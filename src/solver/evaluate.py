@@ -36,6 +36,7 @@ class EvalWeights:
     spawn_blocked: float = 1000
     pod_uncollected: float = -100
     pod_proximity: float = 50         # bonus for mech within 2 tiles of pod
+    pod_collected: float = 0          # action-history penalty; Rust search only
     enemy_on_danger: float = 800      # non-flying enemy on danger tile
 
     # Psion kill bonuses (scaled by future_factor)

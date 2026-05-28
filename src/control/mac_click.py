@@ -61,7 +61,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         window_x=1005,
         window_y=676,
         description="Bottom-right Continue panel",
-        settle_seconds=0.35,
+        settle_seconds=0.65,
     ),
     "pod_open_door": KnownWindowControl(
         name="pod_open_door",
@@ -72,16 +72,16 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "dialogue_textbox": KnownWindowControl(
         name="dialogue_textbox",
-        window_x=520,
+        window_x=250,
         window_y=205,
         description="Advisor dialogue text box dismiss",
         settle_seconds=0.25,
     ),
     "mission_preview_board": KnownWindowControl(
         name="mission_preview_board",
-        window_x=815,
-        window_y=468,
-        description="Large mission preview board / start mission",
+        window_x=848,
+        window_y=448,
+        description="Large mission preview board / Start Mission text",
         settle_seconds=0.8,
     ),
     "deploy_confirm": KnownWindowControl(
@@ -219,8 +219,8 @@ _CONTROL_ALIASES = {
     "continue": "menu_continue",
     "resume": "menu_continue",
     "unpause": "menu_continue",
-    "reward": "reward_continue",
-    "region_secured_continue": "reward_continue",
+    "reward": "bottom_continue",
+    "region_secured_continue": "bottom_continue",
     "ceo_continue": "bottom_continue",
     "island_intro_continue": "bottom_continue",
     "bottom_right_continue": "bottom_continue",
@@ -409,6 +409,43 @@ def click_screen_point(
         "description": description,
         "backend": backend,
         "hold_seconds": click_result.get("hold_seconds"),
+    }
+
+
+def press_key(
+    key: str,
+    *,
+    description: str = "",
+    app_name: str = "Into the Breach",
+    dry_run: bool = False,
+    settle_seconds: float = 0.08,
+) -> dict:
+    """Activate the game and press a trusted non-combat UI key."""
+    key = str(key)
+    if dry_run:
+        return {"status": "DRY_RUN", "key": key, "description": description}
+    try:
+        subprocess.run(
+            ["osascript", "-e", f'tell application "{app_name}" to activate'],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        pass
+    try:
+        import pyautogui
+
+        pyautogui.press(key)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"pyautogui key failed: {exc}"}
+    if settle_seconds > 0:
+        time.sleep(settle_seconds)
+    return {
+        "status": "OK",
+        "key": key,
+        "description": description,
+        "backend": "pyautogui",
     }
 
 

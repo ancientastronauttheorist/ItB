@@ -102,6 +102,7 @@ pub struct EvalWeights {
     pub spawn_blocked: f64,
     pub pod_uncollected: f64,    // negative
     pub pod_proximity: f64,
+    pub pod_collected: f64,
     pub enemy_on_danger: f64,
 
     // Psion kill bonuses (scaled by future_factor)
@@ -292,6 +293,7 @@ impl Default for EvalWeights {
             spawn_blocked: 1000.0,
             pod_uncollected: -100.0,
             pod_proximity: 50.0,
+            pod_collected: 0.0,
             enemy_on_danger: 800.0,
             // Psion kill bonuses
             psion_blast: 2000.0,

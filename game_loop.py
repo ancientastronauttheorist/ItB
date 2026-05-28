@@ -54,7 +54,9 @@ from src.loop.commands import (
     cmd_bridge_speed,
     cmd_lightning_preflight,
     cmd_lightning_ui,
+    cmd_lightning_route_start,
     cmd_lightning_capture,
+    cmd_lightning_mark,
     cmd_lightning_peek,
     cmd_lightning_attempt,
     cmd_lightning_segment,
@@ -444,6 +446,18 @@ def main():
         help="Mission routing profile. lightning_war favors fast Blitzkrieg "
              "missions over reputation.",
     )
+    p_rec_mission.add_argument(
+        "--no-save-region-filter",
+        dest="use_save_region_filter",
+        action="store_false",
+        help="Do not reconcile bridge island_map entries with saveData regions",
+    )
+    p_rec_mission.add_argument(
+        "--pause-map-peek",
+        action="store_true",
+        help="Briefly resume from pause to read bridge island_map, then pause",
+    )
+    p_rec_mission.set_defaults(use_save_region_filter=True)
 
     # bridge_speed
     p_bridge_speed = sub.add_parser(
@@ -488,6 +502,83 @@ def main():
     p_lightning_ui.add_argument("--list", action="store_true",
                                 help="List calibrated controls")
 
+    # lightning_route_start
+    p_lightning_route_start = sub.add_parser(
+        "lightning_route_start",
+        help="Preflight and start a selected map region in one Lightning burst",
+    )
+    p_lightning_route_start.add_argument("--profile", default="Alpha")
+    p_lightning_route_start.add_argument("--window-x", type=int, default=None)
+    p_lightning_route_start.add_argument("--window-y", type=int, default=None)
+    p_lightning_route_start.add_argument("--start-window-x", type=int, default=None)
+    p_lightning_route_start.add_argument("--start-window-y", type=int, default=None)
+    p_lightning_route_start.add_argument(
+        "--no-preflight",
+        dest="run_preflight",
+        action="store_false",
+        help="Skip the preflight guard before clicking live UI",
+    )
+    p_lightning_route_start.add_argument(
+        "--no-route-check",
+        dest="verify_route",
+        action="store_false",
+        help="Skip recommend_mission before clicking the supplied region",
+    )
+    p_lightning_route_start.add_argument(
+        "--no-save-region-filter",
+        dest="use_save_region_filter",
+        action="store_false",
+        help="Do not reconcile bridge island_map entries with saveData regions",
+    )
+    p_lightning_route_start.add_argument(
+        "--no-pause-map-peek",
+        dest="allow_pause_map_peek",
+        action="store_false",
+        help="Do not briefly resume from pause to read bridge island_map",
+    )
+    p_lightning_route_start.add_argument(
+        "--no-auto-pause",
+        dest="auto_pause_if_needed",
+        action="store_false",
+        help="Do not click pause first when the map is visibly unpaused",
+    )
+    p_lightning_route_start.add_argument(
+        "--preview-only",
+        dest="include_start_click",
+        action="store_false",
+        help="Click only the region preview, not the mission preview board",
+    )
+    p_lightning_route_start.add_argument(
+        "--dismiss-dialogue",
+        action="store_true",
+        help="Dismiss an advisor dialogue before clicking the mission preview",
+    )
+    p_lightning_route_start.add_argument(
+        "--start-mode",
+        choices=[
+            "preview-board",
+            "preview-board-twice",
+            "visible-text",
+            "region-repeat",
+            "dialogue-region-repeat-preview-board",
+            "dialogue-region-repeat-preview-board-twice",
+        ],
+        default="preview-board",
+        help=(
+            "How to commit the selected preview when no manual start point is "
+            "supplied. Default clicks the calibrated mission preview board."
+        ),
+    )
+    p_lightning_route_start.add_argument("--dry-run", action="store_true")
+    p_lightning_route_start.set_defaults(
+        run_preflight=True,
+        verify_route=True,
+        use_save_region_filter=True,
+        allow_pause_map_peek=True,
+        auto_pause_if_needed=True,
+        include_start_click=True,
+    )
+
     # lightning_capture
     p_lightning_capture = sub.add_parser(
         "lightning_capture",
@@ -503,6 +594,23 @@ def main():
     )
     p_lightning_capture.add_argument("--out-dir", default=None)
     p_lightning_capture.add_argument("--dry-run", action="store_true")
+
+    # lightning_mark
+    p_lightning_mark = sub.add_parser(
+        "lightning_mark",
+        help="Record a structured Lightning War timing event with deltas",
+    )
+    p_lightning_mark.add_argument("label", help="Short timing event label")
+    p_lightning_mark.add_argument("--game-timer", default=None)
+    p_lightning_mark.add_argument("--state", default=None)
+    p_lightning_mark.add_argument("--note", default="")
+    p_lightning_mark.add_argument("--out-dir", default=None)
+    p_lightning_mark.add_argument(
+        "--screenshot-path",
+        default=None,
+        help="Attach/copy an existing screenshot instead of capturing a new one",
+    )
+    p_lightning_mark.add_argument("--dry-run", action="store_true")
 
     # lightning_peek
     p_lightning_peek = sub.add_parser(
@@ -957,6 +1065,8 @@ def main():
             profile=args.profile,
             island_map_json=args.island_map_json,
             routing=args.routing,
+            use_save_region_filter=args.use_save_region_filter,
+            pause_map_peek=args.pause_map_peek,
         )
     elif args.command == "bridge_speed":
         cmd_bridge_speed(args.mode)
@@ -971,6 +1081,23 @@ def main():
             dry_run=args.dry_run,
             list_controls=args.list,
         )
+    elif args.command == "lightning_route_start":
+        cmd_lightning_route_start(
+            profile=args.profile,
+            region_window_x=args.window_x,
+            region_window_y=args.window_y,
+            run_preflight=args.run_preflight,
+            verify_route=args.verify_route,
+            use_save_region_filter=args.use_save_region_filter,
+            allow_pause_map_peek=args.allow_pause_map_peek,
+            auto_pause_if_needed=args.auto_pause_if_needed,
+            include_start_click=args.include_start_click,
+            dismiss_dialogue=args.dismiss_dialogue,
+            start_mode=args.start_mode,
+            start_window_x=args.start_window_x,
+            start_window_y=args.start_window_y,
+            dry_run=args.dry_run,
+        )
     elif args.command == "lightning_capture":
         cmd_lightning_capture(
             args.label,
@@ -978,6 +1105,16 @@ def main():
             game_timer=args.game_timer,
             clock_state=args.clock_state,
             out_dir=args.out_dir,
+            dry_run=args.dry_run,
+        )
+    elif args.command == "lightning_mark":
+        cmd_lightning_mark(
+            args.label,
+            game_timer=args.game_timer,
+            state=args.state,
+            note=args.note,
+            out_dir=args.out_dir,
+            screenshot_path=args.screenshot_path,
             dry_run=args.dry_run,
         )
     elif args.command == "lightning_peek":

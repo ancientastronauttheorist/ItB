@@ -83,3 +83,44 @@
 - Kept the guardrails tight: timeline collapse, mech loss/status, pylon/bomb/final-cave losses, unknown loss kinds, research/desync/stale-board gates, and uncovered live threats still stop the loop.
 - First live `lightning_segment --time-limit 2` smoke after the build found a no-progress gap: starting from a paused `Mission_Train` turn-3 state with `active_mechs=0`, the conductor resumed and then spent the full 45s combat wait. Patch follow-up: when `lightning_attempt` sees `combat_player` plus no active mechs, it now clears an obvious safe panel or stops immediately instead of paying `max_wait`.
 - Built `lightning_peek` for ambiguous paused states: precompute bounds/path while paused, click Continue, capture one persistent screenshot, immediately click Pause, classify the evidence, and think from the saved image. It is visual-only and never clicks End Turn, route/start/shop controls, combat actions, or bridge commands.
+| 10:44:52 | no_active_turn3 |  | micro_peek | [screenshot](screenshots/040_no_active_turn3.png) | Micro-peek after conductor stopped on combat_player with no active mechs. |
+| 10:54:11 | archive_after_mission1 |  | micro_peek | [screenshot](screenshots/041_archive_after_mission1.png) | After first fresh-island smoke segment; conductor completed Mission_Tides and returned to map with stale deployment bridge data. |
+| 10:55:24 | archive_after_mission1 |  | micro_peek | [screenshot](screenshots/042_archive_after_mission1.png) | After Mission_Tides first Archive smoke; route decision from visible island map. |
+| 10:57:46 | archive_martial_preview |  | micro_peek | [screenshot](screenshots/043_archive_martial_preview.png) | After manual Martial District region click burst; verify preview and timer cost. |
+| 11:01:53 | archive_after_mission2 |  | micro_peek | [screenshot](screenshots/044_archive_after_mission2.png) | After Martial District smoke mission; conductor completed combat and post-mission panel, stopped on stale bridge/visible island map for next route. |
+| 11:02:44 | archive_restoration_preview |  | micro_peek | [screenshot](screenshots/045_archive_restoration_preview.png) | After manual Restoration Center region click burst; verify mission type and route cost. |
+| 11:06:15 | archive_after_mission3 |  | micro_peek | [screenshot](screenshots/046_archive_after_mission3.png) | After Restoration Center artillery smoke mission; conductor cleared two post-combat panels and returned to visible Archive map. |
+| 11:06:58 | archive_storage_preview |  | micro_peek | [screenshot](screenshots/047_archive_storage_preview.png) | After manual Storage Vaults region click; likely train mission candidate from stale bridge hint. |
+| 11:11:19 | archive_after_mission4 |  | micro_peek | [screenshot](screenshots/048_archive_after_mission4.png) | After Storage Vaults armored-train smoke mission; research item Moth1 auto-resolved before deploy, conductor returned route_ready. |
+| 11:13:13 | archive_accord_preview |  | micro_peek | [screenshot](screenshots/049_archive_accord_preview.png) | After manual Accord Repository region click; likely remaining fast Tides candidate. |
+| 11:14:11 | archive_remembrance_preview |  | micro_peek | [screenshot](screenshots/050_archive_remembrance_preview.png) | Tried to switch from Accord/Satellite preview to Remembrance Point by clicking visible region behind overlay. |
+| 11:18:39 | archive_after_satellite |  | micro_peek | [screenshot](screenshots/051_archive_after_satellite.png) | After Accord Repository/Satellite smoke mission; likely unlocked Spider Boss/HQ finale next. |
+| 11:19:38 | archive_hq_preview |  | micro_peek | [screenshot](screenshots/052_archive_hq_preview.png) | After clicking red Corporate HQ/Hive Leader region for Archive finale. |
+| 11:23:33 | archive_after_hq |  | micro_peek | [screenshot](screenshots/053_archive_after_hq.png) | After Archive HQ Spider Boss finale; verify island secured/end-state timer and remaining UI. |
+
+## Fresh Archive Full-Island Smoke
+
+- Completed a fresh Blitzkrieg/Camila Easy Archive island smoke and reached the island-complete Spend Reputation / Leave Island screen at game timer `0:16:59`.
+- Route actually played: `Mission_Tides` opener, Martial District / Tides-like power-generator mission, Restoration Center / `Mission_Artillery`, Storage Vaults / `Mission_Armored_Train`, Accord Repository / `Mission_Satellite`, Corporate HQ / `Mission_SpiderBoss`.
+- Good real-route candidates from this island: the Tides opener, the Martial Tides/power-generator mission, and Storage Vaults / Armored Train. The train mission was tactically clean after resolving missing enemy coverage.
+- Bad real-route samples: Restoration Center / Artillery and Accord / Satellite. Both completed, but they added objective friction and longer UI/combat tails. The Satellite preview also demonstrated that switching previews after a detailed mission panel opens is awkward; avoid opening bad previews when the real timer matters.
+- Research lesson: `Moth1` appeared on the Armored Train deployment and tripped preflight. `research_next` auto-resolved it from the current board, but doing that in live deployment wasted timer. Before the real chase, run a coverage/preflight pass that includes Archive train enemy sets.
+- Bridge lesson: early map returns still produced stale deployment-looking bridge states. Later in the island, `recommend_mission --routing lightning_war` recovered an island-map payload, but it included completed regions, so visual availability still had to win over raw rank order.
+- UI lesson: deployment does not pause, mission preview/details tick, island-complete Spend Reputation / Leave Island ticks, and micro-peek costs about 1.4-3.1 seconds of live timer. Resting in pause between bursts worked consistently outside deployment.
+- Speed read: even with deliberate screenshots, one research detour, a bad Satellite mission, and a boss finale, the island finished under 17 minutes. A clean real route needs no research detour, no Satellite/Artillery if avoidable, and fewer preview peeks to leave enough margin for island two.
+
+## R.S.T. Route-Start Refinement
+
+- R.S.T. Dust Bowl exposed a two-stage preview start: region click plus dialogue dismiss opens the detailed mission board, and the first board click only reveals the yellow `Start Mission` overlay. A second click must land on the text, not the lower board body.
+- Tooling fix: `mission_preview_board` was retargeted from `(815, 468)` to `(848, 448)`, matching the visible yellow `Start Mission` text on the R.S.T. board. `lightning_ui commit_preview` now uses Escape resume plus that calibrated click.
+- Tooling fix: the pause classifier now requires heavy pause-button border density, preventing advisor/dialogue panels from being mistaken for the pause menu. The yellow-text detector now groups yellow text components and ignores the lower warning row, so `LIGHTNING STORM` does not masquerade as `Start Mission`.
+- Live result: the corrected commit click advanced Dust Bowl into deployment/combat and `lightning_segment` completed the mission, cleared post-mission panels, and returned to the R.S.T. map. Visible timer moved from roughly `0:33:03` on the Start Mission preview to `0:37:09` back on map, so Dust Bowl/Lightning Storm is too slow for the sub-3 start-to-start target.
+- Route lesson: if the available choice is Lightning Storm vs. volatile/awkward objectives, neither is ideal. Prefer R.S.T. Cataclysm/Sandstorm when visible; otherwise this island may still miss the average unless combat starts cleanly and post-panel clearing is instant.
+
+## Deep Time-Shave Pass
+
+- Main diagnosis from the two-mission Archive sample: solver search was mostly milliseconds; mission wall time was dominated by UI chains, enemy animation waits, stale preflight gates, and one unnecessary Time Pod pickup.
+- Built a Lightning War scoring overlay that removes ordinary pod attraction and applies a Rust action-history penalty for collecting pods. Pod-only losses remain allowed; now the solver should also avoid stepping on pods when a comparable non-pod line exists.
+- Built a stale-research classifier for the Lightning conductor. Current-board research still blocks, but deferrable behavior/novelty entries from a previous mission can wait if the live board proves the target is absent.
+- Reduced Lightning loop player-turn polling from the ordinary 1.5s cadence to 0.35s and surfaced `wait_entry_seconds` in turn telemetry. This should save small slices after every enemy phase without changing normal `auto_turn` behavior.
+- Verification: Python Lightning/mission-picker/parity tests pass, Rust library tests pass with `DYLD_FRAMEWORK_PATH` set, and the rebuilt PyO3 wheel is installed.

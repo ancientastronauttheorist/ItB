@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -155,6 +156,25 @@ def _achievement_weight_overlay(
             -25.0,
         )
         applied.append("hold_the_line")
+
+    if "lightning war" in targets:
+        # Lightning War is pure real-time throughput: pods add reward UI and
+        # do not help the achievement. Keep safety weights intact, but remove
+        # ordinary pod-seeking pressure and make intentional pickup lose to
+        # almost any equivalent non-pod line.
+        weights["pod_uncollected"] = 0.0
+        weights["pod_proximity"] = 0.0
+        weights["pod_collected"] = min(
+            float(weights.get("pod_collected", 0) or 0),
+            -4000.0,
+        )
+        # Fewer spawned Vek means shorter enemy turns and fewer future
+        # decisions; do not overpower building/grid protection.
+        weights["spawn_blocked"] = max(
+            float(weights.get("spawn_blocked", 0) or 0),
+            1600.0,
+        )
+        applied.append("lightning_war")
 
     return weights, applied
 
@@ -6303,10 +6323,92 @@ def cmd_verify_setup_screen(
     return result
 
 
+def _lightning_bridge_island_map_pause_peek(
+    *,
+    settle_seconds: float = 0.12,
+) -> dict:
+    """Briefly resume from pause to read bridge island_map, then pause again."""
+    from src.control.mac_click import _get_window_bounds
+
+    bounds = _get_window_bounds("Into the Breach")
+    if bounds is None:
+        return {"status": "ERROR", "error": "could not read app window bounds"}
+
+    steps = []
+    resume = _lightning_press_pause_escape(settle_seconds=0.08)
+    steps.append({"phase": "resume", "click": resume})
+    if resume.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "pause_map_peek_resume_failed",
+            "steps": steps,
+        }
+
+    bridge_data = None
+    panel_clear = None
+    read_error = None
+    try:
+        time.sleep(max(0.0, float(settle_seconds)))
+        try:
+            refresh_bridge_state()
+        except (BridgeError, Exception):
+            pass
+        _board, bridge_data = read_bridge_state()
+        if not (bridge_data and bridge_data.get("island_map")):
+            panel_clear = _lightning_clear_visible_panel_chain(
+                dry_run=False,
+                max_steps=2,
+            )
+            time.sleep(max(0.0, float(settle_seconds)))
+            try:
+                refresh_bridge_state()
+            except (BridgeError, Exception):
+                pass
+            _board, bridge_data = read_bridge_state()
+    except Exception as exc:  # Keep the pause restoration path simple.
+        read_error = str(exc)
+    finally:
+        pause = _lightning_click_control_with_bounds(
+            "pause",
+            bounds=bounds,
+            dry_run=False,
+            settle_seconds=0.08,
+            hold_seconds=0.06,
+        )
+        steps.append({"phase": "pause", "click": pause})
+
+    if read_error:
+        return {
+            "status": "ERROR",
+            "reason": "pause_map_peek_read_failed",
+            "error": read_error,
+            "steps": steps,
+        }
+    if not bridge_data:
+        return {
+            "status": "NO_BRIDGE",
+            "reason": "pause_map_peek_bridge_read_failed",
+            "steps": steps,
+        }
+
+    island_map = bridge_data.get("island_map") or []
+    return {
+        "status": "OK" if island_map else "NO_ISLAND_MAP",
+        "reason": "pause_map_peek",
+        "phase": bridge_data.get("phase", "unknown"),
+        "island_map_count": len(island_map),
+        "panel_clear": panel_clear,
+        "steps": steps,
+        "bridge_data": bridge_data,
+    }
+
+
 def cmd_recommend_mission(
     profile: str = "Alpha",
     island_map_json: str | None = None,
     routing: str = "default",
+    use_save_region_filter: bool = True,
+    pause_map_peek: bool = False,
 ) -> dict:
     """Recommend a mission from the current island slate.
 
@@ -6328,6 +6430,7 @@ def cmd_recommend_mission(
     units: list = []
     grid_power = 7
     island_map: list | None = None
+    pause_map_peek_result: dict | None = None
 
     if island_map_json:
         try:
@@ -6347,24 +6450,66 @@ def cmd_recommend_mission(
     else:
         # Pull live bridge state.
         if not is_bridge_active():
-            result = {"status": "NO_BRIDGE",
-                      "note": "Bridge not active. Pass --island-map-json "
-                              "<path> to score from a saved payload."}
-            _print_result(result)
-            return result
-        try:
-            refresh_bridge_state()
-        except (BridgeError, Exception):
-            pass
-        board, bridge_data = read_bridge_state()
+            if pause_map_peek:
+                peek = _lightning_bridge_island_map_pause_peek()
+                pause_map_peek_result = {
+                    key: value
+                    for key, value in peek.items()
+                    if key != "bridge_data"
+                }
+                if peek.get("status") == "OK" and peek.get("bridge_data"):
+                    bridge_data = peek["bridge_data"]
+                    island_map = bridge_data.get("island_map")
+                    units = bridge_data.get("units", [])
+                    grid_power = bridge_data.get("grid_power", 7)
+            if not island_map:
+                result = {"status": "NO_BRIDGE",
+                          "note": "Bridge not active. Pass --island-map-json "
+                                  "<path> to score from a saved payload.",
+                          "pause_map_peek": pause_map_peek_result}
+                _print_result(result)
+                return result
+        else:
+            try:
+                refresh_bridge_state()
+            except (BridgeError, Exception):
+                pass
+            board, bridge_data = read_bridge_state()
+            if bridge_data is None:
+                result = {"status": "NO_BRIDGE",
+                          "note": "Bridge read failed."}
+                _print_result(result)
+                return result
+            island_map = bridge_data.get("island_map")
+            units = bridge_data.get("units", [])
+            grid_power = bridge_data.get("grid_power", 7)
+
         if bridge_data is None:
             result = {"status": "NO_BRIDGE",
                       "note": "Bridge read failed."}
             _print_result(result)
             return result
-        island_map = bridge_data.get("island_map")
-        units = bridge_data.get("units", [])
-        grid_power = bridge_data.get("grid_power", 7)
+
+        if not island_map and pause_map_peek:
+            peek = _lightning_bridge_island_map_pause_peek()
+            pause_map_peek_result = {
+                key: value
+                for key, value in peek.items()
+                if key != "bridge_data"
+            }
+            if peek.get("status") == "OK" and peek.get("bridge_data"):
+                bridge_data = peek["bridge_data"]
+                island_map = bridge_data.get("island_map")
+                units = bridge_data.get("units", [])
+                grid_power = bridge_data.get("grid_power", 7)
+
+    save_region_filter: dict | None = None
+    if island_map and use_save_region_filter and not island_map_json:
+        save_regions = _lightning_read_save_region_entries(profile)
+        island_map, save_region_filter = _lightning_annotate_island_map_with_save_regions(
+            island_map,
+            save_regions,
+        )
 
     if not island_map:
         phase = bridge_data.get("phase", "unknown") if bridge_data else "unknown"
@@ -6375,6 +6520,7 @@ def cmd_recommend_mission(
                      "island_map outside active combat. If you're on the "
                      "corp island map and this still fails, the modloader "
                      "may need a rebuild (scripts/install_modloader.sh)."),
+            "pause_map_peek": pause_map_peek_result,
         }
         _print_result(result)
         return result
@@ -6392,6 +6538,8 @@ def cmd_recommend_mission(
             "phase": phase,
             "routing": routing,
             "available": len(island_map),
+            "save_region_filter": save_region_filter,
+            "pause_map_peek": pause_map_peek_result,
             "note": (
                 "Mission entries were present, but all were marked completed, "
                 "current, stale, or preview-only. Close pause/preview UI and "
@@ -6408,6 +6556,12 @@ def cmd_recommend_mission(
     print(f"Grid power:      {grid_power}")
     print(f"Routing:         {routing}")
     print(f"Available:       {len(island_map)} mission(s)")
+    if save_region_filter:
+        print(
+            "Save filter:     "
+            f"{save_region_filter.get('matched', 0)} matched, "
+            f"{save_region_filter.get('unavailable', 0)} unavailable"
+        )
     print()
     for rank, m in enumerate(top3, start=1):
         print(f"  #{rank}  region={m.get('region_id')}  "
@@ -6423,6 +6577,8 @@ def cmd_recommend_mission(
         "routing": routing,
         "ranked": ranked,
         "top3": top3,
+        "save_region_filter": save_region_filter,
+        "pause_map_peek": pause_map_peek_result,
     }
     _print_result(result)
     return result
@@ -6468,11 +6624,365 @@ def _pending_research_entries(
     ]
 
 
+def _lightning_research_entry_deferrable(entry: dict) -> bool:
+    """True for research entries that can safely wait if absent right now."""
+    kind = entry.get("kind")
+    if kind in (None, "behavior_novelty"):
+        return bool(entry.get("type") or entry.get("terrain_id"))
+    return False
+
+
+def _lightning_research_gate_status(session: RunSession) -> dict:
+    """Classify pending research for the Lightning War speed conductor.
+
+    A genuine current-board research target still blocks. Stale behavior
+    entries from a previous mission may defer when the live board proves the
+    target is absent; the ordinary solve/read research gates still protect
+    combat if the target appears again.
+    """
+    from src.research import orchestrator
+
+    drained = orchestrator.drain_stale_behavior_novelty(session)
+    pending = _pending_research_entries(session)
+    result = {
+        "status": "PASS",
+        "pending_research_count": len(pending),
+        "pending_research": pending,
+        "drained_stale_research": drained,
+    }
+    if not pending:
+        return result
+
+    deferrable = all(_lightning_research_entry_deferrable(e) for e in pending)
+    result["deferrable"] = deferrable
+
+    board = None
+    bridge_data = None
+    if is_bridge_active():
+        try:
+            refresh_bridge_state()
+            board, bridge_data = read_bridge_state()
+        except Exception as exc:
+            result["bridge_error"] = str(exc)
+    if isinstance(bridge_data, dict):
+        result["phase"] = bridge_data.get("phase")
+
+    if board is not None:
+        actionable = orchestrator.has_actionable_research(session, board)
+        result["actionable_on_current_board"] = actionable
+        phase = result.get("phase")
+        phase_is_known_board_state = (
+            phase in _COMBAT_BRIDGE_PHASES
+            or bool(
+                isinstance(bridge_data, dict)
+                and bridge_data.get("deployment_zone")
+            )
+        )
+        if not actionable and deferrable and phase_is_known_board_state:
+            result["status"] = "DEFERRED"
+            result["reason"] = "pending_research_absent_from_current_board"
+            return result
+
+    phase = result.get("phase")
+    if phase and phase not in _COMBAT_BRIDGE_PHASES and deferrable:
+        result["status"] = "DEFERRED"
+        result["reason"] = "pending_research_waiting_outside_combat"
+        return result
+
+    result["status"] = "BLOCK"
+    result["reason"] = "pending_research_may_affect_current_board"
+    return result
+
+
 def _pending_diagnosis_entries(session: RunSession) -> list[dict]:
     return [
         e for e in (session.diagnosis_queue or [])
         if e.get("status") not in ("done",)
     ]
+
+
+_SAVE_REGION_STATE_LABELS = {
+    0: "available",
+    1: "active",
+    2: "completed",
+    3: "overrun",
+}
+
+_BONUS_SAVE_TEXT = {
+    1: "Bonus_Simple_Asset",
+    3: "Bonus_Simple_Grid",
+    4: "Bonus_Simple_Mechs",
+    5: "Bonus_Simple_Block",
+    6: "Bonus_Simple_Kill_Five",
+    7: "Bonus_Simple_Debris",
+    8: "Bonus_Simple_Self_Damage",
+    9: "Bonus_Simple_Pacifist",
+}
+
+
+def _iter_lua_keyed_table_blocks(text: str, key_pattern: str) -> list[tuple[str, str]]:
+    """Return ``[(key, table_text)]`` for keyed Lua tables in saveData."""
+    out: list[tuple[str, str]] = []
+    pattern = re.compile(r'\["(' + key_pattern + r')"\]\s*=\s*{')
+    for match in pattern.finditer(text):
+        start = text.find("{", match.start())
+        if start < 0:
+            continue
+        depth = 0
+        in_string = False
+        escaped = False
+        end = None
+        for i in range(start, len(text)):
+            ch = text[i]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == '"':
+                    in_string = False
+                continue
+            if ch == '"':
+                in_string = True
+                continue
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i + 1
+                    break
+        if end is not None:
+            out.append((match.group(1), text[start:end]))
+    return out
+
+
+def _lightning_parse_save_region_entries(text: str) -> list[dict]:
+    """Parse region state/name/objective hints from ``saveData.lua``."""
+    regions: list[dict] = []
+    for key, block in _iter_lua_keyed_table_blocks(text, r"region\d+"):
+        state_match = re.search(r'\["state"\]\s*=\s*(-?\d+)', block)
+        name_match = re.search(r'\["name"\]\s*=\s*"([^"]*)"', block)
+        mission_match = re.search(r'\["mission"\]\s*=\s*"([^"]*)"', block)
+        state = int(state_match.group(1)) if state_match else None
+        regions.append(
+            {
+                "region_key": key,
+                "region_index": int(key.removeprefix("region")),
+                "state": state,
+                "state_label": _SAVE_REGION_STATE_LABELS.get(
+                    state if state is not None else -999,
+                    "unknown",
+                ),
+                "name": name_match.group(1) if name_match else "",
+                "mission_slot": mission_match.group(1) if mission_match else "",
+                "objective_texts": re.findall(r'\["text"\]\s*=\s*"([^"]*)"', block),
+                "objective_params": re.findall(
+                    r'\["param1"\]\s*=\s*"([^"]*)"',
+                    block,
+                ),
+            }
+        )
+    return regions
+
+
+def _lightning_read_save_region_entries(
+    profile: str = "Alpha",
+    *,
+    path: Path | None = None,
+) -> list[dict]:
+    save_path = path or (SAVE_DIR / f"profile_{profile}" / "saveData.lua")
+    try:
+        text = save_path.read_text()
+    except OSError:
+        return []
+    return _lightning_parse_save_region_entries(text)
+
+
+def _lightning_mission_objective_tokens(entry: dict) -> set[str]:
+    mission_id = str(entry.get("mission_id") or "")
+    tokens: set[str] = set()
+    if not mission_id:
+        return tokens
+    tokens.add(mission_id)
+    tokens.add(f"{mission_id}_Obj")
+    if mission_id.startswith("Mission_"):
+        suffix = mission_id.removeprefix("Mission_")
+        tokens.add(f"Mission_{suffix.replace('_', '')}_Obj")
+    return tokens
+
+
+def _lightning_save_region_match_score(entry: dict, region: dict) -> int:
+    objective_texts = set(region.get("objective_texts") or [])
+    objective_params = set(region.get("objective_params") or [])
+    score = 0
+
+    if objective_texts & _lightning_mission_objective_tokens(entry):
+        score += 8
+
+    asset_id = str(entry.get("asset_id") or "")
+    if asset_id and f"{asset_id}_Name" in objective_params:
+        score += 3
+
+    for bonus_id in entry.get("bonus_objective_ids") or []:
+        try:
+            bonus_key = int(bonus_id)
+        except (TypeError, ValueError):
+            bonus_key = bonus_id
+        token = _BONUS_SAVE_TEXT.get(bonus_key)
+        if token and token in objective_texts:
+            score += 1
+
+    if entry.get("boss") and region.get("name") == "Corporate HQ":
+        score += 6
+
+    return score
+
+
+def _lightning_annotate_island_map_with_save_regions(
+    island_map: list[dict] | None,
+    save_regions: list[dict],
+) -> tuple[list[dict] | None, dict]:
+    """Attach save-region state hints so completed entries stop ranking."""
+    if not island_map:
+        return island_map, {"status": "NO_ISLAND_MAP"}
+    if not save_regions:
+        return island_map, {"status": "NO_SAVE_REGIONS"}
+
+    annotated: list[dict] = []
+    matched = 0
+    unavailable = 0
+    for entry in island_map:
+        best_region = None
+        best_score = 0
+        for region in save_regions:
+            score = _lightning_save_region_match_score(entry, region)
+            if score > best_score:
+                best_region = region
+                best_score = score
+
+        out = dict(entry)
+        if best_region is not None and best_score >= 2:
+            matched += 1
+            state = best_region.get("state")
+            out["save_region_index"] = best_region.get("region_index")
+            out["save_region_name"] = best_region.get("name")
+            out["save_region_state"] = state
+            out["save_region_state_label"] = best_region.get("state_label")
+            out["save_region_match_score"] = best_score
+            if state == 1:
+                out["current"] = True
+                unavailable += 1
+            elif state == 2:
+                out["completed"] = True
+                unavailable += 1
+            elif state == 3:
+                out["overrun"] = True
+                unavailable += 1
+        annotated.append(out)
+
+    return annotated, {
+        "status": "OK",
+        "entries": len(island_map),
+        "save_regions": len(save_regions),
+        "matched": matched,
+        "unavailable": unavailable,
+    }
+
+
+def _lightning_extract_red_regions_from_image(image_path: str | Path) -> dict:
+    """Extract available red corp-map region centers from a screenshot."""
+    try:
+        import cv2
+        import numpy as np
+        from PIL import Image
+    except Exception as exc:
+        return {"status": "UNAVAILABLE", "error": f"vision deps unavailable: {exc}"}
+
+    try:
+        image = Image.open(image_path).convert("RGB")
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"failed to open screenshot: {exc}"}
+
+    width, height = image.size
+    base_w, base_h = _LIGHTNING_UI_BASE_SIZE
+    scale_x = width / base_w if base_w else 1.0
+    scale_y = height / base_h if base_h else 1.0
+    left = int(250 * scale_x)
+    top = int(120 * scale_y)
+    right = int(1160 * scale_x)
+    bottom = int(700 * scale_y)
+    arr = np.asarray(image)[top:bottom, left:right]
+    red = arr[:, :, 0].astype("int16")
+    green = arr[:, :, 1].astype("int16")
+    blue = arr[:, :, 2].astype("int16")
+    mask = (
+        (red >= 135)
+        & (green <= 115)
+        & (blue <= 115)
+        & (red >= green + 45)
+        & (red >= blue + 45)
+    ).astype("uint8")
+
+    count, labels, stats, centroids = cv2.connectedComponentsWithStats(mask, 8)
+    min_area = int(4500 * scale_x * scale_y)
+    regions: list[dict] = []
+    for label in range(1, count):
+        area = int(stats[label, cv2.CC_STAT_AREA])
+        if area < min_area:
+            continue
+        x = int(stats[label, cv2.CC_STAT_LEFT]) + left
+        y = int(stats[label, cv2.CC_STAT_TOP]) + top
+        w = int(stats[label, cv2.CC_STAT_WIDTH])
+        h = int(stats[label, cv2.CC_STAT_HEIGHT])
+        cx = float(centroids[label][0]) + left
+        cy = float(centroids[label][1]) + top
+        regions.append(
+            {
+                "window_x": int(round(cx / scale_x)),
+                "window_y": int(round(cy / scale_y)),
+                "bbox_window": [
+                    int(round(x / scale_x)),
+                    int(round(y / scale_y)),
+                    int(round((x + w) / scale_x)),
+                    int(round((y + h) / scale_y)),
+                ],
+                "area_px": area,
+                "area_window": round(area / (scale_x * scale_y), 1),
+            }
+        )
+
+    regions.sort(key=lambda r: (r["window_y"], r["window_x"]))
+    for index, region in enumerate(regions):
+        region["index"] = index
+
+    return {
+        "status": "OK",
+        "screenshot_path": str(image_path),
+        "regions": regions,
+        "region_count": len(regions),
+        "crop_window": [
+            int(round(left / scale_x)),
+            int(round(top / scale_y)),
+            int(round(right / scale_x)),
+            int(round(bottom / scale_y)),
+        ],
+    }
+
+
+def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -> dict | None:
+    if not recommendation:
+        return None
+    pause_map_peek = recommendation.get("pause_map_peek") or {}
+    panel_clear = pause_map_peek.get("panel_clear") or {}
+    visible_ui = panel_clear.get("visible_ui") or {}
+    screenshot_path = visible_ui.get("screenshot_path")
+    if not screenshot_path:
+        return None
+    result = _lightning_extract_red_regions_from_image(screenshot_path)
+    if result.get("status") != "OK" or not result.get("regions"):
+        return result
+    return result
 
 
 def _target_names(session: RunSession) -> set[str]:
@@ -6529,9 +7039,14 @@ def cmd_lightning_preflight(
     if "hold the line" in targets:
         issues.append("Hold the Line target is active; do not use the speed loop")
 
-    pending_research = _pending_research_entries(session)
-    if pending_research:
+    research_gate = _lightning_research_gate_status(session)
+    pending_research = research_gate.get("pending_research") or []
+    if research_gate.get("status") == "BLOCK":
         issues.append(f"{len(pending_research)} unresolved research queue item(s)")
+    elif research_gate.get("status") == "DEFERRED":
+        warnings.append(
+            f"{len(pending_research)} stale/non-current research queue item(s) deferred"
+        )
     pending_diagnosis = _pending_diagnosis_entries(session)
     if pending_diagnosis:
         warnings.append(f"{len(pending_diagnosis)} pending diagnosis item(s)")
@@ -6591,6 +7106,7 @@ def cmd_lightning_preflight(
             "new_equip": settings.get("new_equip"),
         },
         "pending_research_count": len(pending_research),
+        "research_gate": research_gate,
         "pending_diagnosis_count": len(pending_diagnosis),
         "bridge_speed": bridge_speed,
         "next_step": (
@@ -6687,7 +7203,7 @@ _LIGHTNING_UI_BUTTON_CROPS = {
         "size": (320, 100),
     },
     "reward_panel": {
-        "control": "reward_continue",
+        "control": "bottom_continue",
         "center": (1001, 653),
         "size": (300, 90),
     },
@@ -6744,6 +7260,30 @@ _LIGHTNING_DEPLOY_BRIDGE_TIMEOUT_SECONDS = 2.0
 _SUPPRESS_RESULT_PRINT_DEPTH = 0
 
 
+def _lightning_preferred_visible_control(
+    visible_name: str | None,
+    control: str | None,
+) -> str | None:
+    """Prefer controls that landed reliably in timed Lightning UI smoke tests."""
+    if visible_name == "reward_panel" and control:
+        return "bottom_continue"
+    return control
+
+
+def _lightning_score_is_actionable(
+    score: dict,
+    *,
+    min_score: float = 0.70,
+    min_bright: int = 120,
+    min_border: int = 120,
+) -> bool:
+    return (
+        float(score.get("score") or 0.0) >= min_score
+        and int(score.get("bright") or 0) >= min_bright
+        and int(score.get("border") or 0) >= min_border
+    )
+
+
 class _CountingOutput:
     """File-like sink that counts redirected output without retaining it."""
 
@@ -6788,6 +7328,24 @@ def _clear_pending_bridge_command(reason: str) -> dict:
         "cleared": cleared,
         "errors": errors,
     }
+
+
+def _lightning_press_pause_escape(
+    *,
+    dry_run: bool = False,
+    settle_seconds: float = 0.08,
+) -> dict:
+    """Resume a pause menu without clicking through onto the map beneath it."""
+    from src.control.mac_click import press_key
+
+    result = press_key(
+        "esc",
+        description="Pause menu Escape resume",
+        dry_run=dry_run,
+        settle_seconds=settle_seconds,
+    )
+    result["control"] = "pause_menu_escape"
+    return result
 
 
 def _lightning_button_like_score(image, *, center: tuple[int, int],
@@ -6926,30 +7484,155 @@ def _lightning_start_mission_target(image_path: str | Path) -> dict:
     top = int(300 * scale_y)
     right = int(1180 * scale_x)
     bottom = int(690 * scale_y)
+    crop_w = max(0, right - left)
+    crop_h = max(0, bottom - top)
+    if crop_w <= 0 or crop_h <= 0:
+        return {
+            "status": "NOT_FOUND",
+            "yellow": 0,
+            "search_crop": [left, top, right, bottom],
+        }
     pixels = image.load()
-    xs: list[int] = []
-    ys: list[int] = []
+    mask = bytearray(crop_w * crop_h)
+    yellow = 0
     for y in range(max(0, top), min(height, bottom)):
+        row = (y - top) * crop_w
         for x in range(max(0, left), min(width, right)):
             r, g, b = pixels[x, y]
             if r > 180 and g > 150 and b < 90:
-                xs.append(x)
-                ys.append(y)
-    if len(xs) < 500:
+                mask[row + (x - left)] = 1
+                yellow += 1
+    if yellow < 500:
         return {
             "status": "NOT_FOUND",
-            "yellow": len(xs),
+            "yellow": yellow,
             "search_crop": [left, top, right, bottom],
         }
-    window_x = int(round((sum(xs) / len(xs)) / scale_x))
-    window_y = int(round((sum(ys) / len(ys)) / scale_y))
+
+    visited = bytearray(crop_w * crop_h)
+    components: list[dict] = []
+    for start, is_yellow in enumerate(mask):
+        if not is_yellow or visited[start]:
+            continue
+        stack = [start]
+        visited[start] = 1
+        count = 0
+        sum_x = 0
+        sum_y = 0
+        min_x = crop_w
+        min_y = crop_h
+        max_x = 0
+        max_y = 0
+        while stack:
+            idx = stack.pop()
+            cx = idx % crop_w
+            cy = idx // crop_w
+            count += 1
+            sum_x += cx
+            sum_y += cy
+            min_x = min(min_x, cx)
+            min_y = min(min_y, cy)
+            max_x = max(max_x, cx)
+            max_y = max(max_y, cy)
+            for neighbor in (
+                idx - 1 if cx > 0 else -1,
+                idx + 1 if cx + 1 < crop_w else -1,
+                idx - crop_w if cy > 0 else -1,
+                idx + crop_w if cy + 1 < crop_h else -1,
+            ):
+                if neighbor >= 0 and mask[neighbor] and not visited[neighbor]:
+                    visited[neighbor] = 1
+                    stack.append(neighbor)
+        if count < 20:
+            continue
+        window_min_x = (left + min_x) / scale_x
+        window_min_y = (top + min_y) / scale_y
+        window_max_x = (left + max_x) / scale_x
+        window_max_y = (top + max_y) / scale_y
+        comp_width = window_max_x - window_min_x
+        comp_height = window_max_y - window_min_y
+        components.append(
+            {
+                "area": count,
+                "window_min_x": window_min_x,
+                "window_min_y": window_min_y,
+                "window_max_x": window_max_x,
+                "window_max_y": window_max_y,
+                "window_cx": ((left + (sum_x / count)) / scale_x),
+                "window_cy": ((top + (sum_y / count)) / scale_y),
+                "window_width": comp_width,
+                "window_height": comp_height,
+            }
+        )
+
+    candidates = [
+        comp
+        for comp in components
+        if (
+            80 <= comp["area"] <= 100000
+            and 4 <= comp["window_width"] <= 320
+            and 8 <= comp["window_height"] <= 80
+            and comp["window_cy"] <= 560
+        )
+    ]
+    clusters: list[list[dict]] = []
+    for comp in sorted(candidates, key=lambda item: item["window_cy"]):
+        for cluster in clusters:
+            weight = sum(item["area"] for item in cluster) or 1
+            cluster_y = sum(
+                item["window_cy"] * item["area"] for item in cluster
+            ) / weight
+            if abs(cluster_y - comp["window_cy"]) <= 28:
+                cluster.append(comp)
+                break
+        else:
+            clusters.append([comp])
+
+    best_cluster = None
+    best_score = 0.0
+    for cluster in clusters:
+        min_x = min(item["window_min_x"] for item in cluster)
+        max_x = max(item["window_max_x"] for item in cluster)
+        min_y = min(item["window_min_y"] for item in cluster)
+        max_y = max(item["window_max_y"] for item in cluster)
+        span_x = max_x - min_x
+        span_y = max_y - min_y
+        area = sum(item["area"] for item in cluster)
+        if span_x < 60 or span_y > 90:
+            continue
+        score = area * (1.0 + min(span_x, 360) / 120.0)
+        if score > best_score:
+            best_score = score
+            best_cluster = {
+                "area": area,
+                "span_x": span_x,
+                "span_y": span_y,
+                "window_min_x": min_x,
+                "window_max_x": max_x,
+                "window_min_y": min_y,
+                "window_max_y": max_y,
+            }
+
+    if best_cluster is None:
+        return {
+            "status": "NOT_FOUND",
+            "yellow": yellow,
+            "search_crop": [left, top, right, bottom],
+            "component_count": len(components),
+            "reason": "no_start_text_cluster",
+        }
+
+    window_x = int(round((best_cluster["window_min_x"] + best_cluster["window_max_x"]) / 2))
+    window_y = int(round((best_cluster["window_min_y"] + best_cluster["window_max_y"]) / 2))
     return {
         "status": "OK",
         "window_x": window_x,
         "window_y": window_y,
-        "yellow": len(xs),
+        "yellow": yellow,
         "search_crop": [left, top, right, bottom],
         "image_size": [width, height],
+        "component_count": len(components),
+        "cluster": best_cluster,
     }
 
 
@@ -6991,11 +7674,14 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
         }
 
     pause_score = scores.get("pause_menu", {})
+    pause_border_fraction = (
+        pause_score.get("border", 0) / max(int(pause_score.get("pixels", 0) or 1), 1)
+    )
     if (
         dark_overlay >= 0.70
         and pause_score.get("score", 0.0) >= 0.34
         and pause_score.get("bright", 0) >= 120
-        and pause_score.get("border", 0) >= 120
+        and pause_border_fraction >= 0.045
     ):
         spec = _LIGHTNING_UI_BUTTON_CROPS["pause_menu"]
         return {
@@ -7003,6 +7689,50 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             "visible_ui": "pause_menu",
             "recommended_control": spec["control"],
             "confidence": pause_score["score"],
+            "dark_overlay_fraction": dark_overlay,
+            "scores": scores,
+        }
+
+    # Post-mission reward chains often draw several overlapping blue panels.
+    # Prefer the concrete bottom button/open-door controls over broad modal
+    # crops so Region Secured and Pod Recovered contents do not look like
+    # promotion or Perfect Island panels.
+    if dark_overlay >= 0.60:
+        for name in (
+            "pod_open_panel",
+            "bottom_continue_panel",
+            "reward_panel",
+            "promotion_panel",
+            "perfect_island_panel",
+        ):
+            score = scores.get(name, {})
+            threshold = 0.60 if name == "pod_open_panel" else 0.70
+            if _lightning_score_is_actionable(score, min_score=threshold):
+                spec = _LIGHTNING_UI_BUTTON_CROPS[name]
+                return {
+                    "status": "OK",
+                    "visible_ui": name,
+                    "recommended_control": spec["control"],
+                    "confidence": score["score"],
+                    "dark_overlay_fraction": dark_overlay,
+                    "scores": scores,
+                }
+
+    best_name = max(_LIGHTNING_UI_BUTTON_CROPS, key=lambda name: scores[name]["score"])
+    best = scores[best_name]
+    if (
+        island_map.get("colored", 0) >= 12000
+        and best_name in _LIGHTNING_SAFE_CLEAR_UIS
+        and best.get("score", 0.0) >= 0.70
+        and best.get("bright", 0) >= 120
+        and best.get("border", 0) >= 120
+    ):
+        spec = _LIGHTNING_UI_BUTTON_CROPS[best_name]
+        return {
+            "status": "OK",
+            "visible_ui": best_name,
+            "recommended_control": spec["control"],
+            "confidence": best["score"],
             "dark_overlay_fraction": dark_overlay,
             "scores": scores,
         }
@@ -7035,6 +7765,14 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
         best["score"] >= 0.34
         and best.get("bright", 0) >= 120
         and best.get("border", 0) >= 120
+        and (
+            best_name != "pause_menu"
+            or (
+                best.get("border", 0)
+                / max(int(best.get("pixels", 0) or 1), 1)
+            )
+            >= 0.045
+        )
     ):
         spec = _LIGHTNING_UI_BUTTON_CROPS[best_name]
         return {
@@ -7227,7 +7965,10 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
         }
 
     visible_name = visible_ui.get("visible_ui")
-    control = visible_ui.get("recommended_control")
+    control = _lightning_preferred_visible_control(
+        visible_name,
+        visible_ui.get("recommended_control"),
+    )
     if visible_name == "pause_menu":
         return {
             "status": "PAUSED",
@@ -7264,13 +8005,12 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
 def _lightning_clear_visible_panel_chain(
     *,
     dry_run: bool = False,
-    max_steps: int = 4,
+    max_steps: int = 8,
 ) -> dict:
     """Clear chained safe post-mission panels, reclassifying after each click."""
     from src.control.mac_click import click_known_window_control
 
     steps: list[dict] = []
-    previous_key: tuple[str | None, str | None] | None = None
     visible_ui: dict = {}
     for step_index in range(max_steps):
         visible_ui = _lightning_visible_ui_snapshot()
@@ -7283,24 +8023,10 @@ def _lightning_clear_visible_panel_chain(
             }
 
         visible_name = visible_ui.get("visible_ui")
-        control = visible_ui.get("recommended_control")
-        key = (str(visible_name), str(control))
-        if (
-            previous_key is not None
-            and key == previous_key
-            and visible_name in _LIGHTNING_SAFE_CLEAR_UIS
-        ):
-            return {
-                "status": "STALLED",
-                "reason": "panel_did_not_change_after_click",
-                "steps": steps,
-                "visible_ui": visible_ui,
-                "recommended_control": control,
-                "next_step": (
-                    "Inspect the visible panel before repeating the same "
-                    "calibrated click."
-                ),
-            }
+        control = _lightning_preferred_visible_control(
+            visible_name,
+            visible_ui.get("recommended_control"),
+        )
 
         if visible_name not in _LIGHTNING_SAFE_CLEAR_UIS or not control:
             return {
@@ -7337,7 +8063,6 @@ def _lightning_clear_visible_panel_chain(
                 "control": control,
                 "click_result": click_result,
             }
-        previous_key = key
 
     final_ui = _lightning_visible_ui_snapshot()
     return {
@@ -7346,6 +8071,42 @@ def _lightning_clear_visible_panel_chain(
         "steps": steps,
         "visible_ui": final_ui,
         "next_step": "Inspect the screen before clearing more panels.",
+    }
+
+
+def _lightning_dialogue_box_score(image_path: str | Path) -> dict:
+    """Detect the wide advisor dialogue box before clicking its hot zone."""
+    try:
+        from PIL import Image
+    except Exception as exc:
+        return {"status": "UNAVAILABLE", "error": f"PIL unavailable: {exc}"}
+    try:
+        image = Image.open(image_path)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"failed to open screenshot: {exc}"}
+
+    score = _lightning_button_like_score(
+        image,
+        center=(640, 175),
+        size=(920, 115),
+    )
+    portrait_score = _lightning_button_like_score(
+        image,
+        center=(990, 205),
+        size=(160, 160),
+    )
+    visible = (
+        score.get("score", 0.0) >= 0.20
+        and score.get("bright", 0) >= 6000
+        and score.get("border", 0) >= 6000
+        and portrait_score.get("score", 0.0) >= 0.25
+        and portrait_score.get("border", 0) >= 1000
+    )
+    return {
+        "status": "OK",
+        "visible": visible,
+        "portrait_score": portrait_score,
+        **score,
     }
 
 
@@ -7359,32 +8120,54 @@ def _lightning_click_visible_start_mission(
     from src.control.mac_click import click_known_window_control, click_window_point
 
     dialogue_click = None
+    tmp_path = Path(tempfile.gettempdir()) / f"itb_lightning_start_{os.getpid()}.png"
+    reuse_screenshot = False
     if dismiss_dialogue:
-        dialogue_click = click_known_window_control(
-            "dialogue_textbox",
-            dry_run=dry_run,
-        )
-        if dialogue_click.get("status") not in {"OK", "DRY_RUN"}:
-            return {
-                "status": "ERROR",
-                "reason": "dialogue_dismiss_failed",
-                "dialogue_click": dialogue_click,
+        try:
+            take_screenshot(tmp_path)
+        except Exception as exc:
+            return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
+        dialogue_probe = _lightning_dialogue_box_score(tmp_path)
+        if dialogue_probe.get("visible"):
+            dialogue_click = click_known_window_control(
+                "dialogue_textbox",
+                dry_run=dry_run,
+            )
+            dialogue_click["dialogue_probe"] = dialogue_probe
+            if dialogue_click.get("status") not in {"OK", "DRY_RUN"}:
+                return {
+                    "status": "ERROR",
+                    "reason": "dialogue_dismiss_failed",
+                    "dialogue_probe": dialogue_probe,
+                    "dialogue_click": dialogue_click,
+                }
+        else:
+            dialogue_click = {
+                "status": "SKIPPED",
+                "reason": "dialogue_not_visible",
+                "dialogue_probe": dialogue_probe,
             }
+            reuse_screenshot = True
         if dry_run:
             return {
                 "status": "DRY_RUN",
-                "planned_control": "dialogue_textbox",
+                "planned_control": (
+                    "dialogue_textbox"
+                    if dialogue_probe.get("visible")
+                    else "skip_dialogue_textbox"
+                ),
+                "dialogue_probe": dialogue_probe,
                 "next_step": (
-                    "Dry-run only dismissed the dialogue plan; rerun without "
-                    "--dry-run to detect and click Start Mission."
+                    "Dry-run only evaluated the dialogue dismissal plan; rerun "
+                    "without --dry-run to detect and click Start Mission."
                 ),
             }
 
-    tmp_path = Path(tempfile.gettempdir()) / f"itb_lightning_start_{os.getpid()}.png"
-    try:
-        take_screenshot(tmp_path)
-    except Exception as exc:
-        return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
+    if not reuse_screenshot:
+        try:
+            take_screenshot(tmp_path)
+        except Exception as exc:
+            return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
     target = _lightning_start_mission_target(tmp_path)
     target["screenshot_path"] = str(tmp_path)
     if target.get("status") != "OK":
@@ -7412,6 +8195,78 @@ def _lightning_click_visible_start_mission(
     if dialogue_click is not None:
         result["dialogue_click"] = dialogue_click
     return result
+
+
+def _lightning_click_paused_preview_start_sequence(
+    *,
+    dry_run: bool = False,
+    dismiss_dialogue: bool = False,
+    start_clicks: int = 1,
+) -> dict:
+    """Resume from pause and click the visible mission preview board."""
+    from src.control.mac_click import _get_window_bounds
+
+    clicks = max(1, int(start_clicks or 1))
+    sequence = [
+        {
+            "kind": "key",
+            "key": "esc",
+            "description": "Pause menu Escape resume",
+            "settle_seconds": 0.18,
+        }
+    ]
+    if dismiss_dialogue:
+        sequence.append(
+            {
+                "kind": "control",
+                "control": "dialogue_textbox",
+                "settle_seconds": 0.18,
+                "hold_seconds": 0.06,
+            }
+        )
+    for index in range(clicks):
+        sequence.append(
+            {
+                "kind": "control",
+                "control": "mission_preview_board",
+                "settle_seconds": 0.8 if index == clicks - 1 else 0.25,
+                "hold_seconds": 0.06,
+            }
+        )
+
+    if dry_run:
+        return {"status": "DRY_RUN", "sequence": sequence}
+
+    bounds = _get_window_bounds("Into the Breach")
+    if bounds is None:
+        return {"status": "ERROR", "error": "could not read app window bounds"}
+
+    steps = []
+    for item in sequence:
+        if item["kind"] == "key":
+            click = _lightning_press_pause_escape(
+                dry_run=False,
+                settle_seconds=item["settle_seconds"],
+            )
+        else:
+            click = _lightning_click_control_with_bounds(
+                item["control"],
+                bounds=bounds,
+                dry_run=False,
+                settle_seconds=item["settle_seconds"],
+                hold_seconds=item["hold_seconds"],
+            )
+        steps.append(click)
+        if click.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "paused_preview_start_click_failed",
+                "failed_step": item,
+                "steps": steps,
+                "window_bounds": bounds,
+            }
+
+    return {"status": "OK", "steps": steps, "window_bounds": bounds}
 
 
 def _lightning_pause_after_stop(
@@ -7458,18 +8313,16 @@ def _lightning_resume_if_paused(*, dry_run: bool = False, click_ui: bool = True)
     result = {
         "status": "DRY_RUN" if dry_run else "NO_CLICK" if not click_ui else "PLANNED",
         "reason": "pause_menu_visible",
-        "planned_control": "menu_continue",
+        "planned_control": "pause_menu_escape",
         "visible_ui": visible_ui,
     }
     if dry_run or not click_ui:
         return result
 
-    from src.control.mac_click import click_known_window_control
-
     result["stale_bridge_cleanup"] = _clear_pending_bridge_command(
         "resume_from_pause"
     )
-    click_result = click_known_window_control("menu_continue")
+    click_result = _lightning_press_pause_escape()
     result["status"] = click_result.get("status", "ERROR")
     result["click_result"] = click_result
     if click_result.get("status") != "OK":
@@ -7627,6 +8480,62 @@ def cmd_lightning_ui(
         _print_result(result)
         return result
 
+    if control_slug in {
+        "commit_preview",
+        "start_paused_preview",
+        "resume_preview_board",
+        "resume_start_board",
+    }:
+        result = _lightning_click_paused_preview_start_sequence(dry_run=dry_run)
+        print("\n=== LIGHTNING UI COMMIT PREVIEW ===")
+        print(f"  status: {result.get('status')}")
+        _print_result(result)
+        return result
+
+    if control_slug in {
+        "commit_preview_twice",
+        "start_paused_preview_twice",
+        "resume_preview_board_twice",
+        "resume_start_board_twice",
+    }:
+        result = _lightning_click_paused_preview_start_sequence(
+            dry_run=dry_run,
+            start_clicks=2,
+        )
+        print("\n=== LIGHTNING UI COMMIT PREVIEW TWICE ===")
+        print(f"  status: {result.get('status')}")
+        _print_result(result)
+        return result
+
+    if control_slug in {
+        "commit_preview_dialogue",
+        "start_paused_preview_dialogue",
+        "resume_preview_board_dialogue",
+    }:
+        result = _lightning_click_paused_preview_start_sequence(
+            dry_run=dry_run,
+            dismiss_dialogue=True,
+        )
+        print("\n=== LIGHTNING UI COMMIT PREVIEW DIALOGUE ===")
+        print(f"  status: {result.get('status')}")
+        _print_result(result)
+        return result
+
+    if control_slug in {
+        "commit_preview_dialogue_twice",
+        "start_paused_preview_dialogue_twice",
+        "resume_preview_board_dialogue_twice",
+    }:
+        result = _lightning_click_paused_preview_start_sequence(
+            dry_run=dry_run,
+            dismiss_dialogue=True,
+            start_clicks=2,
+        )
+        print("\n=== LIGHTNING UI COMMIT PREVIEW DIALOGUE TWICE ===")
+        print(f"  status: {result.get('status')}")
+        _print_result(result)
+        return result
+
     if control_slug in {"guard_status", "pause_status", "pause_guard_status"}:
         result = _lightning_read_guard()
         print("\n=== LIGHTNING UI PAUSE GUARD ===")
@@ -7647,6 +8556,10 @@ def cmd_lightning_ui(
                 "handle_screen",
                 "start_visible_mission",
                 "start_visible_dialogue",
+                "commit_preview",
+                "commit_preview_twice",
+                "commit_preview_dialogue",
+                "commit_preview_dialogue_twice",
                 "guard_status",
             ],
             "next_step": (
@@ -7887,6 +8800,255 @@ def _lightning_append_capture_note(
         fh.write(note_line)
 
 
+def _lightning_parse_timer_seconds(timer: str | None) -> int | None:
+    """Parse visible ITB timer strings such as 0:37:09 or 0h 37m 09s."""
+    text = str(timer or "").strip().lower()
+    if not text:
+        return None
+    text = text.replace(" ", "")
+    hms_match = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", text)
+    if hms_match and any(hms_match.groups()):
+        hours = int(hms_match.group(1) or 0)
+        minutes = int(hms_match.group(2) or 0)
+        seconds = int(hms_match.group(3) or 0)
+        return hours * 3600 + minutes * 60 + seconds
+    colon_parts = text.split(":")
+    if all(part.isdigit() for part in colon_parts):
+        if len(colon_parts) == 3:
+            hours, minutes, seconds = [int(part) for part in colon_parts]
+            return hours * 3600 + minutes * 60 + seconds
+        if len(colon_parts) == 2:
+            minutes, seconds = [int(part) for part in colon_parts]
+            return minutes * 60 + seconds
+    return None
+
+
+def _lightning_format_seconds(total_seconds: int | float | None) -> str:
+    if total_seconds is None:
+        return ""
+    sign = "-" if float(total_seconds) < 0 else ""
+    seconds = int(round(abs(float(total_seconds))))
+    hours, rem = divmod(seconds, 3600)
+    minutes, sec = divmod(rem, 60)
+    return f"{sign}{hours}:{minutes:02d}:{sec:02d}"
+
+
+def _lightning_timing_paths(out_dir: str | None = None) -> tuple[Path, Path, Path]:
+    base_dir = _lightning_run_notes_base(out_dir)
+    return (
+        base_dir / "timing_events.jsonl",
+        base_dir / "timing.md",
+        base_dir / "screenshots",
+    )
+
+
+def _lightning_load_timing_events(events_path: Path) -> list[dict]:
+    events: list[dict] = []
+    if not events_path.exists():
+        return events
+    for line in events_path.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    return events
+
+
+def _lightning_write_timing_events(events_path: Path, events: list[dict]) -> None:
+    events_path.parent.mkdir(parents=True, exist_ok=True)
+    with events_path.open("w") as fh:
+        for event in events:
+            fh.write(json.dumps(event, sort_keys=True) + "\n")
+
+
+def _lightning_screenshot_link(base_dir: Path, screenshot_path: str | None) -> str:
+    if not screenshot_path:
+        return ""
+    path = Path(screenshot_path)
+    try:
+        rel = path.relative_to(base_dir)
+        target = str(rel)
+    except ValueError:
+        target = str(path)
+    return f"[screenshot]({target})"
+
+
+def _lightning_write_timing_markdown(markdown_path: Path, events: list[dict]) -> None:
+    base_dir = markdown_path.parent
+    lines = [
+        f"# Lightning Timing Journal - {datetime.now():%Y-%m-%d}",
+        "",
+        "| # | Wall | Label | State | Timer | Delta | Wall Delta | UI | Phase | Evidence | Note |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for event in events:
+        timer = event.get("game_timer") or _lightning_format_seconds(
+            event.get("timer_seconds")
+        )
+        timer_delta = event.get("timer_delta_seconds")
+        wall_delta = event.get("wall_delta_seconds")
+        wall_delta_text = (
+            f"{round(float(wall_delta), 1)}s" if wall_delta is not None else ""
+        )
+        phase_text = event.get("bridge_phase") or ""
+        lines.append(
+            "| "
+            f"{event.get('index', '')} | "
+            f"{event.get('wall_time', '')} | "
+            f"{event.get('label', '')} | "
+            f"{event.get('state', '')} | "
+            f"{timer} | "
+            f"{_lightning_format_seconds(timer_delta)} | "
+            f"{wall_delta_text} | "
+            f"{event.get('visible_ui', '')} | "
+            f"{phase_text} | "
+            f"{_lightning_screenshot_link(base_dir, event.get('screenshot_path'))} | "
+            f"{str(event.get('note') or '').replace('|', '/')} |"
+        )
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text("\n".join(lines) + "\n")
+
+
+def cmd_lightning_mark(
+    label: str,
+    *,
+    game_timer: str | None = None,
+    state: str | None = None,
+    note: str = "",
+    out_dir: str | None = None,
+    screenshot_path: str | None = None,
+    dry_run: bool = False,
+) -> dict:
+    """Record a structured Lightning War timing event with deltas."""
+    if not str(label or "").strip():
+        result = {"status": "ERROR", "error": "label is required"}
+        _print_result(result)
+        return result
+
+    events_path, markdown_path, screenshots_dir = _lightning_timing_paths(out_dir)
+    events = _lightning_load_timing_events(events_path)
+    index = len(events) + 1
+    slug = _lightning_capture_slug(label)
+    target_screenshot = screenshots_dir / f"timing_{index:03d}_{slug}.png"
+
+    if dry_run:
+        result = {
+            "status": "DRY_RUN",
+            "index": index,
+            "events_path": str(events_path),
+            "markdown_path": str(markdown_path),
+            "screenshot_path": str(target_screenshot),
+            "timer_seconds": _lightning_parse_timer_seconds(game_timer),
+        }
+        _print_result(result)
+        return result
+
+    if screenshot_path:
+        source = Path(screenshot_path)
+        if not source.exists():
+            result = {
+                "status": "ERROR",
+                "error": f"screenshot does not exist: {screenshot_path}",
+            }
+            _print_result(result)
+            return result
+        target_screenshot.parent.mkdir(parents=True, exist_ok=True)
+        if source.resolve() != target_screenshot.resolve():
+            shutil.copy2(source, target_screenshot)
+    else:
+        from src.control.mac_click import _get_window_bounds
+
+        bounds = _get_window_bounds("Into the Breach")
+        if bounds is None:
+            result = {"status": "ERROR", "error": "could not read game window bounds"}
+            _print_result(result)
+            return result
+        capture = _lightning_capture_window_screenshot(
+            target_screenshot,
+            bounds=bounds,
+            timeout=2.0,
+        )
+        if capture.get("status") != "OK":
+            result = {"status": "ERROR", "capture": capture}
+            _print_result(result)
+            return result
+
+    visible_ui = _classify_lightning_ui_image(target_screenshot)
+    bridge_snapshot = {}
+    try:
+        bridge_snapshot = _lightning_live_snapshot()
+    except Exception as exc:
+        bridge_snapshot = {"status": "ERROR", "error": str(exc)}
+
+    timer_seconds = _lightning_parse_timer_seconds(game_timer)
+    now = time.time()
+    previous = events[-1] if events else None
+    previous_timer = (
+        previous.get("timer_seconds")
+        if isinstance(previous, dict) and previous.get("timer_seconds") is not None
+        else None
+    )
+    previous_wall = (
+        previous.get("wall_unix")
+        if isinstance(previous, dict) and previous.get("wall_unix") is not None
+        else None
+    )
+    event = {
+        "index": index,
+        "wall_time": datetime.now().isoformat(timespec="seconds"),
+        "wall_unix": now,
+        "label": str(label),
+        "state": state or visible_ui.get("visible_ui") or "unknown",
+        "game_timer": game_timer,
+        "timer_seconds": timer_seconds,
+        "timer_delta_seconds": (
+            timer_seconds - previous_timer
+            if timer_seconds is not None and previous_timer is not None
+            else None
+        ),
+        "wall_delta_seconds": (
+            round(now - float(previous_wall), 3)
+            if previous_wall is not None
+            else None
+        ),
+        "visible_ui": visible_ui.get("visible_ui"),
+        "recommended_control": visible_ui.get("recommended_control"),
+        "bridge_status": bridge_snapshot.get("status"),
+        "bridge_phase": bridge_snapshot.get("phase"),
+        "bridge_turn": bridge_snapshot.get("turn"),
+        "mission_id": bridge_snapshot.get("mission_id"),
+        "grid_power": bridge_snapshot.get("grid_power"),
+        "screenshot_path": str(target_screenshot),
+        "note": note,
+    }
+    events.append(event)
+    _lightning_write_timing_events(events_path, events)
+    _lightning_write_timing_markdown(markdown_path, events)
+
+    result = {
+        "status": "OK",
+        "event": event,
+        "events_path": str(events_path),
+        "markdown_path": str(markdown_path),
+        "screenshot_path": str(target_screenshot),
+    }
+    print("\n=== LIGHTNING TIMING MARK ===")
+    print(f"  #{index}: {label}")
+    print(f"  state: {event['state']}  ui: {event.get('visible_ui')}")
+    print(
+        "  timer: "
+        f"{game_timer or '(not supplied)'}  "
+        f"delta={_lightning_format_seconds(event.get('timer_delta_seconds')) or '(n/a)'}"
+    )
+    print(f"  notes: {markdown_path}")
+    _print_result(result)
+    return result
+
+
 def _lightning_capture_window_screenshot(
     screenshot_path: Path,
     *,
@@ -7939,6 +9101,480 @@ def _lightning_click_control_with_bounds(
     result["window_x"] = control.window_x
     result["window_y"] = control.window_y
     result["window_bounds"] = bounds
+    return result
+
+
+def _lightning_click_dialogue_then_region_repeat(
+    *,
+    bounds: dict,
+    region_window_x: int,
+    region_window_y: int,
+    dry_run: bool = False,
+    settle_seconds: float = 0.35,
+    hold_seconds: float = 0.06,
+) -> dict:
+    """Dismiss an advisor dialogue if present, then re-open that same region."""
+    from src.capture.window import take_screenshot
+    from src.control.mac_click import click_screen_point
+
+    if dry_run:
+        return {
+            "status": "DRY_RUN",
+            "kind": "dialogue_then_region_repeat",
+            "dialogue_control": "dialogue_textbox",
+            "region_window_x": int(region_window_x),
+            "region_window_y": int(region_window_y),
+        }
+
+    tmp_path = Path(tempfile.gettempdir()) / f"itb_lightning_dialogue_{os.getpid()}.png"
+    try:
+        take_screenshot(tmp_path)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
+
+    dialogue_probe = _lightning_dialogue_box_score(tmp_path)
+    if not dialogue_probe.get("visible"):
+        return {
+            "status": "OK",
+            "reason": "dialogue_not_visible_region_repeat_skipped",
+            "dialogue_probe": dialogue_probe,
+            "region_repeat_click": None,
+        }
+
+    dialogue_click = _lightning_click_control_with_bounds(
+        "dialogue_textbox",
+        bounds=bounds,
+        dry_run=False,
+        settle_seconds=0.20,
+        hold_seconds=hold_seconds,
+    )
+    dialogue_click["dialogue_probe"] = dialogue_probe
+    if dialogue_click.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "dialogue_dismiss_failed",
+            "dialogue_click": dialogue_click,
+        }
+
+    screen_x = int(bounds["x"] + int(region_window_x))
+    screen_y = int(bounds["y"] + int(region_window_y))
+    region_repeat_click = click_screen_point(
+        screen_x,
+        screen_y,
+        description="Lightning route region after dialogue",
+        dry_run=False,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+    region_repeat_click["window_x"] = int(region_window_x)
+    region_repeat_click["window_y"] = int(region_window_y)
+    region_repeat_click["window_bounds"] = bounds
+    if region_repeat_click.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "dialogue_region_repeat_failed",
+            "dialogue_click": dialogue_click,
+            "region_repeat_click": region_repeat_click,
+        }
+
+    return {
+        "status": "OK",
+        "reason": "dialogue_dismissed_region_repeated",
+        "dialogue_click": dialogue_click,
+        "region_repeat_click": region_repeat_click,
+    }
+
+
+def _lightning_click_route_start_sequence(
+    region_window_x: int,
+    region_window_y: int,
+    *,
+    dry_run: bool = False,
+    include_start_click: bool = True,
+    dismiss_dialogue: bool = False,
+    start_mode: str = "preview_board",
+    start_window_x: int | None = None,
+    start_window_y: int | None = None,
+    region_settle_seconds: float = 0.35,
+) -> dict:
+    """Resume from pause, click a map region, then click the preview board."""
+    from src.control.mac_click import _get_window_bounds, click_screen_point
+
+    sequence = [
+        {
+            "kind": "key",
+            "key": "esc",
+            "description": "Pause menu Escape resume",
+            "settle_seconds": 0.22,
+        },
+        {
+            "kind": "point",
+            "window_x": int(region_window_x),
+            "window_y": int(region_window_y),
+            "description": "Lightning route region",
+            "settle_seconds": float(region_settle_seconds),
+            "hold_seconds": 0.06,
+        },
+    ]
+    if include_start_click:
+        normalized_start_mode = (
+            "manual_point"
+            if start_window_x is not None and start_window_y is not None
+            else str(start_mode or "preview_board").strip().lower().replace("-", "_")
+        )
+        if start_window_x is not None and start_window_y is not None:
+            if dismiss_dialogue:
+                sequence.append(
+                    {
+                        "kind": "control",
+                        "control": "dialogue_textbox",
+                        "settle_seconds": 0.18,
+                        "hold_seconds": 0.06,
+                    }
+                )
+            sequence.append(
+                {
+                    "kind": "point",
+                    "window_x": int(start_window_x),
+                    "window_y": int(start_window_y),
+                    "description": "Lightning route manual start",
+                    "settle_seconds": 0.8,
+                    "hold_seconds": 0.06,
+                }
+            )
+        elif normalized_start_mode in {
+            "preview_board",
+            "board",
+            "mission_preview_board",
+            "preview_board_twice",
+            "board_twice",
+            "mission_preview_board_twice",
+        }:
+            if dismiss_dialogue:
+                sequence.append(
+                    {
+                        "kind": "control",
+                        "control": "dialogue_textbox",
+                        "settle_seconds": 0.18,
+                        "hold_seconds": 0.06,
+                    }
+                )
+            board_clicks = (
+                2 if normalized_start_mode.endswith("_twice") else 1
+            )
+            for index in range(board_clicks):
+                sequence.append(
+                    {
+                        "kind": "control",
+                        "control": "mission_preview_board",
+                        "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
+                        "hold_seconds": 0.06,
+                    }
+                )
+        elif normalized_start_mode in {"region_repeat", "repeat_region", "second_region"}:
+            if dismiss_dialogue:
+                sequence.append(
+                    {
+                        "kind": "control",
+                        "control": "dialogue_textbox",
+                        "settle_seconds": 0.18,
+                        "hold_seconds": 0.06,
+                    }
+                )
+            sequence.append(
+                {
+                    "kind": "point",
+                    "window_x": int(region_window_x),
+                    "window_y": int(region_window_y),
+                    "description": "Lightning route repeat region start",
+                    "settle_seconds": 0.8,
+                    "hold_seconds": 0.06,
+                }
+            )
+        elif normalized_start_mode in {"visible_text", "text", "yellow_text"}:
+            sequence.append(
+                {
+                    "kind": "start_visible",
+                    "dismiss_dialogue": bool(dismiss_dialogue),
+                }
+            )
+        elif normalized_start_mode in {
+            "dialogue_region_repeat",
+            "advisor_region_repeat",
+            "dialogue_region_repeat_preview_board",
+            "advisor_region_repeat_preview_board",
+            "dialogue_region_repeat_preview_board_twice",
+            "advisor_region_repeat_preview_board_twice",
+            "dialogue_repeat_preview_board",
+            "dialogue_repeat_preview_board_twice",
+        }:
+            sequence.append(
+                {
+                    "kind": "dialogue_then_region_repeat",
+                    "window_x": int(region_window_x),
+                    "window_y": int(region_window_y),
+                    "description": "Dismiss advisor dialogue and re-open region",
+                    "settle_seconds": float(region_settle_seconds),
+                    "hold_seconds": 0.06,
+                }
+            )
+            board_clicks = (
+                2
+                if normalized_start_mode.endswith("_twice")
+                else 1
+            )
+            for index in range(board_clicks):
+                sequence.append(
+                    {
+                        "kind": "control",
+                        "control": "mission_preview_board",
+                        "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
+                        "hold_seconds": 0.06,
+                    }
+                )
+        else:
+            return {
+                "status": "ERROR",
+                "reason": "unknown_start_mode",
+                "start_mode": start_mode,
+                "known_start_modes": [
+                    "preview-board",
+                    "preview-board-twice",
+                    "visible-text",
+                    "region-repeat",
+                    "dialogue-region-repeat-preview-board-twice",
+                    "manual point via --start-window-x/--start-window-y",
+                ],
+                "sequence": sequence,
+            }
+    else:
+        sequence.append(
+            {
+                "kind": "control",
+                "control": "pause",
+                "settle_seconds": 0.08,
+                "hold_seconds": 0.06,
+            }
+        )
+
+    if dry_run:
+        return {"status": "DRY_RUN", "sequence": sequence}
+
+    bounds = _get_window_bounds("Into the Breach")
+    if bounds is None:
+        return {"status": "ERROR", "error": "could not read app window bounds"}
+
+    steps = []
+    for item in sequence:
+        if item["kind"] == "key":
+            click = _lightning_press_pause_escape(
+                dry_run=False,
+                settle_seconds=item["settle_seconds"],
+            )
+        elif item["kind"] == "start_visible":
+            click = _lightning_click_visible_start_mission(
+                dry_run=False,
+                dismiss_dialogue=bool(item.get("dismiss_dialogue")),
+            )
+        elif item["kind"] == "dialogue_then_region_repeat":
+            click = _lightning_click_dialogue_then_region_repeat(
+                bounds=bounds,
+                region_window_x=int(item["window_x"]),
+                region_window_y=int(item["window_y"]),
+                dry_run=False,
+                settle_seconds=item["settle_seconds"],
+                hold_seconds=item["hold_seconds"],
+            )
+        elif item["kind"] == "control":
+            click = _lightning_click_control_with_bounds(
+                item["control"],
+                bounds=bounds,
+                dry_run=False,
+                settle_seconds=item["settle_seconds"],
+                hold_seconds=item["hold_seconds"],
+            )
+        else:
+            screen_x = int(bounds["x"] + item["window_x"])
+            screen_y = int(bounds["y"] + item["window_y"])
+            click = click_screen_point(
+                screen_x,
+                screen_y,
+                description=item["description"],
+                dry_run=False,
+                settle_seconds=item["settle_seconds"],
+                hold_seconds=item["hold_seconds"],
+            )
+            click["window_x"] = item["window_x"]
+            click["window_y"] = item["window_y"]
+            click["window_bounds"] = bounds
+        steps.append(click)
+        if click.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "route_start_click_failed",
+                "failed_step": item,
+                "steps": steps,
+                "window_bounds": bounds,
+            }
+
+    return {"status": "OK", "steps": steps, "window_bounds": bounds}
+
+
+def cmd_lightning_route_start(
+    *,
+    region_window_x: int | None = None,
+    region_window_y: int | None = None,
+    profile: str = "Alpha",
+    run_preflight: bool = True,
+    verify_route: bool = True,
+    use_save_region_filter: bool = True,
+    allow_pause_map_peek: bool = True,
+    auto_pause_if_needed: bool = True,
+    include_start_click: bool = True,
+    dismiss_dialogue: bool = False,
+    start_mode: str = "preview_board",
+    start_window_x: int | None = None,
+    start_window_y: int | None = None,
+    dry_run: bool = False,
+) -> dict:
+    """Preflight, route-check, and start a selected mission in one live burst."""
+    preflight = None
+    if run_preflight:
+        preflight = cmd_lightning_preflight(profile=profile, set_fast_bridge=False)
+        if preflight.get("status") == "FAIL":
+            result = {
+                "status": "BLOCKED",
+                "reason": "preflight_failed_before_route_start",
+                "preflight": preflight,
+                "next_step": (
+                    "Resolve preflight issues while paused before entering "
+                    "live mission preview or deployment."
+                ),
+            }
+            _print_result(result)
+            return result
+
+    auto_pause = None
+    initial_ui = _lightning_visible_ui_snapshot()
+    if (
+        initial_ui.get("status") == "OK"
+        and initial_ui.get("visible_ui") != "pause_menu"
+        and auto_pause_if_needed
+    ):
+        auto_pause = _lightning_ensure_pause_state(
+            dry_run=dry_run,
+            reason="lightning_route_start_auto_pause",
+        )
+        if auto_pause.get("status") == "OK":
+            initial_ui = _lightning_visible_ui_snapshot()
+    if initial_ui.get("status") != "OK" or initial_ui.get("visible_ui") != "pause_menu":
+        result = {
+            "status": "BLOCKED",
+            "reason": "not_in_pause_menu",
+            "initial_ui": initial_ui,
+            "auto_pause": auto_pause,
+            "next_step": "Run lightning_ui ensure_pause before route_start.",
+        }
+        _print_result(result)
+        return result
+
+    recommendation = None
+    if verify_route:
+        recommendation = cmd_recommend_mission(
+            profile=profile,
+            routing="lightning_war",
+            use_save_region_filter=use_save_region_filter,
+            pause_map_peek=allow_pause_map_peek and not dry_run,
+        )
+        if recommendation.get("status") != "OK":
+            visual_regions = _lightning_visual_regions_from_recommendation(
+                recommendation,
+            )
+            if (
+                region_window_x is None
+                and region_window_y is None
+                and visual_regions
+                and visual_regions.get("status") == "OK"
+                and visual_regions.get("regions")
+            ):
+                result = {
+                    "status": "ROUTE_READY_VISUAL",
+                    "reason": "route_check_unavailable_visual_regions_detected",
+                    "preflight": preflight,
+                    "initial_ui": initial_ui,
+                    "auto_pause": auto_pause,
+                    "recommendation": recommendation,
+                    "visual_regions": visual_regions,
+                    "next_step": (
+                        "Pick a visual red region and rerun with "
+                        "--no-route-check --window-x X --window-y Y."
+                    ),
+                }
+                _print_result(result)
+                return result
+            result = {
+                "status": "BLOCKED",
+                "reason": "route_check_failed_before_start",
+                "preflight": preflight,
+                "initial_ui": initial_ui,
+                "auto_pause": auto_pause,
+                "recommendation": recommendation,
+                "visual_regions": visual_regions,
+                "next_step": (
+                    "Refresh the map or rerun with --no-route-check only after "
+                    "manual visual confirmation of the target region."
+                ),
+            }
+            _print_result(result)
+            return result
+
+    if region_window_x is None or region_window_y is None:
+        result = {
+            "status": "ROUTE_READY",
+            "reason": "no_region_point_supplied",
+            "preflight": preflight,
+            "initial_ui": initial_ui,
+            "auto_pause": auto_pause,
+            "recommendation": recommendation,
+            "next_step": (
+                "Pick the visible red region matching the recommendation, "
+                "then rerun lightning_route_start --window-x X --window-y Y."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    click_result = _lightning_click_route_start_sequence(
+        int(region_window_x),
+        int(region_window_y),
+        dry_run=dry_run,
+        include_start_click=include_start_click,
+        dismiss_dialogue=dismiss_dialogue,
+        start_mode=start_mode,
+        start_window_x=start_window_x,
+        start_window_y=start_window_y,
+    )
+    result = {
+        "status": click_result.get("status", "ERROR"),
+        "reason": (
+            "dry_run_route_start_sequence"
+            if click_result.get("status") == "DRY_RUN"
+            else "route_start_sequence_clicked"
+            if click_result.get("status") == "OK"
+            else click_result.get("reason", "route_start_failed")
+        ),
+        "preflight": preflight,
+        "initial_ui": initial_ui,
+        "auto_pause": auto_pause,
+        "recommendation": recommendation,
+        "click_result": click_result,
+        "next_step": (
+            "If deployment loaded, run lightning_segment immediately. If a "
+            "preview/dialogue remained open, use lightning_ui start_visible_dialogue "
+            "or route_start again without another long think."
+        ),
+    }
+    _print_result(result)
     return result
 
 
@@ -8007,7 +9643,7 @@ def cmd_lightning_peek(
             "screenshot_path": str(screenshot_path),
             "notes_path": str(notes_path),
             "planned_controls": (
-                ["menu_continue", "screenshot", "pause"]
+                ["pause_menu_escape", "screenshot", "pause"]
                 if initially_paused else ["screenshot", "pause"]
             ),
             "settle_seconds": settle_seconds,
@@ -8030,11 +9666,8 @@ def cmd_lightning_peek(
 
     try:
         if initially_paused:
-            resume_click = _lightning_click_control_with_bounds(
-                "menu_continue",
-                bounds=bounds,
+            resume_click = _lightning_press_pause_escape(
                 settle_seconds=settle_seconds,
-                hold_seconds=hold_seconds,
             )
             if resume_click.get("status") != "OK":
                 result = {
@@ -8736,6 +10369,7 @@ def cmd_lightning_attempt(
             "pause",
             "menu_continue",
             "reward_continue",
+            "bottom_continue",
             "deploy_confirm",
             "modal_understood",
             "panel_continue",
@@ -8782,12 +10416,22 @@ def _lightning_attempt_entered_combat(result: dict) -> bool:
     }
 
 
-def _lightning_segment_step_summary(result: dict, step_index: int) -> dict:
+def _lightning_segment_step_summary(
+    result: dict,
+    step_index: int,
+    *,
+    step_wall_seconds: float | None = None,
+    segment_elapsed_seconds: float | None = None,
+) -> dict:
     summary = {
         "step": step_index,
         "status": result.get("status"),
         "reason": result.get("reason"),
     }
+    if step_wall_seconds is not None:
+        summary["step_wall_seconds"] = round(float(step_wall_seconds), 2)
+    if segment_elapsed_seconds is not None:
+        summary["segment_elapsed_seconds"] = round(float(segment_elapsed_seconds), 2)
     action_name = _lightning_attempt_action_name(result)
     loop_reason = _lightning_attempt_loop_reason(result)
     if action_name:
@@ -8796,6 +10440,30 @@ def _lightning_segment_step_summary(result: dict, step_index: int) -> dict:
         summary["combat_loop_reason"] = loop_reason
     action = result.get("action")
     if isinstance(action, dict):
+        deploy = action.get("deploy")
+        if isinstance(deploy, dict):
+            summary["deploy_status"] = deploy.get("status")
+            summary["deployments"] = len(deploy.get("deployments") or [])
+        loop = action.get("combat_loop")
+        if isinstance(loop, dict):
+            summary["combat_loop_wall_seconds"] = loop.get("wall_seconds")
+            summary["combat_turns_attempted"] = loop.get("turns_attempted")
+            summary["combat_end_turn_clicks"] = loop.get("end_turn_clicks")
+            turn_timings = []
+            for turn in loop.get("turns") or []:
+                if not isinstance(turn, dict):
+                    continue
+                turn_timings.append(
+                    {
+                        "loop_index": turn.get("loop_index"),
+                        "turn": turn.get("turn"),
+                        "status": turn.get("status"),
+                        "auto_turn_wall_seconds": turn.get("auto_turn_wall_seconds"),
+                        "turn_wall_seconds": turn.get("turn_wall_seconds"),
+                    }
+                )
+            if turn_timings:
+                summary["combat_turn_timings"] = turn_timings
         clear_result = action.get("clear_result") or action.get("post_combat_clear_result")
         if isinstance(clear_result, dict):
             summary["panel_clear_status"] = clear_result.get("status")
@@ -8874,6 +10542,7 @@ def cmd_lightning_segment(
     seen_progress_keys: dict[tuple[object, object, object, object], int] = {}
 
     for step_index in range(max(1, int(max_steps))):
+        step_started_at = time.monotonic()
         attempt_kwargs = {
             "profile": profile,
             "time_limit": time_limit,
@@ -8903,7 +10572,12 @@ def cmd_lightning_segment(
             quiet=quiet,
         )
         last_attempt = attempt
-        summary = _lightning_segment_step_summary(attempt, step_index)
+        summary = _lightning_segment_step_summary(
+            attempt,
+            step_index,
+            step_wall_seconds=time.monotonic() - step_started_at,
+            segment_elapsed_seconds=time.monotonic() - started_at,
+        )
         if attempt_output:
             summary["quiet_output"] = attempt_output
         steps.append(summary)
@@ -9116,6 +10790,7 @@ def cmd_lightning_loop(
     time_limit: float = 2.0,
     max_turns: int = 6,
     max_wait: float = 45.0,
+    wait_poll_interval: float = 0.35,
     click_end_turn: bool = True,
     set_fast_bridge: bool = True,
     allow_hold_the_line: bool = False,
@@ -9152,12 +10827,14 @@ def cmd_lightning_loop(
         _print_result(result)
         return result
 
-    pending_research = _pending_research_entries(session)
-    if pending_research:
+    research_gate = _lightning_research_gate_status(session)
+    pending_research = research_gate.get("pending_research") or []
+    if research_gate.get("status") == "BLOCK":
         result = {
             "status": "RESEARCH_REQUIRED",
             "pending_research_count": len(pending_research),
             "research_queue_peek": _research_peek(session),
+            "research_gate": research_gate,
             "next_step": "Resolve pending research before a timed Lightning War loop.",
         }
         _print_result(result)
@@ -9174,7 +10851,11 @@ def cmd_lightning_loop(
 
     if not quiet:
         print("\n=== LIGHTNING LOOP START ===")
-        print(f"time_limit={time_limit}s  max_wait={max_wait}s  max_turns={max_turns}")
+        print(
+            f"time_limit={time_limit}s  max_wait={max_wait}s  "
+            f"max_turns={max_turns}"
+        )
+        print(f"wait_poll_interval={wait_poll_interval}s")
         print(f"auto_click_end_turn={click_end_turn}")
 
     started_at = time.monotonic()
@@ -9185,12 +10866,14 @@ def cmd_lightning_loop(
 
     for loop_index in range(max_turns):
         dirty_allowed_this_turn = bool(allow_dirty_plan and loop_index == 0)
+        turn_started_at = time.monotonic()
         turn_result, auto_turn_output = _lightning_quiet_call(
             cmd_auto_turn,
             profile=profile,
             time_limit=time_limit,
             wait_for_turn=True,
             max_wait=max_wait,
+            wait_poll_interval=wait_poll_interval,
             allow_dirty_plan=dirty_allowed_this_turn,
             candidate_rank=candidate_rank if dirty_allowed_this_turn else None,
             dirty_consent_id=dirty_consent_id if dirty_allowed_this_turn else None,
@@ -9203,6 +10886,7 @@ def cmd_lightning_loop(
             lightning_speed_loss_policy=lightning_speed_loss_policy,
             quiet=quiet,
         )
+        auto_turn_wall_seconds = round(time.monotonic() - turn_started_at, 2)
         last_turn_result = (
             _compact_turn_result_for_lightning(turn_result)
             if quiet else turn_result
@@ -9214,12 +10898,19 @@ def cmd_lightning_loop(
             "turn": turn_result.get("turn"),
             "actions_completed": turn_result.get("actions_completed"),
             "score": turn_result.get("score"),
+            "auto_turn_wall_seconds": auto_turn_wall_seconds,
+            "wait_entry_seconds": turn_result.get("wait_entry_seconds"),
         }
+        stamp_turn_wall = lambda: record.setdefault(
+            "turn_wall_seconds",
+            round(time.monotonic() - turn_started_at, 2),
+        )
         if auto_turn_output:
             record["quiet_output"] = auto_turn_output
         turn_records.append(record)
 
         if turn_result.get("error"):
+            stamp_turn_wall()
             if _lightning_auto_turn_error_is_terminal(turn_result):
                 stopped_reason = "terminal_or_mission_end"
                 record["terminal_transition"] = True
@@ -9229,32 +10920,40 @@ def cmd_lightning_loop(
 
         status = turn_result.get("status")
         if _is_hard_stop_status(status):
+            stamp_turn_wall()
             stopped_reason = str(status)
             break
 
         if status == "PLAN":
             if not click_end_turn:
+                stamp_turn_wall()
                 stopped_reason = "end_turn_plan_ready_no_click"
                 break
             click_result = _click_end_turn_from_plan_result(turn_result)
             record["end_turn_click"] = click_result
             if click_result.get("status") != "OK":
+                stamp_turn_wall()
                 stopped_reason = "end_turn_click_failed"
                 break
             end_turn_clicks += 1
             observed = _observe_end_turn_after_click(turn_result)
             record["end_turn_observed"] = observed
             if observed.get("status") != "OK":
+                stamp_turn_wall()
                 stopped_reason = "end_turn_click_not_observed"
                 break
             if _lightning_observed_terminal_transition(observed):
+                stamp_turn_wall()
                 stopped_reason = "terminal_or_mission_end"
                 break
+            stamp_turn_wall()
             continue
 
         if status == "ok":
+            stamp_turn_wall()
             continue
 
+        stamp_turn_wall()
         stopped_reason = f"unexpected_status:{status}"
         break
 
@@ -9266,6 +10965,8 @@ def cmd_lightning_loop(
         "wall_seconds": round(time.monotonic() - started_at, 2),
         "turns": turn_records,
         "bridge_speed": bridge_speed,
+        "research_gate": research_gate,
+        "wait_poll_interval": wait_poll_interval,
         "last_turn_result": last_turn_result,
         "next_step": (
             "If the reason is a safety/research/investigation gate, pause "
@@ -11683,6 +13384,7 @@ def _check_winnability(turn: int, score: float,
 
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   wait_for_turn: bool = True, max_wait: float = 45.0,
+                  wait_poll_interval: float = 1.5,
                   allow_dirty_plan: bool = False,
                   candidate_rank: int | None = None,
                   dirty_consent_id: str | None = None,
@@ -11822,6 +13524,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         poll_start = _t.time()
         read_result = cmd_read(profile=profile)
         prev_fp: str | None = None
+        wait_poll_interval = max(0.05, float(wait_poll_interval or 0.05))
         while _t.time() - poll_start < max_wait:
             phase = read_result.get("phase")
             # Terminal states — don't keep polling.
@@ -11844,10 +13547,12 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 prev_fp = cur_fp
             else:
                 prev_fp = None
-            _t.sleep(1.5)
+            _t.sleep(wait_poll_interval)
             read_result = cmd_read(profile=profile)
+        wait_entry_seconds = round(_t.time() - poll_start, 3)
     else:
         read_result = cmd_read(profile=profile)
+        wait_entry_seconds = 0.0
 
     if _is_hard_stop_status(read_result.get("status")):
         _print_result(read_result)
@@ -11856,6 +13561,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     phase = read_result.get("phase")
     if phase != "combat_player":
         result = {"error": f"Not in combat_player phase: {phase}", "phase": phase}
+        result["wait_entry_seconds"] = wait_entry_seconds
         _print_result(result)
         return result
     if read_result.get("active_mechs", 1) == 0:
@@ -11908,6 +13614,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 "bridge_mission_id": bridge_mission_id,
                 "active_mechs": 0,
                 "waited_seconds": max_wait if wait_for_turn else 0,
+                "wait_entry_seconds": wait_entry_seconds,
                 "next_step": (
                     "Combat commands are paused because the bridge has no "
                     "active mechs. Check the visible screen for Victory, "
@@ -11923,6 +13630,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "phase": phase,
             "save_phase": save_phase,
             "active_mechs": 0,
+            "wait_entry_seconds": wait_entry_seconds,
         }
         _print_result(result)
         return result
@@ -12743,6 +14451,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "actions_completed": actions_completed,
             "score": score,
             "re_solves": re_solve_count,
+            "wait_entry_seconds": wait_entry_seconds,
             "bridge_ack": end_result.get("bridge_ack"),
             "batch": end_result["batch"],
             "codex_computer_use_batch": end_result.get(
@@ -12786,6 +14495,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "actions_completed": actions_completed,
         "score": score,
         "re_solves": re_solve_count,
+        "wait_entry_seconds": wait_entry_seconds,
         "post_phase": post_phase,
         "grid_power": f"{post_grid}/{post_grid_max}",
         "fuzzy_detections": fuzzy_detections,

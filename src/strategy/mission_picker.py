@@ -573,6 +573,8 @@ _UNAVAILABLE_BOOL_FIELDS = {
     "is_active",
     "is_completed",
     "is_current",
+    "is_overrun",
+    "overrun",
     "preview",
     "stale",
 }
@@ -585,6 +587,7 @@ _UNAVAILABLE_STATE_VALUES = {
     "hover",
     "hover_preview",
     "in_progress",
+    "overrun",
     "preview",
     "running",
     "stale",
