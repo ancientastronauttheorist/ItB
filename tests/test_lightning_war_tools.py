@@ -1201,6 +1201,49 @@ def test_lightning_ui_classifier_prefers_perfect_island_continue(tmp_path):
     assert result["recommended_control"] == "panel_continue"
 
 
+def test_lightning_ui_classifier_prefers_region_secured_continue(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (10, 12, 18))
+    draw = ImageDraw.Draw(image)
+
+    def draw_button(cx: int, cy: int, w: int, h: int) -> None:
+        x = cx * scale
+        y = cy * scale
+        half_w = w * scale // 2
+        half_h = h * scale // 2
+        draw.rectangle(
+            [x - half_w, y - half_h, x + half_w, y + half_h],
+            fill=(18, 25, 38),
+            outline=(85, 110, 165),
+            width=8 * scale,
+        )
+        draw.rectangle(
+            [x - 90 * scale, y - 16 * scale, x + 90 * scale, y + 16 * scale],
+            fill=(240, 240, 240),
+        )
+
+    draw_button(1001, 653, 300, 90)
+    draw.rectangle(
+        [760 * scale, 485 * scale, 950 * scale, 610 * scale],
+        fill=(18, 25, 38),
+        outline=(85, 110, 165),
+        width=5 * scale,
+    )
+    draw.rectangle(
+        [800 * scale, 535 * scale, 890 * scale, 565 * scale],
+        fill=(240, 240, 240),
+    )
+    path = tmp_path / "region_secured_continue.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] in {"reward_panel", "bottom_continue_panel"}
+    assert result["recommended_control"] == "bottom_continue"
+
+
 def test_lightning_ui_classifier_selects_perfect_reward_grid(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -3607,6 +3650,16 @@ def test_pause_map_peek_clears_safe_panel_before_second_read(monkeypatch):
     monkeypatch.setattr(commands, "read_bridge_state", fake_read_bridge_state)
     monkeypatch.setattr(
         commands,
+        "_lightning_capture_window_screenshot",
+        lambda path, **kwargs: {"status": "OK", "path": str(path)},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
         "_lightning_click_control_with_bounds",
         lambda control, **kwargs: calls["clicks"].append(control)
         or {"status": "OK", "control": control},
@@ -3631,6 +3684,113 @@ def test_pause_map_peek_clears_safe_panel_before_second_read(monkeypatch):
     assert calls["reads"] == 2
     assert calls["clears"] == 1
     assert calls["clicks"] == ["pause_menu_escape", "pause"]
+    assert result["pause_verified"] is True
+    assert result["map_screenshot_path"]
+
+
+def test_pause_map_peek_retries_pause_until_verified(monkeypatch):
+    calls = {"clicks": []}
+    visible_states = iter(
+        [
+            {"status": "OK", "visible_ui": "island_map"},
+            {"status": "OK", "visible_ui": "pause_menu"},
+        ]
+    )
+    map_bridge_data = {
+        "island_map": [
+            {
+                "region_id": 9,
+                "mission_id": "Mission_Sandstorm",
+                "bonus_objective_ids": [],
+                "environment": "Env_Sandstorm",
+            },
+        ],
+        "units": [],
+        "grid_power": 7,
+        "phase": "unknown",
+    }
+
+    monkeypatch.setattr("src.control.mac_click._get_window_bounds", lambda app: {})
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: (None, map_bridge_data))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_capture_window_screenshot",
+        lambda path, **kwargs: {"status": "OK", "path": str(path)},
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls["clicks"].append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls["clicks"].append("pause_menu_escape")
+        or {"status": "OK", "control": "pause_menu_escape"},
+    )
+
+    result = commands._lightning_bridge_island_map_pause_peek(settle_seconds=0)
+
+    assert result["status"] == "OK"
+    assert result["pause_verified"] is True
+    assert calls["clicks"] == ["pause_menu_escape", "pause", "pause"]
+    assert [step["pause_verify"]["visible_ui"] for step in result["steps"][1:]] == [
+        "island_map",
+        "pause_menu",
+    ]
+
+
+def test_pause_map_peek_blocks_when_pause_never_verified(monkeypatch):
+    calls = {"clicks": []}
+    map_bridge_data = {
+        "island_map": [
+            {
+                "region_id": 9,
+                "mission_id": "Mission_Sandstorm",
+                "bonus_objective_ids": [],
+                "environment": "Env_Sandstorm",
+            },
+        ],
+        "units": [],
+        "grid_power": 7,
+        "phase": "unknown",
+    }
+
+    monkeypatch.setattr("src.control.mac_click._get_window_bounds", lambda app: {})
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: (None, map_bridge_data))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_capture_window_screenshot",
+        lambda path, **kwargs: {"status": "OK", "path": str(path)},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "island_map"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls["clicks"].append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls["clicks"].append("pause_menu_escape")
+        or {"status": "OK", "control": "pause_menu_escape"},
+    )
+
+    result = commands._lightning_bridge_island_map_pause_peek(settle_seconds=0)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "pause_not_verified_after_map_peek"
+    assert result["pause_verified"] is False
+    assert calls["clicks"] == ["pause_menu_escape", "pause", "pause"]
 
 
 def test_lightning_route_start_blocks_failed_preflight(monkeypatch):
@@ -3767,6 +3927,36 @@ def test_lightning_route_start_returns_visual_regions_when_route_check_unavailab
 
     assert result["status"] == "ROUTE_READY_VISUAL"
     assert result["visual_regions"]["regions"][0]["window_x"] == 420
+
+
+def test_lightning_visual_regions_prefer_map_peek_screenshot(monkeypatch):
+    seen_paths = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: seen_paths.append(path)
+        or {
+            "status": "OK",
+            "screenshot_path": path,
+            "region_count": 1,
+            "regions": [{"index": 0, "window_x": 420, "window_y": 210}],
+        },
+    )
+
+    result = commands._lightning_visual_regions_from_recommendation(
+        {
+            "pause_map_peek": {
+                "map_screenshot_path": "/tmp/live-map.png",
+                "panel_clear": {
+                    "visible_ui": {"screenshot_path": "/tmp/panel-clear.png"},
+                },
+            },
+        }
+    )
+
+    assert result["screenshot_path"] == "/tmp/live-map.png"
+    assert seen_paths == ["/tmp/live-map.png"]
 
 
 def test_lightning_route_start_preview_only_sequence_repauses():

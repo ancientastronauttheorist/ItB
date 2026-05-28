@@ -6345,10 +6345,23 @@ def _lightning_bridge_island_map_pause_peek(
         }
 
     bridge_data = None
+    map_screenshot_path = None
+    map_screenshot = None
     panel_clear = None
     read_error = None
+    pause_verify = None
+    pause_ok = False
     try:
         time.sleep(max(0.0, float(settle_seconds)))
+        map_screenshot_path = (
+            Path(tempfile.gettempdir())
+            / f"itb_lightning_map_peek_{os.getpid()}.png"
+        )
+        map_screenshot = _lightning_capture_window_screenshot(
+            map_screenshot_path,
+            bounds=bounds,
+            timeout=2.0,
+        )
         try:
             refresh_bridge_state()
         except (BridgeError, Exception):
@@ -6368,14 +6381,30 @@ def _lightning_bridge_island_map_pause_peek(
     except Exception as exc:  # Keep the pause restoration path simple.
         read_error = str(exc)
     finally:
-        pause = _lightning_click_control_with_bounds(
-            "pause",
-            bounds=bounds,
-            dry_run=False,
-            settle_seconds=0.08,
-            hold_seconds=0.06,
-        )
-        steps.append({"phase": "pause", "click": pause})
+        for attempt in range(2):
+            pause = _lightning_click_control_with_bounds(
+                "pause",
+                bounds=bounds,
+                dry_run=False,
+                settle_seconds=0.08,
+                hold_seconds=0.06,
+            )
+            pause_verify = _lightning_visible_ui_snapshot()
+            pause_ok = (
+                pause.get("status") == "OK"
+                and pause_verify.get("status") == "OK"
+                and pause_verify.get("visible_ui") == "pause_menu"
+            )
+            steps.append(
+                {
+                    "phase": "pause",
+                    "attempt": attempt + 1,
+                    "click": pause,
+                    "pause_verify": pause_verify,
+                }
+            )
+            if pause_ok:
+                break
 
     if read_error:
         return {
@@ -6383,12 +6412,31 @@ def _lightning_bridge_island_map_pause_peek(
             "reason": "pause_map_peek_read_failed",
             "error": read_error,
             "steps": steps,
+            "map_screenshot_path": str(map_screenshot_path) if map_screenshot_path else None,
+            "map_screenshot": map_screenshot,
+            "pause_verified": pause_ok,
+            "pause_verify": pause_verify,
+        }
+    if not pause_ok:
+        return {
+            "status": "BLOCKED",
+            "reason": "pause_not_verified_after_map_peek",
+            "steps": steps,
+            "map_screenshot_path": str(map_screenshot_path) if map_screenshot_path else None,
+            "map_screenshot": map_screenshot,
+            "pause_verified": False,
+            "pause_verify": pause_verify,
+            "bridge_data": bridge_data,
         }
     if not bridge_data:
         return {
             "status": "NO_BRIDGE",
             "reason": "pause_map_peek_bridge_read_failed",
             "steps": steps,
+            "map_screenshot_path": str(map_screenshot_path) if map_screenshot_path else None,
+            "map_screenshot": map_screenshot,
+            "pause_verified": pause_ok,
+            "pause_verify": pause_verify,
         }
 
     island_map = bridge_data.get("island_map") or []
@@ -6399,6 +6447,10 @@ def _lightning_bridge_island_map_pause_peek(
         "island_map_count": len(island_map),
         "panel_clear": panel_clear,
         "steps": steps,
+        "map_screenshot_path": str(map_screenshot_path) if map_screenshot_path else None,
+        "map_screenshot": map_screenshot,
+        "pause_verified": pause_ok,
+        "pause_verify": pause_verify,
         "bridge_data": bridge_data,
     }
 
@@ -7075,6 +7127,11 @@ def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -
     if not recommendation:
         return None
     pause_map_peek = recommendation.get("pause_map_peek") or {}
+    screenshot_path = pause_map_peek.get("map_screenshot_path")
+    if screenshot_path:
+        result = _lightning_extract_red_regions_from_image(screenshot_path)
+        if result.get("status") == "OK" and result.get("regions"):
+            return result
     panel_clear = pause_map_peek.get("panel_clear") or {}
     visible_ui = panel_clear.get("visible_ui") or {}
     screenshot_path = visible_ui.get("screenshot_path")
@@ -7892,7 +7949,10 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             min_score=0.40,
             min_bright=350,
             min_border=350,
-        ) and strongest_generic_continue < 1.0:
+        ) and (
+            strongest_generic_continue < 0.70
+            or float(perfect.get("score") or 0.0) > strongest_generic_continue
+        ):
             spec = _LIGHTNING_UI_BUTTON_CROPS["perfect_island_panel"]
             return {
                 "status": "OK",
