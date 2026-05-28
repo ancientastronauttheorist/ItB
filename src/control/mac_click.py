@@ -11,6 +11,54 @@ import subprocess
 import time
 
 
+def _pyautogui_click(x: int, y: int, *, hold_seconds: float = 0.3) -> dict:
+    """Click a global screen point with PyAutoGUI, if available."""
+    try:
+        import pyautogui
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"pyautogui unavailable: {exc}"}
+    try:
+        pyautogui.moveTo(int(x), int(y), duration=0.05)
+        pyautogui.mouseDown(int(x), int(y))
+        time.sleep(max(0.0, hold_seconds))
+        pyautogui.mouseUp(int(x), int(y))
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"pyautogui click failed: {exc}"}
+    return {"status": "OK", "hold_seconds": hold_seconds}
+
+
+def _applescript_click(
+    x: int,
+    y: int,
+    *,
+    app_name: str,
+) -> dict:
+    """Click a global screen point via System Events."""
+    script = f'''
+    tell application "{app_name}" to activate
+    delay 0.05
+    tell application "System Events"
+        click at {{{x}, {y}}}
+    end tell
+    '''
+    try:
+        proc = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return {"status": "ERROR", "error": f"osascript timed out: {exc}"}
+
+    if proc.returncode != 0:
+        return {
+            "status": "ERROR",
+            "error": proc.stderr.strip() or proc.stdout.strip() or "click failed",
+        }
+    return {"status": "OK"}
+
+
 def _get_window_bounds(app_name: str) -> dict | None:
     """Return the front window bounds for ``app_name`` via System Events."""
     script = f'''
@@ -53,6 +101,7 @@ def click_screen_point(
     app_name: str = "Into the Breach",
     dry_run: bool = False,
     settle_seconds: float = 0.15,
+    hold_seconds: float = 0.3,
 ) -> dict:
     """Activate the game and click a screen-coordinate point via AppleScript."""
     x = int(x)
@@ -65,33 +114,19 @@ def click_screen_point(
             "description": description,
         }
 
-    script = f'''
-    tell application "{app_name}" to activate
-    delay 0.05
-    tell application "System Events"
-        click at {{{x}, {y}}}
-    end tell
-    '''
-    try:
-        proc = subprocess.run(
-            ["osascript", "-e", script],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except subprocess.TimeoutExpired as exc:
-        return {
-            "status": "ERROR",
-            "error": f"osascript timed out: {exc}",
-            "x": x,
-            "y": y,
-            "description": description,
-        }
+    click_result = _pyautogui_click(x, y, hold_seconds=hold_seconds)
+    backend = "pyautogui"
+    fallback_error = None
+    if click_result.get("status") != "OK":
+        fallback_error = click_result.get("error")
+        click_result = _applescript_click(x, y, app_name=app_name)
+        backend = "applescript"
 
-    if proc.returncode != 0:
+    if click_result.get("status") != "OK":
         return {
             "status": "ERROR",
-            "error": proc.stderr.strip() or proc.stdout.strip() or "click failed",
+            "error": click_result.get("error", "click failed"),
+            "pyautogui_error": fallback_error,
             "x": x,
             "y": y,
             "description": description,
@@ -105,6 +140,8 @@ def click_screen_point(
         "x": x,
         "y": y,
         "description": description,
+        "backend": backend,
+        "hold_seconds": click_result.get("hold_seconds"),
     }
 
 
@@ -116,6 +153,7 @@ def click_window_point(
     app_name: str = "Into the Breach",
     dry_run: bool = False,
     settle_seconds: float = 0.15,
+    hold_seconds: float = 0.3,
 ) -> dict:
     """Click a point relative to the game window's top-left corner."""
     x = int(x)
@@ -147,6 +185,7 @@ def click_window_point(
         app_name=app_name,
         dry_run=False,
         settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
     )
     result["window_x"] = x
     result["window_y"] = y

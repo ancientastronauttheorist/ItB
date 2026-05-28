@@ -6445,7 +6445,7 @@ def _click_end_turn_from_plan_result(
 def _observe_end_turn_after_click(
     turn_result: dict,
     *,
-    timeout: float = 1.25,
+    timeout: float = 10.0,
     poll_interval: float = 0.2,
 ) -> dict:
     """Confirm that a local End Turn click changed bridge state quickly."""
