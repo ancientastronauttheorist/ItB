@@ -58,3 +58,34 @@ def test_lightning_loop_blocks_pending_research(monkeypatch):
 
     assert result["status"] == "RESEARCH_REQUIRED"
     assert result["pending_research_count"] == 1
+
+
+def test_lightning_loop_ignores_background_mech_weapon_research(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        research_queue=[
+            {
+                "status": "pending",
+                "type": "ElectricMech",
+                "kind": "mech_weapon",
+                "slot": 1,
+            }
+        ],
+    )
+
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "cmd_bridge_speed", lambda mode: {"status": "OK"})
+    monkeypatch.setattr(
+        commands,
+        "cmd_auto_turn",
+        lambda **kwargs: {"status": "TERMINAL_OR_MISSION_END", "turn": 1},
+    )
+
+    result = commands.cmd_lightning_loop(max_turns=1)
+
+    assert result["reason"] == "TERMINAL_OR_MISSION_END"
+    assert result["turns_attempted"] == 1

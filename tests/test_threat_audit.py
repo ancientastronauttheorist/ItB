@@ -172,6 +172,43 @@ def test_threat_audit_attacker_will_die_to_prior_projectile():
     )
 
 
+def test_threat_audit_attacker_will_die_to_prior_artillery():
+    board = Board()
+    board.attack_order = [10, 20]
+    board.tile(0, 6).terrain = "building"
+    board.tile(0, 6).building_hp = 1
+    board.units.append(_enemy(
+        uid=10,
+        pawn_type="Moth2",
+        x=5,
+        y=3,
+        tx=5,
+        ty=6,
+        hp=5,
+    ))
+    board.units[-1].weapon = "MothAtk2"
+    board.units[-1].max_hp = 5
+    board.units.append(_enemy(
+        uid=20,
+        pawn_type="Moth1",
+        x=5,
+        y=6,
+        tx=0,
+        ty=6,
+        hp=3,
+    ))
+    board.units[-1].weapon = "MothAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_artillery"
+    )
+
+
 def test_threat_audit_attacker_will_die_to_soldier_psion_fire_teardown():
     board = Board()
     board.tile(5, 6).terrain = "building"

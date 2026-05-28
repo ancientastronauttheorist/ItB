@@ -384,6 +384,28 @@ def _will_die_to_prior_projectile_before_attack(board: Board, attacker: Unit) ->
     return False, ""
 
 
+def _will_die_to_prior_artillery_before_attack(board: Board, attacker: Unit) -> tuple[bool, str]:
+    """True when an earlier enemy artillery shot lands on this attacker."""
+    for other in _ordered_prior_enemies(board, attacker):
+        if not _attacker_can_fire_before_prior_attack(board, other):
+            continue
+        wdef = get_weapon_def(other.weapon)
+        if wdef is None or wdef.weapon_type != "artillery":
+            continue
+        if [int(other.target_x), int(other.target_y)] != [
+            int(attacker.x), int(attacker.y)
+        ]:
+            continue
+        if _weapon_damage_kills_unit(int(wdef.damage), attacker):
+            return (
+                True,
+                f"earlier {other.type} uid={int(other.uid)} artillery "
+                f"hits attacker before it fires",
+            )
+
+    return False, ""
+
+
 def _push_destination_is_open(board: Board, unit: Unit, x: int, y: int) -> bool:
     if not board.in_bounds(x, y):
         return False
@@ -511,6 +533,11 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
     )
     if projectile_kill:
         return "attacker_will_die_to_prior_projectile", projectile_detail
+    artillery_kill, artillery_detail = _will_die_to_prior_artillery_before_attack(
+        board, attacker
+    )
+    if artillery_kill:
+        return "attacker_will_die_to_prior_artillery", artillery_detail
     moved_by_prior, moved_detail = _will_be_moved_by_prior_attack_before_attack(board, attacker)
     if moved_by_prior:
         return "attacker_will_be_moved_by_prior_attack", moved_detail

@@ -3846,9 +3846,11 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 # entry per (mech_type, slot) per mission so the
                 # research_next / research_probe_mech flow can populate
                 # weapon_def_mismatches.jsonl across the full squad.
-                mech_weapons = _auto_enqueue_mech_weapons(
-                    session, board, turn_for_queue,
-                )
+                mech_weapons = []
+                if "lightning war" not in _target_names(session):
+                    mech_weapons = _auto_enqueue_mech_weapons(
+                        session, board, turn_for_queue,
+                    )
                 if mech_weapons:
                     result["mech_weapons_enqueued"] = mech_weapons
                     session.save()
@@ -6219,10 +6221,19 @@ def _read_settings_lua(path: Path | None = None) -> dict:
     return values
 
 
-def _pending_research_entries(session: RunSession) -> list[dict]:
+def _background_research_entry(entry: dict) -> bool:
+    return entry.get("kind") == "mech_weapon"
+
+
+def _pending_research_entries(
+    session: RunSession,
+    *,
+    include_background: bool = False,
+) -> list[dict]:
     return [
         e for e in (session.research_queue or [])
         if e.get("status") not in ("done",)
+        and (include_background or not _background_research_entry(e))
     ]
 
 
