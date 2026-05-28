@@ -3329,6 +3329,70 @@ def test_lightning_loop_treats_unknown_after_end_turn_as_mission_end(monkeypatch
     assert calls["auto_turn"] == 1
 
 
+def test_lightning_loop_stops_before_wait_when_terminal_panel_visible(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = {"auto_turn": 0}
+
+    def fake_auto_turn(**kwargs):
+        calls["auto_turn"] += 1
+        return {
+            "status": "PLAN",
+            "turn": 4,
+            "actions_completed": 3,
+            "batch": [
+                {
+                    "type": "left_click",
+                    "x": 341,
+                    "y": 152,
+                    "window_x": 126,
+                    "window_y": 120,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "cmd_bridge_speed", lambda mode: {"status": "OK"})
+    monkeypatch.setattr(commands, "cmd_auto_turn", fake_auto_turn)
+    monkeypatch.setattr(
+        commands,
+        "_click_end_turn_from_plan_result",
+        lambda plan: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda turn_result: {
+            "status": "OK",
+            "reason": "phase_changed",
+            "samples": [{"phase": "combat_enemy", "turn": 4, "active_mechs": 0}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "recommended_control": "reward_continue",
+            "screenshot_path": "/tmp/region-secured.png",
+        },
+    )
+
+    result = commands.cmd_lightning_loop(max_turns=3)
+
+    assert result["reason"] == "terminal_or_mission_end"
+    assert result["end_turn_clicks"] == 1
+    assert result["turns_attempted"] == 2
+    assert result["turns"][1]["status"] == "VISIBLE_TERMINAL_PANEL"
+    assert calls["auto_turn"] == 1
+
+
 def test_lightning_loop_treats_unknown_phase_error_as_mission_end(monkeypatch):
     session = RunSession(
         run_id="lw",

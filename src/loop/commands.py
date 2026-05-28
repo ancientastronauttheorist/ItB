@@ -11376,6 +11376,31 @@ def cmd_lightning_loop(
     last_turn_result: dict | None = None
 
     for loop_index in range(max_turns):
+        if loop_index > 0:
+            visible_ui = _lightning_visible_ui_snapshot()
+            if (
+                visible_ui.get("status") == "OK"
+                and visible_ui.get("visible_ui") in _LIGHTNING_SAFE_CLEAR_UIS
+            ):
+                turn_records.append(
+                    {
+                        "loop_index": loop_index,
+                        "status": "VISIBLE_TERMINAL_PANEL",
+                        "visible_ui": {
+                            key: visible_ui.get(key)
+                            for key in (
+                                "status",
+                                "visible_ui",
+                                "recommended_control",
+                                "screenshot_path",
+                            )
+                        },
+                        "turn_wall_seconds": 0.0,
+                    }
+                )
+                stopped_reason = "terminal_or_mission_end"
+                break
+
         dirty_allowed_this_turn = bool(allow_dirty_plan and loop_index == 0)
         turn_started_at = time.monotonic()
         turn_result, auto_turn_output = _lightning_quiet_call(
