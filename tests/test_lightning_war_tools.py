@@ -3648,27 +3648,23 @@ def test_pause_map_peek_clears_safe_panel_before_second_read(monkeypatch):
     monkeypatch.setattr("src.control.mac_click._get_window_bounds", lambda app: {})
     monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
     monkeypatch.setattr(commands, "read_bridge_state", fake_read_bridge_state)
+    visible_states = iter(
+        [
+            {"status": "OK", "visible_ui": "island_map"},
+            {"status": "OK", "visible_ui": "pause_menu"},
+        ]
+    )
     monkeypatch.setattr(
         commands,
         "_lightning_capture_window_screenshot",
         lambda path, **kwargs: {"status": "OK", "path": str(path)},
     )
-    monkeypatch.setattr(
-        commands,
-        "_lightning_visible_ui_snapshot",
-        lambda: {"status": "OK", "visible_ui": "pause_menu"},
-    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
     monkeypatch.setattr(
         commands,
         "_lightning_click_control_with_bounds",
         lambda control, **kwargs: calls["clicks"].append(control)
         or {"status": "OK", "control": control},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_lightning_press_pause_escape",
-        lambda **kwargs: calls["clicks"].append("pause_menu_escape")
-        or {"status": "OK", "control": "pause_menu_escape"},
     )
     monkeypatch.setattr(
         commands,
@@ -3683,7 +3679,7 @@ def test_pause_map_peek_clears_safe_panel_before_second_read(monkeypatch):
     assert result["island_map_count"] == 1
     assert calls["reads"] == 2
     assert calls["clears"] == 1
-    assert calls["clicks"] == ["pause_menu_escape", "pause"]
+    assert calls["clicks"] == ["menu_continue", "pause"]
     assert result["pause_verified"] is True
     assert result["map_screenshot_path"]
 
@@ -3692,6 +3688,7 @@ def test_pause_map_peek_retries_pause_until_verified(monkeypatch):
     calls = {"clicks": []}
     visible_states = iter(
         [
+            {"status": "OK", "visible_ui": "island_map"},
             {"status": "OK", "visible_ui": "island_map"},
             {"status": "OK", "visible_ui": "pause_menu"},
         ]
@@ -3725,18 +3722,12 @@ def test_pause_map_peek_retries_pause_until_verified(monkeypatch):
         lambda control, **kwargs: calls["clicks"].append(control)
         or {"status": "OK", "control": control},
     )
-    monkeypatch.setattr(
-        commands,
-        "_lightning_press_pause_escape",
-        lambda **kwargs: calls["clicks"].append("pause_menu_escape")
-        or {"status": "OK", "control": "pause_menu_escape"},
-    )
 
     result = commands._lightning_bridge_island_map_pause_peek(settle_seconds=0)
 
     assert result["status"] == "OK"
     assert result["pause_verified"] is True
-    assert calls["clicks"] == ["pause_menu_escape", "pause", "pause"]
+    assert calls["clicks"] == ["menu_continue", "pause", "pause"]
     assert [step["pause_verify"]["visible_ui"] for step in result["steps"][1:]] == [
         "island_map",
         "pause_menu",
@@ -3778,19 +3769,13 @@ def test_pause_map_peek_blocks_when_pause_never_verified(monkeypatch):
         lambda control, **kwargs: calls["clicks"].append(control)
         or {"status": "OK", "control": control},
     )
-    monkeypatch.setattr(
-        commands,
-        "_lightning_press_pause_escape",
-        lambda **kwargs: calls["clicks"].append("pause_menu_escape")
-        or {"status": "OK", "control": "pause_menu_escape"},
-    )
 
     result = commands._lightning_bridge_island_map_pause_peek(settle_seconds=0)
 
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "pause_not_verified_after_map_peek"
     assert result["pause_verified"] is False
-    assert calls["clicks"] == ["pause_menu_escape", "pause", "pause"]
+    assert calls["clicks"] == ["menu_continue", "pause", "pause"]
 
 
 def test_lightning_route_start_blocks_failed_preflight(monkeypatch):

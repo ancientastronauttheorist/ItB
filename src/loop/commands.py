@@ -6335,13 +6335,48 @@ def _lightning_bridge_island_map_pause_peek(
         return {"status": "ERROR", "error": "could not read app window bounds"}
 
     steps = []
-    resume = _lightning_press_pause_escape(settle_seconds=0.08)
-    steps.append({"phase": "resume", "click": resume})
-    if resume.get("status") != "OK":
+    resumed = False
+    resume_verify = None
+    for attempt in range(2):
+        resume = _lightning_click_control_with_bounds(
+            "menu_continue",
+            bounds=bounds,
+            dry_run=False,
+            settle_seconds=0.08,
+            hold_seconds=0.06,
+        )
+        resume_verify = _lightning_visible_ui_snapshot()
+        steps.append(
+            {
+                "phase": "resume",
+                "attempt": attempt + 1,
+                "click": resume,
+                "resume_verify": resume_verify,
+            }
+        )
+        if resume.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "pause_map_peek_resume_failed",
+                "steps": steps,
+            }
+        if (
+            resume_verify.get("status") == "OK"
+            and resume_verify.get("visible_ui") != "pause_menu"
+        ):
+            resumed = True
+            break
+    if not resumed:
         return {
-            "status": "ERROR",
-            "reason": "pause_map_peek_resume_failed",
+            "status": "BLOCKED",
+            "reason": "pause_map_peek_resume_not_verified",
             "steps": steps,
+            "resume_verified": False,
+            "resume_verify": resume_verify,
+            "next_step": (
+                "Still in the pause menu after Continue. Inspect the screen "
+                "or use lightning_ui menu_continue before retrying the map peek."
+            ),
         }
 
     bridge_data = None
@@ -6381,30 +6416,31 @@ def _lightning_bridge_island_map_pause_peek(
     except Exception as exc:  # Keep the pause restoration path simple.
         read_error = str(exc)
     finally:
-        for attempt in range(2):
-            pause = _lightning_click_control_with_bounds(
-                "pause",
-                bounds=bounds,
-                dry_run=False,
-                settle_seconds=0.08,
-                hold_seconds=0.06,
-            )
-            pause_verify = _lightning_visible_ui_snapshot()
-            pause_ok = (
-                pause.get("status") == "OK"
-                and pause_verify.get("status") == "OK"
-                and pause_verify.get("visible_ui") == "pause_menu"
-            )
-            steps.append(
-                {
-                    "phase": "pause",
-                    "attempt": attempt + 1,
-                    "click": pause,
-                    "pause_verify": pause_verify,
-                }
-            )
-            if pause_ok:
-                break
+        if resumed:
+            for attempt in range(2):
+                pause = _lightning_click_control_with_bounds(
+                    "pause",
+                    bounds=bounds,
+                    dry_run=False,
+                    settle_seconds=0.08,
+                    hold_seconds=0.06,
+                )
+                pause_verify = _lightning_visible_ui_snapshot()
+                pause_ok = (
+                    pause.get("status") == "OK"
+                    and pause_verify.get("status") == "OK"
+                    and pause_verify.get("visible_ui") == "pause_menu"
+                )
+                steps.append(
+                    {
+                        "phase": "pause",
+                        "attempt": attempt + 1,
+                        "click": pause,
+                        "pause_verify": pause_verify,
+                    }
+                )
+                if pause_ok:
+                    break
 
     if read_error:
         return {
