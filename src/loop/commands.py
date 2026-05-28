@@ -6952,6 +6952,7 @@ def _lightning_extract_red_regions_from_image(image_path: str | Path) -> dict:
             }
         )
 
+    regions = _lightning_merge_visual_regions(regions)
     regions.sort(key=lambda r: (r["window_y"], r["window_x"]))
     for index, region in enumerate(regions):
         region["index"] = index
@@ -6968,6 +6969,106 @@ def _lightning_extract_red_regions_from_image(image_path: str | Path) -> dict:
             int(round(bottom / scale_y)),
         ],
     }
+
+
+def _lightning_merge_visual_regions(regions: list[dict]) -> list[dict]:
+    """Merge same-territory red blobs split by labels/icons or thin overlays."""
+    merged = [dict(region) for region in regions]
+
+    def x_overlap(a: dict, b: dict) -> float:
+        a0, _a1, a2, _a3 = a["bbox_window"]
+        b0, _b1, b2, _b3 = b["bbox_window"]
+        return max(0.0, min(a2, b2) - max(a0, b0))
+
+    def y_gap(a: dict, b: dict) -> float:
+        _a0, a1, _a2, a3 = a["bbox_window"]
+        _b0, b1, _b2, b3 = b["bbox_window"]
+        if a3 < b1:
+            return b1 - a3
+        if b3 < a1:
+            return a1 - b3
+        return 0.0
+
+    def width(region: dict) -> float:
+        x0, _y0, x1, _y1 = region["bbox_window"]
+        return max(1.0, x1 - x0)
+
+    def should_merge(a: dict, b: dict) -> bool:
+        overlap = x_overlap(a, b)
+        min_width = min(width(a), width(b))
+        if overlap < min_width * 0.45:
+            return False
+        center_gap = abs(float(a["window_x"]) - float(b["window_x"]))
+        gap = y_gap(a, b)
+        if gap == 0:
+            return center_gap <= 80
+        min_area = min(
+            float(a.get("area_window") or 0.0),
+            float(b.get("area_window") or 0.0),
+        )
+        return gap <= 60 and center_gap <= 90 and min_area <= 12000
+
+    def merge_pair(a: dict, b: dict) -> dict:
+        area_a = float(a.get("area_px") or 0)
+        area_b = float(b.get("area_px") or 0)
+        total = max(area_a + area_b, 1.0)
+        bbox_a = a["bbox_window"]
+        bbox_b = b["bbox_window"]
+        area_window = float(a.get("area_window") or 0.0) + float(
+            b.get("area_window") or 0.0
+        )
+        return {
+            "window_x": int(
+                round(
+                    (
+                        float(a["window_x"]) * area_a
+                        + float(b["window_x"]) * area_b
+                    )
+                    / total
+                )
+            ),
+            "window_y": int(
+                round(
+                    (
+                        float(a["window_y"]) * area_a
+                        + float(b["window_y"]) * area_b
+                    )
+                    / total
+                )
+            ),
+            "bbox_window": [
+                min(bbox_a[0], bbox_b[0]),
+                min(bbox_a[1], bbox_b[1]),
+                max(bbox_a[2], bbox_b[2]),
+                max(bbox_a[3], bbox_b[3]),
+            ],
+            "area_px": int(area_a + area_b),
+            "area_window": round(area_window, 1),
+            "merged_parts": int(a.get("merged_parts") or 1)
+            + int(b.get("merged_parts") or 1),
+        }
+
+    changed = True
+    while changed:
+        changed = False
+        for i, first in enumerate(merged):
+            for j in range(i + 1, len(merged)):
+                second = merged[j]
+                if not should_merge(first, second):
+                    continue
+                replacement = merge_pair(first, second)
+                merged = [
+                    region
+                    for index, region in enumerate(merged)
+                    if index not in {i, j}
+                ]
+                merged.append(replacement)
+                changed = True
+                break
+            if changed:
+                break
+
+    return merged
 
 
 def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -> dict | None:
@@ -7250,6 +7351,18 @@ _LIGHTNING_UI_BURSTS = {
     "leave_confirmed": ["leave_island", "leave_confirm_yes"],
     "start_from_dialogue": ["dialogue_textbox", "mission_preview_board"],
     "resume_start_mission": ["menu_continue", "mission_preview_board"],
+    "region_secured_to_pause": ["menu_continue", "reward_continue", "pause"],
+    "promotion_to_pause": ["menu_continue", "modal_understood", "pause"],
+    "perfect_continue_to_pause": ["menu_continue", "panel_continue", "pause"],
+    "perfect_grid_to_pause": ["menu_continue", "perfect_reward_grid", "pause"],
+    "leave_to_select_pause": [
+        "menu_continue",
+        "leave_island",
+        "leave_confirm_yes",
+        "pause",
+    ],
+    "select_rst_pause": ["menu_continue", "island_rst", "pause"],
+    "clear_intro_pause": ["menu_continue", "bottom_continue", "pause"],
 }
 
 _LIGHTNING_PAUSE_BLOCKING_UIS = {
@@ -7262,6 +7375,7 @@ _LIGHTNING_PAUSE_BLOCKING_UIS = {
 }
 
 _LIGHTNING_SAFE_CLEAR_UIS = set(_LIGHTNING_PAUSE_BLOCKING_UIS)
+_LIGHTNING_NON_PAUSEABLE_UIS = {"deployment_screen"}
 _LIGHTNING_EXPECTED_MECH_COUNT = 3
 _LIGHTNING_DEPLOY_BRIDGE_TIMEOUT_SECONDS = 2.0
 _SUPPRESS_RESULT_PRINT_DEPTH = 0
@@ -7437,6 +7551,33 @@ def _lightning_start_mission_score(image) -> dict:
     score = yellow / total
     return {
         "score": round(score, 4),
+        "yellow": yellow,
+        "pixels": total,
+        "crop": [left, top, right, bottom],
+    }
+
+
+def _lightning_deployment_screen_score(image) -> dict:
+    """Detect the live deployment screen so pause guards do not waste time."""
+    width, height = image.size
+    base_w, base_h = _LIGHTNING_UI_BASE_SIZE
+    scale_x = width / base_w if base_w else 1.0
+    scale_y = height / base_h if base_h else 1.0
+    left = int(240 * scale_x)
+    top = int(90 * scale_y)
+    right = int(980 * scale_x)
+    bottom = int(640 * scale_y)
+    if right <= left or bottom <= top:
+        return {"score": 0.0, "yellow": 0, "pixels": 0}
+    crop = image.crop((left, top, right, bottom)).convert("RGB")
+    pixels = list(crop.getdata())
+    total = len(pixels) or 1
+    yellow = 0
+    for r, g, b in pixels:
+        if r >= 160 and g >= 130 and b <= 110 and r >= b + 45 and g >= b + 35:
+            yellow += 1
+    return {
+        "score": round(yellow / total, 4),
         "yellow": yellow,
         "pixels": total,
         "crop": [left, top, right, bottom],
@@ -7668,8 +7809,24 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     dark_overlay = _lightning_dark_overlay_fraction(image)
     start_mission = _lightning_start_mission_score(image)
     scores["mission_preview_panel"] = start_mission
+    deployment = _lightning_deployment_screen_score(image)
+    scores["deployment_screen"] = deployment
     island_map = _lightning_island_map_score(image)
     scores["island_map"] = island_map
+    if (
+        dark_overlay < 0.60
+        and deployment.get("yellow", 0) >= 12000
+        and deployment.get("score", 0.0) >= 0.025
+    ):
+        return {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
+            "confidence": deployment["score"],
+            "dark_overlay_fraction": dark_overlay,
+            "non_pauseable": True,
+            "scores": scores,
+        }
     if (
         dark_overlay >= 0.60
         and start_mission.get("yellow", 0) >= 2000
@@ -7816,6 +7973,7 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
         best["score"] >= 0.34
         and best.get("bright", 0) >= 120
         and best.get("border", 0) >= 120
+        and best_name in _LIGHTNING_UI_BUTTON_CROPS
         and (
             best_name != "pause_menu"
             or (
@@ -7844,6 +8002,43 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     }
 
 
+def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
+    """Use bridge state to reject image-only deployment false positives."""
+    if visible_ui.get("visible_ui") != "deployment_screen":
+        return visible_ui
+
+    snapshot = _lightning_live_snapshot()
+    visible_ui["deployment_bridge_snapshot"] = {
+        key: snapshot.get(key)
+        for key in (
+            "status",
+            "phase",
+            "turn",
+            "deployment_zone_count",
+            "in_active_mission",
+        )
+        if key in snapshot
+    }
+    if snapshot.get("status") != "OK":
+        return visible_ui
+
+    turn_value = snapshot.get("turn")
+    try:
+        turn = int(turn_value)
+    except (TypeError, ValueError):
+        turn = -1
+    is_deployment = turn == 0 and int(snapshot.get("deployment_zone_count") or 0) > 0
+    if is_deployment:
+        return visible_ui
+
+    refined = dict(visible_ui)
+    refined["visible_ui"] = "combat_screen"
+    refined["recommended_control"] = None
+    refined["non_pauseable"] = False
+    refined["deployment_false_positive"] = True
+    return refined
+
+
 def _lightning_visible_ui_snapshot() -> dict:
     """Capture and classify visible non-combat UI panels."""
     from src.capture.window import take_screenshot
@@ -7854,6 +8049,7 @@ def _lightning_visible_ui_snapshot() -> dict:
     except Exception as exc:
         return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
     result = _classify_lightning_ui_image(tmp_path)
+    result = _lightning_refine_visible_ui_with_bridge(result)
     result["screenshot_path"] = str(tmp_path)
     return result
 
@@ -7961,6 +8157,27 @@ def _lightning_ensure_pause_state(
             "next_step": (
                 "Clear the visible panel with lightning_ui handle_screen or "
                 f"lightning_ui {recommended}, then run lightning_ui ensure_pause."
+            ),
+        }
+        if not dry_run:
+            result["guard"] = _lightning_write_guard(
+                session,
+                guard_status=result["status"],
+                reason=reason,
+                visible_ui=visible_ui,
+            )
+        return result
+
+    if visible_name in _LIGHTNING_NON_PAUSEABLE_UIS:
+        result = {
+            "status": "BLOCKED",
+            "reason": "visible_ui_is_not_pauseable",
+            "visible_ui": visible_ui,
+            "recommended_control": recommended,
+            "next_step": (
+                "Do not spend live-clock time trying to pause here. Execute "
+                "the required hot-path action immediately, usually "
+                "`lightning_segment` from deployment."
             ),
         }
         if not dry_run:
@@ -8122,6 +8339,77 @@ def _lightning_clear_visible_panel_chain(
         "steps": steps,
         "visible_ui": final_ui,
         "next_step": "Inspect the screen before clearing more panels.",
+    }
+
+
+def _lightning_clear_tail_to_pause(
+    *,
+    dry_run: bool = False,
+    max_steps: int = 8,
+) -> dict:
+    """Resume if needed, clear safe UI-tail panels, then return to pause."""
+    initial_ui = _lightning_visible_ui_snapshot()
+    if initial_ui.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "screen_classification_failed",
+            "initial_ui": initial_ui,
+        }
+
+    planned = ["clear_visible_panel_chain", "ensure_pause"]
+    resumed = None
+    if initial_ui.get("visible_ui") == "pause_menu":
+        planned.insert(0, "pause_menu_escape")
+        if dry_run:
+            return {
+                "status": "DRY_RUN",
+                "reason": "would_resume_clear_tail_and_pause",
+                "initial_ui": initial_ui,
+                "planned_controls": planned,
+            }
+        resumed = _lightning_press_pause_escape(settle_seconds=0.12)
+        if resumed.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "resume_from_pause_failed",
+                "initial_ui": initial_ui,
+                "resume_result": resumed,
+            }
+    elif dry_run:
+        return {
+            "status": "DRY_RUN",
+            "reason": "would_clear_tail_and_pause",
+            "initial_ui": initial_ui,
+            "planned_controls": planned,
+        }
+
+    clear_result = _lightning_clear_visible_panel_chain(
+        dry_run=False,
+        max_steps=max_steps,
+    )
+    pause_result = _lightning_ensure_pause_state(
+        dry_run=False,
+        reason="lightning_ui_clear_tail_to_pause",
+    )
+    clear_ok = clear_result.get("status") in {"OK", "NO_ACTION"}
+    pause_ok = pause_result.get("status") == "OK"
+    status = "OK" if clear_ok and pause_ok else "BLOCKED"
+    reason = (
+        "tail_cleared_and_paused"
+        if status == "OK"
+        else "tail_clear_or_pause_incomplete"
+    )
+    return {
+        "status": status,
+        "reason": reason,
+        "initial_ui": initial_ui,
+        "resume_result": resumed,
+        "clear_result": clear_result,
+        "pause_result": pause_result,
+        "next_step": (
+            "Stay in pause while planning. If pause_result is blocked on "
+            "deployment_screen, run lightning_segment immediately."
+        ),
     }
 
 
@@ -8497,6 +8785,20 @@ def cmd_lightning_ui(
         return result
 
     if control_slug in {
+        "clear_tail_pause",
+        "tail_pause",
+        "resume_clear_tail_pause",
+        "clear_panels_pause",
+    }:
+        result = _lightning_clear_tail_to_pause(dry_run=dry_run)
+        print("\n=== LIGHTNING UI CLEAR TAIL TO PAUSE ===")
+        print(f"  status: {result.get('status')}")
+        print(f"  reason: {result.get('reason')}")
+        print(f"  pause:  {result.get('pause_result', {}).get('status')}")
+        _print_result(result)
+        return result
+
+    if control_slug in {
         "start_visible_mission",
         "visible_start_mission",
         "start_visible",
@@ -8605,6 +8907,7 @@ def cmd_lightning_ui(
                 "classify",
                 "ensure_pause",
                 "handle_screen",
+                "clear_tail_pause",
                 "start_visible_mission",
                 "start_visible_dialogue",
                 "commit_preview",
@@ -8822,6 +9125,67 @@ def _lightning_screenshot_paths(
     index = _lightning_capture_next_index(screenshots_dir)
     slug = _lightning_capture_slug(label)
     return screenshots_dir / f"{index:03d}_{slug}.png", base_dir / "notes.md"
+
+
+def cmd_lightning_map_regions(
+    screenshot_path: str | None = None,
+    *,
+    out_dir: str | None = None,
+    dry_run: bool = False,
+) -> dict:
+    """Extract clickable red island-map regions from a Lightning peek image."""
+    captured = None
+    if screenshot_path:
+        target_path = Path(screenshot_path)
+    else:
+        target_path, _notes_path = _lightning_screenshot_paths(
+            "map_regions",
+            out_dir=out_dir,
+        )
+        if dry_run:
+            result = {
+                "status": "DRY_RUN",
+                "reason": "would_capture_window_for_map_region_detection",
+                "screenshot_path": str(target_path),
+            }
+            _print_result(result)
+            return result
+        from src.control.mac_click import _get_window_bounds
+
+        bounds = _get_window_bounds("Into the Breach")
+        if bounds is None:
+            result = {"status": "ERROR", "error": "could not read game window bounds"}
+            _print_result(result)
+            return result
+        captured = _lightning_capture_window_screenshot(target_path, bounds=bounds)
+        if captured.get("status") != "OK":
+            result = {
+                "status": "ERROR",
+                "reason": "screenshot_failed",
+                "capture_result": captured,
+            }
+            _print_result(result)
+            return result
+
+    result = _lightning_extract_red_regions_from_image(target_path)
+    result["capture_result"] = captured
+    result["next_step"] = (
+        "Use a region's window_x/window_y with "
+        "`lightning_route_start --no-route-check --window-x X --window-y Y`."
+    )
+    print("\n=== LIGHTNING MAP REGIONS ===")
+    print(f"  screenshot: {target_path}")
+    print(f"  status:     {result.get('status')}")
+    print(f"  regions:    {result.get('region_count')}")
+    for region in result.get("regions") or []:
+        print(
+            "  "
+            f"#{region.get('index')}: "
+            f"window=({region.get('window_x')}, {region.get('window_y')}) "
+            f"area={region.get('area_window')}"
+        )
+    _print_result(result)
+    return result
 
 
 def _lightning_append_capture_note(

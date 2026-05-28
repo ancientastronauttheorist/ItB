@@ -58,6 +58,7 @@ from src.loop.commands import (
     cmd_lightning_capture,
     cmd_lightning_mark,
     cmd_lightning_peek,
+    cmd_lightning_map_regions,
     cmd_lightning_attempt,
     cmd_lightning_segment,
     cmd_lightning_loop,
@@ -634,6 +635,19 @@ def main():
     )
     p_lightning_peek.set_defaults(require_paused=True)
 
+    # lightning_map_regions
+    p_lightning_map_regions = sub.add_parser(
+        "lightning_map_regions",
+        help="Extract clickable red island-map regions from a screenshot",
+    )
+    p_lightning_map_regions.add_argument(
+        "--screenshot-path",
+        default=None,
+        help="Analyze an existing screenshot, usually from lightning_peek",
+    )
+    p_lightning_map_regions.add_argument("--out-dir", default=None)
+    p_lightning_map_regions.add_argument("--dry-run", action="store_true")
+
     # verify_setup
     p_verify_setup = sub.add_parser(
         "verify_setup",
@@ -1129,6 +1143,12 @@ def main():
             hold_seconds=args.hold_seconds,
             capture_timeout=args.capture_timeout,
             require_paused=args.require_paused,
+        )
+    elif args.command == "lightning_map_regions":
+        cmd_lightning_map_regions(
+            screenshot_path=args.screenshot_path,
+            out_dir=args.out_dir,
+            dry_run=args.dry_run,
         )
     elif args.command == "verify_setup":
         cmd_verify_setup_screen(

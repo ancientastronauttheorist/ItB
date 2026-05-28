@@ -364,6 +364,18 @@ def test_lightning_ui_burst_to_rst_dry_run():
     ]
 
 
+def test_lightning_ui_burst_region_secured_to_pause_dry_run():
+    result = commands.cmd_lightning_ui("region_secured_to_pause", dry_run=True)
+
+    assert result["status"] == "DRY_RUN"
+    assert result["burst"] == "region_secured_to_pause"
+    assert [item["name"] for item in result["sequence"]] == [
+        "menu_continue",
+        "reward_continue",
+        "pause",
+    ]
+
+
 def test_lightning_ui_ensure_pause_dry_run_plans_pause(monkeypatch):
     session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
 
@@ -379,6 +391,33 @@ def test_lightning_ui_ensure_pause_dry_run_plans_pause(monkeypatch):
     assert result["status"] == "DRY_RUN"
     assert result["planned_control"] == "pause"
     assert result["visible_ui"]["visible_ui"] == "island_map_or_unknown"
+
+
+def test_lightning_ui_ensure_pause_blocks_deployment_screen(monkeypatch):
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
+            "non_pauseable": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_guard",
+        lambda *args, **kwargs: {"status": "BLOCKED", "path": "guard.json"},
+    )
+
+    result = commands.cmd_lightning_ui("ensure_pause")
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "visible_ui_is_not_pauseable"
+    assert "lightning_segment" in result["next_step"]
 
 
 def test_lightning_ui_ensure_pause_recognizes_pause_menu(monkeypatch):
@@ -405,6 +444,46 @@ def test_lightning_ui_ensure_pause_recognizes_pause_menu(monkeypatch):
     assert result["status"] == "OK"
     assert result["already_paused"] is True
     assert result["reason"] == "already_paused"
+
+
+def test_lightning_ui_clear_tail_to_pause_resumes_clears_and_pauses(monkeypatch):
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "recommended_control": "menu_continue",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls.append("pause_menu_escape")
+        or {"status": "OK", "control": "pause_menu_escape"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: calls.append("clear_chain")
+        or {"status": "OK", "reason": "panel_chain_cleared", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: calls.append("ensure_pause")
+        or {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    result = commands.cmd_lightning_ui("clear_tail_pause")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "tail_cleared_and_paused"
+    assert calls == ["pause_menu_escape", "clear_chain", "ensure_pause"]
 
 
 def test_lightning_ui_handle_screen_clicks_visible_panel(monkeypatch):
@@ -896,6 +975,86 @@ def test_lightning_ui_classifier_rejects_live_combat_button_shapes(tmp_path):
     assert result["dark_overlay_fraction"] < 0.60
 
 
+def test_lightning_ui_classifier_detects_deployment_screen(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (70, 75, 80))
+    draw = ImageDraw.Draw(image)
+    draw.polygon(
+        [
+            (320 * scale, 180 * scale),
+            (880 * scale, 160 * scale),
+            (960 * scale, 500 * scale),
+            (460 * scale, 610 * scale),
+        ],
+        fill=(212, 170, 78),
+    )
+    path = tmp_path / "deployment.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "deployment_screen"
+    assert result["recommended_control"] == "deploy_confirm"
+    assert result["non_pauseable"] is True
+
+
+def test_lightning_refine_deployment_false_positive_with_bridge(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 4,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+
+    result = commands._lightning_refine_visible_ui_with_bridge(
+        {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
+            "non_pauseable": True,
+        }
+    )
+
+    assert result["visible_ui"] == "combat_screen"
+    assert result["recommended_control"] is None
+    assert result["non_pauseable"] is False
+    assert result["deployment_false_positive"] is True
+
+
+def test_lightning_refine_keeps_real_deployment_with_bridge(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "deployment_zone_count": 8,
+            "in_active_mission": True,
+        },
+    )
+
+    result = commands._lightning_refine_visible_ui_with_bridge(
+        {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
+            "non_pauseable": True,
+        }
+    )
+
+    assert result["visible_ui"] == "deployment_screen"
+    assert result["recommended_control"] == "deploy_confirm"
+    assert result["non_pauseable"] is True
+
+
 def test_lightning_ui_classifier_detects_visible_island_map(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -1156,6 +1315,66 @@ def test_lightning_extract_red_regions_from_image(tmp_path):
     assert result["regions"][0]["window_y"] < result["regions"][1]["window_y"]
     assert 380 <= result["regions"][0]["window_x"] <= 460
     assert 170 <= result["regions"][0]["window_y"] <= 230
+
+
+def test_lightning_merge_visual_regions_merges_vertical_splits_only():
+    regions = [
+        {
+            "window_x": 700,
+            "window_y": 300,
+            "bbox_window": [650, 240, 820, 390],
+            "area_px": 1000,
+            "area_window": 250.0,
+        },
+        {
+            "window_x": 910,
+            "window_y": 330,
+            "bbox_window": [850, 290, 980, 410],
+            "area_px": 700,
+            "area_window": 175.0,
+        },
+        {
+            "window_x": 905,
+            "window_y": 455,
+            "bbox_window": [845, 445, 975, 505],
+            "area_px": 300,
+            "area_window": 75.0,
+        },
+    ]
+
+    result = commands._lightning_merge_visual_regions(regions)
+
+    assert len(result) == 2
+    merged = max(result, key=lambda region: region.get("merged_parts", 1))
+    assert merged["merged_parts"] == 2
+    assert 900 <= merged["window_x"] <= 910
+    assert 360 <= merged["window_y"] <= 370
+
+
+def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": str(path),
+            "region_count": 1,
+            "regions": [
+                {
+                    "index": 0,
+                    "window_x": 735,
+                    "window_y": 313,
+                    "area_window": 1234.0,
+                }
+            ],
+        },
+    )
+
+    result = commands.cmd_lightning_map_regions("/tmp/map.png")
+
+    assert result["status"] == "OK"
+    assert result["regions"][0]["window_x"] == 735
+    assert "lightning_route_start" in result["next_step"]
 
 
 def test_lightning_ui_classifier_prioritizes_mission_preview(tmp_path):
