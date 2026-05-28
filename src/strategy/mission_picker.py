@@ -196,6 +196,7 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     "Mission_Holes":          ["mite_counter"],
     "Mission_Dam":            ["mite_counter"],
     "Mission_Teleporter":     ["mite_counter"],
+    "Mission_Repair":         ["bad_repairs", "repair_platforms"],
     # Custom Archive objective: "End with 8 spaces on fire". The tactical
     # solver does not hard-gate this counter yet, so it is unsafe for
     # Perfect Island farming even for Flame Behemoths.
@@ -222,6 +223,7 @@ ENVIRONMENT_TAGS: dict[str, list[str]] = {
     "Env_LightningStorm": ["env_lightning"],
     "Env_Cataclysm":    ["env_cataclysm"],
     "Env_Seismic":      ["env_cataclysm"],
+    "Env_RepairMission": ["bad_repairs", "repair_platforms"],
     # Vanilla Ice Storm. The in-game class is Env_SnowStorm; the display
     # name "Ice Storm" comes from text_missions.lua:162 Env_SnowStorm_Name.
     # The "Env_IceStorm" alias here used to be dead code — it never
@@ -476,6 +478,17 @@ def _apply_lightning_war_routing(
         delta += 8
         rationale.append("+8  Lightning War: plain battle has low UI friction")
 
+    if mission_id == "Mission_Satellite":
+        delta -= 45
+        rationale.append(
+            "-45 Lightning War: Satellite Launches is avoid-unless-forced"
+        )
+    if "bad_repairs" in mission_tags or "repair_platforms" in mission_tags:
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: Bad Repairs / repair platforms are too slow"
+        )
+
     slow_mission_ids = {
         "Mission_Dam",
         "Mission_ForestFire",
@@ -483,7 +496,6 @@ def _apply_lightning_war_routing(
         "Mission_Holes",
         "Mission_Mines",
         "Mission_Power",
-        "Mission_Satellite",
         "Mission_Solar",
         "Mission_Tanks",
         "Mission_Teleporter",
@@ -522,6 +534,57 @@ def _apply_lightning_war_routing(
         rationale.append("-5  Lightning War: kill-limit bonus invites review")
 
     return score + delta
+
+
+_UNAVAILABLE_BOOL_FIELDS = {
+    "active",
+    "completed",
+    "current",
+    "hover_preview",
+    "hovered",
+    "in_progress",
+    "is_active",
+    "is_completed",
+    "is_current",
+    "preview",
+    "stale",
+}
+_UNAVAILABLE_STATE_VALUES = {
+    "active",
+    "combat",
+    "completed",
+    "current",
+    "done",
+    "hover",
+    "hover_preview",
+    "in_progress",
+    "preview",
+    "running",
+    "stale",
+}
+
+
+def _unavailable_mission_reason(entry: dict[str, Any]) -> str | None:
+    """Return why a bridge island-map entry should not be rankable.
+
+    The Lua bridge normally emits only available island choices, but stale
+    reads from hover previews, completed regions, or pause-menu leakage can
+    carry the same mission-shaped payload. Prefer dropping explicitly marked
+    non-options over letting them outrank real island choices.
+    """
+    if entry.get("available") is False or entry.get("is_available") is False:
+        return "available=false"
+    for field in sorted(_UNAVAILABLE_BOOL_FIELDS):
+        if entry.get(field) is True:
+            return field
+    for field in ("state", "status", "mission_state", "availability"):
+        value = entry.get(field)
+        if value is None:
+            continue
+        normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+        if normalized in _UNAVAILABLE_STATE_VALUES:
+            return f"{field}={value}"
+    return None
 
 
 def score_mission(
@@ -726,9 +789,12 @@ def score_island_map(
     if not island_map:
         return []
     squad_tags = derive_squad_tags(squad_units)
-    scored = [
-        score_mission(e, squad_tags, grid_power, mission_metadata, routing)
-        for e in island_map
-    ]
+    scored = []
+    for e in island_map:
+        if _unavailable_mission_reason(e):
+            continue
+        scored.append(
+            score_mission(e, squad_tags, grid_power, mission_metadata, routing)
+        )
     scored.sort(key=lambda e: e["score"], reverse=True)
     return scored

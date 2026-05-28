@@ -175,6 +175,16 @@ def _satellite_mission() -> dict:
     }
 
 
+def _repair_platform_mission() -> dict:
+    """Bad Repairs / Storage Vaults mission: repair platforms are slow."""
+    return {
+        "region_id": 16,
+        "mission_id": "Mission_Repair",
+        "bonus_objective_ids": [],
+        "environment": "Env_RepairMission",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Squad tag derivation
 # ---------------------------------------------------------------------------
@@ -248,7 +258,84 @@ def test_lightning_war_routing_penalizes_satellite_over_sandstorm():
     )
     assert ranked[0]["mission_id"] == "Mission_Sandstorm"
     satellite = next(e for e in ranked if e["mission_id"] == "Mission_Satellite")
-    assert "slow/fragile objective" in " ".join(satellite["rationale_lines"])
+    rationale = " ".join(satellite["rationale_lines"])
+    assert "avoid-unless-forced" in rationale
+    assert satellite["score"] < 0
+
+
+def test_lightning_war_routing_strongly_penalizes_bad_repairs():
+    """Bad Repairs looked fast because it has no reward UI, but platforms stall."""
+    island = [_repair_platform_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    repair = next(e for e in ranked if e["mission_id"] == "Mission_Repair")
+    assert repair["score"] <= -60
+    assert "bad_repairs" in repair["mission_tags"]
+    assert "repair_platforms" in repair["mission_tags"]
+    rationale = " ".join(repair["rationale_lines"])
+    assert "Bad Repairs" in rationale
+    assert "too slow" in rationale
+
+
+def test_lightning_war_bad_repairs_penalty_fires_from_environment_only():
+    """Env_RepairMission carries the same Lightning War veto as Mission_Repair."""
+    entry = {
+        "region_id": 17,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [],
+        "environment": "Env_RepairMission",
+    }
+    scored = score_mission(
+        entry,
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+    assert scored["score"] <= -60
+    assert "bad_repairs" in scored["mission_tags"]
+    assert any("Bad Repairs" in line for line in scored["rationale_lines"])
+
+
+def test_score_island_map_filters_stale_current_and_hover_entries():
+    """Bridge preview/pause leakage must not rank stale missions as choices."""
+    completed = dict(_sandstorm_mission(), completed=True)
+    current = dict(_train_high_threat(), current=True)
+    hover = dict(_satellite_mission(), state="hover_preview")
+    stale = dict(_repair_platform_mission(), stale=True)
+    available = _safe_no_threat_mission()
+
+    ranked = score_island_map(
+        [completed, current, hover, stale, available],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert [e["region_id"] for e in ranked] == [available["region_id"]]
+    assert ranked[0]["mission_id"] == available["mission_id"]
+
+
+def test_score_island_map_returns_empty_when_all_entries_are_unavailable():
+    ranked = score_island_map(
+        [
+            dict(_sandstorm_mission(), completed=True),
+            dict(_satellite_mission(), availability="preview"),
+            dict(_repair_platform_mission(), is_current=True),
+        ],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+    assert ranked == []
 
 
 def test_train_with_defender_outranks_safe_battle():

@@ -6169,6 +6169,21 @@ def cmd_recommend_mission(
         result = {"status": "ERROR", "error": str(e)}
         _print_result(result)
         return result
+    if not ranked:
+        phase = bridge_data.get("phase", "unknown") if bridge_data else "unknown"
+        result = {
+            "status": "NO_AVAILABLE_MISSIONS",
+            "phase": phase,
+            "routing": routing,
+            "available": len(island_map),
+            "note": (
+                "Mission entries were present, but all were marked completed, "
+                "current, stale, or preview-only. Close pause/preview UI and "
+                "read the island map again."
+            ),
+        }
+        _print_result(result)
+        return result
     top3 = ranked[:3]
 
     print(f"\n=== RECOMMEND_MISSION ===")
@@ -6388,16 +6403,36 @@ def _click_end_turn_from_plan_result(
             c for c in batch
             if isinstance(c, dict)
             and c.get("type") == "left_click"
-            and "x" in c
-            and "y" in c
+            and (
+                ("window_x" in c and "window_y" in c)
+                or ("x" in c and "y" in c)
+                or isinstance(c.get("codex_computer_use"), dict)
+            )
         ),
         None,
     )
     if click is None:
         return {
             "status": "ERROR",
-            "error": "no left_click with screen coordinates in End Turn plan",
+            "error": "no usable left_click in End Turn plan",
         }
+    codex_click = click.get("codex_computer_use")
+    if "window_x" in click and "window_y" in click:
+        from src.control.mac_click import click_window_point
+        return click_window_point(
+            int(click["window_x"]),
+            int(click["window_y"]),
+            description=click.get("description", "Click End Turn"),
+            dry_run=dry_run,
+        )
+    if isinstance(codex_click, dict) and "x" in codex_click and "y" in codex_click:
+        from src.control.mac_click import click_window_point
+        return click_window_point(
+            int(codex_click["x"]),
+            int(codex_click["y"]),
+            description=codex_click.get("description", "Click End Turn"),
+            dry_run=dry_run,
+        )
     from src.control.mac_click import click_screen_point
     return click_screen_point(
         int(click["x"]),
@@ -6405,6 +6440,66 @@ def _click_end_turn_from_plan_result(
         description=click.get("description", "Click End Turn"),
         dry_run=dry_run,
     )
+
+
+def _observe_end_turn_after_click(
+    turn_result: dict,
+    *,
+    timeout: float = 1.25,
+    poll_interval: float = 0.2,
+) -> dict:
+    """Confirm that a local End Turn click changed bridge state quickly."""
+    expected_turn = turn_result.get("turn")
+    started_at = time.monotonic()
+    samples: list[dict] = []
+    last_error: str | None = None
+
+    while time.monotonic() - started_at <= timeout:
+        try:
+            refresh_bridge_state()
+            _board, bridge_data = read_bridge_state()
+        except Exception as exc:
+            last_error = str(exc)
+            time.sleep(poll_interval)
+            continue
+        if not isinstance(bridge_data, dict):
+            time.sleep(poll_interval)
+            continue
+
+        units = bridge_data.get("units") or []
+        active_mechs = sum(
+            1 for unit in units
+            if unit.get("mech")
+            and unit.get("active")
+            and int(unit.get("hp") or 0) > 0
+        )
+        sample = {
+            "phase": bridge_data.get("phase", "unknown"),
+            "turn": bridge_data.get("turn"),
+            "active_mechs": active_mechs,
+        }
+        samples.append(sample)
+
+        if sample["phase"] != "combat_player":
+            return {"status": "OK", "reason": "phase_changed", "samples": samples}
+        if expected_turn is not None and sample["turn"] != expected_turn:
+            return {"status": "OK", "reason": "turn_changed", "samples": samples}
+        if active_mechs > 0:
+            return {
+                "status": "OK",
+                "reason": "active_mechs_reset",
+                "samples": samples,
+            }
+
+        time.sleep(poll_interval)
+
+    return {
+        "status": "END_TURN_CLICK_NOT_OBSERVED",
+        "reason": "bridge_still_player_turn",
+        "samples": samples,
+        "last_error": last_error,
+        "timeout": timeout,
+    }
 
 
 def cmd_lightning_loop(
@@ -6503,6 +6598,11 @@ def cmd_lightning_loop(
                 stopped_reason = "end_turn_click_failed"
                 break
             end_turn_clicks += 1
+            observed = _observe_end_turn_after_click(turn_result)
+            record["end_turn_observed"] = observed
+            if observed.get("status") != "OK":
+                stopped_reason = "end_turn_click_not_observed"
+                break
             continue
 
         if status == "ok":
