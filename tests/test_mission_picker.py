@@ -185,6 +185,42 @@ def _repair_platform_mission() -> dict:
     }
 
 
+def _generic_no_bonus_mission(region_id: int = 17) -> dict:
+    return {
+        "region_id": region_id,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
+def _asset_pod_mission() -> dict:
+    return {
+        "region_id": 18,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [BONUS_ASSET],
+        "environment": "Env_Null",
+    }
+
+
+def _barrels_mission() -> dict:
+    return {
+        "region_id": 19,
+        "mission_id": "Mission_Barrels",
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": "Env_Null",
+    }
+
+
+def _acid_tank_mission() -> dict:
+    return {
+        "region_id": 20,
+        "mission_id": "Mission_AcidTank",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Squad tag derivation
 # ---------------------------------------------------------------------------
@@ -301,6 +337,100 @@ def test_lightning_war_bad_repairs_penalty_fires_from_environment_only():
     assert scored["score"] <= -60
     assert "bad_repairs" in scored["mission_tags"]
     assert any("Bad Repairs" in line for line in scored["rationale_lines"])
+
+
+def test_lightning_war_routing_prefers_metadata_four_turn_mission():
+    fast = {
+        "region_id": 21,
+        "mission_id": "Mission_MetadataFast",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+    ranked = score_island_map(
+        [_safe_battle_mission(), fast],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={
+            "Mission_MetadataFast": {
+                "turn_limit": 3,
+                "environment": "Env_Null",
+            },
+        },
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_MetadataFast"
+    assert "four_turn" in ranked[0]["mission_tags"]
+    assert any("metadata 4-turn" in line for line in ranked[0]["rationale_lines"])
+
+
+def test_metadata_environment_overlay_tags_tides():
+    scored = score_mission(
+        {
+            "region_id": 22,
+            "mission_id": "Mission_Tides",
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        },
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),
+        grid_power=7,
+        mission_metadata={
+            "Mission_Tides": {
+                "turn_limit": 3,
+                "environment": "Env_Tides",
+            },
+        },
+        routing="lightning_war",
+    )
+
+    assert "env_tidal" in scored["mission_tags"]
+    assert "four_turn" in scored["mission_tags"]
+    assert any("Tidal" in line for line in scored["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_barrels_even_with_grid_bonus():
+    ranked = score_island_map(
+        [_barrels_mission(), _safe_battle_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    barrels = next(e for e in ranked if e["mission_id"] == "Mission_Barrels")
+    assert barrels["score"] < 0
+    assert any("Detritus vats/barrels" in line for line in barrels["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_acid_tank_or_vats():
+    ranked = score_island_map(
+        [_acid_tank_mission(), _safe_battle_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    acid_tank = next(e for e in ranked if e["mission_id"] == "Mission_AcidTank")
+    assert acid_tank["score"] < 0
+    assert any("Detritus vats/barrels" in line for line in acid_tank["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_generic_asset_pod_reward():
+    ranked = score_island_map(
+        [_asset_pod_mission(), _generic_no_bonus_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["region_id"] == _generic_no_bonus_mission()["region_id"]
+    pod = next(e for e in ranked if e["region_id"] == _asset_pod_mission()["region_id"])
+    assert pod["score"] < 0
+    assert any("asset/pod reward" in line for line in pod["rationale_lines"])
 
 
 def test_score_island_map_filters_stale_current_and_hover_entries():

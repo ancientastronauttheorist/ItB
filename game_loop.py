@@ -56,6 +56,7 @@ from src.loop.commands import (
     cmd_lightning_ui,
     cmd_lightning_capture,
     cmd_lightning_attempt,
+    cmd_lightning_segment,
     cmd_lightning_loop,
     cmd_verify_setup_screen,
     cmd_research_attach_community,
@@ -478,7 +479,9 @@ def main():
         default=None,
         help="Known control name, such as pause, menu_continue, "
              "reward_continue, deploy_confirm, modal_understood, "
-             "panel_continue, or end_turn. Use comma or + for a fast sequence.",
+             "panel_continue, or end_turn. Special controls include "
+             "ensure_pause, handle_screen, and named bursts. Use comma or + "
+             "for a fast sequence.",
     )
     p_lightning_ui.add_argument("--dry-run", action="store_true")
     p_lightning_ui.add_argument("--list", action="store_true",
@@ -629,6 +632,42 @@ def main():
                                   help="Do not request bridge fast mode at start")
     p_lightning_loop.add_argument("--allow-hold-the-line", action="store_true",
                                   help="Bypass the Hold the Line target guard")
+    p_lightning_loop.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Capture nested command stdout instead of printing during the live loop",
+    )
+    p_lightning_loop.add_argument(
+        "--allow-dirty-plan",
+        action="store_true",
+        help="Pass exact reviewed dirty-plan consent to the first loop turn",
+    )
+    p_lightning_loop.add_argument(
+        "--candidate-rank",
+        type=int,
+        default=None,
+        help="Execute an exact solve_top_k candidate rank on the consented first turn",
+    )
+    p_lightning_loop.add_argument(
+        "--dirty-consent-id",
+        default=None,
+        help="Exact one-use token emitted by a safety block",
+    )
+    p_lightning_loop.add_argument(
+        "--allow-protected-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow protected objective unit loss",
+    )
+    p_lightning_loop.add_argument(
+        "--allow-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow objective loss/failure kinds",
+    )
+    p_lightning_loop.add_argument(
+        "--speed-loss-policy",
+        action="store_true",
+        help="Lightning War only: allow nonlethal speed losses and optional objective failures",
+    )
 
     # lightning_attempt
     p_lightning_attempt = sub.add_parser(
@@ -663,6 +702,124 @@ def main():
         help="Optional conservative wall-clock budget guard",
     )
     p_lightning_attempt.add_argument("--allow-hold-the-line", action="store_true")
+    p_lightning_attempt.add_argument(
+        "--no-pause-on-stop",
+        dest="pause_on_stop",
+        action="store_false",
+        help="Do not click the pause guard after this conductor step stops",
+    )
+    p_lightning_attempt.add_argument(
+        "--verbose",
+        dest="quiet",
+        action="store_false",
+        help="Print nested preflight/combat/routing command output before pausing",
+    )
+    p_lightning_attempt.add_argument(
+        "--no-resume-if-paused",
+        dest="resume_if_paused",
+        action="store_false",
+        help="Do not click Continue automatically when the pause menu is visible",
+    )
+    p_lightning_attempt.add_argument(
+        "--no-auto-clear-panels",
+        dest="auto_clear_panels",
+        action="store_false",
+        help="Do not auto-click safe Continue-style reward/promotion panels",
+    )
+    p_lightning_attempt.add_argument(
+        "--allow-dirty-plan",
+        action="store_true",
+        help="Pass exact reviewed dirty-plan consent to the first combat loop turn",
+    )
+    p_lightning_attempt.add_argument(
+        "--candidate-rank",
+        type=int,
+        default=None,
+        help="Execute an exact solve_top_k candidate rank on the consented first turn",
+    )
+    p_lightning_attempt.add_argument(
+        "--dirty-consent-id",
+        default=None,
+        help="Exact one-use token emitted by a safety block",
+    )
+    p_lightning_attempt.add_argument(
+        "--allow-protected-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow protected objective unit loss",
+    )
+    p_lightning_attempt.add_argument(
+        "--allow-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow objective loss/failure kinds",
+    )
+    p_lightning_attempt.add_argument(
+        "--speed-loss-policy",
+        action="store_true",
+        help="Lightning War only: allow nonlethal speed losses and optional objective failures",
+    )
+    p_lightning_attempt.set_defaults(pause_on_stop=True)
+    p_lightning_attempt.set_defaults(quiet=True)
+    p_lightning_attempt.set_defaults(resume_if_paused=True)
+    p_lightning_attempt.set_defaults(auto_clear_panels=True)
+
+    # lightning_segment
+    p_lightning_segment = sub.add_parser(
+        "lightning_segment",
+        help="Run repeated Lightning War conductor bursts to the next decision",
+    )
+    p_lightning_segment.add_argument("--profile", default="Alpha")
+    p_lightning_segment.add_argument("--time-limit", type=float, default=2.0)
+    p_lightning_segment.add_argument("--max-steps", type=int, default=8)
+    p_lightning_segment.add_argument("--max-turns", type=int, default=6)
+    p_lightning_segment.add_argument("--max-wait", type=float, default=45.0)
+    p_lightning_segment.add_argument("--settle-seconds", type=float, default=0.25)
+    p_lightning_segment.add_argument("--no-click", action="store_true")
+    p_lightning_segment.add_argument("--no-bridge-fast", action="store_true")
+    p_lightning_segment.add_argument("--no-preflight", action="store_true")
+    p_lightning_segment.add_argument("--dry-run", action="store_true")
+    p_lightning_segment.add_argument("--max-wall-seconds", type=float, default=None)
+    p_lightning_segment.add_argument("--allow-hold-the-line", action="store_true")
+    p_lightning_segment.add_argument(
+        "--no-pause-on-stop",
+        dest="pause_on_stop",
+        action="store_false",
+        help="Do not click the pause guard after the segment stops",
+    )
+    p_lightning_segment.add_argument(
+        "--verbose",
+        dest="quiet",
+        action="store_false",
+        help="Print nested conductor output instead of capturing it",
+    )
+    p_lightning_segment.add_argument(
+        "--no-resume-if-paused",
+        dest="resume_if_paused",
+        action="store_false",
+    )
+    p_lightning_segment.add_argument(
+        "--no-auto-clear-panels",
+        dest="auto_clear_panels",
+        action="store_false",
+    )
+    p_lightning_segment.add_argument("--allow-dirty-plan", action="store_true")
+    p_lightning_segment.add_argument("--candidate-rank", type=int, default=None)
+    p_lightning_segment.add_argument("--dirty-consent-id", default=None)
+    p_lightning_segment.add_argument(
+        "--allow-protected-objective-loss",
+        action="store_true",
+    )
+    p_lightning_segment.add_argument("--allow-objective-loss", action="store_true")
+    p_lightning_segment.add_argument(
+        "--no-speed-loss-policy",
+        dest="lightning_speed_loss_policy",
+        action="store_false",
+        help="Disable Lightning War speed-loss allowance for this segment",
+    )
+    p_lightning_segment.set_defaults(pause_on_stop=True)
+    p_lightning_segment.set_defaults(quiet=True)
+    p_lightning_segment.set_defaults(resume_if_paused=True)
+    p_lightning_segment.set_defaults(auto_clear_panels=True)
+    p_lightning_segment.set_defaults(lightning_speed_loss_policy=True)
 
     # analyze
     p_analyze = sub.add_parser("analyze",
@@ -880,6 +1037,13 @@ def main():
             click_end_turn=not args.no_click,
             set_fast_bridge=not args.no_bridge_fast,
             allow_hold_the_line=args.allow_hold_the_line,
+            quiet=args.quiet,
+            allow_dirty_plan=args.allow_dirty_plan,
+            candidate_rank=args.candidate_rank,
+            dirty_consent_id=args.dirty_consent_id,
+            allow_protected_objective_loss=args.allow_protected_objective_loss,
+            allow_objective_loss=args.allow_objective_loss,
+            lightning_speed_loss_policy=args.speed_loss_policy,
         )
     elif args.command == "lightning_attempt":
         cmd_lightning_attempt(
@@ -893,6 +1057,41 @@ def main():
             dry_run=args.dry_run,
             max_wall_seconds=args.max_wall_seconds,
             allow_hold_the_line=args.allow_hold_the_line,
+            pause_on_stop=args.pause_on_stop,
+            quiet=args.quiet,
+            resume_if_paused=args.resume_if_paused,
+            auto_clear_panels=args.auto_clear_panels,
+            allow_dirty_plan=args.allow_dirty_plan,
+            candidate_rank=args.candidate_rank,
+            dirty_consent_id=args.dirty_consent_id,
+            allow_protected_objective_loss=args.allow_protected_objective_loss,
+            allow_objective_loss=args.allow_objective_loss,
+            lightning_speed_loss_policy=args.speed_loss_policy,
+        )
+    elif args.command == "lightning_segment":
+        cmd_lightning_segment(
+            profile=args.profile,
+            time_limit=args.time_limit,
+            max_steps=args.max_steps,
+            max_turns=args.max_turns,
+            max_wait=args.max_wait,
+            click_ui=not args.no_click,
+            set_fast_bridge=not args.no_bridge_fast,
+            run_preflight=not args.no_preflight,
+            dry_run=args.dry_run,
+            max_wall_seconds=args.max_wall_seconds,
+            allow_hold_the_line=args.allow_hold_the_line,
+            pause_on_stop=args.pause_on_stop,
+            quiet=args.quiet,
+            resume_if_paused=args.resume_if_paused,
+            auto_clear_panels=args.auto_clear_panels,
+            allow_dirty_plan=args.allow_dirty_plan,
+            candidate_rank=args.candidate_rank,
+            dirty_consent_id=args.dirty_consent_id,
+            allow_protected_objective_loss=args.allow_protected_objective_loss,
+            allow_objective_loss=args.allow_objective_loss,
+            lightning_speed_loss_policy=args.lightning_speed_loss_policy,
+            settle_seconds=args.settle_seconds,
         )
     elif args.command == "analyze":
         cmd_analyze(min_samples=args.min_samples)

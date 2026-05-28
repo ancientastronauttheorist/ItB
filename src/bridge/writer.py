@@ -166,10 +166,10 @@ def execute_bridge_end_turn() -> str:
     return wait_for_ack(timeout=10.0)
 
 
-def deploy_mech(uid: int, x: int, y: int) -> str:
+def deploy_mech(uid: int, x: int, y: int, *, timeout: float = 10.0) -> str:
     """Deploy a mech at the given tile during deployment phase."""
     write_command(f"DEPLOY {uid} {x} {y}")
-    return wait_for_ack(timeout=10.0)
+    return wait_for_ack(timeout=timeout)
 
 
 def set_bridge_speed(mode: str) -> str:

@@ -215,6 +215,8 @@ ENVIRONMENT_TAGS: dict[str, list[str]] = {
     "Env_Lava":         ["env_lava"],
     "Env_Tidal":        ["env_tidal"],
     "Env_TidalWaves":   ["env_tidal"],
+    "Env_Tides":        ["env_tidal"],
+    "Env_Terratide":    ["env_tidal"],
     "Env_Conveyor":     ["conveyor"],
     "Env_ConveyorBelt": ["conveyor"],
     "Env_Sandstorm":    ["defensive_smoke"],
@@ -335,6 +337,11 @@ def _tags_from_metadata(
         return tags
     if rec.get("train_mission"):
         tags.add("train")
+    environment = rec.get("environment")
+    if isinstance(environment, str):
+        tags.update(ENVIRONMENT_TAGS.get(environment, []))
+    if rec.get("turn_limit") == 3:
+        tags.add("four_turn")
     if rec.get("boss_mission"):
         tags.add("boss")
         tags.add("high_threat")
@@ -474,6 +481,15 @@ def _apply_lightning_war_routing(
     if "defensive_smoke" in mission_tags or mission_id == "Mission_Sandstorm":
         delta += 25
         rationale.append("+25 Lightning War: fast Sandstorm mission")
+    if (
+        "four_turn" in mission_tags
+        and not (
+            {"train", "env_tidal", "env_cataclysm", "defensive_smoke"}
+            & mission_tags
+        )
+    ):
+        delta += 20
+        rationale.append("+20 Lightning War: metadata 4-turn mission")
     if mission_id == "Mission_Battle":
         delta += 8
         rationale.append("+8  Lightning War: plain battle has low UI friction")
@@ -487,6 +503,17 @@ def _apply_lightning_war_routing(
         delta -= 70
         rationale.append(
             "-70 Lightning War: Bad Repairs / repair platforms are too slow"
+        )
+
+    detritus_speed_traps = {
+        "Mission_AcidTank",
+        "Mission_Barrels",
+        "Mission_Disposal",
+    }
+    if mission_id in detritus_speed_traps:
+        delta -= 45
+        rationale.append(
+            f"-45 Lightning War: Detritus vats/barrels UI-combat drag ({mission_id})"
         )
 
     slow_mission_ids = {
@@ -524,8 +551,8 @@ def _apply_lightning_war_routing(
         )
 
     if BONUS_ASSET in bonus_ids:
-        delta -= 8
-        rationale.append("-8  Lightning War: asset/pod reward adds UI time")
+        delta -= 20
+        rationale.append("-20 Lightning War: asset/pod reward adds UI time")
     if BONUS_KILL_FIVE in bonus_ids:
         delta -= 5
         rationale.append("-5  Lightning War: kill-count bonus invites overplay")

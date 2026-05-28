@@ -1076,6 +1076,10 @@ def test_final_turn_live_pod_blocks_until_recovered():
         allow_dirty_plan=True,
         allow_objective_loss_dirty=True,
     ) is False
+    assert plan_requires_safety_block(
+        audit,
+        allow_pod_loss_dirty=True,
+    ) is False
     assert audit["violations"][0]["kind"] == "pod_unrecovered_final"
     assert safety_loss_profile(audit)["label"] == "objective_loss"
 
