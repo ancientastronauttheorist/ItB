@@ -8312,7 +8312,55 @@ def cmd_lightning_attempt(
         )
 
     if phase == "combat_player" and active_mechs <= 0:
-        return run_combat_loop(action="wait_then_combat_loop")
+        visible_ui = _lightning_visible_ui_snapshot()
+        snapshot["visible_ui"] = visible_ui
+        if (
+            visible_ui.get("status") == "OK"
+            and visible_ui.get("recommended_control")
+            and visible_ui.get("visible_ui") in _LIGHTNING_SAFE_CLEAR_UIS
+        ):
+            if auto_clear_panels and click_ui and not dry_run:
+                clear_result = _lightning_clear_visible_panel_chain()
+                action_record.update(
+                    {
+                        "action": "clear_panel_during_no_active_mechs",
+                        "visible_ui": visible_ui,
+                        "clear_result": clear_result,
+                    }
+                )
+                result = {
+                    "status": "LIGHTNING_ATTEMPT_PANEL_CLEARED",
+                    "reason": "auto_clear_safe_panel_during_no_active_mechs",
+                    "snapshot": snapshot,
+                    "budget": budget,
+                    "preflight": preflight,
+                    "action": action_record,
+                    "next_step": (
+                        "Safe panel was cleared while bridge had no active "
+                        "mechs. Rerun lightning_attempt/segment after the "
+                        "screen settles."
+                    ),
+                }
+                if clear_result.get("status") not in {"OK", "NO_ACTION"}:
+                    result["status"] = "LIGHTNING_ATTEMPT_STOPPED"
+                    result["reason"] = clear_result.get("reason", "panel_clear_failed")
+                return finish(result, pause_reason="lightning_attempt_panel_cleared")
+
+        result = {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "player_turn_no_active_mechs",
+            "snapshot": snapshot,
+            "budget": budget,
+            "preflight": preflight,
+            "next_step": (
+                "Bridge reports a player turn with no active mechs. This is "
+                "usually a held End Turn state or a post-click animation gap, "
+                "so the Lightning conductor is stopping instead of spending "
+                "the full combat wait window. Inspect the visible screen or "
+                "rerun after the transition settles."
+            ),
+        }
+        return finish(result, pause_reason="lightning_attempt_no_active_mechs")
 
     if phase == "combat_player" and active_mechs > 0:
         return run_combat_loop(action="combat_loop")

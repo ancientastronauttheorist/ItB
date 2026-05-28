@@ -1117,7 +1117,7 @@ def test_lightning_attempt_runs_loop_through_enemy_phase(monkeypatch):
     assert calls[0]["max_wait"] == 30.0
 
 
-def test_lightning_attempt_runs_loop_until_player_phase_has_active_mechs(monkeypatch):
+def test_lightning_attempt_stops_quickly_on_player_phase_without_active_mechs(monkeypatch):
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
@@ -1149,12 +1149,86 @@ def test_lightning_attempt_runs_loop_until_player_phase_has_active_mechs(monkeyp
         return {"status": "LIGHTNING_LOOP_STOPPED", "reason": "mission_end"}
 
     monkeypatch.setattr(commands, "cmd_lightning_loop", fake_loop)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "recommended_control": None,
+        },
+    )
 
     result = commands.cmd_lightning_attempt()
 
     assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
-    assert result["action"]["action"] == "wait_then_combat_loop"
-    assert calls[0]["max_wait"] == 45.0
+    assert result["reason"] == "player_turn_no_active_mechs"
+    assert calls == []
+
+
+def test_lightning_attempt_clears_safe_panel_when_no_active_mechs(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    clicks = []
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "pod_open_panel",
+                "recommended_control": "pod_open_door",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "pod_open_panel",
+                "recommended_control": "pod_open_door",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: next(visible_states),
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: clicks.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands.cmd_lightning_attempt(auto_clear_panels=True)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "auto_clear_safe_panel_during_no_active_mechs"
+    assert result["action"]["clear_result"]["reason"] == "panel_chain_cleared"
+    assert clicks == ["pod_open_door"]
 
 
 def test_lightning_attempt_recommends_route_on_island_map(monkeypatch):
