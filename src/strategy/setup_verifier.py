@@ -1,9 +1,4 @@
-"""Visual checks for the new-run difficulty setup screen.
-
-The Advanced Content checkboxes are visually odd: the small square mostly
-behaves as a hover target, while enabled content is most reliably shown by the
-colored icon beside the row. Disabled rows render that icon as grayscale.
-"""
+"""Visual checks for the new-run difficulty setup screen."""
 
 from __future__ import annotations
 
@@ -25,6 +20,7 @@ ADVANCED_ITEMS: tuple[dict[str, Any], ...] = (
         "key": "enemy_units",
         "label": "Enemy Units",
         "icon_box": (558, 274, 616, 344),
+        "checkbox_box": (628, 286, 664, 322),
         "click": (646, 304),
         "colorfulness_threshold": 0.06,
     },
@@ -32,6 +28,7 @@ ADVANCED_ITEMS: tuple[dict[str, Any], ...] = (
         "key": "missions",
         "label": "Missions",
         "icon_box": (558, 350, 616, 418),
+        "checkbox_box": (628, 361, 664, 397),
         "click": (646, 379),
         "colorfulness_threshold": 0.05,
     },
@@ -39,6 +36,7 @@ ADVANCED_ITEMS: tuple[dict[str, Any], ...] = (
         "key": "equipment",
         "label": "Equipment",
         "icon_box": (558, 426, 616, 493),
+        "checkbox_box": (628, 436, 664, 472),
         "click": (646, 454),
         "colorfulness_threshold": 0.11,
     },
@@ -46,6 +44,7 @@ ADVANCED_ITEMS: tuple[dict[str, Any], ...] = (
         "key": "pilot_abilities",
         "label": "Pilot Abilities",
         "icon_box": (558, 503, 616, 570),
+        "checkbox_box": (628, 511, 664, 547),
         "click": (646, 529),
         "colorfulness_threshold": 0.10,
     },
@@ -59,6 +58,8 @@ DIFFICULTIES: dict[int, dict[str, Any]] = {
 }
 
 YELLOW_BORDER_THRESHOLD = 0.025
+CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD = 0.08
+CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD = 0.25
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,8 @@ class SetupCheck:
     status: str
     expected_difficulty: int
     actual_difficulty: int | None
+    setup_screen_detected: bool
+    setup_signature: dict[str, Any]
     advanced: list[dict[str, Any]]
     missing_advanced: list[str]
     screenshot_path: str | None
@@ -76,6 +79,8 @@ class SetupCheck:
             "status": self.status,
             "expected_difficulty": self.expected_difficulty,
             "actual_difficulty": self.actual_difficulty,
+            "setup_screen_detected": self.setup_screen_detected,
+            "setup_signature": self.setup_signature,
             "advanced": self.advanced,
             "missing_advanced": self.missing_advanced,
             "screenshot_path": self.screenshot_path,
@@ -127,27 +132,48 @@ def analyze_setup_image(
     advanced: list[dict[str, Any]] = []
     click_plan: list[dict[str, Any]] = []
     for item in ADVANCED_ITEMS:
-        score = _icon_colorfulness(img, _scale_box(item["icon_box"], sx, sy))
+        icon_score = _icon_colorfulness(img, _scale_box(item["icon_box"], sx, sy))
+        checkbox = _checkbox_brightness(img, _scale_box(item["checkbox_box"], sx, sy))
         threshold = float(item["colorfulness_threshold"])
-        enabled = score >= threshold
+        checkbox_present = (
+            checkbox["bright_ratio"] >= CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD
+        )
+        enabled = (
+            checkbox_present
+            and checkbox["bright_ratio"] >= CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD
+        )
         cx, cy = _scale_point(item["click"], click_sx, click_sy)
         row = {
             "key": item["key"],
             "label": item["label"],
             "enabled": enabled,
-            "colorfulness": round(score, 3),
+            "colorfulness": round(icon_score, 3),
             "threshold": threshold,
+            "checkbox_present": checkbox_present,
+            "checkbox_brightness": checkbox["bright_ratio"],
+            "checkbox_enabled_threshold": CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD,
             "click": {"x": cx, "y": cy, "coordinate_space": "window"},
         }
         advanced.append(row)
-        if require_all_advanced and not enabled:
-            click_plan.append({
-                "type": "left_click",
-                "x": cx,
-                "y": cy,
-                "coordinate_space": "window",
-                "description": f"Enable Advanced Content: {item['label']}",
-            })
+
+    present_count = sum(1 for row in advanced if row["checkbox_present"])
+    setup_screen_detected = present_count >= 3
+    setup_signature = {
+        "advanced_checkbox_present_count": present_count,
+        "advanced_checkbox_required_count": 3,
+        "checkbox_present_brightness_threshold": CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD,
+        "checkbox_enabled_brightness_threshold": CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD,
+    }
+    if setup_screen_detected:
+        for row in advanced:
+            if require_all_advanced and not row["enabled"]:
+                click_plan.append({
+                    "type": "left_click",
+                    "x": row["click"]["x"],
+                    "y": row["click"]["y"],
+                    "coordinate_space": "window",
+                    "description": f"Enable Advanced Content: {row['label']}",
+                })
 
     difficulty_scores = {
         value: _yellow_border_ratio(img, _scale_box(info["button_box"], sx, sy))
@@ -156,8 +182,10 @@ def analyze_setup_image(
     actual_difficulty = max(difficulty_scores, key=difficulty_scores.get)
     if difficulty_scores[actual_difficulty] < YELLOW_BORDER_THRESHOLD:
         actual_difficulty = None
+    if not setup_screen_detected:
+        actual_difficulty = None
 
-    if actual_difficulty != expected_difficulty:
+    if setup_screen_detected and actual_difficulty != expected_difficulty:
         cx, cy = _scale_point(
             DIFFICULTIES[expected_difficulty]["click"],
             click_sx,
@@ -174,14 +202,16 @@ def analyze_setup_image(
         })
 
     missing = [row["label"] for row in advanced if not row["enabled"]]
-    ok_advanced = (not require_all_advanced) or not missing
-    ok_difficulty = actual_difficulty == expected_difficulty
+    ok_advanced = setup_screen_detected and ((not require_all_advanced) or not missing)
+    ok_difficulty = setup_screen_detected and actual_difficulty == expected_difficulty
     status = "PASS" if ok_advanced and ok_difficulty else "FAIL"
 
     return SetupCheck(
         status=status,
         expected_difficulty=expected_difficulty,
         actual_difficulty=actual_difficulty,
+        setup_screen_detected=setup_screen_detected,
+        setup_signature=setup_signature,
         advanced=advanced,
         missing_advanced=missing,
         screenshot_path=screenshot_path,
@@ -217,6 +247,18 @@ def _icon_colorfulness(img: "Image.Image", box: tuple[int, int, int, int]) -> fl
     if not scores:
         return 0.0
     return sum(scores) / len(scores)
+
+
+def _checkbox_brightness(img: "Image.Image", box: tuple[int, int, int, int]) -> dict[str, float]:
+    crop = img.crop(box)
+    pixels = list(crop.getdata())
+    if not pixels:
+        return {"bright_ratio": 0.0}
+    bright = 0
+    for r, g, b in pixels:
+        if max(r, g, b) >= 170:
+            bright += 1
+    return {"bright_ratio": round(bright / len(pixels), 3)}
 
 
 def _yellow_border_ratio(img: "Image.Image", box: tuple[int, int, int, int]) -> float:

@@ -146,3 +146,11 @@
 - New tooling from this audit: deployment screen classifier returns `deployment_screen` + `non_pauseable`; `lightning_ui ensure_pause` now refuses to waste a pause click there. Added tail bursts (`region_secured_to_pause`, `promotion_to_pause`, `leave_to_select_pause`, `select_rst_pause`, `clear_intro_pause`) and `lightning_ui clear_tail_pause` for resume/clear/re-pause chains.
 - Classifier refinement: yellow combat move highlights can look like deployment in a screenshot. The visible-UI snapshot now cross-checks deployment against the bridge and only keeps `deployment_screen` when `turn == 0` with deployment zones. Ordinary combat false positives become `combat_screen`, so `ensure_pause` may still pause them.
 - Bad mission lesson: Fox Plateau turned out to be `Mission_Wind` / Coal Plant, not Cataclysm, and stopped on a turn-4 safety block. Avoid visually ambiguous R.S.T. power-grid/coal-plant missions unless the route helper confirms a fast Cataclysm/Sandstorm-style mission.
+| 18:13:45 | archive_region0_preview |  | micro_peek | [screenshot](screenshots/058_archive_region0_preview.png) |  |
+| 18:16:34 | current_preview_after_clicks |  | micro_peek | [screenshot](screenshots/059_current_preview_after_clicks.png) |  |
+| 20:13:16 | peek |  | micro_peek | [screenshot](screenshots/060_peek.png) |  |
+| 20:14:07 | archive_mission_map |  | ticks | [screenshot](screenshots/061_archive_mission_map.png) | visible_archive_regions |
+| 23:03:17 | archive_map_after_desync |  | micro_peek | [screenshot](screenshots/063_archive_map_after_desync.png) |  |
+| 23:12:48 | archive_after_mission1 |  | micro_peek | [screenshot](screenshots/064_archive_after_mission1.png) |  |
+| 23:16:48 | archive_after_mission2 |  | micro_peek | [screenshot](screenshots/065_archive_after_mission2.png) |  |
+| 23:21:19 | archive_after_mission3 |  | micro_peek | [screenshot](screenshots/066_archive_after_mission3.png) |  |

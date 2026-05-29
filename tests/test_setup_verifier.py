@@ -22,7 +22,63 @@ def _paint_difficulty_border(img: Image.Image, box):
         )
 
 
+def _paint_checkbox(img: Image.Image, center, checked: bool):
+    draw = ImageDraw.Draw(img)
+    cx, cy = center
+    box = (cx - 18, cy - 18, cx + 18, cy + 18)
+    draw.rectangle(box, fill=(12, 16, 24), outline=(235, 235, 245), width=2)
+    if checked:
+        draw.rectangle((cx - 12, cy - 12, cx + 12, cy + 12), fill=(235, 235, 245))
+
+
 def test_setup_verifier_passes_when_all_advanced_and_easy_selected():
+    img = _blank_setup()
+    for box, color in [
+        ((558, 274, 616, 344), (84, 184, 92)),
+        ((558, 350, 616, 418), (78, 118, 210)),
+        ((558, 426, 616, 493), (210, 125, 72)),
+        ((558, 503, 616, 570), (62, 198, 212)),
+    ]:
+        _paint_icon(img, box, color)
+    for center in [(646, 304), (646, 379), (646, 454), (646, 529)]:
+        _paint_checkbox(img, center, checked=True)
+    _paint_difficulty_border(img, (909, 250, 1122, 317))
+
+    check = analyze_setup_image(img, expected_difficulty=0)
+
+    assert check.status == "PASS"
+    assert check.setup_screen_detected is True
+    assert check.actual_difficulty == 0
+    assert check.missing_advanced == []
+    assert check.click_plan == []
+
+
+def test_setup_verifier_reports_missing_advanced_and_difficulty_clicks():
+    img = _blank_setup()
+    _paint_icon(img, (558, 274, 616, 344), (84, 184, 92))
+    _paint_icon(img, (558, 350, 616, 418), (120, 120, 120))
+    _paint_icon(img, (558, 426, 616, 493), (120, 120, 120))
+    _paint_icon(img, (558, 503, 616, 570), (62, 198, 212))
+    _paint_checkbox(img, (646, 304), checked=True)
+    _paint_checkbox(img, (646, 379), checked=False)
+    _paint_checkbox(img, (646, 454), checked=False)
+    _paint_checkbox(img, (646, 529), checked=True)
+    _paint_difficulty_border(img, (909, 326, 1122, 391))
+
+    check = analyze_setup_image(img, expected_difficulty=0)
+
+    assert check.status == "FAIL"
+    assert check.setup_screen_detected is True
+    assert check.actual_difficulty == 1
+    assert check.missing_advanced == ["Missions", "Equipment"]
+    assert [c["description"] for c in check.click_plan] == [
+        "Enable Advanced Content: Missions",
+        "Enable Advanced Content: Equipment",
+        "Select difficulty: Easy",
+    ]
+
+
+def test_setup_verifier_fails_colorful_squad_screen_false_positive():
     img = _blank_setup()
     for box, color in [
         ((558, 274, 616, 344), (84, 184, 92)),
@@ -35,27 +91,7 @@ def test_setup_verifier_passes_when_all_advanced_and_easy_selected():
 
     check = analyze_setup_image(img, expected_difficulty=0)
 
-    assert check.status == "PASS"
-    assert check.actual_difficulty == 0
-    assert check.missing_advanced == []
-    assert check.click_plan == []
-
-
-def test_setup_verifier_reports_missing_advanced_and_difficulty_clicks():
-    img = _blank_setup()
-    _paint_icon(img, (558, 274, 616, 344), (84, 184, 92))
-    _paint_icon(img, (558, 350, 616, 418), (120, 120, 120))
-    _paint_icon(img, (558, 426, 616, 493), (120, 120, 120))
-    _paint_icon(img, (558, 503, 616, 570), (62, 198, 212))
-    _paint_difficulty_border(img, (909, 326, 1122, 391))
-
-    check = analyze_setup_image(img, expected_difficulty=0)
-
     assert check.status == "FAIL"
-    assert check.actual_difficulty == 1
-    assert check.missing_advanced == ["Missions", "Equipment"]
-    assert [c["description"] for c in check.click_plan] == [
-        "Enable Advanced Content: Missions",
-        "Enable Advanced Content: Equipment",
-        "Select difficulty: Easy",
-    ]
+    assert check.setup_screen_detected is False
+    assert check.actual_difficulty is None
+    assert check.click_plan == []

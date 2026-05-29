@@ -643,6 +643,10 @@ def _lightning_speed_loss_summary(plan_safety: dict | None) -> dict | None:
                     plan_safety,
                     "protected_objective_units_alive",
                 ),
+                "destroy_objective_units_alive": _safety_int_loss(
+                    plan_safety,
+                    "destroy_objective_units_alive",
+                ),
                 "pods_present": _safety_int_loss(plan_safety, "pods_present"),
             }.items()
             if value
@@ -6306,13 +6310,16 @@ def cmd_verify_setup_screen(
         expected_difficulty, str(expected_difficulty)
     )
     print(f"  status: {check.status}")
+    if not result.get("setup_screen_detected"):
+        print("  screen: not the Difficulty Setup modal")
     print(f"  difficulty: {actual_label} (expected {expected_label})")
     print("  advanced content:")
     for row in check.advanced:
         state = "ON" if row["enabled"] else "OFF"
         print(
             f"    - {row['label']}: {state} "
-            f"(colorfulness={row['colorfulness']:.3f})"
+            f"(checkbox={row.get('checkbox_brightness', 0):.3f}, "
+            f"colorfulness={row['colorfulness']:.3f})"
         )
     if check.click_plan:
         print("  suggested clicks:")
@@ -6522,6 +6529,8 @@ def cmd_recommend_mission(
     grid_power = 7
     island_map: list | None = None
     pause_map_peek_result: dict | None = None
+    island_map_source = "json" if island_map_json else "bridge"
+    save_island_map_result: dict | None = None
 
     if island_map_json:
         try:
@@ -6553,13 +6562,6 @@ def cmd_recommend_mission(
                     island_map = bridge_data.get("island_map")
                     units = bridge_data.get("units", [])
                     grid_power = bridge_data.get("grid_power", 7)
-            if not island_map:
-                result = {"status": "NO_BRIDGE",
-                          "note": "Bridge not active. Pass --island-map-json "
-                                  "<path> to score from a saved payload.",
-                          "pause_map_peek": pause_map_peek_result}
-                _print_result(result)
-                return result
         else:
             try:
                 refresh_bridge_state()
@@ -6594,8 +6596,48 @@ def cmd_recommend_mission(
                 units = bridge_data.get("units", [])
                 grid_power = bridge_data.get("grid_power", 7)
 
+        if (
+            not island_map
+            and isinstance(bridge_data, dict)
+            and bridge_data.get("mission_id")
+            and bridge_data.get("in_active_mission")
+            and str(bridge_data.get("phase") or "unknown") == "unknown"
+        ):
+            island_map = [
+                {
+                    "mission_id": bridge_data.get("mission_id"),
+                    "bonus_objective_ids": [],
+                    "environment": bridge_data.get("environment")
+                    or bridge_data.get("env_type"),
+                    "bridge_preview": True,
+                    "source": "bridge_preview",
+                }
+            ]
+            island_map_source = "bridge_preview"
+            if not units:
+                units = _lightning_parse_save_current_units(
+                    (SAVE_DIR / f"profile_{profile}" / "saveData.lua").read_text()
+                    if (SAVE_DIR / f"profile_{profile}" / "saveData.lua").exists()
+                    else ""
+                )
+            grid_power = bridge_data.get("grid_power", grid_power)
+
+        if not island_map:
+            save_island_map_result = _lightning_build_save_island_map(profile)
+            if save_island_map_result.get("island_map"):
+                island_map = save_island_map_result.get("island_map")
+                if not units:
+                    units = save_island_map_result.get("units", [])
+                grid_power = save_island_map_result.get("grid_power", grid_power)
+                island_map_source = "saveData"
+
     save_region_filter: dict | None = None
-    if island_map and use_save_region_filter and not island_map_json:
+    if (
+        island_map
+        and use_save_region_filter
+        and not island_map_json
+        and island_map_source not in {"saveData", "bridge_preview"}
+    ):
         save_regions = _lightning_read_save_region_entries(profile)
         island_map, save_region_filter = _lightning_annotate_island_map_with_save_regions(
             island_map,
@@ -6607,11 +6649,13 @@ def cmd_recommend_mission(
         result = {
             "status": "NO_ISLAND_MAP",
             "phase": phase,
+            "source": island_map_source,
             "note": ("No mission options visible. The Lua hook only emits "
                      "island_map outside active combat. If you're on the "
                      "corp island map and this still fails, the modloader "
                      "may need a rebuild (scripts/install_modloader.sh)."),
             "pause_map_peek": pause_map_peek_result,
+            "save_island_map": save_island_map_result,
         }
         _print_result(result)
         return result
@@ -6628,9 +6672,11 @@ def cmd_recommend_mission(
             "status": "NO_AVAILABLE_MISSIONS",
             "phase": phase,
             "routing": routing,
+            "source": island_map_source,
             "available": len(island_map),
             "save_region_filter": save_region_filter,
             "pause_map_peek": pause_map_peek_result,
+            "save_island_map": save_island_map_result,
             "note": (
                 "Mission entries were present, but all were marked completed, "
                 "current, stale, or preview-only. Close pause/preview UI and "
@@ -6646,6 +6692,7 @@ def cmd_recommend_mission(
           f"{[w for u in units if u.get('mech') for w in u.get('weapons', [])]}")
     print(f"Grid power:      {grid_power}")
     print(f"Routing:         {routing}")
+    print(f"Source:          {island_map_source}")
     print(f"Available:       {len(island_map)} mission(s)")
     if save_region_filter:
         print(
@@ -6666,10 +6713,13 @@ def cmd_recommend_mission(
         "status": "OK",
         "grid_power": grid_power,
         "routing": routing,
+        "source": island_map_source,
         "ranked": ranked,
         "top3": top3,
         "save_region_filter": save_region_filter,
         "pause_map_peek": pause_map_peek_result,
+        "save_island_map": save_island_map_result,
+        "speed_route_status": _lightning_speed_route_status(ranked, routing),
     }
     _print_result(result)
     return result
@@ -6715,6 +6765,45 @@ def _pending_research_entries(
     ]
 
 
+def _lightning_drain_known_behavior_research(session: RunSession) -> list[str]:
+    """Resolve catalogued behavior-novelty entries during Lightning War.
+
+    Lightning War is explicitly speed-first: visual research for a pawn type
+    that already exists in ``known_types.json`` cannot add the missing fact
+    before the clock is lost. Keep truly unknown targets blocking, but let
+    known high-severity behavior entries become post-run diagnosis evidence.
+    """
+    if "lightning war" not in _target_names(session):
+        return []
+
+    from src.solver.unknown_detector import _load_known
+
+    known = _load_known()
+    known_pawn_types = known.get("pawn_types", set())
+    resolved: list[str] = []
+    for entry in session.research_queue or []:
+        if entry.get("status") not in ("pending", "in_progress"):
+            continue
+        if entry.get("kind") != "behavior_novelty":
+            continue
+        type_name = str(entry.get("type") or "")
+        if not type_name or type_name not in known_pawn_types:
+            continue
+        entry["status"] = "done"
+        entry["result"] = {
+            "source": "lightning_auto_resolved",
+            "reason": "known_behavior_type_speed_run",
+            "diff_field": entry.get("diff_field"),
+            "diff_predicted": entry.get("diff_predicted"),
+            "diff_actual": entry.get("diff_actual"),
+        }
+        resolved.append(type_name)
+
+    if resolved:
+        session.save()
+    return resolved
+
+
 def _lightning_research_entry_deferrable(entry: dict) -> bool:
     """True for research entries that can safely wait if absent right now."""
     kind = entry.get("kind")
@@ -6734,6 +6823,7 @@ def _lightning_research_gate_status(session: RunSession) -> dict:
     from src.research import orchestrator
 
     drained = orchestrator.drain_stale_behavior_novelty(session)
+    drained += _lightning_drain_known_behavior_research(session)
     pending = _pending_research_entries(session)
     result = {
         "status": "PASS",
@@ -6848,13 +6938,105 @@ def _iter_lua_keyed_table_blocks(text: str, key_pattern: str) -> list[tuple[str,
     return out
 
 
+def _lua_table_block_at(text: str, start: int) -> str | None:
+    """Return the balanced Lua table block beginning at ``start``."""
+    if start < 0 or start >= len(text) or text[start] != "{":
+        return None
+    depth = 0
+    in_string = False
+    escaped = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None
+
+
+def _lightning_parse_save_mission_entries(text: str) -> dict[str, dict]:
+    """Parse ``GAME.Missions`` entries from saveData into bridge-like rows."""
+    missions_match = re.search(r'\["Missions"\]\s*=\s*{', text)
+    if not missions_match:
+        return {}
+    start = text.find("{", missions_match.start())
+    missions_block = _lua_table_block_at(text, start)
+    if not missions_block:
+        return {}
+
+    out: dict[str, dict] = {}
+    for match in re.finditer(r'\[(\d+)\]\s*=\s*{', missions_block):
+        block_start = missions_block.find("{", match.start())
+        block = _lua_table_block_at(missions_block, block_start)
+        if not block:
+            continue
+        mission_index = int(match.group(1))
+        mission_id_match = re.search(r'\["ID"\]\s*=\s*"([^"]*)"', block)
+        mission_id = mission_id_match.group(1) if mission_id_match else ""
+        if not mission_id:
+            continue
+        bonus_block_match = re.search(
+            r'\["BonusObjs"\]\s*=\s*{(?P<body>.*?)}',
+            block,
+            re.DOTALL,
+        )
+        bonus_ids: list[int] = []
+        if bonus_block_match:
+            for raw_bonus in re.findall(
+                r'\[\d+\]\s*=\s*(-?\d+)',
+                bonus_block_match.group("body"),
+            ):
+                try:
+                    bonus_ids.append(int(raw_bonus))
+                except ValueError:
+                    continue
+        environment_match = re.search(r'\["Environment"\]\s*=\s*"([^"]*)"', block)
+        diff_match = re.search(r'\["DiffMod"\]\s*=\s*(-?\d+)', block)
+        asset_match = re.search(r'\["AssetId"\]\s*=\s*"([^"]*)"', block)
+        boss_match = re.search(r'\["BossMission"\]\s*=\s*(true|false)', block)
+        entry = {
+            "mission_index": mission_index,
+            "mission_slot": f"Mission{mission_index}",
+            "mission_id": mission_id,
+            "bonus_objective_ids": bonus_ids,
+            "environment": (
+                environment_match.group(1) if environment_match else None
+            ),
+        }
+        if diff_match:
+            entry["diff_mod"] = int(diff_match.group(1))
+        if asset_match:
+            entry["asset_id"] = asset_match.group(1)
+        if boss_match:
+            entry["boss"] = boss_match.group(1) == "true"
+        elif mission_id.endswith("Boss"):
+            entry["boss"] = True
+        out[entry["mission_slot"]] = entry
+    return out
+
+
 def _lightning_parse_save_region_entries(text: str) -> list[dict]:
     """Parse region state/name/objective hints from ``saveData.lua``."""
     regions: list[dict] = []
     for key, block in _iter_lua_keyed_table_blocks(text, r"region\d+"):
         state_match = re.search(r'\["state"\]\s*=\s*(-?\d+)', block)
-        name_match = re.search(r'\["name"\]\s*=\s*"([^"]*)"', block)
+        name_matches = re.findall(r'\["name"\]\s*=\s*"([^"]*)"', block)
         mission_match = re.search(r'\["mission"\]\s*=\s*"([^"]*)"', block)
+        turn_match = re.search(r'\["iCurrentTurn"\]\s*=\s*(-?\d+)', block)
+        has_player = bool(re.search(r'\["player"\]\s*=\s*{', block))
         state = int(state_match.group(1)) if state_match else None
         regions.append(
             {
@@ -6865,8 +7047,10 @@ def _lightning_parse_save_region_entries(text: str) -> list[dict]:
                     state if state is not None else -999,
                     "unknown",
                 ),
-                "name": name_match.group(1) if name_match else "",
+                "name": name_matches[-1] if name_matches else "",
                 "mission_slot": mission_match.group(1) if mission_match else "",
+                "has_player": has_player,
+                "i_current_turn": int(turn_match.group(1)) if turn_match else None,
                 "objective_texts": re.findall(r'\["text"\]\s*=\s*"([^"]*)"', block),
                 "objective_params": re.findall(
                     r'\["param1"\]\s*=\s*"([^"]*)"',
@@ -6888,6 +7072,116 @@ def _lightning_read_save_region_entries(
     except OSError:
         return []
     return _lightning_parse_save_region_entries(text)
+
+
+def _lightning_parse_save_active_region_index(text: str) -> int | None:
+    match = re.search(r'\["iBattleRegion"\]\s*=\s*(-?\d+)', text)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
+def _lightning_parse_save_grid_power(text: str) -> int:
+    match = re.search(r'\["network"\]\s*=\s*(-?\d+)', text)
+    if not match:
+        return 7
+    try:
+        return max(0, int(match.group(1)))
+    except ValueError:
+        return 7
+
+
+def _lightning_parse_save_current_units(text: str) -> list[dict]:
+    """Return a minimal weapon-bearing squad row for mission scoring."""
+    match = re.search(r'\["weapons"\]\s*=\s*{(?P<body>.*?)}', text, re.DOTALL)
+    if not match:
+        return []
+    weapons = [
+        weapon
+        for weapon in re.findall(r'"([^"]*)"', match.group("body"))
+        if weapon
+    ]
+    if not weapons:
+        return []
+    return [{"mech": True, "hp": 1, "weapons": weapons}]
+
+
+def _lightning_save_route_state(regions: list[dict]) -> int | None:
+    """Choose the save-region state that currently represents red choices."""
+    mission_regions = [r for r in regions if r.get("mission_slot")]
+    if any(r.get("state") == 1 for r in mission_regions):
+        return 1
+    if any(r.get("state") == 0 for r in mission_regions):
+        return 0
+    return None
+
+
+def _lightning_build_save_island_map_from_text(text: str) -> dict:
+    """Build a routeable island-map slate from saveData.lua alone."""
+    regions = _lightning_parse_save_region_entries(text)
+    missions_by_slot = _lightning_parse_save_mission_entries(text)
+    active_region_index = _lightning_parse_save_active_region_index(text)
+    route_state = _lightning_save_route_state(regions)
+    island_map: list[dict] = []
+
+    for region in sorted(regions, key=lambda r: int(r.get("region_index") or 0)):
+        mission_slot = str(region.get("mission_slot") or "")
+        if not mission_slot or route_state is None:
+            continue
+        if region.get("state") != route_state:
+            continue
+        if (
+            active_region_index == region.get("region_index")
+            and (region.get("i_current_turn") or 0) > 0
+        ):
+            continue
+        mission = missions_by_slot.get(mission_slot)
+        if not mission:
+            continue
+        entry = dict(mission)
+        entry.update(
+            {
+                "region_id": region.get("region_index"),
+                "save_region_index": region.get("region_index"),
+                "save_region_name": region.get("name"),
+                "save_region_state": region.get("state"),
+                "save_region_state_label": region.get("state_label"),
+                "mission_slot": mission_slot,
+                "source": "saveData",
+            }
+        )
+        if region.get("name") == "Corporate HQ":
+            entry["boss"] = True
+        island_map.append(entry)
+
+    return {
+        "status": "OK" if island_map else "NO_SAVE_ROUTE_OPTIONS",
+        "island_map": island_map,
+        "units": _lightning_parse_save_current_units(text),
+        "grid_power": _lightning_parse_save_grid_power(text),
+        "save_regions": regions,
+        "mission_count": len(missions_by_slot),
+        "active_region_index": active_region_index,
+        "route_state": route_state,
+    }
+
+
+def _lightning_build_save_island_map(
+    profile: str = "Alpha",
+    *,
+    path: Path | None = None,
+) -> dict:
+    save_path = path or (SAVE_DIR / f"profile_{profile}" / "saveData.lua")
+    try:
+        text = save_path.read_text()
+    except OSError as exc:
+        return {"status": "NO_SAVE_DATA", "error": str(exc), "island_map": []}
+    result = _lightning_build_save_island_map_from_text(text)
+    result["save_path"] = str(save_path)
+    return result
 
 
 def _lightning_current_time_ms_from_lua(text: str) -> float | None:
@@ -6946,15 +7240,49 @@ def _lightning_read_save_game_timer(
             "game_timer": _lightning_format_seconds(seconds),
         })
     if observed:
-        latest = max(observed, key=lambda item: float(item["game_timer_ms"]))
+        primary = [
+            item for item in observed
+            if item.get("source") != "undoSave_current_time"
+        ]
+        undo_candidates = [
+            item for item in observed
+            if item.get("source") == "undoSave_current_time"
+        ]
+        ignored: list[dict] = []
+        if primary and undo_candidates:
+            primary_latest = max(primary, key=lambda item: float(item["game_timer_ms"]))
+            undo_latest = max(
+                undo_candidates,
+                key=lambda item: float(item["game_timer_ms"]),
+            )
+            # After abandoning a timeline, undoSave.lua can retain the old
+            # timer while saveData/profile have already reset for the fresh run.
+            if (
+                float(primary_latest["game_timer_ms"]) <= 10_000
+                and float(undo_latest["game_timer_ms"]) >= 60_000
+            ):
+                ignored.append({
+                    **undo_latest,
+                    "reason": "stale_undo_after_new_timeline",
+                })
+                observed_for_choice = primary
+            else:
+                observed_for_choice = observed
+        else:
+            observed_for_choice = observed
+        latest = max(
+            observed_for_choice,
+            key=lambda item: float(item["game_timer_ms"]),
+        )
         return {
             "status": "OK",
             **latest,
             "candidates": observed,
+            "ignored_candidates": ignored,
             "note": (
                 "current.time is stored in milliseconds; profile.timer is "
-                "intentionally ignored; when save files disagree, the "
-                "highest current.time is used as the conservative clock"
+                "intentionally ignored; undoSave.current.time is ignored only "
+                "when it is clearly stale from an abandoned timeline"
             ),
         }
     return {
@@ -7475,19 +7803,201 @@ def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -
     return result
 
 
+_LIGHTNING_ROUTE_AUTO_MIN_SCORE = 10
+_LIGHTNING_ROUTE_DEFAULT_START_MODE = "dialogue-region-repeat-preview-board"
+
+
+def _lightning_speed_route_status(ranked: list[dict], routing: str) -> dict | None:
+    """Summarize whether the top Lightning route is fast enough to auto-start."""
+    if routing != "lightning_war":
+        return None
+    if not ranked:
+        return {
+            "status": "NO_ROUTE",
+            "auto_start_allowed": False,
+            "reason": "no_ranked_missions",
+            "min_auto_score": _LIGHTNING_ROUTE_AUTO_MIN_SCORE,
+        }
+    top = ranked[0]
+    score = top.get("score")
+    boss = bool(top.get("boss")) or str(top.get("mission_id") or "").endswith("Boss")
+    try:
+        numeric_score = float(score)
+    except (TypeError, ValueError):
+        numeric_score = None
+    allowed = boss or (
+        numeric_score is not None
+        and numeric_score >= _LIGHTNING_ROUTE_AUTO_MIN_SCORE
+    )
+    return {
+        "status": "AUTO_START_OK" if allowed else "REROLL_RECOMMENDED",
+        "auto_start_allowed": allowed,
+        "reason": (
+            "forced_boss_route"
+            if boss
+            else "top_score_meets_threshold"
+            if allowed
+            else "top_score_below_lightning_threshold"
+        ),
+        "min_auto_score": _LIGHTNING_ROUTE_AUTO_MIN_SCORE,
+        "top_score": score,
+        "top_mission_id": top.get("mission_id"),
+        "top_save_region_name": top.get("save_region_name"),
+    }
+
+
+def _lightning_recommend_save_routes(
+    profile: str = "Alpha",
+    *,
+    routing: str = "lightning_war",
+) -> dict:
+    """Score the current save-backed island route options without bridge IO."""
+    from src.strategy.mission_picker import score_island_map
+
+    save_result = _lightning_build_save_island_map(profile)
+    island_map = save_result.get("island_map") or []
+    if not island_map:
+        return {
+            "status": "NO_ISLAND_MAP",
+            "source": "saveData",
+            "routing": routing,
+            "ranked": [],
+            "top3": [],
+            "save_island_map": save_result,
+            "speed_route_status": _lightning_speed_route_status([], routing),
+        }
+    try:
+        ranked = score_island_map(
+            island_map,
+            save_result.get("units") or [],
+            int(save_result.get("grid_power") or 7),
+            routing=routing,
+        )
+    except ValueError as exc:
+        return {"status": "ERROR", "source": "saveData", "error": str(exc)}
+    return {
+        "status": "OK" if ranked else "NO_AVAILABLE_MISSIONS",
+        "source": "saveData",
+        "routing": routing,
+        "grid_power": save_result.get("grid_power"),
+        "available": len(island_map),
+        "ranked": ranked,
+        "top3": ranked[:3],
+        "save_island_map": save_result,
+        "speed_route_status": _lightning_speed_route_status(ranked, routing),
+    }
+
+
+def _lightning_route_options_for_visual_assignment(
+    recommendation: dict | None,
+) -> list[dict]:
+    """Return ranked save-backed routes in visual-map order."""
+    if not isinstance(recommendation, dict):
+        return []
+    ranked = recommendation.get("ranked")
+    if not isinstance(ranked, list):
+        return []
+    options = [
+        dict(option)
+        for option in ranked
+        if isinstance(option, dict) and option.get("save_region_index") is not None
+    ]
+    options.sort(
+        key=lambda option: (
+            int(option.get("save_region_index") or 0),
+            str(option.get("save_region_name") or ""),
+        )
+    )
+    return options
+
+
+def _lightning_assign_visual_route_options(
+    visual_regions: dict | None,
+    recommendation: dict | None,
+) -> dict | None:
+    """Attach save-backed mission ids to red blobs when counts line up."""
+    if not isinstance(visual_regions, dict) or visual_regions.get("status") != "OK":
+        return visual_regions
+    regions = visual_regions.get("regions")
+    if not isinstance(regions, list) or not regions:
+        return visual_regions
+    options = _lightning_route_options_for_visual_assignment(recommendation)
+    if not options:
+        return visual_regions
+
+    out = dict(visual_regions)
+    out_regions = [dict(region) for region in regions if isinstance(region, dict)]
+    if len(out_regions) != len(options):
+        out["route_assignment"] = {
+            "status": "COUNT_MISMATCH",
+            "method": "save_region_index_to_visual_order",
+            "visual_regions": len(out_regions),
+            "save_route_options": len(options),
+        }
+        out["regions"] = out_regions
+        return out
+
+    for region, option in zip(out_regions, options):
+        region["route_option"] = {
+            key: option.get(key)
+            for key in (
+                "mission_id",
+                "mission_slot",
+                "mission_index",
+                "region_id",
+                "save_region_index",
+                "save_region_name",
+                "score",
+                "boss",
+                "source",
+            )
+            if option.get(key) is not None
+        }
+    out["regions"] = out_regions
+    out["route_assignment"] = {
+        "status": "OK",
+        "method": "save_region_index_to_visual_order",
+        "visual_regions": len(out_regions),
+        "save_route_options": len(options),
+    }
+    return out
+
+
+def _lightning_candidate_auto_allowed(candidate: dict) -> bool:
+    option = candidate.get("route_option") or {}
+    if option.get("boss") or str(option.get("mission_id") or "").endswith("Boss"):
+        return True
+    try:
+        return float(option.get("score")) >= _LIGHTNING_ROUTE_AUTO_MIN_SCORE
+    except (TypeError, ValueError):
+        return False
+
+
+def _lightning_candidate_score(candidate: dict) -> float:
+    try:
+        return float(candidate.get("score"))
+    except (TypeError, ValueError):
+        return -9999.0
+
+
 def _lightning_route_start_candidates(
     visual_regions: dict | None,
     *,
-    start_mode: str = "preview-board",
+    start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
     target_hint: dict | None = None,
+    recommendation: dict | None = None,
 ) -> list[dict]:
     """Return ready-to-run route handoff commands for detected map regions."""
+    visual_regions = _lightning_assign_visual_route_options(
+        visual_regions,
+        recommendation,
+    )
     if not isinstance(visual_regions, dict):
         return []
     if visual_regions.get("status") != "OK":
         return []
     candidates: list[dict] = []
-    for region in visual_regions.get("regions") or []:
+    for visual_order, region in enumerate(visual_regions.get("regions") or []):
         if not isinstance(region, dict):
             continue
         window_x = region.get("window_x")
@@ -7523,9 +8033,28 @@ def _lightning_route_start_candidates(
             "route_start_command": route_start_command,
             "coordinate_command": coordinate_command,
         }
+        route_option = region.get("route_option")
+        if isinstance(route_option, dict) and route_option:
+            candidate["route_option"] = dict(route_option)
+            candidate["visual_order"] = visual_order
+            candidate["mission_id"] = route_option.get("mission_id")
+            candidate["save_region_index"] = route_option.get("save_region_index")
+            candidate["save_region_name"] = route_option.get("save_region_name")
+            candidate["score"] = route_option.get("score")
+            candidate["auto_route_allowed"] = _lightning_candidate_auto_allowed(
+                candidate,
+            )
         if target_hint:
             candidate["target_hint"] = dict(target_hint)
         candidates.append(candidate)
+    if any("route_option" in candidate for candidate in candidates):
+        candidates.sort(
+            key=lambda candidate: (
+                not bool(candidate.get("auto_route_allowed")),
+                -_lightning_candidate_score(candidate),
+                int(candidate.get("visual_order") or 0),
+            )
+        )
     return candidates
 
 
@@ -7601,6 +8130,21 @@ def _lightning_attach_primary_route_candidate(
         result["primary_next_command"] = command
     if first.get("index") is not None:
         result["primary_route_candidate_index"] = first.get("index")
+    result["primary_route_candidate"] = {
+        key: first.get(key)
+        for key in (
+            "index",
+            "window_x",
+            "window_y",
+            "mission_id",
+            "save_region_index",
+            "save_region_name",
+            "score",
+            "auto_route_allowed",
+            "route_option",
+        )
+        if first.get(key) is not None
+    }
     target_hint = first.get("target_hint")
     if isinstance(target_hint, dict) and target_hint:
         result["primary_route_target_hint"] = dict(target_hint)
@@ -7934,7 +8478,10 @@ def _lightning_live_snapshot() -> dict:
         "in_active_mission": bridge_data.get("in_active_mission"),
     }
     if board is not None:
-        snapshot["grid_power"] = f"{board.grid_power}/{board.grid_power_max}"
+        grid_power = getattr(board, "grid_power", None)
+        grid_power_max = getattr(board, "grid_power_max", None)
+        if grid_power is not None and grid_power_max is not None:
+            snapshot["grid_power"] = f"{grid_power}/{grid_power_max}"
     return snapshot
 
 
@@ -7947,7 +8494,7 @@ _LIGHTNING_UI_BUTTON_CROPS = {
         "size": (320, 100),
     },
     "reward_panel": {
-        "control": "bottom_continue",
+        "control": "reward_continue",
         "center": (1001, 653),
         "size": (300, 90),
     },
@@ -7966,6 +8513,11 @@ _LIGHTNING_UI_BUTTON_CROPS = {
         "center": (666, 518),
         "size": (300, 100),
     },
+    "kia_panel": {
+        "control": "kia_understood",
+        "center": (666, 443),
+        "size": (360, 90),
+    },
     "perfect_reward_choice": {
         "control": "perfect_reward_grid",
         "center": (817, 470),
@@ -7981,7 +8533,6 @@ _LIGHTNING_UI_BUTTON_CROPS = {
 _LIGHTNING_AUTO_HANDLE_UIS = {
     "reward_panel",
     "bottom_continue_panel",
-    "pod_open_panel",
     "promotion_panel",
     "perfect_reward_choice",
     "perfect_island_panel",
@@ -8038,7 +8589,6 @@ _LIGHTNING_UI_BURSTS = {
 _LIGHTNING_PAUSE_BLOCKING_UIS = {
     "reward_panel",
     "bottom_continue_panel",
-    "pod_open_panel",
     "promotion_panel",
     "perfect_reward_choice",
     "perfect_island_panel",
@@ -8046,6 +8596,14 @@ _LIGHTNING_PAUSE_BLOCKING_UIS = {
 
 _LIGHTNING_SAFE_CLEAR_UIS = set(_LIGHTNING_PAUSE_BLOCKING_UIS)
 _LIGHTNING_NON_PAUSEABLE_UIS = {"deployment_screen"}
+_LIGHTNING_PAUSE_GUARD_UIS = (
+    set(_LIGHTNING_SAFE_CLEAR_UIS)
+    | {
+        "island_map",
+        "island_map_or_unknown",
+        "mission_preview_panel",
+    }
+)
 _LIGHTNING_EXPECTED_MECH_COUNT = 3
 _LIGHTNING_DEPLOY_BRIDGE_TIMEOUT_SECONDS = 2.0
 _SUPPRESS_RESULT_PRINT_DEPTH = 0
@@ -8057,7 +8615,7 @@ def _lightning_preferred_visible_control(
 ) -> str | None:
     """Prefer controls that landed reliably in timed Lightning UI smoke tests."""
     if visible_name == "reward_panel" and control:
-        return "bottom_continue"
+        return "reward_continue"
     if visible_name == "perfect_island_panel" and control:
         return "panel_continue"
     if visible_name == "perfect_reward_choice" and control:
@@ -8536,6 +9094,33 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     # higher on the dialogue art, so recognize these before generic reward
     # continuations.
     if dark_overlay >= 0.60:
+        generic_continue = {
+            name: scores.get(name, {})
+            for name in ("bottom_continue_panel", "reward_panel")
+        }
+        reward_choice_probe = scores.get("perfect_reward_choice", {})
+        generic_hits = [
+            (name, score)
+            for name, score in generic_continue.items()
+            if (
+                _lightning_score_is_actionable(score, min_score=0.70)
+                and float(reward_choice_probe.get("score") or 0.0) < 0.80
+            )
+        ]
+        if generic_hits:
+            name, score = max(
+                generic_hits,
+                key=lambda item: float(item[1].get("score") or 0.0),
+            )
+            spec = _LIGHTNING_UI_BUTTON_CROPS[name]
+            return {
+                "status": "OK",
+                "visible_ui": name,
+                "recommended_control": spec["control"],
+                "confidence": score["score"],
+                "dark_overlay_fraction": dark_overlay,
+                "scores": scores,
+            }
         reward_choice = scores.get("perfect_reward_choice", {})
         if _lightning_score_is_actionable(
             reward_choice,
@@ -8581,6 +9166,7 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     # so Region Secured and Pod Recovered contents do not look like promotions.
     if dark_overlay >= 0.60:
         for name in (
+            "kia_panel",
             "pod_open_panel",
             "bottom_continue_panel",
             "reward_panel",
@@ -8710,10 +9296,20 @@ def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
         return visible_ui
 
     if (
+        visible_name == "reward_panel"
+        and is_deployment
+        and snapshot.get("in_active_mission") is True
+    ):
+        refined = dict(visible_ui)
+        refined["visible_ui"] = "bottom_continue_panel"
+        refined["recommended_control"] = "bottom_continue"
+        refined["intro_continue_from_deployment_snapshot"] = True
+        return refined
+
+    if (
         visible_name in _LIGHTNING_SAFE_CLEAR_UIS
         and snapshot.get("phase") in _COMBAT_BRIDGE_PHASES
         and snapshot.get("in_active_mission") is True
-        and int(snapshot.get("active_mechs") or 0) > 0
     ):
         refined = dict(visible_ui)
         refined["visible_ui"] = "combat_screen"
@@ -8894,6 +9490,14 @@ def _lightning_ensure_pause_state(
     from src.control.mac_click import click_known_window_control
 
     click_result = click_known_window_control("pause")
+    pause_verify = None
+    pause_verified = False
+    if click_result.get("status") == "OK":
+        pause_verify = _lightning_visible_ui_snapshot()
+        pause_verified = (
+            pause_verify.get("status") == "OK"
+            and pause_verify.get("visible_ui") == "pause_menu"
+        )
     result = {
         "status": click_result.get("status", "ERROR"),
         "reason": "pause_clicked",
@@ -8901,17 +9505,373 @@ def _lightning_ensure_pause_state(
         "already_paused": False,
         "visible_ui": visible_ui,
         "click_result": click_result,
+        "pause_verified": pause_verified,
+        "pause_verify": pause_verify,
     }
     if click_result.get("status") != "OK":
         result["reason"] = "pause_click_failed"
         result["error"] = click_result.get("error")
+    elif not pause_verified:
+        result["status"] = "BLOCKED"
+        result["reason"] = "pause_not_verified"
+        result["next_step"] = (
+            "Inspect the screen before running a timed Lightning combat burst; "
+            "the pause click did not visibly reach the pause menu."
+        )
     result["guard"] = _lightning_write_guard(
         session,
         guard_status=result["status"],
         reason=reason,
-        visible_ui=visible_ui,
+        visible_ui=pause_verify or visible_ui,
         click_result=click_result,
     )
+    return result
+
+
+def _lightning_pause_guard_decision(
+    visible_ui: dict,
+    live_snapshot: dict | None = None,
+) -> dict:
+    """Decide whether the timer pause guard may click Pause on this screen."""
+    visible_name = visible_ui.get("visible_ui") if isinstance(visible_ui, dict) else None
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "screen_classification_failed",
+            "pause_allowed": False,
+        }
+    if visible_name == "pause_menu":
+        return {
+            "status": "OK",
+            "reason": "already_paused",
+            "pause_allowed": False,
+            "already_paused": True,
+        }
+    if visible_name == "kia_panel":
+        return {
+            "status": "BLOCKED",
+            "reason": "kia_panel_visible",
+            "pause_allowed": False,
+            "next_step": "Inspect the terminal outcome before more Lightning UI clicks.",
+        }
+    if visible_name == "pod_open_panel":
+        return {
+            "status": "SKIPPED",
+            "reason": "pod_panel_excluded_from_pause_guard",
+            "pause_allowed": False,
+        }
+    if (
+        visible_name in _LIGHTNING_NON_PAUSEABLE_UIS
+        or visible_ui.get("non_pauseable") is True
+    ):
+        return {
+            "status": "BLOCKED",
+            "reason": "visible_ui_is_not_pauseable",
+            "pause_allowed": False,
+        }
+
+    live_snapshot = live_snapshot or {}
+    visible_island_map = visible_name == "island_map"
+    if live_snapshot.get("status") == "OK":
+        try:
+            turn = int(live_snapshot.get("turn") or 0)
+        except (TypeError, ValueError):
+            turn = 0
+        try:
+            deployment_zone_count = int(
+                live_snapshot.get("deployment_zone_count") or 0
+            )
+        except (TypeError, ValueError):
+            deployment_zone_count = 0
+        phase = live_snapshot.get("phase")
+        if (
+            not visible_island_map
+            and
+            live_snapshot.get("in_active_mission") is True
+            and phase in _COMBAT_BRIDGE_PHASES
+        ):
+            return {
+                "status": "BLOCKED",
+                "reason": "live_combat_phase",
+                "pause_allowed": False,
+                "phase": phase,
+            }
+        if not visible_island_map and turn == 0 and deployment_zone_count > 0:
+            return {
+                "status": "BLOCKED",
+                "reason": "deployment_phase",
+                "pause_allowed": False,
+            }
+        if (
+            visible_name == "island_map_or_unknown"
+            and int(live_snapshot.get("island_map_count") or 0) <= 0
+            and live_snapshot.get("in_active_mission") is not False
+        ):
+            return {
+                "status": "SKIPPED",
+                "reason": "unknown_screen_without_map_context",
+                "pause_allowed": False,
+            }
+    elif visible_name == "island_map_or_unknown":
+        return {
+            "status": "SKIPPED",
+            "reason": "unknown_screen_without_bridge",
+            "pause_allowed": False,
+        }
+
+    if visible_name in _LIGHTNING_PAUSE_GUARD_UIS:
+        return {
+            "status": "OK",
+            "reason": "safe_ui_pause_available",
+            "pause_allowed": True,
+            "visible_ui": visible_name,
+        }
+
+    return {
+        "status": "SKIPPED",
+        "reason": "visible_ui_not_pause_guard_eligible",
+        "pause_allowed": False,
+        "visible_ui": visible_name,
+    }
+
+
+def _lightning_timer_growth_probe(
+    profile: str = "Alpha",
+    *,
+    sample_seconds: float = 0.25,
+    first_timer: dict | None = None,
+) -> dict:
+    """Sample save/profile current.time twice to detect an advancing run clock."""
+    first = first_timer or _lightning_read_save_game_timer(profile)
+    wait = max(0.0, float(sample_seconds or 0.0))
+    if wait > 0:
+        time.sleep(wait)
+    second = _lightning_read_save_game_timer(profile)
+    result = {
+        "status": "UNKNOWN",
+        "sample_seconds": round(wait, 3),
+        "first_timer": first,
+        "second_timer": second,
+        "running": None,
+        "delta_seconds": None,
+    }
+    if (
+        first.get("status") == "OK"
+        and second.get("status") == "OK"
+        and first.get("game_seconds") is not None
+        and second.get("game_seconds") is not None
+    ):
+        delta = float(second["game_seconds"]) - float(first["game_seconds"])
+        result.update(
+            {
+                "status": "OK",
+                "delta_seconds": round(delta, 3),
+                "running": delta > 0.05,
+            }
+        )
+    return result
+
+
+def _lightning_timer_pause_guard_once(
+    profile: str = "Alpha",
+    *,
+    dry_run: bool = False,
+    click_ui: bool = True,
+    require_timer_growth: bool = False,
+    sample_seconds: float = 0.25,
+    verify_sample_seconds: float = 0.25,
+    reason: str = "lightning_pause_guard",
+) -> dict:
+    """Click Pause from timer-bearing safe screens, including reward panels."""
+    session = _load_session()
+    visible_ui = _lightning_visible_ui_snapshot()
+    if visible_ui.get("visible_ui") == "island_map":
+        live_snapshot = {
+            "status": "SKIPPED",
+            "reason": "visible_island_map_authoritative",
+        }
+    else:
+        bridge_refine = visible_ui.get("bridge_refine_snapshot")
+        live_snapshot = (
+            bridge_refine
+            if isinstance(bridge_refine, dict)
+            and bridge_refine.get("status") == "OK"
+            else _lightning_live_snapshot()
+        )
+    decision = _lightning_pause_guard_decision(visible_ui, live_snapshot)
+    base = {
+        "visible_ui": visible_ui,
+        "live_snapshot": live_snapshot,
+        "decision": decision,
+    }
+
+    if not decision.get("pause_allowed"):
+        result = {
+            "status": decision.get("status", "SKIPPED"),
+            "reason": decision.get("reason", "pause_not_allowed"),
+            **base,
+        }
+        if decision.get("already_paused") and not dry_run:
+            result["guard"] = _lightning_write_guard(
+                session,
+                guard_status="OK",
+                reason=reason,
+                visible_ui=visible_ui,
+            )
+        return result
+
+    timer_probe = None
+    if require_timer_growth:
+        timer_probe = _lightning_timer_growth_probe(
+            profile,
+            sample_seconds=sample_seconds,
+        )
+        if timer_probe.get("running") is not True:
+            return {
+                "status": "SKIPPED",
+                "reason": "timer_not_observed_running",
+                "timer_probe": timer_probe,
+                **base,
+            }
+
+    if dry_run or not click_ui:
+        return {
+            "status": "DRY_RUN" if dry_run else "NO_CLICK",
+            "reason": "would_click_pause",
+            "planned_control": "pause",
+            "timer_probe": timer_probe,
+            **base,
+        }
+
+    from src.control.mac_click import click_known_window_control
+
+    click_result = click_known_window_control("pause")
+    pause_verify = None
+    pause_verified = False
+    timer_stop_verified = False
+    stop_probe = None
+    if click_result.get("status") == "OK":
+        pause_verify = _lightning_visible_ui_snapshot()
+        pause_verified = (
+            pause_verify.get("status") == "OK"
+            and pause_verify.get("visible_ui") == "pause_menu"
+        )
+        if not pause_verified and verify_sample_seconds > 0:
+            stop_probe = _lightning_timer_growth_probe(
+                profile,
+                sample_seconds=verify_sample_seconds,
+            )
+            timer_stop_verified = (
+                stop_probe.get("status") == "OK"
+                and stop_probe.get("running") is False
+            )
+            pause_verified = timer_stop_verified
+
+    result = {
+        "status": click_result.get("status", "ERROR"),
+        "reason": "pause_clicked",
+        "planned_control": "pause",
+        "timer_probe": timer_probe,
+        "visible_ui": visible_ui,
+        "live_snapshot": live_snapshot,
+        "decision": decision,
+        "click_result": click_result,
+        "pause_verified": pause_verified,
+        "timer_stop_verified": timer_stop_verified,
+        "pause_verify": pause_verify,
+        "stop_probe": stop_probe,
+    }
+    if click_result.get("status") != "OK":
+        result["reason"] = "pause_click_failed"
+        result["error"] = click_result.get("error")
+    elif timer_stop_verified:
+        result["reason"] = "pause_clicked_timer_stopped"
+    elif not pause_verified:
+        result["status"] = "BLOCKED"
+        result["reason"] = "pause_not_verified"
+        result["next_step"] = (
+            "Pause was clicked from a safe timer screen, but the pause menu "
+            "or stopped timer was not verified. Inspect before more timed UI."
+        )
+    result["guard"] = _lightning_write_guard(
+        session,
+        guard_status=result["status"],
+        reason=reason,
+        visible_ui=pause_verify or visible_ui,
+        click_result=click_result,
+    )
+    return result
+
+
+def cmd_lightning_pause_guard(
+    profile: str = "Alpha",
+    *,
+    seconds: float = 5.0,
+    interval: float = 0.25,
+    sample_seconds: float = 0.25,
+    require_timer_growth: bool = False,
+    dry_run: bool = False,
+    click_ui: bool = True,
+    once: bool = False,
+) -> dict:
+    """Cooperatively watch for safe timer screens and pause immediately."""
+    started = time.monotonic()
+    deadline = started + max(0.0, float(seconds or 0.0))
+    polls: list[dict] = []
+    while True:
+        poll = _lightning_timer_pause_guard_once(
+            profile,
+            dry_run=dry_run,
+            click_ui=click_ui,
+            require_timer_growth=require_timer_growth,
+            sample_seconds=sample_seconds,
+            reason="lightning_pause_guard_watch",
+        )
+        polls.append(poll)
+        poll_status = poll.get("status")
+        poll_reason = poll.get("reason")
+        if (
+            poll_status in {"OK", "DRY_RUN", "NO_CLICK", "BLOCKED", "ERROR"}
+            or poll_reason in {
+                "already_paused",
+                "pause_clicked",
+                "pause_clicked_timer_stopped",
+                "would_click_pause",
+            }
+        ):
+            break
+        if once or time.monotonic() >= deadline:
+            break
+        time.sleep(max(0.0, float(interval or 0.0)))
+
+    elapsed = time.monotonic() - started
+    last_poll = polls[-1] if polls else {}
+    status = last_poll.get("status", "NO_ACTION")
+    reason = last_poll.get("reason", "no_pauseable_timer_screen_seen")
+    if status == "SKIPPED":
+        status = "NO_ACTION"
+        reason = "no_pauseable_timer_screen_seen"
+    result = {
+        "status": status,
+        "reason": reason,
+        "poll_count": len(polls),
+        "elapsed_wall_seconds": round(elapsed, 3),
+        "last_poll": last_poll,
+        "require_timer_growth": require_timer_growth,
+        "sample_seconds": sample_seconds,
+    }
+    if len(polls) > 1:
+        result["poll_reasons"] = [poll.get("reason") for poll in polls]
+
+    print("\n=== LIGHTNING PAUSE GUARD ===")
+    print(f"  status:  {result.get('status')}")
+    print(f"  reason:  {result.get('reason')}")
+    print(f"  polls:   {result.get('poll_count')}")
+    print(
+        "  visible: "
+        f"{last_poll.get('visible_ui', {}).get('visible_ui')}"
+    )
+    _print_result(result)
     return result
 
 
@@ -8951,7 +9911,13 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
     from src.control.mac_click import click_known_window_control
 
     click_result = click_known_window_control(control, dry_run=dry_run)
-    return {
+    fallback_result = None
+    fallback_visible_ui = None
+    if control == "reward_continue" and not dry_run and click_result.get("status") == "OK":
+        fallback_visible_ui = _lightning_visible_ui_snapshot()
+        if fallback_visible_ui.get("visible_ui") in {"reward_panel", "bottom_continue_panel"}:
+            fallback_result = click_known_window_control("bottom_continue", dry_run=dry_run)
+    result = {
         "status": click_result.get("status", "ERROR"),
         "visible_ui": visible_ui,
         "control": control,
@@ -8961,6 +9927,13 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
             "otherwise run lightning_ui ensure_pause or lightning_attempt."
         ),
     }
+    if fallback_result is not None:
+        result["fallback_visible_ui"] = fallback_visible_ui
+        result["fallback_control"] = "bottom_continue"
+        result["fallback_click_result"] = fallback_result
+        if fallback_result.get("status") != "OK":
+            result["status"] = fallback_result.get("status", "ERROR")
+    return result
 
 
 def _lightning_clear_visible_panel_chain(
@@ -9014,6 +9987,15 @@ def _lightning_clear_visible_panel_chain(
 
         click_result = click_known_window_control(str(control))
         step["click_result"] = click_result
+        if control == "reward_continue" and click_result.get("status") == "OK":
+            fallback_visible_ui = _lightning_visible_ui_snapshot()
+            if fallback_visible_ui.get("visible_ui") in {"reward_panel", "bottom_continue_panel"}:
+                fallback_result = click_known_window_control("bottom_continue")
+                step["fallback_visible_ui"] = fallback_visible_ui
+                step["fallback_control"] = "bottom_continue"
+                step["fallback_click_result"] = fallback_result
+                if fallback_result.get("status") != "OK":
+                    click_result = fallback_result
         steps.append(step)
         if click_result.get("status") != "OK":
             return {
@@ -9320,8 +10302,9 @@ def _lightning_pause_after_stop(
         }
         return result
 
-    result["pause_guard"] = _lightning_ensure_pause_state(
+    result["pause_guard"] = _lightning_timer_pause_guard_once(
         dry_run=False,
+        click_ui=True,
         reason=reason,
     )
     result["next_step"] = (
@@ -9394,6 +10377,46 @@ def _lightning_quiet_call(func, *args, quiet: bool = False, **kwargs) -> tuple[d
     return result, {
         "captured_stdout_lines": sink.lines,
         "captured_stdout_chars": sink.chars,
+    }
+
+
+def _lightning_visible_map_route_plan(
+    *,
+    profile: str,
+    visible_ui: dict,
+    quiet: bool = False,
+) -> dict:
+    """Score save routes and match them to the current visible island map."""
+    recommendation, recommendation_output = _lightning_quiet_call(
+        cmd_recommend_mission,
+        profile=profile,
+        routing="lightning_war",
+        pause_map_peek=False,
+        quiet=quiet,
+    )
+    if recommendation_output:
+        recommendation["quiet_output"] = recommendation_output
+    route_target_hint = _lightning_route_target_hint_from_recommendation(
+        recommendation,
+    )
+    visual_regions = None
+    screenshot_path = visible_ui.get("screenshot_path") if isinstance(visible_ui, dict) else None
+    if screenshot_path:
+        visual_regions = _lightning_extract_red_regions_from_image(screenshot_path)
+        visual_regions = _lightning_assign_visual_route_options(
+            visual_regions,
+            recommendation,
+        )
+    route_candidates = _lightning_route_start_candidates(
+        visual_regions,
+        target_hint=route_target_hint,
+        recommendation=recommendation,
+    )
+    return {
+        "recommendation": recommendation,
+        "route_target_hint": route_target_hint,
+        "visual_regions": visual_regions,
+        "route_start_candidates": route_candidates,
     }
 
 
@@ -9836,7 +10859,9 @@ def cmd_lightning_map_regions(
     *,
     out_dir: str | None = None,
     dry_run: bool = False,
-    start_mode: str = "preview-board",
+    start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
+    profile: str = "Alpha",
+    use_save_route_plan: bool = True,
     target_name: str | None = None,
     target_mission_id: str | None = None,
     target_region_id: int | None = None,
@@ -9884,10 +10909,21 @@ def cmd_lightning_map_regions(
     )
     if target_hint:
         result["route_target_hint"] = target_hint
+    save_recommendation = (
+        _lightning_recommend_save_routes(profile, routing="lightning_war")
+        if use_save_route_plan
+        else None
+    )
+    if save_recommendation:
+        result["save_route_recommendation"] = save_recommendation
+        assigned = _lightning_assign_visual_route_options(result, save_recommendation)
+        if isinstance(assigned, dict):
+            result = assigned
     route_candidates = _lightning_route_start_candidates(
         result,
         start_mode=start_mode,
         target_hint=target_hint,
+        recommendation=save_recommendation,
     )
     if route_candidates:
         result["route_start_candidates"] = route_candidates
@@ -9915,9 +10951,15 @@ def cmd_lightning_map_regions(
             hint = candidate.get("target_hint") or {}
             if hint.get("match_label"):
                 target = f" target={hint.get('match_label')}"
+            mission = ""
+            if candidate.get("mission_id"):
+                mission = (
+                    f" mission={candidate.get('mission_id')}"
+                    f" score={candidate.get('score')}"
+                )
             print(
                 f"    #{candidate.get('index')}: "
-                f"{candidate.get('command')}{target}"
+                f"{candidate.get('command')}{target}{mission}"
             )
     _print_result(result)
     return result
@@ -10342,30 +11384,31 @@ def _lightning_click_route_start_sequence(
     dry_run: bool = False,
     include_start_click: bool = True,
     dismiss_dialogue: bool = False,
-    start_mode: str = "preview_board",
+    start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
     start_window_x: int | None = None,
     start_window_y: int | None = None,
     region_settle_seconds: float = 0.35,
+    resume_from_pause: bool = True,
 ) -> dict:
     """Resume from pause, click a map region, then click the preview board."""
     from src.control.mac_click import _get_window_bounds, click_screen_point
 
-    sequence = [
-        {
+    sequence = []
+    if resume_from_pause:
+        sequence.append({
             "kind": "key",
             "key": "esc",
             "description": "Pause menu Escape resume",
             "settle_seconds": 0.22,
-        },
-        {
-            "kind": "point",
-            "window_x": int(region_window_x),
-            "window_y": int(region_window_y),
-            "description": "Lightning route region",
-            "settle_seconds": float(region_settle_seconds),
-            "hold_seconds": 0.06,
-        },
-    ]
+        })
+    sequence.append({
+        "kind": "point",
+        "window_x": int(region_window_x),
+        "window_y": int(region_window_y),
+        "description": "Lightning route region",
+        "settle_seconds": float(region_settle_seconds),
+        "hold_seconds": 0.06,
+    })
     if include_start_click:
         normalized_start_mode = (
             "manual_point"
@@ -10583,7 +11626,7 @@ def cmd_lightning_route_start(
     auto_pause_if_needed: bool = True,
     include_start_click: bool = True,
     dismiss_dialogue: bool = False,
-    start_mode: str = "preview_board",
+    start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
     start_window_x: int | None = None,
     start_window_y: int | None = None,
     dry_run: bool = False,
@@ -10635,7 +11678,16 @@ def cmd_lightning_route_start(
         )
         if auto_pause.get("status") == "OK":
             initial_ui = _lightning_visible_ui_snapshot()
-    if initial_ui.get("status") != "OK" or initial_ui.get("visible_ui") != "pause_menu":
+    initial_visible_name = initial_ui.get("visible_ui")
+    can_start_from_live_map = (
+        not auto_pause_if_needed
+        and initial_ui.get("status") == "OK"
+        and initial_visible_name == "island_map"
+    )
+    if (
+        initial_ui.get("status") != "OK"
+        or (initial_visible_name != "pause_menu" and not can_start_from_live_map)
+    ):
         result = {
             "status": "BLOCKED",
             "reason": "not_in_pause_menu",
@@ -10677,6 +11729,7 @@ def cmd_lightning_route_start(
                     route_candidates = _lightning_route_start_candidates(
                         visual_regions,
                         target_hint=route_target_hint,
+                        recommendation=recommendation,
                     )
                     result = {
                         "status": "BLOCKED",
@@ -10712,6 +11765,7 @@ def cmd_lightning_route_start(
                 route_candidates = _lightning_route_start_candidates(
                     visual_regions,
                     target_hint=route_target_hint,
+                    recommendation=recommendation,
                 )
                 result = {
                     "status": "ROUTE_READY_VISUAL",
@@ -10774,6 +11828,7 @@ def cmd_lightning_route_start(
             route_candidates = _lightning_route_start_candidates(
                 visual_regions,
                 target_hint=route_target_hint,
+                recommendation=recommendation,
             )
             result = {
                 "status": "BLOCKED",
@@ -10822,6 +11877,7 @@ def cmd_lightning_route_start(
             route_candidates = _lightning_route_start_candidates(
                 visual_regions,
                 target_hint=route_target_hint,
+                recommendation=recommendation,
             )
             if route_candidates:
                 result["route_start_candidates"] = route_candidates
@@ -10846,6 +11902,7 @@ def cmd_lightning_route_start(
         start_mode=start_mode,
         start_window_x=start_window_x,
         start_window_y=start_window_y,
+        resume_from_pause=(initial_visible_name == "pause_menu"),
     )
     result = {
         "status": click_result.get("status", "ERROR"),
@@ -11077,6 +12134,8 @@ def cmd_lightning_attempt(
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = False,
+    pause_before_solve: bool = True,
+    pause_between_actions: bool = True,
 ) -> dict:
     """Run the next safe Lightning War automation step.
 
@@ -11238,12 +12297,37 @@ def cmd_lightning_attempt(
             visible_ui.get("status") == "OK"
             and visible_ui.get("visible_ui") == "island_map"
         ):
+            route_plan = _lightning_visible_map_route_plan(
+                profile=profile,
+                visible_ui=visible_ui,
+                quiet=quiet,
+            )
+            if route_plan.get("route_start_candidates"):
+                result = {
+                    "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                    "reason": "visible_island_map_save_route_plan",
+                    "snapshot": snapshot,
+                    "budget": budget,
+                    "preflight": preflight,
+                    **route_plan,
+                    "next_step": (
+                        "Visible island map has save-backed route candidates. "
+                        "Use the primary route command, or abandon/restart if "
+                        "the speed_route_status recommends rerolling."
+                    ),
+                }
+                _lightning_attach_primary_route_candidate(
+                    result,
+                    route_plan["route_start_candidates"],
+                )
+                return finish(result, pause_reason="lightning_attempt_visible_island_map")
             result = {
                 "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
                 "reason": "bridge_snapshot_unavailable_visible_island_map",
                 "snapshot": snapshot,
                 "budget": budget,
                 "preflight": preflight,
+                **route_plan,
                 "next_step": (
                     "The visible screen is the island map, but the bridge "
                     "snapshot is unavailable. Stay paused for route thinking, "
@@ -11298,6 +12382,8 @@ def cmd_lightning_attempt(
             allow_protected_objective_loss=allow_protected_objective_loss,
             allow_objective_loss=allow_objective_loss,
             lightning_speed_loss_policy=lightning_speed_loss_policy,
+            pause_before_solve=pause_before_solve,
+            pause_between_actions=pause_between_actions,
         )
         action_record["combat_loop"] = loop
         result = {
@@ -11482,16 +12568,55 @@ def cmd_lightning_attempt(
                 }
                 return finish(result, pause_reason="lightning_attempt_started_preview")
         elif visible_ui.get("visible_ui") == "island_map":
+            route_plan = _lightning_visible_map_route_plan(
+                profile=profile,
+                visible_ui=visible_ui,
+                quiet=quiet,
+            )
+            if route_plan.get("route_start_candidates"):
+                result = {
+                    "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                    "reason": "stale_deployment_visible_island_map_save_route_plan",
+                    "snapshot": {**snapshot, "visible_ui": visible_ui},
+                    "budget": budget,
+                    "preflight": preflight,
+                    **route_plan,
+                    "next_step": (
+                        "Visible island map has save-backed route candidates "
+                        "despite stale deployment bridge data. Use the primary "
+                        "route command only if its auto_route_allowed flag is true."
+                    ),
+                }
+                _lightning_attach_primary_route_candidate(
+                    result,
+                    route_plan["route_start_candidates"],
+                )
+                return finish(result, pause_reason="lightning_attempt_deployment_uncertain")
             result = {
                 "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
                 "reason": "deployment_bridge_state_uncertain",
                 "snapshot": {**snapshot, "visible_ui": visible_ui},
                 "budget": budget,
                 "preflight": preflight,
+                **route_plan,
                 "next_step": (
                     "Visible screen is the island map, so bridge deployment "
                     "zones are stale. Select/start a red mission preview before "
                     "deployment."
+                ),
+            }
+            return finish(result, pause_reason="lightning_attempt_deployment_uncertain")
+        elif visible_ui.get("visible_ui") != "deployment_screen":
+            result = {
+                "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
+                "reason": "deployment_visible_ui_not_deployment",
+                "snapshot": {**snapshot, "visible_ui": visible_ui},
+                "budget": budget,
+                "preflight": preflight,
+                "next_step": (
+                    "Bridge reports a phase-unknown deployment state, but the "
+                    "screen is not visibly deployment. Inspect/clear the visible "
+                    "UI before deploying."
                 ),
             }
             return finish(result, pause_reason="lightning_attempt_deployment_uncertain")
@@ -11637,6 +12762,26 @@ def cmd_lightning_attempt(
                 ),
             }
             return finish(result, pause_reason="lightning_attempt_panel_ready")
+        if (
+            visible_ui.get("status") == "OK"
+            and visible_ui.get("recommended_control")
+            and visible_ui.get("visible_ui") != "island_map"
+        ):
+            result = {
+                "status": "LIGHTNING_ATTEMPT_PANEL_READY",
+                "reason": "visible_panel_not_auto_clearable",
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+                "visible_ui": visible_ui,
+                "recommended_control": visible_ui.get("recommended_control"),
+                "next_step": (
+                    "A visible modal is covering the island map and is not in "
+                    "the Lightning auto-clear allowlist. Inspect it before "
+                    "continuing."
+                ),
+            }
+            return finish(result, pause_reason="lightning_attempt_panel_ready")
         recommendation, recommendation_output = _lightning_quiet_call(
             cmd_recommend_mission,
             profile=profile,
@@ -11669,6 +12814,7 @@ def cmd_lightning_attempt(
             route_candidates = _lightning_route_start_candidates(
                 visual_regions,
                 target_hint=route_target_hint,
+                recommendation=recommendation,
             )
             if route_candidates:
                 result["route_start_candidates"] = route_candidates
@@ -11866,6 +13012,11 @@ def _lightning_segment_success_reason(result: dict) -> str | None:
         and reason == "bridge_snapshot_unavailable_visible_island_map"
     ):
         return "visible_island_map_without_bridge"
+    if status == "LIGHTNING_ATTEMPT_NEEDS_UI" and reason == "deployment_bridge_state_uncertain":
+        snapshot = result.get("snapshot")
+        visible_ui = snapshot.get("visible_ui") if isinstance(snapshot, dict) else None
+        if isinstance(visible_ui, dict) and visible_ui.get("visible_ui") == "island_map":
+            return "visible_island_map_with_stale_deployment_bridge"
     return None
 
 
@@ -11891,9 +13042,12 @@ def cmd_lightning_segment(
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = True,
+    pause_before_solve: bool = True,
+    pause_between_actions: bool = True,
     settle_seconds: float = 0.25,
     route_visual_region_index: int | None = None,
-    route_start_mode: str = "preview_board",
+    route_start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
+    route_auto_start: bool = False,
 ) -> dict:
     """Run repeated Lightning War conductor bursts until the next decision."""
     started_at = time.monotonic()
@@ -11930,6 +13084,8 @@ def cmd_lightning_segment(
             ),
             "allow_objective_loss": allow_objective_loss if dirty_pending else False,
             "lightning_speed_loss_policy": lightning_speed_loss_policy,
+            "pause_before_solve": pause_before_solve,
+            "pause_between_actions": pause_between_actions,
         }
         attempt, attempt_output = _lightning_quiet_call(
             lambda: cmd_lightning_attempt(**attempt_kwargs),
@@ -11951,6 +13107,22 @@ def cmd_lightning_segment(
 
         success_reason = _lightning_segment_success_reason(attempt)
         if success_reason:
+            if not route_start_pending and route_auto_start:
+                primary = attempt.get("primary_route_candidate")
+                if (
+                    isinstance(primary, dict)
+                    and isinstance(primary.get("index"), int)
+                    and primary.get("auto_route_allowed") is True
+                ):
+                    route_visual_region_index = int(primary["index"])
+                    route_start_pending = True
+                    summary["route_auto_start_index"] = route_visual_region_index
+                    summary["route_auto_start_mission"] = primary.get("mission_id")
+                else:
+                    stopped_reason = "route_auto_start_not_allowed"
+                    if isinstance(primary, dict):
+                        summary["route_auto_start_blocked_candidate"] = primary
+                    break
             if route_start_pending:
                 route_start_pending = False
                 route_started_at = time.monotonic()
@@ -12021,6 +13193,7 @@ def cmd_lightning_segment(
         "wall_seconds": round(time.monotonic() - started_at, 2),
         "steps": steps,
         "lightning_speed_loss_policy": lightning_speed_loss_policy,
+        "route_auto_start": route_auto_start,
         "dirty_consent_still_pending": dirty_pending,
         "route_start_performed": last_route_start is not None,
         "route_visual_region_index_pending": (
@@ -12187,6 +13360,30 @@ def _observe_end_turn_after_click(
     }
 
 
+def _lightning_end_turn_retryable(observed: dict, turn_result: dict) -> bool:
+    """True when a missed End Turn observation is safe to click once more."""
+    if not isinstance(observed, dict):
+        return False
+    if observed.get("status") != "END_TURN_CLICK_NOT_OBSERVED":
+        return False
+    if observed.get("reason") != "bridge_still_player_turn":
+        return False
+    samples = observed.get("samples")
+    if not isinstance(samples, list) or not samples:
+        return False
+    expected_turn = turn_result.get("turn")
+    for sample in samples:
+        if not isinstance(sample, dict):
+            return False
+        if sample.get("phase") != "combat_player":
+            return False
+        if int(sample.get("active_mechs") or 0) != 0:
+            return False
+        if expected_turn is not None and sample.get("turn") != expected_turn:
+            return False
+    return True
+
+
 def _lightning_observed_terminal_transition(observed: dict) -> bool:
     """True when the End Turn observer saw a mission/reward-screen phase."""
     samples = observed.get("samples") if isinstance(observed, dict) else None
@@ -12207,6 +13404,71 @@ def _lightning_auto_turn_error_is_terminal(turn_result: dict) -> bool:
     return error.startswith("Not in combat_player phase:")
 
 
+def _lightning_wait_for_player_turn_and_pause(
+    *,
+    max_wait: float,
+    wait_poll_interval: float,
+) -> dict:
+    """Wait for an actionable player turn, then pause before solving."""
+    started_at = time.monotonic()
+    wait_poll_interval = max(0.05, float(wait_poll_interval or 0.05))
+    prev_fp: str | None = None
+    last_snapshot: dict | None = None
+
+    while time.monotonic() - started_at < max_wait:
+        snapshot = _lightning_live_snapshot()
+        last_snapshot = snapshot
+        phase = snapshot.get("phase")
+        if snapshot.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "snapshot_failed",
+                "snapshot": snapshot,
+                "wait_seconds": round(time.monotonic() - started_at, 3),
+            }
+        has_deploy_zone = int(snapshot.get("deployment_zone_count") or 0) > 0
+        if (
+            phase in ("between_missions", "mission_ending")
+            or not snapshot.get("in_active_mission")
+            or (phase == "unknown" and not has_deploy_zone)
+        ):
+            return {
+                "status": "TERMINAL_OR_MISSION_END",
+                "reason": "not_in_active_combat",
+                "snapshot": snapshot,
+                "wait_seconds": round(time.monotonic() - started_at, 3),
+            }
+        if phase == "combat_player" and int(snapshot.get("active_mechs") or 0) > 0:
+            try:
+                live_data = read_state() if is_bridge_active() else None
+            except Exception:
+                live_data = None
+            cur_fp = _unit_roster_fingerprint(live_data)
+            if prev_fp is not None and cur_fp == prev_fp:
+                pause_result = _lightning_ensure_pause_state(
+                    dry_run=False,
+                    reason="lightning_pause_before_solve",
+                )
+                return {
+                    "status": pause_result.get("status", "ERROR"),
+                    "reason": pause_result.get("reason"),
+                    "snapshot": snapshot,
+                    "pause_result": pause_result,
+                    "wait_seconds": round(time.monotonic() - started_at, 3),
+                }
+            prev_fp = cur_fp
+        else:
+            prev_fp = None
+        time.sleep(wait_poll_interval)
+
+    return {
+        "status": "TIMEOUT",
+        "reason": "player_turn_not_ready",
+        "snapshot": last_snapshot,
+        "wait_seconds": round(time.monotonic() - started_at, 3),
+    }
+
+
 def cmd_lightning_loop(
     profile: str = "Alpha",
     time_limit: float = 2.0,
@@ -12223,6 +13485,8 @@ def cmd_lightning_loop(
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = False,
+    pause_before_solve: bool = True,
+    pause_between_actions: bool = True,
 ) -> dict:
     """Run clean combat turns for Lightning War and click End Turn locally."""
     if not is_bridge_active():
@@ -12279,6 +13543,8 @@ def cmd_lightning_loop(
         )
         print(f"wait_poll_interval={wait_poll_interval}s")
         print(f"auto_click_end_turn={click_end_turn}")
+        print(f"pause_before_solve={pause_before_solve}")
+        print(f"pause_between_actions={pause_between_actions}")
 
     started_at = time.monotonic()
     turn_records: list[dict] = []
@@ -12314,11 +13580,46 @@ def cmd_lightning_loop(
 
         dirty_allowed_this_turn = bool(allow_dirty_plan and loop_index == 0)
         turn_started_at = time.monotonic()
+        pre_turn_pause = None
+        wait_for_turn = True
+        if pause_before_solve:
+            pre_turn_pause = _lightning_wait_for_player_turn_and_pause(
+                max_wait=max_wait,
+                wait_poll_interval=wait_poll_interval,
+            )
+            if pre_turn_pause.get("status") == "OK":
+                wait_for_turn = False
+            elif pre_turn_pause.get("status") == "TERMINAL_OR_MISSION_END":
+                turn_records.append(
+                    {
+                        "loop_index": loop_index,
+                        "status": "TERMINAL_OR_MISSION_END",
+                        "pause_before_solve": pre_turn_pause,
+                        "turn_wall_seconds": round(
+                            time.monotonic() - turn_started_at, 2
+                        ),
+                    }
+                )
+                stopped_reason = "terminal_or_mission_end"
+                break
+            else:
+                turn_records.append(
+                    {
+                        "loop_index": loop_index,
+                        "status": "PAUSE_BEFORE_SOLVE_FAILED",
+                        "pause_before_solve": pre_turn_pause,
+                        "turn_wall_seconds": round(
+                            time.monotonic() - turn_started_at, 2
+                        ),
+                    }
+                )
+                stopped_reason = "pause_before_solve_failed"
+                break
         turn_result, auto_turn_output = _lightning_quiet_call(
             cmd_auto_turn,
             profile=profile,
             time_limit=time_limit,
-            wait_for_turn=True,
+            wait_for_turn=wait_for_turn,
             max_wait=max_wait,
             wait_poll_interval=wait_poll_interval,
             allow_dirty_plan=dirty_allowed_this_turn,
@@ -12331,6 +13632,8 @@ def cmd_lightning_loop(
                 allow_objective_loss if dirty_allowed_this_turn else False
             ),
             lightning_speed_loss_policy=lightning_speed_loss_policy,
+            resume_before_execute=pause_before_solve,
+            pause_between_actions=pause_between_actions,
             quiet=quiet,
         )
         auto_turn_wall_seconds = round(time.monotonic() - turn_started_at, 2)
@@ -12348,6 +13651,8 @@ def cmd_lightning_loop(
             "auto_turn_wall_seconds": auto_turn_wall_seconds,
             "wait_entry_seconds": turn_result.get("wait_entry_seconds"),
         }
+        if pre_turn_pause is not None:
+            record["pause_before_solve"] = pre_turn_pause
         stamp_turn_wall = lambda: record.setdefault(
             "turn_wall_seconds",
             round(time.monotonic() - turn_started_at, 2),
@@ -12376,6 +13681,17 @@ def cmd_lightning_loop(
                 stamp_turn_wall()
                 stopped_reason = "end_turn_plan_ready_no_click"
                 break
+            if pause_before_solve:
+                resume_result = _lightning_resume_if_paused(
+                    dry_run=False,
+                    click_ui=True,
+                )
+                if resume_result is not None:
+                    record["resume_before_end_turn"] = resume_result
+                    if resume_result.get("status") not in {"OK", "PLANNED"}:
+                        stamp_turn_wall()
+                        stopped_reason = "resume_before_end_turn_failed"
+                        break
             click_result = _click_end_turn_from_plan_result(turn_result)
             record["end_turn_click"] = click_result
             if click_result.get("status") != "OK":
@@ -12385,6 +13701,19 @@ def cmd_lightning_loop(
             end_turn_clicks += 1
             observed = _observe_end_turn_after_click(turn_result)
             record["end_turn_observed"] = observed
+            if _lightning_end_turn_retryable(observed, turn_result):
+                retry_click = _click_end_turn_from_plan_result(turn_result)
+                record["end_turn_retry_click"] = retry_click
+                if retry_click.get("status") != "OK":
+                    stamp_turn_wall()
+                    stopped_reason = "end_turn_retry_click_failed"
+                    break
+                end_turn_clicks += 1
+                observed = _observe_end_turn_after_click(
+                    turn_result,
+                    timeout=12.0,
+                )
+                record["end_turn_retry_observed"] = observed
             if observed.get("status") != "OK":
                 stamp_turn_wall()
                 stopped_reason = "end_turn_click_not_observed"
@@ -14837,7 +16166,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   dirty_consent_id: str | None = None,
                   allow_protected_objective_loss: bool = False,
                   allow_objective_loss: bool = False,
-                  lightning_speed_loss_policy: bool = False) -> dict:
+                  lightning_speed_loss_policy: bool = False,
+                  resume_before_execute: bool = False,
+                  pause_between_actions: bool = False,
+                  quiet: bool = False) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -14853,6 +16185,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     becomes combat_player or max_wait seconds elapse. This folds the enemy-
     phase wait inside one Python call so Claude doesn't burn LLM round-trips
     on polling after each End Turn click.
+
+    When resume_before_execute=True, a visible pause menu is dismissed after
+    solving and safety review, immediately before the first bridge action.
+    Lightning War uses this to think while the in-game timer is stopped without
+    trying to drive Lua while the game is paused.
+
+    ``quiet`` is accepted for lightning_loop compatibility. Output suppression
+    is handled by the caller's redirect wrapper.
 
     Returns dict with turn results or error.
     """
@@ -15385,9 +16725,116 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             session.dirty_consent_used.append(expected)
         session.save()
 
+    resume_before_execute_result = None
+    if resume_before_execute:
+        resume_before_execute_result = _lightning_resume_if_paused(
+            dry_run=False,
+            click_ui=True,
+        )
+        if (
+            resume_before_execute_result is not None
+            and resume_before_execute_result.get("status") not in {"OK", "PLANNED"}
+        ):
+            result = {
+                "status": "RESUME_BEFORE_EXECUTE_FAILED",
+                "turn": turn,
+                "score": score,
+                "actions_planned": len(actions),
+                "resume_before_execute": resume_before_execute_result,
+                "next_step": (
+                    "Combat action execution was held because the pause menu "
+                    "could not be dismissed safely."
+                ),
+            }
+            _print_result(result)
+            return result
+        if resume_before_execute_result is not None:
+            time.sleep(0.12)
+
     done_uids: set[int] = set()
     re_solve_count = 0
     actions_completed = 0
+    combat_pause_steps: list[dict] = []
+    combat_timer_paused = False
+    combat_pause_bounds: dict | None = None
+
+    def _resume_combat_timer_pause(label: str) -> dict | None:
+        nonlocal combat_timer_paused
+        if not pause_between_actions or not combat_timer_paused:
+            return None
+        resume = _lightning_resume_if_paused(dry_run=False, click_ui=True)
+        step = {
+            "phase": label,
+            "action_index": actions_completed,
+            "control": "pause_menu_escape",
+            "result": resume,
+        }
+        combat_pause_steps.append(step)
+        if resume is not None and resume.get("status") not in {"OK", "PLANNED"}:
+            return {
+                "status": "ERROR",
+                "reason": "combat_timer_resume_failed",
+                "phase": label,
+                "resume": resume,
+            }
+        combat_timer_paused = False
+        time.sleep(0.05)
+        return {"status": "OK", "reason": "resumed" if resume else "not_paused"}
+
+    def _pause_combat_timer(label: str) -> dict | None:
+        nonlocal combat_timer_paused, combat_pause_bounds
+        if not pause_between_actions:
+            return None
+        if combat_timer_paused:
+            return {"status": "OK", "reason": "already_paused"}
+        if combat_pause_bounds is None:
+            from src.control.mac_click import _get_window_bounds
+            combat_pause_bounds = _get_window_bounds("Into the Breach")
+        if combat_pause_bounds is None:
+            return {
+                "status": "ERROR",
+                "reason": "combat_pause_bounds_unavailable",
+            }
+        click = _lightning_click_control_with_bounds(
+            "pause",
+            bounds=combat_pause_bounds,
+            dry_run=False,
+            settle_seconds=0.05,
+            hold_seconds=0.06,
+        )
+        step = {
+            "phase": label,
+            "action_index": actions_completed,
+            "control": "pause",
+            "result": click,
+        }
+        combat_pause_steps.append(step)
+        if click.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "combat_timer_pause_failed",
+                "phase": label,
+                "click_result": click,
+            }
+        combat_timer_paused = True
+        time.sleep(0.05)
+        return {"status": "OK", "reason": "paused"}
+
+    def _combat_pause_error(phase: str, detail: dict | None) -> dict | None:
+        if not detail or detail.get("status") == "OK":
+            return None
+        return {
+            "status": "COMBAT_TIMER_PAUSE_FAILED",
+            "phase": phase,
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "detail": detail,
+            "combat_pause_steps": combat_pause_steps,
+            "next_step": (
+                "Pause/resume around combat verification failed. Re-read the "
+                "board before issuing more combat commands."
+            ),
+        }
 
     # 3. Execute each action with per-sub-action verification
     action_idx = 0
@@ -15427,6 +16874,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
         # --- MOVE PHASE ---
         if has_move:
+            pause_detail = _resume_combat_timer_pause("before_move")
+            pause_error = _combat_pause_error("before_move", pause_detail)
+            if pause_error:
+                _print_result(pause_error)
+                return pause_error
             try:
                 ack = move_mech(mech_uid, action.move_to[0], action.move_to[1])
                 print(f"  MOVE: {ack}")
@@ -15436,6 +16888,12 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                           "turn": turn, "actions_completed": actions_completed}
                 _print_result(result)
                 return result
+
+            pause_detail = _pause_combat_timer("after_move")
+            pause_error = _combat_pause_error("after_move", pause_detail)
+            if pause_error:
+                _print_result(pause_error)
+                return pause_error
 
             # Read actual state after move
             refresh_bridge_state()
@@ -15531,7 +16989,26 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             # to the exact plan the operator reviewed. After a
                             # desync, a partial re-solve is a new plan and
                             # must stop on hard safety loss for a fresh call.
-                            if plan_requires_safety_block(new_safety):
+                            re_solve_speed_loss = (
+                                bool(lightning_speed_loss_policy)
+                                and _allow_lightning_war_speed_loss(
+                                    session, new_safety
+                                )
+                            )
+                            if re_solve_speed_loss:
+                                print(
+                                    "  LIGHTNING SPEED LOSS POLICY — "
+                                    "accepting partial re-solve trade"
+                                )
+                            if plan_requires_safety_block(
+                                new_safety,
+                                allow_dirty_plan=re_solve_speed_loss,
+                                allow_protected_objective_loss_dirty=(
+                                    re_solve_speed_loss
+                                ),
+                                allow_objective_loss_dirty=re_solve_speed_loss,
+                                allow_pod_loss_dirty=re_solve_speed_loss,
+                            ):
                                 result = {
                                     "status": "SAFETY_BLOCKED_RE_SOLVE",
                                     "turn": turn,
@@ -15584,6 +17061,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             current_board, _ = read_bridge_state()
             weapon_slot = _resolve_weapon_slot(mech_action, current_board) if current_board else 0
 
+            pause_detail = _resume_combat_timer_pause("before_attack")
+            pause_error = _combat_pause_error("before_attack", pause_detail)
+            if pause_error:
+                _print_result(pause_error)
+                return pause_error
             try:
                 ack = attack_mech(mech_uid, weapon_slot, action.target[0], action.target[1])
                 print(f"  ATTACK: {ack}")
@@ -15610,6 +17092,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 else:
                     refresh_bridge_state()
                     repair_board, _ = read_bridge_state()
+                pause_detail = _resume_combat_timer_pause("before_repair")
+                pause_error = _combat_pause_error("before_repair", pause_detail)
+                if pause_error:
+                    _print_result(pause_error)
+                    return pause_error
                 if _repair_would_be_noop(repair_board, mech_uid):
                     ack = skip_mech(mech_uid)
                     print(f"  SKIP (repair no-op): {ack}")
@@ -15624,6 +17111,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 return result
         elif not has_move:
             try:
+                pause_detail = _resume_combat_timer_pause("before_skip")
+                pause_error = _combat_pause_error("before_skip", pause_detail)
+                if pause_error:
+                    _print_result(pause_error)
+                    return pause_error
                 ack = skip_mech(mech_uid)
                 print(f"  SKIP: {ack}")
             except (TimeoutError, BridgeError) as e:
@@ -15631,10 +17123,21 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         else:
             # Move-only: need to deactivate via SKIP
             try:
+                pause_detail = _resume_combat_timer_pause("before_move_only_skip")
+                pause_error = _combat_pause_error("before_move_only_skip", pause_detail)
+                if pause_error:
+                    _print_result(pause_error)
+                    return pause_error
                 ack = skip_mech(mech_uid)
                 print(f"  SKIP (move-only): {ack}")
             except (TimeoutError, BridgeError) as e:
                 print(f"  SKIP ERROR: {e}")
+
+        pause_detail = _pause_combat_timer(f"after_{final_phase}")
+        pause_error = _combat_pause_error(f"after_{final_phase}", pause_detail)
+        if pause_error:
+            _print_result(pause_error)
+            return pause_error
 
         # Read actual state after attack/repair/skip
         refresh_bridge_state()
@@ -15755,7 +17258,24 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         # the exact plan the operator reviewed. After a
                         # desync, a partial re-solve is a new plan and must
                         # stop on hard safety loss for a fresh call.
-                        if plan_requires_safety_block(new_safety):
+                        re_solve_speed_loss = (
+                            bool(lightning_speed_loss_policy)
+                            and _allow_lightning_war_speed_loss(
+                                session, new_safety
+                            )
+                        )
+                        if re_solve_speed_loss:
+                            print(
+                                "  LIGHTNING SPEED LOSS POLICY — "
+                                "accepting partial re-solve trade"
+                            )
+                        if plan_requires_safety_block(
+                            new_safety,
+                            allow_dirty_plan=re_solve_speed_loss,
+                            allow_protected_objective_loss_dirty=re_solve_speed_loss,
+                            allow_objective_loss_dirty=re_solve_speed_loss,
+                            allow_pod_loss_dirty=re_solve_speed_loss,
+                        ):
                             result = {
                                 "status": "SAFETY_BLOCKED_RE_SOLVE",
                                 "turn": turn,
@@ -15842,6 +17362,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
     fuzzy_detections = session.failure_events_this_run[pre_turn_event_count:]
     solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
+    lightning_research_auto_resolved = _lightning_drain_known_behavior_research(session)
 
     if grid_drop_investigations:
         pending_plan = _end_turn_click_plan_result()
@@ -15872,6 +17393,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             result["threat_audit"] = threat_audit
         if winnability_warning:
             result["winnability_warning"] = winnability_warning
+        if lightning_research_auto_resolved:
+            result["lightning_research_auto_resolved"] = lightning_research_auto_resolved
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
@@ -15912,6 +17435,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         }
         if winnability_warning:
             result["winnability_warning"] = winnability_warning
+        if lightning_research_auto_resolved:
+            result["lightning_research_auto_resolved"] = lightning_research_auto_resolved
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
@@ -15919,6 +17444,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         return result
 
     # 4. End turn
+    pause_detail = _resume_combat_timer_pause("before_end_turn")
+    pause_error = _combat_pause_error("before_end_turn", pause_detail)
+    if pause_error:
+        _print_result(pause_error)
+        return pause_error
     end_result = cmd_end_turn()
     if "error" in end_result:
         result = {"error": f"END_TURN: {end_result['error']}",
@@ -15951,12 +17481,18 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "solver_gap_events": solver_gap_events,
             "research_queue_peek": _research_peek(session),
         }
+        if resume_before_execute_result is not None:
+            result["resume_before_execute"] = resume_before_execute_result
         if lightning_speed_loss_summary:
             result["lightning_speed_loss_policy"] = lightning_speed_loss_summary
         if threat_audit is not None:
             result["threat_audit"] = threat_audit
+        if combat_pause_steps:
+            result["combat_pause_steps"] = combat_pause_steps
         if winnability_warning:
             result["winnability_warning"] = winnability_warning
+        if lightning_research_auto_resolved:
+            result["lightning_research_auto_resolved"] = lightning_research_auto_resolved
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
@@ -15987,12 +17523,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "solver_gap_events": solver_gap_events,
         "research_queue_peek": _research_peek(session),
     }
+    if resume_before_execute_result is not None:
+        result["resume_before_execute"] = resume_before_execute_result
     if lightning_speed_loss_summary:
         result["lightning_speed_loss_policy"] = lightning_speed_loss_summary
     if threat_audit is not None:
         result["threat_audit"] = threat_audit
     if winnability_warning:
         result["winnability_warning"] = winnability_warning
+    if lightning_research_auto_resolved:
+        result["lightning_research_auto_resolved"] = lightning_research_auto_resolved
     _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                    unknowns_flagged,
                    research_peek=result["research_queue_peek"])
@@ -16025,6 +17565,7 @@ _HAZARD_SEVERITY: dict[str, int] = {
     "teleporter": 1,
     "freeze_mine": 2,
     "old_earth_mine": 3,
+    "environment_danger": 4,
 }
 
 
@@ -16056,6 +17597,8 @@ def classify_deploy_hazard(board, x: int, y: int,
         teleporter_tiles = _teleporter_tile_set(board)
     tile = board.tiles[x][y]
     # Severity-ordered checks so the most dangerous wins on overlapping items.
+    if (x, y) in (getattr(board, "environment_danger", set()) or set()):
+        return "environment_danger"
     if getattr(tile, "old_earth_mine", False):
         return "old_earth_mine"
     if getattr(tile, "freeze_mine", False):

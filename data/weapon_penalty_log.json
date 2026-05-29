@@ -96,8 +96,8 @@
       "weapon_id": "ScorpionAtk1"
     },
     "damage_amount|Unknown|move": {
-      "count": 5,
-      "last_run_id": "20260527_141021_642",
+      "count": 8,
+      "last_run_id": "20260529_015516_179",
       "weapon_id": "Unknown"
     },
     "death|Brute_Beetle|attack": {
@@ -106,8 +106,8 @@
       "weapon_id": "Brute_Beetle"
     },
     "death|Brute_Grapple|attack": {
-      "count": 6,
-      "last_run_id": "20260524_154211_411",
+      "count": 15,
+      "last_run_id": "20260529_045744_557",
       "weapon_id": "Brute_Grapple"
     },
     "death|Brute_Jetmech|attack": {
@@ -161,8 +161,8 @@
       "weapon_id": "Prime_Lightning_A"
     },
     "death|Prime_Lightning|attack": {
-      "count": 4,
-      "last_run_id": "20260524_154211_411",
+      "count": 7,
+      "last_run_id": "20260529_105649_588",
       "weapon_id": "Prime_Lightning"
     },
     "death|Prime_Punchmech_A|attack": {
@@ -221,8 +221,8 @@
       "weapon_id": "Ranged_Rocket"
     },
     "death|Ranged_Rockthrow|attack": {
-      "count": 4,
-      "last_run_id": "20260527_152006_916",
+      "count": 8,
+      "last_run_id": "20260529_103036_042",
       "weapon_id": "Ranged_Rockthrow"
     },
     "death|Science_AcidShot|attack": {

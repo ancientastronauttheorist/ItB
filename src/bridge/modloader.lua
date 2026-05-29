@@ -1365,6 +1365,10 @@ local _bridge_speed = "fast"  -- "fast" or "visual"
 
 local _running_coroutine = nil
 
+local function bridge_fast_mode()
+    return _bridge_speed == "fast"
+end
+
 -- NOTE: os.time() (wall clock, second precision) rather than os.clock()
 -- (process CPU time). When the coroutine yields back to the engine, CPU
 -- time barely advances relative to wall time, so an os.clock()-based
@@ -1383,9 +1387,23 @@ local function wait_until_coro(predicate, max_wait)
 end
 
 local function wait_for_board_coro(max_wait)
+    if bridge_fast_mode() then
+        max_wait = math.min(max_wait or 15, 2)
+    end
     return wait_until_coro(function()
         return not Board:IsBusy()
     end, max_wait)
+end
+
+local function move_pawn_for_bridge(pawn, point)
+    if bridge_fast_mode() then
+        local ok, err = pcall(function() pawn:SetSpace(point) end)
+        if ok then return true, "SetSpace" end
+        return false, err
+    end
+    local ok, err = pcall(function() pawn:Move(point) end)
+    if ok then return true, "Move" end
+    return false, err
 end
 
 --------------------------------------------------------------------
@@ -1915,13 +1933,13 @@ local function execute_command(cmd_str)
             write_ack("ERROR: pawn " .. uid .. " not found")
             return
         end
-        local ok, err = pcall(function() pawn:Move(Point(x, y)) end)
+        local ok, err = move_pawn_for_bridge(pawn, Point(x, y))
         if not ok then
             write_ack("ERROR: Move failed: " .. tostring(err))
             return
         end
         wait_for_board_coro()
-        write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y)
+        write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y .. " [" .. err .. "]")
 
     elseif cmd == "ATTACK" then
         -- ATTACK uid weapon_slot target_x target_y
@@ -1964,7 +1982,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: invalid weapon slot '" .. tostring(parts[5]) .. "'")
             return
         end
-        local ok1, err1 = pcall(function() pawn:Move(Point(mx, my)) end)
+        local ok1, err1 = move_pawn_for_bridge(pawn, Point(mx, my))
         if not ok1 then
             write_ack("ERROR: Move failed: " .. tostring(err1))
             return

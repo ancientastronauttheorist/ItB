@@ -59,6 +59,7 @@ from src.loop.commands import (
     cmd_lightning_mark,
     cmd_lightning_peek,
     cmd_lightning_map_regions,
+    cmd_lightning_pause_guard,
     cmd_lightning_attempt,
     cmd_lightning_segment,
     cmd_lightning_loop,
@@ -503,6 +504,33 @@ def main():
     p_lightning_ui.add_argument("--list", action="store_true",
                                 help="List calibrated controls")
 
+    # lightning_pause_guard
+    p_lightning_pause_guard = sub.add_parser(
+        "lightning_pause_guard",
+        help="Watch safe Lightning War UI states and click Pause when useful",
+    )
+    p_lightning_pause_guard.add_argument("--profile", default="Alpha")
+    p_lightning_pause_guard.add_argument("--seconds", type=float, default=5.0)
+    p_lightning_pause_guard.add_argument("--interval", type=float, default=0.25)
+    p_lightning_pause_guard.add_argument(
+        "--sample-seconds",
+        type=float,
+        default=0.25,
+        help="Timer-growth probe duration when --require-timer-growth is used",
+    )
+    p_lightning_pause_guard.add_argument(
+        "--require-timer-growth",
+        action="store_true",
+        help="Only click Pause after save/profile current.time advances",
+    )
+    p_lightning_pause_guard.add_argument("--dry-run", action="store_true")
+    p_lightning_pause_guard.add_argument("--no-click", action="store_true")
+    p_lightning_pause_guard.add_argument(
+        "--once",
+        action="store_true",
+        help="Poll once instead of watching for the full duration",
+    )
+
     # lightning_route_start
     p_lightning_route_start = sub.add_parser(
         "lightning_route_start",
@@ -573,7 +601,7 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="preview-board",
+        default="dialogue-region-repeat-preview-board",
         help=(
             "How to commit the selected preview when no manual start point is "
             "supplied. Default clicks the calibrated mission preview board."
@@ -655,6 +683,7 @@ def main():
         help="Analyze an existing screenshot, usually from lightning_peek",
     )
     p_lightning_map_regions.add_argument("--out-dir", default=None)
+    p_lightning_map_regions.add_argument("--profile", default="Alpha")
     p_lightning_map_regions.add_argument(
         "--start-mode",
         choices=[
@@ -665,8 +694,14 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="preview-board",
+        default="dialogue-region-repeat-preview-board",
         help="Start sequence to place in emitted route candidate commands",
+    )
+    p_lightning_map_regions.add_argument(
+        "--no-save-route-plan",
+        dest="use_save_route_plan",
+        action="store_false",
+        help="Do not rank detected red regions with the current saveData slate",
     )
     p_lightning_map_regions.add_argument(
         "--target-name",
@@ -685,6 +720,7 @@ def main():
         help="Optional bridge/save region id to attach to candidates",
     )
     p_lightning_map_regions.add_argument("--dry-run", action="store_true")
+    p_lightning_map_regions.set_defaults(use_save_route_plan=True)
 
     # verify_setup
     p_verify_setup = sub.add_parser(
@@ -786,6 +822,14 @@ def main():
     p_auto_turn.add_argument("--allow-objective-loss", action="store_true",
                              help="Stress-test escape hatch: with exact dirty consent, "
                                   "allow objective loss/failure kinds")
+    p_auto_turn.add_argument(
+        "--pause-between-actions",
+        action="store_true",
+        help=(
+            "Lightning-speed mode: pause after each bridge sub-action before "
+            "verification reads, then resume for the next game command"
+        ),
+    )
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",
@@ -851,6 +895,25 @@ def main():
         action="store_true",
         help="Lightning War only: allow nonlethal speed losses and optional objective failures",
     )
+    p_lightning_loop.add_argument(
+        "--pause-before-solve",
+        action="store_true",
+        help="Pause as soon as each player turn is ready, then solve/execute while paused",
+    )
+    p_lightning_loop.add_argument(
+        "--no-pause-between-actions",
+        dest="pause_between_actions",
+        action="store_false",
+        help="Do not pause between combat sub-actions and verification reads",
+    )
+    p_lightning_loop.add_argument(
+        "--pause-between-actions",
+        dest="pause_between_actions",
+        action="store_true",
+        help="Pause between combat sub-actions and verification reads",
+    )
+    p_lightning_loop.set_defaults(pause_before_solve=True)
+    p_lightning_loop.set_defaults(pause_between_actions=True)
 
     # lightning_attempt
     p_lightning_attempt = sub.add_parser(
@@ -940,10 +1003,36 @@ def main():
         action="store_true",
         help="Lightning War only: allow nonlethal speed losses and optional objective failures",
     )
+    p_lightning_attempt.add_argument(
+        "--no-pause-before-solve",
+        dest="pause_before_solve",
+        action="store_false",
+        help="Do not pause before combat solves",
+    )
+    p_lightning_attempt.add_argument(
+        "--pause-before-solve",
+        dest="pause_before_solve",
+        action="store_true",
+        help="Pause on each ready player turn before solving/executing",
+    )
+    p_lightning_attempt.add_argument(
+        "--no-pause-between-actions",
+        dest="pause_between_actions",
+        action="store_false",
+        help="Do not pause between combat sub-actions and verification reads",
+    )
+    p_lightning_attempt.add_argument(
+        "--pause-between-actions",
+        dest="pause_between_actions",
+        action="store_true",
+        help="Pause between combat sub-actions and verification reads",
+    )
     p_lightning_attempt.set_defaults(pause_on_stop=True)
     p_lightning_attempt.set_defaults(quiet=True)
     p_lightning_attempt.set_defaults(resume_if_paused=True)
     p_lightning_attempt.set_defaults(auto_clear_panels=True)
+    p_lightning_attempt.set_defaults(pause_before_solve=True)
+    p_lightning_attempt.set_defaults(pause_between_actions=True)
 
     # lightning_segment
     p_lightning_segment = sub.add_parser(
@@ -999,12 +1088,44 @@ def main():
         help="Disable Lightning War speed-loss allowance for this segment",
     )
     p_lightning_segment.add_argument(
+        "--no-pause-before-solve",
+        dest="pause_before_solve",
+        action="store_false",
+        help="Do not pause before combat solves",
+    )
+    p_lightning_segment.add_argument(
+        "--pause-before-solve",
+        dest="pause_before_solve",
+        action="store_true",
+        help="Pause on each ready player turn before solving/executing",
+    )
+    p_lightning_segment.add_argument(
+        "--no-pause-between-actions",
+        dest="pause_between_actions",
+        action="store_false",
+        help="Do not pause between combat sub-actions and verification reads",
+    )
+    p_lightning_segment.add_argument(
+        "--pause-between-actions",
+        dest="pause_between_actions",
+        action="store_true",
+        help="Pause between combat sub-actions and verification reads",
+    )
+    p_lightning_segment.add_argument(
         "--route-visual-region-index",
         type=int,
         default=None,
         help=(
             "When the segment reaches a route-ready map, start the detected "
             "red-region index before continuing into deployment/combat"
+        ),
+    )
+    p_lightning_segment.add_argument(
+        "--route-auto-start",
+        action="store_true",
+        help=(
+            "At route-ready maps, automatically start the save-ranked primary "
+            "red-region candidate when its Lightning score is high enough"
         ),
     )
     p_lightning_segment.add_argument(
@@ -1017,7 +1138,7 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="preview-board",
+        default="dialogue-region-repeat-preview-board",
         help="Start sequence to use with --route-visual-region-index",
     )
     p_lightning_segment.set_defaults(pause_on_stop=True)
@@ -1025,6 +1146,8 @@ def main():
     p_lightning_segment.set_defaults(resume_if_paused=True)
     p_lightning_segment.set_defaults(auto_clear_panels=True)
     p_lightning_segment.set_defaults(lightning_speed_loss_policy=True)
+    p_lightning_segment.set_defaults(pause_before_solve=True)
+    p_lightning_segment.set_defaults(pause_between_actions=True)
 
     # analyze
     p_analyze = sub.add_parser("analyze",
@@ -1155,6 +1278,17 @@ def main():
             dry_run=args.dry_run,
             list_controls=args.list,
         )
+    elif args.command == "lightning_pause_guard":
+        cmd_lightning_pause_guard(
+            profile=args.profile,
+            seconds=args.seconds,
+            interval=args.interval,
+            sample_seconds=args.sample_seconds,
+            require_timer_growth=args.require_timer_growth,
+            dry_run=args.dry_run,
+            click_ui=not args.no_click,
+            once=args.once,
+        )
     elif args.command == "lightning_route_start":
         cmd_lightning_route_start(
             profile=args.profile,
@@ -1211,6 +1345,8 @@ def main():
             out_dir=args.out_dir,
             dry_run=args.dry_run,
             start_mode=args.start_mode,
+            profile=args.profile,
+            use_save_route_plan=args.use_save_route_plan,
             target_name=args.target_name,
             target_mission_id=args.target_mission_id,
             target_region_id=args.target_region_id,
@@ -1282,7 +1418,8 @@ def main():
                       candidate_rank=args.candidate_rank,
                       dirty_consent_id=args.dirty_consent_id,
                       allow_protected_objective_loss=args.allow_protected_objective_loss,
-                      allow_objective_loss=args.allow_objective_loss)
+                      allow_objective_loss=args.allow_objective_loss,
+                      pause_between_actions=args.pause_between_actions)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)
@@ -1302,6 +1439,8 @@ def main():
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
             lightning_speed_loss_policy=args.speed_loss_policy,
+            pause_before_solve=args.pause_before_solve,
+            pause_between_actions=args.pause_between_actions,
         )
     elif args.command == "lightning_attempt":
         cmd_lightning_attempt(
@@ -1325,6 +1464,8 @@ def main():
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
             lightning_speed_loss_policy=args.speed_loss_policy,
+            pause_before_solve=args.pause_before_solve,
+            pause_between_actions=args.pause_between_actions,
         )
     elif args.command == "lightning_segment":
         cmd_lightning_segment(
@@ -1349,9 +1490,12 @@ def main():
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
             lightning_speed_loss_policy=args.lightning_speed_loss_policy,
+            pause_before_solve=args.pause_before_solve,
+            pause_between_actions=args.pause_between_actions,
             settle_seconds=args.settle_seconds,
             route_visual_region_index=args.route_visual_region_index,
             route_start_mode=args.route_start_mode,
+            route_auto_start=args.route_auto_start,
         )
     elif args.command == "analyze":
         cmd_analyze(min_samples=args.min_samples)

@@ -472,15 +472,20 @@ def _apply_lightning_war_routing(
     if "train" in mission_tags:
         delta += 35
         rationale.append("+35 Lightning War: 4-turn train mission")
-    if "env_tidal" in mission_tags:
+    if "env_tidal" in mission_tags and mission_id != "Mission_Terratide":
         delta += 25
         rationale.append("+25 Lightning War: fast Tidal Waves mission")
+    if mission_id == "Mission_Terratide":
+        delta -= 45
+        rationale.append("-45 Lightning War: Terratide/Sandstorm animation drag")
     if "env_cataclysm" in mission_tags:
-        delta += 25
-        rationale.append("+25 Lightning War: fast Cataclysm/Seismic mission")
+        delta -= 10
+        rationale.append(
+            "-10 Lightning War: Cataclysm/Seismic animations measured slow"
+        )
     if "defensive_smoke" in mission_tags or mission_id == "Mission_Sandstorm":
-        delta += 25
-        rationale.append("+25 Lightning War: fast Sandstorm mission")
+        delta -= 10
+        rationale.append("-10 Lightning War: Sandstorm animations measured slow")
     if (
         "four_turn" in mission_tags
         and not (
@@ -517,6 +522,7 @@ def _apply_lightning_war_routing(
         )
 
     slow_mission_ids = {
+        "Mission_Artillery",
         "Mission_Dam",
         "Mission_ForestFire",
         "Mission_FreezeBldg",
@@ -533,6 +539,16 @@ def _apply_lightning_war_routing(
     if mission_id in slow_mission_ids:
         delta -= 28
         rationale.append(f"-28 Lightning War: slow/fragile objective ({mission_id})")
+
+    very_slow_mission_ids = {
+        "Mission_Artillery",
+        "Mission_Mines",
+    }
+    if mission_id in very_slow_mission_ids:
+        delta -= 25
+        rationale.append(
+            f"-25 Lightning War: measured slow mission/template ({mission_id})"
+        )
 
     slow_tags = {
         "fire_tile_counter",
