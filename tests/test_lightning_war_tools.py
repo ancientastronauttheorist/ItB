@@ -760,6 +760,12 @@ def test_lightning_parse_timer_seconds_variants():
     assert commands._lightning_parse_timer_seconds("bad") is None
 
 
+def test_lightning_parse_visible_timer_ocr_variants():
+    assert commands._lightning_parse_visible_timer_ocr_seconds("Oh 23m 495") == 1429
+    assert commands._lightning_parse_visible_timer_ocr_seconds("0h 03m 04s") == 184
+    assert commands._lightning_parse_visible_timer_ocr_seconds("bad") is None
+
+
 def test_lightning_save_timer_reads_current_time_ms(tmp_path):
     profile_dir = tmp_path / "profile_Alpha"
     profile_dir.mkdir()
@@ -787,6 +793,34 @@ def test_lightning_save_timer_reads_current_time_ms(tmp_path):
         "profile_current_time",
         "undoSave_current_time",
     ]
+
+
+def test_lightning_visible_pause_timer_reads_ocr(monkeypatch, tmp_path):
+    screenshot = tmp_path / "pause.png"
+    screenshot.write_text("placeholder")
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {"status": "OK", "visible_ui": "perfect_reward_choice"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": ["Timeline Playtime", "Oh 23m 495", "Easy"],
+        },
+    )
+
+    result = commands._lightning_visible_pause_timer_from_screenshot(screenshot)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_pause_menu_timer"
+    assert result["game_seconds"] == 1429.0
+    assert result["game_timer"] == "0:23:49"
+    assert result["ocr_text"] == "Oh 23m 495"
+    assert result["classifier_visible_ui"] == "perfect_reward_choice"
+    assert result["timeline_label_seen"] is True
 
 
 def test_lightning_game_timer_budget_blocks_at_thirty_minutes(monkeypatch):
@@ -833,6 +867,11 @@ def _patch_clean_lightning_preflight(monkeypatch, settings):
             "game_seconds": 600.0,
             "game_timer": "0:10:00",
         },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_visible_pause_timer",
+        lambda: {"status": "UNKNOWN", "reason": "not_visible"},
     )
     monkeypatch.setattr(
         commands,
@@ -894,6 +933,65 @@ def test_lightning_preflight_blocks_exceeded_game_timer(monkeypatch):
     assert result["status"] == "FAIL"
     assert result["game_budget"]["game_status"] == "EXCEEDED"
     assert any("in-game timer" in issue for issue in result["issues"])
+
+
+def test_lightning_preflight_uses_visible_timer_when_save_is_stale(monkeypatch):
+    _patch_clean_lightning_preflight(
+        monkeypatch,
+        {"timer_ui": 1, "speed": 1057},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_save_game_timer",
+        lambda profile="Alpha": {
+            "status": "OK",
+            "source": "profile_current_time",
+            "game_seconds": 1219.0,
+            "game_timer": "0:20:19",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_visible_pause_timer",
+        lambda: {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 1429.0,
+            "game_timer": "0:23:49",
+            "ocr_text": "Oh 23m 495",
+        },
+    )
+
+    result = commands.cmd_lightning_preflight()
+
+    assert result["status"] == "WARN"
+    assert result["effective_timer"]["source"] == "visible_pause_menu_timer"
+    assert result["game_budget"]["game_timer"] == "0:23:49"
+    assert any("visible pause-menu timer" in warning for warning in result["warnings"])
+
+
+def test_lightning_preflight_blocks_exceeded_visible_timer(monkeypatch):
+    _patch_clean_lightning_preflight(
+        monkeypatch,
+        {"timer_ui": 1, "speed": 1057},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_visible_pause_timer",
+        lambda: {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 1801.0,
+            "game_timer": "0:30:01",
+            "ocr_text": "Oh 30m 015",
+        },
+    )
+
+    result = commands.cmd_lightning_preflight()
+
+    assert result["status"] == "FAIL"
+    assert result["effective_timer"]["source"] == "visible_pause_menu_timer"
+    assert result["game_budget"]["game_status"] == "EXCEEDED"
 
 
 def test_lightning_refine_rejects_terminal_panel_during_live_combat(monkeypatch):

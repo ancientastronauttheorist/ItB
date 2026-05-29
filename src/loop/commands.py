@@ -20,6 +20,7 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from src.capture.save_parser import (
     load_game_state,
@@ -6966,6 +6967,197 @@ def _lightning_read_save_game_timer(
     }
 
 
+def _lightning_parse_visible_timer_ocr_seconds(text: str | None) -> int | None:
+    """Parse OCR variants of the pause-menu Timeline Playtime value."""
+    direct = _lightning_parse_timer_seconds(text)
+    if direct is not None:
+        return direct
+    compact = str(text or "").strip().lower().replace(" ", "")
+    if not compact:
+        return None
+
+    def digits(value: str) -> str:
+        table = str.maketrans({"o": "0", "O": "0", "i": "1", "l": "1"})
+        return value.translate(table)
+
+    match = re.search(r"([0-9oil]+)h([0-9oil]+)m([0-9oil]+)(?:s|5)?", compact)
+    if match:
+        hours = int(digits(match.group(1)))
+        minutes = int(digits(match.group(2)))
+        second_text = digits(match.group(3))
+        if len(second_text) > 2 and int(second_text) > 59:
+            second_text = second_text[:-1]
+        if len(second_text) > 2:
+            second_text = second_text[:2]
+        seconds = int(second_text or "0")
+        if minutes < 60 and seconds < 60:
+            return hours * 3600 + minutes * 60 + seconds
+
+    colon_text = digits(compact)
+    colon_text = re.sub(r"[^0-9:]", "", colon_text)
+    return _lightning_parse_timer_seconds(colon_text)
+
+
+def _lightning_ocr_texts_from_image(image_path: str | Path) -> dict:
+    """Return recognized text snippets from a screenshot using macOS Vision."""
+    try:
+        import objc  # type: ignore
+        import Foundation  # type: ignore
+    except Exception as exc:
+        return {"status": "UNAVAILABLE", "error": f"macOS OCR unavailable: {exc}"}
+
+    namespace: dict[str, Any] = {}
+    try:
+        objc.loadBundle(
+            "Vision",
+            namespace,
+            bundle_path="/System/Library/Frameworks/Vision.framework",
+        )
+        request = namespace["VNRecognizeTextRequest"].alloc().init()
+        request.setRecognitionLevel_(1)
+        request.setUsesLanguageCorrection_(False)
+        url = Foundation.NSURL.fileURLWithPath_(str(image_path))
+        handler = namespace["VNImageRequestHandler"].alloc().initWithURL_options_(
+            url, {}
+        )
+        ok = handler.performRequests_error_([request], None)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"macOS OCR failed: {exc}"}
+    if not ok:
+        return {"status": "ERROR", "error": "macOS OCR request failed"}
+
+    texts: list[str] = []
+    for observation in request.results() or []:
+        try:
+            candidates = observation.topCandidates_(3)
+        except Exception:
+            continue
+        for candidate in candidates:
+            text = str(candidate.string()).strip()
+            if text:
+                texts.append(text)
+    return {"status": "OK", "texts": texts}
+
+
+def _lightning_visible_pause_timer_from_screenshot(
+    screenshot_path: str | Path,
+) -> dict:
+    """Read the visible pause-menu timer from a screenshot when possible."""
+    visible_ui = _classify_lightning_ui_image(screenshot_path)
+    if visible_ui.get("status") != "OK":
+        return {
+            "status": "UNKNOWN",
+            "reason": "screen_classification_failed",
+            "visible_ui": visible_ui,
+            "screenshot_path": str(screenshot_path),
+        }
+
+    ocr = _lightning_ocr_texts_from_image(screenshot_path)
+    if ocr.get("status") != "OK":
+        return {
+            "status": "UNKNOWN",
+            "reason": "ocr_unavailable",
+            "ocr": ocr,
+            "visible_ui": visible_ui,
+            "screenshot_path": str(screenshot_path),
+        }
+
+    matches: list[dict] = []
+    ocr_texts = [str(text) for text in (ocr.get("texts") or [])]
+    has_timeline_label = any(
+        "timeline" in text.lower() or "playtime" in text.lower()
+        for text in ocr_texts
+    )
+    for text in ocr.get("texts") or []:
+        seconds = _lightning_parse_visible_timer_ocr_seconds(text)
+        if seconds is None:
+            continue
+        matches.append({
+            "text": text,
+            "game_seconds": seconds,
+            "game_timer": _lightning_format_seconds(seconds),
+        })
+    if not matches:
+        return {
+            "status": "UNKNOWN",
+            "reason": "visible_timer_text_not_found",
+            "ocr": ocr,
+            "visible_ui": visible_ui,
+            "screenshot_path": str(screenshot_path),
+        }
+    if visible_ui.get("visible_ui") != "pause_menu" and not has_timeline_label:
+        return {
+            "status": "UNKNOWN",
+            "reason": "pause_menu_not_visible",
+            "ocr": ocr,
+            "visible_ui": visible_ui,
+            "screenshot_path": str(screenshot_path),
+        }
+
+    best = max(matches, key=lambda item: int(item["game_seconds"]))
+    return {
+        "status": "OK",
+        "source": "visible_pause_menu_timer",
+        "game_seconds": float(best["game_seconds"]),
+        "game_timer": best["game_timer"],
+        "ocr_text": best["text"],
+        "timer_matches": matches,
+        "classifier_visible_ui": visible_ui.get("visible_ui"),
+        "timeline_label_seen": has_timeline_label,
+        "visible_ui": visible_ui,
+        "screenshot_path": str(screenshot_path),
+    }
+
+
+def _lightning_read_visible_pause_timer() -> dict:
+    """Capture the current window and OCR the pause-menu timer if visible."""
+    visible_ui = _lightning_visible_ui_snapshot()
+    screenshot_path = visible_ui.get("screenshot_path")
+    if not screenshot_path:
+        return {
+            "status": "UNKNOWN",
+            "reason": "screenshot_unavailable",
+            "visible_ui": visible_ui,
+        }
+    result = _lightning_visible_pause_timer_from_screenshot(screenshot_path)
+    result.setdefault("visible_ui", visible_ui)
+    return result
+
+
+def _lightning_effective_timer_source(
+    save_timer: dict,
+    visible_timer: dict | None = None,
+) -> dict:
+    """Choose the highest observed game clock from save/profile and screen."""
+    candidates: list[dict] = []
+    if save_timer.get("status") == "OK" and save_timer.get("game_seconds") is not None:
+        candidates.append({
+            "source": save_timer.get("source") or "save_timer",
+            "game_seconds": float(save_timer["game_seconds"]),
+            "game_timer": save_timer.get("game_timer"),
+        })
+    if (
+        visible_timer
+        and visible_timer.get("status") == "OK"
+        and visible_timer.get("game_seconds") is not None
+    ):
+        candidates.append({
+            "source": visible_timer.get("source") or "visible_timer",
+            "game_seconds": float(visible_timer["game_seconds"]),
+            "game_timer": visible_timer.get("game_timer"),
+        })
+    if not candidates:
+        return {
+            "status": "UNKNOWN",
+            "source": None,
+            "game_seconds": None,
+            "game_timer": None,
+            "candidates": [],
+        }
+    best = max(candidates, key=lambda item: float(item["game_seconds"]))
+    return {"status": "OK", **best, "candidates": candidates}
+
+
 def _lightning_game_timer_budget(
     game_seconds: int | float | None,
     *,
@@ -7491,7 +7683,9 @@ def cmd_lightning_preflight(
     settings = _read_settings_lua()
     live_difficulty = _read_save_file_difficulty(profile)
     save_timer = _lightning_read_save_game_timer(profile)
-    game_budget = _lightning_game_timer_budget(save_timer.get("game_seconds"))
+    visible_timer = _lightning_read_visible_pause_timer()
+    effective_timer = _lightning_effective_timer_source(save_timer, visible_timer)
+    game_budget = _lightning_game_timer_budget(effective_timer.get("game_seconds"))
     targets = _target_names(session)
     issues: list[str] = []
     warnings: list[str] = []
@@ -7533,6 +7727,26 @@ def cmd_lightning_preflight(
         )
     elif game_budget.get("game_status") == "UNKNOWN":
         warnings.append("save-file in-game timer could not be read")
+    if (
+        visible_timer.get("status") == "OK"
+        and save_timer.get("status") == "OK"
+        and visible_timer.get("game_seconds") is not None
+        and save_timer.get("game_seconds") is not None
+        and float(visible_timer["game_seconds"]) - float(save_timer["game_seconds"]) >= 30
+    ):
+        warnings.append(
+            "visible pause-menu timer is newer than save/profile current.time; "
+            "using the visible timer for the budget guard"
+        )
+    if (
+        game_budget.get("game_status") == "OK"
+        and not session.islands_completed
+        and (game_budget.get("game_seconds") or 0) >= 20 * 60
+    ):
+        warnings.append(
+            "no island is complete after 20+ game minutes; restart is recommended "
+            "for Lightning War"
+        )
 
     if settings.get("timer_ui") != 1:
         warnings.append("settings.lua timer_ui is not enabled")
@@ -7570,8 +7784,14 @@ def cmd_lightning_preflight(
     print(
         "Game timer:      "
         f"{game_budget.get('game_timer') or '(unknown)'} "
-        f"source={save_timer.get('source') or '(unknown)'}"
+        f"source={effective_timer.get('source') or '(unknown)'}"
     )
+    if visible_timer.get("status") == "OK":
+        print(
+            "Visible timer:   "
+            f"{visible_timer.get('game_timer')} "
+            f"text={visible_timer.get('ocr_text')!r}"
+        )
     if issues:
         print("Issues:")
         for issue in issues:
@@ -7605,6 +7825,8 @@ def cmd_lightning_preflight(
             "new_equip": settings.get("new_equip"),
         },
         "save_timer": save_timer,
+        "visible_timer": visible_timer,
+        "effective_timer": effective_timer,
         "game_budget": game_budget,
         "pending_research_count": len(pending_research),
         "research_gate": research_gate,
@@ -9126,6 +9348,17 @@ def _lightning_resume_if_paused(*, dry_run: bool = False, click_ui: bool = True)
         "planned_control": "pause_menu_escape",
         "visible_ui": visible_ui,
     }
+    screenshot_path = visible_ui.get("screenshot_path")
+    if screenshot_path:
+        visible_timer = _lightning_visible_pause_timer_from_screenshot(screenshot_path)
+        result["visible_timer"] = visible_timer
+        visible_budget = _lightning_game_timer_budget(visible_timer.get("game_seconds"))
+        result["visible_timer_budget"] = visible_budget
+        if visible_budget.get("game_status") == "EXCEEDED":
+            result["status"] = "BLOCKED"
+            result["reason"] = "pause_menu_timer_budget_exceeded"
+            result["next_step"] = "Start a fresh Lightning War timeline."
+            return result
     if dry_run or not click_ui:
         return result
 
