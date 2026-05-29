@@ -49,6 +49,13 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Pause menu Continue",
         settle_seconds=0.2,
     ),
+    "title_continue": KnownWindowControl(
+        name="title_continue",
+        window_x=170,
+        window_y=251,
+        description="Title screen Continue",
+        settle_seconds=1.0,
+    ),
     "reward_continue": KnownWindowControl(
         name="reward_continue",
         window_x=1001,

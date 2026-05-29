@@ -56,13 +56,18 @@ def derive_severity(field: str, predicted: Any, actual: Any) -> str:
       that tuning or overrides will catch anyway).
     - ``position``: low (execution / animation timing, not a behavior
       mispredict).
+    - ``status.*``: low. These diffs are verification/tuning evidence for
+      already-known units, not useful visual-research targets.
     - anything else: medium, so we err on keeping the entry for review.
 
     Unparseable predicted/actual falls back to medium — we can't classify
     magnitude without numbers, and high would over-gate.
     """
+    field = str(field or "")
     if field in ("alive", "push_dir"):
         return "high"
+    if field.startswith("status."):
+        return "low"
     if field in ("hp", "damage_amount"):
         try:
             delta = abs(int(predicted) - int(actual))

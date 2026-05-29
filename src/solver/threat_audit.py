@@ -93,6 +93,24 @@ def capture_building_threats(board: Board) -> list[dict[str, Any]]:
     return out
 
 
+def _threat_key(threat: dict[str, Any]) -> tuple[str, int, tuple[int, int]]:
+    attacker = threat.get("attacker") or {}
+    target = threat.get("target") or [-1, -1]
+    try:
+        tx, ty = int(target[0]), int(target[1])
+    except (TypeError, ValueError, IndexError):
+        tx, ty = -1, -1
+    try:
+        uid = int(attacker.get("uid", -1))
+    except (TypeError, ValueError):
+        uid = -1
+    return (
+        str(threat.get("threat_kind") or "building"),
+        uid,
+        (tx, ty),
+    )
+
+
 def _tile_smoke(board: Board, x: int, y: int) -> bool:
     return board.in_bounds(x, y) and bool(getattr(board.tile(x, y), "smoke", False))
 
@@ -590,11 +608,13 @@ def audit_threat_coverage(
     initial_threats: list[dict[str, Any]] | None,
     board: Board,
 ) -> dict[str, Any]:
-    """Explain coverage for every initial building threat."""
+    """Explain coverage for solve-time threats and block new live threats."""
     threats = initial_threats or []
     entries: list[dict[str, Any]] = []
     still_threatened = 0
+    seen_threats: set[tuple[str, int, tuple[int, int]]] = set()
     for threat in threats:
+        seen_threats.add(_threat_key(threat))
         reason, detail = _coverage_reason(threat, board)
         if reason.startswith("still_threatened"):
             still_threatened += 1
@@ -605,9 +625,26 @@ def audit_threat_coverage(
         }
         entries.append(entry)
 
+    current_threats = capture_building_threats(board)
+    new_current_threats = [
+        threat for threat in current_threats if _threat_key(threat) not in seen_threats
+    ]
+    for threat in new_current_threats:
+        still_threatened += 1
+        entry = dict(threat)
+        entry["coverage"] = {
+            "reason": "still_threatened_current",
+            "detail": (
+                "current live building threat was not in the solve-time audit set"
+            ),
+        }
+        entries.append(entry)
+
     return {
         "status": "WARN" if still_threatened else "OK",
         "initial_threat_count": len(threats),
+        "current_threat_count": len(current_threats),
+        "new_current_threat_count": len(new_current_threats),
         "still_threatened_count": still_threatened,
         "entries": entries,
     }

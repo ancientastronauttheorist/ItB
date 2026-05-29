@@ -511,6 +511,15 @@ def main():
     p_lightning_route_start.add_argument("--profile", default="Alpha")
     p_lightning_route_start.add_argument("--window-x", type=int, default=None)
     p_lightning_route_start.add_argument("--window-y", type=int, default=None)
+    p_lightning_route_start.add_argument(
+        "--visual-region-index",
+        type=int,
+        default=None,
+        help=(
+            "Use a detected red-region index from lightning_route_start "
+            "or lightning_attempt output instead of raw window coordinates"
+        ),
+    )
     p_lightning_route_start.add_argument("--start-window-x", type=int, default=None)
     p_lightning_route_start.add_argument("--start-window-y", type=int, default=None)
     p_lightning_route_start.add_argument(
@@ -646,6 +655,35 @@ def main():
         help="Analyze an existing screenshot, usually from lightning_peek",
     )
     p_lightning_map_regions.add_argument("--out-dir", default=None)
+    p_lightning_map_regions.add_argument(
+        "--start-mode",
+        choices=[
+            "preview-board",
+            "preview-board-twice",
+            "visible-text",
+            "region-repeat",
+            "dialogue-region-repeat-preview-board",
+            "dialogue-region-repeat-preview-board-twice",
+        ],
+        default="preview-board",
+        help="Start sequence to place in emitted route candidate commands",
+    )
+    p_lightning_map_regions.add_argument(
+        "--target-name",
+        default=None,
+        help="Optional save-region/visible district name to attach to candidates",
+    )
+    p_lightning_map_regions.add_argument(
+        "--target-mission-id",
+        default=None,
+        help="Optional mission id to attach to candidates",
+    )
+    p_lightning_map_regions.add_argument(
+        "--target-region-id",
+        type=int,
+        default=None,
+        help="Optional bridge/save region id to attach to candidates",
+    )
     p_lightning_map_regions.add_argument("--dry-run", action="store_true")
 
     # verify_setup
@@ -960,6 +998,28 @@ def main():
         action="store_false",
         help="Disable Lightning War speed-loss allowance for this segment",
     )
+    p_lightning_segment.add_argument(
+        "--route-visual-region-index",
+        type=int,
+        default=None,
+        help=(
+            "When the segment reaches a route-ready map, start the detected "
+            "red-region index before continuing into deployment/combat"
+        ),
+    )
+    p_lightning_segment.add_argument(
+        "--route-start-mode",
+        choices=[
+            "preview-board",
+            "preview-board-twice",
+            "visible-text",
+            "region-repeat",
+            "dialogue-region-repeat-preview-board",
+            "dialogue-region-repeat-preview-board-twice",
+        ],
+        default="preview-board",
+        help="Start sequence to use with --route-visual-region-index",
+    )
     p_lightning_segment.set_defaults(pause_on_stop=True)
     p_lightning_segment.set_defaults(quiet=True)
     p_lightning_segment.set_defaults(resume_if_paused=True)
@@ -1100,6 +1160,7 @@ def main():
             profile=args.profile,
             region_window_x=args.window_x,
             region_window_y=args.window_y,
+            visual_region_index=args.visual_region_index,
             run_preflight=args.run_preflight,
             verify_route=args.verify_route,
             use_save_region_filter=args.use_save_region_filter,
@@ -1149,6 +1210,10 @@ def main():
             screenshot_path=args.screenshot_path,
             out_dir=args.out_dir,
             dry_run=args.dry_run,
+            start_mode=args.start_mode,
+            target_name=args.target_name,
+            target_mission_id=args.target_mission_id,
+            target_region_id=args.target_region_id,
         )
     elif args.command == "verify_setup":
         cmd_verify_setup_screen(
@@ -1285,6 +1350,8 @@ def main():
             allow_objective_loss=args.allow_objective_loss,
             lightning_speed_loss_policy=args.lightning_speed_loss_policy,
             settle_seconds=args.settle_seconds,
+            route_visual_region_index=args.route_visual_region_index,
+            route_start_mode=args.route_start_mode,
         )
     elif args.command == "analyze":
         cmd_analyze(min_samples=args.min_samples)

@@ -182,6 +182,8 @@ def _achievement_weight_overlay(
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
 _SAFETY_WIDENING_TOP_K = 1000
+_LIGHTNING_MIN_FAST_SETTINGS_SPEED = 1000
+_LIGHTNING_ACHIEVEMENT_SECONDS = 30 * 60
 _HARD_STOP_STATUSES = {
     "INVESTIGATE",
     "INVESTIGATE_POST_ENEMY",
@@ -6887,6 +6889,108 @@ def _lightning_read_save_region_entries(
     return _lightning_parse_save_region_entries(text)
 
 
+def _lightning_current_time_ms_from_lua(text: str) -> float | None:
+    """Return ``GameData/Profile.current.time`` from save/profile Lua text."""
+    for _key, block in _iter_lua_keyed_table_blocks(text, r"current"):
+        match = re.search(
+            r'\["time"\]\s*=\s*(-?\d+(?:\.\d+)?)',
+            block,
+        )
+        if not match:
+            continue
+        try:
+            value = float(match.group(1))
+        except ValueError:
+            continue
+        if value >= 0:
+            return value
+    return None
+
+
+def _lightning_read_save_game_timer(
+    profile: str = "Alpha",
+    *,
+    profile_dir: Path | None = None,
+) -> dict:
+    """Read the Lightning War achievement clock from ITB save/profile files.
+
+    ITB stores current run score time in milliseconds at
+    ``["current"]["time"]``. This is distinct from profile ``["timer"]``, a
+    settings-ish value that is not the achievement clock.
+    """
+    base_dir = profile_dir or (SAVE_DIR / f"profile_{profile}")
+    candidates = [
+        ("saveData.lua", "saveData_current_time"),
+        ("profile.lua", "profile_current_time"),
+        ("undoSave.lua", "undoSave_current_time"),
+    ]
+    checked: list[str] = []
+    observed: list[dict] = []
+    for filename, source in candidates:
+        path = base_dir / filename
+        checked.append(str(path))
+        try:
+            text = path.read_text()
+        except OSError:
+            continue
+        current_time_ms = _lightning_current_time_ms_from_lua(text)
+        if current_time_ms is None:
+            continue
+        seconds = current_time_ms / 1000.0
+        observed.append({
+            "source": source,
+            "path": str(path),
+            "game_timer_ms": round(current_time_ms, 3),
+            "game_seconds": round(seconds, 3),
+            "game_timer": _lightning_format_seconds(seconds),
+        })
+    if observed:
+        latest = max(observed, key=lambda item: float(item["game_timer_ms"]))
+        return {
+            "status": "OK",
+            **latest,
+            "candidates": observed,
+            "note": (
+                "current.time is stored in milliseconds; profile.timer is "
+                "intentionally ignored; when save files disagree, the "
+                "highest current.time is used as the conservative clock"
+            ),
+        }
+    return {
+        "status": "UNKNOWN",
+        "source": None,
+        "game_timer_ms": None,
+        "game_seconds": None,
+        "game_timer": None,
+        "checked_paths": checked,
+    }
+
+
+def _lightning_game_timer_budget(
+    game_seconds: int | float | None,
+    *,
+    max_game_seconds: int | float = _LIGHTNING_ACHIEVEMENT_SECONDS,
+) -> dict:
+    budget = {
+        "game_seconds": (
+            round(float(game_seconds), 3)
+            if game_seconds is not None
+            else None
+        ),
+        "game_timer": _lightning_format_seconds(game_seconds),
+        "max_game_seconds": max_game_seconds,
+        "max_game_timer": _lightning_format_seconds(max_game_seconds),
+    }
+    if game_seconds is None:
+        budget["game_status"] = "UNKNOWN"
+        return budget
+    remaining = float(max_game_seconds) - float(game_seconds)
+    budget["game_status"] = "EXCEEDED" if remaining <= 0 else "OK"
+    budget["remaining_game_seconds"] = round(remaining, 3)
+    budget["remaining_game_timer"] = _lightning_format_seconds(remaining)
+    return budget
+
+
 def _lightning_mission_objective_tokens(entry: dict) -> set[str]:
     mission_id = str(entry.get("mission_id") or "")
     tokens: set[str] = set()
@@ -7179,6 +7283,176 @@ def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -
     return result
 
 
+def _lightning_route_start_candidates(
+    visual_regions: dict | None,
+    *,
+    start_mode: str = "preview-board",
+    target_hint: dict | None = None,
+) -> list[dict]:
+    """Return ready-to-run route handoff commands for detected map regions."""
+    if not isinstance(visual_regions, dict):
+        return []
+    if visual_regions.get("status") != "OK":
+        return []
+    candidates: list[dict] = []
+    for region in visual_regions.get("regions") or []:
+        if not isinstance(region, dict):
+            continue
+        window_x = region.get("window_x")
+        window_y = region.get("window_y")
+        if not isinstance(window_x, int) or not isinstance(window_y, int):
+            continue
+        region_index = region.get("index", len(candidates))
+        route_start_command = (
+            "python3 game_loop.py lightning_route_start "
+            f"--visual-region-index {region_index} "
+            f"--start-mode {start_mode}"
+        )
+        coordinate_command = (
+            "python3 game_loop.py lightning_route_start "
+            "--no-route-check "
+            f"--window-x {window_x} --window-y {window_y} "
+            f"--start-mode {start_mode}"
+        )
+        if isinstance(region_index, int):
+            command = (
+                "python3 game_loop.py lightning_segment "
+                f"--route-visual-region-index {region_index} "
+                f"--route-start-mode {start_mode}"
+            )
+        else:
+            command = coordinate_command
+            route_start_command = coordinate_command
+        candidate = {
+            "index": region_index,
+            "window_x": window_x,
+            "window_y": window_y,
+            "command": command,
+            "route_start_command": route_start_command,
+            "coordinate_command": coordinate_command,
+        }
+        if target_hint:
+            candidate["target_hint"] = dict(target_hint)
+        candidates.append(candidate)
+    return candidates
+
+
+def _lightning_route_target_hint_from_recommendation(
+    recommendation: dict | None,
+) -> dict | None:
+    """Compact the top recommended mission into a visual matching hint."""
+    if not isinstance(recommendation, dict):
+        return None
+    top3 = recommendation.get("top3")
+    if not isinstance(top3, list) or not top3:
+        return None
+    first = top3[0]
+    if not isinstance(first, dict):
+        return None
+    fields = (
+        "mission_id",
+        "region_id",
+        "save_region_name",
+        "save_region_index",
+        "save_region_state_label",
+        "environment",
+        "score",
+    )
+    hint = {key: first.get(key) for key in fields if first.get(key) is not None}
+    if not hint:
+        return None
+    label = (
+        hint.get("save_region_name")
+        or hint.get("mission_id")
+        or f"region {hint.get('region_id')}"
+    )
+    hint["match_label"] = str(label)
+    return hint
+
+
+def _lightning_route_target_hint_from_args(
+    *,
+    target_name: str | None = None,
+    target_mission_id: str | None = None,
+    target_region_id: int | None = None,
+) -> dict | None:
+    """Build an operator-provided visual matching hint for screenshot routing."""
+    hint: dict = {}
+    if target_name:
+        hint["save_region_name"] = str(target_name)
+    if target_mission_id:
+        hint["mission_id"] = str(target_mission_id)
+    if target_region_id is not None:
+        hint["region_id"] = int(target_region_id)
+    if not hint:
+        return None
+    hint["match_label"] = str(
+        hint.get("save_region_name")
+        or hint.get("mission_id")
+        or f"region {hint.get('region_id')}"
+    )
+    return hint
+
+
+def _lightning_attach_primary_route_candidate(
+    result: dict,
+    route_candidates: list[dict],
+) -> dict:
+    """Promote the first route candidate to a compact timed-run shortcut."""
+    if not route_candidates:
+        return result
+    first = route_candidates[0]
+    if not isinstance(first, dict):
+        return result
+    command = first.get("command")
+    if command:
+        result["primary_next_command"] = command
+    if first.get("index") is not None:
+        result["primary_route_candidate_index"] = first.get("index")
+    target_hint = first.get("target_hint")
+    if isinstance(target_hint, dict) and target_hint:
+        result["primary_route_target_hint"] = dict(target_hint)
+    return result
+
+
+def _lightning_visual_region_by_index(
+    visual_regions: dict | None,
+    visual_region_index: int | None,
+) -> dict | None:
+    """Return the detected map region matching a visual extractor index."""
+    if visual_region_index is None:
+        return None
+    if not isinstance(visual_regions, dict):
+        return None
+    if visual_regions.get("status") != "OK":
+        return None
+    for offset, region in enumerate(visual_regions.get("regions") or []):
+        if not isinstance(region, dict):
+            continue
+        region_index = region.get("index", offset)
+        if region_index != visual_region_index:
+            continue
+        if not isinstance(region.get("window_x"), int):
+            return None
+        if not isinstance(region.get("window_y"), int):
+            return None
+        return region
+    return None
+
+
+def _lightning_visual_regions_from_pause_map_peek() -> tuple[dict | None, dict]:
+    """Briefly expose the island map, then extract detected red regions."""
+    peek = _lightning_bridge_island_map_pause_peek()
+    visual_regions = _lightning_visual_regions_from_recommendation(
+        {"pause_map_peek": peek},
+    )
+    return visual_regions, {
+        key: value
+        for key, value in peek.items()
+        if key != "bridge_data"
+    }
+
+
 def _target_names(session: RunSession) -> set[str]:
     return {
         str(t).strip().lower()
@@ -7216,6 +7490,8 @@ def cmd_lightning_preflight(
     session = _load_session()
     settings = _read_settings_lua()
     live_difficulty = _read_save_file_difficulty(profile)
+    save_timer = _lightning_read_save_game_timer(profile)
+    game_budget = _lightning_game_timer_budget(save_timer.get("game_seconds"))
     targets = _target_names(session)
     issues: list[str] = []
     warnings: list[str] = []
@@ -7249,10 +7525,29 @@ def cmd_lightning_preflight(
     if block is not None:
         issues.append("persistent post-enemy block is active")
 
+    if game_budget.get("game_status") == "EXCEEDED":
+        issues.append(
+            "save-file in-game timer is "
+            f"{game_budget.get('game_timer')}, at/over the Lightning War "
+            f"limit of {game_budget.get('max_game_timer')}"
+        )
+    elif game_budget.get("game_status") == "UNKNOWN":
+        warnings.append("save-file in-game timer could not be read")
+
     if settings.get("timer_ui") != 1:
         warnings.append("settings.lua timer_ui is not enabled")
-    if settings and "speed" not in settings:
+    settings_speed = settings.get("speed")
+    if isinstance(settings_speed, int):
+        if settings_speed < _LIGHTNING_MIN_FAST_SETTINGS_SPEED:
+            issues.append(
+                "settings.lua speed is "
+                f"{settings_speed}, below Lightning War fast threshold "
+                f"{_LIGHTNING_MIN_FAST_SETTINGS_SPEED}"
+            )
+    elif settings and "speed" not in settings:
         warnings.append("settings.lua has no speed key")
+    elif settings:
+        warnings.append(f"settings.lua speed is not numeric: {settings_speed!r}")
     if not settings:
         warnings.append("settings.lua could not be read")
 
@@ -7272,6 +7567,11 @@ def cmd_lightning_preflight(
     print(f"Targets:         {session.achievement_targets}")
     print(f"Timer UI:        {settings.get('timer_ui', '(unknown)')}")
     print(f"Settings speed:  {settings.get('speed', '(unknown)')}")
+    print(
+        "Game timer:      "
+        f"{game_budget.get('game_timer') or '(unknown)'} "
+        f"source={save_timer.get('source') or '(unknown)'}"
+    )
     if issues:
         print("Issues:")
         for issue in issues:
@@ -7294,11 +7594,18 @@ def cmd_lightning_preflight(
         },
         "settings": {
             "timer_ui": settings.get("timer_ui"),
-            "speed": settings.get("speed"),
+            "speed": settings_speed,
+            "speed_fast_threshold": _LIGHTNING_MIN_FAST_SETTINGS_SPEED,
+            "speed_fast_ready": (
+                isinstance(settings_speed, int)
+                and settings_speed >= _LIGHTNING_MIN_FAST_SETTINGS_SPEED
+            ),
             "new_missions": settings.get("new_missions"),
             "new_enemies": settings.get("new_enemies"),
             "new_equip": settings.get("new_equip"),
         },
+        "save_timer": save_timer,
+        "game_budget": game_budget,
         "pending_research_count": len(pending_research),
         "research_gate": research_gate,
         "pending_diagnosis_count": len(pending_diagnosis),
@@ -7330,21 +7637,42 @@ def _parse_session_run_wall_seconds(session: RunSession) -> float | None:
 def _lightning_budget_summary(
     session: RunSession,
     *,
+    profile: str = "Alpha",
     max_wall_seconds: float | None = None,
+    max_game_seconds: int | float = _LIGHTNING_ACHIEVEMENT_SECONDS,
 ) -> dict:
     wall_seconds = _parse_session_run_wall_seconds(session)
+    save_timer = _lightning_read_save_game_timer(profile)
+    game_budget = _lightning_game_timer_budget(
+        save_timer.get("game_seconds"),
+        max_game_seconds=max_game_seconds,
+    )
+    wall_status = "UNKNOWN" if wall_seconds is None else "OK"
+    remaining_wall_seconds = None
+    if wall_seconds is not None and max_wall_seconds is not None:
+        remaining_wall_seconds = max_wall_seconds - wall_seconds
+        wall_status = "EXCEEDED" if remaining_wall_seconds <= 0 else "OK"
     summary = {
         "wall_seconds": round(wall_seconds, 1) if wall_seconds is not None else None,
         "max_wall_seconds": max_wall_seconds,
         "mission_index": session.mission_index,
         "current_mission": session.current_mission,
         "islands_completed": session.islands_completed,
+        "save_timer": save_timer,
+        **game_budget,
+        "wall_status": wall_status,
     }
-    if wall_seconds is None or max_wall_seconds is None:
-        summary["status"] = "UNKNOWN" if wall_seconds is None else "OK"
-        return summary
-    summary["status"] = "EXCEEDED" if wall_seconds > max_wall_seconds else "OK"
-    summary["remaining_wall_seconds"] = round(max_wall_seconds - wall_seconds, 1)
+    if remaining_wall_seconds is not None:
+        summary["remaining_wall_seconds"] = round(remaining_wall_seconds, 1)
+    if (
+        game_budget.get("game_status") == "EXCEEDED"
+        or wall_status == "EXCEEDED"
+    ):
+        summary["status"] = "EXCEEDED"
+    elif game_budget.get("game_status") == "UNKNOWN" and wall_status == "UNKNOWN":
+        summary["status"] = "UNKNOWN"
+    else:
+        summary["status"] = "OK"
     return summary
 
 
@@ -7456,6 +7784,33 @@ _LIGHTNING_UI_BURSTS = {
     ],
     "select_rst_pause": ["menu_continue", "island_rst", "pause"],
     "clear_intro_pause": ["menu_continue", "bottom_continue", "pause"],
+    "first_island_to_rst_pause": [
+        "menu_continue",
+        "leave_island",
+        "leave_confirm_yes",
+        "island_rst",
+        "bottom_continue",
+        "pause",
+    ],
+    "first_island_perfect_grid_to_rst_pause": [
+        "menu_continue",
+        "perfect_reward_grid",
+        "leave_island",
+        "leave_confirm_yes",
+        "island_rst",
+        "bottom_continue",
+        "pause",
+    ],
+    "first_island_perfect_full_to_rst_pause": [
+        "menu_continue",
+        "panel_continue",
+        "perfect_reward_grid",
+        "leave_island",
+        "leave_confirm_yes",
+        "island_rst",
+        "bottom_continue",
+        "pause",
+    ],
 }
 
 _LIGHTNING_PAUSE_BLOCKING_UIS = {
@@ -8099,17 +8454,22 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
 
 
 def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
-    """Use bridge state to reject image-only deployment false positives."""
-    if visible_ui.get("visible_ui") != "deployment_screen":
+    """Use bridge state to reject image-only live-combat false positives."""
+    visible_name = visible_ui.get("visible_ui")
+    if (
+        visible_name != "deployment_screen"
+        and visible_name not in _LIGHTNING_SAFE_CLEAR_UIS
+    ):
         return visible_ui
 
     snapshot = _lightning_live_snapshot()
-    visible_ui["deployment_bridge_snapshot"] = {
+    visible_ui["bridge_refine_snapshot"] = {
         key: snapshot.get(key)
         for key in (
             "status",
             "phase",
             "turn",
+            "active_mechs",
             "deployment_zone_count",
             "in_active_mission",
         )
@@ -8124,7 +8484,22 @@ def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
     except (TypeError, ValueError):
         turn = -1
     is_deployment = turn == 0 and int(snapshot.get("deployment_zone_count") or 0) > 0
-    if is_deployment:
+    if visible_name == "deployment_screen" and is_deployment:
+        return visible_ui
+
+    if (
+        visible_name in _LIGHTNING_SAFE_CLEAR_UIS
+        and snapshot.get("phase") in _COMBAT_BRIDGE_PHASES
+        and snapshot.get("in_active_mission") is True
+        and int(snapshot.get("active_mechs") or 0) > 0
+    ):
+        refined = dict(visible_ui)
+        refined["visible_ui"] = "combat_screen"
+        refined["recommended_control"] = None
+        refined["terminal_panel_false_positive"] = True
+        return refined
+
+    if visible_name != "deployment_screen":
         return visible_ui
 
     refined = dict(visible_ui)
@@ -9228,6 +9603,10 @@ def cmd_lightning_map_regions(
     *,
     out_dir: str | None = None,
     dry_run: bool = False,
+    start_mode: str = "preview-board",
+    target_name: str | None = None,
+    target_mission_id: str | None = None,
+    target_region_id: int | None = None,
 ) -> dict:
     """Extract clickable red island-map regions from a Lightning peek image."""
     captured = None
@@ -9265,9 +9644,25 @@ def cmd_lightning_map_regions(
 
     result = _lightning_extract_red_regions_from_image(target_path)
     result["capture_result"] = captured
+    target_hint = _lightning_route_target_hint_from_args(
+        target_name=target_name,
+        target_mission_id=target_mission_id,
+        target_region_id=target_region_id,
+    )
+    if target_hint:
+        result["route_target_hint"] = target_hint
+    route_candidates = _lightning_route_start_candidates(
+        result,
+        start_mode=start_mode,
+        target_hint=target_hint,
+    )
+    if route_candidates:
+        result["route_start_candidates"] = route_candidates
+        _lightning_attach_primary_route_candidate(result, route_candidates)
     result["next_step"] = (
-        "Use a region's window_x/window_y with "
-        "`lightning_route_start --no-route-check --window-x X --window-y Y`."
+        "Pick the visual red-region candidate matching the intended mission, "
+        "then run its command. Use route_start_command only for a narrower "
+        "start-only handoff."
     )
     print("\n=== LIGHTNING MAP REGIONS ===")
     print(f"  screenshot: {target_path}")
@@ -9280,6 +9675,17 @@ def cmd_lightning_map_regions(
             f"window=({region.get('window_x')}, {region.get('window_y')}) "
             f"area={region.get('area_window')}"
         )
+    if route_candidates:
+        print("  candidates:")
+        for candidate in route_candidates:
+            target = ""
+            hint = candidate.get("target_hint") or {}
+            if hint.get("match_label"):
+                target = f" target={hint.get('match_label')}"
+            print(
+                f"    #{candidate.get('index')}: "
+                f"{candidate.get('command')}{target}"
+            )
     _print_result(result)
     return result
 
@@ -9935,6 +10341,7 @@ def cmd_lightning_route_start(
     *,
     region_window_x: int | None = None,
     region_window_y: int | None = None,
+    visual_region_index: int | None = None,
     profile: str = "Alpha",
     run_preflight: bool = True,
     verify_route: bool = True,
@@ -9949,6 +10356,23 @@ def cmd_lightning_route_start(
     dry_run: bool = False,
 ) -> dict:
     """Preflight, route-check, and start a selected mission in one live burst."""
+    if visual_region_index is not None and (
+        region_window_x is not None or region_window_y is not None
+    ):
+        result = {
+            "status": "ERROR",
+            "reason": "ambiguous_route_start_region",
+            "visual_region_index": visual_region_index,
+            "region_window_x": region_window_x,
+            "region_window_y": region_window_y,
+            "next_step": (
+                "Use either --visual-region-index or --window-x/--window-y, "
+                "not both."
+            ),
+        }
+        _print_result(result)
+        return result
+
     preflight = None
     if run_preflight:
         preflight = cmd_lightning_preflight(profile=profile, set_fast_bridge=False)
@@ -9989,7 +10413,11 @@ def cmd_lightning_route_start(
         _print_result(result)
         return result
 
+    visual_regions = None
+    selected_visual_region = None
+    visual_region_peek = None
     recommendation = None
+    route_target_hint = None
     if verify_route:
         recommendation = cmd_recommend_mission(
             profile=profile,
@@ -9997,17 +10425,61 @@ def cmd_lightning_route_start(
             use_save_region_filter=use_save_region_filter,
             pause_map_peek=allow_pause_map_peek and not dry_run,
         )
+        route_target_hint = _lightning_route_target_hint_from_recommendation(
+            recommendation,
+        )
         if recommendation.get("status") != "OK":
             visual_regions = _lightning_visual_regions_from_recommendation(
                 recommendation,
             )
-            if (
+            if visual_region_index is not None:
+                selected_visual_region = _lightning_visual_region_by_index(
+                    visual_regions,
+                    visual_region_index,
+                )
+                if selected_visual_region is not None:
+                    region_window_x = selected_visual_region["window_x"]
+                    region_window_y = selected_visual_region["window_y"]
+                else:
+                    route_candidates = _lightning_route_start_candidates(
+                        visual_regions,
+                        target_hint=route_target_hint,
+                    )
+                    result = {
+                        "status": "BLOCKED",
+                        "reason": "visual_region_index_not_found",
+                        "requested_visual_region_index": visual_region_index,
+                        "preflight": preflight,
+                        "initial_ui": initial_ui,
+                        "auto_pause": auto_pause,
+                        "recommendation": recommendation,
+                        "route_target_hint": route_target_hint,
+                        "visual_regions": visual_regions,
+                        "route_start_candidates": route_candidates,
+                        "next_step": (
+                            "Pick one of the detected visual red-region "
+                            "indexes, or rerun with explicit window "
+                            "coordinates after manual confirmation."
+                        ),
+                    }
+                    _lightning_attach_primary_route_candidate(result, route_candidates)
+                    _print_result(result)
+                    return result
+            if selected_visual_region is not None:
+                pass
+            elif (
+                visual_region_index is None
+                and
                 region_window_x is None
                 and region_window_y is None
                 and visual_regions
                 and visual_regions.get("status") == "OK"
                 and visual_regions.get("regions")
             ):
+                route_candidates = _lightning_route_start_candidates(
+                    visual_regions,
+                    target_hint=route_target_hint,
+                )
                 result = {
                     "status": "ROUTE_READY_VISUAL",
                     "reason": "route_check_unavailable_visual_regions_detected",
@@ -10015,31 +10487,90 @@ def cmd_lightning_route_start(
                     "initial_ui": initial_ui,
                     "auto_pause": auto_pause,
                     "recommendation": recommendation,
+                    "route_target_hint": route_target_hint,
+                    "visual_regions": visual_regions,
+                    "route_start_candidates": route_candidates,
+                    "next_step": (
+                        "Pick a visual red region and run its candidate "
+                        "command. Use route_start_command only for a narrower "
+                        "start-only handoff."
+                    ),
+                }
+                _lightning_attach_primary_route_candidate(result, route_candidates)
+                _print_result(result)
+                return result
+            else:
+                result = {
+                    "status": "BLOCKED",
+                    "reason": "route_check_failed_before_start",
+                    "preflight": preflight,
+                    "initial_ui": initial_ui,
+                    "auto_pause": auto_pause,
+                    "recommendation": recommendation,
                     "visual_regions": visual_regions,
                     "next_step": (
-                        "Pick a visual red region and rerun with "
-                        "--no-route-check --window-x X --window-y Y."
+                        "Refresh the map or rerun with --no-route-check only after "
+                        "manual visual confirmation of the target region."
                     ),
                 }
                 _print_result(result)
                 return result
+
+    if visual_region_index is not None and selected_visual_region is None:
+        if visual_regions is None:
+            visual_regions = _lightning_visual_regions_from_recommendation(
+                recommendation,
+            )
+        if (
+            (
+                not visual_regions
+                or visual_regions.get("status") != "OK"
+                or not visual_regions.get("regions")
+            )
+            and allow_pause_map_peek
+            and not dry_run
+        ):
+            visual_regions, visual_region_peek = (
+                _lightning_visual_regions_from_pause_map_peek()
+            )
+        selected_visual_region = _lightning_visual_region_by_index(
+            visual_regions,
+            visual_region_index,
+        )
+        if selected_visual_region is None:
+            route_candidates = _lightning_route_start_candidates(
+                visual_regions,
+                target_hint=route_target_hint,
+            )
             result = {
                 "status": "BLOCKED",
-                "reason": "route_check_failed_before_start",
+                "reason": "visual_region_index_not_found",
+                "requested_visual_region_index": visual_region_index,
                 "preflight": preflight,
                 "initial_ui": initial_ui,
                 "auto_pause": auto_pause,
                 "recommendation": recommendation,
+                "route_target_hint": route_target_hint,
                 "visual_regions": visual_regions,
+                "visual_region_peek": visual_region_peek,
+                "route_start_candidates": route_candidates,
                 "next_step": (
-                    "Refresh the map or rerun with --no-route-check only after "
-                    "manual visual confirmation of the target region."
+                    "Pick one of the detected visual red-region indexes, or "
+                    "rerun with explicit window coordinates after manual "
+                    "confirmation."
                 ),
             }
+            _lightning_attach_primary_route_candidate(result, route_candidates)
             _print_result(result)
             return result
+        region_window_x = selected_visual_region["window_x"]
+        region_window_y = selected_visual_region["window_y"]
 
     if region_window_x is None or region_window_y is None:
+        if visual_regions is None:
+            visual_regions = _lightning_visual_regions_from_recommendation(
+                recommendation,
+            )
         result = {
             "status": "ROUTE_READY",
             "reason": "no_region_point_supplied",
@@ -10047,11 +10578,29 @@ def cmd_lightning_route_start(
             "initial_ui": initial_ui,
             "auto_pause": auto_pause,
             "recommendation": recommendation,
+            "route_target_hint": route_target_hint,
             "next_step": (
                 "Pick the visible red region matching the recommendation, "
                 "then rerun lightning_route_start --window-x X --window-y Y."
             ),
         }
+        if visual_regions:
+            result["visual_regions"] = visual_regions
+            route_candidates = _lightning_route_start_candidates(
+                visual_regions,
+                target_hint=route_target_hint,
+            )
+            if route_candidates:
+                result["route_start_candidates"] = route_candidates
+                _lightning_attach_primary_route_candidate(result, route_candidates)
+            if (
+                visual_regions.get("status") == "OK"
+                and visual_regions.get("regions")
+            ):
+                result["next_step"] = (
+                    "Pick the visual red-region candidate matching the top "
+                    "recommendation, then run its candidate command."
+                )
         _print_result(result)
         return result
 
@@ -10078,6 +10627,10 @@ def cmd_lightning_route_start(
         "initial_ui": initial_ui,
         "auto_pause": auto_pause,
         "recommendation": recommendation,
+        "route_target_hint": route_target_hint,
+        "visual_regions": visual_regions,
+        "selected_visual_region": selected_visual_region,
+        "visual_region_peek": visual_region_peek,
         "click_result": click_result,
         "next_step": (
             "If deployment loaded, run lightning_segment immediately. If a "
@@ -10352,6 +10905,7 @@ def cmd_lightning_attempt(
 
     budget = _lightning_budget_summary(
         session,
+        profile=profile,
         max_wall_seconds=max_wall_seconds,
     )
     if budget.get("status") == "EXCEEDED":
@@ -10359,8 +10913,9 @@ def cmd_lightning_attempt(
             "status": "LIGHTNING_ATTEMPT_BUDGET_EXCEEDED",
             "budget": budget,
             "next_step": (
-                "Start a fresh Lightning War timeline unless the visible "
-                "in-game timer is still safely under 30 minutes."
+                "Start a fresh Lightning War timeline unless independent "
+                "visible timer evidence proves the save-file clock is stale "
+                "and still under 30 minutes."
             ),
         }
         return finish(result, pause_reason="lightning_attempt_budget_exceeded")
@@ -10857,18 +11412,42 @@ def cmd_lightning_attempt(
         )
         if recommendation_output:
             recommendation["quiet_output"] = recommendation_output
+        route_target_hint = _lightning_route_target_hint_from_recommendation(
+            recommendation,
+        )
+        visual_regions = _lightning_visual_regions_from_recommendation(
+            recommendation,
+        )
         result = {
             "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
             "snapshot": snapshot,
             "budget": budget,
             "preflight": preflight,
             "recommendation": recommendation,
+            "route_target_hint": route_target_hint,
             "next_step": (
                 "Pause for route thinking if the timer is running, select the "
                 "top recommended red region visually, click its preview board "
                 "to start, then rerun lightning_attempt for deployment."
             ),
         }
+        if visual_regions:
+            result["visual_regions"] = visual_regions
+            route_candidates = _lightning_route_start_candidates(
+                visual_regions,
+                target_hint=route_target_hint,
+            )
+            if route_candidates:
+                result["route_start_candidates"] = route_candidates
+                _lightning_attach_primary_route_candidate(result, route_candidates)
+            if (
+                visual_regions.get("status") == "OK"
+                and visual_regions.get("regions")
+            ):
+                result["next_step"] = (
+                    "Use the visual red-region candidates with the top "
+                    "recommendation, then run its candidate command."
+                )
         return finish(result, pause_reason="lightning_attempt_route_ready")
 
     result = {
@@ -10943,6 +11522,14 @@ def _lightning_segment_step_summary(
         summary["step_wall_seconds"] = round(float(step_wall_seconds), 2)
     if segment_elapsed_seconds is not None:
         summary["segment_elapsed_seconds"] = round(float(segment_elapsed_seconds), 2)
+    if result.get("primary_next_command"):
+        summary["primary_next_command"] = result.get("primary_next_command")
+    if result.get("primary_route_candidate_index") is not None:
+        summary["primary_route_candidate_index"] = result.get(
+            "primary_route_candidate_index",
+        )
+    if isinstance(result.get("primary_route_target_hint"), dict):
+        summary["primary_route_target_hint"] = result.get("primary_route_target_hint")
     action_name = _lightning_attempt_action_name(result)
     loop_reason = _lightning_attempt_loop_reason(result)
     if action_name:
@@ -10987,6 +11574,35 @@ def _lightning_segment_step_summary(
             if isinstance(first, dict):
                 summary["top_mission"] = first.get("mission_id")
                 summary["top_region_id"] = first.get("region_id")
+    return summary
+
+
+def _lightning_segment_route_start_summary(
+    result: dict,
+    step_index: int,
+    *,
+    step_wall_seconds: float | None = None,
+    segment_elapsed_seconds: float | None = None,
+) -> dict:
+    summary = {
+        "step": step_index,
+        "phase": "route_start",
+        "status": result.get("status"),
+        "reason": result.get("reason"),
+    }
+    if step_wall_seconds is not None:
+        summary["step_wall_seconds"] = round(float(step_wall_seconds), 2)
+    if segment_elapsed_seconds is not None:
+        summary["segment_elapsed_seconds"] = round(float(segment_elapsed_seconds), 2)
+    selected = result.get("selected_visual_region")
+    if isinstance(selected, dict):
+        summary["visual_region_index"] = selected.get("index")
+        summary["window_x"] = selected.get("window_x")
+        summary["window_y"] = selected.get("window_y")
+    click_result = result.get("click_result")
+    if isinstance(click_result, dict):
+        summary["click_status"] = click_result.get("status")
+        summary["click_steps"] = len(click_result.get("steps") or [])
     return summary
 
 
@@ -11043,13 +11659,17 @@ def cmd_lightning_segment(
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = True,
     settle_seconds: float = 0.25,
+    route_visual_region_index: int | None = None,
+    route_start_mode: str = "preview_board",
 ) -> dict:
     """Run repeated Lightning War conductor bursts until the next decision."""
     started_at = time.monotonic()
     steps: list[dict] = []
     last_attempt: dict | None = None
+    last_route_start: dict | None = None
     stopped_reason = "max_steps_reached"
     dirty_pending = bool(allow_dirty_plan)
+    route_start_pending = route_visual_region_index is not None
     seen_progress_keys: dict[tuple[object, object, object, object], int] = {}
 
     for step_index in range(max(1, int(max_steps))):
@@ -11098,6 +11718,44 @@ def cmd_lightning_segment(
 
         success_reason = _lightning_segment_success_reason(attempt)
         if success_reason:
+            if route_start_pending:
+                route_start_pending = False
+                route_started_at = time.monotonic()
+                route_start, route_output = _lightning_quiet_call(
+                    lambda: cmd_lightning_route_start(
+                        profile=profile,
+                        visual_region_index=route_visual_region_index,
+                        run_preflight=False,
+                        verify_route=False,
+                        auto_pause_if_needed=True,
+                        start_mode=route_start_mode,
+                        dry_run=dry_run,
+                    ),
+                    quiet=quiet,
+                )
+                last_route_start = route_start
+                route_summary = _lightning_segment_route_start_summary(
+                    route_start,
+                    len(steps),
+                    step_wall_seconds=time.monotonic() - route_started_at,
+                    segment_elapsed_seconds=time.monotonic() - started_at,
+                )
+                if route_output:
+                    route_summary["quiet_output"] = route_output
+                steps.append(route_summary)
+                if route_start.get("status") not in {"OK", "DRY_RUN"}:
+                    stopped_reason = str(
+                        route_start.get("reason")
+                        or route_start.get("status")
+                        or "route_start_failed"
+                    )
+                    break
+                if dry_run:
+                    stopped_reason = "dry_run_route_start"
+                    break
+                if settle_seconds > 0:
+                    time.sleep(settle_seconds)
+                continue
             stopped_reason = success_reason
             break
 
@@ -11131,6 +11789,10 @@ def cmd_lightning_segment(
         "steps": steps,
         "lightning_speed_loss_policy": lightning_speed_loss_policy,
         "dirty_consent_still_pending": dirty_pending,
+        "route_start_performed": last_route_start is not None,
+        "route_visual_region_index_pending": (
+            route_visual_region_index if route_start_pending else None
+        ),
         "next_step": (
             "If this stopped at route_ready, choose/start the next mission. "
             "If it stopped on a hard gate, inspect last_attempt before "
@@ -11138,6 +11800,16 @@ def cmd_lightning_segment(
         ),
     }
     if last_attempt is not None:
+        if last_attempt.get("primary_next_command"):
+            result["primary_next_command"] = last_attempt.get("primary_next_command")
+        if last_attempt.get("primary_route_candidate_index") is not None:
+            result["primary_route_candidate_index"] = last_attempt.get(
+                "primary_route_candidate_index",
+            )
+        if isinstance(last_attempt.get("primary_route_target_hint"), dict):
+            result["primary_route_target_hint"] = last_attempt.get(
+                "primary_route_target_hint",
+            )
         if stopped_reason not in {
             "route_ready",
             "visible_island_map_without_bridge",
@@ -11149,6 +11821,12 @@ def cmd_lightning_segment(
                 last_attempt,
                 len(steps) - 1,
             )
+    if last_route_start is not None and stopped_reason not in {
+        "route_ready",
+        "visible_island_map_without_bridge",
+        "max_steps_reached",
+    }:
+        result["last_route_start"] = last_route_start
 
     result = _lightning_pause_after_stop(
         result,
@@ -14060,9 +14738,21 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         poll_start = _t.time()
         read_result = cmd_read(profile=profile)
         prev_fp: str | None = None
+        visible_terminal_panel: dict | None = None
+        last_visible_poll = 0.0
         wait_poll_interval = max(0.05, float(wait_poll_interval or 0.05))
         while _t.time() - poll_start < max_wait:
             phase = read_result.get("phase")
+            now = _t.time()
+            if now - last_visible_poll >= 1.0:
+                last_visible_poll = now
+                visible_ui = _lightning_visible_ui_snapshot()
+                if (
+                    visible_ui.get("status") == "OK"
+                    and visible_ui.get("visible_ui") in _LIGHTNING_SAFE_CLEAR_UIS
+                ):
+                    visible_terminal_panel = visible_ui
+                    break
             # Terminal states — don't keep polling.
             if read_result.get("game_over") or phase in ("mission_end", "unknown"):
                 break
@@ -14089,6 +14779,29 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     else:
         read_result = cmd_read(profile=profile)
         wait_entry_seconds = 0.0
+        visible_terminal_panel = None
+
+    if visible_terminal_panel is not None:
+        result = {
+            "status": "TERMINAL_OR_MISSION_END",
+            "phase": read_result.get("phase"),
+            "visible_ui": {
+                key: visible_terminal_panel.get(key)
+                for key in (
+                    "status",
+                    "visible_ui",
+                    "recommended_control",
+                    "screenshot_path",
+                )
+            },
+            "wait_entry_seconds": wait_entry_seconds,
+            "next_step": (
+                "A safe post-mission panel is visible. Clear it with the "
+                "Lightning UI tail burst before issuing more combat commands."
+            ),
+        }
+        _print_result(result)
+        return result
 
     if _is_hard_stop_status(read_result.get("status")):
         _print_result(read_result)

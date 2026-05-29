@@ -78,6 +78,19 @@ def test_threat_audit_attacker_killed():
     assert audit["entries"][0]["coverage"]["reason"] == "attacker_killed"
 
 
+def test_threat_audit_blocks_current_threat_missing_from_initial_set():
+    board = _board()
+
+    audit = audit_threat_coverage([], board)
+
+    assert audit["status"] == "WARN"
+    assert audit["initial_threat_count"] == 0
+    assert audit["current_threat_count"] == 1
+    assert audit["new_current_threat_count"] == 1
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened_current"
+
+
 def test_threat_audit_attacker_smoked():
     initial = capture_building_threats(_board())
     after = _board()
