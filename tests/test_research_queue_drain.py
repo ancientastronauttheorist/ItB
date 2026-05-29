@@ -162,6 +162,24 @@ def test_drain_resolves_known_type_status_diff(monkeypatch):
     assert entry["result"]["diff_field"] == "status.fire"
 
 
+def test_drain_reclassifies_older_medium_status_diff(monkeypatch):
+    monkeypatch.setattr(RunSession, "save", lambda self, *a, **kw: None)
+    s = RunSession()
+    s.enqueue_research(
+        "Scorpion1", None, 1, kind="behavior_novelty",
+        diff_field="status.fire", diff_predicted=True, diff_actual=False,
+        severity="medium",
+    )
+
+    resolved = orchestrator.drain_stale_behavior_novelty(s)
+
+    assert resolved == ["Scorpion1"]
+    entry = s.research_queue[0]
+    assert entry["status"] == "done"
+    assert entry["severity"] == "low"
+    assert entry["result"]["diff_field"] == "status.fire"
+
+
 def test_drain_keeps_high_severity_known_type(monkeypatch):
     # Scorpion1 (known) surviving a predicted kill IS a genuine bug
     # signal — the user spec calls this out explicitly. Stay pending.

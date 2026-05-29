@@ -144,6 +144,19 @@ def drain_stale_behavior_novelty(session: RunSession) -> list[str]:
     known_weapons_norm = {w.replace("_", "") for w in known_weapons}
     known_phases = known.get("phases", set())
 
+    def effective_behavior_severity(entry: dict) -> str | None:
+        field = entry.get("diff_field")
+        if field:
+            severity = derive_severity(
+                str(field),
+                entry.get("diff_predicted"),
+                entry.get("diff_actual"),
+            )
+            if entry.get("severity") != severity:
+                entry["severity"] = severity
+            return severity
+        return entry.get("severity")
+
     resolved: list[str] = []
     for entry in session.research_queue:
         if entry.get("status") not in ("pending", "in_progress"):
@@ -152,7 +165,7 @@ def drain_stale_behavior_novelty(session: RunSession) -> list[str]:
         type_name = entry.get("type", "")
 
         if kind == "behavior_novelty":
-            if entry.get("severity") != "low":
+            if effective_behavior_severity(entry) != "low":
                 continue
             if not type_name or type_name not in known_pawn_types:
                 continue
