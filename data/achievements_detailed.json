@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-29T14:40:06.737744",
+    "last_steam_sync": "2026-05-30T00:15:07Z",
     "last_steam_total": 70,
-    "last_steam_unlocked": 47
+    "last_steam_unlocked": 48
   },
   "achievements": {
     "rift_walkers": [
@@ -315,9 +315,9 @@
         "description": "Beat the game with 3 different Mechs from the same class in Custom squad",
         "type": "single_run",
         "global_unlock_pct": 9.8,
-        "completed": false,
-        "strategy": "Prime class recommended: Combat Mech + Laser Mech + Aegis Mech. All have strong melee attacks. 2-island run.",
-        "setup": "Custom squad: 3 Prime-class mechs. Easy difficulty.",
+        "completed": true,
+        "strategy": "Completed with Combat Mech + Laser Mech + Aegis Mech on Easy. Prime class has strong melee/control tools; buy Grid Power first, then cores and useful Prime-class weapons.",
+        "setup": "Custom squad: 3 Prime-class mechs. Proven setup: Combat Mech + Laser Mech + Aegis Mech, Easy difficulty, Advanced Edition ON, 2-island run.",
         "pitfalls": "Same-class squads lack support variety. Primes lack ranged attacks."
       },
       {
