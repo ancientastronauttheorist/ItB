@@ -31,7 +31,7 @@ class DecisionLog:
             self._write(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
     def _write(self, text: str):
-        with open(self.log_file, "a") as f:
+        with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(text)
 
     @staticmethod

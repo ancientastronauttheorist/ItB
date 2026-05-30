@@ -1,18 +1,18 @@
 # Into the Breach Achievement Bot
 
-An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
+An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS and Windows, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **47 / 70 achievements Steam-cache confirmed** after the 2026-05-27 `Change the Odds` Random Squad unlock and sync. Steam offline mode can delay achievement reconciliation: visible or in-game awards may not appear in `achievements --sync` until Steam goes online and Into the Breach restarts.
+Status: **48 / 70 achievements Steam-cache confirmed** after the 2026-05-30 `Class Specialist` Custom Squad victory. Steam offline mode can delay achievement reconciliation: visible or in-game awards may not appear in `achievements --sync` until Steam goes online and Into the Breach restarts; the Windows Steam client cache confirmed `Ach_Custom_2` immediately after victory.
 
-Recent unlocks: **Change the Odds** unlocked on 2026-05-27 in Random Squad Easy run `20260527_152006_916` after Archive HQ by buying Grid Defense to 30%; **Mech Specialist** and **Flight Specialist** unlocked on 2026-05-27 in Custom Squad Easy run `20260526_204256_831` with 3x Ice Mech after a two-island final victory; **Distant Friends** unlocked on 2026-05-26 in Frozen Titans Easy run `20260525_203546_657` after the hidden H2 beacon pickup on R.S.T. `Mission_Force`; **Hold the Line** unlocked on 2026-05-24 in Blitzkrieg Normal run `20260524_195401_412` after a manual four-block spawn cluster on Detritus Corporate HQ; **Healing** and **Overkill** reconciled on 2026-05-24 after the Hazardous Mechs Easy 4-island victory run `20260522_193613_471` and a Steam online/game restart; **Untouchable** popped in-game on 2026-05-22 after Frozen Titans Easy Archive run `20260522_133722_695`; **Unstable Ground** was confirmed by the 2026-05-21 sync during the Cataclysm run `20260521_120049_468`; **This is Fine** also reconciled in that sync after its 2026-05-21 Flame Behemoths Easy toast in run `20260520_174936_811`; **Quantum Entanglement** was confirmed by the 2026-05-20 sync after a four-tile `Science_Swap_AB` Teleporter line in Flame Behemoths run `20260520_134643_900`; **Adaptable Victory** was confirmed by the 2026-05-19 sync after the Rusting Hulks Easy 2-island victory run `20260519_200933_351`; **There is No Try** was confirmed earlier on 2026-05-19 after the Rusting Hulks Easy no-failed-objectives run `20260519_154655_297`; **Perfect Strategy** was confirmed earlier on 2026-05-19 after a Rusting Hulks Easy Pinnacle Perfect Island reward in run `20260519_133059_179`; **Ramming Speed**, **Chain Attack**, and **Squads Victory** were confirmed by the 2026-05-18 sync after the 2026-05-17 Blitzkrieg victory push; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
+Recent unlocks: **Class Specialist** unlocked on 2026-05-30 in Custom Squad Easy run `20260529_164303_219` with Combat Mech + Laser Mech + Aegis Mech after a two-island Windows victory; **Change the Odds** unlocked on 2026-05-27 in Random Squad Easy run `20260527_152006_916` after Archive HQ by buying Grid Defense to 30%; **Mech Specialist** and **Flight Specialist** unlocked on 2026-05-27 in Custom Squad Easy run `20260526_204256_831` with 3x Ice Mech after a two-island final victory; **Distant Friends** unlocked on 2026-05-26 in Frozen Titans Easy run `20260525_203546_657` after the hidden H2 beacon pickup on R.S.T. `Mission_Force`; **Hold the Line** unlocked on 2026-05-24 in Blitzkrieg Normal run `20260524_195401_412` after a manual four-block spawn cluster on Detritus Corporate HQ; **Healing** and **Overkill** reconciled on 2026-05-24 after the Hazardous Mechs Easy 4-island victory run `20260522_193613_471` and a Steam online/game restart; **Untouchable** popped in-game on 2026-05-22 after Frozen Titans Easy Archive run `20260522_133722_695`; **Unstable Ground** was confirmed by the 2026-05-21 sync during the Cataclysm run `20260521_120049_468`; **This is Fine** also reconciled in that sync after its 2026-05-21 Flame Behemoths Easy toast in run `20260520_174936_811`; **Quantum Entanglement** was confirmed by the 2026-05-20 sync after a four-tile `Science_Swap_AB` Teleporter line in Flame Behemoths run `20260520_134643_900`; **Adaptable Victory** was confirmed by the 2026-05-19 sync after the Rusting Hulks Easy 2-island victory run `20260519_200933_351`; **There is No Try** was confirmed earlier on 2026-05-19 after the Rusting Hulks Easy no-failed-objectives run `20260519_154655_297`; **Perfect Strategy** was confirmed earlier on 2026-05-19 after a Rusting Hulks Easy Pinnacle Perfect Island reward in run `20260519_133059_179`; **Ramming Speed**, **Chain Attack**, and **Squads Victory** were confirmed by the 2026-05-18 sync after the 2026-05-17 Blitzkrieg victory push; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
 
-Current milestone: **Change the Odds** is closed. The Random Squad route proved that Easy Balanced Roll can tolerate non-desync objective/mech losses if the dirty frontier is reviewed, but real desyncs still get fixed immediately before continuing. The winning shop line filled the grid, bought five high-value overpowers to 25%, then sold spare weapons/pilots for four +1% overpowers to reach 30%. Remaining cleanup can pivot to Blitzkrieg **Lightning War**, Hazardous **Immortal**, Cataclysm, Mist Eaters/Heat Sinkers/Arachnophiles, or Custom/Random targets such as **Class Specialist**, **Loot Boxes!**, **Lucky Start**, and **Engineering Dropout**.
+Current milestone: **Class Specialist** is closed, and the live loop has completed a full achievement victory on Windows. The proven Windows route used platform-specific save/bridge paths, Windows window detection, PIL `ImageGrab` screenshots, and Win32 file locking while preserving the same bridge-first combat loop. Remaining cleanup can pivot to Blitzkrieg **Lightning War**, Hazardous **Immortal**, Cataclysm, Mist Eaters/Heat Sinkers/Arachnophiles, or Custom/Random targets such as **Loot Boxes!**, **Lucky Start**, and **Engineering Dropout**.
 
 ---
 
 ## How it works
 
-The game runs natively. State flows out through a Lua mod hook that writes `/tmp/itb_state.json`; commands flow back through `/tmp/itb_cmd.txt`, ACKed via `/tmp/itb_ack.txt`, with a heartbeat file to detect a hung bridge. For UI screens the bridge can't drive (deployment, menus, shop, rewards, island map), the bot emits pixel-coordinate click plans and dispatches them via the `computer-use` MCP.
+The game runs natively. State flows out through a Lua mod hook that writes `itb_state.json`; commands flow back through `itb_cmd.txt`, ACKed via `itb_ack.txt`, with a heartbeat file to detect a hung bridge. The bridge directory is platform-specific: `/tmp` on macOS and `Documents/My Games/Into The Breach/itb_bridge` on Windows, unless `ITB_BRIDGE_DIR` overrides it. For UI screens the bridge can't drive (deployment, menus, shop, rewards, island map), the bot emits pixel-coordinate click plans and dispatches them via the `computer-use` MCP.
 
 ### Five-layer architecture
 
@@ -64,7 +64,7 @@ Tuned weights land in `weights/v{NNN}_{date}.json`; the deployed copy is `weight
 
 ### Prerequisites
 
-- macOS (Quartz used for window detection)
+- macOS or Windows. macOS uses Quartz and `/tmp`; Windows uses Win32 window detection, PIL `ImageGrab`, and the profile-local `itb_bridge` directory.
 - Python 3.9+
 - Rust toolchain
 - `maturin` (`pip install maturin`)
@@ -73,11 +73,11 @@ Tuned weights land in `weights/v{NNN}_{date}.json`; the deployed copy is `weight
 ### Install the Lua bridge
 
 ```bash
-bash scripts/install_modloader.sh   # copies src/bridge/modloader.lua into the Steam app bundle
+bash scripts/install_modloader.sh   # macOS: copies src/bridge/modloader.lua into the Steam app bundle
 # then restart Into the Breach
 ```
 
-Re-run after any edit to `src/bridge/modloader.lua`.
+Re-run after any edit to `src/bridge/modloader.lua`. On Windows, install the same Lua file into the ITB-ModLoader location used by the game, then restart Into the Breach. Set `ITB_SAVE_DIR` or `ITB_BRIDGE_DIR` only when using nonstandard save or bridge locations.
 
 ### Build the Rust solver
 
@@ -87,7 +87,9 @@ maturin build --release
 pip3 install --user --force-reinstall target/wheels/itb_solver-0.1.0-cp39-cp39-macosx_11_0_arm64.whl
 ```
 
-Re-run after any edit to `rust_solver/src/*.rs`.
+Re-run after any edit to `rust_solver/src/*.rs`. The wheel filename is
+platform- and Python-version-specific; use the wheel produced under
+`rust_solver/target/wheels/` on Windows.
 
 ### Git hooks
 
@@ -102,6 +104,9 @@ bash scripts/install-hooks.sh
 ---
 
 ## Quick start
+
+On Windows PowerShell, prefer `python -X utf8 game_loop.py ...` for the same
+commands shown below.
 
 ```bash
 # Start a new run
@@ -210,7 +215,7 @@ prompts/       Vision prompt templates for the research loop
 ## Coordinate conventions
 
 - **Bridge `(x, y)` → visual:** `Row = 8 - x`, `Col = chr(72 - y)`. Example: bridge `(3, 5)` = `C5`. **All communication uses A1–H8 visual notation.**
-- **MCP pixel coords:** `grid_to_mcp(x, y)` in `src/control/executor.py` auto-detects the game window via Quartz and uses the shared grid calibration. Never hardcode pixel coords - the window moves.
+- **MCP pixel coords:** `grid_to_mcp(x, y)` in `src/control/executor.py` auto-detects the game window via Quartz on macOS or Win32 APIs on Windows, then uses the shared grid calibration. Never hardcode pixel coords - the window moves.
 - **UI anchors** (scaled to window size from a 1280×748 reference): End Turn `(95, 78)`, Repair `(105, 553)`, weapon slots `(181, 553)` / `(245, 553)`, Balanced Roll `(791, 530)`.
 
 ---

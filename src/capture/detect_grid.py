@@ -9,6 +9,7 @@ This replaces hardcoded screen coordinates with dynamic detection.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from dataclasses import dataclass
 
@@ -26,7 +27,10 @@ class WindowInfo:
 
 
 def find_game_window() -> WindowInfo | None:
-    """Find the Into the Breach window via Quartz CGWindowList."""
+    """Find the Into the Breach window."""
+    if os.name == "nt":
+        return _find_game_window_windows()
+
     try:
         import Quartz
         windows = Quartz.CGWindowListCopyWindowInfo(
@@ -71,6 +75,44 @@ def find_game_window() -> WindowInfo | None:
         pass
 
     return None
+
+
+def _find_game_window_windows() -> WindowInfo | None:
+    """Find the Into the Breach window via the Windows user32 API."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+    except Exception:
+        return None
+
+    user32 = ctypes.windll.user32
+    matches: list[WindowInfo] = []
+    enum_proc_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    def enum_proc(hwnd, _lparam):
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        length = user32.GetWindowTextLengthW(hwnd)
+        if length <= 0:
+            return True
+        title = ctypes.create_unicode_buffer(length + 1)
+        user32.GetWindowTextW(hwnd, title, length + 1)
+        if "Into the Breach" not in title.value:
+            return True
+        rect = wintypes.RECT()
+        if not user32.GetWindowRect(hwnd, ctypes.byref(rect)):
+            return True
+        matches.append(WindowInfo(
+            x=int(rect.left),
+            y=int(rect.top),
+            width=int(rect.right - rect.left),
+            height=int(rect.bottom - rect.top),
+            window_id=int(hwnd),
+        ))
+        return True
+
+    user32.EnumWindows(enum_proc_type(enum_proc), 0)
+    return matches[0] if matches else None
 
 
 # Grid position relative to the game window content area.

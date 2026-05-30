@@ -394,10 +394,11 @@ evaluation weights when targeting that achievement.
 ### Class Specialist (9.8%)
 - **Requirement:** Beat the game with 3 different Mechs from the same class in a Custom squad.
 - **Squad:** Custom (required -- 3 mechs of one class: Prime, Brute, Ranged, or Science)
-- **Strategy:** Choose 3 different mechs of the same class. Recommended: 3 Brute mechs (varied push/damage options) or 3 Ranged mechs (artillery coverage). The challenge is that no Science class provides direct damage, and 3 Primes may lack range.
-- **Bot approach:** Build custom squad with 3 mechs from the same class. Recommended: 3 Brute mechs (Cannon Mech + Hook Mech + Mirror Mech or Unstable Mech for damage variety and push options). [needs-verification: which specific combination is strongest]
-- **Ideal setup:** Normal difficulty, 2-island run.
-- **Estimated difficulty for bot:** Hard
+- **Status:** Complete. Custom Squad Easy run `20260529_164303_219` used Combat Mech + Laser Mech + Aegis Mech, all different Prime-class mechs, and unlocked Class Specialist on 2026-05-30. The same run proved the live bot can complete an achievement victory on Windows.
+- **Strategy:** Prime class is now proven. Combat Mech supplies displacement and single-target damage, Laser Mech supplies range and multi-tile damage, and Aegis Mech supplies armor plus Shield Bash control. Buy Grid Power before cores, then prioritize cores and Prime-class weapons that the solver can model.
+- **Bot approach:** Use Custom Squad on Easy with Advanced Edition ON: Combat Mech, Laser Mech, Aegis Mech. Optional island bonuses and leader kills are expendable; timeline survival, pilots, and the final-cave Renfield Bomb stay mandatory. If no clean line exists, reviewed one-grid/building dirty losses can be accepted under the ordinary non-perfect achievement policy.
+- **Ideal setup:** Easy difficulty, 2-island run.
+- **Estimated difficulty for bot:** Complete; keep as a regression guard for Custom Squad setup, Prime-class loadouts, final-cave hazard triage, and Windows live-control support.
 
 ### Trusted Equipment (9.7%)
 - **Requirement:** Finish 3 Corporate Islands without equipping any new Pilots or weapons.

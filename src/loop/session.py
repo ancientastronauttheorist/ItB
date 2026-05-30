@@ -108,7 +108,6 @@ def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
     Re-entrant: if this process already holds the lock, returns immediately.
     """
     global _lock_handle, _lock_path
-    import fcntl
 
     # Already locked by this process — re-entrant
     if _lock_handle is not None and _lock_path == str(path):
@@ -122,7 +121,7 @@ def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
     while True:
         try:
             handle.seek(0)
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _lock_file(handle)
             break
         except OSError:
             if time.time() >= deadline:
@@ -138,14 +137,38 @@ def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
     return handle
 
 
+def _lock_file(handle):
+    """Take an exclusive, non-blocking lock on handle across platforms."""
+    try:
+        import fcntl
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except ModuleNotFoundError:
+        import msvcrt
+        if os.fstat(handle.fileno()).st_size == 0:
+            handle.write(b"\0")
+            handle.flush()
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+
+
+def _unlock_file(handle):
+    """Release a lock taken by _lock_file."""
+    try:
+        import fcntl
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    except ModuleNotFoundError:
+        import msvcrt
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+
+
 def _release_lock():
     """Release the session file lock."""
     global _lock_handle, _lock_path
     if _lock_handle is None:
         return
     try:
-        import fcntl
-        fcntl.flock(_lock_handle.fileno(), fcntl.LOCK_UN)
+        _unlock_file(_lock_handle)
     finally:
         _lock_handle.close()
         _lock_handle = None

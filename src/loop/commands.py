@@ -29,6 +29,7 @@ from src.capture.save_parser import (
     _MODELED_UPGRADED_WEAPONS,
     _modeled_upgrade_from_save_mods,
     _strip_upgrade_suffix,
+    SAVE_DIR,
 )
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
@@ -82,7 +83,6 @@ BONUS_MECH_DAMAGE_ID = 4
 MECH_DAMAGE_OBJECTIVE_LIMIT = 4
 
 SNAPSHOT_DIR = Path(__file__).parent.parent.parent / "snapshots"
-SAVE_DIR = Path.home() / "Library" / "Application Support" / "IntoTheBreach"
 
 
 def _load_session() -> RunSession:
@@ -4571,6 +4571,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
+            phase = bridge_data.get("phase", "unknown")
+            if phase != "combat_player":
+                result = {
+                    "error": f"No active player-turn mission to solve (phase: {phase})",
+                    "phase": phase,
+                }
+                _print_result(result)
+                return result
             weapon_overlay_updates = _enrich_bridge_mech_weapons_from_save(
                 bridge_data, profile=profile,
             )
@@ -4585,6 +4593,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
     # Fallback to save parser
     if board is None:
+        phase = detect_game_phase(profile)
+        if phase != "combat_player":
+            result = {
+                "error": f"No active player-turn mission to solve (phase: {phase})",
+                "phase": phase,
+            }
+            _print_result(result)
+            return result
         state = load_game_state(profile)
         if state is None or state.active_mission is None:
             result = {"error": "No active mission to solve"}

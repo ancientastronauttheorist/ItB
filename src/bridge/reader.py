@@ -9,9 +9,18 @@ import json
 import os
 import re
 
-from src.capture.save_parser import SAVE_DIR, Point, parse_save_file
+from src.capture.save_parser import Point, parse_save_file
 from src.model.board import Board
 from src.bridge.protocol import read_state
+from src.itb_paths import get_profile_dir, get_save_file
+
+
+def _read_save_text(filename: str, profile: str = "Alpha") -> str | None:
+    path = get_save_file(filename, profile)
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
 
 
 # data/mission_metadata.json — used to flag infinite-spawn missions so the
@@ -155,13 +164,8 @@ def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
     Returns {(x, y): direction} where direction is 0-3.
     Direction: 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y).
     """
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return {}
     return _parse_conveyor_belts_from_save_text(content)
 
@@ -174,7 +178,7 @@ def _read_active_save_mission() -> dict | None:
     fought. SaveData does not update every sub-action, so callers should only
     use static mission metadata or fields where save staleness is acceptable.
     """
-    save_path = SAVE_DIR / "profile_Alpha" / "saveData.lua"
+    save_path = get_save_file("saveData.lua")
     if not save_path.exists():
         return None
     try:
@@ -311,13 +315,8 @@ def _read_freeze_mines_from_save() -> set[tuple[int, int]]:
     Returns set of (x, y) bridge coordinates with freeze mines.
     """
     mines = set()
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return mines
 
     # Match: ["loc"] = Point( x, y ), ... ["item"] = "Freeze_Mine"
@@ -338,13 +337,8 @@ def _read_old_earth_mines_from_save() -> set[tuple[int, int]]:
     Returns set of (x, y) bridge coordinates with old earth mines.
     """
     mines = set()
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return mines
 
     # Match: ["loc"] = Point( x, y ), ... ["item"] = "Item_Mine"
@@ -683,15 +677,14 @@ def _read_teleporter_pads_from_save() -> list[tuple[int, int, int, int]]:
     found (saves on non-teleporter missions have no `["teleports"]` array).
     """
     pairs: list[tuple[int, int, int, int]] = []
-    profile_dir = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
-    )
+    profile_dir = get_profile_dir("Alpha")
     # saveData.lua first (live), undoSave.lua as fallback (post-restart
     # state where saveData.lua may be absent — observed 2026-04-25).
     for filename in ("saveData.lua", "undoSave.lua"):
         try:
-            with open(os.path.join(profile_dir, filename)) as f:
-                content = f.read()
+            content = (profile_dir / filename).read_text(
+                encoding="utf-8", errors="replace",
+            )
         except OSError:
             continue
 
@@ -723,13 +716,8 @@ def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
     Returns {uid: (piOrigin_x, piOrigin_y)}.
     """
     origins: dict[int, tuple[int, int]] = {}
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return origins
 
     # Match blocks that have iOwner + piOrigin + piQueuedShot. Filter to

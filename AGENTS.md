@@ -24,20 +24,25 @@ Existing design docs remain authoritative for their domains:
 
 ## Project Goal
 
-Earn all 70 Into the Breach achievements autonomously on macOS while the user
-watches in real time. Combat state comes from the Lua bridge through `/tmp/`.
+Earn all 70 Into the Breach achievements autonomously on macOS and Windows while
+the user watches in real time. Combat state comes from the Lua bridge through
+the platform bridge directory (`/tmp/` on macOS, profile-local `itb_bridge/` on
+Windows).
 Combat actions go through the bridge; deployment, menus, shop, rewards, and
 island navigation use Codex Computer Use clicks.
 
 Steam App ID: `590380`.
 
-After editing `src/bridge/modloader.lua`, run:
+After editing `src/bridge/modloader.lua` on macOS, run:
 
 ```bash
 bash scripts/install_modloader.sh
 ```
 
 Then restart the game.
+
+On Windows, install the same `src/bridge/modloader.lua` into the ITB-ModLoader
+location used by the game, then restart the game.
 
 ## Architecture
 

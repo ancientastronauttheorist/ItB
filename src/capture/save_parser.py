@@ -4,9 +4,10 @@ The game writes Lua table literals to save files. We parse these into
 Python dicts, then extract structured game state. This replaces computer
 vision for state extraction — faster, 100% accurate, complete.
 
-Save file locations (macOS):
+Default save file locations:
   ~/Library/Application Support/IntoTheBreach/profile_<name>/saveData.lua
   ~/Library/Application Support/IntoTheBreach/profile_<name>/undoSave.lua
+  ~/Documents/My Games/Into The Breach/profile_<name>/saveData.lua
 """
 
 from __future__ import annotations
@@ -17,8 +18,10 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.itb_paths import get_save_dir
+
 # Save directory
-SAVE_DIR = Path.home() / "Library" / "Application Support" / "IntoTheBreach"
+SAVE_DIR = get_save_dir()
 
 # Terrain type mapping from save file integers
 TERRAIN_MAP = {

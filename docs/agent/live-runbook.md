@@ -12,10 +12,10 @@ This is the operational runbook for running Into the Breach through the bridge a
 
 **Coordinate mapping:**
 - Bridge `(x, y)` → visual: `Row = 8 - x`, `Col = chr(72 - y)`. Example: bridge `(3, 5)` = `C5`. Always use A1–H8 visual notation in communication.
-- MCP pixel coords: `grid_to_mcp(x, y)` (in `src/control/executor.py`) or `python3 tile_hover.py <TILE>`. Both auto-detect window position via Quartz.
+- MCP pixel coords: `grid_to_mcp(x, y)` (in `src/control/executor.py`) or `python3 tile_hover.py <TILE>`. Both auto-detect window position via Quartz on macOS or Win32 APIs on Windows.
 - Island-select click coords: `python3 island_select.py`.
 - **End Turn button: `python3 game_loop.py click_end_turn`** — emits both legacy screen/global coords and `codex_computer_use_batch` window-local coords for Codex Computer Use. In Codex Computer Use, dispatch `codex_computer_use_batch` (or the per-click `window_x`/`window_y`), not the legacy `x`/`y`. The calibrated End Turn offset is `(126, 120)` window-relative.
-- If Codex Computer Use is unavailable, use the emitted legacy screen coordinates only after activating the Into the Breach window and doing a fresh `read`. A minimal fallback is `osascript -e 'tell application "Into the Breach" to activate'`, then a short `pyautogui` click on the current `click_end_turn` screen coordinate, then wait and read again. Do not repeat a fallback End Turn click just because the save parser says `mission_ending`; compare the visible game, bridge `phase`, active mechs, and countdown first.
+- If Codex Computer Use is unavailable, use the emitted legacy screen coordinates only after activating the Into the Breach window and doing a fresh `read`. On macOS, a minimal fallback is `osascript -e 'tell application "Into the Breach" to activate'`; on Windows, bring the HWND titled `Into the Breach` foreground with Win32 APIs. Then use a short `pyautogui` click on the current `click_end_turn` screen coordinate, wait, and read again. Do not repeat a fallback End Turn click just because the save parser says `mission_ending`; compare the visible game, bridge `phase`, active mechs, and countdown first.
 
 ## Phase Protocols
 

@@ -406,3 +406,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 393 | 695 | Triple Ice can close Mech Specialist and Flight Specialist together. | `docs/agent/achievement-playbook.md` |
 | 394 | 697 | Computer Use fallback End Turn clicks need refocus and fresh reads. | `docs/agent/live-runbook.md` |
 | 395 | 699 | Change the Odds is post-island shop math, not a victory requirement. | `docs/agent/achievement-playbook.md` |
+| 396 | 701 | Class Specialist is proven with three Prime mechs. | `docs/agent/achievement-playbook.md` |

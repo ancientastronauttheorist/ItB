@@ -13,12 +13,15 @@ import os
 import time
 from pathlib import Path
 
-STATE_FILE = Path("/tmp/itb_state.json")
-CMD_FILE = Path("/tmp/itb_cmd.txt")
-CMD_TMP = Path("/tmp/itb_cmd.txt.tmp")
-ACK_FILE = Path("/tmp/itb_ack.txt")
-LOG_FILE = Path("/tmp/itb_bridge.log")
-HEARTBEAT_FILE = Path("/tmp/itb_bridge_heartbeat")
+from src.itb_paths import get_bridge_dir
+
+BRIDGE_DIR = get_bridge_dir()
+STATE_FILE = BRIDGE_DIR / "itb_state.json"
+CMD_FILE = BRIDGE_DIR / "itb_cmd.txt"
+CMD_TMP = BRIDGE_DIR / "itb_cmd.txt.tmp"
+ACK_FILE = BRIDGE_DIR / "itb_ack.txt"
+LOG_FILE = BRIDGE_DIR / "itb_bridge.log"
+HEARTBEAT_FILE = BRIDGE_DIR / "itb_bridge_heartbeat"
 
 # State file must be newer than this many seconds
 STALENESS_THRESHOLD = 300.0  # 5 minutes
@@ -86,7 +89,7 @@ def read_state() -> dict | None:
     if not STATE_FILE.exists():
         return None
     try:
-        with open(STATE_FILE) as f:
+        with open(STATE_FILE, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError):
         return None
@@ -100,6 +103,7 @@ def write_command(cmd: str) -> None:
     command's response as this command's ACK (race condition fix).
     """
     global _seq_counter
+    BRIDGE_DIR.mkdir(parents=True, exist_ok=True)
 
     # Clear stale ACK to prevent reading previous command's response
     try:
@@ -111,7 +115,7 @@ def write_command(cmd: str) -> None:
     _seq_counter += 1
     full_cmd = f"#{_seq_counter} {cmd}"
 
-    with open(CMD_TMP, "w") as f:
+    with open(CMD_TMP, "w", encoding="utf-8") as f:
         f.write(full_cmd)
         f.flush()
         os.fsync(f.fileno())
@@ -134,7 +138,7 @@ def wait_for_ack(timeout: float = 10.0) -> str:
     while time.time() < deadline:
         if ACK_FILE.exists():
             try:
-                content = ACK_FILE.read_text().strip()
+                content = ACK_FILE.read_text(encoding="utf-8").strip()
                 ACK_FILE.unlink()
 
                 # Strip sequence ID prefix (#NNN)
@@ -179,7 +183,7 @@ def wait_for_fresh_state(timeout: float = 10.0) -> dict | None:
             mtime = STATE_FILE.stat().st_mtime
             if mtime >= start:
                 try:
-                    with open(STATE_FILE) as f:
+                    with open(STATE_FILE, encoding="utf-8") as f:
                         return json.load(f)
                 except (json.JSONDecodeError, IOError):
                     pass

@@ -1,19 +1,56 @@
 --------------------------------------------------------------------
 -- ITB Bot Bridge — Production
--- Runs inside Into the Breach on macOS via modloader.lua injection.
--- Communicates with external Python bot via file-based IPC in /tmp/.
+-- Runs inside Into the Breach via modloader.lua injection.
+-- Communicates with external Python bot via file-based IPC.
 --
--- State dump: /tmp/itb_state.json (Lua writes, Python reads)
--- Commands:   /tmp/itb_cmd.txt    (Python writes, Lua reads)
--- Ack:        /tmp/itb_ack.txt    (Lua writes, Python reads)
+-- macOS default: /tmp/itb_*
+-- Windows default: Documents/My Games/Into The Breach/itb_bridge/itb_*
 --------------------------------------------------------------------
 
-local STATE_FILE = "/tmp/itb_state.json"
-local STATE_TMP  = "/tmp/itb_state.json.tmp"
-local CMD_FILE   = "/tmp/itb_cmd.txt"
-local ACK_FILE   = "/tmp/itb_ack.txt"
-local ACK_TMP    = "/tmp/itb_ack.tmp"
-local LOG_FILE   = "/tmp/itb_bridge.log"
+local function normalize_path(path)
+    return (path:gsub("\\", "/"))
+end
+
+local function is_windows()
+    return package.config:sub(1, 1) == "\\"
+end
+
+local function default_save_root()
+    local override = os.getenv("ITB_SAVE_DIR")
+    if override and override ~= "" then return normalize_path(override) end
+    if is_windows() then
+        local user = os.getenv("USERPROFILE") or os.getenv("HOME") or "."
+        return normalize_path(user) .. "/Documents/My Games/Into The Breach"
+    end
+    local home = os.getenv("HOME") or "."
+    return normalize_path(home) .. "/Library/Application Support/IntoTheBreach"
+end
+
+local function default_bridge_dir()
+    local override = os.getenv("ITB_BRIDGE_DIR")
+    if override and override ~= "" then return normalize_path(override) end
+    if is_windows() then
+        return default_save_root() .. "/itb_bridge"
+    end
+    return "/tmp"
+end
+
+local BRIDGE_DIR = default_bridge_dir()
+local SAVE_ROOT = default_save_root()
+
+local STATE_FILE = BRIDGE_DIR .. "/itb_state.json"
+local STATE_TMP  = BRIDGE_DIR .. "/itb_state.json.tmp"
+local CMD_FILE   = BRIDGE_DIR .. "/itb_cmd.txt"
+local ACK_FILE   = BRIDGE_DIR .. "/itb_ack.txt"
+local ACK_TMP    = BRIDGE_DIR .. "/itb_ack.tmp"
+local LOG_FILE   = BRIDGE_DIR .. "/itb_bridge.log"
+local HEARTBEAT_FILE = BRIDGE_DIR .. "/itb_bridge_heartbeat"
+
+if is_windows() then
+    os.execute('mkdir "' .. BRIDGE_DIR .. '" >NUL 2>NUL')
+else
+    os.execute('mkdir -p "' .. BRIDGE_DIR .. '"')
+end
 
 local TERRAIN_NAMES = {}
 
@@ -111,8 +148,7 @@ local function _read_save_data()
         current_weapons = {}, -- GameData.current.weapons, 1-indexed loadout slots
         pawn_offsets = {},    -- [pawn_id] = raw save offset (diagnostic only)
     }
-    local base = os.getenv("HOME") ..
-        "/Library/Application Support/IntoTheBreach/profile_Alpha/"
+    local base = SAVE_ROOT .. "/profile_Alpha/"
     local sf = io.open(base .. "saveData.lua", "r")
     if not sf then
         sf = io.open(base .. "undoSave.lua", "r")
@@ -2311,7 +2347,7 @@ Mission.BaseUpdate = function(self)
     clear_stale_teleporter_pairs_for(self)
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
-        local f = io.open("/tmp/itb_bridge_heartbeat", "w")
+        local f = io.open(HEARTBEAT_FILE, "w")
         if f then f:write(tostring(os.clock())); f:close() end
     end)
     if _running_coroutine then
@@ -2530,5 +2566,5 @@ _ITB_BRIDGE_LOAD_COUNT = _reload_count
 
 log_bridge("=== ITB Bot Bridge started (load #" .. _reload_count .. ") ===")
 if ConsolePrint then
-    ConsolePrint("ITB Bot Bridge loaded! IPC via /tmp/itb_*.json")
+    ConsolePrint("ITB Bot Bridge loaded! IPC via " .. BRIDGE_DIR)
 end

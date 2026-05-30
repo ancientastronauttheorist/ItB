@@ -3,14 +3,14 @@
 ## Overview
 
 Replace the current two-layer indirection (save-file parsing + MCP mouse clicks) with
-a direct Lua<->Python bridge using file-based IPC through `/tmp/`. The game's
+a direct Lua<->Python bridge using file-based IPC through a platform bridge directory. The game's
 `modloader.lua` writes JSON state dumps and reads command files; the Python bot reads
 state and writes commands. No mouse clicks, no coordinate calibration, no window focus
 issues.
 
 ```
 Current:   Game -> saveData.lua -> save_parser.py -> solver -> executor.py -> MCP clicks -> Game
-Proposed:  Game -> /tmp/itb_state.json -> bridge_reader.py -> solver -> bridge_writer.py -> /tmp/itb_cmd.txt -> Game
+Proposed:  Game -> itb_state.json -> bridge_reader.py -> solver -> bridge_writer.py -> itb_cmd.txt -> Game
 ```
 
 ---
@@ -21,10 +21,14 @@ Proposed:  Game -> /tmp/itb_state.json -> bridge_reader.py -> solver -> bridge_w
 
 | File | Writer | Reader | Format | Purpose |
 |------|--------|--------|--------|---------|
-| `/tmp/itb_state.json` | Lua | Python | JSON | Full board state dump |
-| `/tmp/itb_cmd.txt` | Python | Lua | Line-based text | Bot commands |
-| `/tmp/itb_ack.txt` | Lua | Python | Line-based text | Command acknowledgement |
-| `/tmp/itb_bridge.log` | Lua | Human | Plain text | Debug log |
+| `itb_state.json` | Lua | Python | JSON | Full board state dump |
+| `itb_cmd.txt` | Python | Lua | Line-based text | Bot commands |
+| `itb_ack.txt` | Lua | Python | Line-based text | Command acknowledgement |
+| `itb_bridge.log` | Lua | Human | Plain text | Debug log |
+
+The bridge directory defaults to `/tmp` on macOS and
+`Documents/My Games/Into The Breach/itb_bridge` on Windows. Override with
+`ITB_BRIDGE_DIR` when running multiple installs or nonstandard save locations.
 
 ### 1.2 Synchronization Protocol
 
