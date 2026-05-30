@@ -275,6 +275,7 @@ fn apply_pod_on_land(board: &mut Board, unit_idx: usize, result: &mut ActionResu
 ///  13. WebbEgg1 adjacency refresh → newly adjacent units become webbed
 fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     if board.units[unit_idx].hp <= 0 { return; }
+    if !board.units[unit_idx].is_player() { return; }
     let x = board.units[unit_idx].x;
     let y = board.units[unit_idx].y;
     if !board.tile(x, y).repair_platform() { return; }
@@ -3315,6 +3316,90 @@ fn is_brute_mirrorshot_weapon(weapon_id: WId) -> bool {
     )
 }
 
+fn projectile_blocker_at(board: &Board, x: u8, y: u8, phase: bool) -> bool {
+    let tile = board.tile(x, y);
+    tile.terrain == Terrain::Mountain
+        || (tile.is_building() && !phase)
+        || board.unit_at(x, y).is_some()
+}
+
+fn find_projectile_blocker_from(
+    board: &Board,
+    sx: i8,
+    sy: i8,
+    dx: i8,
+    dy: i8,
+    phase: bool,
+) -> Option<(u8, u8)> {
+    for i in 1..8i8 {
+        let nx = sx + dx * i;
+        let ny = sy + dy * i;
+        if !in_bounds(nx, ny) {
+            break;
+        }
+        let x = nx as u8;
+        let y = ny as u8;
+        if projectile_blocker_at(board, x, y, phase) {
+            return Some((x, y));
+        }
+    }
+    None
+}
+
+fn sim_pierce_projectile(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    wdef: &WeaponDef,
+    dir: usize,
+    result: &mut ActionResult,
+) {
+    let (dx, dy) = DIRS[dir];
+    let first = find_projectile_blocker_from(
+        board,
+        ax as i8,
+        ay as i8,
+        dx,
+        dy,
+        wdef.phase(),
+    );
+    let Some((fx, fy)) = first else {
+        return;
+    };
+    let second = find_projectile_blocker_from(
+        board,
+        fx as i8,
+        fy as i8,
+        dx,
+        dy,
+        wdef.phase(),
+    );
+
+    let Some((sx, sy)) = second else {
+        if board.unit_at(fx, fy).is_some() {
+            apply_push_with_policy(board, fx, fy, dir, result, DEFAULT_PUSH_POLICY);
+        }
+        return;
+    };
+    let deferred_death_explosion = apply_damage_defer_death_explosion(
+        board,
+        sx,
+        sy,
+        wdef.damage,
+        result,
+        DamageSource::Weapon,
+    );
+    apply_push_with_policy(board, sx, sy, dir, result, DEFAULT_PUSH_POLICY);
+    if board.unit_at(fx, fy).is_some() {
+        apply_push_with_policy(board, fx, fy, dir, result, DEFAULT_PUSH_POLICY);
+    }
+    if let Some(idx) = deferred_death_explosion {
+        let ex = board.units[idx].x;
+        let ey = board.units[idx].y;
+        apply_death_explosion(board, ex, ey, result, 0);
+    }
+}
+
 fn sim_projectile(
     board: &mut Board,
     ax: u8,
@@ -3330,6 +3415,11 @@ fn sim_projectile(
     };
 
     let (dx, dy) = DIRS[dir];
+
+    if weapon_id == WId::BrutePierceShot {
+        sim_pierce_projectile(board, ax, ay, wdef, dir, result);
+        return;
+    }
 
     // Find first hit. Mountains stop the projectile AND take 1 damage
     // (2 HP → damaged → rubble), mirroring sim_laser's beam-hits-mountain
@@ -5799,6 +5889,23 @@ mod tests {
         assert!(
             !board.tile(3, 3).repair_platform(),
             "repair platform consumed even when full-health mech gets no HP"
+        );
+    }
+
+    #[test]
+    fn test_repair_platform_does_not_trigger_for_enemy() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).set_repair_platform(true);
+        let enemy_idx = add_enemy(&mut board, 42, 3, 2, 1);
+
+        let result = simulate_move(&mut board, enemy_idx, (3, 3));
+
+        assert_eq!(board.units[enemy_idx].hp, 1, "enemy does not heal");
+        assert_eq!(board.repair_platforms_used, 0);
+        assert_eq!(result.repair_platforms_used, 0);
+        assert!(
+            board.tile(3, 3).repair_platform(),
+            "enemy does not consume the platform"
         );
     }
 
@@ -12255,6 +12362,50 @@ mod tests {
             "dist=4 still caps at MaxDamage=2");
         assert_eq!(board.units[enemy_idx].y, 5,
             "Forward push moves target one tile (no bump)");
+    }
+
+    #[test]
+    fn test_brute_pierce_shot_pushes_first_and_damages_second() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BrutePierceShot);
+        let first = add_enemy(&mut board, 1, 3, 4, 3);
+        let second = add_enemy(&mut board, 2, 3, 6, 3);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::BrutePierceShot, 3, 4);
+
+        assert_eq!((board.units[first].x, board.units[first].y), (3, 5));
+        assert_eq!(board.units[first].hp, 3);
+        assert_eq!((board.units[second].x, board.units[second].y), (3, 7));
+        assert_eq!(board.units[second].hp, 1);
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_brute_pierce_shot_adjacent_targets_do_not_bump_each_other() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BrutePierceShot);
+        let first = add_enemy(&mut board, 1, 3, 4, 3);
+        let second = add_enemy(&mut board, 2, 3, 5, 3);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::BrutePierceShot, 3, 4);
+
+        assert_eq!((board.units[first].x, board.units[first].y), (3, 5));
+        assert_eq!(board.units[first].hp, 3);
+        assert_eq!((board.units[second].x, board.units[second].y), (3, 6));
+        assert_eq!(board.units[second].hp, 1);
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_brute_pierce_shot_first_target_only_is_push_only() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BrutePierceShot);
+        let first = add_enemy(&mut board, 1, 3, 4, 3);
+
+        simulate_weapon(&mut board, mech_idx, WId::BrutePierceShot, 3, 4);
+
+        assert_eq!((board.units[first].x, board.units[first].y), (3, 5));
+        assert_eq!(board.units[first].hp, 3);
     }
 
     #[test]

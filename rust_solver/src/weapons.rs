@@ -600,9 +600,11 @@ pub enum WId {
     ScienceTcSwapOtherA = 207,
     ScienceTcSwapOtherB = 208,
     ScienceTcSwapOtherAB = 209,
+    /// Bombermechs — Pierce Mech's AP Cannon.
+    BrutePierceShot = 210,
 }
 
-pub const WEAPON_COUNT: usize = 210;
+pub const WEAPON_COUNT: usize = 211;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -928,6 +930,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[207] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
     w[208] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
     w[209] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    // 210: Brute_PierceShot — AP Cannon.
+    // Pushes the first projectile blocker, then damages and pushes the second.
+    // The two-stage projectile semantics are WId-specific in simulate.rs.
+    w[210] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1573,6 +1579,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Sniper" => WId::BruteSniper,
         "Brute_Splitshot" => WId::BruteSplitshot,
         "Brute_Bombrun" => WId::BruteBombrun,
+        "Brute_PierceShot" => WId::BrutePierceShot,
         "Brute_TC_Ricochet" => WId::BruteTcRicochet,
         "Brute_TC_Ricochet_A" => WId::BruteTcRicochetA,
         "Brute_TC_Ricochet_B" => WId::BruteTcRicochetB,
@@ -1813,6 +1820,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteSniper => "Brute_Sniper",
         WId::BruteSplitshot => "Brute_Splitshot",
         WId::BruteBombrun => "Brute_Bombrun",
+        WId::BrutePierceShot => "Brute_PierceShot",
         WId::BruteTcRicochet => "Brute_TC_Ricochet",
         WId::BruteTcRicochetA => "Brute_TC_Ricochet_A",
         WId::BruteTcRicochetB => "Brute_TC_Ricochet_B",
@@ -2110,6 +2118,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteSniper => "Sniper Rifle",
         WId::BruteSplitshot => "Split Shot",
         WId::BruteBombrun => "Bombing Run",
+        WId::BrutePierceShot => "AP Cannon",
         WId::BruteTcRicochet | WId::BruteTcRicochetA
             | WId::BruteTcRicochetB | WId::BruteTcRicochetAB => "Ricochet Rocket",
         WId::ArchiveArtShot => "Old Earth Artillery",
@@ -2660,6 +2669,17 @@ mod tests {
     fn test_phase_cannon() {
         let w = weapon_def(WId::BrutePhaseShot);
         assert!(w.phase());
+    }
+
+    #[test]
+    fn test_ap_cannon_mapping_and_def() {
+        let w = weapon_def(WId::BrutePierceShot);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 2);
+        assert_eq!(w.push, PushDir::Forward);
+        assert_eq!(wid_from_str("Brute_PierceShot"), WId::BrutePierceShot);
+        assert_eq!(wid_to_str(WId::BrutePierceShot), "Brute_PierceShot");
+        assert_eq!(weapon_name(WId::BrutePierceShot), "AP Cannon");
     }
 
     #[test]

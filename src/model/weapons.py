@@ -384,6 +384,12 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Unstable Cannon", weapon_type="projectile",
         damage=4, push="forward", self_damage=2, push_self=True, range_max=0,
     ),
+    "Brute_PierceShot": WeaponDef(
+        name="AP Cannon", weapon_type="projectile",
+        damage=2, push="forward", range_max=0,
+        upgrade_a="+1 damage to second target (total 3)",
+        upgrade_b="+1 damage to second target (total 3)",
+    ),
     "Brute_PhaseShot": WeaponDef(
         name="Phase Cannon", weapon_type="projectile",
         damage=1, push="forward", phase=True, range_max=0,

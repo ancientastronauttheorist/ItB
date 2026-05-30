@@ -120,6 +120,11 @@
       "last_run_id": "20260522_133722_695",
       "weapon_id": "Brute_Mirrorshot"
     },
+    "death|Brute_PierceShot|attack": {
+      "count": 1,
+      "last_run_id": "20260530_124216_453",
+      "weapon_id": "Brute_PierceShot"
+    },
     "death|Brute_TC_Ricochet|attack": {
       "count": 1,
       "last_run_id": "20260517_170505_240",

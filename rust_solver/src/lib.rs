@@ -1664,7 +1664,17 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   run 20260527_152006_916 Corporate HQ turn 1, where a killed Blob corpse
 //   bumped Boulder Mech at A6. Pre-v234 corpus archived as
 //   `failure_db_snapshot_sim_v233.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 234;
+// v235 - Add Brute_PierceShot / AP Cannon coverage for Pierce Mech.
+//   Pre-v235 corpus archived as `failure_db_snapshot_sim_v234.jsonl`.
+// v236 - AP Cannon resolves the second target damage/push before moving the
+//   first target, so adjacent targets do not take ordinary collision bump
+//   damage from each other. Fixes Loot Boxes run 20260530_124216_453 mission 1
+//   turn 1. Pre-v236 corpus archived as `failure_db_snapshot_sim_v235.jsonl`.
+// v237 - Repair platforms do not trigger for hostile units. Fixes Loot Boxes
+//   run 20260530_124216_453 Mission_Repair turn 2, where Vice Fist threw
+//   Firefly1 onto a repair platform and live left it unhealed. Pre-v237 corpus
+//   archived as `failure_db_snapshot_sim_v236.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 237;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
