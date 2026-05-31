@@ -1058,6 +1058,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Cannon 8R Mark I", weapon_type="projectile",
         damage=1, range_max=0, fire=True,
     ),
+    "SnowtankAtk1_Player": WeaponDef(
+        name="Cannon 8R Mark I", weapon_type="projectile",
+        damage=1, range_max=0, fire=True,
+    ),
     "SnowartAtk1": WeaponDef(
         name="Snowart Shot", weapon_type="artillery",
         damage=1, range_min=2,

@@ -849,7 +849,7 @@ def _bridge_is_stale_post_mission(
     # the next combat. Do not discard a fresh turn-0/turn-1 active-mission bridge
     # board as stale post-mission residue.
     if (
-        bridge_data.get("in_active_mission") is True
+        bridge_data.get("in_active_mission") is not False
         and bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
         and bridge_turn <= 1
         and bridge_data.get("mission_id")

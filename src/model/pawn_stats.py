@@ -130,6 +130,11 @@ VEK_STATS = {
     "ScorpionBoss":  PawnStats(move_speed=3, massive=True, ranged=0),
     # Pinnacle bots
     "Snowtank1":     PawnStats(move_speed=3, ranged=0),
+    # Mission_Hacking turns the Cannon Bot over to the player team after the
+    # hacking facility falls; the bridge appends _Player but the unit is the
+    # same 1 HP, move-3 cannon bot.
+    "Snowtank1_Player": PawnStats(move_speed=3, ranged=0,
+                                  default_weapon="SnowtankAtk1_Player"),
     "Snowtank2":     PawnStats(move_speed=3, ranged=0),
     "Snowart1":      PawnStats(move_speed=3, ranged=1),
     "Snowart2":      PawnStats(move_speed=3, ranged=1),

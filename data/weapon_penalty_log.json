@@ -15,6 +15,11 @@
       "last_run_id": "20260525_145507_262",
       "weapon_id": "Brute_Mirrorshot"
     },
+    "damage_amount|Brute_PierceShot|attack": {
+      "count": 3,
+      "last_run_id": "20260530_225649_007",
+      "weapon_id": "Brute_PierceShot"
+    },
     "damage_amount|Brute_Tankmech|attack": {
       "count": 2,
       "last_run_id": "20260510_213059_819",
@@ -49,6 +54,11 @@
       "count": 1,
       "last_run_id": "20260424_193000_165",
       "weapon_id": "Prime_Shift"
+    },
+    "damage_amount|Prime_TC_Punt|attack": {
+      "count": 5,
+      "last_run_id": "20260530_225649_007",
+      "weapon_id": "Prime_TC_Punt"
     },
     "damage_amount|Ranged_Artillerymech|attack": {
       "count": 1,
@@ -96,8 +106,8 @@
       "weapon_id": "ScorpionAtk1"
     },
     "damage_amount|Unknown|move": {
-      "count": 8,
-      "last_run_id": "20260529_015516_179",
+      "count": 9,
+      "last_run_id": "20260530_225649_007",
       "weapon_id": "Unknown"
     },
     "death|Brute_Beetle|attack": {
@@ -116,13 +126,18 @@
       "weapon_id": "Brute_Jetmech"
     },
     "death|Brute_Mirrorshot|attack": {
-      "count": 1,
-      "last_run_id": "20260522_133722_695",
+      "count": 2,
+      "last_run_id": "20260530_175137_851",
       "weapon_id": "Brute_Mirrorshot"
     },
     "death|Brute_PierceShot|attack": {
+      "count": 5,
+      "last_run_id": "20260531_114844_128",
+      "weapon_id": "Brute_PierceShot"
+    },
+    "death|Brute_PierceShot|move": {
       "count": 1,
-      "last_run_id": "20260530_124216_453",
+      "last_run_id": "20260530_225649_007",
       "weapon_id": "Brute_PierceShot"
     },
     "death|Brute_TC_Ricochet|attack": {
@@ -185,6 +200,11 @@
       "last_run_id": "20260421_015818_989",
       "weapon_id": "Prime_ShieldBash"
     },
+    "death|Prime_TC_Punt|attack": {
+      "count": 6,
+      "last_run_id": "20260530_225649_007",
+      "weapon_id": "Prime_TC_Punt"
+    },
     "death|Ranged_Arachnoid|attack": {
       "count": 1,
       "last_run_id": "20260517_170505_240",
@@ -221,8 +241,8 @@
       "weapon_id": "Ranged_Rocket_A"
     },
     "death|Ranged_Rocket|attack": {
-      "count": 5,
-      "last_run_id": "20260513_230944_542",
+      "count": 6,
+      "last_run_id": "20260531_114844_128",
       "weapon_id": "Ranged_Rocket"
     },
     "death|Ranged_Rockthrow|attack": {

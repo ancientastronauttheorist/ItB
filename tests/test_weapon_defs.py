@@ -16,6 +16,25 @@ def test_snowtank_mark_i_weapon_def_matches_lua_projectile_fire():
     assert w.fire is True
 
 
+def test_hacking_cannon_bot_player_aliases_match_mark_i():
+    known = json.loads(Path("data/known_types.json").read_text())
+    w = get_weapon_def("SnowtankAtk1_Player")
+
+    assert "Snowtank1_Player" in known["observed_pawn_types"]
+    assert "SnowtankAtk1_Player" in known["observed_weapons"]
+    assert w is not None
+    assert w.name == "Cannon 8R Mark I"
+    assert w.weapon_type == "projectile"
+    assert w.damage == 1
+    assert w.range_max == 0
+    assert w.fire is True
+    assert get_pawn_stats("Snowtank1_Player").move_speed == 3
+    assert (
+        get_pawn_stats("Snowtank1_Player").default_weapon
+        == "SnowtankAtk1_Player"
+    )
+
+
 def test_dung_attack_aliases_match_tumblebug_weapon_defs():
     normal = get_weapon_def("DungAtk1")
     alpha = get_weapon_def("DungAtk2")

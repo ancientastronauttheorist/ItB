@@ -1709,6 +1709,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "BurnbugAtk1" => WId::BurnbugAtk1,
         "BurnbugAtk2" => WId::BurnbugAtk2,
         "SnowtankAtk1" => WId::SnowtankAtk1,
+        "SnowtankAtk1_Player" => WId::SnowtankAtk1,
         "SnowtankAtk2" => WId::SnowtankAtk2,
         "SnowlaserAtk1" => WId::SnowlaserAtk1,
         "SnowlaserAtk2" => WId::SnowlaserAtk2,
@@ -2042,6 +2043,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "TotemB" => WId::TotemAtkB,
         // Pinnacle bots
         "Snowtank1" => WId::SnowtankAtk1,
+        "Snowtank1_Player" => WId::SnowtankAtk1,
         "Snowtank2" => WId::SnowtankAtk2,
         "Snowlaser1" => WId::SnowlaserAtk1,
         "Snowlaser2" => WId::SnowlaserAtk2,
@@ -2425,6 +2427,8 @@ mod tests {
         assert_eq!(w.range_max, 0);
         assert!(w.fire());
         assert_eq!(weapon_name(WId::SnowtankAtk1), "Cannon 8R Mark I");
+        assert_eq!(wid_from_str("SnowtankAtk1_Player"), WId::SnowtankAtk1);
+        assert_eq!(enemy_weapon_for_type("Snowtank1_Player"), WId::SnowtankAtk1);
     }
 
     #[test]

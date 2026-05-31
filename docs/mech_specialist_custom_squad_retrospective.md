@@ -18,4 +18,4 @@ Run `20260526_204256_831` completed **Mech Specialist** and **Flight Specialist*
 
 ## Carry Forward
 
-For future Custom Squad attempts, 3x Ice Mech is now the default proven route only if the target still benefits from it. **Class Specialist** has since been completed with a Prime-class Custom Squad, so remaining Custom/Random goals are now **Loot Boxes!**, **Lucky Start**, or **Engineering Dropout**. Do not retarget **Mech Specialist** or **Flight Specialist** unless a future Steam sync contradicts their 2026-05-27 completed flags.
+For future Custom Squad attempts, 3x Ice Mech is now the default proven route only if the target still benefits from it. **Class Specialist** has since been completed with a Prime-class Custom Squad, and **Loot Boxes!** plus **Engineering Dropout** have since been completed with Random Squad, so the remaining Custom/Random goal is **Lucky Start**. Do not retarget **Mech Specialist** or **Flight Specialist** unless a future Steam sync contradicts their 2026-05-27 completed flags.

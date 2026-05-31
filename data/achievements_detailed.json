@@ -273,7 +273,7 @@
         "description": "Open 5 Time Pods in a single game with a Random squad",
         "type": "single_run",
         "global_unlock_pct": 9.4,
-        "completed": false,
+        "completed": true,
         "strategy": "4-island run required for enough missions. Protect every Time Pod encountered. Use mobility to collect pods. Not every mission has a pod \u2014 need luck plus protection.",
         "setup": "4-island run. Random squad. Prioritize pod protection.",
         "pitfalls": "Pod spawns are random. May not get 5 across a run. Must protect every one."
@@ -715,7 +715,7 @@
         "description": "Finish 3 Corporate Islands without powering a Weapon Modification",
         "type": "single_run",
         "global_unlock_pct": 9.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Don't power any weapon upgrades. Only use base weapons, HP upgrades, and movement upgrades. Rift Walkers are strong without upgrades.",
         "setup": "3-island run. Rift Walkers. Health/mobility upgrades only.",
         "pitfalls": "No weapon upgrades makes combat harder. Rely on base weapon stats."

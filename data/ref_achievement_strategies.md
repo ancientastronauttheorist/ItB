@@ -421,18 +421,18 @@ evaluation weights when targeting that achievement.
 ### Loot Boxes! (9.4%)
 - **Requirement:** Open 5 Time Pods in a single game with a Random squad.
 - **Squad:** Random (required)
-- **Strategy:** Time Pods appear in missions occasionally. Prioritize collecting every time pod across a 4-island run. Some missions have time pods as bonus objectives.
-- **Bot approach:** Heavily weight time pod collection. The solver should always move a mech to collect time pods even at some risk. Run-level planner should pick missions that display time pods. Play a 4-island run to maximize pod opportunities.
-- **Ideal setup:** Normal difficulty, 4-island run with Random squad. Collect every pod.
-- **Estimated difficulty for bot:** Medium (RNG-dependent on pod spawns)
+- **Strategy:** Time Pods appear in missions occasionally. Prioritize collecting every time pod across a 4-island run; three islands may be insufficient when pod RNG is thin.
+- **Bot approach:** Heavily weight time pod collection and treat visible Time Pod missions as route priorities. The solver should move a mech to collect pods when timeline, objective units, and board certainty remain acceptable; exact dirty consent can spend ordinary grid/objective value for the target, but pod loss usually means the run must keep going for replacement pod RNG.
+- **Ideal setup:** Easy or Normal 4-island Random/Balanced Roll route. Collect every pod, buy Grid Power to full before cores, and avoid weapon-mod upgrades if Engineering Dropout can be co-cleared.
+- **Estimated difficulty for bot:** Complete on 2026-05-31 in Random Squad Easy run `20260531_114844_128`; fifth pod recovered on Pinnacle `Mission_BoomBots` after earlier pod recoveries on Detritus `Mission_AcidStorm`, R.S.T. `Mission_Volatile`, Archive `Mission_Mines`, and Pinnacle `Mission_Reactivation`.
 
 ### Engineering Dropout (9.3%)
 - **Requirement:** Finish 3 Corporate Islands without powering a Weapon Modification.
 - **Squad:** Any
 - **Strategy:** Never spend reactor cores on weapon upgrades for 3 islands. You can still power HP and movement upgrades for mechs. Use only base-level weapons.
-- **Bot approach:** Run-level planner must never allocate reactor cores to weapon modifications. Only use cores for mech HP and move speed. The solver works with unmodified weapons only.
-- **Ideal setup:** Normal difficulty, squad with strong base weapons (Rusting Hulks -- Storm Generator is a passive that works without powering; Aerial Bombs are effective unpowered). [needs-verification: does passive Storm Generator count as a weapon modification?]
-- **Estimated difficulty for bot:** Medium-Hard
+- **Bot approach:** Run-level planner must never allocate reactor cores to weapon modifications until the achievement pops. Only use cores for mech HP and move speed; if Loot Boxes or another pod-heavy route is active, grid and survivability are more valuable than damage upgrades.
+- **Ideal setup:** Easy/Normal route with a squad whose base weapons already solve threats. Random/Balanced Roll can co-clear this while chasing Loot Boxes if shop routing stays grid-first and leaves weapon modifications unpowered.
+- **Estimated difficulty for bot:** Complete on 2026-05-31 in Random Squad Easy run `20260531_114844_128`, co-cleared with Loot Boxes after three Corporate Islands without powered weapon modifications.
 
 ### Trick Shot (9.2%)
 - **Requirement:** Kill 3 enemies with a single attack of the Janus Cannon with the Frozen Titans squad.
