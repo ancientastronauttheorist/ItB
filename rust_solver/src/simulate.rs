@@ -3603,6 +3603,19 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
         board, tx, ty, wdef, center_occupied_at_impact,
     );
 
+    // Smoldering Shells: fire and damage the center tile, then place smoke on
+    // the four cardinal adjacent tiles. Normal SMOKE status would smoke the
+    // center, so the Mist Eaters artillery footprint is WId-specific here.
+    if weapon_id == WId::RangedSmokeFire {
+        for &(dx, dy) in DIRS.iter() {
+            let nx = tx as i8 + dx;
+            let ny = ty as i8 + dy;
+            if in_bounds(nx, ny) {
+                place_smoke(board, nx as u8, ny as u8);
+            }
+        }
+    }
+
     // Smoke-behind-shooter: Rocket Artillery (Ranged_Rocket) places a single
     // smoke tile one step opposite the shot direction from the shooter's
     // position. If behind-tile is off-board (shooter on edge), skip silently —

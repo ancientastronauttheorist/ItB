@@ -602,9 +602,13 @@ pub enum WId {
     ScienceTcSwapOtherAB = 209,
     /// Bombermechs — Pierce Mech's AP Cannon.
     BrutePierceShot = 210,
+    /// Mist Eaters — Smog Mech's Smoldering Shells.
+    RangedSmokeFire = 211,
+    /// Mist Eaters — Control Mech's Control Shot.
+    ScienceTcControl = 212,
 }
 
-pub const WEAPON_COUNT: usize = 211;
+pub const WEAPON_COUNT: usize = 213;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -934,6 +938,17 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // Pushes the first projectile blocker, then damages and pushes the second.
     // The two-stage projectile semantics are WId-specific in simulate.rs.
     w[210] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    // 211: Ranged_SmokeFire — Smoldering Shells.
+    // Base Mist Eaters artillery: deals 1 and lights the target tile on Fire,
+    // then adds Smoke to the four cardinal adjacent tiles. The adjacent smoke
+    // footprint is WId-specific in simulate.rs because normal SMOKE applies to
+    // the center tile.
+    w[211] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 212: Science_TC_Control — Control Shot.
+    // This needs target-unit plus destination targeting. Keep it catalogued but
+    // inert until the action schema/bridge can carry that second click safely.
+    w[212] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1656,6 +1671,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_TC_SwapOther_A" => WId::ScienceTcSwapOtherA,
         "Science_TC_SwapOther_B" => WId::ScienceTcSwapOtherB,
         "Science_TC_SwapOther_AB" => WId::ScienceTcSwapOtherAB,
+        "Science_TC_Control" => WId::ScienceTcControl,
+        "Ranged_SmokeFire" => WId::RangedSmokeFire,
         "Missiles_Shield" => WId::MissilesShield,
         "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
@@ -1878,6 +1895,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceTcSwapOtherA => "Science_TC_SwapOther_A",
         WId::ScienceTcSwapOtherB => "Science_TC_SwapOther_B",
         WId::ScienceTcSwapOtherAB => "Science_TC_SwapOther_AB",
+        WId::ScienceTcControl => "Science_TC_Control",
+        WId::RangedSmokeFire => "Ranged_SmokeFire",
         WId::ScorpionAtk1 => "ScorpionAtk1",
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
@@ -2158,6 +2177,8 @@ pub fn weapon_name(id: WId) -> &'static str {
             | WId::ScienceMassShiftB | WId::ScienceMassShiftAB => "Area Shift",
         WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
             | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB => "Force Swap",
+        WId::ScienceTcControl => "Control Shot",
+        WId::RangedSmokeFire => "Smoldering Shells",
         WId::Repair => "Repair",
         WId::ScorpionAtk1 => "Scorpion Strike",
         WId::ScorpionAtk2 => "Alpha Scorpion Strike",

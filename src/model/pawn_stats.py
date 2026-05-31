@@ -48,6 +48,8 @@ MECH_STATS = {
     "ScienceMech":   PawnStats(move_speed=4, massive=True, flying=True, class_type="Science", default_weapon="Science_Pullmech"),
     "GuardMech":     PawnStats(move_speed=4, massive=True, class_type="Prime", default_weapon="Prime_ShieldBash"),
     "MirrorMech":    PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_Mirrorshot"),
+    "SmokeMech":     PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_SmokeFire"),
+    "SupermanMech":  PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_TC_Control"),
     "IceMech":       PawnStats(move_speed=3, massive=True, flying=True, class_type="Ranged", default_weapon="Ranged_Ice"),
     "ElectricMech":  PawnStats(move_speed=3, massive=True, class_type="Prime", default_weapon="Prime_Lightning"),
     "WallMech":      PawnStats(move_speed=3, massive=True, armor=True, class_type="Brute", default_weapon="Brute_Grapple"),

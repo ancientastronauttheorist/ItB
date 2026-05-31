@@ -544,6 +544,12 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage (total 3)",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Ranged_SmokeFire": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=1, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
     "Ranged_Crack": WeaponDef(
         name="Tri-Rocket", weapon_type="artillery",
         damage=1, push="forward", range_min=2, path_size=3,
@@ -672,6 +678,14 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Force Swap", weapon_type="passive", damage=0,
         upgrade_a="Heal Ally",
         upgrade_b="Hurt Enemy",
+    ),
+    # Control Shot needs a target unit and a destination tile. The live bridge
+    # action schema currently has only one target coordinate, so keep it
+    # catalogued but inert until a true second-click execution path exists.
+    "Science_TC_Control": WeaponDef(
+        name="Control Shot", weapon_type="passive", damage=0,
+        upgrade_a="+1 move",
+        upgrade_b="+1 move",
     ),
     "Science_AcidShot": WeaponDef(
         name="Acid Projector", weapon_type="projectile",

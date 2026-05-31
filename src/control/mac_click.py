@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import subprocess
 import time
+import shutil
 
 
 @dataclass(frozen=True)
@@ -429,6 +430,20 @@ def _applescript_click(
 
 def _get_window_bounds(app_name: str) -> dict | None:
     """Return the front window bounds for ``app_name`` via System Events."""
+    if shutil.which("osascript") is None:
+        try:
+            from src.capture.detect_grid import find_game_window
+
+            win = find_game_window()
+        except Exception:
+            return None
+        return {
+            "x": int(win.x),
+            "y": int(win.y),
+            "width": int(win.width),
+            "height": int(win.height),
+        }
+
     script = f'''
     tell application "{app_name}" to activate
     delay 0.05
