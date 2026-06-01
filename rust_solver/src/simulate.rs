@@ -3603,43 +3603,31 @@ fn sim_projectile(
         let opp = opposite_dir(dir);
         let (odx, ody) = DIRS[opp];
         let mut backward_hit = false;
-        let mut adjacent_empty_sand: Option<(u8, u8)> = None;
-        for i in 1..8i8 {
-            let nx = ax as i8 + odx * i;
-            let ny = ay as i8 + ody * i;
-            if !in_bounds(nx, ny) { break; }
+        let nx = ax as i8 + odx;
+        let ny = ay as i8 + ody;
+        if in_bounds(nx, ny) {
             let nxu = nx as u8;
             let nyu = ny as u8;
 
-            let tile = board.tile(nxu, nyu);
-            if i == 1 && tile.terrain == Terrain::Sand && board.unit_at(nxu, nyu).is_none() {
-                adjacent_empty_sand = Some((nxu, nyu));
-            }
-            if tile.terrain == Terrain::Mountain {
-                // Backward projectile stops at a mountain but damages it
-                // (Janus Cannon / Mirror Shot rubbleizes mountains behind
-                // the shooter, matching forward-projectile behavior).
+            let terrain = board.tile(nxu, nyu).terrain;
+            let is_building = board.tile(nxu, nyu).is_building();
+            if terrain == Terrain::Mountain {
+                // Backward projectile affects only the adjacent rear tile,
+                // including adjacent mountains that can be rubbleized.
                 backward_hit = true;
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
-                break;
-            }
-            if tile.is_building() {
+            } else if is_building {
                 backward_hit = true;
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
-                break;
-            }
-            if board.unit_at(nxu, nyu).is_some() {
+            } else if board.unit_at(nxu, nyu).is_some() {
                 backward_hit = true;
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
                 if wdef.push == PushDir::Forward {
                     apply_push(board, nxu, nyu, opp, result);
                 }
-                break;
             }
-        }
-        if !backward_hit {
-            if let Some((sx, sy)) = adjacent_empty_sand {
-                apply_damage(board, sx, sy, wdef.damage, result, DamageSource::Weapon);
+            if !backward_hit && terrain == Terrain::Sand {
+                apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
             }
         }
     }
@@ -12023,6 +12011,27 @@ mod tests {
         assert!(
             board.tile(2, 0).smoke(),
             "Mirror Shot backward arm should smoke adjacent empty sand when no blocker is behind"
+        );
+    }
+
+    #[test]
+    fn test_mirrorshot_backward_arm_does_not_skip_empty_adjacent_tile() {
+        // Live regression: Frozen Titans Trick Shot run
+        // 20260601_105838_091, Corporate HQ turn 4. MirrorMech at E2 fired
+        // west through D2/C2 into the Jelly at B2. The Moth at G2 sat two
+        // tiles behind Mirror with empty F2 between them; live killed the
+        // forward Jelly but the backward arm did not travel through F2.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 6, 3, 3, WId::BruteMirrorshotA);
+        let moth = add_enemy_type(&mut board, 508, 6, 1, 3, "Moth1");
+        let jelly = add_enemy_type(&mut board, 478, 6, 7, 2, "Jelly_Armor1");
+
+        let _ = simulate_weapon(&mut board, mirror, WId::BruteMirrorshotA, 6, 4);
+
+        assert_eq!(board.units[jelly].hp, 0, "forward arm should kill B2 Jelly");
+        assert_eq!(
+            board.units[moth].hp, 3,
+            "backward arm should stop at adjacent empty F2 instead of hitting G2"
         );
     }
 

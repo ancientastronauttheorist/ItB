@@ -1698,7 +1698,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260601_105838_091 Mission_Filler turn 2, where a frozen Ice Mech behind
 //   the rock thawed from the push before taking BombRock blast damage.
 //   Pre-v242 corpus archived as `failure_db_snapshot_sim_v241.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 242;
+// v243 - Mirror Shot backward arm affects only the adjacent rear tile; it does
+//   not skip an empty adjacent tile to hit a farther blocker. Fixes Frozen
+//   Titans Trick Shot run 20260601_105838_091 Corporate HQ turn 4, where E2->D2
+//   killed the forward Jelly at B2 but did not hit the Moth at G2 through
+//   empty F2. Pre-v243 corpus archived as `failure_db_snapshot_sim_v242.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 243;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

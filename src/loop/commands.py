@@ -15469,7 +15469,11 @@ def _re_solve_partial(
                 ud.get("pilot_level", 0),
             )
     _annotate_pending_grid_debt(session, board, bridge_data)
-    _maybe_disable_bridge_capped_repair(session, bridge_data, turn)
+    _maybe_disable_bridge_capped_repair(
+        session,
+        bridge_data,
+        int(bridge_data.get("turn", session.current_turn) or 0),
+    )
 
     # Forward the soft-disable blocklist on re-solves too, otherwise the
     # Rust solver could pick the disabled weapon again on the same turn
