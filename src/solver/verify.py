@@ -1221,7 +1221,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Trick Shot run 20260601_105838_091 Corporate HQ turn 4, where E2->D2 killed
 # the forward Jelly at B2 but did not hit the Moth at G2 through empty F2.
 # Pre-v243 corpus archived as failure_db_snapshot_sim_v242.jsonl.
-SIMULATOR_VERSION = 243
+# v244 - Mirror Shot backward arm can still skip an empty adjacent tile to hit a
+# farther terrain blocker, while preserving v243's non-adjacent-pawn miss. Fixes
+# Frozen Titans Trick Shot run 20260601_154715_670 Disposal Site C turn 3, where
+# E7->D7 destroyed the G7 building through empty F7.
+# Pre-v244 corpus archived as failure_db_snapshot_sim_v243.jsonl.
+SIMULATOR_VERSION = 244
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -3629,6 +3629,21 @@ fn sim_projectile(
             if !backward_hit && terrain == Terrain::Sand {
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
             }
+            if !backward_hit {
+                let mut cx = nx + odx;
+                let mut cy = ny + ody;
+                while in_bounds(cx, cy) {
+                    let tx = cx as u8;
+                    let ty = cy as u8;
+                    let tile = board.tile(tx, ty);
+                    if tile.terrain == Terrain::Mountain || tile.is_building() {
+                        apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+                        break;
+                    }
+                    cx += odx;
+                    cy += ody;
+                }
+            }
         }
     }
 
@@ -12033,6 +12048,31 @@ mod tests {
             board.units[moth].hp, 3,
             "backward arm should stop at adjacent empty F2 instead of hitting G2"
         );
+    }
+
+    #[test]
+    fn test_mirrorshot_backward_arm_skips_empty_tile_to_hit_building() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_154715_670,
+        // Disposal Site C turn 3. MirrorMech at E7 fired east at D7. The
+        // adjacent rear F7 tile was empty, but live continued the rear arm to
+        // the G7 building and destroyed it. Non-adjacent pawns remain covered
+        // by the prior no-skip regression above.
+        let mut board = make_test_board();
+        board.tile_mut(1, 1).terrain = Terrain::Building;
+        board.tile_mut(1, 1).building_hp = 1;
+
+        let mirror = add_mech(&mut board, 1, 1, 3, 3, WId::BruteMirrorshot);
+        let leaper = add_enemy_type(&mut board, 647, 1, 4, 2, "Leaper2");
+
+        let _ = simulate_weapon(&mut board, mirror, WId::BruteMirrorshot, 1, 4);
+
+        assert_eq!(board.units[leaper].hp, 1, "forward arm should hit D7 Leaper");
+        assert_eq!(
+            board.tile(1, 1).terrain,
+            Terrain::Rubble,
+            "rear arm should continue through empty F7 and destroy G7 building"
+        );
+        assert_eq!(board.tile(1, 1).building_hp, 0);
     }
 
     #[test]
