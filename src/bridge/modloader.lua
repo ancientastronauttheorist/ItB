@@ -289,17 +289,20 @@ end
 local function get_pawn_max_health(pawn, uid, save_data)
     local pawn_def = _G[pawn:GetType()]
     local base = (pawn_def and pawn_def.Health) or pawn:GetHealth()
+    local max_hp = base
 
     local fn = pawn.GetMaxHealth
     if type(fn) == "function" then
         local ok, mh = pcall(function() return fn(pawn) end)
         if ok and type(mh) == "number" and mh > 0 then
-            return mh
+            max_hp = math.max(max_hp, mh)
         end
     end
 
     local saved = save_data and save_data.pawn_max_health and save_data.pawn_max_health[uid]
-    local max_hp = (type(saved) == "number" and saved > 0) and saved or base
+    if type(saved) == "number" and saved > 0 then
+        max_hp = math.max(max_hp, saved)
+    end
 
     local bonus = 0
     local pilot = save_data and save_data.pilots and save_data.pilots[uid]
