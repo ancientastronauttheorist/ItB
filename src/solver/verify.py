@@ -1232,7 +1232,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260601_154715_670 Chemical Field A turn 3, where D6->D7 hit D3 Mosquito and
 # bumped frozen D2 Bouncer.
 # Pre-v245 corpus archived as failure_db_snapshot_sim_v244.jsonl.
-SIMULATOR_VERSION = 245
+# v246 - Frozen units absorb weapon terrain ignition on their occupied Forest
+# tile. Fixes Frozen Titans Trick Shot run 20260601_174638_420 Mission_Survive
+# turn 4, where Mirror Shot thawed/pushed IceMech off E6 but live left E6 as
+# unburned Forest.
+# Pre-v246 corpus archived as failure_db_snapshot_sim_v245.jsonl.
+SIMULATOR_VERSION = 246
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

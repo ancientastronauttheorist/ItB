@@ -1714,7 +1714,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260601_154715_670 Chemical Field A turn 3, where D6->D7 hit D3 Mosquito
 //   and bumped frozen D2 Bouncer. Pre-v245 corpus archived as
 //   `failure_db_snapshot_sim_v244.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 245;
+// v246 - Frozen units absorb weapon terrain ignition on their occupied Forest
+//   tile. Fixes Frozen Titans Trick Shot run 20260601_174638_420
+//   Mission_Survive turn 4, where Mirror Shot thawed/pushed IceMech off E6
+//   but live left E6 as unburned Forest. Pre-v246 corpus archived as
+//   `failure_db_snapshot_sim_v245.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 246;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

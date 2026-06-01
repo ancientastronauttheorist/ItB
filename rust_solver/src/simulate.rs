@@ -1259,6 +1259,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     if damage == 0 { return; }
 
     let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
+    let mut frozen_unit_absorbed_damage = false;
 
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
@@ -1271,6 +1272,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             // Frozen = invincible, damage unfreezes (0 actual damage)
             unit.set_frozen(false);
             clear_mites(unit);
+            frozen_unit_absorbed_damage = true;
         } else {
             let actual = match source {
                 DamageSource::Bump | DamageSource::BombRockBlast => {
@@ -1482,7 +1484,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
 
         // Forest: weapon damage ignites (NOT bump/push damage)
         let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Forest && source != DamageSource::Bump {
+        if tile.terrain == Terrain::Forest
+            && source != DamageSource::Bump
+            && !frozen_unit_absorbed_damage {
             tile.terrain = Terrain::Ground;
             tile.set_on_fire(true);
             // Live consumes the forest immediately: the tile becomes burning Ground.
@@ -12008,6 +12012,30 @@ mod tests {
             "Mirror Shot should push an allied forward target in the projectile direction"
         );
         assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
+    fn test_mirrorshot_frozen_unit_absorbs_forest_ignition() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_174638_420,
+        // Mission_Survive turn 4. Mirror fired away from a frozen Ice Mech
+        // standing on forest; live thawed/pushed Ice but left the origin tile
+        // as unburned Forest.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 2, 4, 3, WId::BruteMirrorshot);
+        let ice = add_mech(&mut board, 2, 2, 3, 2, WId::RangedIce);
+        board.units[ice].set_frozen(true);
+        board.tile_mut(2, 3).terrain = Terrain::Forest;
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshot, 2, 5);
+
+        assert!(!board.units[ice].frozen(), "Mirror Shot should thaw frozen Ice");
+        assert_eq!((board.units[ice].x, board.units[ice].y), (2, 2));
+        assert_eq!(board.tile(2, 3).terrain, Terrain::Forest);
+        assert!(
+            !board.tile(2, 3).on_fire(),
+            "frozen-unit damage absorption should not ignite the forest"
+        );
+        assert_eq!(result.mech_damage_taken, 0);
     }
 
     #[test]
