@@ -777,6 +777,17 @@ def _dirty_consent_gate(
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
 _POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
 _COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
+_MODELED_PASSIVE_LOADOUT_WEAPONS = {
+    "Passive_Electric",
+    "Passive_FlameImmune",
+    "Passive_Leech",
+    "Passive_Leech_A",
+    "Passive_FriendlyFire",
+    "Passive_ForceAmp",
+    "Passive_Medical",
+}
+
+
 def _save_pawn_for_uid(state: object, uid: int) -> object | None:
     active_mission = getattr(state, "active_mission", None)
     pawns = getattr(active_mission, "pawns", None)
@@ -802,7 +813,10 @@ def _upgraded_weapon_from_save(
         loadout_idx = uid * 2 + slot
         if loadout_idx < len(weapons):
             weapon_id = weapons[loadout_idx]
-            if weapon_id in _MODELED_UPGRADED_WEAPONS:
+            if (
+                weapon_id in _MODELED_UPGRADED_WEAPONS
+                or weapon_id in _MODELED_PASSIVE_LOADOUT_WEAPONS
+            ):
                 return weapon_id
 
     pawn = _save_pawn_for_uid(state, uid)

@@ -164,7 +164,16 @@ fn apply_bombrock_explosion(
         if nx < 0 || nx >= 8 || ny < 0 || ny >= 8 { continue; }
         let (nx, ny) = (nx as u8, ny as u8);
         if exclude == Some((nx, ny)) { continue; }
-        apply_damage_inner(board, nx, ny, 1, result, DamageSource::Bump, None, depth + 1);
+        apply_damage_inner(
+            board,
+            nx,
+            ny,
+            1,
+            result,
+            DamageSource::BombRockBlast,
+            None,
+            depth + 1,
+        );
     }
 }
 
@@ -1162,7 +1171,10 @@ pub(crate) fn settle_building_grid_loss(
         return 0;
     }
 
-    if matches!(source, DamageSource::Bump | DamageSource::WeaponDeferredGrid)
+    if matches!(
+        source,
+        DamageSource::Bump | DamageSource::BombRockBlast | DamageSource::WeaponDeferredGrid
+    )
         && !is_unique
         && !destroyed
     {
@@ -1239,7 +1251,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             clear_mites(unit);
         } else {
             let actual = match source {
-                DamageSource::Bump => {
+                DamageSource::Bump | DamageSource::BombRockBlast => {
                     // Force Amp (Passive_ForceAmp): Vek take +1 from bump-class
                     // damage (push collisions AND blocking emerging Vek). The
                     // Bot Leader is a sentient enemy and is explicitly exempt
@@ -1384,6 +1396,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     source,
                     DamageSource::Weapon
                         | DamageSource::Bump
+                        | DamageSource::BombRockBlast
                         | DamageSource::WeaponCracksOccupied
                         | DamageSource::WeaponNoAcidPool
                 );
@@ -1422,7 +1435,10 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             occupied_by_alive_unit_at_start
             && matches!(
                 source,
-                DamageSource::Weapon | DamageSource::Bump | DamageSource::WeaponNoAcidPool
+                DamageSource::Weapon
+                    | DamageSource::Bump
+                    | DamageSource::BombRockBlast
+                    | DamageSource::WeaponNoAcidPool
             );
         if tile.terrain == Terrain::Ground
             && tile.cracked()
@@ -1460,6 +1476,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     | DamageSource::SelfDamage
                     | DamageSource::WeaponCracksOccupied
                     | DamageSource::WeaponNoAcidPool
+                    | DamageSource::BombRockBlast
             ) {
             tile.terrain = Terrain::Ground;
             // Note: fire_weapon flag not yet threaded; default to smoke.
@@ -9884,6 +9901,30 @@ mod tests {
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 2),
             "Flip does not push the target");
         assert_eq!(result.enemy_damage_dealt, 2);
+    }
+
+    #[test]
+    fn test_spartan_shield_killed_bombrock_smokes_adjacent_occupied_sand() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_105838_091,
+        // R.S.T. Mission_Cataclysm turn 1. Shield Bash destroyed a BombRock;
+        // its adjacent blast hit a Dung on sand. The blast used bump-class
+        // unit damage, but still converted the occupied sand to smoked ground.
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 2, 3, WId::PrimeShieldBash);
+        let rock = add_bombrock(&mut board, 252, 3, 3);
+        let dung = add_enemy_type(&mut board, 148, 4, 3, 3, "Dung1");
+        board.units[dung].flags.insert(UnitFlags::ARMOR);
+        board.tile_mut(4, 3).terrain = Terrain::Sand;
+
+        let _result = simulate_weapon(&mut board, mech, WId::PrimeShieldBash, 3, 3);
+
+        assert!(board.units[rock].hp <= 0, "Shield Bash should destroy the BombRock");
+        assert_eq!(
+            board.units[dung].hp, 2,
+            "BombRock blast should keep bump-style damage that ignores armor"
+        );
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
+        assert!(board.tile(4, 3).smoke(), "occupied sand hit by the blast should smoke");
     }
 
     #[test]

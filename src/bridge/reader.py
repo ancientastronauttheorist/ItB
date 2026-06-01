@@ -442,19 +442,35 @@ def _parse_mech_stat_overlays_from_save_text(content: str) -> dict[int, dict]:
 
 
 def _read_mech_stat_overlays_from_save() -> dict[int, dict]:
-    profile_dir = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
-    )
     for filename in ("saveData.lua", "undoSave.lua"):
         try:
-            with open(os.path.join(profile_dir, filename)) as f:
-                content = f.read()
+            content = get_save_file(filename, "Alpha").read_text(
+                encoding="utf-8",
+                errors="replace",
+            )
         except OSError:
             continue
         records = _parse_mech_stat_overlays_from_save_text(content)
         if records:
             return records
     return {}
+
+
+def _pilot_skill_max_hp_bonus(*skills: object) -> int:
+    """Return HP granted by leveled pilot skills visible in saveData.
+
+    Into the Breach stores pilot perks as numeric IDs. The base-game
+    ``+2 Mech HP`` perk is 1, and AE ``Skilled`` is 9 (+1 Move, +2 HP).
+    """
+    bonus = 0
+    for skill in skills:
+        try:
+            value = int(skill)
+        except (TypeError, ValueError):
+            continue
+        if value in {1, 9}:
+            bonus += 2
+    return bonus
 
 
 def _visual_coord(x: int, y: int) -> str:
@@ -506,6 +522,10 @@ def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
             unit["infected"] = rec["infected"]
 
         raw_skills = list(unit.get("pilot_skills", []) or [])
+        hp_skill_bonus = _pilot_skill_max_hp_bonus(
+            rec.get("pilot_skill1"),
+            rec.get("pilot_skill2"),
+        )
         for save_key, label in (
             ("pilot_skill1", "skill1"),
             ("pilot_skill2", "skill2"),
@@ -521,6 +541,12 @@ def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
         save_max = rec.get("max_hp")
         if not isinstance(save_max, int) or save_max <= 0:
             continue
+        if hp_skill_bonus:
+            try:
+                bridge_max = int(unit.get("max_hp", 0) or 0)
+            except (TypeError, ValueError):
+                bridge_max = 0
+            save_max = max(save_max, bridge_max + hp_skill_bonus)
         old_max = unit.get("max_hp")
         if old_max == save_max:
             continue

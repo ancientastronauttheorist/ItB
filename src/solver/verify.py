@@ -1206,7 +1206,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Fixes Frozen Titans Trick Shot run 20260601_105838_091 Mission_Bomb turn 4,
 # where Cryo-Launcher froze a Leaper but the sim left ProtoBomb webbed.
 # Pre-v240 corpus archived as failure_db_snapshot_sim_v239.jsonl.
-SIMULATOR_VERSION = 240
+# v241 - BombRock blast damage uses bump-class unit math while still converting
+# adjacent occupied sand to smoked ground. Fixes Frozen Titans Trick Shot run
+# 20260601_105838_091 Mission_Cataclysm turn 1, where Shield Bash destroyed a
+# BombRock beside a Dung on sand.
+# Pre-v241 corpus archived as failure_db_snapshot_sim_v240.jsonl.
+SIMULATOR_VERSION = 241
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -43,11 +43,9 @@ def test_read_mech_stat_overlays_falls_back_to_undo_save(
     profile_dir.mkdir()
     (profile_dir / "undoSave.lua").write_text(SAVE_SNIPPET)
     monkeypatch.setattr(
-        reader.os.path,
-        "expanduser",
-        lambda path: str(profile_dir)
-        if path.endswith("profile_Alpha")
-        else path,
+        reader,
+        "get_save_file",
+        lambda filename, profile="Alpha": profile_dir / filename,
     )
 
     records = reader._read_mech_stat_overlays_from_save()
@@ -122,6 +120,40 @@ def test_apply_save_mech_stat_overlays_patches_max_hp_without_touching_live_hp(
     assert units[2].hp == 4
     assert units[2].max_hp == 5
     assert units[2].infected is True
+
+
+def test_apply_save_mech_stat_overlays_accounts_for_new_skilled_hp(
+    monkeypatch,
+):
+    snippet = """
+["pawn1"] = {["type"] = "MirrorMech", ["id"] = 1, ["mech"] = true,
+["pilot"] = {["id"] = "Pilot_Pinnacle", ["name"] = "Coral", ["name_id"] = "", ["skill1"] = 0, ["skill2"] = 9, ["level"] = 1, },
+["health"] = 5, ["max_health"] = 3, }
+"""
+    monkeypatch.setattr(
+        reader,
+        "_read_mech_stat_overlays_from_save",
+        lambda: reader._parse_mech_stat_overlays_from_save_text(snippet),
+    )
+    bridge_data = {
+        "units": [
+            {
+                "uid": 1,
+                "type": "MirrorMech",
+                "hp": 5,
+                "max_hp": 3,
+                "team": 1,
+                "mech": True,
+                "weapons": ["Brute_Mirrorshot_A"],
+            },
+        ],
+    }
+
+    updates = reader._apply_save_mech_stat_overlays(bridge_data)
+
+    assert bridge_data["units"][0]["max_hp"] == 5
+    assert bridge_data["units"][0]["pilot_skills"] == ["skill2=9"]
+    assert updates[0]["save_max_hp"] == 5
 
 
 def test_apply_save_mech_stat_overlays_ignores_uid_type_mismatch(monkeypatch):

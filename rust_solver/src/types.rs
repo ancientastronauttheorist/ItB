@@ -214,6 +214,9 @@ pub enum DamageSource {
     /// Weapon damage that still uses weapon damage math / kill credit but does
     /// not synthesize a corpse ACID pool when the killed pawn had ACID.
     WeaponNoAcidPool = 8,
+    /// Unstable Boulder / BombRock blast damage: bump-class unit math, but
+    /// live captures show it still disturbs sand into smoke.
+    BombRockBlast = 9,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
