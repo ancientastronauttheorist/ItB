@@ -1211,7 +1211,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260601_105838_091 Mission_Cataclysm turn 1, where Shield Bash destroyed a
 # BombRock beside a Dung on sand.
 # Pre-v241 corpus archived as failure_db_snapshot_sim_v240.jsonl.
-SIMULATOR_VERSION = 241
+# v242 - Mirror Shot defers a killed forward BombRock blast until after its
+# push/bump resolution. Fixes Frozen Titans Trick Shot run
+# 20260601_105838_091 Mission_Filler turn 2, where a frozen Ice Mech behind the
+# rock thawed from the push before taking BombRock blast damage.
+# Pre-v242 corpus archived as failure_db_snapshot_sim_v241.jsonl.
+SIMULATOR_VERSION = 242
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

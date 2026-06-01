@@ -1104,7 +1104,22 @@ fn apply_damage_defer_death_explosion(
     result: &mut ActionResult,
     source: DamageSource,
 ) -> Option<usize> {
-    if damage == 0 { return None; }
+    apply_damage_defer_death_explosion_impl(
+        board, x, y, damage, result, source, false,
+    ).0
+}
+
+fn apply_damage_defer_death_explosion_impl(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+    defer_bombrock: bool,
+) -> (Option<usize>, Option<(u8, u8)>) {
+    if damage == 0 { return (None, None); }
+    let mut deferred_bombrock = None;
 
     let death_check = if board.blast_psion || board.boss_psion {
         board.unit_at(x, y).and_then(|idx| {
@@ -1140,7 +1155,11 @@ fn apply_damage_defer_death_explosion(
 
     if let Some(idx) = bombrock_check {
         if board.units[idx].hp <= 0 {
-            apply_bombrock_explosion(board, x, y, result, None, 0);
+            if defer_bombrock {
+                deferred_bombrock = Some((x, y));
+            } else {
+                apply_bombrock_explosion(board, x, y, result, None, 0);
+            }
         }
     }
 
@@ -1150,7 +1169,10 @@ fn apply_damage_defer_death_explosion(
         }
     }
 
-    death_check.filter(|idx| board.units[*idx].hp <= 0)
+    (
+        death_check.filter(|idx| board.units[*idx].hp <= 0),
+        deferred_bombrock,
+    )
 }
 
 /// Grid-power accounting for building HP changes.
@@ -2022,6 +2044,7 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
 struct PushPolicy {
     dead_nonpushable_collides: bool,
     dead_bumps_live_blocker: bool,
+    dead_bombrock_bumps_live_blocker: bool,
     edge_bump_damage: bool,
     friendly_live_pusher_enters_wreck: bool,
     live_pusher_enters_wreck: bool,
@@ -2030,6 +2053,7 @@ struct PushPolicy {
 const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2038,6 +2062,7 @@ const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
 const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: true,
     dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2046,6 +2071,7 @@ const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
 const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2054,6 +2080,7 @@ const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
 const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2062,6 +2089,16 @@ const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
 const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: false,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const MIRRORSHOT_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: true,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2070,6 +2107,7 @@ const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
 const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: true,
     live_pusher_enters_wreck: false,
@@ -2078,6 +2116,7 @@ const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
 const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2086,6 +2125,7 @@ const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
 const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2094,6 +2134,7 @@ const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
 const ACID_PROJECTOR_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: true,
@@ -2102,6 +2143,7 @@ const ACID_PROJECTOR_PUSH_POLICY: PushPolicy = PushPolicy {
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
+    dead_bombrock_bumps_live_blocker: false,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
@@ -2150,12 +2192,6 @@ fn apply_push_with_policy(
         None => return,
     };
 
-    // BombRocks explode as soon as they are destroyed. The dead boulder does
-    // not continue as a pushable corpse for Taurus/Rocket-style damage+push.
-    if board.units[unit_idx].hp <= 0 && board.units[unit_idx].type_name_str() == "BombRock" {
-        return;
-    }
-
     // Non-pushable non-mechs are immune
     if !board.units[unit_idx].pushable()
         && !board.units[unit_idx].is_mech()
@@ -2178,6 +2214,22 @@ fn apply_push_with_policy(
 
     let nx = nx_i as u8;
     let ny = ny_i as u8;
+
+    // BombRocks normally explode as soon as they are destroyed; the dead
+    // boulder does not continue as a pushable corpse for Taurus/Rocket-style
+    // damage+push. Mirror Shot is a narrow live exception: the killed forward
+    // BombRock can still bump a live blocker in the push direction before its
+    // blast resolves.
+    if board.units[unit_idx].hp <= 0 && board.units[unit_idx].type_name_str() == "BombRock" {
+        if policy.dead_bombrock_bumps_live_blocker {
+            if let Some(blocker_idx) = board.unit_at(nx, ny) {
+                if blocker_idx != unit_idx {
+                    apply_damage(board, nx, ny, 1, result, DamageSource::Bump);
+                }
+            }
+        }
+        return;
+    }
 
     // Blocked by mountain — pushed unit bumps, mountain takes 1 damage
     if board.tile(nx, ny).terrain == Terrain::Mountain {
@@ -3473,6 +3525,8 @@ fn sim_projectile(
         }
     }
 
+    let mut deferred_bombrock_explosion: Option<(u8, u8)> = None;
+
     if hit_x >= 0 {
         let hx = hit_x as u8;
         let hy = hit_y as u8;
@@ -3488,12 +3542,23 @@ fn sim_projectile(
                 .map(|idx| board.units[idx].is_player())
                 .unwrap_or(false);
         let defer_death_explosion = dmg > 0 && !matches!(wdef.push, PushDir::None | PushDir::Flip);
+        let defer_bombrock_explosion =
+            is_brute_mirrorshot_weapon(weapon_id) && wdef.aoe_behind();
         let deferred_death_explosion = if skip_friendly_damage {
             None
         } else if defer_death_explosion {
-            apply_damage_defer_death_explosion(
-                board, hx, hy, dmg, result, damage_source,
-            )
+            let (death_explosion, bombrock_explosion) =
+                apply_damage_defer_death_explosion_impl(
+                    board,
+                    hx,
+                    hy,
+                    dmg,
+                    result,
+                    damage_source,
+                    defer_bombrock_explosion,
+                );
+            deferred_bombrock_explosion = bombrock_explosion;
+            death_explosion
         } else {
             apply_damage(board, hx, hy, dmg, result, damage_source);
             None
@@ -3513,7 +3578,7 @@ fn sim_projectile(
         } else if weapon_id == WId::ScienceAcidShot {
             ACID_PROJECTOR_PUSH_POLICY
         } else if is_brute_mirrorshot_weapon(weapon_id) {
-            TRI_ROCKET_PUSH_POLICY
+            MIRRORSHOT_PUSH_POLICY
         } else {
             DEFAULT_PUSH_POLICY
         };
@@ -3577,6 +3642,10 @@ fn sim_projectile(
                 apply_damage(board, sx, sy, wdef.damage, result, DamageSource::Weapon);
             }
         }
+    }
+
+    if let Some((bx, by)) = deferred_bombrock_explosion {
+        apply_bombrock_explosion(board, bx, by, result, None, 0);
     }
 }
 
@@ -11955,6 +12024,35 @@ mod tests {
             board.tile(2, 0).smoke(),
             "Mirror Shot backward arm should smoke adjacent empty sand when no blocker is behind"
         );
+    }
+
+    #[test]
+    fn test_mirrorshot_defers_killed_bombrock_blast_until_after_push() {
+        // Live regression: Frozen Titans Trick Shot run
+        // 20260601_105838_091, Mission_Filler turn 2. Upgraded Mirror Shot
+        // killed a BombRock directly in front of Mirror while frozen Ice Mech
+        // stood behind the rock. Live resolved the Mirror Shot push into Ice
+        // first, thawing it, then resolved the BombRock blast for 1 damage.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 4, 2, 5, WId::BruteMirrorshotA);
+        let ice = add_mech(&mut board, 2, 4, 4, 2, WId::RangedIce);
+        board.units[ice].max_hp = 4;
+        board.units[ice].set_frozen(true);
+        let rock = add_bombrock(&mut board, 286, 4, 3);
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshotA, 4, 3);
+
+        assert!(board.units[rock].hp <= 0);
+        assert_eq!(
+            board.units[ice].hp, 1,
+            "BombRock blast should damage Ice after the push has thawed it"
+        );
+        assert!(!board.units[ice].frozen());
+        assert_eq!(
+            board.units[mirror].hp, 4,
+            "BombRock blast should still detonate from the killed rock tile"
+        );
+        assert_eq!(result.mech_damage_taken, 2);
     }
 
     #[test]
