@@ -11990,6 +11990,27 @@ mod tests {
     }
 
     #[test]
+    fn test_mirrorshot_forward_arm_pushes_allied_target() {
+        // Live regression: Frozen Titans Trick Shot run
+        // 20260601_154715_670, Mission_Tides turn 2. Mirror Mech at C6
+        // fired upgraded Janus Cannon at allied Ice Mech on D6; live damage
+        // pushed Ice one more tile to E6, into the incoming tidal wave.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 2, 5, 3, WId::BruteMirrorshotA);
+        let ice = add_mech(&mut board, 2, 2, 4, 4, WId::RangedIce);
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshotA, 2, 4);
+
+        assert_eq!(board.units[ice].hp, 2);
+        assert_eq!(
+            (board.units[ice].x, board.units[ice].y),
+            (2, 3),
+            "Mirror Shot should push an allied forward target in the projectile direction"
+        );
+        assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
     fn test_upgraded_mirrorshot_backward_arm_can_disable_mech() {
         // Live regression: Distant Friends hunt 20260525_203546_657,
         // Mission_SnowBattle turn 1. The save-file loadout had

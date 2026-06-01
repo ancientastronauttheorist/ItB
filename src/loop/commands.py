@@ -17434,10 +17434,12 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         action_idx += 1
 
     threat_audit = None
+    post_action_summary = None
     try:
         refresh_bridge_state()
         audit_board, audit_data = read_bridge_state()
         if audit_board is not None:
+            post_action_summary = _capture_board_summary(audit_board, audit_data)
             from src.solver.threat_audit import audit_threat_coverage
             threat_audit = audit_threat_coverage(
                 solve_data.get("initial_building_threats") or [],
@@ -17540,6 +17542,42 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "solver_gap_events": solver_gap_events,
             "research_queue_peek": _research_peek(session),
         }
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        if lightning_research_auto_resolved:
+            result["lightning_research_auto_resolved"] = lightning_research_auto_resolved
+        _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                       unknowns_flagged,
+                       research_peek=result["research_queue_peek"])
+        _print_result(result)
+        return result
+
+    post_action_danger = []
+    if isinstance(post_action_summary, dict):
+        post_action_danger = list(post_action_summary.get("mechs_on_danger") or [])
+    if post_action_danger:
+        result = {
+            "status": "SAFETY_BLOCKED_POST_ACTION",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "post_action_mechs_on_danger": post_action_danger,
+            "plan_safety": plan_safety,
+            "next_step": (
+                "Fresh post-action bridge state has a mech on lethal "
+                "environment danger. Do not click End Turn; reset or recover "
+                "the live turn before continuing."
+            ),
+            "fuzzy_detections": fuzzy_detections,
+            "soft_disabled": list(session.disabled_actions),
+            "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+            "unknowns_flagged": unknowns_flagged,
+            "solver_gap_events": solver_gap_events,
+            "research_queue_peek": _research_peek(session),
+        }
+        if threat_audit is not None:
+            result["threat_audit"] = threat_audit
         if winnability_warning:
             result["winnability_warning"] = winnability_warning
         if lightning_research_auto_resolved:
