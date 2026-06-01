@@ -3258,6 +3258,59 @@ def _repair_would_be_noop(board: Board | None, mech_uid: int) -> bool:
     )
 
 
+def _bridge_capped_repair_disable_reasons(bridge_data: dict | None) -> list[str]:
+    """Find mechs where direct bridge REPAIR cannot reach save-overlaid max HP."""
+    if not isinstance(bridge_data, dict):
+        return []
+    overlays: dict[int, tuple[int, int]] = {}
+    for rec in bridge_data.get("mech_stat_overlays") or []:
+        if not isinstance(rec, dict):
+            continue
+        try:
+            uid = int(rec.get("uid"))
+            bridge_max = int(rec.get("bridge_max_hp"))
+            save_max = int(rec.get("save_max_hp"))
+        except (TypeError, ValueError):
+            continue
+        if 0 < bridge_max < save_max:
+            overlays[uid] = (bridge_max, save_max)
+
+    if not overlays:
+        return []
+
+    reasons: list[str] = []
+    for unit in bridge_data.get("units") or []:
+        if not isinstance(unit, dict):
+            continue
+        try:
+            uid = int(unit.get("uid"))
+            hp = int(unit.get("hp"))
+        except (TypeError, ValueError):
+            continue
+        caps = overlays.get(uid)
+        if caps is None:
+            continue
+        bridge_max, save_max = caps
+        if hp < bridge_max or hp >= save_max:
+            continue
+        if any(bool(unit.get(flag)) for flag in ("fire", "acid", "frozen", "infected")):
+            continue
+        reasons.append(f"uid={uid}:hp={hp}:bridge_max={bridge_max}:save_max={save_max}")
+    return reasons
+
+
+def _maybe_disable_bridge_capped_repair(session: RunSession, bridge_data: dict, turn: int) -> bool:
+    reasons = _bridge_capped_repair_disable_reasons(bridge_data)
+    if not reasons:
+        return False
+    return session.add_disabled_action(
+        weapon_id="_REPAIR",
+        cause="bridge_repair_cap:" + ",".join(reasons),
+        expires_turn=turn + 99,
+        strategic_override=True,
+    )
+
+
 def _compute_deltas(predicted: dict, actual: dict) -> dict:
     """Compare predicted vs actual board state. Negative diff = worse than predicted."""
     deltas = {
@@ -4770,6 +4823,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         ud.get("pilot_level", 0),
                     )
             _annotate_pending_grid_debt(session, board, bridge_data)
+            _maybe_disable_bridge_capped_repair(session, bridge_data, turn)
             # Self-healing loop Tier 2: forward the session's current
             # blocklist so the Rust solver biases scoring away from
             # soft-disabled weapons. Expiry was pruned at the start of
@@ -15415,6 +15469,7 @@ def _re_solve_partial(
                 ud.get("pilot_level", 0),
             )
     _annotate_pending_grid_debt(session, board, bridge_data)
+    _maybe_disable_bridge_capped_repair(session, bridge_data, turn)
 
     # Forward the soft-disable blocklist on re-solves too, otherwise the
     # Rust solver could pick the disabled weapon again on the same turn
