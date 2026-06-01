@@ -4823,7 +4823,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         ud.get("pilot_level", 0),
                     )
             _annotate_pending_grid_debt(session, board, bridge_data)
-            _maybe_disable_bridge_capped_repair(session, bridge_data, turn)
+            _maybe_disable_bridge_capped_repair(session, bridge_data, current_turn)
             # Self-healing loop Tier 2: forward the session's current
             # blocklist so the Rust solver biases scoring away from
             # soft-disabled weapons. Expiry was pruned at the start of
