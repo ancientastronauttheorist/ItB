@@ -287,6 +287,9 @@ local function _read_save_data()
 end
 
 local function get_pawn_max_health(pawn, uid, save_data)
+    local pawn_def = _G[pawn:GetType()]
+    local base = (pawn_def and pawn_def.Health) or pawn:GetHealth()
+
     local fn = pawn.GetMaxHealth
     if type(fn) == "function" then
         local ok, mh = pcall(function() return fn(pawn) end)
@@ -296,12 +299,21 @@ local function get_pawn_max_health(pawn, uid, save_data)
     end
 
     local saved = save_data and save_data.pawn_max_health and save_data.pawn_max_health[uid]
-    if type(saved) == "number" and saved > 0 then
-        return saved
-    end
+    local max_hp = (type(saved) == "number" and saved > 0) and saved or base
 
-    local pawn_def = _G[pawn:GetType()]
-    return (pawn_def and pawn_def.Health) or pawn:GetHealth()
+    local bonus = 0
+    local pilot = save_data and save_data.pilots and save_data.pilots[uid]
+    if pilot then
+        for _, skill in ipairs({pilot.skill1, pilot.skill2}) do
+            if skill == 1 or skill == 9 then
+                bonus = bonus + 2
+            end
+        end
+    end
+    if bonus > 0 and max_hp < base + bonus then
+        return max_hp + bonus
+    end
+    return max_hp
 end
 
 local function normalize_queued_target(raw, origin, current_x, current_y)
