@@ -25,4 +25,4 @@ Outcome: **Healing** and **Overkill** unlocked. The run reached the Victory scre
 
 ## Follow-Up
 
-Hazardous Mechs now have **Healing** and **Overkill** complete. The remaining Hazardous squad target is **Immortal**: finish 4 Corporate Islands without a mech being destroyed at battle end. That target should bias toward survival and battle-end state, not the aggressive self-damage farming that made Healing possible.
+Hazardous Mechs now have **Healing**, **Overkill**, and **Immortal** complete. The later Immortal route is documented in `docs/immortal_hazardous_retrospective.md`; its lesson is the inverse of this Healing/Overkill run: preserve battle-end mech survival above optional objectives, kills, reputation, and aggressive self-damage shaping.

@@ -17,6 +17,7 @@ from src.itb_paths import get_bridge_dir
 
 BRIDGE_DIR = get_bridge_dir()
 STATE_FILE = BRIDGE_DIR / "itb_state.json"
+STATE_TMP = BRIDGE_DIR / "itb_state.json.tmp"
 CMD_FILE = BRIDGE_DIR / "itb_cmd.txt"
 CMD_TMP = BRIDGE_DIR / "itb_cmd.txt.tmp"
 ACK_FILE = BRIDGE_DIR / "itb_ack.txt"
@@ -44,15 +45,35 @@ def is_bridge_active() -> bool:
     """
     if not LOG_FILE.exists():
         return False
-    if not STATE_FILE.exists():
+    state_path = _newest_state_path()
+    if state_path is None:
         return False
     # State file must not be ancient unless the heartbeat proves the Lua
     # bridge is still ticking. On island-map screens the bridge may not dump
     # combat JSON until prompted, but a fresh heartbeat means refresh can work.
-    age = time.time() - STATE_FILE.stat().st_mtime
+    age = time.time() - state_path.stat().st_mtime
     if age < STALENESS_THRESHOLD:
         return True
     return is_bridge_alive(max_stale_sec=5.0)
+
+
+def _state_candidates() -> list[Path]:
+    return [p for p in (STATE_FILE, STATE_TMP) if p.exists()]
+
+
+def _newest_state_path() -> Path | None:
+    candidates = _state_candidates()
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
+def _read_json_file(path: Path) -> dict | None:
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError, OSError):
+        return None
 
 
 def is_bridge_alive(max_stale_sec: float = 5.0) -> bool:
@@ -86,13 +107,11 @@ def refresh_bridge_state() -> bool:
 
 def read_state() -> dict | None:
     """Read the current game state JSON. Returns None if unavailable."""
-    if not STATE_FILE.exists():
-        return None
-    try:
-        with open(STATE_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return None
+    for path in sorted(_state_candidates(), key=lambda p: p.stat().st_mtime, reverse=True):
+        payload = _read_json_file(path)
+        if payload is not None:
+            return payload
+    return None
 
 
 def write_command(cmd: str) -> None:
@@ -179,13 +198,11 @@ def wait_for_fresh_state(timeout: float = 10.0) -> dict | None:
     start = time.time()
     deadline = start + timeout
     while time.time() < deadline:
-        if STATE_FILE.exists():
-            mtime = STATE_FILE.stat().st_mtime
+        for path in sorted(_state_candidates(), key=lambda p: p.stat().st_mtime, reverse=True):
+            mtime = path.stat().st_mtime
             if mtime >= start:
-                try:
-                    with open(STATE_FILE, encoding="utf-8") as f:
-                        return json.load(f)
-                except (json.JSONDecodeError, IOError):
-                    pass
+                payload = _read_json_file(path)
+                if payload is not None:
+                    return payload
         time.sleep(0.2)
     return None

@@ -218,6 +218,20 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Island complete Spend Reputation",
         settle_seconds=0.35,
     ),
+    "shop_grid_power": KnownWindowControl(
+        name="shop_grid_power",
+        window_x=920,
+        window_y=225,
+        description="Shop +1 Grid Power supply card",
+        settle_seconds=0.35,
+    ),
+    "shop_continue": KnownWindowControl(
+        name="shop_continue",
+        window_x=850,
+        window_y=690,
+        description="Shop Continue",
+        settle_seconds=0.6,
+    ),
     "leave_island": KnownWindowControl(
         name="leave_island",
         window_x=641,
@@ -283,8 +297,8 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "island_detritus": KnownWindowControl(
         name="island_detritus",
-        window_x=845,
-        window_y=548,
+        window_x=1070,
+        window_y=550,
         description="Island select Detritus",
         settle_seconds=0.6,
     ),

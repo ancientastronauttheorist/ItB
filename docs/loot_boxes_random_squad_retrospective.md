@@ -1,6 +1,6 @@
 # Loot Boxes / Engineering Dropout Random Squad Retrospective
 
-Run `20260531_114844_128` completed **Loot Boxes!** and **Engineering Dropout** on 2026-05-31 with Random Squad / Balanced Roll on Easy. The visible in-game achievement popups appeared after Pinnacle `Mission_BoomBots`; Steam-cache sync still needs a later credential/client pass to reconcile beyond 48/70.
+Run `20260531_114844_128` completed **Loot Boxes!** and **Engineering Dropout** on 2026-05-31 with Random Squad / Balanced Roll on Easy. The visible in-game achievement popups appeared after Pinnacle `Mission_BoomBots`; later Steam-cache checks no longer contradict the popups, and the global tracker advanced again when **Immortal** confirmed 51/70 on 2026-06-01.
 
 ## What Worked
 
@@ -14,8 +14,8 @@ Run `20260531_114844_128` completed **Loot Boxes!** and **Engineering Dropout** 
 - Loot Boxes is still RNG-heavy. Archive `Mission_Repair` failed a Time Pod, so the run needed two Pinnacle pod spawns instead of one.
 - Several missions needed reviewed dirty lines. Ordinary grid/objective losses were acceptable for the target, but each consent stayed tied to an exact frontier and fresh board state.
 - Pinnacle `Mission_Hacking` exposed player-team Cannon Bot aliases (`Snowtank1_Player` / `SnowtankAtk1_Player`). The fix added Python model coverage, Rust weapon mapping, known-types entries, and focused tests before the run continued.
-- Steam sync was not available at closeout because credentials/client cache were not ready, so the README and checklist record these as observed in-game until the next successful sync.
+- Steam sync was not available at closeout because credentials/client cache were not ready, so the README and checklist initially recorded these as observed in-game until later cache reconciliation.
 
 ## Carry Forward
 
-For future Random Squad routes, treat **Loot Boxes!** and **Engineering Dropout** as complete unless Steam later contradicts the 2026-05-31 visible popups. Keep the Loot Boxes playbook oriented around four islands, honest pod accounting, and grid-first survival. When a no-weapon-mod route is active, allow HP/move cores but leave weapon upgrades unpowered until the popup appears.
+For future Random Squad routes, treat **Loot Boxes!** and **Engineering Dropout** as complete. Keep the Loot Boxes playbook oriented around four islands, honest pod accounting, and grid-first survival. When a no-weapon-mod route is active, allow HP/move cores but leave weapon upgrades unpowered until the popup appears.

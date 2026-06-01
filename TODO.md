@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-50 of 70 observed in-game, with 48 of 70 Steam-cache confirmed until the next successful sync. **Loot Boxes!** and **Engineering Dropout** popped in Random Squad Easy run `20260531_114844_128` after the fifth recovered pod on Pinnacle `Mission_BoomBots`. 20 remaining; sorted by global unlock % (easiest first).
+51 of 70 Steam-cache confirmed. **Immortal** unlocked in Hazardous Mechs Easy run `20260531_181444_169` after the four-corporate-island Detritus finale on 2026-06-01. 19 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Random Squad run `20260531_114844_128` closed **Loot Boxes!** and opportunistically closed **Engineering Dropout** while continuing to prove the live achievement loop on Windows with platform-specific bridge/save paths, Windows window detection, screenshots, and session locking.
+Current milestone: Hazardous Mechs run `20260531_181444_169` closed **Immortal** and proved the Windows live achievement loop across a full four-island survival route with bridge `.tmp` state fallback, calibrated Detritus/shop controls, and Steam-cache confirmation after leaving the island.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -54,7 +54,7 @@ Current milestone: Random Squad run `20260531_114844_128` closed **Loot Boxes!**
 ### Tier 4: Red Zone (<10% — hardest achievements, endgame goals)
 - [x] Class Specialist (9.8%) — Beat game with 3 Mechs from same class in Custom — completed with Combat Mech + Laser Mech + Aegis Mech in run `20260529_164303_219`
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
-- [ ] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs]
+- [x] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs] — Steam-cache confirmed on 2026-06-01 in run `20260531_181444_169`
 - [x] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random] — in-game popup observed in Random Squad run `20260531_114844_128` after Pinnacle `Mission_BoomBots`
 - [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification — in-game popup observed during Random Squad run `20260531_114844_128`
 - [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
@@ -79,7 +79,7 @@ Current milestone: Random Squad run `20260531_114844_128` closed **Loot Boxes!**
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (50 observed, 48 from Steam sync)
+### Already Completed (51 Steam-cache confirmed)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -124,6 +124,7 @@ Current milestone: Random Squad run `20260531_114844_128` closed **Loot Boxes!**
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Class Specialist (9.8%) — Beat game with 3 different Mechs from the same class  [Custom Squad]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
+- [x] Immortal (9.6%) — 4 islands without Mech destroyed  [Hazardous Mechs]
 - [x] Loot Boxes! (9.4%) — Open 5 Time Pods in single game  [Random Squad]
 - [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]

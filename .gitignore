@@ -15,6 +15,14 @@ tmp/
 .local_runs/
 recordings/[0-9]*/
 snapshots/*/
+snapshots/*.png
 logs/*_log.md
 data/wiki_raw/*
+research_crops/
+run_screenshots/
+screenshots/
+ui_checks/
+tmp_*.png
+tmp_research_*/
+research_*.png
 *.tmp
