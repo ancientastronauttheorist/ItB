@@ -2484,12 +2484,19 @@ pub fn apply_weapon_status_with_impact_occupancy(
             }
         }
         if wdef.freeze() {
-            let u = &mut board.units[idx];
-            if u.fire() {
-                u.set_fire(false); // freeze on fire: extinguish
+            let frozen_uid = board.units[idx].uid;
+            let was_enemy_web_source = board.units[idx].is_enemy();
+            {
+                let u = &mut board.units[idx];
+                if u.fire() {
+                    u.set_fire(false); // freeze on fire: extinguish
+                }
+                u.set_frozen(true);
+                clear_mites(u);
             }
-            u.set_frozen(true);
-            clear_mites(u);
+            if was_enemy_web_source {
+                break_web_from(board, frozen_uid);
+            }
         }
         if wdef.web() {
             // Pilot_Soldier (Camila Vera) is web-immune. The web_source_uid
@@ -3513,6 +3520,8 @@ fn sim_projectile(
     if wdef.aoe_behind() {
         let opp = opposite_dir(dir);
         let (odx, ody) = DIRS[opp];
+        let mut backward_hit = false;
+        let mut adjacent_empty_sand: Option<(u8, u8)> = None;
         for i in 1..8i8 {
             let nx = ax as i8 + odx * i;
             let ny = ay as i8 + ody * i;
@@ -3521,23 +3530,34 @@ fn sim_projectile(
             let nyu = ny as u8;
 
             let tile = board.tile(nxu, nyu);
+            if i == 1 && tile.terrain == Terrain::Sand && board.unit_at(nxu, nyu).is_none() {
+                adjacent_empty_sand = Some((nxu, nyu));
+            }
             if tile.terrain == Terrain::Mountain {
                 // Backward projectile stops at a mountain but damages it
                 // (Janus Cannon / Mirror Shot rubbleizes mountains behind
                 // the shooter, matching forward-projectile behavior).
+                backward_hit = true;
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
                 break;
             }
             if tile.is_building() {
+                backward_hit = true;
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
                 break;
             }
             if board.unit_at(nxu, nyu).is_some() {
+                backward_hit = true;
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
                 if wdef.push == PushDir::Forward {
                     apply_push(board, nxu, nyu, opp, result);
                 }
                 break;
+            }
+        }
+        if !backward_hit {
+            if let Some((sx, sy)) = adjacent_empty_sand {
+                apply_damage(board, sx, sy, wdef.damage, result, DamageSource::Weapon);
             }
         }
     }
@@ -7070,6 +7090,22 @@ mod tests {
             !board.tile(3, 3).on_fire(),
             "Self-freeze should extinguish the shooter tile"
         );
+    }
+
+    #[test]
+    fn test_cryo_freezing_leaper_releases_webbed_proto_bomb() {
+        let mut board = make_test_board();
+        let ice = add_mech(&mut board, 2, 2, 2, 2, WId::RangedIce);
+        let leaper = add_enemy_type(&mut board, 179, 6, 2, 1, "Leaper1");
+        let bomb = add_mission_ally(&mut board, 150, 5, 2, 1, WId::None, "ProtoBomb");
+        board.units[bomb].set_web(true);
+        board.units[bomb].web_source_uid = board.units[leaper].uid;
+
+        let _ = simulate_weapon(&mut board, ice, WId::RangedIce, 6, 2);
+
+        assert!(board.units[leaper].frozen(), "Cryo should freeze the Leaper web source");
+        assert!(!board.units[bomb].web(), "freezing the web source should release ProtoBomb");
+        assert_eq!(board.units[bomb].web_source_uid, 0);
     }
 
     #[test]
@@ -11857,6 +11893,28 @@ mod tests {
     }
 
     // ── Teleporter pad swap (Mission_Teleporter) ──────────────────────────
+
+    #[test]
+    fn test_mirrorshot_backward_arm_empty_adjacent_sand_smokes_when_no_blocker() {
+        // Live regression: Frozen Titans Trick Shot run
+        // 20260601_105838_091, Mission_Bomb turn 1. Upgraded Mirror Shot
+        // fired east from G6 into F6; its backward arm had no blocker, but
+        // live still hit the adjacent empty sand tile H6 and converted it to
+        // smoked ground.
+        let mut board = make_test_board();
+        board.tile_mut(2, 0).terrain = Terrain::Sand;
+
+        let mirror = add_mech(&mut board, 1, 2, 1, 3, WId::BruteMirrorshotA);
+        add_enemy(&mut board, 90, 2, 2, 3);
+
+        let _ = simulate_weapon(&mut board, mirror, WId::BruteMirrorshotA, 2, 2);
+
+        assert_eq!(board.tile(2, 0).terrain, Terrain::Ground);
+        assert!(
+            board.tile(2, 0).smoke(),
+            "Mirror Shot backward arm should smoke adjacent empty sand when no blocker is behind"
+        );
+    }
 
     #[test]
     fn test_teleport_partner_lookup_both_directions() {

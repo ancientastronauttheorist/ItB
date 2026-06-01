@@ -1192,7 +1192,21 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # run 20260530_124216_453 Mission_Repair turn 2, where Vice Fist threw
 # Firefly1 onto a repair platform and live left it unhealed.
 # Pre-v237 corpus archived as failure_db_snapshot_sim_v236.jsonl.
-SIMULATOR_VERSION = 237
+# v238 - Pushed projectile Vek whose bridge queued target equals queued origin
+# infer direction from current position. Fixes Frozen Titans Trick Shot run
+# 20260601_105838_091 Mission_Power turn 2, where Firefly1 still shot
+# MirrorMech after Mirror Shot displacement.
+# Pre-v238 corpus archived as failure_db_snapshot_sim_v237.jsonl.
+# v239 - Mirror Shot backward arm with no blocker still damages adjacent empty
+# sand, converting it to smoked ground. Fixes Frozen Titans Trick Shot run
+# 20260601_105838_091 Mission_Bomb turn 1, where Brute_Mirrorshot_A smoked H6
+# behind MirrorMech.
+# Pre-v239 corpus archived as failure_db_snapshot_sim_v238.jsonl.
+# v240 - Freezing an enemy web source releases units webbed by that source.
+# Fixes Frozen Titans Trick Shot run 20260601_105838_091 Mission_Bomb turn 4,
+# where Cryo-Launcher froze a Leaper but the sim left ProtoBomb webbed.
+# Pre-v240 corpus archived as failure_db_snapshot_sim_v239.jsonl.
+SIMULATOR_VERSION = 240
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

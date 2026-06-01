@@ -1157,7 +1157,9 @@ pub fn simulate_enemy_attacks(
         match wdef.weapon_type {
             WeaponType::Projectile => {
                 if enemy_wid == WId::FireflyAtkB {
-                    if let Some((dx, dy)) = projectile_delta_from_queued(
+                    if let Some((dx, dy)) = projectile_delta_from_queued_or_current(
+                        ex,
+                        ey,
                         queued_origin.0,
                         queued_origin.1,
                         qtx,
@@ -1229,11 +1231,8 @@ pub fn simulate_enemy_attacks(
                         }
                     }
                     if wdef.projectile_grapple() {
-                        if let Some(dir) = projectile_dir_from_queued(
-                            queued_origin.0,
-                            queued_origin.1,
-                            qtx,
-                            qty,
+                        if let Some(dir) = projectile_dir_from_queued_or_current(
+                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
                         ) {
                             apply_projectile_grapple(board, ei, tx, ty, dir, hit_was_object, &mut result);
                         }
@@ -1602,10 +1601,11 @@ pub fn simulate_enemy_attacks(
                     // Line attack (e.g., Launching Stinger): 2-tile line in the original
                     // cardinal direction. When pushed, retrace direction from the ORIGINAL
                     // position so the attack fires correctly from the new position.
-                    let dx = (qtx - queued_origin.0 as i8).signum();
-                    let dy = (qty - queued_origin.1 as i8).signum();
-                    // Must be a valid cardinal direction (exactly one axis non-zero)
-                    if (dx != 0) == (dy != 0) { continue; }
+                    let Some((dx, dy)) = projectile_delta_from_queued_or_current(
+                        ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
+                    ) else {
+                        continue;
+                    };
 
                     let tx1 = ex as i8 + dx;
                     let ty1 = ey as i8 + dy;
@@ -1639,11 +1639,8 @@ pub fn simulate_enemy_attacks(
                     }
                 } else {
                     if enemy_wid == WId::BouncerAtkB {
-                        let Some(dir) = projectile_dir_from_queued(
-                            queued_origin.0,
-                            queued_origin.1,
-                            qtx,
-                            qty,
+                        let Some(dir) = projectile_dir_from_queued_or_current(
+                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
                         ) else {
                             continue;
                         };
@@ -1983,25 +1980,46 @@ fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
 /// Trace projectile from enemy position in queued direction.
 /// Returns (hit_x, hit_y) or None.
 fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
-    let (dx, dy) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty)?;
+    let (dx, dy) = projectile_delta_from_queued_or_current(ex, ey, orig_x, orig_y, qtx, qty)?;
     find_projectile_target_in_direction(board, ex, ey, dx, dy)
 }
 
-fn projectile_delta_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
+fn cardinal_delta(from_x: u8, from_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
     if qtx < 0 { return None; }
+    let dx = (qtx - from_x as i8).signum();
+    let dy = (qty - from_y as i8).signum();
+    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) { return None; }
+    Some((dx, dy))
+}
 
+fn projectile_delta_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
     // Compute direction from ORIGINAL position to queued target.
     // Preserves cardinal attack direction after mech pushes.
     // INVARIANT: queued_target is relative to the original position (bridge
     // normalizes piQueuedShot against piOrigin when reading a mid-turn board).
     // The delta may be a full same-row/column offset; signum recovers direction.
-    let dx = (qtx - orig_x as i8).signum();
-    let dy = (qty - orig_y as i8).signum();
+    cardinal_delta(orig_x, orig_y, qtx, qty)
+}
 
-    // Must be a valid cardinal direction (exactly one axis non-zero)
-    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) { return None; }
-
-    Some((dx, dy))
+fn projectile_delta_from_queued_or_current(
+    ex: u8,
+    ey: u8,
+    orig_x: u8,
+    orig_y: u8,
+    qtx: i8,
+    qty: i8,
+) -> Option<(i8, i8)> {
+    if let Some(delta) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty) {
+        return Some(delta);
+    }
+    // Mid-turn bridge reads after a pushed projectile Vek can report the
+    // queued target as the Vek's original tile, while queued_origin still
+    // points at that same original tile. Live then fires from the current
+    // position toward that target tile.
+    if qtx == orig_x as i8 && qty == orig_y as i8 && (ex, ey) != (orig_x, orig_y) {
+        return cardinal_delta(ex, ey, qtx, qty);
+    }
+    None
 }
 
 fn find_projectile_target_in_direction(board: &Board, ex: u8, ey: u8, dx: i8, dy: i8) -> Option<(u8, u8)> {
@@ -2028,11 +2046,19 @@ fn find_projectile_target_in_direction(board: &Board, ex: u8, ey: u8, dx: i8, dy
 }
 
 fn projectile_dir_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<usize> {
-    let dx = (qtx - orig_x as i8).signum();
-    let dy = (qty - orig_y as i8).signum();
-    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) {
-        return None;
-    }
+    let (dx, dy) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty)?;
+    DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy)
+}
+
+fn projectile_dir_from_queued_or_current(
+    ex: u8,
+    ey: u8,
+    orig_x: u8,
+    orig_y: u8,
+    qtx: i8,
+    qty: i8,
+) -> Option<usize> {
+    let (dx, dy) = projectile_delta_from_queued_or_current(ex, ey, orig_x, orig_y, qtx, qty)?;
     DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy)
 }
 
@@ -2191,6 +2217,43 @@ mod tests {
 
         assert_eq!(board.tile(2, 1).building_hp, 1, "old G6 target should survive");
         assert_eq!(board.tile(3, 1).building_hp, 0, "shifted G5 target should be hit");
+    }
+
+    #[test]
+    fn test_pushed_projectile_with_origin_tile_target_fires_from_current_position() {
+        let mut board = Board::default();
+        let mirror_idx = board.add_unit(Unit {
+            uid: 1,
+            x: 3,
+            y: 6,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[mirror_idx].set_type_name("MirrorMech");
+
+        // Live Frozen Titans regression: Firefly1 was queued from (4,6) into
+        // MirrorMech, then Mirror Shot pushed it to (5,6). The bridge read
+        // queued_target=(4,6), queued_origin=(4,6); live still fired from
+        // current (5,6) through (4,6) into MirrorMech at (3,6).
+        let firefly_idx = add_enemy_with_type(&mut board, 105, 5, 6, 2, "Firefly1", 4, 6);
+        board.units[firefly_idx].queued_origin_x = 4;
+        board.units[firefly_idx].queued_origin_y = 6;
+        board.units[firefly_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::QUEUED_ORIGIN_SET,
+        );
+
+        let mut orig = default_orig_pos(&board);
+        orig[firefly_idx] = (4, 6);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.units[mirror_idx].hp, 2,
+            "Firefly projectile should infer direction from current position when target equals queued origin"
+        );
     }
 
     #[test]
