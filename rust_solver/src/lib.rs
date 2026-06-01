@@ -1708,7 +1708,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Fixes Frozen Titans Trick Shot run 20260601_154715_670 Disposal Site C turn
 //   3, where E7->D7 destroyed the G7 building through empty F7. Pre-v244 corpus
 //   archived as `failure_db_snapshot_sim_v243.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 244;
+// v245 - Mirror Shot backward arm can also skip empty rear tiles to a farther
+//   pawn when the forward arm hit was adjacent. Preserves v243's long-forward
+//   non-adjacent-pawn miss. Fixes Frozen Titans Trick Shot run
+//   20260601_154715_670 Chemical Field A turn 3, where D6->D7 hit D3 Mosquito
+//   and bumped frozen D2 Bouncer. Pre-v245 corpus archived as
+//   `failure_db_snapshot_sim_v244.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 245;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

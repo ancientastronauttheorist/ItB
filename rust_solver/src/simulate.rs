@@ -3600,6 +3600,8 @@ fn sim_projectile(
 
     // Mirror shot (aoe_behind): also fire backward
     if wdef.aoe_behind() {
+        let forward_hit_adjacent = hit_x >= 0
+            && (hit_x - ax as i8).abs() + (hit_y - ay as i8).abs() == 1;
         let opp = opposite_dir(dir);
         let (odx, ody) = DIRS[opp];
         let mut backward_hit = false;
@@ -3636,6 +3638,13 @@ fn sim_projectile(
                     let tx = cx as u8;
                     let ty = cy as u8;
                     let tile = board.tile(tx, ty);
+                    if forward_hit_adjacent && board.unit_at(tx, ty).is_some() {
+                        apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+                        if wdef.push == PushDir::Forward {
+                            apply_push(board, tx, ty, opp, result);
+                        }
+                        break;
+                    }
                     if tile.terrain == Terrain::Mountain || tile.is_building() {
                         apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
                         break;
@@ -12073,6 +12082,33 @@ mod tests {
             "rear arm should continue through empty F7 and destroy G7 building"
         );
         assert_eq!(board.tile(1, 1).building_hp, 0);
+    }
+
+    #[test]
+    fn test_mirrorshot_backward_arm_skips_empty_after_adjacent_forward_hit_to_pawn() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_154715_670,
+        // Chemical Field A turn 3. Mirror teleported to D6, fired north into
+        // adjacent frozen Ice at D7, and the rear arm continued through empty
+        // D5/D4 to the frozen Mosquito at D3, pushing it into frozen D2 Bouncer.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 2, 4, 3, WId::BruteMirrorshot);
+        let ice = add_mech(&mut board, 2, 1, 4, 2, WId::RangedIce);
+        board.units[ice].max_hp = 4;
+        board.units[ice].set_frozen(true);
+        let mosquito = add_enemy_type(&mut board, 669, 5, 4, 2, "Mosquito1");
+        board.units[mosquito].set_frozen(true);
+        let bouncer = add_enemy_type(&mut board, 671, 6, 4, 3, "Bouncer1");
+        board.units[bouncer].set_frozen(true);
+
+        let _ = simulate_weapon(&mut board, mirror, WId::BruteMirrorshot, 1, 4);
+
+        assert_eq!((board.units[ice].x, board.units[ice].y), (0, 4));
+        assert!(!board.units[ice].frozen(), "forward adjacent Ice should thaw and push to D8");
+        assert_eq!(board.units[mosquito].hp, 1);
+        assert!(!board.units[mosquito].frozen(), "rear pawn should thaw before bump damage");
+        assert_eq!((board.units[mosquito].x, board.units[mosquito].y), (5, 4));
+        assert_eq!(board.units[bouncer].hp, 3);
+        assert!(!board.units[bouncer].frozen(), "blocked rear push should thaw the Bouncer");
     }
 
     #[test]
