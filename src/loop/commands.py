@@ -3311,6 +3311,20 @@ def _maybe_disable_bridge_capped_repair(session: RunSession, bridge_data: dict, 
     )
 
 
+def _hard_soft_disables_for_safety_widening(disabled_actions: list[dict]) -> list[dict]:
+    """Keep deterministic live-desync disables even in relaxed widening solves."""
+    kept: list[dict] = []
+    for entry in disabled_actions:
+        if not isinstance(entry, dict):
+            continue
+        if (
+            entry.get("weapon_id") == "_REPAIR"
+            and str(entry.get("cause_pattern", "")).startswith("bridge_repair_cap:")
+        ):
+            kept.append(dict(entry))
+    return kept
+
+
 def _compute_deltas(predicted: dict, actual: dict) -> dict:
     """Compare predicted vs actual board state. Negative diff = worse than predicted."""
     deltas = {
@@ -4968,7 +4982,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 for source, ignore_soft_disables in widening_sources:
                     wide_bridge_data = dict(bridge_data)
                     if ignore_soft_disables:
-                        wide_bridge_data["disabled_actions"] = []
+                        wide_bridge_data["disabled_actions"] = (
+                            _hard_soft_disables_for_safety_widening(
+                                session.disabled_actions
+                            )
+                        )
 
                     wide_raw = _rust.solve_top_k(
                         _json.dumps(wide_bridge_data),
