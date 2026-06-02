@@ -1260,6 +1260,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
 
     let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
     let mut frozen_unit_absorbed_damage = false;
+    let mut unit_received_nonshield_hit = false;
 
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
@@ -1273,6 +1274,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             unit.set_frozen(false);
             clear_mites(unit);
             frozen_unit_absorbed_damage = true;
+            unit_received_nonshield_hit = true;
         } else {
             let actual = match source {
                 DamageSource::Bump | DamageSource::BombRockBlast => {
@@ -1303,6 +1305,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             unit.hp -= actual;
             if actual > 0 {
                 clear_mites(unit);
+                unit_received_nonshield_hit = true;
             }
 
             if unit.is_enemy() {
@@ -1325,6 +1328,14 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     result.mechs_killed += 1;
                 }
             }
+        }
+    }
+
+    // Live refreshes ambient fire pickup after non-shield damage/thaw hits
+    // an occupant already standing on a burning tile.
+    if unit_received_nonshield_hit {
+        if let Some(idx) = board.unit_at(x, y) {
+            apply_fire_tile_pickup(board, idx, x, y);
         }
     }
 
@@ -10012,6 +10023,22 @@ mod tests {
         );
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 2),
             "Flip does not push the target");
+        assert_eq!(result.enemy_damage_dealt, 2);
+    }
+
+    #[test]
+    fn test_spartan_shield_refreshes_fire_status_on_burning_tile() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 2, 4, 3, WId::PrimeShieldBash);
+        let enemy = add_enemy_type(&mut board, 2, 3, 4, 3, "Moth1");
+        board.tile_mut(3, 4).set_on_fire(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeShieldBash, 3, 4);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 4));
+        assert_eq!(board.units[enemy].hp, 1);
+        assert!(board.units[enemy].fire(),
+            "Shield Bash damage should refresh fire status for a target already standing on fire");
         assert_eq!(result.enemy_damage_dealt, 2);
     }
 

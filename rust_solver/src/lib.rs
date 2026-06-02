@@ -1753,7 +1753,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   the water tile remains water. Fixes Mission_Final_Cave turn 1 in Trick
 //   Shot run 20260601_221405_894. Pre-v253 corpus archived as
 //   failure_db_snapshot_sim_v252.jsonl.
-pub const SIMULATOR_VERSION: u32 = 253;
+// v254 - Direct non-shield hits refresh existing fire-tile pickup for the
+//   occupant. Fixes Frozen Titans Trick Shot run 20260602_095732_968
+//   Mission_Armored_Train turn 2, where Prime_ShieldBash hit a Moth standing
+//   on fire and live set status.fire. Pre-v254 corpus archived as
+//   failure_db_snapshot_sim_v253.jsonl.
+pub const SIMULATOR_VERSION: u32 = 254;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
