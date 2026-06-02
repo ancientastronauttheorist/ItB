@@ -3243,6 +3243,44 @@ def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
     return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
 
 
+def _is_implausible_stale_verify_actual(
+    diff,
+    actual_data: dict | None,
+    expected_mission_id: str | None,
+) -> bool:
+    """Return true when a verify read looks like a stale/different board.
+
+    Bridge commands can ACK correctly while the immediate verify read picks up
+    an old bridge/save snapshot. Those diffs are broad, often with a mission or
+    grid mismatch. They must not feed partial re-solve, or the solver can plan
+    for unrelated actors from the stale board.
+    """
+    if not isinstance(actual_data, dict):
+        return False
+
+    actual_mission_id = actual_data.get("mission_id")
+    if (
+        expected_mission_id
+        and actual_mission_id
+        and actual_mission_id != expected_mission_id
+    ):
+        return True
+
+    unit_count = len(getattr(diff, "unit_diffs", []) or [])
+    tile_count = len(getattr(diff, "tile_diffs", []) or [])
+    scalar_diffs = getattr(diff, "scalar_diffs", []) or []
+    has_grid_diff = any(sd.get("field") == "grid_power" for sd in scalar_diffs)
+    total_count = diff.total_count() if hasattr(diff, "total_count") else (
+        unit_count + tile_count + len(scalar_diffs)
+    )
+    return (
+        total_count >= 12
+        and unit_count >= 5
+        and tile_count >= 6
+        and has_grid_diff
+    )
+
+
 def _repair_would_be_noop(board: Board | None, mech_uid: int) -> bool:
     if board is None:
         return False
@@ -16387,6 +16425,84 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   f"({diff.total_count()} -> {best_diff.total_count()})")
         return best_board, best_data, best_diff
 
+    def _expected_verify_mission_id() -> str | None:
+        if isinstance(plan_safety, dict):
+            current = plan_safety.get("current")
+            if isinstance(current, dict) and current.get("mission_id"):
+                return str(current["mission_id"])
+        if isinstance(solve_data, dict):
+            current = solve_data.get("current_outcome")
+            if isinstance(current, dict) and current.get("mission_id"):
+                return str(current["mission_id"])
+        return None
+
+    def _settle_verify_diff(predicted: dict, actual_board, actual_data, phase: str):
+        """Re-read transient or implausibly stale verify snapshots."""
+        actual_board, actual_data, diff = _settle_transient_verify_diff(
+            predicted, actual_board, actual_data, phase
+        )
+        expected_mission_id = _expected_verify_mission_id()
+        if (
+            diff.is_empty()
+            or not _is_implausible_stale_verify_actual(
+                diff, actual_data, expected_mission_id
+            )
+        ):
+            return actual_board, actual_data, diff, False
+
+        best_board, best_data, best_diff = actual_board, actual_data, diff
+        for attempt in range(5):
+            time.sleep(0.25)
+            refresh_bridge_state()
+            reread_board, reread_data = read_bridge_state()
+            if not reread_board:
+                continue
+            reread_diff = diff_states(predicted, reread_board)
+            if reread_diff.is_empty():
+                print(
+                    f"  {phase.upper()} VERIFIED: PASS "
+                    f"(stale verify snapshot cleared after {attempt + 1} reread)"
+                )
+                return reread_board, reread_data, reread_diff, False
+            if reread_diff.total_count() < best_diff.total_count():
+                best_board, best_data, best_diff = (
+                    reread_board, reread_data, reread_diff
+                )
+            if not _is_implausible_stale_verify_actual(
+                reread_diff, reread_data, expected_mission_id
+            ):
+                return reread_board, reread_data, reread_diff, False
+
+        return best_board, best_data, best_diff, True
+
+    def _stale_verify_block(
+        phase: str,
+        action_index: int,
+        mech_uid: int,
+        diff,
+        actual_data: dict | None,
+    ) -> dict:
+        result = {
+            "status": "STALE_ACTUAL_VERIFY_BLOCKED",
+            "turn": turn,
+            "phase": phase,
+            "action_index": action_index,
+            "mech_uid": mech_uid,
+            "diff_count": diff.total_count() if hasattr(diff, "total_count") else None,
+            "expected_mission_id": _expected_verify_mission_id(),
+            "actual_mission_id": (
+                actual_data.get("mission_id") if isinstance(actual_data, dict)
+                else None
+            ),
+            "next_step": (
+                "Verifier saw an implausible stale/cross-board actual snapshot. "
+                "Do not partial re-solve from it; start from a fresh read plus "
+                "solve after confirming the board."
+            ),
+        }
+        _print_result(result)
+        return result
+
     if not is_bridge_active():
         result = {"error": "Bridge not active — auto_turn requires bridge"}
         _print_result(result)
@@ -17007,10 +17123,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             actual_board, actual_data = read_bridge_state()
 
             if actual_board and pred_post_move:
-                actual_board, actual_data, diff = _settle_transient_verify_diff(
+                actual_board, actual_data, diff, stale_verify_blocked = _settle_verify_diff(
                     pred_post_move, actual_board, actual_data, "move"
                 )
                 if not diff.is_empty():
+                    if stale_verify_blocked:
+                        return _stale_verify_block(
+                            "move", actions_completed, mech_uid, diff, actual_data
+                        )
                     if _is_harmless_active_state_diff(diff, allowed_uids=set(done_uids)):
                         print("  MOVE VERIFIED: PASS (prior active-state drift ignored)")
                     elif _is_harmless_player_hp_gain_diff(diff):
@@ -17251,10 +17371,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         actual_board, actual_data = read_bridge_state()
 
         if actual_board and pred_post_attack:
-            actual_board, actual_data, diff = _settle_transient_verify_diff(
+            actual_board, actual_data, diff, stale_verify_blocked = _settle_verify_diff(
                 pred_post_attack, actual_board, actual_data, final_phase
             )
             if not diff.is_empty():
+                if stale_verify_blocked:
+                    return _stale_verify_block(
+                        final_phase, actions_completed, mech_uid, diff, actual_data
+                    )
                 allowed_active_drift_uids = set(done_uids)
                 if final_phase == "skip":
                     allowed_active_drift_uids.add(mech_uid)
