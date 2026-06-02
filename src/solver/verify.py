@@ -1270,7 +1270,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # water tile remains water. Fixes Mission_Final_Cave turn 1 in Trick Shot run
 # 20260601_221405_894. Pre-v253 corpus archived as
 # failure_db_snapshot_sim_v252.jsonl.
-SIMULATOR_VERSION = 254
+SIMULATOR_VERSION = 255
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

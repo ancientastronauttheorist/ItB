@@ -1758,7 +1758,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Armored_Train turn 2, where Prime_ShieldBash hit a Moth standing
 //   on fire and live set status.fire. Pre-v254 corpus archived as
 //   failure_db_snapshot_sim_v253.jsonl.
-pub const SIMULATOR_VERSION: u32 = 254;
+// v255 - Cryo-Launcher self-freeze suppression over water is limited to the
+//   observed Mission_Final_Cave case; Mission_Tides water still freezes the
+//   flying IceMech and turns its tile to ice. Fixes Frozen Titans Trick Shot
+//   run 20260602_095732_968 Mission_Tides turn 2. Pre-v255 corpus archived as
+//   failure_db_snapshot_sim_v254.jsonl.
+pub const SIMULATOR_VERSION: u32 = 255;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

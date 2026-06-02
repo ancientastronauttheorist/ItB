@@ -2823,7 +2823,8 @@ pub fn simulate_weapon_with(
         let ax = board.units[attacker_idx].x;
         let ay = board.units[attacker_idx].y;
         let self_freeze_suppressed =
-            board.units[attacker_idx].flying()
+            board.mission_id == "Mission_Final_Cave"
+            && board.units[attacker_idx].flying()
             && board.tile(ax, ay).terrain == Terrain::Water;
         if !self_freeze_suppressed {
             apply_freeze_weapon_tile_status(board, ax, ay);
@@ -7220,6 +7221,7 @@ mod tests {
         // Mission_Final_Cave turn 1. IceMech fired Cryo from water at E4;
         // live froze the target but left IceMech unfrozen and the tile water.
         let mut board = make_test_board();
+        board.mission_id = "Mission_Final_Cave".to_string();
         board.tile_mut(4, 3).terrain = Terrain::Water;
         let ice = add_mech(&mut board, 2, 4, 3, 2, WId::RangedIce);
         board.units[ice].flags.insert(UnitFlags::FLYING);
@@ -7230,6 +7232,25 @@ mod tests {
         assert!(board.units[enemy].frozen(), "Target should still be frozen");
         assert!(!board.units[ice].frozen(), "Flying IceMech on water should not self-freeze");
         assert_eq!(board.tile(4, 3).terrain, Terrain::Water);
+    }
+
+    #[test]
+    fn test_cryo_launcher_self_freezes_flying_ice_on_tides_water() {
+        // Live regression: Frozen Titans Trick Shot run 20260602_095732_968,
+        // Mission_Tides turn 2. IceMech fired Cryo from B7 water; live froze
+        // IceMech and converted the shooter tile to ice.
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Tides".to_string();
+        board.tile_mut(1, 6).terrain = Terrain::Water;
+        let ice = add_mech(&mut board, 2, 1, 6, 2, WId::RangedIce);
+        board.units[ice].flags.insert(UnitFlags::FLYING);
+        let enemy = add_enemy(&mut board, 2376, 6, 6, 3);
+
+        let _ = simulate_weapon(&mut board, ice, WId::RangedIce, 6, 6);
+
+        assert!(board.units[enemy].frozen(), "Target should still be frozen");
+        assert!(board.units[ice].frozen(), "Mission_Tides water shot should self-freeze");
+        assert_eq!(board.tile(1, 6).terrain, Terrain::Ice);
     }
 
     #[test]
