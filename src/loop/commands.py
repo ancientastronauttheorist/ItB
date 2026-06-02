@@ -10570,10 +10570,11 @@ def _lightning_resume_if_paused(*, dry_run: bool = False, click_ui: bool = True)
         }
     if visible_ui.get("visible_ui") != "pause_menu":
         return None
+    planned_control = "menu_continue" if os.name == "nt" else "pause_menu_escape"
     result = {
         "status": "DRY_RUN" if dry_run else "NO_CLICK" if not click_ui else "PLANNED",
         "reason": "pause_menu_visible",
-        "planned_control": "pause_menu_escape",
+        "planned_control": planned_control,
         "visible_ui": visible_ui,
     }
     screenshot_path = visible_ui.get("screenshot_path")
@@ -10593,7 +10594,21 @@ def _lightning_resume_if_paused(*, dry_run: bool = False, click_ui: bool = True)
     result["stale_bridge_cleanup"] = _clear_pending_bridge_command(
         "resume_from_pause"
     )
-    click_result = _lightning_press_pause_escape()
+    if os.name == "nt":
+        from src.control.mac_click import _get_window_bounds
+
+        bounds = _get_window_bounds("Into the Breach")
+        if bounds is None:
+            result["status"] = "ERROR"
+            result["reason"] = "window_bounds_unavailable"
+            return result
+        click_result = _lightning_click_control_with_bounds(
+            "menu_continue",
+            bounds=bounds,
+            settle_seconds=0.2,
+        )
+    else:
+        click_result = _lightning_press_pause_escape()
     result["status"] = click_result.get("status", "ERROR")
     result["click_result"] = click_result
     if click_result.get("status") != "OK":

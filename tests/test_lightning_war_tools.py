@@ -759,6 +759,12 @@ def test_lightning_ui_clear_tail_to_pause_resumes_clears_and_pauses(monkeypatch)
     )
     monkeypatch.setattr(
         commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
         "_lightning_clear_visible_panel_chain",
         lambda **kwargs: calls.append("clear_chain")
         or {"status": "OK", "reason": "panel_chain_cleared", "steps": []},
@@ -1453,6 +1459,12 @@ def test_lightning_attempt_resumes_from_pause_before_routing(monkeypatch):
     )
     monkeypatch.setattr(
         commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
         "cmd_lightning_preflight",
         lambda **kwargs: {"status": "PASS"},
     )
@@ -1492,7 +1504,7 @@ def test_lightning_attempt_resumes_from_pause_before_routing(monkeypatch):
         pause_on_stop=True,
     )
 
-    assert calls == ["pause_menu_escape"]
+    assert calls == [_lightning_peek_resume_control()]
     assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
     assert result["resume_guard"]["reason"] == "resumed_from_pause"
 
@@ -1520,7 +1532,7 @@ def test_lightning_attempt_dry_run_reports_resume_needed(monkeypatch):
 
     assert result["status"] == "LIGHTNING_ATTEMPT_UI_READY"
     assert result["resume_guard"]["status"] == "DRY_RUN"
-    assert result["resume_guard"]["planned_control"] == "pause_menu_escape"
+    assert result["resume_guard"]["planned_control"] == _lightning_peek_resume_control()
 
 
 def test_lightning_ui_classifier_scales_retina_pause_menu(tmp_path):
