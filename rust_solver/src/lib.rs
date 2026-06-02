@@ -1768,7 +1768,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260602_095732_968 Corporate HQ turn 4, where Prime_ShieldBash hit a
 //   Firefly on Forest and live set status.fire. Pre-v256 corpus archived as
 //   failure_db_snapshot_sim_v255.jsonl.
-pub const SIMULATOR_VERSION: u32 = 256;
+// v257 - Spartan Shield direct hits collapse occupied cracked Ground into a
+//   chasm, killing grounded targets and clearing webs when the hit kills a
+//   webber. Fixes Frozen Titans Trick Shot run 20260602_095732_968 R.S.T.
+//   Mission_Crack turn 3, where Prime_ShieldBash hit a Scorpion on cracked
+//   Ground. Pre-v257 corpus archived as failure_db_snapshot_sim_v256.jsonl.
+pub const SIMULATOR_VERSION: u32 = 257;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

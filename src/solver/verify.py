@@ -1270,7 +1270,22 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # water tile remains water. Fixes Mission_Final_Cave turn 1 in Trick Shot run
 # 20260601_221405_894. Pre-v253 corpus archived as
 # failure_db_snapshot_sim_v252.jsonl.
-SIMULATOR_VERSION = 256
+# v254 - Direct non-shield hits refresh existing fire-tile pickup for the
+# occupant. Fixes Frozen Titans Trick Shot run 20260602_095732_968
+# Mission_Armored_Train turn 2. Pre-v254 corpus archived as
+# failure_db_snapshot_sim_v253.jsonl.
+# v255 - Cryo-Launcher self-freeze suppression over water is limited to
+# Mission_Final_Cave. Pre-v255 corpus archived as
+# failure_db_snapshot_sim_v254.jsonl.
+# v256 - Weapon damage that ignites an occupied Forest immediately applies fire
+# status to the surviving occupant. Pre-v256 corpus archived as
+# failure_db_snapshot_sim_v255.jsonl.
+# v257 - Spartan Shield direct hits collapse occupied cracked Ground into a
+# chasm, killing grounded targets and clearing webs when the hit kills a
+# webber. Fixes Frozen Titans Trick Shot run 20260602_095732_968 R.S.T.
+# Mission_Crack turn 3. Pre-v257 corpus archived as
+# failure_db_snapshot_sim_v256.jsonl.
+SIMULATOR_VERSION = 257
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

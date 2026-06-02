@@ -3231,12 +3231,20 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
         && attack_dir.is_some()
         && target_dmg > 0
         && !matches!(wdef.push, PushDir::None | PushDir::Flip);
+    let direct_hit_source = if matches!(
+        weapon_id,
+        WId::PrimeShieldBash | WId::PrimeShieldBashB | WId::PrimeShieldBashAB
+    ) {
+        DamageSource::WeaponCracksOccupied
+    } else {
+        DamageSource::Weapon
+    };
     let deferred_death_explosion = if defer_target_death_explosion {
         apply_damage_defer_death_explosion(
-            board, tx, ty, target_dmg, result, DamageSource::Weapon,
+            board, tx, ty, target_dmg, result, direct_hit_source,
         )
     } else if !wdef.chain() {
-        apply_damage(board, tx, ty, target_dmg, result, DamageSource::Weapon);
+        apply_damage(board, tx, ty, target_dmg, result, direct_hit_source);
         None
     } else {
         None
@@ -10085,6 +10093,29 @@ mod tests {
         assert!(board.tile(6, 6).on_fire(), "Forest should ignite and become burning Ground");
         assert!(board.units[enemy].fire(), "Surviving occupant should catch the newly lit Forest fire");
         assert_eq!(result.enemy_damage_dealt, 2);
+    }
+
+    #[test]
+    fn test_spartan_shield_collapses_occupied_cracked_ground_and_clears_web() {
+        // Trick Shot run 20260602_095732_968, R.S.T. Mission_Crack turn 3:
+        // Shield Bash hit a Scorpion on cracked Ground. Live opened the tile
+        // into a chasm, killed the Scorpion, and cleared the Guard's web.
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 5, WId::PrimeShieldBash);
+        board.units[mech].flags.insert(UnitFlags::WEB);
+        let enemy = add_enemy_type(&mut board, 2403, 3, 4, 3, "Scorpion1");
+        board.units[mech].web_source_uid = board.units[enemy].uid;
+        board.tile_mut(3, 4).terrain = Terrain::Ground;
+        board.tile_mut(3, 4).set_cracked(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeShieldBash, 3, 4);
+
+        assert!(board.units[enemy].hp <= 0, "Scorpion should fall into the opened chasm");
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Chasm);
+        assert!(!board.tile(3, 4).cracked());
+        assert!(!board.units[mech].web(), "Killed webber should clear Guard's web");
+        assert_eq!(result.enemy_damage_dealt, 2);
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]
