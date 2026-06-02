@@ -5270,12 +5270,12 @@ def test_lightning_route_start_preview_only_sequence_repauses():
     )
 
     assert result["status"] == "DRY_RUN"
-    assert [step["key"] for step in result["sequence"] if step["kind"] == "key"] == [
-        "esc",
-    ]
-    assert [step["control"] for step in result["sequence"] if step["kind"] == "control"] == [
-        "pause",
-    ]
+    expected_keys = [] if os.name == "nt" else ["esc"]
+    expected_controls = (
+        ["menu_continue", "pause"] if os.name == "nt" else ["pause"]
+    )
+    assert [step["key"] for step in result["sequence"] if step["kind"] == "key"] == expected_keys
+    assert [step["control"] for step in result["sequence"] if step["kind"] == "control"] == expected_controls
 
 
 def test_lightning_route_start_dismiss_dialogue_sequence():
@@ -5292,7 +5292,10 @@ def test_lightning_route_start_dismiss_dialogue_sequence():
         step.get("control") for step in result["sequence"]
         if step["kind"] == "control"
     ]
-    assert controls == ["dialogue_textbox", "mission_preview_board"]
+    expected_controls = (
+        ["menu_continue"] if os.name == "nt" else []
+    ) + ["dialogue_textbox", "mission_preview_board"]
+    assert controls == expected_controls
 
 
 def test_lightning_route_start_visible_text_sequence():
@@ -5326,11 +5329,14 @@ def test_lightning_route_start_preview_board_twice_sequence():
         step.get("control") for step in result["sequence"]
         if step["kind"] == "control"
     ]
-    assert controls == [
+    expected_controls = (
+        ["menu_continue"] if os.name == "nt" else []
+    ) + [
         "dialogue_textbox",
         "mission_preview_board",
         "mission_preview_board",
     ]
+    assert controls == expected_controls
 
 
 def test_lightning_paused_preview_start_sequence():
@@ -5390,19 +5396,23 @@ def test_lightning_route_start_dialogue_region_repeat_sequence():
 
     assert result["status"] == "DRY_RUN"
     kinds = [step["kind"] for step in result["sequence"]]
-    assert kinds == [
-        "key",
+    expected_kinds = [
+        "control" if os.name == "nt" else "key",
         "point",
         "dialogue_then_region_repeat",
         "control",
         "control",
     ]
+    assert kinds == expected_kinds
     dialogue_step = result["sequence"][2]
     assert dialogue_step["window_x"] == 541
     assert dialogue_step["window_y"] == 244
     assert [
         step.get("control") for step in result["sequence"] if step["kind"] == "control"
-    ] == ["mission_preview_board", "mission_preview_board"]
+    ] == ((["menu_continue"] if os.name == "nt" else []) + [
+        "mission_preview_board",
+        "mission_preview_board",
+    ])
 
 
 def test_lightning_dialogue_region_repeat_skips_when_no_dialogue(monkeypatch):
@@ -5491,7 +5501,10 @@ def test_lightning_route_start_manual_start_sequence():
         step for step in result["sequence"]
         if step["kind"] == "point"
     ]
-    assert controls == ["dialogue_textbox"]
+    expected_controls = (
+        ["menu_continue"] if os.name == "nt" else []
+    ) + ["dialogue_textbox"]
+    assert controls == expected_controls
     assert points[-1]["description"] == "Lightning route manual start"
     assert points[-1]["window_x"] == 870
     assert points[-1]["window_y"] == 300

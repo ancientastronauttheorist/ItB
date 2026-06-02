@@ -11669,12 +11669,20 @@ def _lightning_click_route_start_sequence(
 
     sequence = []
     if resume_from_pause:
-        sequence.append({
-            "kind": "key",
-            "key": "esc",
-            "description": "Pause menu Escape resume",
-            "settle_seconds": 0.22,
-        })
+        if os.name == "nt":
+            sequence.append({
+                "kind": "control",
+                "control": "menu_continue",
+                "settle_seconds": 0.2,
+                "hold_seconds": 0.06,
+            })
+        else:
+            sequence.append({
+                "kind": "key",
+                "key": "esc",
+                "description": "Pause menu Escape resume",
+                "settle_seconds": 0.22,
+            })
     sequence.append({
         "kind": "point",
         "window_x": int(region_window_x),
