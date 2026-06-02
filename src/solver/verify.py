@@ -1256,7 +1256,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # where Mirror Shot correctly produced a SpiderlingEgg1 at D5 but live used
 # uid 1904 instead of predicted uid 1902. Pre-v250 corpus archived as
 # failure_db_snapshot_sim_v249.jsonl.
-SIMULATOR_VERSION = 250
+# v251 - Per-sub-action move verification tolerates the live bridge keeping a
+# Time Pod visible under the moved mech until the action finishes. Full
+# post-action verification still catches unrecovered or destroyed pods. Fixes
+# Frozen Titans Trick Shot run 20260601_221405_894 Mission_Solar turn 3.
+# Pre-v251 corpus archived as failure_db_snapshot_sim_v250.jsonl.
+SIMULATOR_VERSION = 251
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1520,6 +1525,27 @@ def _normalize_unstable_spawn_uids(pred_units: dict, actual_units: dict) -> None
         actual_by_identity[key] = []
 
 
+def _is_expected_mid_move_pod_delay(
+    predicted: dict,
+    x: int,
+    y: int,
+    predicted_has_pod: bool,
+    actual_has_pod: bool,
+) -> bool:
+    """Live keeps a just-entered pod visible until the action resolves."""
+    if predicted.get("snapshot_phase") != "after_move":
+        return False
+    if predicted_has_pod is not False or actual_has_pod is not True:
+        return False
+    mech_uid = predicted.get("mech_uid")
+    for unit in predicted.get("units", []):
+        if unit.get("uid") != mech_uid:
+            continue
+        pos = unit.get("pos", [-1, -1])
+        return len(pos) >= 2 and int(pos[0]) == x and int(pos[1]) == y
+    return False
+
+
 def diff_states(predicted: dict, actual_board) -> DiffResult:
     """Diff a predicted snapshot dict against an actual Board object.
 
@@ -1664,6 +1690,13 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
         ):
             pv = pt.get(pred_field, False)
             av = getattr(at, actual_attr, False)
+            if (
+                pred_field == "has_pod"
+                and _is_expected_mid_move_pod_delay(
+                    predicted, x, y, bool(pv), bool(av)
+                )
+            ):
+                continue
             if pv != av:
                 result.tile_diffs.append({
                     "x": x, "y": y,

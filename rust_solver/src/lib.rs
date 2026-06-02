@@ -1739,7 +1739,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mirror Shot correctly produced a SpiderlingEgg1 at D5 but live used
 //   uid 1904 instead of predicted uid 1902. Pre-v250 corpus archived as
 //   failure_db_snapshot_sim_v249.jsonl.
-pub const SIMULATOR_VERSION: u32 = 250;
+// v251 - Per-sub-action move verification tolerates the live bridge keeping a
+//   Time Pod visible under the moved mech until the action finishes. Full
+//   post-action verification still catches unrecovered or destroyed pods.
+//   Fixes Frozen Titans Trick Shot run 20260601_221405_894 Mission_Solar
+//   turn 3. Pre-v251 corpus archived as failure_db_snapshot_sim_v250.jsonl.
+pub const SIMULATOR_VERSION: u32 = 251;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

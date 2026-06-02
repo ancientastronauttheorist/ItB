@@ -318,6 +318,44 @@ diff = diff_states(predicted_spider_egg, actual_spider_egg_board)
 check("SpiderlingEgg1 UID drift matched by type+tile", diff.is_empty(),
       diff.unit_diffs)
 
+# Test 22: live bridge can keep a pod visible under a moved mech until attack.
+predicted_mid_move_pod = {
+    "mech_uid": 2,
+    "snapshot_phase": "after_move",
+    "units": [{
+        "uid": 2,
+        "type": "IceMech",
+        "pos": [4, 2],
+        "hp": 2,
+        "alive": True,
+        "active": True,
+        "is_mech": True,
+        "status": {},
+    }],
+    "tiles_changed": [{
+        "x": 4,
+        "y": 2,
+        "terrain": "ground",
+        "building_hp": 0,
+        "has_pod": False,
+    }],
+    "grid_power": 7,
+}
+actual_mid_move_pod_board = make_board(units=[
+    mk_unit(2, "IceMech", 4, 2, hp=2, max_hp=2, team=1, active=True),
+])
+actual_mid_move_pod_board.tile(4, 2).has_pod = True
+diff = diff_states(predicted_mid_move_pod, actual_mid_move_pod_board)
+check("after_move pod pickup delay ignored for moved mech", diff.is_empty(),
+      diff.tile_diffs)
+
+predicted_post_action_pod = dict(predicted_mid_move_pod)
+predicted_post_action_pod["snapshot_phase"] = "after_mech_action"
+diff = diff_states(predicted_post_action_pod, actual_mid_move_pod_board)
+check("post-action pod mismatch still reported",
+      any(d["field"] == "has_pod" for d in diff.tile_diffs),
+      diff.tile_diffs)
+
 print(f"\n{passed}/{passed+failed} tests passed")
 if failed:
     raise SystemExit(1)
