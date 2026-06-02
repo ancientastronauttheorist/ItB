@@ -1744,7 +1744,16 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   post-action verification still catches unrecovered or destroyed pods.
 //   Fixes Frozen Titans Trick Shot run 20260601_221405_894 Mission_Solar
 //   turn 3. Pre-v251 corpus archived as failure_db_snapshot_sim_v250.jsonl.
-pub const SIMULATOR_VERSION: u32 = 251;
+// v252 - Mirror Shot direct projectile pushes at the off-board edge deal only
+//   Janus weapon damage, matching live Scarab2 survival on Mission_Final turn
+//   3. On-board live-blocker corpse bumps remain enabled. Pre-v252 corpus
+//   archived as failure_db_snapshot_sim_v251.jsonl.
+// v253 - Cryo-Launcher self-freeze is suppressed when the flying IceMech fires
+//   while over water; the target still freezes, but IceMech stays unfrozen and
+//   the water tile remains water. Fixes Mission_Final_Cave turn 1 in Trick
+//   Shot run 20260601_221405_894. Pre-v253 corpus archived as
+//   failure_db_snapshot_sim_v252.jsonl.
+pub const SIMULATOR_VERSION: u32 = 253;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

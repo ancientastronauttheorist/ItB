@@ -2103,7 +2103,7 @@ const MIRRORSHOT_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
     dead_bombrock_bumps_live_blocker: true,
-    edge_bump_damage: true,
+    edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
 };
@@ -2811,8 +2811,13 @@ pub fn simulate_weapon_with(
     if wdef.freeze() && weapon_id == WId::RangedIce {
         let ax = board.units[attacker_idx].x;
         let ay = board.units[attacker_idx].y;
-        apply_freeze_weapon_tile_status(board, ax, ay);
-        if !board.units[attacker_idx].shield() {
+        let self_freeze_suppressed =
+            board.units[attacker_idx].flying()
+            && board.tile(ax, ay).terrain == Terrain::Water;
+        if !self_freeze_suppressed {
+            apply_freeze_weapon_tile_status(board, ax, ay);
+        }
+        if !self_freeze_suppressed && !board.units[attacker_idx].shield() {
             board.units[attacker_idx].set_fire(false);
             board.units[attacker_idx].set_frozen(true);
             clear_mites(&mut board.units[attacker_idx]);
@@ -7196,6 +7201,24 @@ mod tests {
             !board.tile(3, 3).on_fire(),
             "Self-freeze should extinguish the shooter tile"
         );
+    }
+
+    #[test]
+    fn test_cryo_launcher_self_freeze_suppressed_for_flying_ice_on_water() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_221405_894,
+        // Mission_Final_Cave turn 1. IceMech fired Cryo from water at E4;
+        // live froze the target but left IceMech unfrozen and the tile water.
+        let mut board = make_test_board();
+        board.tile_mut(4, 3).terrain = Terrain::Water;
+        let ice = add_mech(&mut board, 2, 4, 3, 2, WId::RangedIce);
+        board.units[ice].flags.insert(UnitFlags::FLYING);
+        let enemy = add_enemy(&mut board, 2255, 1, 3, 3);
+
+        let _ = simulate_weapon(&mut board, ice, WId::RangedIce, 1, 3);
+
+        assert!(board.units[enemy].frozen(), "Target should still be frozen");
+        assert!(!board.units[ice].frozen(), "Flying IceMech on water should not self-freeze");
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Water);
     }
 
     #[test]
@@ -12072,6 +12095,25 @@ mod tests {
             "Mirror Shot should push an allied forward target in the projectile direction"
         );
         assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
+    fn test_mirrorshot_direct_edge_push_does_not_bump_target_off_board() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_221405_894,
+        // Mission_Final turn 3. Janus AB hit a 4-HP Scarab on the board edge;
+        // live dealt 3 weapon damage but did not add an off-board bump kill.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 2, 2, 3, WId::BruteMirrorshotAB);
+        let scarab = add_enemy_type(&mut board, 2216, 7, 2, 4, "Scarab2");
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshotAB, 3, 2);
+
+        assert_eq!(
+            (board.units[scarab].x, board.units[scarab].y, board.units[scarab].hp),
+            (7, 2, 1),
+            "Janus edge hit should deal weapon damage only"
+        );
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]
