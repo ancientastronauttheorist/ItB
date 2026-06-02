@@ -413,6 +413,48 @@ def test_summary_tracks_dam_pawn_destroy_objective_from_metadata():
     ]
 
 
+def test_summary_tracks_bonus_debris_objective_from_bonus_id():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Survive"
+    data["bonus_objective_ids"] = [7]
+    data["destroy_objective_unit_types"] = ["BonusDebris"]
+    data["units"].extend([
+        {
+            "uid": 701,
+            "type": "BonusDebris",
+            "x": 4,
+            "y": 3,
+            "hp": 1,
+            "max_hp": 1,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+        {
+            "uid": 702,
+            "type": "BonusDebris",
+            "x": 5,
+            "y": 3,
+            "hp": 0,
+            "max_hp": 1,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["destroy_objective_units_alive"] == 1
+    assert [u["type"] for u in summary["destroy_objective_units"]] == [
+        "BonusDebris",
+        "BonusDebris",
+    ]
+
+
 def test_summary_tracks_terraform_grass_counter_tiles():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_Terraform"

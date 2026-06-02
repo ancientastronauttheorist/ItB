@@ -16,6 +16,8 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PATH = REPO_ROOT / "data" / "mission_unit_objectives.json"
+BONUS_SIMPLE_DEBRIS = 7
+BONUS_DEBRIS_OBJECTIVE_TYPE = "BonusDebris"
 
 
 def _clean_list(value: Any) -> list[str]:
@@ -98,6 +100,22 @@ def inject_into_bridge(
         ),
         path=path,
     )
+    bonus_ids = bridge_data.get("bonus_objective_ids") or []
+    has_debris_bonus = (
+        isinstance(bonus_ids, list)
+        and BONUS_SIMPLE_DEBRIS in bonus_ids
+    )
+    has_bonus_debris_unit = any(
+        isinstance(u, dict)
+        and u.get("type") == BONUS_DEBRIS_OBJECTIVE_TYPE
+        for u in bridge_data.get("units", []) or []
+    )
+    if (
+        has_debris_bonus
+        and has_bonus_debris_unit
+        and BONUS_DEBRIS_OBJECTIVE_TYPE not in resolved["destroy"]
+    ):
+        resolved["destroy"].append(BONUS_DEBRIS_OBJECTIVE_TYPE)
     bridge_data["destroy_objective_unit_types"] = resolved["destroy"]
     bridge_data["protect_objective_unit_types"] = resolved["protect"]
     return resolved
