@@ -905,6 +905,9 @@ pub fn evaluate(
                 // skip the defensive death penalty (the simulator agrees).
                 // Final Cave falling rocks do not set this bit.
                 if u.effectively_flying() && on_flying_immune_kill {
+                    if board.mission_id == "Mission_Tides" {
+                        score -= scaled(weights.mech_hp, ff, 0.20, 0.80);
+                    }
                     continue;
                 }
                 // Defensive penalty: a player mech on a kill_int=1 tile is a

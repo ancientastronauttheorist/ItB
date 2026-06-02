@@ -91,7 +91,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 
 12. Use all mech actions every turn — even suboptimal moves beat skipping.
 
-13. The solver handles environment hazards via `environment_danger_v2`: each entry is `[x, y, damage, kill_int]`. `kill_int=1` = lethal (Air Strike, Lightning, Cataclysm→chasm, Seismic→chasm, Tidal→water; bypasses shield/frozen/armor/ACID). `kill_int=0` = non-lethal (Wind/Sand/Snow). Env ticks fire BEFORE Vek attacks in enemy phase.
+13. The solver handles environment hazards via `environment_danger_v2`: each entry is `[x, y, damage, kill_int]`. `kill_int=1` = lethal (Air Strike, Lightning, Cataclysm→chasm, Seismic→chasm, Tidal→water; bypasses shield/frozen/armor/ACID for grounded units). `kill_int=0` = non-lethal (Wind/Sand/Snow). Env ticks normally fire BEFORE Vek attacks in enemy phase. `Mission_Tides` is the exception: queued Vek attacks land before the wave advances, and flying units on the wave tile take 1 damage instead of being fully spared.
 
 14. On crash/timeout recovery, always start with `cmd_read` + `cmd_solve`. Never resume a previous solution — the board may have changed.
 

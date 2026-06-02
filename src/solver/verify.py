@@ -1247,7 +1247,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Mission_BeltRandom turn 4, where Brute_Mirrorshot_A killed IceMech at D8
 # through conveyor D7.
 # Pre-v248 corpus archived as failure_db_snapshot_sim_v247.jsonl.
-SIMULATOR_VERSION = 248
+# v249 - Mission_Tides applies queued Vek attacks before the tidal wave, and
+# flying units on a tide tile take 1 damage instead of being fully spared.
+# Pre-v249 corpus archived as failure_db_snapshot_sim_v248.jsonl.
+SIMULATOR_VERSION = 249
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

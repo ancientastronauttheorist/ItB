@@ -11169,6 +11169,62 @@ mod tests {
     }
 
     #[test]
+    fn test_mission_tides_flying_mech_takes_one_damage() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_221405_894,
+        // Mission_Tides turn 2. Ice Mech stood on the advancing tide lane;
+        // live game left it alive but dealt 1 damage.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Tides".to_string();
+        let ice = add_mech(&mut board, 2, 3, 3, 2, WId::RangedIce);
+        board.units[ice].flags.insert(UnitFlags::FLYING);
+        let bit = 1u64 << xy_to_idx(3, 3);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[ice].hp, 1);
+        assert_eq!(result.mech_damage_taken, 1);
+    }
+
+    #[test]
+    fn test_mission_tides_vek_attack_before_wave() {
+        // Same live capture: a Vek on the tide lane landed its queued attack
+        // before the wave killed it. The simulator must not erase the attack
+        // by applying Mission_Tides env danger first.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Tides".to_string();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        let enemy = add_enemy_type(&mut board, 1363, 3, 3, 3, "Firefly1");
+        board.units[enemy].queued_target_x = 3;
+        board.units[enemy].queued_target_y = 4;
+        board.units[enemy].weapon_damage = 1;
+        board.units[enemy].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let bit = 1u64 << xy_to_idx(3, 3);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+        let mut original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        original_positions[enemy] = (3, 3);
+
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
     fn test_cataclysm_lethal_spares_flying() {
         // Flying enemy on a Cataclysm tile (chasm-conversion): flyer hovers
         // over the new chasm and lives. Mirrors the Tidal Wave path — same

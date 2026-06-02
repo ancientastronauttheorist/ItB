@@ -233,8 +233,10 @@ The solver enforces the full rules in `docs/agent/solver-reference.md` and
 - Smoke prevents attacks and repair.
 - Webbed units cannot move but can still attack. A blocked push does not clear
   web.
-- Environment danger ticks before Vek attacks. `environment_danger_v2` entries
-  are `[x, y, damage, kill_int]`; `kill_int=1` means lethal.
+- Environment danger normally ticks before Vek attacks. `Mission_Tides` is the
+  exception: queued Vek attacks land before the wave advances, and flying units
+  on tide tiles take 1 damage. `environment_danger_v2` entries are
+  `[x, y, damage, kill_int]`; `kill_int=1` means lethal for grounded units.
 
 ## Command Cheat Sheet
 

@@ -251,6 +251,7 @@ fn apply_env_danger(
     x: u8, y: u8,
     lethal: bool,
     flying_immune: bool,
+    flying_immune_damage: u8,
     result: &mut ActionResult,
 ) {
     // Damage unit if present. Track whether an enemy died so we can run
@@ -279,8 +280,31 @@ fn apply_env_danger(
                     enemy_died_idx = Some(uidx);
                 }
             } else if lethal && spared_by_flight {
-                // Flying unit on Tidal/Cataclysm/Seismic tile: untouched.
-                // No damage, no shield/frozen consumption.
+                // Terrain-conversion lethal env spares flyers from the instant
+                // kill. Mission_Tides still hits hovering units for 1 damage;
+                // Cataclysm/Seismic flyers hover safely over the new chasm.
+                if flying_immune_damage > 0 {
+                    if unit.shield() {
+                        unit.set_shield(false);
+                    } else if unit.frozen() {
+                        unit.set_frozen(false);
+                    } else {
+                        let damage = flying_immune_damage as i8;
+                        unit.hp -= damage;
+                        if unit.is_player() {
+                            result.mech_damage_taken += damage as i32;
+                            if unit.hp <= 0 {
+                                result.mechs_killed += 1;
+                            }
+                        } else if unit.is_enemy() {
+                            result.enemy_damage_dealt += damage as i32;
+                            if unit.hp <= 0 {
+                                result.record_enemy_kill(!unit.minor());
+                                enemy_died_idx = Some(uidx);
+                            }
+                        }
+                    }
+                }
             } else if !unit.effectively_flying() {
                 // Non-lethal env (1 dmg): bump-like — consumed by shield, ignores armor/ACID
                 if unit.shield() {
@@ -353,6 +377,26 @@ fn apply_env_danger(
         );
         result.grid_damage += (grid_loss as i32) - (lost as i32);
         board.grid_power = board.grid_power.saturating_sub(grid_loss);
+    }
+}
+
+fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
+    let flying_immune_damage = if board.mission_id == "Mission_Tides" { 1 } else { 0 };
+    for tile_idx in 0usize..64 {
+        if board.env_danger & (1u64 << tile_idx) == 0 { continue; }
+        let (x, y) = idx_to_xy(tile_idx);
+        let bit = 1u64 << tile_idx;
+        let lethal = board.env_danger_kill & bit != 0;
+        let flying_immune = lethal && (board.env_danger_flying_immune & bit != 0);
+        apply_env_danger(
+            board,
+            x,
+            y,
+            lethal,
+            flying_immune,
+            flying_immune_damage,
+            result,
+        );
     }
 }
 
@@ -740,17 +784,11 @@ pub fn simulate_enemy_attacks(
     }
 
     // Environment danger (air strikes, lightning, tidal waves) — fires BEFORE Vek attacks
-    // per game's interleaved attack order. Env effects resolve first, killing units
-    // that were going to attack. Their queued attacks then never fire (hp <= 0 check below).
-    if board.env_danger != 0 {
-        for tile_idx in 0usize..64 {
-            if board.env_danger & (1u64 << tile_idx) == 0 { continue; }
-            let (x, y) = idx_to_xy(tile_idx);
-            let bit = 1u64 << tile_idx;
-            let lethal = board.env_danger_kill & bit != 0;
-            let flying_immune = lethal && (board.env_danger_flying_immune & bit != 0);
-            apply_env_danger(board, x, y, lethal, flying_immune, &mut result);
-        }
+    // Exception: Mission_Tides resolves queued attacks first, then advances the
+    // wave, so tide danger is deferred below until after the attack loop.
+    let tide_env_after_attacks = board.mission_id == "Mission_Tides";
+    if board.env_danger != 0 && !tide_env_after_attacks {
+        apply_env_danger_board(board, &mut result);
     }
 
     // Ice Storm freeze (sim v25). Fires at start of enemy turn — same step as
@@ -1791,6 +1829,10 @@ pub fn simulate_enemy_attacks(
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
             }
         }
+    }
+
+    if board.env_danger != 0 && tide_env_after_attacks {
+        apply_env_danger_board(board, &mut result);
     }
 
     // Psion Tyrant: 1 damage to all player units (passive, not an attack — smoke doesn't cancel)

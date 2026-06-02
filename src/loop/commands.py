@@ -1865,6 +1865,7 @@ def _environment_danger_info(board: Board,
         mission_id = str(bridge_data.get("mission_id") or "")
     mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
     final_cave_env = mission_id == "Mission_Final_Cave"
+    tidal_env = mission_id == "Mission_Tides"
     deadly_threat_env = mission_id in {
         "Mission_Airstrike",
         "Mission_Lightning",
@@ -1891,6 +1892,7 @@ def _environment_danger_info(board: Board,
                     "damage": int(dt[2]),
                     "lethal": bool(int(dt[3])),
                     "flying_immune": flying_immune,
+                    "flying_damage": 1 if tidal_env and flying_immune else 0,
                 }
             except (TypeError, ValueError):
                 continue
@@ -1908,6 +1910,9 @@ def _environment_danger_info(board: Board,
                 and not final_cave_env
                 and not deadly_threat_env
             ),
+            "flying_damage": 1 if (
+                tidal_env and bool(lethal) and pos in board_flying_immune
+            ) else 0,
         }
         if pos in danger:
             danger[pos].update(board_info)
@@ -1922,6 +1927,7 @@ def _environment_danger_info(board: Board,
                 and not final_cave_env
                 and not deadly_threat_env
             ),
+            "flying_damage": 1 if tidal_env and pos in board_flying_immune else 0,
         })
     return danger
 
@@ -2173,13 +2179,21 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         pos = (m.x, m.y)
         danger_info = danger.get(pos)
         if danger_info and danger_info.get("lethal"):
-            flying_spared = bool(m.flying and danger_info.get("flying_immune"))
+            flying_spared = bool(
+                m.flying
+                and danger_info.get("flying_immune")
+                and not danger_info.get("flying_damage")
+            )
             if not flying_spared:
                 mechs_on_danger.append({
                     "uid": m.uid,
                     "type": m.type,
                     "pos": [m.x, m.y],
-                    "damage": danger_info.get("damage", 1),
+                    "damage": (
+                        danger_info.get("flying_damage")
+                        if m.flying and danger_info.get("flying_damage")
+                        else danger_info.get("damage", 1)
+                    ),
                 })
 
         raw = raw_units.get(int(m.uid), {})
