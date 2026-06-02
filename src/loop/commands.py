@@ -13329,6 +13329,76 @@ def cmd_lightning_segment(
 
     for step_index in range(max(1, int(max_steps))):
         step_started_at = time.monotonic()
+        if route_start_pending:
+            preflight_result = None
+            preflight_output = None
+            if run_preflight and step_index == 0:
+                preflight_result, preflight_output = _lightning_quiet_call(
+                    cmd_lightning_preflight,
+                    profile,
+                    False,
+                    quiet=quiet,
+                )
+                if preflight_result.get("status") == "FAIL":
+                    stopped_reason = "route_start_preflight_failed"
+                    steps.append({
+                        "step": step_index,
+                        "status": preflight_result.get("status"),
+                        "reason": stopped_reason,
+                        "step_wall_seconds": round(
+                            time.monotonic() - step_started_at,
+                            2,
+                        ),
+                        "segment_elapsed_seconds": round(
+                            time.monotonic() - started_at,
+                            2,
+                        ),
+                        "preflight": preflight_result,
+                    })
+                    if preflight_output:
+                        steps[-1]["quiet_output"] = preflight_output
+                    break
+            route_start_pending = False
+            route_started_at = time.monotonic()
+            route_start, route_output = _lightning_quiet_call(
+                lambda: cmd_lightning_route_start(
+                    profile=profile,
+                    visual_region_index=route_visual_region_index,
+                    run_preflight=False,
+                    verify_route=False,
+                    auto_pause_if_needed=True,
+                    start_mode=route_start_mode,
+                    dry_run=dry_run,
+                ),
+                quiet=quiet,
+            )
+            last_route_start = route_start
+            route_summary = _lightning_segment_route_start_summary(
+                route_start,
+                len(steps),
+                step_wall_seconds=time.monotonic() - route_started_at,
+                segment_elapsed_seconds=time.monotonic() - started_at,
+            )
+            if preflight_result is not None:
+                route_summary["preflight_status"] = preflight_result.get("status")
+            if route_output:
+                route_summary["quiet_output"] = route_output
+            steps.append(route_summary)
+            if route_start.get("status") not in {"OK", "DRY_RUN"}:
+                stopped_reason = str(
+                    route_start.get("reason")
+                    or route_start.get("status")
+                    or "route_start_failed"
+                )
+                break
+            if dry_run:
+                stopped_reason = "dry_run_route_start"
+                break
+            if settle_seconds > 0:
+                time.sleep(settle_seconds)
+            run_preflight = False
+            continue
+
         attempt_kwargs = {
             "profile": profile,
             "time_limit": time_limit,

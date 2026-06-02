@@ -3340,17 +3340,17 @@ def test_lightning_segment_stops_on_visible_map_without_bridge(monkeypatch):
 def test_lightning_segment_starts_route_from_stale_deployment_map(monkeypatch):
     attempts = iter(
         [
-            {
-                "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
-                "reason": "deployment_bridge_state_uncertain",
-                "snapshot": {"visible_ui": {"status": "OK", "visible_ui": "island_map"}},
-            },
             {"status": "LIGHTNING_ATTEMPT_ROUTE_READY"},
         ]
     )
     route_calls = []
 
     monkeypatch.setattr(commands, "cmd_lightning_attempt", lambda **kwargs: next(attempts))
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda *args, **kwargs: {"status": "PASS"},
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_route_start",
@@ -3371,8 +3371,8 @@ def test_lightning_segment_starts_route_from_stale_deployment_map(monkeypatch):
     assert result["reason"] == "route_ready"
     assert result["route_start_performed"] is True
     assert route_calls[0]["visual_region_index"] == 1
-    assert result["steps"][0]["reason"] == "deployment_bridge_state_uncertain"
-    assert result["steps"][1]["phase"] == "route_start"
+    assert result["steps"][0]["phase"] == "route_start"
+    assert result["steps"][1]["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
 
 
 def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
@@ -3459,12 +3459,6 @@ def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypat
             {
                 "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
                 "recommendation": {
-                    "top3": [{"mission_id": "Mission_Train", "region_id": 2}],
-                },
-            },
-            {
-                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
-                "recommendation": {
                     "top3": [{"mission_id": "Mission_Tides", "region_id": 4}],
                 },
             },
@@ -3491,6 +3485,11 @@ def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypat
         }
 
     monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda *args, **kwargs: {"status": "PASS"},
+    )
     monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
     monkeypatch.setattr(
         commands,
@@ -3507,18 +3506,17 @@ def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypat
 
     assert result["reason"] == "route_ready"
     assert result["route_start_performed"] is True
-    assert result["steps_attempted"] == 3
-    assert result["steps"][1]["phase"] == "route_start"
-    assert result["steps"][1]["visual_region_index"] == 3
-    assert result["steps"][1]["click_steps"] == 3
+    assert result["steps_attempted"] == 2
+    assert result["steps"][0]["phase"] == "route_start"
+    assert result["steps"][0]["visual_region_index"] == 3
+    assert result["steps"][0]["click_steps"] == 3
     assert len(route_calls) == 1
     assert route_calls[0]["visual_region_index"] == 3
     assert route_calls[0]["run_preflight"] is False
     assert route_calls[0]["verify_route"] is False
     assert route_calls[0]["start_mode"] == "dialogue-region-repeat-preview-board-twice"
-    assert len(attempt_calls) == 2
-    assert attempt_calls[0]["run_preflight"] is True
-    assert attempt_calls[1]["run_preflight"] is False
+    assert len(attempt_calls) == 1
+    assert attempt_calls[0]["run_preflight"] is False
 
 
 def test_lightning_segment_stops_when_visual_route_start_blocks(monkeypatch):
