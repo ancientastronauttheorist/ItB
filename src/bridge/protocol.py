@@ -61,11 +61,24 @@ def _state_candidates() -> list[Path]:
     return [p for p in (STATE_FILE, STATE_TMP) if p.exists()]
 
 
+def _state_candidates_newest_first() -> list[Path]:
+    candidates: list[tuple[float, Path]] = []
+    for path in _state_candidates():
+        try:
+            candidates.append((path.stat().st_mtime, path))
+        except OSError:
+            # The bridge writes the tmp file atomically and may rename/remove it
+            # between the exists() check and stat(); ignore that transient race.
+            continue
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return [path for _, path in candidates]
+
+
 def _newest_state_path() -> Path | None:
-    candidates = _state_candidates()
+    candidates = _state_candidates_newest_first()
     if not candidates:
         return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    return candidates[0]
 
 
 def _read_json_file(path: Path) -> dict | None:
@@ -107,7 +120,7 @@ def refresh_bridge_state() -> bool:
 
 def read_state() -> dict | None:
     """Read the current game state JSON. Returns None if unavailable."""
-    for path in sorted(_state_candidates(), key=lambda p: p.stat().st_mtime, reverse=True):
+    for path in _state_candidates_newest_first():
         payload = _read_json_file(path)
         if payload is not None:
             return payload
@@ -198,8 +211,11 @@ def wait_for_fresh_state(timeout: float = 10.0) -> dict | None:
     start = time.time()
     deadline = start + timeout
     while time.time() < deadline:
-        for path in sorted(_state_candidates(), key=lambda p: p.stat().st_mtime, reverse=True):
-            mtime = path.stat().st_mtime
+        for path in _state_candidates_newest_first():
+            try:
+                mtime = path.stat().st_mtime
+            except OSError:
+                continue
             if mtime >= start:
                 payload = _read_json_file(path)
                 if payload is not None:
