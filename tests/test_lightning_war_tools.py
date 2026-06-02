@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import json
+import os
 from types import SimpleNamespace
 
 from src.loop import commands
 from src.loop.session import RunSession
+
+
+def _lightning_peek_resume_control() -> str:
+    return "menu_continue" if os.name == "nt" else "pause_menu_escape"
 
 
 def test_lightning_war_weight_overlay_penalizes_pod_pickup():
@@ -816,7 +821,7 @@ def test_lightning_peek_dry_run_plans_micro_burst(monkeypatch, tmp_path):
 
     assert result["status"] == "DRY_RUN"
     assert result["planned_controls"] == [
-        "pause_menu_escape",
+        _lightning_peek_resume_control(),
         "screenshot",
         "pause",
     ]
@@ -892,7 +897,7 @@ def test_lightning_peek_captures_between_continue_and_pause(monkeypatch, tmp_pat
     )
 
     assert result["status"] == "OK"
-    assert clicks == ["pause_menu_escape", "pause"]
+    assert clicks == [_lightning_peek_resume_control(), "pause"]
     assert result["evidence_ui"]["visible_ui"] == "island_map_or_unknown"
     assert result["note_written"] is True
     assert (tmp_path / "notes.md").exists()
@@ -942,7 +947,7 @@ def test_lightning_peek_pauses_even_when_capture_fails(monkeypatch, tmp_path):
 
     assert result["status"] == "ERROR"
     assert result["reason"] == "screenshot_failed"
-    assert clicks == ["pause_menu_escape", "pause"]
+    assert clicks == [_lightning_peek_resume_control(), "pause"]
     assert result["note_written"] is False
 
 

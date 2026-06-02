@@ -12256,7 +12256,8 @@ def cmd_lightning_peek(
             "screenshot_path": str(screenshot_path),
             "notes_path": str(notes_path),
             "planned_controls": (
-                ["pause_menu_escape", "screenshot", "pause"]
+                [("menu_continue" if os.name == "nt" else "pause_menu_escape"),
+                 "screenshot", "pause"]
                 if initially_paused else ["screenshot", "pause"]
             ),
             "settle_seconds": settle_seconds,
@@ -12279,9 +12280,17 @@ def cmd_lightning_peek(
 
     try:
         if initially_paused:
-            resume_click = _lightning_press_pause_escape(
-                settle_seconds=settle_seconds,
-            )
+            if os.name == "nt":
+                resume_click = _lightning_click_control_with_bounds(
+                    "menu_continue",
+                    bounds=bounds,
+                    settle_seconds=max(float(settle_seconds), 0.2),
+                    hold_seconds=hold_seconds,
+                )
+            else:
+                resume_click = _lightning_press_pause_escape(
+                    settle_seconds=settle_seconds,
+                )
             if resume_click.get("status") != "OK":
                 result = {
                     "status": "ERROR",
