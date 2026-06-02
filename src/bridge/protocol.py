@@ -45,13 +45,13 @@ def is_bridge_active() -> bool:
     """
     if not LOG_FILE.exists():
         return False
-    state_path = _newest_state_path()
-    if state_path is None:
+    state_mtime = _newest_state_mtime()
+    if state_mtime is None:
         return False
     # State file must not be ancient unless the heartbeat proves the Lua
     # bridge is still ticking. On island-map screens the bridge may not dump
     # combat JSON until prompted, but a fresh heartbeat means refresh can work.
-    age = time.time() - state_path.stat().st_mtime
+    age = time.time() - state_mtime
     if age < STALENESS_THRESHOLD:
         return True
     return is_bridge_alive(max_stale_sec=5.0)
@@ -79,6 +79,17 @@ def _newest_state_path() -> Path | None:
     if not candidates:
         return None
     return candidates[0]
+
+
+def _newest_state_mtime() -> float | None:
+    for path in _state_candidates_newest_first():
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            # The newest candidate can still disappear after sorting if the
+            # bridge renames/removes the tmp file between calls.
+            continue
+    return None
 
 
 def _read_json_file(path: Path) -> dict | None:
