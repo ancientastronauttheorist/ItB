@@ -1763,7 +1763,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   flying IceMech and turns its tile to ice. Fixes Frozen Titans Trick Shot
 //   run 20260602_095732_968 Mission_Tides turn 2. Pre-v255 corpus archived as
 //   failure_db_snapshot_sim_v254.jsonl.
-pub const SIMULATOR_VERSION: u32 = 255;
+// v256 - Weapon damage that ignites an occupied Forest immediately applies
+//   fire status to the surviving occupant. Fixes Frozen Titans Trick Shot run
+//   20260602_095732_968 Corporate HQ turn 4, where Prime_ShieldBash hit a
+//   Firefly on Forest and live set status.fire. Pre-v256 corpus archived as
+//   failure_db_snapshot_sim_v255.jsonl.
+pub const SIMULATOR_VERSION: u32 = 256;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

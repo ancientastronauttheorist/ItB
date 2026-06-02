@@ -1500,8 +1500,13 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             && !frozen_unit_absorbed_damage {
             tile.terrain = Terrain::Ground;
             tile.set_on_fire(true);
-            // Live consumes the forest immediately: the tile becomes burning Ground.
-            // Unit does NOT immediately catch fire — happens at end-of-turn.
+            if unit_received_nonshield_hit {
+                if let Some(idx) = board.unit_at(x, y) {
+                    apply_fire_tile_pickup(board, idx, x, y);
+                }
+            }
+            // Live consumes occupied Forest immediately and the surviving
+            // occupant catches the newly lit tile fire in the same action.
         }
 
         // Sand: weapon/self damage -> smoke (fire weapon -> fire tile instead)
@@ -10060,6 +10065,25 @@ mod tests {
         assert_eq!(board.units[enemy].hp, 1);
         assert!(board.units[enemy].fire(),
             "Shield Bash damage should refresh fire status for a target already standing on fire");
+        assert_eq!(result.enemy_damage_dealt, 2);
+    }
+
+    #[test]
+    fn test_spartan_shield_ignites_enemy_on_forest_hit() {
+        // Trick Shot run 20260602_095732_968, Corporate HQ turn 4:
+        // Shield Bash hit a Firefly on Forest. Live converted the Forest to
+        // burning Ground and immediately set the surviving Firefly on fire.
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 6, 5, 5, WId::PrimeShieldBash);
+        let enemy = add_enemy_type(&mut board, 2388, 6, 6, 3, "Firefly1");
+        board.tile_mut(6, 6).terrain = Terrain::Forest;
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeShieldBash, 6, 6);
+
+        assert_eq!(board.units[enemy].hp, 1);
+        assert_eq!(board.tile(6, 6).terrain, Terrain::Ground);
+        assert!(board.tile(6, 6).on_fire(), "Forest should ignite and become burning Ground");
+        assert!(board.units[enemy].fire(), "Surviving occupant should catch the newly lit Forest fire");
         assert_eq!(result.enemy_damage_dealt, 2);
     }
 
