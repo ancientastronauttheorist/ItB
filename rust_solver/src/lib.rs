@@ -1725,7 +1725,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Filler turn 3, where Brute_Mirrorshot_A killed IceMech at E8
 //   through empty sand E7. Pre-v247 corpus archived as
 //   `failure_db_snapshot_sim_v246.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 247;
+// v248 - Mirror Shot backward arm also skips adjacent rear conveyor tiles to a
+//   farther pawn. Fixes Frozen Titans Trick Shot run 20260601_221405_894
+//   Mission_BeltRandom turn 4, where Brute_Mirrorshot_A killed IceMech at D8
+//   through conveyor D7. Pre-v248 corpus archived as
+//   `failure_db_snapshot_sim_v247.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 248;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

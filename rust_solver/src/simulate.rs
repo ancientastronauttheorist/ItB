@@ -3618,6 +3618,7 @@ fn sim_projectile(
             let terrain = board.tile(nxu, nyu).terrain;
             let is_building = board.tile(nxu, nyu).is_building();
             let adjacent_rear_sand = terrain == Terrain::Sand;
+            let adjacent_rear_conveyor = board.tile(nxu, nyu).conveyor_dir >= 0;
             if terrain == Terrain::Mountain {
                 // Backward projectile affects only the adjacent rear tile,
                 // including adjacent mountains that can be rubbleized.
@@ -3643,7 +3644,7 @@ fn sim_projectile(
                     let tx = cx as u8;
                     let ty = cy as u8;
                     let tile = board.tile(tx, ty);
-                    if (forward_hit_adjacent || adjacent_rear_sand)
+                    if (forward_hit_adjacent || adjacent_rear_sand || adjacent_rear_conveyor)
                         && board.unit_at(tx, ty).is_some()
                     {
                         apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
@@ -12132,6 +12133,25 @@ mod tests {
             !board.tile(1, 3).smoke(),
             "skipped rear sand should not be converted to smoked ground"
         );
+    }
+
+    #[test]
+    fn test_mirrorshot_backward_arm_skips_adjacent_conveyor_to_mech() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_221405_894,
+        // Mission_BeltRandom turn 4. MirrorMech at D6 fired south at D5; the
+        // rear arm skipped empty conveyor D7, hit IceMech at D8, then pushed
+        // it into the board edge.
+        let mut board = make_test_board();
+        board.tile_mut(1, 4).conveyor_dir = 2;
+
+        let mirror = add_mech(&mut board, 1, 2, 4, 3, WId::BruteMirrorshotA);
+        let ice = add_mech(&mut board, 2, 0, 4, 2, WId::RangedIce);
+        add_enemy_type(&mut board, 1244, 6, 4, 3, "Firefly1");
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshotA, 3, 4);
+
+        assert_eq!(board.units[ice].hp, 0, "rear arm should disable Ice at D8");
+        assert_eq!(result.mech_damage_taken, 2);
     }
 
     #[test]

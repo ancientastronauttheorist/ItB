@@ -1237,7 +1237,17 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # turn 4, where Mirror Shot thawed/pushed IceMech off E6 but live left E6 as
 # unburned Forest.
 # Pre-v246 corpus archived as failure_db_snapshot_sim_v245.jsonl.
-SIMULATOR_VERSION = 247
+# v247 - Mirror Shot backward arm skips adjacent rear sand to hit a farther
+# pawn even when the forward hit was non-adjacent, and leaves the skipped sand
+# unchanged. Fixes Frozen Titans Trick Shot run 20260601_174638_420
+# Mission_Filler turn 3.
+# Pre-v247 corpus archived as failure_db_snapshot_sim_v246.jsonl.
+# v248 - Mirror Shot backward arm also skips adjacent rear conveyor tiles to a
+# farther pawn. Fixes Frozen Titans Trick Shot run 20260601_221405_894
+# Mission_BeltRandom turn 4, where Brute_Mirrorshot_A killed IceMech at D8
+# through conveyor D7.
+# Pre-v248 corpus archived as failure_db_snapshot_sim_v247.jsonl.
+SIMULATOR_VERSION = 248
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
