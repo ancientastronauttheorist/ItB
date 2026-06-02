@@ -1237,7 +1237,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # turn 4, where Mirror Shot thawed/pushed IceMech off E6 but live left E6 as
 # unburned Forest.
 # Pre-v246 corpus archived as failure_db_snapshot_sim_v245.jsonl.
-SIMULATOR_VERSION = 246
+SIMULATOR_VERSION = 247
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1719,7 +1719,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Survive turn 4, where Mirror Shot thawed/pushed IceMech off E6
 //   but live left E6 as unburned Forest. Pre-v246 corpus archived as
 //   `failure_db_snapshot_sim_v245.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 246;
+// v247 - Mirror Shot backward arm skips adjacent rear sand to hit a farther
+//   pawn even when the forward hit was non-adjacent, and leaves the skipped
+//   sand unchanged. Fixes Frozen Titans Trick Shot run 20260601_174638_420
+//   Mission_Filler turn 3, where Brute_Mirrorshot_A killed IceMech at E8
+//   through empty sand E7. Pre-v247 corpus archived as
+//   `failure_db_snapshot_sim_v246.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 247;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

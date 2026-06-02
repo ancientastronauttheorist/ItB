@@ -3617,6 +3617,7 @@ fn sim_projectile(
 
             let terrain = board.tile(nxu, nyu).terrain;
             let is_building = board.tile(nxu, nyu).is_building();
+            let adjacent_rear_sand = terrain == Terrain::Sand;
             if terrain == Terrain::Mountain {
                 // Backward projectile affects only the adjacent rear tile,
                 // including adjacent mountains that can be rubbleized.
@@ -3632,7 +3633,7 @@ fn sim_projectile(
                     apply_push(board, nxu, nyu, opp, result);
                 }
             }
-            if !backward_hit && terrain == Terrain::Sand {
+            if !backward_hit && adjacent_rear_sand && forward_hit_adjacent {
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
             }
             if !backward_hit {
@@ -3642,7 +3643,9 @@ fn sim_projectile(
                     let tx = cx as u8;
                     let ty = cy as u8;
                     let tile = board.tile(tx, ty);
-                    if forward_hit_adjacent && board.unit_at(tx, ty).is_some() {
+                    if (forward_hit_adjacent || adjacent_rear_sand)
+                        && board.unit_at(tx, ty).is_some()
+                    {
                         apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
                         if wdef.push == PushDir::Forward {
                             apply_push(board, tx, ty, opp, result);
@@ -12105,6 +12108,29 @@ mod tests {
         assert_eq!(
             board.units[moth].hp, 3,
             "backward arm should stop at adjacent empty F2 instead of hitting G2"
+        );
+    }
+
+    #[test]
+    fn test_mirrorshot_backward_arm_skips_adjacent_sand_to_mech() {
+        // Live regression: Frozen Titans Trick Shot run 20260601_174638_420,
+        // Mission_Filler turn 3. MirrorMech at E6 fired south at E5; the rear
+        // arm skipped empty sand at E7, hit IceMech at E8, and left E7 sand.
+        let mut board = make_test_board();
+        board.tile_mut(1, 3).terrain = Terrain::Sand;
+
+        let mirror = add_mech(&mut board, 1, 2, 3, 3, WId::BruteMirrorshotA);
+        let ice = add_mech(&mut board, 2, 0, 3, 2, WId::RangedIce);
+        add_enemy_type(&mut board, 1059, 5, 3, 3, "Bouncer1");
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshotA, 3, 3);
+
+        assert_eq!(board.units[ice].hp, 0, "rear arm should hit Ice at E8");
+        assert_eq!(result.mech_damage_taken, 2);
+        assert_eq!(board.tile(1, 3).terrain, Terrain::Sand);
+        assert!(
+            !board.tile(1, 3).smoke(),
+            "skipped rear sand should not be converted to smoked ground"
         );
     }
 
