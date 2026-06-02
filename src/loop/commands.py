@@ -11494,6 +11494,20 @@ def _lightning_capture_window_screenshot(
 ) -> dict:
     screenshot_path.parent.mkdir(parents=True, exist_ok=True)
     rect = f"{bounds['x']},{bounds['y']},{bounds['width']},{bounds['height']}"
+    if os.name == "nt":
+        try:
+            from PIL import ImageGrab
+
+            bbox = (
+                int(bounds["x"]),
+                int(bounds["y"]),
+                int(bounds["x"] + bounds["width"]),
+                int(bounds["y"] + bounds["height"]),
+            )
+            ImageGrab.grab(bbox=bbox).save(screenshot_path)
+        except Exception as exc:
+            return {"status": "ERROR", "error": f"ImageGrab capture failed: {exc}"}
+        return {"status": "OK", "screenshot_path": str(screenshot_path), "rect": rect}
     try:
         proc = subprocess.run(
             ["screencapture", "-x", "-R", rect, str(screenshot_path)],
