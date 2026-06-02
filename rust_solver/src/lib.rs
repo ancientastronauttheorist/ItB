@@ -1773,7 +1773,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   webber. Fixes Frozen Titans Trick Shot run 20260602_095732_968 R.S.T.
 //   Mission_Crack turn 3, where Prime_ShieldBash hit a Scorpion on cracked
 //   Ground. Pre-v257 corpus archived as failure_db_snapshot_sim_v256.jsonl.
-pub const SIMULATOR_VERSION: u32 = 257;
+// v258 - Weapon damage to a live enemy web source clears/reassigns that web
+//   even if the webber survives. Fixes Frozen Titans Trick Shot run
+//   20260602_095732_968 Mission_Solar turn 3, where Prime_ShieldBash damaged
+//   a Scorpion web source for 2, live cleared Guard's web, and the Scorpion
+//   survived at 1 HP. Pre-v258 corpus archived as
+//   failure_db_snapshot_sim_v257.jsonl.
+pub const SIMULATOR_VERSION: u32 = 258;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

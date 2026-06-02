@@ -1261,6 +1261,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
     let mut frozen_unit_absorbed_damage = false;
     let mut unit_received_nonshield_hit = false;
+    let mut damaged_enemy_web_source_uid = None;
 
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
@@ -1306,6 +1307,16 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             if actual > 0 {
                 clear_mites(unit);
                 unit_received_nonshield_hit = true;
+                if unit.is_enemy()
+                    && matches!(
+                        source,
+                        DamageSource::Weapon
+                            | DamageSource::WeaponCracksOccupied
+                            | DamageSource::WeaponNoAcidPool
+                    )
+                {
+                    damaged_enemy_web_source_uid = Some(unit.uid);
+                }
             }
 
             if unit.is_enemy() {
@@ -1337,6 +1348,10 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         if let Some(idx) = board.unit_at(x, y) {
             apply_fire_tile_pickup(board, idx, x, y);
         }
+    }
+
+    if let Some(uid) = damaged_enemy_web_source_uid {
+        break_web_from(board, uid);
     }
 
     // Acid pool creation: unit with acid dies → acid pool on tile
@@ -10116,6 +10131,26 @@ mod tests {
         assert!(!board.units[mech].web(), "Killed webber should clear Guard's web");
         assert_eq!(result.enemy_damage_dealt, 2);
         assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_spartan_shield_damaging_web_source_clears_web_even_if_survives() {
+        // Trick Shot run 20260602_095732_968, Mission_Solar turn 3:
+        // Guard Shield Bashed the Scorpion web source for 2 damage. The
+        // Scorpion survived at 1 HP, but live still cleared Guard's web.
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 4, 3, 5, WId::PrimeShieldBash);
+        board.units[mech].flags.insert(UnitFlags::WEB);
+        let enemy = add_enemy_type(&mut board, 2413, 4, 2, 3, "Scorpion1");
+        board.units[mech].web_source_uid = board.units[enemy].uid;
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeShieldBash, 4, 2);
+
+        assert_eq!(board.units[enemy].hp, 1);
+        assert!(!board.units[mech].web(), "damaged web source should release Guard");
+        assert_eq!(board.units[mech].web_source_uid, 0);
+        assert_eq!(result.enemy_damage_dealt, 2);
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]

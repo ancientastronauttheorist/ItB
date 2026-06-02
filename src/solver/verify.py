@@ -1285,7 +1285,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # webber. Fixes Frozen Titans Trick Shot run 20260602_095732_968 R.S.T.
 # Mission_Crack turn 3. Pre-v257 corpus archived as
 # failure_db_snapshot_sim_v256.jsonl.
-SIMULATOR_VERSION = 257
+# v258 - Weapon damage to a live enemy web source clears/reassigns that web
+# even if the webber survives. Fixes Frozen Titans Trick Shot run
+# 20260602_095732_968 Mission_Solar turn 3. Pre-v258 corpus archived as
+# failure_db_snapshot_sim_v257.jsonl.
+SIMULATOR_VERSION = 258
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
