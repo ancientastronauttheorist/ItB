@@ -3363,6 +3363,41 @@ def _maybe_disable_bridge_capped_repair(session: RunSession, bridge_data: dict, 
     )
 
 
+def _refresh_bridge_capped_repair_disable(session: RunSession, bridge_data: dict, turn: int) -> dict:
+    """Keep the bridge repair-cap soft-disable aligned to the current board."""
+    current_reasons = _bridge_capped_repair_disable_reasons(bridge_data)
+    current_cause = (
+        "bridge_repair_cap:" + ",".join(current_reasons)
+        if current_reasons else ""
+    )
+    before = len(session.disabled_actions)
+    kept = []
+    removed = []
+    for entry in session.disabled_actions:
+        if (
+            entry.get("weapon_id") == "_REPAIR"
+            and str(entry.get("cause_pattern", "")).startswith("bridge_repair_cap:")
+        ):
+            removed.append(dict(entry))
+            continue
+        kept.append(entry)
+    session.disabled_actions = kept
+    added = False
+    if current_reasons:
+        added = session.add_disabled_action(
+            weapon_id="_REPAIR",
+            cause=current_cause,
+            expires_turn=turn + 99,
+            strategic_override=True,
+        )
+    return {
+        "removed": removed,
+        "removed_count": len(removed),
+        "current_reasons": current_reasons,
+        "added": added,
+    }
+
+
 def _hard_soft_disables_for_safety_widening(disabled_actions: list[dict]) -> list[dict]:
     """Keep deterministic live-desync disables even in relaxed widening solves."""
     kept: list[dict] = []
@@ -4980,7 +5015,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         ud.get("pilot_level", 0),
                     )
             _annotate_pending_grid_debt(session, board, bridge_data)
-            _maybe_disable_bridge_capped_repair(session, bridge_data, current_turn)
+            _refresh_bridge_capped_repair_disable(session, bridge_data, current_turn)
             # Self-healing loop Tier 2: forward the session's current
             # blocklist so the Rust solver biases scoring away from
             # soft-disabled weapons. Expiry was pruned at the start of
