@@ -1250,7 +1250,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v249 - Mission_Tides applies queued Vek attacks before the tidal wave, and
 # flying units on a tide tile take 1 damage instead of being fully spared.
 # Pre-v249 corpus archived as failure_db_snapshot_sim_v248.jsonl.
-SIMULATOR_VERSION = 249
+# v250 - Spider Psion death eggs spawned during an action are matched by
+# type+tile when the live engine allocates a different UID than the simulator.
+# Fixes Frozen Titans Trick Shot run 20260601_221405_894 Mission_Solar turn 3,
+# where Mirror Shot correctly produced a SpiderlingEgg1 at D5 but live used
+# uid 1904 instead of predicted uid 1902. Pre-v250 corpus archived as
+# failure_db_snapshot_sim_v249.jsonl.
+SIMULATOR_VERSION = 250
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1483,7 +1489,7 @@ class DiffResult:
         }
 
 
-_UNSTABLE_SPAWN_IDENTITY_TYPES = {"RockThrown"}
+_UNSTABLE_SPAWN_IDENTITY_TYPES = {"RockThrown", "SpiderlingEgg1"}
 
 
 def _normalize_unstable_spawn_uids(pred_units: dict, actual_units: dict) -> None:

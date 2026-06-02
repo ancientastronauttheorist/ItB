@@ -297,6 +297,27 @@ diff = diff_states(predicted_rock, actual_rock_board)
 check("RockThrown UID drift matched by type+tile", diff.is_empty(),
       diff.unit_diffs)
 
+# Test 21: Spider Psion death eggs can get live engine UIDs that skip ahead.
+predicted_spider_egg = {
+    "units": [{
+        "uid": 1902,
+        "type": "SpiderlingEgg1",
+        "pos": [3, 4],
+        "hp": 1,
+        "alive": True,
+        "status": {},
+    }],
+    "tiles_changed": [],
+    "grid_power": 7,
+}
+actual_spider_egg_board = make_board(units=[
+    mk_unit(1904, "SpiderlingEgg1", 3, 4, hp=1, max_hp=1, team=6,
+            is_mech=False, active=False),
+])
+diff = diff_states(predicted_spider_egg, actual_spider_egg_board)
+check("SpiderlingEgg1 UID drift matched by type+tile", diff.is_empty(),
+      diff.unit_diffs)
+
 print(f"\n{passed}/{passed+failed} tests passed")
 if failed:
     raise SystemExit(1)

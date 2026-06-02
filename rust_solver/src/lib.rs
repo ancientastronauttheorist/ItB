@@ -1733,7 +1733,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v249 - Mission_Tides applies queued Vek attacks before the tidal wave, and
 //   flying units on a tide tile take 1 damage instead of being fully spared.
 //   Pre-v249 corpus archived as failure_db_snapshot_sim_v248.jsonl.
-pub const SIMULATOR_VERSION: u32 = 249;
+// v250 - Python verify loop matches Spider Psion death eggs by type+tile when
+//   the live engine allocates a different UID than the simulator. Fixes Frozen
+//   Titans Trick Shot run 20260601_221405_894 Mission_Solar turn 3, where
+//   Mirror Shot correctly produced a SpiderlingEgg1 at D5 but live used
+//   uid 1904 instead of predicted uid 1902. Pre-v250 corpus archived as
+//   failure_db_snapshot_sim_v249.jsonl.
+pub const SIMULATOR_VERSION: u32 = 250;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
