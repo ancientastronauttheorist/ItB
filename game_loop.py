@@ -33,6 +33,21 @@ Combat turn protocol:
 import argparse
 import sys
 
+
+def _configure_output_encoding() -> None:
+    """Keep CLI progress output printable under Windows cp1252 consoles."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            pass
+
+
+_configure_output_encoding()
+
 from src.loop.commands import (
     cmd_read,
     cmd_solve,

@@ -113,7 +113,11 @@ local function write_atomic(path, tmp_path, content)
     if f then
         f:write(content)
         f:close()
-        os.rename(tmp_path, path)
+        local ok, _err = os.rename(tmp_path, path)
+        if not ok and is_windows() then
+            os.remove(path)
+            os.rename(tmp_path, path)
+        end
     end
 end
 

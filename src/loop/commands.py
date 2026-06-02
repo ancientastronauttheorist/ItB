@@ -3980,6 +3980,91 @@ def _unit_status_summary(unit) -> tuple[str, list[str]]:
     return (f"{base} {'/'.join(flags)}" if flags else base, flags)
 
 
+def _phase_unknown_bridge_payload_is_active(data: dict | None) -> bool:
+    """True for a bridge pre-deployment payload that should beat save fallback."""
+    if not isinstance(data, dict):
+        return False
+    if data.get("phase") != "unknown":
+        return False
+    if not data.get("in_active_mission"):
+        return False
+    if not data.get("mission_id"):
+        return False
+    if not data.get("tiles"):
+        return False
+    return bool(data.get("units") or data.get("spawning_tiles"))
+
+
+def _read_stale_heartbeat_bridge_payload(session: RunSession) -> dict | None:
+    """Report a fresh-looking bridge mission payload even when heartbeat is stale.
+
+    On Windows, mission-start/deployment screens can leave ``Mission.BaseUpdate``
+    dormant, so the heartbeat ages out while ``itb_state.json.tmp`` still
+    contains the new mission. Falling through to saveData at that point can
+    resurrect the previous completed combat board.
+    """
+    data = read_state()
+    if not _phase_unknown_bridge_payload_is_active(data):
+        return None
+
+    board, bridge_data = read_bridge_state()
+    if board is None or bridge_data is None:
+        return None
+    if not _phase_unknown_bridge_payload_is_active(bridge_data):
+        return None
+
+    phase = bridge_data.get("phase", "unknown")
+    session.phase = phase
+    session.current_turn = bridge_data.get("turn", 0)
+    result: dict[str, Any] = {
+        "status": "BRIDGE_HEARTBEAT_STALE",
+        "phase": phase,
+        "source": "bridge_stale_heartbeat",
+        "turn": bridge_data.get("turn", 0),
+        "mission_id": bridge_data.get("mission_id"),
+        "grid_power": f"{board.grid_power}/{board.grid_power_max}",
+        "bridge_heartbeat_stale": True,
+        "note": (
+            "Bridge heartbeat is stale, but the newest bridge payload is an "
+            "active phase-unknown mission; ignoring stale saveData combat."
+        ),
+        "next_step": (
+            "Resolve the UI/bridge mismatch before combat. Do not run solve or "
+            "auto_turn from save fallback."
+        ),
+    }
+
+    enemies = board.enemies()
+    if enemies:
+        result["enemies"] = [
+            {
+                "type": e.type,
+                "pos": _bv(e.x, e.y),
+                "hp": f"{e.hp}/{e.max_hp}",
+            }
+            for e in enemies
+        ]
+
+    deploy_zone = bridge_data.get("deployment_zone", [])
+    if deploy_zone:
+        result["deployment_zone_count"] = len(deploy_zone)
+        result["deployment_zone"] = [
+            {
+                "bridge": f"({int(tile[0])},{int(tile[1])})",
+                "visual": _visual_tile(int(tile[0]), int(tile[1])),
+            }
+            for tile in deploy_zone
+            if isinstance(tile, (list, tuple)) and len(tile) >= 2
+        ]
+
+    _record_turn_state(session, "board", {
+        "bridge_state": bridge_data,
+        "result_summary": result,
+    })
+    session.save()
+    return result
+
+
 def cmd_read(profile: str = "Alpha") -> dict:
     """Parse save file, detect game phase, dump board state.
 
@@ -4403,6 +4488,12 @@ def cmd_read(profile: str = "Alpha") -> dict:
             session.save()
             _print_result(result)
             return result
+
+    stale_heartbeat_bridge = _read_stale_heartbeat_bridge_payload(session)
+    if stale_heartbeat_bridge is not None:
+        _attach_post_enemy_block(stale_heartbeat_bridge, session)
+        _print_result(stale_heartbeat_bridge)
+        return stale_heartbeat_bridge
 
     # Fallback: detect phase from saveData.lua ONLY (no undoSave fallback)
     phase = save_phase_from_stale_check or detect_game_phase(profile)
