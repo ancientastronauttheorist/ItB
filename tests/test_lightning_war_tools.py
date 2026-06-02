@@ -1042,6 +1042,36 @@ def test_lightning_save_timer_reads_current_time_ms(tmp_path):
     ]
 
 
+def test_lightning_save_timer_ignores_stale_undo_after_fresh_run_advances(tmp_path):
+    profile_dir = tmp_path / "profile_Alpha"
+    profile_dir.mkdir()
+    (profile_dir / "saveData.lua").write_text(
+        'GameData = {["current"] = {["time"] = 33909.707000,}, }'
+    )
+    (profile_dir / "profile.lua").write_text(
+        'Profile = {["current"] = {["time"] = 33909.707000,}, }'
+    )
+    (profile_dir / "undoSave.lua").write_text(
+        'GameData = {["current"] = {["time"] = 16177021.000000,}, }'
+    )
+
+    result = commands._lightning_read_save_game_timer(profile_dir=profile_dir)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "saveData_current_time"
+    assert result["game_timer"] == "0:00:34"
+    assert result["ignored_candidates"] == [
+        {
+            "source": "undoSave_current_time",
+            "path": str(profile_dir / "undoSave.lua"),
+            "game_timer_ms": 16177021.0,
+            "game_seconds": 16177.021,
+            "game_timer": "4:29:37",
+            "reason": "stale_undo_after_new_timeline",
+        }
+    ]
+
+
 def test_lightning_visible_pause_timer_reads_ocr(monkeypatch, tmp_path):
     screenshot = tmp_path / "pause.png"
     screenshot.write_text("placeholder")

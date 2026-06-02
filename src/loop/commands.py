@@ -7537,9 +7537,12 @@ def _lightning_read_save_game_timer(
             )
             # After abandoning a timeline, undoSave.lua can retain the old
             # timer while saveData/profile have already reset for the fresh run.
+            # The same stale undo can persist after the fresh run advances, so
+            # do not require the primary timer to be near zero.
             if (
-                float(primary_latest["game_timer_ms"]) <= 10_000
-                and float(undo_latest["game_timer_ms"]) >= 60_000
+                float(primary_latest["game_timer_ms"]) <= 1_800_000
+                and float(undo_latest["game_timer_ms"])
+                >= float(primary_latest["game_timer_ms"]) + 60_000
             ):
                 ignored.append({
                     **undo_latest,
