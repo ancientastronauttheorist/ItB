@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-51 of 70 Steam-cache confirmed. **Immortal** unlocked in Hazardous Mechs Easy run `20260531_181444_169` after the four-corporate-island Detritus finale on 2026-06-01. 19 remaining; sorted by global unlock % (easiest first).
+52 of 70 Steam-cache confirmed. **Trick Shot** reconciled after Steam returned online on 2026-06-02, closing the Frozen Titans squad achievements. 18 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Hazardous Mechs run `20260531_181444_169` closed **Immortal** and proved the Windows live achievement loop across a full four-island survival route with bridge `.tmp` state fallback, calibrated Detritus/shop controls, and Steam-cache confirmation after leaving the island.
+Current milestone: Frozen Titans **Trick Shot** is complete. Steam recorded `Ach_Pinnacle_B_2` at 2026-06-02 14:50:21 CDT after online reconciliation; local ITB files do not preserve a separate exact game-side unlock timestamp, so future offline awards should be recorded from visible popups or run evidence before sync.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -57,7 +57,7 @@ Current milestone: Hazardous Mechs run `20260531_181444_169` closed **Immortal**
 - [x] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs] — Steam-cache confirmed on 2026-06-01 in run `20260531_181444_169`
 - [x] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random] — in-game popup observed in Random Squad run `20260531_114844_128` after Pinnacle `Mission_BoomBots`
 - [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification — in-game popup observed during Random Squad run `20260531_114844_128`
-- [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
+- [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans] — Steam-cache confirmed on 2026-06-02 after offline-to-online reconciliation
 - [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
 - [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
@@ -127,6 +127,7 @@ Current milestone: Hazardous Mechs run `20260531_181444_169` closed **Immortal**
 - [x] Immortal (9.6%) — 4 islands without Mech destroyed  [Hazardous Mechs]
 - [x] Loot Boxes! (9.4%) — Open 5 Time Pods in single game  [Random Squad]
 - [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
+- [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon  [Frozen Titans]
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]

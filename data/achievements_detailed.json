@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-30T00:15:07Z",
+    "last_steam_sync": "2026-06-02T15:01:56.594268",
     "last_steam_total": 70,
-    "last_steam_unlocked": 48
+    "last_steam_unlocked": 52
   },
   "achievements": {
     "rift_walkers": [
@@ -219,10 +219,10 @@
         "description": "Kill 3 enemies with a single attack of the Janus Cannon with Frozen Titans",
         "type": "single_battle",
         "global_unlock_pct": 9.1,
-        "completed": false,
-        "strategy": "Janus Cannon fires in BOTH directions. Need 3 enemies in the two lines. Archive island dam destruction can line up enemies. Spider Boss with spiderlings provides many low-HP targets. Upgrade Janus damage.",
-        "setup": "Upgraded Janus Cannon. Spider Leader mission or dam map. Low-HP targets.",
-        "pitfalls": "Damage decreases with range. Further enemies may survive. Need exact alignment."
+        "completed": true,
+        "strategy": "Janus Cannon fires in BOTH directions. Need 3 enemies in the two lines. Archive dam destruction can drown three enemies and count toward the Janus attack; otherwise line up one kill on one side and two on the other via direct damage plus bump/collision. Spiderlings, Blobs, Leapers, A.C.I.D., and upgraded Janus damage all help.",
+        "setup": "Frozen Titans on Easy/Normal. Prefer +1 Reactor pilot or early core in Mirror Mech, power +1 Janus damage, then hunt Archive dam or dense low-HP enemy missions.",
+        "pitfalls": "Offline Steam can delay the visible cache/API credit until Steam returns online and Into the Breach restarts. Local ITB logs record the achievement call without an exact per-line timestamp. Damage decreases with range; further enemies may survive unless A.C.I.D., bumps, or dam flooding finish them."
       },
       {
         "name": "Pacifist",
@@ -251,7 +251,7 @@
         "description": "Finish 4 Corporate Islands without a Mech destroyed at battle end with Hazardous Mechs squad",
         "type": "single_run",
         "global_unlock_pct": 9.5,
-        "completed": false,
+        "completed": true,
         "strategy": "4-island run. No mech can be destroyed (0 HP) at end of any battle across all 4 islands. Abe Isamu (Armor) helps survival. Harold Schmidt repairs. Prioritize damage upgrades for faster kills. Complete hardest islands first while fresh.",
         "setup": "4-island run. Abe Isamu pilot. Damage upgrades. Easy difficulty.",
         "pitfalls": "A mech being destroyed at ANY battle end fails the whole achievement. Very long run."

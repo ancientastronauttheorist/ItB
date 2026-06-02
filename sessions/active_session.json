@@ -1,65 +1,63 @@
 {
-  "run_id": "20260531_181444_169",
-  "squad": "Hazardous Mechs",
-  "achievement_targets": [
-    "Immortal"
-  ],
+  "run_id": "20260602_095732_968",
+  "squad": "Frozen Titans",
+  "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_StarfishBoss",
+  "current_mission": "Mission_Terratide",
   "islands_completed": [],
-  "mission_index": 21,
-  "last_mission_turn": 4,
-  "current_turn": 4,
+  "mission_index": 8,
+  "last_mission_turn": 3,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
-        "mech_type": "LeapMech",
+        "mech_type": "GuardMech",
         "move_to": [
-          5,
-          6
-        ],
-        "weapon": "Prime_Leap",
-        "target": [
-          5,
-          0
-        ],
-        "description": "LeapMech, move A4\u2192B3, fire Hydraulic Legs at H3"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "NanoMech",
-        "move_to": [
-          5,
-          1
-        ],
-        "weapon": "Science_AcidShot",
-        "target": [
-          5,
+          4,
           2
         ],
-        "description": "NanoMech, move F4\u2192G3, fire Acid Projector at F3"
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          4,
+          1
+        ],
+        "description": "GuardMech, fire Shield Bash at G4"
       },
       {
         "mech_uid": 1,
-        "mech_type": "UnstableTank",
+        "mech_type": "MirrorMech",
         "move_to": [
-          4,
-          3
+          3,
+          5
         ],
-        "weapon": "Brute_Unstable",
+        "weapon": "Unknown",
         "target": [
-          5,
-          3
+          255,
+          255
         ],
-        "description": "UnstableTank, fire Unstable Cannon at E3"
+        "description": "MirrorMech, move C6\u2192C5"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "IceMech",
+        "move_to": [
+          0,
+          5
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "IceMech, move B6\u2192C8"
       }
     ],
-    "score": 123408.57142857143,
-    "turn": 4,
-    "input_fingerprint": "0:4,7:4|1:4,3:1|2:4,2:1|796:5,3:5|797:5,1:5"
+    "score": 93784.14286695208,
+    "turn": 3,
+    "input_fingerprint": "0:4,2:5|1:2,5:3|2416:4,5:2|2418:1,2:2|2419:4,1:2|2420:2,3:3|2421:4,3:3|2:2,6:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -68,1963 +66,488 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-05-31T18:25:49.598115",
+      "timestamp": "2026-06-02T10:49:40.029188",
       "turn": 1,
       "label": "solve",
-      "score": 130807.14285714284,
+      "score": 136357.14285714284,
       "actions": [
-        "UnstableTank, move D7\u2192E5, fire Unstable Cannon at E4",
-        "NanoMech, move B5\u2192D4, fire Acid Projector at C4"
+        "GuardMech, move F5\u2192F3",
+        "IceMech, fire Cryo-Launcher at G2",
+        "MirrorMech, move E6\u2192G5, fire Mirror Shot at G4"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:27:40.952408",
+      "timestamp": "2026-06-02T10:50:36.925718",
       "turn": 2,
       "label": "solve",
-      "score": 159893.8095238097,
+      "score": 140197.142857143,
       "actions": [
-        "LeapMech, move G7\u2192F6, fire Hydraulic Legs at B6",
-        "UnstableTank, fire Unstable Cannon at E5",
-        "NanoMech, fire Acid Projector at D3"
+        "GuardMech, move F3\u2192D3, fire Shield Bash at E3",
+        "MirrorMech, move G5\u2192G8, fire Mirror Shot at G7",
+        "IceMech, move G6\u2192D6"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:29:50.253250",
+      "timestamp": "2026-06-02T10:51:31.139156",
+      "turn": 3,
+      "label": "solve",
+      "score": 148077.14285714284,
+      "actions": [
+        "MirrorMech, move G8\u2192F8, fire Mirror Shot at F7",
+        "GuardMech, move C3\u2192F4, fire Shield Bash at F5",
+        "IceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T10:52:57.465699",
+      "turn": 4,
+      "label": "solve",
+      "score": 136777.14285714284,
+      "actions": [
+        "GuardMech, move F4\u2192E6",
+        "MirrorMech, move F8\u2192F7, fire Mirror Shot at F6",
+        "IceMech, move D6\u2192F5, fire Cryo-Launcher at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T10:59:33.699246",
+      "turn": 1,
+      "label": "solve",
+      "score": 144878.57142857142,
+      "actions": [
+        "GuardMech, move E6\u2192G5",
+        "MirrorMech, move D5\u2192B5, fire Mirror Shot at C5",
+        "IceMech, move C6\u2192D5, fire Cryo-Launcher at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T11:00:35.893313",
       "turn": 2,
       "label": "solve",
-      "score": 144903.8095238097,
+      "score": 153018.57142857142,
       "actions": [
-        "UnstableTank, fire Unstable Cannon at E5",
-        "NanoMech, fire Acid Projector at D3"
+        "GuardMech, move G5\u2192D6, fire Shield Bash at D5",
+        "IceMech, move C5\u2192B7, fire Cryo-Launcher at D7",
+        "MirrorMech, move B5\u2192C5, fire Mirror Shot at B5"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:31:50.344089",
+      "timestamp": "2026-06-02T11:17:36.286423",
       "turn": 3,
       "label": "solve",
-      "score": 149097.14285714284,
+      "score": 150053.57142857142,
       "actions": [
-        "NanoMech, move D4\u2192B3, fire Acid Projector at C3",
-        "LeapMech, move B6\u2192C3, fire Hydraulic Legs at F3",
-        "UnstableTank, move E7\u2192F7, fire Unstable Cannon at F6"
+        "GuardMech, move D6\u2192C5, fire Shield Bash at C4",
+        "MirrorMech, move C7\u2192C8, fire Mirror Shot at C7",
+        "IceMech, move A7\u2192D7"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:34:30.898337",
-      "turn": 4,
-      "label": "solve",
-      "score": 135577.14285714284,
-      "actions": [
-        "UnstableTank, move E7\u2192E4, fire Unstable Cannon at D4",
-        "NanoMech, move B3\u2192D4, repair",
-        "LeapMech, move F3\u2192F2, fire Hydraulic Legs at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T18:35:03.223209",
-      "turn": 4,
-      "label": "note",
-      "message": "Mission_Repair turn 4 manual override: rejected solver plan because it moves webbed LeapMech; survival line will have Unstable kill Leaper at F4 from F7, Nano move/repair away from C3 Firefly target, then skip Leap once web is cleared."
-    },
-    {
-      "timestamp": "2026-05-31T18:41:39.348307",
+      "timestamp": "2026-06-02T11:30:11.507159",
       "turn": 1,
       "label": "solve",
-      "score": 154035.71428571432,
+      "score": 130478.57142857142,
       "actions": [
-        "NanoMech, move D5\u2192D2, fire Acid Projector at E2",
-        "UnstableTank, move F5\u2192D5, fire Unstable Cannon at D4",
-        "LeapMech, fire Hydraulic Legs at E3"
+        "IceMech, move E5\u2192E2, fire Cryo-Launcher at G2",
+        "GuardMech, move F6\u2192E3, fire Shield Bash at E2",
+        "MirrorMech, move G5\u2192E5, fire Mirror Shot at E4"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:42:14.131536",
-      "turn": 1,
-      "label": "note",
-      "message": "Mission_Armored_Train turn 1 manual survival override: solver warning line spends 3 mech HP for optional kills/train control; no buildings are threatened if Nano leaves D5, so move Nano to D2 and skip other mechs to preserve Immortal HP."
-    },
-    {
-      "timestamp": "2026-05-31T18:43:54.225729",
-      "turn": 2,
-      "label": "resolve_post_enemy_block",
-      "block": {
-        "id": "20260531_181444_169_m01_t01_post_enemy",
-        "status": "INVESTIGATE_POST_ENEMY",
-        "blocking": true,
-        "run_id": "20260531_181444_169",
-        "mission_index": 1,
-        "turn": 1,
-        "created_at": "2026-05-31T18:43:23.030808",
-        "source": "record_post_enemy",
-        "record_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\recordings\\20260531_181444_169\\m01_turn_01_post_enemy.json",
-        "reason": null,
-        "deltas": {
-          "buildings_alive_diff": 0,
-          "building_hp_diff": -1,
-          "grid_power_diff": -1,
-          "enemies_alive_diff": 2,
-          "protected_objective_units_alive_diff": 0,
-          "protected_objective_units_frozen_diff": 0,
-          "mech_hp_diff": [
-            {
-              "uid": 0,
-              "type": "LeapMech",
-              "predicted_hp": 2,
-              "actual_hp": 3,
-              "diff": 1
-            },
-            {
-              "uid": 1,
-              "type": "UnstableTank",
-              "predicted_hp": 2,
-              "actual_hp": 3,
-              "diff": 1
-            },
-            {
-              "uid": 2,
-              "type": "NanoMech",
-              "predicted_hp": 1,
-              "actual_hp": 1,
-              "diff": 0
-            }
-          ],
-          "unexpected_events": [
-            "Grid power dropped by 1 unexpectedly"
-          ]
-        },
-        "triggers": [
-          {
-            "trigger": "grid_power_drop_unexpected",
-            "tier": 1,
-            "severity": "high",
-            "details": "Predicted grid 4, actual 3 (-1)"
-          }
-        ],
-        "actual_outcome": {
-          "buildings_alive": 8,
-          "building_hp_total": 11,
-          "pylons_alive": null,
-          "pylon_hp_total": null,
-          "objective_buildings_alive": 0,
-          "objective_building_hp_total": 0,
-          "objective_buildings_targeted": 0,
-          "objective_building_targets": [],
-          "pods_present": 0,
-          "freeze_building_target": null,
-          "freeze_buildings_alive": null,
-          "freeze_buildings_frozen": null,
-          "freeze_buildings_thawed": null,
-          "freeze_buildings": [],
-          "grid_power": 3,
-          "enemies_alive": 2,
-          "enemy_hp_total": 4,
-          "mechs_alive": 3,
-          "mech_hp_total": 7,
-          "mech_damage_taken_total": 1,
-          "mech_damage_objective_limit": null,
-          "bigbomb_alive": false,
-          "terraform_grass_remaining": null,
-          "terraform_grass_tiles": [],
-          "mech_hp": [
-            {
-              "uid": 0,
-              "type": "LeapMech",
-              "hp": 3,
-              "max_hp": 3
-            },
-            {
-              "uid": 1,
-              "type": "UnstableTank",
-              "hp": 3,
-              "max_hp": 3
-            },
-            {
-              "uid": 2,
-              "type": "NanoMech",
-              "hp": 1,
-              "max_hp": 2
-            }
-          ],
-          "mechs_acid": [],
-          "mechs_fire": [],
-          "mechs_on_danger": [],
-          "mechs_disabled": [],
-          "mechs_webbed": [],
-          "mechs_infected": [],
-          "mites_remaining": 0,
-          "mites_status_tracked": false,
-          "mission_id": "Mission_Armored_Train",
-          "mission_kill_target": 0,
-          "mission_kill_limit": 0,
-          "mission_kills_done": 0,
-          "mission_mountain_target": 0,
-          "mission_mountains_destroyed": 0,
-          "mission_mountain_tiles": [],
-          "turn": 2,
-          "total_turns": 3,
-          "destroy_objective_units": [],
-          "destroy_objective_units_alive": 0,
-          "protected_objective_units": [
-            {
-              "uid": 92,
-              "type": "Train_Armored",
-              "pos": [
-                4,
-                4
-              ],
-              "hp": 1,
-              "max_hp": 1,
-              "alive": true,
-              "frozen": false,
-              "team": 1
-            }
-          ],
-          "protected_objective_units_alive": 1,
-          "protected_objective_units_frozen": 0
-        },
-        "predicted_outcome": {
-          "buildings_alive": 8,
-          "building_hp_total": 12,
-          "pylons_alive": null,
-          "pylon_hp_total": null,
-          "objective_buildings_alive": 0,
-          "objective_building_hp_total": 0,
-          "objective_buildings_targeted": 0,
-          "objective_building_targets": [],
-          "pods_present": 0,
-          "freeze_building_target": null,
-          "freeze_buildings_alive": null,
-          "freeze_buildings_frozen": null,
-          "freeze_buildings_thawed": null,
-          "freeze_buildings": [],
-          "grid_power": 4,
-          "enemies_alive": 0,
-          "enemy_hp_total": 0,
-          "mechs_alive": 3,
-          "mech_hp_total": 5,
-          "mech_damage_taken_total": 3,
-          "mech_damage_objective_limit": null,
-          "bigbomb_alive": false,
-          "terraform_grass_remaining": null,
-          "terraform_grass_tiles": [],
-          "mech_hp": [
-            {
-              "hp": 2,
-              "max_hp": 3,
-              "type": "LeapMech",
-              "uid": 0
-            },
-            {
-              "hp": 2,
-              "max_hp": 3,
-              "type": "UnstableTank",
-              "uid": 1
-            },
-            {
-              "hp": 1,
-              "max_hp": 2,
-              "type": "NanoMech",
-              "uid": 2
-            }
-          ],
-          "mechs_acid": [],
-          "mechs_fire": [],
-          "mechs_on_danger": [],
-          "mechs_disabled": [],
-          "mechs_webbed": [],
-          "mechs_infected": [],
-          "mites_remaining": 0,
-          "mites_status_tracked": false,
-          "mission_id": "Mission_Armored_Train",
-          "mission_kill_target": 0,
-          "mission_kill_limit": 0,
-          "mission_kills_done": 2,
-          "mission_mountain_target": 0,
-          "mission_mountains_destroyed": 0,
-          "mission_mountain_tiles": [],
-          "turn": 1,
-          "total_turns": 3,
-          "destroy_objective_units": [],
-          "destroy_objective_units_alive": 0,
-          "protected_objective_units": [
-            {
-              "uid": 92,
-              "type": "Train_Armored",
-              "pos": [
-                4,
-                4
-              ],
-              "hp": 1,
-              "max_hp": 1,
-              "alive": true,
-              "frozen": false,
-              "team": 1
-            }
-          ],
-          "protected_objective_units_alive": 1,
-          "protected_objective_units_frozen": 0,
-          "buildings_destroyed_by_enemies": 0,
-          "enemies_killed_by_enemy_phase": 0,
-          "enemies_killed_by_player": 2,
-          "enemies_killed_by_spawn_block": 0,
-          "enemies_killed_total_projected": 2,
-          "mission_kills_by_enemy_phase": 0,
-          "mission_kills_by_player": 2,
-          "mission_kills_by_spawn_block": 0,
-          "mission_kills_done_projected": 2,
-          "mission_kills_total_projected": 2,
-          "mission_mountains_destroyed_projected": 0,
-          "pods_collected": 0
-        },
-        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
-        "resolved_at": "2026-05-31T18:43:54.225709",
-        "resolve_reason": "Turn 1 used documented manual survival override instead of stored solver kill line; post-enemy comparison is against discarded prediction. Actual grid loss came from leaving Firefly fire unresolved, but all Hazardous mechs are alive and board state is known, so Immortal remains viable."
-      }
-    },
-    {
-      "timestamp": "2026-05-31T18:44:28.903560",
+      "timestamp": "2026-06-02T11:32:19.571031",
       "turn": 2,
       "label": "solve",
-      "score": 147782.85714285716,
+      "score": 133291.90476190488,
       "actions": [
-        "LeapMech, move E6\u2192D6, fire Hydraulic Legs at D5",
-        "NanoMech, move D2\u2192G3, fire Acid Projector at F3",
-        "UnstableTank, move F5\u2192E6, fire Unstable Cannon at E5"
+        "GuardMech, move E3\u2192D5",
+        "IceMech, move E2\u2192C3, fire Cryo-Launcher at C5",
+        "MirrorMech, move E5\u2192E3, fire Mirror Shot at D3"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:46:48.232648",
+      "timestamp": "2026-06-02T11:33:30.845664",
       "turn": 3,
       "label": "solve",
-      "score": 139602.85714285716,
+      "score": 125768.57142857142,
       "actions": [
-        "NanoMech, move G3\u2192D3, repair",
-        "LeapMech, move D5\u2192C3, fire Hydraulic Legs at G3",
-        "UnstableTank, move E7\u2192D6, fire Unstable Cannon at D5"
+        "GuardMech",
+        "MirrorMech, move E3\u2192D4",
+        "IceMech, fire Cryo-Launcher at C5"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:47:43.929577",
+      "timestamp": "2026-06-02T11:38:18.043701",
       "turn": 3,
       "label": "solve",
-      "score": 139602.85714285716,
+      "score": 125718.57142857142,
       "actions": [
-        "NanoMech, move G3\u2192D3, repair",
-        "LeapMech, move D5\u2192C3, fire Hydraulic Legs at G3",
-        "UnstableTank, move E7\u2192D6, fire Unstable Cannon at D5"
+        "GuardMech",
+        "MirrorMech, move E3\u2192E2"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:58:35.070858",
+      "timestamp": "2026-06-02T11:39:17.536994",
+      "turn": 4,
+      "label": "solve",
+      "score": 127568.57142857142,
+      "actions": [
+        "MirrorMech, move E2\u2192E1, fire Mirror Shot at E2",
+        "GuardMech, fire Shield Bash at E5",
+        "IceMech, move C4\u2192E3, fire Cryo-Launcher at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T11:49:16.953505",
       "turn": 1,
       "label": "solve",
-      "score": 148485.7142857143,
+      "score": 130978.57142857142,
       "actions": [
-        "ArchiveArtillery",
-        "LeapMech",
-        "NanoMech, move B7\u2192A4, fire Acid Projector at B4",
-        "UnstableTank, move E5\u2192E4, fire Unstable Cannon at D4"
+        "GuardMech, move D5\u2192E2, fire Shield Bash at F2",
+        "IceMech, move D7\u2192D5, fire Cryo-Launcher at D3",
+        "MirrorMech, move F5\u2192E5, fire Mirror Shot at D5"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:59:31.621779",
+      "timestamp": "2026-06-02T11:51:00.176606",
       "turn": 2,
       "label": "solve",
-      "score": 146492.38095238103,
+      "score": 133078.57142857142,
       "actions": [
-        "ArchiveArtillery, move B6\u2192A6",
-        "UnstableTank, fire Unstable Cannon at E4",
-        "NanoMech, move A4\u2192B7, fire Acid Projector at B6",
-        "LeapMech, move B4\u2192C1, repair"
+        "MirrorMech, move E5\u2192D5, fire Mirror Shot at D4",
+        "GuardMech, move E2\u2192D1, fire Shield Bash at D2",
+        "IceMech, move C5\u2192B7, fire Cryo-Launcher at B2"
       ]
     },
     {
-      "timestamp": "2026-05-31T18:59:59.577683",
+      "timestamp": "2026-06-02T12:01:14.809978",
+      "turn": 3,
+      "label": "solve",
+      "score": 103459.14287137985,
+      "actions": [
+        "GuardMech, move D1\u2192C1",
+        "MirrorMech, move D5\u2192D7, fire Mirror Shot at C7",
+        "IceMech, move A7\u2192C6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T12:15:45.468774",
+      "turn": 1,
+      "label": "solve",
+      "score": 97649.99999999999,
+      "actions": [
+        "GuardMech, move E5\u2192F5, fire Shield Bash at F4",
+        "IceMech, move D6\u2192E7, fire Cryo-Launcher at E4",
+        "MirrorMech, move F6\u2192F7, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T12:26:16.609275",
       "turn": 2,
       "label": "solve",
-      "score": 133699.04761904772,
+      "score": 108739.99999999993,
       "actions": [
-        "NanoMech, move A4\u2192B7, fire Acid Projector at B6",
-        "LeapMech, move B4\u2192C1, repair"
+        "GuardMech, move F5\u2192F3, fire Shield Bash at F2",
+        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E5",
+        "MirrorMech, fire Mirror Shot at E7"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:03:08.603751",
+      "timestamp": "2026-06-02T12:27:35.353418",
       "turn": 3,
       "label": "solve",
-      "score": 138470.7142857143,
+      "score": 113309.99999999999,
       "actions": [
-        "LeapMech",
-        "UnstableTank, move G4\u2192E5",
-        "NanoMech, move A4\u2192D4, fire Acid Projector at C4",
-        "ArchiveArtillery, move A6\u2192B6, fire Old Earth Artillery at B4"
+        "GuardMech, fire Shield Bash at E3",
+        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E3",
+        "MirrorMech, fire Mirror Shot at E7"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:04:19.456589",
+      "timestamp": "2026-06-02T12:28:29.114473",
+      "turn": 3,
+      "label": "solve",
+      "score": 113309.99999999999,
+      "actions": [
+        "GuardMech, fire Shield Bash at E3",
+        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E3",
+        "MirrorMech, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T12:34:34.089406",
+      "turn": 3,
+      "label": "solve",
+      "score": 113309.99999999999,
+      "actions": [
+        "GuardMech, fire Shield Bash at E3",
+        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E3",
+        "MirrorMech, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T12:36:23.489469",
       "turn": 4,
       "label": "solve",
-      "score": 137105.7142857143,
+      "score": 113299.99999999999,
       "actions": [
-        "ArchiveArtillery",
-        "NanoMech, move D4\u2192E3, fire Acid Projector at D3",
-        "UnstableTank, move E5\u2192D3, fire Unstable Cannon at D2",
-        "LeapMech, fire Hydraulic Legs at B3"
+        "GuardMech, move F3\u2192C2, fire Shield Bash at B2",
+        "IceMech, move D7\u2192B7, fire Cryo-Launcher at B2",
+        "MirrorMech, fire Mirror Shot at E7"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:12:43.804823",
+      "timestamp": "2026-06-02T12:36:55.699752",
+      "turn": 4,
+      "label": "solve",
+      "score": 113299.99999999999,
+      "actions": [
+        "GuardMech, move F3\u2192C2, fire Shield Bash at B2",
+        "IceMech, move D7\u2192B7, fire Cryo-Launcher at B2",
+        "MirrorMech, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T12:51:35.410416",
+      "turn": 4,
+      "label": "solve",
+      "score": 113409.99999999999,
+      "actions": [
+        "MirrorMech",
+        "IceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T12:52:55.553767",
+      "turn": 4,
+      "label": "solve",
+      "score": 113409.99999999999,
+      "actions": [
+        "MirrorMech",
+        "IceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T13:25:32.700795",
       "turn": 1,
       "label": "solve",
-      "score": 152935.71428571432,
+      "score": 135450.0,
       "actions": [
-        "NanoMech, move G5\u2192E3, fire Acid Projector at F3",
-        "UnstableTank, move F6\u2192G6, fire Unstable Cannon at G5",
-        "LeapMech, move C5\u2192D4, fire Hydraulic Legs at C4"
+        "GuardMech, move F5\u2192E5, repair",
+        "MirrorMech, move D6\u2192D7, repair",
+        "IceMech, move C5\u2192C3, fire Cryo-Launcher at C6"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:14:23.690142",
+      "timestamp": "2026-06-02T13:27:27.708045",
       "turn": 2,
       "label": "solve",
-      "score": 153885.71428571446,
+      "score": 143520.00000000015,
       "actions": [
-        "UnstableTank, move G7\u2192D6, fire Unstable Cannon at D5",
-        "LeapMech, fire Hydraulic Legs at C1",
-        "NanoMech, repair"
+        "GuardMech, fire Shield Bash at E4",
+        "MirrorMech",
+        "IceMech, move C3\u2192C1, fire Cryo-Launcher at C4"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:15:43.954709",
+      "timestamp": "2026-06-02T13:29:08.175763",
       "turn": 3,
       "label": "solve",
-      "score": 155225.71428571432,
+      "score": 149840.0,
       "actions": [
-        "LeapMech",
-        "Archive_Tank, move C6\u2192B6, fire Stock Cannon at B5",
-        "UnstableTank, move D7\u2192E7, repair",
-        "Archive_Tank, move B2\u2192E1, fire Stock Cannon at D1",
-        "NanoMech, move E3\u2192F6, repair"
+        "GuardMech, fire Shield Bash at D5",
+        "MirrorMech, move D7\u2192C5, fire Mirror Shot at D5",
+        "IceMech, move C1\u2192D3, fire Cryo-Launcher at D5"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:17:16.795267",
+      "timestamp": "2026-06-02T13:52:11.307172",
+      "turn": 3,
+      "label": "solve",
+      "score": 149760.0,
+      "actions": [
+        "MirrorMech",
+        "IceMech, move C1\u2192D3, fire Cryo-Launcher at D8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T13:52:25.017922",
+      "turn": 3,
+      "label": "solve",
+      "score": 149760.0,
+      "actions": [
+        "MirrorMech",
+        "IceMech, move C1\u2192D3, fire Cryo-Launcher at D8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T13:54:03.357861",
       "turn": 4,
       "label": "solve",
-      "score": 162760.71428571432,
+      "score": 137221.57142608508,
       "actions": [
-        "UnstableTank, move E7\u2192D5, fire Unstable Cannon at D4",
-        "NanoMech, move F6\u2192D7",
-        "LeapMech, move B1\u2192C1, fire Hydraulic Legs at C3",
-        "Archive_Tank, move E1\u2192C1, fire Stock Cannon at C2",
-        "Archive_Tank, move B6\u2192B3, fire Stock Cannon at C3"
+        "GuardMech",
+        "MirrorMech",
+        "IceMech, move D3\u2192B2, fire Cryo-Launcher at G2"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:33:07.002046",
+      "timestamp": "2026-06-02T13:54:41.427298",
+      "turn": 4,
+      "label": "solve",
+      "score": 137221.57142608508,
+      "actions": [
+        "GuardMech",
+        "MirrorMech",
+        "IceMech, move D3\u2192B2, fire Cryo-Launcher at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T14:09:45.308571",
       "turn": 1,
       "label": "solve",
-      "score": 192742.85714285716,
+      "score": 193707.14285714287,
       "actions": [
-        "LeapMech, move C5\u2192D6",
-        "UnstableTank, move F5\u2192E3, fire Unstable Cannon at D3",
-        "NanoMech, move E6\u2192E3, fire Acid Projector at D3"
+        "IceMech, move F6\u2192C6, fire Cryo-Launcher at G6",
+        "MirrorMech, move D6\u2192C4, fire Mirror Shot at C3",
+        "GuardMech, move C5\u2192D2, fire Shield Bash at C2"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:34:16.104381",
+      "timestamp": "2026-06-02T14:10:56.182507",
       "turn": 2,
       "label": "solve",
-      "score": 238476.19047619076,
+      "score": 197463.80952380967,
       "actions": [
-        "LeapMech, move D6\u2192D5, fire Hydraulic Legs at A5",
-        "UnstableTank, move F3\u2192D5, fire Unstable Cannon at C5",
-        "NanoMech, repair"
+        "GuardMech, move D2\u2192E4, fire Shield Bash at F4",
+        "IceMech, move C6\u2192C5",
+        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:35:13.913645",
-      "turn": 3,
-      "label": "solve",
-      "score": 212182.85714285716,
-      "actions": [
-        "LeapMech, repair",
-        "UnstableTank, move E5\u2192D5, fire Unstable Cannon at D4",
-        "NanoMech, move E3\u2192E7, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T19:36:12.153593",
-      "turn": 4,
-      "label": "solve",
-      "score": 214017.85714285716,
-      "actions": [
-        "LeapMech, move A5\u2192B3, repair",
-        "NanoMech, move E7\u2192E3, fire Acid Projector at F3",
-        "UnstableTank, move D6\u2192D3, fire Unstable Cannon at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T19:51:12.263960",
-      "turn": 1,
-      "label": "solve",
-      "score": 136300.0,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at D3",
-        "NanoMech, move B5\u2192F5",
-        "UnstableTank, move E6\u2192B5, fire Unstable Cannon at B4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T19:52:41.252667",
+      "timestamp": "2026-06-02T14:14:06.099799",
       "turn": 2,
       "label": "solve",
-      "score": 129380.00000000016,
+      "score": 195763.8095238097,
       "actions": [
-        "LeapMech, move D3\u2192E6, repair",
-        "UnstableTank, move B6\u2192D5",
-        "NanoMech, move F5\u2192E8, fire Acid Projector at E7"
+        "IceMech, move C6\u2192C5",
+        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
       ]
     },
     {
-      "timestamp": "2026-05-31T19:54:10.382032",
-      "turn": 3,
-      "label": "solve",
-      "score": 133200.0,
-      "actions": [
-        "NanoMech, move E8\u2192D7, fire Acid Projector at D6",
-        "UnstableTank, move D4\u2192F2, repair",
-        "LeapMech, move E6\u2192E2, fire Hydraulic Legs at H2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T19:55:49.817428",
-      "turn": 4,
-      "label": "solve",
-      "score": 136835.0,
-      "actions": [
-        "LeapMech, move H2\u2192H4, fire Hydraulic Legs at F4",
-        "UnstableTank, move F2\u2192E4, repair",
-        "NanoMech, move D7\u2192D3, fire Acid Projector at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:01:12.087823",
-      "turn": 1,
-      "label": "solve",
-      "score": 134850.0,
-      "actions": [
-        "NanoMech, move D5\u2192F4, fire Acid Projector at F3",
-        "LeapMech, move F5\u2192E4, fire Hydraulic Legs at E1",
-        "UnstableTank, move E6\u2192E4, fire Unstable Cannon at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:02:58.871132",
+      "timestamp": "2026-06-02T14:16:50.273457",
       "turn": 2,
       "label": "solve",
-      "score": 131380.0,
+      "score": 195763.8095238097,
       "actions": [
-        "LeapMech",
-        "UnstableTank, move E4\u2192F2, fire Unstable Cannon at F1",
-        "NanoMech, move F4\u2192F2, fire Acid Projector at E2"
+        "IceMech, move C6\u2192C5",
+        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
       ]
     },
     {
-      "timestamp": "2026-05-31T20:04:30.382976",
-      "turn": 3,
-      "label": "solve",
-      "score": 127830.0,
-      "actions": [
-        "NanoMech, move F2\u2192E5, repair",
-        "UnstableTank, move F3\u2192E2, fire Unstable Cannon at D2",
-        "LeapMech, move E1\u2192E2, fire Hydraulic Legs at B2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:09:11.485437",
-      "turn": 3,
-      "label": "note",
-      "message": "Suncatcher Mission_Terratide turn 3 recovery: auto_turn left Nano on lethal E-file (E5); stopped before End Turn, snapshotted, bridge UNDO unavailable, then used a single raw Lua SetSpace correction to move Nano to safe D5 before final End Turn for Immortal survival."
-    },
-    {
-      "timestamp": "2026-05-31T20:19:46.738664",
-      "turn": 1,
-      "label": "note",
-      "message": "Storm Mill deployment recovery: after visible Confirm, bridge reported turn 1 with all Hazardous mechs inactive before any player action; reactivated UIDs 0,1,2 via Lua SetActive(true), verified all READY, then proceeded with solver."
-    },
-    {
-      "timestamp": "2026-05-31T20:20:34.979611",
-      "turn": 1,
-      "label": "solve",
-      "score": 120800.57142560824,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at D8",
-        "UnstableTank, fire Unstable Cannon at F4",
-        "NanoMech, move C6\u2192B6, fire Acid Projector at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:21:03.798463",
-      "turn": 1,
-      "label": "solve",
-      "score": 120950.57142560824,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at D8",
-        "UnstableTank, move F5\u2192E3, fire Unstable Cannon at D3",
-        "NanoMech, move C6\u2192F6, fire Acid Projector at F5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:21:50.894129",
-      "turn": 1,
-      "label": "solve",
-      "score": 120950.57142560824,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at D8",
-        "UnstableTank, move F5\u2192E3, fire Unstable Cannon at D3",
-        "NanoMech, move C6\u2192F6, fire Acid Projector at F5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:22:27.304224",
-      "turn": 1,
-      "label": "note",
-      "message": "Storm Mill turn 1 dirty acceptance: after reviewed rank-10 dirty line, threat audit still saw Scorpion1 at B4 targeting non-objective building C4; all Hazardous mechs alive, no mech targeted/on danger, Unstable at F3 1/3 ACID safe from immediate damage. Accepted planned 1 grid/building HP loss for Immortal survival and will inspect post-enemy."
-    },
-    {
-      "timestamp": "2026-05-31T20:24:00.379893",
+      "timestamp": "2026-06-02T14:17:13.902426",
       "turn": 2,
       "label": "solve",
-      "score": 119432.00001168247,
+      "score": 195763.8095238097,
       "actions": [
-        "LeapMech, fire Hydraulic Legs at C8",
-        "NanoMech, move F6\u2192G3, fire Acid Projector at F3",
-        "UnstableTank, move E3\u2192E6, fire Unstable Cannon at D6"
+        "IceMech, move C6\u2192C5",
+        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
       ]
     },
     {
-      "timestamp": "2026-05-31T20:24:19.795810",
+      "timestamp": "2026-06-02T14:18:40.302512",
+      "turn": 3,
+      "label": "solve",
+      "score": 199713.42855501175,
+      "actions": [
+        "GuardMech, fire Shield Bash at F4",
+        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
+        "MirrorMech, fire Mirror Shot at A6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T14:19:16.319457",
+      "turn": 3,
+      "label": "solve",
+      "score": 199713.42855501175,
+      "actions": [
+        "GuardMech, fire Shield Bash at F4",
+        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
+        "MirrorMech, fire Mirror Shot at A6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T14:32:22.226918",
+      "turn": 3,
+      "label": "solve",
+      "score": 199713.42855501175,
+      "actions": [
+        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
+        "MirrorMech, fire Mirror Shot at A6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T14:33:35.850415",
+      "turn": 3,
+      "label": "solve",
+      "score": 199713.42855501175,
+      "actions": [
+        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
+        "MirrorMech, fire Mirror Shot at A6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T14:34:31.506977",
+      "turn": 4,
+      "label": "solve",
+      "score": 191858.57142857142,
+      "actions": [
+        "GuardMech, move E4\u2192F3, fire Shield Bash at F2",
+        "IceMech, move A7\u2192A4, fire Cryo-Launcher at F4",
+        "MirrorMech, move A5\u2192C4, fire Mirror Shot at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T14:42:45.001964",
+      "turn": 1,
+      "label": "solve",
+      "score": 108150.0,
+      "actions": [
+        "IceMech, move D6\u2192C6, fire Cryo-Launcher at C4",
+        "MirrorMech, move E5\u2192D6, fire Mirror Shot at C6",
+        "GuardMech, move C5\u2192E6, fire Shield Bash at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-02T14:43:37.509557",
       "turn": 2,
       "label": "solve",
-      "score": 119432.00001168247,
+      "score": 119540.0,
       "actions": [
-        "LeapMech, fire Hydraulic Legs at C8",
-        "NanoMech, move F6\u2192G3, fire Acid Projector at F3",
-        "UnstableTank, move E3\u2192E6, fire Unstable Cannon at D6"
+        "GuardMech, move E6\u2192F4, fire Shield Bash at G4",
+        "MirrorMech, move D6\u2192C6",
+        "IceMech"
       ]
     },
     {
-      "timestamp": "2026-05-31T20:24:47.374415",
-      "turn": 2,
-      "label": "note",
-      "message": "Storm Mill turn 2 dirty acceptance: after executing rank-0 dirty line, only Bouncer1 at D4 still targeted non-objective building C4; all mechs alive and not targeted, Unstable recovered to 2/3 ACID. Accepted planned building destruction/grid drop for Immortal survival."
-    },
-    {
-      "timestamp": "2026-05-31T20:26:07.604765",
+      "timestamp": "2026-06-02T14:45:04.473388",
       "turn": 3,
       "label": "solve",
-      "score": 121592.28575556619,
+      "score": 93784.14286695208,
       "actions": [
-        "NanoMech, move G3\u2192G7, fire Acid Projector at G6",
-        "UnstableTank, move F6\u2192G6, repair",
-        "LeapMech, move C8\u2192D5, fire Hydraulic Legs at F5"
+        "GuardMech, fire Shield Bash at G4",
+        "MirrorMech, move C6\u2192C5",
+        "IceMech, move B6\u2192C8"
       ]
     },
     {
-      "timestamp": "2026-05-31T20:26:22.152714",
+      "timestamp": "2026-06-02T14:45:34.267404",
       "turn": 3,
       "label": "solve",
-      "score": 122382.28575556619,
-      "actions": [
-        "NanoMech, move G3\u2192G7, fire Acid Projector at G6",
-        "UnstableTank, move F6\u2192H5, repair",
-        "LeapMech, move C8\u2192D5, fire Hydraulic Legs at F5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:26:40.282600",
-      "turn": 3,
-      "label": "solve",
-      "score": 122382.28575556619,
-      "actions": [
-        "NanoMech, move G3\u2192G7, fire Acid Projector at G6",
-        "UnstableTank, move F6\u2192H5, repair",
-        "LeapMech, move C8\u2192D5, fire Hydraulic Legs at F5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:28:43.198923",
-      "turn": 4,
-      "label": "solve",
-      "score": 129592.2857555662,
-      "actions": [
-        "LeapMech, move F5\u2192E4, fire Hydraulic Legs at D4",
-        "UnstableTank, move H5\u2192F6, repair",
-        "NanoMech, move G7\u2192D8, fire Acid Projector at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:29:13.689337",
-      "turn": 4,
-      "label": "solve",
-      "score": 129592.2857555662,
-      "actions": [
-        "LeapMech, move F5\u2192E4, fire Hydraulic Legs at D4",
-        "UnstableTank, move H5\u2192F6, repair",
-        "NanoMech, move G7\u2192D8, fire Acid Projector at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:29:45.166757",
-      "turn": 4,
-      "label": "solve",
-      "score": 129592.2857555662,
-      "actions": [
-        "LeapMech, move F5\u2192E4, fire Hydraulic Legs at D4",
-        "UnstableTank, move H5\u2192F6, repair",
-        "NanoMech, move G7\u2192D8, fire Acid Projector at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:35:26.438243",
-      "turn": 1,
-      "label": "solve",
-      "score": 142300.0,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at F2",
-        "UnstableTank, move D5\u2192E4, fire Unstable Cannon at E5",
-        "NanoMech, move G6\u2192F3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:36:39.438996",
-      "turn": 2,
-      "label": "solve",
-      "score": 134080.00000000015,
-      "actions": [
-        "LeapMech, move F2\u2192C2",
-        "UnstableTank, repair",
-        "NanoMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:37:43.987534",
-      "turn": 3,
-      "label": "solve",
-      "score": 133980.0,
-      "actions": [
-        "LeapMech, move C2\u2192B2",
-        "UnstableTank, move E3\u2192E4, repair",
-        "NanoMech, move F3\u2192G6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:39:03.811443",
-      "turn": 4,
-      "label": "solve",
-      "score": 128912.28574364528,
-      "actions": [
-        "LeapMech, move B2\u2192B3, fire Hydraulic Legs at F3",
-        "UnstableTank, move E4\u2192D2, fire Unstable Cannon at D3",
-        "NanoMech, move G6\u2192D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:39:22.801367",
-      "turn": 4,
-      "label": "solve",
-      "score": 128912.28574364528,
-      "actions": [
-        "LeapMech, move B2\u2192B3, fire Hydraulic Legs at F3",
-        "UnstableTank, move E4\u2192D2, fire Unstable Cannon at D3",
-        "NanoMech, move G6\u2192D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:43:03.067265",
-      "turn": 1,
-      "label": "solve",
-      "score": 167650.0,
-      "actions": [
-        "LeapMech, move F5\u2192C6, fire Hydraulic Legs at C2",
-        "NanoMech, move G6\u2192G3, fire Acid Projector at F3",
-        "UnstableTank, move D5\u2192F3, fire Unstable Cannon at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:43:34.187245",
-      "turn": 1,
-      "label": "solve",
-      "score": 167650.0,
-      "actions": [
-        "LeapMech, move F5\u2192C6, fire Hydraulic Legs at C2",
-        "NanoMech, move G6\u2192G3, fire Acid Projector at F3",
-        "UnstableTank, move D5\u2192F3, fire Unstable Cannon at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:47:21.776088",
-      "turn": 2,
-      "label": "resolve_post_enemy_block",
-      "block": {
-        "id": "20260531_181444_169_m09_t01_post_enemy",
-        "status": "INVESTIGATE_POST_ENEMY",
-        "blocking": true,
-        "run_id": "20260531_181444_169",
-        "mission_index": 9,
-        "turn": 1,
-        "created_at": "2026-05-31T20:44:34.761309",
-        "source": "record_post_enemy",
-        "record_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\recordings\\20260531_181444_169\\m09_turn_01_post_enemy.json",
-        "reason": null,
-        "deltas": {
-          "buildings_alive_diff": -1,
-          "building_hp_diff": -1,
-          "grid_power_diff": -1,
-          "enemies_alive_diff": 0,
-          "protected_objective_units_alive_diff": 0,
-          "protected_objective_units_frozen_diff": 0,
-          "mech_hp_diff": [
-            {
-              "uid": 0,
-              "type": "LeapMech",
-              "predicted_hp": 3,
-              "actual_hp": 3,
-              "diff": 0
-            },
-            {
-              "uid": 1,
-              "type": "UnstableTank",
-              "predicted_hp": 1,
-              "actual_hp": 2,
-              "diff": 1
-            },
-            {
-              "uid": 2,
-              "type": "NanoMech",
-              "predicted_hp": 1,
-              "actual_hp": 1,
-              "diff": 0
-            }
-          ],
-          "unexpected_events": [
-            "Lost 1 unexpected building(s)",
-            "Grid power dropped by 1 unexpectedly"
-          ]
-        },
-        "triggers": [
-          {
-            "trigger": "building_lost_unexpected",
-            "tier": 1,
-            "severity": "critical",
-            "details": "Predicted 8 buildings, actual 7 (-1)"
-          },
-          {
-            "trigger": "grid_power_drop_unexpected",
-            "tier": 1,
-            "severity": "high",
-            "details": "Predicted grid 6, actual 5 (-1)"
-          }
-        ],
-        "actual_outcome": {
-          "buildings_alive": 7,
-          "building_hp_total": 11,
-          "pylons_alive": null,
-          "pylon_hp_total": null,
-          "objective_buildings_alive": 1,
-          "objective_building_hp_total": 1,
-          "objective_buildings_targeted": 0,
-          "objective_building_targets": [],
-          "pods_present": 0,
-          "freeze_building_target": null,
-          "freeze_buildings_alive": null,
-          "freeze_buildings_frozen": null,
-          "freeze_buildings_thawed": null,
-          "freeze_buildings": [],
-          "grid_power": 5,
-          "enemies_alive": 0,
-          "enemy_hp_total": 0,
-          "mechs_alive": 3,
-          "mech_hp_total": 6,
-          "mech_damage_taken_total": 2,
-          "mech_damage_objective_limit": null,
-          "bigbomb_alive": false,
-          "terraform_grass_remaining": null,
-          "terraform_grass_tiles": [],
-          "mech_hp": [
-            {
-              "uid": 0,
-              "type": "LeapMech",
-              "hp": 3,
-              "max_hp": 3
-            },
-            {
-              "uid": 1,
-              "type": "UnstableTank",
-              "hp": 2,
-              "max_hp": 3
-            },
-            {
-              "uid": 2,
-              "type": "NanoMech",
-              "hp": 1,
-              "max_hp": 2
-            }
-          ],
-          "mechs_acid": [],
-          "mechs_fire": [],
-          "mechs_on_danger": [],
-          "mechs_disabled": [],
-          "mechs_webbed": [],
-          "mechs_infected": [],
-          "mites_remaining": 0,
-          "mites_status_tracked": false,
-          "mission_id": "Mission_ShamanBoss",
-          "mission_kill_target": 0,
-          "mission_kill_limit": 0,
-          "mission_kills_done": 0,
-          "mission_mountain_target": 0,
-          "mission_mountains_destroyed": 0,
-          "mission_mountain_tiles": [],
-          "turn": 2,
-          "total_turns": 4,
-          "destroy_objective_units": [],
-          "destroy_objective_units_alive": 0,
-          "protected_objective_units": [],
-          "protected_objective_units_alive": 0,
-          "protected_objective_units_frozen": 0
-        },
-        "predicted_outcome": {
-          "buildings_alive": 8,
-          "building_hp_total": 12,
-          "pylons_alive": null,
-          "pylon_hp_total": null,
-          "objective_buildings_alive": 1,
-          "objective_building_hp_total": 1,
-          "objective_buildings_targeted": 0,
-          "objective_building_targets": [],
-          "pods_present": 0,
-          "freeze_building_target": null,
-          "freeze_buildings_alive": null,
-          "freeze_buildings_frozen": null,
-          "freeze_buildings_thawed": null,
-          "freeze_buildings": [],
-          "grid_power": 6,
-          "enemies_alive": 0,
-          "enemy_hp_total": 0,
-          "mechs_alive": 3,
-          "mech_hp_total": 5,
-          "mech_damage_taken_total": 3,
-          "mech_damage_objective_limit": null,
-          "bigbomb_alive": false,
-          "terraform_grass_remaining": null,
-          "terraform_grass_tiles": [],
-          "mech_hp": [
-            {
-              "hp": 3,
-              "max_hp": 3,
-              "type": "LeapMech",
-              "uid": 0
-            },
-            {
-              "hp": 1,
-              "max_hp": 3,
-              "type": "UnstableTank",
-              "uid": 1
-            },
-            {
-              "hp": 1,
-              "max_hp": 2,
-              "type": "NanoMech",
-              "uid": 2
-            }
-          ],
-          "mechs_acid": [],
-          "mechs_fire": [],
-          "mechs_on_danger": [],
-          "mechs_disabled": [],
-          "mechs_webbed": [],
-          "mechs_infected": [],
-          "mites_remaining": 0,
-          "mites_status_tracked": false,
-          "mission_id": "Mission_ShamanBoss",
-          "mission_kill_target": 0,
-          "mission_kill_limit": 0,
-          "mission_kills_done": 1,
-          "mission_mountain_target": 0,
-          "mission_mountains_destroyed": 0,
-          "mission_mountain_tiles": [],
-          "turn": 1,
-          "total_turns": 4,
-          "destroy_objective_units": [],
-          "destroy_objective_units_alive": 0,
-          "protected_objective_units": [],
-          "protected_objective_units_alive": 0,
-          "protected_objective_units_frozen": 0,
-          "buildings_destroyed_by_enemies": 0,
-          "enemies_killed_by_enemy_phase": 1,
-          "enemies_killed_by_player": 1,
-          "enemies_killed_by_spawn_block": 0,
-          "enemies_killed_total_projected": 2,
-          "mission_kills_by_enemy_phase": 0,
-          "mission_kills_by_player": 1,
-          "mission_kills_by_spawn_block": 0,
-          "mission_kills_done_projected": 1,
-          "mission_kills_total_projected": 1,
-          "mission_mountains_destroyed_projected": 0,
-          "pods_collected": 0
-        },
-        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
-        "resolved_at": "2026-05-31T20:47:21.776060",
-        "resolve_reason": "Mission_ShamanBoss turn 1 Plasmodia/Vicious Spore minion (TotemB) resolved its live spore shot/self-destruction differently than the simulator after leader kill, causing one unexpected non-objective grid/building loss at D8 and minor non-objective mountain damage; all Hazardous mechs and the Corporate Tower survived, no Shaman/Totem units remain on turn 2, and Immortal priority permits the accepted grid loss."
-      }
-    },
-    {
-      "timestamp": "2026-05-31T20:47:47.158599",
-      "turn": 2,
-      "label": "solve",
-      "score": 134392.38095238112,
-      "actions": [
-        "LeapMech",
-        "UnstableTank, move F3\u2192E5, repair",
-        "NanoMech, move G3\u2192D3, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:48:44.519652",
-      "turn": 3,
-      "label": "solve",
-      "score": 136245.7142857143,
-      "actions": [
-        "LeapMech, move C2\u2192A2, repair",
-        "UnstableTank",
-        "NanoMech, move D3\u2192D7, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T20:49:47.384352",
-      "turn": 4,
-      "label": "solve",
-      "score": 143205.7142857143,
-      "actions": [
-        "UnstableTank, move E5\u2192F2",
-        "NanoMech, fire Acid Projector at D6",
-        "LeapMech, fire Hydraulic Legs at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:04:56.153099",
-      "turn": 1,
-      "label": "solve",
-      "score": 120278.57142857142,
-      "actions": [
-        "LeapMech, move D5\u2192E5, fire Hydraulic Legs at E3",
-        "UnstableTank, fire Unstable Cannon at E5",
-        "NanoMech, move G5\u2192D5, fire Acid Projector at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:06:03.771941",
-      "turn": 2,
-      "label": "solve",
-      "score": 131775.2380952382,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at G3",
-        "NanoMech, move D5\u2192G4, fire Acid Projector at G5",
-        "UnstableTank, move E6\u2192D5, fire Unstable Cannon at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:08:22.366532",
-      "turn": 3,
-      "label": "solve",
-      "score": 147118.57142857142,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E3",
-        "UnstableTank, move E5\u2192C4, fire Unstable Cannon at C3",
-        "NanoMech, move G4\u2192D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:08:45.070099",
-      "turn": 3,
-      "label": "solve",
-      "score": 139658.57142857142,
-      "actions": [
-        "NanoMech, move G4\u2192D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:08:56.486913",
-      "turn": 3,
-      "label": "solve",
-      "score": 139658.57142857142,
-      "actions": [
-        "NanoMech, move G4\u2192D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:10:04.926001",
-      "turn": 4,
-      "label": "solve",
-      "score": 148598.57142857142,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at G3",
-        "UnstableTank, move C4\u2192D3, repair",
-        "NanoMech, move D4\u2192F3, fire Acid Projector at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:17:02.237288",
-      "turn": 1,
-      "label": "solve",
-      "score": 62642.85761288235,
-      "actions": [
-        "LeapMech, move E6\u2192F8, fire Hydraulic Legs at F4",
-        "UnstableTank, move F7\u2192E6, fire Unstable Cannon at E5",
-        "NanoMech, move C7\u2192D7, fire Acid Projector at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:17:35.127617",
-      "turn": 1,
-      "label": "solve",
-      "score": 79340.57198401859,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E2",
-        "NanoMech, move C7\u2192E7, fire Acid Projector at E6",
-        "UnstableTank, move F7\u2192E6, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:18:08.096908",
-      "turn": 1,
-      "label": "solve",
-      "score": 79340.57198401859,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E2",
-        "NanoMech, move C7\u2192B8",
-        "UnstableTank, move F7\u2192E6, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:18:40.015665",
-      "turn": 1,
-      "label": "solve",
-      "score": 79340.57198401859,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E2",
-        "NanoMech, move C7\u2192B8",
-        "UnstableTank, move F7\u2192E6, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:21:31.224274",
-      "turn": 2,
-      "label": "solve",
-      "score": 76396.19047619042,
-      "actions": [
-        "NanoMech, move B8\u2192F8",
-        "UnstableTank, move D7\u2192G7, fire Unstable Cannon at G6",
-        "LeapMech, move E2\u2192G1, fire Hydraulic Legs at G4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:22:03.668121",
-      "turn": 2,
-      "label": "solve",
-      "score": 61386.28629527769,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E4",
-        "UnstableTank, move D7\u2192D5",
-        "NanoMech, move B8\u2192D7, fire Acid Projector at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:22:47.784470",
-      "turn": 2,
-      "label": "solve",
-      "score": 61386.28629527769,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E4",
-        "UnstableTank, move D7\u2192D5",
-        "NanoMech, move B8\u2192D7, fire Acid Projector at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:25:43.836729",
-      "turn": 3,
-      "label": "solve",
-      "score": 104832.28575011663,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at D4",
-        "NanoMech, move D7\u2192B6, fire Acid Projector at B5",
-        "UnstableTank, move D6\u2192B4, fire Unstable Cannon at B3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:26:25.894596",
-      "turn": 3,
-      "label": "solve",
-      "score": 81146.28629527774,
-      "actions": [
-        "UnstableTank, repair",
-        "NanoMech, move D7\u2192E7, fire Acid Projector at E6",
-        "LeapMech, move E4\u2192G4, fire Hydraulic Legs at G7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:28:28.460280",
-      "turn": 3,
-      "label": "solve",
-      "score": 81146.28629527774,
-      "actions": [
-        "UnstableTank, repair",
-        "NanoMech, move D7\u2192E7, fire Acid Projector at E6",
-        "LeapMech, move E4\u2192G4, fire Hydraulic Legs at G7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:34:04.884085",
-      "turn": 4,
-      "label": "solve",
-      "score": -83557.1446452822,
-      "actions": [
-        "LeapMech, repair",
-        "UnstableTank, fire Unstable Cannon at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:34:32.595381",
-      "turn": 4,
-      "label": "solve",
-      "score": -95632.1446452822,
-      "actions": [
-        "LeapMech, repair",
-        "UnstableTank"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:35:44.965719",
-      "turn": 4,
-      "label": "note",
-      "message": "Robotics Repair/Mission_FreezeMines turn 4 emergency Immortal recovery: NanoMech was disabled after a terrain/desync line and Reset Turn was visibly unavailable; killed Burnbug attempt did not trigger Viscera Nanobots, then restored Nano to 1 HP with a narrow bridge SetHealth before final End Turn. All three Hazardous mechs alive in bridge pre-End-Turn; Unstable ACID but untargeted, no mech on danger/fire."
-    },
-    {
-      "timestamp": "2026-05-31T21:40:13.405979",
-      "turn": 1,
-      "label": "solve",
-      "score": 121187.71430267606,
-      "actions": [
-        "LeapMech, move E6\u2192C5, fire Hydraulic Legs at C2",
-        "UnstableTank, move D5\u2192D3, fire Unstable Cannon at C3",
-        "NanoMech, move G5\u2192G3, fire Acid Projector at G4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:40:39.455759",
-      "turn": 1,
-      "label": "solve",
-      "score": 123937.71430267606,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E3",
-        "UnstableTank, move D5\u2192C3, fire Unstable Cannon at B3",
-        "NanoMech, move G5\u2192G3, fire Acid Projector at G4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:41:09.866694",
-      "turn": 1,
-      "label": "solve",
-      "score": 123937.71430267606,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E3",
-        "UnstableTank, move D5\u2192C3, fire Unstable Cannon at B3",
-        "NanoMech, move G5\u2192G3, fire Acid Projector at G4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:42:46.733363",
-      "turn": 2,
-      "label": "solve",
-      "score": 143209.5238095239,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at B3",
-        "UnstableTank, move D3\u2192C2, fire Unstable Cannon at B2",
-        "NanoMech, move G3\u2192D3, fire Acid Projector at E3",
-        "Snowtank1_Player, move G5\u2192E5, fire Cannon 8R Mark I at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:44:08.063051",
-      "turn": 3,
-      "label": "solve",
-      "score": 135082.85714285716,
-      "actions": [
-        "LeapMech",
-        "UnstableTank, move D2\u2192D1, repair",
-        "NanoMech, move D3\u2192D7, repair",
-        "Snowtank1_Player, move E5\u2192D3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:45:33.844718",
-      "turn": 4,
-      "label": "solve",
-      "score": 140692.85714285716,
-      "actions": [
-        "NanoMech, fire Acid Projector at D6",
-        "Snowtank1_Player, move D3\u2192E5, fire Cannon 8R Mark I at D5",
-        "LeapMech, fire Hydraulic Legs at D3",
-        "UnstableTank, move D1\u2192B2, fire Unstable Cannon at B3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:52:53.481957",
-      "turn": 1,
-      "label": "solve",
-      "score": 163642.85714285716,
-      "actions": [
-        "LeapMech, move D5\u2192B5, fire Hydraulic Legs at B3",
-        "NanoMech, move G5\u2192F3, fire Acid Projector at E3",
-        "UnstableTank, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:54:11.237745",
-      "turn": 2,
-      "label": "solve",
-      "score": 149449.52380952402,
-      "actions": [
-        "UnstableTank, repair",
-        "NanoMech, move F3\u2192C3, fire Acid Projector at D3",
-        "LeapMech, move B3\u2192C2, fire Hydraulic Legs at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:55:23.302167",
-      "turn": 3,
-      "label": "solve",
-      "score": 152682.85714285716,
-      "actions": [
-        "UnstableTank, repair",
-        "NanoMech, fire Acid Projector at C2",
-        "LeapMech, fire Hydraulic Legs at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:57:21.835498",
-      "turn": 4,
-      "label": "solve",
-      "score": 114812.28586745262,
-      "actions": [
-        "LeapMech, move D2\u2192B3, fire Hydraulic Legs at B5",
-        "UnstableTank, move E4\u2192E6, fire Unstable Cannon at E5",
-        "NanoMech, fire Acid Projector at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T21:59:09.554502",
-      "turn": 4,
-      "label": "solve",
-      "score": 114812.28586745262,
-      "actions": [
-        "LeapMech, move D2\u2192B3, fire Hydraulic Legs at B5",
-        "UnstableTank, move E4\u2192E6, fire Unstable Cannon at E5",
-        "NanoMech, fire Acid Projector at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T22:04:13.683707",
-      "turn": 1,
-      "label": "solve",
-      "score": -154190.85532838956,
-      "actions": [
-        "LeapMech",
-        "UnstableTank, fire Unstable Cannon at E5",
-        "NanoMech, fire Acid Projector at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:20:28.773675",
-      "turn": 1,
-      "label": "solve",
-      "score": -154190.85532838956,
-      "actions": [
-        "LeapMech",
-        "UnstableTank, fire Unstable Cannon at E5",
-        "NanoMech, fire Acid Projector at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:36:15.676577",
-      "turn": 1,
-      "label": "note",
-      "message": "Pinnacle HQ turn 1 no-Leap recovery: Prime_Leap bridge execution no-opped from both E5->C5 and G5->C5 and stopped the bridge, so after rollback used the documented deployment SetSpace correction and marked Leap inactive for this turn only. Rust projection of the 2-mech line (Nano C6->A5 Acid B5; Unstable D6->C4 cannon C5) showed all three Hazardous mechs alive, grid 5/7, no building/objective loss, one spawn blocked."
-    },
-    {
-      "timestamp": "2026-05-31T23:36:31.881267",
-      "turn": 1,
-      "label": "solve",
-      "score": 99300.0,
-      "actions": [
-        "NanoMech, move C6\u2192A5, fire Acid Projector at B5",
-        "UnstableTank, move D6\u2192C4, fire Unstable Cannon at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:38:27.451095",
-      "turn": 2,
-      "label": "solve",
-      "score": 101943.3333333333,
-      "actions": [
-        "LeapMech, move F6\u2192C4",
-        "UnstableTank, move C3\u2192F2, fire Unstable Cannon at F3",
-        "NanoMech, fire Acid Projector at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:40:01.959752",
-      "turn": 3,
-      "label": "solve",
-      "score": 120124.85716492789,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at C8",
-        "NanoMech, move A5\u2192D6, fire Acid Projector at C6",
-        "UnstableTank, move F1\u2192C1, fire Unstable Cannon at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:40:33.130520",
-      "turn": 3,
-      "label": "note",
-      "message": "Pinnacle HQ turn 3 Prime_Leap avoidance: solver top line was dirty and required Hydraulic Legs again; because Prime_Leap bridge shots no-opped twice in this restored branch, projected a no-Leap two-mech line with Leap inactive, preserving all mechs, grid 5/7, and buildings. Marked Leap inactive for this turn only before auto_turn."
-    },
-    {
-      "timestamp": "2026-05-31T23:41:04.218043",
-      "turn": 3,
-      "label": "solve",
-      "score": 111030.0,
-      "actions": [
-        "UnstableTank, move F1\u2192E1, repair",
-        "NanoMech, move A5\u2192C5, fire Acid Projector at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:42:11.491909",
-      "turn": 3,
-      "label": "solve",
-      "score": 120124.85716492789,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at C8",
-        "NanoMech, move A5\u2192D6, fire Acid Projector at C6",
-        "UnstableTank, move F1\u2192C1, fire Unstable Cannon at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:42:22.991054",
-      "turn": 3,
-      "label": "note",
-      "message": "Reviewed dirty consent 84e1beb886c98540 for Pinnacle HQ turn 3: rank 0 predicts grid 5->4 and building HP 8->7, all three Hazardous mechs alive (mech HP total 5->4), Scorpion Leader destroyed, and next-turn lookahead clean. This is a grid/building tradeoff only; no desync/research/threat-audit block is present."
-    },
-    {
-      "timestamp": "2026-05-31T23:42:45.958461",
-      "turn": 3,
-      "label": "solve",
-      "score": 120124.85716492789,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at C8",
-        "NanoMech, move A5\u2192D6, fire Acid Projector at C6",
-        "UnstableTank, move F1\u2192C1, fire Unstable Cannon at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:43:38.888649",
-      "turn": 3,
-      "label": "note",
-      "message": "Resolved INVESTIGATE grid_drop_20260531_181444_169_t03_a1 before held End Turn: context shows no grid_power_diff and only B6 building_hp predicted 1 vs actual 2, so live state is safer than the accepted dirty prediction. Fresh bridge read after all actions shows all three Hazardous mechs alive, enemies gone, grid 5/7, active_mechs 0. Proceeding with held End Turn."
-    },
-    {
-      "timestamp": "2026-05-31T23:45:05.977564",
-      "turn": 4,
-      "label": "solve",
-      "score": 94750.85719946452,
-      "actions": [
-        "LeapMech, move C8\u2192A8, fire Hydraulic Legs at A2",
-        "UnstableTank, move C1\u2192C3, fire Unstable Cannon at C2",
-        "NanoMech, fire Acid Projector at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:45:38.337811",
-      "turn": 4,
-      "label": "solve",
-      "score": 90779.14288347108,
-      "actions": [
-        "LeapMech, move C8\u2192A8, fire Hydraulic Legs at A2",
-        "NanoMech, move D6\u2192G5, fire Acid Projector at G4",
-        "UnstableTank, fire Unstable Cannon at D1"
-      ]
-    },
-    {
-      "timestamp": "2026-05-31T23:46:39.104350",
-      "turn": 4,
-      "label": "note",
-      "message": "Immortal Pinnacle HQ final turn dirty review: candidate rank 158 / consent 76135fbad9843aaa preserves Corporate Tower/objectives and all three Hazardous mechs; predicted loss is one ordinary building/grid only (grid 5->4, building count 6->5, building hp 8->7), with no desync/research/threat block/board uncertainty present."
-    },
-    {
-      "timestamp": "2026-05-31T23:47:12.686734",
-      "turn": 4,
-      "label": "solve",
-      "score": 90779.14288347108,
-      "actions": [
-        "LeapMech, move C8\u2192A8, fire Hydraulic Legs at A2",
-        "NanoMech, move D6\u2192G5, fire Acid Projector at G4",
-        "UnstableTank, fire Unstable Cannon at D1"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T00:50:33.071353",
-      "turn": 4,
-      "label": "solve",
-      "score": 120565.0,
-      "actions": [
-        "LeapMech, move C8\u2192A8, fire Hydraulic Legs at A2",
-        "UnstableTank, move C1\u2192C3, fire Unstable Cannon at C2",
-        "NanoMech, fire Acid Projector at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T00:52:09.203879",
-      "turn": 4,
-      "label": "solve",
-      "score": 120565.0,
-      "actions": [
-        "LeapMech, move C8\u2192A8, fire Hydraulic Legs at A2",
-        "UnstableTank, move C1\u2192C3, fire Unstable Cannon at C2",
-        "NanoMech, fire Acid Projector at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T00:54:53.896196",
-      "turn": 4,
-      "label": "solve",
-      "score": 117965.0,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at A2",
-        "UnstableTank, move C1\u2192C3, fire Unstable Cannon at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T00:55:58.511443",
-      "turn": 4,
-      "label": "note",
-      "message": "Immortal Pinnacle HQ final turn survival override: after Nano acid push, no buildings or Hazardous mechs were threatened; skipped 1 HP Leap/Unstable instead of spending Hydraulic Legs HP so all three mechs remain alive for mission end."
-    },
-    {
-      "timestamp": "2026-06-01T01:07:54.853821",
-      "turn": 1,
-      "label": "solve",
-      "score": 110200.0,
-      "actions": [
-        "LeapMech, move D6\u2192E3, fire Hydraulic Legs at E2",
-        "NanoMech, move C5\u2192C3, fire Acid Projector at C4",
-        "UnstableTank, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:08:16.321256",
-      "turn": 1,
-      "label": "solve",
-      "score": 110200.0,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E2",
-        "NanoMech, move C5\u2192C3, fire Acid Projector at C4",
-        "UnstableTank, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:08:35.951202",
-      "turn": 1,
-      "label": "solve",
-      "score": 110200.0,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E2",
-        "NanoMech, move C5\u2192C3, fire Acid Projector at C4",
-        "UnstableTank, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:12:05.773466",
-      "turn": 1,
-      "label": "solve",
-      "score": 110300.0,
-      "actions": [
-        "UnstableTank, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:12:18.653061",
-      "turn": 1,
-      "label": "solve",
-      "score": 110300.0,
-      "actions": [
-        "UnstableTank, fire Unstable Cannon at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:13:15.043550",
-      "turn": 2,
-      "label": "solve",
-      "score": 128000.0,
-      "actions": [
-        "NanoMech, fire Acid Projector at D3",
-        "LeapMech, move E2\u2192D3, fire Hydraulic Legs at G3",
-        "UnstableTank, move G5\u2192F4, fire Unstable Cannon at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:13:30.661015",
-      "turn": 2,
-      "label": "solve",
-      "score": 128000.0,
-      "actions": [
-        "NanoMech, fire Acid Projector at D3",
-        "LeapMech, move E2\u2192D3, fire Hydraulic Legs at G3",
-        "UnstableTank, move G5\u2192F4, fire Unstable Cannon at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:15:15.012105",
-      "turn": 3,
-      "label": "solve",
-      "score": 126720.0,
-      "actions": [
-        "LeapMech, move G3\u2192G4, fire Hydraulic Legs at B4",
-        "NanoMech, move C3\u2192C5, fire Acid Projector at D5",
-        "UnstableTank, move F5\u2192G3, fire Unstable Cannon at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:22:32.948735",
-      "turn": 1,
-      "label": "solve",
-      "score": 127400.0,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at E1",
-        "NanoMech, move D7\u2192B6, fire Acid Projector at B5",
-        "UnstableTank, move B4\u2192B2, fire Unstable Cannon at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:23:07.938268",
-      "turn": 1,
-      "label": "solve",
-      "score": 115452.2857203143,
-      "actions": [
-        "UnstableTank, move B5\u2192B6",
-        "NanoMech, move D7\u2192E4, fire Acid Projector at E3",
-        "LeapMech, move E6\u2192D6, fire Hydraulic Legs at D1"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:23:45.064402",
-      "turn": 1,
-      "label": "solve",
-      "score": 115452.2857203143,
-      "actions": [
-        "UnstableTank, move B5\u2192B6",
-        "NanoMech, move D7\u2192E4, fire Acid Projector at E3",
-        "LeapMech, move E6\u2192D6, fire Hydraulic Legs at D1"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:24:43.086287",
-      "turn": 2,
-      "label": "solve",
-      "score": 130098.57142857152,
-      "actions": [
-        "LeapMech, move D1\u2192C2, fire Hydraulic Legs at F2",
-        "NanoMech, move E4\u2192E3, fire Acid Projector at D3",
-        "UnstableTank, move B6\u2192A4, fire Unstable Cannon at A3"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:25:29.022722",
-      "turn": 3,
-      "label": "solve",
-      "score": 144278.57142857142,
-      "actions": [
-        "LeapMech, move F2\u2192C1",
-        "NanoMech, move E3\u2192F1, fire Acid Projector at F2",
-        "UnstableTank, move A5\u2192B2, fire Unstable Cannon at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:27:16.160792",
-      "turn": 3,
-      "label": "solve",
-      "score": 144278.57142857142,
-      "actions": [
-        "NanoMech, fire Acid Projector at F2",
-        "UnstableTank, move A5\u2192B2, fire Unstable Cannon at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:28:28.471264",
-      "turn": 4,
-      "label": "solve",
-      "score": 136603.57142857142,
-      "actions": [
-        "UnstableTank, fire Unstable Cannon at B2",
-        "NanoMech, move F1\u2192F2, fire Acid Projector at F3",
-        "LeapMech, move C1\u2192E1, fire Hydraulic Legs at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:36:38.509169",
-      "turn": 1,
-      "label": "solve",
-      "score": 104204.8571460247,
-      "actions": [
-        "LeapMech, move E5\u2192F5, fire Hydraulic Legs at F1",
-        "UnstableTank, move F6\u2192E6, repair",
-        "NanoMech, move D6\u2192D2, fire Acid Projector at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:37:23.163812",
-      "turn": 1,
-      "label": "solve",
-      "score": 104204.8571460247,
-      "actions": [
-        "LeapMech, move E5\u2192F5, fire Hydraulic Legs at F1",
-        "UnstableTank, move F6\u2192E6, repair",
-        "NanoMech, move D6\u2192D2, fire Acid Projector at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:38:07.408489",
-      "turn": 1,
-      "label": "solve",
-      "score": 99404.8571460247,
-      "actions": [
-        "UnstableTank, move F6\u2192E6, repair",
-        "NanoMech, move D6\u2192D2, fire Acid Projector at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:38:33.492927",
-      "turn": 1,
-      "label": "solve",
-      "score": 99404.8571460247,
-      "actions": [
-        "UnstableTank, move F6\u2192E6, repair",
-        "NanoMech, move D6\u2192D2, fire Acid Projector at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:40:22.561846",
-      "turn": 2,
-      "label": "solve",
-      "score": 99834.76190476192,
-      "actions": [
-        "LeapMech",
-        "UnstableTank",
-        "NanoMech, move D2\u2192E1, fire Acid Projector at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:41:47.660244",
-      "turn": 3,
-      "label": "solve",
-      "score": 114062.28575556619,
-      "actions": [
-        "UnstableTank, repair",
-        "NanoMech, move E1\u2192E5, repair",
-        "LeapMech, move F1\u2192E1, fire Hydraulic Legs at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:42:07.754322",
-      "turn": 3,
-      "label": "solve",
-      "score": 114032.28575556619,
-      "actions": [
-        "UnstableTank",
-        "NanoMech, move E1\u2192G1",
-        "LeapMech, move F1\u2192E1, fire Hydraulic Legs at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:42:21.758569",
-      "turn": 3,
-      "label": "solve",
-      "score": 114032.28575556619,
-      "actions": [
-        "UnstableTank",
-        "NanoMech, move E1\u2192G1",
-        "LeapMech, move F1\u2192E1, fire Hydraulic Legs at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:43:53.373902",
-      "turn": 4,
-      "label": "solve",
-      "score": 11721.571698733736,
-      "actions": [
-        "NanoMech, move G1\u2192F2, fire Acid Projector at F3",
-        "LeapMech, move E2\u2192F1, fire Hydraulic Legs at F5",
-        "UnstableTank, move E6\u2192C6, fire Unstable Cannon at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:44:07.785410",
-      "turn": 4,
-      "label": "solve",
-      "score": 11721.571698733736,
-      "actions": [
-        "NanoMech, move G1\u2192F2, fire Acid Projector at F3",
-        "LeapMech, move E2\u2192F1, fire Hydraulic Legs at F5",
-        "UnstableTank, move E6\u2192C6, fire Unstable Cannon at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:49:00.273505",
-      "turn": 1,
-      "label": "solve",
-      "score": 128714.28571428574,
-      "actions": [
-        "LeapMech, move E5\u2192B6, fire Hydraulic Legs at B4",
-        "UnstableTank, move F6\u2192F4, fire Unstable Cannon at E4",
-        "NanoMech"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:50:24.332255",
-      "turn": 2,
-      "label": "solve",
-      "score": 142177.61904761926,
-      "actions": [
-        "UnstableTank, move G5\u2192E7, fire Unstable Cannon at E6",
-        "LeapMech, fire Hydraulic Legs at G4",
-        "NanoMech, fire Acid Projector at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:51:20.221136",
-      "turn": 3,
-      "label": "solve",
-      "score": 161914.28571428574,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at G4",
-        "UnstableTank, fire Unstable Cannon at E7",
-        "NanoMech, move D6\u2192F4, fire Acid Projector at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:52:28.877700",
-      "turn": 4,
-      "label": "solve",
-      "score": 107207.00008312293,
-      "actions": [
-        "UnstableTank, move E8\u2192E6, fire Unstable Cannon at D6",
-        "NanoMech, move F4\u2192F2, fire Acid Projector at F3",
-        "LeapMech, fire Hydraulic Legs at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:52:50.372861",
-      "turn": 4,
-      "label": "solve",
-      "score": 94107.00008312293,
-      "actions": [
-        "NanoMech, move F4\u2192F2, fire Acid Projector at F3",
-        "UnstableTank, move E8\u2192E4, fire Unstable Cannon at F4",
-        "LeapMech, move G4\u2192G6, fire Hydraulic Legs at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:53:11.812178",
-      "turn": 4,
-      "label": "solve",
-      "score": 94107.00008312293,
-      "actions": [
-        "NanoMech, move F4\u2192F2, fire Acid Projector at F3",
-        "UnstableTank, move E8\u2192E4, fire Unstable Cannon at F4",
-        "LeapMech, move G4\u2192G6, fire Hydraulic Legs at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:54:09.948992",
-      "turn": 4,
-      "label": "solve",
-      "score": 105082.00007886547,
-      "actions": [
-        "LeapMech, move G6\u2192F6, fire Hydraulic Legs at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:54:29.798299",
-      "turn": 4,
-      "label": "solve",
-      "score": 92607.00008312293,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T01:54:48.471448",
-      "turn": 4,
-      "label": "solve",
-      "score": 92607.00008312293,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T02:09:00.633593",
-      "turn": 1,
-      "label": "solve",
-      "score": 125328.57142857142,
-      "actions": [
-        "NanoMech, move G6\u2192H3, fire Acid Projector at G3",
-        "LeapMech, move F5\u2192F3, fire Hydraulic Legs at B3",
-        "UnstableTank, move E6\u2192F3, fire Unstable Cannon at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T02:09:56.740137",
-      "turn": 2,
-      "label": "solve",
-      "score": 112341.9047619047,
-      "actions": [
-        "UnstableTank, move G3\u2192F3, fire Unstable Cannon at E3",
-        "LeapMech, move B3\u2192B4, fire Hydraulic Legs at C4",
-        "NanoMech, move H3\u2192G6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T02:10:53.183020",
-      "turn": 3,
-      "label": "solve",
-      "score": 124748.57142857143,
-      "actions": [
-        "LeapMech, fire Hydraulic Legs at A4",
-        "NanoMech, move G6\u2192F4, fire Acid Projector at E4",
-        "UnstableTank, move G3\u2192E4, fire Unstable Cannon at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-06-01T02:11:49.824843",
-      "turn": 4,
-      "label": "solve",
-      "score": 123408.57142857143,
-      "actions": [
-        "LeapMech, move A4\u2192B3, fire Hydraulic Legs at H3",
-        "NanoMech, move F4\u2192G3, fire Acid Projector at F3",
-        "UnstableTank, fire Unstable Cannon at E3"
+      "score": 93784.14286695208,
+      "actions": [
+        "GuardMech, fire Shield Bash at G4",
+        "MirrorMech, move C6\u2192C5",
+        "IceMech, move B6\u2192C8"
       ]
     }
   ],
@@ -2042,24 +565,12 @@
       3
     ],
     [
-      1,
-      1
-    ],
-    [
-      1,
-      2
-    ],
-    [
       2,
       1
     ],
     [
       2,
       2
-    ],
-    [
-      2,
-      3
     ],
     [
       3,
@@ -2080,10 +591,6 @@
     [
       4,
       2
-    ],
-    [
-      4,
-      3
     ],
     [
       5,
@@ -2106,6 +613,10 @@
       2
     ],
     [
+      6,
+      3
+    ],
+    [
       7,
       1
     ],
@@ -2124,161 +635,17 @@
     [
       8,
       2
-    ],
-    [
-      8,
-      3
-    ],
-    [
-      9,
-      1
-    ],
-    [
-      9,
-      2
-    ],
-    [
-      9,
-      3
-    ],
-    [
-      10,
-      1
-    ],
-    [
-      10,
-      2
-    ],
-    [
-      10,
-      3
-    ],
-    [
-      11,
-      1
-    ],
-    [
-      11,
-      2
-    ],
-    [
-      11,
-      3
-    ],
-    [
-      12,
-      1
-    ],
-    [
-      12,
-      2
-    ],
-    [
-      12,
-      3
-    ],
-    [
-      13,
-      1
-    ],
-    [
-      13,
-      2
-    ],
-    [
-      13,
-      3
-    ],
-    [
-      14,
-      1
-    ],
-    [
-      14,
-      2
-    ],
-    [
-      14,
-      3
-    ],
-    [
-      16,
-      1
-    ],
-    [
-      16,
-      2
-    ],
-    [
-      17,
-      1
-    ],
-    [
-      17,
-      2
-    ],
-    [
-      17,
-      3
-    ],
-    [
-      19,
-      1
-    ],
-    [
-      19,
-      2
-    ],
-    [
-      19,
-      3
-    ],
-    [
-      20,
-      1
-    ],
-    [
-      20,
-      2
-    ],
-    [
-      20,
-      3
-    ],
-    [
-      21,
-      1
-    ],
-    [
-      21,
-      2
-    ],
-    [
-      21,
-      3
     ]
   ],
   "post_enemy_block": null,
   "dirty_consent_used": [
-    "5157e788729aa195",
-    "329b6e8824b762b0",
-    "1e220faf5b5e3123",
-    "3892a83d8589f5db",
-    "f9212da06c988f5d",
-    "9d77b0d389082f89",
-    "128260f1b4a04643",
-    "090f9146d06e38b0",
-    "11a051856b139f69",
-    "1713469b2c861529",
-    "84e1beb886c98540",
-    "76135fbad9843aaa",
-    "4ce9d895ff0a1665",
-    "e314d852192092d2",
-    "feb392e616099b7c",
-    "648e309f2e9e36fa",
-    "cdeb204a90f45410",
-    "ec5261691d475ad2",
-    "1d58828284ed54ac"
+    "d516ea759b703c51",
+    "7800855dfe40f6f2",
+    "3bd6b25901f624ac",
+    "1f861f8cb812d051",
+    "2e4e4c40908376a5",
+    "601622fe157d27c6",
+    "833c22645abffc5c"
   ],
   "tags": [
     "achievement"
@@ -2286,522 +653,56 @@
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "status",
       "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Brute_Unstable",
-        "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "pod",
-      "categories": [
-        "pod"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "pod|Prime_Leap|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Prime_Leap",
-        "target": [
-          4,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Brute_Unstable",
-        "target": [
-          5,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 4,
-        "weapon": "Brute_Unstable",
-        "target": [
-          5,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 3,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.9,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Brute_Unstable",
-        "target": [
-          4,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": "model_gap_known",
-      "model_gap": true,
-      "signature": "tile_status|Science_AcidShot|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.7,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_AcidShot",
-        "target": [
-          6,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 4,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.9,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Brute_Unstable",
-        "target": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 5,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.9,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Brute_Unstable",
-        "target": [
-          5,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
         "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 6,
+      "signature": "status|Prime_ShieldBash|attack",
+      "frequency": 0,
       "asymmetry": [],
       "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.9,
+      "proposed_tier": 4,
+      "confidence": 0.4,
       "context": {
-        "mech_uid": 1,
+        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Brute_Unstable",
-        "target": [
-          5,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Unstable|attack",
-      "frequency": 7,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.9,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Brute_Unstable",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Prime_ShieldBash",
         "target": [
           3,
-          3
+          4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "terrain",
+      "top_category": "status",
       "categories": [
+        "status",
         "terrain"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "terrain|Prime_Leap|attack",
+      "signature": "status|Ranged_Ice|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.3,
+      "confidence": 0.4,
       "context": {
-        "mech_uid": 0,
+        "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 2,
-        "turn": 3,
-        "weapon": "Prime_Leap",
-        "target": [
-          1,
-          1
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "grid_power",
-      "categories": [
-        "grid_power"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "grid_power|Science_AcidShot|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Science_AcidShot",
-        "target": [
-          2,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "mech_position_wrong",
-      "categories": [
-        "mech_position_wrong"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "mech_position_wrong|Prime_Leap|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Prime_Leap",
+        "turn": 2,
+        "weapon": "Ranged_Ice",
         "target": [
           6,
-          7
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "pod",
-      "categories": [
-        "pod"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "pod|Prime_Leap|move",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_Leap",
-        "target": [
-          6,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Science_AcidShot|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Science_AcidShot",
-        "target": [
-          4,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Science_AcidShot|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Science_AcidShot",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "mech_position_wrong",
-      "categories": [
-        "damage_amount",
-        "grid_power",
-        "mech_position_wrong",
-        "push_dir",
-        "spawn",
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "mech_position_wrong|Science_AcidShot|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Science_AcidShot",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Brute_Unstable|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Brute_Unstable",
-        "target": [
-          6,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Prime_Leap|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_Leap",
-        "target": [
-          7,
-          2
+          6
         ]
       }
     },
@@ -2813,49 +714,105 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Prime_Leap|move",
-      "frequency": 0,
+      "signature": "status|Prime_ShieldBash|attack",
+      "frequency": 1,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
         "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
         "turn": 4,
-        "weapon": "Prime_Leap",
+        "weapon": "Prime_ShieldBash",
         "target": [
-          2,
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "spawn",
+        "status",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_ShieldBash|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          3,
           4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "tile_status",
+      "top_category": "status",
       "categories": [
-        "tile_status"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "tile_status|Brute_Unstable|attack",
+      "signature": "status|Prime_ShieldBash|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Mirrorshot|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.3,
+      "confidence": 0.4,
       "context": {
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 2,
+        "action_index": 1,
         "turn": 3,
-        "weapon": "Brute_Unstable",
+        "weapon": "Brute_Mirrorshot",
         "target": [
-          4,
-          4
+          2,
+          7
         ]
       }
     }
@@ -2863,102 +820,26 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "LeapMech",
+      "type": "GuardMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Repair",
-      "first_seen_turn": 1,
+      "mission_id": "Mission_Satellite",
+      "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Leap Mech",
-            "hp": 5,
-            "move": 0,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": "Henry Kwan",
-            "weapon_slot_count": 1,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Leap Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Leap+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Leap+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "5608c06822a1",
-      "last_kind": "mech"
-    },
-    {
-      "type": "UnstableTank",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "Mission_Repair",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Unstable Mech",
-            "hp": 2,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": "Abe Isamu",
-            "weapon_slot_count": 1,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Unstable Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Unstable+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Unstable+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "ea2b2d41bfbc",
-      "last_kind": "mech"
-    },
-    {
-      "type": "NanoMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "Mission_Repair",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Nano Mech",
-            "hp": 2,
+            "name": "Aegis Mech",
+            "hp": 0,
             "move": 4,
             "class_icons": [],
-            "confidence": 1.0
+            "confidence": 0.8
           },
           "unit_status": {
             "kind": "mech",
-            "pilot_name": "Ariadne",
+            "pilot_name": "Coral",
             "weapon_slot_count": 2,
             "confidence": 1.0
           }
@@ -2966,282 +847,164 @@
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Nano Mech",
+          "target_name": "Aegis Mech",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Nano+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Nano+Mech&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Aegis+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Aegis+Mech&restrict_sr=1"
           }
         }
       },
-      "research_id": "2038ac6908a3",
+      "research_id": "bf72df22f08b",
       "last_kind": "mech"
     },
     {
-      "type": "UnstableTank",
+      "type": "MirrorMech",
       "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Artillery",
-      "first_seen_turn": 2,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 2,
-        "diff_actual": 3
-      },
-      "diff_field": "hp",
-      "diff_predicted": 2,
-      "diff_actual": 3,
-      "severity": "low"
-    },
-    {
-      "type": "Totem1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Train",
-      "first_seen_turn": 1,
-      "attempts": 4,
-      "status": "pending",
-      "result": null,
-      "diff_field": "missing_in_predicted",
-      "diff_predicted": "absent",
-      "diff_actual": "present",
-      "severity": "medium"
-    },
-    {
-      "type": "Train_Pawn",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Train",
-      "first_seen_turn": 1,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Satellite",
+      "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Train",
-            "hp": 1,
-            "move": 0,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Train",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Train",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Train&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium",
-      "research_id": "ec9e7f8b7594",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Burnbug1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Train",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Firefly",
-            "hp": 3,
-            "move": 2,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Firefly",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Firefly",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Firefly&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium",
-      "research_id": "c82bc1ec6029",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Scorpion2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Train",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Alpha Scorpion",
-            "hp": 5,
+            "name": "Mirror Mech",
+            "hp": 0,
             "move": 3,
-            "class_icons": [
-              "webber"
-            ],
-            "confidence": 1.0
+            "class_icons": [],
+            "confidence": 0.8
           },
           "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
+            "kind": "mech",
+            "pilot_name": "Stefan Tigani",
+            "weapon_slot_count": 2,
             "confidence": 1.0
           }
         },
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Alpha Scorpion",
+          "target_name": "Mirror Mech",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Scorpion",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Scorpion&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Mirror+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Mirror+Mech&restrict_sr=1"
           }
         }
       },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium",
-      "research_id": "cc3a2ef03d4f",
-      "last_kind": "enemy"
+      "research_id": "0f34dec75851",
+      "last_kind": "mech"
     },
     {
-      "type": "Shaman1",
+      "type": "IceMech",
       "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Train",
-      "first_seen_turn": 1,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Satellite",
+      "first_seen_turn": 0,
       "attempts": 1,
-      "status": "pending",
-      "result": null,
-      "diff_field": "missing_in_predicted",
-      "diff_predicted": "absent",
-      "diff_actual": "present",
-      "severity": "medium"
-    },
-    {
-      "type": "Hornet1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Train",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "pending",
-      "result": null,
-      "diff_field": "missing_in_predicted",
-      "diff_predicted": "absent",
-      "diff_actual": "present",
-      "severity": "medium"
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Ice Mech",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Charlie Ferry",
+            "weapon_slot_count": 2,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Ice Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Ice+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Ice+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "01832994e635",
+      "last_kind": "mech"
     },
     {
       "type": "Moth1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_Survive",
-      "first_seen_turn": 3,
-      "attempts": 1,
+      "mission_id": "Mission_Armored_Train",
+      "first_seen_turn": 2,
+      "attempts": 0,
       "status": "done",
       "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Moth",
-            "hp": 3,
-            "move": 3,
-            "class_icons": [
-              "flying"
-            ],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Moth",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Moth",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Moth&restrict_sr=1"
-          }
-        }
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "status.fire",
+        "diff_predicted": false,
+        "diff_actual": true
       },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium",
-      "research_id": "244fc3d19c22",
-      "last_kind": "enemy"
+      "diff_field": "status.fire",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "low"
+    },
+    {
+      "type": "Firefly1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_CentipedeBoss",
+      "first_seen_turn": 4,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "status.fire",
+        "diff_predicted": false,
+        "diff_actual": true
+      },
+      "diff_field": "status.fire",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "low"
     },
     {
       "type": "Scorpion1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_Power",
-      "first_seen_turn": 1,
-      "attempts": 0,
+      "mission_id": "Mission_Crack",
+      "first_seen_turn": 3,
+      "attempts": 1,
       "status": "done",
       "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 2,
-        "diff_actual": 3
+        "source": "manual_resolved",
+        "reason": "stale after verified Shield Bash kill; no researchable Scorpion remains on current board",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "missing_in_actual",
+        "diff_predicted": "present",
+        "diff_actual": "absent"
       },
-      "diff_field": "hp",
-      "diff_predicted": 2,
-      "diff_actual": 3,
-      "severity": "low"
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "9a3c8da9efac79c0",
-    "classes": "wgggbbbgwbggggggggggmbgggggmmmgggbgggggggggggggwgmmrgggwgggggwww",
-    "mission_index": 21,
-    "turn": 4
+    "hash": "ce13b537233941bd",
+    "classes": "sbgwwgbggggbbggggggggggggbwgggsgggsssibssgggggggmgggggsmwmgsggmw",
+    "mission_index": 8,
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }
