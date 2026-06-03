@@ -51,6 +51,7 @@ NON_OVERRIDABLE_KINDS = {
     "objective_building_hp_loss",
     "objective_building_targeted_final",
     "pod_unrecovered_final",
+    "mech_lost",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
     "destroy_objective_unit_alive_final",
@@ -1140,16 +1141,16 @@ def _profile_label(status: Any,
         return "timeline_collapse"
     if "pylon_destroyed" in kind_set or "pylon_hp_loss" in kind_set:
         return "pylon_loss"
-    if non_overridable:
-        return "objective_loss"
     if "grid_damage" in kind_set and "mech_lost" in kind_set:
         return "grid_and_mech_loss"
+    if "mech_lost" in kind_set:
+        return "mech_loss"
+    if non_overridable:
+        return "objective_loss"
     if "grid_damage" in kind_set:
         return "grid_loss"
     if "building_destroyed" in kind_set:
         return "building_loss"
-    if "mech_lost" in kind_set:
-        return "mech_loss"
     if "building_hp_loss" in kind_set:
         return "building_hp_loss"
     if (

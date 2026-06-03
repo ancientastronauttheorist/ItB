@@ -238,6 +238,39 @@ def test_dirty_consent_rejects_non_overridable_without_consuming_token():
     assert token not in s.dirty_consent_used
 
 
+def test_dirty_consent_rejects_mech_loss_without_consuming_token():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.achievement_targets = ["Lightning War"]
+    s.mission_index = 3
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "mech_lost",
+            "current": 3,
+            "predicted": 2,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=0)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "mech_lost" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
 def test_dirty_consent_accepts_protected_objective_loss_with_stress_flag():
     s = RunSession(run_id="r", difficulty=3, tags=["solver_eval"])
     s.mission_index = 3
