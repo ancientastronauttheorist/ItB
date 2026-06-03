@@ -1,0 +1,170 @@
+{
+  "timer_source": "save/profile current.time milliseconds; visible pause-menu Timeline Playtime only as corroborating or newer paused evidence",
+  "states": [
+    {
+      "name": "title_setup",
+      "detect": ["setup_verifier", "focused_itb_screenshot", "timer_not_started"],
+      "clock": "not_started",
+      "pause": "not_required",
+      "safe_to_think": true,
+      "must_act_now": false,
+      "fastest_action": "sync achievements and verify Blitzkrieg Easy AE",
+      "fallback": "refocus Into the Breach and rerun setup verification",
+      "abandon": "wrong setup cannot be fixed quickly"
+    },
+    {
+      "name": "start_game_clicked",
+      "detect": ["start_accept_transition", "ceo_or_island_select_visible"],
+      "clock": "ticking",
+      "pause": "maybe_unavailable",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "continue deterministic island-select flow",
+      "fallback": "pause at first verified pauseable screen",
+      "abandon": "wrong setup discovered after timer start"
+    },
+    {
+      "name": "island_select",
+      "detect": ["four_corporation_cards", "island_select_helper"],
+      "clock": "ticking",
+      "pause": "maybe_available",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "select Archive or best available Lightning route",
+      "fallback": "use island_select.py --lightning-war evidence",
+      "abandon": "first island is strategically unacceptable"
+    },
+    {
+      "name": "island_map_routing",
+      "detect": ["visible_red_regions", "bridge_island_map"],
+      "clock": "ticking_unless_verified_pause",
+      "pause": "usually_available",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "run route-ready lightning_segment command",
+      "fallback": "from pause, use lightning_peek then lightning_map_regions",
+      "abandon": "no fast route and budget is poor"
+    },
+    {
+      "name": "mission_preview",
+      "detect": ["yellow_preview_board", "ceo_dialogue"],
+      "clock": "ticking",
+      "pause": "maybe_available",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "use route-start helper with selected start mode",
+      "fallback": "dismiss known dialogue or pause and reclassify",
+      "abandon": "wrong high-friction mission starts before deployment"
+    },
+    {
+      "name": "deployment",
+      "detect": ["deployment_screen", "turn_zero", "missing_placed_mechs"],
+      "clock": "ticking",
+      "pause": "often_unavailable",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "let lightning_segment finish deployment and confirm",
+      "fallback": "calibrated deploy slots plus ranked tile clicks",
+      "abandon": "placement cannot be verified"
+    },
+    {
+      "name": "combat_player",
+      "detect": ["phase_combat_player", "active_mechs_gt_zero"],
+      "clock": "ticking_unless_pause_verified",
+      "pause": "available_through_guard",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "lightning_loop or auto_turn with bridge verification",
+      "fallback": "pause before solve if configured, then resume to execute",
+      "abandon": "research, desync, mech HP/status, or timeline-collapse gate"
+    },
+    {
+      "name": "enemy_animation",
+      "detect": ["combat_enemy", "active_mechs_zero", "transition_banners"],
+      "clock": "ticking",
+      "pause": "usually_unavailable",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "let conductor wait into player turn or terminal panel",
+      "fallback": "pause guard when a safe UI appears",
+      "abandon": "stale bridge after timeout"
+    },
+    {
+      "name": "reward_tail",
+      "detect": ["region_secured", "reward_panel", "promotion_panel", "pod_panel", "perfect_panel"],
+      "clock": "ticking",
+      "pause": "available_after_known_panel_clear",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "clear deterministic panel chain and pause",
+      "fallback": "exact calibrated continue/open/grid controls",
+      "abandon": "KIA, Timeline Lost, failed primary objective, or contradiction"
+    },
+    {
+      "name": "shop",
+      "detect": ["shop_ui", "spend_reputation_button"],
+      "clock": "ticking_unless_verified_pause",
+      "pause": "usually_available",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "buy Grid Power to full, then leave",
+      "fallback": "trivial deterministic core only if grid is full",
+      "abandon": "low grid, no reputation, and timer poor"
+    },
+    {
+      "name": "verified_pause",
+      "detect": ["pause_menu_classifier", "timer_stop_probe", "guard_status_ok"],
+      "clock": "paused",
+      "pause": "verified",
+      "safe_to_think": true,
+      "must_act_now": false,
+      "fastest_action": "perform planning, diagnosis, tests, docs, commit, push",
+      "fallback": "lightning_peek for bounded evidence",
+      "abandon": "none"
+    },
+    {
+      "name": "ambiguous_ui",
+      "detect": ["island_map_or_unknown", "classifier_error", "focus_lost"],
+      "clock": "unknown",
+      "pause": "unknown",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "pause guard if eligible, otherwise deterministic conductor action",
+      "fallback": "stop only after attempting to park safely",
+      "abandon": "repeated ambiguity while current.time advances"
+    },
+    {
+      "name": "stale_bridge_or_desync",
+      "detect": ["screen_bridge_contradiction", "verify_mismatch", "post_enemy_block"],
+      "clock": "ticking_unless_pause_verified",
+      "pause": "required_before_review",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "park in verified pause before diagnosis",
+      "fallback": "fresh read plus screenshot only after pause or bounded probe",
+      "abandon": "board remains uncertain or desync unresolved"
+    },
+    {
+      "name": "safety_or_dirty_block",
+      "detect": ["RESEARCH_REQUIRED", "INVESTIGATE", "THREAT_AUDIT_BLOCKED", "SAFETY_BLOCKED"],
+      "clock": "ticking_unless_pause_verified",
+      "pause": "required_before_review",
+      "safe_to_think": false,
+      "must_act_now": true,
+      "fastest_action": "pause, then resolve gate or exact Lightning speed consent",
+      "fallback": "pre-approved deterministic Lightning speed policy only",
+      "abandon": "unknown loss, grid <= 0, mech HP/status/death, timeline collapse"
+    },
+    {
+      "name": "achievement_success",
+      "detect": ["visible_popup", "achievements_sync_unlocked"],
+      "clock": "irrelevant_after_stop",
+      "pause": "park_when_possible",
+      "safe_to_think": true,
+      "must_act_now": false,
+      "fastest_action": "capture evidence, sync, stop",
+      "fallback": "record offline evidence and resync after restart/online",
+      "abandon": "do not rerun unless evidence shows still locked"
+    }
+  ]
+}
