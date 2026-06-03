@@ -595,6 +595,7 @@ def run_conductor(args: argparse.Namespace) -> int:
         status = result_status(segment.result)
         reason = str((segment.result or {}).get("reason") or "")
         if status in {"PASS", "OK"} or reason in {
+            "combat_loop_returned",
             "route_ready",
             "lightning_attempt_route_ready",
             "segment_continue",

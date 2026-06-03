@@ -185,3 +185,62 @@ def test_conductor_skips_initial_sync_when_guard_says_must_act(monkeypatch):
     assert calls[1][0] == "lightning_segment"
     assert "--no-preflight" in calls[1]
     assert calls[2] == ["achievements", "--sync"]
+
+
+def test_conductor_continues_after_combat_loop_returned(monkeypatch):
+    calls = []
+    segment_calls = 0
+    achievement_calls = 0
+
+    def result(args, payload, returncode=0):
+        return conductor.CommandResult(
+            args=args,
+            returncode=returncode,
+            stdout="",
+            stderr="",
+            result=payload,
+        )
+
+    def safe_pause_payload(reason="already_paused"):
+        return {
+            "status": "OK",
+            "reason": reason,
+            "pause_guard": {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+            "game_budget": {"game_seconds": 12, "game_timer": "0:00:12"},
+        }
+
+    def fake_run_game_loop(args, *, timeout=None):
+        nonlocal segment_calls, achievement_calls
+        calls.append(list(args))
+        if args[:2] == ["lightning_pause_guard", "--once"]:
+            return result(args, safe_pause_payload())
+        if args and args[0] == "lightning_preflight":
+            return result(args, {"status": "PASS", "game_budget": {"game_seconds": 12}})
+        if args and args[0] == "achievements":
+            achievement_calls += 1
+            unlocked = ["Lightning War"] if achievement_calls >= 3 else []
+            return result(args, {"status": "OK", "unlocked_list": unlocked})
+        if args and args[0] == "lightning_segment":
+            segment_calls += 1
+            reason = "combat_loop_returned" if segment_calls == 1 else "route_ready"
+            return result(args, safe_pause_payload(reason=reason))
+        raise AssertionError(f"unexpected command: {args}")
+
+    monkeypatch.setattr(conductor, "run_game_loop", fake_run_game_loop)
+
+    args = conductor.build_parser().parse_args(
+        [
+            "--max-segments",
+            "2",
+            "--settle-seconds",
+            "0",
+            "--no-journal",
+        ]
+    )
+
+    assert conductor.run_conductor(args) == 0
+    assert [call[0] for call in calls].count("lightning_segment") == 2
