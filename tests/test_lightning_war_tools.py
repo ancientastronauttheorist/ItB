@@ -2244,12 +2244,12 @@ def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch)
     assert result["route_start_candidates"][0]["target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["command"].endswith(
         "--route-visual-region-index 0 "
-        "--route-target-mission-id Mission_Mines "
+        "--route-target-mission-id Mission_Armored_Train "
         "--route-start-mode dialogue-region-repeat-preview-board-twice"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
-        "--route-target-mission-id Mission_Mines "
+        "--route-target-mission-id Mission_Armored_Train "
         "--route-start-mode dialogue-region-repeat-preview-board-twice"
     )
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
@@ -2502,6 +2502,17 @@ def test_lightning_attempt_blocks_route_mission_mismatch_before_deploy(monkeypat
             AssertionError("route mismatch must block before deployment")
         ),
     )
+    mismatch_blocks = []
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_route_mismatch_block",
+        lambda session, **kwargs: mismatch_blocks.append(kwargs)
+        or {
+            "expected_mission_id": kwargs["expected_mission_id"],
+            "actual_mission_id": kwargs["actual_mission_id"],
+            "next_step": "abandon",
+        },
+    )
 
     result = commands.cmd_lightning_attempt(
         expected_route_mission_id="Mission_Mines",
@@ -2511,6 +2522,65 @@ def test_lightning_attempt_blocks_route_mission_mismatch_before_deploy(monkeypat
     assert result["reason"] == "route_mission_mismatch_before_deploy"
     assert result["expected_route_mission_id"] == "Mission_Mines"
     assert result["actual_mission_id"] == "Mission_Satellite"
+    assert mismatch_blocks == [
+        {
+            "expected_mission_id": "Mission_Mines",
+            "actual_mission_id": "Mission_Satellite",
+            "snapshot": result["snapshot"],
+        }
+    ]
+    assert result["route_mismatch_block"]["expected_mission_id"] == "Mission_Mines"
+
+
+def test_lightning_attempt_keeps_active_route_mismatch_blocked(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    snapshot = {
+        "status": "OK",
+        "phase": "combat_enemy",
+        "turn": 0,
+        "active_mechs": 0,
+        "mech_count": 0,
+        "deployment_zone_count": 11,
+        "mission_id": "Mission_Survive",
+    }
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: snapshot)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: {
+            "status": "BLOCKED",
+            "reason": "route_mission_mismatch_before_deploy",
+            "expected_mission_id": "Mission_Volatile",
+            "actual_mission_id": "Mission_Survive",
+            "next_step": "abandon",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_deploy_recommended",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("active route mismatch must not deploy")
+        ),
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_BLOCKED"
+    assert result["reason"] == "route_mission_mismatch_still_active"
+    assert result["expected_route_mission_id"] == "Mission_Volatile"
+    assert result["actual_mission_id"] == "Mission_Survive"
 
 
 def test_lightning_attempt_finishes_partial_deployment_before_waiting(monkeypatch):

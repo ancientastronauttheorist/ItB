@@ -9865,6 +9865,72 @@ def _lightning_guard_path(session: RunSession) -> Path:
     return _recording_dir(session) / "lightning_guard.json"
 
 
+def _lightning_route_mismatch_path(session: RunSession) -> Path:
+    """Persist route handoffs that started a different mission than intended."""
+    return _recording_dir(session) / "lightning_route_mismatch.json"
+
+
+def _lightning_write_route_mismatch_block(
+    session: RunSession,
+    *,
+    expected_mission_id: str,
+    actual_mission_id: str | None,
+    snapshot: dict,
+) -> dict:
+    path = _lightning_route_mismatch_path(session)
+    payload = {
+        "status": "BLOCKED",
+        "run_id": session.run_id,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "reason": "route_mission_mismatch_before_deploy",
+        "expected_mission_id": expected_mission_id,
+        "actual_mission_id": actual_mission_id,
+        "turn": snapshot.get("turn"),
+        "phase": snapshot.get("phase"),
+        "deployment_zone_count": snapshot.get("deployment_zone_count"),
+        "mech_count": snapshot.get("mech_count"),
+        "in_active_mission": snapshot.get("in_active_mission"),
+        "next_step": (
+            "Abandon/restart this Lightning War timeline or return to a "
+            "verified island map. Do not drop the expected mission guard and "
+            "deploy the mismatched mission."
+        ),
+    }
+    _atomic_json_write(path, payload)
+    payload["path"] = str(path)
+    return payload
+
+
+def _lightning_active_route_mismatch_block(
+    session: RunSession,
+    snapshot: dict,
+) -> dict | None:
+    """Return an unresolved route mismatch that still describes deployment."""
+    path = _lightning_route_mismatch_path(session)
+    if not path.exists():
+        return None
+    try:
+        block = json.loads(path.read_text())
+    except Exception:
+        return None
+    if not isinstance(block, dict):
+        return None
+    actual = str(snapshot.get("mission_id") or "").strip()
+    blocked_actual = str(block.get("actual_mission_id") or "").strip()
+    if not actual or actual != blocked_actual:
+        return None
+    if int(snapshot.get("turn") or 0) != 0:
+        return None
+    if int(snapshot.get("deployment_zone_count") or 0) <= 0:
+        return None
+    if int(snapshot.get("mech_count") or 0) >= _LIGHTNING_EXPECTED_MECH_COUNT:
+        return None
+    result = dict(block)
+    result["path"] = str(path)
+    result["snapshot"] = snapshot
+    return result
+
+
 def _lightning_read_guard(session: RunSession | None = None) -> dict:
     session = session or _load_session()
     path = _lightning_guard_path(session)
@@ -13067,9 +13133,43 @@ def cmd_lightning_attempt(
         action_record["action"] = action
         expected_mission = str(expected_route_mission_id or "").strip()
         actual_mission = str(snapshot.get("mission_id") or "").strip()
+        if not expected_mission:
+            active_mismatch = _lightning_active_route_mismatch_block(
+                session,
+                snapshot,
+            )
+            if active_mismatch is not None:
+                action_record["active_route_mismatch_block"] = active_mismatch
+                result = {
+                    "status": "LIGHTNING_ATTEMPT_BLOCKED",
+                    "reason": "route_mission_mismatch_still_active",
+                    "expected_route_mission_id": active_mismatch.get(
+                        "expected_mission_id",
+                    ),
+                    "actual_mission_id": active_mismatch.get(
+                        "actual_mission_id",
+                    ),
+                    "action": action_record,
+                    "snapshot": snapshot,
+                    "budget": budget,
+                    "preflight": preflight,
+                    "route_mismatch_block": active_mismatch,
+                    "next_step": active_mismatch.get("next_step"),
+                }
+                return finish(
+                    result,
+                    pause_reason="lightning_attempt_route_mission_mismatch",
+                )
         if expected_mission and actual_mission != expected_mission:
+            mismatch_block = _lightning_write_route_mismatch_block(
+                session,
+                expected_mission_id=expected_mission,
+                actual_mission_id=actual_mission or None,
+                snapshot=snapshot,
+            )
             action_record["expected_route_mission_id"] = expected_mission
             action_record["actual_mission_id"] = actual_mission or None
+            action_record["route_mismatch_block"] = mismatch_block
             result = {
                 "status": "LIGHTNING_ATTEMPT_BLOCKED",
                 "reason": "route_mission_mismatch_before_deploy",
@@ -13079,10 +13179,12 @@ def cmd_lightning_attempt(
                 "snapshot": snapshot,
                 "budget": budget,
                 "preflight": preflight,
+                "route_mismatch_block": mismatch_block,
                 "next_step": (
                     "Do not deploy. The started mission does not match the "
-                    "route target; abandon/restart if this mission is bad for "
-                    "Lightning War, or reroute from a verified visible map."
+                    "route target. Abandon/restart this Lightning War timeline "
+                    "or reroute from a verified visible map; do not drop the "
+                    "expected mission guard and continue deployment."
                 ),
             }
             return finish(
