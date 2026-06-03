@@ -1856,6 +1856,41 @@ def _bridge_units_by_uid(bridge_data: dict | None) -> dict[int, dict]:
     return out
 
 
+def _bridge_mech_caps_by_uid(bridge_data: dict | None) -> dict[int, int]:
+    if not isinstance(bridge_data, dict):
+        return {}
+    caps: dict[int, int] = {}
+    for rec in bridge_data.get("mech_stat_overlays") or []:
+        if not isinstance(rec, dict):
+            continue
+        try:
+            uid = int(rec.get("uid"))
+            bridge_max = int(rec.get("bridge_max_hp"))
+            save_max = int(rec.get("save_max_hp"))
+        except (TypeError, ValueError):
+            continue
+        if 0 < bridge_max < save_max:
+            caps[uid] = bridge_max
+    return caps
+
+
+def _mech_damage_taken_from_bridge_cap(
+    mech,
+    raw_unit: dict | None,
+    bridge_cap: int | None,
+) -> int:
+    hp = max(0, int(getattr(mech, "hp", 0) or 0))
+    max_hp = max(0, int(getattr(mech, "max_hp", 0) or 0))
+    if isinstance(raw_unit, dict) and raw_unit.get("bridge_reported_max_hp") is not None:
+        try:
+            bridge_cap = int(raw_unit.get("bridge_reported_max_hp"))
+        except (TypeError, ValueError):
+            pass
+    if bridge_cap is not None and 0 < bridge_cap < max_hp and hp <= bridge_cap:
+        return max(0, bridge_cap - hp)
+    return max(0, max_hp - hp)
+
+
 def _environment_danger_info(board: Board,
                              bridge_data: dict | None) -> dict[tuple[int, int], dict]:
     """Return per-tile environment danger with lethality and flying immunity."""
@@ -2088,6 +2123,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 })
 
     raw_units = _bridge_units_by_uid(bridge_data)
+    bridge_mech_caps = _bridge_mech_caps_by_uid(bridge_data)
     danger = _environment_danger_info(board, bridge_data)
     destroy_patterns = _destroy_objective_patterns(board, bridge_data)
     destroy_objective_units = []
@@ -2161,7 +2197,11 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     ]
     live_player_mechs = [m for m in player_mechs if m.hp > 0]
     mech_damage_taken_total = sum(
-        max(0, int(getattr(m, "max_hp", 0)) - max(0, int(getattr(m, "hp", 0))))
+        _mech_damage_taken_from_bridge_cap(
+            m,
+            raw_units.get(int(m.uid), {}),
+            bridge_mech_caps.get(int(m.uid)),
+        )
         for m in player_mechs
     )
     bonus_objective_ids = []

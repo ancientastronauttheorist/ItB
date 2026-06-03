@@ -143,6 +143,43 @@ def test_summary_tracks_mech_damage_objective_from_bonus_ids():
     assert summary["mech_damage_objective_limit"] == 4
 
 
+def test_summary_ignores_save_overlay_gap_at_bridge_cap_for_mech_damage_objective():
+    data = _bridge_with_mech()
+    data["bonus_objective_ids"] = [4]
+    data["mech_stat_overlays"] = [
+        {"uid": 11, "bridge_max_hp": 2, "save_max_hp": 4},
+    ]
+    data["units"][0]["hp"] = 2
+    data["units"][0]["max_hp"] = 4
+    data["units"][0]["bridge_reported_max_hp"] = 2
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mech_damage_taken_total"] == 0
+    assert summary["mech_damage_objective_limit"] == 4
+    assert summary["mech_hp"] == [
+        {"uid": 11, "type": "TeleMech", "hp": 2, "max_hp": 4}
+    ]
+
+
+def test_summary_counts_bridge_cap_damage_below_cap_for_mech_damage_objective():
+    data = _bridge_with_mech()
+    data["bonus_objective_ids"] = [4]
+    data["mech_stat_overlays"] = [
+        {"uid": 11, "bridge_max_hp": 2, "save_max_hp": 4},
+    ]
+    data["units"][0]["hp"] = 1
+    data["units"][0]["max_hp"] = 4
+    data["units"][0]["bridge_reported_max_hp"] = 2
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mech_damage_taken_total"] == 1
+    assert summary["mech_damage_objective_limit"] == 4
+
+
 def test_summary_tracks_mission_kill_objective_progress():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_SnowStorm"
