@@ -10317,7 +10317,8 @@ def _lightning_clear_tail_to_pause(
     planned = ["clear_visible_panel_chain", "ensure_pause"]
     resumed = None
     if initial_ui.get("visible_ui") == "pause_menu":
-        planned.insert(0, "pause_menu_escape")
+        resume_control = "menu_continue" if os.name == "nt" else "pause_menu_escape"
+        planned.insert(0, resume_control)
         if dry_run:
             return {
                 "status": "DRY_RUN",
@@ -10325,13 +10326,42 @@ def _lightning_clear_tail_to_pause(
                 "initial_ui": initial_ui,
                 "planned_controls": planned,
             }
-        resumed = _lightning_press_pause_escape(settle_seconds=0.12)
+        if resume_control == "menu_continue":
+            from src.control.mac_click import _get_window_bounds
+
+            bounds = _get_window_bounds("Into the Breach")
+            if bounds is None:
+                return {
+                    "status": "ERROR",
+                    "reason": "window_bounds_unavailable",
+                    "initial_ui": initial_ui,
+                }
+            resumed = _lightning_click_control_with_bounds(
+                "menu_continue",
+                bounds=bounds,
+                settle_seconds=0.12,
+            )
+        else:
+            resumed = _lightning_press_pause_escape(settle_seconds=0.12)
         if resumed.get("status") != "OK":
             return {
                 "status": "ERROR",
                 "reason": "resume_from_pause_failed",
                 "initial_ui": initial_ui,
                 "resume_result": resumed,
+            }
+        resumed_ui = _lightning_visible_ui_snapshot()
+        if resumed_ui.get("visible_ui") == "pause_menu":
+            return {
+                "status": "BLOCKED",
+                "reason": "resume_from_pause_not_verified",
+                "initial_ui": initial_ui,
+                "resume_result": resumed,
+                "resume_verify": resumed_ui,
+                "next_step": (
+                    "Visible screen is still paused after the resume control. "
+                    "Verify the game window focus before clearing live panels."
+                ),
             }
     elif dry_run:
         return {

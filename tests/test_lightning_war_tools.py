@@ -336,7 +336,7 @@ def test_lightning_ui_clicks_understood_alias_dry_run():
     assert result["status"] == "DRY_RUN"
     assert result["control"] == "modal_understood"
     assert result["window_x"] == 666
-    assert result["window_y"] == 518
+    assert result["window_y"] == 555
 
 
 def test_lightning_ui_clicks_panel_continue_alias_dry_run():
@@ -780,7 +780,50 @@ def test_lightning_ui_clear_tail_to_pause_resumes_clears_and_pauses(monkeypatch)
 
     assert result["status"] == "OK"
     assert result["reason"] == "tail_cleared_and_paused"
-    assert calls == ["pause_menu_escape", "clear_chain", "ensure_pause"]
+    expected_resume = "menu_continue" if os.name == "nt" else "pause_menu_escape"
+    assert calls == [expected_resume, "clear_chain", "ensure_pause"]
+
+
+def test_lightning_ui_clear_tail_blocks_when_resume_stays_paused(monkeypatch):
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "recommended_control": "menu_continue",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls.append("pause_menu_escape")
+        or {"status": "OK", "control": "pause_menu_escape"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("should not clear while still paused")
+        ),
+    )
+
+    result = commands.cmd_lightning_ui("clear_tail_pause")
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "resume_from_pause_not_verified"
+    expected_resume = "menu_continue" if os.name == "nt" else "pause_menu_escape"
+    assert calls == [expected_resume]
 
 
 def test_lightning_ui_handle_screen_clicks_visible_panel(monkeypatch):
