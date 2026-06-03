@@ -3486,6 +3486,53 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         })
     deltas["mech_hp_diff"] = mech_deltas
 
+    status_deltas = []
+    for key, label in (
+        ("mechs_acid", "ACID"),
+        ("mechs_fire", "Fire"),
+        ("mechs_webbed", "Web"),
+        ("mechs_disabled", "Disabled"),
+    ):
+        predicted_items = [
+            item for item in predicted.get(key, []) or []
+            if isinstance(item, dict)
+        ]
+        actual_items = [
+            item for item in actual.get(key, []) or []
+            if isinstance(item, dict)
+        ]
+        if not predicted_items and not actual_items:
+            continue
+
+        def ident(item: dict) -> tuple:
+            uid = item.get("uid")
+            if uid is not None:
+                return ("uid", uid)
+            pos = item.get("pos")
+            if isinstance(pos, (list, tuple)) and len(pos) == 2:
+                return ("pos", item.get("type"), pos[0], pos[1])
+            return ("type", item.get("type"))
+
+        predicted_ids = {ident(item) for item in predicted_items}
+        actual_ids = {ident(item) for item in actual_items}
+        unexpected = [
+            item for item in actual_items
+            if ident(item) not in predicted_ids
+        ]
+        cleared = [
+            item for item in predicted_items
+            if ident(item) not in actual_ids
+        ]
+        status_deltas.append({
+            "key": key,
+            "status": label,
+            "predicted_count": len(predicted_items),
+            "actual_count": len(actual_items),
+            "unexpected": unexpected,
+            "cleared": cleared,
+        })
+    deltas["mech_status_diff"] = status_deltas
+
     # Human-readable unexpected events
     unexpected = []
     if deltas["buildings_alive_diff"] < 0:
@@ -3504,6 +3551,12 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         if md["diff"] < 0:
             unexpected.append(
                 f"{md['type']} took {-md['diff']} unexpected damage")
+    for sd in status_deltas:
+        for item in sd.get("unexpected", []):
+            unexpected.append(
+                f"{item.get('type', 'Mech')} gained unexpected "
+                f"{sd.get('status')} status"
+            )
     deltas["unexpected_events"] = unexpected
 
     return deltas
@@ -3579,6 +3632,11 @@ def _post_enemy_needs_investigation(
     if _blocks_mech_hp_loss_for_perfect_battle(session):
         for delta in deltas.get("mech_hp_diff", []) or []:
             if isinstance(delta, dict) and int(delta.get("diff", 0) or 0) < 0:
+                return True
+
+    if _blocks_mech_status_loss_for_run(session):
+        for delta in deltas.get("mech_status_diff", []) or []:
+            if isinstance(delta, dict) and int(delta.get("actual_count", 0) or 0) > 0:
                 return True
 
     return False
