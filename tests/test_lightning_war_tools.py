@@ -1485,10 +1485,14 @@ def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
     assert result["pause_guard"] == {"status": "OK", "reason": "pause_clicked"}
     assert result["visual_regions"]["regions"][0]["window_x"] == 430
     assert result["route_start_candidates"][0]["command"].endswith(
-        "--route-visual-region-index 0 --route-start-mode dialogue-region-repeat-preview-board"
+        "--route-visual-region-index 0 "
+        "--route-target-mission-id Mission_Train "
+        "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_next_command"].endswith(
-        "--route-visual-region-index 0 --route-start-mode dialogue-region-repeat-preview-board"
+        "--route-visual-region-index 0 "
+        "--route-target-mission-id Mission_Train "
+        "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_route_candidate_index"] == 0
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
@@ -2240,10 +2244,12 @@ def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch)
     assert result["route_start_candidates"][0]["target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["command"].endswith(
         "--route-visual-region-index 0 "
+        "--route-target-mission-id Mission_Mines "
         "--route-start-mode dialogue-region-repeat-preview-board-twice"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
+        "--route-target-mission-id Mission_Mines "
         "--route-start-mode dialogue-region-repeat-preview-board-twice"
     )
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
@@ -2460,6 +2466,51 @@ def test_lightning_attempt_deploys_when_bridge_reports_enemy_phase(monkeypatch):
 
     assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
     assert [call[0] for call in calls] == ["deploy", "click", "loop"]
+
+
+def test_lightning_attempt_blocks_route_mission_mismatch_before_deploy(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "deployment_zone_count": 11,
+            "mission_id": "Mission_Satellite",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_deploy_recommended",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("route mismatch must block before deployment")
+        ),
+    )
+
+    result = commands.cmd_lightning_attempt(
+        expected_route_mission_id="Mission_Mines",
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_BLOCKED"
+    assert result["reason"] == "route_mission_mismatch_before_deploy"
+    assert result["expected_route_mission_id"] == "Mission_Mines"
+    assert result["actual_mission_id"] == "Mission_Satellite"
 
 
 def test_lightning_attempt_finishes_partial_deployment_before_waiting(monkeypatch):
@@ -3637,8 +3688,13 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
         ]
     )
     route_calls = []
+    attempt_calls = []
 
-    monkeypatch.setattr(commands, "cmd_lightning_attempt", lambda **kwargs: next(attempts))
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return next(attempts)
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
     monkeypatch.setattr(
         commands,
         "cmd_lightning_route_start",
@@ -3658,6 +3714,7 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
     assert route_calls[0]["visual_region_index"] == 2
     assert route_calls[0]["start_mode"] == "dialogue-region-repeat-preview-board"
     assert result["steps"][0]["route_auto_start_mission"] == "Mission_Train"
+    assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
 
 
 def test_lightning_segment_blocks_auto_start_for_slow_primary_route(monkeypatch):
@@ -3744,6 +3801,7 @@ def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypat
     result = commands.cmd_lightning_segment(
         max_steps=2,
         route_visual_region_index=3,
+        route_target_mission_id="Mission_Tides",
         route_start_mode="dialogue-region-repeat-preview-board-twice",
     )
 
@@ -3760,6 +3818,7 @@ def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypat
     assert route_calls[0]["start_mode"] == "dialogue-region-repeat-preview-board-twice"
     assert len(attempt_calls) == 1
     assert attempt_calls[0]["run_preflight"] is False
+    assert attempt_calls[0]["expected_route_mission_id"] == "Mission_Tides"
 
 
 def test_lightning_segment_stops_when_visual_route_start_blocks(monkeypatch):
@@ -5309,10 +5368,14 @@ def test_lightning_route_start_auto_pauses_before_route_check(monkeypatch):
         == "The Pasture"
     )
     assert result["route_start_candidates"][0]["command"].endswith(
-        "--route-visual-region-index 0 --route-start-mode dialogue-region-repeat-preview-board"
+        "--route-visual-region-index 0 "
+        "--route-target-mission-id Mission_Train "
+        "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_next_command"].endswith(
-        "--route-visual-region-index 0 --route-start-mode dialogue-region-repeat-preview-board"
+        "--route-visual-region-index 0 "
+        "--route-target-mission-id Mission_Train "
+        "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(

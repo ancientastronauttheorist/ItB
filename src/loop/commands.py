@@ -8503,6 +8503,16 @@ def _lightning_route_start_candidates(
         if not isinstance(window_x, int) or not isinstance(window_y, int):
             continue
         region_index = region.get("index", len(candidates))
+        route_option = region.get("route_option")
+        expected_mission_id = None
+        if isinstance(route_option, dict):
+            expected_mission_id = route_option.get("mission_id")
+        if expected_mission_id is None and isinstance(target_hint, dict):
+            expected_mission_id = target_hint.get("mission_id")
+        route_target_arg = (
+            f"--route-target-mission-id {expected_mission_id} "
+            if expected_mission_id else ""
+        )
         route_start_command = (
             "python3 game_loop.py lightning_route_start "
             f"--visual-region-index {region_index} "
@@ -8518,6 +8528,7 @@ def _lightning_route_start_candidates(
             command = (
                 "python3 game_loop.py lightning_segment "
                 f"--route-visual-region-index {region_index} "
+                f"{route_target_arg}"
                 f"--route-start-mode {start_mode}"
             )
         else:
@@ -8531,7 +8542,6 @@ def _lightning_route_start_candidates(
             "route_start_command": route_start_command,
             "coordinate_command": coordinate_command,
         }
-        route_option = region.get("route_option")
         if isinstance(route_option, dict) and route_option:
             candidate["route_option"] = dict(route_option)
             candidate["visual_order"] = visual_order
@@ -12766,6 +12776,7 @@ def cmd_lightning_attempt(
     lightning_speed_loss_policy: bool = False,
     pause_before_solve: bool = True,
     pause_between_actions: bool = True,
+    expected_route_mission_id: str | None = None,
 ) -> dict:
     """Run the next safe Lightning War automation step.
 
@@ -13054,6 +13065,30 @@ def cmd_lightning_attempt(
 
     def run_deploy_then_combat(*, action: str) -> dict:
         action_record["action"] = action
+        expected_mission = str(expected_route_mission_id or "").strip()
+        actual_mission = str(snapshot.get("mission_id") or "").strip()
+        if expected_mission and actual_mission != expected_mission:
+            action_record["expected_route_mission_id"] = expected_mission
+            action_record["actual_mission_id"] = actual_mission or None
+            result = {
+                "status": "LIGHTNING_ATTEMPT_BLOCKED",
+                "reason": "route_mission_mismatch_before_deploy",
+                "expected_route_mission_id": expected_mission,
+                "actual_mission_id": actual_mission or None,
+                "action": action_record,
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+                "next_step": (
+                    "Do not deploy. The started mission does not match the "
+                    "route target; abandon/restart if this mission is bad for "
+                    "Lightning War, or reroute from a verified visible map."
+                ),
+            }
+            return finish(
+                result,
+                pause_reason="lightning_attempt_route_mission_mismatch",
+            )
         if dry_run:
             result = {
                 "status": "LIGHTNING_ATTEMPT_DRY_RUN",
@@ -13676,6 +13711,7 @@ def cmd_lightning_segment(
     pause_between_actions: bool = True,
     settle_seconds: float = 0.25,
     route_visual_region_index: int | None = None,
+    route_target_mission_id: str | None = None,
     route_start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
     route_auto_start: bool = False,
 ) -> dict:
@@ -13687,6 +13723,8 @@ def cmd_lightning_segment(
     stopped_reason = "max_steps_reached"
     dirty_pending = bool(allow_dirty_plan)
     route_start_pending = route_visual_region_index is not None
+    route_start_expected_mission_id = route_target_mission_id
+    active_route_expected_mission_id: str | None = None
     seen_progress_keys: dict[tuple[object, object, object, object], int] = {}
 
     for step_index in range(max(1, int(max_steps))):
@@ -13756,6 +13794,7 @@ def cmd_lightning_segment(
             if dry_run:
                 stopped_reason = "dry_run_route_start"
                 break
+            active_route_expected_mission_id = route_start_expected_mission_id
             if settle_seconds > 0:
                 time.sleep(settle_seconds)
             run_preflight = False
@@ -13786,6 +13825,7 @@ def cmd_lightning_segment(
             "lightning_speed_loss_policy": lightning_speed_loss_policy,
             "pause_before_solve": pause_before_solve,
             "pause_between_actions": pause_between_actions,
+            "expected_route_mission_id": active_route_expected_mission_id,
         }
         attempt, attempt_output = _lightning_quiet_call(
             lambda: cmd_lightning_attempt(**attempt_kwargs),
@@ -13815,6 +13855,7 @@ def cmd_lightning_segment(
                     and primary.get("auto_route_allowed") is True
                 ):
                     route_visual_region_index = int(primary["index"])
+                    route_start_expected_mission_id = primary.get("mission_id")
                     route_start_pending = True
                     summary["route_auto_start_index"] = route_visual_region_index
                     summary["route_auto_start_mission"] = primary.get("mission_id")
@@ -13858,6 +13899,7 @@ def cmd_lightning_segment(
                 if dry_run:
                     stopped_reason = "dry_run_route_start"
                     break
+                active_route_expected_mission_id = route_start_expected_mission_id
                 if settle_seconds > 0:
                     time.sleep(settle_seconds)
                 continue

@@ -1136,6 +1136,14 @@ def main():
         ),
     )
     p_lightning_segment.add_argument(
+        "--route-target-mission-id",
+        default=None,
+        help=(
+            "Expected mission id for --route-visual-region-index; deployment "
+            "blocks if the live mission differs"
+        ),
+    )
+    p_lightning_segment.add_argument(
         "--route-auto-start",
         action="store_true",
         help=(
@@ -1509,6 +1517,7 @@ def main():
             pause_between_actions=args.pause_between_actions,
             settle_seconds=args.settle_seconds,
             route_visual_region_index=args.route_visual_region_index,
+            route_target_mission_id=args.route_target_mission_id,
             route_start_mode=args.route_start_mode,
             route_auto_start=args.route_auto_start,
         )
