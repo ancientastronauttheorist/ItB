@@ -2542,16 +2542,20 @@ def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
     ]
 
 
-_ZERO_MECH_DAMAGE_ACHIEVEMENTS = {"perfect battle", "untouchable"}
+_ZERO_MECH_DAMAGE_ACHIEVEMENTS = {
+    "lightning war",
+    "perfect battle",
+    "untouchable",
+}
 
 
 def _blocks_mech_hp_loss_for_perfect_battle(session: RunSession | None) -> bool:
     """Return True when the active run treats any mech damage as a loss.
 
-    Normal ITB play can accept repairable mech damage, but Perfect Battle and
-    Untouchable are invalidated by any mech HP loss. Building damage is already
-    a global safety block; this flag promotes mech HP loss to the same level
-    only for runs that explicitly target a still-locked zero-mech-damage
+    Normal ITB play can accept repairable mech damage, but some live-run
+    achievement policies invalidate any mech HP loss. Building damage is
+    already a global safety block; this flag promotes mech HP loss to the same
+    level only for runs that explicitly target a still-locked zero-mech-damage
     achievement.
     """
     targets = {
@@ -2598,6 +2602,7 @@ def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
         int(getattr(session, "difficulty", 0) or 0) >= 2
         or "hard victory" in targets
         or "hard_victory" in tags
+        or "lightning war" in targets
     )
 
 

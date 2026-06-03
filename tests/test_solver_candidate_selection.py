@@ -1,5 +1,6 @@
 from src.loop.commands import (
     _blocks_mech_hp_loss_for_perfect_battle,
+    _blocks_mech_status_loss_for_run,
     _candidate_dirty_frontier,
     _candidate_frontier_representatives,
     _is_harmless_active_state_diff,
@@ -147,6 +148,26 @@ def test_untouchable_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch):
     session = RunSession(achievement_targets=["Untouchable"])
 
     assert _blocks_mech_hp_loss_for_perfect_battle(session) is True
+
+
+def test_lightning_war_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch):
+    achievements_path = tmp_path / "achievements_detailed.json"
+    achievements_path.write_text(
+        '{"achievements": {"global": [{"name": "Lightning War", "completed": false}]}}'
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.ACHIEVEMENTS_PATH",
+        achievements_path,
+    )
+    session = RunSession(achievement_targets=["Lightning War"])
+
+    assert _blocks_mech_hp_loss_for_perfect_battle(session) is True
+
+
+def test_lightning_war_target_blocks_mech_status_loss():
+    session = RunSession(achievement_targets=["Lightning War"], difficulty=0)
+
+    assert _blocks_mech_status_loss_for_run(session) is True
 
 
 def test_completed_untouchable_target_keeps_default_mech_hp_safety_mode(tmp_path, monkeypatch):
