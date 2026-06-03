@@ -296,6 +296,58 @@ def test_record_post_enemy_returns_investigation_gate(tmp_path, monkeypatch):
     assert (run_dir / "m11_turn_01_post_enemy.json").exists()
 
 
+def test_record_post_enemy_blocks_unexpected_mech_damage_for_lightning_war(
+    tmp_path,
+    monkeypatch,
+):
+    achievements_path = tmp_path / "achievements_detailed.json"
+    achievements_path.write_text(json.dumps({
+        "achievements": {
+            "global": [{"name": "Lightning War", "completed": False}]
+        }
+    }))
+    monkeypatch.setattr(commands, "ACHIEVEMENTS_PATH", achievements_path)
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(
+        run_id="run",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    solve_file = run_dir / "m11_turn_01_solve.json"
+    solve_file.write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 5,
+                "enemies_alive": 0,
+                "mech_hp": [
+                    {"uid": 0, "type": "JetMech", "hp": 2, "max_hp": 2}
+                ],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(5)
+    actual.units[0].hp = 1
+    result = commands._record_post_enemy(session, actual, 1)
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
+    assert result["deltas"]["mech_hp_diff"] == [{
+        "uid": 0,
+        "type": "JetMech",
+        "predicted_hp": 2,
+        "actual_hp": 1,
+        "diff": -1,
+    }]
+    assert session.post_enemy_block is not None
+
+
 def test_record_post_enemy_blocks_late_turn_window_without_comparing(tmp_path, monkeypatch):
     monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
     session = RunSession(run_id="run")

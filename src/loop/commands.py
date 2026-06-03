@@ -3559,9 +3559,12 @@ def _post_enemy_missed_window_result(
     return result
 
 
-def _post_enemy_needs_investigation(deltas: dict) -> bool:
+def _post_enemy_needs_investigation(
+    deltas: dict,
+    session: RunSession | None = None,
+) -> bool:
     """True when actual enemy-phase damage is worse than the prediction."""
-    return any(
+    if any(
         int(deltas.get(key, 0) or 0) < 0
         for key in (
             "grid_power_diff",
@@ -3570,7 +3573,15 @@ def _post_enemy_needs_investigation(deltas: dict) -> bool:
             "protected_objective_units_alive_diff",
             "protected_objective_units_frozen_diff",
         )
-    )
+    ):
+        return True
+
+    if _blocks_mech_hp_loss_for_perfect_battle(session):
+        for delta in deltas.get("mech_hp_diff", []) or []:
+            if isinstance(delta, dict) and int(delta.get("diff", 0) or 0) < 0:
+                return True
+
+    return False
 
 
 def _record_post_enemy(session: RunSession, board: Board,
@@ -3712,7 +3723,7 @@ def _record_post_enemy(session: RunSession, board: Board,
     else:
         print(f"\nPost-enemy analysis: no triggers (predictions matched)")
 
-    investigation_required = _post_enemy_needs_investigation(deltas)
+    investigation_required = _post_enemy_needs_investigation(deltas, session)
     status = (
         "INVESTIGATE_POST_ENEMY"
         if investigation_required else "POST_ENEMY_RECORDED"
@@ -3815,7 +3826,7 @@ def _final_post_enemy_audit_gate(
             deltas = ((record.get("data") or {}).get("deltas") or {})
         except (OSError, json.JSONDecodeError):
             deltas = {}
-        if _post_enemy_needs_investigation(deltas):
+        if _post_enemy_needs_investigation(deltas, session):
             return {
                 "status": "INVESTIGATE_POST_ENEMY",
                 "mission_index": session.mission_index,
