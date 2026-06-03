@@ -10762,8 +10762,55 @@ def _lightning_resume_if_paused(*, dry_run: bool = False, click_ui: bool = True)
     if click_result.get("status") != "OK":
         result["reason"] = "resume_click_failed"
         result["error"] = click_result.get("error")
-    else:
-        result["reason"] = "resumed_from_pause"
+        return result
+
+    result["reason"] = "resumed_from_pause"
+    post_click_visible = _lightning_visible_ui_snapshot()
+    result["post_click_visible_ui"] = {
+        key: post_click_visible.get(key)
+        for key in (
+            "status",
+            "visible_ui",
+            "recommended_control",
+            "screenshot_path",
+        )
+        if key in post_click_visible
+    }
+    if (
+        post_click_visible.get("status") == "OK"
+        and post_click_visible.get("visible_ui") == "pause_menu"
+    ):
+        fallback = _lightning_press_pause_escape(settle_seconds=0.2)
+        result["fallback_resume"] = fallback
+        result["status"] = fallback.get("status", "ERROR")
+        if fallback.get("status") != "OK":
+            result["reason"] = "resume_escape_fallback_failed"
+            result["error"] = fallback.get("error")
+            return result
+        fallback_visible = _lightning_visible_ui_snapshot()
+        result["fallback_visible_ui"] = {
+            key: fallback_visible.get(key)
+            for key in (
+                "status",
+                "visible_ui",
+                "recommended_control",
+                "screenshot_path",
+            )
+            if key in fallback_visible
+        }
+        if (
+            fallback_visible.get("status") == "OK"
+            and fallback_visible.get("visible_ui") == "pause_menu"
+        ):
+            result["status"] = "BLOCKED"
+            result["reason"] = "resume_from_pause_not_verified"
+            result["next_step"] = (
+                "Pause menu remained visible after Continue and Escape resume "
+                "attempts; recalibrate the pause menu resume control before "
+                "continuing timed play."
+            )
+        else:
+            result["reason"] = "resumed_from_pause_escape_fallback"
     return result
 
 

@@ -1509,21 +1509,25 @@ def test_lightning_attempt_resumes_from_pause_before_routing(monkeypatch):
     calls = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
-    visible_states = iter(
-        [
-            {
-                "status": "OK",
-                "visible_ui": "pause_menu",
-                "recommended_control": "menu_continue",
-            },
-            {
-                "status": "OK",
-                "visible_ui": "island_map_or_unknown",
-                "recommended_control": None,
-            },
-        ]
-    )
-    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    visible_states = [
+        {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "recommended_control": "menu_continue",
+        },
+        {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "recommended_control": None,
+        },
+    ]
+
+    def next_visible_state():
+        if len(visible_states) > 1:
+            return visible_states.pop(0)
+        return visible_states[0]
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", next_visible_state)
     monkeypatch.setattr(
         commands,
         "_lightning_press_pause_escape",
@@ -1580,6 +1584,99 @@ def test_lightning_attempt_resumes_from_pause_before_routing(monkeypatch):
     assert calls == [_lightning_peek_resume_control()]
     assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
     assert result["resume_guard"]["reason"] == "resumed_from_pause"
+
+
+def test_lightning_attempt_resume_falls_back_when_continue_stays_paused(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
+        ]
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls.append("pause_menu_escape")
+        or {"status": "OK", "control": "pause_menu_escape"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "unknown",
+            "turn": 0,
+            "deployment_zone_count": 0,
+            "island_map_count": 3,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "top3": [
+                {
+                    "mission_id": "Mission_Train",
+                    "region_id": 5,
+                    "save_region_name": "The Pasture",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "regions": [{"index": 0, "window_x": 430, "window_y": 320}],
+        },
+    )
+
+    result = commands.cmd_lightning_attempt(resume_if_paused=True)
+
+    assert calls == ["menu_continue", "pause_menu_escape"]
+    assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
+    assert result["resume_guard"]["reason"] == "resumed_from_pause_escape_fallback"
 
 
 def test_lightning_attempt_dry_run_reports_resume_needed(monkeypatch):
