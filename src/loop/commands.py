@@ -6999,7 +6999,11 @@ def cmd_recommend_mission(
         "save_region_filter": save_region_filter,
         "pause_map_peek": pause_map_peek_result,
         "save_island_map": save_island_map_result,
-        "speed_route_status": _lightning_speed_route_status(ranked, routing),
+        "speed_route_status": _lightning_speed_route_status(
+            ranked,
+            routing,
+            source=island_map_source,
+        ),
     }
     _print_result(result)
     return result
@@ -8087,10 +8091,32 @@ def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -
 
 
 _LIGHTNING_ROUTE_AUTO_MIN_SCORE = 10
+_LIGHTNING_ROUTE_FORCED_PREVIEW_MIN_SCORE = -60
 _LIGHTNING_ROUTE_DEFAULT_START_MODE = "dialogue-region-repeat-preview-board"
 
 
-def _lightning_speed_route_status(ranked: list[dict], routing: str) -> dict | None:
+def _lightning_forced_preview_route_allowed(
+    ranked: list[dict],
+    *,
+    source: str | None = None,
+) -> bool:
+    """Allow a single unavoidable preview unless it is a hard speed veto."""
+    if source != "bridge_preview" or len(ranked) != 1:
+        return False
+    top = ranked[0]
+    try:
+        score = float(top.get("score"))
+    except (TypeError, ValueError):
+        return False
+    return score >= _LIGHTNING_ROUTE_FORCED_PREVIEW_MIN_SCORE
+
+
+def _lightning_speed_route_status(
+    ranked: list[dict],
+    routing: str,
+    *,
+    source: str | None = None,
+) -> dict | None:
     """Summarize whether the top Lightning route is fast enough to auto-start."""
     if routing != "lightning_war":
         return None
@@ -8112,17 +8138,26 @@ def _lightning_speed_route_status(ranked: list[dict], routing: str) -> dict | No
         numeric_score is not None
         and numeric_score >= _LIGHTNING_ROUTE_AUTO_MIN_SCORE
     )
+    forced_preview_allowed = _lightning_forced_preview_route_allowed(
+        ranked,
+        source=source,
+    )
+    if forced_preview_allowed:
+        allowed = True
     return {
         "status": "AUTO_START_OK" if allowed else "REROLL_RECOMMENDED",
         "auto_start_allowed": allowed,
         "reason": (
             "forced_boss_route"
             if boss
+            else "forced_bridge_preview_route"
+            if forced_preview_allowed
             else "top_score_meets_threshold"
             if allowed
             else "top_score_below_lightning_threshold"
         ),
         "min_auto_score": _LIGHTNING_ROUTE_AUTO_MIN_SCORE,
+        "forced_preview_min_score": _LIGHTNING_ROUTE_FORCED_PREVIEW_MIN_SCORE,
         "top_score": score,
         "top_mission_id": top.get("mission_id"),
         "top_save_region_name": top.get("save_region_name"),
@@ -8167,7 +8202,11 @@ def _lightning_recommend_save_routes(
         "ranked": ranked,
         "top3": ranked[:3],
         "save_island_map": save_result,
-        "speed_route_status": _lightning_speed_route_status(ranked, routing),
+        "speed_route_status": _lightning_speed_route_status(
+            ranked,
+            routing,
+            source="saveData",
+        ),
     }
 
 
@@ -8250,6 +8289,8 @@ def _lightning_candidate_auto_allowed(candidate: dict) -> bool:
     option = candidate.get("route_option") or {}
     if option.get("boss") or str(option.get("mission_id") or "").endswith("Boss"):
         return True
+    if candidate.get("forced_preview_route") is True:
+        return True
     try:
         return float(option.get("score")) >= _LIGHTNING_ROUTE_AUTO_MIN_SCORE
     except (TypeError, ValueError):
@@ -8279,6 +8320,31 @@ def _lightning_route_start_candidates(
         return []
     if visual_regions.get("status") != "OK":
         return []
+    ranked = (
+        recommendation.get("ranked")
+        if isinstance(recommendation, dict)
+        else None
+    )
+    forced_preview_allowed = (
+        isinstance(ranked, list)
+        and _lightning_forced_preview_route_allowed(
+            [entry for entry in ranked if isinstance(entry, dict)],
+            source=(
+                str(recommendation.get("source"))
+                if isinstance(recommendation, dict)
+                and recommendation.get("source") is not None
+                else None
+            ),
+        )
+    )
+    forced_preview_option = (
+        dict(ranked[0])
+        if forced_preview_allowed
+        and isinstance(ranked, list)
+        and ranked
+        and isinstance(ranked[0], dict)
+        else None
+    )
     candidates: list[dict] = []
     for visual_order, region in enumerate(visual_regions.get("regions") or []):
         if not isinstance(region, dict):
@@ -8324,6 +8390,14 @@ def _lightning_route_start_candidates(
             candidate["save_region_index"] = route_option.get("save_region_index")
             candidate["save_region_name"] = route_option.get("save_region_name")
             candidate["score"] = route_option.get("score")
+            candidate["auto_route_allowed"] = _lightning_candidate_auto_allowed(
+                candidate,
+            )
+        elif forced_preview_option is not None:
+            candidate["route_option"] = dict(forced_preview_option)
+            candidate["mission_id"] = forced_preview_option.get("mission_id")
+            candidate["score"] = forced_preview_option.get("score")
+            candidate["forced_preview_route"] = True
             candidate["auto_route_allowed"] = _lightning_candidate_auto_allowed(
                 candidate,
             )
@@ -8424,6 +8498,7 @@ def _lightning_attach_primary_route_candidate(
             "save_region_name",
             "score",
             "auto_route_allowed",
+            "forced_preview_route",
             "route_option",
         )
         if first.get(key) is not None

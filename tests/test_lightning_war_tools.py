@@ -4619,6 +4619,31 @@ def test_recommend_mission_scores_bridge_preview_when_slate_missing(monkeypatch)
     assert result["status"] == "OK"
     assert result["source"] == "bridge_preview"
     assert result["top3"][0]["mission_id"] == "Mission_Artillery"
+    assert result["speed_route_status"]["status"] == "AUTO_START_OK"
+    assert result["speed_route_status"]["reason"] == "forced_bridge_preview_route"
+
+
+def test_recommend_mission_blocks_hard_veto_bridge_preview(monkeypatch):
+    bridge_data = {
+        "island_map": None,
+        "mission_id": "Mission_Repair",
+        "in_active_mission": True,
+        "phase": "unknown",
+        "grid_power": 5,
+        "units": [
+            {"mech": True, "hp": 3, "weapons": ["Prime_Lightning"]},
+        ],
+    }
+
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: (None, bridge_data))
+
+    result = commands.cmd_recommend_mission(routing="lightning_war")
+
+    assert result["status"] == "OK"
+    assert result["source"] == "bridge_preview"
+    assert result["top3"][0]["mission_id"] == "Mission_Repair"
     assert result["speed_route_status"]["status"] == "REROLL_RECOMMENDED"
 
 
@@ -4659,6 +4684,40 @@ def test_visual_route_candidates_sort_by_save_ranked_mission():
     assert result[1]["index"] == 0
     assert result[1]["mission_id"] == "Mission_Repair"
     assert result[1]["auto_route_allowed"] is False
+
+
+def test_visual_route_candidate_allows_single_forced_bridge_preview():
+    recommendation = {
+        "status": "OK",
+        "source": "bridge_preview",
+        "ranked": [
+            {
+                "mission_id": "Mission_Artillery",
+                "score": -53,
+            },
+        ],
+        "top3": [
+            {
+                "mission_id": "Mission_Artillery",
+                "score": -53,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 0, "window_x": 873, "window_y": 497},
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    assert result[0]["mission_id"] == "Mission_Artillery"
+    assert result[0]["forced_preview_route"] is True
+    assert result[0]["auto_route_allowed"] is True
 
 
 def test_recommend_mission_uses_save_filter_for_live_bridge(monkeypatch):
