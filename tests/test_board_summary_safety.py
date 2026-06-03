@@ -4,10 +4,12 @@ from src.loop.commands import (
     _annotate_pending_grid_debt,
     _capture_board_summary,
     _compute_deltas,
+    _evaluate_solution_safety,
     _summary_with_pending_grid_debt,
 )
 from src.loop.session import RunSession
 from src.model.board import Board
+from src.solver.solver import Solution
 
 
 def _bridge_with_mech(*, flying=False, danger=None):
@@ -178,6 +180,67 @@ def test_summary_counts_bridge_cap_damage_below_cap_for_mech_damage_objective():
 
     assert summary["mech_damage_taken_total"] == 1
     assert summary["mech_damage_objective_limit"] == 4
+
+
+def test_solution_safety_prefers_projected_board_summary(monkeypatch):
+    data = _bridge_with_mech()
+    data["bonus_objective_ids"] = [4]
+    data["mech_stat_overlays"] = [
+        {"uid": 11, "bridge_max_hp": 2, "save_max_hp": 4},
+    ]
+    data["units"][0]["hp"] = 2
+    data["units"][0]["max_hp"] = 4
+    data["units"][0]["bridge_reported_max_hp"] = 2
+    board = Board.from_bridge_data(data)
+    final_board_data = json.loads(json.dumps(data))
+    final_board_data.pop("bonus_objective_ids", None)
+    final_board_data.pop("mech_stat_overlays", None)
+    final_board_data["environment_danger_v2"] = [[2, 5, 1, 1, 1]]
+    final_board_data["units"][0]["x"] = 2
+    final_board_data["units"][0]["y"] = 5
+    final_board_data["units"][0].pop("bridge_reported_max_hp", None)
+    stale_predicted = {
+        "mission_id": "Mission_Tides",
+        "turn": 1,
+        "total_turns": 3,
+        "grid_power": 7,
+        "mechs_on_danger": [],
+        "mech_damage_taken_total": 2,
+        "mech_damage_objective_limit": None,
+    }
+
+    monkeypatch.setattr(
+        "src.loop.commands.replay_solution",
+        lambda *args, **kwargs: {
+            "predicted_outcome": dict(stale_predicted),
+            "final_board": final_board_data,
+            "action_results": [],
+        },
+    )
+
+    result = _evaluate_solution_safety(
+        board,
+        data,
+        Solution(),
+        [],
+        current_turn=1,
+        total_turns=3,
+        remaining_spawns=0,
+    )
+
+    predicted = result["predicted_board_summary"]
+    assert predicted["mechs_on_danger"] == [{
+        "uid": 11,
+        "type": "TeleMech",
+        "pos": [2, 5],
+        "damage": 1,
+    }]
+    assert predicted["mech_damage_taken_total"] == 0
+    assert predicted["mech_damage_objective_limit"] == 4
+    assert result["plan_safety"]["blocking"] is True
+    assert [
+        item["kind"] for item in result["plan_safety"]["violations"]
+    ] == ["mech_on_danger"]
 
 
 def test_summary_tracks_mission_kill_objective_progress():

@@ -1779,7 +1779,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   a Scorpion web source for 2, live cleared Guard's web, and the Scorpion
 //   survived at 1 HP. Pre-v258 corpus archived as
 //   failure_db_snapshot_sim_v257.jsonl.
-pub const SIMULATOR_VERSION: u32 = 258;
+// v259 - Mission_Tides turn projection/replay advances the tidal warning mask
+//   to the next player turn so plan safety blocks mechs parked on the next
+//   wave lane. Fixes Lightning War run 20260603 Mission_Tides turn 2, where
+//   Electric and Rockart ended on the next tide lane and Electric was webbed
+//   by a spawned Leaper. Pre-v259 corpus archived as
+//   failure_db_snapshot_sim_v258.jsonl.
+pub const SIMULATOR_VERSION: u32 = 259;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

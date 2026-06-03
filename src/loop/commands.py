@@ -1891,6 +1891,38 @@ def _mech_damage_taken_from_bridge_cap(
     return max(0, max_hp - hp)
 
 
+def _carry_projected_summary_metadata(
+    projected_data: dict,
+    bridge_data: dict | None,
+) -> dict:
+    if not isinstance(projected_data, dict) or not isinstance(bridge_data, dict):
+        return projected_data
+    if "bonus_objective_ids" in bridge_data and "bonus_objective_ids" not in projected_data:
+        projected_data["bonus_objective_ids"] = list(
+            bridge_data.get("bonus_objective_ids") or []
+        )
+    if "mech_stat_overlays" in bridge_data and "mech_stat_overlays" not in projected_data:
+        projected_data["mech_stat_overlays"] = list(
+            bridge_data.get("mech_stat_overlays") or []
+        )
+    raw_units = _bridge_units_by_uid(bridge_data)
+    for unit in projected_data.get("units") or []:
+        if not isinstance(unit, dict):
+            continue
+        try:
+            uid = int(unit.get("uid"))
+        except (TypeError, ValueError):
+            continue
+        raw = raw_units.get(uid)
+        if (
+            isinstance(raw, dict)
+            and raw.get("bridge_reported_max_hp") is not None
+            and unit.get("bridge_reported_max_hp") is None
+        ):
+            unit["bridge_reported_max_hp"] = raw.get("bridge_reported_max_hp")
+    return projected_data
+
+
 def _environment_danger_info(board: Board,
                              bridge_data: dict | None) -> dict[tuple[int, int], dict]:
     """Return per-tile environment danger with lethality and flying immunity."""
@@ -2670,11 +2702,14 @@ def _evaluate_solution_safety(board: Board,
     predicted_board_summary = dict(predicted_outcome)
     final_board_data = enriched.get("final_board") or {}
     if final_board_data:
-        final_board = Board.from_bridge_data(final_board_data)
-        predicted_board_summary = _capture_board_summary(
-            final_board, final_board_data
+        final_board_data = _carry_projected_summary_metadata(
+            final_board_data,
+            bridge_data,
         )
-        predicted_board_summary.update(predicted_outcome)
+        final_board = Board.from_bridge_data(final_board_data)
+        predicted_board_summary.update(_capture_board_summary(
+            final_board, final_board_data
+        ))
     predicted_board_summary["pods_collected"] = sum(
         int(r.get("pods_collected", 0) or 0)
         for r in enriched.get("action_results", [])
@@ -16126,11 +16161,14 @@ def _re_solve_partial(
             predicted_board_summary = dict(enriched.get("predicted_outcome") or {})
             final_board_data = enriched.get("final_board") or {}
             if final_board_data:
-                final_board = Board.from_bridge_data(final_board_data)
-                predicted_board_summary = _capture_board_summary(
-                    final_board, final_board_data
+                final_board_data = _carry_projected_summary_metadata(
+                    final_board_data,
+                    bridge_data,
                 )
-                predicted_board_summary.update(enriched.get("predicted_outcome") or {})
+                final_board = Board.from_bridge_data(final_board_data)
+                predicted_board_summary.update(_capture_board_summary(
+                    final_board, final_board_data
+                ))
             predicted_board_summary["pods_collected"] = sum(
                 int(r.get("pods_collected", 0) or 0)
                 for r in enriched.get("action_results", [])

@@ -1289,7 +1289,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # even if the webber survives. Fixes Frozen Titans Trick Shot run
 # 20260602_095732_968 Mission_Solar turn 3. Pre-v258 corpus archived as
 # failure_db_snapshot_sim_v257.jsonl.
-SIMULATOR_VERSION = 258
+# v259 - Mission_Tides turn projection/replay advances the tidal warning mask
+# to the next player turn so plan safety blocks mechs parked on the next wave
+# lane. Fixes Lightning War run 20260603 Mission_Tides turn 2. Pre-v259 corpus
+# archived as failure_db_snapshot_sim_v258.jsonl.
+SIMULATOR_VERSION = 259
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

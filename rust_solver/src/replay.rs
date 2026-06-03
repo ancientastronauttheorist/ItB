@@ -13,12 +13,16 @@
 //! `snapshot_after_move` byte-for-byte: same field names, same types, same
 //! tile-sampling rule (touched tiles + 1-tile buffer).
 
-use crate::board::{ActionResult, Board};
+use crate::board::{ActionResult, Board, UnitFlags};
 use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
 use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
 use crate::simulate::{simulate_attack, simulate_move};
-use crate::turn_projection::board_to_json;
+use crate::turn_projection::{
+    advance_mission_tides_warning,
+    board_to_json,
+    requeue_enemies_heuristic,
+};
 use crate::types::Terrain;
 use crate::weapons::{self, build_overlay_table, wid_from_str, WeaponTable, WId};
 
@@ -192,6 +196,24 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         + enemy_phase_result.mission_kills
         + spawn_block_result.mission_kills;
     board.add_mission_kills(total_projected_mission_kills);
+    for i in 0..board.unit_count as usize {
+        let u = &mut board.units[i];
+        if u.is_enemy() && u.hp > 0 {
+            u.queued_target_x = -1;
+            u.queued_target_y = -1;
+            u.flags.set(UnitFlags::HAS_QUEUED_ATTACK, false);
+        }
+    }
+    for i in 0..board.unit_count as usize {
+        let u = &mut board.units[i];
+        if u.is_player() && u.hp > 0 {
+            u.set_active(true);
+            u.flags.insert(UnitFlags::CAN_MOVE);
+        }
+    }
+    board.current_turn = board.current_turn.saturating_add(1);
+    advance_mission_tides_warning(&mut board);
+    requeue_enemies_heuristic(&mut board);
 
     // Build predicted_outcome (mirrors solver.py:744-756).
     let mut buildings_alive = 0i32;
@@ -607,6 +629,40 @@ mod tests {
         assert_eq!(v["predicted_outcome"]["mechs_alive"], 1);
         assert_eq!(v["predicted_outcome"]["enemies_alive"], 0);
         assert!(v["final_board"].is_object());
+    }
+
+    #[test]
+    fn replay_solution_mission_tides_advances_final_warning_lane() {
+        let bridge = r#"{
+          "mission_id": "Mission_Tides",
+          "turn": 2,
+          "total_turns": 3,
+          "tiles": [],
+          "environment_danger_v2": [[1, 3, 1, 1, 1]],
+          "spawning_tiles": [],
+          "remaining_spawns": 0,
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "units": [
+            {"uid": 0, "type": "PunchMech", "x": 1, "y": 5,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]}
+          ]
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [1, 4],
+          "weapon_id": "None",
+          "target": [255, 255]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let final_board = &v["final_board"];
+        assert_eq!(final_board["turn"], 3);
+        let danger = final_board["environment_danger_v2"].as_array().unwrap();
+        assert!(danger.iter().any(|entry| entry == &json!([1, 4, 1, 1, 1])));
+        assert!(!danger.iter().any(|entry| entry == &json!([1, 3, 1, 1, 1])));
     }
 
     #[test]
