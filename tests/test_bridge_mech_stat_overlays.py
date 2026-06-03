@@ -156,6 +156,41 @@ def test_apply_save_mech_stat_overlays_accounts_for_new_skilled_hp(
     assert updates[0]["save_max_hp"] == 5
 
 
+def test_apply_save_mech_stat_overlays_trusts_repair_bridge_cap_without_health_power(
+    monkeypatch,
+):
+    snippet = """
+["pawn1"] = {["type"] = "WallMech", ["id"] = 1, ["mech"] = true,
+["healthPower"] = {0, },
+["pilot"] = {["id"] = "Pilot_Archive", ["name"] = "Liam", ["name_id"] = "", ["skill1"] = 5, ["skill2"] = 1, ["level"] = 2, },
+["health"] = 3, ["max_health"] = 5, }
+"""
+    monkeypatch.setattr(
+        reader,
+        "_read_mech_stat_overlays_from_save",
+        lambda: reader._parse_mech_stat_overlays_from_save_text(snippet),
+    )
+    bridge_data = {
+        "mission_id": "Mission_Repair",
+        "units": [
+            {
+                "uid": 1,
+                "type": "WallMech",
+                "hp": 3,
+                "max_hp": 3,
+                "team": 1,
+                "mech": True,
+            },
+        ],
+    }
+
+    updates = reader._apply_save_mech_stat_overlays(bridge_data)
+
+    assert updates == []
+    assert bridge_data["units"][0]["max_hp"] == 3
+    assert "mech_stat_overlays" not in bridge_data
+
+
 def test_apply_save_mech_stat_overlays_ignores_uid_type_mismatch(monkeypatch):
     monkeypatch.setattr(
         reader,

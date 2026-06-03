@@ -541,13 +541,24 @@ def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
         save_max = rec.get("max_hp")
         if not isinstance(save_max, int) or save_max <= 0:
             continue
+        old_max = unit.get("max_hp")
+        try:
+            bridge_max_for_repair = int(old_max or 0)
+        except (TypeError, ValueError):
+            bridge_max_for_repair = 0
+        if (
+            data.get("mission_id") == "Mission_Repair"
+            and bridge_max_for_repair > 0
+            and save_max > bridge_max_for_repair
+            and int(rec.get("health_power") or 0) <= 0
+        ):
+            continue
         if hp_skill_bonus:
             try:
                 bridge_max = int(unit.get("max_hp", 0) or 0)
             except (TypeError, ValueError):
                 bridge_max = 0
             save_max = max(save_max, bridge_max + hp_skill_bonus)
-        old_max = unit.get("max_hp")
         if old_max == save_max:
             continue
         unit["bridge_reported_max_hp"] = old_max
