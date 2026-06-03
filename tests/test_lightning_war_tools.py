@@ -2632,6 +2632,67 @@ def test_lightning_attempt_uses_visible_island_map_when_bridge_missing(monkeypat
     assert result["snapshot"]["visible_ui"]["visible_ui"] == "island_map"
 
 
+def test_lightning_attempt_routes_ambiguous_visible_map_when_bridge_missing(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    seen = {}
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "screenshot_path": "map.png",
+        },
+    )
+
+    def fake_route_plan(**kwargs):
+        seen.update(kwargs)
+        return {
+            "recommendation": {"status": "OK"},
+            "route_target_hint": {"mission_id": "Mission_Train"},
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 430,
+                    "window_y": 320,
+                    "mission_id": "Mission_Train",
+                    "command": (
+                        "python game_loop.py lightning_route_start "
+                        "--visual-region-index 0"
+                    ),
+                    "auto_route_allowed": True,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(commands, "_lightning_visible_map_route_plan", fake_route_plan)
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
+    assert result["reason"] == "visible_island_map_save_route_plan"
+    assert seen["visible_ui"]["visible_ui"] == "island_map_or_unknown"
+    assert result["primary_route_candidate_index"] == 0
+
+
 def test_lightning_attempt_clicks_preview_then_deploys(monkeypatch):
     session = RunSession(
         run_id="lw",

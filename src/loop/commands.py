@@ -12781,7 +12781,7 @@ def cmd_lightning_attempt(
             return finish(result, pause_reason="lightning_attempt_panel_ready")
         if (
             visible_ui.get("status") == "OK"
-            and visible_ui.get("visible_ui") == "island_map"
+            and visible_ui.get("visible_ui") in {"island_map", "island_map_or_unknown"}
         ):
             route_plan = _lightning_visible_map_route_plan(
                 profile=profile,
