@@ -509,6 +509,11 @@ def _apply_lightning_war_routing(
         rationale.append(
             "-70 Lightning War: Bad Repairs / repair platforms are too slow"
         )
+    if mission_id == "Mission_Trapped":
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: Power Generator trap can force mech damage"
+        )
 
     detritus_speed_traps = {
         "Mission_AcidTank",

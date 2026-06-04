@@ -185,6 +185,16 @@ def _repair_platform_mission() -> dict:
     }
 
 
+def _trapped_power_generator_mission() -> dict:
+    """R.S.T. Power Generator trap that can force Lightning mech damage."""
+    return {
+        "region_id": 23,
+        "mission_id": "Mission_Trapped",
+        "bonus_objective_ids": [BONUS_KILL_FIVE],
+        "environment": "Env_Null",
+    }
+
+
 def _generic_no_bonus_mission(region_id: int = 17) -> dict:
     return {
         "region_id": region_id,
@@ -337,6 +347,25 @@ def test_lightning_war_bad_repairs_penalty_fires_from_environment_only():
     assert scored["score"] <= -60
     assert "bad_repairs" in scored["mission_tags"]
     assert any("Bad Repairs" in line for line in scored["rationale_lines"])
+
+
+def test_lightning_war_routing_vetoes_power_generator_trap():
+    """Mission_Trapped forced no-clean-candidate mech HP loss in live routing."""
+    island = [_trapped_power_generator_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    trapped = next(e for e in ranked if e["mission_id"] == "Mission_Trapped")
+    assert trapped["score"] < -60
+    rationale = " ".join(trapped["rationale_lines"])
+    assert "Power Generator trap" in rationale
+    assert "mech damage" in rationale
 
 
 def test_lightning_war_routing_prefers_metadata_four_turn_mission():
