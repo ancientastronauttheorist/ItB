@@ -333,6 +333,81 @@ def test_conductor_starts_from_verified_setup_without_codex_gap(monkeypatch):
     assert calls.count(["achievements", "--sync"]) == 1
 
 
+def test_conductor_start_island_handoff_verifies_pause_before_segment(monkeypatch):
+    calls = []
+
+    def result(args, payload, returncode=0):
+        return conductor.CommandResult(
+            args=args,
+            returncode=returncode,
+            stdout="",
+            stderr="",
+            result=payload,
+        )
+
+    def safe_pause_payload():
+        return {
+            "status": "OK",
+            "reason": "already_paused",
+            "pause_guard": {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        }
+
+    def fake_run_game_loop(args, *, timeout=None):
+        calls.append(list(args))
+        if args == ["achievements", "--sync"]:
+            return result(args, {"status": "OK", "unlocked_list": []})
+        if args == ["verify_setup", "--difficulty", "0"]:
+            return result(args, {"status": "PASS"})
+        if args == ["lightning_ui", "setup_modal_start"]:
+            return result(args, {"status": "OK"})
+        if args == ["lightning_ui", "island_rst+bottom_continue+pause"]:
+            return result(args, {"status": "OK"})
+        if args == ["lightning_pause_guard", "--once"]:
+            return result(args, safe_pause_payload())
+        if args and args[0] == "lightning_segment":
+            return result(
+                args,
+                {
+                    **safe_pause_payload(),
+                    "status": "LIGHTNING_SEGMENT_STOPPED",
+                    "reason": "route_ready",
+                },
+            )
+        if args == ["lightning_ui", "ensure_pause"]:
+            return result(args, safe_pause_payload())
+        raise AssertionError(f"unexpected command: {args}")
+
+    monkeypatch.setattr(conductor, "run_game_loop", fake_run_game_loop)
+
+    args = conductor.build_parser().parse_args(
+        [
+            "--start-from-verified-setup",
+            "--start-island",
+            "rst",
+            "--max-segments",
+            "1",
+            "--settle-seconds",
+            "0",
+            "--no-journal",
+        ]
+    )
+
+    assert conductor.run_conductor(args) == 8
+    assert calls[:5] == [
+        ["achievements", "--sync"],
+        ["verify_setup", "--difficulty", "0"],
+        ["lightning_ui", "setup_modal_start"],
+        ["lightning_ui", "island_rst+bottom_continue+pause"],
+        ["lightning_pause_guard", "--once"],
+    ]
+    assert calls[5][0] == "lightning_segment"
+    assert "--no-preflight" in calls[5]
+
+
 def test_conductor_continues_after_combat_loop_returned(monkeypatch):
     calls = []
     segment_calls = 0

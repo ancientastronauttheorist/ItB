@@ -25,6 +25,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 RESULT_MARKER = "--- Result ---"
 LIGHTNING_WAR = "Lightning War"
+START_ISLAND_CONTROLS = {
+    "archive": "island_archive",
+    "rst": "island_rst",
+}
 SAFE_PAUSE_REASONS = {
     "already_paused",
     "pause_clicked_timer_stopped",
@@ -706,6 +710,33 @@ def run_conductor(args: argparse.Namespace) -> int:
         if start.returncode != 0 or result_status(start.result) != "OK":
             print("[start_game] setup Start click failed.")
             return 10
+        if args.start_island:
+            island_control = START_ISLAND_CONTROLS[args.start_island]
+            handoff = run_observed(
+                "start_island_handoff",
+                ["lightning_ui", f"{island_control}+bottom_continue+pause"],
+                watchdog=watchdog,
+                journal=journal,
+                timeout=45,
+            )
+            if handoff.returncode != 0 or result_status(handoff.result) != "OK":
+                ensure_pause(watchdog=watchdog, journal=journal)
+                return 11
+            pause_check = pause_guard_once(
+                watchdog=watchdog,
+                journal=journal,
+                timeout=args.pause_guard_timeout,
+            )
+            pause_state = watchdog.samples[-1] if watchdog.samples else None
+            if (
+                pause_check.returncode != 0
+                or not pause_state
+                or not pause_state.safe_to_think
+            ):
+                ensure_pause(watchdog=watchdog, journal=journal)
+                pause_state = watchdog.samples[-1] if watchdog.samples else None
+                if not pause_state or not pause_state.safe_to_think:
+                    return 12
         initial_must_act = True
         args.no_achievement_sync = True
         args.no_initial_preflight = True
@@ -895,6 +926,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Verify the visible Difficulty Setup modal, click the timer-starting "
             "Start button, then immediately enter the segment hot path."
+        ),
+    )
+    parser.add_argument(
+        "--start-island",
+        choices=sorted(START_ISLAND_CONTROLS),
+        default=None,
+        help=(
+            "After --start-from-verified-setup, select this first corporation, "
+            "clear its intro, click Pause, and verify a safe pause before the "
+            "segment loop returns control."
         ),
     )
     parser.add_argument("--setup-difficulty", type=int, default=0)

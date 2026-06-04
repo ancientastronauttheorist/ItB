@@ -29,7 +29,10 @@ the screenshot is clearly Into the Breach.
   Content rows ON.
 - Codex/user work: allowed until the final Start button is clicked.
 - Action: use the Python conductor's `--start-from-verified-setup` path so the
-  Start click and first live segment happen in one local process.
+  Start click and first live segment happen in one local process. When choosing
+  a known first corporation immediately, prefer `--start-island rst` or
+  `--start-island archive` so the conductor selects the island, clears the intro,
+  clicks Pause, and verifies the pause guard before returning.
 
 ## Must Act Now States
 
@@ -66,6 +69,9 @@ pause-like crop. Verify setup, then Start intentionally.
 The final Difficulty Setup Start click begins the achievement clock. After that
 click, the conductor must own routing/island/deployment/combat immediately; do
 not return control to Codex between Start and the first deterministic segment.
+For a fresh R.S.T. or Archive attempt, this includes the corporation click and
+bottom-right intro Continue; a clicked Pause is still not proof until the guard
+classifies a safe resting state.
 
 Turn-0 deployment is normally not pauseable. If a route-start mismatch is only
 discovered after Start loads deployment, local automation must recover without

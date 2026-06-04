@@ -34,6 +34,38 @@ Code/docs update:
 - `tests/test_lightning_war_conductor.py`
 - `docs/agent/lightning-war-experiments.md`
 
+## 2026-06-04 - Fresh Start Island Handoff Needs Pause Proof
+
+Hypothesis: starting the run and then issuing a separate Codex command to choose
+the first corporation can still spend timer between tool boundaries. The local
+conductor should own the whole Start -> corporation -> intro Continue -> Pause
+handoff and verify the resting state before returning.
+
+Segment: focused unit implementation while the visible game was parked on the
+non-live new-game setup screen.
+
+Evidence:
+- `lightning_ui` supports ad-hoc `+` sequences, and the calibrated R.S.T.
+  controls already include settle times for island selection, intro Continue,
+  and Pause.
+- `python -m pytest tests\test_lightning_war_conductor.py -q` passed after
+  adding a `--start-island rst` path.
+
+Result: `scripts/lightning_war_conductor.py --start-from-verified-setup
+--start-island rst` now syncs, verifies setup, clicks the timer-starting modal
+Start, selects R.S.T., clears the intro panel, clicks Pause, runs a pause guard,
+and only then enters the segment loop.
+
+Derived rule: after the final setup Start, Codex must not own first-island
+selection. Use the conductor start-island handoff for fresh R.S.T./Archive
+starts, and treat any failed pause proof after the handoff as `must_act_now`.
+
+Code/docs update:
+- `scripts/lightning_war_conductor.py`
+- `tests/test_lightning_war_conductor.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
+
 ## 2026-06-04 - Sticky Confirm During Route Mismatch Recovery
 
 Hypothesis: after a route mismatch is discovered post-Start, the recovery path
