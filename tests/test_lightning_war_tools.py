@@ -5994,6 +5994,8 @@ def test_lightning_dialogue_region_repeat_reopens_region(monkeypatch):
     assert result["dialogue_click"]["control"] == "dialogue_textbox"
     assert dialogue_clicks[0][1]["hold_seconds"] == 0.30
     assert dialogue_clicks[0][1]["settle_seconds"] >= 0.30
+    assert result["second_dialogue_click"]["control"] == "dialogue_textbox"
+    assert dialogue_clicks[1][1]["hold_seconds"] == 0.30
     assert region_clicks[0][0:2] == (641, 294)
     assert region_clicks[0][2]["hold_seconds"] == 0.30
     assert result["region_repeat_click"]["window_x"] == 541

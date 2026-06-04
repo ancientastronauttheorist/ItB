@@ -12076,6 +12076,30 @@ def _lightning_click_dialogue_then_region_repeat(
             "dialogue_click": dialogue_click,
         }
 
+    post_dialogue_probe = None
+    second_dialogue_click = None
+    try:
+        take_screenshot(tmp_path)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
+    post_dialogue_probe = _lightning_dialogue_box_score(tmp_path)
+    if post_dialogue_probe.get("visible"):
+        second_dialogue_click = _lightning_click_control_with_bounds(
+            "dialogue_textbox",
+            bounds=bounds,
+            dry_run=False,
+            settle_seconds=max(0.30, float(settle_seconds)),
+            hold_seconds=hold_seconds,
+        )
+        second_dialogue_click["dialogue_probe"] = post_dialogue_probe
+        if second_dialogue_click.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "dialogue_second_dismiss_failed",
+                "dialogue_click": dialogue_click,
+                "second_dialogue_click": second_dialogue_click,
+            }
+
     screen_x = int(bounds["x"] + int(region_window_x))
     screen_y = int(bounds["y"] + int(region_window_y))
     region_repeat_click = click_screen_point(
@@ -12101,6 +12125,8 @@ def _lightning_click_dialogue_then_region_repeat(
         "status": "OK",
         "reason": "dialogue_dismissed_region_repeated",
         "dialogue_click": dialogue_click,
+        "post_dialogue_probe": post_dialogue_probe,
+        "second_dialogue_click": second_dialogue_click,
         "region_repeat_click": region_repeat_click,
     }
 
