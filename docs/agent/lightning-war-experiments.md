@@ -395,3 +395,41 @@ Code/docs update:
 - `tests/test_lightning_war_tools.py`
 - `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
+
+## 2026-06-04 - Ambiguous Bridge Preview Route Guard
+
+Hypothesis: a bridge-preview mission id is not enough to route by exact target
+when the visible map has multiple red regions and save-backed region assignment
+is unavailable.
+
+Segment: fresh Archive start from verified Blitzkrieg/Easy/AE setup. The
+conductor selected Archive, cleared the intro, and reached the island map at
+`current.time=0:01:26` with two red regions visible.
+
+Evidence:
+- The only bridge-preview candidate was `Mission_Volatile`.
+- Visual region 0 clicked Central Museums, but the mission loaded as
+  `Mission_Artillery`.
+- The route mismatch guard recovered by abandoning to `new_game_setup` before
+  deployment/combat. Record:
+  `recordings/20260604_060138_355/lightning_route_mismatch.json`.
+
+Result: ambiguous bridge-preview-only route candidates no longer emit
+`--route-target-mission-id` or `--expected-mission-id`. Save-backed assignments
+and single-region forced previews keep exact guards.
+
+Derived rule: when there are multiple red regions and only a single
+bridge-preview candidate, treat that candidate as stale-prone. Do not infer an
+exact mission target for every visual region; either choose a visible region
+without a target guard and accept the loaded mission, or wait for save-backed
+assignment.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q -k "ambiguous_forced_bridge_preview or single_forced_bridge_preview or route_start_uses_visual_region_index or starts_selected_visual_route"`
+passed.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`

@@ -164,6 +164,18 @@ carry either the user-supplied `--route-target-mission-id` or the inferred
 save-ranked target into preview validation and into the immediate
 deployment/combat attempt.
 
+`ambiguous_bridge_preview_route`
+- Proof: Archive start with two visible red regions at `current.time=0:01:26`.
+  The bridge-preview candidate reported `Mission_Volatile`, but visual region
+  0 loaded `Mission_Artillery`; see
+  `recordings/20260604_060138_355/lightning_route_mismatch.json`.
+- Codex/user work: allowed only after recovery parks at verified setup/pause.
+- Action: if multiple red regions are visible and the only mission id comes
+  from `source=bridge_preview`, do not copy that id into every visual-region
+  command as an exact target. Use a save-backed region assignment, a
+  single-region forced preview, or a no-target visual start that accepts the
+  actual mission.
+
 During combat, `live_combat_phase` is a must-act-now signal, not a safe stop.
 If the bridge says a player turn is ready and the guard refuses to pause because
 combat is live, the conductor must solve from that fresh bridge state instead

@@ -5685,6 +5685,8 @@ def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview():
     assert all(candidate["forced_preview_route"] is True for candidate in result)
     assert all(candidate["forced_preview_ambiguous"] is True for candidate in result)
     assert all(candidate["auto_route_allowed"] is False for candidate in result)
+    assert all("--route-target-mission-id" not in candidate["command"] for candidate in result)
+    assert all("--expected-mission-id" not in candidate["route_start_command"] for candidate in result)
     assert all(
         candidate["auto_route_block_reason"]
         == "forced_bridge_preview_multiple_visible_regions"

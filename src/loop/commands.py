@@ -8528,6 +8528,7 @@ def _lightning_route_start_candidates(
         if isinstance(region, dict)
     ]
     forced_preview_ambiguous = forced_preview_allowed and len(regions) != 1
+    target_hint_can_guard = not forced_preview_ambiguous
     forced_preview_option = (
         dict(ranked[0])
         if forced_preview_allowed
@@ -8548,7 +8549,11 @@ def _lightning_route_start_candidates(
         expected_mission_id = None
         if isinstance(route_option, dict):
             expected_mission_id = route_option.get("mission_id")
-        if expected_mission_id is None and isinstance(target_hint, dict):
+        if (
+            expected_mission_id is None
+            and target_hint_can_guard
+            and isinstance(target_hint, dict)
+        ):
             expected_mission_id = target_hint.get("mission_id")
         route_target_arg = (
             f"--route-target-mission-id {expected_mission_id} "
