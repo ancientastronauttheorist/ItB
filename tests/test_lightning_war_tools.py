@@ -1496,10 +1496,14 @@ def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
     )
     assert result["primary_route_candidate_index"] == 0
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
-        "--visual-region-index 0 --start-mode dialogue-region-repeat-preview-board"
+        "--visual-region-index 0 "
+        "--expected-mission-id Mission_Train "
+        "--start-mode dialogue-region-repeat-preview-board"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
-        "--window-x 430 --window-y 320 --start-mode dialogue-region-repeat-preview-board"
+        "--window-x 430 --window-y 320 "
+        "--expected-mission-id Mission_Train "
+        "--start-mode dialogue-region-repeat-preview-board"
     )
 
 
@@ -2255,6 +2259,7 @@ def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch)
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
         "--visual-region-index 0 "
+        "--expected-mission-id Mission_Armored_Train "
         "--start-mode dialogue-region-repeat-preview-board-twice"
     )
     assert "candidate" in result["next_step"]
@@ -5449,10 +5454,14 @@ def test_lightning_route_start_auto_pauses_before_route_check(monkeypatch):
     )
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
-        "--visual-region-index 0 --start-mode dialogue-region-repeat-preview-board"
+        "--visual-region-index 0 "
+        "--expected-mission-id Mission_Train "
+        "--start-mode dialogue-region-repeat-preview-board"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
-        "--window-x 902 --window-y 349 --start-mode dialogue-region-repeat-preview-board"
+        "--window-x 902 --window-y 349 "
+        "--expected-mission-id Mission_Train "
+        "--start-mode dialogue-region-repeat-preview-board"
     )
 
 
@@ -6031,6 +6040,101 @@ def test_lightning_route_start_uses_visual_region_index(monkeypatch):
         "window_y": 349,
     }
     assert calls[0][0:2] == (902, 349)
+
+
+def test_lightning_route_start_blocks_preview_mismatch_before_commit(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Trapped"}],
+        },
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Bomb",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_mission_mismatch_before_start"
+    assert result["expected_route_mission_id"] == "Mission_Bomb"
+    assert result["actual_preview_mission_id"] == "Mission_Trapped"
+    assert len(calls) == 1
+    assert not any(
+        step.get("control") == "mission_preview_board"
+        for step in calls[0]
+        if isinstance(step, dict)
+    )
+
+
+def test_lightning_route_start_commits_matching_preview(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Bomb"}],
+        },
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Bomb",
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Bomb"
+    assert len(calls) == 2
+    assert any(
+        step.get("control") == "mission_preview_board"
+        for step in calls[1]
+        if isinstance(step, dict)
+    )
 
 
 def test_lightning_route_start_blocks_unknown_visual_region_index(monkeypatch):

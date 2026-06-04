@@ -8513,15 +8513,21 @@ def _lightning_route_start_candidates(
             f"--route-target-mission-id {expected_mission_id} "
             if expected_mission_id else ""
         )
+        route_start_target_arg = (
+            f"--expected-mission-id {expected_mission_id} "
+            if expected_mission_id else ""
+        )
         route_start_command = (
             "python3 game_loop.py lightning_route_start "
             f"--visual-region-index {region_index} "
+            f"{route_start_target_arg}"
             f"--start-mode {start_mode}"
         )
         coordinate_command = (
             "python3 game_loop.py lightning_route_start "
             "--no-route-check "
             f"--window-x {window_x} --window-y {window_y} "
+            f"{route_start_target_arg}"
             f"--start-mode {start_mode}"
         )
         if isinstance(region_index, int):
@@ -12066,11 +12072,10 @@ def _lightning_click_dialogue_then_region_repeat(
     }
 
 
-def _lightning_click_route_start_sequence(
+def _lightning_route_start_sequence_parts(
     region_window_x: int,
     region_window_y: int,
     *,
-    dry_run: bool = False,
     include_start_click: bool = True,
     dismiss_dialogue: bool = False,
     start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
@@ -12079,26 +12084,24 @@ def _lightning_click_route_start_sequence(
     region_settle_seconds: float = 0.35,
     resume_from_pause: bool = True,
 ) -> dict:
-    """Resume from pause, click a map region, then click the preview board."""
-    from src.control.mac_click import _get_window_bounds, click_screen_point
-
-    sequence = []
+    """Build route-start click sequences split at the mission commit point."""
+    preview_sequence = []
     if resume_from_pause:
         if os.name == "nt":
-            sequence.append({
+            preview_sequence.append({
                 "kind": "control",
                 "control": "menu_continue",
                 "settle_seconds": 0.2,
                 "hold_seconds": 0.06,
             })
         else:
-            sequence.append({
+            preview_sequence.append({
                 "kind": "key",
                 "key": "esc",
                 "description": "Pause menu Escape resume",
                 "settle_seconds": 0.22,
             })
-    sequence.append({
+    preview_sequence.append({
         "kind": "point",
         "window_x": int(region_window_x),
         "window_y": int(region_window_y),
@@ -12106,138 +12109,9 @@ def _lightning_click_route_start_sequence(
         "settle_seconds": float(region_settle_seconds),
         "hold_seconds": 0.06,
     })
-    if include_start_click:
-        normalized_start_mode = (
-            "manual_point"
-            if start_window_x is not None and start_window_y is not None
-            else str(start_mode or "preview_board").strip().lower().replace("-", "_")
-        )
-        if start_window_x is not None and start_window_y is not None:
-            if dismiss_dialogue:
-                sequence.append(
-                    {
-                        "kind": "control",
-                        "control": "dialogue_textbox",
-                        "settle_seconds": 0.18,
-                        "hold_seconds": 0.06,
-                    }
-                )
-            sequence.append(
-                {
-                    "kind": "point",
-                    "window_x": int(start_window_x),
-                    "window_y": int(start_window_y),
-                    "description": "Lightning route manual start",
-                    "settle_seconds": 0.8,
-                    "hold_seconds": 0.06,
-                }
-            )
-        elif normalized_start_mode in {
-            "preview_board",
-            "board",
-            "mission_preview_board",
-            "preview_board_twice",
-            "board_twice",
-            "mission_preview_board_twice",
-        }:
-            if dismiss_dialogue:
-                sequence.append(
-                    {
-                        "kind": "control",
-                        "control": "dialogue_textbox",
-                        "settle_seconds": 0.18,
-                        "hold_seconds": 0.06,
-                    }
-                )
-            board_clicks = (
-                2 if normalized_start_mode.endswith("_twice") else 1
-            )
-            for index in range(board_clicks):
-                sequence.append(
-                    {
-                        "kind": "control",
-                        "control": "mission_preview_board",
-                        "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
-                        "hold_seconds": 0.06,
-                    }
-                )
-        elif normalized_start_mode in {"region_repeat", "repeat_region", "second_region"}:
-            if dismiss_dialogue:
-                sequence.append(
-                    {
-                        "kind": "control",
-                        "control": "dialogue_textbox",
-                        "settle_seconds": 0.18,
-                        "hold_seconds": 0.06,
-                    }
-                )
-            sequence.append(
-                {
-                    "kind": "point",
-                    "window_x": int(region_window_x),
-                    "window_y": int(region_window_y),
-                    "description": "Lightning route repeat region start",
-                    "settle_seconds": 0.8,
-                    "hold_seconds": 0.06,
-                }
-            )
-        elif normalized_start_mode in {"visible_text", "text", "yellow_text"}:
-            sequence.append(
-                {
-                    "kind": "start_visible",
-                    "dismiss_dialogue": bool(dismiss_dialogue),
-                }
-            )
-        elif normalized_start_mode in {
-            "dialogue_region_repeat",
-            "advisor_region_repeat",
-            "dialogue_region_repeat_preview_board",
-            "advisor_region_repeat_preview_board",
-            "dialogue_region_repeat_preview_board_twice",
-            "advisor_region_repeat_preview_board_twice",
-            "dialogue_repeat_preview_board",
-            "dialogue_repeat_preview_board_twice",
-        }:
-            sequence.append(
-                {
-                    "kind": "dialogue_then_region_repeat",
-                    "window_x": int(region_window_x),
-                    "window_y": int(region_window_y),
-                    "description": "Dismiss advisor dialogue and re-open region",
-                    "settle_seconds": float(region_settle_seconds),
-                    "hold_seconds": 0.06,
-                }
-            )
-            board_clicks = (
-                2
-                if normalized_start_mode.endswith("_twice")
-                else 1
-            )
-            for index in range(board_clicks):
-                sequence.append(
-                    {
-                        "kind": "control",
-                        "control": "mission_preview_board",
-                        "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
-                        "hold_seconds": 0.06,
-                    }
-                )
-        else:
-            return {
-                "status": "ERROR",
-                "reason": "unknown_start_mode",
-                "start_mode": start_mode,
-                "known_start_modes": [
-                    "preview-board",
-                    "preview-board-twice",
-                    "visible-text",
-                    "region-repeat",
-                    "dialogue-region-repeat-preview-board-twice",
-                    "manual point via --start-window-x/--start-window-y",
-                ],
-                "sequence": sequence,
-            }
-    else:
+
+    if not include_start_click:
+        sequence = list(preview_sequence)
         sequence.append(
             {
                 "kind": "control",
@@ -12246,6 +12120,161 @@ def _lightning_click_route_start_sequence(
                 "hold_seconds": 0.06,
             }
         )
+        return {
+            "status": "OK",
+            "sequence": sequence,
+            "preview_sequence": preview_sequence,
+            "commit_sequence": [],
+        }
+
+    commit_sequence = []
+    normalized_start_mode = (
+        "manual_point"
+        if start_window_x is not None and start_window_y is not None
+        else str(start_mode or "preview_board").strip().lower().replace("-", "_")
+    )
+    if start_window_x is not None and start_window_y is not None:
+        if dismiss_dialogue:
+            preview_sequence.append(
+                {
+                    "kind": "control",
+                    "control": "dialogue_textbox",
+                    "settle_seconds": 0.18,
+                    "hold_seconds": 0.06,
+                }
+            )
+        commit_sequence.append(
+            {
+                "kind": "point",
+                "window_x": int(start_window_x),
+                "window_y": int(start_window_y),
+                "description": "Lightning route manual start",
+                "settle_seconds": 0.8,
+                "hold_seconds": 0.06,
+            }
+        )
+    elif normalized_start_mode in {
+        "preview_board",
+        "board",
+        "mission_preview_board",
+        "preview_board_twice",
+        "board_twice",
+        "mission_preview_board_twice",
+    }:
+        if dismiss_dialogue:
+            preview_sequence.append(
+                {
+                    "kind": "control",
+                    "control": "dialogue_textbox",
+                    "settle_seconds": 0.18,
+                    "hold_seconds": 0.06,
+                }
+            )
+        board_clicks = (
+            2 if normalized_start_mode.endswith("_twice") else 1
+        )
+        for index in range(board_clicks):
+            commit_sequence.append(
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                    "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
+                    "hold_seconds": 0.06,
+                }
+            )
+    elif normalized_start_mode in {"region_repeat", "repeat_region", "second_region"}:
+        if dismiss_dialogue:
+            preview_sequence.append(
+                {
+                    "kind": "control",
+                    "control": "dialogue_textbox",
+                    "settle_seconds": 0.18,
+                    "hold_seconds": 0.06,
+                }
+            )
+        commit_sequence.append(
+            {
+                "kind": "point",
+                "window_x": int(region_window_x),
+                "window_y": int(region_window_y),
+                "description": "Lightning route repeat region start",
+                "settle_seconds": 0.8,
+                "hold_seconds": 0.06,
+            }
+        )
+    elif normalized_start_mode in {"visible_text", "text", "yellow_text"}:
+        commit_sequence.append(
+            {
+                "kind": "start_visible",
+                "dismiss_dialogue": bool(dismiss_dialogue),
+            }
+        )
+    elif normalized_start_mode in {
+        "dialogue_region_repeat",
+        "advisor_region_repeat",
+        "dialogue_region_repeat_preview_board",
+        "advisor_region_repeat_preview_board",
+        "dialogue_region_repeat_preview_board_twice",
+        "advisor_region_repeat_preview_board_twice",
+        "dialogue_repeat_preview_board",
+        "dialogue_repeat_preview_board_twice",
+    }:
+        preview_sequence.append(
+            {
+                "kind": "dialogue_then_region_repeat",
+                "window_x": int(region_window_x),
+                "window_y": int(region_window_y),
+                "description": "Dismiss advisor dialogue and re-open region",
+                "settle_seconds": float(region_settle_seconds),
+                "hold_seconds": 0.06,
+            }
+        )
+        board_clicks = (
+            2
+            if normalized_start_mode.endswith("_twice")
+            else 1
+        )
+        for index in range(board_clicks):
+            commit_sequence.append(
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                    "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
+                    "hold_seconds": 0.06,
+                }
+            )
+    else:
+        return {
+            "status": "ERROR",
+            "reason": "unknown_start_mode",
+            "start_mode": start_mode,
+            "known_start_modes": [
+                "preview-board",
+                "preview-board-twice",
+                "visible-text",
+                "region-repeat",
+                "dialogue-region-repeat-preview-board-twice",
+                "manual point via --start-window-x/--start-window-y",
+            ],
+            "sequence": preview_sequence,
+        }
+
+    sequence = list(preview_sequence) + list(commit_sequence)
+    return {
+        "status": "OK",
+        "sequence": sequence,
+        "preview_sequence": preview_sequence,
+        "commit_sequence": commit_sequence,
+    }
+
+
+def _lightning_execute_route_start_sequence(
+    sequence: list[dict],
+    *,
+    dry_run: bool = False,
+) -> dict:
+    """Execute a prebuilt route-start click sequence."""
+    from src.control.mac_click import _get_window_bounds, click_screen_point
 
     if dry_run:
         return {"status": "DRY_RUN", "sequence": sequence}
@@ -12310,6 +12339,39 @@ def _lightning_click_route_start_sequence(
     return {"status": "OK", "steps": steps, "window_bounds": bounds}
 
 
+def _lightning_click_route_start_sequence(
+    region_window_x: int,
+    region_window_y: int,
+    *,
+    dry_run: bool = False,
+    include_start_click: bool = True,
+    dismiss_dialogue: bool = False,
+    start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
+    start_window_x: int | None = None,
+    start_window_y: int | None = None,
+    region_settle_seconds: float = 0.35,
+    resume_from_pause: bool = True,
+) -> dict:
+    """Resume from pause, click a map region, then click the preview board."""
+    parts = _lightning_route_start_sequence_parts(
+        region_window_x,
+        region_window_y,
+        include_start_click=include_start_click,
+        dismiss_dialogue=dismiss_dialogue,
+        start_mode=start_mode,
+        start_window_x=start_window_x,
+        start_window_y=start_window_y,
+        region_settle_seconds=region_settle_seconds,
+        resume_from_pause=resume_from_pause,
+    )
+    if parts.get("status") != "OK":
+        return parts
+    return _lightning_execute_route_start_sequence(
+        list(parts.get("sequence") or []),
+        dry_run=dry_run,
+    )
+
+
 def cmd_lightning_route_start(
     *,
     region_window_x: int | None = None,
@@ -12326,6 +12388,8 @@ def cmd_lightning_route_start(
     start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
     start_window_x: int | None = None,
     start_window_y: int | None = None,
+    expected_route_mission_id: str | None = None,
+    validate_preview_mission: bool = True,
     dry_run: bool = False,
 ) -> dict:
     """Preflight, route-check, and start a selected mission in one live burst."""
@@ -12590,22 +12654,172 @@ def cmd_lightning_route_start(
         _print_result(result)
         return result
 
-    click_result = _lightning_click_route_start_sequence(
-        int(region_window_x),
-        int(region_window_y),
-        dry_run=dry_run,
-        include_start_click=include_start_click,
-        dismiss_dialogue=dismiss_dialogue,
-        start_mode=start_mode,
-        start_window_x=start_window_x,
-        start_window_y=start_window_y,
-        resume_from_pause=(initial_visible_name == "pause_menu"),
-    )
+    expected_preview_mission = str(expected_route_mission_id or "").strip()
+    if (
+        expected_preview_mission
+        and include_start_click
+        and validate_preview_mission
+        and not dry_run
+    ):
+        sequence_parts = _lightning_route_start_sequence_parts(
+            int(region_window_x),
+            int(region_window_y),
+            include_start_click=True,
+            dismiss_dialogue=dismiss_dialogue,
+            start_mode=start_mode,
+            start_window_x=start_window_x,
+            start_window_y=start_window_y,
+            resume_from_pause=(initial_visible_name == "pause_menu"),
+        )
+        if sequence_parts.get("status") != "OK":
+            result = {
+                "status": "BLOCKED",
+                "reason": sequence_parts.get("reason", "route_start_sequence_failed"),
+                "preflight": preflight,
+                "initial_ui": initial_ui,
+                "auto_pause": auto_pause,
+                "recommendation": recommendation,
+                "route_target_hint": route_target_hint,
+                "visual_regions": visual_regions,
+                "selected_visual_region": selected_visual_region,
+                "visual_region_peek": visual_region_peek,
+                "sequence_parts": sequence_parts,
+                "next_step": (
+                    "Route start could not build a safe preview/commit "
+                    "sequence. Inspect the visible UI before clicking."
+                ),
+            }
+            _print_result(result)
+            return result
+
+        preview_click = _lightning_execute_route_start_sequence(
+            list(sequence_parts.get("preview_sequence") or []),
+            dry_run=False,
+        )
+        if preview_click.get("status") != "OK":
+            result = {
+                "status": "BLOCKED",
+                "reason": preview_click.get("reason", "route_preview_click_failed"),
+                "preflight": preflight,
+                "initial_ui": initial_ui,
+                "auto_pause": auto_pause,
+                "recommendation": recommendation,
+                "route_target_hint": route_target_hint,
+                "visual_regions": visual_regions,
+                "selected_visual_region": selected_visual_region,
+                "visual_region_peek": visual_region_peek,
+                "preview_click": preview_click,
+                "next_step": (
+                    "The selected route preview did not open cleanly. Inspect "
+                    "the visible UI before clicking Start Mission."
+                ),
+            }
+            _print_result(result)
+            return result
+
+        preview_recommendation = cmd_recommend_mission(
+            profile=profile,
+            routing="lightning_war",
+            use_save_region_filter=False,
+            pause_map_peek=False,
+        )
+        actual_preview_mission = None
+        top3 = preview_recommendation.get("top3")
+        if isinstance(top3, list) and top3 and isinstance(top3[0], dict):
+            actual_preview_mission = str(top3[0].get("mission_id") or "").strip()
+        if (
+            preview_recommendation.get("source") != "bridge_preview"
+            or not actual_preview_mission
+        ):
+            result = {
+                "status": "BLOCKED",
+                "reason": "route_preview_mission_unverified_before_start",
+                "expected_route_mission_id": expected_preview_mission,
+                "actual_preview_mission_id": actual_preview_mission or None,
+                "preflight": preflight,
+                "initial_ui": initial_ui,
+                "auto_pause": auto_pause,
+                "recommendation": recommendation,
+                "preview_recommendation": preview_recommendation,
+                "route_target_hint": route_target_hint,
+                "visual_regions": visual_regions,
+                "selected_visual_region": selected_visual_region,
+                "visual_region_peek": visual_region_peek,
+                "preview_click": preview_click,
+                "next_step": (
+                    "Do not click Start Mission. The selected region preview "
+                    "did not expose a bridge_preview mission id; inspect or "
+                    "reroute from the visible map."
+                ),
+            }
+            _print_result(result)
+            return result
+        if actual_preview_mission != expected_preview_mission:
+            result = {
+                "status": "BLOCKED",
+                "reason": "route_preview_mission_mismatch_before_start",
+                "expected_route_mission_id": expected_preview_mission,
+                "actual_preview_mission_id": actual_preview_mission,
+                "preflight": preflight,
+                "initial_ui": initial_ui,
+                "auto_pause": auto_pause,
+                "recommendation": recommendation,
+                "preview_recommendation": preview_recommendation,
+                "route_target_hint": route_target_hint,
+                "visual_regions": visual_regions,
+                "selected_visual_region": selected_visual_region,
+                "visual_region_peek": visual_region_peek,
+                "preview_click": preview_click,
+                "next_step": (
+                    "Do not click Start Mission. The preview mission does not "
+                    "match the route target; choose another visible region, "
+                    "reroute, or restart the Lightning timeline."
+                ),
+            }
+            _print_result(result)
+            return result
+
+        commit_click = _lightning_execute_route_start_sequence(
+            list(sequence_parts.get("commit_sequence") or []),
+            dry_run=False,
+        )
+        click_result = {
+            "status": commit_click.get("status", "ERROR"),
+            "reason": (
+                "route_preview_validated_start_clicked"
+                if commit_click.get("status") == "OK"
+                else commit_click.get("reason", "route_preview_commit_failed")
+            ),
+            "expected_route_mission_id": expected_preview_mission,
+            "actual_preview_mission_id": actual_preview_mission,
+            "preview_click": preview_click,
+            "preview_recommendation": preview_recommendation,
+            "commit_click": commit_click,
+        }
+        if commit_click.get("status") != "OK":
+            click_result["reason"] = commit_click.get(
+                "reason",
+                "route_preview_commit_failed",
+            )
+    else:
+        click_result = _lightning_click_route_start_sequence(
+            int(region_window_x),
+            int(region_window_y),
+            dry_run=dry_run,
+            include_start_click=include_start_click,
+            dismiss_dialogue=dismiss_dialogue,
+            start_mode=start_mode,
+            start_window_x=start_window_x,
+            start_window_y=start_window_y,
+            resume_from_pause=(initial_visible_name == "pause_menu"),
+        )
     result = {
         "status": click_result.get("status", "ERROR"),
         "reason": (
             "dry_run_route_start_sequence"
             if click_result.get("status") == "DRY_RUN"
+            else click_result.get("reason")
+            if click_result.get("reason")
             else "route_start_sequence_clicked"
             if click_result.get("status") == "OK"
             else click_result.get("reason", "route_start_failed")
@@ -12619,6 +12833,9 @@ def cmd_lightning_route_start(
         "selected_visual_region": selected_visual_region,
         "visual_region_peek": visual_region_peek,
         "click_result": click_result,
+        "expected_route_mission_id": (
+            expected_preview_mission if expected_preview_mission else None
+        ),
         "next_step": (
             "If deployment loaded, run lightning_segment immediately. If a "
             "preview/dialogue remained open, use lightning_ui start_visible_dialogue "
@@ -13870,6 +14087,7 @@ def cmd_lightning_segment(
                     verify_route=False,
                     auto_pause_if_needed=True,
                     start_mode=route_start_mode,
+                    expected_route_mission_id=route_start_expected_mission_id,
                     dry_run=dry_run,
                 ),
                 quiet=quiet,
@@ -13977,6 +14195,7 @@ def cmd_lightning_segment(
                         verify_route=False,
                         auto_pause_if_needed=True,
                         start_mode=route_start_mode,
+                        expected_route_mission_id=route_start_expected_mission_id,
                         dry_run=dry_run,
                     ),
                     quiet=quiet,

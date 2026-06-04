@@ -602,6 +602,15 @@ def main():
         help="Click only the region preview, not the mission preview board",
     )
     p_lightning_route_start.add_argument(
+        "--expected-mission-id",
+        dest="expected_route_mission_id",
+        default=None,
+        help=(
+            "Before clicking Start Mission, require the opened preview to "
+            "expose this bridge mission id"
+        ),
+    )
+    p_lightning_route_start.add_argument(
         "--dismiss-dialogue",
         action="store_true",
         help="Dismiss an advisor dialogue before clicking the mission preview",
@@ -1328,6 +1337,7 @@ def main():
             start_mode=args.start_mode,
             start_window_x=args.start_window_x,
             start_window_y=args.start_window_y,
+            expected_route_mission_id=args.expected_route_mission_id,
             dry_run=args.dry_run,
         )
     elif args.command == "lightning_capture":
