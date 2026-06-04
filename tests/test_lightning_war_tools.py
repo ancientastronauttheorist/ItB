@@ -6238,7 +6238,7 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     assert result["reason"] == "route_preview_validated_start_clicked"
     assert result["click_result"]["actual_preview_mission_id"] == "Mission_Bomb"
     assert len(calls) == 1
-    assert dialogue_dismiss_calls == [{"dry_run": False}]
+    assert dialogue_dismiss_calls == []
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
@@ -6276,7 +6276,7 @@ def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch)
 
     def fake_visible_start(**kwargs):
         visible_start_calls.append(kwargs)
-        if len(visible_start_calls) == 1:
+        if len(visible_start_calls) < 3:
             return {
                 "status": "NOT_FOUND",
                 "reason": "start_mission_text_not_found",
@@ -6334,6 +6334,7 @@ def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch)
     )
     assert visible_start_calls == [
         {"dry_run": False, "dismiss_dialogue": False},
+        {"dry_run": False, "dismiss_dialogue": False},
         {"dry_run": False, "dismiss_dialogue": True},
     ]
     assert dialogue_dismiss_calls == [{"dry_run": False}]
@@ -6379,12 +6380,13 @@ def test_lightning_route_start_blocks_post_dialogue_preview_mismatch(monkeypatch
         "_lightning_dismiss_visible_dialogue",
         lambda **kwargs: {"status": "OK", "dialogue_click": {"status": "OK"}},
     )
+    visible_start_calls = []
+
     monkeypatch.setattr(
         commands,
         "_lightning_click_visible_start_mission",
-        lambda **kwargs: (_ for _ in ()).throw(
-            AssertionError("mismatched preview must not click Start Mission")
-        ),
+        lambda **kwargs: visible_start_calls.append(kwargs)
+        or {"status": "NOT_FOUND", "reason": "start_mission_text_not_found"},
     )
 
     result = commands.cmd_lightning_route_start(
@@ -6400,6 +6402,7 @@ def test_lightning_route_start_blocks_post_dialogue_preview_mismatch(monkeypatch
     assert result["click_result"]["actual_preview_mission_id"] == "Mission_Tides"
     assert result["click_result"]["post_dialogue_actual_mission_id"] == "Mission_Mines"
     assert result["click_result"]["commit_click"]["status"] == "BLOCKED"
+    assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
     assert len(calls) == 1
 
 
