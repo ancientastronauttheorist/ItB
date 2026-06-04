@@ -9564,6 +9564,33 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     scores["deployment_screen"] = deployment
     island_map = _lightning_island_map_score(image)
     scores["island_map"] = island_map
+    setup_back = _lightning_button_like_score(
+        image,
+        center=(291, 83),
+        size=(220, 80),
+    )
+    setup_start = _lightning_button_like_score(
+        image,
+        center=(1005, 83),
+        size=(220, 80),
+    )
+    scores["new_game_setup_back"] = setup_back
+    scores["new_game_setup_start"] = setup_start
+    if (
+        dark_overlay >= 0.60
+        and setup_back.get("score", 0.0) >= 0.85
+        and setup_start.get("score", 0.0) >= 0.85
+        and setup_back.get("bright", 0) >= 700
+        and setup_start.get("bright", 0) >= 700
+    ):
+        return {
+            "status": "OK",
+            "visible_ui": "new_game_setup",
+            "recommended_control": None,
+            "confidence": min(setup_back["score"], setup_start["score"]),
+            "dark_overlay_fraction": dark_overlay,
+            "scores": scores,
+        }
     if (
         dark_overlay < 0.60
         and deployment.get("yellow", 0) >= 12000

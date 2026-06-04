@@ -17,6 +17,13 @@ the screenshot is clearly Into the Breach.
   clock has not started or no longer matters.
 - Codex/user work: allowed after confirming the screen.
 
+`new_game_setup`
+- Proof: visible setup layout with top Back and Start buttons, squad card, and
+  setup controls. Classifier should use this explicit layout before considering
+  pause-menu crops.
+- Codex/user work: allowed. Required actions before Start are achievement sync,
+  Blitzkrieg/Easy/AE verification, and focused setup fixes.
+
 ## Must Act Now States
 
 `island_map`, `mission_preview`, `deployment`, `combat_player`,
@@ -44,6 +51,10 @@ The outer conductor journal should preserve:
 `pause_clicked` is an action label, not proof. It becomes safe only when paired
 with `pause_verified=true`, `timer_stop_verified=true`, a verified pause-menu
 classifier result, a bridge pause signal, or stable `current.time`.
+
+`new_game_setup` is safe but is not a pause menu. Do not click `menu_continue`
+or run a live segment from setup just because a dark screenshot has a
+pause-like crop. Verify setup, then Start intentionally.
 
 When `lightning_pause_guard` returns a top-level result with `last_poll`, the
 nested `last_poll` is the evidence-bearing payload. The pre-click panel can be

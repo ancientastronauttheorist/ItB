@@ -1766,6 +1766,50 @@ def test_lightning_ui_classifier_rejects_dialogue_as_pause_menu(tmp_path):
     assert result["recommended_control"] is None
 
 
+def test_lightning_ui_classifier_detects_new_game_setup_before_pause(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (8, 10, 14))
+    draw = ImageDraw.Draw(image)
+    for cx in (291 * scale, 1005 * scale):
+        cy = 83 * scale
+        w, h = 220 * scale, 80 * scale
+        draw.rectangle(
+            [cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2],
+            fill=(24, 32, 48),
+            outline=(92, 122, 180),
+            width=8,
+        )
+        draw.rectangle(
+            [cx - 75 * scale, cy - 14 * scale, cx + 75 * scale, cy + 14 * scale],
+            fill=(235, 235, 235),
+        )
+
+    # The setup hangar can put blue panels under the pause-menu crop. Keep a
+    # pause-like shape here so the setup detector must win the classification.
+    cx, cy = 491 * scale, 251 * scale
+    w, h = 320 * scale, 100 * scale
+    draw.rectangle(
+        [cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2],
+        fill=(18, 24, 36),
+        outline=(85, 110, 165),
+        width=6,
+    )
+    draw.rectangle(
+        [cx - 70 * scale, cy - 10 * scale, cx + 70 * scale, cy + 10 * scale],
+        fill=(235, 235, 235),
+    )
+
+    path = tmp_path / "new_game_setup.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "new_game_setup"
+    assert result["recommended_control"] is None
+
+
 def test_lightning_ui_classifier_rejects_live_combat_button_shapes(tmp_path):
     from PIL import Image, ImageDraw
 
