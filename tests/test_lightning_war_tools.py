@@ -6092,6 +6092,7 @@ def test_lightning_route_start_blocks_preview_mismatch_before_commit(monkeypatch
 
 def test_lightning_route_start_commits_matching_preview(monkeypatch):
     calls = []
+    visible_start_calls = []
 
     monkeypatch.setattr(
         commands,
@@ -6117,6 +6118,16 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
             "top3": [{"mission_id": "Mission_Bomb"}],
         },
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: visible_start_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "target": {"window_x": 848, "window_y": 448},
+            "click_result": {"status": "OK"},
+        },
+    )
 
     result = commands.cmd_lightning_route_start(
         region_window_x=542,
@@ -6129,12 +6140,8 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     assert result["status"] == "OK"
     assert result["reason"] == "route_preview_validated_start_clicked"
     assert result["click_result"]["actual_preview_mission_id"] == "Mission_Bomb"
-    assert len(calls) == 2
-    assert any(
-        step.get("control") == "mission_preview_board"
-        for step in calls[1]
-        if isinstance(step, dict)
-    )
+    assert len(calls) == 1
+    assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
 def test_lightning_route_start_blocks_unknown_visual_region_index(monkeypatch):

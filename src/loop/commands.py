@@ -12779,10 +12779,23 @@ def cmd_lightning_route_start(
             _print_result(result)
             return result
 
-        commit_click = _lightning_execute_route_start_sequence(
-            list(sequence_parts.get("commit_sequence") or []),
-            dry_run=False,
+        commit_sequence = list(sequence_parts.get("commit_sequence") or [])
+        broad_preview_commit = any(
+            isinstance(step, dict)
+            and step.get("kind") == "control"
+            and step.get("control") == "mission_preview_board"
+            for step in commit_sequence
         )
+        if broad_preview_commit and start_window_x is None and start_window_y is None:
+            commit_click = _lightning_click_visible_start_mission(
+                dry_run=False,
+                dismiss_dialogue=False,
+            )
+        else:
+            commit_click = _lightning_execute_route_start_sequence(
+                commit_sequence,
+                dry_run=False,
+            )
         click_result = {
             "status": commit_click.get("status", "ERROR"),
             "reason": (
