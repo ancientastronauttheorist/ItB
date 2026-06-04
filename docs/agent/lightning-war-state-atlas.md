@@ -45,6 +45,23 @@ the screenshot is clearly Into the Breach.
 - Action: deterministic conductor path, route-start helper, panel-clear helper,
   deployment/combat loop, or pause guard if the screen is pauseable.
 
+`hq_warning_island_map`
+- Proof: island map with substantial red territory plus the Hive Leader /
+  Corporate HQ warning tooltip. Tooltip crops can resemble perfect-reward
+  cards, but the red/green map is authoritative.
+- Codex/user work: not allowed while live.
+- Action: classify as `island_map` and route/start the HQ mission with the route
+  helper or a verified boss-region click.
+
+`forced_bridge_preview_ambiguous`
+- Proof: route recommendation source is `bridge_preview`, there is exactly one
+  ranked mission, but the visible red-region detector reports more than one
+  candidate blob and no save-backed visual assignment.
+- Codex/user work: not allowed while live.
+- Action: do not auto-start. Stop at the route decision, collect save-backed
+  assignment or a verified single-region preview, then start with an exact
+  expected mission id.
+
 ## Watchdog Evidence Fields
 
 The outer conductor journal should preserve:

@@ -34,6 +34,51 @@ Code/docs update:
 - `tests/test_lightning_war_conductor.py`
 - `docs/agent/lightning-war-experiments.md`
 
+## 2026-06-04 - HQ Warning And Forced Preview Ambiguity
+
+Hypothesis: the failed R.S.T.-first practice run exposed two deterministic
+state bugs: the Corporate HQ warning map was classified as a perfect reward
+choice, and Archive route auto-start treated one stale bridge-preview mission as
+safe across multiple visible red regions.
+
+Segment: live Lightning War attempt from verified setup, R.S.T. first, then
+manual Archive handoff after the R.S.T. boss.
+
+Evidence:
+- R.S.T. island plus Corporate HQ completed, but the clock reached about
+  `0h 22m 31s`, leaving too little margin for a full second island.
+- The HQ warning screen visibly showed the island map with red Corporate HQ and
+  a warning tooltip, while the classifier returned `perfect_reward_choice` and
+  recommended a Grid reward click.
+- Archive route auto-start saw a single `bridge_preview` recommendation for
+  `Mission_Tides`, detected two visual red regions, attached the same forced
+  preview mission to both, clicked region 0, and loaded
+  `Mission_Armored_Train`.
+- The mismatch guard correctly did not continue the wrong mission; it abandoned
+  the timeline and returned to `new_game_setup`.
+
+Result: island-map classification now wins when substantial red map territory is
+visible, even if a tooltip crop looks like a reward button. Forced
+bridge-preview routes remain auto-startable only when exactly one visual red
+region is present; otherwise candidates are emitted but marked
+`auto_route_allowed=false`.
+
+Derived rules:
+- A red/green island map plus HQ warning tooltip is `island_map`, not
+  `perfect_reward_choice`.
+- A single bridge-preview mission is not enough to click one of multiple
+  unmapped visible regions. Use save-backed visual assignment, a verified
+  single-region preview, or stop at a safe route decision.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q` passed.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
+
 ## 2026-06-04 - Fresh Start Island Handoff Needs Pause Proof
 
 Hypothesis: starting the run and then issuing a separate Codex command to choose

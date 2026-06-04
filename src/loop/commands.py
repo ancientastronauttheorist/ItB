@@ -8501,18 +8501,23 @@ def _lightning_route_start_candidates(
             ),
         )
     )
+    regions = [
+        region
+        for region in (visual_regions.get("regions") or [])
+        if isinstance(region, dict)
+    ]
+    forced_preview_ambiguous = forced_preview_allowed and len(regions) != 1
     forced_preview_option = (
         dict(ranked[0])
         if forced_preview_allowed
+        and not forced_preview_ambiguous
         and isinstance(ranked, list)
         and ranked
         and isinstance(ranked[0], dict)
         else None
     )
     candidates: list[dict] = []
-    for visual_order, region in enumerate(visual_regions.get("regions") or []):
-        if not isinstance(region, dict):
-            continue
+    for visual_order, region in enumerate(regions):
         window_x = region.get("window_x")
         window_y = region.get("window_y")
         if not isinstance(window_x, int) or not isinstance(window_y, int):
@@ -8575,12 +8580,26 @@ def _lightning_route_start_candidates(
             )
         elif forced_preview_option is not None:
             candidate["route_option"] = dict(forced_preview_option)
+            candidate["visual_order"] = visual_order
             candidate["mission_id"] = forced_preview_option.get("mission_id")
             candidate["score"] = forced_preview_option.get("score")
             candidate["forced_preview_route"] = True
             candidate["auto_route_allowed"] = _lightning_candidate_auto_allowed(
                 candidate,
             )
+        elif forced_preview_ambiguous and isinstance(ranked, list) and ranked:
+            top = ranked[0]
+            if isinstance(top, dict):
+                candidate["route_option"] = dict(top)
+                candidate["visual_order"] = visual_order
+                candidate["mission_id"] = top.get("mission_id")
+                candidate["score"] = top.get("score")
+                candidate["forced_preview_route"] = True
+                candidate["forced_preview_ambiguous"] = True
+                candidate["auto_route_allowed"] = False
+                candidate["auto_route_block_reason"] = (
+                    "forced_bridge_preview_multiple_visible_regions"
+                )
         if target_hint:
             candidate["target_hint"] = dict(target_hint)
         candidates.append(candidate)
@@ -9686,6 +9705,19 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
                 "dark_overlay_fraction": dark_overlay,
                 "scores": scores,
             }
+        if (
+            island_map.get("red", 0) >= 5000
+            and island_map.get("colored", 0) >= 12000
+            and island_map.get("score", 0.0) >= 0.05
+        ):
+            return {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "recommended_control": None,
+                "confidence": island_map["score"],
+                "dark_overlay_fraction": dark_overlay,
+                "scores": scores,
+            }
         reward_choice = scores.get("perfect_reward_choice", {})
         if _lightning_score_is_actionable(
             reward_choice,
@@ -9749,6 +9781,20 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
                     "dark_overlay_fraction": dark_overlay,
                     "scores": scores,
                 }
+
+    if (
+        island_map.get("red", 0) >= 5000
+        and island_map.get("colored", 0) >= 12000
+        and island_map.get("score", 0.0) >= 0.05
+    ):
+        return {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "recommended_control": None,
+            "confidence": island_map["score"],
+            "dark_overlay_fraction": dark_overlay,
+            "scores": scores,
+        }
 
     best_name = max(_LIGHTNING_UI_BUTTON_CROPS, key=lambda name: scores[name]["score"])
     best = scores[best_name]

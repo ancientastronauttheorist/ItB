@@ -1948,6 +1948,51 @@ def test_lightning_ui_classifier_detects_visible_island_map(tmp_path):
     assert result["recommended_control"] is None
 
 
+def test_lightning_ui_classifier_keeps_hq_warning_as_island_map(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (24, 30, 42))
+    draw = ImageDraw.Draw(image)
+    draw.polygon(
+        [
+            (570 * scale, 250 * scale),
+            (810 * scale, 220 * scale),
+            (960 * scale, 520 * scale),
+            (770 * scale, 650 * scale),
+            (580 * scale, 500 * scale),
+        ],
+        fill=(185, 45, 50),
+    )
+    draw.polygon(
+        [
+            (900 * scale, 460 * scale),
+            (1060 * scale, 500 * scale),
+            (1020 * scale, 640 * scale),
+            (880 * scale, 610 * scale),
+        ],
+        fill=(55, 135, 70),
+    )
+    cx, cy = 817 * scale, 480 * scale
+    draw.rectangle(
+        [cx - 85 * scale, cy - 55 * scale, cx + 85 * scale, cy + 55 * scale],
+        fill=(18, 25, 38),
+        outline=(85, 110, 165),
+        width=10,
+    )
+    draw.rectangle(
+        [cx - 55 * scale, cy - 16 * scale, cx + 55 * scale, cy + 16 * scale],
+        fill=(240, 240, 240),
+    )
+    path = tmp_path / "hq_warning_map.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "island_map"
+    assert result["recommended_control"] is None
+
+
 def test_lightning_ui_classifier_prioritizes_map_continue_panel(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -5166,6 +5211,48 @@ def test_visual_route_candidate_allows_single_forced_bridge_preview():
     assert result[0]["mission_id"] == "Mission_Artillery"
     assert result[0]["forced_preview_route"] is True
     assert result[0]["auto_route_allowed"] is True
+
+
+def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview():
+    recommendation = {
+        "status": "OK",
+        "source": "bridge_preview",
+        "ranked": [
+            {
+                "mission_id": "Mission_Tides",
+                "score": 23,
+            },
+        ],
+        "top3": [
+            {
+                "mission_id": "Mission_Tides",
+                "score": 23,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 0, "window_x": 809, "window_y": 419},
+            {"index": 1, "window_x": 949, "window_y": 588},
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    assert len(result) == 2
+    assert all(candidate["mission_id"] == "Mission_Tides" for candidate in result)
+    assert all(candidate["forced_preview_route"] is True for candidate in result)
+    assert all(candidate["forced_preview_ambiguous"] is True for candidate in result)
+    assert all(candidate["auto_route_allowed"] is False for candidate in result)
+    assert all(
+        candidate["auto_route_block_reason"]
+        == "forced_bridge_preview_multiple_visible_regions"
+        for candidate in result
+    )
 
 
 def test_recommend_mission_uses_save_filter_for_live_bridge(monkeypatch):
