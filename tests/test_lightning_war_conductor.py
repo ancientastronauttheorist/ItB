@@ -95,6 +95,90 @@ def test_watchdog_marks_verified_pause_safe():
     assert state.visible_ui == "pause_menu"
 
 
+def test_watchdog_uses_nested_pause_guard_poll():
+    watchdog = conductor.TimerWatchdog()
+
+    state = watchdog.observe(
+        "pause_guard",
+        {
+            "status": "OK",
+            "reason": "pause_clicked",
+            "last_poll": {
+                "status": "OK",
+                "reason": "pause_clicked",
+                "pause_verified": True,
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "reward_panel",
+                    "screenshot_path": "reward.png",
+                    "scores": {
+                        "reward_panel": {"score": 0.9, "crop": [1, 2, 3, 4]},
+                    },
+                },
+                "pause_verify": {
+                    "status": "OK",
+                    "visible_ui": "pause_menu",
+                    "screenshot_path": "pause.png",
+                },
+                "live_snapshot": {
+                    "status": "OK",
+                    "phase": "unknown",
+                    "turn": 0,
+                    "deployment_zone_count": 0,
+                },
+                "decision": {
+                    "status": "OK",
+                    "reason": "safe_ui_pause_available",
+                    "pause_allowed": True,
+                },
+                "guard": {"path": "guard.json"},
+            },
+        },
+    )
+
+    assert state.safe_to_think is True
+    assert state.pause_verified is True
+    assert state.visible_ui == "pause_menu"
+    assert state.screenshot_path == "pause.png"
+    assert state.guard_path == "guard.json"
+    assert state.live_phase == "unknown"
+    assert state.evidence["ui_scores"]["reward_panel"]["crop"] == [1, 2, 3, 4]
+
+
+def test_watchdog_does_not_trust_plain_pause_clicked():
+    watchdog = conductor.TimerWatchdog()
+
+    state = watchdog.observe(
+        "pause_guard",
+        {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    assert state.safe_to_think is False
+    assert state.pause_verified is False
+    assert state.timer_stop_verified is False
+    assert state.status == "AMBIGUOUS"
+
+
+def test_safe_timer_uses_nested_timer_probe():
+    result = {
+        "status": "OK",
+        "last_poll": {
+            "status": "OK",
+            "stop_probe": {
+                "status": "OK",
+                "running": False,
+                "second_timer": {
+                    "source": "profile_current_time",
+                    "game_seconds": 12.5,
+                    "game_timer": "0:00:12",
+                },
+            },
+        },
+    }
+
+    assert conductor.safe_timer(result) == (12.5, "0:00:12")
+
+
 def test_watchdog_marks_deployment_must_act():
     watchdog = conductor.TimerWatchdog()
 

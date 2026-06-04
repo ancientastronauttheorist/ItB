@@ -27,7 +27,6 @@ RESULT_MARKER = "--- Result ---"
 LIGHTNING_WAR = "Lightning War"
 SAFE_PAUSE_REASONS = {
     "already_paused",
-    "pause_clicked",
     "pause_clicked_timer_stopped",
 }
 MUST_ACT_REASONS = {
@@ -66,6 +65,13 @@ class WatchdogState:
     timer_delta: float | None = None
     visible_ui: str | None = None
     guard_status: str | None = None
+    pause_verified: bool = False
+    timer_stop_verified: bool = False
+    timer_running: bool = False
+    screenshot_path: str | None = None
+    guard_path: str | None = None
+    live_phase: str | None = None
+    evidence: dict[str, Any] | None = None
     clock_state: str = "ambiguous"
 
 
@@ -114,6 +120,7 @@ class TimerWatchdog:
         guard = guard_payload(result)
         visible_ui = visible_ui_name(guard) or visible_ui_name(result)
         guard_status = str(guard.get("status")) if guard else None
+        evidence = compact_watchdog_evidence(result, guard=guard)
         reason = str(
             (guard.get("reason") if guard else None)
             or (result or {}).get("reason")
@@ -134,7 +141,12 @@ class TimerWatchdog:
         )
         if safe:
             status = "SAFE_TO_THINK"
-            clock_state = "verified_pause_or_non_live"
+            if timer_stop_verified(guard) or timer_stop_verified(result):
+                clock_state = "timer_stop_verified"
+            elif visible_ui == "pause_menu":
+                clock_state = "pause_menu_classifier"
+            else:
+                clock_state = "proven_non_live"
         elif must_act:
             status = "MUST_ACT_NOW"
             clock_state = "live_or_unpauseable"
@@ -153,6 +165,15 @@ class TimerWatchdog:
             timer_delta=timer_delta,
             visible_ui=visible_ui,
             guard_status=guard_status,
+            pause_verified=pause_verified(guard) or pause_verified(result),
+            timer_stop_verified=(
+                timer_stop_verified(guard) or timer_stop_verified(result)
+            ),
+            timer_running=timer_running,
+            screenshot_path=evidence.get("screenshot_path"),
+            guard_path=evidence.get("guard_path"),
+            live_phase=evidence.get("live_snapshot", {}).get("phase"),
+            evidence=evidence,
             clock_state=clock_state,
         )
         self.samples.append(state)
@@ -218,6 +239,9 @@ def result_status(result: dict[str, Any] | None) -> str:
 def safe_timer(result: dict[str, Any] | None) -> tuple[float | None, str | None]:
     if not result:
         return None, None
+    probe_timer = timer_from_probe(result)
+    if probe_timer[0] is not None:
+        return probe_timer
     budget = result.get("game_budget") or {}
     seconds = budget.get("game_seconds")
     timer = budget.get("game_timer")
@@ -225,6 +249,8 @@ def safe_timer(result: dict[str, Any] | None) -> tuple[float | None, str | None]
         effective = result.get("effective_timer") or {}
         seconds = effective.get("game_seconds")
         timer = effective.get("game_timer")
+    if seconds is None and isinstance(result.get("last_poll"), dict):
+        return safe_timer(result["last_poll"])
     try:
         return float(seconds), str(timer) if timer is not None else None
     except (TypeError, ValueError):
@@ -234,18 +260,28 @@ def safe_timer(result: dict[str, Any] | None) -> tuple[float | None, str | None]
 def visible_ui_name(payload: dict[str, Any] | None) -> str | None:
     if not isinstance(payload, dict):
         return None
+    pause_verify = payload.get("pause_verify")
+    if isinstance(pause_verify, dict):
+        name = pause_verify.get("visible_ui")
+        if name is not None:
+            return str(name)
     visible = payload.get("visible_ui")
     if isinstance(visible, dict):
         name = visible.get("visible_ui")
         return str(name) if name is not None else None
     if isinstance(visible, str):
         return visible
-    for key in ("pause_verify", "evidence_ui"):
+    for key in ("evidence_ui",):
         nested = payload.get(key)
         if isinstance(nested, dict):
             name = nested.get("visible_ui")
             if name is not None:
                 return str(name)
+    last_poll = payload.get("last_poll")
+    if isinstance(last_poll, dict):
+        name = visible_ui_name(last_poll)
+        if name is not None:
+            return name
     decision = payload.get("decision")
     if isinstance(decision, dict):
         name = decision.get("visible_ui")
@@ -260,6 +296,14 @@ def guard_payload(result: dict[str, Any] | None) -> dict[str, Any]:
     guard = result.get("pause_guard")
     if isinstance(guard, dict):
         return guard
+    last_poll = result.get("last_poll")
+    if isinstance(last_poll, dict) and (
+        "pause_verified" in last_poll
+        or "timer_stop_verified" in last_poll
+        or "visible_ui" in last_poll
+        or "decision" in last_poll
+    ):
+        return last_poll
     if (
         "pause_verified" in result
         or "timer_stop_verified" in result
@@ -274,6 +318,9 @@ def guard_payload(result: dict[str, Any] | None) -> dict[str, Any]:
 def pause_verified(payload: dict[str, Any] | None) -> bool:
     if not isinstance(payload, dict):
         return False
+    last_poll = payload.get("last_poll")
+    if isinstance(last_poll, dict) and pause_verified(last_poll):
+        return True
     if payload.get("pause_verified") is True:
         return True
     if payload.get("timer_stop_verified") is True:
@@ -286,14 +333,165 @@ def pause_verified(payload: dict[str, Any] | None) -> bool:
     )
 
 
+def timer_stop_verified(payload: dict[str, Any] | None) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    last_poll = payload.get("last_poll")
+    if isinstance(last_poll, dict) and timer_stop_verified(last_poll):
+        return True
+    if payload.get("timer_stop_verified") is True:
+        return True
+    for key in ("stop_probe", "timer_probe"):
+        probe = payload.get(key)
+        if isinstance(probe, dict) and probe.get("running") is False:
+            return True
+    return False
+
+
 def timer_probe_running(payload: dict[str, Any] | None) -> bool:
     if not isinstance(payload, dict):
         return False
+    last_poll = payload.get("last_poll")
+    if isinstance(last_poll, dict) and timer_probe_running(last_poll):
+        return True
     for key in ("timer_probe", "stop_probe"):
         probe = payload.get(key)
         if isinstance(probe, dict) and probe.get("running") is True:
             return True
     return False
+
+
+def timer_from_probe(payload: dict[str, Any] | None) -> tuple[float | None, str | None]:
+    if not isinstance(payload, dict):
+        return None, None
+    for key in ("stop_probe", "timer_probe"):
+        probe = payload.get(key)
+        if not isinstance(probe, dict):
+            continue
+        for timer_key in ("second_timer", "first_timer"):
+            timer = probe.get(timer_key)
+            if not isinstance(timer, dict):
+                continue
+            seconds = timer.get("game_seconds")
+            label = timer.get("game_timer")
+            if seconds is None:
+                continue
+            try:
+                return float(seconds), str(label) if label is not None else None
+            except (TypeError, ValueError):
+                continue
+    last_poll = payload.get("last_poll")
+    if isinstance(last_poll, dict):
+        return timer_from_probe(last_poll)
+    return None, None
+
+
+def compact_watchdog_evidence(
+    result: dict[str, Any] | None,
+    *,
+    guard: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Keep serialized timer/CV evidence small but actionable."""
+    payload = guard if isinstance(guard, dict) and guard else result
+    evidence: dict[str, Any] = {}
+    if not isinstance(payload, dict):
+        return evidence
+    source = payload
+    last_poll = payload.get("last_poll")
+    if isinstance(last_poll, dict):
+        source = last_poll
+
+    evidence["status"] = source.get("status")
+    evidence["reason"] = source.get("reason")
+    evidence["visible_ui"] = visible_ui_name(source)
+    evidence["pause_verified"] = pause_verified(source)
+    evidence["timer_stop_verified"] = timer_stop_verified(source)
+    evidence["timer_running"] = timer_probe_running(source)
+
+    for path_key in ("path", "guard_path"):
+        value = source.get(path_key)
+        if value:
+            evidence["guard_path"] = str(value)
+            break
+    nested_guard = source.get("guard")
+    if "guard_path" not in evidence and isinstance(nested_guard, dict):
+        value = nested_guard.get("path")
+        if value:
+            evidence["guard_path"] = str(value)
+
+    screenshot_paths: list[str] = []
+    ui_scores: dict[str, Any] = {}
+    for key in ("visible_ui", "pause_verify", "post_click_visible_ui"):
+        ui = source.get(key)
+        if isinstance(ui, dict):
+            screenshot = ui.get("screenshot_path")
+            if screenshot:
+                screenshot_paths.append(str(screenshot))
+            scores = ui.get("scores")
+            if isinstance(scores, dict):
+                for name, score in scores.items():
+                    if isinstance(score, dict):
+                        ui_scores[name] = {
+                            field: score.get(field)
+                            for field in ("score", "crop", "bright", "border")
+                            if field in score
+                        }
+    if screenshot_paths:
+        evidence["screenshot_path"] = screenshot_paths[-1]
+        evidence["screenshot_paths"] = screenshot_paths
+    if ui_scores:
+        evidence["ui_scores"] = ui_scores
+
+    live = source.get("live_snapshot")
+    if isinstance(live, dict):
+        evidence["live_snapshot"] = {
+            field: live.get(field)
+            for field in (
+                "status",
+                "phase",
+                "turn",
+                "active_mechs",
+                "in_active_mission",
+                "deployment_zone_count",
+                "island_map_count",
+            )
+            if field in live
+        }
+
+    decision = source.get("decision")
+    if isinstance(decision, dict):
+        evidence["decision"] = {
+            field: decision.get(field)
+            for field in ("status", "reason", "pause_allowed", "visible_ui")
+            if field in decision
+        }
+
+    for key in ("timer_probe", "stop_probe"):
+        probe = source.get(key)
+        if isinstance(probe, dict):
+            evidence[key] = {
+                field: probe.get(field)
+                for field in (
+                    "status",
+                    "running",
+                    "delta_seconds",
+                    "sample_seconds",
+                )
+                if field in probe
+            }
+            for timer_key in ("first_timer", "second_timer"):
+                timer = probe.get(timer_key)
+                if isinstance(timer, dict):
+                    evidence[key][timer_key] = {
+                        field: timer.get(field)
+                        for field in ("source", "game_timer_ms", "game_seconds", "game_timer")
+                        if field in timer
+                    }
+
+    if isinstance(result, dict) and result is not source:
+        evidence["top_status"] = result.get("status")
+        evidence["top_reason"] = result.get("reason")
+    return evidence
 
 
 def normalize_game_loop_command(command: str) -> list[str] | None:
@@ -386,6 +584,7 @@ def run_observed(
             "returncode": command.returncode,
             "result_status": result_status(command.result),
             "watchdog": state.__dict__,
+            "evidence": state.evidence,
         },
     )
     return command
