@@ -201,3 +201,32 @@ During combat, `live_combat_phase` is a must-act-now signal, not a safe stop.
 If the bridge says a player turn is ready and the guard refuses to pause because
 combat is live, the conductor must solve from that fresh bridge state instead
 of returning to Codex.
+
+`wind_covered_threat_audit`
+- Proof: Blitzkrieg Lightning War attempt `20260604_102343_862`,
+  R.S.T. `Mission_Wind` turn 2. Scorpion1 at G6 targeted G5 while G6 was in the
+  wind row and the bridge exported `environment_wind_dir=0`; Rust predicted the
+  pre-attack gust moved the Scorpion to F6, leaving grid/buildings unchanged.
+- Codex/user work: allowed only after verified pause. Do not manually click a
+  held End Turn unless the bridge has a current wind direction and the
+  projected attack no longer hits a live building.
+- Action: threat audit projects `Mission_Wind` gusts before attacks. If the
+  moved attack is clear, classify `attacker_will_be_moved_by_wind`; if it still
+  hits a building, keep blocking as `still_threatened_after_wind`.
+
+`live_boss_preview_overrides_stale_route_target`
+- Proof: same attempt after `Mission_Bomb`. Save-backed map assignment labelled
+  visual region 2 as `Mission_Wind`, but the live bridge preview exposed
+  `Mission_DungBoss` with `forced_boss_route`.
+- Codex/user work: do not stop for stale route thinking after a verified boss
+  preview; the timer is running or about to run.
+- Action: when a bridge-preview top mission is a boss and route status says
+  `forced_boss_route`, the route-start helper may override the stale expected
+  mission id and click Start Mission. Preserve the override note in logs.
+
+`budget_exceeded`
+- Proof: same attempt reached save/profile `current.time=0:30:16`.
+- Codex/user work: safe only after verified pause/setup. The attempt is no
+  longer viable for Lightning War even if combat can still be won.
+- Action: park the game, sync/check achievements if useful, commit verified
+  fixes from the safe state, then start a fresh timeline.

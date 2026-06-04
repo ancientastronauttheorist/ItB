@@ -6924,6 +6924,75 @@ def test_lightning_route_start_blocks_preview_mismatch_before_commit(monkeypatch
     )
 
 
+def test_lightning_route_start_accepts_live_boss_preview_over_stale_expected(
+    monkeypatch,
+):
+    calls = []
+    visible_start_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_DungBoss", "boss": True}],
+            "speed_route_status": {"reason": "forced_boss_route"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: visible_start_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "target": {"window_x": 848, "window_y": 448},
+            "click_result": {"status": "OK"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=544,
+        region_window_y=579,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Wind",
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    click_result = result["click_result"]
+    assert click_result["expected_route_mission_id"] == "Mission_DungBoss"
+    assert click_result["actual_preview_mission_id"] == "Mission_DungBoss"
+    assert click_result["stale_route_target_override"] == {
+        "expected_route_mission_id": "Mission_Wind",
+        "actual_preview_mission_id": "Mission_DungBoss",
+        "reason": "live_bridge_boss_preview_overrode_stale_route_target",
+    }
+    assert len(calls) == 1
+    assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
+
+
 def test_lightning_route_start_blocks_hard_veto_preview_without_expected(
     monkeypatch,
 ):

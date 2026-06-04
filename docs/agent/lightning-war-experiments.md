@@ -71,6 +71,62 @@ Code/docs update:
 - `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
 
+## 2026-06-04 - Blitzkrieg R.S.T. Timer Overrun
+
+Hypothesis: with pause-before-solve and fast route helpers, an Archive + R.S.T.
+Blitzkrieg run could still finish under `current.time < 0:30:00` if combat
+threat-audit blocks were cleared deterministically.
+
+Segment: live Lightning War attempt `20260604_102343_862`. Archive completed,
+R.S.T. reached `Mission_Trapped`, `Mission_Cataclysm`, `Mission_Bomb`, then
+opened `Mission_Wind` while the save timer showed about `0:28:24`.
+
+Evidence:
+- `Mission_Cataclysm` turn 3 blocked on a new-current Beetle threat at F4
+  targeting F5. F4 was in lethal Cataclysm danger, so the attacker died before
+  Vek attacks. The audit only blocked because current threats missing from the
+  solve-time set were always treated as live.
+- After `Mission_Bomb`, the save route assignment pointed visual index 2 at
+  `Mission_Wind`, but the live bridge preview for that same region exposed
+  `Mission_DungBoss` with `forced_boss_route`. The stale expected mission id
+  blocked Start Mission, and the later resume/start flow entered `Mission_Wind`
+  instead.
+- `Mission_Wind` turn 2 blocked on Scorpion1 at G6 targeting G5. The bridge
+  exported `environment_wind_dir=0`, and G6 was in the wind row; Rust predicted
+  the gust pushed the Scorpion to F6 before attacks, preserving grid/buildings.
+- The attempt exceeded the authoritative save/profile `current.time` budget at
+  `0:30:16` and was parked in verified pause.
+
+Result: attempt abandoned as over budget. Three deterministic fixes were added:
+new current threats now receive normal coverage analysis, `Mission_Wind` threat
+audit projects pre-attack gust movement, and a live bridge boss preview can
+override a stale save-map expected route target.
+
+Derived rules:
+- For `Mission_Cataclysm`/Seismic, a new current attacker on lethal
+  environment is covered if the standard threat-audit environmental-kill logic
+  proves it dies before attacks.
+- For `Mission_Wind`, threat audit must treat wind rows as pre-attack pushes,
+  not direct damage and not live threats when the projected attack no longer
+  hits a building.
+- When the preview bridge says the selected region is a boss with
+  `forced_boss_route`, trust that live preview over stale save assignment and
+  start it immediately.
+- At or after `current.time >= 0:30:00`, stop the attempt, park in verified
+  pause/setup, and restart rather than continuing a dead timeline.
+
+Focused regression:
+`python -m pytest tests\test_threat_audit.py tests\test_lightning_war_tools.py -q -k "threat_audit or route_start_accepts_live_boss_preview_over_stale_expected or route_start_blocks_preview_mismatch_before_commit or route_start_commits_matching_preview"`
+passed.
+
+Code/docs update:
+- `src/solver/threat_audit.py`
+- `src/loop/commands.py`
+- `tests/test_threat_audit.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
+
 ## 2026-06-04 - Route Mismatch Auto-Abandon Killed Attempt
 
 Hypothesis: exact mission guards should protect against stale preview clicks,

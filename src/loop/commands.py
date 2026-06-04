@@ -8365,6 +8365,31 @@ def _lightning_speed_route_status(
     }
 
 
+def _lightning_preview_can_override_stale_route_target(
+    preview_recommendation: dict,
+    actual_preview_mission: str | None,
+) -> bool:
+    """Trust a live bridge boss preview over stale save-map assignment."""
+    if not actual_preview_mission:
+        return False
+    if preview_recommendation.get("source") != "bridge_preview":
+        return False
+    top3 = preview_recommendation.get("top3")
+    if not isinstance(top3, list) or not top3 or not isinstance(top3[0], dict):
+        return False
+    top = top3[0]
+    if str(top.get("mission_id") or "").strip() != actual_preview_mission:
+        return False
+    speed_status = preview_recommendation.get("speed_route_status")
+    boss = bool(top.get("boss")) or actual_preview_mission.endswith("Boss")
+    return (
+        boss
+        and isinstance(speed_status, dict)
+        and speed_status.get("reason") == "forced_boss_route"
+        and actual_preview_mission not in _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS
+    )
+
+
 def _lightning_recommend_save_routes(
     profile: str = "Alpha",
     *,
@@ -13301,6 +13326,22 @@ def cmd_lightning_route_start(
             }
             _print_result(result)
             return result
+        stale_route_target_override = None
+        if (
+            expected_preview_mission
+            and actual_preview_mission != expected_preview_mission
+            and _lightning_preview_can_override_stale_route_target(
+                preview_recommendation,
+                actual_preview_mission,
+            )
+        ):
+            stale_route_target_override = {
+                "expected_route_mission_id": expected_preview_mission,
+                "actual_preview_mission_id": actual_preview_mission,
+                "reason": "live_bridge_boss_preview_overrode_stale_route_target",
+            }
+            expected_preview_mission = actual_preview_mission
+
         if expected_preview_mission and actual_preview_mission != expected_preview_mission:
             result = {
                 "status": "BLOCKED",
@@ -13569,6 +13610,8 @@ def cmd_lightning_route_start(
             "preview_recommendation": preview_recommendation,
             "commit_click": commit_click,
         }
+        if stale_route_target_override is not None:
+            click_result["stale_route_target_override"] = stale_route_target_override
         if post_dialogue_recommendation is not None:
             click_result["post_dialogue_recommendation"] = (
                 post_dialogue_recommendation

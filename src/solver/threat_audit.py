@@ -259,6 +259,52 @@ def _first_projectile_building_on_line(
     return None
 
 
+def _projected_attack_building_after_wind(
+    threat: dict[str, Any],
+    board: Board,
+    attacker: Unit,
+) -> tuple[bool, tuple[int, int] | None, tuple[int, int] | None]:
+    if getattr(board, "mission_id", "") != "Mission_Wind":
+        return False, None, None
+    if (int(attacker.x), int(attacker.y)) not in (
+        getattr(board, "environment_danger", set()) or set()
+    ):
+        return False, None, None
+    wind_dir = getattr(board, "environment_wind_dir", None)
+    if not isinstance(wind_dir, int) or not (0 <= wind_dir < len(DIRS)):
+        return False, None, None
+
+    wx, wy = DIRS[wind_dir]
+    nx = int(attacker.x) + wx
+    ny = int(attacker.y) + wy
+    if not _unit_can_conveyor_move_to(board, attacker, nx, ny):
+        return False, None, None
+
+    attacker_info = threat.get("attacker") or {}
+    old_pos = attacker_info.get("pos") or [-1, -1]
+    old_target = attacker_info.get("target") or [-1, -1]
+    dx = _sign(int(old_target[0]) - int(old_pos[0]))
+    dy = _sign(int(old_target[1]) - int(old_pos[1]))
+    if (dx != 0) == (dy != 0):
+        return False, (nx, ny), None
+
+    wdef = get_weapon_def(attacker.weapon)
+    if wdef is None:
+        return False, (nx, ny), None
+
+    projected_building: tuple[int, int] | None = None
+    if wdef.weapon_type == "projectile":
+        projected_building = _first_projectile_building_on_line(board, nx, ny, dx, dy)
+    elif wdef.weapon_type == "melee":
+        tx, ty = nx + dx, ny + dy
+        if _live_building(board, tx, ty):
+            projected_building = (tx, ty)
+    else:
+        return False, (nx, ny), None
+
+    return True, (nx, ny), projected_building
+
+
 def _projected_attack_building_after_conveyor(
     threat: dict[str, Any],
     board: Board,
@@ -560,6 +606,24 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
     if moved_by_prior:
         return "attacker_will_be_moved_by_prior_attack", moved_detail
 
+    wind_projected, wind_pos, wind_building = (
+        _projected_attack_building_after_wind(threat, board, attacker)
+    )
+    if wind_projected:
+        assert wind_pos is not None
+        if wind_building is None:
+            return (
+                "attacker_will_be_moved_by_wind",
+                "Mission_Wind pushes attacker to "
+                f"{_visual(wind_pos[0], wind_pos[1])} before attacks",
+            )
+        return (
+            "still_threatened_after_wind",
+            "Mission_Wind pushes attacker to "
+            f"{_visual(wind_pos[0], wind_pos[1])}, still hitting "
+            f"{_visual(wind_building[0], wind_building[1])}",
+        )
+
     conveyor_projected, conveyor_pos, conveyor_building = (
         _projected_attack_building_after_conveyor(threat, board, attacker)
     )
@@ -630,13 +694,17 @@ def audit_threat_coverage(
         threat for threat in current_threats if _threat_key(threat) not in seen_threats
     ]
     for threat in new_current_threats:
-        still_threatened += 1
+        reason, detail = _coverage_reason(threat, board)
+        if reason.startswith("still_threatened"):
+            still_threatened += 1
+            reason = "still_threatened_current"
+            detail = (
+                "current live building threat was not in the solve-time audit set"
+            )
         entry = dict(threat)
         entry["coverage"] = {
-            "reason": "still_threatened_current",
-            "detail": (
-                "current live building threat was not in the solve-time audit set"
-            ),
+            "reason": reason,
+            "detail": detail,
         }
         entries.append(entry)
 
