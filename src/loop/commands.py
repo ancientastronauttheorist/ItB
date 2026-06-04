@@ -9962,6 +9962,20 @@ def _lightning_recover_started_route_mismatch(
     """Abandon a just-started mismatched route without returning live to Codex."""
     from src.control.mac_click import click_known_window_control
 
+    def pause_needs_deploy_confirm(pause_result: dict) -> bool:
+        visible = pause_result.get("visible_ui")
+        if not isinstance(visible, dict):
+            visible = {}
+        recommended = (
+            pause_result.get("recommended_control")
+            or visible.get("recommended_control")
+        )
+        return (
+            pause_result.get("reason") == "visible_ui_is_not_pauseable"
+            and visible.get("visible_ui") == "deployment_screen"
+            and recommended == "deploy_confirm"
+        )
+
     recovery: dict = {
         "status": "STARTED",
         "reason": "started_route_mismatch_recovery",
@@ -9998,15 +10012,49 @@ def _lightning_recover_started_route_mismatch(
         recovery["reason"] = "route_mismatch_recovery_confirm_failed"
         return recovery
 
-    pause = _lightning_ensure_pause_state(
-        reason="started_route_mismatch_before_abandon",
-    )
-    recovery["pause"] = pause
+    time.sleep(1.0)
+    pause = None
+    confirm_retries: list[dict] = []
+    pause_attempts: list[dict] = []
+    for attempt in range(2):
+        pause = _lightning_ensure_pause_state(
+            reason=(
+                "started_route_mismatch_before_abandon"
+                if attempt == 0
+                else "started_route_mismatch_after_confirm_retry"
+            ),
+        )
+        pause_attempts.append(pause)
+        pause_visible = (
+            pause.get("pause_verify", {}).get("visible_ui")
+            or pause.get("visible_ui", {}).get("visible_ui")
+        )
+        if pause.get("status") == "OK" and pause_visible == "pause_menu":
+            break
+        if attempt == 0 and pause_needs_deploy_confirm(pause):
+            retry = click_known_window_control("deploy_confirm")
+            confirm_retries.append(retry)
+            if retry.get("status") != "OK":
+                recovery["pause"] = pause
+                recovery["pause_attempts"] = pause_attempts
+                recovery["deploy_confirm_retries"] = confirm_retries
+                recovery["status"] = "BLOCKED"
+                recovery["reason"] = "route_mismatch_recovery_confirm_retry_failed"
+                return recovery
+            time.sleep(1.0)
+            continue
+        break
+
+    if confirm_retries:
+        recovery["deploy_confirm_retries"] = confirm_retries
+    recovery["pause"] = pause or {}
+    if len(pause_attempts) > 1:
+        recovery["pause_attempts"] = pause_attempts
     pause_visible = (
-        pause.get("pause_verify", {}).get("visible_ui")
-        or pause.get("visible_ui", {}).get("visible_ui")
+        recovery["pause"].get("pause_verify", {}).get("visible_ui")
+        or recovery["pause"].get("visible_ui", {}).get("visible_ui")
     )
-    if pause.get("status") != "OK" or pause_visible != "pause_menu":
+    if recovery["pause"].get("status") != "OK" or pause_visible != "pause_menu":
         recovery["status"] = "BLOCKED"
         recovery["reason"] = "route_mismatch_recovery_pause_failed"
         return recovery

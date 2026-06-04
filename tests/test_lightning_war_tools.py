@@ -6419,6 +6419,84 @@ def test_lightning_route_start_recovers_post_start_mismatch(monkeypatch):
     assert len(calls) == 1
 
 
+def test_lightning_route_mismatch_recovery_retries_sticky_deploy_confirm(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    clicks = []
+    pauses = iter(
+        [
+            {
+                "status": "BLOCKED",
+                "reason": "visible_ui_is_not_pauseable",
+                "visible_ui": {
+                    "visible_ui": "deployment_screen",
+                    "recommended_control": "deploy_confirm",
+                    "non_pauseable": True,
+                },
+            },
+            {
+                "status": "OK",
+                "reason": "pause_clicked",
+                "pause_verify": {"visible_ui": "pause_menu"},
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_deploy_recommended",
+        lambda **kwargs: {"status": "OK", "deployments": [1, 2, 3]},
+    )
+    monkeypatch.setattr(commands, "_lightning_ensure_pause_state", lambda **kwargs: next(pauses))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "new_game_setup"},
+    )
+
+    def fake_click(control):
+        clicks.append(control)
+        return {"status": "OK", "control": control}
+
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        fake_click,
+    )
+
+    result = commands._lightning_recover_started_route_mismatch(
+        session,
+        profile="default",
+        expected_mission_id="Mission_Train",
+        actual_mission_id="Mission_Solar",
+        snapshot={
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Solar",
+            "deployment_zone_count": 12,
+        },
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_mismatch_abandoned_to_safe_state"
+    assert clicks == [
+        "deploy_confirm",
+        "deploy_confirm",
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_slot",
+    ]
+    assert result["deploy_confirm_retries"][0]["control"] == "deploy_confirm"
+    assert len(result["pause_attempts"]) == 2
+
+
 def test_lightning_route_start_clicks_verified_board_before_dialogue_dismiss(
     monkeypatch,
 ):

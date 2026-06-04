@@ -34,6 +34,42 @@ Code/docs update:
 - `tests/test_lightning_war_conductor.py`
 - `docs/agent/lightning-war-experiments.md`
 
+## 2026-06-04 - Sticky Confirm During Route Mismatch Recovery
+
+Hypothesis: after a route mismatch is discovered post-Start, the recovery path
+may need more than one deployment CONFIRM click before the first player turn is
+pauseable.
+
+Segment: R.S.T. Lightning War attempt after three secured missions. Route handoff
+targeted `Mission_Train` at visual region index 0, but post-Start deployment
+loaded `Mission_Solar`.
+
+Evidence:
+- `lightning_segment` wrote `lightning_route_mismatch.json` with
+  `expected_mission_id=Mission_Train` and `actual_mission_id=Mission_Solar`.
+- The automatic recovery deployed all three mechs and clicked
+  `deploy_confirm`, but pause verification still classified the screen as
+  `deployment_screen` with `recommended_control=deploy_confirm`.
+- A second standalone `lightning_ui deploy_confirm` followed by
+  `lightning_ui ensure_pause` reached a verified `pause_menu`.
+- The timeline was then abandoned from the pause menu and the screen returned
+  to `new_game_setup`.
+
+Result: post-start mismatch recovery now treats a blocked pause whose visible
+UI is `deployment_screen` and recommended control is `deploy_confirm` as a
+sticky CONFIRM state. It retries CONFIRM once, waits briefly, and retries pause
+before returning control to Codex.
+
+Derived rule: recovery from a mismatched deployment is still local automation's
+job. Do not return live from a sticky deployment-confirm state; repeat CONFIRM
+once and verify pause before abandoning.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
+
 ## 2026-06-03 - Post-Start Route Mismatch Recovery
 
 Hypothesis: the route-start path can still click visible Start while the bridge

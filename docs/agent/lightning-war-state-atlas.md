@@ -74,6 +74,12 @@ player turn, abandon the timeline, confirm, select the carry-forward pilot, and
 verify `new_game_setup` or another safe state. Do not continue the mismatched
 mission for Lightning War.
 
+If the post-start mismatch recovery deploys and clicks CONFIRM but pause
+verification still sees `deployment_screen` with
+`recommended_control=deploy_confirm`, this is a sticky CONFIRM state. It is
+still `must_act_now`: click CONFIRM once more, wait briefly, and retry verified
+pause before abandoning.
+
 When `lightning_pause_guard` returns a top-level result with `last_poll`, the
 nested `last_poll` is the evidence-bearing payload. The pre-click panel can be
 `reward_panel` while the post-click `pause_verify` is `pause_menu`; the conductor
