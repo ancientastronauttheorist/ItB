@@ -6093,6 +6093,7 @@ def test_lightning_route_start_blocks_preview_mismatch_before_commit(monkeypatch
 def test_lightning_route_start_commits_matching_preview(monkeypatch):
     calls = []
     visible_start_calls = []
+    dialogue_dismiss_calls = []
 
     monkeypatch.setattr(
         commands,
@@ -6120,6 +6121,12 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     )
     monkeypatch.setattr(
         commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: dialogue_dismiss_calls.append(kwargs)
+        or {"status": "NO_ACTION", "reason": "dialogue_not_visible"},
+    )
+    monkeypatch.setattr(
+        commands,
         "_lightning_click_visible_start_mission",
         lambda **kwargs: visible_start_calls.append(kwargs)
         or {
@@ -6141,7 +6148,72 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     assert result["reason"] == "route_preview_validated_start_clicked"
     assert result["click_result"]["actual_preview_mission_id"] == "Mission_Bomb"
     assert len(calls) == 1
+    assert dialogue_dismiss_calls == [{"dry_run": False}]
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
+
+
+def test_lightning_route_start_blocks_post_dialogue_preview_mismatch(monkeypatch):
+    calls = []
+    recommendations = [
+        {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Tides"}],
+        },
+        {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Mines"}],
+        },
+    ]
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: recommendations.pop(0),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: {"status": "OK", "dialogue_click": {"status": "OK"}},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("mismatched preview must not click Start Mission")
+        ),
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Tides",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_mission_mismatch_after_dialogue"
+    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Tides"
+    assert result["click_result"]["post_dialogue_actual_mission_id"] == "Mission_Mines"
+    assert result["click_result"]["commit_click"]["status"] == "BLOCKED"
+    assert len(calls) == 1
 
 
 def test_lightning_route_start_blocks_unknown_visual_region_index(monkeypatch):
