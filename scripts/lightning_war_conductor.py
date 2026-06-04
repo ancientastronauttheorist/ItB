@@ -698,7 +698,7 @@ def run_conductor(args: argparse.Namespace) -> int:
             return 9
         start = run_observed(
             "start_game",
-            ["lightning_ui", "setup_start"],
+            ["lightning_ui", "setup_modal_start"],
             watchdog=watchdog,
             journal=journal,
             timeout=30,

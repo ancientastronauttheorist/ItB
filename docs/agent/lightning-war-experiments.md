@@ -91,6 +91,10 @@ Derived rule: never let Codex own the gap between final setup Start and the
 first island/route action. Use `scripts/lightning_war_conductor.py
 --start-from-verified-setup` from the verified modal.
 
+Follow-up: the squad-screen Start control is `setup_start`; the Difficulty Setup
+modal's timer-starting button is `setup_modal_start`. The conductor must use the
+modal control after `verify_setup` passes.
+
 Code/docs update:
 - `scripts/lightning_war_conductor.py`
 - `tests/test_lightning_war_conductor.py`

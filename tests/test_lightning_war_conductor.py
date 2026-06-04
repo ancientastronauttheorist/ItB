@@ -289,7 +289,7 @@ def test_conductor_starts_from_verified_setup_without_codex_gap(monkeypatch):
             return result(args, {"status": "OK", "unlocked_list": []})
         if args == ["verify_setup", "--difficulty", "0"]:
             return result(args, {"status": "PASS"})
-        if args == ["lightning_ui", "setup_start"]:
+        if args == ["lightning_ui", "setup_modal_start"]:
             return result(args, {"status": "OK"})
         if args and args[0] == "lightning_segment":
             return result(
@@ -325,7 +325,7 @@ def test_conductor_starts_from_verified_setup_without_codex_gap(monkeypatch):
     assert calls[:3] == [
         ["achievements", "--sync"],
         ["verify_setup", "--difficulty", "0"],
-        ["lightning_ui", "setup_start"],
+        ["lightning_ui", "setup_modal_start"],
     ]
     assert calls[3][0] == "lightning_segment"
     assert "--no-preflight" in calls[3]
