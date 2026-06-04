@@ -150,11 +150,18 @@ bottom-right intro Continue; a clicked Pause is still not proof until the guard
 classifies a safe resting state.
 
 Turn-0 deployment is normally not pauseable. If a route-start mismatch is only
-discovered after Start loads deployment, local automation must recover without
-asking Codex: deploy the three mechs, click CONFIRM, verify pause from the first
-player turn, abandon the timeline, confirm, select the carry-forward pilot, and
-verify `new_game_setup` or another safe state. Do not continue the mismatched
-mission for Lightning War.
+discovered after Start loads deployment, local automation must first classify
+the actual mission. If the post-start bridge snapshot is an active mission, the
+grid is above zero, and the actual mission is not a Lightning War hard veto,
+continue with the actual loaded mission and update the route guard to that
+mission. If the actual mission is a hard veto or the state is not playable,
+recover without asking Codex: deploy the three mechs, click CONFIRM, verify
+pause from the first player turn, abandon the timeline, confirm, select the
+carry-forward pilot, and verify `new_game_setup` or another safe state.
+
+For Windows Timeline Lost recovery, the first carry-forward pilot portrait is
+calibrated near window `(430,329)`. The older `(490,329)` point can land between
+portraits and leave the panel open.
 
 If the post-start mismatch recovery deploys and clicks CONFIRM but pause
 verification still sees `deployment_screen` with

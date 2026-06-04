@@ -71,6 +71,57 @@ Code/docs update:
 - `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
 
+## 2026-06-04 - Route Mismatch Auto-Abandon Killed Attempt
+
+Hypothesis: exact mission guards should protect against stale preview clicks,
+but once Start Mission has already loaded a playable mission, abandoning the
+timeline is more expensive than accepting the actual mission.
+
+Segment: Blitzkrieg/Easy/AE Lightning War attempt. R.S.T. was secured first at
+about `0:18:59` after Terratide/Test Site Echo, Train/Razor Shore, Bomb/QA
+Division, an extra scrapyard/train/filler path, and the Shaman boss. The second
+island intro reached Detritus at about `0:20:46`.
+
+Evidence:
+- `lightning_segment --route-auto-start` proposed visual region index `0` as
+  `Mission_Belt`.
+- The explicit route-start command carried
+  `--route-target-mission-id Mission_Belt`, but the loaded mission was
+  `Mission_Missiles`.
+- The route mismatch handler treated this as terminal, deployed, paused, used
+  Abandon Timeline, confirmed, and selected a carry-forward pilot. The run
+  ended as Timeline Lost with only one island secured.
+- The calibrated `abandon_pilot_slot` at window `(490,329)` clicked between
+  portraits on Windows. The first carry-forward pilot center was observed near
+  window `(430,329)`.
+- Steam sync after the failed attempt still showed Lightning War locked.
+
+Result: the route-start mismatch policy now distinguishes playable mismatches
+from hard vetoes. If the post-start bridge snapshot is an active mission with
+grid power remaining and the actual mission is not a Lightning hard-veto
+mission, the conductor records a warning and continues with the actual loaded
+mission as the expected guard. Hard-veto or non-playable mismatches still use
+the block/recovery path. The carry-forward pilot calibration was moved to
+window `(430,329)`.
+
+Derived rules:
+- A post-start exact-target mismatch is not automatically fatal. Continue a
+  loaded playable mission rather than spending a failed timeline.
+- Do not abandon on a playable mismatch just because the intended route was
+  different; the clock already paid the mission-start cost.
+- Hard-veto actual missions remain exceptions because their friction can still
+  invalidate the Lightning War route.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q -k "post_start_mismatch or playable_route_mismatch or abandon_pilot"`
+passed.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `src/control/mac_click.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+
 ## 2026-06-04 - Dirty Consent Survives Pre-Action Resume Failure
 
 Hypothesis: dirty consent should be single-use only after the reviewed dirty

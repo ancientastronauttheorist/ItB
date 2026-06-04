@@ -13,6 +13,15 @@ def _lightning_peek_resume_control() -> str:
     return "menu_continue" if os.name == "nt" else "pause_menu_escape"
 
 
+def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
+    from src.control.mac_click import list_known_window_controls
+
+    control = list_known_window_controls()["abandon_pilot_slot"]
+
+    assert control["window_x"] == 430
+    assert control["window_y"] == 329
+
+
 def test_lightning_war_weight_overlay_penalizes_pod_pickup():
     session = RunSession(
         squad="Blitzkrieg",
@@ -4388,6 +4397,60 @@ def test_lightning_segment_infers_expected_route_for_explicit_visual_start(monke
     assert attempt_calls[0]["expected_route_mission_id"] == "Mission_Armored_Train"
 
 
+def test_lightning_segment_uses_actual_mission_after_playable_route_mismatch(monkeypatch):
+    route_calls = []
+    attempt_calls = []
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        return {
+            "status": "OK",
+            "reason": "route_mission_mismatch_after_start_playable",
+            "expected_route_mission_id": "Mission_Belt",
+            "actual_started_mission_id": "Mission_Missiles",
+            "click_result": {
+                "status": "OK",
+                "reason": "route_mission_mismatch_after_start_playable",
+                "actual_started_mission_id": "Mission_Missiles",
+                "route_mismatch_warning": {
+                    "expected_mission_id": "Mission_Belt",
+                    "actual_mission_id": "Mission_Missiles",
+                    "policy": "continue_loaded_playable_mission",
+                },
+            },
+        }
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "deployment_waiting_for_ui_settle",
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=2,
+        route_visual_region_index=0,
+        route_target_mission_id="Mission_Belt",
+        run_preflight=False,
+    )
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert route_calls[0]["expected_route_mission_id"] == "Mission_Belt"
+    assert attempt_calls[0]["expected_route_mission_id"] == "Mission_Missiles"
+    assert result["steps"][0]["route_mismatch_warning"]["actual_mission_id"] == (
+        "Mission_Missiles"
+    )
+
+
 def test_lightning_segment_blocks_auto_start_for_slow_primary_route(monkeypatch):
     monkeypatch.setattr(
         commands,
@@ -6985,7 +7048,101 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
-def test_lightning_route_start_recovers_post_start_mismatch(monkeypatch):
+def test_lightning_route_start_continues_playable_post_start_mismatch(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Belt"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "target": {"window_x": 848, "window_y": 448},
+            "click_result": {"status": "OK"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Missiles",
+            "deployment_zone_count": 10,
+            "mech_count": 0,
+            "in_active_mission": True,
+            "grid_power": "6/7",
+        },
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_route_mismatch_block",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("playable mismatch should not write a block")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recover_started_route_mismatch",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("playable mismatch should not abandon the timeline")
+        ),
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Belt",
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_mission_mismatch_after_start_playable"
+    click_result = result["click_result"]
+    assert click_result["post_start_snapshot"]["mission_id"] == "Mission_Missiles"
+    assert click_result["actual_started_mission_id"] == "Mission_Missiles"
+    assert click_result["route_mismatch_warning"] == {
+        "expected_mission_id": "Mission_Belt",
+        "actual_mission_id": "Mission_Missiles",
+        "policy": "continue_loaded_playable_mission",
+    }
+    assert len(calls) == 1
+
+
+def test_lightning_route_start_recovers_hard_veto_post_start_mismatch(monkeypatch):
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
@@ -7037,10 +7194,11 @@ def test_lightning_route_start_recovers_post_start_mismatch(monkeypatch):
             "status": "OK",
             "phase": "combat_enemy",
             "turn": 0,
-            "mission_id": "Mission_Airstrike",
+            "mission_id": "Mission_ForestFire",
             "deployment_zone_count": 10,
             "mech_count": 0,
             "in_active_mission": True,
+            "grid_power": "6/7",
         },
     )
 
@@ -7070,14 +7228,14 @@ def test_lightning_route_start_recovers_post_start_mismatch(monkeypatch):
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "route_mission_mismatch_after_start_recovered"
     click_result = result["click_result"]
-    assert click_result["post_start_snapshot"]["mission_id"] == "Mission_Airstrike"
+    assert click_result["post_start_snapshot"]["mission_id"] == "Mission_ForestFire"
     assert click_result["route_mismatch_block"]["reason"] == (
         "route_mission_mismatch_after_start"
     )
     assert click_result["mismatch_recovery"]["status"] == "OK"
     assert blocks[0][1]["expected_mission_id"] == "Mission_Tides"
-    assert blocks[0][1]["actual_mission_id"] == "Mission_Airstrike"
-    assert recoveries[0][1]["actual_mission_id"] == "Mission_Airstrike"
+    assert blocks[0][1]["actual_mission_id"] == "Mission_ForestFire"
+    assert recoveries[0][1]["actual_mission_id"] == "Mission_ForestFire"
     assert len(calls) == 1
 
 

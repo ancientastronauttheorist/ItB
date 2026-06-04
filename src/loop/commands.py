@@ -10159,6 +10159,44 @@ def _lightning_write_route_mismatch_block(
     return payload
 
 
+def _lightning_snapshot_grid_power(snapshot: dict) -> int | None:
+    raw = snapshot.get("grid_power")
+    if raw is None:
+        return None
+    if isinstance(raw, int):
+        return raw
+    text = str(raw).strip()
+    if not text:
+        return None
+    if "/" in text:
+        text = text.split("/", 1)[0].strip()
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
+def _lightning_started_mismatch_is_playable(
+    *,
+    actual_mission_id: str,
+    snapshot: dict,
+) -> bool:
+    """A post-Start mismatch can be played if it is already a live safe mission."""
+    actual = str(actual_mission_id or "").strip()
+    if not actual or actual in _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS:
+        return False
+    if snapshot.get("status") != "OK" or not snapshot.get("in_active_mission"):
+        return False
+    grid_power = _lightning_snapshot_grid_power(snapshot)
+    if grid_power is not None and grid_power <= 0:
+        return False
+    phase = str(snapshot.get("phase") or "").strip()
+    deployment_zones = int(snapshot.get("deployment_zone_count") or 0)
+    if deployment_zones > 0:
+        return True
+    return phase in _COMBAT_BRIDGE_PHASES
+
+
 def _lightning_recover_started_route_mismatch(
     session: RunSession,
     *,
@@ -13559,36 +13597,51 @@ def cmd_lightning_route_start(
                 and post_start_mission != expected_preview_mission
             ):
                 session = _load_session()
-                mismatch_block = _lightning_write_route_mismatch_block(
-                    session,
-                    expected_mission_id=expected_preview_mission,
+                if _lightning_started_mismatch_is_playable(
                     actual_mission_id=post_start_mission,
                     snapshot=post_start_snapshot,
-                    reason="route_mission_mismatch_after_start",
-                )
-                recovery = None
-                if (
-                    int(post_start_snapshot.get("turn") or 0) == 0
-                    and int(
-                        post_start_snapshot.get("deployment_zone_count") or 0
-                    ) > 0
                 ):
-                    recovery = _lightning_recover_started_route_mismatch(
+                    click_result["status"] = "OK"
+                    click_result["reason"] = (
+                        "route_mission_mismatch_after_start_playable"
+                    )
+                    click_result["actual_started_mission_id"] = post_start_mission
+                    click_result["route_mismatch_warning"] = {
+                        "expected_mission_id": expected_preview_mission,
+                        "actual_mission_id": post_start_mission,
+                        "policy": "continue_loaded_playable_mission",
+                    }
+                else:
+                    mismatch_block = _lightning_write_route_mismatch_block(
                         session,
-                        profile=profile,
                         expected_mission_id=expected_preview_mission,
                         actual_mission_id=post_start_mission,
                         snapshot=post_start_snapshot,
+                        reason="route_mission_mismatch_after_start",
                     )
-                click_result["status"] = "BLOCKED"
-                click_result["reason"] = "route_mission_mismatch_after_start"
-                click_result["route_mismatch_block"] = mismatch_block
-                if recovery is not None:
-                    click_result["mismatch_recovery"] = recovery
-                    if recovery.get("status") == "OK":
-                        click_result["reason"] = (
-                            "route_mission_mismatch_after_start_recovered"
+                    recovery = None
+                    if (
+                        int(post_start_snapshot.get("turn") or 0) == 0
+                        and int(
+                            post_start_snapshot.get("deployment_zone_count") or 0
+                        ) > 0
+                    ):
+                        recovery = _lightning_recover_started_route_mismatch(
+                            session,
+                            profile=profile,
+                            expected_mission_id=expected_preview_mission,
+                            actual_mission_id=post_start_mission,
+                            snapshot=post_start_snapshot,
                         )
+                    click_result["status"] = "BLOCKED"
+                    click_result["reason"] = "route_mission_mismatch_after_start"
+                    click_result["route_mismatch_block"] = mismatch_block
+                    if recovery is not None:
+                        click_result["mismatch_recovery"] = recovery
+                        if recovery.get("status") == "OK":
+                            click_result["reason"] = (
+                                "route_mission_mismatch_after_start_recovered"
+                            )
     else:
         click_result = _lightning_click_route_start_sequence(
             int(region_window_x),
@@ -13624,6 +13677,7 @@ def cmd_lightning_route_start(
         "expected_route_mission_id": (
             expected_preview_mission if expected_preview_mission else None
         ),
+        "actual_started_mission_id": click_result.get("actual_started_mission_id"),
         "inferred_expected_route_mission_id": inferred_expected_route_mission_id,
         "next_step": (
             "If deployment loaded, run lightning_segment immediately. If a "
@@ -14999,7 +15053,31 @@ def _lightning_segment_route_start_summary(
     if isinstance(click_result, dict):
         summary["click_status"] = click_result.get("status")
         summary["click_steps"] = len(click_result.get("steps") or [])
+        if isinstance(click_result.get("route_mismatch_warning"), dict):
+            summary["route_mismatch_warning"] = click_result.get(
+                "route_mismatch_warning",
+            )
     return summary
+
+
+def _lightning_segment_expected_after_route_start(
+    route_start: dict,
+    fallback_expected: str | None,
+) -> str | None:
+    click_result = route_start.get("click_result")
+    if isinstance(click_result, dict) and isinstance(
+        click_result.get("route_mismatch_warning"),
+        dict,
+    ):
+        actual = str(
+            route_start.get("actual_started_mission_id")
+            or click_result.get("actual_started_mission_id")
+            or click_result.get("route_mismatch_warning", {}).get("actual_mission_id")
+            or ""
+        ).strip()
+        if actual:
+            return actual
+    return fallback_expected or route_start.get("expected_route_mission_id")
 
 
 def _lightning_segment_should_continue(result: dict) -> bool:
@@ -15148,8 +15226,10 @@ def cmd_lightning_segment(
                 stopped_reason = "dry_run_route_start"
                 break
             active_route_expected_mission_id = (
-                route_start_expected_mission_id
-                or route_start.get("expected_route_mission_id")
+                _lightning_segment_expected_after_route_start(
+                    route_start,
+                    route_start_expected_mission_id,
+                )
             )
             if settle_seconds > 0:
                 time.sleep(settle_seconds)
@@ -15256,7 +15336,12 @@ def cmd_lightning_segment(
                 if dry_run:
                     stopped_reason = "dry_run_route_start"
                     break
-                active_route_expected_mission_id = route_start_expected_mission_id
+                active_route_expected_mission_id = (
+                    _lightning_segment_expected_after_route_start(
+                        route_start,
+                        route_start_expected_mission_id,
+                    )
+                )
                 if settle_seconds > 0:
                     time.sleep(settle_seconds)
                 continue
