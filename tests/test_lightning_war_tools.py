@@ -6405,6 +6405,113 @@ def test_lightning_route_start_visual_index_can_use_unavailable_route_check(monk
     assert pauses == [{"reason": "route_preview_unverified_before_start"}]
 
 
+def test_lightning_route_start_visual_index_accepts_exact_bridge_match(monkeypatch):
+    calls = []
+    starts = []
+    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge",
+            "pause_map_peek": {"map_screenshot_path": "/tmp/map.png"},
+            "top3": [
+                {
+                    "mission_id": "Mission_Armored_Train",
+                    "region_id": 6,
+                    "score": 35,
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": path,
+            "regions": [{"index": 0, "window_x": 809, "window_y": 420}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 809,
+                    "window_y": 420,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "OK", "reason": "visible_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "in_active_mission": True,
+            "mission_id": "Mission_Armored_Train",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(visual_region_index=0)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    assert result["expected_route_mission_id"] == "Mission_Armored_Train"
+    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Armored_Train"
+    assert starts
+    assert calls == [
+        [
+            {
+                "kind": "point",
+                "window_x": 809,
+                "window_y": 420,
+                "description": "Lightning route region",
+            }
+        ]
+    ]
+    assert pauses == []
+
+
 def test_lightning_route_start_raw_coordinates_can_force_unverified_preview(
     monkeypatch,
 ):

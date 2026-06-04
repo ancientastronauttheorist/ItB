@@ -13312,13 +13312,13 @@ def cmd_lightning_route_start(
         if isinstance(top3, list) and top3 and isinstance(top3[0], dict):
             actual_preview_mission = str(top3[0].get("mission_id") or "").strip()
         preview_source = preview_recommendation.get("source")
-        explicit_save_match = (
-            preview_source == "saveData"
+        explicit_source_match = (
+            preview_source in {"bridge", "saveData"}
             and bool(expected_preview_mission)
             and actual_preview_mission == expected_preview_mission
         )
         preview_unverified = (
-            (preview_source != "bridge_preview" and not explicit_save_match)
+            (preview_source != "bridge_preview" and not explicit_source_match)
             or not actual_preview_mission
         )
         allow_unverified_manual_start = (
