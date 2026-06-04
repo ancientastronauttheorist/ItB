@@ -2178,6 +2178,46 @@ def test_lightning_dialogue_box_score_requires_visible_dialogue(tmp_path):
     assert 3500 <= muted_result["bright"] < 6000
     assert muted_result["visible"] is True
 
+    archive_ceo = Image.new("RGB", (1280 * scale, 748 * scale), (20, 24, 32))
+    draw = ImageDraw.Draw(archive_ceo)
+    draw.rectangle(
+        [
+            180 * scale,
+            120 * scale,
+            1100 * scale,
+            235 * scale,
+        ],
+        fill=(12, 16, 28),
+        outline=(88, 116, 166),
+        width=3 * scale,
+    )
+    draw.rectangle(
+        [
+            250 * scale,
+            155 * scale,
+            500 * scale,
+            160 * scale,
+        ],
+        fill=(238, 238, 238),
+    )
+    draw.rectangle(
+        [
+            940 * scale,
+            130 * scale,
+            1040 * scale,
+            270 * scale,
+        ],
+        fill=(60, 50, 42),
+        outline=(86, 116, 166),
+        width=3 * scale,
+    )
+    archive_ceo_path = tmp_path / "archive_ceo_dialogue.png"
+    archive_ceo.save(archive_ceo_path)
+    archive_ceo_result = commands._lightning_dialogue_box_score(archive_ceo_path)
+
+    assert 0.24 <= archive_ceo_result["portrait_score"]["score"] < 0.25
+    assert archive_ceo_result["visible"] is True
+
 
 def test_lightning_extract_red_regions_from_image(tmp_path):
     from PIL import Image, ImageDraw
