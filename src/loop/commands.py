@@ -774,6 +774,16 @@ def _dirty_consent_gate(
     return None
 
 
+def _dirty_consent_mark_used(session: RunSession, consent_id: str | None) -> bool:
+    if not consent_id:
+        return False
+    if consent_id in session.dirty_consent_used:
+        return False
+    session.dirty_consent_used.append(consent_id)
+    session.save()
+    return True
+
+
 # Difficulty label map (mirrors GameData.difficulty values)
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
 _POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
@@ -18796,6 +18806,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         if allow_lightning_speed_loss else None
     )
     dirty_consent_validated = False
+    dirty_consent_pending_id: str | None = None
     if (
         allow_dirty_plan
         and not allow_lightning_speed_loss
@@ -18817,6 +18828,13 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             _print_result(consent_error)
             return consent_error
         dirty_consent_validated = True
+        dirty_consent_pending_id = _dirty_consent_id(
+            session,
+            turn,
+            plan_safety,
+            actions,
+            candidate_rank=selected_candidate_rank,
+        )
 
     if plan_requires_safety_block(plan_safety,
                                   allow_dirty_plan=(
@@ -18892,18 +18910,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         for kind in (lightning_speed_loss_summary or {}).get("blocking_kinds", []):
             print(f"!   allowed: {kind}")
 
-    if dirty_consent_validated:
-        expected = _dirty_consent_id(
-            session,
-            turn,
-            plan_safety,
-            actions,
-            candidate_rank=selected_candidate_rank,
-        )
-        if expected not in session.dirty_consent_used:
-            session.dirty_consent_used.append(expected)
-        session.save()
-
     resume_before_execute_result = None
     if resume_before_execute:
         resume_before_execute_result = _lightning_resume_if_paused(
@@ -18936,6 +18942,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     combat_pause_steps: list[dict] = []
     combat_timer_paused = False
     combat_pause_bounds: dict | None = None
+
+    def _mark_dirty_consent_progress() -> None:
+        nonlocal dirty_consent_pending_id
+        if _dirty_consent_mark_used(session, dirty_consent_pending_id):
+            dirty_consent_pending_id = None
 
     def _resume_combat_timer_pause(label: str) -> dict | None:
         nonlocal combat_timer_paused
@@ -19061,6 +19072,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             try:
                 ack = move_mech(mech_uid, action.move_to[0], action.move_to[1])
                 print(f"  MOVE: {ack}")
+                _mark_dirty_consent_progress()
             except (TimeoutError, BridgeError) as e:
                 print(f"  MOVE ERROR: {e}")
                 result = {"error": f"Move {actions_completed}: {e}",
@@ -19252,6 +19264,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             try:
                 ack = attack_mech(mech_uid, weapon_slot, action.target[0], action.target[1])
                 print(f"  ATTACK: {ack}")
+                _mark_dirty_consent_progress()
                 if action.weapon == "Support_Wind":
                     session.add_disabled_action(
                         weapon_id="Support_Wind",
@@ -19286,6 +19299,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 else:
                     ack = repair_mech(mech_uid)
                     print(f"  REPAIR: {ack}")
+                _mark_dirty_consent_progress()
             except (TimeoutError, BridgeError) as e:
                 print(f"  REPAIR ERROR: {e}")
                 result = {"error": f"Repair {actions_completed}: {e}",
@@ -19301,6 +19315,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     return pause_error
                 ack = skip_mech(mech_uid)
                 print(f"  SKIP: {ack}")
+                _mark_dirty_consent_progress()
             except (TimeoutError, BridgeError) as e:
                 print(f"  SKIP ERROR: {e}")
         else:
@@ -19313,6 +19328,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     return pause_error
                 ack = skip_mech(mech_uid)
                 print(f"  SKIP (move-only): {ack}")
+                _mark_dirty_consent_progress()
             except (TimeoutError, BridgeError) as e:
                 print(f"  SKIP ERROR: {e}")
 

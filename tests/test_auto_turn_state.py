@@ -402,6 +402,45 @@ def test_dirty_consent_validation_can_delay_token_consumption():
     assert token not in s.dirty_consent_used
 
 
+def test_dirty_consent_progress_mark_consumes_delayed_token(monkeypatch):
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.mission_index = 4
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "grid_damage",
+            "current": 5,
+            "predicted": 4,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=3)
+    saves = []
+    monkeypatch.setattr(s, "save", lambda: saves.append(list(s.dirty_consent_used)))
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+        consume=False,
+    )
+
+    assert accepted is None
+    assert token not in s.dirty_consent_used
+    assert cmd_mod._dirty_consent_mark_used(s, token) is True
+    assert token in s.dirty_consent_used
+    assert saves == [[token]]
+    assert cmd_mod._dirty_consent_mark_used(s, token) is False
+    assert saves == [[token]]
+
+
 def test_dirty_consent_accepts_kill_limit_failure_for_non_perfect_targets():
     s = RunSession(
         run_id="r",

@@ -71,6 +71,39 @@ Code/docs update:
 - `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
 
+## 2026-06-04 - Dirty Consent Survives Pre-Action Resume Failure
+
+Hypothesis: dirty consent should be single-use only after the reviewed dirty
+line changes live combat state. A stale heartbeat or failed pause-menu resume
+before the first bridge action should not burn the token.
+
+Segment: Lightning War R.S.T. mission 3, turn 2, Mission_Bomb. The reviewed
+rank-2 line predicted only nonlethal `mech_hp_loss` with grid at `6/7`, but
+the first rerun started while the pause menu was still open. The bridge
+heartbeat went stale before any sub-action completed.
+
+Result: `cmd_auto_turn` now validates the exact dirty consent up front with
+`consume=False`, stores the pending ID, and marks it used only after a
+successful bridge acknowledgement for move/attack/repair/skip. Failed resume or
+stale heartbeat before action progress leaves the token reusable for the same
+unchanged board.
+
+Derived rule: in live Lightning War, consent is a progress boundary, not a
+solve boundary. Spend the token when the game accepts the first command, never
+while Codex or the conductor is still trying to dismiss pause or regain a live
+heartbeat.
+
+Focused regression:
+`python -m pytest tests\test_auto_turn_state.py::test_dirty_consent_validation_can_delay_token_consumption tests\test_auto_turn_state.py::test_dirty_consent_progress_mark_consumes_delayed_token -q`
+passed. Broader focused suites:
+`python -m pytest tests\test_auto_turn_state.py tests\test_lightning_war_tools.py -q`
+passed.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_auto_turn_state.py`
+- `docs/agent/lightning-war-experiments.md`
+
 ## 2026-06-04 - Hard-Veto Preview Guard Before Start
 
 Hypothesis: after the ambiguous bridge-preview fix, a no-target visual route
