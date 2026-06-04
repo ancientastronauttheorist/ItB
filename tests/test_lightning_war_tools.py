@@ -2138,6 +2138,46 @@ def test_lightning_dialogue_box_score_requires_visible_dialogue(tmp_path):
     assert commands._lightning_dialogue_box_score(dialogue_path)["visible"] is True
     assert commands._lightning_dialogue_box_score(plain_path)["visible"] is False
 
+    muted = Image.new("RGB", (1280 * scale, 748 * scale), (20, 24, 32))
+    draw = ImageDraw.Draw(muted)
+    draw.rectangle(
+        [
+            180 * scale,
+            120 * scale,
+            1100 * scale,
+            235 * scale,
+        ],
+        fill=(12, 16, 28),
+        outline=(88, 116, 166),
+        width=2 * scale,
+    )
+    draw.rectangle(
+        [
+            250 * scale,
+            155 * scale,
+            500 * scale,
+            160 * scale,
+        ],
+        fill=(238, 238, 238),
+    )
+    draw.rectangle(
+        [
+            930 * scale,
+            130 * scale,
+            1050 * scale,
+            270 * scale,
+        ],
+        fill=(196, 102, 58),
+        outline=(86, 116, 166),
+        width=4 * scale,
+    )
+    muted_path = tmp_path / "muted_dialogue.png"
+    muted.save(muted_path)
+    muted_result = commands._lightning_dialogue_box_score(muted_path)
+
+    assert 3500 <= muted_result["bright"] < 6000
+    assert muted_result["visible"] is True
+
 
 def test_lightning_extract_red_regions_from_image(tmp_path):
     from PIL import Image, ImageDraw

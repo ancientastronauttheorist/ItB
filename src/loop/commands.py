@@ -10730,10 +10730,10 @@ def _lightning_dialogue_box_score(image_path: str | Path) -> dict:
     )
     visible = (
         score.get("score", 0.0) >= 0.20
-        and score.get("bright", 0) >= 6000
-        and score.get("border", 0) >= 6000
+        and score.get("bright", 0) >= 3500
+        and score.get("border", 0) >= 1500
         and portrait_score.get("score", 0.0) >= 0.25
-        and portrait_score.get("border", 0) >= 1000
+        and portrait_score.get("border", 0) >= 800
     )
     return {
         "status": "OK",
