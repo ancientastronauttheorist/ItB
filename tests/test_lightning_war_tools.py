@@ -6286,6 +6286,102 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
+def test_lightning_route_start_recovers_post_start_mismatch(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+    blocks = []
+    recoveries = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Tides"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "target": {"window_x": 848, "window_y": 448},
+            "click_result": {"status": "OK"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Airstrike",
+            "deployment_zone_count": 10,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
+    )
+
+    def fake_write_block(session_arg, **kwargs):
+        blocks.append((session_arg, kwargs))
+        return {"status": "BLOCKED", **kwargs}
+
+    def fake_recovery(session_arg, **kwargs):
+        recoveries.append((session_arg, kwargs))
+        return {"status": "OK", "reason": "route_mismatch_abandoned_to_safe_state"}
+
+    monkeypatch.setattr(commands, "_lightning_write_route_mismatch_block", fake_write_block)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recover_started_route_mismatch",
+        fake_recovery,
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Tides",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_mission_mismatch_after_start_recovered"
+    click_result = result["click_result"]
+    assert click_result["post_start_snapshot"]["mission_id"] == "Mission_Airstrike"
+    assert click_result["route_mismatch_block"]["reason"] == (
+        "route_mission_mismatch_after_start"
+    )
+    assert click_result["mismatch_recovery"]["status"] == "OK"
+    assert blocks[0][1]["expected_mission_id"] == "Mission_Tides"
+    assert blocks[0][1]["actual_mission_id"] == "Mission_Airstrike"
+    assert recoveries[0][1]["actual_mission_id"] == "Mission_Airstrike"
+    assert len(calls) == 1
+
+
 def test_lightning_route_start_clicks_verified_board_before_dialogue_dismiss(
     monkeypatch,
 ):

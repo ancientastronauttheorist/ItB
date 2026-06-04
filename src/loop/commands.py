@@ -9909,13 +9909,14 @@ def _lightning_write_route_mismatch_block(
     expected_mission_id: str,
     actual_mission_id: str | None,
     snapshot: dict,
+    reason: str = "route_mission_mismatch_before_deploy",
 ) -> dict:
     path = _lightning_route_mismatch_path(session)
     payload = {
         "status": "BLOCKED",
         "run_id": session.run_id,
         "created_at": datetime.now().isoformat(timespec="seconds"),
-        "reason": "route_mission_mismatch_before_deploy",
+        "reason": reason,
         "expected_mission_id": expected_mission_id,
         "actual_mission_id": actual_mission_id,
         "turn": snapshot.get("turn"),
@@ -9932,6 +9933,102 @@ def _lightning_write_route_mismatch_block(
     _atomic_json_write(path, payload)
     payload["path"] = str(path)
     return payload
+
+
+def _lightning_recover_started_route_mismatch(
+    session: RunSession,
+    *,
+    profile: str,
+    expected_mission_id: str,
+    actual_mission_id: str | None,
+    snapshot: dict,
+    quiet: bool = True,
+) -> dict:
+    """Abandon a just-started mismatched route without returning live to Codex."""
+    from src.control.mac_click import click_known_window_control
+
+    recovery: dict = {
+        "status": "STARTED",
+        "reason": "started_route_mismatch_recovery",
+        "expected_mission_id": expected_mission_id,
+        "actual_mission_id": actual_mission_id,
+        "initial_snapshot": snapshot,
+    }
+
+    deploy, deploy_output = _lightning_quiet_call(
+        cmd_deploy_recommended,
+        profile=profile,
+        quiet=quiet,
+    )
+    if deploy_output:
+        deploy["quiet_output"] = deploy_output
+    recovery["deploy"] = deploy
+    if deploy.get("status") not in ("OK", "WARN"):
+        pause = _lightning_ensure_pause_state(
+            reason="started_route_mismatch_deploy_failed",
+        )
+        recovery["pause_after_deploy_failure"] = pause
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_deploy_failed"
+        return recovery
+
+    confirm = click_known_window_control("deploy_confirm")
+    recovery["deploy_confirm"] = confirm
+    if confirm.get("status") != "OK":
+        pause = _lightning_ensure_pause_state(
+            reason="started_route_mismatch_confirm_failed",
+        )
+        recovery["pause_after_confirm_failure"] = pause
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_confirm_failed"
+        return recovery
+
+    pause = _lightning_ensure_pause_state(
+        reason="started_route_mismatch_before_abandon",
+    )
+    recovery["pause"] = pause
+    pause_visible = (
+        pause.get("pause_verify", {}).get("visible_ui")
+        or pause.get("visible_ui", {}).get("visible_ui")
+    )
+    if pause.get("status") != "OK" or pause_visible != "pause_menu":
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_pause_failed"
+        return recovery
+
+    abandon = click_known_window_control("abandon_timeline")
+    recovery["abandon_timeline"] = abandon
+    if abandon.get("status") != "OK":
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_abandon_click_failed"
+        return recovery
+
+    confirm_abandon = click_known_window_control("abandon_confirm_yes")
+    recovery["abandon_confirm_yes"] = confirm_abandon
+    if confirm_abandon.get("status") != "OK":
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_abandon_confirm_failed"
+        return recovery
+
+    pilot = click_known_window_control("abandon_pilot_slot")
+    recovery["abandon_pilot_slot"] = pilot
+    if pilot.get("status") != "OK":
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_pilot_select_failed"
+        return recovery
+
+    final_ui = _lightning_visible_ui_snapshot()
+    recovery["final_ui"] = final_ui
+    if final_ui.get("status") == "OK" and final_ui.get("visible_ui") in {
+        "new_game_setup",
+        "pause_menu",
+    }:
+        recovery["status"] = "OK"
+        recovery["reason"] = "route_mismatch_abandoned_to_safe_state"
+    else:
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_final_state_unverified"
+    return recovery
 
 
 def _lightning_active_route_mismatch_block(
@@ -13122,6 +13219,49 @@ def cmd_lightning_route_start(
                 "reason",
                 "route_preview_commit_failed",
             )
+        else:
+            post_start_snapshot = _lightning_live_snapshot()
+            click_result["post_start_snapshot"] = post_start_snapshot
+            post_start_mission = str(
+                post_start_snapshot.get("mission_id") or ""
+            ).strip()
+            if (
+                post_start_snapshot.get("status") == "OK"
+                and post_start_snapshot.get("in_active_mission")
+                and post_start_mission
+                and post_start_mission != expected_preview_mission
+            ):
+                session = _load_session()
+                mismatch_block = _lightning_write_route_mismatch_block(
+                    session,
+                    expected_mission_id=expected_preview_mission,
+                    actual_mission_id=post_start_mission,
+                    snapshot=post_start_snapshot,
+                    reason="route_mission_mismatch_after_start",
+                )
+                recovery = None
+                if (
+                    int(post_start_snapshot.get("turn") or 0) == 0
+                    and int(
+                        post_start_snapshot.get("deployment_zone_count") or 0
+                    ) > 0
+                ):
+                    recovery = _lightning_recover_started_route_mismatch(
+                        session,
+                        profile=profile,
+                        expected_mission_id=expected_preview_mission,
+                        actual_mission_id=post_start_mission,
+                        snapshot=post_start_snapshot,
+                    )
+                click_result["status"] = "BLOCKED"
+                click_result["reason"] = "route_mission_mismatch_after_start"
+                click_result["route_mismatch_block"] = mismatch_block
+                if recovery is not None:
+                    click_result["mismatch_recovery"] = recovery
+                    if recovery.get("status") == "OK":
+                        click_result["reason"] = (
+                            "route_mission_mismatch_after_start_recovered"
+                        )
     else:
         click_result = _lightning_click_route_start_sequence(
             int(region_window_x),

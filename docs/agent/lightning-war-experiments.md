@@ -33,6 +33,44 @@ Code/docs update:
 - `scripts/lightning_war_conductor.py`
 - `tests/test_lightning_war_conductor.py`
 - `docs/agent/lightning-war-experiments.md`
+
+## 2026-06-03 - Post-Start Route Mismatch Recovery
+
+Hypothesis: the route-start path can still click visible Start while the bridge
+preview is stale, causing deployment to load a different mission than the
+validated route target.
+
+Segment: Blitzkrieg Easy AE ON fresh attempt. Archive route auto-start targeted
+and preview-validated `Mission_Tides`, but after Start the live deployment
+snapshot reported `Mission_Airstrike`.
+
+Evidence:
+- `lightning_segment` stopped with
+  `reason=route_mission_mismatch_before_deploy` and persisted
+  `recordings/lw/lightning_route_mismatch.json`.
+- Deployment had no usable pause/back state. Gear click and Escape both left the
+  screen in deployment with the timer advancing.
+- Minimal recovery worked: `deploy_recommended`, `deploy_confirm`,
+  `lightning_ui ensure_pause`, `abandon_timeline`, `abandon_confirm_yes`, and
+  `abandon_pilot_slot` returned the game to `new_game_setup`.
+- Focused regression:
+  `python -m pytest tests\test_lightning_war_tools.py -q` passed after adding
+  a post-Start mismatch recovery test.
+
+Result: `cmd_lightning_route_start` now samples `_lightning_live_snapshot()`
+immediately after a successful Start click. If the started mission id differs
+from the route target, it writes the mismatch block and, for turn-0 deployment,
+locally performs the proven deploy-confirm-pause-abandon recovery before
+returning to Codex.
+
+Derived rule: route-start must not return control across an LLM/tool boundary
+from a live mismatched deployment. If the one-way Start click already happened,
+the local Python command owns recovery to a verified safe state.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
 
 ## 2026-06-03 - Setup Screen False Pause Positive

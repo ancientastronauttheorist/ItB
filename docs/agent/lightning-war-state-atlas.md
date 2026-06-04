@@ -67,6 +67,13 @@ The final Difficulty Setup Start click begins the achievement clock. After that
 click, the conductor must own routing/island/deployment/combat immediately; do
 not return control to Codex between Start and the first deterministic segment.
 
+Turn-0 deployment is normally not pauseable. If a route-start mismatch is only
+discovered after Start loads deployment, local automation must recover without
+asking Codex: deploy the three mechs, click CONFIRM, verify pause from the first
+player turn, abandon the timeline, confirm, select the carry-forward pilot, and
+verify `new_game_setup` or another safe state. Do not continue the mismatched
+mission for Lightning War.
+
 When `lightning_pause_guard` returns a top-level result with `last_poll`, the
 nested `last_poll` is the evidence-bearing payload. The pre-click panel can be
 `reward_panel` while the post-click `pause_verify` is `pause_menu`; the conductor
