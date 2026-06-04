@@ -271,6 +271,68 @@ def test_conductor_skips_initial_sync_when_guard_says_must_act(monkeypatch):
     assert calls[2] == ["achievements", "--sync"]
 
 
+def test_conductor_starts_from_verified_setup_without_codex_gap(monkeypatch):
+    calls = []
+
+    def result(args, payload, returncode=0):
+        return conductor.CommandResult(
+            args=args,
+            returncode=returncode,
+            stdout="",
+            stderr="",
+            result=payload,
+        )
+
+    def fake_run_game_loop(args, *, timeout=None):
+        calls.append(list(args))
+        if args == ["achievements", "--sync"]:
+            return result(args, {"status": "OK", "unlocked_list": []})
+        if args == ["verify_setup", "--difficulty", "0"]:
+            return result(args, {"status": "PASS"})
+        if args == ["lightning_ui", "setup_start"]:
+            return result(args, {"status": "OK"})
+        if args and args[0] == "lightning_segment":
+            return result(
+                args,
+                {
+                    "status": "LIGHTNING_SEGMENT_STOPPED",
+                    "reason": "route_ready",
+                    "pause_guard": {
+                        "status": "OK",
+                        "reason": "already_paused",
+                        "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                    },
+                },
+            )
+        if args == ["lightning_ui", "ensure_pause"]:
+            return result(args, {"status": "OK", "reason": "already_paused"})
+        raise AssertionError(f"unexpected command: {args}")
+
+    monkeypatch.setattr(conductor, "run_game_loop", fake_run_game_loop)
+
+    args = conductor.build_parser().parse_args(
+        [
+            "--start-from-verified-setup",
+            "--max-segments",
+            "1",
+            "--settle-seconds",
+            "0",
+            "--no-journal",
+        ]
+    )
+
+    assert conductor.run_conductor(args) == 8
+    assert calls[:3] == [
+        ["achievements", "--sync"],
+        ["verify_setup", "--difficulty", "0"],
+        ["lightning_ui", "setup_start"],
+    ]
+    assert calls[3][0] == "lightning_segment"
+    assert "--no-preflight" in calls[3]
+    assert ["lightning_preflight"] not in calls
+    assert calls.count(["achievements", "--sync"]) == 1
+
+
 def test_conductor_continues_after_combat_loop_returned(monkeypatch):
     calls = []
     segment_calls = 0

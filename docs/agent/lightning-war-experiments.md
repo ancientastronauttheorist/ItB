@@ -68,3 +68,30 @@ Code/docs update:
 - `tests/test_lightning_war_tools.py`
 - `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
+
+## 2026-06-03 - Timer Start Must Be Inside Conductor
+
+Hypothesis: after the final Difficulty Setup modal passes verification, a
+separate Codex-issued Start click followed by a separate conductor command would
+spend live achievement time between tool boundaries.
+
+Segment: offline/unit implementation while the visible game was parked on the
+verified Difficulty Setup modal.
+
+Evidence:
+- `verify_setup --difficulty 0` passed for Easy and all Advanced Content rows.
+- `tests/test_lightning_war_conductor.py` passed after adding a
+  `--start-from-verified-setup` path.
+
+Result: the outer conductor can now sync, verify the setup modal, click the
+timer-starting setup Start button, and immediately enter `lightning_segment
+--no-preflight` inside the same Python process.
+
+Derived rule: never let Codex own the gap between final setup Start and the
+first island/route action. Use `scripts/lightning_war_conductor.py
+--start-from-verified-setup` from the verified modal.
+
+Code/docs update:
+- `scripts/lightning_war_conductor.py`
+- `tests/test_lightning_war_conductor.py`
+- `docs/agent/lightning-war-experiments.md`

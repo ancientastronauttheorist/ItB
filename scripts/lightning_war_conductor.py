@@ -671,14 +671,54 @@ def run_conductor(args: argparse.Namespace) -> int:
     watchdog = TimerWatchdog()
     journal = ConductorJournal(journal_path(not args.no_journal))
 
-    pause_guard_once(
-        watchdog=watchdog,
-        journal=journal,
-        timeout=args.pause_guard_timeout,
-    )
-    initial_state = watchdog.samples[-1] if watchdog.samples else None
-    initial_safe = bool(initial_state and initial_state.safe_to_think)
-    initial_must_act = bool(initial_state and initial_state.must_act_now)
+    initial_safe = False
+    initial_must_act = False
+
+    if args.start_from_verified_setup:
+        if not args.no_achievement_sync:
+            sync = run_observed(
+                "achievements",
+                ["achievements", "--sync"],
+                watchdog=watchdog,
+                journal=journal,
+                timeout=120,
+            )
+            if achievement_unlocked(sync.result):
+                print("Lightning War already unlocked.")
+                return 0
+        setup = run_observed(
+            "verify_setup",
+            ["verify_setup", "--difficulty", str(args.setup_difficulty)],
+            watchdog=watchdog,
+            journal=journal,
+            timeout=60,
+        )
+        if setup.returncode != 0 or result_status(setup.result) != "PASS":
+            print("[verify_setup] setup verification failed; not starting timer.")
+            return 9
+        start = run_observed(
+            "start_game",
+            ["lightning_ui", "setup_start"],
+            watchdog=watchdog,
+            journal=journal,
+            timeout=30,
+        )
+        if start.returncode != 0 or result_status(start.result) != "OK":
+            print("[start_game] setup Start click failed.")
+            return 10
+        initial_must_act = True
+        args.no_achievement_sync = True
+        args.no_initial_preflight = True
+        print("[start_game] timer started; entering deterministic segment hot path.")
+    else:
+        pause_guard_once(
+            watchdog=watchdog,
+            journal=journal,
+            timeout=args.pause_guard_timeout,
+        )
+        initial_state = watchdog.samples[-1] if watchdog.samples else None
+        initial_safe = bool(initial_state and initial_state.safe_to_think)
+        initial_must_act = bool(initial_state and initial_state.must_act_now)
 
     if initial_safe and not args.no_achievement_sync:
         sync = run_observed(
@@ -698,7 +738,7 @@ def run_conductor(args: argparse.Namespace) -> int:
         )
 
     best_timer = 0.0
-    if initial_safe:
+    if initial_safe and not args.no_initial_preflight:
         preflight = run_observed(
             "preflight",
             ["lightning_preflight"],
@@ -710,7 +750,7 @@ def run_conductor(args: argparse.Namespace) -> int:
             ensure_pause(watchdog=watchdog, journal=journal)
             return 2
         best_timer = safe_timer(preflight.result)[0] or 0.0
-    else:
+    elif not args.no_initial_preflight:
         print("[preflight] deferred to lightning_segment hot path.")
 
     for step in range(1, args.max_segments + 1):
@@ -726,7 +766,7 @@ def run_conductor(args: argparse.Namespace) -> int:
         ]
         if args.route_auto_start:
             segment_args.append("--route-auto-start")
-        if initial_must_act and step == 1:
+        if (initial_must_act or args.no_initial_preflight) and step == 1:
             segment_args.append("--no-preflight")
         if args.no_pause_before_solve:
             segment_args.append("--no-pause-before-solve")
@@ -849,6 +889,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-pause-before-solve", action="store_true")
     parser.add_argument("--no-pause-between-actions", action="store_true")
     parser.add_argument("--no-achievement-sync", action="store_true")
+    parser.add_argument(
+        "--start-from-verified-setup",
+        action="store_true",
+        help=(
+            "Verify the visible Difficulty Setup modal, click the timer-starting "
+            "Start button, then immediately enter the segment hot path."
+        ),
+    )
+    parser.add_argument("--setup-difficulty", type=int, default=0)
+    parser.add_argument("--no-initial-preflight", action="store_true")
     parser.add_argument("--no-journal", action="store_true")
     return parser
 

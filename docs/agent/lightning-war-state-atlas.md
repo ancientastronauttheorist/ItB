@@ -24,6 +24,13 @@ the screenshot is clearly Into the Breach.
 - Codex/user work: allowed. Required actions before Start are achievement sync,
   Blitzkrieg/Easy/AE verification, and focused setup fixes.
 
+`verified_difficulty_setup`
+- Proof: `verify_setup --difficulty 0` returns PASS for Easy and all Advanced
+  Content rows ON.
+- Codex/user work: allowed until the final Start button is clicked.
+- Action: use the Python conductor's `--start-from-verified-setup` path so the
+  Start click and first live segment happen in one local process.
+
 ## Must Act Now States
 
 `island_map`, `mission_preview`, `deployment`, `combat_player`,
@@ -55,6 +62,10 @@ classifier result, a bridge pause signal, or stable `current.time`.
 `new_game_setup` is safe but is not a pause menu. Do not click `menu_continue`
 or run a live segment from setup just because a dark screenshot has a
 pause-like crop. Verify setup, then Start intentionally.
+
+The final Difficulty Setup Start click begins the achievement clock. After that
+click, the conductor must own routing/island/deployment/combat immediately; do
+not return control to Codex between Start and the first deterministic segment.
 
 When `lightning_pause_guard` returns a top-level result with `last_poll`, the
 nested `last_poll` is the evidence-bearing payload. The pre-click panel can be
