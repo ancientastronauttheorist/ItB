@@ -5685,11 +5685,62 @@ def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview():
     assert all(candidate["forced_preview_route"] is True for candidate in result)
     assert all(candidate["forced_preview_ambiguous"] is True for candidate in result)
     assert all(candidate["auto_route_allowed"] is False for candidate in result)
-    assert all("--route-target-mission-id" not in candidate["command"] for candidate in result)
-    assert all("--expected-mission-id" not in candidate["route_start_command"] for candidate in result)
+    assert all(
+        "--route-target-mission-id" not in candidate["command"]
+        for candidate in result
+    )
+    assert all(
+        "--expected-mission-id" not in candidate["route_start_command"]
+        for candidate in result
+    )
     assert all(
         candidate["auto_route_block_reason"]
         == "forced_bridge_preview_multiple_visible_regions"
+        for candidate in result
+    )
+
+
+def test_visual_route_candidate_omits_target_for_ambiguous_bridge_preview():
+    recommendation = {
+        "status": "OK",
+        "source": "bridge_preview",
+        "ranked": [
+            {
+                "mission_id": "Mission_Tanks",
+                "score": -62,
+            },
+        ],
+        "top3": [
+            {
+                "mission_id": "Mission_Tanks",
+                "score": -62,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 0, "window_x": 813, "window_y": 401},
+            {"index": 1, "window_x": 949, "window_y": 588},
+        ],
+    }
+    target_hint = commands._lightning_route_target_hint_from_recommendation(
+        recommendation,
+    )
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        target_hint=target_hint,
+        recommendation=recommendation,
+    )
+
+    assert len(result) == 2
+    assert all(
+        "--route-target-mission-id" not in candidate["command"]
+        for candidate in result
+    )
+    assert all(
+        "--expected-mission-id" not in candidate["route_start_command"]
         for candidate in result
     )
 
@@ -6739,6 +6790,7 @@ def test_lightning_route_start_uses_visual_region_index(monkeypatch):
         "window_x": 902,
         "window_y": 349,
     }
+    assert result["inferred_expected_route_mission_id"] is None
     assert calls[0][0:2] == (902, 349)
 
 

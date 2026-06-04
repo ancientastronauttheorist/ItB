@@ -8522,13 +8522,22 @@ def _lightning_route_start_candidates(
             ),
         )
     )
+    recommendation_source = (
+        str(recommendation.get("source"))
+        if isinstance(recommendation, dict)
+        and recommendation.get("source") is not None
+        else None
+    )
     regions = [
         region
         for region in (visual_regions.get("regions") or [])
         if isinstance(region, dict)
     ]
     forced_preview_ambiguous = forced_preview_allowed and len(regions) != 1
-    target_hint_can_guard = not forced_preview_ambiguous
+    bridge_preview_ambiguous = (
+        recommendation_source == "bridge_preview" and len(regions) != 1
+    )
+    target_hint_can_guard = not bridge_preview_ambiguous
     forced_preview_option = (
         dict(ranked[0])
         if forced_preview_allowed
@@ -12920,6 +12929,7 @@ def cmd_lightning_route_start(
             expected_route_mission_id is None
             and visual_region_index is not None
             and isinstance(route_target_hint, dict)
+            and recommendation.get("source") != "bridge_preview"
         ):
             inferred = str(route_target_hint.get("mission_id") or "").strip()
             if inferred:
