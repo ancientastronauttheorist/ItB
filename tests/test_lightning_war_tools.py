@@ -6242,6 +6242,69 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
+def test_lightning_route_start_clicks_verified_board_before_dialogue_dismiss(
+    monkeypatch,
+):
+    calls = []
+    visible_start_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_SnowStorm"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: pytest.fail("dialogue should remain open"),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: visible_start_calls.append(kwargs)
+        or {"status": "NOT_FOUND", "reason": "start_mission_text_not_found"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=600,
+        region_window_y=360,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_SnowStorm",
+        start_mode="preview-board",
+    )
+
+    assert result["status"] == "OK"
+    commit = result["click_result"]["commit_click"]
+    assert commit["reason"] == "verified_preview_board_clicked_before_dialogue"
+    assert len(calls) == 2
+    assert any(
+        step.get("control") == "mission_preview_board"
+        for step in calls[1]
+        if isinstance(step, dict)
+    )
+    assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
+
+
 def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch):
     calls = []
     visible_start_calls = []
@@ -6272,6 +6335,11 @@ def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch)
 
     def fake_execute(sequence, **kwargs):
         calls.append(sequence)
+        if len(calls) == 2:
+            return {
+                "status": "ERROR",
+                "reason": "preview_board_click_failed",
+            }
         return {"status": "OK", "steps": [{"count": len(sequence)}]}
 
     def fake_visible_start(**kwargs):
@@ -6328,8 +6396,13 @@ def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch)
     assert commit["sticky_dialogue_retry"]["retry_actual_mission_id"] == (
         "Mission_Terraform"
     )
-    assert len(calls) == 2
-    assert calls[1][0]["description"] == (
+    assert len(calls) == 3
+    assert any(
+        step.get("control") == "mission_preview_board"
+        for step in calls[1]
+        if isinstance(step, dict)
+    )
+    assert calls[2][0]["description"] == (
         "Lightning route region after sticky dialogue"
     )
     assert visible_start_calls == [
@@ -6363,6 +6436,11 @@ def test_lightning_route_start_blocks_post_dialogue_preview_mismatch(monkeypatch
 
     def fake_execute(sequence, **kwargs):
         calls.append(sequence)
+        if len(calls) == 2:
+            return {
+                "status": "ERROR",
+                "reason": "preview_board_click_failed",
+            }
         return {"status": "OK", "steps": [{"count": len(sequence)}]}
 
     monkeypatch.setattr(
@@ -6403,7 +6481,12 @@ def test_lightning_route_start_blocks_post_dialogue_preview_mismatch(monkeypatch
     assert result["click_result"]["post_dialogue_actual_mission_id"] == "Mission_Mines"
     assert result["click_result"]["commit_click"]["status"] == "BLOCKED"
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
-    assert len(calls) == 1
+    assert len(calls) == 2
+    assert any(
+        step.get("control") == "mission_preview_board"
+        for step in calls[1]
+        if isinstance(step, dict)
+    )
 
 
 def test_lightning_route_start_blocks_unknown_visual_region_index(monkeypatch):

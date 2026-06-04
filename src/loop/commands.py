@@ -12849,6 +12849,7 @@ def cmd_lightning_route_start(
         post_dialogue_actual_mission = None
         dialogue_dismiss = None
         commit_click = None
+        board_click_before_dialogue = None
         if broad_preview_commit and start_window_x is None and start_window_y is None:
             visible_start_before_dialogue = _lightning_click_visible_start_mission(
                 dry_run=False,
@@ -12857,64 +12858,88 @@ def cmd_lightning_route_start(
             if visible_start_before_dialogue.get("status") == "OK":
                 commit_click = visible_start_before_dialogue
             else:
-                dialogue_dismiss = _lightning_dismiss_visible_dialogue(dry_run=False)
-                if dialogue_dismiss.get("status") not in {"OK", "NO_ACTION"}:
+                board_click_before_dialogue = _lightning_execute_route_start_sequence(
+                    commit_sequence,
+                    dry_run=False,
+                )
+                if board_click_before_dialogue.get("status") == "OK":
                     commit_click = {
-                        "status": "BLOCKED",
-                        "reason": dialogue_dismiss.get(
-                            "reason",
-                            "dialogue_dismiss_failed_before_start",
-                        ),
-                        "dialogue_dismiss": dialogue_dismiss,
+                        "status": "OK",
+                        "reason": "verified_preview_board_clicked_before_dialogue",
                         "initial_visible_start": visible_start_before_dialogue,
+                        "board_click_before_dialogue": board_click_before_dialogue,
                     }
-                elif dialogue_dismiss.get("status") == "OK":
-                    post_dialogue_recommendation = cmd_recommend_mission(
-                        profile=profile,
-                        routing="lightning_war",
-                        use_save_region_filter=False,
-                        pause_map_peek=False,
-                    )
-                    post_top3 = post_dialogue_recommendation.get("top3")
-                    if (
-                        isinstance(post_top3, list)
-                        and post_top3
-                        and isinstance(post_top3[0], dict)
-                    ):
-                        post_dialogue_actual_mission = str(
-                            post_top3[0].get("mission_id") or ""
-                        ).strip()
-                    if (
-                        post_dialogue_recommendation.get("source") != "bridge_preview"
-                        or not post_dialogue_actual_mission
-                    ):
+                else:
+                    dialogue_dismiss = _lightning_dismiss_visible_dialogue(dry_run=False)
+                    if dialogue_dismiss.get("status") not in {"OK", "NO_ACTION"}:
                         commit_click = {
                             "status": "BLOCKED",
-                            "reason": (
-                                "route_preview_mission_unverified_after_dialogue"
-                            ),
-                            "expected_route_mission_id": expected_preview_mission,
-                            "actual_preview_mission_id": (
-                                post_dialogue_actual_mission or None
+                            "reason": dialogue_dismiss.get(
+                                "reason",
+                                "dialogue_dismiss_failed_before_start",
                             ),
                             "dialogue_dismiss": dialogue_dismiss,
-                            "post_dialogue_recommendation": (
-                                post_dialogue_recommendation
-                            ),
                             "initial_visible_start": visible_start_before_dialogue,
+                            "board_click_before_dialogue": board_click_before_dialogue,
                         }
-                    elif post_dialogue_actual_mission != expected_preview_mission:
-                        commit_click = {
-                            "status": "BLOCKED",
-                            "reason": "route_preview_mission_mismatch_after_dialogue",
-                            "expected_route_mission_id": expected_preview_mission,
-                            "actual_preview_mission_id": post_dialogue_actual_mission,
-                            "dialogue_dismiss": dialogue_dismiss,
-                            "post_dialogue_recommendation": (
-                                post_dialogue_recommendation
-                            ),
-                            "initial_visible_start": visible_start_before_dialogue,
-                        }
+                    elif dialogue_dismiss.get("status") == "OK":
+                        post_dialogue_recommendation = cmd_recommend_mission(
+                            profile=profile,
+                            routing="lightning_war",
+                            use_save_region_filter=False,
+                            pause_map_peek=False,
+                        )
+                        post_top3 = post_dialogue_recommendation.get("top3")
+                        if (
+                            isinstance(post_top3, list)
+                            and post_top3
+                            and isinstance(post_top3[0], dict)
+                        ):
+                            post_dialogue_actual_mission = str(
+                                post_top3[0].get("mission_id") or ""
+                            ).strip()
+                        if (
+                            post_dialogue_recommendation.get("source")
+                            != "bridge_preview"
+                            or not post_dialogue_actual_mission
+                        ):
+                            commit_click = {
+                                "status": "BLOCKED",
+                                "reason": (
+                                    "route_preview_mission_unverified_after_dialogue"
+                                ),
+                                "expected_route_mission_id": expected_preview_mission,
+                                "actual_preview_mission_id": (
+                                    post_dialogue_actual_mission or None
+                                ),
+                                "dialogue_dismiss": dialogue_dismiss,
+                                "post_dialogue_recommendation": (
+                                    post_dialogue_recommendation
+                                ),
+                                "initial_visible_start": visible_start_before_dialogue,
+                                "board_click_before_dialogue": (
+                                    board_click_before_dialogue
+                                ),
+                            }
+                        elif post_dialogue_actual_mission != expected_preview_mission:
+                            commit_click = {
+                                "status": "BLOCKED",
+                                "reason": (
+                                    "route_preview_mission_mismatch_after_dialogue"
+                                ),
+                                "expected_route_mission_id": expected_preview_mission,
+                                "actual_preview_mission_id": (
+                                    post_dialogue_actual_mission
+                                ),
+                                "dialogue_dismiss": dialogue_dismiss,
+                                "post_dialogue_recommendation": (
+                                    post_dialogue_recommendation
+                                ),
+                                "initial_visible_start": visible_start_before_dialogue,
+                                "board_click_before_dialogue": (
+                                    board_click_before_dialogue
+                                ),
+                            }
                 if commit_click is None:
                     commit_click = _lightning_click_visible_start_mission(
                         dry_run=False,
@@ -12922,6 +12947,9 @@ def cmd_lightning_route_start(
                     )
                     commit_click["initial_visible_start"] = (
                         visible_start_before_dialogue
+                    )
+                    commit_click["board_click_before_dialogue"] = (
+                        board_click_before_dialogue
                     )
                     if dialogue_dismiss is not None:
                         commit_click["dialogue_dismiss"] = dialogue_dismiss
