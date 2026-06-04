@@ -160,7 +160,7 @@ pause from the first player turn, abandon the timeline, confirm, select the
 carry-forward pilot, and verify `new_game_setup` or another safe state.
 
 For Windows Timeline Lost recovery, the first carry-forward pilot portrait is
-calibrated near window `(430,329)`. The older `(490,329)` point can land between
+calibrated near window `(500,329)`. The older `(490,329)` point can land between
 portraits and leave the panel open.
 
 If the post-start mismatch recovery deploys and clicks CONFIRM but pause

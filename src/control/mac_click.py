@@ -269,7 +269,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "abandon_pilot_slot": KnownWindowControl(
         name="abandon_pilot_slot",
-        window_x=430,
+        window_x=500,
         window_y=329,
         description="Abandon Timeline pilot selection",
         settle_seconds=0.8,

@@ -92,8 +92,8 @@ Evidence:
   Abandon Timeline, confirmed, and selected a carry-forward pilot. The run
   ended as Timeline Lost with only one island secured.
 - The calibrated `abandon_pilot_slot` at window `(490,329)` clicked between
-  portraits on Windows. The first carry-forward pilot center was observed near
-  window `(430,329)`.
+  portraits on Windows. A follow-up Timeline Lost panel showed the first
+  carry-forward pilot center at window `(500,329)`.
 - Steam sync after the failed attempt still showed Lightning War locked.
 
 Result: the route-start mismatch policy now distinguishes playable mismatches
@@ -102,7 +102,7 @@ grid power remaining and the actual mission is not a Lightning hard-veto
 mission, the conductor records a warning and continues with the actual loaded
 mission as the expected guard. Hard-veto or non-playable mismatches still use
 the block/recovery path. The carry-forward pilot calibration was moved to
-window `(430,329)`.
+window `(500,329)`.
 
 Derived rules:
 - A post-start exact-target mismatch is not automatically fatal. Continue a
@@ -121,6 +121,41 @@ Code/docs update:
 - `src/control/mac_click.py`
 - `tests/test_lightning_war_tools.py`
 - `docs/agent/lightning-war-experiments.md`
+
+## 2026-06-04 - Archive Airstrike Into Forced Forest Fire Restart
+
+Hypothesis: the first Archive slate after setup could still be viable if the
+first mission was playable and the conductor recovered from stale map routing.
+
+Segment: Blitzkrieg/Easy/AE fresh attempt, Archive first island. The first
+right-side region loaded `Mission_Airstrike` and completed at about `0:04:03`
+with grid `5/7`.
+
+Evidence:
+- After `Mission_Airstrike`, bridge/save routing exposed only one available red
+  mission: `Mission_ForestFire` at Chronology Hall, score `-125`.
+- `Mission_ForestFire` remains a Lightning War hard veto because of the fire
+  counter objective and prior post-enemy/classifier mismatch.
+- The attempt was abandoned from verified pause with 0 islands secured.
+- The Timeline Lost carry-forward pilot center on this layout was window
+  `(500,329)`, not `(430,329)`.
+
+Result: restart this slate rather than spending a timed attempt on forced
+Forest Fire. The Windows `abandon_pilot_slot` calibration is now `(500,329)`.
+
+Derived rule: if a first-island Archive path collapses to forced Forest Fire
+after the first mission, abandon/restart from verified pause. Do not route into
+Forest Fire for Lightning War unless the known post-enemy issue is fixed.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q -k "abandon_pilot"`
+passed.
+
+Code/docs update:
+- `src/control/mac_click.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
 
 ## 2026-06-04 - Dirty Consent Survives Pre-Action Resume Failure
 
