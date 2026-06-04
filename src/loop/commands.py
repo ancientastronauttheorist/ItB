@@ -12031,7 +12031,7 @@ def _lightning_click_dialogue_then_region_repeat(
     region_window_y: int,
     dry_run: bool = False,
     settle_seconds: float = 0.35,
-    hold_seconds: float = 0.06,
+    hold_seconds: float = 0.30,
 ) -> dict:
     """Dismiss an advisor dialogue if present, then re-open that same region."""
     from src.capture.window import take_screenshot

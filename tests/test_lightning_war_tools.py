@@ -5957,6 +5957,7 @@ def test_lightning_dialogue_region_repeat_skips_when_no_dialogue(monkeypatch):
 
 
 def test_lightning_dialogue_region_repeat_reopens_region(monkeypatch):
+    dialogue_clicks = []
     region_clicks = []
     bounds = {"x": 100, "y": 50, "width": 1280, "height": 748}
 
@@ -5972,7 +5973,8 @@ def test_lightning_dialogue_region_repeat_reopens_region(monkeypatch):
     monkeypatch.setattr(
         commands,
         "_lightning_click_control_with_bounds",
-        lambda control, **kwargs: {"status": "OK", "control": control},
+        lambda control, **kwargs: dialogue_clicks.append((control, kwargs))
+        or {"status": "OK", "control": control},
     )
     monkeypatch.setattr(
         "src.control.mac_click.click_screen_point",
@@ -5989,7 +5991,9 @@ def test_lightning_dialogue_region_repeat_reopens_region(monkeypatch):
     assert result["status"] == "OK"
     assert result["reason"] == "dialogue_dismissed_region_repeated"
     assert result["dialogue_click"]["control"] == "dialogue_textbox"
+    assert dialogue_clicks[0][1]["hold_seconds"] == 0.30
     assert region_clicks[0][0:2] == (641, 294)
+    assert region_clicks[0][2]["hold_seconds"] == 0.30
     assert result["region_repeat_click"]["window_x"] == 541
     assert result["region_repeat_click"]["window_y"] == 244
 
