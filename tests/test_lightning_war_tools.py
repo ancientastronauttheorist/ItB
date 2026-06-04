@@ -5916,6 +5916,8 @@ def test_lightning_route_start_dialogue_region_repeat_sequence():
         "control",
     ]
     assert kinds == expected_kinds
+    if os.name == "nt":
+        assert result["sequence"][0]["hold_seconds"] == 0.30
     dialogue_step = result["sequence"][2]
     assert dialogue_step["window_x"] == 541
     assert dialogue_step["window_y"] == 244

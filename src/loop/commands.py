@@ -12151,7 +12151,7 @@ def _lightning_route_start_sequence_parts(
                 "kind": "control",
                 "control": "menu_continue",
                 "settle_seconds": 0.2,
-                "hold_seconds": 0.06,
+                "hold_seconds": 0.30,
             })
         else:
             preview_sequence.append({
