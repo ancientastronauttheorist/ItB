@@ -34,6 +34,43 @@ Code/docs update:
 - `tests/test_lightning_war_conductor.py`
 - `docs/agent/lightning-war-experiments.md`
 
+## 2026-06-04 - R.S.T. Train Preview Dialogue Masks Start Mission
+
+Hypothesis: the R.S.T. `Test Site Echo` Train preview was safe to start, but
+`lightning_segment` stopped because the advisor textbox hid the yellow Start
+Mission text and the classifier reported `island_map_or_unknown`.
+
+Segment: paused micro-peek and focused classifier fix while the visible game was
+verified in the pause menu.
+
+Evidence:
+- `lightning_peek route_choice_rst_train_dialogue_current` captured
+  `run_notes/lightning_war_smoke_2026-06-04/screenshots/019_route_choice_rst_train_dialogue_current.png`.
+- The screenshot showed `Test Site Echo`, `Defend the Train`, an advisor
+  textbox, and no visible yellow Start Mission text.
+- Direct classifier check on the screenshot now returns
+  `mission_preview_panel` with `recommended_control=dialogue_textbox`.
+
+Result: the classifier detects mission-preview cards masked by advisor
+dialogue, recommends `dialogue_textbox` first, then lets the existing segment
+loop re-read and start the mission. The no-bridge attempt branch now clicks
+mission-preview dialogue/start controls locally instead of stopping at a
+Codex-facing `visible_panel_without_bridge`.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q -k "lightning_ui_classifier or mission_preview_dialogue"`
+passed.
+
+Derived rule: mission-preview dialogue is live and pauseable, not a route-ready
+map. Dismiss the textbox inside local automation, then start the preview; do not
+return to Codex between those actions.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
+
 ## 2026-06-04 - Island-Complete Leave Screen False Reward/KIA
 
 Hypothesis: the first-island completion screen can be misclassified as a KIA or
@@ -303,3 +340,58 @@ Code/docs update:
 - `scripts/lightning_war_conductor.py`
 - `tests/test_lightning_war_conductor.py`
 - `docs/agent/lightning-war-experiments.md`
+
+## 2026-06-04 - R.S.T. -> Archive Practice Run Over Budget
+
+Hypothesis: a two-island Blitzkrieg attempt could still recover after first
+island routing drift if the second island stayed on fast missions and the
+segment loop owned all live states.
+
+Segment: live R.S.T. first island into Archive second island, using
+`lightning_segment` with `--pause-between-actions` and manual route starts from
+verified pause.
+
+Evidence:
+- First island completed, but the run reached Archive mission 6 at
+  `current.time=0:25:22`, leaving only `0:04:38`.
+- A manual explicit visual route start intended for `Mission_Armored_Train`
+  loaded `Mission_ForestFire` because no `--route-target-mission-id` guard was
+  supplied to the segment command.
+- `Mission_ForestFire` turn 2 produced `INVESTIGATE_POST_ENEMY`: the simulator
+  predicted all enemies cleaned up and no mech fire, while the bridge reported
+  one enemy alive and WallMech unexpectedly on Fire. Record:
+  `recordings/lw/m06_turn_02_post_enemy.json`.
+- A pause-before-solve guard returned `live_combat_phase` after the conductor
+  had already reached an actionable combat player turn; the segment stopped
+  live until restarted.
+- A dirty consent token was consumed by a stale-heartbeat `auto_turn` attempt
+  before any action executed. A new candidate-rank token succeeded through
+  `lightning_segment`.
+
+Result: practice attempt abandoned as non-viable. Current code now treats
+explicit visual route starts without a supplied mission id as route-checked:
+the route helper infers the save-ranked target and validates the mission preview
+before Start Mission. The combat loop also falls through from
+`live_combat_phase` pause-guard failure to an immediate no-wait solve instead
+of stopping live. Forest Fire gained an additional Lightning War routing
+penalty for post-enemy/classifier friction.
+
+Derived rules:
+- Manual route commands should include the generated
+  `--route-target-mission-id`; if omitted, the segment must infer and enforce
+  the target before committing Start Mission.
+- `live_combat_phase` from the pause guard during combat is not a safe stop; it
+  means the conductor should solve from the fresh bridge state now.
+- Forest Fire is avoid-unless-forced for Lightning War until the post-enemy
+  fire/enemy cleanup mismatch is diagnosed and regressed.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q -k "forest_fire_friction or live_combat or explicit_visual_start or auto_starts_scored_primary_route"`
+passed.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `src/strategy/mission_picker.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`

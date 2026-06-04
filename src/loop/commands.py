@@ -420,6 +420,7 @@ def _dirty_plan_covers_threat_audit_loss(
         "grid_damage",
         "building_hp_loss",
         "building_destroyed",
+        "mech_hp_loss",
     }
     if not kinds or any(kind not in allowed_kinds for kind in kinds):
         return False
@@ -1541,6 +1542,26 @@ def _record_turn_state(session: RunSession, label: str, data: dict,
     }
 
     _atomic_json_write(filepath, record)
+
+
+def _load_recorded_turn_state(
+    session: RunSession,
+    label: str,
+    *,
+    turn: int | None = None,
+) -> dict | None:
+    """Load a previously recorded per-turn payload."""
+    recorded_turn = session.current_turn if turn is None else int(turn)
+    path = (
+        _recording_dir(session)
+        / f"m{session.mission_index:02d}_turn_{recorded_turn:02d}_{label}.json"
+    )
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    data = record.get("data")
+    return data if isinstance(data, dict) else None
 
 
 def _get_simulator_version() -> int:
@@ -9351,6 +9372,68 @@ def _lightning_start_mission_score(image) -> dict:
     }
 
 
+def _lightning_advisor_preview_score(image) -> dict:
+    """Detect a mission preview covered by an advisor dialogue textbox."""
+    width, height = image.size
+    base_w, base_h = _LIGHTNING_UI_BASE_SIZE
+    scale_x = width / base_w if base_w else 1.0
+    scale_y = height / base_h if base_h else 1.0
+
+    def crop_counts(box: tuple[int, int, int, int]) -> dict:
+        left = max(0, int(box[0] * scale_x))
+        top = max(0, int(box[1] * scale_y))
+        right = min(width, int(box[2] * scale_x))
+        bottom = min(height, int(box[3] * scale_y))
+        if right <= left or bottom <= top:
+            return {
+                "red": 0,
+                "blue": 0,
+                "bright": 0,
+                "dark_fraction": 0.0,
+                "pixels": 0,
+                "crop": [left, top, right, bottom],
+            }
+        crop = image.crop((left, top, right, bottom)).convert("RGB")
+        pixels = list(crop.getdata())
+        total = len(pixels) or 1
+        red = 0
+        blue = 0
+        bright = 0
+        dark = 0
+        for r, g, b in pixels:
+            if r >= 160 and g <= 100 and b <= 110 and r >= g + 45:
+                red += 1
+            if 35 <= r <= 145 and 55 <= g <= 170 and 80 <= b <= 220 and b >= r + 20:
+                blue += 1
+            if r >= 180 and g >= 180 and b >= 180:
+                bright += 1
+            if r < 45 and g < 45 and b < 55:
+                dark += 1
+        return {
+            "red": red,
+            "blue": blue,
+            "bright": bright,
+            "dark_fraction": round(dark / total, 4),
+            "pixels": total,
+            "crop": [left, top, right, bottom],
+        }
+
+    card = crop_counts((250, 350, 1060, 590))
+    dialogue = crop_counts((130, 165, 1150, 285))
+    card_score = min(card["red"] / 1000.0, 1.0) + min(card["blue"] / 12000.0, 1.0)
+    dialogue_score = (
+        min(dialogue["blue"] / 3500.0, 1.0)
+        + min(dialogue["bright"] / 3000.0, 1.0)
+        + min(dialogue["dark_fraction"] / 0.75, 1.0)
+    )
+    score = (card_score + dialogue_score) / 5.0
+    return {
+        "score": round(score, 4),
+        "card": card,
+        "dialogue": dialogue,
+    }
+
+
 def _lightning_deployment_screen_score(image) -> dict:
     """Detect the live deployment screen so pause guards do not waste time."""
     width, height = image.size
@@ -9603,6 +9686,8 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     dark_overlay = _lightning_dark_overlay_fraction(image)
     start_mission = _lightning_start_mission_score(image)
     scores["mission_preview_panel"] = start_mission
+    advisor_preview = _lightning_advisor_preview_score(image)
+    scores["mission_preview_dialogue"] = advisor_preview
     deployment = _lightning_deployment_screen_score(image)
     scores["deployment_screen"] = deployment
     island_map = _lightning_island_map_score(image)
@@ -9658,6 +9743,23 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             "visible_ui": "mission_preview_panel",
             "recommended_control": "mission_preview_board",
             "confidence": start_mission["score"],
+            "dark_overlay_fraction": dark_overlay,
+            "scores": scores,
+        }
+    if (
+        dark_overlay >= 0.70
+        and advisor_preview.get("score", 0.0) >= 0.95
+        and advisor_preview.get("card", {}).get("red", 0) >= 1000
+        and advisor_preview.get("card", {}).get("blue", 0) >= 12000
+        and advisor_preview.get("dialogue", {}).get("blue", 0) >= 3500
+        and advisor_preview.get("dialogue", {}).get("bright", 0) >= 3000
+        and advisor_preview.get("dialogue", {}).get("dark_fraction", 0.0) >= 0.75
+    ):
+        return {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+            "confidence": advisor_preview["score"],
             "dark_overlay_fraction": dark_overlay,
             "scores": scores,
         }
@@ -12798,6 +12900,7 @@ def cmd_lightning_route_start(
     visual_region_peek = None
     recommendation = None
     route_target_hint = None
+    inferred_expected_route_mission_id = None
     if verify_route:
         recommendation = cmd_recommend_mission(
             profile=profile,
@@ -12808,6 +12911,14 @@ def cmd_lightning_route_start(
         route_target_hint = _lightning_route_target_hint_from_recommendation(
             recommendation,
         )
+        if (
+            expected_route_mission_id is None
+            and visual_region_index is not None
+            and isinstance(route_target_hint, dict)
+        ):
+            inferred = str(route_target_hint.get("mission_id") or "").strip()
+            if inferred:
+                inferred_expected_route_mission_id = inferred
         if recommendation.get("status") != "OK":
             visual_regions = _lightning_visual_regions_from_recommendation(
                 recommendation,
@@ -12988,7 +13099,9 @@ def cmd_lightning_route_start(
         _print_result(result)
         return result
 
-    expected_preview_mission = str(expected_route_mission_id or "").strip()
+    expected_preview_mission = str(
+        expected_route_mission_id or inferred_expected_route_mission_id or ""
+    ).strip()
     if (
         expected_preview_mission
         and include_start_click
@@ -13448,6 +13561,7 @@ def cmd_lightning_route_start(
         "expected_route_mission_id": (
             expected_preview_mission if expected_preview_mission else None
         ),
+        "inferred_expected_route_mission_id": inferred_expected_route_mission_id,
         "next_step": (
             "If deployment loaded, run lightning_segment immediately. If a "
             "preview/dialogue remained open, use lightning_ui start_visible_dialogue "
@@ -13648,6 +13762,183 @@ def cmd_lightning_peek(
     return result
 
 
+def _lightning_click_reviewed_held_end_turn(
+    *,
+    session: RunSession,
+    snapshot: dict,
+    profile: str,
+    click_ui: bool,
+    dry_run: bool,
+    allow_dirty_plan: bool,
+    candidate_rank: int | None,
+    dirty_consent_id: str | None,
+    allow_protected_objective_loss: bool,
+    allow_objective_loss: bool,
+    lightning_speed_loss_policy: bool,
+) -> dict | None:
+    """Click a held End Turn after re-validating a reviewed dirty/audit state."""
+    active = session.active_solution
+    if active is None:
+        return None
+    turn = int(snapshot.get("turn") or active.turn)
+    if turn != int(active.turn):
+        return None
+    solve_data = _load_recorded_turn_state(session, "solve", turn=turn)
+    if not isinstance(solve_data, dict):
+        return None
+    plan_safety = solve_data.get("plan_safety")
+    if not isinstance(plan_safety, dict):
+        return None
+    selected_rank = candidate_rank
+    if selected_rank is None:
+        recorded_rank = solve_data.get("selected_candidate_rank")
+        if isinstance(recorded_rank, int):
+            selected_rank = recorded_rank
+
+    allow_lightning_speed_loss = (
+        bool(lightning_speed_loss_policy)
+        and _allow_lightning_war_speed_loss(session, plan_safety)
+    )
+    dirty_consent_validated = False
+    if (
+        allow_dirty_plan
+        and not allow_lightning_speed_loss
+        and plan_safety.get("blocking")
+    ):
+        consent_error = _dirty_consent_gate(
+            session,
+            turn=turn,
+            plan_safety=plan_safety,
+            actions=active.actions,
+            candidate_rank=selected_rank,
+            provided_id=dirty_consent_id,
+            consume=False,
+            allow_protected_objective_loss=allow_protected_objective_loss,
+            allow_objective_loss=allow_objective_loss,
+        )
+        if consent_error is not None:
+            consent_error["status"] = "LIGHTNING_ATTEMPT_BLOCKED"
+            consent_error["reason"] = "held_end_turn_dirty_consent_invalid"
+            return consent_error
+        dirty_consent_validated = True
+    elif plan_requires_safety_block(
+        plan_safety,
+        allow_dirty_plan=allow_lightning_speed_loss,
+        allow_protected_objective_loss_dirty=allow_lightning_speed_loss,
+        allow_objective_loss_dirty=allow_lightning_speed_loss,
+    ):
+        return None
+
+    threat_audit = None
+    post_action_summary = None
+    try:
+        refresh_bridge_state()
+        audit_board, audit_data = read_bridge_state()
+        if audit_board is not None:
+            post_action_summary = _capture_board_summary(audit_board, audit_data)
+            from src.solver.threat_audit import audit_threat_coverage
+
+            threat_audit = audit_threat_coverage(
+                solve_data.get("initial_building_threats") or [],
+                audit_board,
+            )
+            threat_audit["phase"] = (
+                audit_data.get("phase", "unknown")
+                if isinstance(audit_data, dict) else "unknown"
+            )
+            _record_turn_state(
+                session,
+                "threat_audit",
+                threat_audit,
+                turn_override=turn,
+            )
+    except Exception as exc:
+        threat_audit = {"status": "ERROR", "error": str(exc)}
+
+    if _threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=dirty_consent_validated,
+        lightning_speed_loss_allowed=allow_lightning_speed_loss,
+    ):
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "held_end_turn_threat_audit_blocked",
+            "snapshot": snapshot,
+            "plan_safety": plan_safety,
+            "threat_audit": threat_audit,
+            "next_step": (
+                "The held End Turn still has an uncovered threat. Do not click "
+                "End Turn until the threat audit is resolved."
+            ),
+        }
+
+    post_action_danger = []
+    if isinstance(post_action_summary, dict):
+        post_action_danger = list(post_action_summary.get("mechs_on_danger") or [])
+    if post_action_danger:
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "held_end_turn_post_action_danger",
+            "snapshot": snapshot,
+            "plan_safety": plan_safety,
+            "threat_audit": threat_audit,
+            "post_action_mechs_on_danger": post_action_danger,
+        }
+
+    pending_plan = _end_turn_click_plan_result()
+    if dry_run or not click_ui:
+        return {
+            "status": "LIGHTNING_ATTEMPT_UI_READY",
+            "reason": "held_end_turn_ready",
+            "snapshot": snapshot,
+            "plan_safety": plan_safety,
+            "threat_audit": threat_audit,
+            "pending_end_turn_batch": pending_plan["batch"],
+            "pending_end_turn_codex_computer_use_batch": pending_plan.get(
+                "codex_computer_use_batch", []
+            ),
+        }
+
+    resume_result = _lightning_resume_if_paused(dry_run=False, click_ui=True)
+    click_result = None
+    observed = None
+    if resume_result is None or resume_result.get("status") in {"OK", "PLANNED"}:
+        click_result = _click_end_turn_from_plan_result(pending_plan)
+        if click_result.get("status") == "OK":
+            observed = _observe_end_turn_after_click(pending_plan)
+
+    status = "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    reason = "held_end_turn_clicked"
+    if resume_result is not None and resume_result.get("status") not in {"OK", "PLANNED"}:
+        status = "LIGHTNING_ATTEMPT_STOPPED"
+        reason = "held_end_turn_resume_failed"
+    elif not isinstance(click_result, dict) or click_result.get("status") != "OK":
+        status = "LIGHTNING_ATTEMPT_STOPPED"
+        reason = "held_end_turn_click_failed"
+    elif not isinstance(observed, dict) or observed.get("status") != "OK":
+        status = "LIGHTNING_ATTEMPT_STOPPED"
+        reason = "held_end_turn_not_observed"
+
+    return {
+        "status": status,
+        "reason": reason,
+        "snapshot": snapshot,
+        "plan_safety": plan_safety,
+        "threat_audit": threat_audit,
+        "dirty_consent_validated": dirty_consent_validated,
+        "lightning_speed_loss_allowed": allow_lightning_speed_loss,
+        "resume_before_end_turn": resume_result,
+        "end_turn_click": click_result,
+        "end_turn_observed": observed,
+        "next_step": (
+            "Rerun lightning_segment so enemy/player transition handling stays "
+            "inside local automation."
+        ),
+    }
+
+
 def cmd_lightning_attempt(
     profile: str = "Alpha",
     time_limit: float = 2.0,
@@ -13777,6 +14068,58 @@ def cmd_lightning_attempt(
             and visible_ui.get("recommended_control")
             and visible_ui.get("visible_ui") in _LIGHTNING_AUTO_HANDLE_UIS
         ):
+            if (
+                visible_ui.get("visible_ui") == "mission_preview_panel"
+                and click_ui
+                and not dry_run
+            ):
+                from src.control.mac_click import click_known_window_control
+
+                control = str(visible_ui.get("recommended_control") or "")
+                click_result = click_known_window_control(control)
+                action_record.update(
+                    {
+                        "action": "clear_mission_preview_without_bridge",
+                        "visible_ui": visible_ui,
+                        "control": control,
+                        "click_result": click_result,
+                    }
+                )
+                if click_result.get("status") != "OK":
+                    result = {
+                        "status": "LIGHTNING_ATTEMPT_STOPPED",
+                        "reason": "mission_preview_click_failed_without_bridge",
+                        "snapshot": snapshot,
+                        "budget": budget,
+                        "preflight": preflight,
+                        "action": action_record,
+                    }
+                    return finish(
+                        result,
+                        pause_reason="lightning_attempt_preview_click_failed",
+                    )
+                time.sleep(0.8 if control == "mission_preview_board" else 0.25)
+                result = {
+                    "status": (
+                        "LIGHTNING_ATTEMPT_UI_READY"
+                        if control == "mission_preview_board"
+                        else "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+                    ),
+                    "reason": (
+                        "mission_preview_started"
+                        if control == "mission_preview_board"
+                        else "mission_preview_dialogue_cleared_without_bridge"
+                    ),
+                    "snapshot": snapshot,
+                    "budget": budget,
+                    "preflight": preflight,
+                    "action": action_record,
+                    "next_step": (
+                        "Rerun lightning_attempt/segment so the refreshed "
+                        "screen can be handled without returning to Codex."
+                    ),
+                }
+                return finish(result)
             if (
                 auto_clear_panels
                 and click_ui
@@ -14251,6 +14594,21 @@ def cmd_lightning_attempt(
         )
 
     if phase == "combat_player" and active_mechs <= 0:
+        held_end_turn = _lightning_click_reviewed_held_end_turn(
+            session=session,
+            snapshot=snapshot,
+            profile=profile,
+            click_ui=click_ui,
+            dry_run=dry_run,
+            allow_dirty_plan=allow_dirty_plan,
+            candidate_rank=candidate_rank,
+            dirty_consent_id=dirty_consent_id,
+            allow_protected_objective_loss=allow_protected_objective_loss,
+            allow_objective_loss=allow_objective_loss,
+            lightning_speed_loss_policy=lightning_speed_loss_policy,
+        )
+        if held_end_turn is not None:
+            return finish(held_end_turn)
         visible_ui = _lightning_visible_ui_snapshot()
         snapshot["visible_ui"] = visible_ui
         if (
@@ -14696,7 +15054,7 @@ def cmd_lightning_segment(
                     profile=profile,
                     visual_region_index=route_visual_region_index,
                     run_preflight=False,
-                    verify_route=False,
+                    verify_route=route_start_expected_mission_id is None,
                     auto_pause_if_needed=True,
                     start_mode=route_start_mode,
                     expected_route_mission_id=route_start_expected_mission_id,
@@ -14726,7 +15084,10 @@ def cmd_lightning_segment(
             if dry_run:
                 stopped_reason = "dry_run_route_start"
                 break
-            active_route_expected_mission_id = route_start_expected_mission_id
+            active_route_expected_mission_id = (
+                route_start_expected_mission_id
+                or route_start.get("expected_route_mission_id")
+            )
             if settle_seconds > 0:
                 time.sleep(settle_seconds)
             run_preflight = False
@@ -15257,6 +15618,7 @@ def cmd_lightning_loop(
         turn_started_at = time.monotonic()
         pre_turn_pause = None
         wait_for_turn = True
+        resume_before_execute = False
         if pause_before_solve:
             pre_turn_pause = _lightning_wait_for_player_turn_and_pause(
                 max_wait=max_wait,
@@ -15264,6 +15626,7 @@ def cmd_lightning_loop(
             )
             if pre_turn_pause.get("status") == "OK":
                 wait_for_turn = False
+                resume_before_execute = True
             elif pre_turn_pause.get("status") == "TERMINAL_OR_MISSION_END":
                 turn_records.append(
                     {
@@ -15277,6 +15640,8 @@ def cmd_lightning_loop(
                 )
                 stopped_reason = "terminal_or_mission_end"
                 break
+            elif pre_turn_pause.get("reason") == "live_combat_phase":
+                wait_for_turn = False
             else:
                 turn_records.append(
                     {
@@ -15307,7 +15672,7 @@ def cmd_lightning_loop(
                 allow_objective_loss if dirty_allowed_this_turn else False
             ),
             lightning_speed_loss_policy=lightning_speed_loss_policy,
-            resume_before_execute=pause_before_solve,
+            resume_before_execute=resume_before_execute,
             pause_between_actions=pause_between_actions,
             quiet=quiet,
         )

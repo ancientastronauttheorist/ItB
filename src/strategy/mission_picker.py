@@ -554,6 +554,11 @@ def _apply_lightning_war_routing(
         rationale.append(
             f"-25 Lightning War: measured slow mission/template ({mission_id})"
         )
+    if mission_id == "Mission_ForestFire":
+        delta -= 35
+        rationale.append(
+            "-35 Lightning War: Forest Fire post-enemy/classifier friction"
+        )
 
     slow_tags = {
         "fire_tile_counter",

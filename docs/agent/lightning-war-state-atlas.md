@@ -63,6 +63,15 @@ the screenshot is clearly Into the Breach.
   the first click succeeds. Do not clear this screen through generic reward or
   KIA handling.
 
+`mission_preview_dialogue`
+- Proof: an open mission preview card is visible, but an advisor textbox hides
+  the usual yellow Start Mission text. The R.S.T. Train preview can present this
+  way after selecting `Test Site Echo`.
+- Codex/user work: not allowed while live.
+- Action: classify as `mission_preview_panel` with `dialogue_textbox` as the
+  first control. The segment loop should dismiss the textbox, re-read the
+  preview, then click Start Mission without returning to Codex.
+
 `forced_bridge_preview_ambiguous`
 - Proof: route recommendation source is `bridge_preview`, there is exactly one
   ranked mission, but the visible red-region detector reports more than one
@@ -71,6 +80,37 @@ the screenshot is clearly Into the Breach.
 - Action: do not auto-start. Stop at the route decision, collect save-backed
   assignment or a verified single-region preview, then start with an exact
   expected mission id.
+
+`explicit_route_start_without_target`
+- Proof: an explicit `lightning_segment --route-visual-region-index N` was run
+  from verified pause without `--route-target-mission-id`; the intended save
+  target was `Mission_Armored_Train`, but the clicked region loaded
+  `Mission_ForestFire`.
+- Codex/user work: not allowed while live.
+- Action: infer the save-ranked target from the route recommendation and
+  validate the mission preview before clicking Start Mission. If the preview id
+  mismatches or is unavailable, block before deployment instead of continuing
+  the wrong mission.
+
+`live_combat_phase_pause_fallback`
+- Proof: `lightning_pause_guard` can return `live_combat_phase` while the
+  bridge reports `phase=combat_player`, `active_mechs > 0`, and the screen is
+  live combat.
+- Codex/user work: not allowed.
+- Action: do not stop to think. Treat the bridge state as actionable, skip
+  pause-only solving for that turn, and run the local solve/execute loop
+  immediately with `wait_for_turn=false`.
+
+`forest_fire_post_enemy_miss`
+- Proof: Archive `Mission_ForestFire`, mission index 6, turn 2, record
+  `recordings/lw/m06_turn_02_post_enemy.json`; predicted enemy phase killed all
+  enemies and left no mech Fire, but bridge outcome had one enemy alive and
+  WallMech on Fire.
+- Codex/user work: allowed only from verified pause or after abandoning the
+  attempt.
+- Action: do not advance that board until the post-enemy block is investigated
+  or the attempt is abandoned. Route picker should strongly avoid Forest Fire
+  for Lightning War because this mismatch creates expensive diagnosis friction.
 
 ## Watchdog Evidence Fields
 
@@ -118,3 +158,13 @@ nested `last_poll` is the evidence-bearing payload. The pre-click panel can be
 `reward_panel` while the post-click `pause_verify` is `pause_menu`; the conductor
 must treat the latter as the resting state and still retain both screenshots in
 the journal.
+
+An explicit visual route click is not enough route proof. The segment should
+carry either the user-supplied `--route-target-mission-id` or the inferred
+save-ranked target into preview validation and into the immediate
+deployment/combat attempt.
+
+During combat, `live_combat_phase` is a must-act-now signal, not a safe stop.
+If the bridge says a player turn is ready and the guard refuses to pause because
+combat is live, the conductor must solve from that fresh bridge state instead
+of returning to Codex.

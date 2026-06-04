@@ -5,7 +5,8 @@ import os
 from types import SimpleNamespace
 
 from src.loop import commands
-from src.loop.session import RunSession
+from src.loop.session import ActiveSolution, RunSession, SolverAction
+from src.strategy.mission_picker import score_mission
 
 
 def _lightning_peek_resume_control() -> str:
@@ -34,6 +35,18 @@ def test_lightning_war_weight_overlay_penalizes_pod_pickup():
     assert weights["pod_proximity"] == 0.0
     assert weights["pod_collected"] == -4000.0
     assert weights["spawn_blocked"] == 1600.0
+
+
+def test_lightning_war_routing_penalizes_forest_fire_friction():
+    result = score_mission(
+        {"mission_id": "Mission_ForestFire", "bonus_objective_ids": []},
+        {"achievement"},
+        grid_power=7,
+        routing="lightning_war",
+    )
+
+    assert result["score"] <= -120
+    assert any("Forest Fire post-enemy" in line for line in result["rationale_lines"])
 
 
 def test_lightning_drain_known_behavior_research_marks_speed_entry_done(monkeypatch):
@@ -260,6 +273,50 @@ def test_lightning_loop_passes_dirty_consent_to_first_turn_only(monkeypatch):
     assert calls[1]["allow_dirty_plan"] is False
     assert calls[1]["candidate_rank"] is None
     assert calls[1]["dirty_consent_id"] is None
+
+
+def test_lightning_loop_solves_when_pause_guard_reports_live_combat(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+
+    def fake_auto_turn(**kwargs):
+        calls.append(kwargs)
+        return {
+            "status": "PLAN",
+            "turn": 3,
+            "actions_completed": 3,
+            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
+        }
+
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "cmd_bridge_speed", lambda mode: {"status": "OK"})
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_player_turn_and_pause",
+        lambda **kwargs: {
+            "status": "BLOCKED",
+            "reason": "live_combat_phase",
+            "snapshot": {"phase": "combat_player", "active_mechs": 3},
+        },
+    )
+    monkeypatch.setattr(commands, "cmd_auto_turn", fake_auto_turn)
+
+    result = commands.cmd_lightning_loop(
+        max_turns=1,
+        click_end_turn=False,
+        quiet=True,
+        pause_before_solve=True,
+    )
+
+    assert result["reason"] == "end_turn_plan_ready_no_click"
+    assert calls[0]["wait_for_turn"] is False
+    assert calls[0]["resume_before_execute"] is False
 
 
 def test_lightning_loop_passes_speed_loss_policy_to_every_turn(monkeypatch):
@@ -2595,6 +2652,45 @@ def test_lightning_ui_classifier_prioritizes_mission_preview(tmp_path):
     assert result["recommended_control"] == "mission_preview_board"
 
 
+def test_lightning_ui_classifier_detects_advisor_masked_mission_preview(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (8, 10, 14))
+    draw = ImageDraw.Draw(image)
+    # Mission preview card with the yellow Start Mission text hidden by an
+    # advisor dialogue. This appears on some first-click Train previews.
+    draw.rectangle(
+        [250 * scale, 350 * scale, 1060 * scale, 590 * scale],
+        fill=(16, 20, 29),
+        outline=(85, 110, 165),
+        width=12 * scale,
+    )
+    draw.rectangle(
+        [305 * scale, 395 * scale, 520 * scale, 430 * scale],
+        fill=(210, 55, 55),
+    )
+    draw.rectangle(
+        [130 * scale, 165 * scale, 1150 * scale, 285 * scale],
+        fill=(14, 18, 28),
+        outline=(85, 110, 165),
+        width=10 * scale,
+    )
+    for index in range(12):
+        left = (160 + index * 48) * scale
+        draw.rectangle(
+            [left, 200 * scale, left + 30 * scale, 218 * scale],
+            fill=(220, 225, 232),
+        )
+    path = tmp_path / "advisor_masked_preview.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "mission_preview_panel"
+    assert result["recommended_control"] == "dialogue_textbox"
+
+
 def test_lightning_start_mission_target_detects_yellow_text(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -3053,6 +3149,169 @@ def test_lightning_attempt_uses_visible_island_map_when_bridge_missing(monkeypat
     assert result["status"] == "LIGHTNING_ATTEMPT_NEEDS_UI"
     assert result["reason"] == "bridge_snapshot_unavailable_visible_island_map"
     assert result["snapshot"]["visible_ui"]["visible_ui"] == "island_map"
+
+
+def test_lightning_attempt_clicks_mission_preview_dialogue_when_bridge_missing(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    clicks = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+        },
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: clicks.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "mission_preview_dialogue_cleared_without_bridge"
+    assert result["action"]["control"] == "dialogue_textbox"
+    assert clicks == ["dialogue_textbox"]
+
+
+def test_lightning_attempt_clicks_reviewed_held_end_turn(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    session.current_turn = 3
+    session.active_solution = ActiveSolution(
+        actions=[
+            SolverAction(
+                mech_uid=0,
+                mech_type="ElectricMech",
+                move_to=(4, 4),
+                weapon="Prime_Lightning",
+                target=(3, 4),
+                description="ElectricMech",
+            )
+        ],
+        score=1.0,
+        turn=3,
+    )
+    plan_safety = {
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": "building_hp_loss", "blocking": True},
+            {"kind": "mech_hp_loss", "blocking": True},
+        ],
+        "current": {
+            "grid_power": 4,
+            "building_hp_total": 9,
+            "buildings_alive": 8,
+            "mechs_alive": 3,
+            "mech_hp_total": 8,
+        },
+        "predicted": {
+            "grid_power": 3,
+            "building_hp_total": 8,
+            "buildings_alive": 8,
+            "mechs_alive": 3,
+            "mech_hp_total": 6,
+        },
+    }
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_load_recorded_turn_state",
+        lambda session, label, turn=None: {
+            "plan_safety": plan_safety,
+            "selected_candidate_rank": 0,
+            "initial_building_threats": [],
+        },
+    )
+    monkeypatch.setattr(commands, "_dirty_consent_gate", lambda *args, **kwargs: None)
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: (object(), {"phase": "combat_player"}),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_capture_board_summary",
+        lambda board, data: {"mechs_on_danger": []},
+    )
+    monkeypatch.setattr(
+        "src.solver.threat_audit.audit_threat_coverage",
+        lambda threats, board: {"still_threatened_count": 1, "entries": []},
+    )
+    monkeypatch.setattr(commands, "_record_turn_state", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "_end_turn_click_plan_result",
+        lambda: {"status": "PLAN", "batch": [{"left_click": {"x": 1, "y": 2}}]},
+    )
+    monkeypatch.setattr(commands, "_lightning_resume_if_paused", lambda **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "_click_end_turn_from_plan_result",
+        lambda result: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda result: {"status": "OK", "phase": "combat_enemy"},
+    )
+
+    result = commands.cmd_lightning_attempt(
+        allow_dirty_plan=True,
+        candidate_rank=0,
+        dirty_consent_id="token",
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "held_end_turn_clicked"
+    assert result["dirty_consent_validated"] is True
 
 
 def test_lightning_attempt_routes_ambiguous_visible_map_when_bridge_missing(monkeypatch):
@@ -4089,6 +4348,46 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
     assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
 
 
+def test_lightning_segment_infers_expected_route_for_explicit_visual_start(monkeypatch):
+    route_calls = []
+    attempt_calls = []
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        return {
+            "status": "OK",
+            "expected_route_mission_id": "Mission_Armored_Train",
+            "inferred_expected_route_mission_id": "Mission_Armored_Train",
+        }
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "deployment_waiting_for_ui_settle",
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=2,
+        route_visual_region_index=0,
+        run_preflight=False,
+    )
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert route_calls[0]["verify_route"] is True
+    assert route_calls[0]["expected_route_mission_id"] is None
+    assert attempt_calls[0]["expected_route_mission_id"] == "Mission_Armored_Train"
+
+
 def test_lightning_segment_blocks_auto_start_for_slow_primary_route(monkeypatch):
     monkeypatch.setattr(
         commands,
@@ -4499,6 +4798,48 @@ def test_dirty_consented_ordinary_grid_loss_satisfies_threat_audit():
         session,
         dirty_consent_validated=False,
     ) is True
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is False
+
+
+def test_dirty_consented_grid_loss_with_mech_hp_satisfies_threat_audit():
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    threat_audit = {
+        "still_threatened_count": 1,
+        "entries": [{"target_visual": "F3"}],
+    }
+    plan_safety = {
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": "building_hp_loss", "blocking": True},
+            {"kind": "mech_hp_loss", "blocking": True},
+        ],
+        "current": {
+            "grid_power": 4,
+            "building_hp_total": 9,
+            "buildings_alive": 8,
+            "mechs_alive": 3,
+            "mech_hp_total": 8,
+        },
+        "predicted": {
+            "grid_power": 3,
+            "building_hp_total": 8,
+            "buildings_alive": 8,
+            "mechs_alive": 3,
+            "mech_hp_total": 6,
+        },
+    }
+
     assert commands._threat_audit_requires_block(
         threat_audit,
         plan_safety,
@@ -6307,7 +6648,11 @@ def test_lightning_route_start_dry_run_plans_click_sequence(monkeypatch):
     monkeypatch.setattr(
         commands,
         "cmd_recommend_mission",
-        lambda **kwargs: {"status": "OK", "top3": [{"mission_id": "Mission_Train"}]},
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Train"}],
+        },
     )
 
     def fake_sequence(x, y, **kwargs):
@@ -6357,7 +6702,11 @@ def test_lightning_route_start_uses_visual_region_index(monkeypatch):
     monkeypatch.setattr(
         commands,
         "cmd_recommend_mission",
-        lambda **kwargs: {"status": "OK", "top3": [{"mission_id": "Mission_Train"}]},
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Train"}],
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -6951,7 +7300,11 @@ def test_lightning_route_start_blocks_unknown_visual_region_index(monkeypatch):
     monkeypatch.setattr(
         commands,
         "cmd_recommend_mission",
-        lambda **kwargs: {"status": "OK", "top3": [{"mission_id": "Mission_Train"}]},
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Train"}],
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -6995,7 +7348,11 @@ def test_lightning_route_start_visual_index_uses_pause_map_peek(monkeypatch):
     monkeypatch.setattr(
         commands,
         "cmd_recommend_mission",
-        lambda **kwargs: {"status": "OK", "top3": [{"mission_id": "Mission_Train"}]},
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Train"}],
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -7018,7 +7375,10 @@ def test_lightning_route_start_visual_index_uses_pause_map_peek(monkeypatch):
 
     monkeypatch.setattr(commands, "_lightning_click_route_start_sequence", fake_sequence)
 
-    result = commands.cmd_lightning_route_start(visual_region_index=1)
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=1,
+        validate_preview_mission=False,
+    )
 
     assert result["status"] == "OK"
     assert result["visual_region_peek"]["map_screenshot_path"] == "/tmp/map.png"
