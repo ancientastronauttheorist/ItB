@@ -549,6 +549,7 @@ _LIGHTNING_SPEED_LOSS_KINDS = (
         "grid_damage",
         "building_destroyed",
         "building_hp_loss",
+        "mech_hp_loss",
     }
     | OBJECTIVE_LOSS_DIRTY_KINDS
     | POD_LOSS_DIRTY_KINDS
@@ -649,6 +650,7 @@ def _lightning_speed_loss_summary(plan_safety: dict | None) -> dict | None:
                     "destroy_objective_units_alive",
                 ),
                 "pods_present": _safety_int_loss(plan_safety, "pods_present"),
+                "mech_hp_total": _safety_int_loss(plan_safety, "mech_hp_total"),
             }.items()
             if value
         },
@@ -9118,6 +9120,41 @@ def _lightning_live_snapshot() -> dict:
     return snapshot
 
 
+def _lightning_wait_for_live_snapshot(
+    *,
+    initial: dict | None = None,
+    max_seconds: float = 2.0,
+    interval_seconds: float = 0.2,
+) -> dict:
+    """Poll briefly for a bridge snapshot after a live UI transition."""
+    start = time.monotonic()
+    snapshot = initial if initial is not None else _lightning_live_snapshot()
+    attempts = [
+        {
+            "elapsed_seconds": 0.0,
+            "status": snapshot.get("status"),
+            "phase": snapshot.get("phase"),
+        }
+    ]
+    deadline = start + max_seconds
+    while snapshot.get("status") != "OK" and time.monotonic() < deadline:
+        time.sleep(interval_seconds)
+        snapshot = _lightning_live_snapshot()
+        attempts.append(
+            {
+                "elapsed_seconds": round(time.monotonic() - start, 3),
+                "status": snapshot.get("status"),
+                "phase": snapshot.get("phase"),
+            }
+        )
+    return {
+        "status": "OK" if snapshot.get("status") == "OK" else "TIMEOUT",
+        "elapsed_seconds": round(time.monotonic() - start, 3),
+        "attempts": attempts,
+        "snapshot": snapshot,
+    }
+
+
 _LIGHTNING_UI_BASE_SIZE = (1280, 748)
 
 _LIGHTNING_UI_BUTTON_CROPS = {
@@ -9188,6 +9225,12 @@ _LIGHTNING_UI_BURSTS = {
     "promotion_to_pause": ["menu_continue", "modal_understood", "pause"],
     "perfect_continue_to_pause": ["menu_continue", "panel_continue", "pause"],
     "perfect_grid_to_pause": ["menu_continue", "perfect_reward_grid", "pause"],
+    "reset_turn_to_pause": [
+        "menu_continue",
+        "reset_turn",
+        "leave_confirm_yes",
+        "pause",
+    ],
     "leave_to_select_pause": [
         "menu_continue",
         "leave_island",
@@ -12922,6 +12965,11 @@ def cmd_lightning_route_start(
     dry_run: bool = False,
 ) -> dict:
     """Preflight, route-check, and start a selected mission in one live burst."""
+    manual_coordinate_start = (
+        visual_region_index is None
+        and region_window_x is not None
+        and region_window_y is not None
+    )
     if visual_region_index is not None and (
         region_window_x is not None or region_window_y is not None
     ):
@@ -13263,10 +13311,20 @@ def cmd_lightning_route_start(
         top3 = preview_recommendation.get("top3")
         if isinstance(top3, list) and top3 and isinstance(top3[0], dict):
             actual_preview_mission = str(top3[0].get("mission_id") or "").strip()
-        if (
-            preview_recommendation.get("source") != "bridge_preview"
+        preview_source = preview_recommendation.get("source")
+        explicit_save_match = (
+            preview_source == "saveData"
+            and bool(expected_preview_mission)
+            and actual_preview_mission == expected_preview_mission
+        )
+        preview_unverified = (
+            (preview_source != "bridge_preview" and not explicit_save_match)
             or not actual_preview_mission
-        ):
+        )
+        allow_unverified_manual_start = (
+            manual_coordinate_start and not expected_preview_mission
+        )
+        if preview_unverified and not allow_unverified_manual_start:
             pause_after_block = _lightning_ensure_pause_state(
                 reason="route_preview_unverified_before_start",
             )
@@ -13432,24 +13490,29 @@ def cmd_lightning_route_start(
                             != "bridge_preview"
                             or not post_dialogue_actual_mission
                         ):
-                            commit_click = {
-                                "status": "BLOCKED",
-                                "reason": (
-                                    "route_preview_mission_unverified_after_dialogue"
-                                ),
-                                "expected_route_mission_id": expected_preview_mission,
-                                "actual_preview_mission_id": (
-                                    post_dialogue_actual_mission or None
-                                ),
-                                "dialogue_dismiss": dialogue_dismiss,
-                                "post_dialogue_recommendation": (
-                                    post_dialogue_recommendation
-                                ),
-                                "initial_visible_start": visible_start_before_dialogue,
-                                "board_click_before_dialogue": (
-                                    board_click_before_dialogue
-                                ),
-                            }
+                            if not allow_unverified_manual_start:
+                                commit_click = {
+                                    "status": "BLOCKED",
+                                    "reason": (
+                                        "route_preview_mission_unverified_after_dialogue"
+                                    ),
+                                    "expected_route_mission_id": (
+                                        expected_preview_mission
+                                    ),
+                                    "actual_preview_mission_id": (
+                                        post_dialogue_actual_mission or None
+                                    ),
+                                    "dialogue_dismiss": dialogue_dismiss,
+                                    "post_dialogue_recommendation": (
+                                        post_dialogue_recommendation
+                                    ),
+                                    "initial_visible_start": (
+                                        visible_start_before_dialogue
+                                    ),
+                                    "board_click_before_dialogue": (
+                                        board_click_before_dialogue
+                                    ),
+                                }
                         elif post_dialogue_actual_mission != expected_preview_mission:
                             commit_click = {
                                 "status": "BLOCKED",
@@ -14220,6 +14283,22 @@ def cmd_lightning_attempt(
 
     action_record: dict = {}
     snapshot = _lightning_live_snapshot()
+    if (
+        snapshot.get("status") == "NO_BRIDGE"
+        and resume_guard is not None
+        and resume_guard.get("status") == "OK"
+        and str(resume_guard.get("reason") or "").startswith("resumed_from_pause")
+    ):
+        bridge_wait = _lightning_wait_for_live_snapshot(
+            initial=snapshot,
+            max_seconds=2.5,
+            interval_seconds=0.25,
+        )
+        action_record["post_resume_bridge_wait"] = {
+            key: bridge_wait.get(key)
+            for key in ("status", "elapsed_seconds", "attempts")
+        }
+        snapshot = bridge_wait.get("snapshot") or snapshot
     if snapshot.get("status") != "OK":
         visible_ui = _lightning_visible_ui_snapshot()
         snapshot["visible_ui"] = visible_ui
@@ -14336,6 +14415,12 @@ def cmd_lightning_attempt(
             visible_ui.get("status") == "OK"
             and visible_ui.get("visible_ui") in {"island_map", "island_map_or_unknown"}
         ):
+            stale_current_mission_warning = None
+            if str(session.current_mission or "").strip():
+                stale_current_mission_warning = {
+                    "reason": "visible_map_overrides_stale_session_mission",
+                    "current_mission": session.current_mission,
+                }
             route_plan = _lightning_visible_map_route_plan(
                 profile=profile,
                 visible_ui=visible_ui,
@@ -14355,6 +14440,10 @@ def cmd_lightning_attempt(
                         "the speed_route_status recommends rerolling."
                     ),
                 }
+                if stale_current_mission_warning is not None:
+                    result["stale_current_mission_warning"] = (
+                        stale_current_mission_warning
+                    )
                 _lightning_attach_primary_route_candidate(
                     result,
                     route_plan["route_start_candidates"],
@@ -14373,6 +14462,8 @@ def cmd_lightning_attempt(
                     "then select/start a mission visually before deployment."
                 ),
             }
+            if stale_current_mission_warning is not None:
+                result["stale_current_mission_warning"] = stale_current_mission_warning
             return finish(result, pause_reason="lightning_attempt_visible_island_map")
         result = {
             "status": "LIGHTNING_ATTEMPT_BLOCKED",
@@ -14672,6 +14763,13 @@ def cmd_lightning_attempt(
                 visible_ui=visible_ui,
                 quiet=quiet,
             )
+            stale_active_mission_warning = None
+            if in_active_mission:
+                stale_active_mission_warning = {
+                    "reason": "visible_map_overrides_stale_active_mission",
+                    "visible_ui": visible_ui,
+                    "mission_id": snapshot.get("mission_id"),
+                }
             if route_plan.get("route_start_candidates"):
                 result = {
                     "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
@@ -14686,6 +14784,10 @@ def cmd_lightning_attempt(
                         "route command only if its auto_route_allowed flag is true."
                     ),
                 }
+                if stale_active_mission_warning is not None:
+                    result["stale_active_mission_warning"] = (
+                        stale_active_mission_warning
+                    )
                 _lightning_attach_primary_route_candidate(
                     result,
                     route_plan["route_start_candidates"],
@@ -14704,6 +14806,8 @@ def cmd_lightning_attempt(
                     "deployment."
                 ),
             }
+            if stale_active_mission_warning is not None:
+                result["stale_active_mission_warning"] = stale_active_mission_warning
             return finish(result, pause_reason="lightning_attempt_deployment_uncertain")
         elif visible_ui.get("visible_ui") != "deployment_screen":
             result = {
@@ -15468,6 +15572,185 @@ def cmd_lightning_segment(
         dry_run=dry_run,
         reason="lightning_segment_stop",
     )
+    _print_result(result)
+    return result
+
+
+def _lightning_pause_verified(result: dict | None) -> bool:
+    """Return true only when the pause menu was visibly verified."""
+    if not isinstance(result, dict) or result.get("status") != "OK":
+        return False
+    visible_ui = result.get("visible_ui")
+    if isinstance(visible_ui, dict) and visible_ui.get("visible_ui") == "pause_menu":
+        return True
+    pause_verify = result.get("pause_verify")
+    return (
+        isinstance(pause_verify, dict)
+        and pause_verify.get("status") == "OK"
+        and pause_verify.get("visible_ui") == "pause_menu"
+    )
+
+
+def cmd_lightning_start_run(
+    profile: str = "Alpha",
+    difficulty: int = 0,
+    first_island: str = "archive",
+    time_limit: float = 2.0,
+    max_steps: int = 8,
+    max_turns: int = 6,
+    max_wait: float = 45.0,
+    max_wall_seconds: float | None = None,
+    route_auto_start: bool = True,
+    run_segment: bool = True,
+    allow_objective_loss: bool = True,
+    dry_run: bool = False,
+) -> dict:
+    """Start a verified Lightning War run and immediately hand off automation."""
+    from src.control.mac_click import click_known_window_control
+
+    island_controls = {
+        "archive": "island_archive",
+        "rst": "island_rst",
+        "r.s.t.": "island_rst",
+        "pinnacle": "island_pinnacle",
+        "detritus": "island_detritus",
+    }
+    island_key = str(first_island or "archive").strip().lower()
+    island_control = island_controls.get(island_key)
+    if island_control is None:
+        result = {
+            "status": "ERROR",
+            "reason": "unknown_first_island",
+            "first_island": first_island,
+            "known_first_islands": sorted(island_controls),
+        }
+        _print_result(result)
+        return result
+
+    setup_check = cmd_verify_setup_screen(expected_difficulty=difficulty)
+    result: dict = {
+        "status": "STARTED",
+        "reason": "lightning_start_run",
+        "profile": profile,
+        "difficulty": difficulty,
+        "first_island": first_island,
+        "island_control": island_control,
+        "verify_setup": setup_check,
+        "planned_controls": [
+            "setup_modal_start",
+            island_control,
+            island_control,
+            "clear_visible_panel_chain",
+            "ensure_pause",
+        ],
+        "run_segment": run_segment,
+        "route_auto_start": route_auto_start,
+    }
+    if setup_check.get("status") != "PASS":
+        result["status"] = "BLOCKED"
+        result["reason"] = "setup_verification_failed"
+        result["next_step"] = (
+            "Fix the visible setup modal, rerun verify_setup, then retry "
+            "lightning_start_run before starting the achievement clock."
+        )
+        _print_result(result)
+        return result
+
+    if dry_run:
+        result["status"] = "DRY_RUN"
+        result["reason"] = "would_start_verified_lightning_run"
+        _print_result(result)
+        return result
+
+    setup_start = click_known_window_control("setup_modal_start")
+    result["setup_modal_start"] = setup_start
+    if setup_start.get("status") != "OK":
+        result["status"] = "BLOCKED"
+        result["reason"] = "setup_modal_start_failed"
+        _print_result(result)
+        return result
+
+    island_click = click_known_window_control(island_control)
+    result["first_island_click"] = island_click
+    if island_click.get("status") != "OK":
+        pause = _lightning_ensure_pause_state(
+            reason="lightning_start_run_island_click_failed",
+        )
+        result["pause_after_island_click_failure"] = pause
+        result["status"] = "BLOCKED"
+        result["reason"] = "first_island_click_failed"
+        _print_result(result)
+        return result
+
+    island_confirm_click = click_known_window_control(island_control)
+    result["first_island_confirm_click"] = island_confirm_click
+    if island_confirm_click.get("status") != "OK":
+        pause = _lightning_ensure_pause_state(
+            reason="lightning_start_run_island_confirm_failed",
+        )
+        result["pause_after_island_confirm_failure"] = pause
+        result["status"] = "BLOCKED"
+        result["reason"] = "first_island_confirm_click_failed"
+        _print_result(result)
+        return result
+
+    clear_panels = _lightning_clear_visible_panel_chain(max_steps=4)
+    result["clear_intro_panels"] = clear_panels
+    if clear_panels.get("status") not in {"OK", "NO_ACTION"}:
+        result["clear_intro_panels_retry"] = _lightning_clear_visible_panel_chain(
+            max_steps=4,
+        )
+
+    pause = _lightning_ensure_pause_state(
+        reason="lightning_start_run_after_first_island",
+    )
+    result["pause_after_first_island"] = pause
+    if not _lightning_pause_verified(pause):
+        if pause.get("reason") == "visible_panel_should_be_cleared_first":
+            result["pause_blocking_panel_clear"] = _lightning_clear_visible_panel_chain(
+                max_steps=4,
+            )
+            pause = _lightning_ensure_pause_state(
+                reason="lightning_start_run_after_panel_retry",
+            )
+            result["pause_after_panel_retry"] = pause
+
+    if run_segment:
+        segment = cmd_lightning_segment(
+            profile=profile,
+            time_limit=time_limit,
+            max_steps=max_steps,
+            max_turns=max_turns,
+            max_wait=max_wait,
+            click_ui=True,
+            set_fast_bridge=True,
+            run_preflight=True,
+            dry_run=False,
+            max_wall_seconds=max_wall_seconds,
+            pause_on_stop=True,
+            quiet=True,
+            resume_if_paused=True,
+            auto_clear_panels=True,
+            allow_objective_loss=allow_objective_loss,
+            lightning_speed_loss_policy=True,
+            route_auto_start=route_auto_start,
+        )
+        result["segment"] = segment
+        result["status"] = "OK" if segment.get("status") == "LIGHTNING_SEGMENT_STOPPED" else "BLOCKED"
+        result["reason"] = f"segment_{segment.get('reason') or segment.get('status')}"
+        _print_result(result)
+        return result
+
+    if _lightning_pause_verified(pause):
+        result["status"] = "OK"
+        result["reason"] = "first_island_paused"
+    else:
+        result["status"] = "BLOCKED"
+        result["reason"] = "pause_after_first_island_not_verified"
+        result["next_step"] = (
+            "Do not think from this state. Run lightning_segment immediately "
+            "or recover to a verified pause/setup state."
+        )
     _print_result(result)
     return result
 

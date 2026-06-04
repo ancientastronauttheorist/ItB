@@ -650,3 +650,45 @@ Code/docs update:
 - `tests/test_lightning_war_tools.py`
 - `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
+
+## 2026-06-04 - R.S.T. Boss To Archive Timer Miss
+
+Hypothesis: a late first-island boss can still be converted into a two-island
+Lightning War if the conductor keeps acting through stale bridge/map states.
+
+Segment: Blitzkrieg/Easy/AE attempt `20260604_163332_450`. R.S.T. boss was
+started around `current.time=0:21`, completed, and the conductor reached
+Archive `Mission_Tanks`, but the clock exceeded `0:30:00` on Archive turn 4.
+
+Evidence:
+- After R.S.T. HQ, the visible screen was the island map / island select while
+  bridge/save residue still reported `phase=unknown`, deployment zones, and an
+  active mission. The old branch repeatedly tried deployment from that stale
+  state.
+- The run reached Archive selection around visible `0:25:35`; Archive mission
+  1 reached `current.time=0:29:15` at turn 4 and then budget-exceeded at
+  `0:30:11`.
+- `Mission_Tanks` repeatedly produced post-enemy investigations where Leaper
+  web status and later nonlethal mech HP damage differed from the simulator,
+  but grid/building/objective state remained viable.
+
+Result: timeline abandoned from a verified pause/new-setup state. The conductor
+now treats a visibly confirmed island map as stronger than stale active-mission
+or deployment residue, returning route candidates instead of redeploying. Raw
+coordinate starts may bypass unverified preview only when there is no exact
+expected mission guard, and save-backed exact preview matches are accepted.
+
+Derived rules:
+- If visible UI is `island_map` or `island_map_or_unknown`, stale
+  `session.current_mission`, `in_active_mission`, or deployment-zone residue is
+  a warning, not permission to deploy.
+- A first island reaching boss after about `0:20` is not viable unless the boss
+  and second island are exceptionally fast; restart is preferred once parked.
+- For Lightning War speed only, nonlethal mech HP loss with grid above zero is
+  an acceptable dirty loss, but grid/building/objective loss is not.
+- Leaper web post-enemy investigations can be cleared only from the fresh live
+  bridge state with an explicit reason and no grid/building/objective delta.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q -k "lightning_speed_loss_policy or route_start_raw_coordinates_can_force_unverified_preview or route_start_accepts_explicit_save_backed_preview_match"`
+passed before the attempt.

@@ -230,3 +230,34 @@ of returning to Codex.
   longer viable for Lightning War even if combat can still be won.
 - Action: park the game, sync/check achievements if useful, commit verified
   fixes from the safe state, then start a fresh timeline.
+
+`visible_map_overrides_stale_active_mission`
+- Proof: Blitzkrieg Lightning War attempt `20260604_163332_450` after R.S.T.
+  HQ. The visible screen was an island map / island-selection flow, but bridge
+  and session residue still reported an active mission, phase unknown, and
+  deployment zones.
+- Codex/user work: allowed only after the conductor verifies pause or setup.
+  While unpaused on the map, route immediately or pause immediately; do not
+  inspect stale bridge state as if combat were still active.
+- Action: if the screen classifier reports `island_map` or
+  `island_map_or_unknown`, route from visible/save-backed map evidence. Keep
+  stale mission/deployment data as a warning field and never deploy from it.
+
+`mission_tanks_post_enemy_leaper_web`
+- Proof: same attempt, Archive `Mission_Tanks` turns 1 and 2. Leapers webbed
+  RockartMech and WallMech after enemy phase; simulator predicted no web, but
+  grid/building/objective and mech HP were unchanged.
+- Codex/user work: live combat is not safe to think. Resolve the specific
+  post-enemy block only with the fresh bridge state and a reason naming the
+  webbed mech and confirming no grid/building/objective delta.
+- Action: after resolution, continue from a fresh solve. This is a tactical
+  recovery rule, not blanket permission to ignore post-enemy investigations.
+
+`lightning_nonlethal_mech_hp_loss`
+- Proof: same attempt, Archive `Mission_Tanks` turn 3. Enemy phase caused
+  nonlethal damage to ElectricMech and WallMech while grid/buildings/objective
+  remained unchanged.
+- Codex/user work: only for Lightning War speed attempts with grid above zero.
+  Perfect battle and ordinary achievement runs still block on mech HP loss.
+- Action: the speed policy may accept nonlethal mech HP loss as dirty, but must
+  keep blocking grid damage, building loss, objective loss, and mech death.

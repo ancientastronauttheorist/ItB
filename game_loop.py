@@ -77,6 +77,7 @@ from src.loop.commands import (
     cmd_lightning_pause_guard,
     cmd_lightning_attempt,
     cmd_lightning_segment,
+    cmd_lightning_start_run,
     cmd_lightning_loop,
     cmd_verify_setup_screen,
     cmd_research_attach_community,
@@ -1181,6 +1182,51 @@ def main():
     p_lightning_segment.set_defaults(pause_before_solve=True)
     p_lightning_segment.set_defaults(pause_between_actions=True)
 
+    # lightning_start_run
+    p_lightning_start = sub.add_parser(
+        "lightning_start_run",
+        help=(
+            "Verify setup, click final Start, select the first island, "
+            "pause, and hand off to the Lightning War segment conductor"
+        ),
+    )
+    p_lightning_start.add_argument("--profile", default="Alpha")
+    p_lightning_start.add_argument("--difficulty", type=int, default=0)
+    p_lightning_start.add_argument(
+        "--first-island",
+        default="archive",
+        choices=["archive", "rst", "r.s.t.", "pinnacle", "detritus"],
+    )
+    p_lightning_start.add_argument("--time-limit", type=float, default=2.0)
+    p_lightning_start.add_argument("--max-steps", type=int, default=8)
+    p_lightning_start.add_argument("--max-turns", type=int, default=6)
+    p_lightning_start.add_argument("--max-wait", type=float, default=45.0)
+    p_lightning_start.add_argument("--max-wall-seconds", type=float, default=None)
+    p_lightning_start.add_argument(
+        "--no-route-auto-start",
+        dest="route_auto_start",
+        action="store_false",
+        help="Stop at the first route-ready map instead of auto-starting it",
+    )
+    p_lightning_start.add_argument(
+        "--no-segment",
+        dest="run_segment",
+        action="store_false",
+        help="Stop after selecting the first island and verifying pause",
+    )
+    p_lightning_start.add_argument(
+        "--no-allow-objective-loss",
+        dest="allow_objective_loss",
+        action="store_false",
+        help="Disable Lightning War optional-objective speed losses",
+    )
+    p_lightning_start.add_argument("--dry-run", action="store_true")
+    p_lightning_start.set_defaults(
+        route_auto_start=True,
+        run_segment=True,
+        allow_objective_loss=True,
+    )
+
     # analyze
     p_analyze = sub.add_parser("analyze",
                                help="Analyze failure database for patterns")
@@ -1530,6 +1576,21 @@ def main():
             route_target_mission_id=args.route_target_mission_id,
             route_start_mode=args.route_start_mode,
             route_auto_start=args.route_auto_start,
+        )
+    elif args.command == "lightning_start_run":
+        cmd_lightning_start_run(
+            profile=args.profile,
+            difficulty=args.difficulty,
+            first_island=args.first_island,
+            time_limit=args.time_limit,
+            max_steps=args.max_steps,
+            max_turns=args.max_turns,
+            max_wait=args.max_wait,
+            max_wall_seconds=args.max_wall_seconds,
+            route_auto_start=args.route_auto_start,
+            run_segment=args.run_segment,
+            allow_objective_loss=args.allow_objective_loss,
+            dry_run=args.dry_run,
         )
     elif args.command == "analyze":
         cmd_analyze(min_samples=args.min_samples)

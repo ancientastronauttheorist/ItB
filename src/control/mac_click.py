@@ -57,6 +57,13 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Title screen Continue",
         settle_seconds=1.0,
     ),
+    "title_new_game": KnownWindowControl(
+        name="title_new_game",
+        window_x=170,
+        window_y=315,
+        description="Title screen New Game",
+        settle_seconds=1.0,
+    ),
     "setup_start": KnownWindowControl(
         name="setup_start",
         window_x=1005,
@@ -267,6 +274,13 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Abandon Timeline confirmation Yes",
         settle_seconds=0.8,
     ),
+    "reset_turn": KnownWindowControl(
+        name="reset_turn",
+        window_x=520,
+        window_y=58,
+        description="Top-bar Reset Turn",
+        settle_seconds=0.35,
+    ),
     "abandon_pilot_slot": KnownWindowControl(
         name="abandon_pilot_slot",
         window_x=500,
@@ -315,6 +329,8 @@ _CONTROL_ALIASES = {
     "continue": "menu_continue",
     "resume": "menu_continue",
     "unpause": "menu_continue",
+    "new_game": "title_new_game",
+    "title_new": "title_new_game",
     "start": "setup_start",
     "start_run": "setup_start",
     "new_run_start": "setup_start",
