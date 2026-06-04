@@ -71,6 +71,48 @@ Code/docs update:
 - `docs/agent/lightning-war-experiments.md`
 - `docs/agent/lightning-war-state-atlas.md`
 
+## 2026-06-04 - Hard-Veto Preview Guard Before Start
+
+Hypothesis: after the ambiguous bridge-preview fix, a no-target visual route
+start can still commit a mission whose hidden bridge preview is bad for
+Lightning War. The helper must split the region preview click from the final
+Start Mission click and classify the actual preview mission before committing.
+
+Segment: fresh R.S.T. first-island attempt from verified Blitzkrieg/Easy/AE
+setup. Excavation Site completed quickly as `Mission_Volatile`, then the next
+manual visual route start selected a red region labeled Central Museums.
+
+Evidence:
+- The selected region loaded `Mission_Dam`, not a low-friction mission.
+- Turn 2 required reviewed nonlethal dirty consent:
+  `b034b38b23e2c785`.
+- Turn 3 dirty frontier included `mech_lost`, with consent id
+  `b03abedc4fb4a3d4`, which is outside standing consent.
+- The attempt was abandoned back to `new_game_setup` before spending the
+  Lightning War clock on an unauthorized lethal line.
+
+Result: `cmd_lightning_route_start` now validates every live route start with
+an intermediate bridge-preview sample before clicking Start Mission. If the
+preview mission id is unavailable, it blocks and verifies pause. If no exact
+expected mission was supplied and the preview is one of
+`Mission_Artillery`, `Mission_Dam`, `Mission_ForestFire`, or
+`Mission_Volatile`, it blocks before Start Mission and verifies pause.
+
+Derived rule: a manual visual region click is not a license to start whatever
+the preview hides. For Lightning War, preview first, require a bridge mission
+id, and hard-veto known slow or high-friction missions unless an exact route
+target explicitly chose them.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q -k "route_start or route_ready or route_auto_start or ambiguous_bridge_preview or visual_route"`
+passed.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
+
 ## 2026-06-04 - Island-Complete Leave Screen False Reward/KIA
 
 Hypothesis: the first-island completion screen can be misclassified as a KIA or

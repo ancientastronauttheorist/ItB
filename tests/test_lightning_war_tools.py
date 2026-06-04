@@ -6259,6 +6259,7 @@ def test_lightning_route_start_returns_visual_regions_when_route_check_unavailab
 
 def test_lightning_route_start_visual_index_can_use_unavailable_route_check(monkeypatch):
     calls = []
+    pauses = []
 
     monkeypatch.setattr(
         commands,
@@ -6290,18 +6291,36 @@ def test_lightning_route_start_visual_index_can_use_unavailable_route_check(monk
         },
     )
 
-    def fake_sequence(x, y, **kwargs):
-        calls.append((x, y))
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
         return {"status": "OK", "steps": []}
 
-    monkeypatch.setattr(commands, "_lightning_click_route_start_sequence", fake_sequence)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs)
+        or {"status": "OK", "reason": "pause_clicked"},
+    )
 
     result = commands.cmd_lightning_route_start(visual_region_index=0)
 
-    assert result["status"] == "OK"
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_mission_unverified_before_start"
     assert result["recommendation"]["status"] == "NO_BRIDGE"
     assert result["selected_visual_region"]["window_x"] == 420
-    assert calls == [(420, 210)]
+    assert result["pause_after_block"]["status"] == "OK"
+    assert len(calls) == 1
+    assert not any(
+        step.get("control") == "mission_preview_board"
+        for step in calls[0]
+        if isinstance(step, dict)
+    )
+    assert pauses == [{"reason": "route_preview_unverified_before_start"}]
 
 
 def test_lightning_visual_regions_prefer_map_peek_screenshot(monkeypatch):
@@ -6840,6 +6859,63 @@ def test_lightning_route_start_blocks_preview_mismatch_before_commit(monkeypatch
         for step in calls[0]
         if isinstance(step, dict)
     )
+
+
+def test_lightning_route_start_blocks_hard_veto_preview_without_expected(
+    monkeypatch,
+):
+    calls = []
+    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Dam"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs)
+        or {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_hard_veto_before_start"
+    assert result["actual_preview_mission_id"] == "Mission_Dam"
+    assert result["pause_after_veto"]["status"] == "OK"
+    assert len(calls) == 1
+    assert not any(
+        step.get("control") == "mission_preview_board"
+        for step in calls[0]
+        if isinstance(step, dict)
+    )
+    assert pauses == [{"reason": "route_preview_hard_veto_before_start"}]
 
 
 def test_lightning_route_start_commits_matching_preview(monkeypatch):

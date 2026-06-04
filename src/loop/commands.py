@@ -8278,6 +8278,12 @@ def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -
 _LIGHTNING_ROUTE_AUTO_MIN_SCORE = 10
 _LIGHTNING_ROUTE_FORCED_PREVIEW_MIN_SCORE = -60
 _LIGHTNING_ROUTE_DEFAULT_START_MODE = "dialogue-region-repeat-preview-board"
+_LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS = {
+    "Mission_Artillery",
+    "Mission_Dam",
+    "Mission_ForestFire",
+    "Mission_Volatile",
+}
 
 
 def _lightning_forced_preview_route_allowed(
@@ -13117,12 +13123,7 @@ def cmd_lightning_route_start(
     expected_preview_mission = str(
         expected_route_mission_id or inferred_expected_route_mission_id or ""
     ).strip()
-    if (
-        expected_preview_mission
-        and include_start_click
-        and validate_preview_mission
-        and not dry_run
-    ):
+    if include_start_click and validate_preview_mission and not dry_run:
         sequence_parts = _lightning_route_start_sequence_parts(
             int(region_window_x),
             int(region_window_y),
@@ -13193,6 +13194,9 @@ def cmd_lightning_route_start(
             preview_recommendation.get("source") != "bridge_preview"
             or not actual_preview_mission
         ):
+            pause_after_block = _lightning_ensure_pause_state(
+                reason="route_preview_unverified_before_start",
+            )
             result = {
                 "status": "BLOCKED",
                 "reason": "route_preview_mission_unverified_before_start",
@@ -13208,6 +13212,7 @@ def cmd_lightning_route_start(
                 "selected_visual_region": selected_visual_region,
                 "visual_region_peek": visual_region_peek,
                 "preview_click": preview_click,
+                "pause_after_block": pause_after_block,
                 "next_step": (
                     "Do not click Start Mission. The selected region preview "
                     "did not expose a bridge_preview mission id; inspect or "
@@ -13216,7 +13221,39 @@ def cmd_lightning_route_start(
             }
             _print_result(result)
             return result
-        if actual_preview_mission != expected_preview_mission:
+        if not expected_preview_mission and actual_preview_mission in (
+            _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS
+        ):
+            pause_after_veto = _lightning_ensure_pause_state(
+                reason="route_preview_hard_veto_before_start",
+            )
+            result = {
+                "status": "BLOCKED",
+                "reason": "route_preview_hard_veto_before_start",
+                "actual_preview_mission_id": actual_preview_mission,
+                "hard_veto_missions": sorted(
+                    _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS
+                ),
+                "preflight": preflight,
+                "initial_ui": initial_ui,
+                "auto_pause": auto_pause,
+                "recommendation": recommendation,
+                "preview_recommendation": preview_recommendation,
+                "route_target_hint": route_target_hint,
+                "visual_regions": visual_regions,
+                "selected_visual_region": selected_visual_region,
+                "visual_region_peek": visual_region_peek,
+                "preview_click": preview_click,
+                "pause_after_veto": pause_after_veto,
+                "next_step": (
+                    "Do not click Start Mission. This preview is a Lightning "
+                    "War hard-veto mission; choose another visible region or "
+                    "restart the timeline."
+                ),
+            }
+            _print_result(result)
+            return result
+        if expected_preview_mission and actual_preview_mission != expected_preview_mission:
             result = {
                 "status": "BLOCKED",
                 "reason": "route_preview_mission_mismatch_before_start",
@@ -13508,6 +13545,7 @@ def cmd_lightning_route_start(
                 post_start_snapshot.get("status") == "OK"
                 and post_start_snapshot.get("in_active_mission")
                 and post_start_mission
+                and expected_preview_mission
                 and post_start_mission != expected_preview_mission
             ):
                 session = _load_session()

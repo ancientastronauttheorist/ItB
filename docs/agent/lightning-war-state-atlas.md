@@ -92,6 +92,15 @@ the screenshot is clearly Into the Breach.
   mismatches or is unavailable, block before deployment instead of continuing
   the wrong mission.
 
+`hard_veto_route_preview`
+- Proof: after a manual visual route preview, bridge-preview reports one of
+  `Mission_Artillery`, `Mission_Dam`, `Mission_ForestFire`, or
+  `Mission_Volatile` while no exact expected mission id was supplied.
+- Codex/user work: not allowed while live.
+- Action: do not click Start Mission. The route-start helper must block before
+  Start, verify pause, and choose another visible region or restart the
+  timeline.
+
 `live_combat_phase_pause_fallback`
 - Proof: `lightning_pause_guard` can return `live_combat_phase` while the
   bridge reports `phase=combat_player`, `active_mechs > 0`, and the screen is
@@ -175,6 +184,11 @@ deployment/combat attempt.
   command as an exact target. Use a save-backed region assignment, a
   single-region forced preview, or a no-target visual start that accepts the
   actual mission.
+
+`route_preview_hard_veto_before_start` is a safe stop only after the helper has
+verified pause. It means the selected region's hidden mission is known to be too
+slow or fragile for Lightning War's route budget; resume by selecting a
+different red region through the route helper, not by manually clicking Start.
 
 During combat, `live_combat_phase` is a must-act-now signal, not a safe stop.
 If the bridge says a player turn is ready and the guard refuses to pause because
