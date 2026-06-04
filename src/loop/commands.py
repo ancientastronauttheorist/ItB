@@ -8072,35 +8072,47 @@ def _lightning_extract_red_regions_from_image(image_path: str | Path) -> dict:
         & (red >= blue + 45)
     ).astype("uint8")
 
-    count, labels, stats, centroids = cv2.connectedComponentsWithStats(mask, 8)
     min_area = int(4500 * scale_x * scale_y)
-    regions: list[dict] = []
-    for label in range(1, count):
-        area = int(stats[label, cv2.CC_STAT_AREA])
-        if area < min_area:
-            continue
-        x = int(stats[label, cv2.CC_STAT_LEFT]) + left
-        y = int(stats[label, cv2.CC_STAT_TOP]) + top
-        w = int(stats[label, cv2.CC_STAT_WIDTH])
-        h = int(stats[label, cv2.CC_STAT_HEIGHT])
-        cx = float(centroids[label][0]) + left
-        cy = float(centroids[label][1]) + top
-        regions.append(
-            {
-                "window_x": int(round(cx / scale_x)),
-                "window_y": int(round(cy / scale_y)),
-                "bbox_window": [
-                    int(round(x / scale_x)),
-                    int(round(y / scale_y)),
-                    int(round((x + w) / scale_x)),
-                    int(round((y + h) / scale_y)),
-                ],
-                "area_px": area,
-                "area_window": round(area / (scale_x * scale_y), 1),
-            }
-        )
 
-    regions = _lightning_merge_visual_regions(regions)
+    def collect_regions(component_mask) -> list[dict]:
+        count, labels, stats, centroids = cv2.connectedComponentsWithStats(
+            component_mask,
+            8,
+        )
+        found: list[dict] = []
+        for label in range(1, count):
+            area = int(stats[label, cv2.CC_STAT_AREA])
+            if area < min_area:
+                continue
+            x = int(stats[label, cv2.CC_STAT_LEFT]) + left
+            y = int(stats[label, cv2.CC_STAT_TOP]) + top
+            w = int(stats[label, cv2.CC_STAT_WIDTH])
+            h = int(stats[label, cv2.CC_STAT_HEIGHT])
+            cx = float(centroids[label][0]) + left
+            cy = float(centroids[label][1]) + top
+            found.append(
+                {
+                    "window_x": int(round(cx / scale_x)),
+                    "window_y": int(round(cy / scale_y)),
+                    "bbox_window": [
+                        int(round(x / scale_x)),
+                        int(round(y / scale_y)),
+                        int(round((x + w) / scale_x)),
+                        int(round((y + h) / scale_y)),
+                    ],
+                    "area_px": area,
+                    "area_window": round(area / (scale_x * scale_y), 1),
+                }
+            )
+        return _lightning_merge_visual_regions(found)
+
+    raw_regions = collect_regions(mask)
+    kernel_size = max(2, int(round(3 * max(scale_x, scale_y))))
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    eroded_mask = cv2.erode(mask, kernel, iterations=1)
+    eroded_regions = collect_regions(eroded_mask)
+    use_eroded = len(eroded_regions) > len(raw_regions)
+    regions = eroded_regions if use_eroded else raw_regions
     regions.sort(key=lambda r: (r["window_y"], r["window_x"]))
     for index, region in enumerate(regions):
         region["index"] = index
@@ -8110,6 +8122,9 @@ def _lightning_extract_red_regions_from_image(image_path: str | Path) -> dict:
         "screenshot_path": str(image_path),
         "regions": regions,
         "region_count": len(regions),
+        "segmentation": "eroded" if use_eroded else "raw",
+        "raw_region_count": len(raw_regions),
+        "eroded_region_count": len(eroded_regions),
         "crop_window": [
             int(round(left / scale_x)),
             int(round(top / scale_y)),

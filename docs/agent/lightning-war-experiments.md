@@ -71,6 +71,20 @@ Code/docs update:
 - `src/loop/commands.py`
 - `tests/test_lightning_war_tools.py`
 - `docs/agent/lightning-war-experiments.md`
+
+Follow-up: the Archive map screenshot
+`itb_lightning_map_peek_10752.png` showed Preserved Farms and Historic County
+touching as one connected red mask. The visual detector clicked the combined
+center at Preserved Farms, starting `Mission_Airstrike` while the save route
+target was lower Historic County / `Mission_Repair`. A lightly-eroded red mask
+now separates adjacent mission regions before visual-to-save assignment. On the
+captured map it reports two regions:
+- index 0: upper Preserved Farms center around `(809, 420)`.
+- index 1: lower Historic County center around `(949, 588)`.
+
+Focused regression:
+`python -m pytest tests\test_lightning_war_tools.py -q` passed with the
+adjacent-region split test.
 - `docs/agent/lightning-war-state-atlas.md`
 
 ## 2026-06-03 - Setup Screen False Pause Positive

@@ -2299,6 +2299,38 @@ def test_lightning_extract_red_regions_from_image(tmp_path):
     assert 170 <= result["regions"][0]["window_y"] <= 230
 
 
+def test_lightning_extract_red_regions_splits_adjacent_regions(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (24, 30, 42))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle(
+        [760 * scale, 260 * scale, 890 * scale, 520 * scale],
+        fill=(185, 45, 50),
+    )
+    draw.rectangle(
+        [840 * scale, 522 * scale, 1060 * scale, 690 * scale],
+        fill=(190, 50, 55),
+    )
+    draw.rectangle(
+        [879 * scale, 520 * scale, 881 * scale, 522 * scale],
+        fill=(190, 50, 55),
+    )
+    path = tmp_path / "adjacent_regions.png"
+    image.save(path)
+
+    result = commands._lightning_extract_red_regions_from_image(path)
+
+    assert result["status"] == "OK"
+    assert result["segmentation"] == "eroded"
+    assert result["raw_region_count"] == 1
+    assert result["region_count"] == 2
+    assert result["regions"][0]["window_y"] < result["regions"][1]["window_y"]
+    assert 790 <= result["regions"][0]["window_x"] <= 850
+    assert 930 <= result["regions"][1]["window_x"] <= 990
+
+
 def test_lightning_merge_visual_regions_merges_vertical_splits_only():
     regions = [
         {
@@ -6269,6 +6301,11 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
             "click_result": {"status": "OK"},
         },
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
+    )
 
     result = commands.cmd_lightning_route_start(
         region_window_x=542,
@@ -6423,6 +6460,11 @@ def test_lightning_route_start_clicks_verified_board_before_dialogue_dismiss(
         lambda **kwargs: visible_start_calls.append(kwargs)
         or {"status": "NOT_FOUND", "reason": "start_mission_text_not_found"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
+    )
 
     result = commands.cmd_lightning_route_start(
         region_window_x=600,
@@ -6515,6 +6557,11 @@ def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch)
         commands,
         "_lightning_click_visible_start_mission",
         fake_visible_start,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
     )
 
     result = commands.cmd_lightning_route_start(
