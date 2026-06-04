@@ -12913,6 +12913,109 @@ def cmd_lightning_route_start(
                     commit_click["post_dialogue_actual_mission_id"] = (
                         post_dialogue_actual_mission
                     )
+                if (
+                    commit_click.get("reason") == "start_mission_text_not_found"
+                    and dialogue_dismiss is not None
+                    and dialogue_dismiss.get("status") == "OK"
+                    and post_dialogue_actual_mission == expected_preview_mission
+                    and region_window_x is not None
+                    and region_window_y is not None
+                ):
+                    sticky_retry = _lightning_execute_route_start_sequence(
+                        [
+                            {
+                                "kind": "point",
+                                "window_x": int(region_window_x),
+                                "window_y": int(region_window_y),
+                                "description": (
+                                    "Lightning route region after sticky dialogue"
+                                ),
+                                "settle_seconds": 0.35,
+                                "hold_seconds": 0.30,
+                            }
+                        ],
+                        dry_run=False,
+                    )
+                    retry_recommendation = None
+                    retry_actual_mission = None
+                    retry_start = None
+                    if sticky_retry.get("status") == "OK":
+                        retry_recommendation = cmd_recommend_mission(
+                            profile=profile,
+                            routing="lightning_war",
+                            use_save_region_filter=False,
+                            pause_map_peek=False,
+                        )
+                        retry_top3 = retry_recommendation.get("top3")
+                        if (
+                            isinstance(retry_top3, list)
+                            and retry_top3
+                            and isinstance(retry_top3[0], dict)
+                        ):
+                            retry_actual_mission = str(
+                                retry_top3[0].get("mission_id") or ""
+                            ).strip()
+                        if (
+                            retry_recommendation.get("source") != "bridge_preview"
+                            or not retry_actual_mission
+                        ):
+                            sticky_retry = {
+                                **sticky_retry,
+                                "status": "BLOCKED",
+                                "reason": (
+                                    "route_preview_mission_unverified_after_"
+                                    "sticky_dialogue_retry"
+                                ),
+                            }
+                        elif retry_actual_mission != expected_preview_mission:
+                            sticky_retry = {
+                                **sticky_retry,
+                                "status": "BLOCKED",
+                                "reason": (
+                                    "route_preview_mission_mismatch_after_"
+                                    "sticky_dialogue_retry"
+                                ),
+                            }
+                        else:
+                            retry_start = _lightning_click_visible_start_mission(
+                                dry_run=False,
+                                dismiss_dialogue=True,
+                            )
+                            sticky_retry = {
+                                **sticky_retry,
+                                "status": retry_start.get("status", "ERROR"),
+                                "reason": (
+                                    "sticky_dialogue_region_reopened_start_clicked"
+                                    if retry_start.get("status") == "OK"
+                                    else retry_start.get(
+                                        "reason",
+                                        "sticky_dialogue_retry_start_failed",
+                                    )
+                                ),
+                                "start_click": retry_start,
+                            }
+                    sticky_retry["retry_recommendation"] = retry_recommendation
+                    sticky_retry["retry_actual_mission_id"] = retry_actual_mission
+                    original_commit_click = commit_click
+                    if sticky_retry.get("status") == "OK":
+                        commit_click = {
+                            "status": "OK",
+                            "reason": (
+                                "sticky_dialogue_region_reopened_start_clicked"
+                            ),
+                            "initial_start_click": original_commit_click,
+                            "sticky_dialogue_retry": sticky_retry,
+                            "dialogue_dismiss": dialogue_dismiss,
+                        }
+                        if post_dialogue_recommendation is not None:
+                            commit_click["post_dialogue_recommendation"] = (
+                                post_dialogue_recommendation
+                            )
+                            commit_click["post_dialogue_actual_mission_id"] = (
+                                post_dialogue_actual_mission
+                            )
+                    else:
+                        commit_click["sticky_dialogue_retry"] = sticky_retry
         else:
             commit_click = _lightning_execute_route_start_sequence(
                 commit_sequence,

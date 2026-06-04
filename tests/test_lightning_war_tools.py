@@ -6242,6 +6242,103 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
+def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch):
+    calls = []
+    visible_start_calls = []
+    dialogue_dismiss_calls = []
+    recommendations = [
+        {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Terraform"}],
+        },
+        {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Terraform"}],
+        },
+        {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Terraform"}],
+        },
+    ]
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    def fake_visible_start(**kwargs):
+        visible_start_calls.append(kwargs)
+        if len(visible_start_calls) == 1:
+            return {
+                "status": "NOT_FOUND",
+                "reason": "start_mission_text_not_found",
+            }
+        return {
+            "status": "OK",
+            "target": {"window_x": 848, "window_y": 448},
+            "click_result": {"status": "OK"},
+        }
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: recommendations.pop(0),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: dialogue_dismiss_calls.append(kwargs)
+        or {"status": "OK", "dialogue_click": {"status": "OK"}},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        fake_visible_start,
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Terraform",
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    commit = result["click_result"]["commit_click"]
+    assert commit["reason"] == "sticky_dialogue_region_reopened_start_clicked"
+    assert (
+        commit["initial_start_click"]["reason"]
+        == "start_mission_text_not_found"
+    )
+    assert commit["sticky_dialogue_retry"]["retry_actual_mission_id"] == (
+        "Mission_Terraform"
+    )
+    assert len(calls) == 2
+    assert calls[1][0]["description"] == (
+        "Lightning route region after sticky dialogue"
+    )
+    assert visible_start_calls == [
+        {"dry_run": False, "dismiss_dialogue": False},
+        {"dry_run": False, "dismiss_dialogue": True},
+    ]
+    assert dialogue_dismiss_calls == [{"dry_run": False}]
+
+
 def test_lightning_route_start_blocks_post_dialogue_preview_mismatch(monkeypatch):
     calls = []
     recommendations = [
