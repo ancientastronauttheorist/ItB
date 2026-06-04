@@ -851,6 +851,35 @@ def test_lightning_ui_handle_screen_clicks_visible_panel(monkeypatch):
     assert calls == [("modal_understood", {"dry_run": False})]
 
 
+def test_lightning_ui_handle_screen_confirms_leave_island(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_complete_leave",
+            "recommended_control": "leave_island",
+        },
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append((control, kwargs))
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands.cmd_lightning_ui("handle_screen")
+
+    assert result["status"] == "OK"
+    assert result["control"] == "leave_island"
+    assert result["fallback_control"] == "leave_confirm_yes"
+    assert calls == [
+        ("leave_island", {"dry_run": False}),
+        ("leave_confirm_yes", {"dry_run": False}),
+    ]
+
+
 def test_lightning_peek_dry_run_plans_micro_burst(monkeypatch, tmp_path):
     monkeypatch.setattr(
         commands,
@@ -2178,6 +2207,73 @@ def test_lightning_ui_classifier_selects_perfect_reward_grid(tmp_path):
 
     assert result["visible_ui"] == "perfect_reward_choice"
     assert result["recommended_control"] == "perfect_reward_grid"
+
+
+def test_lightning_ui_classifier_detects_island_complete_leave(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (10, 12, 18))
+    draw = ImageDraw.Draw(image)
+
+    # Completed island map underneath the spend/leave panel. This produces
+    # enough saturated map color for island-complete detection while the dim
+    # background keeps the modal-overlay estimate high.
+    draw.polygon(
+        [
+            (430 * scale, 170 * scale),
+            (980 * scale, 150 * scale),
+            (1060 * scale, 650 * scale),
+            (540 * scale, 640 * scale),
+        ],
+        fill=(50, 130, 65),
+    )
+    draw.polygon(
+        [
+            (650 * scale, 250 * scale),
+            (850 * scale, 250 * scale),
+            (850 * scale, 560 * scale),
+            (650 * scale, 560 * scale),
+        ],
+        fill=(82, 70, 150),
+    )
+
+    # Add a reward-card-like rectangle so the old broad crop would have been
+    # tempted to classify this as a perfect reward choice.
+    x = 817 * scale
+    y = 470 * scale
+    draw.rectangle(
+        [x - 85 * scale, y - 55 * scale, x + 85 * scale, y + 55 * scale],
+        fill=(18, 25, 38),
+        outline=(85, 110, 165),
+        width=8 * scale,
+    )
+    draw.rectangle(
+        [x - 45 * scale, y - 22 * scale, x + 45 * scale, y + 22 * scale],
+        fill=(235, 240, 245),
+    )
+
+    # Actual Leave Island button at the bottom of the completed-island panel.
+    cx, cy = 641 * scale, 704 * scale
+    w, h = 260 * scale, 70 * scale
+    draw.rectangle(
+        [cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2],
+        fill=(18, 25, 38),
+        outline=(85, 110, 165),
+        width=8 * scale,
+    )
+    draw.rectangle(
+        [cx - 85 * scale, cy - 14 * scale, cx + 85 * scale, cy + 14 * scale],
+        fill=(235, 240, 245),
+    )
+
+    path = tmp_path / "island_complete_leave.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "island_complete_leave"
+    assert result["recommended_control"] == "leave_island"
 
 
 def test_lightning_dialogue_box_score_requires_visible_dialogue(tmp_path):

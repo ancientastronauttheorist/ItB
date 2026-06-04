@@ -9085,6 +9085,11 @@ _LIGHTNING_UI_BUTTON_CROPS = {
         "center": (846, 550),
         "size": (360, 130),
     },
+    "island_complete_leave": {
+        "control": "leave_island",
+        "center": (641, 704),
+        "size": (260, 70),
+    },
 }
 
 _LIGHTNING_AUTO_HANDLE_UIS = {
@@ -9093,6 +9098,7 @@ _LIGHTNING_AUTO_HANDLE_UIS = {
     "promotion_panel",
     "perfect_reward_choice",
     "perfect_island_panel",
+    "island_complete_leave",
     "mission_preview_panel",
 }
 
@@ -9149,6 +9155,7 @@ _LIGHTNING_PAUSE_BLOCKING_UIS = {
     "promotion_panel",
     "perfect_reward_choice",
     "perfect_island_panel",
+    "island_complete_leave",
 }
 
 _LIGHTNING_SAFE_CLEAR_UIS = set(_LIGHTNING_PAUSE_BLOCKING_UIS)
@@ -9177,6 +9184,8 @@ def _lightning_preferred_visible_control(
         return "panel_continue"
     if visible_name == "perfect_reward_choice" and control:
         return "perfect_reward_grid"
+    if visible_name == "island_complete_leave" and control:
+        return "leave_island"
     return control
 
 
@@ -9669,6 +9678,28 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             "visible_ui": "pause_menu",
             "recommended_control": spec["control"],
             "confidence": pause_score["score"],
+            "dark_overlay_fraction": dark_overlay,
+            "scores": scores,
+        }
+
+    leave_score = scores.get("island_complete_leave", {})
+    if (
+        dark_overlay >= 0.55
+        and island_map.get("colored", 0) >= 12000
+        and island_map.get("score", 0.0) >= 0.045
+        and _lightning_score_is_actionable(
+            leave_score,
+            min_score=0.50,
+            min_bright=250,
+            min_border=250,
+        )
+    ):
+        spec = _LIGHTNING_UI_BUTTON_CROPS["island_complete_leave"]
+        return {
+            "status": "OK",
+            "visible_ui": "island_complete_leave",
+            "recommended_control": spec["control"],
+            "confidence": leave_score["score"],
             "dark_overlay_fraction": dark_overlay,
             "scores": scores,
         }
@@ -10734,11 +10765,16 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
 
     click_result = click_known_window_control(control, dry_run=dry_run)
     fallback_result = None
+    fallback_control = None
     fallback_visible_ui = None
     if control == "reward_continue" and not dry_run and click_result.get("status") == "OK":
         fallback_visible_ui = _lightning_visible_ui_snapshot()
         if fallback_visible_ui.get("visible_ui") in {"reward_panel", "bottom_continue_panel"}:
+            fallback_control = "bottom_continue"
             fallback_result = click_known_window_control("bottom_continue", dry_run=dry_run)
+    if control == "leave_island" and not dry_run and click_result.get("status") == "OK":
+        fallback_control = "leave_confirm_yes"
+        fallback_result = click_known_window_control("leave_confirm_yes", dry_run=dry_run)
     result = {
         "status": click_result.get("status", "ERROR"),
         "visible_ui": visible_ui,
@@ -10751,7 +10787,7 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
     }
     if fallback_result is not None:
         result["fallback_visible_ui"] = fallback_visible_ui
-        result["fallback_control"] = "bottom_continue"
+        result["fallback_control"] = fallback_control
         result["fallback_click_result"] = fallback_result
         if fallback_result.get("status") != "OK":
             result["status"] = fallback_result.get("status", "ERROR")
@@ -10818,6 +10854,12 @@ def _lightning_clear_visible_panel_chain(
                 step["fallback_click_result"] = fallback_result
                 if fallback_result.get("status") != "OK":
                     click_result = fallback_result
+        if control == "leave_island" and click_result.get("status") == "OK":
+            fallback_result = click_known_window_control("leave_confirm_yes")
+            step["fallback_control"] = "leave_confirm_yes"
+            step["fallback_click_result"] = fallback_result
+            if fallback_result.get("status") != "OK":
+                click_result = fallback_result
         steps.append(step)
         if click_result.get("status") != "OK":
             return {

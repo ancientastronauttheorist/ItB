@@ -53,6 +53,16 @@ the screenshot is clearly Into the Breach.
 - Action: classify as `island_map` and route/start the HQ mission with the route
   helper or a verified boss-region click.
 
+`island_complete_leave`
+- Proof: completed Corporate Island map behind a dark overlay with visible
+  `SPEND REPUTATION` and `LEAVE ISLAND` controls. Broad reward or KIA crops may
+  score high on this screen, but the leave button plus colored map is
+  authoritative.
+- Codex/user work: not allowed while live.
+- Action: click `leave_island`, then immediately click `leave_confirm_yes` if
+  the first click succeeds. Do not clear this screen through generic reward or
+  KIA handling.
+
 `forced_bridge_preview_ambiguous`
 - Proof: route recommendation source is `bridge_preview`, there is exactly one
   ranked mission, but the visible red-region detector reports more than one

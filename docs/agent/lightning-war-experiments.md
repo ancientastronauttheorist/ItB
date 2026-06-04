@@ -34,6 +34,45 @@ Code/docs update:
 - `tests/test_lightning_war_conductor.py`
 - `docs/agent/lightning-war-experiments.md`
 
+## 2026-06-04 - Island-Complete Leave Screen False Reward/KIA
+
+Hypothesis: the first-island completion screen can be misclassified as a KIA or
+perfect-reward panel because the dimmed island map and lower spend/leave panel
+overlap the broad reward crops.
+
+Segment: Blitzkrieg Easy AE ON R.S.T. practice attempt, parked after the
+Corporate Island completion sequence. The visible screen showed `SPEND
+REPUTATION` and `LEAVE ISLAND`, but the classifier reported
+`perfect_reward_choice`/`kia_panel`, causing repeated reward-style clicks instead
+of leaving the island.
+
+Evidence:
+- Verified pause guard classified the top-level rest state as `pause_menu` over
+  the completed-island spend/leave screen.
+- The underlying screen had no KIA copy or pilot-loss affordance; it was the
+  normal island-complete action choice.
+- The Lightning clock continued to rise during repeated misclick recovery, so
+  the practice attempt became nonviable for a sub-30:00 two-island route.
+- Focused regression:
+  `python -m pytest tests\test_lightning_war_tools.py -q -k "island_complete_leave or lightning_ui_classifier"`
+  passed after adding the explicit classifier case.
+
+Result: the UI classifier now recognizes the completed-island leave button when
+it appears over a colored island map. The panel clear path treats it as a
+must-act live state and clicks `leave_island`, then immediately clicks
+`leave_confirm_yes` if the first click succeeds.
+
+Derived rule: after a Corporate Island completion, do not route the spend/leave
+screen through generic reward handling. If `LEAVE ISLAND` is visible, the local
+automation owns both leave and confirmation before returning to Codex or the
+next route segment.
+
+Code/docs update:
+- `src/loop/commands.py`
+- `tests/test_lightning_war_tools.py`
+- `docs/agent/lightning-war-experiments.md`
+- `docs/agent/lightning-war-state-atlas.md`
+
 ## 2026-06-04 - HQ Warning And Forced Preview Ambiguity
 
 Hypothesis: the failed R.S.T.-first practice run exposed two deterministic
