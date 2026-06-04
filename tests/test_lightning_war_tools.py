@@ -5919,6 +5919,7 @@ def test_lightning_route_start_dialogue_region_repeat_sequence():
     dialogue_step = result["sequence"][2]
     assert dialogue_step["window_x"] == 541
     assert dialogue_step["window_y"] == 244
+    assert dialogue_step["hold_seconds"] == 0.30
     assert [
         step.get("control") for step in result["sequence"] if step["kind"] == "control"
     ] == ((["menu_continue"] if os.name == "nt" else []) + [
@@ -5992,6 +5993,7 @@ def test_lightning_dialogue_region_repeat_reopens_region(monkeypatch):
     assert result["reason"] == "dialogue_dismissed_region_repeated"
     assert result["dialogue_click"]["control"] == "dialogue_textbox"
     assert dialogue_clicks[0][1]["hold_seconds"] == 0.30
+    assert dialogue_clicks[0][1]["settle_seconds"] >= 0.30
     assert region_clicks[0][0:2] == (641, 294)
     assert region_clicks[0][2]["hold_seconds"] == 0.30
     assert result["region_repeat_click"]["window_x"] == 541

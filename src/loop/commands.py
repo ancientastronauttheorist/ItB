@@ -12065,7 +12065,7 @@ def _lightning_click_dialogue_then_region_repeat(
         "dialogue_textbox",
         bounds=bounds,
         dry_run=False,
-        settle_seconds=0.20,
+        settle_seconds=max(0.30, float(settle_seconds)),
         hold_seconds=hold_seconds,
     )
     dialogue_click["dialogue_probe"] = dialogue_probe
@@ -12259,7 +12259,7 @@ def _lightning_route_start_sequence_parts(
                 "window_y": int(region_window_y),
                 "description": "Dismiss advisor dialogue and re-open region",
                 "settle_seconds": float(region_settle_seconds),
-                "hold_seconds": 0.06,
+                "hold_seconds": 0.30,
             }
         )
         board_clicks = (
