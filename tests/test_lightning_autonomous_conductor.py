@@ -416,7 +416,13 @@ def test_restart_dead_timeline_uses_pause_guard_before_abandon():
 
     def pause_guard(**kwargs):
         calls.append("pause_guard")
-        return {"status": "OK", "timer_stop_verified": True}
+        return {
+            "status": "OK",
+            "last_poll": {
+                "status": "OK",
+                "timer_stop_verified": True,
+            },
+        }
 
     commands = SimpleNamespace(
         cmd_lightning_ui=lightning_ui,

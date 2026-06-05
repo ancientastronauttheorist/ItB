@@ -628,6 +628,9 @@ def _safe_to_think(result: dict[str, Any] | None) -> bool:
         return True
     if result.get("pause_verified") or result.get("timer_stop_verified"):
         return True
+    last_poll = result.get("last_poll")
+    if isinstance(last_poll, dict) and _safe_to_think(last_poll):
+        return True
     visible = result.get("visible_ui") or result.get("pause_verify")
     if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
         return True
@@ -654,6 +657,9 @@ def _safe_to_finalize(result: dict[str, Any] | None) -> bool:
     if _visible_ui_name(result) == "new_game_setup":
         return True
     if result.get("pause_verified") or result.get("timer_stop_verified"):
+        return True
+    last_poll = result.get("last_poll")
+    if isinstance(last_poll, dict) and _safe_to_finalize(last_poll):
         return True
     visible = result.get("visible_ui") or result.get("pause_verify")
     if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
