@@ -6,6 +6,7 @@ from src.loop.lightning_conductor import (
     AutonomousLightningConfig,
     AutonomousLightningConductor,
     _hard_stop,
+    _telemetry_run_id,
     _timer_label,
     _timer_seconds,
 )
@@ -33,6 +34,21 @@ def make_conductor(**kwargs) -> AutonomousLightningConductor:
     )
     conductor.telemetry = FakeTelemetry()
     return conductor
+
+
+def test_telemetry_run_id_preserves_real_session_id():
+    session = SimpleNamespace(run_id="20260605_120000_123")
+
+    assert _telemetry_run_id(session) == "20260605_120000_123"
+
+
+def test_telemetry_run_id_replaces_generic_lw_session_id():
+    session = SimpleNamespace(run_id="lw")
+
+    run_id = _telemetry_run_id(session)
+
+    assert run_id.startswith("lightning_")
+    assert run_id != "lw"
 
 
 def test_autonomous_starts_when_initial_screen_is_setup():

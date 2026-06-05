@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Callable
 
 from src.loop.lightning_telemetry import (
@@ -61,7 +62,7 @@ class AutonomousLightningConductor:
         from src.loop import commands
 
         session = _load_current_session(commands)
-        run_id = str(session.run_id or f"lightning_{int(time.time())}")
+        run_id = _telemetry_run_id(session)
         self.telemetry = TelemetryRecorder(run_id)
         self.telemetry.write_manifest(
             {
@@ -523,6 +524,14 @@ def _load_current_session(commands: Any) -> Any:
         islands_completed: list[str] = []
 
     return SessionView()
+
+
+def _telemetry_run_id(session: Any) -> str:
+    raw = str(getattr(session, "run_id", "") or "").strip()
+    if raw and raw.lower() not in {"default", "lw", "none", "null"}:
+        return raw
+    now = datetime.now()
+    return now.strftime("lightning_%Y%m%d_%H%M%S") + f"_{now.microsecond // 1000:03d}"
 
 
 def _lightning_format_seconds(total_seconds: int | float | None) -> str:
