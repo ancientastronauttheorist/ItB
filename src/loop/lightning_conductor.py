@@ -232,7 +232,11 @@ class AutonomousLightningConductor:
                     set_fast_bridge=True,
                     run_preflight=(segment_index == 1),
                     dry_run=cfg.dry_run,
-                    max_wall_seconds=cfg.max_wall_seconds,
+                    max_wall_seconds=(
+                        cfg.max_wall_seconds
+                        if cfg.max_wall_seconds is not None
+                        else cfg.segment_timeout
+                    ),
                     pause_on_stop=True,
                     quiet=True,
                     resume_if_paused=True,
