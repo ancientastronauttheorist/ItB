@@ -179,7 +179,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     "modal_understood": KnownWindowControl(
         name="modal_understood",
         window_x=666,
-        window_y=555,
+        window_y=520,
         description="Modal / promotion Understood",
         settle_seconds=0.25,
     ),

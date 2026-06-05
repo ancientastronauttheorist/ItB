@@ -402,7 +402,7 @@ def test_lightning_ui_clicks_understood_alias_dry_run():
     assert result["status"] == "DRY_RUN"
     assert result["control"] == "modal_understood"
     assert result["window_x"] == 666
-    assert result["window_y"] == 555
+    assert result["window_y"] == 520
 
 
 def test_lightning_ui_clicks_panel_continue_alias_dry_run():
@@ -2826,6 +2826,7 @@ def test_lightning_attempt_deploys_confirms_and_runs_loop(monkeypatch):
     assert calls[1] == ("click", "deploy_confirm")
     assert result["action"]["max_wait_floor"] == 30.0
     assert calls[2][1]["max_wait"] == 30.0
+    assert calls[2][1]["pause_between_actions"] is False
 
 
 def test_lightning_attempt_deploys_when_bridge_reports_enemy_phase(monkeypatch):
@@ -3531,6 +3532,7 @@ def test_lightning_attempt_runs_combat_loop_on_active_turn(monkeypatch):
     assert calls[0]["dirty_consent_id"] == "dirty-ok"
     assert calls[0]["allow_protected_objective_loss"] is True
     assert calls[0]["allow_objective_loss"] is True
+    assert calls[0]["pause_between_actions"] is False
 
 
 def test_lightning_attempt_runs_loop_through_enemy_phase(monkeypatch):
@@ -4271,6 +4273,7 @@ def test_lightning_segment_continues_panel_clear_to_route_ready(monkeypatch):
     assert calls[1]["run_preflight"] is False
     assert all(call["pause_on_stop"] is False for call in calls)
     assert all(call["lightning_speed_loss_policy"] is True for call in calls)
+    assert all(call["pause_between_actions"] is False for call in calls)
     assert result["pause_guard"]["status"] == "OK"
 
 

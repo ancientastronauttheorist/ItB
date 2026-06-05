@@ -14361,7 +14361,7 @@ def cmd_lightning_attempt(
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = False,
     pause_before_solve: bool = True,
-    pause_between_actions: bool = True,
+    pause_between_actions: bool = False,
     expected_route_mission_id: str | None = None,
 ) -> dict:
     """Run the next safe Lightning War automation step.
@@ -15536,7 +15536,7 @@ def cmd_lightning_segment(
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = True,
     pause_before_solve: bool = True,
-    pause_between_actions: bool = True,
+    pause_between_actions: bool = False,
     settle_seconds: float = 0.25,
     route_visual_region_index: int | None = None,
     route_target_mission_id: str | None = None,
@@ -16261,7 +16261,7 @@ def cmd_lightning_loop(
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = False,
     pause_before_solve: bool = True,
-    pause_between_actions: bool = True,
+    pause_between_actions: bool = False,
 ) -> dict:
     """Run clean combat turns for Lightning War and click End Turn locally."""
     if not is_bridge_active():

@@ -951,7 +951,7 @@ def main():
         help="Pause between combat sub-actions and verification reads",
     )
     p_lightning_loop.set_defaults(pause_before_solve=True)
-    p_lightning_loop.set_defaults(pause_between_actions=True)
+    p_lightning_loop.set_defaults(pause_between_actions=False)
 
     # lightning_attempt
     p_lightning_attempt = sub.add_parser(
@@ -1070,7 +1070,7 @@ def main():
     p_lightning_attempt.set_defaults(resume_if_paused=True)
     p_lightning_attempt.set_defaults(auto_clear_panels=True)
     p_lightning_attempt.set_defaults(pause_before_solve=True)
-    p_lightning_attempt.set_defaults(pause_between_actions=True)
+    p_lightning_attempt.set_defaults(pause_between_actions=False)
 
     # lightning_segment
     p_lightning_segment = sub.add_parser(
@@ -1193,7 +1193,7 @@ def main():
     p_lightning_segment.set_defaults(auto_clear_panels=True)
     p_lightning_segment.set_defaults(lightning_speed_loss_policy=True)
     p_lightning_segment.set_defaults(pause_before_solve=True)
-    p_lightning_segment.set_defaults(pause_between_actions=True)
+    p_lightning_segment.set_defaults(pause_between_actions=False)
 
     # lightning_start_run
     p_lightning_start = sub.add_parser(
