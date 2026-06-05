@@ -5,6 +5,9 @@ from types import SimpleNamespace
 from src.loop.lightning_conductor import (
     AutonomousLightningConfig,
     AutonomousLightningConductor,
+    _hard_stop,
+    _timer_label,
+    _timer_seconds,
 )
 
 
@@ -330,3 +333,32 @@ def test_autonomous_restarts_when_second_island_start_gate_is_missed():
     assert result["reason"] == "second_island_start_pace_gate"
     assert result["gate_timer"] == "0:16:45"
     assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_timer_helpers_read_real_segment_last_attempt_budget():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "route_auto_start_not_allowed",
+        "last_attempt": {
+            "budget": {
+                "game_seconds": 940.267,
+                "game_timer": "0:15:40",
+            },
+        },
+    }
+
+    assert _timer_seconds(segment) == 940.267
+    assert _timer_label(segment) == "0:15:40"
+
+
+def test_hard_stop_detects_nested_post_enemy_attempt():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "combat_loop_returned",
+        "last_attempt": {
+            "status": "POST_ENEMY_AUDIT_MISSED_WINDOW",
+            "blocking": True,
+        },
+    }
+
+    assert _hard_stop(segment)

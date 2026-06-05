@@ -482,7 +482,11 @@ def _compact(value: Any) -> Any:
 def _timer_seconds(result: dict[str, Any] | None) -> float | None:
     if not isinstance(result, dict):
         return None
-    for container in (result.get("game_budget"), result.get("effective_timer")):
+    for container in (
+        result.get("game_budget"),
+        result.get("effective_timer"),
+        result.get("budget"),
+    ):
         if isinstance(container, dict) and container.get("game_seconds") is not None:
             try:
                 return float(container["game_seconds"])
@@ -497,9 +501,16 @@ def _timer_seconds(result: dict[str, Any] | None) -> float | None:
 def _timer_label(result: dict[str, Any] | None) -> str | None:
     if not isinstance(result, dict):
         return None
-    for container in (result.get("game_budget"), result.get("effective_timer")):
+    for container in (
+        result.get("game_budget"),
+        result.get("effective_timer"),
+        result.get("budget"),
+    ):
         if isinstance(container, dict) and container.get("game_timer") is not None:
             return str(container["game_timer"])
+    last_attempt = result.get("last_attempt")
+    if isinstance(last_attempt, dict):
+        return _timer_label(last_attempt)
     return None
 
 
@@ -531,7 +542,13 @@ def _hard_stop(result: dict[str, Any] | None) -> bool:
     if not isinstance(result, dict):
         return False
     text = f"{result.get('status') or ''} {result.get('reason') or ''}".upper()
-    return any(token in text for token in HARD_STOP_TOKENS)
+    if any(token in text for token in HARD_STOP_TOKENS):
+        return True
+    for key in ("last_attempt", "pause_guard"):
+        nested = result.get(key)
+        if isinstance(nested, dict) and _hard_stop(nested):
+            return True
+    return False
 
 
 def _route_ready(result: dict[str, Any] | None) -> bool:
