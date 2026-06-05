@@ -698,12 +698,103 @@ def _must_act_now(result: dict[str, Any] | None) -> bool:
     )
 
 
+def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> dict[str, Any]:
+    """Abandon a dead Lightning timeline and verify the setup screen."""
+    steps: list[dict[str, Any]] = []
+
+    def ui(control: str) -> dict[str, Any]:
+        result = commands.cmd_lightning_ui(control)
+        steps.append({"control": control, "result": _compact(result)})
+        return result
+
+    if not _safe_to_think(previous_result):
+        pause = ui("ensure_pause")
+        if not _safe_to_think(pause):
+            return {
+                "status": "BLOCKED_UNPAUSED_CLOCK_TICKING",
+                "reason": "restart_pause_not_verified",
+                "steps": steps,
+            }
+
+    for control in (
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_slot",
+    ):
+        result = ui(control)
+        if result.get("status") != "OK":
+            return {
+                "status": "BLOCKED",
+                "reason": f"{control}_failed",
+                "steps": steps,
+            }
+
+    for _ in range(4):
+        visible = ui("classify")
+        if _visible_ui_name(visible) == "new_game_setup":
+            return {
+                "status": "OK",
+                "reason": "abandoned_to_setup",
+                "steps": steps,
+            }
+        handled = ui("handle_screen")
+        if _visible_ui_name(handled) == "new_game_setup":
+            return {
+                "status": "OK",
+                "reason": "abandoned_to_setup_after_panel",
+                "steps": steps,
+            }
+
+    return {
+        "status": "BLOCKED",
+        "reason": "abandon_final_state_unverified",
+        "steps": steps,
+    }
+
+
 def cmd_lightning_autonomous(**kwargs: Any) -> dict[str, Any]:
     """CLI entry point for the telemetry-backed autonomous conductor."""
-    from src.loop.commands import _print_result
+    from src.loop import commands
 
-    config = AutonomousLightningConfig(**kwargs)
-    conductor = AutonomousLightningConductor(config)
-    result = conductor.run()
-    _print_result(result)
+    max_attempts = max(1, int(kwargs.get("max_attempts") or 1))
+    run_kwargs = dict(kwargs)
+    run_kwargs["max_attempts"] = 1
+    history: list[dict[str, Any]] = []
+
+    for attempt_index in range(1, max_attempts + 1):
+        config = AutonomousLightningConfig(**run_kwargs)
+        conductor = AutonomousLightningConductor(config)
+        result = conductor.run()
+        result["timeline_attempt_index"] = attempt_index
+        history.append(_compact(result))
+
+        if result.get("status") != "RESTART_RECOMMENDED":
+            if history:
+                result["timeline_attempt_history"] = history
+            commands._print_result(result)
+            return result
+        if attempt_index >= max_attempts:
+            result["timeline_attempt_history"] = history
+            commands._print_result(result)
+            return result
+
+        recovery = _restart_dead_timeline(commands, result)
+        history[-1]["restart_recovery"] = _compact(recovery)
+        if recovery.get("status") != "OK":
+            blocked = {
+                "status": "BLOCKED",
+                "reason": "restart_recovery_failed",
+                "last_result": _compact(result),
+                "restart_recovery": recovery,
+                "timeline_attempt_history": history,
+            }
+            commands._print_result(blocked)
+            return blocked
+
+    result = {
+        "status": "BLOCKED",
+        "reason": "autonomous_attempt_loop_exhausted",
+        "timeline_attempt_history": history,
+    }
+    commands._print_result(result)
     return result

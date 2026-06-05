@@ -5,8 +5,10 @@ from types import SimpleNamespace
 from src.loop.lightning_conductor import (
     AutonomousLightningConfig,
     AutonomousLightningConductor,
+    cmd_lightning_autonomous,
     _hard_stop,
     _restartable_attempt_stop,
+    _restart_dead_timeline,
     _safe_to_finalize,
     _telemetry_run_id,
     _timer_label,
@@ -43,6 +45,13 @@ def verified_pause_payload() -> dict:
         "status": "OK",
         "pause_verified": True,
         "visible_ui": {"visible_ui": "pause_menu"},
+    }
+
+
+def new_game_setup_payload() -> dict:
+    return {
+        "status": "OK",
+        "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
     }
 
 
@@ -359,6 +368,94 @@ def test_autonomous_restarts_when_second_island_start_gate_is_missed():
     assert result["reason"] == "second_island_start_pace_gate"
     assert result["gate_timer"] == "0:16:45"
     assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_restart_dead_timeline_abandons_to_setup():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_slot",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+
+    result = _restart_dead_timeline(commands, verified_pause_payload())
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "abandoned_to_setup"
+    assert calls == [
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_slot",
+        "classify",
+    ]
+
+
+def test_cmd_lightning_autonomous_retries_recommended_timeline(monkeypatch):
+    calls: list[str] = []
+    printed: list[dict] = []
+    configs: list[AutonomousLightningConfig] = []
+    run_results = iter(
+        [
+            {
+                "status": "RESTART_RECOMMENDED",
+                "reason": "first_island_pace_gate",
+                "ensure_pause": verified_pause_payload(),
+            },
+            {"status": "SUCCESS", "reason": "achievement_confirmed_sync"},
+        ]
+    )
+
+    class FakeConductor:
+        def __init__(self, config):
+            configs.append(config)
+
+        def run(self):
+            return next(run_results)
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_slot",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    from src.loop import commands as commands_module
+    from src.loop import lightning_conductor as conductor_module
+
+    monkeypatch.setattr(
+        conductor_module,
+        "AutonomousLightningConductor",
+        FakeConductor,
+    )
+    monkeypatch.setattr(commands_module, "cmd_lightning_ui", lightning_ui)
+    monkeypatch.setattr(commands_module, "_print_result", printed.append)
+
+    result = cmd_lightning_autonomous(max_attempts=2, screenshots=False)
+
+    assert result["status"] == "SUCCESS"
+    assert [config.max_attempts for config in configs] == [1, 1]
+    assert calls == [
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_slot",
+        "classify",
+    ]
+    assert printed == [result]
+    assert result["timeline_attempt_history"][0]["status"] == "RESTART_RECOMMENDED"
 
 
 def test_autonomous_restarts_on_nested_safety_blocked_attempt():
