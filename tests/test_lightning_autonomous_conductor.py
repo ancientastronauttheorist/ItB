@@ -399,6 +399,46 @@ def test_restart_dead_timeline_abandons_to_setup():
     ]
 
 
+def test_restart_dead_timeline_uses_pause_guard_before_abandon():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_slot",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    def pause_guard(**kwargs):
+        calls.append("pause_guard")
+        return {"status": "OK", "timer_stop_verified": True}
+
+    commands = SimpleNamespace(
+        cmd_lightning_ui=lightning_ui,
+        cmd_lightning_pause_guard=pause_guard,
+    )
+    unsafe_previous = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "first_island_pace_gate",
+    }
+
+    result = _restart_dead_timeline(commands, unsafe_previous)
+
+    assert result["status"] == "OK"
+    assert calls == [
+        "pause_guard",
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_slot",
+        "classify",
+    ]
+
+
 def test_cmd_lightning_autonomous_retries_recommended_timeline(monkeypatch):
     calls: list[str] = []
     printed: list[dict] = []

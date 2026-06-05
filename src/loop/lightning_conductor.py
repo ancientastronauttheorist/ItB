@@ -710,7 +710,12 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
         return result
 
     if not _safe_to_think(previous_result):
-        pause = ui("ensure_pause")
+        pause_guard = getattr(commands, "cmd_lightning_pause_guard", None)
+        if callable(pause_guard):
+            pause = pause_guard(seconds=5.0, interval=0.25, once=True)
+            steps.append({"control": "pause_guard", "result": _compact(pause)})
+        else:
+            pause = ui("ensure_pause")
         if not _safe_to_think(pause):
             return {
                 "status": "BLOCKED_UNPAUSED_CLOCK_TICKING",
