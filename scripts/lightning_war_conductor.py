@@ -27,6 +27,8 @@ RESULT_MARKER = "--- Result ---"
 LIGHTNING_WAR = "Lightning War"
 START_ISLAND_CONTROLS = {
     "archive": "island_archive",
+    "detritus": "island_detritus",
+    "pinnacle": "island_pinnacle",
     "rst": "island_rst",
 }
 SAFE_PAUSE_REASONS = {
@@ -55,6 +57,7 @@ class CommandResult:
     stdout: str
     stderr: str
     result: dict[str, Any] | None
+    watchdog: WatchdogState | None = None
 
 
 @dataclass
@@ -530,6 +533,22 @@ def route_command_from_segment(result: dict[str, Any] | None) -> list[str] | Non
     return None
 
 
+def segment_hard_stop(result: dict[str, Any] | None) -> bool:
+    if not isinstance(result, dict):
+        return False
+    status = str(result.get("status") or "").upper()
+    reason = str(result.get("reason") or "").upper()
+    hard_tokens = (
+        "SAFETY_BLOCKED",
+        "RESEARCH_REQUIRED",
+        "INVESTIGATE",
+        "THREAT_AUDIT",
+        "POST_ENEMY",
+        "DESYNC",
+    )
+    return any(token in status or token in reason for token in hard_tokens)
+
+
 def print_command_result(label: str, command: CommandResult) -> None:
     status = result_status(command.result)
     print(f"[{label}] status={status} returncode={command.returncode}")
@@ -579,6 +598,7 @@ def run_observed(
     command = run_game_loop(args, timeout=timeout)
     print_command_result(label, command)
     state = watchdog.observe(label, command.result)
+    command.watchdog = state
     print_watchdog_state(state)
     journal.write(
         "command",
@@ -700,6 +720,27 @@ def run_conductor(args: argparse.Namespace) -> int:
         if setup.returncode != 0 or result_status(setup.result) != "PASS":
             print("[verify_setup] setup verification failed; not starting timer.")
             return 9
+        if not args.no_session_init:
+            session = run_observed(
+                "session_init",
+                [
+                    "new_run",
+                    "Blitzkrieg",
+                    "--achieve",
+                    LIGHTNING_WAR,
+                    "--difficulty",
+                    str(args.setup_difficulty),
+                    "--tags",
+                    "achievement",
+                    "lightning_war",
+                ],
+                watchdog=watchdog,
+                journal=journal,
+                timeout=60,
+            )
+            if session.returncode != 0:
+                print("[session_init] local Lightning War session init failed.")
+                return 13
         start = run_observed(
             "start_game",
             ["lightning_ui", "setup_modal_start"],
@@ -711,10 +752,12 @@ def run_conductor(args: argparse.Namespace) -> int:
             print("[start_game] setup Start click failed.")
             return 10
         if args.start_island:
+            if args.start_settle_seconds > 0:
+                time.sleep(args.start_settle_seconds)
             island_control = START_ISLAND_CONTROLS[args.start_island]
             handoff = run_observed(
                 "start_island_handoff",
-                ["lightning_ui", f"{island_control}+bottom_continue+pause"],
+                ["lightning_ui", f"menu_continue+{island_control}+bottom_continue+pause"],
                 watchdog=watchdog,
                 journal=journal,
                 timeout=45,
@@ -722,6 +765,16 @@ def run_conductor(args: argparse.Namespace) -> int:
             if handoff.returncode != 0 or result_status(handoff.result) != "OK":
                 ensure_pause(watchdog=watchdog, journal=journal)
                 return 11
+            intro_clear = run_observed(
+                "start_island_intro_clear",
+                ["lightning_ui", "menu_continue+bottom_continue+pause"],
+                watchdog=watchdog,
+                journal=journal,
+                timeout=45,
+            )
+            if intro_clear.returncode != 0 or result_status(intro_clear.result) != "OK":
+                ensure_pause(watchdog=watchdog, journal=journal)
+                return 14
             pause_check = pause_guard_once(
                 watchdog=watchdog,
                 journal=journal,
@@ -832,6 +885,16 @@ def run_conductor(args: argparse.Namespace) -> int:
             journal=journal,
             try_pause=not bool(route_args),
         )
+        if (
+            segment.watchdog
+            and segment.watchdog.must_act_now
+            and not segment_hard_stop(segment.result)
+        ):
+            print(
+                f"[segment {step}] live-clock risk detected after segment; "
+                "continuing deterministic automation."
+            )
+            continue
         if safe_now and not args.no_achievement_sync:
             sync = run_observed(
                 f"sync {step}",
@@ -939,6 +1002,23 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--setup-difficulty", type=int, default=0)
+    parser.add_argument(
+        "--start-settle-seconds",
+        type=float,
+        default=1.25,
+        help=(
+            "After clicking the setup modal Start button, wait this long for "
+            "the first island-select screen before the hot-path island handoff."
+        ),
+    )
+    parser.add_argument(
+        "--no-session-init",
+        action="store_true",
+        help=(
+            "Do not initialize a fresh local RunSession before clicking the "
+            "timer-starting setup Start button."
+        ),
+    )
     parser.add_argument("--no-initial-preflight", action="store_true")
     parser.add_argument("--no-journal", action="store_true")
     return parser

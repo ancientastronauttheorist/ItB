@@ -1752,10 +1752,11 @@ def test_lightning_attempt_resume_falls_back_when_continue_stays_paused(monkeypa
             "island_map_count": 3,
         },
     )
-    monkeypatch.setattr(
-        commands,
-        "cmd_recommend_mission",
-        lambda **kwargs: {
+    recommend_calls = []
+
+    def fake_recommend_mission(**kwargs):
+        recommend_calls.append(kwargs)
+        return {
             "status": "OK",
             "top3": [
                 {
@@ -1764,8 +1765,9 @@ def test_lightning_attempt_resume_falls_back_when_continue_stays_paused(monkeypa
                     "save_region_name": "The Pasture",
                 }
             ],
-        },
-    )
+        }
+
+    monkeypatch.setattr(commands, "cmd_recommend_mission", fake_recommend_mission)
     monkeypatch.setattr(
         commands,
         "_lightning_extract_red_regions_from_image",
@@ -3678,6 +3680,7 @@ def test_lightning_attempt_recommends_route_on_island_map(monkeypatch):
         difficulty=0,
         achievement_targets=["Lightning War"],
     )
+    recommend_calls = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
     monkeypatch.setattr(
@@ -3696,10 +3699,9 @@ def test_lightning_attempt_recommends_route_on_island_map(monkeypatch):
             "island_map_count": 3,
         },
     )
-    monkeypatch.setattr(
-        commands,
-        "cmd_recommend_mission",
-        lambda **kwargs: {
+    def fake_island_map_recommend_mission(**kwargs):
+        recommend_calls.append(kwargs)
+        return {
             "status": "OK",
             "top3": [
                 {
@@ -3708,7 +3710,12 @@ def test_lightning_attempt_recommends_route_on_island_map(monkeypatch):
                     "save_region_name": "The Pasture",
                 }
             ],
-        },
+        }
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        fake_island_map_recommend_mission,
     )
     monkeypatch.setattr(
         commands,
@@ -3720,6 +3727,7 @@ def test_lightning_attempt_recommends_route_on_island_map(monkeypatch):
 
     assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
     assert result["recommendation"]["top3"][0]["mission_id"] == "Mission_Train"
+    assert recommend_calls[-1]["pause_map_peek"] is True
 
 
 def test_lightning_attempt_panel_precedes_route_recommendation(monkeypatch):
@@ -4451,7 +4459,9 @@ def test_lightning_segment_uses_actual_mission_after_playable_route_mismatch(mon
     )
 
 
-def test_lightning_segment_blocks_auto_start_for_slow_primary_route(monkeypatch):
+def test_lightning_segment_auto_starts_former_slow_primary_route(monkeypatch):
+    route_calls = []
+
     monkeypatch.setattr(
         commands,
         "cmd_lightning_attempt",
@@ -4468,9 +4478,8 @@ def test_lightning_segment_blocks_auto_start_for_slow_primary_route(monkeypatch)
     monkeypatch.setattr(
         commands,
         "cmd_lightning_route_start",
-        lambda **kwargs: (_ for _ in ()).throw(
-            AssertionError("slow route should not auto-start")
-        ),
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_start_sequence_clicked"},
     )
     monkeypatch.setattr(
         commands,
@@ -4478,13 +4487,11 @@ def test_lightning_segment_blocks_auto_start_for_slow_primary_route(monkeypatch)
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
 
-    result = commands.cmd_lightning_segment(route_auto_start=True)
+    result = commands.cmd_lightning_segment(route_auto_start=True, max_steps=2)
 
-    assert result["reason"] == "route_auto_start_not_allowed"
-    assert result["route_start_performed"] is False
-    assert result["steps"][0]["route_auto_start_blocked_candidate"]["mission_id"] == (
-        "Mission_Artillery"
-    )
+    assert result["route_start_performed"] is True
+    assert route_calls[0]["visual_region_index"] == 1
+    assert route_calls[0]["expected_route_mission_id"] == "Mission_Artillery"
 
 
 def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypatch):
@@ -5635,7 +5642,7 @@ def test_recommend_mission_scores_bridge_preview_when_slate_missing(monkeypatch)
     assert result["speed_route_status"]["reason"] == "forced_bridge_preview_route"
 
 
-def test_recommend_mission_blocks_hard_veto_bridge_preview(monkeypatch):
+def test_recommend_mission_allows_low_score_bridge_preview(monkeypatch):
     bridge_data = {
         "island_map": None,
         "mission_id": "Mission_Repair",
@@ -5656,7 +5663,8 @@ def test_recommend_mission_blocks_hard_veto_bridge_preview(monkeypatch):
     assert result["status"] == "OK"
     assert result["source"] == "bridge_preview"
     assert result["top3"][0]["mission_id"] == "Mission_Repair"
-    assert result["speed_route_status"]["status"] == "REROLL_RECOMMENDED"
+    assert result["speed_route_status"]["status"] == "AUTO_START_OK"
+    assert result["speed_route_status"]["reason"] == "forced_bridge_preview_route"
 
 
 def test_visual_route_candidates_sort_by_save_ranked_mission():
@@ -5695,7 +5703,7 @@ def test_visual_route_candidates_sort_by_save_ranked_mission():
     assert result[0]["auto_route_allowed"] is True
     assert result[1]["index"] == 0
     assert result[1]["mission_id"] == "Mission_Repair"
-    assert result[1]["auto_route_allowed"] is False
+    assert result[1]["auto_route_allowed"] is True
 
 
 def test_visual_route_candidate_allows_single_forced_bridge_preview():
@@ -5732,7 +5740,7 @@ def test_visual_route_candidate_allows_single_forced_bridge_preview():
     assert result[0]["auto_route_allowed"] is True
 
 
-def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview():
+def test_visual_route_candidate_allows_ambiguous_forced_bridge_preview_above_floor():
     recommendation = {
         "status": "OK",
         "source": "bridge_preview",
@@ -5766,7 +5774,7 @@ def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview():
     assert all(candidate["mission_id"] == "Mission_Tides" for candidate in result)
     assert all(candidate["forced_preview_route"] is True for candidate in result)
     assert all(candidate["forced_preview_ambiguous"] is True for candidate in result)
-    assert all(candidate["auto_route_allowed"] is False for candidate in result)
+    assert all(candidate["auto_route_allowed"] is True for candidate in result)
     assert all(
         "--route-target-mission-id" not in candidate["command"]
         for candidate in result
@@ -5775,9 +5783,41 @@ def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview():
         "--expected-mission-id" not in candidate["route_start_command"]
         for candidate in result
     )
+
+
+def test_visual_route_candidate_allows_ambiguous_forced_bridge_preview_below_floor():
+    recommendation = {
+        "status": "OK",
+        "source": "bridge_preview",
+        "ranked": [
+            {
+                "mission_id": "Mission_Teleporter",
+                "score": -90,
+            },
+        ],
+        "top3": [
+            {
+                "mission_id": "Mission_Teleporter",
+                "score": -90,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 0, "window_x": 809, "window_y": 419},
+            {"index": 1, "window_x": 949, "window_y": 588},
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    assert len(result) == 2
     assert all(
-        candidate["auto_route_block_reason"]
-        == "forced_bridge_preview_multiple_visible_regions"
+        candidate.get("auto_route_allowed") is True
         for candidate in result
     )
 
@@ -7275,11 +7315,11 @@ def test_lightning_route_start_accepts_live_boss_preview_over_stale_expected(
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
-def test_lightning_route_start_blocks_hard_veto_preview_without_expected(
+def test_lightning_route_start_commits_preview_without_expected_target(
     monkeypatch,
 ):
     calls = []
-    pauses = []
+    visible_start_calls = []
 
     monkeypatch.setattr(
         commands,
@@ -7307,9 +7347,18 @@ def test_lightning_route_start_blocks_hard_veto_preview_without_expected(
     )
     monkeypatch.setattr(
         commands,
-        "_lightning_ensure_pause_state",
-        lambda **kwargs: pauses.append(kwargs)
-        or {"status": "OK", "reason": "pause_clicked"},
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: visible_start_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "target": {"window_x": 848, "window_y": 448},
+            "click_result": {"status": "OK"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
     )
 
     result = commands.cmd_lightning_route_start(
@@ -7319,17 +7368,11 @@ def test_lightning_route_start_blocks_hard_veto_preview_without_expected(
         verify_route=False,
     )
 
-    assert result["status"] == "BLOCKED"
-    assert result["reason"] == "route_preview_hard_veto_before_start"
-    assert result["actual_preview_mission_id"] == "Mission_Dam"
-    assert result["pause_after_veto"]["status"] == "OK"
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Dam"
     assert len(calls) == 1
-    assert not any(
-        step.get("control") == "mission_preview_board"
-        for step in calls[0]
-        if isinstance(step, dict)
-    )
-    assert pauses == [{"reason": "route_preview_hard_veto_before_start"}]
+    assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
 def test_lightning_route_start_commits_matching_preview(monkeypatch):
@@ -7493,7 +7536,7 @@ def test_lightning_route_start_continues_playable_post_start_mismatch(monkeypatc
     assert len(calls) == 1
 
 
-def test_lightning_route_start_recovers_hard_veto_post_start_mismatch(monkeypatch):
+def test_lightning_route_start_continues_former_veto_post_start_mismatch(monkeypatch):
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
@@ -7576,17 +7619,17 @@ def test_lightning_route_start_recovers_hard_veto_post_start_mismatch(monkeypatc
         expected_route_mission_id="Mission_Tides",
     )
 
-    assert result["status"] == "BLOCKED"
-    assert result["reason"] == "route_mission_mismatch_after_start_recovered"
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_mission_mismatch_after_start_playable"
     click_result = result["click_result"]
     assert click_result["post_start_snapshot"]["mission_id"] == "Mission_ForestFire"
-    assert click_result["route_mismatch_block"]["reason"] == (
-        "route_mission_mismatch_after_start"
-    )
-    assert click_result["mismatch_recovery"]["status"] == "OK"
-    assert blocks[0][1]["expected_mission_id"] == "Mission_Tides"
-    assert blocks[0][1]["actual_mission_id"] == "Mission_ForestFire"
-    assert recoveries[0][1]["actual_mission_id"] == "Mission_ForestFire"
+    assert click_result["route_mismatch_warning"] == {
+        "expected_mission_id": "Mission_Tides",
+        "actual_mission_id": "Mission_ForestFire",
+        "policy": "continue_loaded_playable_mission",
+    }
+    assert not blocks
+    assert not recoveries
     assert len(calls) == 1
 
 

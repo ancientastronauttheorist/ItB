@@ -2648,7 +2648,6 @@ def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
 
 
 _ZERO_MECH_DAMAGE_ACHIEVEMENTS = {
-    "lightning war",
     "perfect battle",
     "untouchable",
 }
@@ -2707,8 +2706,14 @@ def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
         int(getattr(session, "difficulty", 0) or 0) >= 2
         or "hard victory" in targets
         or "hard_victory" in tags
-        or "lightning war" in targets
     )
+
+
+def _blocks_mech_death_for_lightning_war(session: RunSession | None) -> bool:
+    if session is None:
+        return False
+    targets = {str(t).strip().lower() for t in (session.achievement_targets or [])}
+    return "lightning war" in targets
 
 
 def _evaluate_solution_safety(board: Board,
@@ -3740,6 +3745,15 @@ def _post_enemy_needs_investigation(
     if _blocks_mech_hp_loss_for_perfect_battle(session):
         for delta in deltas.get("mech_hp_diff", []) or []:
             if isinstance(delta, dict) and int(delta.get("diff", 0) or 0) < 0:
+                return True
+    elif _blocks_mech_death_for_lightning_war(session):
+        for delta in deltas.get("mech_hp_diff", []) or []:
+            if not isinstance(delta, dict):
+                continue
+            if (
+                int(delta.get("diff", 0) or 0) < 0
+                and int(delta.get("actual_hp", 0) or 0) <= 0
+            ):
                 return True
 
     if _blocks_mech_status_loss_for_run(session):
@@ -8287,15 +8301,7 @@ def _lightning_visual_regions_from_recommendation(recommendation: dict | None) -
     return result
 
 
-_LIGHTNING_ROUTE_AUTO_MIN_SCORE = 10
-_LIGHTNING_ROUTE_FORCED_PREVIEW_MIN_SCORE = -60
 _LIGHTNING_ROUTE_DEFAULT_START_MODE = "dialogue-region-repeat-preview-board"
-_LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS = {
-    "Mission_Artillery",
-    "Mission_Dam",
-    "Mission_ForestFire",
-    "Mission_Volatile",
-}
 
 
 def _lightning_forced_preview_route_allowed(
@@ -8303,15 +8309,8 @@ def _lightning_forced_preview_route_allowed(
     *,
     source: str | None = None,
 ) -> bool:
-    """Allow a single unavoidable preview unless it is a hard speed veto."""
-    if source != "bridge_preview" or len(ranked) != 1:
-        return False
-    top = ranked[0]
-    try:
-        score = float(top.get("score"))
-    except (TypeError, ValueError):
-        return False
-    return score >= _LIGHTNING_ROUTE_FORCED_PREVIEW_MIN_SCORE
+    """Allow a single unavoidable bridge preview during Lightning War."""
+    return source == "bridge_preview" and len(ranked) == 1
 
 
 def _lightning_speed_route_status(
@@ -8328,39 +8327,24 @@ def _lightning_speed_route_status(
             "status": "NO_ROUTE",
             "auto_start_allowed": False,
             "reason": "no_ranked_missions",
-            "min_auto_score": _LIGHTNING_ROUTE_AUTO_MIN_SCORE,
         }
     top = ranked[0]
     score = top.get("score")
     boss = bool(top.get("boss")) or str(top.get("mission_id") or "").endswith("Boss")
-    try:
-        numeric_score = float(score)
-    except (TypeError, ValueError):
-        numeric_score = None
-    allowed = boss or (
-        numeric_score is not None
-        and numeric_score >= _LIGHTNING_ROUTE_AUTO_MIN_SCORE
-    )
     forced_preview_allowed = _lightning_forced_preview_route_allowed(
         ranked,
         source=source,
     )
-    if forced_preview_allowed:
-        allowed = True
     return {
-        "status": "AUTO_START_OK" if allowed else "REROLL_RECOMMENDED",
-        "auto_start_allowed": allowed,
+        "status": "AUTO_START_OK",
+        "auto_start_allowed": True,
         "reason": (
             "forced_boss_route"
             if boss
             else "forced_bridge_preview_route"
             if forced_preview_allowed
-            else "top_score_meets_threshold"
-            if allowed
-            else "top_score_below_lightning_threshold"
+            else "lightning_war_no_mission_veto"
         ),
-        "min_auto_score": _LIGHTNING_ROUTE_AUTO_MIN_SCORE,
-        "forced_preview_min_score": _LIGHTNING_ROUTE_FORCED_PREVIEW_MIN_SCORE,
         "top_score": score,
         "top_mission_id": top.get("mission_id"),
         "top_save_region_name": top.get("save_region_name"),
@@ -8388,7 +8372,6 @@ def _lightning_preview_can_override_stale_route_target(
         boss
         and isinstance(speed_status, dict)
         and speed_status.get("reason") == "forced_boss_route"
-        and actual_preview_mission not in _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS
     )
 
 
@@ -8515,14 +8498,7 @@ def _lightning_assign_visual_route_options(
 
 def _lightning_candidate_auto_allowed(candidate: dict) -> bool:
     option = candidate.get("route_option") or {}
-    if option.get("boss") or str(option.get("mission_id") or "").endswith("Boss"):
-        return True
-    if candidate.get("forced_preview_route") is True:
-        return True
-    try:
-        return float(option.get("score")) >= _LIGHTNING_ROUTE_AUTO_MIN_SCORE
-    except (TypeError, ValueError):
-        return False
+    return bool(option.get("mission_id"))
 
 
 def _lightning_candidate_score(candidate: dict) -> float:
@@ -8674,10 +8650,13 @@ def _lightning_route_start_candidates(
                 candidate["score"] = top.get("score")
                 candidate["forced_preview_route"] = True
                 candidate["forced_preview_ambiguous"] = True
-                candidate["auto_route_allowed"] = False
-                candidate["auto_route_block_reason"] = (
-                    "forced_bridge_preview_multiple_visible_regions"
+                candidate["auto_route_allowed"] = _lightning_candidate_auto_allowed(
+                    candidate,
                 )
+                if not candidate["auto_route_allowed"]:
+                    candidate["auto_route_block_reason"] = (
+                        "forced_bridge_preview_multiple_visible_regions"
+                    )
         if target_hint:
             candidate["target_hint"] = dict(target_hint)
         candidates.append(candidate)
@@ -10251,7 +10230,7 @@ def _lightning_started_mismatch_is_playable(
 ) -> bool:
     """A post-Start mismatch can be played if it is already a live safe mission."""
     actual = str(actual_mission_id or "").strip()
-    if not actual or actual in _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS:
+    if not actual:
         return False
     if snapshot.get("status") != "OK" or not snapshot.get("in_active_mission"):
         return False
@@ -11618,7 +11597,7 @@ def _lightning_visible_map_route_plan(
         cmd_recommend_mission,
         profile=profile,
         routing="lightning_war",
-        pause_map_peek=False,
+        pause_map_peek=True,
         quiet=quiet,
     )
     if recommendation_output:
@@ -13352,38 +13331,6 @@ def cmd_lightning_route_start(
             }
             _print_result(result)
             return result
-        if not expected_preview_mission and actual_preview_mission in (
-            _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS
-        ):
-            pause_after_veto = _lightning_ensure_pause_state(
-                reason="route_preview_hard_veto_before_start",
-            )
-            result = {
-                "status": "BLOCKED",
-                "reason": "route_preview_hard_veto_before_start",
-                "actual_preview_mission_id": actual_preview_mission,
-                "hard_veto_missions": sorted(
-                    _LIGHTNING_ROUTE_PREVIEW_HARD_VETO_MISSIONS
-                ),
-                "preflight": preflight,
-                "initial_ui": initial_ui,
-                "auto_pause": auto_pause,
-                "recommendation": recommendation,
-                "preview_recommendation": preview_recommendation,
-                "route_target_hint": route_target_hint,
-                "visual_regions": visual_regions,
-                "selected_visual_region": selected_visual_region,
-                "visual_region_peek": visual_region_peek,
-                "preview_click": preview_click,
-                "pause_after_veto": pause_after_veto,
-                "next_step": (
-                    "Do not click Start Mission. This preview is a Lightning "
-                    "War hard-veto mission; choose another visible region or "
-                    "restart the timeline."
-                ),
-            }
-            _print_result(result)
-            return result
         stale_route_target_override = None
         if (
             expected_preview_mission
@@ -15004,6 +14951,7 @@ def cmd_lightning_attempt(
             cmd_recommend_mission,
             profile=profile,
             routing="lightning_war",
+            pause_map_peek=True,
             quiet=quiet,
         )
         if recommendation_output:
@@ -15435,7 +15383,6 @@ def cmd_lightning_segment(
                 if (
                     isinstance(primary, dict)
                     and isinstance(primary.get("index"), int)
-                    and primary.get("auto_route_allowed") is True
                 ):
                     route_visual_region_index = int(primary["index"])
                     route_start_expected_mission_id = primary.get("mission_id")

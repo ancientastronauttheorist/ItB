@@ -231,6 +231,15 @@ def _acid_tank_mission() -> dict:
     }
 
 
+def _acid_storm_mission() -> dict:
+    return {
+        "region_id": 24,
+        "mission_id": "Mission_AcidStorm",
+        "bonus_objective_ids": [],
+        "environment": "Env_NanoStorm",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Squad tag derivation
 # ---------------------------------------------------------------------------
@@ -445,6 +454,23 @@ def test_lightning_war_routing_penalizes_acid_tank_or_vats():
     acid_tank = next(e for e in ranked if e["mission_id"] == "Mission_AcidTank")
     assert acid_tank["score"] < 0
     assert any("Detritus vats/barrels" in line for line in acid_tank["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_acid_storm_without_veto():
+    ranked = score_island_map(
+        [_acid_storm_mission(), _safe_battle_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    acid_storm = next(e for e in ranked if e["mission_id"] == "Mission_AcidStorm")
+    assert acid_storm["score"] < 0
+    rationale = " ".join(acid_storm["rationale_lines"])
+    assert "Acid Storm" in rationale
+    assert "hard veto" not in rationale
 
 
 def test_lightning_war_routing_penalizes_generic_asset_pod_reward():

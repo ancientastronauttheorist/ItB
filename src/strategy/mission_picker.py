@@ -514,6 +514,11 @@ def _apply_lightning_war_routing(
         rationale.append(
             "-70 Lightning War: Power Generator trap can force mech damage"
         )
+    if mission_id == "Mission_AcidStorm":
+        delta -= 12
+        rationale.append(
+            "-12 Lightning War: Acid Storm can add ACID cleanup friction"
+        )
 
     detritus_speed_traps = {
         "Mission_AcidTank",
@@ -528,6 +533,7 @@ def _apply_lightning_war_routing(
 
     slow_mission_ids = {
         "Mission_Artillery",
+        "Mission_AcidStorm",
         "Mission_Dam",
         "Mission_ForestFire",
         "Mission_FreezeBldg",
