@@ -84,6 +84,59 @@ def test_summary_honors_board_flying_immunity_when_bridge_payload_is_stale():
     assert summary["mechs_on_danger"] == []
 
 
+def test_summary_satellite_fallback_ignores_non_queued_rockets():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Satellite"
+    data["targeted_tiles"] = [[6, 1], [4, 2], [5, 2], [6, 2], [6, 3]]
+    data["environment_danger"] = [[5, 2], [7, 2], [6, 1], [6, 3]]
+    data["environment_danger_v2"] = [
+        [5, 2, 1, 1, 1],
+        [7, 2, 1, 1, 1],
+        [6, 1, 1, 1, 1],
+        [6, 3, 1, 1, 1],
+    ]
+    data["units"][0]["type"] = "ElectricMech"
+    data["units"][0]["x"] = 4
+    data["units"][0]["y"] = 3
+    data["units"][0]["hp"] = 3
+    data["units"].extend([
+        {
+            "uid": 98,
+            "type": "SatelliteRocket",
+            "x": 6,
+            "y": 2,
+            "hp": 2,
+            "max_hp": 2,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": ["Rocket_Launch"],
+            "active": False,
+            "queued_launch": True,
+        },
+        {
+            "uid": 99,
+            "type": "SatelliteRocket",
+            "x": 4,
+            "y": 2,
+            "hp": 2,
+            "max_hp": 2,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": ["Rocket_Launch"],
+            "active": False,
+            "queued_launch": False,
+        },
+    ])
+
+    board = Board.from_bridge_data(data)
+    summary = _capture_board_summary(board, data)
+
+    assert (4, 3) not in board.environment_danger
+    assert summary["mechs_on_danger"] == []
+
+
 def test_summary_does_not_treat_spent_action_as_disabled():
     data = _bridge_with_mech()
     data["units"][0]["active"] = False

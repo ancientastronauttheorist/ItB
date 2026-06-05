@@ -833,14 +833,28 @@ class Board:
         )
 
         # Satellite rocket deadly threat: 4 adjacent tiles kill grounded units
-        # on launch, but live launch exhaust spares flying pawns. Detect by
-        # targeted adjacent tiles when old payloads lack environment_danger_v2.
+        # on launch, but live launch exhaust spares flying pawns. New bridge
+        # payloads expose queued_launch per rocket; old payloads only had
+        # targeted tiles, so keep that fallback when queued_launch is absent.
         targeted = set()
         for tt in data.get("targeted_tiles", []):
             if isinstance(tt, (list, tuple)) and len(tt) >= 2:
                 targeted.add((tt[0], tt[1]))
+        raw_satellites = [
+            ud for ud in data.get("units", []) or []
+            if isinstance(ud, dict) and "Satellite" in str(ud.get("type", ""))
+        ]
+        satellite_launch_field_present = any(
+            "queued_launch" in ud for ud in raw_satellites
+        )
+        queued_satellite_uids = {
+            ud.get("uid") for ud in raw_satellites
+            if ud.get("queued_launch")
+        }
         for u in board.units:
             if "Satellite" in u.type and u.hp > 0:
+                if satellite_launch_field_present and u.uid not in queued_satellite_uids:
+                    continue
                 adj = [(u.x-1, u.y), (u.x+1, u.y), (u.x, u.y-1), (u.x, u.y+1)]
                 adj_on_board = [(x, y) for x, y in adj if 0 <= x < 8 and 0 <= y < 8]
                 if any(t in targeted for t in adj_on_board):
