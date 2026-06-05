@@ -283,9 +283,23 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "abandon_pilot_slot": KnownWindowControl(
         name="abandon_pilot_slot",
-        window_x=560,
+        window_x=491,
         window_y=329,
         description="Abandon Timeline pilot selection",
+        settle_seconds=0.8,
+    ),
+    "abandon_pilot_slot_wide": KnownWindowControl(
+        name="abandon_pilot_slot_wide",
+        window_x=560,
+        window_y=329,
+        description="Abandon Timeline wide-layout pilot selection",
+        settle_seconds=0.8,
+    ),
+    "abandon_pilot_slot_right": KnownWindowControl(
+        name="abandon_pilot_slot_right",
+        window_x=700,
+        window_y=329,
+        description="Abandon Timeline right pilot selection",
         settle_seconds=0.8,
     ),
     "island_archive": KnownWindowControl(

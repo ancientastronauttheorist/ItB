@@ -814,16 +814,31 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                 }
 
     if needs_abandon_clicks:
+        for control in ("abandon_timeline", "abandon_confirm_yes"):
+            result = ui(control)
+            if result.get("status") != "OK":
+                return {
+                    "status": "BLOCKED",
+                    "reason": f"{control}_failed",
+                    "steps": steps,
+                }
         for control in (
-            "abandon_timeline",
-            "abandon_confirm_yes",
             "abandon_pilot_slot",
+            "abandon_pilot_slot_wide",
+            "abandon_pilot_slot_right",
         ):
             result = ui(control)
             if result.get("status") != "OK":
                 return {
                     "status": "BLOCKED",
                     "reason": f"{control}_failed",
+                    "steps": steps,
+                }
+            visible = ui("classify")
+            if _visible_ui_name(visible) == "new_game_setup":
+                return {
+                    "status": "OK",
+                    "reason": "abandoned_to_setup",
                     "steps": steps,
                 }
 

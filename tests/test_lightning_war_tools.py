@@ -16,10 +16,17 @@ def _lightning_peek_resume_control() -> str:
 def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
     from src.control.mac_click import list_known_window_controls
 
-    control = list_known_window_controls()["abandon_pilot_slot"]
+    controls = list_known_window_controls()
+    control = controls["abandon_pilot_slot"]
+    wide = controls["abandon_pilot_slot_wide"]
+    right = controls["abandon_pilot_slot_right"]
 
-    assert control["window_x"] == 560
+    assert control["window_x"] == 491
     assert control["window_y"] == 329
+    assert wide["window_x"] == 560
+    assert wide["window_y"] == 329
+    assert right["window_x"] == 700
+    assert right["window_y"] == 329
 
 
 def test_lightning_war_weight_overlay_penalizes_pod_pickup():

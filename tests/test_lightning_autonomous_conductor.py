@@ -558,7 +558,7 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
         "abandon_confirm_yes",
         "abandon_pilot_slot",
         "classify",
-        "abandon_pilot_slot",
+        "abandon_pilot_slot_wide",
         "classify",
     ]
 
