@@ -1892,6 +1892,23 @@ def _unit_roster_fingerprint(bridge_data: dict | None) -> str:
     return "|".join(parts)
 
 
+def _should_clear_stale_active_solution(
+    cached_turn: int,
+    cached_fingerprint: str,
+    current_turn: int,
+    current_fingerprint: str,
+) -> bool:
+    """Return true when cached action predictions are unsafe to reuse."""
+    if cached_turn > current_turn:
+        return True
+    return (
+        cached_turn == current_turn
+        and bool(cached_fingerprint)
+        and bool(current_fingerprint)
+        and cached_fingerprint != current_fingerprint
+    )
+
+
 def _enqueue_behavior_novelty(
     session: RunSession,
     diff,
@@ -19429,10 +19446,15 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         cur_turn = read_result.get("turn", 0)
         cur_data = read_state() if is_bridge_active() else None
         cur_fp = _unit_roster_fingerprint(cur_data)
-        # Different turn → the next solve will overwrite it anyway;
-        # mismatched fingerprint on the same turn → stale cache.
-        if (cached_turn != cur_turn
-                or (cached_fp and cur_fp and cached_fp != cur_fp)):
+        # Older solved turns are pending post-enemy evidence. Keep them until
+        # the audit consumes or blocks them; clearing here can skip the only
+        # pointer no-active End Turn handling has for the previous turn.
+        if _should_clear_stale_active_solution(
+            cached_turn,
+            cached_fp,
+            cur_turn,
+            cur_fp,
+        ):
             _stale_session.active_solution = None
             _stale_session.actions_executed = 0
             _stale_session.save()

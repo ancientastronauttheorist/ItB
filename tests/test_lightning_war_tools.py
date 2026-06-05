@@ -135,6 +135,30 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
     assert manifests[0][1]["advanced_content"] == "off"
 
 
+def test_stale_active_solution_guard_preserves_pending_post_enemy_turn():
+    assert not commands._should_clear_stale_active_solution(
+        cached_turn=1,
+        cached_fingerprint="old-roster",
+        current_turn=2,
+        current_fingerprint="new-roster",
+    )
+
+
+def test_stale_active_solution_guard_clears_same_turn_mismatch_and_rollback():
+    assert commands._should_clear_stale_active_solution(
+        cached_turn=2,
+        cached_fingerprint="old-roster",
+        current_turn=2,
+        current_fingerprint="new-roster",
+    )
+    assert commands._should_clear_stale_active_solution(
+        cached_turn=3,
+        cached_fingerprint="old-roster",
+        current_turn=2,
+        current_fingerprint="old-roster",
+    )
+
+
 def test_lightning_drain_known_behavior_research_marks_speed_entry_done(monkeypatch):
     session = RunSession(
         run_id="lw",
