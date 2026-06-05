@@ -605,6 +605,7 @@ _LIGHTNING_SPEED_LOSS_KINDS = (
         "grid_damage",
         "building_destroyed",
         "building_hp_loss",
+        "mech_lost",
         "mech_hp_loss",
     }
     | OBJECTIVE_LOSS_DIRTY_KINDS
@@ -655,16 +656,6 @@ def _allow_lightning_war_speed_loss(
     if "grid_damage" in blocking_kinds:
         pred_grid = predicted.get("grid_power")
         if not isinstance(pred_grid, int) or pred_grid <= 0:
-            return False
-
-    if isinstance(current, dict):
-        cur_mechs = current.get("mechs_alive")
-        pred_mechs = predicted.get("mechs_alive")
-        if (
-            isinstance(cur_mechs, int)
-            and isinstance(pred_mechs, int)
-            and pred_mechs < cur_mechs
-        ):
             return False
 
     return True
@@ -719,6 +710,7 @@ def _lightning_speed_loss_summary(plan_safety: dict | None) -> dict | None:
                     "destroy_objective_units_alive",
                 ),
                 "pods_present": _safety_int_loss(plan_safety, "pods_present"),
+                "mechs_alive": _safety_int_loss(plan_safety, "mechs_alive"),
                 "mech_hp_total": _safety_int_loss(plan_safety, "mech_hp_total"),
             }.items()
             if value
@@ -14267,6 +14259,7 @@ def _lightning_click_reviewed_held_end_turn(
         allow_dirty_plan=allow_lightning_speed_loss,
         allow_protected_objective_loss_dirty=allow_lightning_speed_loss,
         allow_objective_loss_dirty=allow_lightning_speed_loss,
+        allow_mech_loss_dirty=allow_lightning_speed_loss,
     ):
         return None
 
@@ -19644,6 +19637,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                       allow_objective_loss
                                       or allow_lightning_speed_loss
                                   ),
+                                  allow_mech_loss_dirty=allow_lightning_speed_loss,
                                   allow_pod_loss_dirty=allow_lightning_pod_loss):
         consent_id = _dirty_consent_id(
             session,
@@ -19996,6 +19990,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                     re_solve_speed_loss
                                 ),
                                 allow_objective_loss_dirty=re_solve_speed_loss,
+                                allow_mech_loss_dirty=re_solve_speed_loss,
                                 allow_pod_loss_dirty=re_solve_speed_loss,
                             ):
                                 result = {
@@ -20271,6 +20266,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             allow_dirty_plan=re_solve_speed_loss,
                             allow_protected_objective_loss_dirty=re_solve_speed_loss,
                             allow_objective_loss_dirty=re_solve_speed_loss,
+                            allow_mech_loss_dirty=re_solve_speed_loss,
                             allow_pod_loss_dirty=re_solve_speed_loss,
                         ):
                             result = {

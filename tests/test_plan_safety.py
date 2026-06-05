@@ -529,6 +529,11 @@ def test_predicted_mech_loss_blocks_plan():
     assert audit["status"] == "DIRTY"
     assert plan_requires_safety_block(audit) is True
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_mech_loss_dirty=True,
+    ) is False
     assert audit["violations"][0]["kind"] == "mech_lost"
 
 

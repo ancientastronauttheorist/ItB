@@ -827,6 +827,7 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                                allow_kill_limit_objective_dirty: bool = False,
                                allow_protected_objective_loss_dirty: bool = False,
                                allow_objective_loss_dirty: bool = False,
+                               allow_mech_loss_dirty: bool = False,
                                allow_pod_loss_dirty: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
     if not isinstance(audit, dict):
@@ -882,6 +883,10 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             and not (
                 allow_objective_loss_dirty
                 and v.get("kind") in OBJECTIVE_LOSS_DIRTY_KINDS
+            )
+            and not (
+                allow_mech_loss_dirty
+                and v.get("kind") == "mech_lost"
             )
             and not (
                 allow_pod_loss_dirty
