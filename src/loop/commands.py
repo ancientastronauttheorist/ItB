@@ -15091,6 +15091,50 @@ def cmd_lightning_attempt(
             and lightning_speed_loss_policy
             and visible_ui.get("visible_ui") not in _LIGHTNING_SAFE_CLEAR_UIS
         ):
+            post_enemy_result = None
+            if session.active_solution is not None:
+                solved_turn = int(session.active_solution.turn)
+                expected_actual_turn = _post_enemy_expected_actual_turn(solved_turn)
+                if turn >= expected_actual_turn:
+                    try:
+                        refresh_bridge_state()
+                        post_board, post_data = read_bridge_state()
+                        if post_board is not None:
+                            post_enemy_result = _record_post_enemy(
+                                session,
+                                post_board,
+                                solved_turn,
+                                bridge_data=post_data,
+                            )
+                    except Exception as exc:
+                        post_enemy_result = {
+                            "status": "POST_ENEMY_AUDIT_MISSING",
+                            "blocking": True,
+                            "reason": "no_active_end_turn_flush_error",
+                            "message": str(exc),
+                            "turn": solved_turn,
+                            "mission_index": session.mission_index,
+                        }
+                    if (
+                        isinstance(post_enemy_result, dict)
+                        and post_enemy_result.get("blocking")
+                    ):
+                        result = dict(post_enemy_result)
+                        result.setdefault("next_step", (
+                            "Post-enemy audit blocked before a no-active-mechs "
+                            "Lightning End Turn click. Investigate before "
+                            "advancing the turn."
+                        ))
+                        action_record.update({
+                            "action": "no_active_mechs_post_enemy_block",
+                            "post_enemy_result": post_enemy_result,
+                        })
+                        result["action"] = action_record
+                        return finish(
+                            result,
+                            pause_reason="lightning_attempt_no_active_post_enemy_block",
+                        )
+
             pending_plan = _end_turn_click_plan_result()
             resume_result = _lightning_resume_if_paused(
                 dry_run=False,
@@ -15112,6 +15156,7 @@ def cmd_lightning_attempt(
                 {
                     "action": "click_no_active_mechs_end_turn",
                     "visible_ui": visible_ui,
+                    "post_enemy_result": post_enemy_result,
                     "resume_before_end_turn": resume_result,
                     "end_turn_click": click_result,
                     "end_turn_observed": observed,

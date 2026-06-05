@@ -3698,6 +3698,169 @@ def test_lightning_attempt_clicks_end_turn_when_no_active_mechs_for_speedrun(mon
     assert observations[0]["turn"] == 2
 
 
+def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    session.active_solution = ActiveSolution(
+        actions=[],
+        score=100.0,
+        turn=1,
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "recommended_control": None,
+        },
+    )
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: ("board", {"turn": 2, "phase": "combat_player"}),
+    )
+
+    def fake_record_post_enemy(session_arg, board, solved_turn, bridge_data=None):
+        calls.append(("post_enemy", solved_turn, board, bridge_data))
+        return {"status": "POST_ENEMY_RECORDED", "blocking": False}
+
+    monkeypatch.setattr(commands, "_record_post_enemy", fake_record_post_enemy)
+    monkeypatch.setattr(
+        commands,
+        "_end_turn_click_plan_result",
+        lambda: {
+            "status": "PLAN",
+            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
+            "codex_computer_use_batch": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: {"status": "OK"},
+    )
+
+    def fake_click(plan):
+        calls.append(("click", plan))
+        return {"status": "OK"}
+
+    monkeypatch.setattr(commands, "_click_end_turn_from_plan_result", fake_click)
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda plan: {"status": "OK", "reason": "phase_changed"},
+    )
+
+    result = commands.cmd_lightning_attempt(lightning_speed_loss_policy=True)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["action"]["post_enemy_result"]["status"] == "POST_ENEMY_RECORDED"
+    assert calls[0] == (
+        "post_enemy",
+        1,
+        "board",
+        {"turn": 2, "phase": "combat_player"},
+    )
+    assert calls[1][0] == "click"
+
+
+def test_lightning_attempt_blocks_no_active_end_turn_on_post_enemy_gate(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    session.active_solution = ActiveSolution(
+        actions=[],
+        score=100.0,
+        turn=1,
+    )
+    clicks = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "recommended_control": None,
+        },
+    )
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: ("board", {"turn": 2, "phase": "combat_player"}),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_record_post_enemy",
+        lambda *args, **kwargs: {
+            "status": "INVESTIGATE_POST_ENEMY",
+            "blocking": True,
+            "turn": 1,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_click_end_turn_from_plan_result",
+        lambda plan: clicks.append(plan) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_attempt(lightning_speed_loss_policy=True)
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["action"]["action"] == "no_active_mechs_post_enemy_block"
+    assert clicks == []
+
+
 def test_lightning_attempt_clears_safe_panel_when_no_active_mechs(monkeypatch):
     session = RunSession(
         run_id="lw",
@@ -4788,6 +4951,7 @@ def test_lightning_segment_stops_when_visual_route_start_blocks(monkeypatch):
 
     result = commands.cmd_lightning_segment(
         route_visual_region_index=8,
+        run_preflight=False,
     )
 
     assert result["reason"] == "visual_region_index_not_found"
