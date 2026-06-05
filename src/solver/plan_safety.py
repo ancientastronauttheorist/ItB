@@ -833,7 +833,7 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
         return True
     if audit.get("status") == "UNKNOWN":
         return True
-    if allow_pod_loss_dirty:
+    if allow_pod_loss_dirty and not allow_dirty_plan:
         return any(
             isinstance(v, dict)
             and v.get("blocking")
@@ -882,6 +882,10 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             and not (
                 allow_objective_loss_dirty
                 and v.get("kind") in OBJECTIVE_LOSS_DIRTY_KINDS
+            )
+            and not (
+                allow_pod_loss_dirty
+                and v.get("kind") in POD_LOSS_DIRTY_KINDS
             )
             for v in audit.get("violations", []) or []
         )

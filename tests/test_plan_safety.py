@@ -435,6 +435,25 @@ def test_explicit_stress_flag_overrides_protected_objective_loss():
     ) is False
 
 
+def test_dirty_allowances_compose_for_pod_and_protected_objective_loss():
+    audit = audit_plan_safety(
+        _summary(protected_objective_units_alive=2, pods_present=1),
+        _summary(protected_objective_units_alive=1, pods_present=0),
+    )
+
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_pod_loss_dirty=True,
+    ) is True
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_pod_loss_dirty=True,
+        allow_protected_objective_loss_dirty=True,
+    ) is False
+
+
 def test_objective_loss_stress_flag_overrides_objective_building_loss():
     audit = audit_plan_safety(
         _summary(objective_buildings_alive=1, objective_building_hp_total=1),
