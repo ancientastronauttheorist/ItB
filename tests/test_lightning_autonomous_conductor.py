@@ -883,6 +883,10 @@ def test_restartable_attempt_stop_treats_lightning_hard_gates_as_dead_attempts()
             "stale_active_combat_visible_island_map",
             "stale_active_combat_visible_island_map_attempt_restart",
         ),
+        (
+            "deployment_visible_ui_not_deployment",
+            "deployment_visible_ui_not_deployment_attempt_restart",
+        ),
     ]
 
     for reason, expected in examples:
