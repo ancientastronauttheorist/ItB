@@ -7900,10 +7900,12 @@ def _lightning_read_save_game_timer(
 
 def _lightning_parse_visible_timer_ocr_seconds(text: str | None) -> int | None:
     """Parse OCR variants of the pause-menu Timeline Playtime value."""
-    direct = _lightning_parse_timer_seconds(text)
-    if direct is not None:
-        return direct
-    compact = str(text or "").strip().lower().replace(" ", "")
+    raw = str(text or "").strip()
+    if not re.search(r"\d\s+\d", raw):
+        direct = _lightning_parse_timer_seconds(raw)
+        if direct is not None:
+            return direct
+    compact = raw.lower().replace(" ", "")
     if not compact:
         return None
 
@@ -7924,9 +7926,13 @@ def _lightning_parse_visible_timer_ocr_seconds(text: str | None) -> int | None:
         if minutes < 60 and seconds < 60:
             return hours * 3600 + minutes * 60 + seconds
 
-    colon_text = digits(compact)
-    colon_text = re.sub(r"[^0-9:]", "", colon_text)
-    return _lightning_parse_timer_seconds(colon_text)
+    colon_match = re.search(
+        r"(?<![0-9oil])([0-9oil]{1,2}:[0-9oil]{1,2}(?::[0-9oil]{1,2})?)(?![0-9oil])",
+        compact,
+    )
+    if colon_match:
+        return _lightning_parse_timer_seconds(digits(colon_match.group(1)))
+    return None
 
 
 def _lightning_ocr_texts_from_image(image_path: str | Path) -> dict:
