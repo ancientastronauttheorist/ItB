@@ -257,3 +257,76 @@ def test_autonomous_prefers_explicit_max_wall_seconds():
     assert result["status"] == "PARKED_SAFE"
     segment_call = next(payload for name, payload in calls if name == "segment")
     assert segment_call["max_wall_seconds"] == 77.0
+
+
+def test_autonomous_restarts_when_first_island_gate_is_missed():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 901.0}},
+        ),
+        cmd_lightning_segment=record("segment", {"status": "SHOULD_NOT_RUN"}),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(first_island_gate_seconds=900.0)._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "first_island_pace_gate"
+    assert result["game_timer"] == "0:15:01"
+    assert ("segment", {"args": ()}) not in calls
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_restarts_when_second_island_start_gate_is_missed():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=["archive"]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 1006.0}},
+        ),
+        cmd_lightning_segment=record("segment", {"status": "SHOULD_NOT_RUN"}),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(second_island_start_gate_seconds=1005.0)._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "second_island_start_pace_gate"
+    assert result["gate_timer"] == "0:16:45"
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})

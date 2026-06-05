@@ -60,7 +60,7 @@ class AutonomousLightningConductor:
     def run(self) -> dict[str, Any]:
         from src.loop import commands
 
-        session = commands._load_session()
+        session = _load_current_session(commands)
         run_id = str(session.run_id or f"lightning_{int(time.time())}")
         self.telemetry = TelemetryRecorder(run_id)
         self.telemetry.write_manifest(
@@ -213,6 +213,17 @@ class AutonomousLightningConductor:
             )
 
         best_timer = _timer_seconds(preflight)
+        session = _load_current_session(commands)
+        pace_gate = self._pace_gate(session, best_timer)
+        if pace_gate is not None:
+            pace_payload = dict(pace_gate)
+            pace_reason = str(pace_payload.pop("reason"))
+            commands.cmd_lightning_ui("ensure_pause")
+            return self._finish(
+                "RESTART_RECOMMENDED",
+                pace_reason,
+                **pace_payload,
+            )
         for attempt_index in range(1, max(1, cfg.max_attempts) + 1):
             self.telemetry.event(
                 "attempt_start",
@@ -254,6 +265,22 @@ class AutonomousLightningConductor:
                         game_timer=_timer_label(segment),
                         attempt_index=attempt_index,
                         segment_index=segment_index,
+                    )
+                session = _load_current_session(commands)
+                pace_gate = self._pace_gate(session, best_timer)
+                if pace_gate is not None:
+                    self.telemetry.event(
+                        "pace_gate",
+                        status="RESTART_RECOMMENDED",
+                        **pace_gate,
+                    )
+                    pace_payload = dict(pace_gate)
+                    pace_reason = str(pace_payload.pop("reason"))
+                    commands.cmd_lightning_ui("ensure_pause")
+                    return self._finish(
+                        "RESTART_RECOMMENDED",
+                        pace_reason,
+                        **pace_payload,
                     )
                 if cfg.achievement_sync and _safe_to_think(segment):
                     sync = self._span(
@@ -310,6 +337,35 @@ class AutonomousLightningConductor:
             "max_attempts_reached",
             telemetry_dir=str(self.telemetry.telemetry_dir),
         )
+
+    def _pace_gate(self, session: Any, game_seconds: float | None) -> dict[str, Any] | None:
+        cfg = self.config
+        if game_seconds is None:
+            return None
+        completed = list(getattr(session, "islands_completed", []) or [])
+        if not completed and float(game_seconds) >= float(cfg.first_island_gate_seconds):
+            return {
+                "reason": "first_island_pace_gate",
+                "game_seconds": round(float(game_seconds), 3),
+                "game_timer": _lightning_format_seconds(game_seconds),
+                "gate_seconds": float(cfg.first_island_gate_seconds),
+                "gate_timer": _lightning_format_seconds(cfg.first_island_gate_seconds),
+                "islands_completed": completed,
+            }
+        if len(completed) == 1 and float(game_seconds) >= float(
+            cfg.second_island_start_gate_seconds
+        ):
+            return {
+                "reason": "second_island_start_pace_gate",
+                "game_seconds": round(float(game_seconds), 3),
+                "game_timer": _lightning_format_seconds(game_seconds),
+                "gate_seconds": float(cfg.second_island_start_gate_seconds),
+                "gate_timer": _lightning_format_seconds(
+                    cfg.second_island_start_gate_seconds
+                ),
+                "islands_completed": completed,
+            }
+        return None
 
     def _prepare_setup(self, commands: Any) -> dict[str, Any]:
         cfg = self.config
@@ -445,6 +501,24 @@ def _timer_label(result: dict[str, Any] | None) -> str | None:
         if isinstance(container, dict) and container.get("game_timer") is not None:
             return str(container["game_timer"])
     return None
+
+
+def _load_current_session(commands: Any) -> Any:
+    loader = getattr(commands, "_load_session", None)
+    if callable(loader):
+        return loader()
+
+    class SessionView:
+        islands_completed: list[str] = []
+
+    return SessionView()
+
+
+def _lightning_format_seconds(total_seconds: int | float | None) -> str:
+    if total_seconds is None:
+        return "unknown"
+    seconds = max(0, int(float(total_seconds)))
+    return f"{seconds // 3600}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
 
 
 def _achievement_unlocked(result: dict[str, Any] | None) -> bool:
