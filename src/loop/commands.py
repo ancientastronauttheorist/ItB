@@ -8095,6 +8095,20 @@ def _lightning_effective_timer_source(
     return {"status": "OK", **best, "candidates": candidates}
 
 
+def _lightning_preflight_has_visible_pause_timer(preflight: dict | None) -> bool:
+    if not isinstance(preflight, dict):
+        return False
+    visible_timer = preflight.get("visible_timer")
+    if not isinstance(visible_timer, dict):
+        return False
+    return (
+        visible_timer.get("status") == "OK"
+        and visible_timer.get("source") == "visible_pause_menu_timer"
+        and bool(visible_timer.get("timeline_label_seen"))
+        and visible_timer.get("game_seconds") is not None
+    )
+
+
 def _lightning_game_timer_budget(
     game_seconds: int | float | None,
     *,
@@ -13253,11 +13267,13 @@ def cmd_lightning_route_start(
             _print_result(result)
             return result
 
+    visible_pause_timer_proof = _lightning_preflight_has_visible_pause_timer(preflight)
     auto_pause = None
     initial_ui = _lightning_visible_ui_snapshot()
     if (
         initial_ui.get("status") == "OK"
         and initial_ui.get("visible_ui") != "pause_menu"
+        and not visible_pause_timer_proof
         and auto_pause_if_needed
     ):
         auto_pause = _lightning_ensure_pause_state(
@@ -13267,6 +13283,14 @@ def cmd_lightning_route_start(
         if auto_pause.get("status") == "OK":
             initial_ui = _lightning_visible_ui_snapshot()
     initial_visible_name = initial_ui.get("visible_ui")
+    if initial_visible_name != "pause_menu" and visible_pause_timer_proof:
+        initial_visible_name = "pause_menu"
+        initial_ui = {
+            **initial_ui,
+            "visible_ui": "pause_menu",
+            "classifier_visible_ui": initial_ui.get("visible_ui"),
+            "pause_proof": "visible_pause_menu_timer",
+        }
     can_start_from_live_map = (
         not auto_pause_if_needed
         and initial_ui.get("status") == "OK"
@@ -13281,6 +13305,7 @@ def cmd_lightning_route_start(
             "reason": "not_in_pause_menu",
             "initial_ui": initial_ui,
             "auto_pause": auto_pause,
+            "visible_pause_timer_proof": visible_pause_timer_proof,
             "next_step": "Run lightning_ui ensure_pause before route_start.",
         }
         _print_result(result)

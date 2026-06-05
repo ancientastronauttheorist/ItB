@@ -7488,6 +7488,63 @@ def test_lightning_route_start_auto_pauses_before_route_check(monkeypatch):
     )
 
 
+def test_lightning_route_start_accepts_visible_pause_timer_proof(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {
+            "status": "PASS",
+            "visible_timer": {
+                "status": "OK",
+                "source": "visible_pause_menu_timer",
+                "timeline_label_seen": True,
+                "game_seconds": 261.0,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "island_map_or_unknown"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("visible pause timer should avoid auto-pause")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "top3": [
+                {
+                    "mission_id": "Mission_Train",
+                    "region_id": 5,
+                    "save_region_name": "The Pasture",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visual_regions_from_recommendation",
+        lambda recommendation: {
+            "status": "OK",
+            "regions": [{"index": 0, "window_x": 902, "window_y": 349}],
+        },
+    )
+
+    result = commands.cmd_lightning_route_start()
+
+    assert result["status"] == "ROUTE_READY"
+    assert result["auto_pause"] is None
+    assert result["initial_ui"]["pause_proof"] == "visible_pause_menu_timer"
+    assert result["route_target_hint"]["match_label"] == "The Pasture"
+
+
 def test_lightning_route_start_returns_visual_regions_when_route_check_unavailable(monkeypatch):
     monkeypatch.setattr(
         commands,
