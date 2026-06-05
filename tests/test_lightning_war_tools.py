@@ -18,7 +18,7 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
 
     control = list_known_window_controls()["abandon_pilot_slot"]
 
-    assert control["window_x"] == 500
+    assert control["window_x"] == 560
     assert control["window_y"] == 329
 
 
