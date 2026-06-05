@@ -835,13 +835,13 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                 "reason": "abandoned_to_setup",
                 "steps": steps,
             }
-        recommended = str(visible.get("recommended_control") or "")
-        if recommended in RESTART_RECOVERY_SAFE_CONTROLS:
-            cleared = ui(recommended)
+        recovery_control = _restart_recovery_control(visible)
+        if recovery_control:
+            cleared = ui(recovery_control)
             if cleared.get("status") != "OK":
                 return {
                     "status": "BLOCKED",
-                    "reason": f"{recommended}_failed",
+                    "reason": f"{recovery_control}_failed",
                     "steps": steps,
                 }
             continue
@@ -864,6 +864,15 @@ def _restart_recovery_panel_safe(result: dict[str, Any]) -> bool:
     if _visible_ui_name(result) != "kia_panel":
         return False
     return _recommended_control_name(result) in RESTART_RECOVERY_SAFE_CONTROLS
+
+
+def _restart_recovery_control(result: dict[str, Any]) -> str | None:
+    if _visible_ui_name(result) == "kia_panel":
+        return "abandon_pilot_slot"
+    recommended = _recommended_control_name(result)
+    if recommended in RESTART_RECOVERY_SAFE_CONTROLS:
+        return recommended
+    return None
 
 
 def _recommended_control_name(result: dict[str, Any] | None) -> str | None:

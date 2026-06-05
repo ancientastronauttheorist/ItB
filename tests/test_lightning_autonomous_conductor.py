@@ -534,7 +534,6 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
             "abandon_timeline",
             "abandon_confirm_yes",
             "abandon_pilot_slot",
-            "kia_understood",
         }:
             return {"status": "OK"}
         if control == "classify":
@@ -559,7 +558,7 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
         "abandon_confirm_yes",
         "abandon_pilot_slot",
         "classify",
-        "kia_understood",
+        "abandon_pilot_slot",
         "classify",
     ]
 
@@ -617,7 +616,7 @@ def test_restart_dead_timeline_resumes_from_kia_panel_after_failed_recovery():
     def lightning_ui(control):
         nonlocal classify_count
         calls.append(control)
-        if control == "kia_understood":
+        if control == "abandon_pilot_slot":
             return {"status": "OK"}
         if control == "classify":
             classify_count += 1
@@ -661,7 +660,7 @@ def test_restart_dead_timeline_resumes_from_kia_panel_after_failed_recovery():
     assert calls == [
         "pause_guard",
         "classify",
-        "kia_understood",
+        "abandon_pilot_slot",
         "classify",
     ]
 
