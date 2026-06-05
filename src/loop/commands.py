@@ -15016,6 +15016,79 @@ def cmd_lightning_attempt(
                     result["reason"] = clear_result.get("reason", "panel_clear_failed")
                 return finish(result, pause_reason="lightning_attempt_panel_cleared")
 
+        if (
+            in_active_mission
+            and click_ui
+            and not dry_run
+            and lightning_speed_loss_policy
+            and visible_ui.get("visible_ui") not in _LIGHTNING_SAFE_CLEAR_UIS
+        ):
+            pending_plan = _end_turn_click_plan_result()
+            resume_result = _lightning_resume_if_paused(
+                dry_run=False,
+                click_ui=True,
+            )
+            click_result = None
+            observed = None
+            if (
+                resume_result is None
+                or resume_result.get("status") in {"OK", "PLANNED"}
+            ):
+                click_result = _click_end_turn_from_plan_result(pending_plan)
+                if click_result.get("status") == "OK":
+                    observed = _observe_end_turn_after_click(
+                        {"turn": turn, **pending_plan},
+                    )
+
+            action_record.update(
+                {
+                    "action": "click_no_active_mechs_end_turn",
+                    "visible_ui": visible_ui,
+                    "resume_before_end_turn": resume_result,
+                    "end_turn_click": click_result,
+                    "end_turn_observed": observed,
+                }
+            )
+            status = "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+            reason = "no_active_mechs_end_turn_clicked"
+            if (
+                resume_result is not None
+                and resume_result.get("status") not in {"OK", "PLANNED"}
+            ):
+                status = "LIGHTNING_ATTEMPT_STOPPED"
+                reason = "no_active_mechs_resume_failed"
+            elif (
+                not isinstance(click_result, dict)
+                or click_result.get("status") != "OK"
+            ):
+                status = "LIGHTNING_ATTEMPT_STOPPED"
+                reason = "no_active_mechs_end_turn_click_failed"
+            elif (
+                not isinstance(observed, dict)
+                or observed.get("status") != "OK"
+            ):
+                status = "LIGHTNING_ATTEMPT_STOPPED"
+                reason = "no_active_mechs_end_turn_not_observed"
+
+            result = {
+                "status": status,
+                "reason": reason,
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+                "action": action_record,
+                "pending_end_turn_batch": pending_plan["batch"],
+                "pending_end_turn_codex_computer_use_batch": pending_plan.get(
+                    "codex_computer_use_batch",
+                    [],
+                ),
+                "next_step": (
+                    "Rerun lightning_segment so enemy/player transition "
+                    "handling stays inside local automation."
+                ),
+            }
+            return finish(result, pause_reason="lightning_attempt_no_active_mechs_end_turn")
+
         result = {
             "status": "LIGHTNING_ATTEMPT_STOPPED",
             "reason": "player_turn_no_active_mechs",

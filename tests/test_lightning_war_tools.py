@@ -3623,6 +3623,79 @@ def test_lightning_attempt_stops_quickly_on_player_phase_without_active_mechs(mo
     assert calls == []
 
 
+def test_lightning_attempt_clicks_end_turn_when_no_active_mechs_for_speedrun(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    clicks = []
+    observations = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "recommended_control": None,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_end_turn_click_plan_result",
+        lambda: {
+            "status": "PLAN",
+            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
+            "codex_computer_use_batch": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: {"status": "OK"},
+    )
+
+    def fake_click(plan):
+        clicks.append(plan)
+        return {"status": "OK"}
+
+    def fake_observe(plan):
+        observations.append(plan)
+        return {"status": "OK", "reason": "phase_changed"}
+
+    monkeypatch.setattr(commands, "_click_end_turn_from_plan_result", fake_click)
+    monkeypatch.setattr(commands, "_observe_end_turn_after_click", fake_observe)
+
+    result = commands.cmd_lightning_attempt(lightning_speed_loss_policy=True)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "no_active_mechs_end_turn_clicked"
+    assert result["action"]["action"] == "click_no_active_mechs_end_turn"
+    assert clicks
+    assert observations[0]["turn"] == 2
+
+
 def test_lightning_attempt_clears_safe_panel_when_no_active_mechs(monkeypatch):
     session = RunSession(
         run_id="lw",
