@@ -157,7 +157,20 @@ class AutonomousLightningConductor:
             if _achievement_unlocked(sync):
                 return self._finish("SUCCESS", "achievement_already_unlocked", sync=_compact(sync))
 
-        if cfg.start_from_verified_setup or _visible_ui_name(guard) == "new_game_setup":
+        initial_visible_ui = _visible_ui_name(guard)
+        if cfg.start_from_verified_setup or initial_visible_ui == "new_game_setup":
+            if initial_visible_ui == "new_game_setup":
+                setup_start = self._span(
+                    "setup_start",
+                    commands.cmd_lightning_ui,
+                    control="setup_start",
+                )
+                if setup_start.get("status") != "OK":
+                    return self._finish(
+                        "BLOCKED",
+                        "setup_start_failed",
+                        setup_start=_compact(setup_start),
+                    )
             setup = self._prepare_setup(commands)
             if setup.get("status") != "PASS":
                 return self._finish(

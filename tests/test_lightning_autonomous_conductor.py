@@ -71,12 +71,14 @@ def test_autonomous_starts_when_initial_screen_is_setup():
     result = make_conductor()._run_inner(commands)
 
     assert result["status"] == "PARKED_SAFE"
-    assert [name for name, _ in calls[:4]] == [
+    assert [name for name, _ in calls[:5]] == [
         "pause_guard",
+        "lightning_ui",
         "verify_setup",
         "start_run",
         "preflight",
     ]
+    assert calls[1] == ("lightning_ui", {"args": (), "control": "setup_start"})
 
 
 def test_autonomous_blocks_and_pauses_on_bridge_snapshot_unavailable():
