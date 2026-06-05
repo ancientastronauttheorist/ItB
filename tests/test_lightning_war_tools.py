@@ -5293,6 +5293,50 @@ def test_lightning_speed_policy_allows_clean_unplanned_building_threat():
     ) is False
 
 
+def test_lightning_speed_policy_ignores_covered_audit_entries():
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    threat_audit = {
+        "still_threatened_count": 1,
+        "entries": [
+            {
+                "target_visual": "B7",
+                "target_hp": 1,
+                "coverage": {"reason": "attacker_killed"},
+            },
+            {
+                "target_visual": "B3",
+                "target_hp": 2,
+                "coverage": {"reason": "still_threatened_current"},
+            },
+        ],
+    }
+    plan_safety = {
+        "blocking": False,
+        "violations": [],
+        "current": {
+            "grid_power": 5,
+            "objective_buildings_alive": 1,
+            "objective_building_hp_total": 1,
+            "protected_objective_units_alive": 0,
+            "pylons_alive": None,
+            "pylon_hp_total": None,
+            "bigbomb_alive": False,
+        },
+    }
+
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        lightning_speed_loss_allowed=True,
+    ) is False
+
+
 def test_lightning_speed_policy_blocks_unplanned_threat_if_grid_would_collapse():
     session = RunSession(
         run_id="lw",
@@ -5323,7 +5367,7 @@ def test_lightning_speed_policy_blocks_unplanned_threat_if_grid_would_collapse()
     ) is True
 
 
-def test_lightning_speed_policy_blocks_unplanned_objective_threat():
+def test_lightning_speed_policy_blocks_unplanned_pylon_threat():
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
@@ -5339,9 +5383,8 @@ def test_lightning_speed_policy_blocks_unplanned_objective_threat():
         "violations": [],
         "current": {
             "grid_power": 6,
-            "objective_buildings_alive": 1,
-            "objective_building_hp_total": 2,
-            "protected_objective_units_alive": 0,
+            "pylons_alive": 1,
+            "pylon_hp_total": 1,
         },
     }
 

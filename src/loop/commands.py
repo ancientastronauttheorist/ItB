@@ -413,14 +413,7 @@ def _lightning_speed_unplanned_threat_loss_allowed(
     if not isinstance(grid_power, int) or grid_power - still_threatened <= 0:
         return False
 
-    protected_fields = (
-        "objective_buildings_alive",
-        "objective_building_hp_total",
-        "protected_objective_units_alive",
-        "pylons_alive",
-        "pylon_hp_total",
-        "bigbomb_alive",
-    )
+    protected_fields = ("pylons_alive", "pylon_hp_total", "bigbomb_alive")
     for field in protected_fields:
         value = current.get(field)
         if isinstance(value, bool):
@@ -430,9 +423,22 @@ def _lightning_speed_unplanned_threat_loss_allowed(
             return False
 
     entries = threat_audit.get("entries")
-    if not isinstance(entries, list) or len(entries) < still_threatened:
+    if not isinstance(entries, list):
         return False
-    for entry in entries[:still_threatened]:
+    live_entries = [
+        entry for entry in entries
+        if isinstance(entry, dict)
+        and (
+            not isinstance(entry.get("coverage"), dict)
+            or entry.get("coverage", {}).get("reason") in {
+                "still_threatened_current",
+                "still_threatened_initial",
+            }
+        )
+    ]
+    if len(live_entries) < still_threatened:
+        return False
+    for entry in live_entries[:still_threatened]:
         if not isinstance(entry, dict):
             return False
         target_hp = entry.get("target_hp")
