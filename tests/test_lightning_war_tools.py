@@ -5431,7 +5431,7 @@ def test_lightning_war_pod_loss_allowance_does_not_cover_grid_loss():
     assert commands._allow_lightning_war_pod_loss(session, plan_safety) is False
 
 
-def test_lightning_attempt_blocks_on_wall_budget(monkeypatch):
+def test_lightning_attempt_does_not_treat_session_age_as_game_budget(monkeypatch):
     old_session = RunSession(
         run_id="20000101_000000_000",
         squad="Blitzkrieg",
@@ -5439,10 +5439,21 @@ def test_lightning_attempt_blocks_on_wall_budget(monkeypatch):
         achievement_targets=["Lightning War"],
     )
     monkeypatch.setattr(commands, "_load_session", lambda: old_session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_save_game_timer",
+        lambda profile="Alpha": {
+            "status": "OK",
+            "source": "saveData_current_time",
+            "game_seconds": 0.0,
+            "game_timer": "0:00:00",
+        },
+    )
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: False)
 
     result = commands.cmd_lightning_attempt(max_wall_seconds=1)
 
-    assert result["status"] == "LIGHTNING_ATTEMPT_BUDGET_EXCEEDED"
+    assert result["status"] != "LIGHTNING_ATTEMPT_BUDGET_EXCEEDED"
 
 
 def test_lightning_loop_blocks_pending_research(monkeypatch):

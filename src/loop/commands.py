@@ -14424,7 +14424,7 @@ def cmd_lightning_attempt(
     budget = _lightning_budget_summary(
         session,
         profile=profile,
-        max_wall_seconds=max_wall_seconds,
+        max_wall_seconds=None,
     )
     if budget.get("status") == "EXCEEDED":
         result = {
