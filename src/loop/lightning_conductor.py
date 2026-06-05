@@ -109,7 +109,15 @@ class AutonomousLightningConductor:
             if self.screenshots is not None:
                 self.screenshots.stop()
                 self.screenshots.capture_once(clock_state="final", note=reason)
-            report = generate_frame_delta_report(self.telemetry.run_dir)
+            if _safe_to_finalize(result):
+                report = generate_frame_delta_report(self.telemetry.run_dir)
+            else:
+                report = {
+                    "status": "SKIPPED",
+                    "reason": "unsafe_to_generate_frame_deltas",
+                    "final_status": status,
+                    "final_reason": reason,
+                }
             self.telemetry.event("frame_delta_report", **report)
             self.telemetry.summary(
                 status=status,
@@ -221,10 +229,10 @@ class AutonomousLightningConductor:
         if pace_gate is not None:
             pace_payload = dict(pace_gate)
             pace_reason = str(pace_payload.pop("reason"))
-            commands.cmd_lightning_ui("ensure_pause")
             return self._finish(
                 "RESTART_RECOMMENDED",
                 pace_reason,
+                ensure_pause=self._ensure_pause(commands),
                 **pace_payload,
             )
         for attempt_index in range(1, max(1, cfg.max_attempts) + 1):
@@ -279,10 +287,10 @@ class AutonomousLightningConductor:
                     )
                     pace_payload = dict(pace_gate)
                     pace_reason = str(pace_payload.pop("reason"))
-                    commands.cmd_lightning_ui("ensure_pause")
                     return self._finish(
                         "RESTART_RECOMMENDED",
                         pace_reason,
+                        ensure_pause=self._ensure_pause(commands),
                         **pace_payload,
                     )
                 if cfg.achievement_sync and _safe_to_think(segment):
@@ -299,24 +307,24 @@ class AutonomousLightningConductor:
                         )
                 restart_reason = _restartable_attempt_stop(segment)
                 if restart_reason is not None:
-                    commands.cmd_lightning_ui("ensure_pause")
                     return self._finish(
                         "RESTART_RECOMMENDED",
                         restart_reason,
+                        ensure_pause=self._ensure_pause(commands),
                         segment=_compact(segment),
                     )
                 if _hard_stop(segment):
-                    commands.cmd_lightning_ui("ensure_pause")
                     return self._finish(
                         "BLOCKED",
                         "hard_gate",
+                        ensure_pause=self._ensure_pause(commands),
                         segment=_compact(segment),
                     )
                 if best_timer is not None and best_timer >= cfg.abandon_seconds:
-                    commands.cmd_lightning_ui("ensure_pause")
                     return self._finish(
                         "RESTART_RECOMMENDED",
                         "timer_abandon_gate",
+                        ensure_pause=self._ensure_pause(commands),
                         game_seconds=best_timer,
                     )
                 if not _safe_to_think(segment) and _must_act_now(segment):
@@ -342,10 +350,18 @@ class AutonomousLightningConductor:
                 reason="attempt_loop_exhausted",
             )
 
-        commands.cmd_lightning_ui("ensure_pause")
+        ensure_pause = self._ensure_pause(commands)
+        if not _safe_to_think(ensure_pause):
+            return self._finish(
+                "RESTART_RECOMMENDED",
+                "attempt_dead_unpausable",
+                ensure_pause=ensure_pause,
+                telemetry_dir=str(self.telemetry.telemetry_dir),
+            )
         return self._finish(
             "PARKED_SAFE",
             "max_attempts_reached",
+            ensure_pause=ensure_pause,
             telemetry_dir=str(self.telemetry.telemetry_dir),
         )
 
@@ -456,6 +472,9 @@ class AutonomousLightningConductor:
         )
         return result
 
+    def _ensure_pause(self, commands: Any) -> dict[str, Any]:
+        return commands.cmd_lightning_ui("ensure_pause")
+
     def _finish(self, status: str, reason: str, **payload: Any) -> dict[str, Any]:
         assert self.telemetry is not None
         result = {
@@ -479,6 +498,7 @@ def _compact(value: Any) -> Any:
         "game_budget",
         "effective_timer",
         "pause_guard",
+        "ensure_pause",
         "issues",
         "warnings",
         "primary_next_command",
@@ -607,6 +627,11 @@ def _safe_to_think(result: dict[str, Any] | None) -> bool:
         return False
     if _visible_ui_name(result) == "new_game_setup":
         return True
+    if result.get("pause_verified") or result.get("timer_stop_verified"):
+        return True
+    visible = result.get("visible_ui") or result.get("pause_verify")
+    if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
+        return True
     guard = result.get("pause_guard")
     if isinstance(guard, dict):
         if guard.get("pause_verified") or guard.get("timer_stop_verified"):
@@ -614,8 +639,30 @@ def _safe_to_think(result: dict[str, Any] | None) -> bool:
         visible = guard.get("visible_ui") or guard.get("pause_verify")
         if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
             return True
+    ensure_pause = result.get("ensure_pause")
+    if isinstance(ensure_pause, dict) and _safe_to_think(ensure_pause):
+        return True
     if result.get("status") in {"PARKED_SAFE", "SUCCESS"}:
         return True
+    return False
+
+
+def _safe_to_finalize(result: dict[str, Any] | None) -> bool:
+    if not isinstance(result, dict):
+        return False
+    if result.get("status") == "SUCCESS":
+        return True
+    if _visible_ui_name(result) == "new_game_setup":
+        return True
+    if result.get("pause_verified") or result.get("timer_stop_verified"):
+        return True
+    visible = result.get("visible_ui") or result.get("pause_verify")
+    if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
+        return True
+    for key in ("ensure_pause", "pause_guard"):
+        nested = result.get(key)
+        if isinstance(nested, dict) and _safe_to_finalize(nested):
+            return True
     return False
 
 

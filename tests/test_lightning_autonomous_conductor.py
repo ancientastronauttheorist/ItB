@@ -7,6 +7,7 @@ from src.loop.lightning_conductor import (
     AutonomousLightningConductor,
     _hard_stop,
     _restartable_attempt_stop,
+    _safe_to_finalize,
     _telemetry_run_id,
     _timer_label,
     _timer_seconds,
@@ -35,6 +36,14 @@ def make_conductor(**kwargs) -> AutonomousLightningConductor:
     )
     conductor.telemetry = FakeTelemetry()
     return conductor
+
+
+def verified_pause_payload() -> dict:
+    return {
+        "status": "OK",
+        "pause_verified": True,
+        "visible_ui": {"visible_ui": "pause_menu"},
+    }
 
 
 def test_telemetry_run_id_preserves_real_session_id():
@@ -85,7 +94,7 @@ def test_autonomous_starts_when_initial_screen_is_setup():
                 },
             },
         ),
-        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
     )
 
     result = make_conductor()._run_inner(commands)
@@ -141,7 +150,7 @@ def test_autonomous_starts_from_setup_despite_stale_live_bridge():
                 },
             },
         ),
-        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
     )
 
     result = make_conductor()._run_inner(commands)
@@ -187,7 +196,7 @@ def test_autonomous_blocks_and_pauses_on_bridge_snapshot_unavailable():
                 },
             },
         ),
-        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
     )
 
     result = make_conductor()._run_inner(commands)
@@ -228,7 +237,7 @@ def test_autonomous_passes_segment_timeout_as_wall_cap():
                 },
             },
         ),
-        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
     )
 
     result = make_conductor(segment_timeout=123.0)._run_inner(commands)
@@ -269,7 +278,7 @@ def test_autonomous_prefers_explicit_max_wall_seconds():
                 },
             },
         ),
-        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
     )
 
     result = make_conductor(max_wall_seconds=77.0, segment_timeout=123.0)._run_inner(commands)
@@ -469,3 +478,40 @@ def test_restartable_attempt_stop_detects_nested_safety_blocked_loop():
 
     assert _restartable_attempt_stop(segment) == "safety_blocked_attempt_restart"
     assert not _hard_stop(segment)
+
+
+def test_final_frame_report_requires_safe_evidence_for_parked_safe_status():
+    result = {
+        "status": "PARKED_SAFE",
+        "reason": "max_attempts_reached",
+    }
+
+    assert not _safe_to_finalize(result)
+
+
+def test_final_frame_report_allows_verified_ensure_pause():
+    result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "first_island_pace_gate",
+        "ensure_pause": {
+            "status": "OK",
+            "pause_verified": True,
+            "visible_ui": {"visible_ui": "pause_menu"},
+        },
+    }
+
+    assert _safe_to_finalize(result)
+
+
+def test_final_frame_report_skips_unverified_ensure_pause():
+    result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "attempt_dead_unpausable",
+        "ensure_pause": {
+            "status": "BLOCKED",
+            "reason": "pause_not_verified",
+            "visible_ui": {"visible_ui": "combat_screen"},
+        },
+    }
+
+    assert not _safe_to_finalize(result)
