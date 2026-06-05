@@ -523,6 +523,47 @@ def test_restart_dead_timeline_abandons_to_setup():
     ]
 
 
+def test_restart_dead_timeline_clears_kia_panel_to_setup():
+    calls: list[str] = []
+    classify_count = 0
+
+    def lightning_ui(control):
+        nonlocal classify_count
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_slot",
+            "kia_understood",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            classify_count += 1
+            if classify_count == 1:
+                return {
+                    "status": "OK",
+                    "visible_ui": "kia_panel",
+                    "recommended_control": "kia_understood",
+                }
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+
+    result = _restart_dead_timeline(commands, verified_pause_payload())
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "abandoned_to_setup"
+    assert calls == [
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_slot",
+        "classify",
+        "kia_understood",
+        "classify",
+    ]
+
+
 def test_restart_dead_timeline_uses_pause_guard_before_abandon():
     calls: list[str] = []
 

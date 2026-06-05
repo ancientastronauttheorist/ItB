@@ -28,6 +28,10 @@ RESTARTABLE_ATTEMPT_STOP_TOKENS = (
     "POST_ENEMY_AUDIT_MISSED_WINDOW",
     "SAFETY_BLOCKED",
 )
+RESTART_RECOVERY_SAFE_CONTROLS = {
+    "kia_understood",
+    "modal_understood",
+}
 
 
 @dataclass
@@ -826,6 +830,16 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                 "reason": "abandoned_to_setup",
                 "steps": steps,
             }
+        recommended = str(visible.get("recommended_control") or "")
+        if recommended in RESTART_RECOVERY_SAFE_CONTROLS:
+            cleared = ui(recommended)
+            if cleared.get("status") != "OK":
+                return {
+                    "status": "BLOCKED",
+                    "reason": f"{recommended}_failed",
+                    "steps": steps,
+                }
+            continue
         handled = ui("handle_screen")
         if _visible_ui_name(handled) == "new_game_setup":
             return {
