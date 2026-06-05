@@ -2123,7 +2123,7 @@ def test_lightning_ui_classifier_prioritizes_map_continue_panel(tmp_path):
     result = commands._classify_lightning_ui_image(path)
 
     assert result["visible_ui"] in {"bottom_continue_panel", "reward_panel"}
-    assert result["recommended_control"] == "bottom_continue"
+    assert result["recommended_control"] == "reward_continue"
 
 
 def test_lightning_ui_classifier_prefers_bottom_continue_over_modal_overlap(tmp_path):
@@ -2156,8 +2156,8 @@ def test_lightning_ui_classifier_prefers_bottom_continue_over_modal_overlap(tmp_
 
     result = commands._classify_lightning_ui_image(path)
 
-    assert result["visible_ui"] == "bottom_continue_panel"
-    assert result["recommended_control"] == "bottom_continue"
+    assert result["visible_ui"] == "reward_panel"
+    assert result["recommended_control"] == "reward_continue"
 
 
 def test_lightning_ui_classifier_prefers_perfect_island_continue(tmp_path):
@@ -2747,8 +2747,8 @@ def test_lightning_ui_classifier_prefers_region_secured_continue(tmp_path):
 
     result = commands._classify_lightning_ui_image(path)
 
-    assert result["visible_ui"] == "bottom_continue_panel"
-    assert result["recommended_control"] == "bottom_continue"
+    assert result["visible_ui"] == "reward_panel"
+    assert result["recommended_control"] == "reward_continue"
 
 
 def test_lightning_start_mission_target_detects_yellow_text(tmp_path):

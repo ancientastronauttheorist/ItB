@@ -10009,8 +10009,8 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     ):
         return {
             "status": "OK",
-            "visible_ui": "bottom_continue_panel",
-            "recommended_control": "bottom_continue",
+            "visible_ui": "reward_panel",
+            "recommended_control": "reward_continue",
             "confidence": bottom_continue["score"],
             "dark_overlay_fraction": dark_overlay,
             "scores": scores,
