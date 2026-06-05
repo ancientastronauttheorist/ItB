@@ -16013,6 +16013,24 @@ def cmd_lightning_start_run(
         _print_result(result)
         return result
 
+    session = RunSession.new_run(
+        "Blitzkrieg",
+        ["Lightning War"],
+        difficulty,
+        tags=["achievement", "lightning_war"],
+    )
+    session.save()
+    _write_manifest(
+        session,
+        {
+            "mode": "lightning_war_autonomous",
+            "profile": profile,
+            "advanced_content": advanced_content,
+            "first_island": first_island,
+        },
+    )
+    result["run_id"] = session.run_id
+
     island_click = click_known_window_control(island_control)
     result["first_island_click"] = island_click
     if island_click.get("status") != "OK":

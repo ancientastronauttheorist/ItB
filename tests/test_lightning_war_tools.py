@@ -58,6 +58,83 @@ def test_lightning_war_routing_penalizes_forest_fire_friction():
     assert any("Forest Fire post-enemy" in line for line in result["rationale_lines"])
 
 
+def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch):
+    calls: list[str] = []
+    manifests: list[tuple[object, dict | None]] = []
+    saved: list[object] = []
+    new_run_args: list[dict] = []
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(squad, achievements=None, difficulty=0, tags=None):
+            new_run_args.append(
+                {
+                    "squad": squad,
+                    "achievements": achievements,
+                    "difficulty": difficulty,
+                    "tags": tags,
+                }
+            )
+            return FakeSession()
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(
+        commands,
+        "_write_manifest",
+        lambda session, extra=None: manifests.append((session, extra)),
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {"status": "NO_ACTION", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+
+    result = commands.cmd_lightning_start_run(
+        advanced_content="off",
+        run_segment=False,
+    )
+
+    assert result["status"] == "OK"
+    assert result["run_id"] == "fresh_lw"
+    assert calls == ["setup_modal_start", "island_archive", "island_archive"]
+    assert saved == [manifests[0][0]]
+    assert new_run_args == [
+        {
+            "squad": "Blitzkrieg",
+            "achievements": ["Lightning War"],
+            "difficulty": 0,
+            "tags": ["achievement", "lightning_war"],
+        }
+    ]
+    assert manifests[0][1]["advanced_content"] == "off"
+
+
 def test_lightning_drain_known_behavior_research_marks_speed_entry_done(monkeypatch):
     session = RunSession(
         run_id="lw",
