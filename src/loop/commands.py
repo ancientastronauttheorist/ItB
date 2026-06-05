@@ -15421,7 +15421,7 @@ def _lightning_segment_should_continue(result: dict) -> bool:
     if (
         status == "LIGHTNING_ATTEMPT_STOPPED"
         and reason == "combat_loop_returned"
-        and loop_reason == "terminal_or_mission_end"
+        and loop_reason in {"terminal_or_mission_end", "max_turns_reached"}
     ):
         return True
     return False
@@ -15488,6 +15488,12 @@ def cmd_lightning_segment(
     seen_progress_keys: dict[tuple[object, object, object, object], int] = {}
 
     for step_index in range(max(1, int(max_steps))):
+        if (
+            max_wall_seconds is not None
+            and time.monotonic() - started_at >= max_wall_seconds
+        ):
+            stopped_reason = "segment_wall_seconds_exceeded"
+            break
         step_started_at = time.monotonic()
         if route_start_pending:
             preflight_result = None
@@ -15569,7 +15575,7 @@ def cmd_lightning_segment(
         attempt_kwargs = {
             "profile": profile,
             "time_limit": time_limit,
-            "max_turns": max_turns,
+            "max_turns": 1 if max_wall_seconds is not None else max_turns,
             "max_wait": max_wait,
             "click_ui": click_ui,
             "set_fast_bridge": set_fast_bridge,

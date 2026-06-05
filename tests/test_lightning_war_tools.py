@@ -4350,6 +4350,78 @@ def test_lightning_segment_dirty_consent_survives_panel_clear_until_combat(monke
     assert calls[1]["dirty_consent_id"] == "dirty-ok"
 
 
+def test_lightning_segment_limits_combat_burst_when_wall_cap_is_set(monkeypatch):
+    calls = []
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "combat_loop_returned",
+                "action": {
+                    "action": "combat_loop",
+                    "combat_loop": {"reason": "max_turns_reached"},
+                },
+            },
+            {"status": "LIGHTNING_ATTEMPT_ROUTE_READY"},
+        ]
+    )
+
+    def fake_attempt(**kwargs):
+        calls.append(kwargs)
+        return next(attempts)
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {"status": "OK", "reason": "already_paused"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=2,
+        max_turns=6,
+        max_wall_seconds=120,
+    )
+
+    assert result["reason"] == "route_ready"
+    assert [call["max_turns"] for call in calls] == [1, 1]
+
+
+def test_lightning_segment_stops_between_steps_after_wall_cap(monkeypatch):
+    calls = []
+    ticks = iter([0.0, 0.0, 0.0, 2.0, 2.0])
+
+    def fake_monotonic():
+        return next(ticks, 2.0)
+
+    def fake_attempt(**kwargs):
+        calls.append(kwargs)
+        return {
+            "status": "LIGHTNING_ATTEMPT_PANEL_CLEARED",
+            "reason": "auto_clear_safe_panel",
+            "action": {"action": "clear_visible_panel"},
+        }
+
+    monkeypatch.setattr(commands.time, "monotonic", fake_monotonic)
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {"status": "OK", "reason": "already_paused"},
+    )
+
+    result = commands.cmd_lightning_segment(
+        max_steps=3,
+        max_wall_seconds=1,
+    )
+
+    assert result["reason"] == "segment_wall_seconds_exceeded"
+    assert result["steps_attempted"] == 1
+    assert len(calls) == 1
+
+
 def test_lightning_segment_stops_on_visible_map_without_bridge(monkeypatch):
     monkeypatch.setattr(
         commands,
