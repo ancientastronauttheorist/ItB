@@ -15938,6 +15938,24 @@ def _lightning_auto_start_candidate_from_recommendation(attempt: dict) -> dict |
     """Build an auto-start route candidate from bridge-backed map routing."""
     if not isinstance(attempt, dict):
         return None
+    route_candidates = attempt.get("route_start_candidates")
+    if isinstance(route_candidates, list):
+        for candidate in route_candidates:
+            if not isinstance(candidate, dict):
+                continue
+            if candidate.get("auto_route_allowed") is False:
+                continue
+            try:
+                index = int(candidate.get("index"))
+            except (TypeError, ValueError):
+                continue
+            out = {"index": index}
+            mission_id = candidate.get("mission_id")
+            if mission_id:
+                out["mission_id"] = str(mission_id)
+            if candidate.get("auto_route_allowed") is not None:
+                out["auto_route_allowed"] = bool(candidate.get("auto_route_allowed"))
+            return out
     region_id = attempt.get("top_region_id")
     mission_id = attempt.get("top_mission")
     allowed = None
