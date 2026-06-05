@@ -789,6 +789,7 @@ def _must_act_now(result: dict[str, Any] | None) -> bool:
 def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> dict[str, Any]:
     """Abandon a dead Lightning timeline and verify the setup screen."""
     steps: list[dict[str, Any]] = []
+    needs_abandon_clicks = True
 
     def ui(control: str) -> dict[str, Any]:
         result = commands.cmd_lightning_ui(control)
@@ -803,24 +804,28 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
         else:
             pause = ui("ensure_pause")
         if not _safe_to_think(pause):
-            return {
-                "status": "BLOCKED_UNPAUSED_CLOCK_TICKING",
-                "reason": "restart_pause_not_verified",
-                "steps": steps,
-            }
+            if _restart_recovery_panel_safe(pause):
+                needs_abandon_clicks = False
+            else:
+                return {
+                    "status": "BLOCKED_UNPAUSED_CLOCK_TICKING",
+                    "reason": "restart_pause_not_verified",
+                    "steps": steps,
+                }
 
-    for control in (
-        "abandon_timeline",
-        "abandon_confirm_yes",
-        "abandon_pilot_slot",
-    ):
-        result = ui(control)
-        if result.get("status") != "OK":
-            return {
-                "status": "BLOCKED",
-                "reason": f"{control}_failed",
-                "steps": steps,
-            }
+    if needs_abandon_clicks:
+        for control in (
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_slot",
+        ):
+            result = ui(control)
+            if result.get("status") != "OK":
+                return {
+                    "status": "BLOCKED",
+                    "reason": f"{control}_failed",
+                    "steps": steps,
+                }
 
     for _ in range(4):
         visible = ui("classify")
@@ -853,6 +858,31 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
         "reason": "abandon_final_state_unverified",
         "steps": steps,
     }
+
+
+def _restart_recovery_panel_safe(result: dict[str, Any]) -> bool:
+    if _visible_ui_name(result) != "kia_panel":
+        return False
+    return _recommended_control_name(result) in RESTART_RECOVERY_SAFE_CONTROLS
+
+
+def _recommended_control_name(result: dict[str, Any] | None) -> str | None:
+    if not isinstance(result, dict):
+        return None
+    direct = result.get("recommended_control")
+    if isinstance(direct, str) and direct:
+        return direct
+    visible = result.get("visible_ui") or result.get("pause_verify")
+    if isinstance(visible, dict):
+        nested = visible.get("recommended_control")
+        if isinstance(nested, str) and nested:
+            return nested
+    last_poll = result.get("last_poll")
+    if isinstance(last_poll, dict):
+        nested = _recommended_control_name(last_poll)
+        if nested:
+            return nested
+    return None
 
 
 def cmd_lightning_autonomous(**kwargs: Any) -> dict[str, Any]:
