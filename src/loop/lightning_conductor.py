@@ -65,20 +65,7 @@ class AutonomousLightningConductor:
         session = _load_current_session(commands)
         run_id = _telemetry_run_id(session)
         self.telemetry = TelemetryRecorder(run_id)
-        self.telemetry.write_manifest(
-            {
-                "achievement": self.config.achievement,
-                "profile": self.config.profile,
-                "squad": session.squad,
-                "difficulty": self.config.difficulty,
-                "advanced_content": self.config.advanced_content,
-                "mode": "hybrid_theory",
-                "first_island_gate_seconds": self.config.first_island_gate_seconds,
-                "second_island_start_gate_seconds": (
-                    self.config.second_island_start_gate_seconds
-                ),
-            }
-        )
+        self.telemetry.write_manifest(self._manifest_payload(session))
         self.telemetry.event(
             "autonomous_start",
             status="STARTED",
@@ -207,6 +194,10 @@ class AutonomousLightningConductor:
             )
             if str(start.get("status")) not in {"OK", "DRY_RUN"}:
                 return self._finish("BLOCKED", "start_run_failed", start=_compact(start))
+            self._rehome_telemetry_if_session_changed(
+                commands,
+                reason="fresh_lightning_start_run",
+            )
 
         preflight = self._span(
             "lightning_preflight",
@@ -474,6 +465,61 @@ class AutonomousLightningConductor:
     def _ensure_pause(self, commands: Any) -> dict[str, Any]:
         return commands.cmd_lightning_ui("ensure_pause")
 
+    def _manifest_payload(self, session: Any) -> dict[str, Any]:
+        return {
+            "achievement": self.config.achievement,
+            "profile": self.config.profile,
+            "squad": getattr(session, "squad", None),
+            "difficulty": self.config.difficulty,
+            "advanced_content": self.config.advanced_content,
+            "mode": "hybrid_theory",
+            "first_island_gate_seconds": self.config.first_island_gate_seconds,
+            "second_island_start_gate_seconds": (
+                self.config.second_island_start_gate_seconds
+            ),
+        }
+
+    def _rehome_telemetry_if_session_changed(self, commands: Any, *, reason: str) -> None:
+        """Move serious-attempt telemetry to the run id created by Start Run."""
+        assert self.telemetry is not None
+        session = _load_current_session(commands)
+        new_run_id = _concrete_session_run_id(session)
+        old_run_id = getattr(self.telemetry, "run_id", None)
+        if not new_run_id or new_run_id == old_run_id:
+            return
+
+        old_telemetry = self.telemetry
+        if self.screenshots is not None:
+            self.screenshots.stop()
+            self.screenshots = None
+        old_telemetry.event(
+            "telemetry_rehome",
+            status="REHOMING",
+            reason=reason,
+            old_run_id=old_run_id,
+            new_run_id=new_run_id,
+        )
+        old_telemetry.summary(
+            status="REHOMED",
+            reason=reason,
+            extra={"new_telemetry_run_id": new_run_id},
+        )
+
+        self.telemetry = TelemetryRecorder(new_run_id)
+        self.telemetry.write_manifest(self._manifest_payload(session))
+        self.telemetry.event(
+            "telemetry_rehome",
+            status="OK",
+            reason=reason,
+            previous_run_id=old_run_id,
+        )
+        if self.config.screenshots:
+            self.screenshots = ScreenshotRecorder(
+                self.telemetry,
+                cadence_seconds=self.config.screenshot_cadence,
+            )
+            self.screenshots.start()
+
     def _finish(self, status: str, reason: str, **payload: Any) -> dict[str, Any]:
         assert self.telemetry is not None
         result = {
@@ -563,11 +609,18 @@ def _load_current_session(commands: Any) -> Any:
 
 
 def _telemetry_run_id(session: Any) -> str:
+    concrete = _concrete_session_run_id(session)
+    if concrete:
+        return concrete
+    now = datetime.now()
+    return now.strftime("lightning_%Y%m%d_%H%M%S") + f"_{now.microsecond // 1000:03d}"
+
+
+def _concrete_session_run_id(session: Any) -> str | None:
     raw = str(getattr(session, "run_id", "") or "").strip()
     if raw and raw.lower() not in {"default", "lw", "none", "null"}:
         return raw
-    now = datetime.now()
-    return now.strftime("lightning_%Y%m%d_%H%M%S") + f"_{now.microsecond // 1000:03d}"
+    return None
 
 
 def _lightning_format_seconds(total_seconds: int | float | None) -> str:

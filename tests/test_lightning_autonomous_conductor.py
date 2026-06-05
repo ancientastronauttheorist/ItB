@@ -18,12 +18,21 @@ from src.loop.lightning_conductor import (
 
 class FakeTelemetry:
     def __init__(self, run_id: str = "lw_test") -> None:
+        self.run_id = run_id
         self.run_dir = f"recordings/{run_id}"
         self.telemetry_dir = f"{self.run_dir}/telemetry"
         self.events: list[tuple[str, dict]] = []
+        self.manifests: list[dict] = []
+        self.summaries: list[dict] = []
 
     def event(self, name: str, **payload):
         self.events.append((name, payload))
+
+    def write_manifest(self, payload):
+        self.manifests.append(payload)
+
+    def summary(self, **payload):
+        self.summaries.append(payload)
 
 
 def make_conductor(**kwargs) -> AutonomousLightningConductor:
@@ -170,6 +179,82 @@ def test_autonomous_starts_from_setup_despite_stale_live_bridge():
         "lightning_ui",
         "verify_setup",
         "start_run",
+    ]
+
+
+def test_autonomous_rehomes_telemetry_after_fresh_start_run(monkeypatch):
+    calls: list[tuple[str, dict]] = []
+    created_recorders: list[FakeTelemetry] = []
+    session = SimpleNamespace(
+        run_id="20260605_141600_123",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        islands_completed=[],
+    )
+
+    def fake_recorder(run_id):
+        recorder = FakeTelemetry(run_id)
+        created_recorders.append(recorder)
+        return recorder
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            if name == "start_run":
+                session.run_id = "20260605_150536_840"
+            return payload
+
+        return fn
+
+    from src.loop import lightning_conductor as conductor_module
+
+    monkeypatch.setattr(conductor_module, "TelemetryRecorder", fake_recorder)
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_verify_setup_screen=record("verify_setup", {"status": "PASS"}),
+        cmd_lightning_start_run=record("start_run", {"status": "OK"}),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "max_steps_reached",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+    conductor = make_conductor(start_from_verified_setup=True)
+    conductor.telemetry = FakeTelemetry(session.run_id)
+
+    result = conductor._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert conductor.telemetry.run_id == "20260605_150536_840"
+    assert result["telemetry_dir"] == "recordings/20260605_150536_840/telemetry"
+    assert [recorder.run_id for recorder in created_recorders] == [
+        "20260605_150536_840"
+    ]
+    assert conductor.telemetry.events[0][0] == "telemetry_rehome"
+    assert conductor.telemetry.events[0][1]["previous_run_id"] == "20260605_141600_123"
+    assert [name for name, _ in calls[:4]] == [
+        "pause_guard",
+        "verify_setup",
+        "start_run",
+        "preflight",
     ]
 
 
