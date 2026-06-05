@@ -14756,11 +14756,20 @@ def cmd_lightning_attempt(
             and click_ui
             and str(loop.get("reason")) == "terminal_or_mission_end"
         ):
-            clear_result = _lightning_clear_visible_panel_chain(
+            clear_result = _lightning_clear_tail_to_pause(
                 dry_run=dry_run,
             )
             action_record["post_combat_clear_result"] = clear_result
-            if clear_result.get("steps"):
+            nested_clear = clear_result.get("clear_result")
+            nested_steps = (
+                nested_clear.get("steps")
+                if isinstance(nested_clear, dict)
+                else clear_result.get("steps")
+            )
+            made_tail_progress = bool(nested_steps) or bool(
+                clear_result.get("resume_result")
+            )
+            if made_tail_progress:
                 result["status"] = "LIGHTNING_ATTEMPT_PANEL_CLEARED"
                 result["reason"] = "post_combat_auto_clear_safe_panel"
                 result["next_step"] = (

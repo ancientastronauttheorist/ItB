@@ -4614,20 +4614,26 @@ def test_lightning_attempt_auto_clears_post_combat_panels(monkeypatch):
         },
     )
 
-    def fake_clear(**kwargs):
+    def fake_clear_tail(**kwargs):
         calls["clear"] += 1
         return {
             "status": "OK",
-            "reason": "panel_chain_cleared",
-            "steps": [
-                {
-                    "control": "reward_continue",
-                    "click_result": {"status": "OK"},
-                }
-            ],
+            "reason": "tail_cleared_and_paused",
+            "resume_result": None,
+            "clear_result": {
+                "status": "OK",
+                "reason": "panel_chain_cleared",
+                "steps": [
+                    {
+                        "control": "reward_continue",
+                        "click_result": {"status": "OK"},
+                    }
+                ],
+            },
+            "pause_result": {"status": "OK"},
         }
 
-    monkeypatch.setattr(commands, "_lightning_clear_visible_panel_chain", fake_clear)
+    monkeypatch.setattr(commands, "_lightning_clear_tail_to_pause", fake_clear_tail)
     monkeypatch.setattr(
         commands,
         "_lightning_timer_pause_guard_once",
@@ -4641,9 +4647,79 @@ def test_lightning_attempt_auto_clears_post_combat_panels(monkeypatch):
 
     assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
     assert result["reason"] == "post_combat_auto_clear_safe_panel"
-    assert result["action"]["post_combat_clear_result"]["reason"] == "panel_chain_cleared"
+    assert result["action"]["post_combat_clear_result"]["reason"] == "tail_cleared_and_paused"
     assert result["pause_guard"]["status"] == "OK"
     assert calls["clear"] == 1
+
+
+def test_lightning_attempt_treats_post_combat_resume_to_map_as_progress(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_loop",
+        lambda **kwargs: {
+            "status": "LIGHTNING_LOOP_STOPPED",
+            "reason": "terminal_or_mission_end",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "initial_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            "resume_result": {"status": "OK", "reason": "resumed_from_pause"},
+            "clear_result": {
+                "status": "NO_ACTION",
+                "reason": "no_safe_panel_visible",
+                "steps": [],
+                "visible_ui": {"status": "OK", "visible_ui": "island_map"},
+            },
+            "pause_result": {"status": "OK", "reason": "pause_clicked"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {"status": "OK", "reason": "already_paused"},
+    )
+
+    result = commands.cmd_lightning_attempt(
+        auto_clear_panels=True,
+        pause_on_stop=True,
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "post_combat_auto_clear_safe_panel"
+    clear_result = result["action"]["post_combat_clear_result"]
+    assert clear_result["resume_result"]["reason"] == "resumed_from_pause"
+    assert clear_result["clear_result"]["reason"] == "no_safe_panel_visible"
+    assert result["pause_guard"]["status"] == "OK"
 
 
 def test_lightning_segment_continues_panel_clear_to_route_ready(monkeypatch):
