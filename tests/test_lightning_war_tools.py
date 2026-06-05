@@ -4193,6 +4193,7 @@ def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypa
         "board",
         {"turn": 2, "phase": "combat_player"},
     )
+    assert session.active_solution is None
     assert calls[1][0] == "click"
 
 

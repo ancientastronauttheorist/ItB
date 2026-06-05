@@ -15280,6 +15280,8 @@ def cmd_lightning_attempt(
                                 solved_turn,
                                 bridge_data=post_data,
                             )
+                            session.active_solution = None
+                            session.save()
                     except Exception as exc:
                         post_enemy_result = {
                             "status": "POST_ENEMY_AUDIT_MISSING",
@@ -15289,6 +15291,8 @@ def cmd_lightning_attempt(
                             "turn": solved_turn,
                             "mission_index": session.mission_index,
                         }
+                        session.active_solution = None
+                        session.save()
                     if (
                         isinstance(post_enemy_result, dict)
                         and post_enemy_result.get("blocking")
