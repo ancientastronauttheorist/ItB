@@ -4355,9 +4355,15 @@ def test_lightning_attempt_auto_clears_chained_pod_panels(monkeypatch):
     )
 
     assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
-    assert calls == ["reward_continue", "bottom_continue"]
+    assert calls == [
+        "reward_continue",
+        "bottom_continue",
+        "pod_open_door",
+        "reward_continue",
+        "bottom_continue",
+    ]
     assert result["action"]["clear_result"]["visible_ui"]["visible_ui"] == (
-        "pod_open_panel"
+        "island_map_or_unknown"
     )
     assert result["action"]["clear_result"]["reason"] == "panel_chain_cleared"
 
@@ -4380,6 +4386,11 @@ def test_lightning_clear_panel_chain_repeats_same_class(monkeypatch):
                 "visible_ui": "pod_open_panel",
                 "recommended_control": "pod_open_door",
             },
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
         ]
     )
     calls = []
@@ -4395,8 +4406,77 @@ def test_lightning_clear_panel_chain_repeats_same_class(monkeypatch):
 
     assert result["status"] == "OK"
     assert result["reason"] == "panel_chain_cleared"
-    assert calls == ["reward_continue", "bottom_continue"]
-    assert result["visible_ui"]["visible_ui"] == "pod_open_panel"
+    assert calls == ["reward_continue", "bottom_continue", "pod_open_door"]
+    assert result["visible_ui"]["visible_ui"] == "island_map_or_unknown"
+
+
+def test_lightning_attempt_auto_clears_visible_pod_panel(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "unknown",
+            "turn": 3,
+            "deployment_zone_count": 0,
+            "island_map_count": 8,
+            "in_active_mission": False,
+        },
+    )
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "pod_open_panel",
+                "recommended_control": "pod_open_door",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "pod_open_panel",
+                "recommended_control": "pod_open_door",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
+        ]
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    result = commands.cmd_lightning_attempt(
+        auto_clear_panels=True,
+        pause_on_stop=True,
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "auto_clear_safe_panel"
+    assert result["action"]["control"] == "pod_open_door"
+    assert calls == ["pod_open_door"]
 
 
 def test_lightning_clear_panel_chain_clears_mission_preview_dialogue(monkeypatch):

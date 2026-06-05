@@ -9364,6 +9364,7 @@ _LIGHTNING_UI_BUTTON_CROPS = {
 _LIGHTNING_AUTO_HANDLE_UIS = {
     "reward_panel",
     "bottom_continue_panel",
+    "pod_open_panel",
     "promotion_panel",
     "perfect_reward_choice",
     "perfect_island_panel",
@@ -9468,6 +9469,8 @@ def _lightning_is_safe_clear_ui(
     visible_name: str | None,
     control: str | None = None,
 ) -> bool:
+    if visible_name == "pod_open_panel" and control == "pod_open_door":
+        return True
     if visible_name in _LIGHTNING_SAFE_CLEAR_UIS:
         return True
     return visible_name == "mission_preview_panel" and control == "dialogue_textbox"
