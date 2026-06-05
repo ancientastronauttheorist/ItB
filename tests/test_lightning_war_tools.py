@@ -4878,6 +4878,62 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
     assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
 
 
+def test_lightning_segment_auto_starts_bridge_ranked_route_without_primary_candidate(monkeypatch):
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "top_mission": "Mission_Train",
+                "top_region_id": 2,
+                "recommendation": {
+                    "ranked": [
+                        {
+                            "mission_id": "Mission_Train",
+                            "region_id": 2,
+                        },
+                    ],
+                    "speed_route_status": {
+                        "status": "AUTO_START_OK",
+                        "auto_start_allowed": True,
+                    },
+                },
+            },
+            {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "deployment_waiting_for_ui_settle",
+            },
+        ]
+    )
+    route_calls = []
+    attempt_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return next(attempts)
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=2, route_auto_start=True)
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["route_start_performed"] is True
+    assert route_calls[0]["visual_region_index"] == 2
+    assert route_calls[0]["expected_route_mission_id"] == "Mission_Train"
+    assert result["steps"][0]["route_auto_start_mission"] == "Mission_Train"
+    assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
+
+
 def test_lightning_segment_infers_expected_route_for_explicit_visual_start(monkeypatch):
     route_calls = []
     attempt_calls = []

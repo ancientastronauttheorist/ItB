@@ -15777,6 +15777,13 @@ def cmd_lightning_segment(
         if success_reason:
             if not route_start_pending and route_auto_start:
                 primary = attempt.get("primary_route_candidate")
+                if not (
+                    isinstance(primary, dict)
+                    and isinstance(primary.get("index"), int)
+                ):
+                    primary = _lightning_auto_start_candidate_from_recommendation(
+                        attempt,
+                    )
                 if (
                     isinstance(primary, dict)
                     and isinstance(primary.get("index"), int)
@@ -15922,6 +15929,39 @@ def cmd_lightning_segment(
     )
     _print_result(result)
     return result
+
+
+def _lightning_auto_start_candidate_from_recommendation(attempt: dict) -> dict | None:
+    """Build an auto-start route candidate from bridge-backed map routing."""
+    if not isinstance(attempt, dict):
+        return None
+    region_id = attempt.get("top_region_id")
+    mission_id = attempt.get("top_mission")
+    allowed = None
+    recommendation = attempt.get("recommendation")
+    if isinstance(recommendation, dict):
+        ranked = recommendation.get("ranked")
+        if isinstance(ranked, list) and ranked and isinstance(ranked[0], dict):
+            top = ranked[0]
+            if region_id is None:
+                region_id = top.get("region_id")
+            if mission_id is None:
+                mission_id = top.get("mission_id")
+        speed_status = recommendation.get("speed_route_status")
+        if isinstance(speed_status, dict):
+            allowed = speed_status.get("auto_start_allowed")
+    if region_id is None:
+        return None
+    try:
+        index = int(region_id)
+    except (TypeError, ValueError):
+        return None
+    candidate: dict = {"index": index}
+    if mission_id:
+        candidate["mission_id"] = str(mission_id)
+    if allowed is not None:
+        candidate["auto_route_allowed"] = bool(allowed)
+    return candidate
 
 
 def _lightning_pause_verified(result: dict | None) -> bool:
