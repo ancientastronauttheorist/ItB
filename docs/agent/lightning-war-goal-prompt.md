@@ -8,69 +8,73 @@ Goal: Earn Lightning War in Into the Breach with no human help: Blitzkrieg,
 Easy, Advanced Edition OFF, first 2 Corporate Islands complete before the
 30:00 in-game achievement timer.
 
-Use the "Hybrid Theory" mode from
-`docs/agent/lightning-war-autonomous-speedrun.md`: run repeated autonomous
-attempts until unlock. Retry normal failures. If telemetry shows a repeated
-bottleneck, park in a verified safe state, patch/test the narrow fix, record
-the new code version, then continue attempts.
+Primary runner:
+`python3 game_loop.py lightning_autonomous --max-attempts 999 --route-auto-start --advanced-content off --difficulty 0`
 
-Hard invariant: Python owns every live-clock state. Codex may think, inspect
-files, patch code, or use agents only after the bot proves the game is paused
-or otherwise non-live. If safe thinking cannot be proven, keep acting
-deterministically, pause as soon as possible, or stop with
-`BLOCKED_UNPAUSED_CLOCK_TICKING`.
+Use lower-level live commands only to debug the conductor from verified
+pause/non-live. Reuse Lightning helpers; do not invent a parallel combat
+executor.
 
-Read/load as needed:
-- `AGENTS.md`
-- `docs/agent/lightning-war-autonomous-speedrun.md`
-- `docs/agent/live-runbook.md`
-- `docs/agent/achievement-playbook.md`
-- `docs/agent/safety-gates.md`
+Use "Hybrid Theory" mode from
+`docs/agent/lightning-war-autonomous-speedrun.md`: repeat attempts until
+unlock. Retry normal failures. If telemetry shows a repeated bottleneck, park
+safe, patch/test the narrow fix, record code version, then continue.
 
-Build/use the local speedrun stack. Prefer an in-process
-`lightning_autonomous` conductor over a Codex/tool loop. Reuse existing
-Lightning helpers: `lightning_preflight`, `lightning_segment`,
-`lightning_attempt`, `lightning_loop`, `auto_turn`, route validation, pause
-guards, panel clearing, bridge combat execution, and calibrated UI controls.
-Do not invent a parallel combat executor.
+Hard invariant: Python owns every live-clock state. Codex may think, inspect,
+patch, or use agents only after verified pause/non-live. Otherwise Python must
+act, pause, restart, or emit a local no-thinking signal.
 
-Telemetry is mandatory. For each serious attempt, record JSONL events,
-2-second screenshots, contact sheets, interesting-frame deltas, and
-`summary.md` under `recordings/<run_id>/telemetry/`. Keep all successful raw
-screenshots, drop only under capture backpressure, and do not record video.
+`BLOCKED_UNPAUSED_CLOCK_TICKING` is not a global `/goal` failure. Dead
+attempts, failed pause proof, post-enemy blocks, pace failure, route RNG, stale
+bridge/game, and unpausable live states are attempt outcomes. Restart/retry.
+Mark `/goal` BLOCKED only if the game cannot launch/control/reach setup, or
+after 5 consecutive identical infrastructure recovery failures with telemetry.
 
-Timer policy: use save/profile `current.time` or visible pause-menu Timeline
-Playtime; ignore profile `timer`. Measure mission pace start-to-start,
-including preview/dialogue, deployment, combat, enemy waits, panels, map
-return, shop/leave, and next Start click.
+Read/load as needed: `AGENTS.md`,
+`docs/agent/lightning-war-autonomous-speedrun.md`,
+`docs/agent/live-runbook.md`, `docs/agent/achievement-playbook.md`,
+`docs/agent/safety-gates.md`.
 
-Pace gates: first island must complete before 15:00, no grace. Add/tune a
-second-island start gate around 16:30-17:00. Restart full run on wrong setup,
-AE mismatch, timer >= 30:00, grid collapse risk, unrecoverable stale
-game/bridge state, unresolved research/desync/post-enemy/threat-audit block,
-or any state requiring live-clock Codex thinking.
+Telemetry is mandatory: JSONL events, 2-second screenshots, contact sheets,
+interesting-frame deltas, and `summary.md` under
+`recordings/<run_id>/telemetry/`. Keep all successful screenshots; drop only
+under capture backpressure; no video.
+
+Recovery ladder:
+1. If a clearable panel is visible, run `lightning_ui handle_screen`.
+2. Try `lightning_ui ensure_pause` once.
+3. If pause guard says `live_combat_phase` and bridge says
+   `phase=combat_player` with `active_mechs > 0`, do not think. Run one burst:
+   `python3 game_loop.py lightning_segment --time-limit 2 --max-steps 1 --max-turns 1 --no-pause-before-solve`
+4. If the attempt is dead/contaminated by pace, timer, grid collapse, stale
+   game/bridge, `POST_ENEMY_AUDIT_MISSED_WINDOW`, or persistent
+   `post_enemy_block`, emit best-effort `attempt_dead_unpausable` telemetry
+   with latest timer/phase/UI/blocker, then abandon/restart/fresh setup.
+   If telemetry write fails, restart anyway.
+5. Diagnose/patch only from verified pause/non-live, especially after repeats.
+
+Timer: use save/profile `current.time` or visible pause Timeline Playtime;
+ignore profile `timer`. Measure mission pace start-to-start, including
+preview/dialogue, deployment, combat, enemy waits, panels, map return, shop,
+leave, and next Start click.
+
+Pace gates: island 1 complete before 15:00, no grace. Tune island-2 start gate
+around 16:30-17:00. Restart current attempt on wrong setup, AE mismatch, timer
+>= 30:00, grid collapse risk, unrecoverable stale state, or live-clock Codex
+thinking requirement.
 
 Speed policy: optional objectives, Perfect Island, reputation, stars, pods,
-protected-unit losses, mech HP loss, mech death, and KIA are acceptable if the
-timeline survives and continuing is faster. Grid/building damage is acceptable
-within reason when grid remains above 0 and it does not create compounding
-risk. No save rollback; use normal abandon/restart/new-run only.
+protected-unit losses, and nonlethal mech HP loss are acceptable if timeline
+survives and continuing is faster. Mech death/KIA are speed losses only when
+current code can safely continue; otherwise restart/patch from safe state.
+Grid/building damage is ok when grid stays above 0. No save rollback.
 
-Routing policy: route for speed, not reputation. Prefer empirically fast
-islands/missions once telemetry proves them. If a different mission loads after
-a click, play it unless pace/grid gates say the run is already dead. Log the
-mismatch so future route code can improve.
-
-Shop/island tail: if grid is below max, buy Grid Power first. If grid is full,
-leave immediately. Do not chase optional pilots, weapons, cores, pods, or
-speculative installs during the timed route.
-
-Combat policy: solve with normal/long budget only from verified pause. During
-live play, execute known-fast deterministic actions, bridge-verified combat,
-End Turn clicks, enemy waits, and immediate pause attempts. Do not let Codex
-ponder while the clock ticks.
+Routing/shop: route for speed, not reputation. Prefer empirically fast
+islands/missions. If a different mission loads, play it unless pace/grid gates
+say dead. If grid is below max, buy Grid Power first; if full, leave
+immediately. Do not chase optional purchases.
 
 Success proof: visible Lightning War popup or `achievements --sync`; if popup
-appears, sync afterward to confirm. Stop only when unlocked, or when parked in
-a verified safe state with telemetry, blocker, and exact next action.
+appears, sync afterward. Stop only when unlocked, or when true infrastructure
+blocking criteria above are met with telemetry and exact next action.
 ```
