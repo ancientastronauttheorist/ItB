@@ -258,7 +258,7 @@ def test_autonomous_rehomes_telemetry_after_fresh_start_run(monkeypatch):
     ]
 
 
-def test_autonomous_blocks_and_pauses_on_bridge_snapshot_unavailable():
+def test_autonomous_restarts_on_bridge_snapshot_unavailable():
     calls: list[tuple[str, dict]] = []
 
     def record(name, payload):
@@ -295,8 +295,8 @@ def test_autonomous_blocks_and_pauses_on_bridge_snapshot_unavailable():
 
     result = make_conductor()._run_inner(commands)
 
-    assert result["status"] == "BLOCKED"
-    assert result["reason"] == "hard_gate"
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "bridge_snapshot_unavailable_attempt_restart"
     assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
 
 
@@ -455,6 +455,49 @@ def test_autonomous_restarts_when_preflight_has_persistent_post_enemy_block():
     assert result["status"] == "RESTART_RECOMMENDED"
     assert result["reason"] == "persistent_post_enemy_block_attempt_restart"
     assert ("segment", {"args": ()}) not in calls
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_restarts_on_stale_active_combat_visible_map():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "stale_active_combat_visible_island_map",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "stale_active_combat_visible_island_map_attempt_restart"
+    assert [name for name, _ in calls].count("segment") == 1
     assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
 
 
@@ -827,6 +870,33 @@ def test_restartable_attempt_stop_detects_nested_post_enemy_missed_window():
         == "post_enemy_audit_missed_window_attempt_restart"
     )
     assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_treats_lightning_hard_gates_as_dead_attempts():
+    examples = [
+        ("RESEARCH_REQUIRED", "research_required_attempt_restart"),
+        ("INVESTIGATE_POST_ENEMY", "investigate_attempt_restart"),
+        ("THREAT_AUDIT_BLOCKED", "threat_audit_attempt_restart"),
+        ("POST_ENEMY_BLOCKED", "post_enemy_attempt_restart"),
+        ("DESYNC_AFTER_ACTION", "desync_attempt_restart"),
+        (
+            "stale_active_combat_visible_island_map",
+            "stale_active_combat_visible_island_map_attempt_restart",
+        ),
+    ]
+
+    for reason, expected in examples:
+        segment = {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": reason,
+            "pause_guard": {
+                "status": "OK",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        }
+
+        assert _restartable_attempt_stop(segment) == expected
+        assert not _hard_stop(segment)
 
 
 def test_hard_stop_ignores_playable_route_mismatch():
