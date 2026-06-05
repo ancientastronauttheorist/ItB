@@ -16,7 +16,6 @@ from src.loop.lightning_telemetry import (
 
 LIGHTNING_WAR = "Lightning War"
 HARD_STOP_TOKENS = (
-    "SAFETY_BLOCKED",
     "RESEARCH_REQUIRED",
     "INVESTIGATE",
     "THREAT_AUDIT",
@@ -25,6 +24,9 @@ HARD_STOP_TOKENS = (
     "ROUTE_MISSION_MISMATCH",
     "BUDGET_EXCEEDED",
     "BRIDGE_SNAPSHOT_UNAVAILABLE",
+)
+RESTARTABLE_ATTEMPT_STOP_TOKENS = (
+    "SAFETY_BLOCKED",
 )
 
 
@@ -295,6 +297,14 @@ class AutonomousLightningConductor:
                             "achievement_confirmed_sync",
                             sync=_compact(sync),
                         )
+                restart_reason = _restartable_attempt_stop(segment)
+                if restart_reason is not None:
+                    commands.cmd_lightning_ui("ensure_pause")
+                    return self._finish(
+                        "RESTART_RECOMMENDED",
+                        restart_reason,
+                        segment=_compact(segment),
+                    )
                 if _hard_stop(segment):
                     commands.cmd_lightning_ui("ensure_pause")
                     return self._finish(
@@ -555,16 +565,33 @@ def _achievement_unlocked(result: dict[str, Any] | None) -> bool:
 
 
 def _hard_stop(result: dict[str, Any] | None) -> bool:
-    if not isinstance(result, dict):
-        return False
-    text = f"{result.get('status') or ''} {result.get('reason') or ''}".upper()
-    if any(token in text for token in HARD_STOP_TOKENS):
-        return True
-    for key in ("last_attempt", "pause_guard"):
-        nested = result.get(key)
-        if isinstance(nested, dict) and _hard_stop(nested):
-            return True
-    return False
+    return _find_stop_token(result, HARD_STOP_TOKENS) is not None
+
+
+def _restartable_attempt_stop(result: dict[str, Any] | None) -> str | None:
+    token = _find_stop_token(result, RESTARTABLE_ATTEMPT_STOP_TOKENS)
+    if token is None:
+        return None
+    return f"{token.lower()}_attempt_restart"
+
+
+def _find_stop_token(value: Any, tokens: tuple[str, ...]) -> str | None:
+    if isinstance(value, dict):
+        status_reason = f"{value.get('status') or ''} {value.get('reason') or ''}".upper()
+        for token in tokens:
+            if token in status_reason:
+                return token
+        for nested in value.values():
+            found = _find_stop_token(nested, tokens)
+            if found is not None:
+                return found
+        return None
+    if isinstance(value, list):
+        for nested in value:
+            found = _find_stop_token(nested, tokens)
+            if found is not None:
+                return found
+    return None
 
 
 def _route_ready(result: dict[str, Any] | None) -> bool:

@@ -6,6 +6,7 @@ from src.loop.lightning_conductor import (
     AutonomousLightningConfig,
     AutonomousLightningConductor,
     _hard_stop,
+    _restartable_attempt_stop,
     _telemetry_run_id,
     _timer_label,
     _timer_seconds,
@@ -351,6 +352,56 @@ def test_autonomous_restarts_when_second_island_start_gate_is_missed():
     assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
 
 
+def test_autonomous_restarts_on_nested_safety_blocked_attempt():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "combat_loop_returned",
+                "last_attempt": {
+                    "action": {
+                        "combat_loop": {
+                            "status": "LIGHTNING_LOOP_STOPPED",
+                            "reason": "SAFETY_BLOCKED",
+                        },
+                    },
+                },
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "safety_blocked_attempt_restart"
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
 def test_timer_helpers_read_real_segment_last_attempt_budget():
     segment = {
         "status": "LIGHTNING_SEGMENT_STOPPED",
@@ -400,3 +451,21 @@ def test_hard_stop_detects_nested_post_enemy_attempt():
     }
 
     assert _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_detects_nested_safety_blocked_loop():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "combat_loop_returned",
+        "last_attempt": {
+            "action": {
+                "combat_loop": {
+                    "status": "LIGHTNING_LOOP_STOPPED",
+                    "reason": "SAFETY_BLOCKED",
+                },
+            },
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) == "safety_blocked_attempt_restart"
+    assert not _hard_stop(segment)
