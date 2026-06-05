@@ -208,6 +208,14 @@ class AutonomousLightningConductor:
             advanced_content=cfg.advanced_content,
         )
         if str(preflight.get("status")) == "FAIL":
+            restart_reason = _restartable_preflight_failure(preflight)
+            if restart_reason is not None:
+                return self._finish(
+                    "RESTART_RECOMMENDED",
+                    restart_reason,
+                    ensure_pause=self._ensure_pause(commands),
+                    preflight=_compact(preflight),
+                )
             return self._finish(
                 "BLOCKED",
                 "preflight_failed",
@@ -648,6 +656,18 @@ def _restartable_attempt_stop(result: dict[str, Any] | None) -> str | None:
     if token is None:
         return None
     return f"{token.lower()}_attempt_restart"
+
+
+def _restartable_preflight_failure(result: dict[str, Any] | None) -> str | None:
+    if not isinstance(result, dict):
+        return None
+    issues = result.get("issues") or []
+    if not isinstance(issues, list):
+        return None
+    normalized = " ".join(str(issue).lower() for issue in issues)
+    if "persistent post-enemy block is active" in normalized:
+        return "persistent_post_enemy_block_attempt_restart"
+    return None
 
 
 def _find_stop_token(value: Any, tokens: tuple[str, ...]) -> str | None:
