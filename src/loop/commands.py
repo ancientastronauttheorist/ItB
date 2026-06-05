@@ -352,6 +352,11 @@ def _threat_audit_requires_block(
         safety,
     ):
         return False
+    if lightning_speed_loss_allowed and _lightning_speed_unplanned_threat_loss_allowed(
+        threat_audit,
+        safety,
+    ):
+        return False
     if final_cave_emergency_pylon_loss_allowed(safety):
         current = safety.get("current") if isinstance(safety.get("current"), dict) else {}
         predicted = (
@@ -391,6 +396,49 @@ def _lightning_speed_plan_covers_threat_audit_loss(
         _safety_int_loss(plan_safety, "protected_objective_units_alive"),
     )
     return covered_losses >= still_threatened
+
+
+def _lightning_speed_unplanned_threat_loss_allowed(
+    threat_audit: dict,
+    plan_safety: dict,
+) -> bool:
+    """Allow ordinary unplanned building hits for Lightning War pace only."""
+    still_threatened = int(threat_audit.get("still_threatened_count") or 0)
+    if still_threatened <= 0:
+        return True
+    current = plan_safety.get("current")
+    if not isinstance(current, dict):
+        return False
+    grid_power = current.get("grid_power")
+    if not isinstance(grid_power, int) or grid_power - still_threatened <= 0:
+        return False
+
+    protected_fields = (
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "protected_objective_units_alive",
+        "pylons_alive",
+        "pylon_hp_total",
+        "bigbomb_alive",
+    )
+    for field in protected_fields:
+        value = current.get(field)
+        if isinstance(value, bool):
+            if value:
+                return False
+        elif isinstance(value, int) and value > 0:
+            return False
+
+    entries = threat_audit.get("entries")
+    if not isinstance(entries, list) or len(entries) < still_threatened:
+        return False
+    for entry in entries[:still_threatened]:
+        if not isinstance(entry, dict):
+            return False
+        target_hp = entry.get("target_hp")
+        if not isinstance(target_hp, int) or target_hp <= 0:
+            return False
+    return True
 
 
 def _dirty_plan_covers_threat_audit_loss(
@@ -613,6 +661,19 @@ def _allow_lightning_war_speed_loss(
             return False
 
     return True
+
+
+def _lightning_speed_policy_active_for_plan(
+    session: RunSession,
+    plan_safety: dict | None,
+) -> bool:
+    if "lightning war" not in _target_names(session):
+        return False
+    if not isinstance(plan_safety, dict):
+        return False
+    if not plan_safety.get("blocking"):
+        return True
+    return _allow_lightning_war_speed_loss(session, plan_safety)
 
 
 def _lightning_speed_loss_summary(plan_safety: dict | None) -> dict | None:
@@ -14129,7 +14190,7 @@ def _lightning_click_reviewed_held_end_turn(
 
     allow_lightning_speed_loss = (
         bool(lightning_speed_loss_policy)
-        and _allow_lightning_war_speed_loss(session, plan_safety)
+        and _lightning_speed_policy_active_for_plan(session, plan_safety)
     )
     dirty_consent_validated = False
     if (
@@ -19407,7 +19468,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     allow_lightning_pod_loss = _allow_lightning_war_pod_loss(session, plan_safety)
     allow_lightning_speed_loss = (
         bool(lightning_speed_loss_policy)
-        and _allow_lightning_war_speed_loss(session, plan_safety)
+        and _lightning_speed_policy_active_for_plan(session, plan_safety)
     )
     lightning_speed_loss_summary = (
         _lightning_speed_loss_summary(plan_safety)

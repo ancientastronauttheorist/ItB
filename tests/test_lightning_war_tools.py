@@ -5258,6 +5258,101 @@ def test_lightning_speed_policy_satisfies_threat_audit_without_dirty_consent():
     ) is False
 
 
+def test_lightning_speed_policy_allows_clean_unplanned_building_threat():
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    threat_audit = {
+        "still_threatened_count": 1,
+        "entries": [{"target_visual": "B5", "target_hp": 2}],
+    }
+    plan_safety = {
+        "blocking": False,
+        "violations": [],
+        "current": {
+            "grid_power": 6,
+            "objective_buildings_alive": 0,
+            "objective_building_hp_total": 0,
+            "protected_objective_units_alive": 0,
+            "pylons_alive": None,
+            "pylon_hp_total": None,
+            "bigbomb_alive": False,
+        },
+        "predicted": {"grid_power": 6},
+    }
+
+    assert commands._lightning_speed_policy_active_for_plan(session, plan_safety) is True
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        lightning_speed_loss_allowed=True,
+    ) is False
+
+
+def test_lightning_speed_policy_blocks_unplanned_threat_if_grid_would_collapse():
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    threat_audit = {
+        "still_threatened_count": 1,
+        "entries": [{"target_visual": "B5", "target_hp": 2}],
+    }
+    plan_safety = {
+        "blocking": False,
+        "violations": [],
+        "current": {
+            "grid_power": 1,
+            "objective_buildings_alive": 0,
+            "objective_building_hp_total": 0,
+            "protected_objective_units_alive": 0,
+        },
+    }
+
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        lightning_speed_loss_allowed=True,
+    ) is True
+
+
+def test_lightning_speed_policy_blocks_unplanned_objective_threat():
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    threat_audit = {
+        "still_threatened_count": 1,
+        "entries": [{"target_visual": "B5", "target_hp": 2}],
+    }
+    plan_safety = {
+        "blocking": False,
+        "violations": [],
+        "current": {
+            "grid_power": 6,
+            "objective_buildings_alive": 1,
+            "objective_building_hp_total": 2,
+            "protected_objective_units_alive": 0,
+        },
+    }
+
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        lightning_speed_loss_allowed=True,
+    ) is True
+
+
 def test_lightning_war_allows_pod_only_loss():
     session = RunSession(
         run_id="lw",
