@@ -462,6 +462,27 @@ def test_hard_stop_detects_nested_post_enemy_attempt():
     assert _hard_stop(segment)
 
 
+def test_hard_stop_ignores_playable_route_mismatch():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "segment_wall_seconds_exceeded",
+        "steps": [
+            {
+                "phase": "route_start",
+                "status": "OK",
+                "reason": "route_mission_mismatch_after_start_playable",
+                "route_mismatch_warning": {
+                    "expected_mission_id": "Mission_Airstrike",
+                    "actual_mission_id": "Mission_Dam",
+                    "policy": "continue_loaded_playable_mission",
+                },
+            }
+        ],
+    }
+
+    assert not _hard_stop(segment)
+
+
 def test_restartable_attempt_stop_detects_nested_safety_blocked_loop():
     segment = {
         "status": "LIGHTNING_SEGMENT_STOPPED",
