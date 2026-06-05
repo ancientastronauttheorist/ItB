@@ -29,6 +29,7 @@ from src.capture.save_parser import (
     _MODELED_UPGRADED_WEAPONS,
     _modeled_upgrade_from_save_mods,
     _strip_upgrade_suffix,
+    parse_lua_table,
     SAVE_DIR,
 )
 from src.model.board import Board
@@ -906,6 +907,45 @@ def _read_save_file_difficulty(profile: str = "Alpha") -> int | None:
     if isinstance(diff, int):
         return diff
     return None
+
+
+def _read_save_advanced_content(profile: str = "Alpha") -> dict:
+    """Return active-run Advanced Content flags from save/profile data."""
+    keys = ("new_enemies", "new_missions", "new_equip", "new_abilities")
+    candidates: list[dict] = []
+    for filename, source in (("saveData.lua", "saveData"), ("profile.lua", "profile")):
+        path = SAVE_DIR / f"profile_{profile}" / filename
+        try:
+            text = path.read_text()
+        except OSError:
+            continue
+        start = text.find("{")
+        if start < 0:
+            continue
+        try:
+            data, _pos = parse_lua_table(text, start)
+        except Exception:
+            continue
+        if not isinstance(data, dict):
+            continue
+        flags = {
+            key: data.get(key)
+            for key in keys
+            if key in data
+        }
+        if flags:
+            candidates.append({
+                "source": source,
+                "path": str(path),
+                "state": flags,
+            })
+    state = candidates[0]["state"] if candidates else {}
+    return {
+        "status": "OK" if state else "UNKNOWN",
+        "source": candidates[0]["source"] if candidates else None,
+        "state": state,
+        "candidates": candidates,
+    }
 
 
 def _enrich_bridge_mech_weapons_from_save(
@@ -6771,11 +6811,13 @@ def cmd_verify_setup_screen(
     *,
     expected_difficulty: int = 0,
     require_all_advanced: bool = True,
+    advanced_content: str | None = None,
 ) -> dict:
     """Verify the visible new-run difficulty setup before pressing Start."""
     check = capture_and_check_setup(
         expected_difficulty=expected_difficulty,
         require_all_advanced=require_all_advanced,
+        advanced_content=advanced_content,
     )
     result = check.to_dict()
 
@@ -6789,6 +6831,7 @@ def cmd_verify_setup_screen(
     if not result.get("setup_screen_detected"):
         print("  screen: not the Difficulty Setup modal")
     print(f"  difficulty: {actual_label} (expected {expected_label})")
+    print(f"  advanced content target: {check.desired_advanced.upper()}")
     print("  advanced content:")
     for row in check.advanced:
         state = "ON" if row["enabled"] else "OFF"
@@ -8835,10 +8878,14 @@ def cmd_bridge_speed(mode: str = "fast") -> dict:
 def cmd_lightning_preflight(
     profile: str = "Alpha",
     set_fast_bridge: bool = False,
+    advanced_content: str = "any",
 ) -> dict:
     """Check the known Lightning War speed blockers before a fresh attempt."""
+    if advanced_content not in {"on", "off", "any"}:
+        raise ValueError(f"unknown advanced content mode {advanced_content!r}")
     session = _load_session()
     settings = _read_settings_lua()
+    save_advanced = _read_save_advanced_content(profile)
     live_difficulty = _read_save_file_difficulty(profile)
     save_timer = _lightning_read_save_game_timer(profile)
     visible_timer = _lightning_read_visible_pause_timer()
@@ -8909,6 +8956,51 @@ def cmd_lightning_preflight(
     if settings.get("timer_ui") != 1:
         warnings.append("settings.lua timer_ui is not enabled")
     settings_speed = settings.get("speed")
+    advanced_keys = ("new_enemies", "new_missions", "new_equip", "new_abilities")
+    settings_advanced_state = {
+        key: settings.get(key)
+        for key in advanced_keys
+        if key in settings
+    }
+    advanced_state = (
+        save_advanced.get("state")
+        if save_advanced.get("status") == "OK"
+        else settings_advanced_state
+    )
+    advanced_state_source = (
+        save_advanced.get("source")
+        if save_advanced.get("status") == "OK"
+        else "settings"
+    )
+    if advanced_content in {"on", "off"}:
+        desired_value = 1 if advanced_content == "on" else 0
+        mismatched = [
+            key for key, value in advanced_state.items()
+            if value != desired_value
+        ]
+        if mismatched:
+            issues.append(
+                "Advanced Content state mismatch for "
+                f"{', '.join(mismatched)}; expected {advanced_content.upper()}"
+            )
+        if (
+            save_advanced.get("status") == "OK"
+            and settings_advanced_state
+            and settings_advanced_state != advanced_state
+        ):
+            warnings.append(
+                "settings.lua Advanced Content keys differ from the active "
+                "save/profile run state; trusting save/profile for this preflight"
+            )
+        missing_advanced_keys = [
+            key for key in advanced_keys
+            if key not in advanced_state
+        ]
+        if missing_advanced_keys:
+            warnings.append(
+                "settings.lua lacks Advanced Content key(s): "
+                f"{', '.join(missing_advanced_keys)}"
+            )
     if isinstance(settings_speed, int):
         if settings_speed < _LIGHTNING_MIN_FAST_SETTINGS_SPEED:
             issues.append(
@@ -8939,6 +9031,8 @@ def cmd_lightning_preflight(
     print(f"Targets:         {session.achievement_targets}")
     print(f"Timer UI:        {settings.get('timer_ui', '(unknown)')}")
     print(f"Settings speed:  {settings.get('speed', '(unknown)')}")
+    print(f"Advanced target: {advanced_content.upper()}")
+    print(f"Advanced state:  {advanced_state or '(unknown)'} source={advanced_state_source}")
     print(
         "Game timer:      "
         f"{game_budget.get('game_timer') or '(unknown)'} "
@@ -8981,6 +9075,12 @@ def cmd_lightning_preflight(
             "new_missions": settings.get("new_missions"),
             "new_enemies": settings.get("new_enemies"),
             "new_equip": settings.get("new_equip"),
+            "new_abilities": settings.get("new_abilities"),
+            "advanced_content_target": advanced_content,
+            "advanced_content_state": advanced_state,
+            "advanced_content_source": advanced_state_source,
+            "settings_advanced_content_state": settings_advanced_state,
+            "save_advanced_content": save_advanced,
         },
         "save_timer": save_timer,
         "visible_timer": visible_timer,
@@ -11605,24 +11705,84 @@ def _lightning_visible_map_route_plan(
     route_target_hint = _lightning_route_target_hint_from_recommendation(
         recommendation,
     )
-    visual_regions = None
+    raw_visual_regions = None
     screenshot_path = visible_ui.get("screenshot_path") if isinstance(visible_ui, dict) else None
     if screenshot_path:
-        visual_regions = _lightning_extract_red_regions_from_image(screenshot_path)
-        visual_regions = _lightning_assign_visual_route_options(
-            visual_regions,
+        raw_visual_regions = _lightning_extract_red_regions_from_image(screenshot_path)
+    if not (
+        isinstance(raw_visual_regions, dict)
+        and raw_visual_regions.get("status") == "OK"
+        and raw_visual_regions.get("regions")
+    ):
+        raw_visual_regions = _lightning_visual_regions_from_recommendation(
             recommendation,
         )
+    visual_regions = _lightning_assign_visual_route_options(
+        raw_visual_regions,
+        recommendation,
+    )
     route_candidates = _lightning_route_start_candidates(
         visual_regions,
         target_hint=route_target_hint,
         recommendation=recommendation,
     )
+    route_fallback = None
+    regions = (
+        visual_regions.get("regions")
+        if isinstance(visual_regions, dict)
+        else None
+    )
+    visible_region_count = len(regions) if isinstance(regions, list) else 0
+    if (
+        visible_region_count > 1
+        and isinstance(recommendation, dict)
+        and recommendation.get("source") == "bridge_preview"
+    ):
+        save_recommendation = _lightning_recommend_save_routes(
+            profile=profile,
+            routing="lightning_war",
+        )
+        save_visual_regions = _lightning_assign_visual_route_options(
+            raw_visual_regions,
+            save_recommendation,
+        )
+        save_route_target_hint = _lightning_route_target_hint_from_recommendation(
+            save_recommendation,
+        )
+        save_route_candidates = _lightning_route_start_candidates(
+            save_visual_regions,
+            target_hint=save_route_target_hint,
+            recommendation=save_recommendation,
+        )
+        if any(
+            bool(candidate.get("auto_route_allowed"))
+            for candidate in save_route_candidates
+            if isinstance(candidate, dict)
+        ):
+            route_fallback = {
+                "status": "USED",
+                "reason": "visible_map_ignored_stale_bridge_preview",
+                "original_source": recommendation.get("source"),
+                "original_top_mission": (
+                    recommendation.get("top3", [{}])[0].get("mission_id")
+                    if isinstance(recommendation.get("top3"), list)
+                    and recommendation.get("top3")
+                    and isinstance(recommendation.get("top3")[0], dict)
+                    else None
+                ),
+                "save_source": save_recommendation.get("source"),
+                "visible_region_count": visible_region_count,
+            }
+            recommendation = save_recommendation
+            route_target_hint = save_route_target_hint
+            visual_regions = save_visual_regions
+            route_candidates = save_route_candidates
     return {
         "recommendation": recommendation,
         "route_target_hint": route_target_hint,
         "visual_regions": visual_regions,
         "route_start_candidates": route_candidates,
+        "route_fallback": route_fallback,
     }
 
 
@@ -12941,6 +13101,7 @@ def cmd_lightning_route_start(
     start_window_y: int | None = None,
     expected_route_mission_id: str | None = None,
     validate_preview_mission: bool = True,
+    allow_unverified_preview_start: bool = False,
     dry_run: bool = False,
 ) -> dict:
     """Preflight, route-check, and start a selected mission in one live burst."""
@@ -13300,10 +13461,11 @@ def cmd_lightning_route_start(
             (preview_source != "bridge_preview" and not explicit_source_match)
             or not actual_preview_mission
         )
-        allow_unverified_manual_start = (
-            manual_coordinate_start and not expected_preview_mission
+        allow_unverified_start = (
+            (manual_coordinate_start or allow_unverified_preview_start)
+            and not expected_preview_mission
         )
-        if preview_unverified and not allow_unverified_manual_start:
+        if preview_unverified and not allow_unverified_start:
             pause_after_block = _lightning_ensure_pause_state(
                 reason="route_preview_unverified_before_start",
             )
@@ -13437,7 +13599,7 @@ def cmd_lightning_route_start(
                             != "bridge_preview"
                             or not post_dialogue_actual_mission
                         ):
-                            if not allow_unverified_manual_start:
+                            if not allow_unverified_start:
                                 commit_click = {
                                     "status": "BLOCKED",
                                     "reason": (
@@ -15406,6 +15568,10 @@ def cmd_lightning_segment(
                         auto_pause_if_needed=True,
                         start_mode=route_start_mode,
                         expected_route_mission_id=route_start_expected_mission_id,
+                        allow_unverified_preview_start=(
+                            route_auto_start
+                            and route_start_expected_mission_id is None
+                        ),
                         dry_run=dry_run,
                     ),
                     quiet=quiet,
@@ -15542,6 +15708,7 @@ def cmd_lightning_start_run(
     profile: str = "Alpha",
     difficulty: int = 0,
     first_island: str = "archive",
+    advanced_content: str = "on",
     time_limit: float = 2.0,
     max_steps: int = 8,
     max_turns: int = 6,
@@ -15574,12 +15741,16 @@ def cmd_lightning_start_run(
         _print_result(result)
         return result
 
-    setup_check = cmd_verify_setup_screen(expected_difficulty=difficulty)
+    setup_check = cmd_verify_setup_screen(
+        expected_difficulty=difficulty,
+        advanced_content=advanced_content,
+    )
     result: dict = {
         "status": "STARTED",
         "reason": "lightning_start_run",
         "profile": profile,
         "difficulty": difficulty,
+        "advanced_content": advanced_content,
         "first_island": first_island,
         "island_control": island_control,
         "verify_setup": setup_check,

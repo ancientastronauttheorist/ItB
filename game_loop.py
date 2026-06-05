@@ -105,6 +105,7 @@ from src.loop.commands import (
     cmd_mission_end,
     cmd_annotate,
 )
+from src.loop.lightning_conductor import cmd_lightning_autonomous
 
 
 def main():
@@ -500,6 +501,12 @@ def main():
         action="store_true",
         help="Also request fast mode from the Lua bridge if it is active",
     )
+    p_lightning_preflight.add_argument(
+        "--advanced-content",
+        choices=["on", "off", "any"],
+        default="any",
+        help="Require the saved Advanced Content settings to match this state",
+    )
 
     # lightning_ui
     p_lightning_ui = sub.add_parser(
@@ -753,6 +760,12 @@ def main():
         help="Verify new-run difficulty and Advanced Content toggles on screen",
     )
     p_verify_setup.add_argument("--difficulty", type=int, default=0)
+    p_verify_setup.add_argument(
+        "--advanced-content",
+        choices=["on", "off", "any"],
+        default=None,
+        help="Require the visible Advanced Content rows to be on, off, or just present",
+    )
     p_verify_setup.add_argument(
         "--allow-partial-advanced",
         action="store_true",
@@ -1193,6 +1206,11 @@ def main():
     p_lightning_start.add_argument("--profile", default="Alpha")
     p_lightning_start.add_argument("--difficulty", type=int, default=0)
     p_lightning_start.add_argument(
+        "--advanced-content",
+        choices=["on", "off", "any"],
+        default="on",
+    )
+    p_lightning_start.add_argument(
         "--first-island",
         default="archive",
         choices=["archive", "rst", "r.s.t.", "pinnacle", "detritus"],
@@ -1226,6 +1244,32 @@ def main():
         run_segment=True,
         allow_objective_loss=True,
     )
+
+    # lightning_autonomous
+    p_lightning_auto = sub.add_parser(
+        "lightning_autonomous",
+        help="Run telemetry-backed autonomous Lightning War attempts",
+    )
+    p_lightning_auto.add_argument("--profile", default="Alpha")
+    p_lightning_auto.add_argument("--achievement", default="Lightning War")
+    p_lightning_auto.add_argument("--advanced-content", choices=["on", "off", "any"], default="off")
+    p_lightning_auto.add_argument("--difficulty", type=int, default=0)
+    p_lightning_auto.add_argument("--first-island", choices=["archive", "rst", "pinnacle", "detritus"], default="archive")
+    p_lightning_auto.add_argument("--max-attempts", type=int, default=1)
+    p_lightning_auto.add_argument("--max-segments", type=int, default=20)
+    p_lightning_auto.add_argument("--segment-steps", type=int, default=12)
+    p_lightning_auto.add_argument("--time-limit", type=float, default=2.0)
+    p_lightning_auto.add_argument("--max-wall-seconds", type=float, default=None)
+    p_lightning_auto.add_argument("--segment-timeout", type=float, default=420.0)
+    p_lightning_auto.add_argument("--abandon-seconds", type=float, default=29 * 60)
+    p_lightning_auto.add_argument("--first-island-gate-seconds", type=float, default=15 * 60)
+    p_lightning_auto.add_argument("--second-island-start-gate-seconds", type=float, default=16.75 * 60)
+    p_lightning_auto.add_argument("--screenshot-cadence", type=float, default=2.0)
+    p_lightning_auto.add_argument("--no-screenshots", action="store_true")
+    p_lightning_auto.add_argument("--route-auto-start", action="store_true")
+    p_lightning_auto.add_argument("--start-from-verified-setup", action="store_true")
+    p_lightning_auto.add_argument("--no-achievement-sync", action="store_true")
+    p_lightning_auto.add_argument("--dry-run", action="store_true")
 
     # analyze
     p_analyze = sub.add_parser("analyze",
@@ -1349,6 +1393,7 @@ def main():
         cmd_lightning_preflight(
             profile=args.profile,
             set_fast_bridge=args.set_bridge_fast,
+            advanced_content=args.advanced_content,
         )
     elif args.command == "lightning_ui":
         cmd_lightning_ui(
@@ -1431,9 +1476,13 @@ def main():
             target_region_id=args.target_region_id,
         )
     elif args.command == "verify_setup":
+        advanced_content = args.advanced_content
+        if advanced_content is None and args.allow_partial_advanced:
+            advanced_content = "any"
         cmd_verify_setup_screen(
             expected_difficulty=args.difficulty,
             require_all_advanced=not args.allow_partial_advanced,
+            advanced_content=advanced_content,
         )
     elif args.command == "research_next":
         cmd_research_next(profile=args.profile)
@@ -1577,10 +1626,34 @@ def main():
             route_start_mode=args.route_start_mode,
             route_auto_start=args.route_auto_start,
         )
+    elif args.command == "lightning_autonomous":
+        cmd_lightning_autonomous(
+            profile=args.profile,
+            achievement=args.achievement,
+            advanced_content=args.advanced_content,
+            difficulty=args.difficulty,
+            first_island=args.first_island,
+            max_attempts=args.max_attempts,
+            max_segments=args.max_segments,
+            segment_steps=args.segment_steps,
+            time_limit=args.time_limit,
+            max_wall_seconds=args.max_wall_seconds,
+            segment_timeout=args.segment_timeout,
+            abandon_seconds=args.abandon_seconds,
+            first_island_gate_seconds=args.first_island_gate_seconds,
+            second_island_start_gate_seconds=args.second_island_start_gate_seconds,
+            screenshot_cadence=args.screenshot_cadence,
+            screenshots=not args.no_screenshots,
+            route_auto_start=args.route_auto_start,
+            start_from_verified_setup=args.start_from_verified_setup,
+            achievement_sync=not args.no_achievement_sync,
+            dry_run=args.dry_run,
+        )
     elif args.command == "lightning_start_run":
         cmd_lightning_start_run(
             profile=args.profile,
             difficulty=args.difficulty,
+            advanced_content=args.advanced_content,
             first_island=args.first_island,
             time_limit=args.time_limit,
             max_steps=args.max_steps,

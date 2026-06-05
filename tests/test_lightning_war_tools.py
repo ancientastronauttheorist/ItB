@@ -1779,7 +1779,7 @@ def test_lightning_attempt_resume_falls_back_when_continue_stays_paused(monkeypa
 
     result = commands.cmd_lightning_attempt(resume_if_paused=True)
 
-    assert calls == ["menu_continue", "pause_menu_escape"]
+    assert calls == [_lightning_peek_resume_control(), "pause_menu_escape"]
     assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
     assert result["resume_guard"]["reason"] == "resumed_from_pause_escape_fallback"
 
@@ -3120,6 +3120,16 @@ def test_lightning_attempt_does_not_deploy_from_visible_island_map(monkeypatch):
     )
     monkeypatch.setattr(
         commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: {
+            "recommendation": {"status": "NO_ISLAND_MAP"},
+            "route_target_hint": None,
+            "visual_regions": None,
+            "route_start_candidates": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
         "cmd_deploy_recommended",
         lambda **kwargs: (_ for _ in ()).throw(AssertionError("should not deploy")),
     )
@@ -3153,6 +3163,16 @@ def test_lightning_attempt_uses_visible_island_map_when_bridge_missing(monkeypat
         commands,
         "_lightning_visible_ui_snapshot",
         lambda: {"status": "OK", "visible_ui": "island_map"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: {
+            "recommendation": {"status": "NO_ISLAND_MAP"},
+            "route_target_hint": None,
+            "visual_regions": None,
+            "route_start_candidates": [],
+        },
     )
 
     result = commands.cmd_lightning_attempt()
@@ -4494,6 +4514,41 @@ def test_lightning_segment_auto_starts_former_slow_primary_route(monkeypatch):
     assert route_calls[0]["expected_route_mission_id"] == "Mission_Artillery"
 
 
+def test_lightning_segment_auto_start_allows_unverified_visual_route(monkeypatch):
+    route_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "primary_route_candidate": {
+                "index": 0,
+                "window_x": 938,
+                "window_y": 417,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_start_sequence_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    result = commands.cmd_lightning_segment(route_auto_start=True, max_steps=2)
+
+    assert result["route_start_performed"] is True
+    assert route_calls[0]["visual_region_index"] == 0
+    assert route_calls[0]["expected_route_mission_id"] is None
+    assert route_calls[0]["allow_unverified_preview_start"] is True
+
+
 def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypatch):
     attempts = iter(
         [
@@ -5667,6 +5722,72 @@ def test_recommend_mission_allows_low_score_bridge_preview(monkeypatch):
     assert result["speed_route_status"]["reason"] == "forced_bridge_preview_route"
 
 
+def test_visible_map_route_plan_ignores_stale_bridge_preview(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "ranked": [{"mission_id": "Mission_Tides", "score": 23}],
+            "top3": [{"mission_id": "Mission_Tides", "score": 23}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recommend_save_routes",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "saveData",
+            "ranked": [
+                {
+                    "mission_id": "Mission_Train",
+                    "save_region_index": 1,
+                    "save_region_name": "Preserved Farms",
+                    "score": 41,
+                },
+                {
+                    "mission_id": "Mission_Repair",
+                    "save_region_index": 0,
+                    "save_region_name": "Archivist Hall",
+                    "score": -12,
+                },
+            ],
+            "top3": [
+                {
+                    "mission_id": "Mission_Train",
+                    "save_region_index": 1,
+                    "save_region_name": "Preserved Farms",
+                    "score": 41,
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "regions": [
+                {"index": 0, "window_x": 812, "window_y": 423},
+                {"index": 1, "window_x": 938, "window_y": 417},
+            ],
+        },
+    )
+
+    result = commands._lightning_visible_map_route_plan(
+        profile="Alpha",
+        visible_ui={"status": "OK", "visible_ui": "island_map", "screenshot_path": "map.png"},
+    )
+
+    assert result["route_fallback"]["reason"] == (
+        "visible_map_ignored_stale_bridge_preview"
+    )
+    assert result["recommendation"]["source"] == "saveData"
+    assert result["route_start_candidates"][0]["mission_id"] == "Mission_Train"
+    assert result["route_start_candidates"][0]["index"] == 1
+
+
 def test_visual_route_candidates_sort_by_save_ranked_mission():
     recommendation = {
         "status": "OK",
@@ -6638,6 +6759,105 @@ def test_lightning_route_start_raw_coordinates_can_force_unverified_preview(
                 "kind": "point",
                 "window_x": 690,
                 "window_y": 350,
+                "description": "Lightning route region",
+            }
+        ]
+    ]
+    assert pauses == []
+
+
+def test_lightning_route_start_policy_can_force_unverified_visual_preview(
+    monkeypatch,
+):
+    calls = []
+    starts = []
+    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 812,
+                    "window_y": 423,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visual_regions_from_recommendation",
+        lambda recommendation: {
+            "status": "OK",
+            "regions": [{"index": 0, "window_x": 812, "window_y": 423}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "NO_ISLAND_MAP",
+            "source": "bridge",
+            "top3": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "OK", "reason": "visible_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "in_active_mission": True,
+            "mission_id": "Mission_Unknown",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=0,
+        run_preflight=False,
+        allow_unverified_preview_start=True,
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    assert result["expected_route_mission_id"] is None
+    assert starts
+    assert calls == [
+        [
+            {
+                "kind": "point",
+                "window_x": 812,
+                "window_y": 423,
                 "description": "Lightning route region",
             }
         ]

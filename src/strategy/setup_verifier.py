@@ -71,6 +71,8 @@ class SetupCheck:
     setup_signature: dict[str, Any]
     advanced: list[dict[str, Any]]
     missing_advanced: list[str]
+    unexpected_advanced: list[str]
+    desired_advanced: str
     screenshot_path: str | None
     click_plan: list[dict[str, Any]]
 
@@ -83,6 +85,8 @@ class SetupCheck:
             "setup_signature": self.setup_signature,
             "advanced": self.advanced,
             "missing_advanced": self.missing_advanced,
+            "unexpected_advanced": self.unexpected_advanced,
+            "desired_advanced": self.desired_advanced,
             "screenshot_path": self.screenshot_path,
             "click_plan": self.click_plan,
         }
@@ -92,6 +96,7 @@ def capture_and_check_setup(
     *,
     expected_difficulty: int = 0,
     require_all_advanced: bool = True,
+    advanced_content: str | None = None,
     output_path: str | Path = "tmp/new_run_setup_check.png",
 ) -> SetupCheck:
     if Image is None:
@@ -107,6 +112,7 @@ def capture_and_check_setup(
             img.convert("RGB"),
             expected_difficulty=expected_difficulty,
             require_all_advanced=require_all_advanced,
+            advanced_content=advanced_content,
             screenshot_path=str(screenshot),
             click_window_size=window_size,
         )
@@ -117,11 +123,19 @@ def analyze_setup_image(
     *,
     expected_difficulty: int = 0,
     require_all_advanced: bool = True,
+    advanced_content: str | None = None,
     screenshot_path: str | None = None,
     click_window_size: tuple[int, int] | None = None,
 ) -> SetupCheck:
     if expected_difficulty not in DIFFICULTIES:
         raise ValueError(f"unknown difficulty {expected_difficulty!r}")
+    desired_advanced = (
+        advanced_content
+        if advanced_content is not None
+        else ("on" if require_all_advanced else "any")
+    )
+    if desired_advanced not in {"on", "off", "any"}:
+        raise ValueError(f"unknown advanced content mode {desired_advanced!r}")
 
     sx, sy = _scale_for(img)
     if click_window_size is None:
@@ -166,13 +180,21 @@ def analyze_setup_image(
     }
     if setup_screen_detected:
         for row in advanced:
-            if require_all_advanced and not row["enabled"]:
+            if desired_advanced == "on" and not row["enabled"]:
                 click_plan.append({
                     "type": "left_click",
                     "x": row["click"]["x"],
                     "y": row["click"]["y"],
                     "coordinate_space": "window",
                     "description": f"Enable Advanced Content: {row['label']}",
+                })
+            elif desired_advanced == "off" and row["enabled"]:
+                click_plan.append({
+                    "type": "left_click",
+                    "x": row["click"]["x"],
+                    "y": row["click"]["y"],
+                    "coordinate_space": "window",
+                    "description": f"Disable Advanced Content: {row['label']}",
                 })
 
     difficulty_scores = {
@@ -202,7 +224,13 @@ def analyze_setup_image(
         })
 
     missing = [row["label"] for row in advanced if not row["enabled"]]
-    ok_advanced = setup_screen_detected and ((not require_all_advanced) or not missing)
+    unexpected = [row["label"] for row in advanced if row["enabled"]]
+    if desired_advanced == "on":
+        ok_advanced = setup_screen_detected and not missing
+    elif desired_advanced == "off":
+        ok_advanced = setup_screen_detected and not unexpected
+    else:
+        ok_advanced = setup_screen_detected
     ok_difficulty = setup_screen_detected and actual_difficulty == expected_difficulty
     status = "PASS" if ok_advanced and ok_difficulty else "FAIL"
 
@@ -214,6 +242,8 @@ def analyze_setup_image(
         setup_signature=setup_signature,
         advanced=advanced,
         missing_advanced=missing,
+        unexpected_advanced=unexpected,
+        desired_advanced=desired_advanced,
         screenshot_path=screenshot_path,
         click_plan=click_plan,
     )

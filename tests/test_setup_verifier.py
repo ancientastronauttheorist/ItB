@@ -78,6 +78,27 @@ def test_setup_verifier_reports_missing_advanced_and_difficulty_clicks():
     ]
 
 
+def test_setup_verifier_passes_when_advanced_content_off():
+    img = _blank_setup()
+    for box in [
+        (558, 274, 616, 344),
+        (558, 350, 616, 418),
+        (558, 426, 616, 493),
+        (558, 503, 616, 570),
+    ]:
+        _paint_icon(img, box, (120, 120, 120))
+    for center in [(646, 304), (646, 379), (646, 454), (646, 529)]:
+        _paint_checkbox(img, center, checked=False)
+    _paint_difficulty_border(img, (909, 250, 1122, 317))
+
+    check = analyze_setup_image(img, expected_difficulty=0, advanced_content="off")
+
+    assert check.status == "PASS"
+    assert check.desired_advanced == "off"
+    assert check.unexpected_advanced == []
+    assert check.click_plan == []
+
+
 def test_setup_verifier_fails_colorful_squad_screen_false_positive():
     img = _blank_setup()
     for box, color in [
