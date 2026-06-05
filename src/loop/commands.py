@@ -14704,6 +14704,63 @@ def cmd_lightning_attempt(
     mech_count = int(snapshot.get("mech_count") or 0)
     in_active_mission = bool(snapshot.get("in_active_mission"))
 
+    resumed_visible_ui = None
+    if isinstance(resume_guard, dict):
+        resumed_visible_ui = resume_guard.get("post_click_visible_ui")
+    if (
+        in_active_mission
+        and phase in {"combat_player", "combat_enemy"}
+        and turn > 0
+        and isinstance(resumed_visible_ui, dict)
+        and resumed_visible_ui.get("status") == "OK"
+        and resumed_visible_ui.get("visible_ui") in {"island_map", "island_map_or_unknown"}
+    ):
+        route_plan = _lightning_visible_map_route_plan(
+            profile=profile,
+            visible_ui=resumed_visible_ui,
+            quiet=quiet,
+        )
+        stale_active_mission_warning = {
+            "reason": "visible_map_overrides_stale_active_combat",
+            "mission_id": snapshot.get("mission_id"),
+            "phase": phase,
+            "turn": turn,
+        }
+        if route_plan.get("route_start_candidates"):
+            result = {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "reason": "stale_active_combat_visible_island_map_save_route_plan",
+                "snapshot": {**snapshot, "visible_ui": resumed_visible_ui},
+                "budget": budget,
+                "preflight": preflight,
+                **route_plan,
+                "stale_active_mission_warning": stale_active_mission_warning,
+                "next_step": (
+                    "Visible island map has save-backed route candidates "
+                    "despite stale active-combat bridge data. Use the primary "
+                    "route command only if its auto_route_allowed flag is true."
+                ),
+            }
+            _lightning_attach_primary_route_candidate(
+                result,
+                route_plan["route_start_candidates"],
+            )
+            return finish(result, pause_reason="lightning_attempt_stale_active_map")
+        result = {
+            "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
+            "reason": "stale_active_combat_visible_island_map",
+            "snapshot": {**snapshot, "visible_ui": resumed_visible_ui},
+            "budget": budget,
+            "preflight": preflight,
+            **route_plan,
+            "stale_active_mission_warning": stale_active_mission_warning,
+            "next_step": (
+                "Visible screen is the island map, so active-combat bridge "
+                "data is stale. Select/start a route from the visible map."
+            ),
+        }
+        return finish(result, pause_reason="lightning_attempt_stale_active_map")
+
     def run_combat_loop(*, action: str, wait_floor: float | None = None) -> dict:
         action_record["action"] = action
         if dry_run:
