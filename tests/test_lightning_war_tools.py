@@ -4249,6 +4249,38 @@ def test_lightning_clear_panel_chain_repeats_same_class(monkeypatch):
     assert result["visible_ui"]["visible_ui"] == "pod_open_panel"
 
 
+def test_lightning_clear_panel_chain_clears_mission_preview_dialogue(monkeypatch):
+    states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "mission_preview_panel",
+                "recommended_control": "dialogue_textbox",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "mission_preview_panel",
+                "recommended_control": "mission_preview_board",
+            },
+        ]
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(states))
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands._lightning_clear_visible_panel_chain()
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "panel_chain_cleared"
+    assert calls == ["dialogue_textbox"]
+    assert result["visible_ui"]["recommended_control"] == "mission_preview_board"
+
+
 def test_lightning_attempt_auto_clears_safe_panel_without_bridge(monkeypatch):
     session = RunSession(
         run_id="lw",

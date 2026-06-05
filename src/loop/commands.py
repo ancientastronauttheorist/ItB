@@ -9455,6 +9455,15 @@ def _lightning_preferred_visible_control(
     return control
 
 
+def _lightning_is_safe_clear_ui(
+    visible_name: str | None,
+    control: str | None = None,
+) -> bool:
+    if visible_name in _LIGHTNING_SAFE_CLEAR_UIS:
+        return True
+    return visible_name == "mission_preview_panel" and control == "dialogue_textbox"
+
+
 def _lightning_score_is_actionable(
     score: dict,
     *,
@@ -11205,7 +11214,7 @@ def _lightning_clear_visible_panel_chain(
             visible_ui.get("recommended_control"),
         )
 
-        if visible_name not in _LIGHTNING_SAFE_CLEAR_UIS or not control:
+        if not control or not _lightning_is_safe_clear_ui(visible_name, control):
             return {
                 "status": "OK" if steps else "NO_ACTION",
                 "reason": "panel_chain_cleared" if steps else "no_safe_panel_visible",
@@ -14540,7 +14549,10 @@ def cmd_lightning_attempt(
                 auto_clear_panels
                 and click_ui
                 and not dry_run
-                and visible_ui.get("visible_ui") in _LIGHTNING_SAFE_CLEAR_UIS
+                and _lightning_is_safe_clear_ui(
+                    visible_ui.get("visible_ui"),
+                    visible_ui.get("recommended_control"),
+                )
             ):
                 clear_result = _lightning_clear_visible_panel_chain()
                 action_record.update(
@@ -15055,7 +15067,10 @@ def cmd_lightning_attempt(
         if (
             visible_ui.get("status") == "OK"
             and visible_ui.get("recommended_control")
-            and visible_ui.get("visible_ui") in _LIGHTNING_SAFE_CLEAR_UIS
+            and _lightning_is_safe_clear_ui(
+                visible_ui.get("visible_ui"),
+                visible_ui.get("recommended_control"),
+            )
         ):
             if auto_clear_panels and click_ui and not dry_run:
                 clear_result = _lightning_clear_visible_panel_chain()
@@ -15233,7 +15248,10 @@ def cmd_lightning_attempt(
                 auto_clear_panels
                 and click_ui
                 and not dry_run
-                and visible_ui.get("visible_ui") in _LIGHTNING_SAFE_CLEAR_UIS
+                and _lightning_is_safe_clear_ui(
+                    visible_ui.get("visible_ui"),
+                    visible_ui.get("recommended_control"),
+                )
             ):
                 clear_result = _lightning_clear_visible_panel_chain()
                 action_record["action"] = "clear_visible_panel"
