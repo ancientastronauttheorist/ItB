@@ -25,6 +25,7 @@ HARD_STOP_TOKENS = (
     "BRIDGE_SNAPSHOT_UNAVAILABLE",
 )
 RESTARTABLE_ATTEMPT_STOP_TOKENS = (
+    "POST_ENEMY_AUDIT_MISSED_WINDOW",
     "SAFETY_BLOCKED",
 )
 
@@ -637,6 +638,8 @@ def _achievement_unlocked(result: dict[str, Any] | None) -> bool:
 
 
 def _hard_stop(result: dict[str, Any] | None) -> bool:
+    if _restartable_attempt_stop(result) is not None:
+        return False
     return _find_stop_token(result, HARD_STOP_TOKENS) is not None
 
 

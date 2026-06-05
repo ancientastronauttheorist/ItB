@@ -677,7 +677,7 @@ def test_timer_helpers_read_nested_resume_guard_visible_budget():
     assert _timer_label(segment) == "0:15:47"
 
 
-def test_hard_stop_detects_nested_post_enemy_attempt():
+def test_restartable_attempt_stop_detects_nested_post_enemy_missed_window():
     segment = {
         "status": "LIGHTNING_SEGMENT_STOPPED",
         "reason": "combat_loop_returned",
@@ -687,7 +687,11 @@ def test_hard_stop_detects_nested_post_enemy_attempt():
         },
     }
 
-    assert _hard_stop(segment)
+    assert (
+        _restartable_attempt_stop(segment)
+        == "post_enemy_audit_missed_window_attempt_restart"
+    )
+    assert not _hard_stop(segment)
 
 
 def test_hard_stop_ignores_playable_route_mismatch():
