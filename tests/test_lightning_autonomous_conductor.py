@@ -367,6 +367,28 @@ def test_timer_helpers_read_real_segment_last_attempt_budget():
     assert _timer_label(segment) == "0:15:40"
 
 
+def test_timer_helpers_read_nested_resume_guard_visible_budget():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "route_auto_start_not_allowed",
+        "last_attempt": {
+            "budget": {
+                "game_seconds": 786.395,
+                "game_timer": "0:13:06",
+            },
+            "resume_guard": {
+                "visible_timer_budget": {
+                    "game_seconds": 947.0,
+                    "game_timer": "0:15:47",
+                },
+            },
+        },
+    }
+
+    assert _timer_seconds(segment) == 947.0
+    assert _timer_label(segment) == "0:15:47"
+
+
 def test_hard_stop_detects_nested_post_enemy_attempt():
     segment = {
         "status": "LIGHTNING_SEGMENT_STOPPED",
