@@ -14771,6 +14771,40 @@ def cmd_lightning_attempt(
                 route_plan["route_start_candidates"],
             )
             return finish(result, pause_reason="lightning_attempt_stale_active_map")
+        if click_ui and not dry_run:
+            pause_refresh = _lightning_ensure_pause_state(
+                dry_run=False,
+                reason="lightning_attempt_stale_active_refresh",
+            )
+            refreshed = _lightning_live_snapshot()
+            action_record["stale_active_refresh"] = {
+                "pause": pause_refresh,
+                "snapshot": refreshed,
+            }
+            if (
+                pause_refresh.get("status") == "OK"
+                and refreshed.get("status") == "OK"
+                and int(refreshed.get("turn") or 0) == 0
+                and int(refreshed.get("deployment_zone_count") or 0) > 0
+            ):
+                result = {
+                    "status": "LIGHTNING_ATTEMPT_PANEL_CLEARED",
+                    "reason": "stale_active_refreshed_to_deployment",
+                    "snapshot": {
+                        **refreshed,
+                        "visible_ui": pause_refresh.get("visible_ui"),
+                    },
+                    "budget": budget,
+                    "preflight": preflight,
+                    "action": action_record,
+                    "stale_active_mission_warning": stale_active_mission_warning,
+                    "next_step": (
+                        "Paused and refreshed stale active-combat bridge data "
+                        "into a deployment snapshot. Rerun lightning_segment "
+                        "so it can resume and use the normal deployment path."
+                    ),
+                }
+                return finish(result)
         result = {
             "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
             "reason": "stale_active_combat_visible_island_map",

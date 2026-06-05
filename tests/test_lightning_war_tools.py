@@ -3732,6 +3732,86 @@ def test_lightning_attempt_routes_visible_map_over_stale_active_combat(monkeypat
     assert result["pause_guard"]["status"] == "OK"
 
 
+def test_lightning_attempt_refreshes_stale_active_map_to_deployment(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "phase": "combat_player",
+                "turn": 4,
+                "mission_id": "Mission_Volatile",
+                "active_mechs": 3,
+                "mech_count": 3,
+                "deployment_zone_count": 0,
+                "in_active_mission": True,
+            },
+            {
+                "status": "OK",
+                "phase": "unknown",
+                "turn": 0,
+                "mission_id": "Mission_Survive",
+                "active_mechs": 0,
+                "mech_count": 0,
+                "deployment_zone_count": 12,
+                "in_active_mission": True,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "resumed_from_pause",
+            "post_click_visible_ui": {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "screenshot_path": "deployment.png",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: {
+            "recommendation": {"status": "OK"},
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "pause_clicked",
+            "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+
+    result = commands.cmd_lightning_attempt(resume_if_paused=True, pause_on_stop=True)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "stale_active_refreshed_to_deployment"
+    assert result["snapshot"]["mission_id"] == "Mission_Survive"
+    assert result["snapshot"]["deployment_zone_count"] == 12
+    assert result["action"]["stale_active_refresh"]["pause"]["status"] == "OK"
+
+
 def test_lightning_attempt_clicks_preview_then_deploys(monkeypatch):
     session = RunSession(
         run_id="lw",
