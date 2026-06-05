@@ -10000,6 +10000,21 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             "dark_overlay_fraction": dark_overlay,
             "scores": scores,
         }
+    bottom_continue = scores.get("bottom_continue_panel", {})
+    if (
+        dark_overlay >= 0.70
+        and bottom_continue.get("score", 0.0) >= 0.70
+        and bottom_continue.get("bright", 0) >= 1000
+        and bottom_continue.get("border", 0) >= 1000
+    ):
+        return {
+            "status": "OK",
+            "visible_ui": "bottom_continue_panel",
+            "recommended_control": "bottom_continue",
+            "confidence": bottom_continue["score"],
+            "dark_overlay_fraction": dark_overlay,
+            "scores": scores,
+        }
     if (
         dark_overlay >= 0.70
         and advisor_preview.get("score", 0.0) >= 0.95

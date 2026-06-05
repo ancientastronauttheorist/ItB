@@ -2702,6 +2702,55 @@ def test_lightning_ui_classifier_detects_advisor_masked_mission_preview(tmp_path
     assert result["recommended_control"] == "dialogue_textbox"
 
 
+def test_lightning_ui_classifier_prefers_region_secured_continue(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (8, 10, 14))
+    draw = ImageDraw.Draw(image)
+    # Advisor dialogue is present, but the Region Secured Continue panel should
+    # win so the speed loop clicks the actual continuation button.
+    draw.rectangle(
+        [130 * scale, 165 * scale, 1150 * scale, 285 * scale],
+        fill=(14, 18, 28),
+        outline=(85, 110, 165),
+        width=10 * scale,
+    )
+    draw.rectangle(
+        [305 * scale, 395 * scale, 520 * scale, 430 * scale],
+        fill=(210, 55, 55),
+    )
+    for index in range(12):
+        left = (160 + index * 48) * scale
+        draw.rectangle(
+            [left, 200 * scale, left + 30 * scale, 218 * scale],
+            fill=(220, 225, 232),
+        )
+    cx, cy = 1005 * scale, 676 * scale
+    draw.polygon(
+        [
+            (cx - 210 * scale, cy - 44 * scale),
+            (cx + 170 * scale, cy - 44 * scale),
+            (cx + 210 * scale, cy),
+            (cx + 170 * scale, cy + 44 * scale),
+            (cx - 210 * scale, cy + 44 * scale),
+        ],
+        fill=(18, 24, 36),
+        outline=(85, 110, 165),
+    )
+    draw.rectangle(
+        [cx - 90 * scale, cy - 14 * scale, cx + 90 * scale, cy + 14 * scale],
+        fill=(235, 235, 235),
+    )
+    path = tmp_path / "region_secured_continue.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "bottom_continue_panel"
+    assert result["recommended_control"] == "bottom_continue"
+
+
 def test_lightning_start_mission_target_detects_yellow_text(tmp_path):
     from PIL import Image, ImageDraw
 
