@@ -669,6 +669,8 @@ def _visible_ui_name(result: dict[str, Any] | None) -> str | None:
     if not isinstance(result, dict):
         return None
     visible = result.get("visible_ui")
+    if isinstance(visible, str) and visible:
+        return visible
     if isinstance(visible, dict) and visible.get("visible_ui"):
         return str(visible["visible_ui"])
     last_poll = result.get("last_poll")

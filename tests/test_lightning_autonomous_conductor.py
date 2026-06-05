@@ -51,7 +51,7 @@ def verified_pause_payload() -> dict:
 def new_game_setup_payload() -> dict:
     return {
         "status": "OK",
-        "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+        "visible_ui": "new_game_setup",
     }
 
 
