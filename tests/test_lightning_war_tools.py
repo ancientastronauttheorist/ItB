@@ -5247,6 +5247,73 @@ def test_lightning_segment_auto_starts_detected_visual_candidate_before_save_reg
     assert result["steps"][0]["route_auto_start_index"] == 0
 
 
+def test_lightning_segment_retries_detected_visual_candidate_after_stale_region_id(monkeypatch):
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "top_mission": "Mission_BotDefense",
+                "top_region_id": 3,
+                "recommendation": {
+                    "ranked": [
+                        {
+                            "mission_id": "Mission_BotDefense",
+                            "region_id": 3,
+                        },
+                    ],
+                    "speed_route_status": {
+                        "status": "AUTO_START_OK",
+                        "auto_start_allowed": True,
+                    },
+                },
+            },
+            {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "deployment_waiting_for_ui_settle",
+            },
+        ]
+    )
+    route_calls = []
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        if len(route_calls) == 1:
+            return {
+                "status": "BLOCKED",
+                "reason": "visual_region_index_not_found",
+                "requested_visual_region_index": kwargs["visual_region_index"],
+                "route_start_candidates": [
+                    {"index": 0, "mission_id": "Mission_BotDefense"},
+                    {"index": 1, "mission_id": "Mission_FreezeBots"},
+                ],
+                "primary_route_candidate": {
+                    "index": 0,
+                    "mission_id": "Mission_BotDefense",
+                },
+            }
+        return {"status": "OK"}
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", lambda **kwargs: next(attempts))
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=3,
+        route_auto_start=True,
+    )
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert [call["visual_region_index"] for call in route_calls] == [3, 0]
+    assert route_calls[1]["expected_route_mission_id"] == "Mission_BotDefense"
+    assert result["steps"][1]["route_auto_start_retry_index"] == 0
+    assert result["route_start_performed"] is True
+
+
 def test_lightning_segment_infers_expected_route_for_explicit_visual_start(monkeypatch):
     route_calls = []
     attempt_calls = []

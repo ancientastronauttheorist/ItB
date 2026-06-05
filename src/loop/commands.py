@@ -15808,6 +15808,24 @@ def cmd_lightning_segment(
                 route_summary["quiet_output"] = route_output
             steps.append(route_summary)
             if route_start.get("status") not in {"OK", "DRY_RUN"}:
+                retry_candidate = _lightning_retry_candidate_from_visual_region_block(
+                    route_start,
+                    route_visual_region_index,
+                )
+                if route_auto_start and retry_candidate is not None:
+                    route_visual_region_index = int(retry_candidate["index"])
+                    if retry_candidate.get("mission_id"):
+                        route_start_expected_mission_id = (
+                            retry_candidate["mission_id"]
+                        )
+                    route_start_pending = True
+                    route_summary["route_auto_start_retry_index"] = (
+                        route_visual_region_index
+                    )
+                    route_summary["route_auto_start_retry_mission"] = (
+                        route_start_expected_mission_id
+                    )
+                    continue
                 stopped_reason = str(
                     route_start.get("reason")
                     or route_start.get("status")
@@ -15929,6 +15947,24 @@ def cmd_lightning_segment(
                     route_summary["quiet_output"] = route_output
                 steps.append(route_summary)
                 if route_start.get("status") not in {"OK", "DRY_RUN"}:
+                    retry_candidate = _lightning_retry_candidate_from_visual_region_block(
+                        route_start,
+                        route_visual_region_index,
+                    )
+                    if route_auto_start and retry_candidate is not None:
+                        route_visual_region_index = int(retry_candidate["index"])
+                        if retry_candidate.get("mission_id"):
+                            route_start_expected_mission_id = (
+                                retry_candidate["mission_id"]
+                            )
+                        route_start_pending = True
+                        route_summary["route_auto_start_retry_index"] = (
+                            route_visual_region_index
+                        )
+                        route_summary["route_auto_start_retry_mission"] = (
+                            route_start_expected_mission_id
+                        )
+                        continue
                     stopped_reason = str(
                         route_start.get("reason")
                         or route_start.get("status")
@@ -16080,6 +16116,43 @@ def _lightning_auto_start_candidate_from_recommendation(attempt: dict) -> dict |
     if allowed is not None:
         candidate["auto_route_allowed"] = bool(allowed)
     return candidate
+
+
+def _lightning_retry_candidate_from_visual_region_block(
+    route_start: dict,
+    previous_index: int | None,
+) -> dict | None:
+    """Pick a detected visual route candidate after a stale index miss."""
+    if not isinstance(route_start, dict):
+        return None
+    if route_start.get("reason") != "visual_region_index_not_found":
+        return None
+
+    candidates: list[Any] = []
+    primary = route_start.get("primary_route_candidate")
+    if isinstance(primary, dict):
+        candidates.append(primary)
+    route_candidates = route_start.get("route_start_candidates")
+    if isinstance(route_candidates, list):
+        candidates.extend(route_candidates)
+
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        try:
+            index = int(candidate.get("index"))
+        except (TypeError, ValueError):
+            continue
+        if previous_index is not None and index == previous_index:
+            continue
+        out = {"index": index}
+        mission_id = candidate.get("mission_id")
+        if mission_id:
+            out["mission_id"] = str(mission_id)
+        if candidate.get("auto_route_allowed") is not None:
+            out["auto_route_allowed"] = bool(candidate.get("auto_route_allowed"))
+        return out
+    return None
 
 
 def _lightning_pause_verified(result: dict | None) -> bool:
