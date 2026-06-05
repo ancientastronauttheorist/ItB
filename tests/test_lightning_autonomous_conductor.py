@@ -81,6 +81,60 @@ def test_autonomous_starts_when_initial_screen_is_setup():
     assert calls[1] == ("lightning_ui", {"args": (), "control": "setup_start"})
 
 
+def test_autonomous_starts_from_setup_despite_stale_live_bridge():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "BLOCKED",
+                "reason": "live_combat_phase",
+                "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+                "last_poll": {
+                    "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+                    "live_snapshot": {
+                        "phase": "combat_player",
+                        "mission_id": "Mission_Volatile",
+                    },
+                },
+            },
+        ),
+        cmd_verify_setup_screen=record("verify_setup", {"status": "PASS"}),
+        cmd_lightning_start_run=record("start_run", {"status": "OK"}),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "max_steps_reached",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert [name for name, _ in calls[:4]] == [
+        "pause_guard",
+        "lightning_ui",
+        "verify_setup",
+        "start_run",
+    ]
+
+
 def test_autonomous_blocks_and_pauses_on_bridge_snapshot_unavailable():
     calls: list[tuple[str, dict]] = []
 

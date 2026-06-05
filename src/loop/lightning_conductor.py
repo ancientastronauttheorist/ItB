@@ -471,6 +471,8 @@ def _route_ready(result: dict[str, Any] | None) -> bool:
 def _safe_to_think(result: dict[str, Any] | None) -> bool:
     if not isinstance(result, dict):
         return False
+    if _visible_ui_name(result) == "new_game_setup":
+        return True
     guard = result.get("pause_guard")
     if isinstance(guard, dict):
         if guard.get("pause_verified") or guard.get("timer_stop_verified"):
