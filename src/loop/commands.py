@@ -16170,6 +16170,25 @@ def _lightning_pause_verified(result: dict | None) -> bool:
     )
 
 
+def _lightning_intro_continue_likely_visible(visible_ui: dict | None) -> bool:
+    """Detect island intro dialogue that classifier cannot clear directly."""
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return False
+    if visible_ui.get("visible_ui") != "island_map_or_unknown":
+        return False
+    scores = visible_ui.get("scores")
+    if not isinstance(scores, dict):
+        return False
+    dialogue = scores.get("mission_preview_dialogue")
+    island_map = scores.get("island_map")
+    if not isinstance(dialogue, dict) or not isinstance(island_map, dict):
+        return False
+    return (
+        float(dialogue.get("score") or 0.0) >= 0.55
+        and float(island_map.get("score") or 0.0) < 0.05
+    )
+
+
 def cmd_lightning_start_run(
     profile: str = "Alpha",
     difficulty: int = 0,
@@ -16225,6 +16244,7 @@ def cmd_lightning_start_run(
             island_control,
             island_control,
             "clear_visible_panel_chain",
+            "intro_bottom_continue_fallback",
             "ensure_pause",
         ],
         "run_segment": run_segment,
@@ -16302,6 +16322,18 @@ def cmd_lightning_start_run(
         result["clear_intro_panels_retry"] = _lightning_clear_visible_panel_chain(
             max_steps=4,
         )
+    intro_visible = (
+        result.get("clear_intro_panels_retry", {}).get("visible_ui")
+        if isinstance(result.get("clear_intro_panels_retry"), dict)
+        else None
+    ) or clear_panels.get("visible_ui")
+    if _lightning_intro_continue_likely_visible(intro_visible):
+        intro_continue = click_known_window_control("bottom_continue")
+        result["intro_bottom_continue_fallback"] = intro_continue
+        if intro_continue.get("status") == "OK":
+            result["clear_intro_after_continue"] = (
+                _lightning_clear_visible_panel_chain(max_steps=4)
+            )
 
     pause = _lightning_ensure_pause_state(
         reason="lightning_start_run_after_first_island",

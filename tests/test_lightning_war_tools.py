@@ -142,6 +142,80 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
     assert manifests[0][1]["advanced_content"] == "off"
 
 
+def test_lightning_start_run_clears_archive_intro_dialogue_fallback(monkeypatch):
+    calls: list[str] = []
+
+    class FakeSession:
+        run_id = "fresh_lw"
+
+        def save(self):
+            pass
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    clear_results = iter(
+        [
+            {
+                "status": "OK",
+                "reason": "panel_chain_cleared",
+                "steps": [{"control": "modal_understood"}],
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "island_map_or_unknown",
+                    "scores": {
+                        "mission_preview_dialogue": {"score": 0.58},
+                        "island_map": {"score": 0.01},
+                    },
+                },
+            },
+            {"status": "NO_ACTION", "steps": []},
+        ]
+    )
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: next(clear_results),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+
+    result = commands.cmd_lightning_start_run(
+        advanced_content="off",
+        run_segment=False,
+    )
+
+    assert result["status"] == "OK"
+    assert calls == [
+        "setup_modal_start",
+        "island_archive",
+        "island_archive",
+        "bottom_continue",
+    ]
+    assert result["intro_bottom_continue_fallback"]["control"] == "bottom_continue"
+    assert result["clear_intro_after_continue"]["status"] == "NO_ACTION"
+
+
 def test_stale_active_solution_guard_preserves_pending_post_enemy_turn():
     assert not commands._should_clear_stale_active_solution(
         cached_turn=1,
