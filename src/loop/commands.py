@@ -431,6 +431,7 @@ def _lightning_speed_unplanned_threat_loss_allowed(
         and (
             not isinstance(entry.get("coverage"), dict)
             or entry.get("coverage", {}).get("reason") in {
+                "still_threatened",
                 "still_threatened_current",
                 "still_threatened_initial",
             }

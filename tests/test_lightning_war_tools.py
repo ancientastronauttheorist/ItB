@@ -5337,6 +5337,45 @@ def test_lightning_speed_policy_ignores_covered_audit_entries():
     ) is False
 
 
+def test_lightning_speed_policy_allows_legacy_still_threatened_reason():
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    threat_audit = {
+        "still_threatened_count": 1,
+        "entries": [
+            {
+                "target_visual": "C3",
+                "target_hp": 2,
+                "coverage": {"reason": "still_threatened"},
+            },
+        ],
+    }
+    plan_safety = {
+        "blocking": False,
+        "violations": [],
+        "current": {
+            "grid_power": 5,
+            "objective_buildings_alive": 1,
+            "objective_building_hp_total": 1,
+            "protected_objective_units_alive": 0,
+            "pylons_alive": None,
+            "pylon_hp_total": None,
+            "bigbomb_alive": False,
+        },
+    }
+
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        lightning_speed_loss_allowed=True,
+    ) is False
+
+
 def test_lightning_speed_policy_blocks_unplanned_threat_if_grid_would_collapse():
     session = RunSession(
         run_id="lw",
