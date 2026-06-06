@@ -661,6 +661,77 @@ def test_restart_dead_timeline_uses_pause_guard_before_abandon():
     ]
 
 
+def test_restart_dead_timeline_ensures_pause_before_abandon_from_safe_result():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control == "ensure_pause":
+            return verified_pause_payload()
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+    restart_result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "deployment_visible_ui_not_deployment_attempt_restart",
+        "ensure_pause": new_game_setup_payload(),
+    }
+
+    result = _restart_dead_timeline(commands, restart_result)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "abandoned_to_setup"
+    assert calls == [
+        "ensure_pause",
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_available",
+        "abandon_pilot_slot_two_left",
+        "classify",
+    ]
+
+
+def test_restart_dead_timeline_blocks_false_setup_with_active_mission_clue():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control == "ensure_pause":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+    restart_result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "deployment_visible_ui_not_deployment_attempt_restart",
+        "ensure_pause": new_game_setup_payload(),
+        "segment": {
+            "last_attempt": {
+                "snapshot": {
+                    "in_active_mission": True,
+                    "mission_id": "Mission_SnowStorm",
+                    "deployment_zone_count": 13,
+                }
+            }
+        },
+    }
+
+    result = _restart_dead_timeline(commands, restart_result)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "restart_setup_visibility_conflicts_with_active_mission"
+    assert calls == ["ensure_pause"]
+
+
 def test_restart_dead_timeline_resumes_from_kia_panel_after_failed_recovery():
     calls: list[str] = []
     classify_count = 0

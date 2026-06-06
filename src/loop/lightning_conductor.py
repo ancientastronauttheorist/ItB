@@ -812,14 +812,38 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
         steps.append({"control": control, "result": _compact(result)})
         return result
 
-    if not _safe_to_think(previous_result):
-        pause_guard = getattr(commands, "cmd_lightning_pause_guard", None)
-        if callable(pause_guard):
-            pause = pause_guard(seconds=5.0, interval=0.25, once=True)
-            steps.append({"control": "pause_guard", "result": _compact(pause)})
+    previous_visible = _visible_ui_name(previous_result)
+    if previous_visible == "new_game_setup" and not _active_mission_clue(previous_result):
+        return {
+            "status": "OK",
+            "reason": "already_at_setup",
+            "steps": steps,
+        }
+
+    if not _pause_menu_proven(previous_result):
+        if not _safe_to_think(previous_result):
+            pause_guard = getattr(commands, "cmd_lightning_pause_guard", None)
+            if callable(pause_guard):
+                pause = pause_guard(seconds=5.0, interval=0.25, once=True)
+                steps.append({"control": "pause_guard", "result": _compact(pause)})
+            else:
+                pause = ui("ensure_pause")
         else:
             pause = ui("ensure_pause")
-        if not _safe_to_think(pause):
+        pause_visible = _visible_ui_name(pause)
+        if pause_visible == "new_game_setup":
+            if _active_mission_clue(previous_result) or _active_mission_clue(pause):
+                return {
+                    "status": "BLOCKED",
+                    "reason": "restart_setup_visibility_conflicts_with_active_mission",
+                    "steps": steps,
+                }
+            return {
+                "status": "OK",
+                "reason": "already_at_setup",
+                "steps": steps,
+            }
+        if pause_visible != "pause_menu" and not _pause_menu_proven(pause):
             if _restart_recovery_panel_safe(pause):
                 needs_abandon_clicks = False
             else:
@@ -929,6 +953,42 @@ def _restart_recovery_control(result: dict[str, Any]) -> str | None:
     if recommended in RESTART_RECOVERY_SAFE_CONTROLS:
         return recommended
     return None
+
+
+def _pause_menu_proven(result: dict[str, Any] | None) -> bool:
+    if not isinstance(result, dict):
+        return False
+    if result.get("pause_verified") or result.get("timer_stop_verified"):
+        return True
+    visible = result.get("visible_ui") or result.get("pause_verify")
+    if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
+        return True
+    if visible == "pause_menu":
+        return True
+    for key in ("last_poll", "pause_guard", "ensure_pause"):
+        nested = result.get(key)
+        if isinstance(nested, dict) and _pause_menu_proven(nested):
+            return True
+    return False
+
+
+def _active_mission_clue(value: Any) -> bool:
+    if isinstance(value, dict):
+        if value.get("in_active_mission") is True:
+            return True
+        try:
+            deployment_zones = int(value.get("deployment_zone_count") or 0)
+        except (TypeError, ValueError):
+            deployment_zones = 0
+        if deployment_zones > 0 and value.get("mission_id"):
+            return True
+        for nested in value.values():
+            if _active_mission_clue(nested):
+                return True
+        return False
+    if isinstance(value, list):
+        return any(_active_mission_clue(nested) for nested in value)
+    return False
 
 
 def _recommended_control_name(result: dict[str, Any] | None) -> str | None:
