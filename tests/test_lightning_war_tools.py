@@ -3720,7 +3720,7 @@ def test_lightning_attempt_routes_visible_map_over_stale_active_combat(monkeypat
             "reason": "resumed_from_pause",
             "post_click_visible_ui": {
                 "status": "OK",
-                "visible_ui": "island_map_or_unknown",
+                "visible_ui": "island_map",
                 "screenshot_path": "map.png",
             },
         },
@@ -3783,8 +3783,71 @@ def test_lightning_attempt_routes_visible_map_over_stale_active_combat(monkeypat
         "phase": "combat_player",
         "turn": 3,
     }
-    assert seen["visible_ui"]["visible_ui"] == "island_map_or_unknown"
+    assert seen["visible_ui"]["visible_ui"] == "island_map"
     assert result["primary_route_candidate_index"] == 0
+    assert result["pause_guard"]["status"] == "OK"
+
+
+def test_lightning_attempt_runs_combat_on_ambiguous_stale_active_ui(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "resumed_from_pause",
+            "post_click_visible_ui": {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "screenshot_path": "ambiguous.png",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 1,
+            "mission_id": "Mission_Dam",
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: pytest.fail("ambiguous active combat must not route"),
+    )
+
+    def fake_loop(**kwargs):
+        calls.append(kwargs)
+        return {"status": "LIGHTNING_LOOP_STOPPED", "reason": "max_turns_reached"}
+
+    monkeypatch.setattr(commands, "cmd_lightning_loop", fake_loop)
+
+    result = commands.cmd_lightning_attempt(resume_if_paused=True, pause_on_stop=True)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "combat_loop_returned"
+    assert result["action"]["action"] == "combat_loop"
+    assert calls
     assert result["pause_guard"]["status"] == "OK"
 
 
@@ -3829,7 +3892,7 @@ def test_lightning_attempt_refreshes_stale_active_map_to_deployment(monkeypatch)
             "reason": "resumed_from_pause",
             "post_click_visible_ui": {
                 "status": "OK",
-                "visible_ui": "island_map_or_unknown",
+                "visible_ui": "island_map",
                 "screenshot_path": "deployment.png",
             },
         },

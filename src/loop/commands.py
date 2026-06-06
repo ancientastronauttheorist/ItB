@@ -14783,7 +14783,7 @@ def cmd_lightning_attempt(
         and active_mechs > 0
         and isinstance(resumed_visible_ui, dict)
         and resumed_visible_ui.get("status") == "OK"
-        and resumed_visible_ui.get("visible_ui") in {"island_map", "island_map_or_unknown"}
+        and resumed_visible_ui.get("visible_ui") == "island_map"
     ):
         route_plan = _lightning_visible_map_route_plan(
             profile=profile,
