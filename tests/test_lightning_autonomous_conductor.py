@@ -887,6 +887,10 @@ def test_restartable_attempt_stop_treats_lightning_hard_gates_as_dead_attempts()
             "deployment_visible_ui_not_deployment",
             "deployment_visible_ui_not_deployment_attempt_restart",
         ),
+        (
+            "visual_region_index_not_found",
+            "visual_region_index_not_found_attempt_restart",
+        ),
     ]
 
     for reason, expected in examples:
