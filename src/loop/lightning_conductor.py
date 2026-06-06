@@ -669,6 +669,12 @@ def _restartable_attempt_stop(result: dict[str, Any] | None) -> str | None:
     token = _find_stop_token(result, RESTARTABLE_ATTEMPT_STOP_TOKENS)
     if token is None:
         return None
+    if (
+        token == "VISUAL_REGION_INDEX_NOT_FOUND"
+        and isinstance(result, dict)
+        and result.get("route_visual_region_index_pending") is not None
+    ):
+        return None
     return f"{token.lower()}_attempt_restart"
 
 

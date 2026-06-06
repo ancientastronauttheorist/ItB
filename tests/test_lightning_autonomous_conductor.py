@@ -907,6 +907,27 @@ def test_restartable_attempt_stop_treats_lightning_hard_gates_as_dead_attempts()
         assert not _hard_stop(segment)
 
 
+def test_restartable_attempt_stop_ignores_visual_region_miss_with_pending_retry():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "segment_wall_seconds_exceeded",
+        "route_visual_region_index_pending": 0,
+        "steps": [
+            {
+                "status": "BLOCKED",
+                "reason": "visual_region_index_not_found",
+            },
+        ],
+        "pause_guard": {
+            "status": "OK",
+            "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) is None
+    assert not _hard_stop(segment)
+
+
 def test_hard_stop_ignores_playable_route_mismatch():
     segment = {
         "status": "LIGHTNING_SEGMENT_STOPPED",
