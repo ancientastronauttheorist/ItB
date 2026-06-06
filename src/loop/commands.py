@@ -10841,6 +10841,12 @@ def _lightning_pause_guard_decision(
             "pause_allowed": False,
             "already_paused": True,
         }
+    if visible_name == "new_game_setup":
+        return {
+            "status": "OK",
+            "reason": "new_game_setup_visible",
+            "pause_allowed": False,
+        }
     if visible_name == "kia_panel":
         return {
             "status": "BLOCKED",

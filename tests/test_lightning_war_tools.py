@@ -899,6 +899,27 @@ def test_lightning_pause_guard_blocks_live_combat_panel():
     assert result["pause_allowed"] is False
 
 
+def test_lightning_pause_guard_allows_new_setup_over_stale_combat():
+    result = commands._lightning_pause_guard_decision(
+        {
+            "status": "OK",
+            "visible_ui": "new_game_setup",
+            "recommended_control": None,
+        },
+        {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "new_game_setup_visible"
+    assert result["pause_allowed"] is False
+
+
 def test_lightning_pause_guard_allows_visible_map_over_stale_deployment():
     result = commands._lightning_pause_guard_decision(
         {
