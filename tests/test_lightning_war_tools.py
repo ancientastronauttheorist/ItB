@@ -4153,6 +4153,98 @@ def test_lightning_attempt_clicks_end_turn_when_no_active_mechs_for_speedrun(mon
     assert observations[0]["turn"] == 2
 
 
+def test_lightning_attempt_no_active_mechs_ignores_resumed_combat_board_classifier(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    clicks = []
+    resume_calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "mission_id": "Mission_Power",
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "recommended_control": None,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("spent combat turn should not route from board classifier")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_end_turn_click_plan_result",
+        lambda: {
+            "status": "PLAN",
+            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
+            "codex_computer_use_batch": [],
+        },
+    )
+
+    def fake_resume(**kwargs):
+        resume_calls.append(kwargs)
+        if len(resume_calls) == 1:
+            return {
+                "status": "OK",
+                "post_click_visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "island_map_or_unknown",
+                },
+            }
+        return {"status": "OK"}
+
+    monkeypatch.setattr(commands, "_lightning_resume_if_paused", fake_resume)
+    monkeypatch.setattr(
+        commands,
+        "_click_end_turn_from_plan_result",
+        lambda plan: clicks.append(plan) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda plan: {"status": "OK", "reason": "phase_changed"},
+    )
+
+    result = commands.cmd_lightning_attempt(
+        resume_if_paused=True,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "no_active_mechs_end_turn_clicked"
+    assert result["action"]["action"] == "click_no_active_mechs_end_turn"
+    assert len(resume_calls) == 2
+    assert clicks
+
+
 def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypatch):
     session = RunSession(
         run_id="lw",

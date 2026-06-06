@@ -14766,6 +14766,7 @@ def cmd_lightning_attempt(
         in_active_mission
         and phase in {"combat_player", "combat_enemy"}
         and turn > 0
+        and active_mechs > 0
         and isinstance(resumed_visible_ui, dict)
         and resumed_visible_ui.get("status") == "OK"
         and resumed_visible_ui.get("visible_ui") in {"island_map", "island_map_or_unknown"}
