@@ -595,13 +595,13 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
     result = _restart_dead_timeline(commands, verified_pause_payload())
 
     assert result["status"] == "OK"
-    assert result["reason"] == "abandoned_to_setup"
+    assert result["reason"] == "abandoned_to_setup_after_panel"
     assert calls == [
         "abandon_timeline",
         "abandon_confirm_yes",
         "abandon_pilot_slot",
         "classify",
-        "abandon_pilot_slot_wide",
+        "kia_understood",
         "classify",
     ]
 
@@ -703,7 +703,7 @@ def test_restart_dead_timeline_resumes_from_kia_panel_after_failed_recovery():
     assert calls == [
         "pause_guard",
         "classify",
-        "abandon_pilot_slot",
+        "kia_understood",
         "classify",
     ]
 

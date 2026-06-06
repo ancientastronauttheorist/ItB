@@ -857,6 +857,22 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                     "reason": "abandoned_to_setup",
                     "steps": steps,
                 }
+            recovery_control = _restart_recovery_control(visible)
+            if recovery_control:
+                cleared = ui(recovery_control)
+                if cleared.get("status") != "OK":
+                    return {
+                        "status": "BLOCKED",
+                        "reason": f"{recovery_control}_failed",
+                        "steps": steps,
+                    }
+                visible = ui("classify")
+                if _visible_ui_name(visible) == "new_game_setup":
+                    return {
+                        "status": "OK",
+                        "reason": "abandoned_to_setup_after_panel",
+                        "steps": steps,
+                    }
 
     for _ in range(4):
         visible = ui("classify")
@@ -898,11 +914,11 @@ def _restart_recovery_panel_safe(result: dict[str, Any]) -> bool:
 
 
 def _restart_recovery_control(result: dict[str, Any]) -> str | None:
-    if _visible_ui_name(result) == "kia_panel":
-        return "abandon_pilot_slot"
     recommended = _recommended_control_name(result)
     if recommended in RESTART_RECOVERY_SAFE_CONTROLS:
         return recommended
+    if _visible_ui_name(result) == "kia_panel":
+        return "abandon_pilot_slot"
     return None
 
 
