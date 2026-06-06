@@ -21,12 +21,12 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
     wide = controls["abandon_pilot_slot_wide"]
     right = controls["abandon_pilot_slot_right"]
 
-    assert control["window_x"] == 491
-    assert control["window_y"] == 329
-    assert wide["window_x"] == 560
-    assert wide["window_y"] == 329
-    assert right["window_x"] == 700
-    assert right["window_y"] == 329
+    assert control["window_x"] == 95
+    assert control["window_y"] == 254
+    assert wide["window_x"] == 95
+    assert wide["window_y"] == 386
+    assert right["window_x"] == 95
+    assert right["window_y"] == 522
 
 
 def test_lightning_war_weight_overlay_penalizes_pod_pickup():
