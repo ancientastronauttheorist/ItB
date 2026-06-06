@@ -10731,6 +10731,23 @@ def _lightning_ensure_pause_state(
             )
         return result
 
+    if visible_name == "new_game_setup":
+        result = {
+            "status": "OK",
+            "reason": "new_game_setup_visible",
+            "already_paused": False,
+            "visible_ui": visible_ui,
+            "recommended_control": recommended,
+        }
+        if not dry_run:
+            result["guard"] = _lightning_write_guard(
+                session,
+                guard_status=result["status"],
+                reason=reason,
+                visible_ui=visible_ui,
+            )
+        return result
+
     if visible_name in _LIGHTNING_PAUSE_BLOCKING_UIS:
         result = {
             "status": "BLOCKED",

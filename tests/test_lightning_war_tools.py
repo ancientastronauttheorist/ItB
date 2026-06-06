@@ -813,6 +813,32 @@ def test_lightning_ui_ensure_pause_recognizes_pause_menu(monkeypatch):
     assert result["reason"] == "already_paused"
 
 
+def test_lightning_ui_ensure_pause_recognizes_new_game_setup(monkeypatch):
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "new_game_setup",
+            "recommended_control": None,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_guard",
+        lambda *args, **kwargs: {"status": kwargs["guard_status"], "path": "guard.json"},
+    )
+
+    result = commands.cmd_lightning_ui("ensure_pause")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "new_game_setup_visible"
+    assert result["visible_ui"]["visible_ui"] == "new_game_setup"
+
+
 def test_lightning_ui_ensure_pause_verifies_clicked_pause(monkeypatch):
     session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
     visible_states = iter(
