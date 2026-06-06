@@ -10591,6 +10591,13 @@ def _lightning_recover_started_route_mismatch(
         recovery["reason"] = "route_mismatch_recovery_abandon_confirm_failed"
         return recovery
 
+    available = click_known_window_control("abandon_pilot_available")
+    recovery["abandon_pilot_available"] = available
+    if available.get("status") != "OK":
+        recovery["status"] = "BLOCKED"
+        recovery["reason"] = "route_mismatch_recovery_pilot_available_failed"
+        return recovery
+
     pilot = click_known_window_control("abandon_pilot_slot")
     recovery["abandon_pilot_slot"] = pilot
     if pilot.get("status") != "OK":

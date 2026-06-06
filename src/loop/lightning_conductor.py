@@ -838,6 +838,13 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                     "reason": f"{control}_failed",
                     "steps": steps,
                 }
+        result = ui("abandon_pilot_available")
+        if result.get("status") != "OK":
+            return {
+                "status": "BLOCKED",
+                "reason": "abandon_pilot_available_failed",
+                "steps": steps,
+            }
         for control in (
             "abandon_pilot_slot",
             "abandon_pilot_slot_wide",
@@ -914,11 +921,11 @@ def _restart_recovery_panel_safe(result: dict[str, Any]) -> bool:
 
 
 def _restart_recovery_control(result: dict[str, Any]) -> str | None:
+    if _visible_ui_name(result) == "kia_panel":
+        return "abandon_pilot_slot"
     recommended = _recommended_control_name(result)
     if recommended in RESTART_RECOVERY_SAFE_CONTROLS:
         return recommended
-    if _visible_ui_name(result) == "kia_panel":
-        return "abandon_pilot_slot"
     return None
 
 

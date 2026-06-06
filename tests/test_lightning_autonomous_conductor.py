@@ -545,6 +545,7 @@ def test_restart_dead_timeline_abandons_to_setup():
         if control in {
             "abandon_timeline",
             "abandon_confirm_yes",
+            "abandon_pilot_available",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -561,6 +562,7 @@ def test_restart_dead_timeline_abandons_to_setup():
     assert calls == [
         "abandon_timeline",
         "abandon_confirm_yes",
+        "abandon_pilot_available",
         "abandon_pilot_slot",
         "classify",
     ]
@@ -576,6 +578,7 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
         if control in {
             "abandon_timeline",
             "abandon_confirm_yes",
+            "abandon_pilot_available",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -599,9 +602,10 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
     assert calls == [
         "abandon_timeline",
         "abandon_confirm_yes",
+        "abandon_pilot_available",
         "abandon_pilot_slot",
         "classify",
-        "kia_understood",
+        "abandon_pilot_slot",
         "classify",
     ]
 
@@ -614,6 +618,7 @@ def test_restart_dead_timeline_uses_pause_guard_before_abandon():
         if control in {
             "abandon_timeline",
             "abandon_confirm_yes",
+            "abandon_pilot_available",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -647,6 +652,7 @@ def test_restart_dead_timeline_uses_pause_guard_before_abandon():
         "pause_guard",
         "abandon_timeline",
         "abandon_confirm_yes",
+        "abandon_pilot_available",
         "abandon_pilot_slot",
         "classify",
     ]
@@ -703,7 +709,7 @@ def test_restart_dead_timeline_resumes_from_kia_panel_after_failed_recovery():
     assert calls == [
         "pause_guard",
         "classify",
-        "kia_understood",
+        "abandon_pilot_slot",
         "classify",
     ]
 
@@ -735,6 +741,7 @@ def test_cmd_lightning_autonomous_retries_recommended_timeline(monkeypatch):
         if control in {
             "abandon_timeline",
             "abandon_confirm_yes",
+            "abandon_pilot_available",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -760,6 +767,7 @@ def test_cmd_lightning_autonomous_retries_recommended_timeline(monkeypatch):
     assert calls == [
         "abandon_timeline",
         "abandon_confirm_yes",
+        "abandon_pilot_available",
         "abandon_pilot_slot",
         "classify",
     ]

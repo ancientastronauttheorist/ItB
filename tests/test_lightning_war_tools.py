@@ -17,16 +17,19 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
     from src.control.mac_click import list_known_window_controls
 
     controls = list_known_window_controls()
+    available = controls["abandon_pilot_available"]
     control = controls["abandon_pilot_slot"]
     wide = controls["abandon_pilot_slot_wide"]
     right = controls["abandon_pilot_slot_right"]
 
-    assert control["window_x"] == 95
-    assert control["window_y"] == 254
-    assert wide["window_x"] == 95
-    assert wide["window_y"] == 386
-    assert right["window_x"] == 95
-    assert right["window_y"] == 522
+    assert available["window_x"] == 95
+    assert available["window_y"] == 254
+    assert control["window_x"] == 491
+    assert control["window_y"] == 329
+    assert wide["window_x"] == 632
+    assert wide["window_y"] == 329
+    assert right["window_x"] == 773
+    assert right["window_y"] == 329
 
 
 def test_lightning_war_weight_overlay_penalizes_pod_pickup():
@@ -9305,6 +9308,7 @@ def test_lightning_route_mismatch_recovery_retries_sticky_deploy_confirm(
         "deploy_confirm",
         "abandon_timeline",
         "abandon_confirm_yes",
+        "abandon_pilot_available",
         "abandon_pilot_slot",
     ]
     assert result["deploy_confirm_retries"][0]["control"] == "deploy_confirm"
