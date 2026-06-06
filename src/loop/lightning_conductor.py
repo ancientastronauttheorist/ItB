@@ -846,6 +846,8 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                 "steps": steps,
             }
         for control in (
+            "abandon_pilot_slot_two_left",
+            "abandon_pilot_slot_two_right",
             "abandon_pilot_slot",
             "abandon_pilot_slot_wide",
             "abandon_pilot_slot_right",

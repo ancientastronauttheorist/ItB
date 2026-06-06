@@ -10598,14 +10598,28 @@ def _lightning_recover_started_route_mismatch(
         recovery["reason"] = "route_mismatch_recovery_pilot_available_failed"
         return recovery
 
-    pilot = click_known_window_control("abandon_pilot_slot")
-    recovery["abandon_pilot_slot"] = pilot
-    if pilot.get("status") != "OK":
-        recovery["status"] = "BLOCKED"
-        recovery["reason"] = "route_mismatch_recovery_pilot_select_failed"
-        return recovery
+    final_ui = None
+    for pilot_control in (
+        "abandon_pilot_slot_two_left",
+        "abandon_pilot_slot_two_right",
+        "abandon_pilot_slot",
+    ):
+        pilot = click_known_window_control(pilot_control)
+        recovery[pilot_control] = pilot
+        if pilot.get("status") != "OK":
+            recovery["status"] = "BLOCKED"
+            recovery["reason"] = "route_mismatch_recovery_pilot_select_failed"
+            recovery["pilot_control"] = pilot_control
+            return recovery
+        final_ui = _lightning_visible_ui_snapshot()
+        if final_ui.get("status") == "OK" and final_ui.get("visible_ui") in {
+            "new_game_setup",
+            "pause_menu",
+        }:
+            break
 
-    final_ui = _lightning_visible_ui_snapshot()
+    if final_ui is None:
+        final_ui = _lightning_visible_ui_snapshot()
     recovery["final_ui"] = final_ui
     if final_ui.get("status") == "OK" and final_ui.get("visible_ui") in {
         "new_game_setup",

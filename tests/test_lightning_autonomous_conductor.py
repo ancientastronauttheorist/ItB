@@ -546,6 +546,7 @@ def test_restart_dead_timeline_abandons_to_setup():
             "abandon_timeline",
             "abandon_confirm_yes",
             "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -563,7 +564,7 @@ def test_restart_dead_timeline_abandons_to_setup():
         "abandon_timeline",
         "abandon_confirm_yes",
         "abandon_pilot_available",
-        "abandon_pilot_slot",
+        "abandon_pilot_slot_two_left",
         "classify",
     ]
 
@@ -579,6 +580,7 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
             "abandon_timeline",
             "abandon_confirm_yes",
             "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -603,7 +605,7 @@ def test_restart_dead_timeline_clears_kia_panel_to_setup():
         "abandon_timeline",
         "abandon_confirm_yes",
         "abandon_pilot_available",
-        "abandon_pilot_slot",
+        "abandon_pilot_slot_two_left",
         "classify",
         "abandon_pilot_slot",
         "classify",
@@ -619,6 +621,7 @@ def test_restart_dead_timeline_uses_pause_guard_before_abandon():
             "abandon_timeline",
             "abandon_confirm_yes",
             "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -653,7 +656,7 @@ def test_restart_dead_timeline_uses_pause_guard_before_abandon():
         "abandon_timeline",
         "abandon_confirm_yes",
         "abandon_pilot_available",
-        "abandon_pilot_slot",
+        "abandon_pilot_slot_two_left",
         "classify",
     ]
 
@@ -742,6 +745,7 @@ def test_cmd_lightning_autonomous_retries_recommended_timeline(monkeypatch):
             "abandon_timeline",
             "abandon_confirm_yes",
             "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
             "abandon_pilot_slot",
         }:
             return {"status": "OK"}
@@ -768,7 +772,7 @@ def test_cmd_lightning_autonomous_retries_recommended_timeline(monkeypatch):
         "abandon_timeline",
         "abandon_confirm_yes",
         "abandon_pilot_available",
-        "abandon_pilot_slot",
+        "abandon_pilot_slot_two_left",
         "classify",
     ]
     assert printed == [result]

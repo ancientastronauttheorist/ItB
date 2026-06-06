@@ -295,6 +295,20 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Abandon Timeline left carry-forward pilot selection",
         settle_seconds=0.8,
     ),
+    "abandon_pilot_slot_two_left": KnownWindowControl(
+        name="abandon_pilot_slot_two_left",
+        window_x=562,
+        window_y=329,
+        description="Abandon Timeline left two-pilot carry-forward selection",
+        settle_seconds=0.8,
+    ),
+    "abandon_pilot_slot_two_right": KnownWindowControl(
+        name="abandon_pilot_slot_two_right",
+        window_x=704,
+        window_y=329,
+        description="Abandon Timeline right two-pilot carry-forward selection",
+        settle_seconds=0.8,
+    ),
     "abandon_pilot_slot_wide": KnownWindowControl(
         name="abandon_pilot_slot_wide",
         window_x=632,

@@ -19,6 +19,8 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
     controls = list_known_window_controls()
     available = controls["abandon_pilot_available"]
     control = controls["abandon_pilot_slot"]
+    two_left = controls["abandon_pilot_slot_two_left"]
+    two_right = controls["abandon_pilot_slot_two_right"]
     wide = controls["abandon_pilot_slot_wide"]
     right = controls["abandon_pilot_slot_right"]
 
@@ -26,6 +28,10 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
     assert available["window_y"] == 254
     assert control["window_x"] == 491
     assert control["window_y"] == 329
+    assert two_left["window_x"] == 562
+    assert two_left["window_y"] == 329
+    assert two_right["window_x"] == 704
+    assert two_right["window_y"] == 329
     assert wide["window_x"] == 632
     assert wide["window_y"] == 329
     assert right["window_x"] == 773
@@ -9401,7 +9407,7 @@ def test_lightning_route_mismatch_recovery_retries_sticky_deploy_confirm(
         "abandon_timeline",
         "abandon_confirm_yes",
         "abandon_pilot_available",
-        "abandon_pilot_slot",
+        "abandon_pilot_slot_two_left",
     ]
     assert result["deploy_confirm_retries"][0]["control"] == "deploy_confirm"
     assert len(result["pause_attempts"]) == 2
