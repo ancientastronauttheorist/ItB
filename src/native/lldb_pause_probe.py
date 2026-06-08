@@ -20,6 +20,7 @@ you are debugging the sampler:
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
 import os
 from pathlib import Path
@@ -47,6 +48,8 @@ SKIP_VMMAP_LABELS = {"IOSurface"}
 
 
 def _find_game_pid() -> int | None:
+    if os.name == "nt":
+        return _find_windows_game_pid()
     try:
         proc = subprocess.run(
             ["pgrep", "-f", "Into the Breach"],
@@ -66,6 +69,35 @@ def _find_game_pid() -> int | None:
         except ValueError:
             continue
     return pids[0] if pids else None
+
+
+def _find_windows_game_pid() -> int | None:
+    try:
+        proc = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                (
+                    "Get-Process Breach -ErrorAction SilentlyContinue | "
+                    "Select-Object -First 1 -ExpandProperty Id"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    for raw in proc.stdout.splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            return int(raw)
+        except ValueError:
+            continue
+    return None
 
 
 def _read_process_memory(process: Any, addr: int, size: int) -> bytes | None:
@@ -561,7 +593,281 @@ def _run_lldb_read_pause_offset(
         )
 
 
+def _windows_protect_label(protect: int) -> str:
+    base = protect & 0xFF
+    names = {
+        0x01: "NOACCESS",
+        0x02: "READONLY",
+        0x04: "READWRITE",
+        0x08: "WRITECOPY",
+        0x10: "EXECUTE",
+        0x20: "EXECUTE_READ",
+        0x40: "EXECUTE_READWRITE",
+        0x80: "EXECUTE_WRITECOPY",
+    }
+    flags = [names.get(base, f"0x{base:x}")]
+    if protect & 0x100:
+        flags.append("GUARD")
+    if protect & 0x200:
+        flags.append("NOCACHE")
+    if protect & 0x400:
+        flags.append("WRITECOMBINE")
+    return "|".join(flags)
+
+
+def _windows_region_is_dumpable(protect: int) -> bool:
+    base = protect & 0xFF
+    if protect & 0x100:
+        return False
+    if base in (0x01, 0x10, 0x20):
+        return False
+    return base in (0x04, 0x08, 0x40, 0x80)
+
+
+def _run_windows_sample(
+    *,
+    pid: int,
+    sample_dir: Path,
+    label: str,
+    max_region: int,
+    max_total: int,
+) -> None:
+    if os.name != "nt":
+        raise RuntimeError("Windows memory sampler was requested on a non-Windows host.")
+
+    from ctypes import wintypes
+
+    PROCESS_QUERY_INFORMATION = 0x0400
+    PROCESS_VM_READ = 0x0010
+    MEM_COMMIT = 0x1000
+
+    class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+        _fields_ = [
+            ("BaseAddress", ctypes.c_void_p),
+            ("AllocationBase", ctypes.c_void_p),
+            ("AllocationProtect", wintypes.DWORD),
+            ("PartitionId", wintypes.WORD),
+            ("RegionSize", ctypes.c_size_t),
+            ("State", wintypes.DWORD),
+            ("Protect", wintypes.DWORD),
+            ("Type", wintypes.DWORD),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    kernel32.VirtualQueryEx.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_void_p,
+        ctypes.POINTER(MEMORY_BASIC_INFORMATION),
+        ctypes.c_size_t,
+    ]
+    kernel32.VirtualQueryEx.restype = ctypes.c_size_t
+    kernel32.ReadProcessMemory.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+        ctypes.POINTER(ctypes.c_size_t),
+    ]
+    kernel32.ReadProcessMemory.restype = wintypes.BOOL
+
+    handle = kernel32.OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+        False,
+        pid,
+    )
+    if not handle:
+        err = ctypes.get_last_error()
+        raise RuntimeError(f"OpenProcess failed for pid {pid}: WinError {err}")
+
+    sample_dir.mkdir(parents=True, exist_ok=True)
+    manifest: dict[str, Any] = {
+        "label": label,
+        "created_at": time.time(),
+        "max_region": max_region,
+        "max_total": max_total,
+        "regions": [],
+        "skipped": [],
+        "backend": "windows_readprocessmemory",
+    }
+
+    address = 0
+    total = 0
+    dumped = 0
+    mbi = MEMORY_BASIC_INFORMATION()
+    mbi_size = ctypes.sizeof(mbi)
+    try:
+        while kernel32.VirtualQueryEx(
+            handle,
+            ctypes.c_void_p(address),
+            ctypes.byref(mbi),
+            mbi_size,
+        ):
+            base = int(mbi.BaseAddress or 0)
+            size = int(mbi.RegionSize or 0)
+            protect = int(mbi.Protect or 0)
+            next_address = base + max(size, 0x1000)
+
+            if mbi.State != MEM_COMMIT:
+                reason = "not_committed"
+            elif not _windows_region_is_dumpable(protect):
+                reason = "protection"
+            elif size <= 0 or size > max_region:
+                reason = "size"
+            elif total + size > max_total:
+                reason = "total_cap"
+            else:
+                reason = ""
+
+            if reason:
+                manifest["skipped"].append({
+                    "base": base,
+                    "size": size,
+                    "reason": reason,
+                    "prot": _windows_protect_label(protect),
+                })
+            else:
+                buffer = ctypes.create_string_buffer(size)
+                read = ctypes.c_size_t(0)
+                ok = kernel32.ReadProcessMemory(
+                    handle,
+                    ctypes.c_void_p(base),
+                    buffer,
+                    size,
+                    ctypes.byref(read),
+                )
+                if not ok or int(read.value) != size:
+                    manifest["skipped"].append({
+                        "base": base,
+                        "size": size,
+                        "reason": "read_failed",
+                        "prot": _windows_protect_label(protect),
+                        "read_bytes": int(read.value),
+                        "win_error": ctypes.get_last_error(),
+                    })
+                else:
+                    filename = f"region_{dumped:04d}_{base:016x}_{size:x}.bin"
+                    (sample_dir / filename).write_bytes(buffer.raw[:size])
+                    manifest["regions"].append({
+                        "base": base,
+                        "end": base + size,
+                        "size": size,
+                        "prot": _windows_protect_label(protect),
+                        "vmmap_label": "",
+                        "file": filename,
+                    })
+                    total += size
+                    dumped += 1
+
+            if next_address <= address:
+                break
+            address = next_address
+    finally:
+        kernel32.CloseHandle(handle)
+
+    manifest["dumped_regions"] = dumped
+    manifest["dumped_bytes"] = total
+    (sample_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    print(
+        f"pause sample {label}: dumped {dumped} regions, "
+        f"{total / 1024 / 1024:.1f} MB to {sample_dir}"
+    )
+
+
+def _windows_read_process_memory(pid: int, addr: int, size: int) -> bytes | None:
+    if os.name != "nt":
+        return None
+    from ctypes import wintypes
+
+    PROCESS_VM_READ = 0x0010
+    PROCESS_QUERY_INFORMATION = 0x0400
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.ReadProcessMemory.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+        ctypes.POINTER(ctypes.c_size_t),
+    ]
+    kernel32.ReadProcessMemory.restype = wintypes.BOOL
+
+    handle = kernel32.OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+        False,
+        pid,
+    )
+    if not handle:
+        return None
+    try:
+        buffer = ctypes.create_string_buffer(size)
+        read = ctypes.c_size_t(0)
+        ok = kernel32.ReadProcessMemory(
+            handle,
+            ctypes.c_void_p(addr),
+            buffer,
+            size,
+            ctypes.byref(read),
+        )
+        if not ok or int(read.value) != size:
+            return None
+        return buffer.raw[:size]
+    finally:
+        kernel32.CloseHandle(handle)
+
+
+def _run_windows_read_values(
+    *,
+    pid: int,
+    candidates_path: Path,
+    output_path: Path,
+    label: str,
+    limit: int,
+) -> None:
+    payload = json.loads(candidates_path.read_text())
+    candidates = payload.get("candidates") or []
+    values: list[dict[str, Any]] = []
+    for candidate in candidates[:limit]:
+        if not isinstance(candidate, dict):
+            continue
+        addr = int(str(candidate.get("address")), 16)
+        width = int(candidate.get("width") or 1)
+        data = _windows_read_process_memory(pid, addr, width)
+        entry = {
+            "address": f"0x{addr:016x}",
+            "width": width,
+            "read_ok": data is not None and len(data) == width,
+            "source_candidate": candidate,
+        }
+        if data is not None and len(data) == width:
+            entry["bytes"] = data.hex()
+            entry["value"] = int.from_bytes(data, "little", signed=False)
+        values.append(entry)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps({
+        "label": label,
+        "created_at": time.time(),
+        "values": values,
+        "backend": "windows_readprocessmemory",
+    }, indent=2))
+    print(f"read {len(values)} candidate values to {output_path}")
+
+
 def _toggle_esc(settle_seconds: float) -> dict:
+    if os.name == "nt":
+        try:
+            _activate_windows_game_window()
+            result = _windows_press_escape(settle_seconds)
+            if result.get("status") == "OK":
+                return result
+        except Exception:
+            pass
     repo_root = Path(__file__).resolve().parents[2]
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
@@ -572,6 +878,127 @@ def _toggle_esc(settle_seconds: float) -> dict:
         description="Toggle pause menu for LLDB pause probe",
         settle_seconds=settle_seconds,
     )
+
+
+def _windows_press_escape(settle_seconds: float) -> dict:
+    if os.name != "nt":
+        return {"status": "ERROR", "error": "not Windows"}
+    from ctypes import wintypes
+
+    INPUT_KEYBOARD = 1
+    KEYEVENTF_SCANCODE = 0x0008
+    KEYEVENTF_KEYUP = 0x0002
+    ESC_SCAN_CODE = 0x01
+
+    class KEYBDINPUT(ctypes.Structure):
+        _fields_ = [
+            ("wVk", wintypes.WORD),
+            ("wScan", wintypes.WORD),
+            ("dwFlags", wintypes.DWORD),
+            ("time", wintypes.DWORD),
+            ("dwExtraInfo", ctypes.c_size_t),
+        ]
+
+    class MOUSEINPUT(ctypes.Structure):
+        _fields_ = [
+            ("dx", wintypes.LONG),
+            ("dy", wintypes.LONG),
+            ("mouseData", wintypes.DWORD),
+            ("dwFlags", wintypes.DWORD),
+            ("time", wintypes.DWORD),
+            ("dwExtraInfo", ctypes.c_size_t),
+        ]
+
+    class HARDWAREINPUT(ctypes.Structure):
+        _fields_ = [
+            ("uMsg", wintypes.DWORD),
+            ("wParamL", wintypes.WORD),
+            ("wParamH", wintypes.WORD),
+        ]
+
+    class INPUT_UNION(ctypes.Union):
+        _fields_ = [
+            ("mi", MOUSEINPUT),
+            ("ki", KEYBDINPUT),
+            ("hi", HARDWAREINPUT),
+        ]
+
+    class INPUT(ctypes.Structure):
+        _fields_ = [
+            ("type", wintypes.DWORD),
+            ("union", INPUT_UNION),
+        ]
+
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.SendInput.argtypes = [wintypes.UINT, ctypes.POINTER(INPUT), ctypes.c_int]
+    user32.SendInput.restype = wintypes.UINT
+    inputs = (INPUT * 2)(
+        INPUT(
+            type=INPUT_KEYBOARD,
+            union=INPUT_UNION(ki=KEYBDINPUT(0, ESC_SCAN_CODE, KEYEVENTF_SCANCODE, 0, 0)),
+        ),
+        INPUT(
+            type=INPUT_KEYBOARD,
+            union=INPUT_UNION(
+                ki=KEYBDINPUT(
+                    0,
+                    ESC_SCAN_CODE,
+                    KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
+                    0,
+                    0,
+                )
+            ),
+        ),
+    )
+    sent = user32.SendInput(2, inputs, ctypes.sizeof(INPUT))
+    if sent != 2:
+        return {
+            "status": "ERROR",
+            "error": f"SendInput sent {sent}/2 events; WinError {ctypes.get_last_error()}",
+        }
+    if settle_seconds > 0:
+        time.sleep(settle_seconds)
+    return {
+        "status": "OK",
+        "key": "esc",
+        "description": "Toggle pause menu for memory probe",
+        "backend": "win32_sendinput",
+    }
+
+
+def _activate_windows_game_window() -> None:
+    if os.name != "nt":
+        return
+    from ctypes import wintypes
+
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.EnumWindows.argtypes = [ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM), wintypes.LPARAM]
+    user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user32.IsWindowVisible.argtypes = [wintypes.HWND]
+    user32.SetForegroundWindow.argtypes = [wintypes.HWND]
+    user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+    pid = _find_windows_game_pid()
+    if not pid:
+        return
+    found: list[int] = []
+
+    enum_proc_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    def callback(hwnd: int, _lparam: int) -> bool:
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        window_pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
+        if int(window_pid.value) == pid:
+            found.append(hwnd)
+            return False
+        return True
+
+    user32.EnumWindows(enum_proc_type(callback), 0)
+    if found:
+        user32.ShowWindow(wintypes.HWND(found[0]), 9)
+        user32.SetForegroundWindow(wintypes.HWND(found[0]))
+        time.sleep(0.1)
 
 
 def _load_manifest(sample_dir: Path) -> dict[str, Any]:
@@ -710,10 +1137,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("Into the Breach process not found.", file=sys.stderr)
         return 2
 
-    lldb_path = args.lldb or shutil.which("lldb")
-    if not lldb_path:
-        print("lldb not found on PATH.", file=sys.stderr)
-        return 2
+    lldb_path = None
+    if os.name != "nt":
+        lldb_path = args.lldb or shutil.which("lldb")
+        if not lldb_path:
+            print("lldb not found on PATH.", file=sys.stderr)
+            return 2
 
     if args.output:
         root = Path(args.output).expanduser().resolve()
@@ -725,14 +1154,23 @@ def cmd_run(args: argparse.Namespace) -> int:
     print(f"Output: {root}")
     print("Sample 1: current state, expected pause closed.")
     try:
-        _run_lldb_sample(
-            pid=pid,
-            sample_dir=root / "sample_closed",
-            label="closed",
-            max_region=args.max_region,
-            max_total=args.max_total,
-            lldb_path=lldb_path,
-        )
+        if os.name == "nt":
+            _run_windows_sample(
+                pid=pid,
+                sample_dir=root / "sample_closed",
+                label="closed",
+                max_region=args.max_region,
+                max_total=args.max_total,
+            )
+        else:
+            _run_lldb_sample(
+                pid=pid,
+                sample_dir=root / "sample_closed",
+                label="closed",
+                max_region=args.max_region,
+                max_total=args.max_total,
+                lldb_path=str(lldb_path),
+            )
 
         if not args.no_toggle:
             print("Toggling Esc to expected pause open.")
@@ -744,14 +1182,23 @@ def cmd_run(args: argparse.Namespace) -> int:
             print("Skipping Esc toggle 1 by request.")
 
         print("Sample 2: expected pause open.")
-        _run_lldb_sample(
-            pid=pid,
-            sample_dir=root / "sample_open",
-            label="open",
-            max_region=args.max_region,
-            max_total=args.max_total,
-            lldb_path=lldb_path,
-        )
+        if os.name == "nt":
+            _run_windows_sample(
+                pid=pid,
+                sample_dir=root / "sample_open",
+                label="open",
+                max_region=args.max_region,
+                max_total=args.max_total,
+            )
+        else:
+            _run_lldb_sample(
+                pid=pid,
+                sample_dir=root / "sample_open",
+                label="open",
+                max_region=args.max_region,
+                max_total=args.max_total,
+                lldb_path=str(lldb_path),
+            )
 
         if not args.no_toggle:
             print("Toggling Esc to expected pause closed again.")
@@ -763,14 +1210,23 @@ def cmd_run(args: argparse.Namespace) -> int:
             print("Skipping Esc toggle 2 by request.")
 
         print("Sample 3: expected pause closed again.")
-        _run_lldb_sample(
-            pid=pid,
-            sample_dir=root / "sample_closed2",
-            label="closed2",
-            max_region=args.max_region,
-            max_total=args.max_total,
-            lldb_path=lldb_path,
-        )
+        if os.name == "nt":
+            _run_windows_sample(
+                pid=pid,
+                sample_dir=root / "sample_closed2",
+                label="closed2",
+                max_region=args.max_region,
+                max_total=args.max_total,
+            )
+        else:
+            _run_lldb_sample(
+                pid=pid,
+                sample_dir=root / "sample_closed2",
+                label="closed2",
+                max_region=args.max_region,
+                max_total=args.max_total,
+                lldb_path=str(lldb_path),
+            )
     except RuntimeError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         print(f"Partial output, if any: {root}", file=sys.stderr)
@@ -806,14 +1262,44 @@ def _load_value_sample(path: Path) -> dict[str, tuple[int, int]]:
     return out
 
 
+def _run_driver_read_values(
+    *,
+    pid: int,
+    candidates_path: Path,
+    output_path: Path,
+    label: str,
+    limit: int,
+    lldb_path: str | None,
+) -> None:
+    if os.name == "nt":
+        _run_windows_read_values(
+            pid=pid,
+            candidates_path=candidates_path,
+            output_path=output_path,
+            label=label,
+            limit=limit,
+        )
+    else:
+        if not lldb_path:
+            raise RuntimeError("lldb not found on PATH.")
+        _run_lldb_read_values(
+            pid=pid,
+            candidates_path=candidates_path,
+            output_path=output_path,
+            label=label,
+            limit=limit,
+            lldb_path=lldb_path,
+        )
+
+
 def cmd_validate(args: argparse.Namespace) -> int:
     pid = args.pid or _find_game_pid()
     if not pid:
         print("Into the Breach process not found.", file=sys.stderr)
         return 2
 
-    lldb_path = args.lldb or shutil.which("lldb")
-    if not lldb_path:
+    lldb_path = None if os.name == "nt" else args.lldb or shutil.which("lldb")
+    if os.name != "nt" and not lldb_path:
         print("lldb not found on PATH.", file=sys.stderr)
         return 2
 
@@ -834,7 +1320,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
         print(f"PID: {pid}")
         print(f"Candidates: {candidates_path}")
         print("Read 1: current state.")
-        _run_lldb_read_values(
+        _run_driver_read_values(
             pid=pid,
             candidates_path=candidates_path,
             output_path=samples[0],
@@ -848,7 +1334,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
         if toggle.get("status") != "OK":
             return 3
         print("Read 2: toggled state.")
-        _run_lldb_read_values(
+        _run_driver_read_values(
             pid=pid,
             candidates_path=candidates_path,
             output_path=samples[1],
@@ -862,7 +1348,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
         if toggle.get("status") != "OK":
             return 3
         print("Read 3: current state again.")
-        _run_lldb_read_values(
+        _run_driver_read_values(
             pid=pid,
             candidates_path=candidates_path,
             output_path=samples[2],
@@ -919,7 +1405,7 @@ def _load_value_samples(paths: list[Path]) -> list[dict[str, tuple[int, int]]]:
 
 def cmd_validate_cycles(args: argparse.Namespace) -> int:
     pid, lldb_path = _resolve_driver_lldb(args)
-    if pid is None or lldb_path is None:
+    if pid is None or (os.name != "nt" and lldb_path is None):
         return 2
 
     candidates_path = Path(args.candidates).expanduser().resolve()
@@ -948,7 +1434,7 @@ def cmd_validate_cycles(args: argparse.Namespace) -> int:
         print(f"Candidates: {candidates_path}")
         for idx, sample_path in enumerate(control_samples):
             print(f"Control read {idx + 1}/{len(control_samples)}.")
-            _run_lldb_read_values(
+            _run_driver_read_values(
                 pid=pid,
                 candidates_path=candidates_path,
                 output_path=sample_path,
@@ -960,7 +1446,7 @@ def cmd_validate_cycles(args: argparse.Namespace) -> int:
                 time.sleep(args.control_settle_seconds)
         for idx, sample_path in enumerate(samples):
             print(f"Read {idx + 1}/{len(samples)}.")
-            _run_lldb_read_values(
+            _run_driver_read_values(
                 pid=pid,
                 candidates_path=candidates_path,
                 output_path=sample_path,
@@ -1040,6 +1526,8 @@ def _resolve_driver_lldb(args: argparse.Namespace) -> tuple[int | None, str | No
         print("Into the Breach process not found.", file=sys.stderr)
         return None, None
 
+    if os.name == "nt":
+        return pid, None
     lldb_path = args.lldb or shutil.which("lldb")
     if not lldb_path:
         print("lldb not found on PATH.", file=sys.stderr)
