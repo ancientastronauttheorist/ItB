@@ -11,7 +11,7 @@ try:
 except ImportError:  # pragma: no cover - exercised only on missing dependency
     Image = None
 
-from src.capture.window import get_window_bounds, take_screenshot
+from src.capture.window import get_window_bounds, is_game_frontmost, take_screenshot
 
 BASE_SIZE = (1280, 748)
 
@@ -74,6 +74,8 @@ class SetupCheck:
     unexpected_advanced: list[str]
     desired_advanced: str
     screenshot_path: str | None
+    window_focus_verified: bool
+    window_bounds: dict[str, Any] | None
     click_plan: list[dict[str, Any]]
 
     def to_dict(self) -> dict[str, Any]:
@@ -88,6 +90,8 @@ class SetupCheck:
             "unexpected_advanced": self.unexpected_advanced,
             "desired_advanced": self.desired_advanced,
             "screenshot_path": self.screenshot_path,
+            "window_focus_verified": self.window_focus_verified,
+            "window_bounds": self.window_bounds,
             "click_plan": self.click_plan,
         }
 
@@ -101,8 +105,11 @@ def capture_and_check_setup(
 ) -> SetupCheck:
     if Image is None:
         raise RuntimeError("Pillow is required for setup verification")
-    screenshot = take_screenshot(output_path)
-    bounds = get_window_bounds() or {}
+    bounds = get_window_bounds()
+    frontmost = is_game_frontmost() if bounds else False
+    screenshot = take_screenshot(output_path, bounds=bounds)
+    bounds_dict = dict(bounds) if bounds else None
+    bounds = bounds or {}
     window_size = (
         int(bounds.get("width", BASE_SIZE[0])),
         int(bounds.get("height", BASE_SIZE[1])),
@@ -115,6 +122,8 @@ def capture_and_check_setup(
             advanced_content=advanced_content,
             screenshot_path=str(screenshot),
             click_window_size=window_size,
+            window_focus_verified=bounds_dict is not None and frontmost,
+            window_bounds=bounds_dict,
         )
 
 
@@ -126,6 +135,8 @@ def analyze_setup_image(
     advanced_content: str | None = None,
     screenshot_path: str | None = None,
     click_window_size: tuple[int, int] | None = None,
+    window_focus_verified: bool = True,
+    window_bounds: dict[str, Any] | None = None,
 ) -> SetupCheck:
     if expected_difficulty not in DIFFICULTIES:
         raise ValueError(f"unknown difficulty {expected_difficulty!r}")
@@ -177,6 +188,7 @@ def analyze_setup_image(
         "advanced_checkbox_required_count": 3,
         "checkbox_present_brightness_threshold": CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD,
         "checkbox_enabled_brightness_threshold": CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD,
+        "window_focus_verified": bool(window_focus_verified),
     }
     if setup_screen_detected:
         for row in advanced:
@@ -232,7 +244,9 @@ def analyze_setup_image(
     else:
         ok_advanced = setup_screen_detected
     ok_difficulty = setup_screen_detected and actual_difficulty == expected_difficulty
-    status = "PASS" if ok_advanced and ok_difficulty else "FAIL"
+    status = "PASS" if ok_advanced and ok_difficulty and window_focus_verified else "FAIL"
+    if not window_focus_verified:
+        click_plan = []
 
     return SetupCheck(
         status=status,
@@ -245,6 +259,8 @@ def analyze_setup_image(
         unexpected_advanced=unexpected,
         desired_advanced=desired_advanced,
         screenshot_path=screenshot_path,
+        window_focus_verified=bool(window_focus_verified),
+        window_bounds=window_bounds,
         click_plan=click_plan,
     )
 

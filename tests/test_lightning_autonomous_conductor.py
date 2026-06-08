@@ -661,22 +661,11 @@ def test_restart_dead_timeline_uses_pause_guard_before_abandon():
     ]
 
 
-def test_restart_dead_timeline_ensures_pause_before_abandon_from_safe_result():
+def test_restart_dead_timeline_does_not_abandon_when_restart_evidence_is_setup():
     calls: list[str] = []
 
     def lightning_ui(control):
         calls.append(control)
-        if control == "ensure_pause":
-            return verified_pause_payload()
-        if control in {
-            "abandon_timeline",
-            "abandon_confirm_yes",
-            "abandon_pilot_available",
-            "abandon_pilot_slot_two_left",
-        }:
-            return {"status": "OK"}
-        if control == "classify":
-            return new_game_setup_payload()
         return {"status": "OK"}
 
     commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
@@ -689,15 +678,8 @@ def test_restart_dead_timeline_ensures_pause_before_abandon_from_safe_result():
     result = _restart_dead_timeline(commands, restart_result)
 
     assert result["status"] == "OK"
-    assert result["reason"] == "abandoned_to_setup"
-    assert calls == [
-        "ensure_pause",
-        "abandon_timeline",
-        "abandon_confirm_yes",
-        "abandon_pilot_available",
-        "abandon_pilot_slot_two_left",
-        "classify",
-    ]
+    assert result["reason"] == "already_at_setup"
+    assert calls == []
 
 
 def test_restart_dead_timeline_blocks_false_setup_with_active_mission_clue():

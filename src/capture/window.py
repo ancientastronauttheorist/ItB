@@ -66,11 +66,42 @@ def get_window_bounds() -> dict | None:
     return None
 
 
-def take_screenshot(output_path: str | Path) -> Path:
+def is_game_frontmost() -> bool:
+    """Return true when Into the Breach is the current frontmost app/window."""
+    if os.name == "nt":
+        return _windows_game_is_frontmost()
+
+    script = '''
+    tell application "System Events"
+        set frontApp to name of first application process whose frontmost is true
+        return frontApp
+    end tell
+    '''
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    if result.returncode != 0:
+        return False
+    return result.stdout.strip() == "Into the Breach"
+
+
+def take_screenshot(
+    output_path: str | Path,
+    *,
+    bounds: dict | None = None,
+) -> Path:
     """Capture a screenshot of the game window.
 
     Args:
         output_path: Where to save the PNG screenshot.
+        bounds: Optional window bounds already proven by the caller. When
+            provided, the screenshot uses these bounds instead of re-querying.
 
     Returns:
         Path to the saved screenshot.
@@ -78,7 +109,8 @@ def take_screenshot(output_path: str | Path) -> Path:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    bounds = get_window_bounds()
+    if bounds is None:
+        bounds = get_window_bounds()
     if os.name == "nt":
         from PIL import ImageGrab
 
@@ -163,6 +195,27 @@ def _windows_window_bounds() -> dict | None:
         "width": first["width"],
         "height": first["height"],
     }
+
+
+def _windows_game_is_frontmost() -> bool:
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+    except Exception:
+        return False
+
+    user32 = ctypes.windll.user32
+    hwnd = user32.GetForegroundWindow()
+    if not hwnd:
+        return False
+    length = user32.GetWindowTextLengthW(hwnd)
+    if length <= 0:
+        return False
+    title = ctypes.create_unicode_buffer(length + 1)
+    user32.GetWindowTextW(hwnd, title, length + 1)
+    return "Into the Breach" in title.value
 
 
 if __name__ == "__main__":

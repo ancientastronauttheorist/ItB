@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw
 
+from src.strategy import setup_verifier
 from src.strategy.setup_verifier import analyze_setup_image
 
 
@@ -96,6 +97,104 @@ def test_setup_verifier_passes_when_advanced_content_off():
     assert check.status == "PASS"
     assert check.desired_advanced == "off"
     assert check.unexpected_advanced == []
+    assert check.click_plan == []
+
+
+def test_setup_verifier_fails_without_window_focus_proof():
+    img = _blank_setup()
+    for box in [
+        (558, 274, 616, 344),
+        (558, 350, 616, 418),
+        (558, 426, 616, 493),
+        (558, 503, 616, 570),
+    ]:
+        _paint_icon(img, box, (120, 120, 120))
+    for center in [(646, 304), (646, 379), (646, 454), (646, 529)]:
+        _paint_checkbox(img, center, checked=False)
+    _paint_difficulty_border(img, (909, 250, 1122, 317))
+
+    check = analyze_setup_image(
+        img,
+        expected_difficulty=0,
+        advanced_content="off",
+        window_focus_verified=False,
+    )
+
+    assert check.status == "FAIL"
+    assert check.setup_screen_detected is True
+    assert check.window_focus_verified is False
+    assert check.to_dict()["window_focus_verified"] is False
+    assert check.click_plan == []
+
+
+def test_capture_setup_uses_verified_bounds_for_screenshot(monkeypatch, tmp_path):
+    bounds = {"x": 10, "y": 20, "width": 1280, "height": 748}
+    screenshot_bounds = []
+
+    def fake_screenshot(output_path, *, bounds=None):
+        screenshot_bounds.append(bounds)
+        img = _blank_setup()
+        for box in [
+            (558, 274, 616, 344),
+            (558, 350, 616, 418),
+            (558, 426, 616, 493),
+            (558, 503, 616, 570),
+        ]:
+            _paint_icon(img, box, (120, 120, 120))
+        for center in [(646, 304), (646, 379), (646, 454), (646, 529)]:
+            _paint_checkbox(img, center, checked=False)
+        _paint_difficulty_border(img, (909, 250, 1122, 317))
+        img.save(output_path)
+        return output_path
+
+    monkeypatch.setattr(setup_verifier, "get_window_bounds", lambda: bounds)
+    monkeypatch.setattr(setup_verifier, "is_game_frontmost", lambda: True)
+    monkeypatch.setattr(setup_verifier, "take_screenshot", fake_screenshot)
+
+    check = setup_verifier.capture_and_check_setup(
+        expected_difficulty=0,
+        advanced_content="off",
+        output_path=tmp_path / "setup.png",
+    )
+
+    assert check.status == "PASS"
+    assert check.window_focus_verified is True
+    assert check.window_bounds == bounds
+    assert screenshot_bounds == [bounds]
+
+
+def test_capture_setup_fails_when_game_window_is_not_frontmost(monkeypatch, tmp_path):
+    bounds = {"x": 10, "y": 20, "width": 1280, "height": 748}
+
+    def fake_screenshot(output_path, *, bounds=None):
+        img = _blank_setup()
+        for box in [
+            (558, 274, 616, 344),
+            (558, 350, 616, 418),
+            (558, 426, 616, 493),
+            (558, 503, 616, 570),
+        ]:
+            _paint_icon(img, box, (120, 120, 120))
+        for center in [(646, 304), (646, 379), (646, 454), (646, 529)]:
+            _paint_checkbox(img, center, checked=False)
+        _paint_difficulty_border(img, (909, 250, 1122, 317))
+        img.save(output_path)
+        return output_path
+
+    monkeypatch.setattr(setup_verifier, "get_window_bounds", lambda: bounds)
+    monkeypatch.setattr(setup_verifier, "is_game_frontmost", lambda: False)
+    monkeypatch.setattr(setup_verifier, "take_screenshot", fake_screenshot)
+
+    check = setup_verifier.capture_and_check_setup(
+        expected_difficulty=0,
+        advanced_content="off",
+        output_path=tmp_path / "setup.png",
+    )
+
+    assert check.status == "FAIL"
+    assert check.setup_screen_detected is True
+    assert check.window_focus_verified is False
+    assert check.window_bounds == bounds
     assert check.click_plan == []
 
 

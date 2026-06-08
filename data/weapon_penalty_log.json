@@ -121,8 +121,8 @@
       "weapon_id": "Brute_Beetle"
     },
     "death|Brute_Grapple|attack": {
-      "count": 15,
-      "last_run_id": "20260529_045744_557",
+      "count": 25,
+      "last_run_id": "20260605_200942_544",
       "weapon_id": "Brute_Grapple"
     },
     "death|Brute_Jetmech|attack": {
@@ -196,8 +196,8 @@
       "weapon_id": "Prime_Lightning_A"
     },
     "death|Prime_Lightning|attack": {
-      "count": 7,
-      "last_run_id": "20260529_105649_588",
+      "count": 8,
+      "last_run_id": "lw",
       "weapon_id": "Prime_Lightning"
     },
     "death|Prime_Punchmech_A|attack": {
@@ -261,8 +261,8 @@
       "weapon_id": "Ranged_Rocket"
     },
     "death|Ranged_Rockthrow|attack": {
-      "count": 8,
-      "last_run_id": "20260529_103036_042",
+      "count": 16,
+      "last_run_id": "20260607_113748_220",
       "weapon_id": "Ranged_Rockthrow"
     },
     "death|Science_AcidShot|attack": {

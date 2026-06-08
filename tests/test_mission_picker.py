@@ -303,6 +303,55 @@ def test_lightning_war_routing_prefers_fast_train_even_without_defender():
     assert "Lightning War" in " ".join(ranked[0]["rationale_lines"])
 
 
+def test_lightning_baseline_routing_vetoes_train_even_when_fast():
+    """Reliable baseline mode avoids train objective surprises."""
+    island = [_safe_battle_mission(), _train_high_threat()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_baseline",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    train = next(e for e in ranked if e["mission_id"] == "Mission_Train")
+    assert train["route_auto_start_veto_reason"] == "baseline_reliability_veto:train"
+    rationale = " ".join(train["rationale_lines"])
+    assert "Lightning baseline" in rationale
+    assert "train objective" in rationale
+
+
+def test_lightning_baseline_routing_vetoes_tides_for_reliability():
+    """Reliable baseline mode avoids Tides final-turn trap patterns."""
+    tides = {
+        "region_id": 4,
+        "mission_id": "Mission_Tides",
+        "bonus_objective_ids": [],
+        "environment": "Env_Tides",
+    }
+    island = [_safe_battle_mission(), tides]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_baseline",
+        mission_metadata={
+            "Mission_Tides": {
+                "turn_limit": 3,
+                "environment": "Env_Tides",
+            },
+        },
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    tides_scored = next(e for e in ranked if e["mission_id"] == "Mission_Tides")
+    assert tides_scored["route_auto_start_veto_reason"] == (
+        "baseline_reliability_veto:tides"
+    )
+    rationale = " ".join(tides_scored["rationale_lines"])
+    assert "Tidal Waves" in rationale
+    assert "final-turn" in rationale
+
+
 def test_lightning_war_routing_penalizes_satellite_over_sandstorm():
     island = [_satellite_mission(), _sandstorm_mission()]
     ranked = score_island_map(

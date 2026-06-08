@@ -23,6 +23,7 @@ HARD_STOP_TOKENS = (
     "DESYNC",
     "BUDGET_EXCEEDED",
     "BRIDGE_SNAPSHOT_UNAVAILABLE",
+    "MISSION_PREVIEW_REQUIRES_ROUTE_VALIDATION",
 )
 RESTARTABLE_ATTEMPT_STOP_TOKENS = (
     "RESEARCH_REQUIRED",
@@ -613,7 +614,7 @@ def _timer_candidates(result: dict[str, Any] | None) -> list[tuple[float, str | 
                 else None
             )
             candidates.append((seconds, label))
-    for key in ("last_attempt", "pause_guard", "resume_guard"):
+    for key in ("last_attempt", "guard", "pause_guard", "resume_guard"):
         nested = result.get(key)
         if isinstance(nested, dict):
             candidates.extend(_timer_candidates(nested))
@@ -730,13 +731,14 @@ def _safe_to_think(result: dict[str, Any] | None) -> bool:
     visible = result.get("visible_ui") or result.get("pause_verify")
     if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
         return True
-    guard = result.get("pause_guard")
-    if isinstance(guard, dict):
-        if guard.get("pause_verified") or guard.get("timer_stop_verified"):
-            return True
-        visible = guard.get("visible_ui") or guard.get("pause_verify")
-        if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
-            return True
+    for key in ("guard", "pause_guard", "resume_guard"):
+        guard = result.get(key)
+        if isinstance(guard, dict):
+            if guard.get("pause_verified") or guard.get("timer_stop_verified"):
+                return True
+            visible = guard.get("visible_ui") or guard.get("pause_verify")
+            if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
+                return True
     ensure_pause = result.get("ensure_pause")
     if isinstance(ensure_pause, dict) and _safe_to_think(ensure_pause):
         return True
@@ -760,7 +762,7 @@ def _safe_to_finalize(result: dict[str, Any] | None) -> bool:
     visible = result.get("visible_ui") or result.get("pause_verify")
     if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
         return True
-    for key in ("ensure_pause", "pause_guard"):
+    for key in ("ensure_pause", "guard", "pause_guard", "resume_guard"):
         nested = result.get(key)
         if isinstance(nested, dict) and _safe_to_finalize(nested):
             return True
@@ -780,11 +782,12 @@ def _visible_ui_name(result: dict[str, Any] | None) -> str | None:
         nested = _visible_ui_name(last_poll)
         if nested:
             return nested
-    pause_guard = result.get("pause_guard")
-    if isinstance(pause_guard, dict):
-        nested = _visible_ui_name(pause_guard)
-        if nested:
-            return nested
+    for key in ("guard", "pause_guard", "resume_guard", "ensure_pause"):
+        nested_result = result.get(key)
+        if isinstance(nested_result, dict):
+            nested = _visible_ui_name(nested_result)
+            if nested:
+                return nested
     return None
 
 

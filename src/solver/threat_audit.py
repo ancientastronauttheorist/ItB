@@ -448,6 +448,38 @@ def _will_die_to_prior_projectile_before_attack(board: Board, attacker: Unit) ->
     return False, ""
 
 
+def _will_die_to_prior_melee_before_attack(board: Board, attacker: Unit) -> tuple[bool, str]:
+    """True when an earlier enemy melee attack kills this attacker first."""
+    for other in _ordered_prior_enemies(board, attacker):
+        if not _attacker_can_fire_before_prior_attack(board, other):
+            continue
+        wdef = get_weapon_def(other.weapon)
+        if wdef is None or wdef.weapon_type != "melee":
+            continue
+        if getattr(other, "weapon_target_behind", False):
+            continue
+
+        dx = _sign(int(other.target_x) - int(other.x))
+        dy = _sign(int(other.target_y) - int(other.y))
+        if (dx != 0) == (dy != 0):
+            continue
+
+        tx = int(other.x) + dx
+        ty = int(other.y) + dy
+        if (tx, ty) != (int(attacker.x), int(attacker.y)):
+            continue
+
+        damage = int(getattr(other, "weapon_damage", 0) or 0) or int(wdef.damage)
+        if _weapon_damage_kills_unit(damage, attacker):
+            return (
+                True,
+                f"earlier {other.type} uid={int(other.uid)} melee "
+                f"hits attacker before it fires",
+            )
+
+    return False, ""
+
+
 def _will_die_to_prior_artillery_before_attack(board: Board, attacker: Unit) -> tuple[bool, str]:
     """True when an earlier enemy artillery shot lands on this attacker."""
     for other in _ordered_prior_enemies(board, attacker):
@@ -597,6 +629,11 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
     )
     if projectile_kill:
         return "attacker_will_die_to_prior_projectile", projectile_detail
+    melee_kill, melee_detail = _will_die_to_prior_melee_before_attack(
+        board, attacker
+    )
+    if melee_kill:
+        return "attacker_will_die_to_prior_melee", melee_detail
     artillery_kill, artillery_detail = _will_die_to_prior_artillery_before_attack(
         board, attacker
     )

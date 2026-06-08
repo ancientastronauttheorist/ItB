@@ -201,6 +201,45 @@ def test_threat_audit_attacker_will_die_to_prior_projectile():
     )
 
 
+def test_threat_audit_attacker_will_die_to_prior_melee():
+    board = Board()
+    board.attack_order = [23716, 23719]
+    board.mission_id = "Mission_Tides"
+    board.tile(4, 3).terrain = "building"
+    board.tile(4, 3).building_hp = 2
+    board.units.append(_enemy(
+        uid=23716,
+        pawn_type="Scorpion1",
+        x=4,
+        y=5,
+        tx=4,
+        ty=4,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    board.units[-1].weapon_damage = 1
+    board.units.append(_enemy(
+        uid=23719,
+        pawn_type="Scorpion1",
+        x=4,
+        y=4,
+        tx=4,
+        ty=3,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    board.units[-1].weapon_damage = 1
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_melee"
+    )
+
+
 def test_threat_audit_attacker_will_die_to_prior_artillery():
     board = Board()
     board.attack_order = [10, 20]

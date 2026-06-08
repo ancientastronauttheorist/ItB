@@ -9,6 +9,8 @@ The top-level `AGENTS.md` is now the compact field guide. These focused files ho
 - `lightning-war-autonomous-speedrun.md` - design plan for a pause-safe Python
   speedrun conductor, telemetry, screenshots, restart policy, and AE-off
   Lightning War attempts.
+- `lightning-war-runner.md` - implemented baseline/speed runner commands,
+  assumptions, telemetry, and recovery result meanings.
 - `rule-index.md` - historical rule-number lookup table pointing to the focused doc for each rule.
 - `legacy-full-guide.md` - verbatim snapshot of the pre-cleanup `AGENTS.md` for audit/recovery.
 

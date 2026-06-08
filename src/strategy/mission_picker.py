@@ -595,6 +595,56 @@ def _apply_lightning_war_routing(
     return score + delta
 
 
+def _apply_lightning_baseline_routing(
+    entry: dict[str, Any],
+    mission_tags: set[str],
+    score: int,
+    rationale: list[str],
+) -> tuple[int, str | None]:
+    """Conservative Lightning route policy for no-surprise baseline proofs."""
+    mission_id = entry.get("mission_id", "")
+    delta = 0
+    veto_reason = None
+
+    if "train" in mission_tags:
+        delta -= 80
+        veto_reason = "baseline_reliability_veto:train"
+        rationale.append(
+            "-80 Lightning baseline: train objective can fail after clean turns"
+        )
+    if mission_id == "Mission_Battle":
+        delta += 8
+        rationale.append("+8  Lightning baseline: plain battle has low UI friction")
+    if "env_tidal" in mission_tags:
+        delta -= 70
+        veto_reason = "baseline_reliability_veto:tides"
+        rationale.append(
+            "-70 Lightning baseline: Tidal Waves can trap Blitzkrieg into "
+            "final-turn mech/objective losses"
+        )
+    if "four_turn" in mission_tags and "train" not in mission_tags:
+        delta += 6
+        rationale.append("+6  Lightning baseline: metadata 4-turn mission")
+
+    fragile_tags = {
+        "fire_tile_counter",
+        "fragile_ally_objective",
+        "mite_counter",
+        "protect_specific_building",
+        "terraform_grass_counter",
+        "volatile_vek",
+    }
+    fired_fragile_tags = sorted(mission_tags & fragile_tags)
+    if fired_fragile_tags:
+        delta -= 20
+        rationale.append(
+            "-20 Lightning baseline: fragile objective/review tags "
+            f"({', '.join(fired_fragile_tags)})"
+        )
+
+    return score + delta, veto_reason
+
+
 _UNAVAILABLE_BOOL_FIELDS = {
     "active",
     "completed",
@@ -819,8 +869,13 @@ def score_mission(
         score += 1
         rationale.append("+1  marked EASY by engine")
 
+    route_auto_start_veto_reason = None
     if routing == "lightning_war":
         score = _apply_lightning_war_routing(
+            entry, mission_tags, score, rationale
+        )
+    elif routing == "lightning_baseline":
+        score, route_auto_start_veto_reason = _apply_lightning_baseline_routing(
             entry, mission_tags, score, rationale
         )
     elif routing != "default":
@@ -830,6 +885,8 @@ def score_mission(
     out["score"] = score
     out["mission_tags"] = sorted(mission_tags)
     out["rationale_lines"] = rationale
+    if route_auto_start_veto_reason is not None:
+        out["route_auto_start_veto_reason"] = route_auto_start_veto_reason
     return out
 
 
