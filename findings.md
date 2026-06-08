@@ -101,3 +101,126 @@ run/timer_memory_probe_20260608/timer_f32_candidate_validation.json
 run/timer_memory_probe_20260608/timer_pointer_path_validation.json
 ```
 
+## Grid Power and Grid Defense
+
+Process memory contains serialized `GameData` copies with the live grid fields.
+The strongest current-state hit during this run was:
+
+```text
+0x0000000003fc9d8c
+network = 5
+networkMax = 7
+overflow = 0
+difficulty = 0
+ach_squad = "Detritus_A"
+```
+
+`network` and `networkMax` are the current and maximum Power Grid values.
+`overflow` is the permanent overpowered Grid Defense bonus counter.
+
+Other matching copies were found at:
+
+```text
+0x0000000011576fec
+0x00000000167c936c
+```
+
+Some older serialized copies also remain in memory, so consumers should rank
+matches by freshness/current seed/current squad/current section instead of
+trusting the first grid-shaped hit.
+
+The visible Grid Defense value is computed from difficulty base defense,
+`overflow`, and active pilot skills. For the current screen, the user observed
+`18%` Grid Defense. The memory-backed formula was:
+
+```text
+base defense on Easy/Normal/Hard = 15
+overflow = 0
+Bethany active skill1 = 2 = +3 Grid DEF
+Penny level 0 saved skills ignored
+Mateo level 0 saved skills ignored
+
+15 + 0 + 3 = 18
+```
+
+Screenshot capture through Computer Use failed during this check with:
+
+```text
+SetIsBorderRequired failed: No such interface supported (0x80004002)
+```
+
+Evidence was written locally under:
+
+```text
+run/grid_memory_probe_20260608/grid_network_string_scan.json
+run/grid_memory_probe_20260608/grid_values_reread.json
+```
+
+## Pilot Skill Level Gating
+
+Current pilot blocks in process memory showed:
+
+```text
+0x0000000003fca1f7 Bethany Jones level=2 skill1=2 skill2=1
+0x0000000003fca2fc Penny         level=0 skill1=3 skill2=1
+0x0000000003fca3d3 Mateo Volkov  level=0 skill1=3 skill2=1
+```
+
+The important rule is that saved skill slots can exist before they are active:
+
+```text
+skill1 is active only when level >= 1
+skill2 is active only when level >= 2
+```
+
+Level 0 pilots may already have future `skill1` and `skill2` values in memory,
+but those stored future skills do not affect current stats.
+
+Evidence was written locally under:
+
+```text
+run/grid_memory_probe_20260608/grid_current_pilot_scan.json
+```
+
+## Pilot Skill IDs
+
+Community save-edit references, local installed game text, and the current live
+`18%` Grid Defense observation agree on this skill ID map:
+
+```text
+0  +2 Mech HP        piloted mech HP +2
+1  +1 Mech Move      piloted mech move +1
+2  +3 Grid DEF       grid defense +3 percentage points
+3  +1 Mech Reactor   piloted mech reactor +1
+4  Opener            Boost and +2 Move on the first turn
+5  Finisher/Closer   Boost and +2 Move on the last turn
+6  Popular Hero      pilot sells for 4 reputation
+7  Thick Skin        immune to A.C.I.D. and Fire
+8  Skilled           +1 Move and +2 Mech HP
+9  Invulnerable      pilot does not die when the mech is defeated
+10 Adrenaline        +1 Move per Vek killed in the current battle
+11 Masochist/Pain    +2 Move when not at full health
+12 Technician/Regen  repair 1 HP at the start of each turn
+13 Conservative      limited-use weapon bonus
+```
+
+Local source anchors:
+
+```text
+B:\SteamLibrary\steamapps\common\Into the Breach\scripts\text.lua
+B:\SteamLibrary\steamapps\common\Into the Breach\scripts\localization\Tooltips.csv
+B:\SteamLibrary\steamapps\common\Into the Breach\scripts\localization\Tooltips_ae.csv
+B:\SteamLibrary\steamapps\common\Into the Breach\scripts\pilots.lua
+```
+
+Online anchors:
+
+```text
+https://intothebreach.fandom.com/wiki/Skills
+https://www.reddit.com/r/IntoTheBreach/comments/wy4n6w/picking_pilot_skills/
+```
+
+The installed scripts expose names, descriptions, unique pilot skills, and
+skill blacklists. They do not appear to expose a direct numeric ID table, so the
+numeric mapping is treated as community save-edit knowledge cross-checked
+against the local text and the live Grid Defense result.
