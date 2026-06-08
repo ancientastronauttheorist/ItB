@@ -67,6 +67,7 @@ from src.loop.commands import (
     cmd_recommend_squad,
     cmd_recommend_mission,
     cmd_bridge_speed,
+    cmd_bridge_ui_probe,
     cmd_lightning_preflight,
     cmd_lightning_ui,
     cmd_lightning_route_start,
@@ -494,6 +495,12 @@ def main():
         nargs="?",
         choices=["fast", "visual"],
         default="fast",
+    )
+
+    # bridge_ui_probe
+    sub.add_parser(
+        "bridge_ui_probe",
+        help="Read-only Lua probe for pause/menu/UI state candidates",
     )
 
     # lightning_preflight
@@ -1528,6 +1535,8 @@ def main():
         )
     elif args.command == "bridge_speed":
         cmd_bridge_speed(args.mode)
+    elif args.command == "bridge_ui_probe":
+        cmd_bridge_ui_probe()
     elif args.command == "lightning_preflight":
         cmd_lightning_preflight(
             profile=args.profile,

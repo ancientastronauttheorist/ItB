@@ -66,7 +66,7 @@ from src.bridge.protocol import (
 from src.bridge.reader import read_bridge_state
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
-    deploy_mech, set_bridge_speed,
+    deploy_mech, set_bridge_speed, bridge_ui_probe,
     move_mech, attack_mech, skip_mech, repair_mech,
 )
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
@@ -9590,6 +9590,101 @@ def cmd_bridge_speed(mode: str = "fast") -> dict:
         _print_result(result)
         return result
     result = {"status": "OK", "mode": mode, "ack": ack}
+    _print_result(result)
+    return result
+
+
+def _parse_bridge_ui_probe_ack(ack: str) -> dict:
+    prefix = "OK UI_PROBE "
+    if not ack.startswith(prefix):
+        return {
+            "status": "ERROR",
+            "reason": "unexpected_ack",
+            "ack": ack,
+        }
+    try:
+        probe = json.loads(ack[len(prefix):])
+    except json.JSONDecodeError as exc:
+        return {
+            "status": "ERROR",
+            "reason": "probe_json_parse_failed",
+            "error": str(exc),
+            "ack": ack,
+        }
+    if not isinstance(probe, dict):
+        return {
+            "status": "ERROR",
+            "reason": "probe_payload_not_object",
+            "ack": ack,
+            "payload_type": type(probe).__name__,
+        }
+
+    available_globals: list[str] = []
+    for entry in probe.get("globals") or []:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("ok") and entry.get("type") != "nil":
+            available_globals.append(str(entry.get("label")))
+
+    successful_values: list[dict] = []
+    callable_errors: list[dict] = []
+    for entry in probe.get("values") or []:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("ok"):
+            successful_values.append(entry)
+        elif "not callable" not in str(entry.get("error") or ""):
+            callable_errors.append(entry)
+
+    return {
+        "status": "OK",
+        "probe": probe,
+        "summary": {
+            "available_globals": available_globals,
+            "callable": probe.get("callable") or {},
+            "successful_values": successful_values,
+            "non_callable_errors": callable_errors,
+        },
+        "ack": ack,
+    }
+
+
+def cmd_bridge_ui_probe() -> dict:
+    """Run the read-only Lua UI/menu probe."""
+    if not is_bridge_alive(max_stale_sec=5.0):
+        result = {
+            "status": "NO_BRIDGE",
+            "reason": "bridge_heartbeat_stale_or_missing",
+            "next_step": (
+                "Install/restart the modloader if needed, then run this probe "
+                "once with the pause menu closed and once after pressing Esc."
+            ),
+        }
+        _print_result(result)
+        return result
+    try:
+        ack = bridge_ui_probe()
+    except (TimeoutError, BridgeError) as e:
+        result = {"status": "ERROR", "error": str(e)}
+        _print_result(result)
+        return result
+    result = _parse_bridge_ui_probe_ack(ack)
+    print("\n=== BRIDGE UI PROBE ===")
+    print(f"  status: {result.get('status')}")
+    summary = result.get("summary") or {}
+    if summary:
+        globals_count = len(summary.get("available_globals") or [])
+        values_count = len(summary.get("successful_values") or [])
+        print(f"  available globals: {globals_count}")
+        print(f"  successful values: {values_count}")
+        callable_map = summary.get("callable") or {}
+        callable_bits = [
+            f"{label}={','.join(names)}"
+            for label, names in callable_map.items()
+            if names
+        ]
+        if callable_bits:
+            print(f"  callable methods:  {'; '.join(callable_bits)}")
     _print_result(result)
     return result
 
