@@ -1955,6 +1955,123 @@ local function write_ack(msg)
     write_atomic(ACK_FILE, ACK_TMP, ack)
 end
 
+local function ui_probe_value(label, fn)
+    local ok, value = pcall(fn)
+    local out = {label = label, ok = ok and true or false}
+    if ok then
+        local vt = type(value)
+        out.type = vt
+        if vt == "boolean" or vt == "number" or vt == "string" then
+            out.value = value
+        elseif value == nil then
+            out.value = nil
+        else
+            out.value = tostring(value)
+        end
+    else
+        out.error = tostring(value)
+    end
+    return out
+end
+
+local function ui_probe_has_callable(obj, name)
+    if obj == nil then return false end
+    local ok, value = pcall(function() return obj[name] end)
+    return ok and type(value) == "function"
+end
+
+local function ui_probe_methods(label, obj, names)
+    local out = {}
+    for _, name in ipairs(names) do
+        out[#out + 1] = ui_probe_value(label .. "." .. name, function()
+            if obj == nil then error(label .. " unavailable") end
+            local fn = obj[name]
+            if type(fn) ~= "function" then error(name .. " not callable") end
+            return fn(obj)
+        end)
+    end
+    return out
+end
+
+local function ui_probe_globals()
+    local out = {}
+    local global_names = {
+        "Game", "Board", "Mission", "GameData", "sdlext", "modApi",
+        "UiRoot", "Ui", "UI", "PauseMenu", "Pause_Menu", "Menu",
+        "Screen", "ScreenManager", "GetGame", "GetCurrentMission",
+    }
+    for _, name in ipairs(global_names) do
+        out[#out + 1] = ui_probe_value("_G." .. name, function()
+            return _G[name]
+        end)
+    end
+    return out
+end
+
+local function ui_probe_menu_state()
+    local probes = {
+        bridge_speed = _bridge_speed,
+        timestamp = os.time(),
+        globals = ui_probe_globals(),
+        values = {},
+        callable = {},
+    }
+
+    local method_names = {
+        "IsPaused", "IsPause", "IsPauseMenu", "IsMenuOpen", "IsGamePaused",
+        "IsCombatPaused", "IsRunning", "IsBusy", "GetState", "GetCurrentState",
+        "GetTeamTurn", "GetTurnCount",
+    }
+    local objects = {
+        {"Game", Game},
+        {"Board", Board},
+        {"Mission", Mission},
+    }
+    if GetGame ~= nil then
+        local ok_game, game_ref = pcall(function() return GetGame() end)
+        probes.values[#probes.values + 1] = {
+            label = "GetGame()",
+            ok = ok_game and true or false,
+            type = ok_game and type(game_ref) or nil,
+            value = ok_game and tostring(game_ref) or nil,
+            error = ok_game and nil or tostring(game_ref),
+        }
+        if ok_game then
+            objects[#objects + 1] = {"GetGame()", game_ref}
+        end
+    end
+
+    for _, pair in ipairs(objects) do
+        local label = pair[1]
+        local obj = pair[2]
+        local callable = {}
+        for _, name in ipairs(method_names) do
+            if ui_probe_has_callable(obj, name) then
+                callable[#callable + 1] = name
+            end
+        end
+        probes.callable[label] = callable
+        local method_values = ui_probe_methods(label, obj, method_names)
+        for _, entry in ipairs(method_values) do
+            probes.values[#probes.values + 1] = entry
+        end
+    end
+
+    local globals_as_functions = {
+        "IsPaused", "IsPauseMenu", "IsMenuOpen", "IsGamePaused",
+        "GetCurrentScreen", "GetCurrentMenu", "GetUiState",
+    }
+    for _, name in ipairs(globals_as_functions) do
+        probes.values[#probes.values + 1] = ui_probe_value(name .. "()", function()
+            local fn = _G[name]
+            if type(fn) ~= "function" then error(name .. " not callable") end
+            return fn()
+        end)
+    end
+
+    return probes
+end
+
 local function execute_command(cmd_str)
     local parts = {}
     for word in cmd_str:gmatch("%S+") do
@@ -2244,6 +2361,17 @@ local function execute_command(cmd_str)
             write_ack("ERROR: invalid speed: " .. mode .. " (use fast or visual)")
             return
         end
+
+    elseif cmd == "UI_PROBE" then
+        -- Read-only probe for pause/menu/UI state candidates. Intended for
+        -- before/after Esc comparisons; every candidate is protected by pcall.
+        local ok, result = pcall(ui_probe_menu_state)
+        if ok then
+            write_ack("OK UI_PROBE " .. json_encode(result))
+        else
+            write_ack("ERROR: UI_PROBE failed: " .. tostring(result))
+        end
+        return
 
     elseif cmd == "LUA" then
         -- Raw Lua execution (for debugging)

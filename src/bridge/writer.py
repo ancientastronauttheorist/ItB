@@ -176,3 +176,9 @@ def set_bridge_speed(mode: str) -> str:
     """Set bridge speed mode: 'fast' or 'visual'."""
     write_command(f"SET_SPEED {mode}")
     return wait_for_ack(timeout=5.0)
+
+
+def bridge_ui_probe() -> str:
+    """Run the read-only Lua UI/menu probe."""
+    write_command("UI_PROBE")
+    return wait_for_ack(timeout=5.0)
