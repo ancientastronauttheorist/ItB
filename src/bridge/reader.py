@@ -456,19 +456,36 @@ def _read_mech_stat_overlays_from_save() -> dict[int, dict]:
     return {}
 
 
-def _pilot_skill_max_hp_bonus(*skills: object) -> int:
+def _active_pilot_skill_values(level: object, skill1: object, skill2: object) -> list[int]:
+    """Return level-gated pilot perk IDs from saveData.
+
+    The game uses zero as a real perk ID (``+2 Mech HP``), so slot presence
+    must be inferred from pilot level rather than by treating ``0`` as empty.
+    """
+    try:
+        lvl = int(level)
+    except (TypeError, ValueError):
+        lvl = 0
+    values: list[int] = []
+    for required_level, skill in ((1, skill1), (2, skill2)):
+        if lvl < required_level:
+            continue
+        try:
+            values.append(int(skill))
+        except (TypeError, ValueError):
+            continue
+    return values
+
+
+def _pilot_skill_max_hp_bonus(skills: list[int]) -> int:
     """Return HP granted by leveled pilot skills visible in saveData.
 
     Into the Breach stores pilot perks as numeric IDs. The base-game
-    ``+2 Mech HP`` perk is 1, and AE ``Skilled`` is 9 (+1 Move, +2 HP).
+    ``+2 Mech HP`` perk is 0, and AE ``Skilled`` is 8 (+1 Move, +2 HP).
     """
     bonus = 0
     for skill in skills:
-        try:
-            value = int(skill)
-        except (TypeError, ValueError):
-            continue
-        if value in {1, 9}:
+        if skill in {0, 8}:
             bonus += 2
     return bonus
 
@@ -522,16 +539,14 @@ def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
             unit["infected"] = rec["infected"]
 
         raw_skills = list(unit.get("pilot_skills", []) or [])
-        hp_skill_bonus = _pilot_skill_max_hp_bonus(
+        active_skills = _active_pilot_skill_values(
+            rec.get("pilot_level"),
             rec.get("pilot_skill1"),
             rec.get("pilot_skill2"),
         )
-        for save_key, label in (
-            ("pilot_skill1", "skill1"),
-            ("pilot_skill2", "skill2"),
-        ):
-            val = rec.get(save_key)
-            if isinstance(val, int) and val != 0:
+        hp_skill_bonus = _pilot_skill_max_hp_bonus(active_skills)
+        for label, val in zip(("skill1", "skill2"), active_skills):
+            if isinstance(val, int):
                 token = f"{label}={val}"
                 if token not in raw_skills:
                     raw_skills.append(token)

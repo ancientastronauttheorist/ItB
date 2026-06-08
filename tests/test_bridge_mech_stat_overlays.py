@@ -105,7 +105,7 @@ def test_apply_save_mech_stat_overlays_patches_max_hp_without_touching_live_hp(
     assert jet["max_hp"] == 4
     assert jet["bridge_reported_max_hp"] == 2
     assert jet["pilot_name"] == "Michael Lee"
-    assert jet["pilot_skills"] == ["skill2=2"]
+    assert jet["pilot_skills"] == ["skill2=2", "skill1=0"]
     assert pulse["hp"] == 4
     assert pulse["max_hp"] == 5
     assert pulse["infected"] is True
@@ -127,7 +127,7 @@ def test_apply_save_mech_stat_overlays_accounts_for_new_skilled_hp(
 ):
     snippet = """
 ["pawn1"] = {["type"] = "MirrorMech", ["id"] = 1, ["mech"] = true,
-["pilot"] = {["id"] = "Pilot_Pinnacle", ["name"] = "Coral", ["name_id"] = "", ["skill1"] = 0, ["skill2"] = 9, ["level"] = 1, },
+["pilot"] = {["id"] = "Pilot_Pinnacle", ["name"] = "Coral", ["name_id"] = "", ["skill1"] = 8, ["skill2"] = 1, ["level"] = 1, },
 ["health"] = 5, ["max_health"] = 3, }
 """
     monkeypatch.setattr(
@@ -152,8 +152,15 @@ def test_apply_save_mech_stat_overlays_accounts_for_new_skilled_hp(
     updates = reader._apply_save_mech_stat_overlays(bridge_data)
 
     assert bridge_data["units"][0]["max_hp"] == 5
-    assert bridge_data["units"][0]["pilot_skills"] == ["skill2=9"]
+    assert bridge_data["units"][0]["pilot_skills"] == ["skill1=8"]
     assert updates[0]["save_max_hp"] == 5
+
+
+def test_active_pilot_skill_values_uses_level_gating_and_zero_skill_id():
+    assert reader._active_pilot_skill_values(0, 3, 1) == []
+    assert reader._active_pilot_skill_values(1, 0, 1) == [0]
+    assert reader._active_pilot_skill_values(2, 2, 1) == [2, 1]
+    assert reader._pilot_skill_max_hp_bonus([0, 8, 1, 9]) == 4
 
 
 def test_apply_save_mech_stat_overlays_trusts_repair_bridge_cap_without_health_power(

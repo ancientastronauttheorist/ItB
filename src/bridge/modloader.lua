@@ -311,8 +311,14 @@ local function get_pawn_max_health(pawn, uid, save_data)
     local bonus = 0
     local pilot = save_data and save_data.pilots and save_data.pilots[uid]
     if pilot then
-        for _, skill in ipairs({pilot.skill1, pilot.skill2}) do
-            if skill == 1 or skill == 9 then
+        local level = pilot.level or 0
+        -- Pilot perk ID 0 is a real active skill (+2 HP) once the slot is
+        -- unlocked, so gate by level instead of treating zero as empty.
+        local active_skills = {}
+        if level >= 1 then active_skills[#active_skills + 1] = pilot.skill1 end
+        if level >= 2 then active_skills[#active_skills + 1] = pilot.skill2 end
+        for _, skill in ipairs(active_skills) do
+            if skill == 0 or skill == 8 then
                 bonus = bonus + 2
             end
         end

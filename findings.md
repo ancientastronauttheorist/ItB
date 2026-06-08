@@ -131,12 +131,27 @@ trusting the first grid-shaped hit.
 
 The visible Grid Defense value is computed from difficulty base defense,
 `overflow`, and active pilot skills. For the current screen, the user observed
-`18%` Grid Defense. The memory-backed formula was:
+`18%` Grid Defense. A later pilot panel check on the Lightning Mech showed
+Bethany Jones had:
+
+```text
+Max Level
+Starting Shield
++3 Grid DEF
++1 Mech Move
+```
+
+The matching memory block had Bethany as `level=2 skill1=2 skill2=1`, so the
+correct level-up perk interpretation for this case is `skill1=2` = `+3 Grid
+DEF` and `skill2=1` = `+1 Mech Move`.
+
+The memory-backed Grid Defense formula was:
 
 ```text
 base defense on Easy/Normal/Hard = 15
 overflow = 0
 Bethany active skill1 = 2 = +3 Grid DEF
+Bethany active skill2 = 1 = +1 Mech Move, no grid effect
 Penny level 0 saved skills ignored
 Mateo level 0 saved skills ignored
 
@@ -184,8 +199,8 @@ run/grid_memory_probe_20260608/grid_current_pilot_scan.json
 
 ## Pilot Skill IDs
 
-Community save-edit references, local installed game text, and the current live
-`18%` Grid Defense observation agree on this skill ID map:
+Local installed game text, wiki/internal-order notes, and the current live
+Bethany UI observation agree on this level-up perk ID map:
 
 ```text
 0  +2 Mech HP        piloted mech HP +2
@@ -221,6 +236,17 @@ https://www.reddit.com/r/IntoTheBreach/comments/wy4n6w/picking_pilot_skills/
 ```
 
 The installed scripts expose names, descriptions, unique pilot skills, and
-skill blacklists. They do not appear to expose a direct numeric ID table, so the
-numeric mapping is treated as community save-edit knowledge cross-checked
-against the local text and the live Grid Defense result.
+skill blacklists. They do not appear to expose a direct numeric ID table for
+level-up perks, so the numeric mapping is treated as wiki/internal-order
+knowledge cross-checked against the local text and the live Bethany/Grid Defense
+result.
+
+Important parser caveat: `0` is both the internal ID for `+2 Mech HP` and the
+default-looking value seen in locked or absent slots. Consumers must gate slots
+by pilot level first:
+
+```text
+level >= 1 => skill1 is active, even when skill1 == 0
+level >= 2 => skill2 is active, even when skill2 == 0
+level 0    => saved skill1/skill2 values are future choices and inactive
+```
