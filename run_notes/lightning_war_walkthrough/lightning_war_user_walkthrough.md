@@ -499,6 +499,93 @@ Automation note:
   fresh screenshot -> detect red mission component -> click detected centroid.
 - Never reuse a screenshot for the click decision.
 
+
+## Timing Probe - Mission Preview Board / Start Mission Click
+
+Preview hover artifacts directory:
+[mission_board_click_timing_20260609_0p5_probe](mission_board_click_timing_20260609_0p5_probe/)
+
+Board-click artifacts directory:
+[mission_board_start_click_20260609](mission_board_start_click_20260609/)
+
+Corrected three-loop repeat directory:
+[mission_board_3loop_main_menu_corrected_20260609](mission_board_3loop_main_menu_corrected_20260609/)
+
+User instruction:
+
+- After clicking a red mission, click the minimap/preview board to start the
+  mission.
+- Take one screenshot with the mouse off the board and one with the mouse on
+  the board, so the yellow hover highlight and `Start Mission` text can be
+  learned.
+- Take screenshots every 0.5 seconds after the red mission click to identify
+  the fastest available click time.
+- Stop after the actual game board/deployment screen loads.
+
+Observed hover behavior:
+
+- With the mouse off the board, the mission preview card and board are visible,
+  but the preview board is not yellow-highlighted.
+- With the mouse at window `(1450, 790)`, the preview board highlights yellow
+  and shows `Start Mission`.
+- In this sample an advisor dialogue was still visible, but the board hover and
+  `Start Mission` state still worked.
+
+Observed timing after red mission click:
+
+- The mission preview board was already visible at the first captured frame,
+  t=`0.0` after the red mission click returned.
+- It remained visible and stable at t=`0.5`, t=`1.0`, t=`1.5`, and later frames.
+- This supports clicking the preview board as soon as the red mission click has
+  opened the preview, with no extra 1.5 second wait needed in this sample.
+
+General click rule:
+
+- Prefer the existing visible `Start Mission` detector when available. It looks
+  for the yellow `Start Mission` text/hover state and produces a fresh target
+  from the current screenshot.
+- The calibrated fallback target on this 2560x1441 Windows window is
+  `mission_preview_board` at window `(1450, 790)`.
+- In proportional terms, this is about x=`0.566` and y=`0.548` of the current
+  window size, centered on the large isometric preview board.
+
+Click result:
+
+- Clicked the highlighted preview board at `(1450, 790)`.
+- The deployment/game board was visible by the first post-click capture,
+  t=`0.5` after the click.
+- Stopped on the deployment screen labeled `Deploying Lightning Mech`, before
+  making any deployment choices.
+
+Three-loop repeat result:
+
+- A first repeat attempt was discarded because the reset verifier was too loose:
+  later trials reached deployment, but their starting frames were not actually
+  the title screen.
+- The corrected repeat restarted the game between trials and verified the title
+  menu with the dynamic title-row detector before clicking `New Game`.
+- Corrected Trial 1: started from verified title screen, clicked red mission
+  target `(1665, 750)`, clicked the preview board, and reached deployment at
+  t=`0.5` after the preview-board click.
+- Corrected Trial 2: started from verified title screen, clicked red mission
+  target `(1717, 922)`, clicked the preview board, and reached deployment at
+  t=`0.5`.
+- Corrected Trial 3: started from verified title screen, clicked red mission
+  target `(1062, 694)`, clicked the preview board, and reached deployment at
+  t=`0.5`.
+- Result: `3/3` successful from a verified main menu/title start.
+
+Automation note:
+
+- Order for this step:
+  fresh preview screenshot -> detect/hover `Start Mission` board -> held click
+  preview board -> wait for deployment board.
+- If using fixed coordinates as a fallback, click the center of the large
+  preview board, not the mission text card.
+- Do not trust a reset unless the next run has a fresh title-screen screenshot
+  and the title-row detector confirms the `New Game` row. Deployment screens can
+  absorb clicks and create false-positive repeat runs if reset is not verified.
+
 ### 6.5 Second Island Click Trial
 
 Artifacts directory:
@@ -525,3 +612,64 @@ Automation note:
 - The current bracket is: 7.0 seconds succeeds, 6.5 seconds fails.
 - If we want a tighter threshold later, test between these values, such as
   6.75 seconds, rather than continuing downward by 0.5 seconds.
+
+## Timing Probe - First Deployment Click
+
+Artifacts directory:
+[deployment_start_timing_20260609_0p5_from_setup](deployment_start_timing_20260609_0p5_from_setup/)
+
+Contact sheet:
+[contact_sheet.png](deployment_start_timing_20260609_0p5_from_setup/contact_sheet.png)
+
+User instruction:
+
+- From the normal Lightning War startup path, learn how quickly deployment can
+  begin after clicking the mission preview board.
+- Initial expectation: deployment may be ready after only t=`0.5`.
+
+Observed setup issue:
+
+- The first attempt intended to start from the main menu did not leave the title
+  screen because the `Start New Game` overwrite prompt appeared and needed an
+  explicit `Yes`.
+- That failed frame is kept in
+  [deployment_start_timing_20260609_0p5](deployment_start_timing_20260609_0p5/),
+  but it is not deployment timing evidence. It is a reminder that the loop must
+  gate on the overwrite modal before assuming it is on setup.
+- After clicking `Yes`, the setup screen was verified and the timing probe
+  continued from there with the normal already-learned sequence.
+
+Timing sequence:
+
+- Clicked setup `Start`.
+- Clicked `Easy`, then clicked the difficulty modal `Start`; the modal `Start`
+  mouse-up is t=`0`.
+- Clicked Archive at t=`7.0`.
+- Clicked `Continue` at t=`9.5`.
+- Took a fresh screenshot, found a red mission region, and clicked it.
+- Hovered/clicked the mission preview board.
+- Captured the deployment board at t=`0.5` after the preview-board click.
+- Immediately clicked a detected yellow deployment region.
+- Captured the follow-up deployment state at about t=`1.0`.
+
+Observed result:
+
+- At t=`0.5` after clicking the mission preview board, the deployment screen was
+  already visible and ready. The screen showed `Deploying Lightning Mech` and
+  yellow deployment tiles.
+- The first deployment click was accepted immediately after that t=`0.5`
+  capture.
+- The follow-up screenshot showed the first mech placed and the next deployment
+  step active.
+
+Automation note:
+
+- Deployment can begin at t=`0.5` after clicking the mission preview board in
+  this sample.
+- The current yellow visual detector is enough for this proof, but not final:
+  it merged several adjacent yellow deployment tiles into one large connected
+  region. For a robust loop, split the yellow mask into tile centers or prefer
+  bridge deployment data once the bridge reports deployment.
+- A clean full-start repeat should make the overwrite-modal gate explicit:
+  title `New Game` -> if `Start New Game` appears, click `Yes` -> verify setup
+  -> continue the learned timing sequence.

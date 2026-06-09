@@ -1,0 +1,403 @@
+{
+  "trial": 1,
+  "status": "OK",
+  "events": [
+    {
+      "name": "title_new_game",
+      "result": {
+        "status": "OK",
+        "x": 172,
+        "y": 360,
+        "description": "Title screen New Game (dynamic screenshot target)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 172,
+        "window_y": 360,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "title_new_game",
+        "dynamic_target": {
+          "status": "OK",
+          "row_index": 1,
+          "image_x": 172,
+          "image_y": 360,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "target_row": {
+            "image_x": 172.0,
+            "image_y": 359.5,
+            "min_x": 0,
+            "max_x": 344,
+            "min_y": 349,
+            "max_y": 370,
+            "width": 345,
+            "height": 22,
+            "dark": 6070,
+            "bright": 1520
+          },
+          "candidate_rows": [
+            {
+              "image_x": 172.0,
+              "image_y": 307.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 297,
+              "max_y": 318,
+              "width": 345,
+              "height": 22,
+              "dark": 6358,
+              "bright": 1232
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 359.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 349,
+              "max_y": 370,
+              "width": 345,
+              "height": 22,
+              "dark": 6070,
+              "bright": 1520
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 411.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 401,
+              "max_y": 422,
+              "width": 345,
+              "height": 22,
+              "dark": 6458,
+              "bright": 1132
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 463.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 453,
+              "max_y": 474,
+              "width": 345,
+              "height": 22,
+              "dark": 6486,
+              "bright": 1104
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 515.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 505,
+              "max_y": 526,
+              "width": 345,
+              "height": 22,
+              "dark": 7002,
+              "bright": 588
+            }
+          ]
+        },
+        "coordinate_scale": {
+          "x": 1.0,
+          "y": 1.0
+        }
+      }
+    },
+    {
+      "name": "overwrite_yes_attempt",
+      "result": {
+        "status": "OK",
+        "x": 1208,
+        "y": 795,
+        "description": "Abandon Timeline confirmation Yes (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1208,
+        "window_y": 795,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "abandon_confirm_yes"
+      }
+    },
+    {
+      "name": "setup_start",
+      "result": {
+        "status": "OK",
+        "x": 1712,
+        "y": 477,
+        "description": "New-run setup Start (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1712,
+        "window_y": 477,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "setup_start"
+      }
+    },
+    {
+      "name": "easy_click",
+      "result": {
+        "status": "OK",
+        "x": 1650,
+        "y": 619,
+        "description": "ensure Easy difficulty",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1650,
+        "window_y": 619,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "name": "modal_start_t0",
+      "result": {
+        "status": "OK",
+        "x": 1704,
+        "y": 974,
+        "description": "Difficulty setup modal Start (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1704,
+        "window_y": 974,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "setup_modal_start"
+      }
+    },
+    {
+      "name": "archive_island",
+      "elapsed": 7.638,
+      "result": {
+        "status": "OK",
+        "x": 600,
+        "y": 430,
+        "description": "Island select Archive (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 600,
+        "window_y": 430,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "island_archive"
+      }
+    },
+    {
+      "name": "intro_continue",
+      "elapsed": 10.126,
+      "result": {
+        "status": "OK",
+        "x": 1633,
+        "y": 1009,
+        "description": "Bottom-right Continue panel (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1633,
+        "window_y": 1009,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "bottom_continue"
+      }
+    },
+    {
+      "name": "mission_preview_board",
+      "result": {
+        "status": "OK",
+        "x": 1450,
+        "y": 790,
+        "description": "Large mission preview board / Start Mission text (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1450,
+        "window_y": 790,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "mission_preview_board"
+      }
+    }
+  ],
+  "red": {
+    "target": [
+      1150,
+      963
+    ],
+    "detect_ms": 138.2,
+    "elapsed": 11.296,
+    "components": [
+      {
+        "area": 137441,
+        "bbox": [
+          847,
+          845,
+          1471,
+          1129
+        ],
+        "center": [
+          1150,
+          963
+        ],
+        "w": 624,
+        "h": 284
+      },
+      {
+        "area": 103644,
+        "bbox": [
+          831,
+          521,
+          1235,
+          841
+        ],
+        "center": [
+          1062,
+          694
+        ],
+        "w": 404,
+        "h": 320
+      }
+    ],
+    "click": {
+      "status": "OK",
+      "x": 1150,
+      "y": 963,
+      "description": "trial 1 red mission",
+      "backend": "pyautogui",
+      "hold_seconds": 0.3,
+      "window_x": 1150,
+      "window_y": 963,
+      "window_bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 2560,
+        "height": 1441
+      }
+    }
+  },
+  "deployment_frames": [
+    {
+      "offset": 0.5,
+      "path": "run_notes\\lightning_war_walkthrough\\mission_board_3loop_main_menu_20260609\\trial_01\\deployment_frame_00_t0.5.png",
+      "yellow_score": 6568
+    }
+  ],
+  "reset": [
+    {
+      "attempt": 1,
+      "esc": {
+        "status": "OK",
+        "key": "esc",
+        "description": "trial 1 open pause attempt 1",
+        "backend": "pyautogui"
+      },
+      "pause_probe": {
+        "bright": 68,
+        "borderish": 188,
+        "path": "run_notes\\lightning_war_walkthrough\\mission_board_3loop_main_menu_20260609\\trial_01\\reset_pause_attempt_1.png"
+      }
+    },
+    {
+      "attempt": 2,
+      "esc": {
+        "status": "OK",
+        "key": "esc",
+        "description": "trial 1 open pause attempt 2",
+        "backend": "pyautogui"
+      },
+      "pause_probe": {
+        "bright": 44,
+        "borderish": 48,
+        "path": "run_notes\\lightning_war_walkthrough\\mission_board_3loop_main_menu_20260609\\trial_01\\reset_pause_attempt_2.png"
+      }
+    },
+    {
+      "attempt": 3,
+      "esc": {
+        "status": "OK",
+        "key": "esc",
+        "description": "trial 1 open pause attempt 3",
+        "backend": "pyautogui"
+      },
+      "pause_probe": {
+        "bright": 44,
+        "borderish": 48,
+        "path": "run_notes\\lightning_war_walkthrough\\mission_board_3loop_main_menu_20260609\\trial_01\\reset_pause_attempt_3.png"
+      }
+    },
+    {
+      "attempt": 4,
+      "esc": {
+        "status": "OK",
+        "key": "esc",
+        "description": "trial 1 open pause attempt 4",
+        "backend": "pyautogui"
+      },
+      "pause_probe": {
+        "bright": 44,
+        "borderish": 48,
+        "path": "run_notes\\lightning_war_walkthrough\\mission_board_3loop_main_menu_20260609\\trial_01\\reset_pause_attempt_4.png"
+      }
+    },
+    {
+      "main_menu_click": {
+        "status": "OK",
+        "x": 1130,
+        "y": 774,
+        "description": "trial 1 pause Main Menu",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1130,
+        "window_y": 774,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "title_screenshot": "run_notes\\lightning_war_walkthrough\\mission_board_3loop_main_menu_20260609\\trial_01\\reset_after_main_menu.png"
+    }
+  ]
+}
