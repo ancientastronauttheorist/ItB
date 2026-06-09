@@ -1,0 +1,84 @@
+{
+  "status": "PARTIAL",
+  "trials": [
+    {
+      "trial": 1,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.596,
+      "confirm_elapsed": 28.116,
+      "player_turn_elapsed": null,
+      "frame_count": 5,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_01\\contact_sheet.png"
+    },
+    {
+      "trial": 2,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.599,
+      "confirm_elapsed": 28.204,
+      "player_turn_elapsed": null,
+      "frame_count": 6,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_02\\contact_sheet.png"
+    },
+    {
+      "trial": 3,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.591,
+      "confirm_elapsed": 28.022,
+      "player_turn_elapsed": null,
+      "frame_count": 5,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_03\\contact_sheet.png"
+    },
+    {
+      "trial": 4,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.598,
+      "confirm_elapsed": 28.412,
+      "player_turn_elapsed": null,
+      "frame_count": 6,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_04\\contact_sheet.png"
+    },
+    {
+      "trial": 5,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.615,
+      "confirm_elapsed": 28.62,
+      "player_turn_elapsed": null,
+      "frame_count": 5,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_05\\contact_sheet.png"
+    },
+    {
+      "trial": 6,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.585,
+      "confirm_elapsed": 28.315,
+      "player_turn_elapsed": null,
+      "frame_count": 6,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_06\\contact_sheet.png"
+    },
+    {
+      "trial": 7,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.638,
+      "confirm_elapsed": 32.013,
+      "player_turn_elapsed": null,
+      "frame_count": 5,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\contact_sheet.png"
+    },
+    {
+      "trial": 8,
+      "status": "TIMEOUT",
+      "deploy_elapsed": 10.617,
+      "confirm_elapsed": 28.72,
+      "player_turn_elapsed": null,
+      "frame_count": 5,
+      "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_08\\contact_sheet.png"
+    }
+  ],
+  "cadence": 0.5,
+  "max_post_confirm": 18.0,
+  "started_at": "2026-06-09 17:31:37",
+  "completed_at": "2026-06-09 17:48:48",
+  "player_turn_elapsed_max": null,
+  "player_turn_elapsed_min": null,
+  "player_turn_elapsed_values": []
+}

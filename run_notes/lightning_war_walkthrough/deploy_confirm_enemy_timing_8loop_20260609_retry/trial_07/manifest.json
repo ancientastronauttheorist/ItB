@@ -1,0 +1,1376 @@
+{
+  "trial": 7,
+  "events": [
+    {
+      "event": "click_title_new_game",
+      "result": {
+        "status": "OK",
+        "x": 172,
+        "y": 360,
+        "description": "Title screen New Game (dynamic screenshot target)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 172,
+        "window_y": 360,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "title_new_game",
+        "dynamic_target": {
+          "status": "OK",
+          "row_index": 1,
+          "image_x": 172,
+          "image_y": 360,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "target_row": {
+            "image_x": 172.0,
+            "image_y": 359.5,
+            "min_x": 0,
+            "max_x": 344,
+            "min_y": 349,
+            "max_y": 370,
+            "width": 345,
+            "height": 22,
+            "dark": 6070,
+            "bright": 1520
+          },
+          "candidate_rows": [
+            {
+              "image_x": 172.0,
+              "image_y": 307.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 297,
+              "max_y": 318,
+              "width": 345,
+              "height": 22,
+              "dark": 6358,
+              "bright": 1232
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 359.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 349,
+              "max_y": 370,
+              "width": 345,
+              "height": 22,
+              "dark": 6070,
+              "bright": 1520
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 411.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 401,
+              "max_y": 422,
+              "width": 345,
+              "height": 22,
+              "dark": 6458,
+              "bright": 1132
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 463.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 453,
+              "max_y": 474,
+              "width": 345,
+              "height": 22,
+              "dark": 6486,
+              "bright": 1104
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 515.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 505,
+              "max_y": 526,
+              "width": 345,
+              "height": 22,
+              "dark": 7002,
+              "bright": 588
+            }
+          ]
+        },
+        "coordinate_scale": {
+          "x": 1.0,
+          "y": 1.0
+        }
+      }
+    },
+    {
+      "event": "post_new_game_capture",
+      "capture": {
+        "label": "post_new_game",
+        "elapsed": null,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\post_new_game.png",
+        "visible_ui": "island_map_or_unknown",
+        "recommended_control": null,
+        "confidence": 0.25,
+        "bridge": {
+          "status": "NO_DATA"
+        },
+        "note": null
+      }
+    },
+    {
+      "event": "click_overwrite_yes_gate",
+      "result": {
+        "status": "OK",
+        "x": 1208,
+        "y": 795,
+        "description": "Abandon Timeline confirmation Yes (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1208,
+        "window_y": 795,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "abandon_confirm_yes"
+      }
+    },
+    {
+      "event": "setup_state_capture",
+      "capture": {
+        "label": "setup_state_after_yes_gate",
+        "elapsed": null,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\setup_state_after_yes_gate.png",
+        "visible_ui": "pause_menu",
+        "recommended_control": "menu_continue",
+        "confidence": 0.991,
+        "bridge": {
+          "status": "NO_DATA"
+        },
+        "note": null
+      }
+    },
+    {
+      "event": "click_setup_start",
+      "result": {
+        "status": "OK",
+        "x": 1712,
+        "y": 477,
+        "description": "New-run setup Start (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1712,
+        "window_y": 477,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "setup_start"
+      }
+    },
+    {
+      "event": "click_easy",
+      "result": {
+        "status": "OK",
+        "x": 1650,
+        "y": 619,
+        "description": "Easy difficulty",
+        "backend": "pyautogui",
+        "hold_seconds": 0.18,
+        "window_x": 1650,
+        "window_y": 619,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "event": "click_setup_modal_start",
+      "result": {
+        "status": "OK",
+        "x": 1704,
+        "y": 974,
+        "description": "Difficulty setup modal Start (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1704,
+        "window_y": 974,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "setup_modal_start"
+      }
+    },
+    {
+      "event": "click_archive",
+      "elapsed": 7.0,
+      "result": {
+        "status": "OK",
+        "x": 600,
+        "y": 430,
+        "description": "Island select Archive (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 600,
+        "window_y": 430,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "island_archive"
+      }
+    },
+    {
+      "event": "click_continue",
+      "elapsed": 9.5,
+      "result": {
+        "status": "OK",
+        "x": 1633,
+        "y": 1009,
+        "description": "Bottom-right Continue panel (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1633,
+        "window_y": 1009,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "bottom_continue"
+      }
+    },
+    {
+      "event": "red_detection",
+      "result": {
+        "status": "OK",
+        "screenshot_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\fresh_red_detection_frame.png",
+        "regions": [
+          {
+            "window_x": 794,
+            "window_y": 399,
+            "bbox_window": [
+              739,
+              228,
+              866,
+              556
+            ],
+            "area_px": 116960,
+            "area_window": 30356.0,
+            "index": 0
+          },
+          {
+            "window_x": 935,
+            "window_y": 574,
+            "bbox_window": [
+              813,
+              500,
+              1034,
+              670
+            ],
+            "area_px": 98337,
+            "area_window": 25522.6,
+            "index": 1
+          }
+        ],
+        "region_count": 2,
+        "segmentation": "eroded",
+        "raw_region_count": 1,
+        "eroded_region_count": 2,
+        "crop_window": [
+          250,
+          120,
+          1160,
+          700
+        ]
+      }
+    },
+    {
+      "event": "click_red_mission",
+      "target": {
+        "window_x": 794,
+        "window_y": 399,
+        "bbox_window": [
+          739,
+          228,
+          866,
+          556
+        ],
+        "area_px": 116960,
+        "area_window": 30356.0,
+        "index": 0
+      },
+      "result": {
+        "status": "OK",
+        "x": 794,
+        "y": 399,
+        "description": "Red mission",
+        "backend": "pyautogui",
+        "hold_seconds": 0.25,
+        "window_x": 794,
+        "window_y": 399,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "event": "click_preview_board",
+      "result": {
+        "status": "OK",
+        "x": 1450,
+        "y": 790,
+        "description": "Large mission preview board / Start Mission text (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1450,
+        "window_y": 790,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "mission_preview_board"
+      }
+    },
+    {
+      "event": "deployment_ready_capture",
+      "capture": {
+        "label": "deployment_ready_t0p5",
+        "elapsed": null,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\deployment_ready_t0p5.png",
+        "visible_ui": "island_map",
+        "recommended_control": null,
+        "confidence": 0.1793,
+        "bridge": {
+          "status": "OK",
+          "phase": "unknown",
+          "turn": 0,
+          "deployment_zone_count": 10,
+          "mech_count": 0,
+          "active_mechs": 0,
+          "mission_id": "Mission_Survive"
+        },
+        "note": null
+      }
+    }
+  ],
+  "restart": {
+    "status": "OK",
+    "frames": [
+      {
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\title_wait_00.png",
+        "target": {
+          "status": "NOT_FOUND",
+          "reason": "not_enough_title_menu_rows",
+          "row_index": 1,
+          "candidate_count": 0,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "runs": []
+        },
+        "visible_ui": "island_map_or_unknown",
+        "recommended_control": null
+      },
+      {
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\title_wait_01.png",
+        "target": {
+          "status": "NOT_FOUND",
+          "reason": "not_enough_title_menu_rows",
+          "row_index": 1,
+          "candidate_count": 0,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "runs": []
+        },
+        "visible_ui": "island_map_or_unknown",
+        "recommended_control": null
+      },
+      {
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\title_wait_02.png",
+        "target": {
+          "status": "OK",
+          "row_index": 1,
+          "image_x": 172,
+          "image_y": 360,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "target_row": {
+            "image_x": 172.0,
+            "image_y": 359.5,
+            "min_x": 0,
+            "max_x": 344,
+            "min_y": 349,
+            "max_y": 370,
+            "width": 345,
+            "height": 22,
+            "dark": 6070,
+            "bright": 1520
+          },
+          "candidate_rows": [
+            {
+              "image_x": 172.0,
+              "image_y": 307.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 297,
+              "max_y": 318,
+              "width": 345,
+              "height": 22,
+              "dark": 6358,
+              "bright": 1232
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 359.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 349,
+              "max_y": 370,
+              "width": 345,
+              "height": 22,
+              "dark": 6070,
+              "bright": 1520
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 411.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 401,
+              "max_y": 422,
+              "width": 345,
+              "height": 22,
+              "dark": 6458,
+              "bright": 1132
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 463.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 453,
+              "max_y": 474,
+              "width": 345,
+              "height": 22,
+              "dark": 6486,
+              "bright": 1104
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 515.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 505,
+              "max_y": 526,
+              "width": 345,
+              "height": 22,
+              "dark": 7002,
+              "bright": 588
+            }
+          ]
+        },
+        "visible_ui": "island_map_or_unknown",
+        "recommended_control": null
+      }
+    ],
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 2560,
+      "height": 1441
+    }
+  },
+  "startup": {
+    "status": "OK",
+    "events": [
+      {
+        "event": "click_title_new_game",
+        "result": {
+          "status": "OK",
+          "x": 172,
+          "y": 360,
+          "description": "Title screen New Game (dynamic screenshot target)",
+          "backend": "pyautogui",
+          "hold_seconds": 0.3,
+          "window_x": 172,
+          "window_y": 360,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          },
+          "control": "title_new_game",
+          "dynamic_target": {
+            "status": "OK",
+            "row_index": 1,
+            "image_x": 172,
+            "image_y": 360,
+            "image_size": [
+              2560,
+              1441
+            ],
+            "search_region": [
+              0,
+              144,
+              716,
+              691
+            ],
+            "target_row": {
+              "image_x": 172.0,
+              "image_y": 359.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 349,
+              "max_y": 370,
+              "width": 345,
+              "height": 22,
+              "dark": 6070,
+              "bright": 1520
+            },
+            "candidate_rows": [
+              {
+                "image_x": 172.0,
+                "image_y": 307.5,
+                "min_x": 0,
+                "max_x": 344,
+                "min_y": 297,
+                "max_y": 318,
+                "width": 345,
+                "height": 22,
+                "dark": 6358,
+                "bright": 1232
+              },
+              {
+                "image_x": 172.0,
+                "image_y": 359.5,
+                "min_x": 0,
+                "max_x": 344,
+                "min_y": 349,
+                "max_y": 370,
+                "width": 345,
+                "height": 22,
+                "dark": 6070,
+                "bright": 1520
+              },
+              {
+                "image_x": 172.0,
+                "image_y": 411.5,
+                "min_x": 0,
+                "max_x": 344,
+                "min_y": 401,
+                "max_y": 422,
+                "width": 345,
+                "height": 22,
+                "dark": 6458,
+                "bright": 1132
+              },
+              {
+                "image_x": 172.0,
+                "image_y": 463.5,
+                "min_x": 0,
+                "max_x": 344,
+                "min_y": 453,
+                "max_y": 474,
+                "width": 345,
+                "height": 22,
+                "dark": 6486,
+                "bright": 1104
+              },
+              {
+                "image_x": 172.0,
+                "image_y": 515.5,
+                "min_x": 0,
+                "max_x": 344,
+                "min_y": 505,
+                "max_y": 526,
+                "width": 345,
+                "height": 22,
+                "dark": 7002,
+                "bright": 588
+              }
+            ]
+          },
+          "coordinate_scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      },
+      {
+        "event": "post_new_game_capture",
+        "capture": {
+          "label": "post_new_game",
+          "elapsed": null,
+          "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\post_new_game.png",
+          "visible_ui": "island_map_or_unknown",
+          "recommended_control": null,
+          "confidence": 0.25,
+          "bridge": {
+            "status": "NO_DATA"
+          },
+          "note": null
+        }
+      },
+      {
+        "event": "click_overwrite_yes_gate",
+        "result": {
+          "status": "OK",
+          "x": 1208,
+          "y": 795,
+          "description": "Abandon Timeline confirmation Yes (Windows calibrated)",
+          "backend": "pyautogui",
+          "hold_seconds": 0.3,
+          "window_x": 1208,
+          "window_y": 795,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          },
+          "control": "abandon_confirm_yes"
+        }
+      },
+      {
+        "event": "setup_state_capture",
+        "capture": {
+          "label": "setup_state_after_yes_gate",
+          "elapsed": null,
+          "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\setup_state_after_yes_gate.png",
+          "visible_ui": "pause_menu",
+          "recommended_control": "menu_continue",
+          "confidence": 0.991,
+          "bridge": {
+            "status": "NO_DATA"
+          },
+          "note": null
+        }
+      },
+      {
+        "event": "click_setup_start",
+        "result": {
+          "status": "OK",
+          "x": 1712,
+          "y": 477,
+          "description": "New-run setup Start (Windows calibrated)",
+          "backend": "pyautogui",
+          "hold_seconds": 0.3,
+          "window_x": 1712,
+          "window_y": 477,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          },
+          "control": "setup_start"
+        }
+      },
+      {
+        "event": "click_easy",
+        "result": {
+          "status": "OK",
+          "x": 1650,
+          "y": 619,
+          "description": "Easy difficulty",
+          "backend": "pyautogui",
+          "hold_seconds": 0.18,
+          "window_x": 1650,
+          "window_y": 619,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          }
+        }
+      },
+      {
+        "event": "click_setup_modal_start",
+        "result": {
+          "status": "OK",
+          "x": 1704,
+          "y": 974,
+          "description": "Difficulty setup modal Start (Windows calibrated)",
+          "backend": "pyautogui",
+          "hold_seconds": 0.3,
+          "window_x": 1704,
+          "window_y": 974,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          },
+          "control": "setup_modal_start"
+        }
+      },
+      {
+        "event": "click_archive",
+        "elapsed": 7.0,
+        "result": {
+          "status": "OK",
+          "x": 600,
+          "y": 430,
+          "description": "Island select Archive (Windows calibrated)",
+          "backend": "pyautogui",
+          "hold_seconds": 0.3,
+          "window_x": 600,
+          "window_y": 430,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          },
+          "control": "island_archive"
+        }
+      },
+      {
+        "event": "click_continue",
+        "elapsed": 9.5,
+        "result": {
+          "status": "OK",
+          "x": 1633,
+          "y": 1009,
+          "description": "Bottom-right Continue panel (Windows calibrated)",
+          "backend": "pyautogui",
+          "hold_seconds": 0.3,
+          "window_x": 1633,
+          "window_y": 1009,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          },
+          "control": "bottom_continue"
+        }
+      },
+      {
+        "event": "red_detection",
+        "result": {
+          "status": "OK",
+          "screenshot_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\fresh_red_detection_frame.png",
+          "regions": [
+            {
+              "window_x": 794,
+              "window_y": 399,
+              "bbox_window": [
+                739,
+                228,
+                866,
+                556
+              ],
+              "area_px": 116960,
+              "area_window": 30356.0,
+              "index": 0
+            },
+            {
+              "window_x": 935,
+              "window_y": 574,
+              "bbox_window": [
+                813,
+                500,
+                1034,
+                670
+              ],
+              "area_px": 98337,
+              "area_window": 25522.6,
+              "index": 1
+            }
+          ],
+          "region_count": 2,
+          "segmentation": "eroded",
+          "raw_region_count": 1,
+          "eroded_region_count": 2,
+          "crop_window": [
+            250,
+            120,
+            1160,
+            700
+          ]
+        }
+      },
+      {
+        "event": "click_red_mission",
+        "target": {
+          "window_x": 794,
+          "window_y": 399,
+          "bbox_window": [
+            739,
+            228,
+            866,
+            556
+          ],
+          "area_px": 116960,
+          "area_window": 30356.0,
+          "index": 0
+        },
+        "result": {
+          "status": "OK",
+          "x": 794,
+          "y": 399,
+          "description": "Red mission",
+          "backend": "pyautogui",
+          "hold_seconds": 0.25,
+          "window_x": 794,
+          "window_y": 399,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          }
+        }
+      },
+      {
+        "event": "click_preview_board",
+        "result": {
+          "status": "OK",
+          "x": 1450,
+          "y": 790,
+          "description": "Large mission preview board / Start Mission text (Windows calibrated)",
+          "backend": "pyautogui",
+          "hold_seconds": 0.3,
+          "window_x": 1450,
+          "window_y": 790,
+          "window_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1441
+          },
+          "control": "mission_preview_board"
+        }
+      },
+      {
+        "event": "deployment_ready_capture",
+        "capture": {
+          "label": "deployment_ready_t0p5",
+          "elapsed": null,
+          "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\deployment_ready_t0p5.png",
+          "visible_ui": "island_map",
+          "recommended_control": null,
+          "confidence": 0.1793,
+          "bridge": {
+            "status": "OK",
+            "phase": "unknown",
+            "turn": 0,
+            "deployment_zone_count": 10,
+            "mech_count": 0,
+            "active_mechs": 0,
+            "mission_id": "Mission_Survive"
+          },
+          "note": null
+        }
+      }
+    ]
+  },
+  "timing": {
+    "status": "TIMEOUT",
+    "deploy_result": {
+      "status": "WARN",
+      "reason": "bridge_deploy_timed_out_used_ui_fallback",
+      "deployments": [
+        {
+          "uid": 0,
+          "mech_type": "ElectricMech",
+          "bridge": [
+            2,
+            3
+          ],
+          "visual": "E6",
+          "hazard": null,
+          "hazard_warning": false,
+          "ack": "UI_FALLBACK_AFTER_TIMEOUT: Bridge ACK timeout after 2s",
+          "timeout_recovered": false,
+          "ui_fallback": true,
+          "verified": null,
+          "actual_bridge": null,
+          "click_step": {
+            "uid": 0,
+            "mech_type": "ElectricMech",
+            "bridge": [
+              2,
+              3
+            ],
+            "visual": "E6",
+            "slot_control": "deploy_slot_0",
+            "tile_screen": [
+              912,
+              892
+            ],
+            "tile_window": [
+              912,
+              892
+            ],
+            "select_result": {
+              "status": "OK",
+              "x": 102,
+              "y": 250,
+              "description": "Deployment mech slot 0",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12,
+              "window_x": 102,
+              "window_y": 250,
+              "window_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 2560,
+                "height": 1441
+              },
+              "control": "deploy_slot_0"
+            },
+            "tile_result": {
+              "status": "OK",
+              "x": 912,
+              "y": 892,
+              "description": "Deploy ElectricMech to E6",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12
+            }
+          }
+        },
+        {
+          "uid": 1,
+          "mech_type": "WallMech",
+          "bridge": [
+            3,
+            4
+          ],
+          "visual": "D5",
+          "hazard": null,
+          "hazard_warning": false,
+          "ack": "UI_FALLBACK_AFTER_TIMEOUT: Bridge ACK timeout after 2s",
+          "timeout_recovered": false,
+          "ui_fallback": true,
+          "verified": null,
+          "actual_bridge": null,
+          "click_step": {
+            "uid": 1,
+            "mech_type": "WallMech",
+            "bridge": [
+              3,
+              4
+            ],
+            "visual": "D5",
+            "slot_control": "deploy_slot_1",
+            "tile_screen": [
+              875,
+              800
+            ],
+            "tile_window": [
+              875,
+              800
+            ],
+            "select_result": {
+              "status": "OK",
+              "x": 102,
+              "y": 388,
+              "description": "Deployment mech slot 1",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12,
+              "window_x": 102,
+              "window_y": 388,
+              "window_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 2560,
+                "height": 1441
+              },
+              "control": "deploy_slot_1"
+            },
+            "tile_result": {
+              "status": "OK",
+              "x": 875,
+              "y": 800,
+              "description": "Deploy WallMech to D5",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12
+            }
+          }
+        },
+        {
+          "uid": 2,
+          "mech_type": "RockartMech",
+          "bridge": [
+            1,
+            1
+          ],
+          "visual": "G7",
+          "hazard": null,
+          "hazard_warning": false,
+          "ack": "UI_FALLBACK_AFTER_TIMEOUT: Bridge ACK timeout after 2s",
+          "timeout_recovered": false,
+          "ui_fallback": true,
+          "verified": null,
+          "actual_bridge": null,
+          "click_step": {
+            "uid": 2,
+            "mech_type": "RockartMech",
+            "bridge": [
+              1,
+              1
+            ],
+            "visual": "G7",
+            "slot_control": "deploy_slot_2",
+            "tile_screen": [
+              891,
+              1006
+            ],
+            "tile_window": [
+              891,
+              1006
+            ],
+            "select_result": {
+              "status": "OK",
+              "x": 102,
+              "y": 520,
+              "description": "Deployment mech slot 2",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12,
+              "window_x": 102,
+              "window_y": 520,
+              "window_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 2560,
+                "height": 1441
+              },
+              "control": "deploy_slot_2"
+            },
+            "tile_result": {
+              "status": "OK",
+              "x": 891,
+              "y": 1006,
+              "description": "Deploy RockartMech to G7",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12
+            }
+          }
+        }
+      ],
+      "existing_deployments": {},
+      "ui_fallback": {
+        "status": "OK",
+        "reason": "bridge_deploy_timeout_uid_0",
+        "steps": [
+          {
+            "uid": 0,
+            "mech_type": "ElectricMech",
+            "bridge": [
+              2,
+              3
+            ],
+            "visual": "E6",
+            "slot_control": "deploy_slot_0",
+            "tile_screen": [
+              912,
+              892
+            ],
+            "tile_window": [
+              912,
+              892
+            ],
+            "select_result": {
+              "status": "OK",
+              "x": 102,
+              "y": 250,
+              "description": "Deployment mech slot 0",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12,
+              "window_x": 102,
+              "window_y": 250,
+              "window_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 2560,
+                "height": 1441
+              },
+              "control": "deploy_slot_0"
+            },
+            "tile_result": {
+              "status": "OK",
+              "x": 912,
+              "y": 892,
+              "description": "Deploy ElectricMech to E6",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12
+            }
+          },
+          {
+            "uid": 1,
+            "mech_type": "WallMech",
+            "bridge": [
+              3,
+              4
+            ],
+            "visual": "D5",
+            "slot_control": "deploy_slot_1",
+            "tile_screen": [
+              875,
+              800
+            ],
+            "tile_window": [
+              875,
+              800
+            ],
+            "select_result": {
+              "status": "OK",
+              "x": 102,
+              "y": 388,
+              "description": "Deployment mech slot 1",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12,
+              "window_x": 102,
+              "window_y": 388,
+              "window_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 2560,
+                "height": 1441
+              },
+              "control": "deploy_slot_1"
+            },
+            "tile_result": {
+              "status": "OK",
+              "x": 875,
+              "y": 800,
+              "description": "Deploy WallMech to D5",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12
+            }
+          },
+          {
+            "uid": 2,
+            "mech_type": "RockartMech",
+            "bridge": [
+              1,
+              1
+            ],
+            "visual": "G7",
+            "slot_control": "deploy_slot_2",
+            "tile_screen": [
+              891,
+              1006
+            ],
+            "tile_window": [
+              891,
+              1006
+            ],
+            "select_result": {
+              "status": "OK",
+              "x": 102,
+              "y": 520,
+              "description": "Deployment mech slot 2",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12,
+              "window_x": 102,
+              "window_y": 520,
+              "window_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 2560,
+                "height": 1441
+              },
+              "control": "deploy_slot_2"
+            },
+            "tile_result": {
+              "status": "OK",
+              "x": 891,
+              "y": 1006,
+              "description": "Deploy RockartMech to G7",
+              "backend": "pyautogui",
+              "hold_seconds": 0.12
+            }
+          }
+        ]
+      },
+      "stale_bridge_cleanup": {
+        "status": "OK",
+        "reason": "deploy_timeout_ui_fallback",
+        "cleared": [
+          "cmd"
+        ],
+        "errors": []
+      },
+      "bridge_alive_after_timeout": false,
+      "next_step": "click the visible CONFIRM button, then run `auto_turn --time-limit 10`",
+      "phase": "unknown"
+    },
+    "deploy_stdout": "\n=== DEPLOY_RECOMMENDED (10 tiles available) ===\n  NOTE: bridge did not list unplaced mechs; using recovered/stable UIDs\n  Deploying ElectricMech (uid=0) to E6 (2,3)\n\n--- Result ---\n{\n  \"status\": \"WARN\",\n  \"reason\": \"bridge_deploy_timed_out_used_ui_fallback\",\n  \"deployments\": [\n    {\n      \"uid\": 0,\n      \"mech_type\": \"ElectricMech\",\n      \"bridge\": [\n        2,\n        3\n      ],\n      \"visual\": \"E6\",\n      \"hazard\": null,\n      \"hazard_warning\": false,\n      \"ack\": \"UI_FALLBACK_AFTER_TIMEOUT: Bridge ACK timeout after 2s\",\n      \"timeout_recovered\": false,\n      \"ui_fallback\": true,\n      \"verified\": null,\n      \"actual_bridge\": null,\n      \"click_step\": {\n        \"uid\": 0,\n        \"mech_type\": \"ElectricMech\",\n        \"bridge\": [\n          2,\n          3\n        ],\n        \"visual\": \"E6\",\n        \"slot_control\": \"deploy_slot_0\",\n        \"tile_screen\": [\n          912,\n          892\n        ],\n        \"tile_window\": [\n          912,\n          892\n        ],\n        \"select_result\": {\n          \"status\": \"OK\",\n          \"x\": 102,\n          \"y\": 250,\n          \"description\": \"Deployment mech slot 0\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12,\n          \"window_x\": 102,\n          \"window_y\": 250,\n          \"window_bounds\": {\n            \"x\": 0,\n            \"y\": 0,\n            \"width\": 2560,\n            \"height\": 1441\n          },\n          \"control\": \"deploy_slot_0\"\n        },\n        \"tile_result\": {\n          \"status\": \"OK\",\n          \"x\": 912,\n          \"y\": 892,\n          \"description\": \"Deploy ElectricMech to E6\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12\n        }\n      }\n    },\n    {\n      \"uid\": 1,\n      \"mech_type\": \"WallMech\",\n      \"bridge\": [\n        3,\n        4\n      ],\n      \"visual\": \"D5\",\n      \"hazard\": null,\n      \"hazard_warning\": false,\n      \"ack\": \"UI_FALLBACK_AFTER_TIMEOUT: Bridge ACK timeout after 2s\",\n      \"timeout_recovered\": false,\n      \"ui_fallback\": true,\n      \"verified\": null,\n      \"actual_bridge\": null,\n      \"click_step\": {\n        \"uid\": 1,\n        \"mech_type\": \"WallMech\",\n        \"bridge\": [\n          3,\n          4\n        ],\n        \"visual\": \"D5\",\n        \"slot_control\": \"deploy_slot_1\",\n        \"tile_screen\": [\n          875,\n          800\n        ],\n        \"tile_window\": [\n          875,\n          800\n        ],\n        \"select_result\": {\n          \"status\": \"OK\",\n          \"x\": 102,\n          \"y\": 388,\n          \"description\": \"Deployment mech slot 1\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12,\n          \"window_x\": 102,\n          \"window_y\": 388,\n          \"window_bounds\": {\n            \"x\": 0,\n            \"y\": 0,\n            \"width\": 2560,\n            \"height\": 1441\n          },\n          \"control\": \"deploy_slot_1\"\n        },\n        \"tile_result\": {\n          \"status\": \"OK\",\n          \"x\": 875,\n          \"y\": 800,\n          \"description\": \"Deploy WallMech to D5\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12\n        }\n      }\n    },\n    {\n      \"uid\": 2,\n      \"mech_type\": \"RockartMech\",\n      \"bridge\": [\n        1,\n        1\n      ],\n      \"visual\": \"G7\",\n      \"hazard\": null,\n      \"hazard_warning\": false,\n      \"ack\": \"UI_FALLBACK_AFTER_TIMEOUT: Bridge ACK timeout after 2s\",\n      \"timeout_recovered\": false,\n      \"ui_fallback\": true,\n      \"verified\": null,\n      \"actual_bridge\": null,\n      \"click_step\": {\n        \"uid\": 2,\n        \"mech_type\": \"RockartMech\",\n        \"bridge\": [\n          1,\n          1\n        ],\n        \"visual\": \"G7\",\n        \"slot_control\": \"deploy_slot_2\",\n        \"tile_screen\": [\n          891,\n          1006\n        ],\n        \"tile_window\": [\n          891,\n          1006\n        ],\n        \"select_result\": {\n          \"status\": \"OK\",\n          \"x\": 102,\n          \"y\": 520,\n          \"description\": \"Deployment mech slot 2\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12,\n          \"window_x\": 102,\n          \"window_y\": 520,\n          \"window_bounds\": {\n            \"x\": 0,\n            \"y\": 0,\n            \"width\": 2560,\n            \"height\": 1441\n          },\n          \"control\": \"deploy_slot_2\"\n        },\n        \"tile_result\": {\n          \"status\": \"OK\",\n          \"x\": 891,\n          \"y\": 1006,\n          \"description\": \"Deploy RockartMech to G7\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12\n        }\n      }\n    }\n  ],\n  \"existing_deployments\": {},\n  \"ui_fallback\": {\n    \"status\": \"OK\",\n    \"reason\": \"bridge_deploy_timeout_uid_0\",\n    \"steps\": [\n      {\n        \"uid\": 0,\n        \"mech_type\": \"ElectricMech\",\n        \"bridge\": [\n          2,\n          3\n        ],\n        \"visual\": \"E6\",\n        \"slot_control\": \"deploy_slot_0\",\n        \"tile_screen\": [\n          912,\n          892\n        ],\n        \"tile_window\": [\n          912,\n          892\n        ],\n        \"select_result\": {\n          \"status\": \"OK\",\n          \"x\": 102,\n          \"y\": 250,\n          \"description\": \"Deployment mech slot 0\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12,\n          \"window_x\": 102,\n          \"window_y\": 250,\n          \"window_bounds\": {\n            \"x\": 0,\n            \"y\": 0,\n            \"width\": 2560,\n            \"height\": 1441\n          },\n          \"control\": \"deploy_slot_0\"\n        },\n        \"tile_result\": {\n          \"status\": \"OK\",\n          \"x\": 912,\n          \"y\": 892,\n          \"description\": \"Deploy ElectricMech to E6\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12\n        }\n      },\n      {\n        \"uid\": 1,\n        \"mech_type\": \"WallMech\",\n        \"bridge\": [\n          3,\n          4\n        ],\n        \"visual\": \"D5\",\n        \"slot_control\": \"deploy_slot_1\",\n        \"tile_screen\": [\n          875,\n          800\n        ],\n        \"tile_window\": [\n          875,\n          800\n        ],\n        \"select_result\": {\n          \"status\": \"OK\",\n          \"x\": 102,\n          \"y\": 388,\n          \"description\": \"Deployment mech slot 1\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12,\n          \"window_x\": 102,\n          \"window_y\": 388,\n          \"window_bounds\": {\n            \"x\": 0,\n            \"y\": 0,\n            \"width\": 2560,\n            \"height\": 1441\n          },\n          \"control\": \"deploy_slot_1\"\n        },\n        \"tile_result\": {\n          \"status\": \"OK\",\n          \"x\": 875,\n          \"y\": 800,\n          \"description\": \"Deploy WallMech to D5\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12\n        }\n      },\n      {\n        \"uid\": 2,\n        \"mech_type\": \"RockartMech\",\n        \"bridge\": [\n          1,\n          1\n        ],\n        \"visual\": \"G7\",\n        \"slot_control\": \"deploy_slot_2\",\n        \"tile_screen\": [\n          891,\n          1006\n        ],\n        \"tile_window\": [\n          891,\n          1006\n        ],\n        \"select_result\": {\n          \"status\": \"OK\",\n          \"x\": 102,\n          \"y\": 520,\n          \"description\": \"Deployment mech slot 2\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12,\n          \"window_x\": 102,\n          \"window_y\": 520,\n          \"window_bounds\": {\n            \"x\": 0,\n            \"y\": 0,\n            \"width\": 2560,\n            \"height\": 1441\n          },\n          \"control\": \"deploy_slot_2\"\n        },\n        \"tile_result\": {\n          \"status\": \"OK\",\n          \"x\": 891,\n          \"y\": 1006,\n          \"description\": \"Deploy RockartMech to G7\",\n          \"backend\": \"pyautogui\",\n          \"hold_seconds\": 0.12\n        }\n      }\n    ]\n  },\n  \"stale_bridge_cleanup\": {\n    \"status\": \"OK\",\n    \"reason\": \"deploy_timeout_ui_fallback\",\n    \"cleared\": [\n      \"cmd\"\n    ],\n    \"errors\": []\n  },\n  \"bridge_alive_after_timeout\": false,\n  \"next_step\": \"click the visible CONFIRM button, then run `auto_turn --time-limit 10`\",\n  \"phase\": \"unknown\"\n}\n",
+    "deploy_elapsed": 10.638,
+    "confirm_start_elapsed": 31.327,
+    "confirm_click_result": {
+      "status": "OK",
+      "x": 240,
+      "y": 235,
+      "description": "Deployment Confirm (Windows calibrated)",
+      "backend": "pyautogui",
+      "hold_seconds": 0.3,
+      "window_x": 240,
+      "window_y": 235,
+      "window_bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 2560,
+        "height": 1441
+      },
+      "control": "deploy_confirm"
+    },
+    "confirm_elapsed": 32.013,
+    "player_turn_elapsed": null,
+    "player_turn_frame": null,
+    "frames": [
+      {
+        "label": "frame_000_t0p000_before_deploy",
+        "elapsed": 3.229,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\frame_000_t0p000_before_deploy.png",
+        "visible_ui": "island_map",
+        "recommended_control": null,
+        "confidence": 0.1793,
+        "bridge": {
+          "status": "OK",
+          "phase": "unknown",
+          "turn": 0,
+          "deployment_zone_count": 10,
+          "mech_count": 0,
+          "active_mechs": 0,
+          "mission_id": "Mission_Survive"
+        },
+        "note": "before deploy_recommended"
+      },
+      {
+        "label": "frame_001_t18p967_after_deploy",
+        "elapsed": 26.216,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\frame_001_t18p967_after_deploy.png",
+        "visible_ui": "island_map",
+        "recommended_control": null,
+        "confidence": 0.1793,
+        "bridge": {
+          "status": "OK",
+          "phase": "unknown",
+          "turn": 0,
+          "deployment_zone_count": 10,
+          "mech_count": 0,
+          "active_mechs": 0,
+          "mission_id": "Mission_Survive"
+        },
+        "note": "after deploy_recommended elapsed=10.638"
+      },
+      {
+        "label": "frame_002_t32p013_after_confirm_click",
+        "elapsed": 36.833,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\frame_002_t32p013_after_confirm_click.png",
+        "visible_ui": "island_map",
+        "recommended_control": null,
+        "confidence": 0.1793,
+        "bridge": {
+          "status": "OK",
+          "phase": "unknown",
+          "turn": 0,
+          "deployment_zone_count": 10,
+          "mech_count": 0,
+          "active_mechs": 0,
+          "mission_id": "Mission_Survive"
+        },
+        "note": "after deploy_confirm click"
+      },
+      {
+        "label": "frame_003_t42p450_post_confirm",
+        "elapsed": 46.679,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\frame_003_t42p450_post_confirm.png",
+        "visible_ui": "island_map",
+        "recommended_control": null,
+        "confidence": 0.1793,
+        "bridge": {
+          "status": "OK",
+          "phase": "unknown",
+          "turn": 0,
+          "deployment_zone_count": 10,
+          "mech_count": 0,
+          "active_mechs": 0,
+          "mission_id": "Mission_Survive"
+        },
+        "note": "post-confirm cadence"
+      },
+      {
+        "label": "frame_004_t51p781_post_confirm",
+        "elapsed": 55.802,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\frame_004_t51p781_post_confirm.png",
+        "visible_ui": "island_map",
+        "recommended_control": null,
+        "confidence": 0.1793,
+        "bridge": {
+          "status": "OK",
+          "phase": "unknown",
+          "turn": 0,
+          "deployment_zone_count": 10,
+          "mech_count": 0,
+          "active_mechs": 0,
+          "mission_id": "Mission_Survive"
+        },
+        "note": "post-confirm cadence"
+      }
+    ]
+  },
+  "status": "TIMEOUT",
+  "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_8loop_20260609_retry\\trial_07\\contact_sheet.png"
+}

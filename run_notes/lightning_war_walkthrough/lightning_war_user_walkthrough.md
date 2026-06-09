@@ -673,3 +673,78 @@ Automation note:
 - A clean full-start repeat should make the overwrite-modal gate explicit:
   title `New Game` -> if `Start New Game` appears, click `Yes` -> verify setup
   -> continue the learned timing sequence.
+
+## Timing Probe - Deploy, Confirm, Enemy Turn
+
+Primary artifacts directory:
+[deploy_confirm_enemy_timing_visual_8loop_25s_20260609](deploy_confirm_enemy_timing_visual_8loop_25s_20260609/)
+
+Earlier diagnostic artifacts:
+
+- [deploy_confirm_enemy_timing_8loop_20260609](deploy_confirm_enemy_timing_8loop_20260609/)
+- [deploy_confirm_enemy_timing_8loop_20260609_retry](deploy_confirm_enemy_timing_8loop_20260609_retry/)
+- [deploy_confirm_enemy_timing_visual_8loop_20260609](deploy_confirm_enemy_timing_visual_8loop_20260609/)
+
+User instruction:
+
+- From the main menu, run the learned Lightning War startup path.
+- Once deployment is visible, measure how quickly the existing deployment code
+  can place mechs, click `Confirm`, and wait through the enemy's opening turn.
+- Capture screenshots every t=`0.5` during the deployment/confirm/enemy-turn
+  window.
+- Run the probe eight times because enemy turn length varies.
+
+Diagnostic lessons before the final 8-loop batch:
+
+- Do not poll the bridge inside a t=`0.5` screenshot cadence loop. Bridge reads
+  can block long enough to destroy the cadence.
+- Do not use the built-in red region extractor for this specific first-island
+  screen. It clicked the red territory mass instead of the actionable mission
+  target in the diagnostic run.
+- Use the relaxed fresh-red detector from the notes:
+  ROI x=`520..2320`, y=`240..1320`;
+  `r >= 55`, `r >= g*1.35`, `r >= b*1.25`,
+  `(r-g) >= 18`, `(r-b) >= 12`;
+  OpenCV connected components with area `>=3000` and width/height `>=60`;
+  click the largest component centroid.
+- The unconditional post-`New Game` `Yes` gate was harmless in these screenshots
+  when the overwrite modal was not present, and clears the modal when it is
+  present. Prefer a true modal detector later, but this gate worked for the
+  timing batch.
+
+Final 8-loop timing batch:
+
+| Trial | deploy_recommended elapsed | Confirm clicked at | First visible `PLAYER TURN` | Enemy span after Confirm |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 1.788s | 2.792s | 10.581s | 7.789s |
+| 2 | 1.562s | 2.538s | 11.967s | 9.429s |
+| 3 | 1.547s | 2.553s | 16.326s | 13.773s |
+| 4 | 1.660s | 2.602s | 10.401s | 7.799s |
+| 5 | 1.557s | 2.505s | 16.254s | 13.749s |
+| 6 | 1.757s | 2.752s | 10.597s | 7.845s |
+| 7 | 1.760s | 2.716s | 11.533s | 8.817s |
+| 8 | 1.800s | 2.756s | 17.028s | 14.272s |
+
+Observed result:
+
+- `deploy_recommended` successfully placed all three mechs in every final
+  trial.
+- Placement duration range: `1.547s..1.800s`.
+- Confirm click time from deployment-ready timing start:
+  `2.505s..2.792s`.
+- Slowest observed enemy opening turn:
+  `14.272s` after the Confirm click, in Trial 8.
+- Slowest observed total deployment-ready-to-player-turn time:
+  `17.028s`, also in Trial 8.
+
+Automation note:
+
+- From the deployment-ready screen, existing code can place mechs and click
+  Confirm in under `3.0s` in these samples.
+- After Confirm, do not assume the first player turn is ready before `15s`.
+- Conservative rule for the current loop: wait/check at about `16s` after
+  Confirm before beginning turn-1 combat automation.
+- Equivalent deployment-start guard: wait/check at about `18s` after entering
+  the deployment timing step.
+- Keep taking screenshots or visible-state checks during development; enemy
+  turn animations and mission opening dialogue can vary by map.

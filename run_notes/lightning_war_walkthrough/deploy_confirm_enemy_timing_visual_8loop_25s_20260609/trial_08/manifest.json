@@ -1,0 +1,822 @@
+{
+  "trial": 8,
+  "events": [
+    {
+      "event": "click_title_new_game",
+      "result": {
+        "status": "OK",
+        "x": 172,
+        "y": 360,
+        "description": "Title screen New Game (dynamic screenshot target)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 172,
+        "window_y": 360,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "title_new_game",
+        "dynamic_target": {
+          "status": "OK",
+          "row_index": 1,
+          "image_x": 172,
+          "image_y": 360,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "target_row": {
+            "image_x": 172.0,
+            "image_y": 359.5,
+            "min_x": 0,
+            "max_x": 344,
+            "min_y": 349,
+            "max_y": 370,
+            "width": 345,
+            "height": 22,
+            "dark": 6070,
+            "bright": 1520
+          },
+          "candidate_rows": [
+            {
+              "image_x": 172.0,
+              "image_y": 307.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 297,
+              "max_y": 318,
+              "width": 345,
+              "height": 22,
+              "dark": 6358,
+              "bright": 1232
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 359.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 349,
+              "max_y": 370,
+              "width": 345,
+              "height": 22,
+              "dark": 6070,
+              "bright": 1520
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 411.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 401,
+              "max_y": 422,
+              "width": 345,
+              "height": 22,
+              "dark": 6458,
+              "bright": 1132
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 463.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 453,
+              "max_y": 474,
+              "width": 345,
+              "height": 22,
+              "dark": 6486,
+              "bright": 1104
+            },
+            {
+              "image_x": 166.0,
+              "image_y": 515.5,
+              "min_x": 0,
+              "max_x": 332,
+              "min_y": 505,
+              "max_y": 526,
+              "width": 333,
+              "height": 22,
+              "dark": 6738,
+              "bright": 588
+            }
+          ]
+        },
+        "coordinate_scale": {
+          "x": 1.0,
+          "y": 1.0
+        }
+      }
+    },
+    {
+      "event": "post_new_game",
+      "capture": {
+        "label": "post_new_game",
+        "elapsed": null,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\post_new_game.png"
+      }
+    },
+    {
+      "event": "click_yes_gate",
+      "result": {
+        "status": "OK",
+        "x": 1208,
+        "y": 795,
+        "description": "Abandon Timeline confirmation Yes (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1208,
+        "window_y": 795,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "abandon_confirm_yes"
+      }
+    },
+    {
+      "event": "setup_after_yes_gate",
+      "capture": {
+        "label": "setup_after_yes_gate",
+        "elapsed": null,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\setup_after_yes_gate.png"
+      }
+    },
+    {
+      "event": "click_setup_start",
+      "result": {
+        "status": "OK",
+        "x": 1712,
+        "y": 477,
+        "description": "New-run setup Start (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1712,
+        "window_y": 477,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "setup_start"
+      }
+    },
+    {
+      "event": "click_easy",
+      "result": {
+        "status": "OK",
+        "x": 1650,
+        "y": 619,
+        "description": "Easy difficulty",
+        "backend": "pyautogui",
+        "hold_seconds": 0.18,
+        "window_x": 1650,
+        "window_y": 619,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "event": "click_setup_modal_start",
+      "result": {
+        "status": "OK",
+        "x": 1704,
+        "y": 974,
+        "description": "Difficulty setup modal Start (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1704,
+        "window_y": 974,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "setup_modal_start"
+      }
+    },
+    {
+      "event": "click_archive",
+      "elapsed": 7.001,
+      "result": {
+        "status": "OK",
+        "x": 600,
+        "y": 430,
+        "description": "Island select Archive (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 600,
+        "window_y": 430,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "island_archive"
+      }
+    },
+    {
+      "event": "click_continue",
+      "elapsed": 9.501,
+      "result": {
+        "status": "OK",
+        "x": 1633,
+        "y": 1009,
+        "description": "Bottom-right Continue panel (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1633,
+        "window_y": 1009,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "bottom_continue"
+      }
+    },
+    {
+      "event": "red_detection_relaxed",
+      "result": {
+        "status": "OK",
+        "regions": [
+          {
+            "area": 137358,
+            "bbox": [
+              847,
+              845,
+              1471,
+              1129
+            ],
+            "window_x": 1150,
+            "window_y": 963,
+            "w": 624,
+            "h": 284
+          },
+          {
+            "area": 103801,
+            "bbox": [
+              831,
+              521,
+              1235,
+              841
+            ],
+            "window_x": 1062,
+            "window_y": 694,
+            "w": 404,
+            "h": 320
+          }
+        ],
+        "annotation": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\fresh_red_detection_frame_relaxed_annotation.png"
+      }
+    },
+    {
+      "event": "click_red_mission",
+      "target": {
+        "area": 137358,
+        "bbox": [
+          847,
+          845,
+          1471,
+          1129
+        ],
+        "window_x": 1150,
+        "window_y": 963,
+        "w": 624,
+        "h": 284
+      },
+      "result": {
+        "status": "OK",
+        "x": 1150,
+        "y": 963,
+        "description": "Red mission relaxed",
+        "backend": "pyautogui",
+        "hold_seconds": 0.25,
+        "window_x": 1150,
+        "window_y": 963,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "event": "preview_after_red",
+      "capture": {
+        "label": "preview_after_red",
+        "elapsed": null,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\preview_after_red.png"
+      }
+    },
+    {
+      "event": "click_preview_board",
+      "result": {
+        "status": "OK",
+        "x": 1450,
+        "y": 790,
+        "description": "Large mission preview board / Start Mission text (Windows calibrated)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1450,
+        "window_y": 790,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "mission_preview_board"
+      }
+    },
+    {
+      "event": "deployment_ready",
+      "capture": {
+        "label": "deployment_ready_t0p5",
+        "elapsed": null,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\deployment_ready_t0p5.png"
+      }
+    }
+  ],
+  "restart": {
+    "status": "OK",
+    "frames": [
+      {
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\title_wait_00.png",
+        "target": {
+          "status": "NOT_FOUND",
+          "reason": "not_enough_title_menu_rows",
+          "row_index": 1,
+          "candidate_count": 0,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "runs": []
+        }
+      },
+      {
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\title_wait_01.png",
+        "target": {
+          "status": "OK",
+          "row_index": 1,
+          "image_x": 170,
+          "image_y": 360,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "target_row": {
+            "image_x": 170.5,
+            "image_y": 359.5,
+            "min_x": 0,
+            "max_x": 341,
+            "min_y": 349,
+            "max_y": 370,
+            "width": 342,
+            "height": 22,
+            "dark": 6004,
+            "bright": 1520
+          },
+          "candidate_rows": [
+            {
+              "image_x": 172.0,
+              "image_y": 307.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 297,
+              "max_y": 318,
+              "width": 345,
+              "height": 22,
+              "dark": 6358,
+              "bright": 1232
+            },
+            {
+              "image_x": 170.5,
+              "image_y": 359.5,
+              "min_x": 0,
+              "max_x": 341,
+              "min_y": 349,
+              "max_y": 370,
+              "width": 342,
+              "height": 22,
+              "dark": 6004,
+              "bright": 1520
+            },
+            {
+              "image_x": 163.0,
+              "image_y": 411.5,
+              "min_x": 0,
+              "max_x": 326,
+              "min_y": 401,
+              "max_y": 422,
+              "width": 327,
+              "height": 22,
+              "dark": 6062,
+              "bright": 1132
+            },
+            {
+              "image_x": 131.5,
+              "image_y": 463.5,
+              "min_x": 0,
+              "max_x": 263,
+              "min_y": 453,
+              "max_y": 474,
+              "width": 264,
+              "height": 22,
+              "dark": 4704,
+              "bright": 1104
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "startup": {
+    "status": "OK"
+  },
+  "timing": {
+    "deploy_elapsed": 1.8,
+    "deploy_result": {
+      "status": "OK",
+      "deployments": [
+        {
+          "uid": 0,
+          "mech_type": "ElectricMech",
+          "bridge": [
+            3,
+            5
+          ],
+          "visual": "C5",
+          "hazard": null,
+          "hazard_warning": false,
+          "ack": "OK DEPLOY 0 at 3,5",
+          "timeout_recovered": false,
+          "actual_bridge": [
+            3,
+            5
+          ],
+          "verified": true
+        },
+        {
+          "uid": 1,
+          "mech_type": "WallMech",
+          "bridge": [
+            2,
+            3
+          ],
+          "visual": "E6",
+          "hazard": null,
+          "hazard_warning": false,
+          "ack": "OK DEPLOY 1 at 2,3",
+          "timeout_recovered": false,
+          "actual_bridge": [
+            2,
+            3
+          ],
+          "verified": true
+        },
+        {
+          "uid": 2,
+          "mech_type": "RockartMech",
+          "bridge": [
+            1,
+            5
+          ],
+          "visual": "C7",
+          "hazard": null,
+          "hazard_warning": false,
+          "ack": "OK DEPLOY 2 at 1,5",
+          "timeout_recovered": false,
+          "actual_bridge": [
+            1,
+            5
+          ],
+          "verified": true
+        }
+      ],
+      "existing_deployments": {},
+      "next_step": "click the visible CONFIRM button, then run `auto_turn --time-limit 10`",
+      "phase": "combat_enemy"
+    },
+    "deploy_stdout": "\n=== DEPLOY_RECOMMENDED (12 tiles available) ===\n  NOTE: bridge did not list unplaced mechs; using recovered/stable UIDs\n  Deploying ElectricMech (uid=0) to C5 (3,5)\n    ACK: OK DEPLOY 0 at 3,5\n  Deploying WallMech (uid=1) to E6 (2,3)\n    ACK: OK DEPLOY 1 at 2,3\n  Deploying RockartMech (uid=2) to C7 (1,5)\n    ACK: OK DEPLOY 2 at 1,5\n    VERIFY ElectricMech C5: PASS\n    VERIFY WallMech E6: PASS\n    VERIFY RockartMech C7: PASS\n\n--- Result ---\n{\n  \"status\": \"OK\",\n  \"deployments\": [\n    {\n      \"uid\": 0,\n      \"mech_type\": \"ElectricMech\",\n      \"bridge\": [\n        3,\n        5\n      ],\n      \"visual\": \"C5\",\n      \"hazard\": null,\n      \"hazard_warning\": false,\n      \"ack\": \"OK DEPLOY 0 at 3,5\",\n      \"timeout_recovered\": false,\n      \"actual_bridge\": [\n        3,\n        5\n      ],\n      \"verified\": true\n    },\n    {\n      \"uid\": 1,\n      \"mech_type\": \"WallMech\",\n      \"bridge\": [\n        2,\n        3\n      ],\n      \"visual\": \"E6\",\n      \"hazard\": null,\n      \"hazard_warning\": false,\n      \"ack\": \"OK DEPLOY 1 at 2,3\",\n      \"timeout_recovered\": false,\n      \"actual_bridge\": [\n        2,\n        3\n      ],\n      \"verified\": true\n    },\n    {\n      \"uid\": 2,\n      \"mech_type\": \"RockartMech\",\n      \"bridge\": [\n        1,\n        5\n      ],\n      \"visual\": \"C7\",\n      \"hazard\": null,\n      \"hazard_warning\": false,\n      \"ack\": \"OK DEPLOY 2 at 1,5\",\n      \"timeout_recovered\": false,\n      \"actual_bridge\": [\n        1,\n        5\n      ],\n      \"verified\": true\n    }\n  ],\n  \"existing_deployments\": {},\n  \"next_step\": \"click the visible CONFIRM button, then run `auto_turn --time-limit 10`\",\n  \"phase\": \"combat_enemy\"\n}\n",
+    "confirm_start_elapsed": 2.076,
+    "confirm_elapsed": 2.756,
+    "confirm_result": {
+      "status": "OK",
+      "x": 240,
+      "y": 235,
+      "description": "Deployment Confirm (Windows calibrated)",
+      "backend": "pyautogui",
+      "hold_seconds": 0.3,
+      "window_x": 240,
+      "window_y": 235,
+      "window_bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 2560,
+        "height": 1441
+      },
+      "control": "deploy_confirm"
+    },
+    "frames": [
+      {
+        "label": "frame_000_t0p000_before_deploy",
+        "elapsed": 0.141,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_000_t0p000_before_deploy.png"
+      },
+      {
+        "label": "frame_001_t1p941_after_deploy",
+        "elapsed": 2.076,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_001_t1p941_after_deploy.png"
+      },
+      {
+        "label": "frame_002_t2p756_after_confirm",
+        "elapsed": 2.882,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_002_t2p756_after_confirm.png"
+      },
+      {
+        "label": "frame_003_t3p382_post_confirm",
+        "elapsed": 3.524,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_003_t3p382_post_confirm.png"
+      },
+      {
+        "label": "frame_004_t3p882_post_confirm",
+        "elapsed": 4.014,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_004_t3p882_post_confirm.png"
+      },
+      {
+        "label": "frame_005_t4p382_post_confirm",
+        "elapsed": 4.534,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_005_t4p382_post_confirm.png"
+      },
+      {
+        "label": "frame_006_t4p882_post_confirm",
+        "elapsed": 5.015,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_006_t4p882_post_confirm.png"
+      },
+      {
+        "label": "frame_007_t5p383_post_confirm",
+        "elapsed": 5.538,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_007_t5p383_post_confirm.png"
+      },
+      {
+        "label": "frame_008_t5p883_post_confirm",
+        "elapsed": 6.018,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_008_t5p883_post_confirm.png"
+      },
+      {
+        "label": "frame_009_t6p382_post_confirm",
+        "elapsed": 6.555,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_009_t6p382_post_confirm.png"
+      },
+      {
+        "label": "frame_010_t6p882_post_confirm",
+        "elapsed": 7.041,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_010_t6p882_post_confirm.png"
+      },
+      {
+        "label": "frame_011_t7p382_post_confirm",
+        "elapsed": 7.554,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_011_t7p382_post_confirm.png"
+      },
+      {
+        "label": "frame_012_t7p882_post_confirm",
+        "elapsed": 8.036,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_012_t7p882_post_confirm.png"
+      },
+      {
+        "label": "frame_013_t8p382_post_confirm",
+        "elapsed": 8.551,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_013_t8p382_post_confirm.png"
+      },
+      {
+        "label": "frame_014_t8p883_post_confirm",
+        "elapsed": 9.048,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_014_t8p883_post_confirm.png"
+      },
+      {
+        "label": "frame_015_t9p383_post_confirm",
+        "elapsed": 9.551,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_015_t9p383_post_confirm.png"
+      },
+      {
+        "label": "frame_016_t9p883_post_confirm",
+        "elapsed": 10.048,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_016_t9p883_post_confirm.png"
+      },
+      {
+        "label": "frame_017_t10p382_post_confirm",
+        "elapsed": 10.545,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_017_t10p382_post_confirm.png"
+      },
+      {
+        "label": "frame_018_t10p882_post_confirm",
+        "elapsed": 11.044,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_018_t10p882_post_confirm.png"
+      },
+      {
+        "label": "frame_019_t11p383_post_confirm",
+        "elapsed": 11.549,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_019_t11p383_post_confirm.png"
+      },
+      {
+        "label": "frame_020_t11p882_post_confirm",
+        "elapsed": 12.035,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_020_t11p882_post_confirm.png"
+      },
+      {
+        "label": "frame_021_t12p382_post_confirm",
+        "elapsed": 12.532,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_021_t12p382_post_confirm.png"
+      },
+      {
+        "label": "frame_022_t12p882_post_confirm",
+        "elapsed": 13.042,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_022_t12p882_post_confirm.png"
+      },
+      {
+        "label": "frame_023_t13p383_post_confirm",
+        "elapsed": 13.541,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_023_t13p383_post_confirm.png"
+      },
+      {
+        "label": "frame_024_t13p883_post_confirm",
+        "elapsed": 14.058,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_024_t13p883_post_confirm.png"
+      },
+      {
+        "label": "frame_025_t14p382_post_confirm",
+        "elapsed": 14.543,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_025_t14p382_post_confirm.png"
+      },
+      {
+        "label": "frame_026_t14p882_post_confirm",
+        "elapsed": 15.057,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_026_t14p882_post_confirm.png"
+      },
+      {
+        "label": "frame_027_t15p382_post_confirm",
+        "elapsed": 15.517,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_027_t15p382_post_confirm.png"
+      },
+      {
+        "label": "frame_028_t15p882_post_confirm",
+        "elapsed": 16.035,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_028_t15p882_post_confirm.png"
+      },
+      {
+        "label": "frame_029_t16p382_post_confirm",
+        "elapsed": 16.518,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_029_t16p382_post_confirm.png"
+      },
+      {
+        "label": "frame_030_t16p882_post_confirm",
+        "elapsed": 17.028,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_030_t16p882_post_confirm.png"
+      },
+      {
+        "label": "frame_031_t17p383_post_confirm",
+        "elapsed": 17.515,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_031_t17p383_post_confirm.png"
+      },
+      {
+        "label": "frame_032_t17p882_post_confirm",
+        "elapsed": 18.026,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_032_t17p882_post_confirm.png"
+      },
+      {
+        "label": "frame_033_t18p382_post_confirm",
+        "elapsed": 18.518,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_033_t18p382_post_confirm.png"
+      },
+      {
+        "label": "frame_034_t18p883_post_confirm",
+        "elapsed": 19.033,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_034_t18p883_post_confirm.png"
+      },
+      {
+        "label": "frame_035_t19p382_post_confirm",
+        "elapsed": 19.526,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_035_t19p382_post_confirm.png"
+      },
+      {
+        "label": "frame_036_t19p882_post_confirm",
+        "elapsed": 20.022,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_036_t19p882_post_confirm.png"
+      },
+      {
+        "label": "frame_037_t20p383_post_confirm",
+        "elapsed": 20.528,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_037_t20p383_post_confirm.png"
+      },
+      {
+        "label": "frame_038_t20p882_post_confirm",
+        "elapsed": 21.025,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_038_t20p882_post_confirm.png"
+      },
+      {
+        "label": "frame_039_t21p382_post_confirm",
+        "elapsed": 21.539,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_039_t21p382_post_confirm.png"
+      },
+      {
+        "label": "frame_040_t21p882_post_confirm",
+        "elapsed": 22.035,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_040_t21p882_post_confirm.png"
+      },
+      {
+        "label": "frame_041_t22p382_post_confirm",
+        "elapsed": 22.534,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_041_t22p382_post_confirm.png"
+      },
+      {
+        "label": "frame_042_t22p882_post_confirm",
+        "elapsed": 23.017,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_042_t22p882_post_confirm.png"
+      },
+      {
+        "label": "frame_043_t23p383_post_confirm",
+        "elapsed": 23.526,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_043_t23p383_post_confirm.png"
+      },
+      {
+        "label": "frame_044_t23p883_post_confirm",
+        "elapsed": 24.035,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_044_t23p883_post_confirm.png"
+      },
+      {
+        "label": "frame_045_t24p382_post_confirm",
+        "elapsed": 24.523,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_045_t24p382_post_confirm.png"
+      },
+      {
+        "label": "frame_046_t24p882_post_confirm",
+        "elapsed": 25.017,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_046_t24p882_post_confirm.png"
+      },
+      {
+        "label": "frame_047_t25p382_post_confirm",
+        "elapsed": 25.536,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_047_t25p382_post_confirm.png"
+      },
+      {
+        "label": "frame_048_t25p882_post_confirm",
+        "elapsed": 26.025,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_048_t25p882_post_confirm.png"
+      },
+      {
+        "label": "frame_049_t26p382_post_confirm",
+        "elapsed": 26.528,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_049_t26p382_post_confirm.png"
+      },
+      {
+        "label": "frame_050_t26p882_post_confirm",
+        "elapsed": 27.017,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_050_t26p882_post_confirm.png"
+      },
+      {
+        "label": "frame_051_t27p383_post_confirm",
+        "elapsed": 27.531,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_051_t27p383_post_confirm.png"
+      },
+      {
+        "label": "frame_052_t27p882_post_confirm",
+        "elapsed": 28.032,
+        "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\frame_052_t27p882_post_confirm.png"
+      }
+    ]
+  },
+  "status": "OK",
+  "contact_sheet": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\deploy_confirm_enemy_timing_visual_8loop_25s_20260609\\trial_08\\contact_sheet.png"
+}
