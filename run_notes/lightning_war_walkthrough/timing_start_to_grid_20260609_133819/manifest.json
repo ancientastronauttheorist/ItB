@@ -1,0 +1,210 @@
+{
+  "started_wall_time": "2026-06-09T13:38:20.502",
+  "window_bounds": {
+    "x": 0,
+    "y": 0,
+    "width": 2560,
+    "height": 1441
+  },
+  "cadence_seconds": 0.5,
+  "duration_seconds": 15.0,
+  "t0_event": "modal_start_mouse_up",
+  "focus_click": {
+    "window_x": 1650,
+    "window_y": 619,
+    "description": "Easy difficulty focus/ensure"
+  },
+  "start_click": {
+    "window_x": 1704,
+    "window_y": 974,
+    "description": "Difficulty Setup Start"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "elapsed_seconds": 0.0,
+      "capture_seconds": 0.0667,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_000_00.000s.png"
+    },
+    {
+      "index": 1,
+      "elapsed_seconds": 0.501,
+      "capture_seconds": 0.0613,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_001_00.501s.png"
+    },
+    {
+      "index": 2,
+      "elapsed_seconds": 1.0009,
+      "capture_seconds": 0.0662,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_002_01.001s.png"
+    },
+    {
+      "index": 3,
+      "elapsed_seconds": 1.5009,
+      "capture_seconds": 0.0618,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_003_01.501s.png"
+    },
+    {
+      "index": 4,
+      "elapsed_seconds": 2.0009,
+      "capture_seconds": 0.0665,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_004_02.001s.png"
+    },
+    {
+      "index": 5,
+      "elapsed_seconds": 2.5009,
+      "capture_seconds": 0.0592,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_005_02.501s.png"
+    },
+    {
+      "index": 6,
+      "elapsed_seconds": 3.0009,
+      "capture_seconds": 0.0643,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_006_03.001s.png"
+    },
+    {
+      "index": 7,
+      "elapsed_seconds": 3.5009,
+      "capture_seconds": 0.061,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_007_03.501s.png"
+    },
+    {
+      "index": 8,
+      "elapsed_seconds": 4.0009,
+      "capture_seconds": 0.0569,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_008_04.001s.png"
+    },
+    {
+      "index": 9,
+      "elapsed_seconds": 4.5009,
+      "capture_seconds": 0.0576,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_009_04.501s.png"
+    },
+    {
+      "index": 10,
+      "elapsed_seconds": 5.0009,
+      "capture_seconds": 0.0597,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_010_05.001s.png"
+    },
+    {
+      "index": 11,
+      "elapsed_seconds": 5.5009,
+      "capture_seconds": 0.0605,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_011_05.501s.png"
+    },
+    {
+      "index": 12,
+      "elapsed_seconds": 6.0009,
+      "capture_seconds": 0.0601,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_012_06.001s.png"
+    },
+    {
+      "index": 13,
+      "elapsed_seconds": 6.5009,
+      "capture_seconds": 0.0601,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_013_06.501s.png"
+    },
+    {
+      "index": 14,
+      "elapsed_seconds": 7.0009,
+      "capture_seconds": 0.0607,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_014_07.001s.png"
+    },
+    {
+      "index": 15,
+      "elapsed_seconds": 7.5009,
+      "capture_seconds": 0.0624,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_015_07.501s.png"
+    },
+    {
+      "index": 16,
+      "elapsed_seconds": 8.0009,
+      "capture_seconds": 0.0652,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_016_08.001s.png"
+    },
+    {
+      "index": 17,
+      "elapsed_seconds": 8.501,
+      "capture_seconds": 0.0604,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_017_08.501s.png"
+    },
+    {
+      "index": 18,
+      "elapsed_seconds": 9.0009,
+      "capture_seconds": 0.0609,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_018_09.001s.png"
+    },
+    {
+      "index": 19,
+      "elapsed_seconds": 9.501,
+      "capture_seconds": 0.0605,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_019_09.501s.png"
+    },
+    {
+      "index": 20,
+      "elapsed_seconds": 10.001,
+      "capture_seconds": 0.0635,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_020_10.001s.png"
+    },
+    {
+      "index": 21,
+      "elapsed_seconds": 10.501,
+      "capture_seconds": 0.0614,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_021_10.501s.png"
+    },
+    {
+      "index": 22,
+      "elapsed_seconds": 11.001,
+      "capture_seconds": 0.0615,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_022_11.001s.png"
+    },
+    {
+      "index": 23,
+      "elapsed_seconds": 11.501,
+      "capture_seconds": 0.0637,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_023_11.501s.png"
+    },
+    {
+      "index": 24,
+      "elapsed_seconds": 12.0011,
+      "capture_seconds": 0.0659,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_024_12.001s.png"
+    },
+    {
+      "index": 25,
+      "elapsed_seconds": 12.501,
+      "capture_seconds": 0.0587,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_025_12.501s.png"
+    },
+    {
+      "index": 26,
+      "elapsed_seconds": 13.0,
+      "capture_seconds": 0.0666,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_026_13.000s.png"
+    },
+    {
+      "index": 27,
+      "elapsed_seconds": 13.5001,
+      "capture_seconds": 0.0676,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_027_13.500s.png"
+    },
+    {
+      "index": 28,
+      "elapsed_seconds": 14.0,
+      "capture_seconds": 0.0613,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_028_14.000s.png"
+    },
+    {
+      "index": 29,
+      "elapsed_seconds": 14.5,
+      "capture_seconds": 0.0614,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_029_14.500s.png"
+    },
+    {
+      "index": 30,
+      "elapsed_seconds": 15.0001,
+      "capture_seconds": 0.0543,
+      "path": "run_notes\\lightning_war_walkthrough\\timing_start_to_grid_20260609_133819\\frame_030_15.000s.png"
+    }
+  ]
+}

@@ -8,9 +8,12 @@ the bridge or Computer Use planners.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 import subprocess
 import time
 import shutil
+import tempfile
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -39,7 +42,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     "pause": KnownWindowControl(
         name="pause",
         window_x=38,
-        window_y=58,
+        window_y=28,
         description="Pause / open game menu",
         settle_seconds=0.2,
     ),
@@ -440,9 +443,242 @@ def _normalize_control_name(name: str) -> str:
     return _CONTROL_ALIASES.get(normalized, normalized)
 
 
+_WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
+    "setup_start": (1712, 477),
+    "setup_modal_start": (1704, 974),
+    "menu_continue": (1129, 582),
+    "bottom_continue": (1633, 1009),
+    "reward_continue": (1633, 1009),
+    "mission_preview_board": (1450, 790),
+    "deploy_confirm": (240, 235),
+    "abandon_timeline": (1131, 924),
+    "abandon_confirm_yes": (1208, 795),
+    "island_archive": (600, 430),
+    "end_turn": (252, 190),
+}
+
+
+def _platform_control(control: KnownWindowControl) -> KnownWindowControl:
+    if os.name != "nt":
+        return control
+    override = _WINDOWS_CONTROL_OVERRIDES.get(control.name)
+    if override is None:
+        return control
+    return KnownWindowControl(
+        name=control.name,
+        window_x=override[0],
+        window_y=override[1],
+        description=f"{control.description} (Windows calibrated)",
+        settle_seconds=control.settle_seconds,
+        hold_seconds=control.hold_seconds,
+    )
+
+
 def list_known_window_controls() -> dict[str, dict]:
     """Return calibrated controls keyed by canonical name."""
-    return {name: control.to_dict() for name, control in KNOWN_WINDOW_CONTROLS.items()}
+    return {
+        name: _platform_control(control).to_dict()
+        for name, control in KNOWN_WINDOW_CONTROLS.items()
+    }
+
+
+def find_title_menu_button_target(
+    image_path: str | Path,
+    *,
+    row_index: int = 1,
+) -> dict:
+    """Find a title-screen menu row center from the actual window screenshot.
+
+    ``row_index=1`` targets the second row, which is ``New Game`` on the title
+    screen. The returned ``image_x``/``image_y`` are screenshot pixels; callers
+    should scale them to the current window coordinate space before clicking.
+    """
+    try:
+        from PIL import Image
+    except Exception as exc:
+        return {"status": "UNAVAILABLE", "error": f"PIL unavailable: {exc}"}
+
+    try:
+        image = Image.open(image_path).convert("RGB")
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"failed to open screenshot: {exc}"}
+
+    width, height = image.size
+    if width <= 0 or height <= 0:
+        return {"status": "ERROR", "error": "empty screenshot"}
+
+    pixels = image.load()
+    x_limit = max(80, min(width, int(width * 0.28)))
+    y_start = max(0, int(height * 0.10))
+    y_stop = min(height, int(height * 0.48))
+    min_dark_for_row = max(40, int(x_limit * 0.20))
+    min_bright_for_row = 8
+
+    row_hits: list[tuple[int, int, int]] = []
+    for y in range(y_start, y_stop):
+        dark = 0
+        bright = 0
+        for x in range(0, x_limit):
+            r, g, b = pixels[x, y]
+            if r <= 45 and g <= 45 and b <= 65:
+                dark += 1
+            if r >= 180 and g >= 180 and b >= 180:
+                bright += 1
+        if dark >= min_dark_for_row and bright >= min_bright_for_row:
+            row_hits.append((y, dark, bright))
+
+    runs: list[dict] = []
+    current: list[tuple[int, int, int]] = []
+    last_y = None
+    for hit in row_hits:
+        y = hit[0]
+        if last_y is None or y <= last_y + 1:
+            current.append(hit)
+        else:
+            if current:
+                runs.append(_summarize_title_menu_run(current, pixels, x_limit))
+            current = [hit]
+        last_y = y
+    if current:
+        runs.append(_summarize_title_menu_run(current, pixels, x_limit))
+
+    candidates = [
+        run
+        for run in runs
+        if run["height"] >= max(8, int(height * 0.008))
+        and run["width"] >= max(90, int(width * 0.08))
+        and run["bright"] >= max(20, int(width * 0.01))
+    ]
+    candidates.sort(key=lambda item: item["image_y"])
+    if len(candidates) <= row_index:
+        return {
+            "status": "NOT_FOUND",
+            "reason": "not_enough_title_menu_rows",
+            "row_index": row_index,
+            "candidate_count": len(candidates),
+            "image_size": [width, height],
+            "search_region": [0, y_start, x_limit, y_stop],
+            "runs": runs[:8],
+        }
+
+    target = candidates[row_index]
+    return {
+        "status": "OK",
+        "row_index": row_index,
+        "image_x": int(round(target["image_x"])),
+        "image_y": int(round(target["image_y"])),
+        "image_size": [width, height],
+        "search_region": [0, y_start, x_limit, y_stop],
+        "target_row": target,
+        "candidate_rows": candidates[:5],
+    }
+
+
+def _summarize_title_menu_run(
+    rows: list[tuple[int, int, int]],
+    pixels,
+    x_limit: int,
+) -> dict:
+    min_y = rows[0][0]
+    max_y = rows[-1][0]
+    min_x = x_limit
+    max_x = 0
+    dark_total = 0
+    bright_total = 0
+    for y, dark, bright in rows:
+        dark_total += dark
+        bright_total += bright
+        for x in range(0, x_limit):
+            r, g, b = pixels[x, y]
+            if r <= 45 and g <= 45 and b <= 65:
+                min_x = min(min_x, x)
+                max_x = max(max_x, x)
+    if min_x > max_x:
+        min_x = 0
+        max_x = 0
+    return {
+        "image_x": (min_x + max_x) / 2,
+        "image_y": (min_y + max_y) / 2,
+        "min_x": min_x,
+        "max_x": max_x,
+        "min_y": min_y,
+        "max_y": max_y,
+        "width": max_x - min_x + 1,
+        "height": max_y - min_y + 1,
+        "dark": dark_total,
+        "bright": bright_total,
+    }
+
+
+def click_title_new_game_dynamic(
+    *,
+    app_name: str = "Into the Breach",
+    dry_run: bool = False,
+    settle_seconds: float = 1.0,
+    hold_seconds: float = 0.3,
+) -> dict:
+    """Click the title-screen New Game row using live screenshot geometry."""
+    bounds = _get_window_bounds(app_name)
+    if bounds is None:
+        return {
+            "status": "ERROR",
+            "error": "could not read app window bounds",
+            "control": "title_new_game",
+        }
+
+    from src.capture.window import take_screenshot
+
+    with tempfile.NamedTemporaryFile(
+        prefix="itb_title_new_game_",
+        suffix=".png",
+        delete=False,
+    ) as fh:
+        screenshot_path = Path(fh.name)
+    try:
+        take_screenshot(screenshot_path, bounds=bounds)
+        target = find_title_menu_button_target(screenshot_path, row_index=1)
+    finally:
+        try:
+            screenshot_path.unlink()
+        except OSError:
+            pass
+
+    if target.get("status") != "OK":
+        target["control"] = "title_new_game"
+        return target
+
+    image_w, image_h = target["image_size"]
+    scale_x = bounds["width"] / image_w if image_w else 1.0
+    scale_y = bounds["height"] / image_h if image_h else 1.0
+    window_x = int(round(target["image_x"] * scale_x))
+    window_y = int(round(target["image_y"] * scale_y))
+    description = "Title screen New Game (dynamic screenshot target)"
+
+    if dry_run:
+        return {
+            "status": "DRY_RUN",
+            "control": "title_new_game",
+            "window_x": window_x,
+            "window_y": window_y,
+            "window_bounds": bounds,
+            "target": target,
+            "description": description,
+        }
+
+    result = click_window_point(
+        window_x,
+        window_y,
+        description=description,
+        app_name=app_name,
+        dry_run=False,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+    result["control"] = "title_new_game"
+    result["dynamic_target"] = target
+    result["coordinate_scale"] = {"x": scale_x, "y": scale_y}
+    return result
+
 
 
 def _pyautogui_click(x: int, y: int, *, hold_seconds: float = 0.3) -> dict:
@@ -695,6 +931,20 @@ def click_known_window_control(
             "error": f"unknown control: {name}",
             "known_controls": sorted(KNOWN_WINDOW_CONTROLS),
         }
+    if key == "title_new_game":
+        return click_title_new_game_dynamic(
+            app_name=app_name,
+            dry_run=dry_run,
+            settle_seconds=(
+                control.settle_seconds
+                if settle_seconds is None else float(settle_seconds)
+            ),
+            hold_seconds=(
+                control.hold_seconds
+                if hold_seconds is None else float(hold_seconds)
+            ),
+        )
+    control = _platform_control(control)
     result = click_window_point(
         control.window_x,
         control.window_y,
@@ -735,7 +985,7 @@ def click_known_window_sequence(
                 "error": f"unknown control: {name}",
                 "known_controls": sorted(KNOWN_WINDOW_CONTROLS),
             }
-        controls.append(control)
+        controls.append(_platform_control(control))
 
     if dry_run:
         return {

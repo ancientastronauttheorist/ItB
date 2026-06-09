@@ -1,0 +1,448 @@
+{
+  "trial_delay_seconds": 7.0,
+  "capture_end_seconds": 12.0,
+  "cadence_seconds": 0.5,
+  "started_wall_time": "2026-06-09T14:53:47.946",
+  "window_bounds": {
+    "x": 0,
+    "y": 0,
+    "width": 2560,
+    "height": 1441
+  },
+  "island_click": {
+    "window_x": 575,
+    "window_y": 430,
+    "description": "top-left green island"
+  },
+  "steps": [
+    {
+      "name": "title_new_game_first",
+      "elapsed_wall_seconds": 1.8723,
+      "result": {
+        "status": "OK",
+        "x": 172,
+        "y": 360,
+        "description": "Title screen New Game (dynamic screenshot target)",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 172,
+        "window_y": 360,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        },
+        "control": "title_new_game",
+        "dynamic_target": {
+          "status": "OK",
+          "row_index": 1,
+          "image_x": 172,
+          "image_y": 360,
+          "image_size": [
+            2560,
+            1441
+          ],
+          "search_region": [
+            0,
+            144,
+            716,
+            691
+          ],
+          "target_row": {
+            "image_x": 172.0,
+            "image_y": 359.5,
+            "min_x": 0,
+            "max_x": 344,
+            "min_y": 349,
+            "max_y": 370,
+            "width": 345,
+            "height": 22,
+            "dark": 6070,
+            "bright": 1520
+          },
+          "candidate_rows": [
+            {
+              "image_x": 172.0,
+              "image_y": 307.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 297,
+              "max_y": 318,
+              "width": 345,
+              "height": 22,
+              "dark": 6358,
+              "bright": 1232
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 359.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 349,
+              "max_y": 370,
+              "width": 345,
+              "height": 22,
+              "dark": 6070,
+              "bright": 1520
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 411.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 401,
+              "max_y": 422,
+              "width": 345,
+              "height": 22,
+              "dark": 6458,
+              "bright": 1132
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 463.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 453,
+              "max_y": 474,
+              "width": 345,
+              "height": 22,
+              "dark": 6486,
+              "bright": 1104
+            },
+            {
+              "image_x": 172.0,
+              "image_y": 515.5,
+              "min_x": 0,
+              "max_x": 344,
+              "min_y": 505,
+              "max_y": 526,
+              "width": 345,
+              "height": 22,
+              "dark": 7002,
+              "bright": 588
+            }
+          ]
+        },
+        "coordinate_scale": {
+          "x": 1.0,
+          "y": 1.0
+        }
+      }
+    },
+    {
+      "name": "title_new_game_second_if_needed",
+      "elapsed_wall_seconds": 0.2949,
+      "result": {
+        "status": "NOT_FOUND",
+        "reason": "not_enough_title_menu_rows",
+        "row_index": 1,
+        "candidate_count": 0,
+        "image_size": [
+          2560,
+          1441
+        ],
+        "search_region": [
+          0,
+          144,
+          716,
+          691
+        ],
+        "runs": [],
+        "control": "title_new_game"
+      }
+    },
+    {
+      "name": "overwrite_yes_first",
+      "elapsed_wall_seconds": 1.075,
+      "result": {
+        "status": "OK",
+        "x": 1208,
+        "y": 795,
+        "description": "Overwrite prompt YES",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1208,
+        "window_y": 795,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "name": "overwrite_yes_second_if_needed",
+      "elapsed_wall_seconds": 1.4288,
+      "result": {
+        "status": "OK",
+        "x": 1208,
+        "y": 795,
+        "description": "Overwrite prompt YES second if highlighted",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1208,
+        "window_y": 795,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "name": "setup_start_first",
+      "elapsed_wall_seconds": 1.077,
+      "result": {
+        "status": "OK",
+        "x": 1712,
+        "y": 477,
+        "description": "Setup Start",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1712,
+        "window_y": 477,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "name": "setup_start_second_if_needed",
+      "elapsed_wall_seconds": 1.4258,
+      "result": {
+        "status": "OK",
+        "x": 1712,
+        "y": 477,
+        "description": "Setup Start second if highlighted",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1712,
+        "window_y": 477,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "name": "ensure_easy_focus",
+      "elapsed_wall_seconds": 0.7772,
+      "result": {
+        "status": "OK",
+        "x": 1650,
+        "y": 619,
+        "description": "Difficulty Easy ensure/focus",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1650,
+        "window_y": 619,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "name": "difficulty_modal_start",
+      "elapsed_wall_seconds": 0.6247,
+      "result": {
+        "status": "OK",
+        "x": 1704,
+        "y": 974,
+        "description": "Difficulty modal Start",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 1704,
+        "window_y": 974,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    },
+    {
+      "name": "island_click",
+      "trial_elapsed_seconds": 7.6245,
+      "result": {
+        "status": "OK",
+        "x": 575,
+        "y": 430,
+        "description": "Island click at t=7.0s",
+        "backend": "pyautogui",
+        "hold_seconds": 0.3,
+        "window_x": 575,
+        "window_y": 430,
+        "window_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1441
+        }
+      }
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "elapsed_seconds": 0.0,
+      "capture_seconds": 0.0611,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_000_00.000s.png"
+    },
+    {
+      "index": 1,
+      "elapsed_seconds": 0.5003,
+      "capture_seconds": 0.0654,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_001_00.500s.png"
+    },
+    {
+      "index": 2,
+      "elapsed_seconds": 1.0003,
+      "capture_seconds": 0.0547,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_002_01.000s.png"
+    },
+    {
+      "index": 3,
+      "elapsed_seconds": 1.5005,
+      "capture_seconds": 0.0626,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_003_01.500s.png"
+    },
+    {
+      "index": 4,
+      "elapsed_seconds": 2.0001,
+      "capture_seconds": 0.0548,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_004_02.000s.png"
+    },
+    {
+      "index": 5,
+      "elapsed_seconds": 2.5001,
+      "capture_seconds": 0.0598,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_005_02.500s.png"
+    },
+    {
+      "index": 6,
+      "elapsed_seconds": 3.0001,
+      "capture_seconds": 0.0625,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_006_03.000s.png"
+    },
+    {
+      "index": 7,
+      "elapsed_seconds": 3.5002,
+      "capture_seconds": 0.0641,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_007_03.500s.png"
+    },
+    {
+      "index": 8,
+      "elapsed_seconds": 4.0002,
+      "capture_seconds": 0.0583,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_008_04.000s.png"
+    },
+    {
+      "index": 9,
+      "elapsed_seconds": 4.5003,
+      "capture_seconds": 0.0684,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_009_04.500s.png"
+    },
+    {
+      "index": 10,
+      "elapsed_seconds": 5.0003,
+      "capture_seconds": 0.0578,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_010_05.000s.png"
+    },
+    {
+      "index": 11,
+      "elapsed_seconds": 5.5006,
+      "capture_seconds": 0.0577,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_011_05.501s.png"
+    },
+    {
+      "index": 12,
+      "elapsed_seconds": 6.0002,
+      "capture_seconds": 0.0539,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_012_06.000s.png"
+    },
+    {
+      "index": 13,
+      "elapsed_seconds": 6.5002,
+      "capture_seconds": 0.0594,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_013_06.500s.png"
+    },
+    {
+      "index": 14,
+      "elapsed_seconds": 7.6755,
+      "capture_seconds": 0.0555,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_014_07.675s.png"
+    },
+    {
+      "index": 15,
+      "elapsed_seconds": 7.872,
+      "capture_seconds": 0.0547,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_015_07.872s.png"
+    },
+    {
+      "index": 16,
+      "elapsed_seconds": 8.0751,
+      "capture_seconds": 0.0506,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_016_08.075s.png"
+    },
+    {
+      "index": 17,
+      "elapsed_seconds": 8.5004,
+      "capture_seconds": 0.0652,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_017_08.500s.png"
+    },
+    {
+      "index": 18,
+      "elapsed_seconds": 9.0006,
+      "capture_seconds": 0.0588,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_018_09.001s.png"
+    },
+    {
+      "index": 19,
+      "elapsed_seconds": 9.5003,
+      "capture_seconds": 0.062,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_019_09.500s.png"
+    },
+    {
+      "index": 20,
+      "elapsed_seconds": 10.0009,
+      "capture_seconds": 0.0521,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_020_10.001s.png"
+    },
+    {
+      "index": 21,
+      "elapsed_seconds": 10.5004,
+      "capture_seconds": 0.0618,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_021_10.500s.png"
+    },
+    {
+      "index": 22,
+      "elapsed_seconds": 11.0003,
+      "capture_seconds": 0.0606,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_022_11.000s.png"
+    },
+    {
+      "index": 23,
+      "elapsed_seconds": 11.5002,
+      "capture_seconds": 0.061,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_023_11.500s.png"
+    },
+    {
+      "index": 24,
+      "elapsed_seconds": 12.0006,
+      "capture_seconds": 0.0569,
+      "path": "run_notes\\lightning_war_walkthrough\\island_click_timing_20260609_145339_delay_7.0s\\frame_024_12.001s.png"
+    }
+  ]
+}

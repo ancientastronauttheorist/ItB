@@ -1,0 +1,175 @@
+{
+  "results": [
+    {
+      "trial": 1,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\red_mission_click_5loop_0p5_20260609_155634\\trial_01",
+      "detect_ms": 74.67,
+      "red_elapsed": 11.428,
+      "red_result": {
+        "status": "CLICKED",
+        "target": [
+          1665,
+          750
+        ],
+        "components": [
+          {
+            "area": 187209,
+            "bbox": [
+              1475,
+              437,
+              2078,
+              1072
+            ],
+            "center": [
+              1665,
+              750
+            ],
+            "w": 604,
+            "h": 636,
+            "density": 0.487
+          }
+        ]
+      }
+    },
+    {
+      "trial": 2,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\red_mission_click_5loop_0p5_20260609_155634\\trial_02",
+      "detect_ms": 65.37,
+      "red_elapsed": 11.412,
+      "red_result": {
+        "status": "CLICKED",
+        "target": [
+          1717,
+          922
+        ],
+        "components": [
+          {
+            "area": 226539,
+            "bbox": [
+              1475,
+              437,
+              2074,
+              1292
+            ],
+            "center": [
+              1717,
+              922
+            ],
+            "w": 600,
+            "h": 856,
+            "density": 0.441
+          }
+        ]
+      }
+    },
+    {
+      "trial": 3,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\red_mission_click_5loop_0p5_20260609_155634\\trial_03",
+      "detect_ms": 68.35,
+      "red_elapsed": 11.435,
+      "red_result": {
+        "status": "CLICKED",
+        "target": [
+          1717,
+          923
+        ],
+        "components": [
+          {
+            "area": 226447,
+            "bbox": [
+              1475,
+              437,
+              2074,
+              1292
+            ],
+            "center": [
+              1717,
+              923
+            ],
+            "w": 600,
+            "h": 856,
+            "density": 0.441
+          }
+        ]
+      }
+    },
+    {
+      "trial": 4,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\red_mission_click_5loop_0p5_20260609_155634\\trial_04",
+      "detect_ms": 65.7,
+      "red_elapsed": 11.405,
+      "red_result": {
+        "status": "CLICKED",
+        "target": [
+          1653,
+          745
+        ],
+        "components": [
+          {
+            "area": 177639,
+            "bbox": [
+              1475,
+              437,
+              2078,
+              1072
+            ],
+            "center": [
+              1653,
+              745
+            ],
+            "w": 604,
+            "h": 636,
+            "density": 0.462
+          }
+        ]
+      }
+    },
+    {
+      "trial": 5,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\red_mission_click_5loop_0p5_20260609_155634\\trial_05",
+      "detect_ms": 80.99,
+      "red_elapsed": 11.482,
+      "red_result": {
+        "status": "CLICKED",
+        "target": [
+          1062,
+          694
+        ],
+        "components": [
+          {
+            "area": 103629,
+            "bbox": [
+              831,
+              521,
+              1234,
+              840
+            ],
+            "center": [
+              1062,
+              694
+            ],
+            "w": 404,
+            "h": 320,
+            "density": 0.802
+          },
+          {
+            "area": 93793,
+            "bbox": [
+              1239,
+              361,
+              1470,
+              840
+            ],
+            "center": [
+              1360,
+              632
+            ],
+            "w": 232,
+            "h": 480,
+            "density": 0.842
+          }
+        ]
+      }
+    }
+  ]
+}

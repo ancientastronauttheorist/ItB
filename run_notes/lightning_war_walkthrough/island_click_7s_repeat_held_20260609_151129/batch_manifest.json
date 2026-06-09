@@ -1,0 +1,23 @@
+{
+  "delay_seconds": 7.0,
+  "results": [
+    {
+      "trial": 1,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\island_click_7s_repeat_held_20260609_151129\\trial_01_delay_7.0s",
+      "clicked": true,
+      "click_elapsed_seconds": 7.641
+    },
+    {
+      "trial": 2,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\island_click_7s_repeat_held_20260609_151129\\trial_02_delay_7.0s",
+      "clicked": true,
+      "click_elapsed_seconds": 7.638
+    },
+    {
+      "trial": 3,
+      "dir": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\run_notes\\lightning_war_walkthrough\\island_click_7s_repeat_held_20260609_151129\\trial_03_delay_7.0s",
+      "clicked": true,
+      "click_elapsed_seconds": 7.64
+    }
+  ]
+}

@@ -3901,6 +3901,57 @@ def test_lightning_ui_classifier_detects_title_screen(tmp_path):
     assert result["recommended_control"] == "title_new_game"
 
 
+def test_title_new_game_target_finder_uses_actual_screenshot_rows(tmp_path):
+    from PIL import Image, ImageDraw
+    from src.control import mac_click
+
+    image = Image.new("RGB", (2048, 1152), (74, 66, 90))
+    draw = ImageDraw.Draw(image)
+    row_tops = [228, 268, 310, 350, 390]
+    for top in row_tops:
+        draw.rectangle([0, top, 276, top + 34], fill=(18, 18, 31))
+        draw.rectangle([55, top + 11, 180, top + 21], fill=(238, 238, 238))
+
+    path = tmp_path / "live_title_menu.png"
+    image.save(path)
+
+    result = mac_click.find_title_menu_button_target(path, row_index=1)
+
+    assert result["status"] == "OK"
+    assert result["image_x"] == 138
+    assert 284 <= result["image_y"] <= 286
+
+
+def test_title_new_game_dynamic_click_scales_screenshot_to_window_bounds(
+    tmp_path, monkeypatch
+):
+    from PIL import Image, ImageDraw
+    from src.control import mac_click
+    from src.capture import window as capture_window
+
+    image = Image.new("RGB", (2048, 1152), (74, 66, 90))
+    draw = ImageDraw.Draw(image)
+    for top in [228, 268, 310, 350, 390]:
+        draw.rectangle([0, top, 276, top + 34], fill=(18, 18, 31))
+        draw.rectangle([55, top + 11, 180, top + 21], fill=(238, 238, 238))
+
+    def fake_bounds(_app_name):
+        return {"x": 0, "y": 0, "width": 2560, "height": 1440}
+
+    def fake_screenshot(output_path, *, bounds=None):
+        image.save(output_path)
+        return output_path
+
+    monkeypatch.setattr(mac_click, "_get_window_bounds", fake_bounds)
+    monkeypatch.setattr(capture_window, "take_screenshot", fake_screenshot)
+
+    result = mac_click.click_title_new_game_dynamic(dry_run=True)
+
+    assert result["status"] == "DRY_RUN"
+    assert result["window_x"] == 172
+    assert 355 <= result["window_y"] <= 357
+
+
 def test_lightning_ui_classifier_detects_borderless_title_buttons(tmp_path):
     from PIL import Image, ImageDraw
 

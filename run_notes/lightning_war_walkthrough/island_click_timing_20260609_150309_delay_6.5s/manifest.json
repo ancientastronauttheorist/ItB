@@ -1,0 +1,197 @@
+{
+  "delay_seconds": 6.5,
+  "interval_seconds": 0.5,
+  "duration_seconds": 12.0,
+  "modal_start_window_xy": [
+    1704,
+    974
+  ],
+  "easy_window_xy": [
+    1650,
+    619
+  ],
+  "island_archive_window_xy": [
+    600,
+    430
+  ],
+  "clicked": true,
+  "click_elapsed_seconds": 6.613,
+  "start_click_wall_perf_counter": 570636.3271448,
+  "frames": [
+    {
+      "index": 0,
+      "target_t": 0.0,
+      "actual_t": 0.135,
+      "path": "frame_000_t00.0.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 1,
+      "target_t": 0.5,
+      "actual_t": 0.628,
+      "path": "frame_001_t00.5.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 2,
+      "target_t": 1.0,
+      "actual_t": 1.142,
+      "path": "frame_002_t01.0.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 3,
+      "target_t": 1.5,
+      "actual_t": 1.61,
+      "path": "frame_003_t01.5.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 4,
+      "target_t": 2.0,
+      "actual_t": 2.121,
+      "path": "frame_004_t02.0.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 5,
+      "target_t": 2.5,
+      "actual_t": 2.614,
+      "path": "frame_005_t02.5.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 6,
+      "target_t": 3.0,
+      "actual_t": 3.123,
+      "path": "frame_006_t03.0.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 7,
+      "target_t": 3.5,
+      "actual_t": 3.624,
+      "path": "frame_007_t03.5.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 8,
+      "target_t": 4.0,
+      "actual_t": 4.131,
+      "path": "frame_008_t04.0.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 9,
+      "target_t": 4.5,
+      "actual_t": 4.616,
+      "path": "frame_009_t04.5.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 10,
+      "target_t": 5.0,
+      "actual_t": 5.12,
+      "path": "frame_010_t05.0.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 11,
+      "target_t": 5.5,
+      "actual_t": 5.625,
+      "path": "frame_011_t05.5.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 12,
+      "target_t": 6.0,
+      "actual_t": 6.127,
+      "path": "frame_012_t06.0.png",
+      "clicked_before_or_at_frame": false
+    },
+    {
+      "index": 13,
+      "target_t": 6.5,
+      "actual_t": 6.733,
+      "path": "frame_013_t06.5.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 14,
+      "target_t": 7.0,
+      "actual_t": 7.116,
+      "path": "frame_014_t07.0.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 15,
+      "target_t": 7.5,
+      "actual_t": 7.61,
+      "path": "frame_015_t07.5.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 16,
+      "target_t": 8.0,
+      "actual_t": 8.109,
+      "path": "frame_016_t08.0.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 17,
+      "target_t": 8.5,
+      "actual_t": 8.611,
+      "path": "frame_017_t08.5.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 18,
+      "target_t": 9.0,
+      "actual_t": 9.112,
+      "path": "frame_018_t09.0.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 19,
+      "target_t": 9.5,
+      "actual_t": 9.598,
+      "path": "frame_019_t09.5.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 20,
+      "target_t": 10.0,
+      "actual_t": 10.114,
+      "path": "frame_020_t10.0.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 21,
+      "target_t": 10.5,
+      "actual_t": 10.604,
+      "path": "frame_021_t10.5.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 22,
+      "target_t": 11.0,
+      "actual_t": 11.17,
+      "path": "frame_022_t11.0.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 23,
+      "target_t": 11.5,
+      "actual_t": 11.747,
+      "path": "frame_023_t11.5.png",
+      "clicked_before_or_at_frame": true
+    },
+    {
+      "index": 24,
+      "target_t": 12.0,
+      "actual_t": 12.242,
+      "path": "frame_024_t12.0.png",
+      "clicked_before_or_at_frame": true
+    }
+  ]
+}
