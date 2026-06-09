@@ -28,6 +28,59 @@ Evidence was written locally under:
 run/pause_probe_windows_scancode_20260608_validate/pause_probe_validated_cycles.json
 ```
 
+After restart, the original module-relative pause field
+`Breach.exe+0x4bc7e8` stayed readable but stopped tracking the visible menu
+state. A fresh Python-scancode Esc probe found many process-local toggle
+candidates, with the cleanest validated heap hit:
+
+```text
+0x0000000008b3a5dc width=4 values 1->0->1->0->1->0->1
+```
+
+This confirms the pause toggle bytes are useful live hints, not durable
+addresses.
+
+## Pause State From Timer Motion
+
+A better general pause/open detector is the visible timer's motion:
+
+```text
+pause menu open   => visible timer string stays fixed
+pause menu closed => visible timer string advances
+```
+
+Visual screenshots confirmed this on the island map:
+
+```text
+menu open:   3h 6m 48s -> 3h 6m 48s over 5 seconds
+menu closed: 3:06:49  -> 3:06:54 over 5 seconds
+```
+
+Memory context string reads matched the same behavior:
+
+```text
+closed context: 3:08:38 -> 3:08:41
+open context:   3:09:13 -> 3:09:13
+```
+
+The f32 timer scan found stable timer copies in this restart state, even while
+the visible timer was ticking, so it is not the right detector for pause/menu
+state here. Use the visible timer string context instead:
+
+```text
+python scripts/itb_timer_memory_probe.py watch-context --pid <pid> --sample-seconds 5
+```
+
+Evidence was written locally under:
+
+```text
+run/restart_validation_20260608/timer_visual_pause_check/
+run/restart_validation_20260608/timer_visual_closed_check/
+run/restart_validation_20260608/visible_timer_context_closed_5s.json
+run/restart_validation_20260608/visible_timer_context_open_5s.json
+run/restart_validation_20260608/visible_timer_context_watch_open.json
+```
+
 ## Mission Select Memory Strings
 
 A read-only string scan found mission/island state serialized in process memory.
@@ -249,4 +302,159 @@ by pilot level first:
 level >= 1 => skill1 is active, even when skill1 == 0
 level >= 2 => skill2 is active, even when skill2 == 0
 level 0    => saved skill1/skill2 values are future choices and inactive
+```
+
+## Post-Restart Validation
+
+After a full game restart on 2026-06-08, `Breach.exe` relaunched as PID `9852`
+with the same module base observed earlier:
+
+```text
+Breach.exe base = 0x610000
+```
+
+The pause-menu module-relative offset still resolved to the same absolute
+address:
+
+```text
+Breach.exe+0x4bc7e8 = 0x0000000000acc7e8
+read value = 0
+```
+
+The value was readable after restart, but automated Esc injection failed during
+this pass (`SendInput` returned `0`), so the open/closed parity was not
+revalidated after restart.
+
+The old timer pointer path did not survive the restart:
+
+```text
+Breach.exe+0x7d9c read pointer 0x117df33b
+pointer + 0xef49 = 0x117ee284
+timer read = failed
+```
+
+This confirms the earlier caveat: the timer pointer path is a useful one-run
+finding, not a permanent address chain. A fresh `f32` rescan near the visible
+`1:52:xx` timer range found stable candidates while the game appeared to be in
+a pause/menu layer, but did not re-establish a moving live timer address.
+
+Fresh memory still contained serialized `GameData` blocks after restart. The
+strongest current-looking block during this pass had:
+
+```text
+network = 7
+networkMax = 7
+overflow = 13
+difficulty = 0
+seed = 26377
+mechs = {"LeapMech", "UnstableTank", "NanoMech"}
+pilot0 = Kazaaakpleth level=1 skill1=8 skill2=0
+pilot1 = Tatiana Perez level=2 skill1=1 skill2=3
+pilot2 = Zera level=1 skill1=7 skill2=11
+```
+
+This reinforces the stale-copy warning: old Detritus/Bethany blocks were still
+present in memory, but were not the current run context. It also reinforces
+level-gating: Zera had `level=1` with a stored `skill2=11`, so `skill2` must
+remain inactive until `level >= 2`; Kazaaakpleth had `level=1 skill2=0`, showing
+that a zero-valued locked slot can appear even though `0` is also the real
+`+2 Mech HP` ID once a slot is unlocked.
+
+Evidence was written locally under:
+
+```text
+run/restart_validation_20260608/restart_memory_validation.json
+run/restart_validation_20260608/pause_restart_toggle_validation.json
+run/restart_validation_20260608/timer_restart_f32_rescan.json
+```
+
+## Hardened Timer Resolver Direction
+
+The one-run pointer path should be replaced with a resolver workflow:
+
+```text
+1. Collect context timer hints from serialized UI/save text in memory.
+2. Ignore wall-clock timestamp strings such as `Mon Jun 08 22:38:17 2026 UTC`.
+3. Prefer repeated visible timer strings over the largest timer-like string.
+4. Scan readable process memory for plausible f32 seconds values near the hint.
+5. Re-read candidates after a delay.
+6. Prefer candidates whose delta matches wall time when the game is unpaused.
+7. While paused, accept only lower-confidence stable candidates close to the
+   expected visible timer.
+8. Generate module-relative pointer roots only as process-specific hints.
+```
+
+A reusable Windows probe now exists at:
+
+```text
+scripts/itb_timer_memory_probe.py
+```
+
+Example command:
+
+```text
+python scripts/itb_timer_memory_probe.py scan --pid <pid> --sample-seconds 1.5 --output run/restart_validation_20260608/timer_hardened_scan.json
+```
+
+The first hardened pass on restarted PID `9852` still used a max-context
+heuristic. It inferred `2:07:08` and found stable f32 candidates near that value
+while the game was paused/menu-layered. The best paused candidate was:
+
+```text
+address = 0x0000000017506d20
+before = 7627.814941
+after = 7627.814941
+status = paused_expected_match
+game_timer = 2:07:07
+```
+
+It also found a new pointer-root hint for this process:
+
+```text
+Breach.exe+0x418210 -> pointer 0x174fe149, field_offset 0x8bd7
+```
+
+This is not considered durable until it is revalidated after another restart.
+
+After another restart, `Breach.exe` relaunched as PID `29936`, still with module
+base `0x610000`. The earlier direct timer pointer and the PID `9852`
+pointer-root hint did not provide a durable address. A larger context sample
+also revealed false positive clock strings such as:
+
+```text
+Mon Jun 08 22:38:17 2026 UTC
+```
+
+The probe was hardened to skip those timestamp contexts, collect more context
+hits by default, and select the repeated visible timer mode instead of the
+largest timer-like value. On PID `29936`, the hardened pass selected
+`2:00:13` from four repeated visible timer strings and found paused/stable f32
+candidates near that value:
+
+```text
+address = 0x0000000018285a64
+before = 7212.357910
+after = 7212.357910
+status = paused_expected_match
+game_timer = 2:00:12
+```
+
+Its best pointer-root hint was different again:
+
+```text
+Breach.exe+0xa4cbc -> pointer 0x1827e900, field_offset 0x7164
+```
+
+The durable piece is the resolver strategy: rediscover the f32 timer each run,
+then optionally cache and revalidate pointer-root hints only inside the same
+process. A moving candidate sampled while unpaused is still required before any
+single address should be called the live in-game timer.
+
+Evidence was written locally under:
+
+```text
+run/restart_validation_20260608/timer_hardened_scan_auto.json
+run/restart_validation_20260608/timer_hardened_scan_restart2_mode.json
+run/restart_validation_20260608/timer_hardened_scan_restart2_hardened.json
+run/restart_validation_20260608/timer_probe_console_summary_smoke.json
 ```
