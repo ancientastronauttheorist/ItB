@@ -1301,3 +1301,63 @@ Practical rule:
 - Continue treating `in_active_mission=false` plus
   `phase=unknown/combat_player`, `active_mechs=0`, and no deployment zone as
   terminal enough to stop combat input and watch for the result panel.
+
+## First-Island Completion Probe
+
+Goal:
+
+- Extend the Lightning War fast loop past one mission and determine what new UI
+  appears when the first island is fully cleared.
+
+Result:
+
+- A live run from main menu cleared Archive, including the Hive Leader/HQ
+  mission, and reached the second island mission map.
+- The first island required `5` missions in this sample:
+  four ordinary red missions, then the Hive Leader mission at Corporate HQ.
+- The first-island clear happened around visible game timer `0:32:00` after
+  leaving Archive and selecting R.S.T.
+
+New transition states:
+
+- `POD RECOVERED`: the Open Door text is on the pod panel at about
+  `(1690, 700)` window-relative on the `2560x1441` Windows window. It can take
+  a short moment for the pod contents to appear after the click. Once contents
+  are shown, the lower-right Continue is handled by the normal
+  `reward_continue`/bottom-right target around `(1605-1633, 990-1009)`.
+- Boss `Region Secured` can show CEO dialogue over the result card. Dismiss the
+  dialogue text box around `(1280, 520)` first, then click the visible Continue
+  around `(1630, 985)`.
+- Promotion panels can appear after the boss result. Click `Understood` around
+  `(1290, 885)`.
+- `Perfect Island!` first shows an intro Continue at about `(1500, 900)`.
+  The reward-choice screen can be misclassified as `pause_menu`; use visible
+  text instead. For the current speed policy, choose `+2 Grid Def` at about
+  `(1460, 810)`.
+- The island-complete menu shows `SPEND REPUTATION` and `LEAVE ISLAND`. For the
+  speed loop, click `Leave Island` at about `(1280, 1395)`.
+- Leaving with unspent reputation opens a confirmation modal. Click `YES` at
+  about `(1205, 795)`.
+- The next-island world map appears with the next island highlighted. Clicking
+  the selected island starts its HQ intro dialogue; the first observed next
+  island was R.S.T. The HQ intro Continue uses the same bottom-right target
+  around `(1630, 1010)`, after which the second island mission map is ready.
+
+Classifier cautions:
+
+- `perfect_reward_choice`, `kia_panel`, `pause_menu`, `deployment_screen`, and
+  `island_map_or_unknown` all produced false positives during island-complete
+  transitions. Use visible text and screenshots for transition panels instead
+  of the classifier label alone.
+- Treat `Region Secured` text, `POD RECOVERED`, `Perfect Island!`,
+  `SPEND REPUTATION`, `Leave Island`, and `Head Office` intro text as stronger
+  routing signals than the raw classifier name.
+
+Automation changes from this probe:
+
+- `scripts/lightning_war_fast_walkthrough.py --island-loop` has a
+  `--continue-after-island` option to leave the completed island, accept the
+  unspent-reputation confirmation, clear the next HQ intro, and open the next
+  island's first mission preview when possible.
+- Windows control overrides were updated for pod open, dialogue dismissal,
+  promotion Understood, perfect-island Continue/reward, and Leave Island.

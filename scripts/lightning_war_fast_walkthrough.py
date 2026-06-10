@@ -36,6 +36,7 @@ from src.loop.commands import (
     _lightning_ensure_pause_state,
     _lightning_end_turn_retryable,
     _lightning_extract_red_regions_from_image,
+    _lightning_visible_ui_text_parts,
     _lightning_live_snapshot,
     _lightning_observed_terminal_transition,
     _observe_end_turn_after_click,
@@ -475,6 +476,66 @@ def compact_visible_ui(visible: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def visible_text_lower(visible: dict[str, Any]) -> str:
+    try:
+        parts = _lightning_visible_ui_text_parts(visible)
+    except Exception:
+        parts = []
+    return "\n".join(str(part) for part in parts).lower()
+
+
+def clear_control_for_visible_ui(
+    visible: dict[str, Any],
+    *,
+    previous_control: str | None = None,
+) -> str:
+    visible_name = visible.get("visible_ui")
+    text = visible_text_lower(visible)
+
+    if "leave island" in text and "continue" in text and "yes" in text:
+        return "leave_confirm_yes"
+    if "spend reputation" in text and "leave island" in text:
+        return "leave_island"
+    if "head office" in text and "continue" in text:
+        return "bottom_continue"
+    if "promoted" in text or "new skill unlocked" in text:
+        return "modal_understood"
+    if "pod recovered" in text and "open door" in text:
+        return "pod_open_door"
+    if ("pod contents" in text or "reactor core" in text) and "continue" in text:
+        return "reward_continue"
+    if "perfect island" in text and "select one free reward" in text:
+        if "wait" in text or previous_control in {"panel_continue", "bottom_continue"}:
+            return "perfect_reward_grid"
+        return "panel_continue"
+    if "region secured" in text:
+        if previous_control != "dialogue_textbox" and (
+            "saved" in text or "you've" in text or "you have" in text
+        ):
+            return "dialogue_textbox"
+        return "reward_continue"
+
+    if visible_name == "island_complete_leave":
+        return "leave_island"
+    if visible_name == "pause_menu":
+        return "menu_continue"
+    if visible_name == "promotion_panel":
+        return "modal_understood"
+    if visible_name == "pod_open_panel":
+        return "pod_open_door"
+    if visible_name == "perfect_island_panel":
+        return "panel_continue"
+    if visible_name == "perfect_reward_choice":
+        return "perfect_reward_grid"
+    if visible_name in TERMINAL_OR_CLEAR_UIS or visible_name in {
+        "combat_screen",
+        "island_map_or_unknown",
+        "reward_panel",
+    }:
+        return "reward_continue"
+    return visible.get("recommended_control") or "reward_continue"
+
+
 def wait_for_post_end_turn_ready_or_terminal(
     *,
     turn_index: int,
@@ -887,6 +948,144 @@ def paused_solve_execute_and_end_turn(
     }
 
 
+def run_current_mission_from_island_map(
+    *,
+    mission_index: int,
+    timer_start: float,
+    args: argparse.Namespace,
+    preview_already_open: bool = False,
+) -> dict[str, Any]:
+    marks: dict[str, float] = {}
+    region = None
+    if not preview_already_open:
+        time.sleep(args.red_wait_seconds)
+        region = click_largest_red_mission()
+        marks["red_mission_click"] = elapsed(timer_start)
+
+    click_control("mission_preview_board", settle_seconds=args.preview_settle_seconds)
+    marks["preview_board_click"] = elapsed(timer_start)
+
+    time.sleep(args.deploy_ready_wait_seconds)
+    deploy = deploy_and_confirm(confirm_retries=args.confirm_retries)
+    marks["deploy_confirm_live"] = elapsed(timer_start)
+
+    pause = pause_after_opening(
+        min_wait_seconds=args.opening_enemy_wait_seconds,
+        max_wait_seconds=args.opening_enemy_max_wait_seconds,
+    )
+    marks["paused_after_opening"] = elapsed(timer_start)
+
+    if args.stop_after_pause:
+        return {
+            "status": "STOPPED_AFTER_PAUSE",
+            "mission_index": mission_index,
+            "marks": marks,
+            "red_region": region,
+            "deploy": deploy,
+            "pause": pause,
+        }
+
+    turns: list[dict[str, Any]] = []
+    turn_runner = (
+        paused_solve_execute_and_end_turn
+        if args.paused_solve_execute
+        else solve_execute_and_end_turn
+    )
+    for turn_index in range(1, args.max_mission_turns + 1):
+        turn_record = turn_runner(
+            turn_index=turn_index,
+            timer_start=timer_start,
+            args=args,
+        )
+        turns.append(turn_record)
+        marks[f"turn_{turn_index}_end_turn_click"] = (
+            turn_record["marks"]["end_turn_click"]
+        )
+        marks[f"turn_{turn_index}_post_end_observed"] = (
+            turn_record["marks"]["post_end_observed"]
+        )
+        if turn_record["post_end_turn"].get("status") != "PLAYER_TURN_READY":
+            return {
+                "status": "OK",
+                "reason": "terminal_or_clear_after_end_turn",
+                "mission_index": mission_index,
+                "terminal_turn_index": turn_index,
+                "marks": marks,
+                "red_region": region,
+                "deploy": deploy,
+                "turns": turns,
+            }
+    final_visible = _lightning_visible_ui_snapshot(include_ocr=True)
+    return {
+        "status": "MAX_TURNS_REACHED",
+        "mission_index": mission_index,
+        "marks": marks,
+        "red_region": region,
+        "deploy": deploy,
+        "turns": turns,
+        "final_visible_ui": compact_visible_ui(final_visible),
+    }
+
+
+def clear_mission_result_to_island_map(
+    *,
+    mission_index: int,
+    timer_start: float,
+    continue_after_island: bool = False,
+    max_steps: int = 12,
+) -> dict[str, Any]:
+    steps: list[dict[str, Any]] = []
+    previous_control: str | None = None
+    for step_index in range(max_steps):
+        visible = _lightning_visible_ui_snapshot(include_ocr=True)
+        visible_name = visible.get("visible_ui")
+        step: dict[str, Any] = {
+            "step": step_index + 1,
+            "visible_ui": compact_visible_ui(visible),
+            "game_timer_seconds": elapsed(timer_start),
+        }
+        if visible_name == "island_complete_leave" and not continue_after_island:
+            return {
+                "status": "ISLAND_COMPLETE_LEAVE_VISIBLE",
+                "mission_index": mission_index,
+                "steps": steps + [step],
+            }
+        control = clear_control_for_visible_ui(
+            visible,
+            previous_control=previous_control,
+        )
+        try:
+            click = click_control(control, settle_seconds=1.2)
+            step["control"] = control
+            step["click"] = click
+        except Exception as exc:
+            step["control"] = control
+            step["error"] = str(exc)
+            steps.append(step)
+            break
+        previous_control = control
+        steps.append(step)
+        time.sleep(0.6)
+        try:
+            probe = click_largest_red_mission()
+        except Exception as exc:
+            steps[-1]["red_probe_error"] = str(exc)
+            continue
+        steps[-1]["red_probe_clicked"] = probe
+        return {
+            "status": "MISSION_PREVIEW_OPENED",
+            "mission_index": mission_index + 1,
+            "steps": steps,
+            "red_region": probe,
+        }
+    return {
+        "status": "RESULT_CLEAR_INCOMPLETE",
+        "mission_index": mission_index,
+        "steps": steps,
+        "visible_ui": visible_ui_name(),
+    }
+
+
 def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
     marks: dict[str, float] = {}
     run_start = time.perf_counter()
@@ -907,6 +1106,60 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
     sleep_until(timer_start, args.continue_click_seconds)
     click_control("bottom_continue", settle_seconds=0.0)
     marks["intro_continue"] = elapsed(timer_start)
+
+    if args.island_loop:
+        missions: list[dict[str, Any]] = []
+        transitions: list[dict[str, Any]] = []
+        for mission_index in range(1, args.max_island_missions + 1):
+            if mission_index == 1:
+                mission = run_current_mission_from_island_map(
+                    mission_index=mission_index,
+                    timer_start=timer_start,
+                    args=args,
+                )
+            else:
+                mission = run_current_mission_from_island_map(
+                    mission_index=mission_index,
+                    timer_start=timer_start,
+                    args=args,
+                    preview_already_open=True,
+                )
+            missions.append(mission)
+            if mission.get("status") not in {"OK", "STOPPED_AFTER_PAUSE"}:
+                return {
+                    "status": "ISLAND_LOOP_STOPPED",
+                    "reason": "mission_runner_stopped",
+                    "marks": marks,
+                    "missions": missions,
+                    "transitions": transitions,
+                }
+            transition = clear_mission_result_to_island_map(
+                mission_index=mission_index,
+                timer_start=timer_start,
+                continue_after_island=args.continue_after_island,
+            )
+            transitions.append(transition)
+            if transition.get("status") == "ISLAND_COMPLETE_LEAVE_VISIBLE":
+                return {
+                    "status": "ISLAND_COMPLETE_LEAVE_VISIBLE",
+                    "marks": marks,
+                    "missions": missions,
+                    "transitions": transitions,
+                }
+            if transition.get("status") != "MISSION_PREVIEW_OPENED":
+                return {
+                    "status": "ISLAND_LOOP_STOPPED",
+                    "reason": "transition_stopped",
+                    "marks": marks,
+                    "missions": missions,
+                    "transitions": transitions,
+                }
+        return {
+            "status": "MAX_ISLAND_MISSIONS_REACHED",
+            "marks": marks,
+            "missions": missions,
+            "transitions": transitions,
+        }
 
     time.sleep(args.red_wait_seconds)
     region = click_largest_red_mission()
@@ -1042,6 +1295,24 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Continue combat turns until a mission-end/reward panel is visible.",
     )
+    parser.add_argument(
+        "--island-loop",
+        action="store_true",
+        help=(
+            "Continue clearing missions on the first island until the island "
+            "completion transition appears."
+        ),
+    )
+    parser.add_argument(
+        "--continue-after-island",
+        action="store_true",
+        help=(
+            "After the island-complete menu appears, leave the island, confirm "
+            "unspent reputation loss, clear the next HQ intro, and open the "
+            "next island's first mission preview when possible."
+        ),
+    )
+    parser.add_argument("--max-island-missions", type=int, default=5)
     parser.add_argument(
         "--paused-solve-execute",
         action="store_true",
