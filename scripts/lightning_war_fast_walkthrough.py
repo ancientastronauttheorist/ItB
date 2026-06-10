@@ -246,13 +246,33 @@ def click_mission_preview_until_deployment(
         click = click_control("mission_preview_board", settle_seconds=settle_seconds)
         time.sleep(0.5)
         visible = _lightning_visible_ui_snapshot(include_ocr=False)
+        snapshot = _lightning_live_snapshot()
         attempt = {
             "attempt": attempt_index,
             "click": click,
             "visible_ui": compact_visible_ui(visible),
+            "snapshot": {
+                "status": snapshot.get("status"),
+                "phase": snapshot.get("phase"),
+                "turn": snapshot.get("turn"),
+                "in_active_mission": snapshot.get("in_active_mission"),
+                "mission_id": snapshot.get("mission_id"),
+                "deployment_zone_count": snapshot.get("deployment_zone_count"),
+                "bridge_heartbeat_alive": snapshot.get("bridge_heartbeat_alive"),
+                "bridge_heartbeat_stale": snapshot.get("bridge_heartbeat_stale"),
+            },
         }
         attempts.append(attempt)
-        if visible.get("visible_ui") == "deployment_screen":
+        turn = snapshot.get("turn")
+        bridge_deployment_ready = (
+            snapshot.get("status") == "OK"
+            and snapshot.get("in_active_mission") is True
+            and int(turn if turn is not None else -1) == 0
+            and int(snapshot.get("deployment_zone_count") or 0) > 0
+            and snapshot.get("bridge_heartbeat_alive") is not False
+            and snapshot.get("bridge_heartbeat_stale") is not True
+        )
+        if visible.get("visible_ui") == "deployment_screen" or bridge_deployment_ready:
             return {"status": "OK", "attempts": attempts}
     raise FastRunError(
         json.dumps(
@@ -363,6 +383,125 @@ def click_largest_red_mission() -> dict[str, Any]:
     return region
 
 
+def _red_region_signature(regions: list[dict[str, Any]]) -> tuple[tuple[int, int], ...]:
+    """Compact map-region signature for waiting out island-map animations."""
+    points: list[tuple[int, int]] = []
+    for region in regions:
+        try:
+            x = int(region.get("window_x"))
+            y = int(region.get("window_y"))
+        except (TypeError, ValueError):
+            continue
+        points.append((round(x / 8) * 8, round(y / 8) * 8))
+    return tuple(sorted(points))
+
+
+def wait_for_red_mission_regions_stable(
+    *,
+    min_wait_seconds: float = 2.0,
+    max_wait_seconds: float = 5.0,
+    interval_seconds: float = 0.75,
+) -> dict[str, Any]:
+    """Wait for the island map's red mission candidates to settle.
+
+    Region Secured and Hive Leader transitions can temporarily leave old red
+    regions visible. Sampling until the candidate signature stops changing
+    avoids clicking a mission from the transitional frame.
+    """
+    started = time.perf_counter()
+    last_signature: tuple[tuple[int, int], ...] | None = None
+    stable_samples = 0
+    latest: dict[str, Any] | None = None
+    samples: list[dict[str, Any]] = []
+
+    while True:
+        shot = capture("lw_red_settle")
+        regions = _lightning_extract_red_regions_from_image(shot)
+        candidates = [
+            region
+            for region in (regions.get("regions") or [])
+            if isinstance(region, dict)
+        ]
+        signature = _red_region_signature(candidates)
+        elapsed_seconds = time.perf_counter() - started
+        sample = {
+            "t": round(elapsed_seconds, 3),
+            "screenshot": str(shot),
+            "region_count": regions.get("region_count"),
+            "signature": signature,
+            "status": regions.get("status"),
+        }
+        samples.append(sample)
+        latest = {"regions": regions, "screenshot": shot, "samples": samples}
+
+        if signature and signature == last_signature:
+            stable_samples += 1
+        else:
+            stable_samples = 1 if signature else 0
+            last_signature = signature
+
+        if (
+            signature
+            and elapsed_seconds >= min_wait_seconds
+            and stable_samples >= 2
+        ):
+            latest["status"] = "OK"
+            latest["stable_signature"] = signature
+            latest["stable_samples"] = stable_samples
+            return latest
+        if elapsed_seconds >= max_wait_seconds:
+            if candidates:
+                latest["status"] = "TIMEOUT_WITH_REGIONS"
+                latest["stable_signature"] = signature
+                latest["stable_samples"] = stable_samples
+                return latest
+            raise FastRunError(
+                "no red mission regions detected after settle wait: "
+                + json.dumps(samples, default=str)
+            )
+        time.sleep(max(0.05, interval_seconds))
+
+
+def click_stable_red_mission_after_result() -> dict[str, Any]:
+    settled = wait_for_red_mission_regions_stable()
+    regions = settled.get("regions") or {}
+    candidates = regions.get("regions") or []
+    if not candidates:
+        raise FastRunError(f"no red mission regions detected: {regions}")
+    region = max(
+        candidates,
+        key=lambda item: item.get("area_window", item.get("area_px", 0)),
+    )
+    bounds = get_window_bounds()
+    if bounds is None:
+        raise FastRunError("could not find Into the Breach window bounds")
+    base_w, base_h = LIGHTNING_UI_BASE_SIZE
+    scale_x = bounds["width"] / base_w
+    scale_y = bounds["height"] / base_h
+    live_x = int(round(float(region["window_x"]) * scale_x))
+    live_y = int(round(float(region["window_y"]) * scale_y))
+    region["live_window_x"] = live_x
+    region["live_window_y"] = live_y
+    region["live_coordinate_scale"] = {"x": scale_x, "y": scale_y}
+    region["settle"] = {
+        "status": settled.get("status"),
+        "stable_signature": settled.get("stable_signature"),
+        "stable_samples": settled.get("stable_samples"),
+        "samples": settled.get("samples"),
+    }
+    log(
+        "settled red mission regions="
+        f"{regions.get('region_count')} status={settled.get('status')}"
+    )
+    click_point(
+        "red_mission",
+        live_x,
+        live_y,
+        settle_seconds=0.15,
+    )
+    return region
+
+
 def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
     log("deploy_recommended")
     deploy = cmd_deploy_recommended(ui_fallback=True)
@@ -392,11 +531,21 @@ def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
             f"phase={wait.get('snapshot', {}).get('phase')}"
         )
         if wait.get("status") == "OK":
+            snapshot = wait.get("snapshot") or {}
+            confirm_still_pending = (
+                snapshot.get("phase") == "combat_enemy"
+                and int(snapshot.get("active_mechs") or 0) > 0
+                and int(snapshot.get("deployment_zone_count") or 0) > 0
+            )
+            if confirm_still_pending:
+                attempts[-1]["confirm_still_pending"] = True
+                log("confirm still pending; retrying visible Confirm click")
+                continue
             return {
                 "status": "OK",
                 "deploy": deploy,
                 "confirm_attempts": attempts,
-                "snapshot": wait.get("snapshot"),
+                "snapshot": snapshot,
             }
     raise FastRunError(
         json.dumps(
@@ -603,9 +752,11 @@ def clear_control_for_visible_ui(
     visible: dict[str, Any],
     *,
     previous_control: str | None = None,
+    control_history: list[str] | None = None,
 ) -> str:
     visible_name = visible.get("visible_ui")
     text = visible_text_lower(visible)
+    history = control_history or []
 
     if "leave island" in text and "continue" in text and "yes" in text:
         return "leave_confirm_yes"
@@ -629,14 +780,27 @@ def clear_control_for_visible_ui(
     if visible_name == "island_complete_leave":
         return "leave_island"
     if visible_name == "pause_menu":
+        scores = visible.get("scores") or {}
+        choice_score = float(
+            (scores.get("perfect_reward_choice") or {}).get("score") or 0.0
+        )
+        dark_overlay = float(visible.get("dark_overlay_fraction") or 0.0)
+        if dark_overlay >= 0.85 and choice_score >= 0.25:
+            if {"panel_continue", "bottom_continue"} & set(history):
+                return "perfect_reward_grid"
+            return "panel_continue"
         return "menu_continue"
     if visible_name == "promotion_panel":
         return "modal_understood"
+    if visible_name == "kia_panel" and previous_control == "pod_open_door":
+        return "reward_continue"
     if visible_name == "kia_panel" and visible.get("recommended_control") == "kia_understood":
         return "modal_understood"
     if visible_name == "pod_open_panel":
         return "pod_open_door"
     if visible_name == "perfect_island_panel":
+        if previous_control == "panel_continue" or "panel_continue" in history:
+            return "leave_island"
         return "panel_continue"
     if visible_name == "perfect_reward_choice":
         if previous_control in {"panel_continue", "bottom_continue"}:
@@ -644,8 +808,23 @@ def clear_control_for_visible_ui(
         return "reward_continue"
     if visible_name == "island_map" and previous_control == "reward_continue":
         return "leave_island"
+    if previous_control == "pod_open_door":
+        return "reward_continue"
+    if (
+        visible_name == "island_map_or_unknown"
+        and previous_control == "modal_understood"
+        and "pod_open_door" not in history
+    ):
+        return "pod_open_door"
     if visible_name == "island_map_or_unknown" and previous_control == "reward_continue":
-        return "modal_understood"
+        modal_count = history.count("modal_understood")
+        if modal_count == 0:
+            return "modal_understood"
+        if "pod_open_door" not in history:
+            return "pod_open_door"
+        if modal_count < 2:
+            return "modal_understood"
+        return "reward_continue"
     if previous_control == "leave_island":
         return "leave_confirm_yes"
     if previous_control == "leave_confirm_yes":
@@ -785,6 +964,59 @@ def wait_for_post_end_turn_ready_or_terminal(
         time.sleep(max(0.05, poll_seconds))
 
 
+def _lightning_investigation_diff_is_non_worse(diff: Any) -> bool:
+    if not isinstance(diff, dict):
+        return False
+    try:
+        predicted = int(diff.get("predicted"))
+        actual = int(diff.get("actual"))
+    except (TypeError, ValueError):
+        return False
+    return actual >= predicted
+
+
+def _lightning_investigate_is_allowed_speed_trade(turn: dict[str, Any]) -> bool:
+    """True when an INVESTIGATE result only found benign allowed-loss diffs."""
+    if turn.get("status") != "INVESTIGATE":
+        return False
+    if not turn.get("pending_end_turn_batch"):
+        return False
+    threat_audit = turn.get("threat_audit") or {}
+    if threat_audit.get("status") not in {None, "OK"}:
+        return False
+    if int(threat_audit.get("still_threatened_count") or 0) > 0:
+        return False
+
+    investigations = turn.get("investigations") or []
+    if not investigations:
+        return False
+    for investigation in investigations:
+        if not isinstance(investigation, dict):
+            return False
+        snapshot_path = investigation.get("snapshot_path")
+        if not snapshot_path:
+            return False
+        context_path = Path(snapshot_path) / "context.json"
+        try:
+            context = json.loads(context_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            return False
+
+        grid_diff = context.get("grid_power_diff")
+        if grid_diff is not None and not _lightning_investigation_diff_is_non_worse(
+            grid_diff
+        ):
+            return False
+
+        building_diffs = context.get("building_hp_diffs") or []
+        if not isinstance(building_diffs, list):
+            return False
+        for diff in building_diffs:
+            if not _lightning_investigation_diff_is_non_worse(diff):
+                return False
+    return True
+
+
 def solve_execute_and_end_turn(
     *,
     turn_index: int,
@@ -808,8 +1040,51 @@ def solve_execute_and_end_turn(
         and int(turn.get("actions_completed") or 0) > 0
         and turn.get("bridge_ack")
     )
+    empty_solution_fallback = None
+    allowed_investigate_speed_trade = (
+        args.allow_lightning_speed_building_damage
+        and _lightning_investigate_is_allowed_speed_trade(turn)
+    )
+    if allowed_investigate_speed_trade:
+        log(
+            "auto_turn INVESTIGATE only found non-worse grid/building diffs; "
+            "continuing under Lightning speed policy"
+        )
+        turn_plan_ready = True
+
     if turn.get("status") not in {"OK", "PASS"} and not turn_plan_ready:
-        raise FastRunError(f"auto_turn failed on turn {turn_index}: {turn}")
+        error_text = str(turn.get("error") or turn.get("warning") or "")
+        if "Empty solution" in error_text:
+            fallback_read = cmd_read()
+            empty_solution_fallback = {
+                "reason": "empty_solution_no_buildings_threatened",
+                "read": fallback_read,
+            }
+            if (
+                args.allow_lightning_speed_building_damage
+                and fallback_read.get("phase") == "combat_player"
+                and int(fallback_read.get("active_mechs") or 0) >= 0
+                and int(fallback_read.get("threatened_buildings") or 0) == 0
+            ):
+                log(
+                    "auto_turn empty solution; no buildings threatened, "
+                    "clicking End Turn under Lightning speed policy"
+                )
+                turn = {
+                    "status": "LIGHTNING_EMPTY_SOLUTION_END_TURN",
+                    "turn": fallback_read.get("turn", turn.get("turn")),
+                    "actions_completed": 0,
+                    "original_auto_turn": turn,
+                    "fallback_read": fallback_read,
+                }
+                turn_plan_ready = True
+            else:
+                raise FastRunError(
+                    f"auto_turn failed on turn {turn_index}: {turn}; "
+                    f"fallback_read={fallback_read}"
+                )
+        else:
+            raise FastRunError(f"auto_turn failed on turn {turn_index}: {turn}")
     auto_turn_done_mark = elapsed(timer_start)
 
     click_control("end_turn", settle_seconds=0.0)
@@ -870,6 +1145,7 @@ def solve_execute_and_end_turn(
         "heartbeat": heartbeat,
         "auto_turn_status": turn.get("status") or turn.get("error"),
         "actions_completed": turn.get("actions_completed"),
+        "empty_solution_fallback": empty_solution_fallback,
         "turn": turn.get("turn"),
         "end_turn_observed": observed,
         "end_turn_retry_click": retry_click,
@@ -1188,6 +1464,11 @@ def clear_mission_result_to_island_map(
         control = clear_control_for_visible_ui(
             visible,
             previous_control=previous_control,
+            control_history=[
+                str(item.get("control"))
+                for item in steps
+                if item.get("control")
+            ],
         )
         try:
             click = click_transition_control(control, settle_seconds=1.2)
@@ -1207,8 +1488,15 @@ def clear_mission_result_to_island_map(
                 "mission_index": mission_index,
                 "steps": steps,
             }
+        post_click_visible = _lightning_visible_ui_snapshot(include_ocr=False)
+        steps[-1]["post_click_visible_ui"] = compact_visible_ui(post_click_visible)
+        if post_click_visible.get("visible_ui") not in {
+            "island_map",
+            "island_map_or_unknown",
+        }:
+            continue
         try:
-            probe = click_largest_red_mission()
+            probe = click_stable_red_mission_after_result()
         except Exception as exc:
             steps[-1]["red_probe_error"] = str(exc)
             continue

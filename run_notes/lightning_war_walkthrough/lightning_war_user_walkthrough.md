@@ -1441,3 +1441,53 @@ Implementation changes from this pass:
 - Added deployment-screen verification after mission-preview board clicks.
 - Added resume helpers for continuing from an island map or from an already
   open deployment screen during discovery runs.
+
+## Two-Island Slow Rerun Addendum
+
+Date: 2026-06-10.
+
+Outcome:
+
+- A slow two-island discovery rerun cleared Archive and R.S.T. with Blitzkrieg,
+  including both Corporate HQ / Hive Leader missions.
+- After accepting `Leave Island` on R.S.T., the game advanced to the next
+  island/final phase. This is past the Lightning War achievement boundary.
+- The observed in-game timer after leaving R.S.T. was about `1:38:38` in this
+  intentionally slow patched discovery pass. This pass was not a timed attempt.
+
+New edge cases and rules:
+
+- Do not click red missions immediately after a `Region Secured` panel if the
+  large green `REGION SECURED` sweep is still animating over the map. The map
+  can show old red regions during that transition. Sample red-region centers
+  until the signature is stable before clicking the next mission.
+- A stale bridge payload can report `in_active_mission=true`,
+  `turn=0`, and deployment zones while the screen is visibly still on the
+  island map. Do not accept that state as deployment-ready when
+  `bridge_heartbeat_alive=false` or `bridge_heartbeat_stale=true`.
+- On Windows, raw PyAutoGUI clicks can report success while the game is not
+  foreground. Foreground the Into the Breach HWND before trusted window clicks;
+  the click result now records this focus attempt.
+- `auto_turn` can return `INVESTIGATE` after all actions are executed and the
+  End Turn click is held. In the observed R.S.T. HQ case, the investigation was
+  a benign non-worse diff: predicted building HP `1`, actual building HP `2`,
+  and grid remained `7/7`. For Lightning War speed policy, it is safe to
+  continue only when every investigation snapshot has actual grid/building HP
+  greater than or equal to predicted and the threat audit is clear.
+- R.S.T. `Perfect Island!` has two states. First click the dialogue Continue at
+  about `(1500, 900)` on the `2560x1441` Windows window. Then select `+2 Grid`
+  at about `(1460, 810)`. The first state can be misclassified as `pause_menu`.
+- The screenshot viewer may scale images; use pixel evidence from the saved
+  screenshot when calibrating coordinates. The R.S.T. Perfect Island Continue
+  looked lower in the viewer, but the actual button center was near `y=900`.
+
+Patch follow-ups from this rerun:
+
+- `click_stable_red_mission_after_result()` waits out post-result map
+  animations before choosing the next red region.
+- Result clearing now rechecks visible UI after each panel click before probing
+  for red missions, so intermediate island-complete panels are not skipped.
+- The fast walkthrough accepts only benign `INVESTIGATE` results under the
+  Lightning speed policy by reading each snapshot `context.json`.
+- Windows trusted clicks now attempt to foreground the game window before
+  sending raw mouse input.
