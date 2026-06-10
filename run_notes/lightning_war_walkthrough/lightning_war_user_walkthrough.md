@@ -1361,3 +1361,83 @@ Automation changes from this probe:
   island's first mission preview when possible.
 - Windows control overrides were updated for pod open, dialogue dismissal,
   promotion Understood, perfect-island Continue/reward, and Leave Island.
+
+## Two-Island Discovery Pass
+
+Goal:
+
+- Run the loop slowly enough to patch UI edge cases as they appear, with the
+  real Lightning War target in mind: clear the first two Corporate Islands with
+  Blitzkrieg. This was a discovery pass, not a valid timed achievement attempt.
+
+Result:
+
+- The loop successfully reached the post-second-island boundary after clearing
+  Archive and R.S.T., including both Hive Leader/HQ missions.
+- R.S.T. also required `5` missions in this sample: four ordinary red missions,
+  then the Corporate HQ mission.
+- After the second island was left, the game naturally advanced toward a third
+  island intro. For Lightning War, this is already past the achievement target.
+
+Post-mission result screens:
+
+- The CEO dialogue drawn over a `Region Secured` card is decorative in these
+  result screens. Clicking the dialogue textbox did not dismiss it. The active
+  control is still the card's `Continue` button.
+- Result-card `Continue` has at least two observed vertical positions on the
+  `2560x1441` Windows window:
+  - upper result card: about `(1647, 985)`;
+  - lower result card / failed-objective layout: about `(1647, 1018)`.
+- Practical rule: use a two-height `reward_continue` sweep and verify that the
+  screen advanced. Do not assume one fixed lower-right point handles every
+  `Region Secured` card.
+
+Promotion and reward-panel cautions:
+
+- Promotion panels can be misclassified as `kia_panel`,
+  `island_map_or_unknown`, or another broad transition state.
+- When a post-result panel shows an `Understood`-style modal, use the
+  `modal_understood` target around `(1290, 885)`.
+- `perfect_reward_choice` can also be a false positive for an ordinary result
+  card. Prefer visible text such as `Perfect Island!`, reward options, and
+  `Region Secured` over the classifier name by itself.
+
+Island transition after first island:
+
+- The island-complete screen may classify as `island_map` while showing
+  `SPEND REPUTATION` and `LEAVE ISLAND`. In the speed loop, click
+  `Leave Island`.
+- The unspent-reputation confirmation `YES` button is about `(1208, 795)` on
+  the observed Windows window. The older base coordinate near `(568, 444)`
+  only dismissed or missed the prompt and did not leave the island.
+- On the world map after Archive, R.S.T. was highlighted. Clicking about
+  `(850, 960)` opened the R.S.T. Head Office intro, and the normal
+  bottom-right Continue opened the R.S.T. island map.
+
+Second-island HQ edge case:
+
+- The Corporate HQ / Hive Leader mission can show a warning panel on the island
+  map. A stale bridge snapshot can still look like an active mission, so do not
+  deploy purely from bridge state when the screen is visibly still on the map.
+- After clicking the HQ mission preview board, verify that the visible UI is
+  actually `deployment_screen`. If not, click the preview board again a small
+  number of times before calling deployment.
+- This visual deployment verification prevents the loop from trying
+  `deploy_recommended` while still stuck on a mission-preview or warning panel.
+
+Lightning War stop condition:
+
+- The achievement only requires the first two Corporate Islands. After clearing
+  the second island and accepting `Leave Island` confirmation, stop the
+  Lightning War loop instead of selecting a third island.
+- Current implementation treats `mission_index >= 10` after the second
+  `leave_confirm_yes` as `SECOND_ISLAND_COMPLETE`.
+
+Implementation changes from this pass:
+
+- Added a two-height result-card Continue sweep.
+- Added Windows overrides for `leave_confirm_yes` and `island_rst`.
+- Added promotion/result routing fixes for the known false classifiers.
+- Added deployment-screen verification after mission-preview board clicks.
+- Added resume helpers for continuing from an island map or from an already
+  open deployment screen during discovery runs.

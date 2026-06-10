@@ -124,6 +124,92 @@ def click_point(
     return result
 
 
+def click_dialogue_textbox_sweep() -> dict[str, Any]:
+    """Dismiss result/advisor dialogue boxes whose active hitbox varies a bit."""
+    points = [
+        (875, 520),
+        (1040, 520),
+        (1280, 520),
+        (1400, 520),
+    ]
+    clicks: list[dict[str, Any]] = []
+    for index, (x, y) in enumerate(points, start=1):
+        clicks.append(
+            click_point(
+                f"dialogue_textbox_sweep_{index}",
+                x,
+                y,
+                settle_seconds=0.15,
+                hold_seconds=0.16,
+            )
+        )
+    return {"status": "OK", "control": "dialogue_textbox", "clicks": clicks}
+
+
+def click_reward_continue_sweep() -> dict[str, Any]:
+    """Click the two observed Region Secured / reward Continue button heights."""
+    points = [
+        (1647, 1018),
+        (1647, 985),
+    ]
+    clicks: list[dict[str, Any]] = []
+    for index, (x, y) in enumerate(points, start=1):
+        clicks.append(
+            click_point(
+                f"reward_continue_sweep_{index}",
+                x,
+                y,
+                settle_seconds=0.25,
+                hold_seconds=0.18,
+            )
+        )
+    return {"status": "OK", "control": "reward_continue", "clicks": clicks}
+
+
+def click_transition_control(
+    control: str,
+    *,
+    settle_seconds: float = 0.05,
+    hold_seconds: float | None = None,
+) -> dict[str, Any]:
+    if control == "dialogue_textbox":
+        return click_dialogue_textbox_sweep()
+    if control == "reward_continue":
+        return click_reward_continue_sweep()
+    return click_control(
+        control,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+
+
+def dispatch_click_plan(clicks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    dispatched: list[dict[str, Any]] = []
+    for index, op in enumerate(clicks):
+        op_type = op.get("type")
+        if op_type == "wait":
+            duration = float(op.get("duration") or 0.0)
+            time.sleep(max(0.0, duration))
+            dispatched.append({"index": index, "type": "wait", "duration": duration})
+            continue
+        if op_type != "left_click":
+            dispatched.append({"index": index, "type": op_type, "status": "SKIPPED"})
+            continue
+        x = op.get("window_x", op.get("x"))
+        y = op.get("window_y", op.get("y"))
+        if x is None or y is None:
+            raise FastRunError(f"click plan op missing coordinates: {op}")
+        click = click_point(
+            str(op.get("description") or f"click_plan_{index}"),
+            int(x),
+            int(y),
+            settle_seconds=0.05,
+            hold_seconds=0.18,
+        )
+        dispatched.append({"index": index, "type": "left_click", "click": click})
+    return dispatched
+
+
 def capture(prefix: str) -> Path:
     bounds = get_window_bounds()
     if bounds is None:
@@ -148,6 +234,35 @@ def visible_ui_name() -> str:
         return str(_lightning_visible_ui_snapshot().get("visible_ui") or "unknown")
     except Exception as exc:
         return f"unknown:{exc}"
+
+
+def click_mission_preview_until_deployment(
+    *,
+    settle_seconds: float,
+    max_attempts: int = 3,
+) -> dict[str, Any]:
+    attempts: list[dict[str, Any]] = []
+    for attempt_index in range(1, max_attempts + 1):
+        click = click_control("mission_preview_board", settle_seconds=settle_seconds)
+        time.sleep(0.5)
+        visible = _lightning_visible_ui_snapshot(include_ocr=False)
+        attempt = {
+            "attempt": attempt_index,
+            "click": click,
+            "visible_ui": compact_visible_ui(visible),
+        }
+        attempts.append(attempt)
+        if visible.get("visible_ui") == "deployment_screen":
+            return {"status": "OK", "attempts": attempts}
+    raise FastRunError(
+        json.dumps(
+            {
+                "status": "MISSION_PREVIEW_DID_NOT_OPEN_DEPLOYMENT",
+                "attempts": attempts,
+            },
+            default=str,
+        )
+    )
 
 
 def wait_for_fresh_heartbeat(
@@ -509,10 +624,6 @@ def clear_control_for_visible_ui(
             return "perfect_reward_grid"
         return "panel_continue"
     if "region secured" in text:
-        if previous_control != "dialogue_textbox" and (
-            "saved" in text or "you've" in text or "you have" in text
-        ):
-            return "dialogue_textbox"
         return "reward_continue"
 
     if visible_name == "island_complete_leave":
@@ -521,12 +632,26 @@ def clear_control_for_visible_ui(
         return "menu_continue"
     if visible_name == "promotion_panel":
         return "modal_understood"
+    if visible_name == "kia_panel" and visible.get("recommended_control") == "kia_understood":
+        return "modal_understood"
     if visible_name == "pod_open_panel":
         return "pod_open_door"
     if visible_name == "perfect_island_panel":
         return "panel_continue"
     if visible_name == "perfect_reward_choice":
-        return "perfect_reward_grid"
+        if previous_control in {"panel_continue", "bottom_continue"}:
+            return "perfect_reward_grid"
+        return "reward_continue"
+    if visible_name == "island_map" and previous_control == "reward_continue":
+        return "leave_island"
+    if visible_name == "island_map_or_unknown" and previous_control == "reward_continue":
+        return "modal_understood"
+    if previous_control == "leave_island":
+        return "leave_confirm_yes"
+    if previous_control == "leave_confirm_yes":
+        return "island_rst"
+    if previous_control == "island_rst":
+        return "bottom_continue"
     if visible_name in TERMINAL_OR_CLEAR_UIS or visible_name in {
         "combat_screen",
         "island_map_or_unknown",
@@ -782,6 +907,10 @@ def paused_solve_execute_and_end_turn(
         action_index = int(action["index"])
         log(f"execute stored paused action {action_index}")
         executed = cmd_execute(action_index)
+        click_dispatch = None
+        if executed.get("clicks"):
+            log(f"dispatch stored action {action_index} click plan")
+            click_dispatch = dispatch_click_plan(list(executed.get("clicks") or []))
         verified = cmd_verify_action(action_index)
         delayed_verify_retry = None
         retryable_delayed_categories = {"terrain", "death"}
@@ -811,6 +940,7 @@ def paused_solve_execute_and_end_turn(
             {
                 "action_index": action_index,
                 "execute": executed,
+                "click_dispatch": click_dispatch,
                 "verify": verified,
                 "delayed_verify_retry": delayed_verify_retry,
             }
@@ -823,6 +953,7 @@ def paused_solve_execute_and_end_turn(
                         "turn_index": turn_index,
                         "action_index": action_index,
                         "execute": executed,
+                        "click_dispatch": click_dispatch,
                         "verify": verified,
                     },
                     default=str,
@@ -962,7 +1093,9 @@ def run_current_mission_from_island_map(
         region = click_largest_red_mission()
         marks["red_mission_click"] = elapsed(timer_start)
 
-    click_control("mission_preview_board", settle_seconds=args.preview_settle_seconds)
+    preview = click_mission_preview_until_deployment(
+        settle_seconds=args.preview_settle_seconds,
+    )
     marks["preview_board_click"] = elapsed(timer_start)
 
     time.sleep(args.deploy_ready_wait_seconds)
@@ -1012,6 +1145,7 @@ def run_current_mission_from_island_map(
                 "terminal_turn_index": turn_index,
                 "marks": marks,
                 "red_region": region,
+                "preview": preview,
                 "deploy": deploy,
                 "turns": turns,
             }
@@ -1021,6 +1155,7 @@ def run_current_mission_from_island_map(
         "mission_index": mission_index,
         "marks": marks,
         "red_region": region,
+        "preview": preview,
         "deploy": deploy,
         "turns": turns,
         "final_visible_ui": compact_visible_ui(final_visible),
@@ -1055,7 +1190,7 @@ def clear_mission_result_to_island_map(
             previous_control=previous_control,
         )
         try:
-            click = click_control(control, settle_seconds=1.2)
+            click = click_transition_control(control, settle_seconds=1.2)
             step["control"] = control
             step["click"] = click
         except Exception as exc:
@@ -1066,6 +1201,12 @@ def clear_mission_result_to_island_map(
         previous_control = control
         steps.append(step)
         time.sleep(0.6)
+        if control == "leave_confirm_yes" and mission_index >= 10:
+            return {
+                "status": "SECOND_ISLAND_COMPLETE",
+                "mission_index": mission_index,
+                "steps": steps,
+            }
         try:
             probe = click_largest_red_mission()
         except Exception as exc:
@@ -1142,6 +1283,13 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
             if transition.get("status") == "ISLAND_COMPLETE_LEAVE_VISIBLE":
                 return {
                     "status": "ISLAND_COMPLETE_LEAVE_VISIBLE",
+                    "marks": marks,
+                    "missions": missions,
+                    "transitions": transitions,
+                }
+            if transition.get("status") == "SECOND_ISLAND_COMPLETE":
+                return {
+                    "status": "SECOND_ISLAND_COMPLETE",
                     "marks": marks,
                     "missions": missions,
                     "transitions": transitions,
