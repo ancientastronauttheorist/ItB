@@ -10,6 +10,17 @@ This is the operational runbook for running Into the Breach through the bridge a
 
 **Fallback manual play** (`click_action <i>` / `verify_action <i>` / `click_end_turn`) exists for when the bridge is unavailable — don't use it otherwise.
 
+**Pause-menu heartbeat rule.** The Lua bridge heartbeat is written from mission
+`BaseUpdate`. A real pause menu can suspend `BaseUpdate`, so the heartbeat will
+go stale after about five seconds while paused. This is normal and safe when the
+pause menu is visibly open; do not treat it as a dead bridge by itself. The
+live-burst boundary is the important part: after clicking Continue or toggling
+Escape out of pause, wait until the heartbeat is fresh again before `read`,
+`solve`, `deploy_recommended`, `auto_turn`, or any bridge combat command. If it
+does not become fresh after unpause, or if a bridge command reports stale
+heartbeat while the game should be ticking, recover from a fresh read plus
+solve and do not reuse any old plan.
+
 **Coordinate mapping:**
 - Bridge `(x, y)` → visual: `Row = 8 - x`, `Col = chr(72 - y)`. Example: bridge `(3, 5)` = `C5`. Always use A1–H8 visual notation in communication.
 - MCP pixel coords: `grid_to_mcp(x, y)` (in `src/control/executor.py`) or `python3 tile_hover.py <TILE>`. Both auto-detect window position via Quartz on macOS or Win32 APIs on Windows.
@@ -34,6 +45,9 @@ Each phase: read → act → verify. Detailed command semantics are in **Game Lo
 
 - **Unexpected screen:** screenshot, log to decision log, diagnose visually.
 - **State not updating:** `refresh_bridge_state`. If bridge dead, retry save-file verify up to 5× with 1.5s delay.
+- **Stale heartbeat while paused:** expected. Keep using pause as the safe
+  thinking surface. Before live bridge work, unpause and wait for the heartbeat
+  to refresh; only escalate if it stays stale after unpause.
 - **Windows state-file fallback:** the ModLoader can leave the freshest valid bridge payload in `itb_state.json.tmp` while `itb_state.json` is stale. `src/bridge/protocol.py` reads the newest valid state candidate. When the visible screen contradicts a combat read on Windows, inspect the screen and avoid resuming an old solution until a fresh bridge/read agrees.
 - **Solve/auto_turn stall:** inspect the latest `recordings/<run_id>/mNN_turn_NN_solve_input.json` first. That file captures the exact Rust payload before solving starts, so reproduce with `itb_solver.solve` / `solve_top_k` / `solve_beam` from it. Do not rely on the next `*_board.json` after a stall; live recovery may have already executed actions or advanced animations, making that board post-action or stale.
 - **Grid power = 0:** log, snapshot, analyze.

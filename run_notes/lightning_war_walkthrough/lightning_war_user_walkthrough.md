@@ -912,3 +912,61 @@ Automation rule:
   Escape toggle is desired. It now uses the proven scancode path.
 - `lightning_ui pause` is also valid as a visual/icon fallback after the Windows
   coordinate override.
+
+## Bridge Heartbeat, Focus, And Pause
+
+Question:
+
+- Determine what makes the Lua bridge heartbeat go stale: Codex focus, the pause
+  menu, or something else.
+
+Findings:
+
+- The heartbeat is written from `Mission.BaseUpdate` in
+  `src/bridge/modloader.lua`.
+- Clicking into the Codex window did **not** stop the heartbeat in the live
+  Windows setup. While Codex was the active window for about `9s`, the heartbeat
+  age stayed around `0.0-0.01s`, and both `alive_1s` and `alive_5s` remained
+  true.
+- A real ITB pause menu opened with the Windows scancode Escape **did** stop the
+  heartbeat. The heartbeat age increased steadily; after about `1.26s`,
+  `alive_1s` became false, and after about `5.28s`, `alive_5s` became false.
+- Unpausing with the same raw Escape path revived the heartbeat immediately. The
+  first post-unpause sample showed heartbeat age around `0.012s` and both
+  liveness checks true.
+
+Important correction:
+
+- A previous pause probe used generic `pyautogui.press("esc")`, which Into the
+  Breach can ignore on Windows. That made it look as though pause did not stale
+  the heartbeat. The valid Windows test must use the shared `press_key("esc")`
+  helper, which routes Escape through raw `SendInput`.
+
+Automation rule:
+
+- Codex focus alone is not a bridge-heartbeat problem when ITB remains visible
+  and ticking.
+- Treat a stale heartbeat while the pause menu is open as normal and safe, not
+  as a bridge failure.
+- Do not send bridge combat commands after sitting in the pause menu for more
+  than about `5s` without first unpausing and waiting for a fresh heartbeat.
+- The fast walkthrough now has a post-`menu_continue` heartbeat guard before
+  `auto_turn`: wait until `is_bridge_alive(max_stale_sec=1.0)` is true, then
+  begin solver/bridge execution.
+
+Repeat toggle probe:
+
+- Starting from a long-paused menu state, heartbeat age was already stale at
+  about `169s`.
+- Three raw-Escape unpause/pause cycles behaved the same way:
+  - Immediately after unpause, heartbeat age reset to about `0.002-0.005s`, and
+    both `alive_1s` and `alive_5s` were true.
+  - Immediately after pausing again, heartbeat age began increasing from about
+    `0.25s`.
+  - Around `1.26s` paused, `alive_1s` became false.
+  - Around `5.27s` paused, `alive_5s` became false.
+- Conclusion: the pause menu reliably suspends the Lua `BaseUpdate` heartbeat;
+  unpause reliably restarts it on the next tick.
+- Loop implication: pause can remain the safe thinking surface for Lightning
+  War. The bridge-heartbeat invariant moves to the live burst boundary: after
+  leaving pause, wait for a fresh heartbeat, then solve/execute.

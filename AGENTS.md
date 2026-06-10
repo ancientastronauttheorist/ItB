@@ -97,6 +97,13 @@ bridge, verifies after each sub-action, re-solves on desync when possible, and
 emits an End Turn click plan. It waits at entry for both
 `phase == combat_player` and `active_mechs > 0`.
 
+The Lua bridge heartbeat is written from mission `BaseUpdate`. A visible pause
+menu can suspend that tick and make the heartbeat stale; this is expected while
+paused and is not by itself a bridge failure. Before any bridge combat command,
+unpause or otherwise return to a ticking game state and wait for a fresh
+heartbeat. If the heartbeat remains stale after unpausing, or goes stale during
+a bridge command, recover from a fresh `read` plus `solve`.
+
 Typical turn rhythm:
 
 ```text
@@ -131,8 +138,11 @@ Never call bridge sub-action commands such as `move_mech`, `attack_mech`,
    `multi_tool_use.parallel`, chain them with `&&`, pipe them to filters, or run
    them beside screenshots/UI inspection.
 2. Always verify after each mech action. `auto_turn` does this automatically.
-3. After a crash, timeout, stale heartbeat, or desync recovery, start from a
-   fresh `read` plus `solve`; never resume an old solution.
+3. After a crash, timeout, stale heartbeat outside a verified pause menu, stale
+   heartbeat that persists after unpausing, or desync recovery, start from a
+   fresh `read` plus `solve`; never resume an old solution. A stale heartbeat
+   while visibly paused is expected; unpause and wait for a fresh heartbeat
+   before bridge combat commands.
 4. Trust the solver by default. Do not override it unless it times out, returns
    empty, or an explicit dirty/manual protocol authorizes the exact line.
 5. Use all mech actions every turn unless the solver or a safety gate says

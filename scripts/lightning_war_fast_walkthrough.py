@@ -25,6 +25,7 @@ for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")
 
 from src.capture.window import get_window_bounds, take_screenshot
+from src.bridge.protocol import HEARTBEAT_FILE, is_bridge_alive
 from src.control.mac_click import (
     click_known_window_control,
     click_title_new_game_dynamic,
@@ -119,6 +120,51 @@ def visible_ui_name() -> str:
         return str(_lightning_visible_ui_snapshot().get("visible_ui") or "unknown")
     except Exception as exc:
         return f"unknown:{exc}"
+
+
+def wait_for_fresh_heartbeat(
+    *,
+    label: str,
+    max_seconds: float = 2.5,
+    poll_seconds: float = 0.05,
+) -> dict[str, Any]:
+    """Wait for the Lua BaseUpdate heartbeat to prove the game is ticking."""
+    start = time.perf_counter()
+    attempts: list[dict[str, Any]] = []
+    while True:
+        age: float | None = None
+        try:
+            if HEARTBEAT_FILE.exists():
+                age = time.time() - HEARTBEAT_FILE.stat().st_mtime
+        except OSError:
+            age = None
+        alive = is_bridge_alive(max_stale_sec=1.0)
+        attempt = {
+            "elapsed_seconds": elapsed(start),
+            "heartbeat_age_sec": None if age is None else round(age, 3),
+            "alive_1s": alive,
+        }
+        attempts.append(attempt)
+        if alive:
+            return {
+                "status": "OK",
+                "label": label,
+                "elapsed_seconds": elapsed(start),
+                "attempts": attempts,
+            }
+        if time.perf_counter() - start >= max_seconds:
+            raise FastRunError(
+                json.dumps(
+                    {
+                        "status": "HEARTBEAT_STALE_AFTER_FOCUS",
+                        "label": label,
+                        "max_seconds": max_seconds,
+                        "attempts": attempts,
+                    },
+                    default=str,
+                )
+            )
+        time.sleep(max(0.01, poll_seconds))
 
 
 def click_title_new_game() -> dict[str, Any]:
@@ -413,6 +459,8 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
 
     click_control("menu_continue", settle_seconds=0.15)
     marks["unpaused_for_auto_turn"] = elapsed(timer_start)
+    heartbeat = wait_for_fresh_heartbeat(label="after_menu_continue")
+    marks["heartbeat_fresh_for_auto_turn"] = elapsed(timer_start)
 
     log("auto_turn solve+execute")
     turn = cmd_auto_turn(
@@ -444,6 +492,7 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
         "marks": marks,
         "red_region": region,
         "deploy": deploy,
+        "heartbeat": heartbeat,
         "auto_turn_status": turn_status,
         "post_end_turn": post_end,
     }

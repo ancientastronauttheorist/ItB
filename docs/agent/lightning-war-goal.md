@@ -162,7 +162,8 @@ Address these explicitly:
    another region.
 2. Route preview, Start Mission, and deployment must each have separate proof.
    Preview OCR alone is not Start authority in speed mode.
-3. Stale bridge heartbeat or stale combat JSON must trigger fresh state
+3. Stale bridge heartbeat outside a verified pause menu, stale heartbeat that
+   persists after unpausing, or stale combat JSON must trigger fresh state
    recovery. Never resume an old solve after crash, timeout, desync, or reload.
 4. Computer Use may be unavailable. If repo/macOS click helpers are used as a
    fallback, log that fallback and keep the click path proof-gated.
@@ -273,7 +274,8 @@ Speed mode must not:
 - blind-click unknown UI
 - bypass stop signs
 - treat OCR as sufficient Start authority without policy approval
-- ignore stale bridge heartbeat
+- ignore stale bridge heartbeat while the game should be ticking; stale
+  heartbeat is expected while visibly paused, but must refresh after unpause
 - continue after repeated identical blockers
 - make manual combat decisions
 
