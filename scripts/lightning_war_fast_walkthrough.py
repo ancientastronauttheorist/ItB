@@ -34,8 +34,11 @@ from src.control.mac_click import (
 )
 from src.loop.commands import (
     _lightning_ensure_pause_state,
+    _lightning_end_turn_retryable,
     _lightning_extract_red_regions_from_image,
     _lightning_live_snapshot,
+    _lightning_observed_terminal_transition,
+    _observe_end_turn_after_click,
     _lightning_visible_ui_snapshot,
     _lightning_wait_for_deploy_confirm_live_bridge,
     cmd_auto_turn,
@@ -46,6 +49,17 @@ from src.loop.commands import (
 
 APP_NAME = "Into the Breach"
 LIGHTNING_UI_BASE_SIZE = (1280, 748)
+TIMING_SCREENSHOT_DIR = ROOT / "run_notes" / "lightning_war_walkthrough" / "timing_screenshots"
+TERMINAL_OR_CLEAR_UIS = {
+    "bottom_continue_panel",
+    "island_complete_leave",
+    "kia_panel",
+    "perfect_island_panel",
+    "perfect_reward_choice",
+    "pod_open_panel",
+    "promotion_panel",
+    "reward_panel",
+}
 
 
 class FastRunError(RuntimeError):
@@ -111,6 +125,16 @@ def capture(prefix: str) -> Path:
     if bounds is None:
         raise FastRunError("could not find Into the Breach window bounds")
     path = Path(tempfile.gettempdir()) / f"{prefix}_{int(time.time() * 1000)}.png"
+    take_screenshot(path, bounds=bounds)
+    return path
+
+
+def capture_timing(prefix: str) -> Path:
+    bounds = get_window_bounds()
+    if bounds is None:
+        raise FastRunError("could not find Into the Breach window bounds")
+    TIMING_SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+    path = TIMING_SCREENSHOT_DIR / f"{prefix}_{int(time.time() * 1000)}.png"
     take_screenshot(path, bounds=bounds)
     return path
 
@@ -410,6 +434,250 @@ def wait_for_post_end_turn_player_turn(
         time.sleep(max(0.05, poll_seconds))
 
 
+def compact_live_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": snapshot.get("status"),
+        "phase": snapshot.get("phase"),
+        "turn": snapshot.get("turn"),
+        "active_mechs": snapshot.get("active_mechs"),
+        "grid_power": snapshot.get("grid_power"),
+        "in_active_mission": snapshot.get("in_active_mission"),
+        "bridge_heartbeat_alive": snapshot.get("bridge_heartbeat_alive"),
+        "bridge_heartbeat_stale": snapshot.get("bridge_heartbeat_stale"),
+    }
+
+
+def compact_visible_ui(visible: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": visible.get("status"),
+        "visible_ui": visible.get("visible_ui"),
+        "recommended_control": visible.get("recommended_control"),
+        "confidence": visible.get("confidence"),
+        "screenshot_path": visible.get("screenshot_path"),
+        "ocr_text": visible.get("ocr_text"),
+        "terminal_outcome": visible.get("terminal_outcome"),
+        "terminal_outcome_visible": visible.get("terminal_outcome_visible"),
+        "region_secured_visible": visible.get("region_secured_visible"),
+    }
+
+
+def wait_for_post_end_turn_ready_or_terminal(
+    *,
+    turn_index: int,
+    timer_start: float,
+    min_wait_seconds: float,
+    max_wait_seconds: float,
+    terminal_visual_settle_seconds: float,
+    poll_seconds: float = 0.5,
+) -> dict[str, Any]:
+    log(f"wait at least {min_wait_seconds:.1f}s after Turn {turn_index} End Turn")
+    start = time.perf_counter()
+    time.sleep(max(0.0, min_wait_seconds))
+    samples: list[dict[str, Any]] = []
+    first_bridge_terminal_elapsed: float | None = None
+    while True:
+        elapsed_after_end = round(time.perf_counter() - start, 3)
+        sample_shot = capture_timing(f"turn_{turn_index}_post_end")
+        visible = _lightning_visible_ui_snapshot(include_ocr=False)
+        try:
+            snapshot = _lightning_live_snapshot()
+        except Exception as exc:
+            snapshot = {"status": "ERROR", "error": str(exc)}
+        sample = {
+            "elapsed_after_end_turn_seconds": elapsed_after_end,
+            "game_timer_seconds": elapsed(timer_start),
+            "screenshot_path": str(sample_shot),
+            "visible_ui": compact_visible_ui(visible),
+            "live_snapshot": compact_live_snapshot(snapshot),
+        }
+        samples.append(sample)
+        visible_name = visible.get("visible_ui")
+        phase = snapshot.get("phase") if isinstance(snapshot, dict) else None
+        active = snapshot.get("active_mechs") if isinstance(snapshot, dict) else None
+        log(
+            "post-end sample "
+            f"turn={turn_index} +{elapsed_after_end:.1f}s "
+            f"ui={visible_name} phase={phase} active={active} "
+            f"shot={sample_shot}"
+        )
+        if visible.get("status") == "OK" and visible_name in TERMINAL_OR_CLEAR_UIS:
+            audited_visible = _lightning_visible_ui_snapshot(include_ocr=True)
+            return {
+                "status": "TERMINAL_OR_CLEAR_UI",
+                "reason": "visible_terminal_or_clear_panel",
+                "turn_index": turn_index,
+                "elapsed_seconds": elapsed_after_end,
+                "game_timer_seconds": elapsed(timer_start),
+                "samples": samples,
+                "visible_ui": compact_visible_ui(audited_visible),
+                "snapshot": compact_live_snapshot(snapshot),
+            }
+        bridge_terminal = (
+            isinstance(snapshot, dict)
+            and snapshot.get("status") == "OK"
+            and (
+                snapshot.get("in_active_mission") is False
+                or snapshot.get("phase") in {"between_missions", "mission_ending"}
+                or (
+                    snapshot.get("phase") == "unknown"
+                    and int(snapshot.get("active_mechs") or 0) == 0
+                    and int(snapshot.get("deployment_zone_count") or 0) == 0
+                )
+            )
+        )
+        if bridge_terminal:
+            if first_bridge_terminal_elapsed is None:
+                first_bridge_terminal_elapsed = elapsed_after_end
+                log(
+                    "bridge terminal state seen; settling visible result "
+                    f"for {terminal_visual_settle_seconds:.1f}s"
+                )
+            if elapsed_after_end - first_bridge_terminal_elapsed >= terminal_visual_settle_seconds:
+                audited_visible = _lightning_visible_ui_snapshot(include_ocr=True)
+                return {
+                    "status": "TERMINAL_OR_CLEAR_UI",
+                    "reason": "bridge_terminal_visual_settled",
+                    "turn_index": turn_index,
+                    "elapsed_seconds": elapsed_after_end,
+                    "game_timer_seconds": elapsed(timer_start),
+                    "samples": samples,
+                    "visible_ui": compact_visible_ui(audited_visible),
+                    "snapshot": compact_live_snapshot(snapshot),
+                    "first_bridge_terminal_elapsed_seconds": first_bridge_terminal_elapsed,
+                    "terminal_visual_settle_seconds": terminal_visual_settle_seconds,
+                }
+        if (
+            isinstance(snapshot, dict)
+            and snapshot.get("status") == "OK"
+            and snapshot.get("phase") == "combat_player"
+            and int(snapshot.get("active_mechs") or 0) > 0
+            and snapshot.get("bridge_heartbeat_alive") is not False
+            and snapshot.get("bridge_heartbeat_stale") is not True
+        ):
+            pause = press_key(
+                "esc",
+                description=f"pause after Turn {turn_index} enemy turn",
+                app_name=APP_NAME,
+                settle_seconds=0.25,
+            )
+            return {
+                "status": "PLAYER_TURN_READY",
+                "reason": "post_end_turn_player_ready",
+                "turn_index": turn_index,
+                "elapsed_seconds": elapsed_after_end,
+                "game_timer_seconds": elapsed(timer_start),
+                "samples": samples,
+                "snapshot": compact_live_snapshot(snapshot),
+                "pause": pause,
+            }
+        if time.perf_counter() - start >= max_wait_seconds:
+            raise FastRunError(
+                json.dumps(
+                    {
+                        "status": "POST_END_TURN_TIMEOUT",
+                        "turn_index": turn_index,
+                        "max_wait_seconds": max_wait_seconds,
+                        "samples": samples,
+                    },
+                    default=str,
+                )
+            )
+        time.sleep(max(0.05, poll_seconds))
+
+
+def solve_execute_and_end_turn(
+    *,
+    turn_index: int,
+    timer_start: float,
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    click_control("menu_continue", settle_seconds=0.15)
+    unpaused_mark = elapsed(timer_start)
+    heartbeat = wait_for_fresh_heartbeat(label=f"turn_{turn_index}_after_menu_continue")
+    heartbeat_mark = elapsed(timer_start)
+
+    log(f"auto_turn solve+execute turn={turn_index}")
+    turn = cmd_auto_turn(
+        time_limit=args.time_limit,
+        max_wait=args.auto_turn_max_wait,
+        resume_before_execute=False,
+        lightning_speed_loss_policy=True,
+    )
+    turn_plan_ready = (
+        turn.get("status") == "PLAN"
+        and int(turn.get("actions_completed") or 0) > 0
+        and turn.get("bridge_ack")
+    )
+    if turn.get("status") not in {"OK", "PASS"} and not turn_plan_ready:
+        raise FastRunError(f"auto_turn failed on turn {turn_index}: {turn}")
+    auto_turn_done_mark = elapsed(timer_start)
+
+    click_control("end_turn", settle_seconds=0.0)
+    end_turn_mark = elapsed(timer_start)
+    observed = _observe_end_turn_after_click(turn, timeout=2.0, poll_interval=0.2)
+    retry_click = None
+    retry_observed = None
+    if _lightning_end_turn_retryable(observed, turn):
+        retry_click = click_control("end_turn", settle_seconds=0.0)
+        retry_observed = _observe_end_turn_after_click(
+            turn,
+            timeout=4.0,
+            poll_interval=0.2,
+        )
+        observed = retry_observed
+    observed_status = observed.get("status")
+    observer_missed_possible_terminal = observed_status != "OK"
+    if observer_missed_possible_terminal:
+        log(
+            "End Turn observer did not see a clean transition; "
+            "continuing into terminal/player-turn watcher"
+        )
+    if observed_status == "OK" and _lightning_observed_terminal_transition(observed):
+        log("bridge terminal transition observed; sampling visible result panel")
+    try:
+        post_end = wait_for_post_end_turn_ready_or_terminal(
+            turn_index=turn_index,
+            timer_start=timer_start,
+            min_wait_seconds=args.post_end_turn_wait_seconds,
+            max_wait_seconds=args.post_end_turn_max_wait_seconds,
+            terminal_visual_settle_seconds=args.terminal_visual_settle_seconds,
+            poll_seconds=args.result_screenshot_cadence,
+        )
+    except FastRunError:
+        if observer_missed_possible_terminal:
+            raise FastRunError(
+                json.dumps(
+                    {
+                        "status": "END_TURN_CLICK_NOT_OBSERVED",
+                        "turn_index": turn_index,
+                        "observed": observed,
+                        "retry_click": retry_click,
+                        "retry_observed": retry_observed,
+                    },
+                    default=str,
+                )
+            )
+        raise
+    return {
+        "turn_index": turn_index,
+        "marks": {
+            "unpaused_for_auto_turn": unpaused_mark,
+            "heartbeat_fresh_for_auto_turn": heartbeat_mark,
+            "auto_turn_done": auto_turn_done_mark,
+            "end_turn_click": end_turn_mark,
+            "post_end_observed": elapsed(timer_start),
+        },
+        "heartbeat": heartbeat,
+        "auto_turn_status": turn.get("status") or turn.get("error"),
+        "actions_completed": turn.get("actions_completed"),
+        "turn": turn.get("turn"),
+        "end_turn_observed": observed,
+        "end_turn_retry_click": retry_click,
+        "end_turn_retry_observed": retry_observed,
+        "post_end_turn": post_end,
+    }
+
+
 def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
     marks: dict[str, float] = {}
     run_start = time.perf_counter()
@@ -457,44 +725,66 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
             "pause": pause,
         }
 
-    click_control("menu_continue", settle_seconds=0.15)
-    marks["unpaused_for_auto_turn"] = elapsed(timer_start)
-    heartbeat = wait_for_fresh_heartbeat(label="after_menu_continue")
-    marks["heartbeat_fresh_for_auto_turn"] = elapsed(timer_start)
-
-    log("auto_turn solve+execute")
-    turn = cmd_auto_turn(
-        time_limit=args.time_limit,
-        max_wait=args.auto_turn_max_wait,
-        resume_before_execute=False,
-        lightning_speed_loss_policy=True,
+    turns: list[dict[str, Any]] = []
+    first_turn = solve_execute_and_end_turn(
+        turn_index=1,
+        timer_start=timer_start,
+        args=args,
     )
-    turn_status = turn.get("status") or turn.get("error")
-    turn_plan_ready = (
-        turn.get("status") == "PLAN"
-        and int(turn.get("actions_completed") or 0) > 0
-        and turn.get("bridge_ack")
-    )
-    if turn.get("status") not in {"OK", "PASS"} and not turn_plan_ready:
-        raise FastRunError(f"auto_turn failed: {turn}")
-    marks["auto_turn_done"] = elapsed(timer_start)
-
-    click_control("end_turn", settle_seconds=0.0)
-    marks["end_turn_click"] = elapsed(timer_start)
-
-    post_end = wait_for_post_end_turn_player_turn(
-        min_wait_seconds=args.post_end_turn_wait_seconds,
-        max_wait_seconds=args.post_end_turn_max_wait_seconds,
-    )
-    marks["post_end_turn_read"] = elapsed(timer_start)
+    turns.append(first_turn)
+    marks["turn_1_end_turn_click"] = first_turn["marks"]["end_turn_click"]
+    marks["turn_1_post_end_observed"] = first_turn["marks"]["post_end_observed"]
+    if first_turn["post_end_turn"].get("status") != "PLAYER_TURN_READY":
+        return {
+            "status": "OK",
+            "reason": "stopped_after_turn_1_terminal_or_clear",
+            "marks": marks,
+            "red_region": region,
+            "deploy": deploy,
+            "turns": turns,
+        }
+    if not args.full_mission:
+        return {
+            "status": "OK",
+            "marks": marks,
+            "red_region": region,
+            "deploy": deploy,
+            "heartbeat": first_turn.get("heartbeat"),
+            "auto_turn_status": first_turn.get("auto_turn_status"),
+            "post_end_turn": first_turn.get("post_end_turn"),
+            "turns": turns,
+        }
+    for turn_index in range(2, args.max_mission_turns + 1):
+        turn_record = solve_execute_and_end_turn(
+            turn_index=turn_index,
+            timer_start=timer_start,
+            args=args,
+        )
+        turns.append(turn_record)
+        marks[f"turn_{turn_index}_end_turn_click"] = (
+            turn_record["marks"]["end_turn_click"]
+        )
+        marks[f"turn_{turn_index}_post_end_observed"] = (
+            turn_record["marks"]["post_end_observed"]
+        )
+        if turn_record["post_end_turn"].get("status") != "PLAYER_TURN_READY":
+            return {
+                "status": "OK",
+                "reason": "terminal_or_clear_after_end_turn",
+                "terminal_turn_index": turn_index,
+                "marks": marks,
+                "red_region": region,
+                "deploy": deploy,
+                "turns": turns,
+            }
+    final_visible = _lightning_visible_ui_snapshot(include_ocr=True)
     return {
-        "status": "OK",
+        "status": "MAX_TURNS_REACHED",
         "marks": marks,
         "red_region": region,
         "deploy": deploy,
-        "heartbeat": heartbeat,
-        "auto_turn_status": turn_status,
-        "post_end_turn": post_end,
+        "turns": turns,
+        "final_visible_ui": compact_visible_ui(final_visible),
     }
 
 
@@ -522,13 +812,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--red-wait-seconds", type=float, default=0.5)
     parser.add_argument("--preview-settle-seconds", type=float, default=0.5)
     parser.add_argument("--deploy-ready-wait-seconds", type=float, default=0.5)
-    parser.add_argument("--opening-enemy-wait-seconds", type=float, default=16.0)
+    parser.add_argument("--opening-enemy-wait-seconds", type=float, default=7.0)
     parser.add_argument("--opening-enemy-max-wait-seconds", type=float, default=28.0)
     parser.add_argument("--post-end-turn-wait-seconds", type=float, default=8.0)
     parser.add_argument("--post-end-turn-max-wait-seconds", type=float, default=25.0)
+    parser.add_argument("--result-screenshot-cadence", type=float, default=0.5)
+    parser.add_argument("--terminal-visual-settle-seconds", type=float, default=2.5)
+    parser.add_argument("--max-mission-turns", type=int, default=6)
     parser.add_argument("--confirm-retries", type=int, default=2)
     parser.add_argument("--time-limit", type=float, default=10.0)
     parser.add_argument("--auto-turn-max-wait", type=float, default=5.0)
+    parser.add_argument(
+        "--full-mission",
+        action="store_true",
+        help="Continue combat turns until a mission-end/reward panel is visible.",
+    )
     parser.add_argument(
         "--stop-after-pause",
         action="store_true",

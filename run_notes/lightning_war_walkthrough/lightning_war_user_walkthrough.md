@@ -970,3 +970,158 @@ Repeat toggle probe:
 - Loop implication: pause can remain the safe thinking surface for Lightning
   War. The bridge-heartbeat invariant moves to the live burst boundary: after
   leaving pause, wait for a fresh heartbeat, then solve/execute.
+
+## Opening Enemy Turn Readiness Timing
+
+Question:
+
+- The first enemy turn after deployment appears visually complete before the
+  script notices it. Determine whether bridge or memory evidence can safely
+  identify our first actionable player turn around the `0:19-0:23` game-timer
+  range.
+
+Probe result:
+
+- Starting from main menu, the fast path reached deploy Confirm at about
+  `15.8s` after the Lightning War timer began.
+- Bridge samples after Confirm:
+  - Through about `22.6s` timer-relative, bridge stayed
+    `phase=combat_enemy`, `turn=0`, `active_mechs=0`.
+  - Around `23.6s`, bridge flipped to `phase=combat_player`, `turn=1`, but
+    `active_mechs=0`.
+  - Around `25.7s`, bridge reported `phase=combat_player` with
+    `active_mechs=3`, which is the first safe point for `auto_turn`.
+- Memory context scanning did not provide a reliable turn-ready signal. It
+  selected stale/irrelevant `GameData.current.time`-like values. A focused f32
+  scan found moving timer-like values near `19-29s`, but no direct
+  player-turn/actionability indicator better than the bridge.
+
+Automation rule:
+
+- After deployment Confirm, do not wait a fixed `16s` before polling. Start
+  polling around `7s` after Confirm and require the bridge condition
+  `phase == combat_player` plus `active_mechs > 0`.
+- `phase == combat_player` alone is not enough; in this probe it appeared about
+  `2s` before active mechs were ready.
+
+## Full Mission Fast-Mode Timing Probe
+
+Reference screen:
+
+- Saved a user-identified mission-complete / `Region Secured` reference screen:
+  `run_notes/lightning_war_walkthrough/region_secured_reference_20260609_215847.png`.
+- This screen can include a CEO dialogue box over the `Region Secured` card.
+  The visible Continue button is lower than the generic Windows
+  `reward_continue` calibration; the observed button center was about
+  `(1630, 985)` window-relative on a `2560x1441` window.
+
+Successful full-mission run:
+
+- A full fast-mode run from main menu completed a `Mission_Train` in `3` combat
+  player turns and stopped on a `Region Secured` screen.
+- Important marks from that run:
+  - Timer start: `7.991s` after script launch.
+  - Deploy Confirm live: `15.704s` timer-relative.
+  - First actionable player turn after opening enemy phase:
+    `30.132s` timer-relative.
+  - Turn 1 End Turn click: `41.965s`; next player turn ready at `55.033s`.
+  - Turn 2 End Turn click: `80.040s`; next player turn ready at `92.586s`.
+  - Turn 3 End Turn click: `116.651s`; bridge terminal transition observed at
+    `129.070s`.
+- Practical interpretation: in this run, the mission-complete state was reached
+  about `12.4s` after the final End Turn click, with the game timer around
+  `0:02:09`. A screenshot taken shortly afterward showed the `Region Secured`
+  Continue button visible at game timer `0:02:18`.
+
+Edge cases discovered:
+
+- `End Turn` sometimes needs an observer/retry path. A simple single calibrated
+  click can leave bridge state at `phase=combat_player`, `active_mechs=0`.
+  Reuse the existing `_observe_end_turn_after_click` and retryable-click logic
+  after every visual End Turn click.
+- The visible UI classifier can mislabel the `Region Secured` result panel as
+  `perfect_reward_choice` or `island_map_or_unknown`. Do not rely on classifier
+  name alone for final-result timing.
+- Final mission completion may first show a CEO dialogue over the board/result
+  flow. Treat a non-active-mission bridge snapshot plus visible post-mission
+  dialogue as terminal enough to stop timed combat input and inspect.
+- The stable timing screenshot folder is
+  `run_notes/lightning_war_walkthrough/timing_screenshots/`. Each post-End-Turn
+  sample should write a fresh image there and record both
+  `elapsed_after_end_turn_seconds` and `game_timer_seconds`.
+
+Next automation fix:
+
+- In full-mission mode, after a bridge terminal transition, continue taking
+  visible screenshots for a short window instead of returning immediately.
+- Also stop if bridge says `in_active_mission == false`, even when the UI
+  classifier still says `island_map_or_unknown`, because that covers the
+  post-mission dialogue/result sequence.
+
+Follow-up visual timing from paused post-mission dialogue:
+
+- Starting from a paused post-mission dialogue screen, click pause-menu
+  `Continue`, then capture every `0.5s`.
+- Evidence folder:
+  `run_notes/lightning_war_walkthrough/mission_complete_continue_probe/20260609_222256/`.
+- Contact sheet:
+  `run_notes/lightning_war_walkthrough/mission_complete_continue_probe/20260609_222256/contact_sheet.png`.
+- Observed sequence after unpause:
+  - `+0.001s`: post-mission CEO dialogue over the board.
+  - `+0.501s`: `MISSION COMPLETE` banner visible.
+  - `+1.000s` to `+1.501s`: banner fading / transition.
+  - `+2.001s`: `Region Secured` card is visible with the `Continue` button.
+  - `+2.501s` onward: `Region Secured` card remains stable and clickable.
+- Practical rule: if the loop reaches/pauses on post-mission dialogue after the
+  final End Turn, unpause and wait about `2.0s` before expecting the
+  `Region Secured` Continue button to be available. Use `2.5s` as a safer
+  click delay until we collect more samples.
+
+## Three-Pass Region Secured Validation
+
+Goal:
+
+- Run fast-mode from main menu to the `Region Secured` Continue button several
+  times to validate the timing against varying mission layouts and turn counts.
+
+Observer fix:
+
+- One pre-fix pass reached the `Region Secured` Continue screen visually, but
+  the automation raised `END_TURN_CLICK_NOT_OBSERVED` on the final turn because
+  bridge samples stayed briefly at `phase=combat_player`, `active_mechs=0`
+  before terminal state. The parked snapshot already showed
+  `in_active_mission=false`, `phase=unknown`, `active_mechs=0`,
+  `deployment_zone_count=0`.
+- Fix: if the End Turn observer does not see a clean transition, continue into
+  the post-End-Turn terminal/player-turn watcher. If no terminal or next player
+  turn appears, preserve the strict `END_TURN_CLICK_NOT_OBSERVED` error.
+
+Clean validation passes after the fix:
+
+- Attempt 2: completed in `3` combat turns. Deploy Confirm at `15.865s`,
+  opening player-turn pause at `31.483s`, final End Turn click at `102.652s`,
+  terminal/result watcher returned at `143.454s`. Visual confirmation:
+  `run_notes/lightning_war_walkthrough/attempt_2_current_state.png`, visible
+  game timer `0:02:30`.
+- Attempt 3: completed in `3` combat turns. Deploy Confirm at `15.660s`,
+  opening player-turn pause at `30.033s`, final End Turn click at `111.123s`,
+  terminal/result watcher returned at `148.754s`. Visual confirmation:
+  `run_notes/lightning_war_walkthrough/attempt_3_current_state.png`, visible
+  game timer `0:02:35`.
+- Attempt 4: completed in `4` combat turns. Deploy Confirm at `15.606s`,
+  opening player-turn pause at `25.606s`, final End Turn click at `117.509s`,
+  terminal/result watcher returned at `149.485s`. Visual confirmation:
+  `run_notes/lightning_war_walkthrough/attempt_4_current_state.png`, visible
+  game timer `0:02:33`.
+
+Practical rule:
+
+- The run can require either `3` or `4` player turns depending on the generated
+  mission. Keep `--max-mission-turns 6`.
+- The final-result watcher should allow at least `30s` after each End Turn. In
+  these clean passes, the script reached and confirmed the result screen by
+  about `143.5-149.5s` timer-relative, with the visible game timer around
+  `0:02:30-0:02:35`.
+- Continue treating `in_active_mission=false` plus
+  `phase=unknown/combat_player`, `active_mechs=0`, and no deployment zone as
+  terminal enough to stop combat input and watch for the result panel.
