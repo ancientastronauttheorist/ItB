@@ -971,6 +971,182 @@ Repeat toggle probe:
   War. The bridge-heartbeat invariant moves to the live burst boundary: after
   leaving pause, wait for a fresh heartbeat, then solve/execute.
 
+## Paused Read And Solver Test
+
+Question:
+
+- Can the loop save in-game timer time by staying in the pause menu while
+  reading bridge state and running the Rust solver, or do those steps require a
+  live Lua heartbeat?
+
+Test setup:
+
+- Ran the fast walkthrough from the title screen with `--stop-after-pause`.
+- It reached turn `1`, mission `Mission_Tides`, then paused after the opening
+  enemy turn at about `30.628s` timer-relative.
+- Deployment was:
+  - ElectricMech at `E5`.
+  - WallMech at `F6`.
+  - RockartMech at `B5`.
+
+Observed result:
+
+- After sitting paused long enough for the bridge heartbeat to be stale,
+  `game_loop.py read` still succeeded from the bridge and returned
+  `phase=combat_player`, `turn=1`, `active_mechs=3`, grid `5/7`.
+- The measured heartbeat age before the second read was about `64.8s`;
+  `alive_1s=false` and `alive_5s=false`.
+- `game_loop.py solve --time-limit 10` also succeeded while still paused.
+  Rust solver time was `0.22s`, with `6/6` permutations complete and a
+  `CLEAN` selected plan:
+  1. `WallMech, move F6->D7`
+  2. `RockartMech, move B5->C7, fire Rock Launcher at C2`
+  3. `ElectricMech, move E5->D3, fire Chain Whip at D4`
+- Repeating both `read` and `solve` with the heartbeat still stale returned the
+  same board and same plan.
+
+Practical rule:
+
+- A fresh heartbeat is **not** required for paused board read or Rust solving
+  when the bot itself just paused from a known actionable combat-player state.
+- Keep the game paused for `read`, safety review, and `solve` to avoid spending
+  in-game timer time.
+- Still require a fresh heartbeat after unpausing and before bridge command
+  execution, because paused Lua cannot process live combat commands and the
+  board must be proven ticking before actions are sent.
+
+## Paused Solve Execute Fast-Mode Trial
+
+Question:
+
+- Does the optimized loop work from the main menu in fast-mode: solve while
+  paused, unpause only for stored action execution, verify each action, then
+  End Turn?
+
+Implementation under test:
+
+- Added experimental `--paused-solve-execute` to
+  `scripts/lightning_war_fast_walkthrough.py`.
+- The guarded test path:
+  1. Runs `read` and `solve` while paused.
+  2. Unpauses with `menu_continue`.
+  3. Waits for a fresh heartbeat.
+  4. Executes stored action indices with `cmd_execute`.
+  5. Runs `cmd_verify_action` after each action.
+  6. Runs a fresh post-action `read`.
+  7. Refuses to click End Turn if `threatened_buildings > 0`.
+
+One-turn fast-mode result:
+
+- Command:
+  `python scripts/lightning_war_fast_walkthrough.py --paused-solve-execute --post-end-turn-wait-seconds 0.5 --post-end-turn-max-wait-seconds 30`
+- Result: success for turn `1`.
+- Paused solve completed, all stored actions executed, all three
+  `verify_action` calls passed, post-action read showed
+  `threatened_buildings=0`, End Turn was observed, and the loop paused on turn
+  `2` at about `58.9s` timer-relative.
+
+Full-mission fast-mode result:
+
+- Command:
+  `python scripts/lightning_war_fast_walkthrough.py --full-mission --paused-solve-execute --post-end-turn-wait-seconds 0.5 --post-end-turn-max-wait-seconds 30 --result-screenshot-cadence 0.5 --terminal-visual-settle-seconds 2.5 --max-mission-turns 6`
+- Result: blocked on turn `1` of `Mission_Dam`.
+- Action `2` (`RockartMech, move D5->B4, fire Rock Launcher at H4`) executed
+  through the bridge, but `verify_action 2` returned `DESYNC`, category
+  `terrain`, failure id
+  `20260609_184046_189_m17_t01_per_action_desync_a2`.
+- The runner stopped and parked instead of clicking End Turn. Evidence:
+  `run_notes/lightning_war_walkthrough/paused_solve_full_mission_attempt_1.log`
+  and
+  `run_notes/lightning_war_walkthrough/paused_solve_full_mission_desync_state.png`.
+
+Follow-up terrain timing check:
+
+- The user visually noticed the six disputed tiles were already water on
+  screen. I unpaused, did not click End Turn, and read the bridge again.
+- The first fresh read after unpause reported the six tiles as water, matching
+  the simulator prediction:
+  `C4`, `B4`, `A4`, `C3`, `B3`, `A3`.
+- A second read after another `2s` still reported those tiles as water.
+- Updated diagnosis: this was not a wrong dam-water prediction. It was a
+  verification timing issue. The bridge action ACK and unit positions were
+  current, but the dam terrain transformation had not been reflected in the
+  bridge snapshot used by immediate `verify_action`.
+
+Practical rule:
+
+- Paused solve plus stored action execution is promising and can save timer
+  time, but it is not default-safe yet.
+- Keep `auto_turn` as the default full-mission path until the stored-plan path
+  gets the same post-action threat/desync recovery behavior as `auto_turn`.
+- The experimental path must continue to verify every action, but terrain-only
+  desyncs immediately after a terrain-changing action should be retried after a
+  short live-tick delay before blocking. `Mission_Dam` dam-water conversion is
+  the first confirmed case.
+- Stop before End Turn on any persistent `DESYNC` or fresh post-action threat.
+
+Follow-up run with delayed verify retry:
+
+- Added a narrow delayed retry for immediate verification desyncs whose
+  categories are only `terrain` and/or `death`.
+- A new full-mission paused-solve run made it through turns `1-3` and stopped
+  safely on turn `4` of `Mission_Artillery`.
+- Stop reason:
+  `PAUSED_STORED_PLAN_THREAT_AUDIT_BLOCKED`.
+- Fresh post-action read showed `threatened_buildings=1`:
+  `Building G3 by Scorpion1 at G2`.
+- All four stored actions individually verified as `PASS`, but the post-action
+  threat audit still found the building threat:
+  1. `ArchiveArtillery` -> `OK SKIP 470`
+  2. `RockartMech, move F5->G5, fire Rock Launcher at G2` -> `PASS`
+  3. `ElectricMech, move D6->D5, fire Chain Whip at E5` -> `PASS`
+  4. `WallMech, fire Grappling Hook at D5` -> `PASS`
+- Evidence:
+  `run_notes/lightning_war_walkthrough/paused_solve_full_mission_attempt_3.log`
+  and
+  `run_notes/lightning_war_walkthrough/paused_solve_attempt_3_stop_state.png`.
+- Updated diagnosis: the delayed verification retry helps with dam terrain lag,
+  but the stored-plan path still needs a proper post-action threat audit and
+  recovery loop. The action-level verifier can pass while the overall turn is
+  strategically unsafe.
+
+Solver timing and Lightning speed loss policy:
+
+- Recent recorded solve artifacts show the Rust solver is extremely fast for
+  this loop:
+  - Normal 3-mech turns: about `0.03s..0.7s` in recent samples.
+  - `Mission_Dam` turn 1: about `0.48s`.
+  - `Mission_Artillery` with the Archive artillery ally:
+    turn 1 `2.56s`, turn 2 `2.59s`, turn 3 `2.85s`, turn 4 `3.70s`.
+  - All of these completed all permutations and did not time out.
+- Because paused solving does not spend the in-game timer, the fast runner now
+  defaults to a `30s` solve budget.
+- Added `--allow-lightning-speed-building-damage`, default enabled, for the
+  paused-solve path. It allows ordinary post-action building threats when the
+  grid would survive, and still records the allowance in the run result.
+
+Manual continuation of the turn-4 `Mission_Artillery` stop:
+
+- The paused-solve path had stopped before End Turn because post-action read
+  saw `Building G3 by Scorpion1 at G2`.
+- Under the Lightning War speed policy, I unpaused, waited for a fresh
+  heartbeat, clicked End Turn, and watched the result flow.
+- The mission reached `Region Secured` with both objectives checked:
+  `Defend the Artillery Support` and `Protect the Emergency Batteries`.
+- Visible game timer on the result screen: `0:02:08`.
+- Grid remained `5/7`.
+- Evidence:
+  `run_notes/lightning_war_walkthrough/allow_building_threat_result_state.png`.
+
+Updated practical rule:
+
+- For Lightning War, do not block solely because an ordinary building is
+  threatened after all actions, provided grid power would survive and no
+  objective/protected target failure is indicated.
+- Continue blocking on persistent action desyncs, objective failure, protected
+  unit/objective threats, timeline collapse, or grid loss that could end the
+  run.
+
 ## Opening Enemy Turn Readiness Timing
 
 Question:

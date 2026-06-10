@@ -43,7 +43,10 @@ from src.loop.commands import (
     _lightning_wait_for_deploy_confirm_live_bridge,
     cmd_auto_turn,
     cmd_deploy_recommended,
+    cmd_execute,
     cmd_read,
+    cmd_solve,
+    cmd_verify_action,
 )
 
 
@@ -290,6 +293,17 @@ def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
             default=str,
         )
     )
+
+
+def parse_grid_power(value: Any) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value.split("/", 1)[0])
+        except (TypeError, ValueError):
+            return None
+    return None
 
 
 def wait_for_actionable_player_turn(
@@ -678,6 +692,201 @@ def solve_execute_and_end_turn(
     }
 
 
+def paused_solve_execute_and_end_turn(
+    *,
+    turn_index: int,
+    timer_start: float,
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    log(f"paused solve turn={turn_index}")
+    paused_read = cmd_read()
+    paused_read_mark = elapsed(timer_start)
+    solve = cmd_solve(time_limit=args.time_limit)
+    paused_solve_done_mark = elapsed(timer_start)
+    if solve.get("error"):
+        raise FastRunError(f"paused solve failed on turn {turn_index}: {solve}")
+    actions = solve.get("actions") or []
+    if not actions:
+        raise FastRunError(f"paused solve returned no actions on turn {turn_index}: {solve}")
+
+    click_control("menu_continue", settle_seconds=0.15)
+    unpaused_mark = elapsed(timer_start)
+    heartbeat = wait_for_fresh_heartbeat(
+        label=f"turn_{turn_index}_after_paused_solve_menu_continue",
+    )
+    heartbeat_mark = elapsed(timer_start)
+
+    executions: list[dict[str, Any]] = []
+    for action in actions:
+        action_index = int(action["index"])
+        log(f"execute stored paused action {action_index}")
+        executed = cmd_execute(action_index)
+        verified = cmd_verify_action(action_index)
+        delayed_verify_retry = None
+        retryable_delayed_categories = {"terrain", "death"}
+        if (
+            verified.get("status") != "PASS"
+            and set(verified.get("categories") or []) <= retryable_delayed_categories
+        ):
+            log(
+                f"delayed terrain/death verify lag on action {action_index}; "
+                f"retrying after {args.terrain_verify_retry_seconds:.1f}s live tick"
+            )
+            time.sleep(args.terrain_verify_retry_seconds)
+            refresh_read = cmd_read()
+            retry_verify = cmd_verify_action(action_index)
+            delayed_verify_retry = {
+                "delay_seconds": args.terrain_verify_retry_seconds,
+                "refresh_read": {
+                    "phase": refresh_read.get("phase"),
+                    "turn": refresh_read.get("turn"),
+                    "active_mechs": refresh_read.get("active_mechs"),
+                    "grid_power": refresh_read.get("grid_power"),
+                },
+                "verify": retry_verify,
+            }
+            verified = retry_verify
+        executions.append(
+            {
+                "action_index": action_index,
+                "execute": executed,
+                "verify": verified,
+                "delayed_verify_retry": delayed_verify_retry,
+            }
+        )
+        if verified.get("status") != "PASS":
+            raise FastRunError(
+                json.dumps(
+                    {
+                        "status": "PAUSED_STORED_ACTION_VERIFY_FAILED",
+                        "turn_index": turn_index,
+                        "action_index": action_index,
+                        "execute": executed,
+                        "verify": verified,
+                    },
+                    default=str,
+                )
+            )
+    stored_actions_done_mark = elapsed(timer_start)
+
+    post_action_read = cmd_read()
+    post_action_mark = elapsed(timer_start)
+    threatened = int(post_action_read.get("threatened_buildings") or 0)
+    grid_power = parse_grid_power(post_action_read.get("grid_power"))
+    speed_building_damage_allowed = (
+        bool(args.allow_lightning_speed_building_damage)
+        and grid_power is not None
+        and grid_power - threatened > 0
+    )
+    if threatened > 0 and speed_building_damage_allowed:
+        log(
+            "allowing ordinary building threat for Lightning War speed: "
+            f"threatened={threatened} grid={post_action_read.get('grid_power')}"
+        )
+    if threatened > 0 and not speed_building_damage_allowed:
+        raise FastRunError(
+            json.dumps(
+                {
+                    "status": "PAUSED_STORED_PLAN_THREAT_AUDIT_BLOCKED",
+                    "turn_index": turn_index,
+                    "threatened_buildings": threatened,
+                    "threats": post_action_read.get("threats"),
+                    "allow_lightning_speed_building_damage": (
+                        args.allow_lightning_speed_building_damage
+                    ),
+                    "post_action_read": post_action_read,
+                    "solve": {
+                        "score": solve.get("score"),
+                        "num_actions": solve.get("num_actions"),
+                        "actions": solve.get("actions"),
+                        "plan_safety": solve.get("plan_safety"),
+                    },
+                    "executions": executions,
+                },
+                default=str,
+            )
+        )
+
+    click_control("end_turn", settle_seconds=0.0)
+    end_turn_mark = elapsed(timer_start)
+    observed = _observe_end_turn_after_click(
+        {"status": "OK", "actions_completed": len(actions)},
+        timeout=2.0,
+        poll_interval=0.2,
+    )
+    retry_click = None
+    retry_observed = None
+    if _lightning_end_turn_retryable(observed, {"status": "OK"}):
+        retry_click = click_control("end_turn", settle_seconds=0.0)
+        retry_observed = _observe_end_turn_after_click(
+            {"status": "OK", "actions_completed": len(actions)},
+            timeout=4.0,
+            poll_interval=0.2,
+        )
+        observed = retry_observed
+
+    try:
+        post_end = wait_for_post_end_turn_ready_or_terminal(
+            turn_index=turn_index,
+            timer_start=timer_start,
+            min_wait_seconds=args.post_end_turn_wait_seconds,
+            max_wait_seconds=args.post_end_turn_max_wait_seconds,
+            terminal_visual_settle_seconds=args.terminal_visual_settle_seconds,
+            poll_seconds=args.result_screenshot_cadence,
+        )
+    except FastRunError:
+        raise FastRunError(
+            json.dumps(
+                {
+                    "status": "PAUSED_STORED_END_TURN_NOT_OBSERVED",
+                    "turn_index": turn_index,
+                    "observed": observed,
+                    "retry_click": retry_click,
+                    "retry_observed": retry_observed,
+                },
+                default=str,
+            )
+        )
+
+    return {
+        "turn_index": turn_index,
+        "mode": "paused_solve_execute",
+        "marks": {
+            "paused_read_done": paused_read_mark,
+            "paused_solve_done": paused_solve_done_mark,
+            "unpaused_for_stored_execute": unpaused_mark,
+            "heartbeat_fresh_for_stored_execute": heartbeat_mark,
+            "stored_actions_done": stored_actions_done_mark,
+            "post_action_read_done": post_action_mark,
+            "end_turn_click": end_turn_mark,
+            "post_end_observed": elapsed(timer_start),
+        },
+        "paused_read": {
+            "phase": paused_read.get("phase"),
+            "turn": paused_read.get("turn"),
+            "active_mechs": paused_read.get("active_mechs"),
+            "grid_power": paused_read.get("grid_power"),
+        },
+        "heartbeat": heartbeat,
+        "solve_status": solve.get("status") or ("OK" if not solve.get("error") else "ERROR"),
+        "actions_completed": len(executions),
+        "executions": executions,
+        "post_action_read": {
+            "phase": post_action_read.get("phase"),
+            "turn": post_action_read.get("turn"),
+            "active_mechs": post_action_read.get("active_mechs"),
+            "grid_power": post_action_read.get("grid_power"),
+            "threatened_buildings": post_action_read.get("threatened_buildings"),
+            "threats": post_action_read.get("threats"),
+            "speed_building_damage_allowed": speed_building_damage_allowed,
+        },
+        "end_turn_observed": observed,
+        "end_turn_retry_click": retry_click,
+        "end_turn_retry_observed": retry_observed,
+        "post_end_turn": post_end,
+    }
+
+
 def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
     marks: dict[str, float] = {}
     run_start = time.perf_counter()
@@ -726,7 +935,12 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     turns: list[dict[str, Any]] = []
-    first_turn = solve_execute_and_end_turn(
+    turn_runner = (
+        paused_solve_execute_and_end_turn
+        if args.paused_solve_execute
+        else solve_execute_and_end_turn
+    )
+    first_turn = turn_runner(
         turn_index=1,
         timer_start=timer_start,
         args=args,
@@ -755,7 +969,7 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
             "turns": turns,
         }
     for turn_index in range(2, args.max_mission_turns + 1):
-        turn_record = solve_execute_and_end_turn(
+        turn_record = turn_runner(
             turn_index=turn_index,
             timer_start=timer_start,
             args=args,
@@ -818,14 +1032,32 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--post-end-turn-max-wait-seconds", type=float, default=25.0)
     parser.add_argument("--result-screenshot-cadence", type=float, default=0.5)
     parser.add_argument("--terminal-visual-settle-seconds", type=float, default=2.5)
+    parser.add_argument("--terrain-verify-retry-seconds", type=float, default=1.0)
     parser.add_argument("--max-mission-turns", type=int, default=6)
     parser.add_argument("--confirm-retries", type=int, default=2)
-    parser.add_argument("--time-limit", type=float, default=10.0)
+    parser.add_argument("--time-limit", type=float, default=30.0)
     parser.add_argument("--auto-turn-max-wait", type=float, default=5.0)
     parser.add_argument(
         "--full-mission",
         action="store_true",
         help="Continue combat turns until a mission-end/reward panel is visible.",
+    )
+    parser.add_argument(
+        "--paused-solve-execute",
+        action="store_true",
+        help=(
+            "Experimental: solve while paused, then unpause only to execute "
+            "the stored plan and click End Turn."
+        ),
+    )
+    parser.add_argument(
+        "--allow-lightning-speed-building-damage",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Allow ordinary post-action building threats when grid power would "
+            "survive; useful for Lightning War speed."
+        ),
     )
     parser.add_argument(
         "--stop-after-pause",
