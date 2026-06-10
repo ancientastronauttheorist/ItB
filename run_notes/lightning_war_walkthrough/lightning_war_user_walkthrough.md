@@ -748,3 +748,167 @@ Automation note:
   the deployment timing step.
 - Keep taking screenshots or visible-state checks during development; enemy
   turn animations and mission opening dialogue can vary by map.
+
+## Live Probe - Pause, Bridge Read, Solver, End Turn
+
+Artifacts from this probe:
+
+- [live_probe_after_new_game.png](live_probe_after_new_game.png)
+- [live_probe_route_stop.png](live_probe_route_stop.png)
+- [live_probe_after_route_start_block.png](live_probe_after_route_start_block.png)
+- [live_probe_route_retry_after.png](live_probe_route_retry_after.png)
+- [live_probe_after_preview_board_click.png](live_probe_after_preview_board_click.png)
+- [live_probe_after_esc_pause_turn1.png](live_probe_after_esc_pause_turn1.png)
+- [live_probe_after_second_esc.png](live_probe_after_second_esc.png)
+- [live_probe_after_pause_icon_turn1.png](live_probe_after_pause_icon_turn1.png)
+- [live_probe_after_actual_pause_gear.png](live_probe_after_actual_pause_gear.png)
+- [live_probe_final_paused.png](live_probe_final_paused.png)
+
+User instruction:
+
+- From the main menu, reach the first combat player turn.
+- Enter the pause menu with `Esc` if possible.
+- Read the board from the bridge while paused, feed it to the solver, unpause,
+  execute the solver's move with the existing scripts, then press `End Turn`.
+
+Observed flow:
+
+- Dynamic `title_new_game` correctly clicked the `New Game` row from the title
+  screen.
+- The `Start New Game` overwrite modal appeared. A fresh screenshot detected
+  the modal, then clicked `YES` twice at current-window coordinate
+  approximately `(1208, 797)`. The double click cleared the focus/highlight
+  edge case and reached the Blitzkrieg loadout screen.
+- `verify_setup --difficulty 0 --advanced-content any` initially failed on the
+  loadout screen, which is expected because it only verifies the difficulty
+  modal after the loadout `Start`.
+- `setup_start` reached the difficulty modal. `verify_setup` then passed:
+  difficulty `Easy`, Blitzkrieg already selected, Advanced Content state
+  irrelevant for this loop.
+- A bounded `lightning_start_run` probe selected Archive, but stopped before
+  deployment because route scoring vetoed `Mission_Artillery`. For this
+  walkthrough probe, the user had said any red mission is acceptable, so route
+  scoring should not block the mechanics rehearsal.
+- `lightning_capture` is not Windows-ready in this tree: it attempted macOS
+  `screencapture` and failed with `WinError 2`. Use
+  `src.capture.window.take_screenshot` on Windows until that command is fixed.
+- `lightning_route_start --no-route-check` also proved too strict for this
+  manual walkthrough state. It sent an `esc` key via `win32_sendinput`, but the
+  visual verifier reported `pause_not_verified` even when a manual screenshot
+  showed the pause menu was actually open. This verifier needs adjustment before
+  trusting it in the loop.
+- Manual route start from the live map worked:
+  click the upper red mission at about `(1070, 660)`, then click the calibrated
+  `mission_preview_board` at `(1450, 790)`.
+- The mission reached deployment. `deploy_recommended` successfully deployed all
+  three mechs by bridge and verified them:
+  ElectricMech to `D5`, WallMech to `C6`, RockartMech to `F5`.
+- `deploy_confirm` at `(240, 235)` started the opening enemy turn.
+- Waiting `16s` after Confirm was sufficient to reach turn-1 player control.
+
+Pause findings:
+
+- Pressing lowercase `esc` via `src.control.mac_click.press_key("esc")` did not
+  open the pause menu on this combat screen. The first and second attempts left
+  the game in normal player-turn UI with a mech selected.
+- The existing `lightning_ui pause` control is not Windows-calibrated for this
+  window. It clicked `(38, 28)`, but the visible gear was around `(168, 130)`.
+- Clicking the actual visible gear coordinate `(168, 130)` opened the pause
+  menu reliably.
+- Automation rule for this Windows setup: use the visible/calibrated pause gear
+  coordinate, not `Esc`, until we improve key/focus handling and update the
+  Windows pause control override.
+
+Bridge and solver while paused:
+
+- A paused `read` succeeded from the bridge:
+  phase `combat_player`, turn `1`, grid `5/7`, three ready mechs.
+- Threat summary from the paused read:
+  one threatened building, `E7`, attacked by a Scarab at `E2`.
+- `solve --time-limit 10` succeeded while paused and returned:
+  1. `WallMech, move C6->D4, fire Grappling Hook at D2`
+  2. `RockartMech, fire Rock Launcher at F2`
+  3. `ElectricMech, fire Chain Whip at D4`
+- Plan safety was `WARN` but not blocking: predicted `2` mech HP loss and
+  WallMech on fire. No grid/building/objective block.
+
+Execution result:
+
+- `menu_continue` at `(1129, 582)` unpaused successfully.
+- `auto_turn --time-limit 10 --max-wait 5` fresh-read, re-solved the same plan,
+  executed all three actions through the bridge, and verified every action:
+  move PASS, attack PASS, attack PASS, attack PASS.
+- Threat audit passed: `E7` was covered because the attacking Scarab was killed.
+- `auto_turn` emitted the End Turn click plan at Windows window-local
+  `(252, 190)`.
+- `lightning_ui end_turn` clicked End Turn successfully.
+- After an `8s` wait, `read` reported turn `2`, phase `combat_player`,
+  grid still `5/7`, and post-enemy analysis said predictions matched.
+
+Automation notes from this probe:
+
+- The core pause-read-solve-unpause-execute-End-Turn loop works once the pause
+  state is reached.
+- Prefer `auto_turn` for execution rather than manually replaying stored
+  `execute <index>` calls; it fresh-reads, re-solves, executes, and verifies
+  after each action.
+- Current blockers to fully autonomous startup are UI-specific, not solver
+  specific:
+  route-start verifier misclassifies pause on Windows, `lightning_capture` is
+  macOS-only, and the pause control needs a Windows coordinate override.
+
+## Escape Toggle Investigation
+
+Artifacts from this probe:
+
+- [esc_probe_01_before_scancode_from_pause.png](esc_probe_01_before_scancode_from_pause.png)
+- [esc_probe_02_after_scancode_from_pause.png](esc_probe_02_after_scancode_from_pause.png)
+- [esc_probe_03_after_scancode_from_combat.png](esc_probe_03_after_scancode_from_combat.png)
+- [esc_probe_04_before_pyautogui_from_pause.png](esc_probe_04_before_pyautogui_from_pause.png)
+- [esc_probe_05_after_pyautogui_from_pause.png](esc_probe_05_after_pyautogui_from_pause.png)
+- [esc_probe_06_after_pyautogui_escape.png](esc_probe_06_after_pyautogui_escape.png)
+- [esc_patch_verify_01_before_press_key.png](esc_patch_verify_01_before_press_key.png)
+- [esc_patch_verify_02_after_press_key_from_pause.png](esc_patch_verify_02_after_press_key_from_pause.png)
+- [esc_patch_verify_03_after_press_key_from_combat.png](esc_patch_verify_03_after_press_key_from_combat.png)
+- [esc_patch_verify_04_after_lightning_ui_pause_override.png](esc_patch_verify_04_after_lightning_ui_pause_override.png)
+
+Question:
+
+- `Esc` should toggle the pause menu. During the live probe, lowercase
+  `press_key("esc")` did not visibly open pause, even after two attempts.
+
+Root cause:
+
+- The general `src.control.mac_click.press_key` helper used `pyautogui.press`
+  on Windows.
+- `pyautogui.press("esc")` and `pyautogui.press("escape")` both returned
+  success from the library, but the game did not react. From a verified pause
+  menu, both calls left the pause menu unchanged.
+- The native Windows scancode path from `src.native.lldb_pause_probe` did work:
+  `_windows_press_escape` sent scan code `0x01` through `SendInput`, toggled
+  from pause to combat, and toggled from combat back to pause.
+
+Fix applied:
+
+- `src/control/mac_click.py` now routes Windows `press_key("esc")` and
+  `press_key("escape")` through raw `SendInput` scancode Escape instead of
+  PyAutoGUI.
+- The Windows `pause` control override was updated to `(168, 130)`, matching the
+  visible gear in the current 2560x1441 Windows capture. The old `(38, 28)`
+  coordinate was not on the visible gear for this window.
+
+Verification:
+
+- After the patch, `press_key("esc")` reported backend `win32_sendinput`,
+  toggled from the pause menu to combat, and toggled from combat back to the
+  pause menu.
+- `lightning_ui pause` now reports window coordinate `(168, 130)` and opens the
+  pause menu from combat.
+- `python -m py_compile src/control/mac_click.py` passed.
+
+Automation rule:
+
+- On Windows, use the shared `press_key("esc")` helper after this patch when an
+  Escape toggle is desired. It now uses the proven scancode path.
+- `lightning_ui pause` is also valid as a visual/icon fallback after the Windows
+  coordinate override.

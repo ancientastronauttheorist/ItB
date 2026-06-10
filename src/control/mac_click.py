@@ -13,6 +13,7 @@ import subprocess
 import time
 import shutil
 import tempfile
+import ctypes
 from pathlib import Path
 
 
@@ -444,6 +445,7 @@ def _normalize_control_name(name: str) -> str:
 
 
 _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
+    "pause": (168, 130),
     "setup_start": (1712, 477),
     "setup_modal_start": (1704, 974),
     "menu_continue": (1129, 582),
@@ -841,6 +843,11 @@ def press_key(
     key = str(key)
     if dry_run:
         return {"status": "DRY_RUN", "key": key, "description": description}
+    if os.name == "nt" and key.strip().lower() in {"esc", "escape"}:
+        return _windows_press_escape(
+            description=description,
+            settle_seconds=settle_seconds,
+        )
     try:
         subprocess.run(
             ["osascript", "-e", f'tell application "{app_name}" to activate'],
@@ -863,6 +870,121 @@ def press_key(
         "key": key,
         "description": description,
         "backend": "pyautogui",
+    }
+
+
+def _windows_press_escape(
+    *,
+    description: str = "",
+    settle_seconds: float = 0.08,
+) -> dict:
+    """Send Escape as a raw Windows scancode.
+
+    Into the Breach on Windows can ignore PyAutoGUI's virtual-key style Escape,
+    while a direct scancode SendInput toggles the pause menu reliably.
+    """
+    try:
+        from ctypes import wintypes
+
+        INPUT_KEYBOARD = 1
+        KEYEVENTF_SCANCODE = 0x0008
+        KEYEVENTF_KEYUP = 0x0002
+        ESC_SCAN_CODE = 0x01
+
+        class KEYBDINPUT(ctypes.Structure):
+            _fields_ = [
+                ("wVk", wintypes.WORD),
+                ("wScan", wintypes.WORD),
+                ("dwFlags", wintypes.DWORD),
+                ("time", wintypes.DWORD),
+                ("dwExtraInfo", ctypes.c_size_t),
+            ]
+
+        class MOUSEINPUT(ctypes.Structure):
+            _fields_ = [
+                ("dx", wintypes.LONG),
+                ("dy", wintypes.LONG),
+                ("mouseData", wintypes.DWORD),
+                ("dwFlags", wintypes.DWORD),
+                ("time", wintypes.DWORD),
+                ("dwExtraInfo", ctypes.c_size_t),
+            ]
+
+        class HARDWAREINPUT(ctypes.Structure):
+            _fields_ = [
+                ("uMsg", wintypes.DWORD),
+                ("wParamL", wintypes.WORD),
+                ("wParamH", wintypes.WORD),
+            ]
+
+        class INPUT_UNION(ctypes.Union):
+            _fields_ = [
+                ("mi", MOUSEINPUT),
+                ("ki", KEYBDINPUT),
+                ("hi", HARDWAREINPUT),
+            ]
+
+        class INPUT(ctypes.Structure):
+            _fields_ = [
+                ("type", wintypes.DWORD),
+                ("union", INPUT_UNION),
+            ]
+
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        user32.SendInput.argtypes = [
+            wintypes.UINT,
+            ctypes.POINTER(INPUT),
+            ctypes.c_int,
+        ]
+        user32.SendInput.restype = wintypes.UINT
+
+        inputs = (INPUT * 2)(
+            INPUT(
+                type=INPUT_KEYBOARD,
+                union=INPUT_UNION(
+                    ki=KEYBDINPUT(0, ESC_SCAN_CODE, KEYEVENTF_SCANCODE, 0, 0)
+                ),
+            ),
+            INPUT(
+                type=INPUT_KEYBOARD,
+                union=INPUT_UNION(
+                    ki=KEYBDINPUT(
+                        0,
+                        ESC_SCAN_CODE,
+                        KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
+                        0,
+                        0,
+                    )
+                ),
+            ),
+        )
+        sent = user32.SendInput(2, inputs, ctypes.sizeof(INPUT))
+        if sent != 2:
+            return {
+                "status": "ERROR",
+                "error": (
+                    f"SendInput sent {sent}/2 events; "
+                    f"WinError {ctypes.get_last_error()}"
+                ),
+                "key": "esc",
+                "description": description,
+                "backend": "win32_sendinput",
+            }
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "error": f"win32 SendInput Escape failed: {exc}",
+            "key": "esc",
+            "description": description,
+            "backend": "win32_sendinput",
+        }
+    if settle_seconds > 0:
+        time.sleep(settle_seconds)
+    return {
+        "status": "OK",
+        "key": "esc",
+        "description": description,
+        "backend": "win32_sendinput",
     }
 
 
