@@ -26491,6 +26491,7 @@ def cmd_deploy_recommended(
     profile: str = "Alpha",
     *,
     ui_fallback: bool = True,
+    verify_after: bool = True,
 ) -> dict:
     """Deploy three mechs to the ranked deployment tiles via bridge DEPLOY.
 
@@ -26725,6 +26726,28 @@ def cmd_deploy_recommended(
             "bridge_alive_after_timeout": bridge_alive_after_timeout,
             "next_step": "click the visible CONFIRM button, then run `auto_turn --time-limit 10`",
             "phase": bridge_data.get("phase", "unknown"),
+        }
+        _print_result(result)
+        return result
+
+    if not verify_after:
+        result = {
+            "status": "OK",
+            "deployments": [
+                {
+                    **entry,
+                    "actual_bridge": entry["bridge"],
+                    "verified": None,
+                    "verification_skipped": True,
+                }
+                for entry in deployments
+            ],
+            "existing_deployments": {
+                str(uid): list(pos) for uid, pos in sorted(placed_by_uid.items())
+            },
+            "next_step": "click the visible CONFIRM button, then run `auto_turn --time-limit 10`",
+            "phase": bridge_data.get("phase", "unknown"),
+            "verify_after": False,
         }
         _print_result(result)
         return result

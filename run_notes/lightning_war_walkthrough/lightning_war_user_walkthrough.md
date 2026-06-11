@@ -1532,3 +1532,28 @@ Patch follow-ups:
 - Result clearing now uses non-OCR visible classification first and shorter
   transition settles, so obvious Region Secured / reward Continue panels should
   be clicked much sooner.
+
+Follow-up Continue-button edge case:
+
+- A `Region Secured` card can appear with an advisor dialogue strip still open
+  across the top. On Windows without OCR, the visual classifier can mislabel
+  this as `perfect_reward_choice` because the lower card resembles the perfect
+  reward crop.
+- In this state the visible Continue button may not activate reliably until the
+  dialogue strip is dismissed. The fast clearer now treats
+  `in_active_mission=false`, `active_mechs=0`, and a strong dialogue-strip
+  visual score as a terminal-dialogue overlay, clicks the dialogue textbox
+  first, then proceeds to the result Continue.
+
+Follow-up deployment speed issue:
+
+- The fast walkthrough had accumulated several conservative deployment waits:
+  `0.5s` after mission-preview click before checking deployment, another
+  `0.5s` `deploy-ready` wait, a `0.5s` post-bridge-deploy verification sleep
+  inside `deploy_recommended`, and up to `4s` waiting after Confirm before
+  retrying.
+- These waits were useful while hardening stale-bridge and focus issues, but
+  they are too expensive for the real Lightning War loop. The timed fast
+  walkthrough now checks deployment after `0.15s`, uses no extra deploy-ready
+  wait by default, calls `deploy_recommended(..., verify_after=False)`, and
+  verifies the deployment commit through the faster Confirm/live-bridge wait.

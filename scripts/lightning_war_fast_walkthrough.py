@@ -244,7 +244,7 @@ def click_mission_preview_until_deployment(
     attempts: list[dict[str, Any]] = []
     for attempt_index in range(1, max_attempts + 1):
         click = click_control("mission_preview_board", settle_seconds=settle_seconds)
-        time.sleep(0.5)
+        time.sleep(0.15)
         visible = _lightning_visible_ui_snapshot(include_ocr=False)
         snapshot = _lightning_live_snapshot()
         attempt = {
@@ -504,7 +504,7 @@ def click_stable_red_mission_after_result() -> dict[str, Any]:
 
 def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
     log("deploy_recommended")
-    deploy = cmd_deploy_recommended(ui_fallback=True)
+    deploy = cmd_deploy_recommended(ui_fallback=True, verify_after=False)
     deploy_status = deploy.get("status")
     deployments = deploy.get("deployments") or []
     if deploy_status != "OK":
@@ -521,8 +521,8 @@ def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
     for attempt in range(1, max(1, confirm_retries) + 1):
         click_control("deploy_confirm", settle_seconds=0.05)
         wait = _lightning_wait_for_deploy_confirm_live_bridge(
-            max_seconds=4.0,
-            interval_seconds=0.3,
+            max_seconds=2.0,
+            interval_seconds=0.15,
         )
         attempts.append(wait)
         log(
@@ -757,6 +757,23 @@ def clear_control_for_visible_ui(
     visible_name = visible.get("visible_ui")
     text = visible_text_lower(visible)
     history = control_history or []
+    scores = visible.get("scores") or {}
+    dialogue_score = float(
+        (scores.get("mission_preview_dialogue") or {}).get("score") or 0.0
+    )
+    bridge_refine = visible.get("bridge_refine_snapshot") or {}
+    inactive_terminal_screen = (
+        bridge_refine.get("status") == "OK"
+        and bridge_refine.get("in_active_mission") is False
+        and int(bridge_refine.get("active_mechs") or 0) == 0
+    )
+
+    if (
+        inactive_terminal_screen
+        and dialogue_score >= 0.5
+        and "dialogue_textbox" not in history
+    ):
+        return "dialogue_textbox"
 
     if "leave island" in text and "continue" in text and "yes" in text:
         return "leave_confirm_yes"
@@ -1735,7 +1752,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--continue-click-seconds", type=float, default=9.5)
     parser.add_argument("--red-wait-seconds", type=float, default=0.5)
     parser.add_argument("--preview-settle-seconds", type=float, default=0.5)
-    parser.add_argument("--deploy-ready-wait-seconds", type=float, default=0.5)
+    parser.add_argument("--deploy-ready-wait-seconds", type=float, default=0.0)
     parser.add_argument("--opening-enemy-wait-seconds", type=float, default=7.0)
     parser.add_argument("--opening-enemy-max-wait-seconds", type=float, default=28.0)
     parser.add_argument("--post-end-turn-wait-seconds", type=float, default=0.5)
