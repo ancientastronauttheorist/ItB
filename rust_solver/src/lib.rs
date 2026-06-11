@@ -1795,7 +1795,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260610_222220_354 Mission_Mines turn 1, where Hook pulled a flying
 //   Jelly_Regen1 across an intermediate Old Earth Mine and live left it alive.
 //   Pre-v261 corpus archived as failure_db_snapshot_sim_v260.jsonl.
-pub const SIMULATOR_VERSION: u32 = 261;
+// v262 - Old Earth Artillery damage does not release a surviving enemy web
+//   source. Fixes Lightning War run 20260610_222220_354 Archive
+//   Mission_Artillery turn 4, where ArchiveArtillery damaged a Scorpion web
+//   source but ElectricMech stayed webbed. Pre-v262 corpus archived as
+//   failure_db_snapshot_sim_v261.jsonl.
+pub const SIMULATOR_VERSION: u32 = 262;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

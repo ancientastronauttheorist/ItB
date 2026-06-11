@@ -1313,6 +1313,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                         DamageSource::Weapon
                             | DamageSource::WeaponCracksOccupied
                             | DamageSource::WeaponNoAcidPool
+                            | DamageSource::MissionArtillery
                     )
                 {
                     damaged_enemy_web_source_uid = Some(unit.uid);
@@ -1329,6 +1330,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                             DamageSource::Weapon
                                 | DamageSource::WeaponCracksOccupied
                                 | DamageSource::WeaponNoAcidPool
+                                | DamageSource::MissionArtillery
                         ),
                     );
                     on_enemy_death(board, idx, result);
@@ -1351,7 +1353,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     if let Some(uid) = damaged_enemy_web_source_uid {
-        break_web_from(board, uid);
+        if source != DamageSource::MissionArtillery {
+            break_web_from(board, uid);
+        }
     }
 
     // Acid pool creation: unit with acid dies → acid pool on tile
@@ -1449,6 +1453,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                         | DamageSource::BombRockBlast
                         | DamageSource::WeaponCracksOccupied
                         | DamageSource::WeaponNoAcidPool
+                        | DamageSource::MissionArtillery
                 );
             if occupied_pawn_absorbs_ice_hit {
                 // Live pawn hits on occupied ice are pawn-only for ordinary
@@ -1489,6 +1494,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     | DamageSource::Bump
                     | DamageSource::BombRockBlast
                     | DamageSource::WeaponNoAcidPool
+                    | DamageSource::MissionArtillery
             );
         if tile.terrain == Terrain::Ground
             && tile.cracked()
@@ -1534,6 +1540,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     | DamageSource::WeaponCracksOccupied
                     | DamageSource::WeaponNoAcidPool
                     | DamageSource::BombRockBlast
+                    | DamageSource::MissionArtillery
             ) {
             tile.terrain = Terrain::Ground;
             // Note: fire_weapon flag not yet threaded; default to smoke.
@@ -1884,13 +1891,25 @@ fn apply_damage_inner(
 }
 
 fn apply_direct_weapon_damage(board: &mut Board, x: u8, y: u8, damage: u8, wdef: &WeaponDef, result: &mut ActionResult) {
+    apply_direct_weapon_damage_with_source(board, x, y, damage, wdef, result, DamageSource::Weapon);
+}
+
+fn apply_direct_weapon_damage_with_source(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    wdef: &WeaponDef,
+    result: &mut ActionResult,
+    source: DamageSource,
+) {
     if wdef.building_immune() {
         let tile = board.tile(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
             return;
         }
     }
-    apply_damage(board, x, y, damage, result, DamageSource::Weapon);
+    apply_damage(board, x, y, damage, result, source);
 }
 
 // ── apply_throw ──────────────────────────────────────────────────────────────
@@ -3736,6 +3755,11 @@ fn sim_projectile(
 fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     let center_occupied_at_impact = board.unit_at(tx, ty).is_some();
     let center_blocked_at_impact = board.is_blocked(tx, ty, false);
+    let direct_damage_source = if weapon_id == WId::ArchiveArtShot {
+        DamageSource::MissionArtillery
+    } else {
+        DamageSource::Weapon
+    };
     let rockthrow_spawns_empty_center = weapon_id == WId::RangedRockthrow
         && !center_occupied_at_impact
         && !center_blocked_at_impact;
@@ -3777,7 +3801,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     // Center damage
     if wdef.aoe_center() {
         if center_volatile_idx.is_some() || center_blast_idx.is_some() {
-            apply_damage_core(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+            apply_damage_core(board, tx, ty, wdef.damage, result, direct_damage_source);
             deferred_center_volatile_decay = center_volatile_idx
                 .map(|idx| board.units[idx].hp <= 0)
                 .unwrap_or(false);
@@ -3785,7 +3809,15 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
                 .map(|idx| board.units[idx].hp <= 0)
                 .unwrap_or(false);
         } else if !rockthrow_spawns_empty_center {
-            apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+            apply_direct_weapon_damage_with_source(
+                board,
+                tx,
+                ty,
+                wdef.damage,
+                wdef,
+                result,
+                direct_damage_source,
+            );
         }
     }
 
@@ -3909,7 +3941,15 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             let by = ty as i8 + ddy;
             if in_bounds(bx, by) {
                 let occupied_at_impact = board.unit_at(bx as u8, by as u8).is_some();
-                apply_direct_weapon_damage(board, bx as u8, by as u8, wdef.damage, wdef, result);
+                apply_direct_weapon_damage_with_source(
+                    board,
+                    bx as u8,
+                    by as u8,
+                    wdef.damage,
+                    wdef,
+                    result,
+                    direct_damage_source,
+                );
                 apply_weapon_status_with_impact_occupancy(
                     board, bx as u8, by as u8, wdef, occupied_at_impact,
                 );
@@ -10218,6 +10258,35 @@ mod tests {
         assert_eq!(board.units[enemy].hp, 1);
         assert!(!board.units[mech].web(), "damaged web source should release Guard");
         assert_eq!(board.units[mech].web_source_uid, 0);
+        assert_eq!(result.enemy_damage_dealt, 2);
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_archive_artillery_damaging_web_source_keeps_web_if_survives() {
+        // Lightning War run 20260610_222220_354, Archive Mission_Artillery
+        // turn 4: Old Earth Artillery hit a Scorpion web source for 2 damage.
+        // The Scorpion survived at 1 HP and Electric Mech stayed webbed.
+        let mut board = make_test_board();
+        let artillery = add_mission_ally(
+            &mut board,
+            400,
+            1,
+            5,
+            2,
+            WId::ArchiveArtShot,
+            "ArchiveArtillery",
+        );
+        let mech = add_mech(&mut board, 0, 5, 5, 3, WId::PrimeLightning);
+        board.units[mech].flags.insert(UnitFlags::WEB);
+        let enemy = add_enemy_type(&mut board, 408, 6, 5, 3, "Scorpion1");
+        board.units[mech].web_source_uid = board.units[enemy].uid;
+
+        let result = simulate_weapon(&mut board, artillery, WId::ArchiveArtShot, 6, 5);
+
+        assert_eq!(board.units[enemy].hp, 1);
+        assert!(board.units[mech].web(), "Old Earth Artillery should not release a surviving web source");
+        assert_eq!(board.units[mech].web_source_uid, board.units[enemy].uid);
         assert_eq!(result.enemy_damage_dealt, 2);
         assert_eq!(result.enemies_killed, 0);
     }

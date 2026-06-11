@@ -217,6 +217,9 @@ pub enum DamageSource {
     /// Unstable Boulder / BombRock blast damage: bump-class unit math, but
     /// live captures show it still disturbs sand into smoke.
     BombRockBlast = 9,
+    /// Old Earth Artillery damage uses ordinary weapon damage math, but live
+    /// keeps a surviving Scorpion's existing grapple attached.
+    MissionArtillery = 10,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────

@@ -1301,7 +1301,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # until the final resting tile. Fixes Lightning War run 20260610_222220_354
 # Mission_Mines turn 1. Pre-v261 corpus archived as
 # failure_db_snapshot_sim_v260.jsonl.
-SIMULATOR_VERSION = 261
+# v262 - Old Earth Artillery damage does not release a surviving enemy web
+# source. Fixes Lightning War run 20260610_222220_354 Archive
+# Mission_Artillery turn 4. Pre-v262 corpus archived as
+# failure_db_snapshot_sim_v261.jsonl.
+SIMULATOR_VERSION = 262
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
