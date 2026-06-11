@@ -1790,7 +1790,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Lightning War run 20260610_184414_692 Archive Mission_Mines turn 1, where
 //   Ranged_Rockthrow at E3 spawned a rock but left the forest intact. Pre-v260
 //   corpus archived as failure_db_snapshot_sim_v259.jsonl.
-pub const SIMULATOR_VERSION: u32 = 260;
+// v261 - Brute_Grapple full-pull transit skips Old Earth / freeze mine
+//   triggers until the final resting tile. Fixes Lightning War run
+//   20260610_222220_354 Mission_Mines turn 1, where Hook pulled a flying
+//   Jelly_Regen1 across an intermediate Old Earth Mine and live left it alive.
+//   Pre-v261 corpus archived as failure_db_snapshot_sim_v260.jsonl.
+pub const SIMULATOR_VERSION: u32 = 261;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

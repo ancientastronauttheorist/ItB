@@ -1297,7 +1297,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # damage. Live preserves Forest/no fire under the spawned RockThrown. Fixes
 # Lightning War run 20260610_184414_692 Archive Mission_Mines turn 1. Pre-v260
 # corpus archived as failure_db_snapshot_sim_v259.jsonl.
-SIMULATOR_VERSION = 260
+# v261 - Brute_Grapple full-pull transit skips Old Earth / freeze mine triggers
+# until the final resting tile. Fixes Lightning War run 20260610_222220_354
+# Mission_Mines turn 1. Pre-v261 corpus archived as
+# failure_db_snapshot_sim_v260.jsonl.
+SIMULATOR_VERSION = 261
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

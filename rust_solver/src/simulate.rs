@@ -2083,6 +2083,7 @@ struct PushPolicy {
     edge_bump_damage: bool,
     friendly_live_pusher_enters_wreck: bool,
     live_pusher_enters_wreck: bool,
+    trigger_mines: bool,
 }
 
 const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2092,6 +2093,7 @@ const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2101,6 +2103,7 @@ const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2110,6 +2113,7 @@ const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2119,6 +2123,7 @@ const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2128,6 +2133,7 @@ const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const MIRRORSHOT_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2137,6 +2143,7 @@ const MIRRORSHOT_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2146,6 +2153,7 @@ const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: true,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2155,6 +2163,7 @@ const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2164,6 +2173,7 @@ const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
 };
 
 const ACID_PROJECTOR_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2173,6 +2183,7 @@ const ACID_PROJECTOR_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: true,
+    trigger_mines: true,
 };
 
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2182,6 +2193,12 @@ const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
+    trigger_mines: true,
+};
+
+const GRAPPLE_TRANSIT_PUSH_POLICY: PushPolicy = PushPolicy {
+    trigger_mines: false,
+    ..DEFAULT_PUSH_POLICY
 };
 
 /// Push unit at (x, y) in direction. Damage+push are simultaneous; a
@@ -2453,14 +2470,14 @@ fn apply_push_with_policy(
     } else {
         // Unit survived the push — check for Old Earth Mine (instant kill, bypasses shield)
         let tile = board.tile(nx, ny);
-        if tile.old_earth_mine() {
+        if policy.trigger_mines && tile.old_earth_mine() {
             finish_instant_unit_death(board, unit_idx, result, nx, ny);
             board.tile_mut(nx, ny).set_old_earth_mine(false);
         }
         // Freeze mine: pushed unit gets frozen, mine consumed
         else {
             let tile = board.tile(nx, ny);
-            if tile.freeze_mine() {
+            if policy.trigger_mines && tile.freeze_mine() {
                 if !board.units[unit_idx].shield() {
                     board.units[unit_idx].set_frozen(true);
                 } else {
@@ -4423,7 +4440,16 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
         if (cx as i16 - ax as i16).abs() + (cy as i16 - ay as i16).abs() <= 1 {
             break;
         }
-        apply_push(board, cx, cy, pull_dir, result);
+        let (pdx, pdy) = DIRS[pull_dir];
+        let nx_i = cx as i8 + pdx;
+        let ny_i = cy as i8 + pdy;
+        let terminal_after_step = in_bounds(nx_i, ny_i)
+            && ((nx_i as i16 - ax as i16).abs() + (ny_i as i16 - ay as i16).abs() <= 1);
+        if terminal_after_step {
+            apply_push(board, cx, cy, pull_dir, result);
+        } else {
+            apply_push_with_policy(board, cx, cy, pull_dir, result, GRAPPLE_TRANSIT_PUSH_POLICY);
+        }
         // Bail if the target died (terrain kill, mine, bump fatal).
         if board.units[target_idx].hp <= 0 {
             break;
@@ -9859,6 +9885,23 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 7);
         assert_eq!(board.units[target].hp, 0, "Target drowned in water during pull");
         assert_eq!(board.units[target].y, 5, "Corpse rests on the water tile");
+    }
+
+    #[test]
+    fn test_brute_grapple_transit_over_old_earth_mine_does_not_trigger() {
+        // Live Mission_Mines m02 t01: Hook at (2,3) pulled a flying Psion
+        // from (5,3) across an Old Earth Mine at (4,3). The Psion skipped the
+        // transit mine and stopped adjacent at (3,3), alive.
+        let mut board = make_test_board();
+        board.tile_mut(4, 3).set_old_earth_mine(true);
+        let mech_idx = add_mech(&mut board, 1, 2, 3, 3, WId::BruteGrapple);
+        let target = add_flying_enemy(&mut board, 296, 5, 3, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 5, 3);
+        assert_eq!(board.units[target].x, 3, "Target stops adjacent to Hook");
+        assert_eq!(board.units[target].y, 3, "Target stays in pull lane");
+        assert_eq!(board.units[target].hp, 2, "Transit mine does not kill target");
+        assert!(board.tile(4, 3).old_earth_mine(), "Transit mine remains armed");
     }
 
     // ── Brute_Grapple no-pawn self-charge (mountain/building target) ──────────

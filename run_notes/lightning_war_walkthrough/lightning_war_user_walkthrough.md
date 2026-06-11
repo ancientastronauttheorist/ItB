@@ -1557,3 +1557,52 @@ Follow-up deployment speed issue:
   walkthrough now checks deployment after `0.15s`, uses no extra deploy-ready
   wait by default, calls `deploy_recommended(..., verify_after=False)`, and
   verifies the deployment commit through the faster Confirm/live-bridge wait.
+
+Follow-up Region Secured classifier edge case:
+
+- New timing probe from main menu used:
+  `python scripts\lightning_war_fast_walkthrough.py --full-mission --paused-solve-execute --post-end-turn-wait-seconds 0.5 --post-end-turn-max-wait-seconds 30 --result-screenshot-cadence 0.5 --terminal-visual-settle-seconds 2.5 --max-mission-turns 6 --record-timing-screenshots --allow-lightning-speed-building-damage`.
+- Evidence screenshots:
+  `run_notes/lightning_war_walkthrough/timing_screenshots/turn_4_post_end_1781149992680.png`
+  and
+  `run_notes/lightning_war_walkthrough/timing_screenshots/turn_4_post_end_1781150001399.png`.
+- At final End Turn +0.5s, the Region Secured card was already sliding in
+  behind the board; by the later terminal sample it was fully visible with the
+  Continue button at the lower-right of the card.
+- The visible classifier misreported that stable Region Secured screen as
+  `pause_menu` with low confidence (`0.1928`) because the result overlay is dark
+  and the advisor strip overlaps the pause-menu crop. OCR did not rescue it
+  because the classifier stopped at the pause-menu label.
+- Practical rule: when the bridge says `in_active_mission=false` and
+  `active_mechs=0`, a `pause_menu` visual label during result clearing is more
+  likely a terminal result-card false positive than a real pause menu. The fast
+  clearer now attaches the live bridge sample to each clear step and maps this
+  exact inactive-terminal/pause-like state to `reward_continue`.
+- Additional validation: after the bridge files disappeared entirely, the same
+  parked Region Secured screen still classified as `pause_menu`, with
+  `mission_preview_dialogue` score around `0.76` and `perfect_reward_choice`
+  score around `0.66`. The fast clearer now also treats this no-bridge,
+  pause-like, advisor-strip result-card shape as `reward_continue`.
+- Live validation from the parked screen succeeded: `reward_continue_sweep_1`
+  at `(1647,1018)` and `reward_continue_sweep_2` at `(1647,985)` cleared
+  Region Secured, the island map appeared, and the red-region probe opened the
+  next mission preview.
+
+Follow-up Grappling Hook / mine transit desync:
+
+- A fresh island-loop attempt from main menu reached Archive `Mission_Mines`
+  and stopped safely on `PAUSED_STORED_ACTION_VERIFY_FAILED`.
+- Failure id:
+  `20260610_222220_354_m02_t01_per_action_desync_a1`.
+- Action: WallMech moved `F6->E6` and fired Grappling Hook at `E3`.
+  The solver predicted the flying `Jelly_Regen1` would die on the Old Earth
+  Mine at bridge `(4,3)`. Live instead pulled it across that intermediate mine
+  and left it alive adjacent to Hook at bridge `(3,3)`.
+- Fix: Rust full-pull Grappling Hook transit now skips Old Earth / freeze mine
+  triggers on non-final pull steps while preserving normal final-landing mine
+  behavior. Added
+  `test_brute_grapple_transit_over_old_earth_mine_does_not_trigger`.
+- Simulator version bumped `260 -> 261`, pre-v261 failure DB archived as
+  `recordings/failure_db_snapshot_sim_v260.jsonl`, focused Brute Grapple Rust
+  tests passed, and the rebuilt Python 3.13 wheel reports Rust/Python simulator
+  version `261`.

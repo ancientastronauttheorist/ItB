@@ -768,13 +768,6 @@ def clear_control_for_visible_ui(
         and int(bridge_refine.get("active_mechs") or 0) == 0
     )
 
-    if (
-        inactive_terminal_screen
-        and dialogue_score >= 0.5
-        and "dialogue_textbox" not in history
-    ):
-        return "dialogue_textbox"
-
     if "leave island" in text and "continue" in text and "yes" in text:
         return "leave_confirm_yes"
     if "spend reputation" in text and "leave island" in text:
@@ -802,11 +795,21 @@ def clear_control_for_visible_ui(
             (scores.get("perfect_reward_choice") or {}).get("score") or 0.0
         )
         dark_overlay = float(visible.get("dark_overlay_fraction") or 0.0)
+        if inactive_terminal_screen:
+            return "reward_continue"
+        if dark_overlay >= 0.85 and dialogue_score >= 0.5 and choice_score >= 0.25:
+            return "reward_continue"
         if dark_overlay >= 0.85 and choice_score >= 0.25:
             if {"panel_continue", "bottom_continue"} & set(history):
                 return "perfect_reward_grid"
             return "panel_continue"
         return "menu_continue"
+    if (
+        inactive_terminal_screen
+        and dialogue_score >= 0.5
+        and "dialogue_textbox" not in history
+    ):
+        return "dialogue_textbox"
     if visible_name == "promotion_panel":
         return "modal_understood"
     if visible_name == "kia_panel" and previous_control == "pod_open_door":
@@ -1482,15 +1485,38 @@ def clear_mission_result_to_island_map(
 ) -> dict[str, Any]:
     steps: list[dict[str, Any]] = []
     previous_control: str | None = None
+    terminal_bridge_snapshot: dict[str, Any] | None = None
     for step_index in range(max_steps):
         visible = _lightning_visible_ui_snapshot(include_ocr=False)
         visible_name = visible.get("visible_ui")
         if visible_name in {"pause_menu", "island_map_or_unknown"}:
             visible = _lightning_visible_ui_snapshot(include_ocr=True)
             visible_name = visible.get("visible_ui")
+        try:
+            bridge_snapshot = _lightning_live_snapshot()
+        except Exception as exc:
+            bridge_snapshot = {"status": "ERROR", "error": str(exc)}
+        if (
+            isinstance(bridge_snapshot, dict)
+            and bridge_snapshot.get("status") == "OK"
+            and bridge_snapshot.get("in_active_mission") is False
+            and int(bridge_snapshot.get("active_mechs") or 0) == 0
+        ):
+            terminal_bridge_snapshot = dict(bridge_snapshot)
+        elif (
+            terminal_bridge_snapshot
+            and visible_name == "pause_menu"
+            and bridge_snapshot.get("status") in {"NO_BRIDGE", "ERROR"}
+        ):
+            bridge_snapshot = {
+                **terminal_bridge_snapshot,
+                "stale_for_result_clear": True,
+            }
+        visible["bridge_refine_snapshot"] = bridge_snapshot
         step: dict[str, Any] = {
             "step": step_index + 1,
             "visible_ui": compact_visible_ui(visible),
+            "live_snapshot": compact_live_snapshot(bridge_snapshot),
             "game_timer_seconds": elapsed(timer_start),
         }
         if visible_name == "island_complete_leave" and not continue_after_island:
