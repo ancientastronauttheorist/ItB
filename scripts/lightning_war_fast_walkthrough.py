@@ -848,6 +848,8 @@ def wait_for_post_end_turn_ready_or_terminal(
     max_wait_seconds: float,
     terminal_visual_settle_seconds: float,
     poll_seconds: float = 0.5,
+    record_timing_screenshots: bool = False,
+    ocr_result_audit: bool = False,
 ) -> dict[str, Any]:
     log(f"wait at least {min_wait_seconds:.1f}s after Turn {turn_index} End Turn")
     start = time.perf_counter()
@@ -856,7 +858,11 @@ def wait_for_post_end_turn_ready_or_terminal(
     first_bridge_terminal_elapsed: float | None = None
     while True:
         elapsed_after_end = round(time.perf_counter() - start, 3)
-        sample_shot = capture_timing(f"turn_{turn_index}_post_end")
+        sample_shot = (
+            capture_timing(f"turn_{turn_index}_post_end")
+            if record_timing_screenshots
+            else None
+        )
         visible = _lightning_visible_ui_snapshot(include_ocr=False)
         try:
             snapshot = _lightning_live_snapshot()
@@ -865,7 +871,7 @@ def wait_for_post_end_turn_ready_or_terminal(
         sample = {
             "elapsed_after_end_turn_seconds": elapsed_after_end,
             "game_timer_seconds": elapsed(timer_start),
-            "screenshot_path": str(sample_shot),
+            "screenshot_path": str(sample_shot) if sample_shot else None,
             "visible_ui": compact_visible_ui(visible),
             "live_snapshot": compact_live_snapshot(snapshot),
         }
@@ -877,10 +883,14 @@ def wait_for_post_end_turn_ready_or_terminal(
             "post-end sample "
             f"turn={turn_index} +{elapsed_after_end:.1f}s "
             f"ui={visible_name} phase={phase} active={active} "
-            f"shot={sample_shot}"
+            f"shot={sample_shot or 'off'}"
         )
         if visible.get("status") == "OK" and visible_name in TERMINAL_OR_CLEAR_UIS:
-            audited_visible = _lightning_visible_ui_snapshot(include_ocr=True)
+            audited_visible = (
+                _lightning_visible_ui_snapshot(include_ocr=True)
+                if ocr_result_audit
+                else visible
+            )
             return {
                 "status": "TERMINAL_OR_CLEAR_UI",
                 "reason": "visible_terminal_or_clear_panel",
@@ -912,7 +922,11 @@ def wait_for_post_end_turn_ready_or_terminal(
                     f"for {terminal_visual_settle_seconds:.1f}s"
                 )
             if elapsed_after_end - first_bridge_terminal_elapsed >= terminal_visual_settle_seconds:
-                audited_visible = _lightning_visible_ui_snapshot(include_ocr=True)
+                audited_visible = (
+                    _lightning_visible_ui_snapshot(include_ocr=True)
+                    if ocr_result_audit
+                    else _lightning_visible_ui_snapshot(include_ocr=False)
+                )
                 return {
                     "status": "TERMINAL_OR_CLEAR_UI",
                     "reason": "bridge_terminal_visual_settled",
@@ -1117,6 +1131,8 @@ def solve_execute_and_end_turn(
             max_wait_seconds=args.post_end_turn_max_wait_seconds,
             terminal_visual_settle_seconds=args.terminal_visual_settle_seconds,
             poll_seconds=args.result_screenshot_cadence,
+            record_timing_screenshots=args.record_timing_screenshots,
+            ocr_result_audit=args.ocr_result_audit,
         )
     except FastRunError:
         if observer_missed_possible_terminal:
@@ -1301,6 +1317,8 @@ def paused_solve_execute_and_end_turn(
             max_wait_seconds=args.post_end_turn_max_wait_seconds,
             terminal_visual_settle_seconds=args.terminal_visual_settle_seconds,
             poll_seconds=args.result_screenshot_cadence,
+            record_timing_screenshots=args.record_timing_screenshots,
+            ocr_result_audit=args.ocr_result_audit,
         )
     except FastRunError:
         raise FastRunError(
@@ -1448,8 +1466,11 @@ def clear_mission_result_to_island_map(
     steps: list[dict[str, Any]] = []
     previous_control: str | None = None
     for step_index in range(max_steps):
-        visible = _lightning_visible_ui_snapshot(include_ocr=True)
+        visible = _lightning_visible_ui_snapshot(include_ocr=False)
         visible_name = visible.get("visible_ui")
+        if visible_name in {"pause_menu", "island_map_or_unknown"}:
+            visible = _lightning_visible_ui_snapshot(include_ocr=True)
+            visible_name = visible.get("visible_ui")
         step: dict[str, Any] = {
             "step": step_index + 1,
             "visible_ui": compact_visible_ui(visible),
@@ -1471,7 +1492,7 @@ def clear_mission_result_to_island_map(
             ],
         )
         try:
-            click = click_transition_control(control, settle_seconds=1.2)
+            click = click_transition_control(control, settle_seconds=0.25)
             step["control"] = control
             step["click"] = click
         except Exception as exc:
@@ -1481,7 +1502,7 @@ def clear_mission_result_to_island_map(
             break
         previous_control = control
         steps.append(step)
-        time.sleep(0.6)
+        time.sleep(0.2)
         if control == "leave_confirm_yes" and mission_index >= 10:
             return {
                 "status": "SECOND_ISLAND_COMPLETE",
@@ -1717,7 +1738,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--deploy-ready-wait-seconds", type=float, default=0.5)
     parser.add_argument("--opening-enemy-wait-seconds", type=float, default=7.0)
     parser.add_argument("--opening-enemy-max-wait-seconds", type=float, default=28.0)
-    parser.add_argument("--post-end-turn-wait-seconds", type=float, default=8.0)
+    parser.add_argument("--post-end-turn-wait-seconds", type=float, default=0.5)
     parser.add_argument("--post-end-turn-max-wait-seconds", type=float, default=25.0)
     parser.add_argument("--result-screenshot-cadence", type=float, default=0.5)
     parser.add_argument("--terminal-visual-settle-seconds", type=float, default=2.5)
@@ -1751,10 +1772,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-island-missions", type=int, default=5)
     parser.add_argument(
         "--paused-solve-execute",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         help=(
-            "Experimental: solve while paused, then unpause only to execute "
-            "the stored plan and click End Turn."
+            "Solve while paused, then unpause only to execute the stored plan "
+            "and click End Turn. Enabled by default for fast-mode."
+        ),
+    )
+    parser.add_argument(
+        "--record-timing-screenshots",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Write every post-End-Turn timing screenshot. Useful for timing "
+            "probes, but disabled by default for real fast-mode."
+        ),
+    )
+    parser.add_argument(
+        "--ocr-result-audit",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Run OCR-backed result-panel audits before returning from combat. "
+            "Useful for diagnosis; disabled by default for speed."
         ),
     )
     parser.add_argument(

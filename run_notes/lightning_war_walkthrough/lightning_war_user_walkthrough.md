@@ -1491,3 +1491,44 @@ Patch follow-ups from this rerun:
   Lightning speed policy by reading each snapshot `context.json`.
 - Windows trusted clicks now attempt to foreground the game window before
   sending raw mouse input.
+
+## Fast-Mode Timing Investigation
+
+Date: 2026-06-10.
+
+Observed issues:
+
+- During the real fast-mode attempt, the game briefly entered the pause menu,
+  immediately unpaused, and then waited several seconds before mech actions
+  began.
+- After mission completion, the Region Secured Continue button was visible but
+  the loop was slow to click it.
+
+Findings:
+
+- The attempted command did not pass `--paused-solve-execute`, and the script
+  default was still the live `auto_turn` path. That path clicks
+  `menu_continue` first, waits for a fresh heartbeat, and then runs
+  `cmd_auto_turn`, so solving/diagnosis happens while the in-game timer is
+  ticking. This exactly explains the visible pause flash followed by delayed
+  mech actions.
+- The post-End-Turn watcher still had timing-probe behavior enabled for the
+  real attempt: every poll wrote a timing screenshot and then took a separate
+  classifier screenshot. It also ran OCR-backed result audits before returning.
+  That is good for measurement, but it is unnecessary overhead when the goal is
+  to click Region Secured Continue as soon as it appears.
+- The result clearer also used OCR snapshots and conservative fixed sleeps for
+  every transition click, even when the visible UI was already an obvious
+  reward / Region Secured panel.
+
+Patch follow-ups:
+
+- `--paused-solve-execute` is now enabled by default for this fast walkthrough.
+  Use `--no-paused-solve-execute` only for deliberate live-`auto_turn` testing.
+- Post-End-Turn timing screenshots and OCR result audits are now opt-in via
+  `--record-timing-screenshots` and `--ocr-result-audit`.
+- The default post-End-Turn minimum wait is now `0.5s`, matching the fast-mode
+  probes.
+- Result clearing now uses non-OCR visible classification first and shorter
+  transition settles, so obvious Region Secured / reward Continue panels should
+  be clicked much sooner.
