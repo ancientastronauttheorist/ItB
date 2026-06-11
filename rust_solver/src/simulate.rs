@@ -3719,6 +3719,9 @@ fn sim_projectile(
 fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     let center_occupied_at_impact = board.unit_at(tx, ty).is_some();
     let center_blocked_at_impact = board.is_blocked(tx, ty, false);
+    let rockthrow_spawns_empty_center = weapon_id == WId::RangedRockthrow
+        && !center_occupied_at_impact
+        && !center_blocked_at_impact;
     let rockthrow_defer_center_death_effects = weapon_id == WId::RangedRockthrow
         && matches!(wdef.push, PushDir::Perpendicular);
     let center_volatile_idx = if rockthrow_defer_center_death_effects {
@@ -3764,7 +3767,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             deferred_center_blast_explosion = center_blast_idx
                 .map(|idx| board.units[idx].hp <= 0)
                 .unwrap_or(false);
-        } else {
+        } else if !rockthrow_spawns_empty_center {
             apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
         }
     }
@@ -3877,7 +3880,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     // Rock Accelerator leaves a neutral boulder on an empty target tile after
     // impact. The pre-impact blocked check prevents replacing mountains,
     // buildings, units, wrecks, or deadly terrain cleared by the shot.
-    if weapon_id == WId::RangedRockthrow && !center_blocked_at_impact {
+    if rockthrow_spawns_empty_center {
         spawn_rock_thrown(board, tx, ty);
     }
 
@@ -7428,6 +7431,29 @@ mod tests {
         assert_eq!((rock.hp, rock.max_hp), (1, 1));
         assert_eq!(rock.move_speed, 0);
         assert!(rock.pushable());
+    }
+
+    #[test]
+    fn test_rock_accelerator_empty_forest_spawn_preserves_forest() {
+        // Lightning War regression 20260610_184414_692: RockartMech fired
+        // Rock Launcher at empty E3 Forest, live spawned RockThrown but left
+        // the underlying tile as unburned Forest.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+        board.tile_mut(5, 3).terrain = Terrain::Forest;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 5, 3);
+
+        let rock = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|u| u.type_name_str() == "RockThrown")
+            .expect("Rock Accelerator should spawn a RockThrown on empty Forest");
+        assert_eq!((rock.x, rock.y), (5, 3));
+        assert_eq!(board.tile(5, 3).terrain, Terrain::Forest);
+        assert!(
+            !board.tile(5, 3).on_fire(),
+            "empty-target RockThrown spawn should not consume or ignite Forest"
+        );
     }
 
     #[test]

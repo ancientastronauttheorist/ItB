@@ -1293,7 +1293,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # to the next player turn so plan safety blocks mechs parked on the next wave
 # lane. Fixes Lightning War run 20260603 Mission_Tides turn 2. Pre-v259 corpus
 # archived as failure_db_snapshot_sim_v258.jsonl.
-SIMULATOR_VERSION = 259
+# v260 - Rock Launcher empty-target rock spawns do not apply center terrain
+# damage. Live preserves Forest/no fire under the spawned RockThrown. Fixes
+# Lightning War run 20260610_184414_692 Archive Mission_Mines turn 1. Pre-v260
+# corpus archived as failure_db_snapshot_sim_v259.jsonl.
+SIMULATOR_VERSION = 260
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

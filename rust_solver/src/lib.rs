@@ -1785,7 +1785,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Electric and Rockart ended on the next tide lane and Electric was webbed
 //   by a spawned Leaper. Pre-v259 corpus archived as
 //   failure_db_snapshot_sim_v258.jsonl.
-pub const SIMULATOR_VERSION: u32 = 259;
+// v260 - Rock Launcher empty-target rock spawns do not apply center terrain
+//   damage. Live preserves Forest/no fire under the spawned RockThrown. Fixes
+//   Lightning War run 20260610_184414_692 Archive Mission_Mines turn 1, where
+//   Ranged_Rockthrow at E3 spawned a rock but left the forest intact. Pre-v260
+//   corpus archived as failure_db_snapshot_sim_v259.jsonl.
+pub const SIMULATOR_VERSION: u32 = 260;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

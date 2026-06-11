@@ -407,3 +407,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 394 | 697 | Computer Use fallback End Turn clicks need refocus and fresh reads. | `docs/agent/live-runbook.md` |
 | 395 | 699 | Change the Odds is post-island shop math, not a victory requirement. | `docs/agent/achievement-playbook.md` |
 | 396 | 701 | Class Specialist is proven with three Prime mechs. | `docs/agent/achievement-playbook.md` |
+| 397 | 703 | Rock Launcher empty rock spawns preserve Forest. | `docs/agent/solver-reference.md` |
