@@ -59,6 +59,8 @@ MECH_STATS = {
     "NanoMech":      PawnStats(move_speed=4, massive=True, flying=True, class_type="Science", default_weapon="Science_AcidShot"),
     # Advanced Edition mechs
     "BeetleMech":    PawnStats(move_speed=3, massive=True, class_type="Prime", default_weapon="Prime_Beetle"),
+    "PierceMech":    PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_PierceShot"),
+    "BomblingMech":  PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_DeployBomb"),
     "BulkMech":      PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_TC_Ricochet"),
     "ScorpioMech":   PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_Arachnoid"),
     "FourwayMech":   PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_MassShift"),
