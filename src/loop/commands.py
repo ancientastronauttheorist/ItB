@@ -7040,13 +7040,16 @@ def _lightning_bridge_island_map_pause_peek(
     finally:
         if resumed:
             for attempt in range(2):
-                pause = _lightning_click_control_with_bounds(
-                    "pause",
-                    bounds=bounds,
-                    dry_run=False,
-                    settle_seconds=0.08,
-                    hold_seconds=0.06,
-                )
+                if os.name == "nt":
+                    pause = _lightning_press_pause_escape(settle_seconds=0.20)
+                else:
+                    pause = _lightning_click_control_with_bounds(
+                        "pause",
+                        bounds=bounds,
+                        dry_run=False,
+                        settle_seconds=0.08,
+                        hold_seconds=0.06,
+                    )
                 pause_verify = _lightning_visible_ui_snapshot()
                 pause_ok = (
                     pause.get("status") == "OK"
@@ -8557,6 +8560,30 @@ def _lightning_extract_red_regions_from_image(image_path: str | Path) -> dict:
     regions.sort(key=lambda r: (r["window_y"], r["window_x"]))
     for index, region in enumerate(regions):
         region["index"] = index
+        base_x = int(region["window_x"])
+        base_y = int(region["window_y"])
+        base_bbox = [int(value) for value in region["bbox_window"]]
+        image_x = int(round(base_x * scale_x))
+        image_y = int(round(base_y * scale_y))
+        image_bbox = [
+            int(round(base_bbox[0] * scale_x)),
+            int(round(base_bbox[1] * scale_y)),
+            int(round(base_bbox[2] * scale_x)),
+            int(round(base_bbox[3] * scale_y)),
+        ]
+        region["base_window_x"] = base_x
+        region["base_window_y"] = base_y
+        region["bbox_base_window"] = base_bbox
+        region["image_x"] = image_x
+        region["image_y"] = image_y
+        region["bbox_image"] = image_bbox
+        region["coordinate_space"] = (
+            "physical_window" if os.name == "nt" else "base_window"
+        )
+        if os.name == "nt":
+            region["window_x"] = image_x
+            region["window_y"] = image_y
+            region["bbox_window"] = image_bbox
 
     return {
         "status": "OK",
@@ -10362,6 +10389,8 @@ def _lightning_preferred_visible_control(
             return "bottom_continue"
         return "panel_continue"
     if visible_name == "perfect_reward_choice" and control:
+        if _lightning_visible_ui_is_perfect_reward_continue_dialogue(visible_ui):
+            return "dialogue_textbox"
         return "perfect_reward_grid"
     if visible_name == "island_complete_leave" and control:
         return "leave_island"
@@ -10474,9 +10503,97 @@ def _lightning_visible_ui_is_intro_continue_panel(
         return False
     if _lightning_visible_ui_is_active_intro_dialogue(visible_ui):
         return True
-    if visible_ui.get("visible_ui") != "island_map_or_unknown":
+    if visible_ui.get("visible_ui") not in {
+        "island_map_or_unknown",
+        "mission_preview_panel",
+    }:
         return False
     return _lightning_visible_ui_has_intro_continue_text(visible_ui)
+
+
+def _lightning_visible_ui_has_continue_text(visible_ui: dict | None) -> bool:
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return False
+    text = "\n".join(_lightning_visible_ui_text_parts(visible_ui))
+    if not text:
+        return False
+    normalized = re.sub(r"[^a-z0-9]+", " ", text.lower()).strip().split()
+    compact = re.sub(r"[^a-z0-9]+", "", text.lower())
+    return "continue" in normalized or "continue" in compact
+
+
+def _lightning_visible_ui_has_ceo_dialogue_signal(visible_ui: dict | None) -> bool:
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return False
+    scores = visible_ui.get("scores")
+    if not isinstance(scores, dict):
+        return False
+    dialogue = scores.get("mission_preview_dialogue")
+    if not isinstance(dialogue, dict):
+        return False
+    card = dialogue.get("card")
+    if not isinstance(card, dict):
+        card = {}
+    dialogue_region = dialogue.get("dialogue")
+    if not isinstance(dialogue_region, dict):
+        dialogue_region = {}
+    try:
+        score = float(dialogue.get("score") or 0.0)
+        dark_fraction = float(
+            dialogue.get("dialogue_dark_fraction")
+            or dialogue_region.get("dark_fraction")
+            or 0.0
+        )
+    except (TypeError, ValueError):
+        return False
+    try:
+        dialogue_bright = int(
+            dialogue.get("dialogue_bright")
+            or dialogue_region.get("bright")
+            or 0
+        )
+        dialogue_blue = int(
+            dialogue.get("dialogue_blue")
+            or dialogue_region.get("blue")
+            or 0
+        )
+        card_blue = int(dialogue.get("card_blue") or card.get("blue") or 0)
+    except (TypeError, ValueError):
+        return False
+    return (
+        score >= 0.55
+        and dark_fraction >= 0.70
+        and dialogue_bright >= 1200
+        and (dialogue_blue >= 1200 or card_blue >= 4000)
+    )
+
+
+def _lightning_visible_ui_is_perfect_reward_continue_dialogue(
+    visible_ui: dict | None,
+) -> bool:
+    """Detect the post-grid-reward CEO dialogue that masquerades as the grid card."""
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return False
+    if visible_ui.get("visible_ui") != "perfect_reward_choice":
+        return False
+    if not _lightning_visible_ui_has_continue_text(visible_ui):
+        return False
+    return _lightning_visible_ui_has_ceo_dialogue_signal(
+        visible_ui
+    ) or _lightning_visible_ui_has_intro_continue_text(visible_ui)
+
+
+def _lightning_visible_ui_is_perfect_reward_continue_after_grid_click(
+    visible_ui: dict | None,
+) -> bool:
+    """No-OCR fallback used only after the grid reward was already clicked."""
+    if _lightning_visible_ui_is_perfect_reward_continue_dialogue(visible_ui):
+        return True
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return False
+    if visible_ui.get("visible_ui") != "perfect_reward_choice":
+        return False
+    return _lightning_visible_ui_has_ceo_dialogue_signal(visible_ui)
 
 
 def _lightning_is_safe_clear_ui(
@@ -10666,6 +10783,26 @@ def _lightning_press_pause_escape(
         settle_seconds=settle_seconds,
     )
     result["control"] = "pause_menu_escape"
+    return result
+
+
+def _lightning_press_ui_key(
+    key: str,
+    *,
+    description: str,
+    dry_run: bool = False,
+    settle_seconds: float = 0.08,
+) -> dict:
+    """Press a trusted non-combat UI key without moving the cursor."""
+    from src.control.mac_click import press_key
+
+    result = press_key(
+        key,
+        description=description,
+        dry_run=dry_run,
+        settle_seconds=settle_seconds,
+    )
+    result["control"] = f"ui_key_{str(key).strip().lower()}"
     return result
 
 
@@ -10975,13 +11112,17 @@ def _lightning_start_mission_target(image_path: str | Path) -> dict:
             }
         )
 
+    min_component_width = 1.0 if os.name == "nt" else 4.0
+    min_component_height = 6.0 if os.name == "nt" else 8.0
+    min_cluster_span_x = 45.0 if os.name == "nt" else 60.0
+    max_cluster_span_y = 90.0
     candidates = [
         comp
         for comp in components
         if (
             80 <= comp["area"] <= 100000
-            and 4 <= comp["window_width"] <= 320
-            and 8 <= comp["window_height"] <= 80
+            and min_component_width <= comp["window_width"] <= 320
+            and min_component_height <= comp["window_height"] <= 80
             and comp["window_cy"] <= 560
         )
     ]
@@ -11008,7 +11149,7 @@ def _lightning_start_mission_target(image_path: str | Path) -> dict:
         span_x = max_x - min_x
         span_y = max_y - min_y
         area = sum(item["area"] for item in cluster)
-        if span_x < 60 or span_y > 90:
+        if span_x < min_cluster_span_x or span_y > max_cluster_span_y:
             continue
         score = area * (1.0 + min(span_x, 360) / 120.0)
         if score > best_score:
@@ -11032,8 +11173,20 @@ def _lightning_start_mission_target(image_path: str | Path) -> dict:
             "reason": "no_start_text_cluster",
         }
 
-    window_x = int(round((best_cluster["window_min_x"] + best_cluster["window_max_x"]) / 2))
-    window_y = int(round((best_cluster["window_min_y"] + best_cluster["window_max_y"]) / 2))
+    window_x_base = (
+        best_cluster["window_min_x"] + best_cluster["window_max_x"]
+    ) / 2
+    window_y_base = (
+        best_cluster["window_min_y"] + best_cluster["window_max_y"]
+    ) / 2
+    if os.name == "nt":
+        # Windows screenshots are captured in physical window pixels, and
+        # click_window_point consumes that same coordinate space.
+        window_x = int(round(window_x_base * scale_x))
+        window_y = int(round(window_y_base * scale_y))
+    else:
+        window_x = int(round(window_x_base))
+        window_y = int(round(window_y_base))
     return {
         "status": "OK",
         "window_x": window_x,
@@ -11083,8 +11236,20 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
         center=(1005, 83),
         size=(220, 80),
     )
+    setup_back_windows = _lightning_button_like_score(
+        image,
+        center=(755, 248),
+        size=(130, 44),
+    )
+    setup_start_windows = _lightning_button_like_score(
+        image,
+        center=(856, 248),
+        size=(130, 44),
+    )
     scores["new_game_setup_back"] = setup_back
     scores["new_game_setup_start"] = setup_start
+    scores["new_game_setup_back_windows"] = setup_back_windows
+    scores["new_game_setup_start_windows"] = setup_start_windows
     system_prompt = _lightning_system_privacy_prompt_score(image)
     scores["system_privacy_prompt"] = system_prompt
     if system_prompt.get("matched"):
@@ -11104,6 +11269,57 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
         }
     title_continue = scores.get("title_continue", {})
     title_new_game = scores.get("title_new_game", {})
+    if os.name == "nt":
+        windows_title_new_game = _lightning_button_like_score(
+            image,
+            center=(68, 150),
+            size=(160, 34),
+        )
+        windows_title_options = _lightning_button_like_score(
+            image,
+            center=(68, 172),
+            size=(160, 34),
+        )
+        scores["title_new_game_windows"] = windows_title_new_game
+        scores["title_options_windows"] = windows_title_options
+        if (
+            dark_overlay < 0.55
+            and windows_title_new_game.get("score", 0.0) >= 0.40
+            and windows_title_options.get("score", 0.0) >= 0.50
+            and windows_title_new_game.get("bright", 0) >= 700
+            and windows_title_options.get("bright", 0) >= 1000
+        ):
+            return {
+                "status": "OK",
+                "visible_ui": "title_screen",
+                "recommended_control": "title_new_game",
+                "confidence": min(
+                    windows_title_new_game["score"],
+                    windows_title_options["score"],
+                ),
+                "dark_overlay_fraction": dark_overlay,
+                "scores": scores,
+            }
+    if (
+        dark_overlay >= 0.70
+        and setup_back_windows.get("score", 0.0) >= 0.80
+        and setup_start_windows.get("score", 0.0) >= 0.80
+        and setup_back_windows.get("bright", 0) >= 150
+        and setup_start_windows.get("bright", 0) >= 150
+        and setup_back_windows.get("border", 0) >= 2500
+        and setup_start_windows.get("border", 0) >= 2500
+    ):
+        return {
+            "status": "OK",
+            "visible_ui": "new_game_setup",
+            "recommended_control": None,
+            "confidence": min(
+                setup_back_windows["score"],
+                setup_start_windows["score"],
+            ),
+            "dark_overlay_fraction": dark_overlay,
+            "scores": scores,
+        }
     start_mission_visible = (
         dark_overlay >= 0.60
         and start_mission.get("yellow", 0) >= 2000
@@ -11118,6 +11334,30 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
         and advisor_preview.get("dialogue", {}).get("dark_fraction", 0.0) >= 0.75
     )
     bottom_continue = scores.get("bottom_continue_panel", {})
+    if os.name == "nt":
+        # Windows' full-screen layout puts the post-mission Continue button
+        # much farther left/up than the old 1280x748 crop. Without this
+        # override, Region Secured dialogue can look like the dim pause menu.
+        windows_bottom_continue = _lightning_button_like_score(
+            image,
+            center=(810, 510),
+            size=(150, 42),
+        )
+        scores["bottom_continue_panel_windows"] = windows_bottom_continue
+        if (
+            dark_overlay >= 0.70
+            and windows_bottom_continue.get("score", 0.0) >= 0.70
+            and windows_bottom_continue.get("bright", 0) >= 800
+            and windows_bottom_continue.get("border", 0) >= 900
+        ):
+            return {
+                "status": "OK",
+                "visible_ui": "bottom_continue_panel",
+                "recommended_control": "reward_continue",
+                "confidence": windows_bottom_continue["score"],
+                "dark_overlay_fraction": dark_overlay,
+                "scores": scores,
+            }
     if (
         dark_overlay >= 0.70
         and bottom_continue.get("score", 0.0) >= 0.70
@@ -11206,8 +11446,12 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             "scores": scores,
         }
     pause_score = scores.get("pause_menu", {})
+    pause_pixels = max(int(pause_score.get("pixels", 0) or 1), 1)
     pause_border_fraction = (
-        pause_score.get("border", 0) / max(int(pause_score.get("pixels", 0) or 1), 1)
+        pause_score.get("border", 0) / pause_pixels
+    )
+    pause_bright_fraction = (
+        pause_score.get("bright", 0) / pause_pixels
     )
     if (
         dark_overlay >= 0.70
@@ -11222,7 +11466,8 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
                 and pause_score.get("score", 0.0) >= 0.14
                 and pause_score.get("bright", 0) >= 900
                 and pause_score.get("border", 0) >= 1000
-                and pause_border_fraction >= 0.03
+                and pause_border_fraction >= 0.010
+                and pause_bright_fraction <= 0.03
             )
         )
     ):
@@ -11564,6 +11809,9 @@ def _lightning_terminal_outcome_evidence(
 ) -> dict | None:
     """Find explicit terminal/failure evidence before clearing Lightning UI."""
     if isinstance(value, dict):
+        visual_kia = _lightning_terminal_visual_kia_evidence(value, path=path)
+        if visual_kia is not None:
+            return visual_kia
         structured_failure = _lightning_structured_objective_failure_evidence(
             value,
             path=path,
@@ -11623,6 +11871,63 @@ def _lightning_terminal_outcome_evidence(
                 "text": text[:240],
             }
     return None
+
+
+def _lightning_terminal_visual_kia_evidence(
+    value: dict,
+    *,
+    path: tuple[str, ...],
+) -> dict | None:
+    visible_name = value.get("visible_ui")
+    if visible_name not in {
+        "reward_panel",
+        "bottom_continue_panel",
+        "perfect_reward_choice",
+        "perfect_island_panel",
+    }:
+        return None
+    if _lightning_terminal_visible_ui_has_clean_text_audit(value):
+        return None
+    screenshot_path = value.get("screenshot_path")
+    if not screenshot_path:
+        return None
+    try:
+        from PIL import Image
+
+        image = Image.open(screenshot_path).convert("RGB")
+    except Exception:
+        return None
+    width, height = image.size
+    base_w, base_h = _LIGHTNING_UI_BASE_SIZE
+    scale_x = width / base_w if base_w else 1.0
+    scale_y = height / base_h if base_h else 1.0
+    # Region Secured KIA text appears under the middle pilot card. This narrow
+    # crop avoids the red island map behind the dark modal.
+    left = int(650 * scale_x)
+    top = int(455 * scale_y)
+    right = int(735 * scale_x)
+    bottom = int(530 * scale_y)
+    if right <= left or bottom <= top:
+        return None
+    crop = image.crop((left, top, right, bottom)).convert("RGB")
+    pixels = list(crop.getdata())
+    total = len(pixels) or 1
+    red = sum(
+        1
+        for r, g, b in pixels
+        if r > 145 and 20 < g < 130 and b < 140 and r > g + 45 and r > b + 45
+    )
+    red_fraction = red / total
+    if red < 180 or red_fraction < 0.006:
+        return None
+    return {
+        "kind": "terminal_visual_kia",
+        "path": ".".join(path + ("screenshot_path",)),
+        "phrase": "kia",
+        "red_pixels": red,
+        "red_fraction": round(red_fraction, 4),
+        "crop": [left, top, right, bottom],
+    }
 
 
 def _lightning_terminal_visible_ui_evidence(
@@ -12612,33 +12917,47 @@ def _lightning_ensure_pause_state(
             "visible_ui": visible_ui,
         }
 
-    if os.name == "nt":
-        from src.native.lldb_pause_probe import (
-            _activate_windows_game_window,
-            _windows_press_escape,
-        )
+    from src.control.mac_click import click_known_window_control
 
-        try:
-            _activate_windows_game_window()
-            click_result = _windows_press_escape(0.35)
-        except Exception as exc:
-            click_result = {
-                "status": "ERROR",
-                "planned_control": "pause_escape",
-                "error": str(exc),
-            }
-    else:
-        from src.control.mac_click import click_known_window_control
-
-        click_result = click_known_window_control("pause")
+    pause_attempts = []
+    pauseable_after_escape = {
+        "island_map",
+        "island_map_or_unknown",
+        "mission_preview_panel",
+    }
+    max_pause_attempts = 2 if os.name == "nt" else 1
+    click_result = {}
     pause_verify = None
     pause_verified = False
-    if click_result.get("status") == "OK":
-        pause_verify = _lightning_visible_ui_snapshot()
-        pause_verified = (
-            pause_verify.get("status") == "OK"
-            and pause_verify.get("visible_ui") == "pause_menu"
+    for attempt in range(max_pause_attempts):
+        if os.name == "nt":
+            click_result = _lightning_press_pause_escape(settle_seconds=0.35)
+        else:
+            click_result = click_known_window_control("pause")
+        pause_attempt = {
+            "attempt": attempt + 1,
+            "click_result": click_result,
+        }
+        if click_result.get("status") == "OK":
+            pause_verify = _lightning_visible_ui_snapshot()
+            pause_attempt["pause_verify"] = pause_verify
+            pause_verified = (
+                pause_verify.get("status") == "OK"
+                and pause_verify.get("visible_ui") == "pause_menu"
+            )
+            pause_attempt["pause_verified"] = pause_verified
+        pause_attempts.append(pause_attempt)
+        if pause_verified:
+            break
+        if os.name != "nt" or click_result.get("status") != "OK":
+            break
+        after_visible = (
+            pause_verify.get("visible_ui")
+            if isinstance(pause_verify, dict)
+            else None
         )
+        if after_visible not in pauseable_after_escape:
+            break
     result = {
         "status": click_result.get("status", "ERROR"),
         "reason": "pause_clicked",
@@ -12649,6 +12968,8 @@ def _lightning_ensure_pause_state(
         "pause_verified": pause_verified,
         "pause_verify": pause_verify,
     }
+    if len(pause_attempts) > 1:
+        result["pause_attempts"] = pause_attempts
     if click_result.get("status") != "OK":
         result["reason"] = "pause_click_failed"
         result["error"] = click_result.get("error")
@@ -12804,7 +13125,10 @@ def _lightning_pause_guard_decision(
                 "reason": "unknown_screen_without_map_context",
                 "pause_allowed": False,
             }
-    elif visible_name == "island_map_or_unknown":
+    elif (
+        visible_name == "island_map_or_unknown"
+        and not _lightning_visible_ui_has_preview_commit_context(visible_ui)
+    ):
         return {
             "status": "SKIPPED",
             "reason": "unknown_screen_without_bridge",
@@ -12939,27 +13263,64 @@ def _lightning_timer_pause_guard_once(
 
     from src.control.mac_click import click_known_window_control
 
-    click_result = click_known_window_control("pause")
+    pause_attempts = []
+    pauseable_after_escape = {
+        "island_map",
+        "island_map_or_unknown",
+        "mission_preview_panel",
+    }
+    max_pause_attempts = 2 if os.name == "nt" else 1
+    click_result = {}
     pause_verify = None
     pause_verified = False
     timer_stop_verified = False
     stop_probe = None
-    if click_result.get("status") == "OK":
-        pause_verify = _lightning_visible_ui_snapshot()
-        pause_verified = (
-            pause_verify.get("status") == "OK"
-            and pause_verify.get("visible_ui") == "pause_menu"
+    for attempt in range(max_pause_attempts):
+        if os.name == "nt":
+            click_result = _lightning_press_pause_escape(settle_seconds=0.35)
+        else:
+            click_result = click_known_window_control("pause")
+        pause_attempt = {
+            "attempt": attempt + 1,
+            "click_result": click_result,
+        }
+        if click_result.get("status") == "OK":
+            pause_verify = _lightning_visible_ui_snapshot()
+            pause_attempt["pause_verify"] = pause_verify
+            pause_verified = (
+                pause_verify.get("status") == "OK"
+                and pause_verify.get("visible_ui") == "pause_menu"
+            )
+            pause_attempt["pause_verified"] = pause_verified
+            can_probe_timer_stop = os.name != "nt" or attempt == max_pause_attempts - 1
+            if (
+                not pause_verified
+                and can_probe_timer_stop
+                and verify_sample_seconds > 0
+            ):
+                stop_probe = _lightning_timer_growth_probe(
+                    profile,
+                    sample_seconds=verify_sample_seconds,
+                )
+                timer_stop_verified = (
+                    stop_probe.get("status") == "OK"
+                    and stop_probe.get("running") is False
+                )
+                pause_verified = timer_stop_verified
+                pause_attempt["stop_probe"] = stop_probe
+                pause_attempt["timer_stop_verified"] = timer_stop_verified
+        pause_attempts.append(pause_attempt)
+        if pause_verified:
+            break
+        if os.name != "nt" or click_result.get("status") != "OK":
+            break
+        after_visible = (
+            pause_verify.get("visible_ui")
+            if isinstance(pause_verify, dict)
+            else None
         )
-        if not pause_verified and verify_sample_seconds > 0:
-            stop_probe = _lightning_timer_growth_probe(
-                profile,
-                sample_seconds=verify_sample_seconds,
-            )
-            timer_stop_verified = (
-                stop_probe.get("status") == "OK"
-                and stop_probe.get("running") is False
-            )
-            pause_verified = timer_stop_verified
+        if after_visible not in pauseable_after_escape:
+            break
 
     result = {
         "status": click_result.get("status", "ERROR"),
@@ -12975,6 +13336,8 @@ def _lightning_timer_pause_guard_once(
         "pause_verify": pause_verify,
         "stop_probe": stop_probe,
     }
+    if len(pause_attempts) > 1:
+        result["pause_attempts"] = pause_attempts
     if click_result.get("status") != "OK":
         result["reason"] = "pause_click_failed"
         result["error"] = click_result.get("error")
@@ -13137,6 +13500,7 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
     fallback_result = None
     fallback_control = None
     fallback_visible_ui = None
+    dialogue_result = None
     if control == "reward_continue" and not dry_run and click_result.get("status") == "OK":
         fallback_visible_ui = _lightning_audit_visible_ui_for_terminal_text(
             _lightning_visible_ui_snapshot()
@@ -13152,6 +13516,57 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
         if fallback_visible_ui.get("visible_ui") in {"reward_panel", "bottom_continue_panel"}:
             fallback_control = "bottom_continue"
             fallback_result = click_known_window_control("bottom_continue", dry_run=dry_run)
+        elif _lightning_visible_ui_is_perfect_reward_continue_dialogue(fallback_visible_ui):
+            fallback_control = "dialogue_textbox"
+            dialogue_result = click_known_window_control(
+                "dialogue_textbox",
+                dry_run=dry_run,
+            )
+            if dialogue_result.get("status") == "OK":
+                fallback_control = "reward_continue"
+                fallback_result = click_known_window_control(
+                    "reward_continue",
+                    dry_run=dry_run,
+                )
+            else:
+                fallback_result = dialogue_result
+    if (
+        visible_name == "perfect_reward_choice"
+        and control == "dialogue_textbox"
+        and not dry_run
+        and click_result.get("status") == "OK"
+        and _lightning_visible_ui_is_perfect_reward_continue_dialogue(visible_ui)
+    ):
+        fallback_control = "reward_continue"
+        fallback_result = click_known_window_control("reward_continue", dry_run=dry_run)
+    if control == "perfect_reward_grid" and not dry_run and click_result.get("status") == "OK":
+        fallback_visible_ui = _lightning_audit_visible_ui_for_terminal_text(
+            _lightning_visible_ui_snapshot()
+        )
+        terminal_block = _lightning_terminal_panel_block(
+            fallback_visible_ui,
+            reason="terminal_outcome_visible_after_perfect_reward_grid",
+        )
+        if terminal_block is not None:
+            terminal_block["control"] = control
+            terminal_block["click_result"] = click_result
+            return terminal_block
+        if _lightning_visible_ui_is_perfect_reward_continue_after_grid_click(
+            fallback_visible_ui
+        ):
+            fallback_control = "dialogue_textbox"
+            dialogue_result = click_known_window_control(
+                "dialogue_textbox",
+                dry_run=dry_run,
+            )
+            if dialogue_result.get("status") == "OK":
+                fallback_control = "reward_continue"
+                fallback_result = click_known_window_control(
+                    "reward_continue",
+                    dry_run=dry_run,
+                )
+            else:
+                fallback_result = dialogue_result
     if control == "leave_island" and not dry_run and click_result.get("status") == "OK":
         fallback_control = "leave_confirm_yes"
         fallback_result = click_known_window_control("leave_confirm_yes", dry_run=dry_run)
@@ -13168,6 +13583,8 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
     if fallback_result is not None:
         result["fallback_visible_ui"] = fallback_visible_ui
         result["fallback_control"] = fallback_control
+        if dialogue_result is not None:
+            result["dialogue_click_result"] = dialogue_result
         result["fallback_click_result"] = fallback_result
         if fallback_result.get("status") != "OK":
             result["status"] = fallback_result.get("status", "ERROR")
@@ -13238,6 +13655,17 @@ def _lightning_clear_visible_panel_chain(
 
         click_result = click_known_window_control(str(control))
         step["click_result"] = click_result
+        if (
+            visible_name == "perfect_reward_choice"
+            and control == "dialogue_textbox"
+            and click_result.get("status") == "OK"
+            and _lightning_visible_ui_is_perfect_reward_continue_dialogue(visible_ui)
+        ):
+            fallback_result = click_known_window_control("reward_continue")
+            step["fallback_control"] = "reward_continue"
+            step["fallback_click_result"] = fallback_result
+            if fallback_result.get("status") != "OK":
+                click_result = fallback_result
         if control == "reward_continue" and click_result.get("status") == "OK":
             fallback_visible_ui = _lightning_audit_visible_ui_for_terminal_text(
                 _lightning_visible_ui_snapshot()
@@ -13254,6 +13682,47 @@ def _lightning_clear_visible_panel_chain(
                 step["fallback_visible_ui"] = fallback_visible_ui
                 step["fallback_control"] = "bottom_continue"
                 step["fallback_click_result"] = fallback_result
+                if fallback_result.get("status") != "OK":
+                    click_result = fallback_result
+            elif _lightning_visible_ui_is_perfect_reward_continue_dialogue(fallback_visible_ui):
+                dialogue_result = click_known_window_control("dialogue_textbox")
+                step["fallback_visible_ui"] = fallback_visible_ui
+                step["fallback_control"] = "dialogue_textbox"
+                step["dialogue_click_result"] = dialogue_result
+                if dialogue_result.get("status") == "OK":
+                    fallback_result = click_known_window_control("reward_continue")
+                    step["fallback_control"] = "reward_continue"
+                    step["fallback_click_result"] = fallback_result
+                else:
+                    fallback_result = dialogue_result
+                    step["fallback_click_result"] = fallback_result
+                if fallback_result.get("status") != "OK":
+                    click_result = fallback_result
+        if control == "perfect_reward_grid" and click_result.get("status") == "OK":
+            fallback_visible_ui = _lightning_audit_visible_ui_for_terminal_text(
+                _lightning_visible_ui_snapshot()
+            )
+            terminal_block = _lightning_terminal_panel_block(
+                fallback_visible_ui,
+                reason="terminal_outcome_visible_after_perfect_reward_grid",
+                steps=steps + [step],
+            )
+            if terminal_block is not None:
+                return terminal_block
+            if _lightning_visible_ui_is_perfect_reward_continue_after_grid_click(
+                fallback_visible_ui
+            ):
+                dialogue_result = click_known_window_control("dialogue_textbox")
+                step["fallback_visible_ui"] = fallback_visible_ui
+                step["fallback_control"] = "dialogue_textbox"
+                step["dialogue_click_result"] = dialogue_result
+                if dialogue_result.get("status") == "OK":
+                    fallback_result = click_known_window_control("reward_continue")
+                    step["fallback_control"] = "reward_continue"
+                    step["fallback_click_result"] = fallback_result
+                else:
+                    fallback_result = dialogue_result
+                    step["fallback_click_result"] = fallback_result
                 if fallback_result.get("status") != "OK":
                     click_result = fallback_result
         if control == "leave_island" and click_result.get("status") == "OK":
@@ -13309,41 +13778,16 @@ def _lightning_clear_tail_to_pause(
                 "initial_ui": initial_ui,
                 "planned_controls": planned,
             }
-        if resume_control == "menu_continue":
-            from src.control.mac_click import _get_window_bounds
-
-            bounds = _get_window_bounds("Into the Breach")
-            if bounds is None:
-                return {
-                    "status": "ERROR",
-                    "reason": "window_bounds_unavailable",
-                    "initial_ui": initial_ui,
-                }
-            resumed = _lightning_click_control_with_bounds(
-                "menu_continue",
-                bounds=bounds,
-                settle_seconds=0.12,
-            )
-        else:
-            resumed = _lightning_press_pause_escape(settle_seconds=0.12)
-        if resumed.get("status") != "OK":
+        resumed = _lightning_resume_if_paused(dry_run=False, click_ui=True)
+        if resumed is not None and resumed.get("status") != "OK":
             return {
-                "status": "ERROR",
-                "reason": "resume_from_pause_failed",
+                "status": resumed.get("status", "ERROR"),
+                "reason": resumed.get("reason", "resume_from_pause_failed"),
                 "initial_ui": initial_ui,
                 "resume_result": resumed,
-            }
-        resumed_ui = _lightning_visible_ui_snapshot()
-        if resumed_ui.get("visible_ui") == "pause_menu":
-            return {
-                "status": "BLOCKED",
-                "reason": "resume_from_pause_not_verified",
-                "initial_ui": initial_ui,
-                "resume_result": resumed,
-                "resume_verify": resumed_ui,
-                "next_step": (
-                    "Visible screen is still paused after the resume control. "
-                    "Verify the game window focus before clearing live panels."
+                "next_step": resumed.get(
+                    "next_step",
+                    "Verify the game window focus before clearing live panels.",
                 ),
             }
     elif dry_run:
@@ -13405,6 +13849,16 @@ def _lightning_dialogue_box_score(image_path: str | Path) -> dict:
         center=(990, 205),
         size=(160, 160),
     )
+    windows_map_score = _lightning_button_like_score(
+        image,
+        center=(560, 260),
+        size=(500, 80),
+    )
+    windows_compact_card_score = _lightning_button_like_score(
+        image,
+        center=(700, 392),
+        size=(380, 150),
+    )
     visible = (
         score.get("score", 0.0) >= 0.20
         and score.get("bright", 0) >= 3500
@@ -13412,10 +13866,22 @@ def _lightning_dialogue_box_score(image_path: str | Path) -> dict:
         and portrait_score.get("score", 0.0) >= 0.24
         and portrait_score.get("border", 0) >= 800
     )
+    if os.name == "nt" and not visible:
+        visible = (
+            windows_map_score.get("score", 0.0) >= 0.16
+            and windows_map_score.get("bright", 0) >= 700
+            and windows_map_score.get("border", 0) >= 2500
+            and (
+                windows_compact_card_score.get("score", 0.0) >= 0.20
+                or portrait_score.get("border", 0) >= 250
+            )
+        )
     return {
         "status": "OK",
         "visible": visible,
         "portrait_score": portrait_score,
+        "windows_map_score": windows_map_score,
+        "windows_compact_card_score": windows_compact_card_score,
         **score,
     }
 
@@ -13439,18 +13905,27 @@ def _lightning_click_visible_start_mission(
             return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
         dialogue_probe = _lightning_dialogue_box_score(tmp_path)
         if dialogue_probe.get("visible"):
-            dialogue_click = click_known_window_control(
-                "dialogue_textbox",
-                dry_run=dry_run,
-            )
-            dialogue_click["dialogue_probe"] = dialogue_probe
-            if dialogue_click.get("status") not in {"OK", "DRY_RUN"}:
-                return {
-                    "status": "ERROR",
-                    "reason": "dialogue_dismiss_failed",
-                    "dialogue_probe": dialogue_probe,
-                    "dialogue_click": dialogue_click,
-                }
+            dialogue_clicks = []
+            for index, step in enumerate(_lightning_dialogue_dismiss_control_steps()):
+                click = click_known_window_control(
+                    "dialogue_textbox",
+                    dry_run=dry_run,
+                    settle_seconds=step["settle_seconds"],
+                    hold_seconds=step["hold_seconds"],
+                )
+                click["dialogue_probe"] = dialogue_probe
+                click["dialogue_click_index"] = index
+                dialogue_clicks.append(click)
+                if click.get("status") not in {"OK", "DRY_RUN"}:
+                    return {
+                        "status": "ERROR",
+                        "reason": "dialogue_dismiss_failed",
+                        "dialogue_probe": dialogue_probe,
+                        "dialogue_click": click,
+                        "dialogue_clicks": dialogue_clicks,
+                    }
+            dialogue_click = dialogue_clicks[-1]
+            dialogue_click["dialogue_clicks"] = dialogue_clicks
         else:
             dialogue_click = {
                 "status": "SKIPPED",
@@ -13465,6 +13940,11 @@ def _lightning_click_visible_start_mission(
                     "dialogue_textbox"
                     if dialogue_probe.get("visible")
                     else "skip_dialogue_textbox"
+                ),
+                "planned_dialogue_clicks": (
+                    len(_lightning_dialogue_dismiss_control_steps())
+                    if dialogue_probe.get("visible")
+                    else 0
                 ),
                 "dialogue_probe": dialogue_probe,
                 "next_step": (
@@ -13540,6 +14020,35 @@ def _lightning_dismiss_visible_dialogue(*, dry_run: bool = False) -> dict:
     return result
 
 
+def _lightning_dialogue_dismiss_control_steps() -> list[dict]:
+    """Return trusted dialogue textbox clicks for dismissing advisor prompts."""
+    if os.name == "nt":
+        return [
+            {
+                "kind": "control",
+                "control": "dialogue_textbox",
+                "settle_seconds": 0.20,
+                "hold_seconds": 0.18,
+                "pre_click_seconds": 0.0,
+            },
+            {
+                "kind": "control",
+                "control": "dialogue_textbox",
+                "settle_seconds": 0.55,
+                "hold_seconds": 0.18,
+                "pre_click_seconds": 0.0,
+            },
+        ]
+    return [
+        {
+            "kind": "control",
+            "control": "dialogue_textbox",
+            "settle_seconds": 0.45,
+            "hold_seconds": 0.06,
+        }
+    ]
+
+
 def _lightning_click_paused_preview_start_sequence(
     *,
     dry_run: bool = False,
@@ -13550,23 +14059,26 @@ def _lightning_click_paused_preview_start_sequence(
     from src.control.mac_click import _get_window_bounds
 
     clicks = max(1, int(start_clicks or 1))
-    sequence = [
-        {
-            "kind": "key",
-            "key": "esc",
-            "description": "Pause menu Escape resume",
-            "settle_seconds": 0.18,
-        }
-    ]
-    if dismiss_dialogue:
-        sequence.append(
+    if os.name == "nt":
+        sequence = [
             {
                 "kind": "control",
-                "control": "dialogue_textbox",
-                "settle_seconds": 0.18,
-                "hold_seconds": 0.06,
+                "control": "menu_continue",
+                "settle_seconds": 0.6,
+                "hold_seconds": 0.30,
             }
-        )
+        ]
+    else:
+        sequence = [
+            {
+                "kind": "key",
+                "key": "esc",
+                "description": "Pause menu Escape resume",
+                "settle_seconds": 0.18,
+            }
+        ]
+    if dismiss_dialogue:
+        sequence.extend(_lightning_dialogue_dismiss_control_steps())
     for index in range(clicks):
         sequence.append(
             {
@@ -13587,10 +14099,21 @@ def _lightning_click_paused_preview_start_sequence(
     steps = []
     for item in sequence:
         if item["kind"] == "key":
-            click = _lightning_press_pause_escape(
-                dry_run=False,
-                settle_seconds=item["settle_seconds"],
-            )
+            key = str(item.get("key") or "esc")
+            if key.strip().lower() in {"esc", "escape"}:
+                click = _lightning_press_pause_escape(
+                    dry_run=False,
+                    settle_seconds=item["settle_seconds"],
+                )
+            else:
+                click = _lightning_press_ui_key(
+                    key,
+                    description=str(
+                        item.get("description") or "Lightning route UI key",
+                    ),
+                    dry_run=False,
+                    settle_seconds=item["settle_seconds"],
+                )
         else:
             click = _lightning_click_control_with_bounds(
                 item["control"],
@@ -13716,6 +14239,36 @@ def _lightning_resume_if_paused(*, dry_run: bool = False, click_ui: bool = True)
         post_click_visible.get("status") == "OK"
         and post_click_visible.get("visible_ui") == "pause_menu"
     ):
+        if os.name == "nt":
+            retry_click = _lightning_click_control_with_bounds(
+                "menu_continue",
+                bounds=bounds,
+                settle_seconds=0.35,
+                hold_seconds=0.45,
+            )
+            result["retry_click_result"] = retry_click
+            result["status"] = retry_click.get("status", "ERROR")
+            if retry_click.get("status") != "OK":
+                result["reason"] = "resume_retry_click_failed"
+                result["error"] = retry_click.get("error")
+                return result
+            retry_visible = _lightning_visible_ui_snapshot()
+            result["retry_visible_ui"] = {
+                key: retry_visible.get(key)
+                for key in (
+                    "status",
+                    "visible_ui",
+                    "recommended_control",
+                    "screenshot_path",
+                )
+                if key in retry_visible
+            }
+            if (
+                retry_visible.get("status") != "OK"
+                or retry_visible.get("visible_ui") != "pause_menu"
+            ):
+                result["reason"] = "resumed_from_pause_retry_click"
+                return result
         fallback = _lightning_press_pause_escape(settle_seconds=0.2)
         result["fallback_resume"] = fallback
         result["status"] = fallback.get("status", "ERROR")
@@ -14930,6 +15483,7 @@ def _lightning_click_control_with_bounds(
     dry_run: bool = False,
     settle_seconds: float = 0.05,
     hold_seconds: float | None = None,
+    pre_click_seconds: float | None = None,
 ) -> dict:
     from src.control.mac_click import (
         KNOWN_WINDOW_CONTROLS,
@@ -14950,6 +15504,7 @@ def _lightning_click_control_with_bounds(
         dry_run=dry_run,
         settle_seconds=settle_seconds,
         hold_seconds=control.hold_seconds if hold_seconds is None else hold_seconds,
+        pre_click_seconds=pre_click_seconds,
     )
     result["control"] = control.name
     result["window_x"] = control.window_x
@@ -15006,6 +15561,7 @@ def _lightning_click_dialogue_then_region_repeat(
             dry_run=False,
             settle_seconds=max(0.30, float(settle_seconds)),
             hold_seconds=hold_seconds,
+            pre_click_seconds=0.0 if os.name == "nt" else None,
         )
         dialogue_click["dialogue_probe"] = dialogue_probe
         if dialogue_click.get("status") != "OK":
@@ -15029,6 +15585,7 @@ def _lightning_click_dialogue_then_region_repeat(
                 dry_run=False,
                 settle_seconds=max(0.30, float(settle_seconds)),
                 hold_seconds=hold_seconds,
+                pre_click_seconds=0.0 if os.name == "nt" else None,
             )
             second_dialogue_click["dialogue_probe"] = post_dialogue_probe
             if second_dialogue_click.get("status") != "OK":
@@ -15094,7 +15651,7 @@ def _lightning_route_start_sequence_parts(
             preview_sequence.append({
                 "kind": "control",
                 "control": "menu_continue",
-                "settle_seconds": 0.2,
+                "settle_seconds": 0.6,
                 "hold_seconds": 0.30,
             })
         else:
@@ -15138,14 +15695,7 @@ def _lightning_route_start_sequence_parts(
     )
     if start_window_x is not None and start_window_y is not None:
         if dismiss_dialogue:
-            preview_sequence.append(
-                {
-                    "kind": "control",
-                    "control": "dialogue_textbox",
-                    "settle_seconds": 0.18,
-                    "hold_seconds": 0.06,
-                }
-            )
+            preview_sequence.extend(_lightning_dialogue_dismiss_control_steps())
         commit_sequence.append(
             {
                 "kind": "point",
@@ -15165,14 +15715,7 @@ def _lightning_route_start_sequence_parts(
         "mission_preview_board_twice",
     }:
         if dismiss_dialogue:
-            preview_sequence.append(
-                {
-                    "kind": "control",
-                    "control": "dialogue_textbox",
-                    "settle_seconds": 0.18,
-                    "hold_seconds": 0.06,
-                }
-            )
+            preview_sequence.extend(_lightning_dialogue_dismiss_control_steps())
         board_clicks = (
             2 if normalized_start_mode.endswith("_twice") else 1
         )
@@ -15187,14 +15730,7 @@ def _lightning_route_start_sequence_parts(
             )
     elif normalized_start_mode in {"region_repeat", "repeat_region", "second_region"}:
         if dismiss_dialogue:
-            preview_sequence.append(
-                {
-                    "kind": "control",
-                    "control": "dialogue_textbox",
-                    "settle_seconds": 0.18,
-                    "hold_seconds": 0.06,
-                }
-            )
+            preview_sequence.extend(_lightning_dialogue_dismiss_control_steps())
         commit_sequence.append(
             {
                 "kind": "point",
@@ -15205,11 +15741,70 @@ def _lightning_route_start_sequence_parts(
                 "hold_seconds": 0.06,
             }
         )
+    elif normalized_start_mode in {
+        "region_double",
+        "double_region",
+        "double_click_region",
+    }:
+        if dismiss_dialogue:
+            preview_sequence.extend(_lightning_dialogue_dismiss_control_steps())
+        for index in range(2):
+            commit_sequence.append(
+                {
+                    "kind": "point",
+                    "window_x": int(region_window_x),
+                    "window_y": int(region_window_y),
+                    "description": (
+                        "Lightning route repeat region start double-click"
+                    ),
+                    "settle_seconds": 0.12 if index == 0 else 0.8,
+                    "hold_seconds": 0.05,
+                    "source": "region_double",
+                }
+            )
+    elif normalized_start_mode in {
+        "hover_enter",
+        "hover_confirm",
+        "hover_enter_twice",
+        "hover_confirm_twice",
+        "hover_space",
+        "hover_space_twice",
+        "hover_enter_space",
+        "hover_space_enter",
+    }:
+        if normalized_start_mode in {"hover_space", "hover_space_twice"}:
+            keys = ["space"]
+        elif normalized_start_mode == "hover_enter_space":
+            keys = ["enter", "space"]
+        elif normalized_start_mode == "hover_space_enter":
+            keys = ["space", "enter"]
+        else:
+            keys = ["enter"]
+        if normalized_start_mode in {
+            "hover_enter_twice",
+            "hover_confirm_twice",
+            "hover_space_twice",
+        }:
+            keys = keys * 2
+        for index, key in enumerate(keys):
+            commit_sequence.append(
+                {
+                    "kind": "ui_key",
+                    "key": key,
+                    "description": (
+                        f"Lightning route hover confirm {key}"
+                    ),
+                    "settle_seconds": 0.8 if index == len(keys) - 1 else 0.45,
+                    "source": "hover_confirm",
+                }
+            )
     elif normalized_start_mode in {"visible_text", "text", "yellow_text"}:
+        if dismiss_dialogue:
+            preview_sequence.extend(_lightning_dialogue_dismiss_control_steps())
         commit_sequence.append(
             {
                 "kind": "start_visible",
-                "dismiss_dialogue": bool(dismiss_dialogue),
+                "dismiss_dialogue": False,
             }
         )
     elif normalized_start_mode in {
@@ -15256,6 +15851,9 @@ def _lightning_route_start_sequence_parts(
                 "preview-board-twice",
                 "visible-text",
                 "region-repeat",
+                "region-double",
+                "hover-enter-twice",
+                "hover-space-enter",
                 "dialogue-region-repeat-preview-board-twice",
                 "manual point via --start-window-x/--start-window-y",
             ],
@@ -15327,7 +15925,27 @@ def _lightning_execute_route_start_sequence(
     steps = []
     for item in sequence:
         if item["kind"] == "key":
-            click = _lightning_press_pause_escape(
+            key = str(item.get("key") or "esc")
+            if key.strip().lower() in {"esc", "escape"}:
+                click = _lightning_press_pause_escape(
+                    dry_run=False,
+                    settle_seconds=item["settle_seconds"],
+                )
+            else:
+                click = _lightning_press_ui_key(
+                    key,
+                    description=str(
+                        item.get("description") or "Lightning route UI key",
+                    ),
+                    dry_run=False,
+                    settle_seconds=item["settle_seconds"],
+                )
+        elif item["kind"] == "ui_key":
+            click = _lightning_press_ui_key(
+                str(item["key"]),
+                description=str(
+                    item.get("description") or "Lightning route UI key",
+                ),
                 dry_run=False,
                 settle_seconds=item["settle_seconds"],
             )
@@ -15355,6 +15973,7 @@ def _lightning_execute_route_start_sequence(
                 dry_run=False,
                 settle_seconds=item["settle_seconds"],
                 hold_seconds=item["hold_seconds"],
+                pre_click_seconds=item.get("pre_click_seconds"),
             )
         else:
             screen_x = int(bounds["x"] + item["window_x"])
@@ -15366,6 +15985,7 @@ def _lightning_execute_route_start_sequence(
                 dry_run=False,
                 settle_seconds=item["settle_seconds"],
                 hold_seconds=item["hold_seconds"],
+                pre_click_seconds=item.get("pre_click_seconds"),
             )
             click["window_x"] = item["window_x"]
             click["window_y"] = item["window_y"]
@@ -15685,10 +16305,16 @@ def _lightning_route_start_can_retry_board_after_region_repeat(
 ) -> bool:
     """Return true when an inert verified region-repeat can use the board click."""
     reason = str(commit_click.get("reason") or "")
+    explicit_region_repeat = any(
+        isinstance(step, dict)
+        and step.get("kind") == "point"
+        and "repeat region start" in str(step.get("description") or "").lower()
+        for step in commit_sequence or []
+    )
     if reason not in {
         "baseline_verified_region_repeat_clicked_without_dialogue",
         "baseline_dialogue_dismissed_region_repeat_clicked",
-    }:
+    } and not explicit_region_repeat:
         return False
     if start_window_x is not None or start_window_y is not None:
         return False
@@ -15696,7 +16322,7 @@ def _lightning_route_start_can_retry_board_after_region_repeat(
         return False
     if not _lightning_visible_ui_has_preview_commit_context(post_start_visible_ui):
         return False
-    return any(
+    return explicit_region_repeat or any(
         isinstance(step, dict)
         and step.get("kind") == "control"
         and step.get("control") == "mission_preview_board"
@@ -15794,11 +16420,15 @@ def _lightning_compact_preview_side_card_commit_sequence(
         return []
     if not _lightning_visible_ui_has_preview_commit_context(post_start_visible_ui):
         return []
+    if os.name == "nt":
+        window_x, window_y = 1500, 620
+    else:
+        window_x, window_y = 760, 300
     return [
         {
             "kind": "point",
-            "window_x": 760,
-            "window_y": 300,
+            "window_x": window_x,
+            "window_y": window_y,
             "description": "Lightning compact preview side-card start",
             "settle_seconds": 0.8,
             "hold_seconds": 0.08,
@@ -15821,6 +16451,29 @@ def _lightning_committed_preview_after_click(
     snapshot = _lightning_live_snapshot()
     if not _lightning_turn_zero_deployment_snapshot(snapshot):
         return None
+    if bool(snapshot.get("bridge_heartbeat_stale")):
+        visible_ui = _lightning_visible_ui_snapshot()
+        visible_name = str(visible_ui.get("visible_ui") or "")
+        if visible_name in {
+            "island_map",
+            "island_map_or_unknown",
+            "mission_preview_panel",
+            "pause_menu",
+        }:
+            cleanup = None
+            if visible_name in {"island_map", "island_map_or_unknown"}:
+                cleanup = _lightning_clear_stale_bridge_files_for_visible_map(
+                    reason="route_preview_committed_ignored_stale_deployment_bridge",
+                    snapshot=snapshot,
+                    visible_ui=visible_ui,
+                )
+            preview_click["stale_deployment_bridge_ignored"] = {
+                "reason": "visible_ui_overrides_stale_deployment_bridge",
+                "visible_ui": visible_name,
+                "snapshot": snapshot,
+                "cleanup": cleanup,
+            }
+            return None
 
     actual_mission = str(
         snapshot.get("mission_id") or actual_preview_mission or ""
@@ -16424,10 +17077,18 @@ def cmd_lightning_route_start(
         preview_click = _lightning_execute_guarded_route_preview_sequence(
             list(sequence_parts.get("preview_sequence") or []),
             require_plain_map=(
-                require_auto_start_safe_preview
-                and not expected_preview_mission
-                and start_window_x is None
-                and start_window_y is None
+                (
+                    require_auto_start_safe_preview
+                    and not expected_preview_mission
+                    and start_window_x is None
+                    and start_window_y is None
+                )
+                or (
+                    visual_region_index is not None
+                    and not expected_preview_mission
+                    and start_window_x is None
+                    and start_window_y is None
+                )
             ),
             dry_run=False,
         )
@@ -17533,6 +18194,13 @@ def cmd_lightning_route_start(
                     or _lightning_route_start_commit_requires_transition(
                         commit_click,
                     )
+                    or any(
+                        isinstance(step, dict)
+                        and step.get("kind") == "point"
+                        and "repeat region start"
+                        in str(step.get("description") or "").lower()
+                        for step in commit_sequence or []
+                    )
                 )
                 and not post_start_verified
             ):
@@ -17554,14 +18222,24 @@ def cmd_lightning_route_start(
                         start_window_y=start_window_y,
                     )
                 ):
-                    board_after_region_repeat_sequence = (
-                        _lightning_compact_preview_region_point_commit_sequence(
-                            region_window_x=region_window_x,
-                            region_window_y=region_window_y,
-                            post_start_visible_ui=post_start_visible_ui,
-                        )
+                    explicit_region_repeat_commit = any(
+                        isinstance(step, dict)
+                        and step.get("kind") == "point"
+                        and "repeat region start"
+                        in str(step.get("description") or "").lower()
+                        for step in commit_sequence or []
                     )
-                    board_after_region_repeat_kind = "compact_preview_region_point"
+                    board_after_region_repeat_sequence = []
+                    board_after_region_repeat_kind = ""
+                    if not explicit_region_repeat_commit:
+                        board_after_region_repeat_sequence = (
+                            _lightning_compact_preview_region_point_commit_sequence(
+                                region_window_x=region_window_x,
+                                region_window_y=region_window_y,
+                                post_start_visible_ui=post_start_visible_ui,
+                            )
+                        )
+                        board_after_region_repeat_kind = "compact_preview_region_point"
                     if not board_after_region_repeat_sequence:
                         board_after_region_repeat_sequence = (
                             _lightning_compact_preview_side_card_commit_sequence(
@@ -18890,6 +19568,18 @@ def cmd_lightning_attempt(
         ):
             snapshot_mission_id = str(snapshot.get("mission_id") or "").strip()
             expected_mission_id = str(expected_route_mission_id or "").strip()
+            if (
+                in_active_mission
+                and snapshot_mission_id
+                and _lightning_bridge_snapshot_fresh_enough(snapshot)
+            ):
+                action_record["deployment_visible_ui_warning"] = {
+                    "reason": "active_mission_deployment_overrides_preview_classifier",
+                    "visible_ui": visible_ui,
+                    "mission_id": snapshot_mission_id,
+                    "expected_route_mission_id": expected_mission_id or None,
+                }
+                return run_deploy_then_combat(action="deploy_then_combat")
             if not expected_mission_id or snapshot_mission_id != expected_mission_id:
                 result = {
                     "status": "LIGHTNING_ATTEMPT_BLOCKED",
@@ -19919,7 +20609,11 @@ def cmd_lightning_segment(
                     start_mode=route_start_mode,
                     expected_route_mission_id=route_start_expected_mission_id,
                     route_routing=route_routing,
-                    allow_pause_map_peek=False,
+                    allow_pause_map_peek=(
+                        route_visual_region_index is not None
+                        and route_start_window_x is None
+                        and route_start_window_y is None
+                    ),
                     require_auto_start_safe_preview=(
                         route_auto_start
                         and route_start_expected_mission_id is None
@@ -20236,7 +20930,11 @@ def cmd_lightning_segment(
                         start_mode=route_start_mode,
                         expected_route_mission_id=route_start_expected_mission_id,
                         route_routing=route_routing,
-                        allow_pause_map_peek=False,
+                        allow_pause_map_peek=(
+                            route_visual_region_index is not None
+                            and route_start_window_x is None
+                            and route_start_window_y is None
+                        ),
                         allow_unverified_preview_start=False,
                         require_auto_start_safe_preview=(
                             route_auto_start
@@ -21147,7 +21845,10 @@ def _lightning_intro_continue_likely_visible(visible_ui: dict | None) -> bool:
     """Detect island intro dialogue that classifier cannot clear directly."""
     if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
         return False
-    if visible_ui.get("visible_ui") != "island_map_or_unknown":
+    if visible_ui.get("visible_ui") not in {
+        "island_map_or_unknown",
+        "mission_preview_panel",
+    }:
         return False
     if _lightning_visible_ui_has_intro_continue_text(visible_ui):
         return True
@@ -21158,6 +21859,15 @@ def _lightning_intro_continue_likely_visible(visible_ui: dict | None) -> bool:
     island_map = scores.get("island_map")
     if not isinstance(dialogue, dict) or not isinstance(island_map, dict):
         return False
+    if visible_ui.get("visible_ui") == "mission_preview_panel":
+        start_panel = scores.get("mission_preview_panel")
+        if not isinstance(start_panel, dict):
+            start_panel = {}
+        return (
+            float(dialogue.get("score") or 0.0) >= 0.70
+            and int(start_panel.get("yellow") or 0) < 1000
+            and float(island_map.get("score") or 0.0) < 0.05
+        )
     return (
         float(dialogue.get("score") or 0.0) >= 0.55
         and float(island_map.get("score") or 0.0) < 0.05
@@ -21302,6 +22012,12 @@ def cmd_lightning_start_run(
         island_key,
     )
     result["session_first_island_pending"] = session_pending
+
+    intro_pre_clear_ui = _lightning_visible_ui_snapshot()
+    result["intro_pre_clear_ui"] = intro_pre_clear_ui
+    if _lightning_intro_continue_likely_visible(intro_pre_clear_ui):
+        intro_continue = click_known_window_control("bottom_continue")
+        result["intro_bottom_continue_pre_clear"] = intro_continue
 
     clear_panels = _lightning_clear_visible_panel_chain(max_steps=4)
     result["clear_intro_panels"] = clear_panels
@@ -21614,6 +22330,12 @@ def cmd_lightning_select_first_island(
     )
     result["session_first_island_pending"] = session_pending
 
+    intro_pre_clear_ui = _lightning_visible_ui_snapshot()
+    result["intro_pre_clear_ui"] = intro_pre_clear_ui
+    if _lightning_intro_continue_likely_visible(intro_pre_clear_ui):
+        intro_continue = click_known_window_control("bottom_continue")
+        result["intro_bottom_continue_pre_clear"] = intro_continue
+
     clear_panels = _lightning_clear_visible_panel_chain(max_steps=4)
     result["clear_intro_panels"] = clear_panels
     if clear_panels.get("status") not in {"OK", "NO_ACTION"}:
@@ -21740,7 +22462,7 @@ def _click_end_turn_from_plan_result(
 def _observe_end_turn_after_click(
     turn_result: dict,
     *,
-    timeout: float = 10.0,
+    timeout: float = 2.5,
     poll_interval: float = 0.2,
 ) -> dict:
     """Confirm that a local End Turn click changed bridge state quickly."""
@@ -22219,7 +22941,7 @@ def cmd_lightning_loop(
                 end_turn_clicks += 1
                 observed = _observe_end_turn_after_click(
                     turn_result,
-                    timeout=12.0,
+                    timeout=6.0,
                 )
                 record["end_turn_retry_observed"] = observed
             if observed.get("status") != "OK":

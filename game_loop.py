@@ -656,6 +656,13 @@ def main():
             "preview-board-twice",
             "visible-text",
             "region-repeat",
+            "region-double",
+            "hover-enter",
+            "hover-enter-twice",
+            "hover-space",
+            "hover-space-twice",
+            "hover-enter-space",
+            "hover-space-enter",
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
@@ -754,6 +761,7 @@ def main():
             "preview-board-twice",
             "visible-text",
             "region-repeat",
+            "region-double",
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
@@ -966,8 +974,15 @@ def main():
     )
     p_lightning_loop.add_argument(
         "--pause-before-solve",
+        dest="pause_before_solve",
         action="store_true",
         help="Pause as soon as each player turn is ready, then solve/execute while paused",
+    )
+    p_lightning_loop.add_argument(
+        "--no-pause-before-solve",
+        dest="pause_before_solve",
+        action="store_false",
+        help="Keep the game unpaused for fresh bridge snapshots while solving/executing",
     )
     p_lightning_loop.add_argument(
         "--no-pause-between-actions",
@@ -1260,6 +1275,7 @@ def main():
             "preview-board-twice",
             "visible-text",
             "region-repeat",
+            "region-double",
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
@@ -1722,7 +1738,6 @@ def main():
             lightning_speed_loss_policy=args.speed_loss_policy,
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
-            route_routing=args.route_routing,
         )
     elif args.command == "lightning_attempt":
         cmd_lightning_attempt(

@@ -154,7 +154,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         window_x=250,
         window_y=205,
         description="Advisor dialogue text box dismiss",
-        settle_seconds=0.25,
+        settle_seconds=0.45,
     ),
     "mission_preview_board": KnownWindowControl(
         name="mission_preview_board",
@@ -461,7 +461,7 @@ def _normalize_control_name(name: str) -> str:
 
 
 _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
-    "pause": (168, 130),
+    "pause": (38, 28),
     "pause_main_menu": (1131, 774),
     "setup_start": (1712, 477),
     "setup_back": (583, 159),
@@ -470,16 +470,21 @@ _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
     "bottom_continue": (1633, 1009),
     "reward_continue": (1647, 985),
     "pod_open_door": (1605, 795),
-    "dialogue_textbox": (1280, 520),
+    "dialogue_textbox": (1390, 555),
     "modal_understood": (1290, 885),
     "panel_continue": (1500, 900),
     "perfect_reward_grid": (1460, 810),
     "leave_island": (1280, 1395),
     "leave_confirm_yes": (1208, 795),
-    "mission_preview_board": (1450, 790),
+    "mission_preview_board": (1460, 780),
     "deploy_confirm": (240, 235),
     "abandon_timeline": (1131, 924),
     "abandon_confirm_yes": (1208, 795),
+    "abandon_pilot_slot": (1205, 660),
+    "abandon_pilot_slot_two_left": (1205, 660),
+    "abandon_pilot_slot_two_right": (1385, 660),
+    "abandon_pilot_slot_wide": (1295, 660),
+    "abandon_pilot_slot_right": (1385, 660),
     "island_archive": (600, 430),
     "island_rst": (850, 960),
     "end_turn": (252, 190),
@@ -769,6 +774,7 @@ def _windows_sendinput_click(
     y: int,
     *,
     hold_seconds: float = 0.3,
+    pre_click_seconds: float = 0.08,
 ) -> dict:
     """Click a global screen point with Win32 raw input.
 
@@ -839,6 +845,8 @@ def _windows_sendinput_click(
                 "status": "ERROR",
                 "error": f"SetCursorPos failed: WinError {ctypes.get_last_error()}",
             }
+        if pre_click_seconds > 0:
+            time.sleep(max(0.0, pre_click_seconds))
 
         down = INPUT(
             type=INPUT_MOUSE,
@@ -873,7 +881,11 @@ def _windows_sendinput_click(
             }
     except Exception as exc:
         return {"status": "ERROR", "error": f"win32 SendInput click failed: {exc}"}
-    return {"status": "OK", "hold_seconds": hold_seconds}
+    return {
+        "status": "OK",
+        "hold_seconds": hold_seconds,
+        "pre_click_seconds": max(0.0, pre_click_seconds),
+    }
 
 
 def _get_window_bounds(app_name: str) -> dict | None:
@@ -1001,6 +1013,7 @@ def click_screen_point(
     dry_run: bool = False,
     settle_seconds: float = 0.15,
     hold_seconds: float = 0.3,
+    pre_click_seconds: float | None = None,
 ) -> dict:
     """Activate the game and click a screen-coordinate point via AppleScript."""
     x = int(x)
@@ -1019,7 +1032,12 @@ def click_screen_point(
         time.sleep(0.05)
 
     if os.name == "nt":
-        click_result = _windows_sendinput_click(x, y, hold_seconds=hold_seconds)
+        click_result = _windows_sendinput_click(
+            x,
+            y,
+            hold_seconds=hold_seconds,
+            pre_click_seconds=0.08 if pre_click_seconds is None else pre_click_seconds,
+        )
         backend = "win32_sendinput"
     else:
         click_result = _pyautogui_click(x, y, hold_seconds=hold_seconds)
@@ -1054,6 +1072,7 @@ def click_screen_point(
         "description": description,
         "backend": backend,
         "hold_seconds": click_result.get("hold_seconds"),
+        "pre_click_seconds": click_result.get("pre_click_seconds"),
         "focus": focus_result,
     }
 
@@ -1068,13 +1087,39 @@ def press_key(
 ) -> dict:
     """Activate the game and press a trusted non-combat UI key."""
     key = str(key)
+    normalized_key = key.strip().lower()
     if dry_run:
         return {"status": "DRY_RUN", "key": key, "description": description}
-    if os.name == "nt" and key.strip().lower() in {"esc", "escape"}:
-        return _windows_press_escape(
+    if os.name == "nt":
+        windows_scan_codes = {
+            "esc": ("esc", 0x01),
+            "escape": ("esc", 0x01),
+            "enter": ("enter", 0x1C),
+            "return": ("enter", 0x1C),
+            "space": ("space", 0x39),
+        }
+        scan_code = windows_scan_codes.get(normalized_key)
+        if scan_code is not None:
+            canonical_key, windows_scan_code = scan_code
+            focus_result = _windows_activate_app_window(app_name)
+            time.sleep(0.05)
+            result = _windows_press_scancode(
+                windows_scan_code,
+                key=canonical_key,
+                description=description,
+                settle_seconds=settle_seconds,
+            )
+            result["focus"] = focus_result
+            return result
+    if os.name == "nt" and normalized_key in {"esc", "escape"}:
+        focus_result = _windows_activate_app_window(app_name)
+        time.sleep(0.05)
+        result = _windows_press_escape(
             description=description,
             settle_seconds=settle_seconds,
         )
+        result["focus"] = focus_result
+        return result
     try:
         subprocess.run(
             ["osascript", "-e", f'tell application "{app_name}" to activate'],
@@ -1110,13 +1155,28 @@ def _windows_press_escape(
     Into the Breach on Windows can ignore PyAutoGUI's virtual-key style Escape,
     while a direct scancode SendInput toggles the pause menu reliably.
     """
+    return _windows_press_scancode(
+        0x01,
+        key="esc",
+        description=description,
+        settle_seconds=settle_seconds,
+    )
+
+
+def _windows_press_scancode(
+    scan_code: int,
+    *,
+    key: str,
+    description: str = "",
+    settle_seconds: float = 0.08,
+) -> dict:
+    """Send a keyboard scancode through Win32 raw input."""
     try:
         from ctypes import wintypes
 
         INPUT_KEYBOARD = 1
         KEYEVENTF_SCANCODE = 0x0008
         KEYEVENTF_KEYUP = 0x0002
-        ESC_SCAN_CODE = 0x01
 
         class KEYBDINPUT(ctypes.Structure):
             _fields_ = [
@@ -1169,7 +1229,7 @@ def _windows_press_escape(
             INPUT(
                 type=INPUT_KEYBOARD,
                 union=INPUT_UNION(
-                    ki=KEYBDINPUT(0, ESC_SCAN_CODE, KEYEVENTF_SCANCODE, 0, 0)
+                    ki=KEYBDINPUT(0, scan_code, KEYEVENTF_SCANCODE, 0, 0)
                 ),
             ),
             INPUT(
@@ -1177,7 +1237,7 @@ def _windows_press_escape(
                 union=INPUT_UNION(
                     ki=KEYBDINPUT(
                         0,
-                        ESC_SCAN_CODE,
+                        scan_code,
                         KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
                         0,
                         0,
@@ -1193,15 +1253,15 @@ def _windows_press_escape(
                     f"SendInput sent {sent}/2 events; "
                     f"WinError {ctypes.get_last_error()}"
                 ),
-                "key": "esc",
+                "key": key,
                 "description": description,
                 "backend": "win32_sendinput",
             }
     except Exception as exc:
         return {
             "status": "ERROR",
-            "error": f"win32 SendInput Escape failed: {exc}",
-            "key": "esc",
+            "error": f"win32 SendInput key failed: {exc}",
+            "key": key,
             "description": description,
             "backend": "win32_sendinput",
         }
@@ -1209,7 +1269,7 @@ def _windows_press_escape(
         time.sleep(settle_seconds)
     return {
         "status": "OK",
-        "key": "esc",
+        "key": key,
         "description": description,
         "backend": "win32_sendinput",
     }

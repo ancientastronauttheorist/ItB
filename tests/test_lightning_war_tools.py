@@ -166,16 +166,28 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
 
     assert available["window_x"] == 95
     assert available["window_y"] == 254
-    assert control["window_x"] == 491
-    assert control["window_y"] == 329
-    assert two_left["window_x"] == 562
-    assert two_left["window_y"] == 329
-    assert two_right["window_x"] == 704
-    assert two_right["window_y"] == 329
-    assert wide["window_x"] == 632
-    assert wide["window_y"] == 329
-    assert right["window_x"] == 773
-    assert right["window_y"] == 329
+    if os.name == "nt":
+        assert control["window_x"] == 1205
+        assert control["window_y"] == 660
+        assert two_left["window_x"] == 1205
+        assert two_left["window_y"] == 660
+        assert two_right["window_x"] == 1385
+        assert two_right["window_y"] == 660
+        assert wide["window_x"] == 1295
+        assert wide["window_y"] == 660
+        assert right["window_x"] == 1385
+        assert right["window_y"] == 660
+    else:
+        assert control["window_x"] == 491
+        assert control["window_y"] == 329
+        assert two_left["window_x"] == 562
+        assert two_left["window_y"] == 329
+        assert two_right["window_x"] == 704
+        assert two_right["window_y"] == 329
+        assert wide["window_x"] == 632
+        assert wide["window_y"] == 329
+        assert right["window_x"] == 773
+        assert right["window_y"] == 329
 
 
 def test_lightning_war_weight_overlay_penalizes_pod_pickup():
@@ -856,6 +868,7 @@ def test_lightning_start_run_clears_archive_intro_dialogue_fallback(monkeypatch)
     assert calls == [
         "setup_modal_start",
         "island_archive",
+        "island_archive",
         "bottom_continue",
     ]
     assert result["intro_bottom_continue_fallback"]["control"] == "bottom_continue"
@@ -1505,6 +1518,41 @@ def test_lightning_prefers_bottom_continue_for_ocr_intro_unknown_map():
     )
 
 
+def test_lightning_intro_continue_likely_visible_for_archive_head_office_panel():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "dark_overlay_fraction": 0.9241,
+        "scores": {
+            "mission_preview_panel": {
+                "score": 0.0,
+                "yellow": 0,
+                "pixels": 521040,
+            },
+            "mission_preview_dialogue": {
+                "score": 0.7705,
+                "card": {
+                    "blue": 10232,
+                    "bright": 7928,
+                    "dark_fraction": 0.8449,
+                },
+                "dialogue": {
+                    "blue": 4576,
+                    "bright": 3396,
+                    "dark_fraction": 0.9784,
+                },
+            },
+            "island_map": {
+                "score": 0.0006,
+                "colored": 780,
+            },
+        },
+    }
+
+    assert commands._lightning_intro_continue_likely_visible(visible_ui)
+
+
 def test_lightning_keeps_panel_continue_for_overlay_perfect_panel():
     visible_ui = {
         "status": "OK",
@@ -1781,6 +1829,12 @@ def test_lightning_ui_ensure_pause_verifies_clicked_pause(monkeypatch):
         "src.control.mac_click.click_known_window_control",
         lambda control: {"status": "OK", "control": control},
     )
+    if commands.os.name == "nt":
+        monkeypatch.setattr(
+            commands,
+            "_lightning_press_pause_escape",
+            lambda **kwargs: {"status": "OK", "key": "esc"},
+        )
     monkeypatch.setattr(
         commands,
         "_lightning_write_guard",
@@ -1792,6 +1846,43 @@ def test_lightning_ui_ensure_pause_verifies_clicked_pause(monkeypatch):
     assert result["status"] == "OK"
     assert result["reason"] == "pause_clicked"
     assert result["pause_verified"] is True
+    assert result["pause_verify"]["visible_ui"] == "pause_menu"
+
+
+def test_lightning_ui_ensure_pause_retries_escape_on_windows_preview_close(
+    monkeypatch,
+):
+    if commands.os.name != "nt":
+        pytest.skip("Windows-specific Escape pause behavior")
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+    visible_states = iter(
+        [
+            {"status": "OK", "visible_ui": "mission_preview_panel"},
+            {"status": "OK", "visible_ui": "island_map"},
+            {"status": "OK", "visible_ui": "pause_menu"},
+        ]
+    )
+    escapes = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: escapes.append(kwargs) or {"status": "OK", "key": "esc"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_guard",
+        lambda *args, **kwargs: {"status": kwargs["guard_status"], "path": "guard.json"},
+    )
+
+    result = commands.cmd_lightning_ui("ensure_pause")
+
+    assert result["status"] == "OK"
+    assert result["pause_verified"] is True
+    assert len(escapes) == 2
+    assert result["pause_attempts"][0]["pause_verify"]["visible_ui"] == "island_map"
     assert result["pause_verify"]["visible_ui"] == "pause_menu"
 
 
@@ -1816,6 +1907,13 @@ def test_lightning_pause_guard_clicks_safe_panel(monkeypatch):
         "src.control.mac_click.click_known_window_control",
         lambda control: clicks.append(control) or {"status": "OK", "control": control},
     )
+    escapes = []
+    if commands.os.name == "nt":
+        monkeypatch.setattr(
+            commands,
+            "_lightning_press_pause_escape",
+            lambda **kwargs: escapes.append(kwargs) or {"status": "OK", "key": "esc"},
+        )
     monkeypatch.setattr(
         commands,
         "_lightning_write_guard",
@@ -1826,8 +1924,75 @@ def test_lightning_pause_guard_clicks_safe_panel(monkeypatch):
 
     assert result["status"] == "OK"
     assert result["reason"] == "pause_clicked"
-    assert clicks == ["pause"]
+    if commands.os.name == "nt":
+        assert clicks == []
+        assert len(escapes) == 1
+    else:
+        assert clicks == ["pause"]
     assert result["last_poll"]["pause_verified"] is True
+
+
+def test_lightning_pause_guard_allows_unknown_preview_context(monkeypatch):
+    result = commands._lightning_pause_guard_decision(
+        {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "scores": {
+                "mission_preview_dialogue": {"score": 0.86},
+            },
+        },
+        {"status": "NO_BRIDGE"},
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "safe_ui_pause_available"
+    assert result["pause_allowed"] is True
+
+
+def test_lightning_pause_guard_retries_escape_on_windows_preview_close(
+    monkeypatch,
+):
+    if commands.os.name != "nt":
+        pytest.skip("Windows-specific Escape pause behavior")
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "scores": {
+                    "mission_preview_dialogue": {"score": 0.86},
+                },
+            },
+            {"status": "OK", "visible_ui": "island_map"},
+            {"status": "OK", "visible_ui": "pause_menu"},
+        ]
+    )
+    escapes = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: {"status": "NO_BRIDGE"})
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: escapes.append(kwargs) or {"status": "OK", "key": "esc"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_guard",
+        lambda *args, **kwargs: {"status": kwargs["guard_status"], "path": "guard.json"},
+    )
+
+    result = commands.cmd_lightning_pause_guard(seconds=0, once=True)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "pause_clicked"
+    assert len(escapes) == 2
+    assert result["last_poll"]["pause_attempts"][0]["pause_verify"]["visible_ui"] == (
+        "island_map"
+    )
+    assert result["last_poll"]["pause_verify"]["visible_ui"] == "pause_menu"
 
 
 def test_lightning_pause_guard_blocks_terminal_evidence_before_pause():
@@ -2172,8 +2337,12 @@ def test_lightning_ui_clear_tail_blocks_when_resume_stays_paused(monkeypatch):
 
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "resume_from_pause_not_verified"
-    expected_resume = "menu_continue" if os.name == "nt" else "pause_menu_escape"
-    assert calls == [expected_resume]
+    expected_resume = (
+        ["menu_continue", "menu_continue", "pause_menu_escape"]
+        if os.name == "nt"
+        else ["pause_menu_escape"]
+    )
+    assert calls == expected_resume
 
 
 def test_lightning_ui_handle_screen_clicks_visible_panel(monkeypatch):
@@ -2382,6 +2551,29 @@ def test_lightning_terminal_evidence_handles_structured_and_split_objectives():
         )
         is None
     )
+
+
+def test_lightning_terminal_outcome_detects_visual_kia_without_ocr(tmp_path):
+    from PIL import Image, ImageDraw
+
+    image = Image.new("RGB", (1280, 748), (8, 10, 14))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle([660, 470, 725, 510], fill=(170, 40, 45))
+    path = tmp_path / "visual_kia.png"
+    image.save(path)
+
+    result = commands._lightning_terminal_outcome_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "perfect_reward_choice",
+            "recommended_control": "perfect_reward_grid",
+            "screenshot_path": str(path),
+        }
+    )
+
+    assert result["kind"] == "terminal_visual_kia"
+    assert result["phrase"] == "kia"
+    assert result["red_pixels"] >= 180
 
 
 def test_lightning_terminal_false_positive_still_blocks_explicit_text():
@@ -3692,6 +3884,173 @@ def test_lightning_ui_classifier_scales_retina_pause_menu(tmp_path):
     assert result["dark_overlay_fraction"] >= 0.70
 
 
+def test_lightning_ui_classifier_accepts_dim_windows_pause_button(
+    monkeypatch, tmp_path
+):
+    from PIL import Image
+
+    image = Image.new("RGB", (1280, 748), (8, 10, 14))
+    path = tmp_path / "dim_pause.png"
+    image.save(path)
+
+    def fake_button_score(_image, *, center, size):
+        if center == commands._LIGHTNING_UI_BUTTON_CROPS["pause_menu"]["center"]:
+            return {
+                "score": 0.1462,
+                "bright": 974,
+                "border": 2057,
+                "pixels": 122880,
+            }
+        return {"score": 0.0, "bright": 0, "border": 0, "pixels": 122880}
+
+    monkeypatch.setattr(commands, "_lightning_button_like_score", fake_button_score)
+    monkeypatch.setattr(commands, "_lightning_dark_overlay_fraction", lambda _image: 0.9813)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_start_mission_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 521040},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_advisor_preview_score",
+        lambda _image: {
+            "score": 0.0,
+            "card": {"blue": 0},
+            "dialogue": {"blue": 0, "bright": 0, "dark_fraction": 0.0},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_deployment_screen_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 1},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_island_map_score",
+        lambda _image: {"score": 0.0, "colored": 0, "pixels": 1},
+    )
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "pause_menu"
+    assert result["recommended_control"] == "menu_continue"
+    assert result["confidence"] == 0.1462
+
+
+def test_lightning_ui_classifier_accepts_low_border_windows_pause_button(
+    monkeypatch, tmp_path
+):
+    from PIL import Image
+
+    image = Image.new("RGB", (1280, 748), (8, 10, 14))
+    path = tmp_path / "low_border_pause.png"
+    image.save(path)
+
+    def fake_button_score(_image, *, center, size):
+        if center == commands._LIGHTNING_UI_BUTTON_CROPS["pause_menu"]["center"]:
+            return {
+                "score": 0.1791,
+                "bright": 1647,
+                "border": 1384,
+                "pixels": 122880,
+            }
+        return {"score": 0.0, "bright": 0, "border": 0, "pixels": 122880}
+
+    monkeypatch.setattr(commands, "_lightning_button_like_score", fake_button_score)
+    monkeypatch.setattr(commands, "_lightning_dark_overlay_fraction", lambda _image: 0.9781)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_start_mission_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 521040},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_advisor_preview_score",
+        lambda _image: {
+            "score": 0.6611,
+            "card": {"blue": 14578},
+            "dialogue": {"blue": 4152, "bright": 916, "dark_fraction": 0.9868},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_deployment_screen_score",
+        lambda _image: {"score": 0.0, "yellow": 48, "pixels": 1},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_island_map_score",
+        lambda _image: {"score": 0.0003, "colored": 352, "pixels": 1},
+    )
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "pause_menu"
+    assert result["recommended_control"] == "menu_continue"
+    assert result["confidence"] == 0.1791
+
+
+def test_lightning_ui_classifier_prefers_windows_bottom_continue_over_dim_pause(
+    monkeypatch, tmp_path
+):
+    from PIL import Image
+
+    image = Image.new("RGB", (1280, 748), (8, 10, 14))
+    path = tmp_path / "windows_region_secured_continue.png"
+    image.save(path)
+
+    def fake_button_score(_image, *, center, size):
+        if center == commands._LIGHTNING_UI_BUTTON_CROPS["pause_menu"]["center"]:
+            return {
+                "score": 0.1456,
+                "bright": 906,
+                "border": 2208,
+                "pixels": 122880,
+            }
+        if center == (810, 510):
+            return {
+                "score": 0.9725,
+                "bright": 1536,
+                "border": 1995,
+                "pixels": 24000,
+            }
+        return {"score": 0.0, "bright": 0, "border": 0, "pixels": 122880}
+
+    monkeypatch.setattr(commands.os, "name", "nt", raising=False)
+    monkeypatch.setattr(commands, "_lightning_button_like_score", fake_button_score)
+    monkeypatch.setattr(commands, "_lightning_dark_overlay_fraction", lambda _image: 0.9487)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_start_mission_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 521040},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_advisor_preview_score",
+        lambda _image: {
+            "score": 0.8237,
+            "card": {"blue": 15908},
+            "dialogue": {"blue": 3526, "bright": 2140, "dark_fraction": 0.9702},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_deployment_screen_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 1},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_island_map_score",
+        lambda _image: {"score": 0.0014, "colored": 1923, "pixels": 1},
+    )
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "bottom_continue_panel"
+    assert result["recommended_control"] == "reward_continue"
+    assert result["confidence"] == 0.9725
+
+
 def test_lightning_ui_classifier_rejects_dialogue_as_pause_menu(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -3763,6 +4122,121 @@ def test_lightning_ui_classifier_detects_new_game_setup_before_pause(tmp_path):
 
     assert result["visible_ui"] == "new_game_setup"
     assert result["recommended_control"] is None
+
+
+def test_lightning_ui_classifier_detects_windows_setup_before_advisor_preview(
+    monkeypatch, tmp_path
+):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (8, 10, 14))
+    draw = ImageDraw.Draw(image)
+    for cx in (755 * scale, 856 * scale):
+        cy = 248 * scale
+        w, h = 130 * scale, 44 * scale
+        draw.rectangle(
+            [cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2],
+            fill=(24, 32, 48),
+            outline=(92, 122, 180),
+            width=8,
+        )
+        draw.rectangle(
+            [cx - 42 * scale, cy - 8 * scale, cx + 42 * scale, cy + 8 * scale],
+            fill=(235, 235, 235),
+        )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_advisor_preview_score",
+        lambda _image: {
+            "score": 0.8,
+            "card": {"blue": 10000},
+            "dialogue": {"blue": 5000, "bright": 3000, "dark_fraction": 0.85},
+        },
+    )
+
+    path = tmp_path / "windows_new_game_setup.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "new_game_setup"
+    assert result["recommended_control"] is None
+    assert result["scores"]["new_game_setup_start_windows"]["score"] >= 0.80
+
+
+def test_lightning_ui_classifier_prefers_windows_setup_over_bottom_continue(
+    monkeypatch, tmp_path
+):
+    from PIL import Image
+
+    image = Image.new("RGB", (1280, 748), (8, 10, 14))
+    path = tmp_path / "windows_setup_not_continue.png"
+    image.save(path)
+
+    def fake_button_score(_image, *, center, size):
+        if center == (755, 248):
+            return {
+                "score": 0.91,
+                "bright": 772,
+                "border": 3079,
+                "pixels": 22100,
+            }
+        if center == (856, 248):
+            return {
+                "score": 0.92,
+                "bright": 776,
+                "border": 3159,
+                "pixels": 22100,
+            }
+        if center == (810, 510):
+            return {
+                "score": 0.73,
+                "bright": 878,
+                "border": 2157,
+                "pixels": 24000,
+            }
+        return {"score": 0.0, "bright": 0, "border": 0, "pixels": 24000}
+
+    monkeypatch.setattr(commands.os, "name", "nt", raising=False)
+    monkeypatch.setattr(commands, "_lightning_button_like_score", fake_button_score)
+    monkeypatch.setattr(commands, "_lightning_dark_overlay_fraction", lambda _image: 0.90)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_system_privacy_prompt_score",
+        lambda _image: {"matched": False},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_start_mission_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 1},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_advisor_preview_score",
+        lambda _image: {
+            "score": 1.0,
+            "card": {"blue": 40388},
+            "dialogue": {"blue": 33451, "bright": 3534, "dark_fraction": 0.86},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_deployment_screen_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 1},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_island_map_score",
+        lambda _image: {"score": 0.0, "colored": 0, "pixels": 1},
+    )
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "new_game_setup"
+    assert result["recommended_control"] is None
+    assert result["scores"]["new_game_setup_start_windows"]["score"] == 0.92
 
 
 def test_lightning_ui_classifier_prefers_mission_preview_over_setup_crops(tmp_path):
@@ -3902,6 +4376,72 @@ def test_lightning_ui_classifier_detects_title_screen(tmp_path):
 
     assert result["visible_ui"] == "title_screen"
     assert result["recommended_control"] == "title_new_game"
+
+
+def test_lightning_ui_classifier_detects_windows_title_screen(
+    monkeypatch, tmp_path
+):
+    from PIL import Image
+
+    image = Image.new("RGB", (1280, 748), (70, 82, 94))
+    path = tmp_path / "windows_title_screen.png"
+    image.save(path)
+
+    def fake_button_score(_image, *, center, size):
+        if center == (68, 150):
+            return {
+                "score": 0.62,
+                "bright": 920,
+                "border": 1200,
+                "pixels": 5440,
+            }
+        if center == (68, 172):
+            return {
+                "score": 0.71,
+                "bright": 1320,
+                "border": 1400,
+                "pixels": 5440,
+            }
+        return {"score": 0.0, "bright": 0, "border": 0, "pixels": 5440}
+
+    monkeypatch.setattr(commands.os, "name", "nt", raising=False)
+    monkeypatch.setattr(commands, "_lightning_button_like_score", fake_button_score)
+    monkeypatch.setattr(commands, "_lightning_dark_overlay_fraction", lambda _image: 0.18)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_system_privacy_prompt_score",
+        lambda _image: {"matched": False},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_start_mission_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 1},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_advisor_preview_score",
+        lambda _image: {
+            "score": 0.0,
+            "card": {"blue": 0},
+            "dialogue": {"blue": 0, "bright": 0, "dark_fraction": 0.0},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_deployment_screen_score",
+        lambda _image: {"score": 0.0, "yellow": 0, "pixels": 1},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_island_map_score",
+        lambda _image: {"score": 0.0, "colored": 0, "pixels": 1},
+    )
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "title_screen"
+    assert result["recommended_control"] == "title_new_game"
+    assert result["scores"]["title_new_game_windows"]["score"] == 0.62
 
 
 def test_title_new_game_target_finder_uses_actual_screenshot_rows(tmp_path):
@@ -4573,6 +5113,66 @@ def test_lightning_dialogue_box_score_requires_visible_dialogue(tmp_path):
     assert archive_ceo_result["visible"] is True
 
 
+def test_lightning_dialogue_box_score_detects_windows_map_dialogue(
+    tmp_path, monkeypatch
+):
+    from PIL import Image, ImageDraw
+
+    monkeypatch.setattr(commands.os, "name", "nt")
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (20, 24, 32))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle(
+        [
+            300 * scale,
+            220 * scale,
+            820 * scale,
+            300 * scale,
+        ],
+        fill=(12, 16, 28),
+        outline=(88, 116, 166),
+        width=4 * scale,
+    )
+    draw.rectangle(
+        [
+            345 * scale,
+            250 * scale,
+            700 * scale,
+            262 * scale,
+        ],
+        fill=(238, 238, 238),
+    )
+    draw.rectangle(
+        [
+            510 * scale,
+            317 * scale,
+            890 * scale,
+            467 * scale,
+        ],
+        fill=(12, 16, 28),
+        outline=(88, 116, 166),
+        width=4 * scale,
+    )
+    draw.rectangle(
+        [
+            610 * scale,
+            345 * scale,
+            790 * scale,
+            360 * scale,
+        ],
+        fill=(238, 238, 238),
+    )
+
+    path = tmp_path / "windows_map_dialogue.png"
+    image.save(path)
+
+    result = commands._lightning_dialogue_box_score(path)
+
+    assert result["visible"] is True
+    assert result["windows_map_score"]["score"] >= 0.16
+    assert result["windows_compact_card_score"]["score"] >= 0.20
+
+
 def test_lightning_extract_red_regions_from_image(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -4605,8 +5205,17 @@ def test_lightning_extract_red_regions_from_image(tmp_path):
     assert result["status"] == "OK"
     assert result["region_count"] == 2
     assert result["regions"][0]["window_y"] < result["regions"][1]["window_y"]
-    assert 380 <= result["regions"][0]["window_x"] <= 460
-    assert 170 <= result["regions"][0]["window_y"] <= 230
+    first = result["regions"][0]
+    assert 380 <= first["base_window_x"] <= 460
+    assert 170 <= first["base_window_y"] <= 230
+    if os.name == "nt":
+        assert 760 <= first["window_x"] <= 920
+        assert 340 <= first["window_y"] <= 460
+        assert first["coordinate_space"] == "physical_window"
+    else:
+        assert 380 <= first["window_x"] <= 460
+        assert 170 <= first["window_y"] <= 230
+        assert first["coordinate_space"] == "base_window"
 
 
 def test_lightning_extract_red_regions_splits_adjacent_regions(tmp_path):
@@ -4637,8 +5246,14 @@ def test_lightning_extract_red_regions_splits_adjacent_regions(tmp_path):
     assert result["raw_region_count"] == 1
     assert result["region_count"] == 2
     assert result["regions"][0]["window_y"] < result["regions"][1]["window_y"]
-    assert 790 <= result["regions"][0]["window_x"] <= 850
-    assert 930 <= result["regions"][1]["window_x"] <= 990
+    assert 790 <= result["regions"][0]["base_window_x"] <= 850
+    assert 930 <= result["regions"][1]["base_window_x"] <= 990
+    if os.name == "nt":
+        assert 1580 <= result["regions"][0]["window_x"] <= 1700
+        assert 1860 <= result["regions"][1]["window_x"] <= 1980
+    else:
+        assert 790 <= result["regions"][0]["window_x"] <= 850
+        assert 930 <= result["regions"][1]["window_x"] <= 990
 
 
 def test_lightning_merge_visual_regions_merges_vertical_splits_only():
@@ -4942,8 +5557,9 @@ def test_lightning_start_mission_target_detects_yellow_text(tmp_path):
     result = commands._lightning_start_mission_target(path)
 
     assert result["status"] == "OK"
-    assert 900 <= result["window_x"] <= 960
-    assert 520 <= result["window_y"] <= 570
+    click_scale = scale if os.name == "nt" else 1
+    assert 900 * click_scale <= result["window_x"] <= 960 * click_scale
+    assert 520 * click_scale <= result["window_y"] <= 570 * click_scale
 
 
 def test_lightning_start_mission_target_prefers_text_over_board_outline(tmp_path):
@@ -4970,8 +5586,9 @@ def test_lightning_start_mission_target_prefers_text_over_board_outline(tmp_path
     result = commands._lightning_start_mission_target(path)
 
     assert result["status"] == "OK"
-    assert 830 <= result["window_x"] <= 880
-    assert 435 <= result["window_y"] <= 465
+    click_scale = scale if os.name == "nt" else 1
+    assert 830 * click_scale <= result["window_x"] <= 880 * click_scale
+    assert 435 * click_scale <= result["window_y"] <= 465 * click_scale
 
 
 def test_lightning_start_mission_target_ignores_warning_row(tmp_path):
@@ -6328,6 +6945,8 @@ def test_lightning_attempt_blocks_preview_start_without_expected_route(monkeypat
             "mech_count": 0,
             "deployment_zone_count": 10,
             "in_active_mission": True,
+            "bridge_heartbeat_alive": False,
+            "bridge_heartbeat_stale": True,
         },
     )
     monkeypatch.setattr(
@@ -6358,6 +6977,75 @@ def test_lightning_attempt_blocks_preview_start_without_expected_route(monkeypat
     assert calls == []
 
 
+def test_lightning_attempt_deploys_when_fresh_active_mission_overrides_preview_classifier(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "mission_id": "Mission_Train",
+            "phase": "unknown",
+            "turn": 0,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "deployment_zone_count": 14,
+            "in_active_mission": True,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "mission_preview_board",
+        },
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda name, **kwargs: calls.append(("click", name)) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_deploy_recommended",
+        lambda **kwargs: calls.append(("deploy", kwargs)) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_loop",
+        lambda **kwargs: calls.append(("loop", kwargs))
+        or {"status": "LIGHTNING_LOOP_STOPPED", "reason": "max_turns_reached"},
+    )
+
+    result = commands.cmd_lightning_attempt(max_wait=10)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "combat_loop_returned"
+    assert result["action"]["deployment_visible_ui_warning"]["reason"] == (
+        "active_mission_deployment_overrides_preview_classifier"
+    )
+    assert calls[0][0] == "deploy"
+    assert calls[1] == ("click", "deploy_confirm")
+    assert calls[2][0] == "loop"
+    assert ("click", "mission_preview_board") not in calls
+
+
 def test_lightning_attempt_clicks_preview_then_deploys(monkeypatch):
     session = RunSession(
         run_id="lw",
@@ -6377,6 +7065,8 @@ def test_lightning_attempt_clicks_preview_then_deploys(monkeypatch):
                 "mech_count": 0,
                 "deployment_zone_count": 10,
                 "in_active_mission": True,
+                "bridge_heartbeat_alive": False,
+                "bridge_heartbeat_stale": True,
             },
             {
                 "status": "OK",
@@ -7267,6 +7957,67 @@ def test_lightning_attempt_auto_clears_chained_pod_panels(monkeypatch):
     assert result["action"]["clear_result"]["reason"] == "panel_chain_cleared"
 
 
+def test_lightning_clear_panel_chain_clears_post_grid_reward_continue_dialogue(monkeypatch):
+    dialogue_scores = {
+        "mission_preview_dialogue": {
+            "score": 0.82,
+            "card": {"blue": 5800},
+            "dialogue": {
+                "blue": 2400,
+                "bright": 3800,
+                "dark_fraction": 0.96,
+            },
+        }
+    }
+    assert (
+        commands._lightning_preferred_visible_control(
+            "perfect_reward_choice",
+            "perfect_reward_grid",
+            {
+                "status": "OK",
+                "visible_ui": "perfect_reward_choice",
+                "scores": dialogue_scores,
+            },
+        )
+        == "perfect_reward_grid"
+    )
+    states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "perfect_reward_choice",
+                "recommended_control": "perfect_reward_grid",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "perfect_reward_choice",
+                "recommended_control": "perfect_reward_grid",
+                "scores": dialogue_scores,
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
+        ]
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(states))
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands._lightning_clear_visible_panel_chain()
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "panel_chain_cleared"
+    assert calls == ["perfect_reward_grid", "dialogue_textbox", "reward_continue"]
+    assert result["steps"][0]["fallback_control"] == "reward_continue"
+
+
 def test_lightning_clear_panel_chain_repeats_same_class(monkeypatch):
     states = iter(
         [
@@ -7993,7 +8744,7 @@ def test_lightning_segment_starts_route_from_stale_deployment_map(monkeypatch):
     assert result["route_start_performed"] is True
     assert route_calls[0]["visual_region_index"] == 1
     assert route_calls[0]["auto_pause_if_needed"] is True
-    assert route_calls[0]["allow_pause_map_peek"] is False
+    assert route_calls[0]["allow_pause_map_peek"] is True
     assert result["steps"][0]["phase"] == "route_start"
     assert result["steps"][1]["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
 
@@ -8042,7 +8793,7 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
     assert result["route_start_performed"] is True
     assert route_calls[0]["visual_region_index"] == 2
     assert route_calls[0]["auto_pause_if_needed"] is False
-    assert route_calls[0]["allow_pause_map_peek"] is False
+    assert route_calls[0]["allow_pause_map_peek"] is True
     assert route_calls[0]["start_mode"] == "dialogue-region-repeat-preview-board"
     assert result["steps"][0]["route_auto_start_mission"] == "Mission_Train"
     assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
@@ -8095,6 +8846,7 @@ def test_lightning_segment_probes_auto_start_without_expected_mission(monkeypatc
     assert route_calls[0]["region_window_x"] == 812
     assert route_calls[0]["region_window_y"] == 423
     assert route_calls[0]["expected_route_mission_id"] is None
+    assert route_calls[0]["allow_pause_map_peek"] is False
     assert route_calls[0]["require_auto_start_safe_preview"] is True
     assert route_calls[0]["allow_unverified_preview_start"] is False
     assert result["steps"][0]["route_auto_start_probe"] == "live_preview_required"
@@ -11977,6 +12729,14 @@ def test_pause_map_peek_clears_safe_panel_before_second_read(monkeypatch):
         lambda control, **kwargs: calls["clicks"].append(control)
         or {"status": "OK", "control": control},
     )
+    calls["escapes"] = []
+    if commands.os.name == "nt":
+        monkeypatch.setattr(
+            commands,
+            "_lightning_press_pause_escape",
+            lambda **kwargs: calls["escapes"].append(kwargs)
+            or {"status": "OK", "key": "esc"},
+        )
     monkeypatch.setattr(
         commands,
         "_lightning_clear_visible_panel_chain",
@@ -11990,7 +12750,11 @@ def test_pause_map_peek_clears_safe_panel_before_second_read(monkeypatch):
     assert result["island_map_count"] == 1
     assert calls["reads"] == 2
     assert calls["clears"] == 1
-    assert calls["clicks"] == ["menu_continue", "pause"]
+    if commands.os.name == "nt":
+        assert calls["clicks"] == ["menu_continue"]
+        assert len(calls["escapes"]) == 1
+    else:
+        assert calls["clicks"] == ["menu_continue", "pause"]
     assert result["pause_verified"] is True
     assert result["map_screenshot_path"]
 
@@ -12033,16 +12797,83 @@ def test_pause_map_peek_retries_pause_until_verified(monkeypatch):
         lambda control, **kwargs: calls["clicks"].append(control)
         or {"status": "OK", "control": control},
     )
+    calls["escapes"] = []
+    if commands.os.name == "nt":
+        monkeypatch.setattr(
+            commands,
+            "_lightning_press_pause_escape",
+            lambda **kwargs: calls["escapes"].append(kwargs)
+            or {"status": "OK", "key": "esc"},
+        )
 
     result = commands._lightning_bridge_island_map_pause_peek(settle_seconds=0)
 
     assert result["status"] == "OK"
     assert result["pause_verified"] is True
-    assert calls["clicks"] == ["menu_continue", "pause", "pause"]
+    if commands.os.name == "nt":
+        assert calls["clicks"] == ["menu_continue"]
+        assert len(calls["escapes"]) == 2
+    else:
+        assert calls["clicks"] == ["menu_continue", "pause", "pause"]
     assert [step["pause_verify"]["visible_ui"] for step in result["steps"][1:]] == [
         "island_map",
         "pause_menu",
     ]
+
+
+def test_pause_map_peek_uses_escape_to_repause_on_windows(monkeypatch):
+    if commands.os.name != "nt":
+        pytest.skip("Windows-specific Escape pause behavior")
+    calls = {"clicks": [], "escapes": []}
+    visible_states = iter(
+        [
+            {"status": "OK", "visible_ui": "island_map"},
+            {"status": "OK", "visible_ui": "pause_menu"},
+        ]
+    )
+    map_bridge_data = {
+        "island_map": [
+            {
+                "region_id": 9,
+                "mission_id": "Mission_Sandstorm",
+                "bonus_objective_ids": [],
+                "environment": "Env_Sandstorm",
+            },
+        ],
+        "units": [],
+        "grid_power": 7,
+        "phase": "unknown",
+    }
+
+    monkeypatch.setattr("src.control.mac_click._get_window_bounds", lambda app: {})
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: (None, map_bridge_data))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_capture_window_screenshot",
+        lambda path, **kwargs: {"status": "OK", "path": str(path)},
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls["clicks"].append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls["escapes"].append(kwargs)
+        or {"status": "OK", "key": "esc"},
+    )
+
+    result = commands._lightning_bridge_island_map_pause_peek(settle_seconds=0)
+
+    assert result["status"] == "OK"
+    assert result["pause_verified"] is True
+    assert calls["clicks"] == ["menu_continue"]
+    assert len(calls["escapes"]) == 1
+    assert result["steps"][1]["click"]["key"] == "esc"
 
 
 def test_pause_map_peek_blocks_when_pause_never_verified(monkeypatch):
@@ -12080,13 +12911,25 @@ def test_pause_map_peek_blocks_when_pause_never_verified(monkeypatch):
         lambda control, **kwargs: calls["clicks"].append(control)
         or {"status": "OK", "control": control},
     )
+    calls["escapes"] = []
+    if commands.os.name == "nt":
+        monkeypatch.setattr(
+            commands,
+            "_lightning_press_pause_escape",
+            lambda **kwargs: calls["escapes"].append(kwargs)
+            or {"status": "OK", "key": "esc"},
+        )
 
     result = commands._lightning_bridge_island_map_pause_peek(settle_seconds=0)
 
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "pause_not_verified_after_map_peek"
     assert result["pause_verified"] is False
-    assert calls["clicks"] == ["menu_continue", "pause", "pause"]
+    if commands.os.name == "nt":
+        assert calls["clicks"] == ["menu_continue"]
+        assert len(calls["escapes"]) == 2
+    else:
+        assert calls["clicks"] == ["menu_continue", "pause", "pause"]
 
 
 def test_lightning_route_start_blocks_failed_preflight(monkeypatch):
@@ -12404,12 +13247,18 @@ def test_lightning_route_start_visual_index_can_use_unavailable_route_check(monk
     assert result["selected_visual_region"]["window_x"] == 420
     assert result["visible_preview_ocr"]["reason"] == "no_known_preview_text_match"
     assert result["pause_after_block"]["status"] == "OK"
-    assert len(calls) == 1
+    flattened_calls = [
+        step
+        for call in calls
+        for step in call
+        if isinstance(step, dict)
+    ]
+    assert len(calls) == 2
     assert not any(
         step.get("control") == "mission_preview_board"
-        for step in calls[0]
-        if isinstance(step, dict)
+        for step in flattened_calls
     )
+    assert calls[0][0]["control"] == "menu_continue"
     assert pauses == [{"reason": "route_preview_mission_unverified_before_start"}]
 
 
@@ -14381,6 +15230,60 @@ def test_lightning_route_start_recovers_preview_click_that_committed_vetoed_miss
     assert len(calls) == 2
 
 
+def test_lightning_committed_preview_ignores_stale_deployment_bridge_on_map(
+    monkeypatch,
+):
+    cleanups = []
+    preview_click = {
+        "status": "OK",
+        "window_bounds": {"x": 0, "y": 0, "width": 1, "height": 1},
+    }
+    stale_snapshot = {
+        "status": "OK",
+        "phase": "unknown",
+        "turn": 0,
+        "mission_id": "Mission_Mines",
+        "deployment_zone_count": 11,
+        "mech_count": 0,
+        "in_active_mission": True,
+        "bridge_heartbeat_alive": False,
+        "bridge_heartbeat_stale": True,
+    }
+    visible_ui = {"status": "OK", "visible_ui": "island_map"}
+
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: stale_snapshot)
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: visible_ui)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_stale_bridge_files_for_visible_map",
+        lambda **kwargs: cleanups.append(kwargs)
+        or {"status": "OK", "reason": kwargs["reason"], "removed": ["state"]},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recover_started_route_mismatch",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("stale visible-map bridge should not recover timeline")
+        ),
+    )
+
+    result = commands._lightning_committed_preview_after_click(
+        preview_click,
+        profile="Alpha",
+        expected_preview_mission="",
+        actual_preview_mission="Mission_Mines",
+        route_routing="lightning_war",
+    )
+
+    assert result is None
+    ignored = preview_click["stale_deployment_bridge_ignored"]
+    assert ignored["reason"] == "visible_ui_overrides_stale_deployment_bridge"
+    assert ignored["visible_ui"] == "island_map"
+    assert ignored["cleanup"]["status"] == "OK"
+    assert cleanups[0]["snapshot"] is stale_snapshot
+    assert cleanups[0]["visible_ui"] is visible_ui
+
+
 def test_lightning_route_start_accepts_preview_click_that_committed_safe_mission(
     monkeypatch,
 ):
@@ -15943,7 +16846,10 @@ def test_lightning_route_start_dismiss_dialogue_sequence():
     ]
     expected_controls = (
         ["menu_continue"] if os.name == "nt" else []
-    ) + ["dialogue_textbox", "mission_preview_board"]
+    ) + (
+        ["dialogue_textbox", "dialogue_textbox"]
+        if os.name == "nt" else ["dialogue_textbox"]
+    ) + ["mission_preview_board"]
     assert controls == expected_controls
 
 
@@ -15957,11 +16863,22 @@ def test_lightning_route_start_visible_text_sequence():
     )
 
     assert result["status"] == "DRY_RUN"
+    controls = [
+        step.get("control") for step in result["sequence"]
+        if step["kind"] == "control"
+    ]
+    expected_controls = (
+        ["menu_continue"] if os.name == "nt" else []
+    ) + (
+        ["dialogue_textbox", "dialogue_textbox"]
+        if os.name == "nt" else ["dialogue_textbox"]
+    )
+    assert controls == expected_controls
     start_steps = [
         step for step in result["sequence"]
         if step["kind"] == "start_visible"
     ]
-    assert start_steps == [{"kind": "start_visible", "dismiss_dialogue": True}]
+    assert start_steps == [{"kind": "start_visible", "dismiss_dialogue": False}]
 
 
 def test_lightning_route_start_preview_board_twice_sequence():
@@ -15980,11 +16897,10 @@ def test_lightning_route_start_preview_board_twice_sequence():
     ]
     expected_controls = (
         ["menu_continue"] if os.name == "nt" else []
-    ) + [
-        "dialogue_textbox",
-        "mission_preview_board",
-        "mission_preview_board",
-    ]
+    ) + (
+        ["dialogue_textbox", "dialogue_textbox"]
+        if os.name == "nt" else ["dialogue_textbox"]
+    ) + ["mission_preview_board", "mission_preview_board"]
     assert controls == expected_controls
 
 
@@ -15995,12 +16911,16 @@ def test_lightning_paused_preview_start_sequence():
     )
 
     assert result["status"] == "DRY_RUN"
-    assert [step.get("key") for step in result["sequence"] if step["kind"] == "key"] == [
-        "esc",
-    ]
+    expected_keys = [] if os.name == "nt" else ["esc"]
+    assert [
+        step.get("key") for step in result["sequence"] if step["kind"] == "key"
+    ] == expected_keys
+    expected_controls = (
+        ["menu_continue"] if os.name == "nt" else []
+    ) + ["mission_preview_board", "mission_preview_board"]
     assert [
         step.get("control") for step in result["sequence"] if step["kind"] == "control"
-    ] == ["mission_preview_board", "mission_preview_board"]
+    ] == expected_controls
 
 
 def test_lightning_paused_preview_dialogue_start_sequence():
@@ -16011,9 +16931,15 @@ def test_lightning_paused_preview_dialogue_start_sequence():
     )
 
     assert result["status"] == "DRY_RUN"
+    expected_controls = (
+        ["menu_continue"] if os.name == "nt" else []
+    ) + (
+        ["dialogue_textbox", "dialogue_textbox"]
+        if os.name == "nt" else ["dialogue_textbox"]
+    ) + ["mission_preview_board", "mission_preview_board"]
     assert [
         step.get("control") for step in result["sequence"] if step["kind"] == "control"
-    ] == ["dialogue_textbox", "mission_preview_board", "mission_preview_board"]
+    ] == expected_controls
 
 
 def test_lightning_route_start_region_repeat_sequence():
@@ -16033,6 +16959,60 @@ def test_lightning_route_start_region_repeat_sequence():
         "Lightning route region",
         "Lightning route repeat region start",
     ]
+
+
+def test_lightning_route_start_region_double_sequence():
+    result = commands._lightning_click_route_start_sequence(
+        541,
+        244,
+        dry_run=True,
+        start_mode="region-double",
+    )
+
+    assert result["status"] == "DRY_RUN"
+    points = [
+        step for step in result["sequence"]
+        if step["kind"] == "point"
+    ]
+    assert [point["description"] for point in points] == [
+        "Lightning route region",
+        "Lightning route repeat region start double-click",
+        "Lightning route repeat region start double-click",
+    ]
+    assert points[-2]["source"] == "region_double"
+    assert points[-2]["settle_seconds"] == 0.12
+    assert points[-1]["settle_seconds"] == 0.8
+
+
+def test_lightning_route_start_hover_enter_twice_sequence():
+    result = commands._lightning_click_route_start_sequence(
+        541,
+        244,
+        dry_run=True,
+        start_mode="hover-enter-twice",
+    )
+
+    assert result["status"] == "DRY_RUN"
+    assert [
+        step.get("control") for step in result["sequence"]
+        if step["kind"] == "control"
+    ] == (["menu_continue"] if os.name == "nt" else [])
+    assert [
+        step["key"] for step in result["sequence"] if step["kind"] == "key"
+    ] == ([] if os.name == "nt" else ["esc"])
+    hover_keys = [
+        step for step in result["sequence"]
+        if step.get("source") == "hover_confirm"
+    ]
+    assert [step["kind"] for step in hover_keys] == ["ui_key", "ui_key"]
+    assert [step["key"] for step in hover_keys] == ["enter", "enter"]
+    assert hover_keys[0]["settle_seconds"] == 0.45
+    assert hover_keys[1]["settle_seconds"] == 0.8
+    points = [
+        step for step in result["sequence"]
+        if step["kind"] == "point"
+    ]
+    assert [point["description"] for point in points] == ["Lightning route region"]
 
 
 def test_lightning_route_start_dialogue_region_repeat_sequence():
@@ -16194,7 +17174,10 @@ def test_lightning_route_start_manual_start_sequence():
     ]
     expected_controls = (
         ["menu_continue"] if os.name == "nt" else []
-    ) + ["dialogue_textbox"]
+    ) + (
+        ["dialogue_textbox", "dialogue_textbox"]
+        if os.name == "nt" else ["dialogue_textbox"]
+    )
     assert controls == expected_controls
     assert points[-1]["description"] == "Lightning route manual start"
     assert points[-1]["window_x"] == 870
@@ -16967,6 +17950,82 @@ def test_lightning_route_start_uses_region_point_after_inert_region_repeat_on_ma
     assert calls[-1][0]["source"] == "compact_preview_region_point"
     assert calls[-1][0]["window_x"] == 592
     assert calls[-1][0]["window_y"] == 522
+
+
+def test_lightning_route_start_explicit_region_repeat_uses_compact_side_card(
+    monkeypatch,
+):
+    calls = []
+    visible = iter(
+        [
+            {"status": "OK", "visible_ui": "pause_menu"},
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "recommended_control": None,
+                "scores": {
+                    "mission_preview_dialogue": {"score": 0.86},
+                    "mission_preview_panel": {"score": 0.0},
+                },
+            },
+            {"status": "OK", "visible_ui": "deployment_screen"},
+        ]
+    )
+    snapshots = iter(
+        [
+            {"status": "NO_BRIDGE"},
+            {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 0,
+                "mission_id": "Mission_Mines",
+                "deployment_zone_count": 12,
+                "active_mechs": 0,
+                "mech_count": 0,
+                "in_active_mission": True,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands.os, "name", "nt")
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible))
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: next(snapshots))
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "saveData",
+            "top3": [{"mission_id": "Mission_Mines"}],
+        },
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=1035,
+        region_window_y=685,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Mines",
+        start_mode="region-repeat",
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "baseline_region_repeat_inert_compact_region_clicked"
+    retry = result["click_result"]["board_after_region_repeat"]
+    assert retry["retry_kind"] == "compact_preview_side_card"
+    assert calls[-1][0]["source"] == "compact_preview_side_card"
+    assert calls[-1][0]["window_x"] == 1500
+    assert calls[-1][0]["window_y"] == 620
 
 
 def test_lightning_route_start_uses_compact_region_point_after_inert_region_repeat(

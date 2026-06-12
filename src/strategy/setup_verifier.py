@@ -170,9 +170,11 @@ def analyze_setup_image(
         fallback = _fallback_transform_from_yellow_border(img, expected_difficulty)
         if fallback is not None:
             sx, sy, ox, oy, fallback_signature = fallback
-            if click_window_size is None:
-                click_sx, click_sy = sx, sy
-                click_ox, click_oy = ox, oy
+            # The fallback transform is anchored to the visible modal, so use it
+            # for both analysis and click targets. Raw window scaling can drift
+            # by a row on centered Windows layouts.
+            click_sx, click_sy = sx, sy
+            click_ox, click_oy = ox, oy
             advanced, present_count = _analyze_advanced(
                 img,
                 sx,
