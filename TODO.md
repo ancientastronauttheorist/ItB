@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-52 of 70 Steam-cache confirmed. **Trick Shot** reconciled after Steam returned online on 2026-06-02, closing the Frozen Titans squad achievements. 18 remaining; sorted by global unlock % (easiest first).
+53 of 70 Steam-cache confirmed. **Powered Blast** unlocked and synced on 2026-06-11, leaving 17 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Frozen Titans **Trick Shot** is complete. Steam recorded `Ach_Pinnacle_B_2` at 2026-06-02 14:50:21 CDT after online reconciliation; local ITB files do not preserve a separate exact game-side unlock timestamp, so future offline awards should be recorded from visible popups or run evidence before sync.
+Current milestone: Bombermechs **Powered Blast** is complete. In run `20260611_202233_019`, Archive `Mission_Artillery` turn 4 spawned a Walking Bomb at C2 and fired AP Cannon from D2 through it to kill the Scarab at B2; `achievements --sync` moved the tracker to 53/70.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -59,7 +59,7 @@ Current milestone: Frozen Titans **Trick Shot** is complete. Steam recorded `Ach
 - [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification — in-game popup observed during Random Squad run `20260531_114844_128`
 - [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans] — Steam-cache confirmed on 2026-06-02 after offline-to-online reconciliation
 - [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
-- [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
+- [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs] — completed in Bombermechs run `20260611_202233_019` on Archive `Mission_Artillery`
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom — completed alongside Mech Specialist with 3x Ice Mech in run `20260526_204256_831`
@@ -79,7 +79,7 @@ Current milestone: Frozen Titans **Trick Shot** is complete. Steam recorded `Ach
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (51 Steam-cache confirmed)
+### Already Completed (53 Steam-cache confirmed)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -129,6 +129,7 @@ Current milestone: Frozen Titans **Trick Shot** is complete. Steam recorded `Ach
 - [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
 - [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon  [Frozen Titans]
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
+- [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy  [Bombermechs]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]
 - [x] Squads Victory — Beat game with 4 different Squads

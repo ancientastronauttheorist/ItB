@@ -453,13 +453,14 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Hard
 
 ### Powered Blast (8.8%)
+- **Status:** Completed on 2026-06-11 in Bombermechs Easy run `20260611_202233_019`; Steam/client sync raised the tracker to 53/70.
 - **Requirement:** Pierce a Walking Bomb with the AP Cannon to kill an Enemy with the Bombermechs squad.
 - **Squad:** Bombermechs (required)
 - **Strategy:** The Pierce Mech's AP Cannon pierces the first target and damages the second. Place a Walking Bomb (from Bombling Mech) in front of an enemy, then fire AP Cannon. The shot pierces through the bomb (pushing it) and damages the enemy behind it. The enemy must die from this shot.
-- **Bot approach:** The solver should set up a Walking Bomb adjacent to an enemy in a straight line from the Pierce Mech. Fire AP Cannon to pierce bomb and kill the enemy. The enemy needs low enough HP to die from 2 base damage (or more with upgrades).
+- **Bot approach:** Rust simulator v263+ models Bomb Dispenser / `Ranged_DeployBomb` as a line-artillery deploy that spawns `DeployUnit_Bomby`, and v264+ rewards `achievement_powered_blast` when `Brute_PierceShot` pierces that bomb and kills the second target enemy. Keep the achievement weight overlay active, then trust `auto_turn` unless a research/safety gate fires; a post-spawn re-solve can be the path that finds the actual AP lane.
 - **Key weapons:** AP Cannon (Pierce Mech), Bomb Dispenser (Bombling Mech -- places Walking Bomb), Force Swap (Exchange Mech -- positioning)
-- **Ideal setup:** Normal difficulty, first or second island. Weaken an enemy to 2 HP or less, place bomb in front, fire AP Cannon.
-- **Estimated difficulty for bot:** Medium
+- **Ideal setup:** Easy/Normal, first or second island. A clean proven geometry is Pierce Mech -> Walking Bomb -> 2 HP enemy in a straight line. The successful run used Archive `Mission_Artillery` turn 4: Walking Bomb at C2, Pierce Mech at D2, Scarab at B2.
+- **Estimated difficulty for bot:** Complete.
 
 ### On the Backburner (8.2%)
 - **Requirement:** Do 4 damage with the Reverse Thrusters with the Mist Eaters squad.

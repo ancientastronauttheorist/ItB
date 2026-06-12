@@ -5,7 +5,7 @@ Squad: Frozen Titans
 Difficulty: Easy/Normal achievement hunt
 Target: Trick Shot
 
-Outcome: **Trick Shot** is complete. `python3 game_loop.py achievements --sync` marked `Ach_Pinnacle_B_2` achieved and raised the confirmed tracker to 52/70. Steam recorded the unlock at 2026-06-02 14:50:21 CDT after Steam was brought back online; local Into the Breach files did not preserve a separate exact game-side unlock timestamp.
+Outcome: **Trick Shot** is complete. `python3 game_loop.py achievements --sync` marked `Ach_Pinnacle_B_2` achieved and raised the confirmed tracker to 52/70 at the time. Steam recorded the unlock at 2026-06-02 14:50:21 CDT after Steam was brought back online; local Into the Breach files did not preserve a separate exact game-side unlock timestamp.
 
 ## What Worked
 
@@ -23,4 +23,4 @@ Outcome: **Trick Shot** is complete. `python3 game_loop.py achievements --sync` 
 
 ## Follow-Up
 
-Frozen Titans squad achievements are now complete: **Cryo Expert**, **Pacifist**, and **Trick Shot**. The next achievement target can pivot away from Frozen Titans unless a full Steam sync later contradicts the 52/70 cache.
+Frozen Titans squad achievements are now complete: **Cryo Expert**, **Pacifist**, and **Trick Shot**. Later Steam syncs have moved the global tracker past 52/70, but no Frozen Titans target needs to be revisited.
