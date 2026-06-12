@@ -389,6 +389,22 @@ pub(crate) fn get_weapon_targets(
                 }
             }
         }
+        WeaponType::Deploy => {
+            let min_r = wdef.range_min.max(1);
+            let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
+            for &(dx, dy) in &DIRS {
+                for i in (min_r as i8)..=(max_r as i8) {
+                    let nx = mx as i8 + dx * i;
+                    let ny = my as i8 + dy * i;
+                    if !in_bounds(nx, ny) { break; }
+                    let ux = nx as u8;
+                    let uy = ny as u8;
+                    if !board.is_blocked(ux, uy, false) {
+                        targets.push((ux, uy));
+                    }
+                }
+            }
+        }
         WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
             let throw_range = wdef.range_max.max(1);
             for &(dx, dy) in &DIRS {
@@ -762,7 +778,14 @@ fn weapon_action_has_effect(
             let target_unit = &board.units[unit_idx];
             target_unit.pushable() || target_unit.is_mech()
         }
-        WeaponType::SelfAoe => unit_at(mx, my) || adj_has_unit(mx, my),
+        WeaponType::Deploy => !board.is_blocked(target.0, target.1, false),
+        WeaponType::SelfAoe => {
+            if is_walking_bomb_trigger(weapon_id) {
+                adj_has_unit(mx, my)
+            } else {
+                unit_at(mx, my) || adj_has_unit(mx, my)
+            }
+        },
         WeaponType::Charge => {
             // Charges forward until it hits something
             let dx = (target.0 as i8 - mx as i8).signum();
@@ -2284,6 +2307,67 @@ mod top_k_tests {
             !targets.contains(&(3, 3)),
             "Hydraulic Legs should not enumerate lava landing E4 for a ground mech"
         );
+    }
+
+    #[test]
+    fn bomb_dispenser_targets_empty_cardinal_deploy_tiles() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::RangedDeployBomb as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("BomblingMech");
+        let occupied = board.add_unit(Unit {
+            uid: 21,
+            x: 3,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.units[occupied].set_type_name("Leaper1");
+        board.tile_mut(5, 3).terrain = Terrain::Mountain;
+
+        let targets = get_weapon_targets(
+            &board,
+            3,
+            3,
+            WId::RangedDeployBomb,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert!(targets.contains(&(3, 1)), "range-2 cardinal tile should be legal");
+        assert!(targets.contains(&(6, 3)), "LineArtillery continues behind blockers");
+        assert!(!targets.contains(&(4, 4)), "off-axis tile should not be legal");
+        assert!(!targets.contains(&(3, 5)), "occupied deploy tile should be rejected");
+        assert!(!targets.contains(&(5, 3)), "mountain deploy tile should be rejected");
+        assert!(weapon_action_has_effect(
+            &board,
+            (3, 3),
+            WId::RangedDeployBomb,
+            (3, 1),
+            &WEAPONS,
+        ));
+        assert!(!weapon_action_has_effect(
+            &board,
+            (3, 3),
+            WId::RangedDeployBomb,
+            (3, 5),
+            &WEAPONS,
+        ));
     }
 
     #[test]

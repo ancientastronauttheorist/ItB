@@ -606,9 +606,13 @@ pub enum WId {
     RangedSmokeFire = 211,
     /// Mist Eaters — Control Mech's Control Shot.
     ScienceTcControl = 212,
+    /// Bombermechs — Bombling Mech's Bomb Dispenser.
+    RangedDeployBomb = 213,
+    /// Bombermechs — Walking Bomb's Trigger.
+    DeployUnitSelfDamage = 214,
 }
 
-pub const WEAPON_COUNT: usize = 213;
+pub const WEAPON_COUNT: usize = 215;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -949,6 +953,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // This needs target-unit plus destination targeting. Keep it catalogued but
     // inert until the action schema/bridge can carry that second click safely.
     w[212] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    // 213: Ranged_DeployBomb — Bomb Dispenser.
+    // Deployable extends LineArtillery in Lua: cardinal lines, min range 2,
+    // empty ground target only. The Walking Bomb spawn itself is in simulate.rs.
+    w[213] = WeaponDef { weapon_type: WeaponType::Deploy, damage: 0, range_min: 2, range_max: 0, flags: C, ..DEF };
+    // 214: DeployUnit_SelfDamage — Walking Bomb Trigger.
+    // Self-destructs and deals 1 damage to the four cardinal adjacent tiles.
+    w[214] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, self_damage: 99,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1454,6 +1466,11 @@ pub fn is_arachnoid_attack(id: WId) -> bool {
 }
 
 #[inline]
+pub fn is_walking_bomb_trigger(id: WId) -> bool {
+    id == WId::DeployUnitSelfDamage
+}
+
+#[inline]
 pub fn is_mass_shift(id: WId) -> bool {
     matches!(
         id,
@@ -1641,6 +1658,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Ranged_Arachnoid_AB" => WId::RangedArachnoidAB,
         "DeployUnit_AracnoidAtk" => WId::DeployUnitAracnoidAtk,
         "DeployUnit_AracnoidAtkB" => WId::DeployUnitAracnoidAtkB,
+        "Ranged_DeployBomb" => WId::RangedDeployBomb,
+        "DeployUnit_SelfDamage" => WId::DeployUnitSelfDamage,
         "Science_Pullmech" => WId::SciencePullmech,
         "Science_Gravwell" => WId::ScienceGravwell,
         "Science_Repulse" => WId::ScienceRepulse,
@@ -1873,6 +1892,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedArachnoidAB => "Ranged_Arachnoid_AB",
         WId::DeployUnitAracnoidAtk => "DeployUnit_AracnoidAtk",
         WId::DeployUnitAracnoidAtkB => "DeployUnit_AracnoidAtkB",
+        WId::RangedDeployBomb => "Ranged_DeployBomb",
+        WId::DeployUnitSelfDamage => "DeployUnit_SelfDamage",
         WId::SciencePullmech => "Science_Pullmech",
         WId::ScienceGravwell => "Science_Gravwell",
         WId::ScienceRepulse => "Science_Repulse",
@@ -2164,6 +2185,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::RangedArachnoid | WId::RangedArachnoidA
             | WId::RangedArachnoidB | WId::RangedArachnoidAB => "Arachnoid Injector",
         WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB => "Arachnoid Bite",
+        WId::RangedDeployBomb => "Bomb Dispenser",
+        WId::DeployUnitSelfDamage => "Trigger",
         WId::SciencePullmech => "Attract Shot",
         WId::ScienceGravwell => "Grav Well",
         WId::ScienceRepulse => "Repulse",
@@ -2705,6 +2728,29 @@ mod tests {
         assert_eq!(wid_from_str("Brute_PierceShot"), WId::BrutePierceShot);
         assert_eq!(wid_to_str(WId::BrutePierceShot), "Brute_PierceShot");
         assert_eq!(weapon_name(WId::BrutePierceShot), "AP Cannon");
+    }
+
+    #[test]
+    fn test_bombermechs_bomb_dispenser_mapping_and_def() {
+        let dispenser = weapon_def(WId::RangedDeployBomb);
+        assert_eq!(dispenser.weapon_type, WeaponType::Deploy);
+        assert_eq!(dispenser.range_min, 2);
+        assert_eq!(dispenser.range_max, 0);
+
+        let trigger = weapon_def(WId::DeployUnitSelfDamage);
+        assert_eq!(trigger.weapon_type, WeaponType::SelfAoe);
+        assert_eq!(trigger.damage, 1);
+        assert_eq!(trigger.self_damage, 99);
+        assert!(trigger.aoe_adjacent());
+        assert!(!trigger.aoe_center());
+        assert!(is_walking_bomb_trigger(WId::DeployUnitSelfDamage));
+
+        assert_eq!(wid_from_str("Ranged_DeployBomb"), WId::RangedDeployBomb);
+        assert_eq!(wid_from_str("DeployUnit_SelfDamage"), WId::DeployUnitSelfDamage);
+        assert_eq!(wid_to_str(WId::RangedDeployBomb), "Ranged_DeployBomb");
+        assert_eq!(wid_to_str(WId::DeployUnitSelfDamage), "DeployUnit_SelfDamage");
+        assert_eq!(weapon_name(WId::RangedDeployBomb), "Bomb Dispenser");
+        assert_eq!(weapon_name(WId::DeployUnitSelfDamage), "Trigger");
     }
 
     #[test]

@@ -1015,6 +1015,35 @@ fn spawn_arachnoid(
     true
 }
 
+fn spawn_walking_bomb(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+    if board.is_blocked(x, y, false) {
+        return false;
+    }
+
+    let mut unit = Unit {
+        uid: next_spawn_uid(board),
+        x,
+        y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Player,
+        move_speed: 3,
+        base_move: 3,
+        flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+        weapon: WeaponId(WId::DeployUnitSelfDamage as u16),
+        queued_target_x: -1,
+        queued_target_y: -1,
+        ..Unit::default()
+    };
+    unit.set_type_name("DeployUnit_Bomby");
+    let idx = board.add_unit(unit);
+    apply_landing_effects(board, idx, result);
+    true
+}
+
 /// Materialize Spider Psion death eggs queued by `on_enemy_death`.
 ///
 /// Player-phase kills need the egg on-board immediately for replay snapshots
@@ -2790,12 +2819,15 @@ pub fn simulate_weapon_with(
         WeaponType::GlobalUnitEffect => sim_global_unit_effect(
             board, wdef, (ax, ay), (target_x, target_y), &mut result,
         ),
+        WeaponType::Deploy if weapon_id == WId::RangedDeployBomb => {
+            spawn_walking_bomb(board, target_x, target_y, &mut result);
+        }
         WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
             sim_hydraulic_lifter(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result)
         }
         WeaponType::Terraformer => sim_terraformer(board, ax, ay, target_x, target_y, &mut result),
         WeaponType::Disposal => sim_disposal(board, target_x, target_y, &mut result),
-        _ => {} // Passive, Deploy, TwoClick — no simulation
+        _ => {} // Passive, unsupported Deploy, TwoClick — no simulation
     }
 
     if let Some(idx) = seismic_target_idx {
@@ -2804,14 +2836,19 @@ pub fn simulate_weapon_with(
         }
     }
 
-    if is_arachnoid_attack(weapon_id) {
+    let temporary_unit_self_destruct =
+        is_arachnoid_attack(weapon_id) || is_walking_bomb_trigger(weapon_id);
+    if temporary_unit_self_destruct {
         board.units[attacker_idx].hp = 0;
     }
 
     // Self damage. Skipped for Charge weapons — sim_charge applies it inline
     // only when the charge actually hits a target (empty-tile charges take no
     // recoil in the game, but the solver used to over-predict HP by 1).
-    if wdef.self_damage > 0 && wdef.weapon_type != WeaponType::Charge {
+    if wdef.self_damage > 0
+        && wdef.weapon_type != WeaponType::Charge
+        && !temporary_unit_self_destruct
+    {
         let ax = board.units[attacker_idx].x;
         let ay = board.units[attacker_idx].y;
         apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
@@ -5844,6 +5881,51 @@ mod tests {
         assert_eq!(board.units[target].hp, 1);
         assert_eq!((board.units[target].x, board.units[target].y), (3, 5));
         assert_eq!(board.units[arachnoid].hp, 0);
+        assert_eq!(result.mechs_killed, 0);
+    }
+
+    #[test]
+    fn test_bomb_dispenser_spawns_active_walking_bomb() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 10, 3, 1, 3, WId::RangedDeployBomb);
+
+        simulate_weapon(&mut board, mech, WId::RangedDeployBomb, 3, 3);
+
+        let spawned = board.unit_at(3, 3).expect("Walking Bomb should spawn on target tile");
+        assert_eq!(board.units[spawned].team, Team::Player);
+        assert_eq!(board.units[spawned].type_name_str(), "DeployUnit_Bomby");
+        assert_eq!(board.units[spawned].hp, 1);
+        assert_eq!(board.units[spawned].max_hp, 1);
+        assert_eq!(board.units[spawned].move_speed, 3);
+        assert_eq!(board.units[spawned].base_move, 3);
+        assert_eq!(board.units[spawned].weapon, WeaponId(WId::DeployUnitSelfDamage as u16));
+        assert!(board.units[spawned].active());
+        assert!(board.units[spawned].pushable());
+    }
+
+    #[test]
+    fn test_walking_bomb_trigger_self_destructs_and_damages_adjacent() {
+        let mut board = make_test_board();
+        let bomb = board.add_unit(Unit {
+            uid: 20,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            move_speed: 3,
+            base_move: 3,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::DeployUnitSelfDamage as u16),
+            ..Default::default()
+        });
+        board.units[bomb].set_type_name("DeployUnit_Bomby");
+        let target = add_enemy(&mut board, 21, 3, 4, 2);
+
+        let result = simulate_weapon(&mut board, bomb, WId::DeployUnitSelfDamage, 3, 3);
+
+        assert_eq!(board.units[target].hp, 1);
+        assert!(board.units[bomb].hp <= 0);
         assert_eq!(result.mechs_killed, 0);
     }
 

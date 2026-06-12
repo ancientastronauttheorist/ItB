@@ -1800,7 +1800,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Artillery turn 4, where ArchiveArtillery damaged a Scorpion web
 //   source but ElectricMech stayed webbed. Pre-v262 corpus archived as
 //   failure_db_snapshot_sim_v261.jsonl.
-pub const SIMULATOR_VERSION: u32 = 262;
+// v263 - Bomb Dispenser / Walking Bomb support for Bombermechs Powered Blast:
+//   line-artillery ground deploy target, spawned temporary Walking Bomb, and
+//   Trigger self-destruct AoE. Pre-v263 corpus archived as
+//   failure_db_snapshot_sim_v262.jsonl.
+pub const SIMULATOR_VERSION: u32 = 263;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

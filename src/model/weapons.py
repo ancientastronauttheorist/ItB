@@ -617,6 +617,16 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Arachnoid Bite", weapon_type="melee",
         damage=1, push="forward", acid=True, self_damage=99,
     ),
+    "DeployUnit_SelfDamage": WeaponDef(
+        name="Trigger", weapon_type="self_aoe",
+        damage=1, self_damage=99, aoe_center=False, aoe_adjacent=True,
+    ),
+    "Ranged_DeployBomb": WeaponDef(
+        name="Bomb Dispenser", weapon_type="deploy",
+        damage=0, range_min=2, range_max=0, spawns="DeployUnit_Bomby",
+        upgrade_a="2 Bombs (two-click; unsupported by bridge)",
+        upgrade_b="Add Push",
+    ),
     "Ranged_Arachnoid": WeaponDef(
         name="Arachnoid Injector", weapon_type="artillery",
         damage=1, range_min=2, spawns="DeployUnit_Aracnoid",

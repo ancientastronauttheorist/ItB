@@ -1305,7 +1305,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # source. Fixes Lightning War run 20260610_222220_354 Archive
 # Mission_Artillery turn 4. Pre-v262 corpus archived as
 # failure_db_snapshot_sim_v261.jsonl.
-SIMULATOR_VERSION = 262
+# v263 - Bomb Dispenser / Walking Bomb support for Bombermechs Powered Blast:
+# line-artillery ground deploy target, spawned temporary Walking Bomb, and
+# Trigger self-destruct AoE. Pre-v263 corpus archived as
+# failure_db_snapshot_sim_v262.jsonl.
+SIMULATOR_VERSION = 263
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
