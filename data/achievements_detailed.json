@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-07T21:46:39.485227",
+    "last_steam_sync": "2026-06-11T21:31:09.943993",
     "last_steam_total": 70,
-    "last_steam_unlocked": 52
+    "last_steam_unlocked": 53
   },
   "achievements": {
     "rift_walkers": [
@@ -337,7 +337,7 @@
         "description": "Pierce a Walking Bomb with the AP Cannon to kill an Enemy with Bombermechs",
         "type": "single_battle",
         "global_unlock_pct": 8.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Place a Bombling between Pierce Mech and a target enemy. Pierce Shot goes through the Bombling and kills the enemy behind. Low-HP targets ideal.",
         "setup": "Position Bombling in line between Pierce Mech and enemy",
         "pitfalls": "Bombling must be in the line of fire. Enemy must die from the shot."
