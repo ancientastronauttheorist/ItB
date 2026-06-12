@@ -5925,7 +5925,9 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
 
     print(f"\n=== EXECUTE Action {action_index}: {action.description} ===")
     for i, c in enumerate(clicks):
-        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
+        x = c.get("x", c.get("window_x"))
+        y = c.get("y", c.get("window_y"))
+        print(f"  {i+1}. {c['type']} ({x}, {y}) -- {c['description']}")
 
     session.save()
     return result
@@ -11109,11 +11111,10 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     )
     advisor_preview_visible = (
         dark_overlay >= 0.70
-        and advisor_preview.get("score", 0.0) >= 0.95
-        and advisor_preview.get("card", {}).get("red", 0) >= 1000
-        and advisor_preview.get("card", {}).get("blue", 0) >= 12000
+        and advisor_preview.get("score", 0.0) >= 0.70
+        and advisor_preview.get("card", {}).get("blue", 0) >= 7000
         and advisor_preview.get("dialogue", {}).get("blue", 0) >= 3500
-        and advisor_preview.get("dialogue", {}).get("bright", 0) >= 3000
+        and advisor_preview.get("dialogue", {}).get("bright", 0) >= 2500
         and advisor_preview.get("dialogue", {}).get("dark_fraction", 0.0) >= 0.75
     )
     bottom_continue = scores.get("bottom_continue_panel", {})
@@ -11210,9 +11211,20 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     )
     if (
         dark_overlay >= 0.70
-        and pause_score.get("score", 0.0) >= 0.34
-        and pause_score.get("bright", 0) >= 120
-        and pause_border_fraction >= 0.045
+        and (
+            (
+                pause_score.get("score", 0.0) >= 0.34
+                and pause_score.get("bright", 0) >= 120
+                and pause_border_fraction >= 0.045
+            )
+            or (
+                dark_overlay >= 0.90
+                and pause_score.get("score", 0.0) >= 0.14
+                and pause_score.get("bright", 0) >= 900
+                and pause_score.get("border", 0) >= 1000
+                and pause_border_fraction >= 0.03
+            )
+        )
     ):
         spec = _LIGHTNING_UI_BUTTON_CROPS["pause_menu"]
         return {
@@ -12600,9 +12612,25 @@ def _lightning_ensure_pause_state(
             "visible_ui": visible_ui,
         }
 
-    from src.control.mac_click import click_known_window_control
+    if os.name == "nt":
+        from src.native.lldb_pause_probe import (
+            _activate_windows_game_window,
+            _windows_press_escape,
+        )
 
-    click_result = click_known_window_control("pause")
+        try:
+            _activate_windows_game_window()
+            click_result = _windows_press_escape(0.35)
+        except Exception as exc:
+            click_result = {
+                "status": "ERROR",
+                "planned_control": "pause_escape",
+                "error": str(exc),
+            }
+    else:
+        from src.control.mac_click import click_known_window_control
+
+        click_result = click_known_window_control("pause")
     pause_verify = None
     pause_verified = False
     if click_result.get("status") == "OK":
@@ -14901,13 +14929,18 @@ def _lightning_click_control_with_bounds(
     bounds: dict,
     dry_run: bool = False,
     settle_seconds: float = 0.05,
-    hold_seconds: float = 0.06,
+    hold_seconds: float | None = None,
 ) -> dict:
-    from src.control.mac_click import KNOWN_WINDOW_CONTROLS, click_screen_point
+    from src.control.mac_click import (
+        KNOWN_WINDOW_CONTROLS,
+        _platform_control,
+        click_screen_point,
+    )
 
     control = KNOWN_WINDOW_CONTROLS.get(control_name)
     if control is None:
         return {"status": "ERROR", "error": f"unknown control: {control_name}"}
+    control = _platform_control(control)
     screen_x = int(bounds["x"] + control.window_x)
     screen_y = int(bounds["y"] + control.window_y)
     result = click_screen_point(
@@ -14916,7 +14949,7 @@ def _lightning_click_control_with_bounds(
         description=control.description,
         dry_run=dry_run,
         settle_seconds=settle_seconds,
-        hold_seconds=hold_seconds,
+        hold_seconds=control.hold_seconds if hold_seconds is None else hold_seconds,
     )
     result["control"] = control.name
     result["window_x"] = control.window_x
@@ -21255,20 +21288,20 @@ def cmd_lightning_start_run(
         _print_result(result)
         return result
 
+    # Windows first-island selection highlights the corporation on the first
+    # click and requires the same island click again before the island map
+    # intro appears. If a platform/build confirms on the first click, this
+    # coordinate is harmless under the intro overlay and avoids a live-clock
+    # stall on Windows.
+    time.sleep(0.8)
+    island_confirm_click = click_known_window_control(island_control)
+    result["first_island_confirm_click"] = island_confirm_click
+
     session_pending = _lightning_mark_session_first_island_pending(
         session,
         island_key,
     )
     result["session_first_island_pending"] = session_pending
-
-    result["first_island_confirm_click"] = {
-        "status": "SKIPPED",
-        "reason": "single_click_selects_first_island",
-        "note": (
-            "Do not click the island coordinate a second time; after the "
-            "corp map opens the same coordinate can select a mission."
-        ),
-    }
 
     clear_panels = _lightning_clear_visible_panel_chain(max_steps=4)
     result["clear_intro_panels"] = clear_panels
@@ -26488,6 +26521,23 @@ def _deployment_click_fallback(
                 "failed_step": step,
                 "steps": steps,
             }
+        if not dry_run:
+            commit_result = click_screen_point(
+                screen_x,
+                screen_y,
+                description=f"Commit deploy {mech['type']} to {_visual_tile(dx, dy)}",
+                dry_run=dry_run,
+                settle_seconds=0.22,
+                hold_seconds=0.12,
+            )
+            step["tile_commit_result"] = commit_result
+            if commit_result.get("status") != "OK":
+                return {
+                    "status": "ERROR",
+                    "reason": "deploy_tile_commit_failed",
+                    "failed_step": step,
+                    "steps": steps,
+                }
 
     return {
         "status": "DRY_RUN" if dry_run else "OK",

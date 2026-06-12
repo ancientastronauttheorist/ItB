@@ -49,13 +49,15 @@ RESTART_RECOVERY_SAFE_CONTROLS = {
 class AutonomousLightningConfig:
     profile: str = "Alpha"
     achievement: str = LIGHTNING_WAR
+    mode: str = "baseline"
+    target_islands: int = 2
     advanced_content: str = "off"
     difficulty: int = 0
     first_island: str = "archive"
     max_attempts: int = 1
     max_segments: int = 20
     segment_steps: int = 12
-    time_limit: float = 2.0
+    time_limit: float | None = None
     max_wall_seconds: float | None = None
     segment_timeout: float = 420.0
     abandon_seconds: float = 29 * 60
@@ -67,6 +69,13 @@ class AutonomousLightningConfig:
     start_from_verified_setup: bool = False
     achievement_sync: bool = True
     dry_run: bool = False
+
+    def __post_init__(self) -> None:
+        if self.mode not in {"baseline", "speed"}:
+            raise ValueError(f"unsupported Lightning War mode: {self.mode}")
+        self.target_islands = max(1, int(self.target_islands))
+        if self.time_limit is None:
+            self.time_limit = 2.0 if self.mode == "speed" else 10.0
 
 
 class AutonomousLightningConductor:
@@ -280,6 +289,7 @@ class AutonomousLightningConductor:
                     allow_objective_loss=True,
                     lightning_speed_loss_policy=True,
                     route_auto_start=cfg.route_auto_start,
+                    route_speed_vetoes=(cfg.mode == "speed"),
                 )
                 timer = _timer_seconds(segment)
                 if timer is not None:
@@ -496,7 +506,9 @@ class AutonomousLightningConductor:
             "squad": getattr(session, "squad", None),
             "difficulty": self.config.difficulty,
             "advanced_content": self.config.advanced_content,
-            "mode": "hybrid_theory",
+            "mode": self.config.mode,
+            "target_islands": self.config.target_islands,
+            "time_limit": self.config.time_limit,
             "first_island_gate_seconds": self.config.first_island_gate_seconds,
             "second_island_start_gate_seconds": (
                 self.config.second_island_start_gate_seconds

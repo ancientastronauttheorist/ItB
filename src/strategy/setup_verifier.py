@@ -60,6 +60,7 @@ DIFFICULTIES: dict[int, dict[str, Any]] = {
 YELLOW_BORDER_THRESHOLD = 0.025
 CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD = 0.08
 CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD = 0.25
+FALLBACK_YELLOW_BORDER_MIN_PIXELS = 500
 
 
 @dataclass(frozen=True)
@@ -149,39 +150,46 @@ def analyze_setup_image(
         raise ValueError(f"unknown advanced content mode {desired_advanced!r}")
 
     sx, sy = _scale_for(img)
+    ox, oy = 0.0, 0.0
+    fallback_signature: dict[str, Any] | None = None
     if click_window_size is None:
         click_sx, click_sy = sx, sy
+        click_ox, click_oy = ox, oy
     else:
         click_sx = click_window_size[0] / BASE_SIZE[0]
         click_sy = click_window_size[1] / BASE_SIZE[1]
-    advanced: list[dict[str, Any]] = []
-    click_plan: list[dict[str, Any]] = []
-    for item in ADVANCED_ITEMS:
-        icon_score = _icon_colorfulness(img, _scale_box(item["icon_box"], sx, sy))
-        checkbox = _checkbox_brightness(img, _scale_box(item["checkbox_box"], sx, sy))
-        threshold = float(item["colorfulness_threshold"])
-        checkbox_present = (
-            checkbox["bright_ratio"] >= CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD
-        )
-        enabled = (
-            checkbox_present
-            and checkbox["bright_ratio"] >= CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD
-        )
-        cx, cy = _scale_point(item["click"], click_sx, click_sy)
-        row = {
-            "key": item["key"],
-            "label": item["label"],
-            "enabled": enabled,
-            "colorfulness": round(icon_score, 3),
-            "threshold": threshold,
-            "checkbox_present": checkbox_present,
-            "checkbox_brightness": checkbox["bright_ratio"],
-            "checkbox_enabled_threshold": CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD,
-            "click": {"x": cx, "y": cy, "coordinate_space": "window"},
-        }
-        advanced.append(row)
+        click_ox, click_oy = 0.0, 0.0
 
-    present_count = sum(1 for row in advanced if row["checkbox_present"])
+    advanced, present_count = _analyze_advanced(img, sx, sy, ox, oy, click_sx, click_sy, click_ox, click_oy)
+    difficulty_scores = _difficulty_scores(img, sx, sy, ox, oy)
+    actual_difficulty = max(difficulty_scores, key=difficulty_scores.get)
+    if difficulty_scores[actual_difficulty] < YELLOW_BORDER_THRESHOLD:
+        actual_difficulty = None
+
+    if present_count < 3 or actual_difficulty is None:
+        fallback = _fallback_transform_from_yellow_border(img, expected_difficulty)
+        if fallback is not None:
+            sx, sy, ox, oy, fallback_signature = fallback
+            if click_window_size is None:
+                click_sx, click_sy = sx, sy
+                click_ox, click_oy = ox, oy
+            advanced, present_count = _analyze_advanced(
+                img,
+                sx,
+                sy,
+                ox,
+                oy,
+                click_sx,
+                click_sy,
+                click_ox,
+                click_oy,
+            )
+            difficulty_scores = _difficulty_scores(img, sx, sy, ox, oy)
+            actual_difficulty = max(difficulty_scores, key=difficulty_scores.get)
+            if difficulty_scores[actual_difficulty] < YELLOW_BORDER_THRESHOLD:
+                actual_difficulty = None
+
+    click_plan: list[dict[str, Any]] = []
     setup_screen_detected = present_count >= 3
     setup_signature = {
         "advanced_checkbox_present_count": present_count,
@@ -190,6 +198,10 @@ def analyze_setup_image(
         "checkbox_enabled_brightness_threshold": CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD,
         "window_focus_verified": bool(window_focus_verified),
     }
+    if fallback_signature:
+        setup_signature["fallback_transform"] = fallback_signature
+    if not setup_screen_detected:
+        actual_difficulty = None
     if setup_screen_detected:
         for row in advanced:
             if desired_advanced == "on" and not row["enabled"]:
@@ -209,21 +221,13 @@ def analyze_setup_image(
                     "description": f"Disable Advanced Content: {row['label']}",
                 })
 
-    difficulty_scores = {
-        value: _yellow_border_ratio(img, _scale_box(info["button_box"], sx, sy))
-        for value, info in DIFFICULTIES.items()
-    }
-    actual_difficulty = max(difficulty_scores, key=difficulty_scores.get)
-    if difficulty_scores[actual_difficulty] < YELLOW_BORDER_THRESHOLD:
-        actual_difficulty = None
-    if not setup_screen_detected:
-        actual_difficulty = None
-
     if setup_screen_detected and actual_difficulty != expected_difficulty:
-        cx, cy = _scale_point(
+        cx, cy = _transform_point(
             DIFFICULTIES[expected_difficulty]["click"],
             click_sx,
             click_sy,
+            click_ox,
+            click_oy,
         )
         click_plan.append({
             "type": "left_click",
@@ -265,12 +269,116 @@ def analyze_setup_image(
     )
 
 
+def _analyze_advanced(
+    img: "Image.Image",
+    sx: float,
+    sy: float,
+    ox: float,
+    oy: float,
+    click_sx: float,
+    click_sy: float,
+    click_ox: float,
+    click_oy: float,
+) -> tuple[list[dict[str, Any]], int]:
+    advanced: list[dict[str, Any]] = []
+    for item in ADVANCED_ITEMS:
+        icon_score = _icon_colorfulness(
+            img,
+            _transform_box(item["icon_box"], sx, sy, ox, oy),
+        )
+        checkbox = _checkbox_brightness(
+            img,
+            _transform_box(item["checkbox_box"], sx, sy, ox, oy),
+        )
+        threshold = float(item["colorfulness_threshold"])
+        checkbox_present = (
+            checkbox["bright_ratio"] >= CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD
+        )
+        enabled = (
+            checkbox_present
+            and checkbox["bright_ratio"] >= CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD
+        )
+        cx, cy = _transform_point(item["click"], click_sx, click_sy, click_ox, click_oy)
+        row = {
+            "key": item["key"],
+            "label": item["label"],
+            "enabled": enabled,
+            "colorfulness": round(icon_score, 3),
+            "threshold": threshold,
+            "checkbox_present": checkbox_present,
+            "checkbox_brightness": checkbox["bright_ratio"],
+            "checkbox_enabled_threshold": CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD,
+            "click": {"x": cx, "y": cy, "coordinate_space": "window"},
+        }
+        advanced.append(row)
+
+    present_count = sum(1 for row in advanced if row["checkbox_present"])
+    return advanced, present_count
+
+
+def _difficulty_scores(
+    img: "Image.Image",
+    sx: float,
+    sy: float,
+    ox: float,
+    oy: float,
+) -> dict[int, float]:
+    return {
+        value: _yellow_border_ratio(
+            img,
+            _transform_box(info["button_box"], sx, sy, ox, oy),
+        )
+        for value, info in DIFFICULTIES.items()
+    }
+
+
+def _fallback_transform_from_yellow_border(
+    img: "Image.Image",
+    expected_difficulty: int,
+) -> tuple[float, float, float, float, dict[str, Any]] | None:
+    yellow_box = _largest_yellow_component_box(img)
+    if yellow_box is None:
+        return None
+    base_box = DIFFICULTIES[expected_difficulty]["button_box"]
+    bx0, by0, bx1, by1 = base_box
+    yx0, yy0, yx1, yy1 = yellow_box
+    sx = (yx1 - yx0) / (bx1 - bx0)
+    sy = (yy1 - yy0) / (by1 - by0)
+    if sx <= 0 or sy <= 0:
+        return None
+    ox = yx0 - bx0 * sx
+    oy = yy0 - by0 * sy
+    signature = {
+        "source": "selected_difficulty_border",
+        "expected_difficulty": expected_difficulty,
+        "yellow_box": {
+            "x0": yx0,
+            "y0": yy0,
+            "x1": yx1,
+            "y1": yy1,
+        },
+        "scale": {"x": round(sx, 3), "y": round(sy, 3)},
+        "offset": {"x": round(ox, 1), "y": round(oy, 1)},
+    }
+    return sx, sy, ox, oy, signature
+
+
 def _scale_for(img: "Image.Image") -> tuple[float, float]:
     return (img.width / BASE_SIZE[0], img.height / BASE_SIZE[1])
 
 
 def _scale_point(point: tuple[int, int], sx: float, sy: float) -> tuple[int, int]:
     return (int(round(point[0] * sx)), int(round(point[1] * sy)))
+
+
+def _transform_point(
+    point: tuple[int, int],
+    sx: float,
+    sy: float,
+    ox: float,
+    oy: float,
+) -> tuple[int, int]:
+    return (int(round(point[0] * sx + ox)), int(round(point[1] * sy + oy)))
 
 
 def _scale_box(
@@ -280,6 +388,18 @@ def _scale_box(
 ) -> tuple[int, int, int, int]:
     x0, y0 = _scale_point((box[0], box[1]), sx, sy)
     x1, y1 = _scale_point((box[2], box[3]), sx, sy)
+    return (x0, y0, x1, y1)
+
+
+def _transform_box(
+    box: tuple[int, int, int, int],
+    sx: float,
+    sy: float,
+    ox: float,
+    oy: float,
+) -> tuple[int, int, int, int]:
+    x0, y0 = _transform_point((box[0], box[1]), sx, sy, ox, oy)
+    x1, y1 = _transform_point((box[2], box[3]), sx, sy, ox, oy)
     return (x0, y0, x1, y1)
 
 
@@ -317,3 +437,39 @@ def _yellow_border_ratio(img: "Image.Image", box: tuple[int, int, int, int]) -> 
         if r >= 185 and g >= 150 and b <= 160 and (r - b) >= 50:
             yellow += 1
     return yellow / len(pixels)
+
+
+def _largest_yellow_component_box(
+    img: "Image.Image",
+) -> tuple[int, int, int, int] | None:
+    yellow_pixels: set[tuple[int, int]] = set()
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b = img.getpixel((x, y))
+            if r >= 170 and g >= 145 and b <= 160 and (r - b) >= 40:
+                yellow_pixels.add((x, y))
+    best: tuple[int, int, int, int, int] | None = None
+    while yellow_pixels:
+        start = yellow_pixels.pop()
+        stack = [start]
+        min_x = max_x = start[0]
+        min_y = max_y = start[1]
+        count = 1
+        while stack:
+            x, y = stack.pop()
+            for neighbor in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if neighbor not in yellow_pixels:
+                    continue
+                yellow_pixels.remove(neighbor)
+                stack.append(neighbor)
+                nx, ny = neighbor
+                min_x = min(min_x, nx)
+                max_x = max(max_x, nx)
+                min_y = min(min_y, ny)
+                max_y = max(max_y, ny)
+                count += 1
+        if best is None or count > best[4]:
+            best = (min_x, min_y, max_x + 1, max_y + 1, count)
+    if best is None or best[4] < FALLBACK_YELLOW_BORDER_MIN_PIXELS:
+        return None
+    return best[:4]

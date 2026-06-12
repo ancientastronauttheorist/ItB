@@ -108,11 +108,13 @@ from src.loop.commands import (
     cmd_mission_end,
     cmd_annotate,
 )
-from src.loop.lightning_runner import (
-    DEFAULT_LIGHTNING_MAX_ATTEMPTS,
-    DEFAULT_LIGHTNING_MAX_SEGMENTS,
+from src.loop.lightning_conductor import (
+    AutonomousLightningConfig,
     cmd_lightning_autonomous,
 )
+
+DEFAULT_LIGHTNING_MAX_ATTEMPTS = 8
+DEFAULT_LIGHTNING_MAX_SEGMENTS = AutonomousLightningConfig.max_segments
 
 
 def main():

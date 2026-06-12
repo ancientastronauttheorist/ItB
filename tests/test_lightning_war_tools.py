@@ -282,11 +282,14 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
 
     assert result["status"] == "OK"
     assert result["run_id"] == "fresh_lw"
-    assert calls == ["setup_modal_start", "island_archive"]
+    assert calls == ["setup_modal_start", "island_archive", "island_archive"]
     assert verify_setup_calls == [
         {"expected_difficulty": 0, "advanced_content": "off"}
     ]
-    assert result["first_island_confirm_click"]["status"] == "SKIPPED"
+    assert result["first_island_confirm_click"] == {
+        "status": "OK",
+        "control": "island_archive",
+    }
     assert result["session_first_island_pending"] == {
         "status": "OK",
         "pending_first_island": "archive",

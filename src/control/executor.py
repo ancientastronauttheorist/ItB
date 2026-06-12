@@ -21,6 +21,8 @@ Coordinate systems:
 
 from __future__ import annotations
 
+import os
+
 from src.solver.solver import MechAction, Solution
 from src.solver.action_classification import action_has_attack, is_board_target
 from src.model.board import Board
@@ -160,6 +162,10 @@ def _ui_repair_button() -> tuple[int, int]:
 
 
 def _ui_end_turn() -> tuple[int, int]:
+    if os.name == "nt":
+        win = _get_window()
+        if win.width >= 2400 and win.height >= 1300:
+            return (int(round(win.x + 252)), int(round(win.y + 190)))
     return _ui_pos(_UI_END_TURN)
 
 

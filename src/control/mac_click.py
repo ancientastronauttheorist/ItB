@@ -54,6 +54,13 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Pause menu Continue",
         settle_seconds=0.2,
     ),
+    "pause_main_menu": KnownWindowControl(
+        name="pause_main_menu",
+        window_x=491,
+        window_y=403,
+        description="Pause menu Main Menu",
+        settle_seconds=0.8,
+    ),
     "title_continue": KnownWindowControl(
         name="title_continue",
         window_x=170,
@@ -74,6 +81,13 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         window_y=96,
         description="New-run setup Start",
         settle_seconds=1.0,
+    ),
+    "setup_back": KnownWindowControl(
+        name="setup_back",
+        window_x=290,
+        window_y=83,
+        description="New-run setup Back",
+        settle_seconds=0.8,
     ),
     "setup_advanced_enemies": KnownWindowControl(
         name="setup_advanced_enemies",
@@ -368,6 +382,8 @@ _CONTROL_ALIASES = {
     "continue": "menu_continue",
     "resume": "menu_continue",
     "unpause": "menu_continue",
+    "main_menu": "pause_main_menu",
+    "pause_main": "pause_main_menu",
     "new_game": "title_new_game",
     "title_new": "title_new_game",
     "start": "setup_start",
@@ -446,7 +462,9 @@ def _normalize_control_name(name: str) -> str:
 
 _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
     "pause": (168, 130),
+    "pause_main_menu": (1131, 774),
     "setup_start": (1712, 477),
+    "setup_back": (583, 159),
     "setup_modal_start": (1704, 974),
     "menu_continue": (1129, 582),
     "bottom_continue": (1633, 1009),
@@ -534,7 +552,7 @@ def find_title_menu_button_target(
                 dark += 1
             if r >= 180 and g >= 180 and b >= 180:
                 bright += 1
-        if dark >= min_dark_for_row and bright >= min_bright_for_row:
+        if dark >= min_dark_for_row:
             row_hits.append((y, dark, bright))
 
     runs: list[dict] = []
@@ -557,24 +575,31 @@ def find_title_menu_button_target(
         for run in runs
         if run["height"] >= max(8, int(height * 0.008))
         and run["width"] >= max(90, int(width * 0.08))
-        and run["bright"] >= max(20, int(width * 0.01))
     ]
     candidates.sort(key=lambda item: item["image_y"])
-    if len(candidates) <= row_index:
+    effective_row_index = row_index
+    if row_index == 1 and len(candidates) == 4:
+        # A disabled Continue row can be too dim to classify as a menu button.
+        # In that state the four detected rows are New Game, Options, Credits,
+        # and Quit, so the New Game target is the first detected row.
+        effective_row_index = 0
+    if len(candidates) <= effective_row_index:
         return {
             "status": "NOT_FOUND",
             "reason": "not_enough_title_menu_rows",
             "row_index": row_index,
+            "effective_row_index": effective_row_index,
             "candidate_count": len(candidates),
             "image_size": [width, height],
             "search_region": [0, y_start, x_limit, y_stop],
             "runs": runs[:8],
         }
 
-    target = candidates[row_index]
+    target = candidates[effective_row_index]
     return {
         "status": "OK",
         "row_index": row_index,
+        "effective_row_index": effective_row_index,
         "image_x": int(round(target["image_x"])),
         "image_y": int(round(target["image_y"])),
         "image_size": [width, height],
@@ -739,6 +764,118 @@ def _applescript_click(
     return {"status": "OK"}
 
 
+def _windows_sendinput_click(
+    x: int,
+    y: int,
+    *,
+    hold_seconds: float = 0.3,
+) -> dict:
+    """Click a global screen point with Win32 raw input.
+
+    PyAutoGUI can report success while some Windows games ignore the generated
+    mouse event. Into the Breach already needs raw scancodes for Escape, so use
+    the same lower-level input path for calibrated clicks.
+    """
+    if os.name != "nt":
+        return {"status": "SKIPPED", "reason": "not_windows"}
+    try:
+        from ctypes import wintypes
+
+        INPUT_MOUSE = 0
+        MOUSEEVENTF_LEFTDOWN = 0x0002
+        MOUSEEVENTF_LEFTUP = 0x0004
+
+        class MOUSEINPUT(ctypes.Structure):
+            _fields_ = [
+                ("dx", wintypes.LONG),
+                ("dy", wintypes.LONG),
+                ("mouseData", wintypes.DWORD),
+                ("dwFlags", wintypes.DWORD),
+                ("time", wintypes.DWORD),
+                ("dwExtraInfo", ctypes.c_size_t),
+            ]
+
+        class KEYBDINPUT(ctypes.Structure):
+            _fields_ = [
+                ("wVk", wintypes.WORD),
+                ("wScan", wintypes.WORD),
+                ("dwFlags", wintypes.DWORD),
+                ("time", wintypes.DWORD),
+                ("dwExtraInfo", ctypes.c_size_t),
+            ]
+
+        class HARDWAREINPUT(ctypes.Structure):
+            _fields_ = [
+                ("uMsg", wintypes.DWORD),
+                ("wParamL", wintypes.WORD),
+                ("wParamH", wintypes.WORD),
+            ]
+
+        class INPUT_UNION(ctypes.Union):
+            _fields_ = [
+                ("mi", MOUSEINPUT),
+                ("ki", KEYBDINPUT),
+                ("hi", HARDWAREINPUT),
+            ]
+
+        class INPUT(ctypes.Structure):
+            _fields_ = [
+                ("type", wintypes.DWORD),
+                ("union", INPUT_UNION),
+            ]
+
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        user32.SetCursorPos.argtypes = [ctypes.c_int, ctypes.c_int]
+        user32.SetCursorPos.restype = wintypes.BOOL
+        user32.SendInput.argtypes = [
+            wintypes.UINT,
+            ctypes.POINTER(INPUT),
+            ctypes.c_int,
+        ]
+        user32.SendInput.restype = wintypes.UINT
+
+        if not user32.SetCursorPos(int(x), int(y)):
+            return {
+                "status": "ERROR",
+                "error": f"SetCursorPos failed: WinError {ctypes.get_last_error()}",
+            }
+
+        down = INPUT(
+            type=INPUT_MOUSE,
+            union=INPUT_UNION(
+                mi=MOUSEINPUT(0, 0, 0, MOUSEEVENTF_LEFTDOWN, 0, 0)
+            ),
+        )
+        sent = user32.SendInput(1, ctypes.byref(down), ctypes.sizeof(INPUT))
+        if sent != 1:
+            return {
+                "status": "ERROR",
+                "error": (
+                    f"SendInput mouse down sent {sent}/1 events; "
+                    f"WinError {ctypes.get_last_error()}"
+                ),
+            }
+        time.sleep(max(0.0, hold_seconds))
+        up = INPUT(
+            type=INPUT_MOUSE,
+            union=INPUT_UNION(
+                mi=MOUSEINPUT(0, 0, 0, MOUSEEVENTF_LEFTUP, 0, 0)
+            ),
+        )
+        sent = user32.SendInput(1, ctypes.byref(up), ctypes.sizeof(INPUT))
+        if sent != 1:
+            return {
+                "status": "ERROR",
+                "error": (
+                    f"SendInput mouse up sent {sent}/1 events; "
+                    f"WinError {ctypes.get_last_error()}"
+                ),
+            }
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"win32 SendInput click failed: {exc}"}
+    return {"status": "OK", "hold_seconds": hold_seconds}
+
+
 def _get_window_bounds(app_name: str) -> dict | None:
     """Return the front window bounds for ``app_name`` via System Events."""
     if shutil.which("osascript") is None:
@@ -881,11 +1018,19 @@ def click_screen_point(
         focus_result = _windows_activate_app_window(app_name)
         time.sleep(0.05)
 
-    click_result = _pyautogui_click(x, y, hold_seconds=hold_seconds)
-    backend = "pyautogui"
+    if os.name == "nt":
+        click_result = _windows_sendinput_click(x, y, hold_seconds=hold_seconds)
+        backend = "win32_sendinput"
+    else:
+        click_result = _pyautogui_click(x, y, hold_seconds=hold_seconds)
+        backend = "pyautogui"
     fallback_error = None
     if click_result.get("status") != "OK":
         fallback_error = click_result.get("error")
+        click_result = _pyautogui_click(x, y, hold_seconds=hold_seconds)
+        backend = "pyautogui"
+    if click_result.get("status") != "OK" and os.name != "nt":
+        fallback_error = fallback_error or click_result.get("error")
         click_result = _applescript_click(x, y, app_name=app_name)
         backend = "applescript"
 

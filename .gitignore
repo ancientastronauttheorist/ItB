@@ -13,15 +13,29 @@ tmp/
 # already tracked in Git remain tracked; force-add a specific new artifact when
 # it should become part of the regression corpus.
 .local_runs/
+run/
 recordings/[0-9]*/
+recordings/lw/
+recordings/timer_screenshot_probe/
 snapshots/*/
 snapshots/*.png
 logs/*_log.md
+run_notes/lightning_war_conductor_*.jsonl
+run_notes/lightning_war_fast_walkthrough/
+run_notes/lightning_war_goal.md
+run_notes/lightning_war_smoke_2026-06-*/
+run_notes/lightning_war_walkthrough/*.log
+run_notes/lightning_war_walkthrough/*.err.log
+run_notes/lightning_war_walkthrough/*.out.log
+run_notes/lightning_war_walkthrough/*.png
+run_notes/lightning_war_walkthrough/timing_screenshots/
 data/wiki_raw/*
 research_crops/
 run_screenshots/
 screenshots/
 ui_checks/
+/.pytest_cache/
+/*.png
 tmp_*.png
 tmp_research_*/
 research_*.png

@@ -27,15 +27,19 @@ for stream in (sys.stdout, sys.stderr):
 from src.capture.window import get_window_bounds, take_screenshot
 from src.bridge.protocol import HEARTBEAT_FILE, is_bridge_alive
 from src.control.mac_click import (
+    _windows_activate_app_window,
     click_known_window_control,
     click_title_new_game_dynamic,
     click_window_point,
     press_key,
 )
 from src.loop.commands import (
+    _lightning_assign_visual_route_options,
     _lightning_ensure_pause_state,
     _lightning_end_turn_retryable,
     _lightning_extract_red_regions_from_image,
+    _lightning_recommend_save_routes,
+    _lightning_route_start_candidates,
     _lightning_visible_ui_text_parts,
     _lightning_live_snapshot,
     _lightning_observed_terminal_transition,
@@ -47,13 +51,25 @@ from src.loop.commands import (
     cmd_execute,
     cmd_read,
     cmd_solve,
+    cmd_verify_setup_screen,
     cmd_verify_action,
 )
+from src.solver.plan_safety import POD_LOSS_DIRTY_KINDS
 
 
 APP_NAME = "Into the Breach"
 LIGHTNING_UI_BASE_SIZE = (1280, 748)
 TIMING_SCREENSHOT_DIR = ROOT / "run_notes" / "lightning_war_walkthrough" / "timing_screenshots"
+STARTUP_SCREENSHOT_DIR = (
+    ROOT / "run_notes" / "lightning_war_fast_walkthrough" / "startup_screenshots"
+)
+STARTUP_REVIEW_DIR = (
+    ROOT / "run_notes" / "lightning_war_fast_walkthrough" / "startup_reviews"
+)
+STARTUP_REFERENCE_SCREENSHOT = (
+    ROOT / "run_notes" / "lightning_war_fast_walkthrough" / "reference_title_screen.png"
+)
+STARTUP_LATEST_REVIEW_FILE = STARTUP_REVIEW_DIR / "latest_startup_visual_review.json"
 TERMINAL_OR_CLEAR_UIS = {
     "bottom_continue_panel",
     "island_complete_leave",
@@ -63,6 +79,16 @@ TERMINAL_OR_CLEAR_UIS = {
     "pod_open_panel",
     "promotion_panel",
     "reward_panel",
+}
+MECH_DAMAGE_WARNING_KINDS = {"mech_hp_loss", "mech_status_debt"}
+LIGHTNING_SPEED_LOSS_DIRTY_KINDS = {
+    "building_destroyed",
+    "building_hp_loss",
+    "grid_damage",
+    "objective_building_destroyed",
+    "objective_building_targeted_final",
+    "protected_objective_unit_lost",
+    "protected_objective_unit_unfrozen",
 }
 
 
@@ -124,6 +150,478 @@ def click_point(
     return result
 
 
+def click_scaled_point(
+    name: str,
+    base_x: float,
+    base_y: float,
+    *,
+    settle_seconds: float = 0.05,
+    hold_seconds: float = 0.3,
+) -> dict[str, Any]:
+    """Click a point calibrated against ``LIGHTNING_UI_BASE_SIZE``."""
+    bounds = get_window_bounds()
+    if bounds is None:
+        raise FastRunError("could not find Into the Breach window bounds")
+    base_w, base_h = LIGHTNING_UI_BASE_SIZE
+    x = int(round(base_x * bounds["width"] / base_w))
+    y = int(round(base_y * bounds["height"] / base_h))
+    return click_point(
+        name,
+        x,
+        y,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+
+
+def hover_window_point(
+    name: str,
+    x: int,
+    y: int,
+    *,
+    hover_seconds: float = 0.25,
+) -> dict[str, Any]:
+    """Move the cursor over a window point before a Windows SendInput click."""
+    bounds = get_window_bounds()
+    if bounds is None:
+        raise FastRunError("could not find Into the Breach window bounds")
+    if not sys.platform.startswith("win"):
+        return {
+            "status": "SKIPPED",
+            "reason": "hover pre-positioning is only needed on Windows",
+            "name": name,
+            "window_x": x,
+            "window_y": y,
+        }
+
+    import ctypes
+
+    focus_result = _windows_activate_app_window(APP_NAME)
+    time.sleep(0.05)
+    screen_x = int(bounds["x"] + int(x))
+    screen_y = int(bounds["y"] + int(y))
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.SetCursorPos.argtypes = [ctypes.c_int, ctypes.c_int]
+    user32.SetCursorPos.restype = ctypes.c_int
+    if not user32.SetCursorPos(screen_x, screen_y):
+        raise FastRunError(f"hover {name} failed: WinError {ctypes.get_last_error()}")
+    time.sleep(max(0.0, hover_seconds))
+    return {
+        "status": "OK",
+        "name": name,
+        "window_x": int(x),
+        "window_y": int(y),
+        "screen_x": screen_x,
+        "screen_y": screen_y,
+        "hover_seconds": hover_seconds,
+        "focus": focus_result,
+    }
+
+
+def click_hovered_point(
+    name: str,
+    x: int,
+    y: int,
+    *,
+    hover_seconds: float = 0.25,
+    settle_seconds: float = 0.05,
+    hold_seconds: float = 0.3,
+) -> dict[str, Any]:
+    hover = hover_window_point(name, x, y, hover_seconds=hover_seconds)
+    click = click_point(
+        name,
+        x,
+        y,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+    click["pre_hover"] = hover
+    return click
+
+
+def click_scaled_hovered_point(
+    name: str,
+    base_x: float,
+    base_y: float,
+    *,
+    hover_seconds: float = 0.25,
+    settle_seconds: float = 0.05,
+    hold_seconds: float = 0.3,
+) -> dict[str, Any]:
+    bounds = get_window_bounds()
+    if bounds is None:
+        raise FastRunError("could not find Into the Breach window bounds")
+    base_w, base_h = LIGHTNING_UI_BASE_SIZE
+    x = int(round(base_x * bounds["width"] / base_w))
+    y = int(round(base_y * bounds["height"] / base_h))
+    return click_hovered_point(
+        name,
+        x,
+        y,
+        hover_seconds=hover_seconds,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+
+
+def click_setup_start_control(
+    *,
+    settle_seconds: float = 0.05,
+    hold_seconds: float = 0.3,
+) -> dict[str, Any]:
+    if sys.platform.startswith("win"):
+        return click_hovered_point(
+            "setup_start",
+            1712,
+            477,
+            hover_seconds=0.28,
+            settle_seconds=settle_seconds,
+            hold_seconds=hold_seconds,
+        )
+    return click_control(
+        "setup_start",
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+
+
+def click_setup_modal_start_control(
+    *,
+    settle_seconds: float = 0.05,
+    hold_seconds: float = 0.3,
+) -> dict[str, Any]:
+    if sys.platform.startswith("win"):
+        return click_hovered_point(
+            "setup_modal_start",
+            1704,
+            974,
+            hover_seconds=0.28,
+            settle_seconds=settle_seconds,
+            hold_seconds=hold_seconds,
+        )
+    return click_control(
+        "setup_modal_start",
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+
+
+WINDOWS_HOVER_CONTROL_POINTS: dict[str, tuple[int, int]] = {
+    "bottom_continue": (1633, 1009),
+    "island_archive": (600, 430),
+    "mission_preview_board": (1450, 790),
+    "panel_continue": (1500, 900),
+    "reward_continue": (1647, 985),
+}
+
+
+def click_ui_control(
+    control: str,
+    *,
+    settle_seconds: float = 0.05,
+    hold_seconds: float | None = None,
+) -> dict[str, Any]:
+    if sys.platform.startswith("win") and control in WINDOWS_HOVER_CONTROL_POINTS:
+        x, y = WINDOWS_HOVER_CONTROL_POINTS[control]
+        return click_hovered_point(
+            control,
+            x,
+            y,
+            hover_seconds=0.25,
+            settle_seconds=settle_seconds,
+            hold_seconds=0.35 if hold_seconds is None else hold_seconds,
+        )
+    return click_control(
+        control,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+
+
+def startup_setup_screen_name(ui_name: str | None) -> bool:
+    """Return whether a startup-only UI label is compatible with setup screen.
+
+    The generic lightning UI detector is tuned for combat/reward flow and can
+    call the Blitzkrieg loadout screen ``pause_menu`` on Windows because the
+    top setup buttons are lower than its historical crop.
+    """
+    return ui_name in {"new_game_setup", "pause_menu", "mission_preview_panel"}
+
+
+def deployment_snapshot_ready(snapshot: dict[str, Any]) -> bool:
+    if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
+        return False
+    if snapshot.get("in_active_mission") is not True:
+        return False
+    try:
+        turn = int(snapshot.get("turn") if snapshot.get("turn") is not None else -1)
+        deployment_zones = int(snapshot.get("deployment_zone_count") or 0)
+    except (TypeError, ValueError):
+        return False
+    return turn == 0 and deployment_zones > 0
+
+
+def deployment_snapshot_fresh_ready(snapshot: dict[str, Any]) -> bool:
+    return (
+        deployment_snapshot_ready(snapshot)
+        and snapshot.get("bridge_heartbeat_alive") is not False
+        and snapshot.get("bridge_heartbeat_stale") is not True
+    )
+
+
+def visible_route_dialogue(visible: dict[str, Any]) -> bool:
+    scores = visible.get("scores") or {}
+    try:
+        dialogue_score = float(
+            (scores.get("mission_preview_dialogue") or {}).get("score") or 0.0
+        )
+    except (TypeError, ValueError):
+        dialogue_score = 0.0
+    text = visible_text_lower(visible)
+    return dialogue_score >= 0.55 or (
+        "continue" in text
+        and any(
+            needle in text
+            for needle in (
+                "head office",
+                "we'll assist",
+                "protect the refugees",
+                "corporate hq",
+            )
+        )
+    )
+
+
+def visible_startable_mission_preview(visible: dict[str, Any]) -> bool:
+    """True for an island preview that appears to be a real mission card."""
+    text = visible_text_lower(visible)
+    if "no vek detected" in text:
+        return False
+    if visible.get("visible_ui") == "mission_preview_panel":
+        return True
+    return "bonus objectives" in text and (
+        "vek detected" in text or "start mission" in text
+    )
+
+
+def visible_deployment_screen(visible: dict[str, Any]) -> bool:
+    """Detect deployment even when the generic classifier names it unknown."""
+    if visible.get("visible_ui") == "deployment_screen":
+        return True
+    text = visible_text_lower(visible)
+    if "deploying" in text and "drop zone" in text:
+        return True
+    scores = visible.get("scores") or {}
+    deployment = scores.get("deployment_screen") or {}
+    try:
+        yellow = int(deployment.get("yellow") or 0)
+    except (TypeError, ValueError):
+        yellow = 0
+    return yellow >= 5000
+
+
+def red_region_key(region: dict[str, Any]) -> str:
+    index = region.get("index")
+    if index is not None:
+        return f"index:{index}"
+    try:
+        x = int(region.get("window_x"))
+        y = int(region.get("window_y"))
+    except (TypeError, ValueError):
+        return f"object:{id(region)}"
+    return f"xy:{round(x / 8) * 8},{round(y / 8) * 8}"
+
+
+def compact_save_route_recommendation(
+    recommendation: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not isinstance(recommendation, dict):
+        return None
+    return {
+        "status": recommendation.get("status"),
+        "source": recommendation.get("source"),
+        "routing": recommendation.get("routing"),
+        "available": recommendation.get("available"),
+        "grid_power": recommendation.get("grid_power"),
+        "top3": recommendation.get("top3"),
+        "speed_route_status": recommendation.get("speed_route_status"),
+    }
+
+
+def ranked_red_region_candidates(
+    regions: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Prefer save-ranked route candidates; fall back to stable visual order."""
+    annotated: dict[str, Any] = dict(regions)
+    recommendation: dict[str, Any] | None = None
+    try:
+        recommendation = _lightning_recommend_save_routes(
+            "Alpha",
+            routing="lightning_war",
+        )
+        assigned = _lightning_assign_visual_route_options(regions, recommendation)
+        if isinstance(assigned, dict):
+            annotated = assigned
+    except Exception as exc:
+        annotated["route_recommendation_error"] = str(exc)
+
+    route_candidates: list[dict[str, Any]] = []
+    try:
+        raw_candidates = _lightning_route_start_candidates(
+            annotated,
+            start_mode="region-then-board",
+            recommendation=recommendation,
+        )
+        route_candidates = [
+            dict(candidate)
+            for candidate in (raw_candidates or [])
+            if isinstance(candidate, dict)
+        ]
+    except Exception as exc:
+        annotated["route_candidate_error"] = str(exc)
+
+    regions_by_key = {
+        red_region_key(region): dict(region)
+        for region in (annotated.get("regions") or [])
+        if isinstance(region, dict)
+    }
+    ordered: list[dict[str, Any]] = []
+    used: set[str] = set()
+
+    for candidate in route_candidates:
+        key = red_region_key(candidate)
+        region = dict(regions_by_key.get(key) or {})
+        region.update(
+            {
+                field: candidate.get(field)
+                for field in (
+                    "index",
+                    "window_x",
+                    "window_y",
+                    "mission_id",
+                    "save_region_index",
+                    "save_region_name",
+                    "score",
+                    "auto_route_allowed",
+                    "auto_route_block_reason",
+                    "route_option",
+                )
+                if candidate.get(field) is not None
+            }
+        )
+        if "window_x" not in region or "window_y" not in region:
+            continue
+        key = red_region_key(region)
+        if key in used:
+            continue
+        ordered.append(region)
+        used.add(key)
+
+    fallback_regions = [
+        dict(region)
+        for region in (annotated.get("regions") or [])
+        if isinstance(region, dict)
+    ]
+    fallback_regions.sort(
+        key=lambda item: (
+            int(item.get("window_y") or 0),
+            int(item.get("window_x") or 0),
+            -float(item.get("area_window") or item.get("area_px") or 0),
+        )
+    )
+    for region in fallback_regions:
+        key = red_region_key(region)
+        if key in used:
+            continue
+        ordered.append(region)
+        used.add(key)
+
+    annotated["save_route_recommendation_compact"] = compact_save_route_recommendation(
+        recommendation
+    )
+    annotated["route_start_candidates_compact"] = [
+        {
+            key: candidate.get(key)
+            for key in (
+                "index",
+                "window_x",
+                "window_y",
+                "mission_id",
+                "save_region_index",
+                "save_region_name",
+                "score",
+                "auto_route_allowed",
+                "auto_route_block_reason",
+            )
+            if candidate.get(key) is not None
+        }
+        for candidate in route_candidates
+    ]
+    annotated["candidate_order"] = [
+        {
+            key: candidate.get(key)
+            for key in (
+                "index",
+                "window_x",
+                "window_y",
+                "mission_id",
+                "save_region_name",
+                "score",
+                "auto_route_allowed",
+                "auto_route_block_reason",
+            )
+            if candidate.get(key) is not None
+        }
+        for candidate in ordered
+    ]
+    return ordered, annotated
+
+
+def select_red_region_candidate(
+    regions: dict[str, Any],
+    *,
+    tried_keys: set[str] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    candidates, annotated = ranked_red_region_candidates(regions)
+    tried = tried_keys or set()
+    for candidate in candidates:
+        if red_region_key(candidate) not in tried:
+            return candidate, annotated
+    raise FastRunError(
+        "no untried red mission candidates remained: "
+        + json.dumps(
+            {
+                "tried_region_keys": sorted(tried),
+                "regions": annotated,
+            },
+            default=str,
+        )
+    )
+
+
+def click_red_region_from_extracted(region: dict[str, Any]) -> dict[str, Any]:
+    bounds = get_window_bounds()
+    if bounds is None:
+        raise FastRunError("could not find Into the Breach window bounds")
+    base_w, base_h = LIGHTNING_UI_BASE_SIZE
+    scale_x = bounds["width"] / base_w
+    scale_y = bounds["height"] / base_h
+    live_x = int(round(float(region["window_x"]) * scale_x))
+    live_y = int(round(float(region["window_y"]) * scale_y))
+    region["live_window_x"] = live_x
+    region["live_window_y"] = live_y
+    region["live_coordinate_scale"] = {"x": scale_x, "y": scale_y}
+    click_hovered_point(
+        "red_mission",
+        live_x,
+        live_y,
+        hover_seconds=0.2,
+        settle_seconds=0.2,
+        hold_seconds=0.35,
+    )
+    return region
+
+
 def click_dialogue_textbox_sweep() -> dict[str, Any]:
     """Dismiss result/advisor dialogue boxes whose active hitbox varies a bit."""
     points = [
@@ -176,7 +674,7 @@ def click_transition_control(
         return click_dialogue_textbox_sweep()
     if control == "reward_continue":
         return click_reward_continue_sweep()
-    return click_control(
+    return click_ui_control(
         control,
         settle_seconds=settle_seconds,
         hold_seconds=hold_seconds,
@@ -229,11 +727,78 @@ def capture_timing(prefix: str) -> Path:
     return path
 
 
+def capture_startup_context() -> Path:
+    bounds = get_window_bounds()
+    if bounds is None:
+        raise FastRunError("could not find Into the Breach window bounds")
+    STARTUP_SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+    path = STARTUP_SCREENSHOT_DIR / f"startup_context_{int(time.time() * 1000)}.png"
+    take_screenshot(path, bounds=bounds)
+    return path
+
+
 def visible_ui_name() -> str:
     try:
         return str(_lightning_visible_ui_snapshot().get("visible_ui") or "unknown")
     except Exception as exc:
         return f"unknown:{exc}"
+
+
+def wait_for_visible_ui(
+    expected: set[str],
+    *,
+    label: str,
+    max_seconds: float = 2.0,
+    poll_seconds: float = 0.15,
+) -> dict[str, Any]:
+    """Wait briefly for a click to produce the expected visible UI state."""
+    start = time.perf_counter()
+    attempts: list[dict[str, Any]] = []
+    while True:
+        visible = _lightning_visible_ui_snapshot(include_ocr=False)
+        compact = compact_visible_ui(visible)
+        attempts.append({"elapsed_seconds": elapsed(start), "visible_ui": compact})
+        if visible.get("visible_ui") in expected:
+            return {
+                "status": "OK",
+                "label": label,
+                "visible_ui": compact,
+                "attempts": attempts,
+            }
+        if time.perf_counter() - start >= max_seconds:
+            raise FastRunError(
+                json.dumps(
+                    {
+                        "status": "VISIBLE_UI_TRANSITION_TIMEOUT",
+                        "label": label,
+                        "expected": sorted(expected),
+                        "last_visible_ui": compact,
+                        "attempts": attempts,
+                    },
+                    default=str,
+                )
+            )
+        time.sleep(max(0.01, poll_seconds))
+
+
+def verify_lightning_setup_modal(*, raise_on_fail: bool = True) -> dict[str, Any]:
+    """Verify the Difficulty Setup modal for a Lightning War attempt."""
+    result = cmd_verify_setup_screen(
+        expected_difficulty=0,
+        require_all_advanced=False,
+        advanced_content="off",
+    )
+    if result.get("status") != "PASS" and raise_on_fail:
+        raise FastRunError(
+            json.dumps(
+                {
+                    "status": "SETUP_VERIFICATION_FAILED",
+                    "verify_setup": result,
+                },
+                default=str,
+            )
+        )
+    return result
 
 
 def click_mission_preview_until_deployment(
@@ -330,57 +895,559 @@ def wait_for_fresh_heartbeat(
         time.sleep(max(0.01, poll_seconds))
 
 
-def click_title_new_game() -> dict[str, Any]:
-    log("click title_new_game")
-    result = click_title_new_game_dynamic(
-        app_name=APP_NAME,
-        settle_seconds=0.15,
-        hold_seconds=0.3,
+def wait_for_title_screen(
+    *,
+    label: str,
+    max_seconds: float = 2.5,
+    poll_seconds: float = 0.2,
+) -> dict[str, Any]:
+    start = time.perf_counter()
+    attempts: list[dict[str, Any]] = []
+    while True:
+        visible = _lightning_visible_ui_snapshot(include_ocr=False)
+        compact = compact_visible_ui(visible)
+        attempts.append({"elapsed_seconds": elapsed(start), "visible_ui": compact})
+        if visible.get("visible_ui") == "title_screen":
+            return {
+                "status": "OK",
+                "label": label,
+                "visible_ui": compact,
+                "attempts": attempts,
+            }
+        if time.perf_counter() - start >= max_seconds:
+            return {
+                "status": "TIMEOUT",
+                "label": label,
+                "visible_ui": compact,
+                "attempts": attempts,
+            }
+        time.sleep(max(0.01, poll_seconds))
+
+
+def write_startup_visual_review_request(
+    *,
+    current_screenshot: Path,
+    visible: dict[str, Any],
+    attempt_index: int,
+) -> dict[str, Any]:
+    """Write a Codex-facing startup review request and return its payload."""
+    if not STARTUP_REFERENCE_SCREENSHOT.exists():
+        raise FastRunError(
+            json.dumps(
+                {
+                    "status": "STARTUP_REFERENCE_SCREENSHOT_MISSING",
+                    "expected_path": str(STARTUP_REFERENCE_SCREENSHOT),
+                    "current_screenshot_path": str(current_screenshot),
+                },
+                default=str,
+            )
+        )
+
+    STARTUP_REVIEW_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = int(time.time() * 1000)
+    request_path = STARTUP_REVIEW_DIR / f"startup_visual_review_{stamp}.json"
+    approval_path = STARTUP_REVIEW_DIR / f"startup_visual_approval_{stamp}.json"
+    payload: dict[str, Any] = {
+        "status": "PENDING_CODEX_VISUAL_REVIEW",
+        "attempt": attempt_index,
+        "created_at_unix": time.time(),
+        "request_path": str(request_path),
+        "latest_request_path": str(STARTUP_LATEST_REVIEW_FILE),
+        "approval_path": str(approval_path),
+        "reference_screenshot_path": str(STARTUP_REFERENCE_SCREENSHOT),
+        "current_screenshot_path": str(current_screenshot),
+        "initial_visible_ui": compact_visible_ui(visible),
+        "instructions": (
+            "Codex should visually compare reference_screenshot_path and "
+            "current_screenshot_path. If the current screen is acceptable for "
+            "starting from the title/main menu, write approval_path with "
+            "{\"action\":\"approve\",\"approved\":true}. If recovery is needed, "
+            "write {\"action\":\"recover_to_main_menu\"}. To stop, write "
+            "{\"action\":\"abort\"}."
+        ),
+        "allowed_actions": ["approve", "recover_to_main_menu", "abort"],
+    }
+    text = json.dumps(payload, default=str, indent=2) + "\n"
+    request_path.write_text(text, encoding="utf-8")
+    STARTUP_LATEST_REVIEW_FILE.write_text(text, encoding="utf-8")
+    log(
+        "startup visual review pending: "
+        f"reference={STARTUP_REFERENCE_SCREENSHOT} current={current_screenshot} "
+        f"approval={approval_path}"
     )
-    if result.get("status") != "OK":
-        raise FastRunError(f"title_new_game failed: {result}")
+    return payload
+
+
+def normalize_startup_visual_action(payload: dict[str, Any]) -> str:
+    raw = str(payload.get("action") or "").strip().lower().replace("-", "_")
+    approved = payload.get("approved")
+    if approved is True and not raw:
+        raw = "approve"
+    if raw in {"approve", "approved", "ok", "go"}:
+        return "approve"
+    if raw in {"recover", "recover_to_main_menu", "main_menu", "title_screen"}:
+        return "recover_to_main_menu"
+    if raw in {"abort", "stop", "blocked"} or approved is False:
+        return "abort"
+    raise FastRunError(
+        json.dumps(
+            {
+                "status": "UNKNOWN_STARTUP_VISUAL_APPROVAL_ACTION",
+                "approval": payload,
+                "allowed_actions": ["approve", "recover_to_main_menu", "abort"],
+            },
+            default=str,
+        )
+    )
+
+
+def wait_for_startup_visual_approval(
+    request: dict[str, Any],
+    *,
+    timeout_seconds: float,
+    poll_seconds: float,
+) -> dict[str, Any]:
+    approval_path = Path(str(request["approval_path"]))
+    start = time.perf_counter()
+    last_error: str | None = None
+    while True:
+        if approval_path.exists():
+            try:
+                payload = json.loads(approval_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                last_error = str(exc)
+            else:
+                if not isinstance(payload, dict):
+                    raise FastRunError(
+                        json.dumps(
+                            {
+                                "status": "INVALID_STARTUP_VISUAL_APPROVAL",
+                                "reason": "approval JSON must be an object",
+                                "approval_path": str(approval_path),
+                            },
+                            default=str,
+                        )
+                    )
+                action = normalize_startup_visual_action(payload)
+                payload["action"] = action
+                payload["approval_path"] = str(approval_path)
+                payload["elapsed_seconds"] = elapsed(start)
+                log(f"startup visual review action={action}")
+                return payload
+        if time.perf_counter() - start >= timeout_seconds:
+            raise FastRunError(
+                json.dumps(
+                    {
+                        "status": "STARTUP_VISUAL_REVIEW_TIMEOUT",
+                        "timeout_seconds": timeout_seconds,
+                        "request": request,
+                        "last_error": last_error,
+                    },
+                    default=str,
+                )
+            )
+        time.sleep(max(0.05, poll_seconds))
+
+
+def recover_to_title_screen_for_startup(visible: dict[str, Any]) -> dict[str, Any]:
+    """Attempt a conservative return to the title screen before another review."""
+    result: dict[str, Any] = {
+        "status": "STARTED",
+        "initial_visible_ui": compact_visible_ui(visible),
+    }
+    visible_name = visible.get("visible_ui")
+
+    if visible_name == "new_game_setup":
+        log("startup recovery on setup screen; clicking Back to main menu")
+        result["setup_back"] = click_control("setup_back", settle_seconds=0.8)
+        result["title_after_setup_back"] = wait_for_title_screen(
+            label="after_setup_back",
+            max_seconds=1.5,
+        )
+        result["status"] = "ATTEMPTED"
+        result["reason"] = "clicked_setup_back"
+        return result
+
+    log("startup recovery opening pause menu")
+    pause = _lightning_ensure_pause_state(reason="fast_walkthrough_startup_main_menu")
+    result["pause"] = pause
+    pause_visible = None
+    pause_verify = pause.get("pause_verify")
+    if isinstance(pause_verify, dict):
+        pause_visible = pause_verify.get("visible_ui")
+    if pause_visible is None and isinstance(pause.get("visible_ui"), dict):
+        pause_visible = pause["visible_ui"].get("visible_ui")
+    if pause.get("status") != "OK" or pause_visible != "pause_menu":
+        result["status"] = "BLOCKED"
+        result["reason"] = "could_not_open_pause_menu"
+        return result
+
+    log("startup recovery clicking pause menu Main Menu")
+    result["pause_main_menu"] = click_control("pause_main_menu", settle_seconds=0.8)
+    result["title_after_pause_main_menu"] = wait_for_title_screen(
+        label="after_pause_main_menu",
+        max_seconds=1.2,
+    )
+
+    log("startup recovery confirming Main Menu prompt if present")
+    result["main_menu_confirm_yes"] = click_control(
+        "abandon_confirm_yes",
+        settle_seconds=0.9,
+    )
+    result["title_after_confirm"] = wait_for_title_screen(
+        label="after_main_menu_confirm",
+        max_seconds=2.0,
+    )
+    result["status"] = "ATTEMPTED"
+    result["reason"] = "clicked_pause_main_menu"
     return result
 
 
-def click_overwrite_yes_if_present() -> None:
+def automated_title_screen_preflight(visible: dict[str, Any]) -> dict[str, Any]:
+    """Legacy detector-based preflight for explicitly ungated test runs."""
+    result: dict[str, Any] = {
+        "status": "STARTED",
+        "initial_visible_ui": compact_visible_ui(visible),
+    }
+
+    if visible.get("visible_ui") == "title_screen":
+        result["status"] = "OK"
+        result["reason"] = "detector_saw_title_screen"
+        return result
+
+    recovery = recover_to_title_screen_for_startup(visible)
+    result["recovery"] = recovery
+    final_title = wait_for_title_screen(label="after_automated_startup_recovery")
+    result["final_title_check"] = final_title
+    if final_title.get("status") == "OK":
+        result["status"] = "OK"
+        result["reason"] = "automated_recovery_verified_title"
+        return result
+
+    result["status"] = "BLOCKED"
+    result["reason"] = "automated_startup_preflight_not_verified"
+    raise FastRunError(json.dumps(result, default=str))
+
+
+def ensure_title_screen_before_start(args: argparse.Namespace) -> dict[str, Any]:
+    """Capture start evidence and normalize to the title screen before timing."""
+    result: dict[str, Any] = {
+        "status": "STARTED",
+        "visual_check_enabled": bool(args.startup_codex_visual_check),
+        "reviews": [],
+        "recoveries": [],
+    }
+    max_attempts = max(1, int(args.startup_visual_max_attempts))
+
+    for attempt_index in range(1, max_attempts + 1):
+        screenshot = capture_startup_context()
+        visible = _lightning_visible_ui_snapshot(include_ocr=True)
+        attempt: dict[str, Any] = {
+            "attempt": attempt_index,
+            "screenshot_path": str(screenshot),
+            "visible_ui": compact_visible_ui(visible),
+        }
+        log(f"startup screenshot={screenshot}")
+
+        if not args.startup_codex_visual_check:
+            attempt["automated_preflight"] = automated_title_screen_preflight(visible)
+            result["reviews"].append(attempt)
+            result["status"] = "OK"
+            result["reason"] = "automated_startup_preflight"
+            return result
+
+        request = write_startup_visual_review_request(
+            current_screenshot=screenshot,
+            visible=visible,
+            attempt_index=attempt_index,
+        )
+        approval = wait_for_startup_visual_approval(
+            request,
+            timeout_seconds=float(args.startup_visual_approval_timeout_seconds),
+            poll_seconds=float(args.startup_visual_approval_poll_seconds),
+        )
+        attempt["visual_review_request"] = request
+        attempt["visual_review_approval"] = approval
+        result["reviews"].append(attempt)
+
+        action = approval["action"]
+        if action == "approve":
+            result["status"] = "OK"
+            result["reason"] = "codex_approved_start_screen"
+            return result
+        if action == "abort":
+            result["status"] = "BLOCKED"
+            result["reason"] = "codex_aborted_startup_visual_review"
+            raise FastRunError(json.dumps(result, default=str))
+
+        recovery = recover_to_title_screen_for_startup(visible)
+        result["recoveries"].append(recovery)
+        if recovery.get("status") == "BLOCKED":
+            result["status"] = "BLOCKED"
+            result["reason"] = "startup_recovery_blocked"
+            raise FastRunError(json.dumps(result, default=str))
+
+    result["status"] = "BLOCKED"
+    result["reason"] = "startup_visual_review_attempts_exhausted"
+    raise FastRunError(json.dumps(result, default=str))
+
+
+def click_title_new_game() -> dict[str, Any]:
+    log("click title_new_game")
+    # The dynamic detector can confuse the title rows with the dimmed Options
+    # overlay on this Windows layout. The title menu rows are stable here.
+    return click_hovered_point(
+        "title_new_game",
+        170,
+        359,
+        hover_seconds=0.25,
+        settle_seconds=0.6,
+        hold_seconds=0.35,
+    )
+
+
+def click_overwrite_yes_if_present() -> dict[str, Any]:
     """Click the new-run overwrite YES position.
 
     This occurs before the game timer starts. If no overwrite modal is present,
     this coordinate is harmless on the loadout screen in the tested layout.
     """
+    attempts: list[dict[str, Any]] = []
     time.sleep(0.25)
-    click_point("overwrite_yes_optional", 1208, 795, settle_seconds=0.45)
+    for attempt_index, hold_seconds in enumerate((0.35, 0.7, 0.7, 0.9), start=1):
+        before_ui = visible_ui_name()
+        if startup_setup_screen_name(before_ui):
+            return {
+                "status": "OK",
+                "reason": "setup_screen_already_visible",
+                "attempts": attempts,
+                "visible_ui": before_ui,
+            }
+        click = click_hovered_point(
+            f"overwrite_yes_optional_{attempt_index}",
+            1208,
+            795,
+            hover_seconds=0.25,
+            settle_seconds=0.45,
+            hold_seconds=hold_seconds,
+        )
+        time.sleep(0.35)
+        after_ui = visible_ui_name()
+        attempt = {
+            "attempt": attempt_index,
+            "hold_seconds": hold_seconds,
+            "before_ui": before_ui,
+            "click": click,
+            "after_ui": after_ui,
+        }
+        attempts.append(attempt)
+        if startup_setup_screen_name(after_ui):
+            return {
+                "status": "OK",
+                "reason": "overwrite_confirmed_to_setup",
+                "attempts": attempts,
+                "visible_ui": after_ui,
+            }
+    raise FastRunError(
+        json.dumps(
+            {
+                "status": "OVERWRITE_CONFIRM_DID_NOT_REACH_SETUP",
+                "attempts": attempts,
+                "visible_ui": visible_ui_name(),
+            },
+            default=str,
+        )
+    )
+
+
+def ensure_blitzkrieg_squad_selected() -> dict[str, Any]:
+    """Open squad selection and select Blitzkrieg before the setup modal."""
+    steps: list[dict[str, Any]] = []
+    for attempt_index, hold_seconds in enumerate((0.35, 0.7), start=1):
+        click = click_scaled_hovered_point(
+            "change_squad",
+            807.5,
+            558.3,
+            settle_seconds=0.8,
+            hold_seconds=hold_seconds,
+        )
+        ui = visible_ui_name()
+        steps.append(
+            {
+                "phase": "change_squad",
+                "attempt": attempt_index,
+                "hold_seconds": hold_seconds,
+                "click": click,
+                "visible_ui": ui,
+            }
+        )
+        if ui != "new_game_setup":
+            break
+    time.sleep(0.25)
+    for attempt_index, hold_seconds in enumerate((0.35, 0.7, 0.7), start=1):
+        click = click_scaled_hovered_point(
+            "select_blitzkrieg_squad",
+            805.0,
+            370.2,
+            settle_seconds=0.9,
+            hold_seconds=hold_seconds,
+        )
+        time.sleep(0.35)
+        ui = visible_ui_name()
+        steps.append(
+            {
+                "phase": "select_blitzkrieg",
+                "attempt": attempt_index,
+                "hold_seconds": hold_seconds,
+                "click": click,
+                "visible_ui": ui,
+            }
+        )
+        if startup_setup_screen_name(ui):
+            return {"status": "OK", "steps": steps, "visible_ui": ui}
+    raise FastRunError(
+        json.dumps(
+            {
+                "status": "BLITZKRIEG_SELECTION_DID_NOT_COMMIT",
+                "steps": steps,
+                "visible_ui": visible_ui_name(),
+            },
+            default=str,
+        )
+    )
+
+
+def open_lightning_setup_modal_from_squad_screen() -> dict[str, Any]:
+    """Click setup Start until the Easy/AE-off modal is really visible."""
+    attempts: list[dict[str, Any]] = []
+    for attempt_index, hold_seconds in enumerate((0.35, 0.7, 0.7, 0.7), start=1):
+        click = click_setup_start_control(
+            settle_seconds=0.75,
+            hold_seconds=hold_seconds,
+        )
+        verify = verify_lightning_setup_modal(raise_on_fail=False)
+        attempt = {
+            "attempt": attempt_index,
+            "hold_seconds": hold_seconds,
+            "click": click,
+            "verify_setup": verify,
+            "visible_ui": visible_ui_name(),
+        }
+        attempts.append(attempt)
+        if verify.get("status") == "PASS":
+            return {"status": "OK", "attempts": attempts}
+    raise FastRunError(
+        json.dumps(
+            {
+                "status": "SETUP_MODAL_DID_NOT_OPEN",
+                "attempts": attempts,
+            },
+            default=str,
+        )
+    )
+
+
+def click_setup_modal_start_until_committed() -> dict[str, Any]:
+    """Click final modal Start until the Difficulty Setup modal disappears."""
+    attempts: list[dict[str, Any]] = []
+    for attempt_index, hold_seconds in enumerate((0.35, 0.7, 0.7, 0.7), start=1):
+        click = click_setup_modal_start_control(
+            settle_seconds=0.45,
+            hold_seconds=hold_seconds,
+        )
+        time.sleep(0.35)
+        verify = verify_lightning_setup_modal(raise_on_fail=False)
+        attempt = {
+            "attempt": attempt_index,
+            "hold_seconds": hold_seconds,
+            "click": click,
+            "verify_setup": verify,
+            "visible_ui": visible_ui_name(),
+        }
+        attempts.append(attempt)
+        if verify.get("status") != "PASS":
+            return {"status": "OK", "attempts": attempts}
+    raise FastRunError(
+        json.dumps(
+            {
+                "status": "SETUP_MODAL_START_DID_NOT_COMMIT",
+                "attempts": attempts,
+            },
+            default=str,
+        )
+    )
 
 
 def click_largest_red_mission() -> dict[str, Any]:
-    shot = capture("lw_red")
-    bounds = get_window_bounds()
-    if bounds is None:
-        raise FastRunError("could not find Into the Breach window bounds")
-    regions = _lightning_extract_red_regions_from_image(shot)
-    log(f"red mission regions={regions.get('region_count')} screenshot={shot}")
-    candidates = regions.get("regions") or []
-    if not candidates:
-        raise FastRunError(f"no red mission regions detected: {regions}")
-    region = max(
-        candidates,
-        key=lambda item: item.get("area_window", item.get("area_px", 0)),
-    )
-    base_w, base_h = LIGHTNING_UI_BASE_SIZE
-    scale_x = bounds["width"] / base_w
-    scale_y = bounds["height"] / base_h
-    live_x = int(round(float(region["window_x"]) * scale_x))
-    live_y = int(round(float(region["window_y"]) * scale_y))
-    region["live_window_x"] = live_x
-    region["live_window_y"] = live_y
-    region["live_coordinate_scale"] = {"x": scale_x, "y": scale_y}
-    click_point(
-        "red_mission",
-        live_x,
-        live_y,
-        settle_seconds=0.15,
-    )
-    return region
+    last_regions: dict[str, Any] | None = None
+    last_visible: dict[str, Any] | None = None
+    for scan_attempt in range(1, 5):
+        visible = _lightning_visible_ui_snapshot(include_ocr=True)
+        last_visible = visible
+        visible_name = visible.get("visible_ui")
+        if visible_name in {"title_screen", "new_game_setup"}:
+            raise FastRunError(
+                json.dumps(
+                    {
+                        "status": "ROUTE_SCREEN_NOT_REACHED",
+                        "visible_ui": compact_visible_ui(visible),
+                    },
+                    default=str,
+                )
+            )
+        if visible_route_dialogue(visible):
+            click = click_transition_control("bottom_continue", settle_seconds=0.35)
+            log(
+                "cleared route dialogue during red mission scan: "
+                + json.dumps(
+                    {
+                        "attempt": scan_attempt,
+                        "visible_ui": compact_visible_ui(visible),
+                        "click": click,
+                    },
+                    default=str,
+                )
+            )
+            time.sleep(0.35)
+            continue
+
+        shot = capture("lw_red")
+        bounds = get_window_bounds()
+        if bounds is None:
+            raise FastRunError("could not find Into the Breach window bounds")
+        regions = _lightning_extract_red_regions_from_image(shot)
+        last_regions = regions
+        log(f"red mission regions={regions.get('region_count')} screenshot={shot}")
+        candidates = [
+            region
+            for region in (regions.get("regions") or [])
+            if isinstance(region, dict)
+        ]
+        if candidates:
+            region, annotated = select_red_region_candidate(regions)
+            break
+        time.sleep(0.25)
+    else:
+        raise FastRunError(
+            "no red mission regions detected: "
+            + json.dumps(
+                {
+                    "regions": last_regions,
+                    "visible_ui": compact_visible_ui(last_visible or {}),
+                },
+                default=str,
+            )
+        )
+
+    region["selection"] = {
+        "strategy": "ranked_route_candidate",
+        "candidate_order": annotated.get("candidate_order"),
+        "route_assignment": annotated.get("route_assignment"),
+        "save_route_recommendation": annotated.get(
+            "save_route_recommendation_compact"
+        ),
+    }
+    return click_red_region_from_extracted(region)
 
 
 def _red_region_signature(regions: list[dict[str, Any]]) -> tuple[tuple[int, int], ...]:
@@ -463,58 +1530,72 @@ def wait_for_red_mission_regions_stable(
 
 
 def click_stable_red_mission_after_result() -> dict[str, Any]:
+    visible = _lightning_visible_ui_snapshot(include_ocr=False)
+    visible_name = visible.get("visible_ui")
+    if visible_name in {"title_screen", "new_game_setup"}:
+        raise FastRunError(
+            json.dumps(
+                {
+                    "status": "ROUTE_SCREEN_NOT_REACHED",
+                    "visible_ui": compact_visible_ui(visible),
+                },
+                default=str,
+            )
+        )
     settled = wait_for_red_mission_regions_stable()
     regions = settled.get("regions") or {}
     candidates = regions.get("regions") or []
     if not candidates:
         raise FastRunError(f"no red mission regions detected: {regions}")
-    region = max(
-        candidates,
-        key=lambda item: item.get("area_window", item.get("area_px", 0)),
-    )
-    bounds = get_window_bounds()
-    if bounds is None:
-        raise FastRunError("could not find Into the Breach window bounds")
-    base_w, base_h = LIGHTNING_UI_BASE_SIZE
-    scale_x = bounds["width"] / base_w
-    scale_y = bounds["height"] / base_h
-    live_x = int(round(float(region["window_x"]) * scale_x))
-    live_y = int(round(float(region["window_y"]) * scale_y))
-    region["live_window_x"] = live_x
-    region["live_window_y"] = live_y
-    region["live_coordinate_scale"] = {"x": scale_x, "y": scale_y}
+    region, annotated = select_red_region_candidate(regions)
     region["settle"] = {
         "status": settled.get("status"),
         "stable_signature": settled.get("stable_signature"),
         "stable_samples": settled.get("stable_samples"),
         "samples": settled.get("samples"),
+        "candidate_order": annotated.get("candidate_order"),
+        "route_assignment": annotated.get("route_assignment"),
+        "save_route_recommendation": annotated.get(
+            "save_route_recommendation_compact"
+        ),
     }
     log(
         "settled red mission regions="
         f"{regions.get('region_count')} status={settled.get('status')}"
     )
-    click_point(
-        "red_mission",
-        live_x,
-        live_y,
-        settle_seconds=0.15,
-    )
-    return region
+    return click_red_region_from_extracted(region)
 
 
 def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
     log("deploy_recommended")
     deploy = cmd_deploy_recommended(ui_fallback=True, verify_after=False)
-    deploy_status = deploy.get("status")
-    deployments = deploy.get("deployments") or []
-    if deploy_status != "OK":
-        fallback_ok = (
-            deploy_status == "WARN"
-            and deploy.get("ui_fallback", {}).get("status") == "OK"
-            and len(deployments) >= 3
+    deploy_retries: list[dict[str, Any]] = []
+
+    def deploy_acceptable(result: dict[str, Any]) -> bool:
+        status = result.get("status")
+        if status == "OK":
+            return True
+        deployments = result.get("deployments") or []
+        return (
+            status == "WARN"
+            and result.get("ui_fallback", {}).get("status") == "OK"
+            and len(deployments) >= 1
         )
-        if not fallback_ok:
-            raise FastRunError(f"deploy_recommended failed: {deploy}")
+
+    def compact_deploy(result: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "status": result.get("status"),
+            "reason": result.get("reason"),
+            "deployment_count": len(result.get("deployments") or []),
+            "phase": result.get("phase"),
+            "ui_fallback_status": (
+                result.get("ui_fallback", {}) or {}
+            ).get("status"),
+        }
+
+    if not deploy_acceptable(deploy):
+        raise FastRunError(f"deploy_recommended failed: {deploy}")
+    if deploy.get("status") != "OK":
         log(f"deploy accepted warning: {deploy.get('reason')}")
 
     attempts: list[dict[str, Any]] = []
@@ -532,18 +1613,41 @@ def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
         )
         if wait.get("status") == "OK":
             snapshot = wait.get("snapshot") or {}
+            visible_name = visible_ui_name()
             confirm_still_pending = (
-                snapshot.get("phase") == "combat_enemy"
+                visible_name == "deployment_screen"
+                and snapshot.get("phase") == "combat_enemy"
                 and int(snapshot.get("active_mechs") or 0) > 0
                 and int(snapshot.get("deployment_zone_count") or 0) > 0
             )
             if confirm_still_pending:
                 attempts[-1]["confirm_still_pending"] = True
-                log("confirm still pending; retrying visible Confirm click")
+                attempts[-1]["visible_ui"] = visible_name
+                log("confirm still pending; retrying deployment for missing units")
+                redeploy = cmd_deploy_recommended(
+                    ui_fallback=True,
+                    verify_after=False,
+                )
+                deploy_retries.append(redeploy)
+                attempts[-1]["redeploy_after_pending_confirm"] = (
+                    compact_deploy(redeploy)
+                )
+                if not deploy_acceptable(redeploy):
+                    log(
+                        "redeploy after pending confirm failed: "
+                        f"{compact_deploy(redeploy)}"
+                    )
+                    continue
+                if redeploy.get("status") != "OK":
+                    log(
+                        "redeploy accepted warning: "
+                        f"{redeploy.get('reason')}"
+                    )
                 continue
             return {
                 "status": "OK",
                 "deploy": deploy,
+                "deploy_retries": deploy_retries,
                 "confirm_attempts": attempts,
                 "snapshot": snapshot,
             }
@@ -551,7 +1655,8 @@ def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
         json.dumps(
             {
                 "status": "DEPLOY_CONFIRM_BLOCKED",
-                "deploy_status": deploy_status,
+                "deploy": compact_deploy(deploy),
+                "deploy_retries": [compact_deploy(item) for item in deploy_retries],
                 "confirm_attempts": attempts,
                 "visible_ui": visible_ui_name(),
             },
@@ -767,12 +1872,27 @@ def clear_control_for_visible_ui(
         and bridge_refine.get("in_active_mission") is False
         and int(bridge_refine.get("active_mechs") or 0) == 0
     )
+    try:
+        bridge_turn = int(bridge_refine.get("turn"))
+    except (TypeError, ValueError):
+        bridge_turn = -1
+    turn_zero_deployment_dialogue = (
+        bridge_refine.get("status") == "OK"
+        and bridge_refine.get("in_active_mission") is True
+        and bridge_turn == 0
+        and int(bridge_refine.get("deployment_zone_count") or 0) > 0
+        and dialogue_score >= 0.5
+    )
 
     if "leave island" in text and "continue" in text and "yes" in text:
         return "leave_confirm_yes"
     if "spend reputation" in text and "leave island" in text:
         return "leave_island"
     if "head office" in text and "continue" in text:
+        return "bottom_continue"
+    if turn_zero_deployment_dialogue:
+        return "bottom_continue"
+    if visible_name == "mission_preview_panel" and dialogue_score >= 0.5:
         return "bottom_continue"
     if "promoted" in text or "new skill unlocked" in text:
         return "modal_understood"
@@ -1051,6 +2171,206 @@ def _lightning_investigate_is_allowed_speed_trade(turn: dict[str, Any]) -> bool:
     return True
 
 
+def plan_safety_violation_kinds(
+    plan_safety: dict[str, Any] | None,
+    *,
+    blocking: bool | None = None,
+) -> set[str]:
+    if not isinstance(plan_safety, dict):
+        return set()
+    kinds: set[str] = set()
+    for violation in plan_safety.get("violations", []) or []:
+        if not isinstance(violation, dict):
+            continue
+        if blocking is not None and bool(violation.get("blocking")) != blocking:
+            continue
+        kind = violation.get("kind")
+        if kind:
+            kinds.add(str(kind))
+    return kinds
+
+
+def _int_value(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def lightning_speed_loss_policy(
+    plan_safety: dict[str, Any] | None,
+    *,
+    blocking_kinds: set[str],
+    args: argparse.Namespace,
+) -> dict[str, Any] | None:
+    if not blocking_kinds:
+        return None
+
+    allowed = set()
+    if bool(args.ignore_lightning_time_pod):
+        allowed |= set(POD_LOSS_DIRTY_KINDS)
+    if bool(args.allow_lightning_speed_building_damage):
+        allowed |= LIGHTNING_SPEED_LOSS_DIRTY_KINDS
+    if not blocking_kinds <= allowed:
+        return None
+
+    predicted_grid = _int_value((plan_safety or {}).get("predicted", {}).get("grid_power"))
+    if predicted_grid is None or predicted_grid <= 0:
+        return None
+
+    return {
+        "status": "ALLOWED",
+        "reason": "lightning_speed_loss_policy",
+        "blocking_kinds": sorted(blocking_kinds),
+        "predicted_grid_power": predicted_grid,
+    }
+
+
+def lightning_speed_frontier_rank(
+    solve: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+) -> int | None:
+    if not bool(args.allow_lightning_speed_building_damage):
+        return None
+    plan_safety = solve.get("plan_safety") or {}
+    current_grid = _int_value(plan_safety.get("current", {}).get("grid_power"))
+    if current_grid is None:
+        return None
+
+    allowed = set(LIGHTNING_SPEED_LOSS_DIRTY_KINDS)
+    if bool(args.ignore_lightning_time_pod):
+        allowed |= set(POD_LOSS_DIRTY_KINDS)
+
+    entries = [
+        entry
+        for entry in (solve.get("dirty_frontier") or [])
+        if isinstance(entry, dict) and isinstance(entry.get("best_rank"), int)
+    ]
+    entries.sort(key=lambda entry: int(entry.get("best_rank") or 0))
+
+    for entry in entries:
+        violations = [
+            v for v in (entry.get("violations") or [])
+            if isinstance(v, dict) and v.get("kind")
+        ]
+        kinds = {str(v.get("kind")) for v in violations}
+        if not kinds or not kinds <= allowed:
+            continue
+        losses = entry.get("losses") or {}
+        grid_loss = _int_value(losses.get("grid_power")) or 0
+        if current_grid - grid_loss <= 0:
+            continue
+        return int(entry["best_rank"])
+    return None
+
+
+def select_lightning_fast_solve(
+    solve: dict[str, Any],
+    *,
+    turn_index: int,
+    args: argparse.Namespace,
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    blocking_kinds = plan_safety_violation_kinds(
+        solve.get("plan_safety"),
+        blocking=True,
+    )
+    if not blocking_kinds:
+        return solve, None
+    if lightning_speed_loss_policy(
+        solve.get("plan_safety"),
+        blocking_kinds=blocking_kinds,
+        args=args,
+    ):
+        return solve, None
+
+    rank = lightning_speed_frontier_rank(solve, args=args)
+    if rank is None:
+        return solve, None
+
+    log(f"selecting Lightning speed-loss candidate rank {rank}")
+    selected = cmd_solve(time_limit=args.time_limit, candidate_rank=rank)
+    if selected.get("error"):
+        raise FastRunError(
+            f"paused solve failed for Lightning speed candidate rank {rank} "
+            f"on turn {turn_index}: {selected}"
+        )
+    return selected, {
+        "status": "SELECTED",
+        "candidate_rank": rank,
+        "reason": "lightning_speed_frontier_rank",
+    }
+
+
+def check_lightning_fast_solve_policy(
+    solve: dict[str, Any],
+    *,
+    turn_index: int,
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    plan_safety = solve.get("plan_safety")
+    blocking_kinds = plan_safety_violation_kinds(plan_safety, blocking=True)
+    warning_kinds = plan_safety_violation_kinds(plan_safety, blocking=False)
+
+    if blocking_kinds:
+        if (
+            bool(args.ignore_lightning_time_pod)
+            and blocking_kinds <= set(POD_LOSS_DIRTY_KINDS)
+        ):
+            return {
+                "status": "ALLOWED",
+                "reason": "lightning_time_pod_ignored",
+                "blocking_kinds": sorted(blocking_kinds),
+            }
+        speed_loss = lightning_speed_loss_policy(
+            plan_safety,
+            blocking_kinds=blocking_kinds,
+            args=args,
+        )
+        if speed_loss is not None:
+            return speed_loss
+        raise FastRunError(
+            json.dumps(
+                {
+                    "status": "PAUSED_SOLVE_SAFETY_BLOCKED",
+                    "turn_index": turn_index,
+                    "blocking_kinds": sorted(blocking_kinds),
+                    "warning_kinds": sorted(warning_kinds),
+                    "ignore_lightning_time_pod": args.ignore_lightning_time_pod,
+                    "plan_safety": plan_safety,
+                    "dirty_frontier": solve.get("dirty_frontier"),
+                    "actions": solve.get("actions"),
+                },
+                default=str,
+            )
+        )
+
+    mech_warning_kinds = warning_kinds & MECH_DAMAGE_WARNING_KINDS
+    if mech_warning_kinds and not bool(args.allow_lightning_speed_mech_damage):
+        raise FastRunError(
+            json.dumps(
+                {
+                    "status": "PAUSED_SOLVE_MECH_DAMAGE_BLOCKED",
+                    "turn_index": turn_index,
+                    "warning_kinds": sorted(mech_warning_kinds),
+                    "allow_lightning_speed_mech_damage": (
+                        args.allow_lightning_speed_mech_damage
+                    ),
+                    "plan_safety": plan_safety,
+                    "dirty_frontier": solve.get("dirty_frontier"),
+                    "actions": solve.get("actions"),
+                },
+                default=str,
+            )
+        )
+
+    return {
+        "status": "OK",
+        "blocking_kinds": sorted(blocking_kinds),
+        "warning_kinds": sorted(warning_kinds),
+    }
+
+
 def solve_execute_and_end_turn(
     *,
     turn_index: int,
@@ -1190,6 +2510,40 @@ def solve_execute_and_end_turn(
     }
 
 
+def refresh_bridge_before_paused_solve(*, turn_index: int) -> dict[str, Any]:
+    """Make the bridge fresh before solving from an otherwise paused turn."""
+    visible = _lightning_visible_ui_snapshot(include_ocr=False)
+    if visible.get("visible_ui") != "pause_menu":
+        heartbeat = wait_for_fresh_heartbeat(
+            label=f"turn_{turn_index}_live_before_solve",
+            max_seconds=2.0,
+        )
+        return {
+            "status": "ALREADY_LIVE",
+            "visible_ui": compact_visible_ui(visible),
+            "heartbeat": heartbeat,
+        }
+
+    click = click_control("menu_continue", settle_seconds=0.15)
+    heartbeat = wait_for_fresh_heartbeat(
+        label=f"turn_{turn_index}_refresh_before_paused_solve",
+        max_seconds=3.0,
+    )
+    pause = press_key(
+        "esc",
+        description=f"pause after bridge refresh before turn {turn_index} solve",
+        app_name=APP_NAME,
+        settle_seconds=0.25,
+    )
+    return {
+        "status": "REFRESHED_AND_PAUSED",
+        "visible_ui": compact_visible_ui(visible),
+        "menu_continue": click,
+        "heartbeat": heartbeat,
+        "pause": pause,
+    }
+
+
 def paused_solve_execute_and_end_turn(
     *,
     turn_index: int,
@@ -1197,15 +2551,28 @@ def paused_solve_execute_and_end_turn(
     args: argparse.Namespace,
 ) -> dict[str, Any]:
     log(f"paused solve turn={turn_index}")
+    bridge_refresh = refresh_bridge_before_paused_solve(turn_index=turn_index)
+    refresh_mark = elapsed(timer_start)
     paused_read = cmd_read()
     paused_read_mark = elapsed(timer_start)
     solve = cmd_solve(time_limit=args.time_limit)
     paused_solve_done_mark = elapsed(timer_start)
     if solve.get("error"):
         raise FastRunError(f"paused solve failed on turn {turn_index}: {solve}")
+    speed_candidate_selection = None
+    solve, speed_candidate_selection = select_lightning_fast_solve(
+        solve,
+        turn_index=turn_index,
+        args=args,
+    )
     actions = solve.get("actions") or []
     if not actions:
         raise FastRunError(f"paused solve returned no actions on turn {turn_index}: {solve}")
+    solve_safety_policy = check_lightning_fast_solve_policy(
+        solve,
+        turn_index=turn_index,
+        args=args,
+    )
 
     click_control("menu_continue", settle_seconds=0.15)
     unpaused_mark = elapsed(timer_start)
@@ -1248,16 +2615,27 @@ def paused_solve_execute_and_end_turn(
                 "verify": retry_verify,
             }
             verified = retry_verify
-        executions.append(
-            {
-                "action_index": action_index,
-                "execute": executed,
-                "click_dispatch": click_dispatch,
-                "verify": verified,
-                "delayed_verify_retry": delayed_verify_retry,
-            }
-        )
+        execution_record = {
+            "action_index": action_index,
+            "execute": executed,
+            "click_dispatch": click_dispatch,
+            "verify": verified,
+            "delayed_verify_retry": delayed_verify_retry,
+        }
+        executions.append(execution_record)
         if verified.get("status") != "PASS":
+            if (
+                bool(args.ignore_verify_desyncs)
+                and verified.get("status") == "DESYNC"
+            ):
+                execution_record["ignored_verify_desync"] = True
+                log(
+                    "ignoring verify desync under Lightning fast policy: "
+                    f"action={action_index} "
+                    f"categories={verified.get('categories')} "
+                    f"failure_id={verified.get('failure_id')}"
+                )
+                continue
             raise FastRunError(
                 json.dumps(
                     {
@@ -1358,6 +2736,7 @@ def paused_solve_execute_and_end_turn(
         "turn_index": turn_index,
         "mode": "paused_solve_execute",
         "marks": {
+            "bridge_refresh_for_solve": refresh_mark,
             "paused_read_done": paused_read_mark,
             "paused_solve_done": paused_solve_done_mark,
             "unpaused_for_stored_execute": unpaused_mark,
@@ -1372,9 +2751,13 @@ def paused_solve_execute_and_end_turn(
             "turn": paused_read.get("turn"),
             "active_mechs": paused_read.get("active_mechs"),
             "grid_power": paused_read.get("grid_power"),
+            "source": paused_read.get("source"),
         },
+        "bridge_refresh": bridge_refresh,
         "heartbeat": heartbeat,
         "solve_status": solve.get("status") or ("OK" if not solve.get("error") else "ERROR"),
+        "speed_candidate_selection": speed_candidate_selection,
+        "solve_safety_policy": solve_safety_policy,
         "actions_completed": len(executions),
         "executions": executions,
         "post_action_read": {
@@ -1393,17 +2776,224 @@ def paused_solve_execute_and_end_turn(
     }
 
 
+def route_to_deployment(
+    *,
+    timer_start: float,
+    args: argparse.Namespace,
+    mission_index: int,
+    preview_already_open: bool = False,
+    max_steps: int = 14,
+) -> dict[str, Any]:
+    """Advance route UI until turn-zero deployment is visible or bridge-proven."""
+    steps: list[dict[str, Any]] = []
+    region: dict[str, Any] | None = None
+    preview: dict[str, Any] | None = None
+    preview_open = bool(preview_already_open)
+    tried_region_keys: set[str] = set()
+
+    if not preview_open:
+        time.sleep(args.red_wait_seconds)
+
+    for step_index in range(1, max_steps + 1):
+        visible = _lightning_visible_ui_snapshot(include_ocr=True)
+        try:
+            snapshot = _lightning_live_snapshot()
+        except Exception as exc:
+            snapshot = {"status": "ERROR", "error": str(exc)}
+        visible_name = visible.get("visible_ui")
+        dialogue_visible = visible_route_dialogue(visible)
+        startable_preview_visible = visible_startable_mission_preview(visible)
+        if isinstance(snapshot, dict):
+            visible["bridge_refine_snapshot"] = snapshot
+        step: dict[str, Any] = {
+            "step": step_index,
+            "game_timer_seconds": elapsed(timer_start),
+            "preview_open": preview_open,
+            "dialogue_visible": dialogue_visible,
+            "startable_preview_visible": startable_preview_visible,
+            "tried_region_keys": sorted(tried_region_keys),
+            "visible_ui": compact_visible_ui(visible),
+            "live_snapshot": compact_live_snapshot(snapshot),
+        }
+
+        if visible_deployment_screen(visible) or (
+            deployment_snapshot_fresh_ready(snapshot) and not dialogue_visible
+        ):
+            step["result"] = "deployment_ready"
+            steps.append(step)
+            return {
+                "status": "DEPLOYMENT_READY",
+                "mission_index": mission_index,
+                "steps": steps,
+                "red_region": region,
+                "preview": preview
+                or {
+                    "status": "ALREADY_DEPLOYMENT",
+                    "reason": "route_state_machine",
+                },
+            }
+
+        if visible_name == "pause_menu":
+            step["control"] = "menu_continue"
+            step["reason"] = "route_unpause_before_transition"
+            step["click"] = click_transition_control(
+                "menu_continue",
+                settle_seconds=0.35,
+            )
+            steps.append(step)
+            time.sleep(0.25)
+            continue
+
+        if dialogue_visible:
+            control = clear_control_for_visible_ui(
+                visible,
+                previous_control=(
+                    str(steps[-1].get("control")) if steps and steps[-1].get("control") else None
+                ),
+                control_history=[
+                    str(item.get("control"))
+                    for item in steps
+                    if item.get("control")
+                ],
+            )
+            if control not in {
+                "bottom_continue",
+                "dialogue_textbox",
+                "mission_preview_board",
+                "panel_continue",
+                "reward_continue",
+            }:
+                control = "bottom_continue"
+            step["control"] = control
+            step["click"] = click_transition_control(control, settle_seconds=0.35)
+            steps.append(step)
+            time.sleep(0.25)
+            continue
+
+        if preview_open or startable_preview_visible:
+            try:
+                preview = click_mission_preview_until_deployment(
+                    settle_seconds=args.preview_settle_seconds,
+                )
+            except FastRunError as exc:
+                step["preview_error"] = str(exc)
+                preview_open = False
+                steps.append(step)
+                time.sleep(0.35)
+                continue
+            step["preview"] = preview
+            steps.append(step)
+            return {
+                "status": "DEPLOYMENT_READY",
+                "mission_index": mission_index,
+                "steps": steps,
+                "red_region": region,
+                "preview": preview,
+            }
+
+        if deployment_snapshot_ready(snapshot):
+            step["control"] = "bottom_continue"
+            step["reason"] = "deployment_bridge_visible_not_ready"
+            step["click"] = click_transition_control("bottom_continue", settle_seconds=0.35)
+            steps.append(step)
+            time.sleep(0.25)
+            continue
+
+        if not preview_open:
+            shot = capture(f"lw_route_m{mission_index}_step{step_index}")
+            regions = _lightning_extract_red_regions_from_image(shot)
+            candidates = [
+                item
+                for item in (regions.get("regions") or [])
+                if isinstance(item, dict)
+            ]
+            step["red_scan"] = {
+                "screenshot_path": str(shot),
+                "status": regions.get("status"),
+                "region_count": regions.get("region_count"),
+                "candidate_count": len(candidates),
+            }
+            if candidates:
+                region, annotated = select_red_region_candidate(
+                    regions,
+                    tried_keys=tried_region_keys,
+                )
+                tried_region_keys.add(red_region_key(region))
+                step["red_scan"]["candidate_order"] = annotated.get("candidate_order")
+                step["red_scan"]["route_assignment"] = annotated.get(
+                    "route_assignment"
+                )
+                step["red_scan"]["save_route_recommendation"] = annotated.get(
+                    "save_route_recommendation_compact"
+                )
+                step["red_region"] = click_red_region_from_extracted(region)
+                step["control"] = "red_mission"
+                step["preview_open_after_click"] = True
+                preview_open = True
+                steps.append(step)
+                time.sleep(args.preview_settle_seconds)
+                continue
+
+        step["wait_seconds"] = 0.35
+        steps.append(step)
+        time.sleep(0.35)
+
+    raise FastRunError(
+        json.dumps(
+            {
+                "status": "ROUTE_TO_DEPLOYMENT_UNRESOLVED",
+                "mission_index": mission_index,
+                "preview_already_open": preview_already_open,
+                "steps": steps,
+            },
+            default=str,
+        )
+    )
+
+
+def clear_route_dialogue_before_red_scan(
+    *,
+    timer_start: float,
+    max_clicks: int = 4,
+) -> list[dict[str, Any]]:
+    clears: list[dict[str, Any]] = []
+    for attempt in range(1, max_clicks + 1):
+        visible = _lightning_visible_ui_snapshot(include_ocr=True)
+        if not visible_route_dialogue(visible):
+            break
+        click = click_transition_control(
+            "bottom_continue",
+            settle_seconds=0.35,
+        )
+        record = {
+            "attempt": attempt,
+            "at_seconds": elapsed(timer_start),
+            "visible_ui": compact_visible_ui(visible),
+            "click": click,
+        }
+        clears.append(record)
+        log("cleared route dialogue before red mission scan: " + json.dumps(record, default=str))
+        time.sleep(0.35)
+    return clears
+
+
 def run_current_mission_from_island_map(
     *,
     mission_index: int,
     timer_start: float,
     args: argparse.Namespace,
     preview_already_open: bool = False,
+    full_mission: bool = True,
 ) -> dict[str, Any]:
     marks: dict[str, float] = {}
     region = None
     if not preview_already_open:
         time.sleep(args.red_wait_seconds)
+        route_dialogue_clears = clear_route_dialogue_before_red_scan(
+            timer_start=timer_start,
+        )
+        if route_dialogue_clears:
+            marks["route_dialogue_clear"] = elapsed(timer_start)
         region = click_largest_red_mission()
         marks["red_mission_click"] = elapsed(timer_start)
 
@@ -1461,6 +3051,19 @@ def run_current_mission_from_island_map(
                 "red_region": region,
                 "preview": preview,
                 "deploy": deploy,
+                "turns": turns,
+            }
+        if turn_index == 1 and not full_mission:
+            return {
+                "status": "OK",
+                "mission_index": mission_index,
+                "marks": marks,
+                "red_region": region,
+                "preview": preview,
+                "deploy": deploy,
+                "heartbeat": turn_record.get("heartbeat"),
+                "auto_turn_status": turn_record.get("auto_turn_status"),
+                "post_end_turn": turn_record.get("post_end_turn"),
                 "turns": turns,
             }
     final_visible = _lightning_visible_ui_snapshot(include_ocr=True)
@@ -1581,23 +3184,36 @@ def clear_mission_result_to_island_map(
 
 def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
     marks: dict[str, float] = {}
+    startup: dict[str, Any] = {}
     run_start = time.perf_counter()
 
-    click_title_new_game()
-    click_overwrite_yes_if_present()
-    click_control("setup_start", settle_seconds=0.45)
+    startup["main_menu_preflight"] = ensure_title_screen_before_start(args)
+    marks["main_menu_preflight"] = elapsed(run_start)
+
+    setup_visible = verify_lightning_setup_modal(raise_on_fail=False)
+    if setup_visible.get("status") == "PASS":
+        log("setup modal already visible")
+        marks["setup_modal_visible"] = elapsed(run_start)
+        startup["setup_visible"] = setup_visible
+    else:
+        startup["title_new_game"] = click_title_new_game()
+        startup["overwrite_yes"] = click_overwrite_yes_if_present()
+        startup["blitzkrieg"] = ensure_blitzkrieg_squad_selected()
+        startup["setup_modal_open"] = open_lightning_setup_modal_from_squad_screen()
+        setup_visible = startup["setup_modal_open"]["attempts"][-1]["verify_setup"]
+        marks["setup_modal_visible"] = elapsed(run_start)
     log(f"pre-timer visible={visible_ui_name()}")
 
     timer_start = time.perf_counter()
-    click_control("setup_modal_start", settle_seconds=0.0)
+    startup["setup_modal_start"] = click_setup_modal_start_until_committed()
     marks["timer_start"] = elapsed(run_start)
 
     sleep_until(timer_start, args.island_click_seconds)
-    click_control("island_archive", settle_seconds=0.0)
+    click_ui_control("island_archive", settle_seconds=0.0)
     marks["archive_click"] = elapsed(timer_start)
 
     sleep_until(timer_start, args.continue_click_seconds)
-    click_control("bottom_continue", settle_seconds=0.0)
+    click_ui_control("bottom_continue", settle_seconds=0.0)
     marks["intro_continue"] = elapsed(timer_start)
 
     if args.island_loop:
@@ -1623,6 +3239,7 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
                     "status": "ISLAND_LOOP_STOPPED",
                     "reason": "mission_runner_stopped",
                     "marks": marks,
+                    "startup": startup,
                     "missions": missions,
                     "transitions": transitions,
                 }
@@ -1636,6 +3253,7 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
                 return {
                     "status": "ISLAND_COMPLETE_LEAVE_VISIBLE",
                     "marks": marks,
+                    "startup": startup,
                     "missions": missions,
                     "transitions": transitions,
                 }
@@ -1643,6 +3261,7 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
                 return {
                     "status": "SECOND_ISLAND_COMPLETE",
                     "marks": marks,
+                    "startup": startup,
                     "missions": missions,
                     "transitions": transitions,
                 }
@@ -1651,108 +3270,27 @@ def run_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
                     "status": "ISLAND_LOOP_STOPPED",
                     "reason": "transition_stopped",
                     "marks": marks,
+                    "startup": startup,
                     "missions": missions,
                     "transitions": transitions,
                 }
         return {
             "status": "MAX_ISLAND_MISSIONS_REACHED",
             "marks": marks,
+            "startup": startup,
             "missions": missions,
             "transitions": transitions,
         }
 
-    time.sleep(args.red_wait_seconds)
-    region = click_largest_red_mission()
-    marks["red_mission_click"] = elapsed(timer_start)
-
-    click_control("mission_preview_board", settle_seconds=args.preview_settle_seconds)
-    marks["preview_board_click"] = elapsed(timer_start)
-
-    time.sleep(args.deploy_ready_wait_seconds)
-    deploy = deploy_and_confirm(confirm_retries=args.confirm_retries)
-    marks["deploy_confirm_live"] = elapsed(timer_start)
-
-    pause = pause_after_opening(
-        min_wait_seconds=args.opening_enemy_wait_seconds,
-        max_wait_seconds=args.opening_enemy_max_wait_seconds,
-    )
-    marks["paused_after_opening"] = elapsed(timer_start)
-
-    if args.stop_after_pause:
-        return {
-            "status": "STOPPED_AFTER_PAUSE",
-            "marks": marks,
-            "red_region": region,
-            "deploy": deploy,
-            "pause": pause,
-        }
-
-    turns: list[dict[str, Any]] = []
-    turn_runner = (
-        paused_solve_execute_and_end_turn
-        if args.paused_solve_execute
-        else solve_execute_and_end_turn
-    )
-    first_turn = turn_runner(
-        turn_index=1,
+    mission = run_current_mission_from_island_map(
+        mission_index=1,
         timer_start=timer_start,
         args=args,
+        full_mission=args.full_mission,
     )
-    turns.append(first_turn)
-    marks["turn_1_end_turn_click"] = first_turn["marks"]["end_turn_click"]
-    marks["turn_1_post_end_observed"] = first_turn["marks"]["post_end_observed"]
-    if first_turn["post_end_turn"].get("status") != "PLAYER_TURN_READY":
-        return {
-            "status": "OK",
-            "reason": "stopped_after_turn_1_terminal_or_clear",
-            "marks": marks,
-            "red_region": region,
-            "deploy": deploy,
-            "turns": turns,
-        }
-    if not args.full_mission:
-        return {
-            "status": "OK",
-            "marks": marks,
-            "red_region": region,
-            "deploy": deploy,
-            "heartbeat": first_turn.get("heartbeat"),
-            "auto_turn_status": first_turn.get("auto_turn_status"),
-            "post_end_turn": first_turn.get("post_end_turn"),
-            "turns": turns,
-        }
-    for turn_index in range(2, args.max_mission_turns + 1):
-        turn_record = turn_runner(
-            turn_index=turn_index,
-            timer_start=timer_start,
-            args=args,
-        )
-        turns.append(turn_record)
-        marks[f"turn_{turn_index}_end_turn_click"] = (
-            turn_record["marks"]["end_turn_click"]
-        )
-        marks[f"turn_{turn_index}_post_end_observed"] = (
-            turn_record["marks"]["post_end_observed"]
-        )
-        if turn_record["post_end_turn"].get("status") != "PLAYER_TURN_READY":
-            return {
-                "status": "OK",
-                "reason": "terminal_or_clear_after_end_turn",
-                "terminal_turn_index": turn_index,
-                "marks": marks,
-                "red_region": region,
-                "deploy": deploy,
-                "turns": turns,
-            }
-    final_visible = _lightning_visible_ui_snapshot(include_ocr=True)
-    return {
-        "status": "MAX_TURNS_REACHED",
-        "marks": marks,
-        "red_region": region,
-        "deploy": deploy,
-        "turns": turns,
-        "final_visible_ui": compact_visible_ui(final_visible),
-    }
+    mission["startup"] = startup
+    mission["top_level_marks"] = marks
+    return mission
 
 
 def park_on_error() -> dict[str, Any]:
@@ -1847,6 +3385,65 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Allow ordinary post-action building threats when grid power would "
             "survive; useful for Lightning War speed."
+        ),
+    )
+    parser.add_argument(
+        "--ignore-verify-desyncs",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Log and continue after per-action verify DESYNC results. "
+            "Enabled by default for this fast walkthrough; use "
+            "--no-ignore-verify-desyncs for solver-diagnosis runs."
+        ),
+    )
+    parser.add_argument(
+        "--ignore-lightning-time-pod",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Allow pod_lost / pod_unrecovered_final safety dirt in this "
+            "Lightning War fast path to avoid pod reward UI."
+        ),
+    )
+    parser.add_argument(
+        "--allow-lightning-speed-mech-damage",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Allow non-blocking mech damage warnings. Enabled by default for "
+            "this fast walkthrough; use --no-allow-lightning-speed-mech-damage "
+            "for solver-diagnosis runs."
+        ),
+    )
+    parser.add_argument(
+        "--startup-codex-visual-check",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "At launch, write a current screenshot plus reference screenshot "
+            "review request and wait for Codex approval before starting."
+        ),
+    )
+    parser.add_argument(
+        "--startup-visual-approval-timeout-seconds",
+        type=float,
+        default=600.0,
+        help="Seconds to wait for Codex to write the startup approval JSON.",
+    )
+    parser.add_argument(
+        "--startup-visual-approval-poll-seconds",
+        type=float,
+        default=0.5,
+        help="Polling interval while waiting for startup visual approval.",
+    )
+    parser.add_argument(
+        "--startup-visual-max-attempts",
+        type=int,
+        default=3,
+        help=(
+            "Maximum Codex visual review/recovery attempts before blocking "
+            "the run."
         ),
     )
     parser.add_argument(
