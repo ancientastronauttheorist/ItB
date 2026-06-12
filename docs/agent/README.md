@@ -11,6 +11,8 @@ The top-level `AGENTS.md` is now the compact field guide. These focused files ho
   Lightning War attempts.
 - `lightning-war-runner.md` - implemented baseline/speed runner commands,
   assumptions, telemetry, and recovery result meanings.
+- `lightning-war-progress-economy.md` - control philosophy for maximizing
+  verified Lightning War progress per in-game timer second.
 - `rule-index.md` - historical rule-number lookup table pointing to the focused doc for each rule.
 - `legacy-full-guide.md` - verbatim snapshot of the pre-cleanup `AGENTS.md` for audit/recovery.
 
