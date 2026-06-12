@@ -62,6 +62,13 @@ pub(crate) fn viscera_nanobots_heal_from_events(events: &[String]) -> i32 {
         .sum()
 }
 
+pub(crate) fn powered_blast_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_powered_blast:"))
+        .count() as i32
+}
+
 // ── MechAction ───────────────────────────────────────────────────────────────
 
 #[derive(Clone, Debug)]
@@ -1389,6 +1396,7 @@ fn search_recursive(
     mission_kills_so_far: i32,
     bumps_so_far: i32,
     nanobots_heal_so_far: i32,
+    powered_blast_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
@@ -1457,11 +1465,14 @@ fn search_recursive(
         let mission_action_bonus = mission_missiles_action_bonus(&b_eval, actions_so_far);
         let nanobots_heal_bonus =
             nanobots_heal_so_far as f64 * weights.viscera_nanobots_heal_bonus;
+        let powered_blast_bonus =
+            powered_blast_so_far as f64 * weights.powered_blast_bonus;
         let pod_collected_penalty =
             pods_collected_so_far as f64 * weights.pod_collected;
         let score = raw
             + mission_action_bonus
             + nanobots_heal_bonus
+            + powered_blast_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
 
@@ -1489,7 +1500,8 @@ fn search_recursive(
         search_recursive(
             board, mech_order, depth + 1,
             actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far,
-            nanobots_heal_so_far, pods_collected_so_far, soft_disable_penalty_so_far,
+            nanobots_heal_so_far, powered_blast_so_far,
+            pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
@@ -1541,6 +1553,7 @@ fn search_recursive(
         let mut b_next = board.clone(); // ~800 byte memcpy
         let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target, weapons);
         let nanobots_heal_add = viscera_nanobots_heal_from_events(&result.events);
+        let powered_blast_add = powered_blast_from_events(&result.events);
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
         // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
@@ -1565,6 +1578,7 @@ fn search_recursive(
             mission_kills_so_far + result.mission_kills,
             bumps_so_far + result.buildings_bump_damaged,
             nanobots_heal_so_far + nanobots_heal_add,
+            powered_blast_so_far + powered_blast_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
@@ -1740,7 +1754,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -1937,7 +1951,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,

@@ -160,6 +160,15 @@ def _achievement_weight_overlay(
         )
         applied.append("hold_the_line")
 
+    if "powered blast" in targets:
+        # Bombermechs: reward the exact AP Cannon-through-Walking-Bomb kill
+        # event enough that safe setup lines beat ordinary cleanup.
+        weights["powered_blast_bonus"] = max(
+            float(weights.get("powered_blast_bonus", 0) or 0),
+            120000.0,
+        )
+        applied.append("powered_blast")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove

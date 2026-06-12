@@ -3579,6 +3579,15 @@ fn sim_pierce_projectile(
         }
         return;
     };
+    let first_is_walking_bomb = board
+        .unit_at(fx, fy)
+        .map(|idx| board.units[idx].type_name_str() == "DeployUnit_Bomby")
+        .unwrap_or(false);
+    let second_enemy_idx = board.unit_at(sx, sy).filter(|idx| {
+        let unit = &board.units[*idx];
+        unit.is_enemy() && unit.hp > 0
+    });
+    let kills_before = result.enemies_killed;
     let deferred_death_explosion = apply_damage_defer_death_explosion(
         board,
         sx,
@@ -3595,6 +3604,16 @@ fn sim_pierce_projectile(
         let ex = board.units[idx].x;
         let ey = board.units[idx].y;
         apply_death_explosion(board, ex, ey, result, 0);
+    }
+    if first_is_walking_bomb {
+        if let Some(idx) = second_enemy_idx {
+            if board.units[idx].hp <= 0 && result.enemies_killed > kills_before {
+                result.events.push(format!(
+                    "achievement_powered_blast:target:{}:{}",
+                    sx, sy
+                ));
+            }
+        }
     }
 }
 
@@ -13252,6 +13271,35 @@ mod tests {
 
         assert_eq!((board.units[first].x, board.units[first].y), (3, 5));
         assert_eq!(board.units[first].hp, 3);
+    }
+
+    #[test]
+    fn test_powered_blast_event_fires_when_ap_cannon_kills_through_walking_bomb() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BrutePierceShot);
+        let bomb = board.add_unit(Unit {
+            uid: 11,
+            x: 3,
+            y: 4,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            move_speed: 3,
+            base_move: 3,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::DeployUnitSelfDamage as u16),
+            ..Default::default()
+        });
+        board.units[bomb].set_type_name("DeployUnit_Bomby");
+        let second = add_enemy(&mut board, 2, 3, 5, 2);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::BrutePierceShot, 3, 4);
+
+        assert!(board.units[second].hp <= 0);
+        assert_eq!(result.enemies_killed, 1);
+        assert!(result.events.iter().any(|e| {
+            e == "achievement_powered_blast:target:3:5"
+        }));
     }
 
     #[test]

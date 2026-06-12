@@ -1309,7 +1309,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # line-artillery ground deploy target, spawned temporary Walking Bomb, and
 # Trigger self-destruct AoE. Pre-v263 corpus archived as
 # failure_db_snapshot_sim_v262.jsonl.
-SIMULATOR_VERSION = 263
+# v264 - Powered Blast achievement event and scoring hook for AP Cannon kills
+# through Walking Bomb. Pre-v264 corpus archived as
+# failure_db_snapshot_sim_v263.jsonl.
+SIMULATOR_VERSION = 264
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

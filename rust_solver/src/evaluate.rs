@@ -162,6 +162,7 @@ pub struct EvalWeights {
     pub smoke_placed: f64,
     pub tiles_frozen: f64,
     pub viscera_nanobots_heal_bonus: f64,
+    pub powered_blast_bonus: f64,
 
     // Mission-specific bonus objectives (0 default; turn-aware via `scaled`).
     // Old Earth Dam: +1 Rep + 14-tile flood that drowns grounded Vek for rest
@@ -333,6 +334,7 @@ impl Default for EvalWeights {
             smoke_placed: 0.0,
             tiles_frozen: 0.0,
             viscera_nanobots_heal_bonus: 0.0,
+            powered_blast_bonus: 0.0,
             // Mission-specific bonuses (zero by default; set via active.json)
             dam_destroyed: 0.0,
             dam_damage_dealt: 0.0,

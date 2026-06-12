@@ -1804,7 +1804,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   line-artillery ground deploy target, spawned temporary Walking Bomb, and
 //   Trigger self-destruct AoE. Pre-v263 corpus archived as
 //   failure_db_snapshot_sim_v262.jsonl.
-pub const SIMULATOR_VERSION: u32 = 263;
+// v264 - Powered Blast achievement event and scoring hook for AP Cannon kills
+//   through Walking Bomb. Pre-v264 corpus archived as
+//   failure_db_snapshot_sim_v263.jsonl.
+pub const SIMULATOR_VERSION: u32 = 264;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
