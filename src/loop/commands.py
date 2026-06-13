@@ -13943,7 +13943,7 @@ def _lightning_dialogue_box_score(image_path: str | Path) -> dict:
         visible = (
             windows_map_score.get("score", 0.0) >= 0.16
             and windows_map_score.get("bright", 0) >= 700
-            and windows_map_score.get("border", 0) >= 2500
+            and windows_map_score.get("border", 0) >= 1500
             and (
                 windows_compact_card_score.get("score", 0.0) >= 0.20
                 or portrait_score.get("border", 0) >= 250
@@ -13997,8 +13997,10 @@ def _lightning_click_visible_start_mission(
                         "dialogue_click": click,
                         "dialogue_clicks": dialogue_clicks,
                     }
-            dialogue_click = dialogue_clicks[-1]
-            dialogue_click["dialogue_clicks"] = dialogue_clicks
+            dialogue_click = dict(dialogue_clicks[-1])
+            dialogue_click["dialogue_clicks"] = [
+                dict(item) for item in dialogue_clicks
+            ]
         else:
             dialogue_click = {
                 "status": "SKIPPED",
@@ -14206,6 +14208,52 @@ def _lightning_click_paused_preview_start_sequence(
             }
 
     return {"status": "OK", "steps": steps, "window_bounds": bounds}
+
+
+def _lightning_click_paused_visible_start_mission(
+    *,
+    dry_run: bool = False,
+    dismiss_dialogue: bool = True,
+) -> dict:
+    """Resume from pause, then click the detected Start Mission text."""
+    from src.control.mac_click import click_known_window_control
+
+    planned_resume = "menu_continue" if os.name == "nt" else "pause_menu_escape"
+    if dry_run:
+        return {
+            "status": "DRY_RUN",
+            "planned_resume": planned_resume,
+            "planned_start": "visible_start_mission",
+            "dismiss_dialogue": bool(dismiss_dialogue),
+        }
+
+    if os.name == "nt":
+        resume_result = click_known_window_control(
+            "menu_continue",
+            settle_seconds=0.65,
+            hold_seconds=0.30,
+        )
+    else:
+        resume_result = _lightning_press_pause_escape(settle_seconds=0.20)
+    if resume_result.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "resume_from_pause_failed",
+            "resume_result": resume_result,
+        }
+
+    start_result = _lightning_click_visible_start_mission(
+        dry_run=False,
+        dismiss_dialogue=dismiss_dialogue,
+    )
+    result = {
+        "status": start_result.get("status", "ERROR"),
+        "resume_result": resume_result,
+        "start_result": start_result,
+    }
+    if start_result.get("status") not in {"OK", "DRY_RUN"}:
+        result["reason"] = start_result.get("reason", "visible_start_failed")
+    return result
 
 
 def _lightning_pause_after_stop(
@@ -14886,6 +14934,34 @@ def cmd_lightning_ui(
         _print_result(result)
         return result
 
+    if control_slug in {
+        "start_paused_visible_dialogue",
+        "resume_visible_start_dialogue",
+        "paused_visible_start_dialogue",
+    }:
+        result = _lightning_click_paused_visible_start_mission(
+            dry_run=dry_run,
+            dismiss_dialogue=True,
+        )
+        print("\n=== LIGHTNING UI START PAUSED VISIBLE DIALOGUE ===")
+        print(f"  status: {result.get('status')}")
+        _print_result(result)
+        return result
+
+    if control_slug in {
+        "start_paused_visible",
+        "resume_visible_start",
+        "paused_visible_start",
+    }:
+        result = _lightning_click_paused_visible_start_mission(
+            dry_run=dry_run,
+            dismiss_dialogue=False,
+        )
+        print("\n=== LIGHTNING UI START PAUSED VISIBLE ===")
+        print(f"  status: {result.get('status')}")
+        _print_result(result)
+        return result
+
     if control_slug in {"guard_status", "pause_status", "pause_guard_status"}:
         result = _lightning_read_guard()
         print("\n=== LIGHTNING UI PAUSE GUARD ===")
@@ -14911,6 +14987,8 @@ def cmd_lightning_ui(
                 "commit_preview_twice",
                 "commit_preview_dialogue",
                 "commit_preview_dialogue_twice",
+                "start_paused_visible",
+                "start_paused_visible_dialogue",
                 "guard_status",
             ],
             "next_step": (

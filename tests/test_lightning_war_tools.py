@@ -4093,6 +4093,41 @@ def test_lightning_ui_classifier_accepts_low_border_windows_pause_button(
     assert result["confidence"] == 0.1791
 
 
+def test_lightning_dialogue_box_score_accepts_windows_preview_low_border(
+    monkeypatch, tmp_path
+):
+    from PIL import Image
+
+    image = Image.new("RGB", (1280, 748), (8, 10, 14))
+    path = tmp_path / "windows_preview_dialogue.png"
+    image.save(path)
+
+    def fake_button_score(_image, *, center, size):
+        if center == (560, 260):
+            return {
+                "score": 0.3929,
+                "bright": 5313,
+                "border": 1846,
+                "pixels": 154000,
+            }
+        if center == (700, 392):
+            return {
+                "score": 0.3265,
+                "bright": 4319,
+                "border": 7130,
+                "pixels": 219640,
+            }
+        return {"score": 0.0, "bright": 0, "border": 0, "pixels": 1}
+
+    monkeypatch.setattr(commands.os, "name", "nt", raising=False)
+    monkeypatch.setattr(commands, "_lightning_button_like_score", fake_button_score)
+
+    result = commands._lightning_dialogue_box_score(path)
+
+    assert result["visible"] is True
+    assert result["windows_map_score"]["border"] == 1846
+
+
 def test_lightning_ui_classifier_prefers_windows_bottom_continue_over_dim_pause(
     monkeypatch, tmp_path
 ):
@@ -17413,6 +17448,70 @@ def test_lightning_route_start_manual_start_sequence():
     assert points[-1]["description"] == "Lightning route manual start"
     assert points[-1]["window_x"] == 870
     assert points[-1]["window_y"] == 300
+
+
+def test_lightning_paused_visible_start_resumes_then_clicks_detected_start(
+    monkeypatch
+):
+    resume_calls = []
+    start_calls = []
+
+    monkeypatch.setattr(commands.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: resume_calls.append((control, kwargs))
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: start_calls.append(kwargs)
+        or {"status": "OK", "target": {"window_x": 1400, "window_y": 760}},
+    )
+
+    result = commands._lightning_click_paused_visible_start_mission(
+        dismiss_dialogue=True,
+    )
+
+    assert result["status"] == "OK"
+    assert resume_calls == [
+        (
+            "menu_continue",
+            {"settle_seconds": 0.65, "hold_seconds": 0.30},
+        )
+    ]
+    assert start_calls == [{"dry_run": False, "dismiss_dialogue": True}]
+
+
+def test_lightning_visible_start_dialogue_failure_is_json_serializable(
+    monkeypatch
+):
+    click_calls = []
+
+    monkeypatch.setattr("src.capture.window.take_screenshot", lambda path: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dialogue_box_score",
+        lambda path: {"status": "OK", "visible": True},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: click_calls.append((control, kwargs))
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_start_mission_target",
+        lambda path: {"status": "NOT_FOUND"},
+    )
+
+    result = commands._lightning_click_visible_start_mission(
+        dismiss_dialogue=True,
+    )
+
+    assert result["status"] == "NOT_FOUND"
+    assert len(result["dialogue_click"]["dialogue_clicks"]) >= 1
+    json.dumps(result)
 
 
 def test_lightning_route_start_dry_run_plans_click_sequence(monkeypatch):
