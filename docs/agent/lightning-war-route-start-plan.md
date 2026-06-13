@@ -16,6 +16,21 @@ The first speed patch should therefore be an atomic, proof-gated route-start
 transaction. Deeper pause/resume optimizations should come after that
 transaction is reliable.
 
+## Mission Timer Budget
+
+Treat 3 minutes of in-game timer as the hard ceiling for each ordinary mission.
+Lightning War needs two Corporate Islands within 30 minutes, but the automation
+should not spend the whole average budget on any single battle. A mission that
+approaches 3 minutes should be treated as a pace failure unless it is an
+explicitly justified exception such as a boss or forced recovery state.
+
+Earlier fast-walkthrough scripts reached roughly 1 minute 50 seconds per
+mission, so the combat flow is known to be capable of beating this budget. The
+main blocker was not action selection speed; it was unreliable UI clicking,
+preview/start handling, and route-map transitions. The route-start plan should
+therefore optimize for deterministic UI progress first, then use the 3-minute
+mission ceiling to decide when a timeline should be abandoned or rerouted.
+
 ## Agent Use
 
 Use agents liberally wherever and whenever they can reduce uncertainty, catch
@@ -127,6 +142,11 @@ Live boundaries include:
 Route planning, candidate ranking, save-route inspection, and dry-run output
 should remain paused whenever possible.
 
+Lazy resume and atomic start work should both be measured against the 3-minute
+mission ceiling. If a mission consumes more than 3 minutes, post-attempt review
+should separate combat decision time from UI transition time so the next patch
+targets the actual timer leak.
+
 ## Edge Cases And Failure Modes
 
 - Visual route order may not match save route order.
@@ -191,6 +211,9 @@ Likely legacy tests to rewrite or scope behind legacy mode:
 6. Add lazy resume only after the atomic route-start path is stable.
 7. Run another live Lightning War attempt and measure timer leakage on the route
    map before touching combat timing.
+8. Enforce the 3-minute per-mission pace gate, using the historical 1:50
+   fast-walkthrough mission time as the stretch target and evidence that the
+   remaining bottleneck is UI reliability.
 
 ## Acceptance Criteria
 
@@ -203,6 +226,8 @@ The route-start patch is ready for live attempts when:
 - baseline flows do not inherit Lightning War routing choices
 - no default path spends timer seconds on blind board, region, or compact-card
   fallback clicks
+- ordinary missions that exceed 3 minutes of in-game time are flagged as pace
+  failures with enough telemetry to distinguish combat time from UI time
 
 The later lazy-resume patch is ready when:
 
