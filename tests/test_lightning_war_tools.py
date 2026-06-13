@@ -9303,6 +9303,57 @@ def test_lightning_segment_probes_auto_start_without_expected_mission(monkeypatc
     assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
 
 
+def test_lightning_segment_blocks_non_exact_lightning_route_identity(monkeypatch):
+    route_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                    "mission_id": "Mission_Train",
+                    "auto_route_allowed": True,
+                    "route_routing": "lightning_war",
+                    "route_identity": {
+                        "status": "diagnostic",
+                        "exact": False,
+                        "mission_id": "Mission_Train",
+                    },
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=2,
+        route_auto_start=True,
+        route_routing="lightning_war",
+    )
+
+    assert result["reason"] == "route_auto_start_not_allowed"
+    assert result["route_start_performed"] is False
+    assert route_calls == []
+    blocked = result["steps"][0]["route_auto_start_blocked_candidate"]
+    assert blocked["auto_route_block_reason"] == "non_exact_route_identity:diagnostic"
+    assert blocked["route_identity"]["exact"] is False
+
+
 def test_lightning_auto_start_rotates_unlabeled_probe_candidates():
     attempt = {
         "route_start_candidates": [
@@ -18309,10 +18360,240 @@ def test_lightning_route_start_blocks_stale_bridge_preview_before_commit(monkeyp
         "route_preview_bridge_stale_before_start"
     )
     assert len(calls) == 2
-    assert calls[0][0].get("description") == "Pause menu Escape resume"
+    if os.name == "nt":
+        assert calls[0][0].get("control") == "menu_continue"
+    else:
+        assert calls[0][0].get("description") == "Pause menu Escape resume"
     assert calls[1][0].get("description") == "Lightning route region"
     assert visible_start_calls == []
     assert pauses == [{"reason": "route_preview_bridge_stale_before_start"}]
+
+
+def test_lightning_route_start_lightning_war_default_uses_visible_text_only(
+    monkeypatch,
+):
+    calls = []
+    visible_start_calls = []
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 0,
+                "mission_id": "Mission_SnowStorm",
+                "deployment_zone_count": 12,
+                "active_mechs": 0,
+                "mech_count": 0,
+                "in_active_mission": True,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(commands, "_lightning_execute_route_start_sequence", fake_execute)
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_SnowStorm"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: visible_start_calls.append(kwargs)
+        or {"status": "OK", "reason": "visible_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: pytest.fail("dialogue should not be dismissed"),
+    )
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: next(snapshots))
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=600,
+        region_window_y=360,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_SnowStorm",
+    )
+
+    assert result["status"] == "OK"
+    assert result["effective_start_mode"] == "visible-text"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    commit = result["click_result"]["commit_click"]
+    assert commit["reason"] == "lightning_war_visible_start_clicked"
+    assert commit["atomic_start_text_only"] is True
+    assert len(calls) == 1
+    assert not any(
+        step.get("control") == "mission_preview_board"
+        for sequence in calls
+        for step in sequence
+        if isinstance(step, dict)
+    )
+    assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
+
+
+def test_lightning_route_start_lightning_war_blocks_missing_start_text(
+    monkeypatch,
+):
+    calls = []
+    starts = []
+    dialogue_dismisses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(commands, "_lightning_execute_route_start_sequence", fake_execute)
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_SnowStorm"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "NOT_FOUND", "reason": "start_mission_text_not_found"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: dialogue_dismisses.append(kwargs)
+        or {"status": "NO_ACTION", "reason": "dialogue_not_visible"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=600,
+        region_window_y=360,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_SnowStorm",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_start_text_missing_before_start"
+    assert result["effective_start_mode"] == "visible-text"
+    assert starts == [{"dry_run": False, "dismiss_dialogue": False}]
+    assert dialogue_dismisses == [{"dry_run": False}]
+    assert len(calls) == 1
+    assert not any(
+        step.get("control") == "mission_preview_board"
+        for sequence in calls
+        for step in sequence
+        if isinstance(step, dict)
+    )
+
+
+def test_lightning_route_start_lightning_war_reproofs_after_dialogue(monkeypatch):
+    calls = []
+    starts = []
+    recommendations = iter(
+        [
+            {
+                "status": "OK",
+                "source": "bridge_preview",
+                "top3": [{"mission_id": "Mission_Terraform"}],
+            },
+            {
+                "status": "OK",
+                "source": "bridge_preview",
+                "top3": [{"mission_id": "Mission_Terraform"}],
+            },
+        ]
+    )
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 0,
+                "mission_id": "Mission_Terraform",
+                "deployment_zone_count": 12,
+                "active_mechs": 0,
+                "mech_count": 0,
+                "in_active_mission": True,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    def fake_start(**kwargs):
+        starts.append(kwargs)
+        if len(starts) == 1:
+            return {
+                "status": "NOT_FOUND",
+                "reason": "start_mission_text_not_found",
+            }
+        return {"status": "OK", "reason": "visible_start_clicked"}
+
+    monkeypatch.setattr(commands, "_lightning_execute_route_start_sequence", fake_execute)
+    monkeypatch.setattr(commands, "cmd_recommend_mission", lambda **kwargs: next(recommendations))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: {"status": "OK", "dialogue_click": {"status": "OK"}},
+    )
+    monkeypatch.setattr(commands, "_lightning_click_visible_start_mission", fake_start)
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: next(snapshots))
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Terraform",
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    commit = result["click_result"]["commit_click"]
+    assert commit["reason"] == "lightning_war_dialogue_dismissed_visible_start_clicked"
+    assert commit["post_dialogue_actual_mission_id"] == "Mission_Terraform"
+    assert commit["atomic_start_text_only"] is True
+    assert starts == [
+        {"dry_run": False, "dismiss_dialogue": False},
+        {"dry_run": False, "dismiss_dialogue": False},
+    ]
+    assert len(calls) == 1
+    assert not any(
+        step.get("control") == "mission_preview_board"
+        for sequence in calls
+        for step in sequence
+        if isinstance(step, dict)
+    )
 
 
 def test_lightning_route_start_baseline_blocks_board_fallback_without_visible_start(
@@ -18398,7 +18679,10 @@ def test_lightning_route_start_baseline_blocks_board_fallback_without_visible_st
         {"reason": "route_preview_baseline_start_button_missing_before_start"}
     ]
     assert len(calls) == 3
-    assert calls[0][0].get("description") == "Pause menu Escape resume"
+    if os.name == "nt":
+        assert calls[0][0].get("control") == "menu_continue"
+    else:
+        assert calls[0][0].get("description") == "Pause menu Escape resume"
     assert calls[1][0].get("description") == "Lightning route region"
     assert calls[2][0].get("description") == (
         "Lightning baseline verified region-repeat start"
@@ -18493,8 +18777,9 @@ def test_lightning_route_start_baseline_uses_verified_region_repeat_without_dial
     assert result["click_result"]["actual_preview_mission_id"] == "Mission_Artillery"
     assert starts == [{"dry_run": False, "dismiss_dialogue": False}]
     assert dialogue_dismisses == [{"dry_run": False}]
+    resume_description = None if os.name == "nt" else "Pause menu Escape resume"
     assert [sequence[0].get("description") for sequence in calls] == [
-        "Pause menu Escape resume",
+        resume_description,
         "Lightning route region",
         "Lightning baseline verified region-repeat start",
     ]
@@ -18620,8 +18905,9 @@ def test_lightning_route_start_blocks_region_repeat_without_transition(monkeypat
     }
     assert result["click_result"]["board_after_region_repeat"]["status"] == "OK"
     assert pauses == [{"reason": "baseline_verified_region_repeat_no_transition"}]
+    resume_description = None if os.name == "nt" else "Pause menu Escape resume"
     assert [sequence[0].get("description") for sequence in calls] == [
-        "Pause menu Escape resume",
+        resume_description,
         "Lightning route region",
         "Lightning baseline verified region-repeat start",
         None,
@@ -18733,8 +19019,9 @@ def test_lightning_route_start_baseline_uses_board_after_inert_region_repeat(
     )
     assert click_result["board_after_region_repeat"]["status"] == "OK"
     assert click_result["post_board_start_snapshot"]["deployment_zone_count"] == 12
+    resume_description = None if os.name == "nt" else "Pause menu Escape resume"
     assert [sequence[0].get("description") for sequence in calls] == [
-        "Pause menu Escape resume",
+        resume_description,
         "Lightning route region",
         "Lightning baseline verified region-repeat start",
         None,
@@ -20101,6 +20388,7 @@ def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch)
         run_preflight=False,
         verify_route=False,
         expected_route_mission_id="Mission_Terraform",
+        route_routing="lightning_baseline",
     )
 
     assert result["status"] == "OK"
@@ -20199,10 +20487,11 @@ def test_lightning_route_start_blocks_post_dialogue_preview_mismatch(monkeypatch
     assert result["click_result"]["post_dialogue_actual_mission_id"] == "Mission_Mines"
     assert result["click_result"]["commit_click"]["status"] == "BLOCKED"
     assert visible_start_calls == [{"dry_run": False, "dismiss_dialogue": False}]
-    assert len(calls) == 2
-    assert any(
+    assert len(calls) == 1
+    assert not any(
         step.get("control") == "mission_preview_board"
-        for step in calls[1]
+        for sequence in calls
+        for step in sequence
         if isinstance(step, dict)
     )
 

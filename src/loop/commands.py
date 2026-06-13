@@ -8726,6 +8726,29 @@ _LIGHTNING_ROUTE_DEFAULT_START_MODE = "dialogue-region-repeat-preview-board"
 _LIGHTNING_ROUTE_START_SUBCALL_TIMEOUT_SECONDS = 55.0
 
 
+def _lightning_effective_route_start_mode(
+    start_mode: str | None,
+    *,
+    route_routing: str,
+    include_start_click: bool = True,
+    start_window_x: int | None = None,
+    start_window_y: int | None = None,
+) -> str:
+    """Use the text-only commit path for default Lightning War route starts."""
+    normalized = _lightning_normalized_route_start_mode(start_mode)
+    if (
+        route_routing == "lightning_war"
+        and include_start_click
+        and start_window_x is None
+        and start_window_y is None
+        and normalized == _lightning_normalized_route_start_mode(
+            _LIGHTNING_ROUTE_DEFAULT_START_MODE,
+        )
+    ):
+        return "visible-text"
+    return str(start_mode or _LIGHTNING_ROUTE_DEFAULT_START_MODE)
+
+
 def _lightning_forced_preview_route_allowed(
     ranked: list[dict],
     *,
@@ -8749,6 +8772,31 @@ def _lightning_bridge_preview_option_stale(option: dict | None) -> bool:
     if option.get("bridge_state_fresh") is False:
         return True
     return False
+
+
+def _lightning_route_identity_exact(identity: dict | None) -> bool:
+    if not isinstance(identity, dict):
+        return False
+    return identity.get("exact") is True and str(identity.get("status") or "") == "exact"
+
+
+def _lightning_auto_route_identity_block_reason(
+    candidate: dict | None,
+    *,
+    routing: str | None,
+) -> str | None:
+    """Block real Lightning War auto-start candidates without exact identity."""
+    if routing != "lightning_war" or not isinstance(candidate, dict):
+        return None
+    if candidate.get("route_routing") != "lightning_war" and "route_identity" not in candidate:
+        return None
+    identity = candidate.get("route_identity")
+    if not isinstance(identity, dict):
+        return "missing_exact_route_identity"
+    if _lightning_route_identity_exact(identity):
+        return None
+    status = str(identity.get("status") or "non_exact_route_identity")
+    return f"non_exact_route_identity:{status}"
 
 
 _LIGHTNING_ROUTE_AUTO_START_SPEED_VETO_MISSIONS = {
@@ -14333,6 +14381,121 @@ def _lightning_dismiss_visible_dialogue(*, dry_run: bool = False) -> dict:
     return result
 
 
+def _lightning_click_atomic_visible_start_mission(
+    *,
+    profile: str,
+    route_routing: str,
+    expected_preview_mission: str,
+) -> dict:
+    """Click only visible Start Mission text, re-proving after dialogue clears."""
+    initial_start = _lightning_click_visible_start_mission(
+        dry_run=False,
+        dismiss_dialogue=False,
+    )
+    if initial_start.get("status") == "OK":
+        return {
+            **initial_start,
+            "reason": "lightning_war_visible_start_clicked",
+            "atomic_start_text_only": True,
+        }
+
+    dialogue_dismiss = _lightning_dismiss_visible_dialogue(dry_run=False)
+    if dialogue_dismiss.get("status") == "NO_ACTION":
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_start_text_missing_before_start",
+            "start_result": initial_start,
+            "dialogue_dismiss": dialogue_dismiss,
+            "atomic_start_text_only": True,
+        }
+    if dialogue_dismiss.get("status") != "OK":
+        return {
+            "status": "BLOCKED",
+            "reason": dialogue_dismiss.get(
+                "reason",
+                "dialogue_dismiss_failed_before_start",
+            ),
+            "initial_visible_start": initial_start,
+            "dialogue_dismiss": dialogue_dismiss,
+            "atomic_start_text_only": True,
+        }
+
+    post_dialogue_recommendation = cmd_recommend_mission(
+        profile=profile,
+        routing=route_routing,
+        use_save_region_filter=False,
+        pause_map_peek=False,
+    )
+    post_top3 = post_dialogue_recommendation.get("top3")
+    post_dialogue_actual_mission = None
+    if isinstance(post_top3, list) and post_top3 and isinstance(post_top3[0], dict):
+        post_dialogue_actual_mission = str(
+            post_top3[0].get("mission_id") or "",
+        ).strip()
+    if (
+        not _lightning_route_preview_source_verified(
+            post_dialogue_recommendation,
+            post_dialogue_actual_mission,
+            routing=route_routing,
+        )
+        or not post_dialogue_actual_mission
+    ):
+        return {
+            "status": "BLOCKED",
+            "reason": (
+                "route_preview_bridge_stale_after_dialogue"
+                if _lightning_bridge_preview_recommendation_stale(
+                    post_dialogue_recommendation,
+                )
+                else "route_preview_mission_unverified_after_dialogue"
+            ),
+            "expected_route_mission_id": expected_preview_mission or None,
+            "actual_preview_mission_id": post_dialogue_actual_mission or None,
+            "initial_visible_start": initial_start,
+            "dialogue_dismiss": dialogue_dismiss,
+            "post_dialogue_recommendation": post_dialogue_recommendation,
+            "post_dialogue_actual_mission_id": post_dialogue_actual_mission,
+            "atomic_start_text_only": True,
+        }
+    if expected_preview_mission and post_dialogue_actual_mission != expected_preview_mission:
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_mission_mismatch_after_dialogue",
+            "expected_route_mission_id": expected_preview_mission,
+            "actual_preview_mission_id": post_dialogue_actual_mission,
+            "initial_visible_start": initial_start,
+            "dialogue_dismiss": dialogue_dismiss,
+            "post_dialogue_recommendation": post_dialogue_recommendation,
+            "post_dialogue_actual_mission_id": post_dialogue_actual_mission,
+            "atomic_start_text_only": True,
+        }
+
+    post_dialogue_start = _lightning_click_visible_start_mission(
+        dry_run=False,
+        dismiss_dialogue=False,
+    )
+    if post_dialogue_start.get("status") != "OK":
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_start_text_missing_after_dialogue",
+            "start_result": post_dialogue_start,
+            "initial_visible_start": initial_start,
+            "dialogue_dismiss": dialogue_dismiss,
+            "post_dialogue_recommendation": post_dialogue_recommendation,
+            "post_dialogue_actual_mission_id": post_dialogue_actual_mission,
+            "atomic_start_text_only": True,
+        }
+    return {
+        **post_dialogue_start,
+        "reason": "lightning_war_dialogue_dismissed_visible_start_clicked",
+        "initial_visible_start": initial_start,
+        "dialogue_dismiss": dialogue_dismiss,
+        "post_dialogue_recommendation": post_dialogue_recommendation,
+        "post_dialogue_actual_mission_id": post_dialogue_actual_mission,
+        "atomic_start_text_only": True,
+    }
+
+
 def _lightning_dialogue_dismiss_control_steps() -> list[dict]:
     """Return trusted dialogue textbox clicks for dismissing advisor prompts."""
     if os.name == "nt":
@@ -17457,9 +17620,24 @@ def cmd_lightning_route_start(
     expected_preview_mission = str(
         expected_route_mission_id or inferred_expected_route_mission_id or ""
     ).strip()
+    effective_start_mode = _lightning_effective_route_start_mode(
+        start_mode,
+        route_routing=route_routing,
+        include_start_click=include_start_click,
+        start_window_x=start_window_x,
+        start_window_y=start_window_y,
+    )
+    lightning_war_text_only_default = (
+        route_routing == "lightning_war"
+        and include_start_click
+        and start_window_x is None
+        and start_window_y is None
+        and _lightning_normalized_route_start_mode(effective_start_mode)
+        == "visible_text"
+    )
     if include_start_click and validate_preview_mission and not dry_run:
         preview_start_mode = _lightning_safe_probe_start_mode(
-            start_mode=start_mode,
+            start_mode=effective_start_mode,
             require_auto_start_safe_preview=require_auto_start_safe_preview,
             expected_preview_mission=expected_preview_mission,
             start_window_x=start_window_x,
@@ -17488,6 +17666,7 @@ def cmd_lightning_route_start(
                 "selected_visual_region": selected_visual_region,
                 "visual_region_peek": visual_region_peek,
                 "sequence_parts": sequence_parts,
+                "effective_start_mode": effective_start_mode,
                 "next_step": (
                     "Route start could not build a safe preview/commit "
                     "sequence. Inspect the visible UI before clicking."
@@ -18000,6 +18179,15 @@ def cmd_lightning_route_start(
             and step.get("control") == "mission_preview_board"
             for step in commit_sequence
         )
+        atomic_visible_text_commit = (
+            lightning_war_text_only_default
+            and start_window_x is None
+            and start_window_y is None
+            and any(
+                isinstance(step, dict) and step.get("kind") == "start_visible"
+                for step in commit_sequence
+            )
+        )
         post_dialogue_recommendation = None
         post_dialogue_actual_mission = None
         dialogue_dismiss = None
@@ -18022,7 +18210,20 @@ def cmd_lightning_route_start(
             baseline_unassigned_multi_region_reason
             or "baseline_guarded_preview_start_missing"
         )
-        if broad_preview_commit and start_window_x is None and start_window_y is None:
+        if atomic_visible_text_commit:
+            commit_click = _lightning_click_atomic_visible_start_mission(
+                profile=profile,
+                route_routing=route_routing,
+                expected_preview_mission=expected_preview_mission,
+            )
+            post_dialogue_recommendation = commit_click.get(
+                "post_dialogue_recommendation",
+            )
+            post_dialogue_actual_mission = commit_click.get(
+                "post_dialogue_actual_mission_id",
+            )
+            dialogue_dismiss = commit_click.get("dialogue_dismiss")
+        elif broad_preview_commit and start_window_x is None and start_window_y is None:
             visible_start_before_dialogue = _lightning_click_visible_start_mission(
                 dry_run=False,
                 dismiss_dialogue=False,
@@ -18643,6 +18844,7 @@ def cmd_lightning_route_start(
             elif (
                 (
                     require_auto_start_safe_preview
+                    or atomic_visible_text_commit
                     or _lightning_route_start_commit_requires_transition(
                         commit_click,
                     )
@@ -18850,7 +19052,7 @@ def cmd_lightning_route_start(
             dry_run=dry_run,
             include_start_click=include_start_click,
             dismiss_dialogue=dismiss_dialogue,
-            start_mode=start_mode,
+            start_mode=effective_start_mode,
             start_window_x=start_window_x,
             start_window_y=start_window_y,
             resume_from_pause=(initial_visible_name == "pause_menu"),
@@ -18879,6 +19081,7 @@ def cmd_lightning_route_start(
             expected_preview_mission if expected_preview_mission else None
         ),
         "route_routing": route_routing,
+        "effective_start_mode": effective_start_mode,
         "actual_started_mission_id": click_result.get("actual_started_mission_id"),
         "inferred_expected_route_mission_id": inferred_expected_route_mission_id,
         "next_step": (
@@ -21136,6 +21339,7 @@ def cmd_lightning_segment(
                                 rejected_indices=route_auto_start_rejected_indices,
                                 route_speed_vetoes=route_speed_vetoes,
                                 route_probe_offset=route_probe_offset,
+                                route_routing=route_routing,
                             )
                         )
                         if retry_candidate is not None:
@@ -21194,6 +21398,7 @@ def cmd_lightning_segment(
                             rejected_indices=route_auto_start_rejected_indices,
                             route_speed_vetoes=route_speed_vetoes,
                             route_probe_offset=route_probe_offset,
+                            route_routing=route_routing,
                         )
                     )
                     if retry_candidate is not None:
@@ -21328,9 +21533,22 @@ def cmd_lightning_segment(
                     rejected_indices=route_auto_start_rejected_indices,
                     route_speed_vetoes=route_speed_vetoes,
                     route_probe_offset=route_probe_offset,
+                    route_routing=route_routing,
                 )
                 if primary is None:
                     primary = attempt.get("primary_route_candidate")
+                    identity_block_reason = (
+                        _lightning_auto_route_identity_block_reason(
+                            primary,
+                            routing=route_routing,
+                        )
+                    )
+                    if identity_block_reason and isinstance(primary, dict):
+                        primary = {
+                            **primary,
+                            "auto_route_allowed": False,
+                            "auto_route_block_reason": identity_block_reason,
+                        }
                     primary_index = _lightning_auto_route_candidate_index(primary)
                     if (
                         primary_index is not None
@@ -21456,6 +21674,7 @@ def cmd_lightning_segment(
                                     rejected_indices=route_auto_start_rejected_indices,
                                     route_speed_vetoes=route_speed_vetoes,
                                     route_probe_offset=route_probe_offset,
+                                    route_routing=route_routing,
                                 )
                             )
                             if retry_candidate is not None:
@@ -21512,6 +21731,7 @@ def cmd_lightning_segment(
                                 rejected_indices=route_auto_start_rejected_indices,
                                 route_speed_vetoes=route_speed_vetoes,
                                 route_probe_offset=route_probe_offset,
+                                route_routing=route_routing,
                             )
                         )
                         if retry_candidate is not None:
@@ -21818,6 +22038,7 @@ def _lightning_auto_start_candidate_from_recommendation(
     rejected_indices: set[int] | None = None,
     route_speed_vetoes: bool = True,
     route_probe_offset: int = 0,
+    route_routing: str | None = None,
 ) -> dict | None:
     """Build an auto-start route candidate from bridge-backed map routing."""
     if not isinstance(attempt, dict):
@@ -21827,6 +22048,7 @@ def _lightning_auto_start_candidate_from_recommendation(
     if isinstance(route_candidates, list):
         known_candidates: list[dict] = []
         probe_candidates: list[dict] = []
+        blocked_candidates: list[dict] = []
         for candidate in route_candidates:
             if not isinstance(candidate, dict):
                 continue
@@ -21834,6 +22056,15 @@ def _lightning_auto_start_candidate_from_recommendation(
             if out is None:
                 continue
             if int(out["index"]) in rejected_indices:
+                continue
+            identity_block_reason = _lightning_auto_route_identity_block_reason(
+                out,
+                routing=route_routing,
+            )
+            if identity_block_reason:
+                out["auto_route_allowed"] = False
+                out["auto_route_block_reason"] = identity_block_reason
+                blocked_candidates.append(out)
                 continue
             if not _lightning_auto_route_probe_allowed(out):
                 if not _lightning_auto_route_speed_veto_override_allowed(
@@ -21854,6 +22085,8 @@ def _lightning_auto_start_candidate_from_recommendation(
             except (TypeError, ValueError):
                 offset = 0
             return probe_candidates[offset % len(probe_candidates)]
+        if blocked_candidates:
+            return blocked_candidates[0]
     return None
 
 
@@ -21864,6 +22097,7 @@ def _lightning_next_auto_start_candidate_after_rejection(
     rejected_indices: set[int],
     route_speed_vetoes: bool = True,
     route_probe_offset: int = 0,
+    route_routing: str | None = None,
 ) -> dict | None:
     """Pick the next candidate after a live preview proved one unsafe."""
     sources: list[dict] = []
@@ -21885,6 +22119,7 @@ def _lightning_next_auto_start_candidate_after_rejection(
             rejected_indices=rejected_indices,
             route_speed_vetoes=route_speed_vetoes,
             route_probe_offset=route_probe_offset,
+            route_routing=route_routing,
         )
         if candidate is not None:
             return candidate
@@ -21967,6 +22202,8 @@ _LIGHTNING_ROUTE_PREVIEW_ONLY_BLOCK_REASONS = {
     "route_preview_mission_unverified_after_dialogue",
     "route_preview_mission_mismatch_after_dialogue",
     "route_preview_unassigned_multi_region_before_start",
+    "route_preview_start_text_missing_before_start",
+    "route_preview_start_text_missing_after_dialogue",
     "route_preview_baseline_start_button_missing_before_start",
     "route_preview_unassigned_multi_region_start_button_missing_before_start",
 }

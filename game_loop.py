@@ -678,7 +678,9 @@ def main():
         default="dialogue-region-repeat-preview-board",
         help=(
             "How to commit the selected preview when no manual start point is "
-            "supplied. Default clicks the calibrated mission preview board."
+            "supplied. In lightning_war routing, the default is upgraded to "
+            "visible Start Mission text only; explicit modes and baseline "
+            "routing keep the named behavior."
         ),
     )
     p_lightning_route_start.add_argument("--dry-run", action="store_true")
