@@ -9185,6 +9185,77 @@ def _lightning_route_options_for_visual_assignment(
     return options
 
 
+def _lightning_visual_route_signature(
+    region: dict,
+    *,
+    visual_order: int | None = None,
+) -> dict:
+    """Small stable witness for the visual blob a route identity was assigned to."""
+    signature = {
+        key: region.get(key)
+        for key in (
+            "index",
+            "window_x",
+            "window_y",
+            "area_window",
+            "area_px",
+            "bbox_window",
+        )
+        if region.get(key) is not None
+    }
+    if visual_order is not None:
+        signature["visual_order"] = int(visual_order)
+    return signature
+
+
+def _lightning_route_identity(
+    *,
+    recommendation: dict | None,
+    assignment_status: str,
+    assignment_method: str,
+    visual_signature: dict,
+    route_option: dict | None = None,
+    identity_status: str | None = None,
+    exact: bool = False,
+    reason: str | None = None,
+) -> dict:
+    """Describe how strongly a visible route blob is tied to a mission."""
+    source = (
+        recommendation.get("source")
+        if isinstance(recommendation, dict)
+        else None
+    )
+    routing = (
+        recommendation.get("routing")
+        if isinstance(recommendation, dict)
+        else None
+    )
+    identity = {
+        "status": identity_status or ("exact" if exact else "diagnostic"),
+        "exact": bool(exact),
+        "assignment_status": assignment_status,
+        "assignment_method": assignment_method,
+        "assignment_source": source,
+        "routing": routing,
+        "visual_signature": dict(visual_signature),
+    }
+    if reason:
+        identity["reason"] = reason
+    if isinstance(route_option, dict):
+        for key in (
+            "mission_id",
+            "mission_slot",
+            "mission_index",
+            "region_id",
+            "save_region_index",
+            "save_region_name",
+            "source",
+        ):
+            if route_option.get(key) is not None:
+                identity[key] = route_option.get(key)
+    return {key: value for key, value in identity.items() if value is not None}
+
+
 def _lightning_assign_visual_route_options(
     visual_regions: dict | None,
     recommendation: dict | None,
@@ -9202,6 +9273,19 @@ def _lightning_assign_visual_route_options(
     out = dict(visual_regions)
     out_regions = [dict(region) for region in regions if isinstance(region, dict)]
     if len(out_regions) != len(options):
+        for visual_order, region in enumerate(out_regions):
+            region["route_identity"] = _lightning_route_identity(
+                recommendation=recommendation,
+                assignment_status="COUNT_MISMATCH",
+                assignment_method="save_region_index_to_visual_order",
+                visual_signature=_lightning_visual_route_signature(
+                    region,
+                    visual_order=visual_order,
+                ),
+                identity_status="count_mismatch",
+                exact=False,
+                reason="visual_region_count_does_not_match_save_route_options",
+            )
         out["route_assignment"] = {
             "status": "COUNT_MISMATCH",
             "method": "save_region_index_to_visual_order",
@@ -9211,7 +9295,13 @@ def _lightning_assign_visual_route_options(
         out["regions"] = out_regions
         return out
 
-    for region, option in zip(out_regions, options):
+    source = (
+        recommendation.get("source")
+        if isinstance(recommendation, dict)
+        else None
+    )
+    exact_assignment = source == "saveData"
+    for visual_order, (region, option) in enumerate(zip(out_regions, options)):
         region["route_option"] = {
             key: option.get(key)
             for key in (
@@ -9236,6 +9326,19 @@ def _lightning_assign_visual_route_options(
             and recommendation.get("routing") is not None
         ):
             region["route_option"].setdefault("routing", recommendation.get("routing"))
+        region["route_identity"] = _lightning_route_identity(
+            recommendation=recommendation,
+            assignment_status="OK",
+            assignment_method="save_region_index_to_visual_order",
+            visual_signature=_lightning_visual_route_signature(
+                region,
+                visual_order=visual_order,
+            ),
+            route_option=region["route_option"],
+            identity_status="exact" if exact_assignment else "diagnostic",
+            exact=exact_assignment,
+            reason=None if exact_assignment else "non_save_assignment_source",
+        )
     out["regions"] = out_regions
     out["route_assignment"] = {
         "status": "OK",
@@ -9423,6 +9526,11 @@ def _lightning_route_start_candidates(
         and isinstance(ranked[0], dict)
         else None
     )
+    route_assignment = (
+        visual_regions.get("route_assignment")
+        if isinstance(visual_regions.get("route_assignment"), dict)
+        else {}
+    )
     candidates: list[dict] = []
     for visual_order, region in enumerate(regions):
         window_x = region.get("window_x")
@@ -9482,6 +9590,25 @@ def _lightning_route_start_candidates(
             "coordinate_command": coordinate_command,
             "route_routing": route_routing,
         }
+        if isinstance(region.get("route_identity"), dict):
+            candidate["route_identity"] = dict(region["route_identity"])
+        elif isinstance(recommendation, dict):
+            candidate["route_identity"] = _lightning_route_identity(
+                recommendation=recommendation,
+                assignment_status=str(
+                    route_assignment.get("status") or "UNASSIGNED",
+                ),
+                assignment_method=str(
+                    route_assignment.get("method") or "no_route_option_assignment",
+                ),
+                visual_signature=_lightning_visual_route_signature(
+                    region,
+                    visual_order=visual_order,
+                ),
+                identity_status="unassigned",
+                exact=False,
+                reason="no_route_option_assigned_to_visual_region",
+            )
         if isinstance(route_option, dict) and route_option:
             candidate["route_option"] = dict(route_option)
             candidate["visual_order"] = visual_order
@@ -9502,6 +9629,19 @@ def _lightning_route_start_candidates(
                 )
         elif forced_preview_option is not None:
             candidate["route_option"] = dict(forced_preview_option)
+            candidate["route_identity"] = _lightning_route_identity(
+                recommendation=recommendation,
+                assignment_status="FORCED_PREVIEW",
+                assignment_method="single_visible_forced_preview",
+                visual_signature=_lightning_visual_route_signature(
+                    region,
+                    visual_order=visual_order,
+                ),
+                route_option=forced_preview_option,
+                identity_status="diagnostic",
+                exact=False,
+                reason="forced_preview_single_visible_region",
+            )
             candidate["visual_order"] = visual_order
             candidate["mission_id"] = forced_preview_option.get("mission_id")
             candidate["score"] = forced_preview_option.get("score")
@@ -9521,6 +9661,19 @@ def _lightning_route_start_candidates(
             top = ranked[0]
             if isinstance(top, dict):
                 candidate["route_option"] = dict(top)
+                candidate["route_identity"] = _lightning_route_identity(
+                    recommendation=recommendation,
+                    assignment_status="AMBIGUOUS_FORCED_PREVIEW",
+                    assignment_method="forced_preview_without_single_visible_region",
+                    visual_signature=_lightning_visual_route_signature(
+                        region,
+                        visual_order=visual_order,
+                    ),
+                    route_option=top,
+                    identity_status="ambiguous",
+                    exact=False,
+                    reason="forced_preview_multiple_visible_regions",
+                )
                 candidate["visual_order"] = visual_order
                 candidate["mission_id"] = top.get("mission_id")
                 candidate["score"] = top.get("score")
@@ -9639,6 +9792,7 @@ def _lightning_attach_primary_route_candidate(
             "forced_preview_route",
             "forced_preview_ambiguous",
             "route_routing",
+            "route_identity",
             "route_option",
         )
         if first.get(key) is not None
@@ -21571,6 +21725,8 @@ def _lightning_compact_auto_route_candidate(candidate: dict) -> dict | None:
             out[key] = value
     if candidate.get("auto_route_allowed") is not None:
         out["auto_route_allowed"] = bool(candidate.get("auto_route_allowed"))
+    if isinstance(candidate.get("route_identity"), dict):
+        out["route_identity"] = dict(candidate["route_identity"])
     return out
 
 

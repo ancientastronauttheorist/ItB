@@ -5463,6 +5463,19 @@ def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch)
             "status": "OK",
             "source": "saveData",
             "routing": "lightning_war",
+            "ranked": [
+                {
+                    "mission_id": "Mission_Armored_Train",
+                    "mission_slot": "Mission3",
+                    "mission_index": 3,
+                    "region_id": 5,
+                    "save_region_index": 5,
+                    "save_region_name": "The Pasture",
+                    "score": 42,
+                    "source": "saveData",
+                    "routing": "lightning_war",
+                }
+            ],
             "top3": [
                 {
                     "mission_id": "Mission_Armored_Train",
@@ -5511,6 +5524,11 @@ def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch)
     )
     assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
     assert result["primary_route_candidate"]["route_routing"] == "lightning_war"
+    assert result["route_start_candidates"][0]["route_identity"]["status"] == "exact"
+    assert result["route_start_candidates"][0]["route_identity"]["exact"] is True
+    assert result["primary_route_candidate"]["route_identity"] == (
+        result["route_start_candidates"][0]["route_identity"]
+    )
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
         "--visual-region-index 0 "
@@ -12723,6 +12741,36 @@ def test_compact_auto_route_candidate_reads_route_option_mission():
     }
 
 
+def test_compact_auto_route_candidate_preserves_route_identity():
+    identity = {
+        "status": "exact",
+        "exact": True,
+        "assignment_source": "saveData",
+        "assignment_method": "save_region_index_to_visual_order",
+        "mission_id": "Mission_Tides",
+        "save_region_index": 2,
+        "visual_signature": {"index": 4, "window_x": 812, "window_y": 423},
+    }
+
+    result = commands._lightning_compact_auto_route_candidate(
+        {
+            "index": 4,
+            "window_x": 812,
+            "window_y": 423,
+            "auto_route_allowed": True,
+            "route_identity": identity,
+            "route_option": {
+                "mission_id": "Mission_Tides",
+                "save_region_index": 2,
+                "save_region_name": "Floodplain",
+                "score": 17,
+            },
+        }
+    )
+
+    assert result["route_identity"] == identity
+
+
 def test_visual_route_candidates_sort_by_save_ranked_mission():
     recommendation = {
         "status": "OK",
@@ -12761,6 +12809,164 @@ def test_visual_route_candidates_sort_by_save_ranked_mission():
     assert result[1]["mission_id"] == "Mission_Repair"
     assert result[1]["auto_route_allowed"] is False
     assert result[1]["auto_route_block_reason"] == "vetoed_mission:Mission_Repair"
+
+
+def test_visual_route_candidates_expose_exact_save_route_identity():
+    recommendation = {
+        "status": "OK",
+        "source": "saveData",
+        "routing": "lightning_war",
+        "ranked": [
+            {
+                "mission_id": "Mission_Cataclysm",
+                "mission_slot": "Mission2",
+                "mission_index": 2,
+                "region_id": 6,
+                "save_region_index": 1,
+                "save_region_name": "Cataclysm Crossing",
+                "score": 47,
+            },
+            {
+                "mission_id": "Mission_Dam",
+                "mission_slot": "Mission1",
+                "mission_index": 1,
+                "region_id": 3,
+                "save_region_index": 0,
+                "save_region_name": "Dam Flats",
+                "score": 21,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 0,
+                "window_x": 300,
+                "window_y": 250,
+                "area_window": 123.0,
+                "bbox_window": [250, 200, 350, 300],
+            },
+            {"index": 1, "window_x": 800, "window_y": 520},
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    by_index = {candidate["index"]: candidate for candidate in result}
+    identity = by_index[0]["route_identity"]
+    assert identity["status"] == "exact"
+    assert identity["exact"] is True
+    assert identity["assignment_source"] == "saveData"
+    assert identity["assignment_status"] == "OK"
+    assert identity["assignment_method"] == "save_region_index_to_visual_order"
+    assert identity["routing"] == "lightning_war"
+    assert identity["mission_id"] == "Mission_Dam"
+    assert identity["mission_slot"] == "Mission1"
+    assert identity["mission_index"] == 1
+    assert identity["region_id"] == 3
+    assert identity["save_region_index"] == 0
+    assert identity["save_region_name"] == "Dam Flats"
+    assert identity["visual_signature"] == {
+        "index": 0,
+        "window_x": 300,
+        "window_y": 250,
+        "area_window": 123.0,
+        "bbox_window": [250, 200, 350, 300],
+        "visual_order": 0,
+    }
+
+
+def test_visual_route_candidates_keep_duplicate_mission_identity_by_visual_region():
+    recommendation = {
+        "status": "OK",
+        "source": "saveData",
+        "routing": "lightning_war",
+        "ranked": [
+            {
+                "mission_id": "Mission_Battle",
+                "mission_slot": "Mission1",
+                "save_region_index": 0,
+                "save_region_name": "North Flats",
+                "score": 20,
+            },
+            {
+                "mission_id": "Mission_Battle",
+                "mission_slot": "Mission2",
+                "save_region_index": 1,
+                "save_region_name": "South Flats",
+                "score": 19,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 7, "window_x": 301, "window_y": 251},
+            {"index": 9, "window_x": 801, "window_y": 521},
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    identities = {
+        candidate["index"]: candidate["route_identity"]
+        for candidate in result
+    }
+    assert identities[7]["mission_id"] == "Mission_Battle"
+    assert identities[7]["mission_slot"] == "Mission1"
+    assert identities[7]["save_region_index"] == 0
+    assert identities[7]["visual_signature"]["window_x"] == 301
+    assert identities[9]["mission_id"] == "Mission_Battle"
+    assert identities[9]["mission_slot"] == "Mission2"
+    assert identities[9]["save_region_index"] == 1
+    assert identities[9]["visual_signature"]["window_x"] == 801
+    assert all(identity["exact"] is True for identity in identities.values())
+
+
+def test_visual_route_candidates_mark_count_mismatch_identity_non_exact():
+    recommendation = {
+        "status": "OK",
+        "source": "saveData",
+        "routing": "lightning_war",
+        "ranked": [
+            {
+                "mission_id": "Mission_Dam",
+                "mission_slot": "Mission1",
+                "save_region_index": 0,
+                "save_region_name": "Dam Flats",
+                "score": 21,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 0, "window_x": 300, "window_y": 250},
+            {"index": 1, "window_x": 800, "window_y": 520},
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    assert len(result) == 2
+    assert all("route_option" not in candidate for candidate in result)
+    identities = [candidate["route_identity"] for candidate in result]
+    assert all(identity["status"] == "count_mismatch" for identity in identities)
+    assert all(identity["exact"] is False for identity in identities)
+    assert all(identity["assignment_status"] == "COUNT_MISMATCH" for identity in identities)
+    assert all(identity["assignment_source"] == "saveData" for identity in identities)
+    assert identities[0]["visual_signature"]["index"] == 0
+    assert identities[1]["visual_signature"]["index"] == 1
 
 
 def test_visual_route_candidates_use_baseline_policy_from_recommendation():
@@ -12834,6 +13040,15 @@ def test_visual_route_candidates_do_not_stamp_hint_on_multiple_unassigned_region
         "--expected-mission-id" not in candidate["route_start_command"]
         for candidate in result
     )
+    assert all(
+        candidate["route_identity"]["status"] == "unassigned"
+        for candidate in result
+    )
+    assert all(candidate["route_identity"]["exact"] is False for candidate in result)
+    assert all(
+        "mission_id" not in candidate["route_identity"]
+        for candidate in result
+    )
 
 
 def test_visual_route_candidate_allows_single_forced_bridge_preview():
@@ -12868,6 +13083,10 @@ def test_visual_route_candidate_allows_single_forced_bridge_preview():
     assert result[0]["mission_id"] == "Mission_Artillery"
     assert result[0]["forced_preview_route"] is True
     assert result[0]["auto_route_allowed"] is True
+    assert result[0]["route_identity"]["status"] == "diagnostic"
+    assert result[0]["route_identity"]["exact"] is False
+    assert result[0]["route_identity"]["assignment_source"] == "bridge_preview"
+    assert result[0]["route_identity"]["assignment_status"] == "FORCED_PREVIEW"
 
 
 def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview_above_floor():
@@ -12905,6 +13124,13 @@ def test_visual_route_candidate_blocks_ambiguous_forced_bridge_preview_above_flo
     assert all(candidate["forced_preview_route"] is True for candidate in result)
     assert all(candidate["forced_preview_ambiguous"] is True for candidate in result)
     assert all(candidate["auto_route_allowed"] is False for candidate in result)
+    assert all(candidate["route_identity"]["status"] == "ambiguous" for candidate in result)
+    assert all(candidate["route_identity"]["exact"] is False for candidate in result)
+    assert all(
+        candidate["route_identity"]["assignment_status"]
+        == "AMBIGUOUS_FORCED_PREVIEW"
+        for candidate in result
+    )
     assert all(
         candidate["auto_route_block_reason"]
         == "forced_bridge_preview_multiple_visible_regions"
