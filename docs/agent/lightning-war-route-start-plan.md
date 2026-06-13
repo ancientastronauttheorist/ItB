@@ -16,6 +16,17 @@ The first speed patch should therefore be an atomic, proof-gated route-start
 transaction. Deeper pause/resume optimizations should come after that
 transaction is reliable.
 
+## Agent Use
+
+Use agents liberally wherever and whenever they can reduce uncertainty, catch
+edge cases, or review implementation details. Good uses include route identity
+reviews, UI/click safety reviews, pause/resume audits, test-plan critiques,
+regression triage, and post-attempt analysis.
+
+Agents are especially useful before changing default Lightning War behavior or
+before running another live attempt. Their findings should be folded back into
+the active plan, tests, or focused docs instead of living only in chat.
+
 ## Implementation Roadmap
 
 ### 1. Route policy plumbing
