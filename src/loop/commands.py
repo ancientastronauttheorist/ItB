@@ -10403,6 +10403,54 @@ def _lightning_preferred_visible_control(
     return control
 
 
+def _lightning_pause_menu_has_island_map_underlay(
+    visible_ui: dict | None,
+) -> bool:
+    """Recognize the island map dimmed behind the pause menu."""
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return False
+    if visible_ui.get("visible_ui") != "pause_menu":
+        return False
+    scores = visible_ui.get("scores")
+    if not isinstance(scores, dict):
+        return False
+    island_map = scores.get("island_map")
+    if not isinstance(island_map, dict):
+        return False
+
+    def as_int(key: str) -> int:
+        try:
+            return int(island_map.get(key) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    try:
+        score = float(island_map.get("score") or 0.0)
+    except (TypeError, ValueError):
+        score = 0.0
+
+    red = as_int("red")
+    green = as_int("green")
+    colored = as_int("colored")
+    if not colored:
+        colored = red + green
+
+    # The pause overlay darkens map regions heavily; a real paused map still
+    # leaves a small but stable red/green signature in the map crop.
+    return colored >= 500 and score >= 0.0003 and (red >= 50 or green >= 50)
+
+
+def _lightning_route_visible_ui_from_pause_underlay(
+    visible_ui: dict,
+) -> dict:
+    route_visible_ui = dict(visible_ui)
+    route_visible_ui["visible_ui"] = "island_map"
+    route_visible_ui["recommended_control"] = None
+    route_visible_ui["pause_underlay_visible_ui"] = "pause_menu"
+    route_visible_ui["pause_underlay_route_signal"] = "island_map_color_signature"
+    return route_visible_ui
+
+
 def _lightning_visible_ui_is_active_intro_dialogue(
     visible_ui: dict | None,
 ) -> bool:
@@ -19163,10 +19211,24 @@ def cmd_lightning_attempt(
                 ),
             }
             return finish(result, pause_reason="lightning_attempt_panel_ready")
-        if (
-            visible_ui.get("status") == "OK"
-            and visible_ui.get("visible_ui") in {"island_map", "island_map_or_unknown"}
-        ):
+        route_visible_ui = None
+        route_ready_reason = "visible_island_map_save_route_plan"
+        route_needs_ui_reason = "bridge_snapshot_unavailable_visible_island_map"
+        stale_cleanup_reason = "visible_map_route_ready_bridge_unavailable"
+        if visible_ui.get("status") == "OK" and visible_ui.get("visible_ui") in {
+            "island_map",
+            "island_map_or_unknown",
+        }:
+            route_visible_ui = visible_ui
+        elif _lightning_pause_menu_has_island_map_underlay(visible_ui):
+            route_visible_ui = _lightning_route_visible_ui_from_pause_underlay(
+                visible_ui,
+            )
+            route_ready_reason = "paused_visible_island_map_save_route_plan"
+            route_needs_ui_reason = "bridge_snapshot_unavailable_paused_island_map"
+            stale_cleanup_reason = "paused_map_route_ready_bridge_unavailable"
+
+        if route_visible_ui is not None:
             stale_current_mission_warning = None
             if str(session.current_mission or "").strip():
                 stale_current_mission_warning = {
@@ -19175,23 +19237,26 @@ def cmd_lightning_attempt(
                 }
             route_plan = _lightning_visible_map_route_plan(
                 profile=profile,
-                visible_ui=visible_ui,
+                visible_ui=route_visible_ui,
                 route_routing=route_routing,
                 quiet=quiet,
             )
+            route_snapshot = {**snapshot, "visible_ui": route_visible_ui}
+            if route_visible_ui is not visible_ui:
+                route_snapshot["pause_menu_visible_ui"] = visible_ui
             if route_plan.get("route_start_candidates"):
                 stale_bridge_cleanup = (
                     _lightning_clear_stale_bridge_files_for_visible_map(
-                        reason="visible_map_route_ready_bridge_unavailable",
+                        reason=stale_cleanup_reason,
                         snapshot=snapshot,
-                        visible_ui=visible_ui,
+                        visible_ui=route_visible_ui,
                         dry_run=dry_run,
                     )
                 )
                 result = {
                     "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
-                    "reason": "visible_island_map_save_route_plan",
-                    "snapshot": snapshot,
+                    "reason": route_ready_reason,
+                    "snapshot": route_snapshot,
                     "budget": budget,
                     "preflight": preflight,
                     **route_plan,
@@ -19213,8 +19278,8 @@ def cmd_lightning_attempt(
                 return finish(result, pause_reason="lightning_attempt_visible_island_map")
             result = {
                 "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
-                "reason": "bridge_snapshot_unavailable_visible_island_map",
-                "snapshot": snapshot,
+                "reason": route_needs_ui_reason,
+                "snapshot": route_snapshot,
                 "budget": budget,
                 "preflight": preflight,
                 **route_plan,
@@ -20502,7 +20567,10 @@ def _lightning_segment_success_reason(result: dict) -> str | None:
         return "route_ready"
     if (
         status == "LIGHTNING_ATTEMPT_NEEDS_UI"
-        and reason == "bridge_snapshot_unavailable_visible_island_map"
+        and reason in {
+            "bridge_snapshot_unavailable_visible_island_map",
+            "bridge_snapshot_unavailable_paused_island_map",
+        }
     ):
         return "visible_island_map_without_bridge"
     if status == "LIGHTNING_ATTEMPT_NEEDS_UI" and reason == "deployment_bridge_state_uncertain":

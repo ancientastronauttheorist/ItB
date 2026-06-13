@@ -6358,6 +6358,134 @@ def test_lightning_attempt_uses_visible_island_map_when_bridge_missing(monkeypat
     assert result["snapshot"]["visible_ui"]["visible_ui"] == "island_map"
 
 
+def test_lightning_attempt_routes_paused_island_map_when_bridge_missing(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    seen = {}
+    cleanups = []
+    paused_map = {
+        "status": "OK",
+        "visible_ui": "pause_menu",
+        "recommended_control": "menu_continue",
+        "scores": {
+            "island_map": {
+                "score": 0.0006,
+                "red": 116,
+                "green": 707,
+                "colored": 823,
+            },
+        },
+    }
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: paused_map)
+
+    def fake_route_plan(**kwargs):
+        seen.update(kwargs)
+        return {
+            "recommendation": {"status": "OK"},
+            "route_target_hint": {"mission_id": "Mission_Train"},
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 430,
+                    "window_y": 320,
+                    "mission_id": "Mission_Train",
+                    "auto_route_allowed": True,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(commands, "_lightning_visible_map_route_plan", fake_route_plan)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_stale_bridge_files_for_visible_map",
+        lambda **kwargs: cleanups.append(kwargs)
+        or {"status": "OK", "reason": kwargs["reason"], "removed": ["state"]},
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
+    assert result["reason"] == "paused_visible_island_map_save_route_plan"
+    assert seen["visible_ui"]["visible_ui"] == "island_map"
+    assert seen["visible_ui"]["pause_underlay_visible_ui"] == "pause_menu"
+    assert result["snapshot"]["visible_ui"]["visible_ui"] == "island_map"
+    assert result["snapshot"]["pause_menu_visible_ui"]["visible_ui"] == "pause_menu"
+    assert result["primary_route_candidate_index"] == 0
+    assert result["stale_bridge_cleanup"]["reason"] == (
+        "paused_map_route_ready_bridge_unavailable"
+    )
+    assert cleanups[0]["visible_ui"]["visible_ui"] == "island_map"
+
+
+def test_lightning_attempt_does_not_route_generic_pause_without_map_signal(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {"status": "NO_BRIDGE"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "recommended_control": "menu_continue",
+            "scores": {
+                "island_map": {
+                    "score": 0.0,
+                    "red": 0,
+                    "green": 0,
+                    "colored": 0,
+                },
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("pause without map signal should not route")
+        ),
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_BLOCKED"
+    assert result["reason"] == "bridge_snapshot_unavailable"
+
+
 def test_lightning_attempt_clears_ocr_intro_when_bridge_missing(monkeypatch):
     session = RunSession(
         run_id="lw",
