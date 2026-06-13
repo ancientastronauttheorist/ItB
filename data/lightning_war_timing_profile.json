@@ -1,0 +1,29 @@
+{
+  "boundaries": {
+    "main_menu_to_archive_red_map": {
+      "archive_click_seconds": 7.975,
+      "branch_label": "archive_intro.default",
+      "chosen_probe_region": {
+        "area_window": 26830.2,
+        "coordinate_space": "physical_window",
+        "index": 0,
+        "window_x": 1062,
+        "window_y": 694
+      },
+      "evidence": {
+        "contact_sheet_path": "recordings\\lightning_ui_timing_20260613_145559\\telemetry\\contact_sheet.png",
+        "red_map_screenshot": "recordings\\lightning_ui_timing_20260613_145559\\telemetry\\screenshots\\000014_1781380617192_opening_probe.png",
+        "report_path": "run_notes\\lightning_ui_timing_loop\\lightning_ui_timing_20260613_145559_opening_red_map_report.json",
+        "run_id": "lightning_ui_timing_20260613_145559"
+      },
+      "intro_continue_seconds": 10.509,
+      "red_map_detected_seconds": 19.276,
+      "region_count": 2,
+      "status": "PASS",
+      "timer_zero": "lower difficulty setup Start click"
+    }
+  },
+  "current_milestone": "main_menu_to_archive_red_map",
+  "schema_version": 1,
+  "updated_at": "2026-06-13T14:56:58-05:00"
+}
