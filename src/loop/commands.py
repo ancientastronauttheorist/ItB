@@ -10290,6 +10290,7 @@ _LIGHTNING_UI_BURSTS = {
 _LIGHTNING_PAUSE_BLOCKING_UIS = {
     "reward_panel",
     "bottom_continue_panel",
+    "pod_open_panel",
     "promotion_panel",
     "perfect_reward_choice",
     "perfect_island_panel",
@@ -11705,9 +11706,11 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
 def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
     """Use bridge state to reject image-only live-combat false positives."""
     visible_name = visible_ui.get("visible_ui")
+    map_like_ui = {"island_map", "island_map_or_unknown"}
     if (
         visible_name != "deployment_screen"
         and visible_name not in _LIGHTNING_SAFE_CLEAR_UIS
+        and visible_name not in map_like_ui
     ):
         return visible_ui
 
@@ -11718,9 +11721,13 @@ def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
             "status",
             "phase",
             "turn",
+            "mission_id",
             "active_mechs",
+            "mech_count",
             "deployment_zone_count",
             "in_active_mission",
+            "bridge_heartbeat_alive",
+            "bridge_heartbeat_stale",
         )
         if key in snapshot
     }
@@ -11733,6 +11740,23 @@ def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
     except (TypeError, ValueError):
         turn = -1
     is_deployment = turn == 0 and int(snapshot.get("deployment_zone_count") or 0) > 0
+    if visible_name in map_like_ui:
+        phase = snapshot.get("phase")
+        if (
+            _lightning_bridge_snapshot_fresh_enough(snapshot)
+            and snapshot.get("in_active_mission") is True
+            and (
+                phase in _COMBAT_BRIDGE_PHASES
+                or is_deployment
+            )
+        ):
+            refined = dict(visible_ui)
+            refined["visible_ui"] = "combat_screen"
+            refined["recommended_control"] = None
+            refined["island_map_false_positive"] = True
+            return refined
+        return visible_ui
+
     if visible_name == "deployment_screen" and is_deployment:
         return visible_ui
 
@@ -13070,9 +13094,10 @@ def _lightning_pause_guard_decision(
         }
     if visible_name == "pod_open_panel":
         return {
-            "status": "SKIPPED",
-            "reason": "pod_panel_excluded_from_pause_guard",
+            "status": "BLOCKED",
+            "reason": "visible_panel_should_be_cleared_first",
             "pause_allowed": False,
+            "next_step": "Clear the visible pod panel before trying to pause.",
         }
     if (
         visible_name in _LIGHTNING_NON_PAUSEABLE_UIS
@@ -14503,10 +14528,7 @@ def _lightning_visible_map_route_plan(
                 "status": "USED",
                 "reason": (
                     "visible_map_ignored_stale_bridge_preview"
-                    if (
-                        recommendation_source == "bridge_preview"
-                        and save_has_auto_candidate
-                    )
+                    if recommendation_source == "bridge_preview"
                     else "visible_map_ignored_ambiguous_bridge_preview"
                     if recommendation_source == "bridge_preview"
                     else "visible_map_refreshed_unassigned_save_routes"
@@ -14594,7 +14616,11 @@ def _lightning_visible_map_route_plan(
                     if isinstance(candidate, dict)
                 ],
             }
-            if ocr_probe_candidates:
+            if (
+                ocr_probe_candidates
+                and not bridge_preview_probe_candidates
+                and not bridge_unassigned_probe_candidates
+            ):
                 route_candidates = [
                     {
                         **candidate,

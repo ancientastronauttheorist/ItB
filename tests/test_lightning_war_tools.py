@@ -1585,8 +1585,8 @@ def test_lightning_ui_clicks_pod_open_alias_dry_run():
 
     assert result["status"] == "DRY_RUN"
     assert result["control"] == "pod_open_door"
-    assert result["window_x"] == 965
-    assert result["window_y"] == 485
+    assert result["window_x"] == (1605 if commands.os.name == "nt" else 965)
+    assert result["window_y"] == (795 if commands.os.name == "nt" else 485)
 
 
 def test_lightning_ui_clicks_dialogue_textbox_alias_dry_run():
@@ -1754,6 +1754,32 @@ def test_lightning_ui_ensure_pause_blocks_deployment_screen(monkeypatch):
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "visible_ui_is_not_pauseable"
     assert "lightning_segment" in result["next_step"]
+
+
+def test_lightning_ui_ensure_pause_blocks_pod_open_panel(monkeypatch):
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "pod_open_panel",
+            "recommended_control": "pod_open_door",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_guard",
+        lambda *args, **kwargs: {"status": "BLOCKED", "path": "guard.json"},
+    )
+
+    result = commands.cmd_lightning_ui("ensure_pause")
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "visible_panel_should_be_cleared_first"
+    assert result["recommended_control"] == "pod_open_door"
 
 
 def test_lightning_ui_ensure_pause_recognizes_pause_menu(monkeypatch):
@@ -1947,6 +1973,22 @@ def test_lightning_pause_guard_allows_unknown_preview_context(monkeypatch):
     assert result["status"] == "OK"
     assert result["reason"] == "safe_ui_pause_available"
     assert result["pause_allowed"] is True
+
+
+def test_lightning_pause_guard_blocks_pod_open_panel_until_clear():
+    result = commands._lightning_pause_guard_decision(
+        {
+            "status": "OK",
+            "visible_ui": "pod_open_panel",
+            "recommended_control": "pod_open_door",
+        },
+        {"status": "NO_BRIDGE"},
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "visible_panel_should_be_cleared_first"
+    assert result["pause_allowed"] is False
+    assert "pod" in result["next_step"].lower()
 
 
 def test_lightning_pause_guard_retries_escape_on_windows_preview_close(
@@ -3511,6 +3553,67 @@ def test_lightning_refine_rejects_terminal_panel_during_enemy_animation(monkeypa
     assert result["visible_ui"] == "combat_screen"
     assert result["recommended_control"] is None
     assert result["terminal_panel_false_positive"] is True
+
+
+def test_lightning_refine_rejects_island_map_during_fresh_live_combat(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "mission_id": "Mission_Tides",
+            "active_mechs": 2,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+            "bridge_heartbeat_alive": True,
+        },
+    )
+
+    result = commands._lightning_refine_visible_ui_with_bridge(
+        {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "recommended_control": None,
+        }
+    )
+
+    assert result["visible_ui"] == "combat_screen"
+    assert result["recommended_control"] is None
+    assert result["island_map_false_positive"] is True
+    assert result["bridge_refine_snapshot"]["mission_id"] == "Mission_Tides"
+
+
+def test_lightning_refine_keeps_island_map_when_active_bridge_is_stale(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "mission_id": "Mission_Train",
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": True,
+            "bridge_heartbeat_alive": False,
+            "bridge_heartbeat_stale": True,
+        },
+    )
+
+    result = commands._lightning_refine_visible_ui_with_bridge(
+        {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "recommended_control": None,
+        }
+    )
+
+    assert result["visible_ui"] == "island_map"
+    assert result["bridge_refine_snapshot"]["bridge_heartbeat_stale"] is True
 
 
 def test_lightning_mark_records_timer_delta(monkeypatch, tmp_path):
