@@ -464,7 +464,7 @@ _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
     "pause": (38, 28),
     "pause_main_menu": (1131, 774),
     "setup_start": (1712, 477),
-    "setup_back": (583, 159),
+    "setup_back": (1510, 477),
     "setup_modal_start": (1704, 974),
     "menu_continue": (1129, 582),
     "bottom_continue": (1633, 1009),
