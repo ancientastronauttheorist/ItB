@@ -208,3 +208,148 @@ def test_select_visible_timer_context_returns_none_without_visible_candidates():
     )
 
     assert selected is None
+
+
+def test_decode_numeric_timer_normalizes_integer_milliseconds():
+    kind = probe.NUMERIC_TIMER_KIND_BY_NAME["u32_milliseconds"]
+    data = (44_250).to_bytes(4, "little")
+
+    raw, seconds = probe._decode_numeric_timer(data, 0, kind)
+
+    assert raw == 44_250
+    assert seconds == 44.25
+
+
+def test_scan_numeric_timer_candidates_reads_multiple_representations():
+    data = bytearray(64)
+    data[0:4] = probe.struct.pack("<f", 44.0)
+    data[8:16] = probe.struct.pack("<d", 44.0)
+    data[16:20] = (44_000).to_bytes(4, "little")
+
+    result = probe.scan_numeric_timer_candidates(
+        FakeReader({0x2000: bytes(data)}),
+        expected_seconds=44.0,
+        seconds_window=0.5,
+        max_timer_seconds=1800.0,
+        max_region_size=1024,
+        max_candidates_per_kind=10,
+        kinds=(
+            probe.NUMERIC_TIMER_KIND_BY_NAME["f32_seconds"],
+            probe.NUMERIC_TIMER_KIND_BY_NAME["f64_seconds"],
+            probe.NUMERIC_TIMER_KIND_BY_NAME["u32_milliseconds"],
+        ),
+        include_readonly=True,
+    )
+
+    kinds = {candidate["kind"] for candidate in result["candidates"]}
+    assert {"f32_seconds", "f64_seconds", "u32_milliseconds"} <= kinds
+    assert result["candidate_count_by_kind"]["u32_milliseconds"] >= 1
+
+
+def test_score_numeric_tracks_rejects_moving_wrong_start_value():
+    candidate = {
+        "address": "0x0000000000002000",
+        "kind": "f32_seconds",
+        "distance_seconds": 17.0,
+    }
+    tracks = [
+        {
+            "candidate": candidate,
+            "first_seconds": 27.0,
+            "last_seconds": 32.0,
+            "delta_seconds": 5.0,
+            "elapsed_seconds": 5.0,
+            "live_delta_error_seconds": 0.0,
+            "monotonic": True,
+            "moving_like_timer": True,
+            "seconds": [27.0, 28.0, 29.0, 30.0, 31.0, 32.0],
+        }
+    ]
+    current = {
+        probe._numeric_candidate_key(candidate): {
+            "read_ok": True,
+            "seconds": 32.0,
+        }
+    }
+
+    result = probe._score_numeric_tracks(
+        tracks=tracks,
+        start_truth_seconds=44.0,
+        final_truth_seconds=49.0,
+        current_values=current,
+        stable_values=current,
+        max_results=10,
+    )
+
+    assert result[0]["status"] == "moving_wrong_start_value"
+    assert result[0]["start_error_seconds"] == 17.0
+
+
+def test_score_numeric_tracks_accepts_cycle_candidate():
+    candidate = {
+        "address": "0x0000000000002000",
+        "kind": "f64_seconds",
+        "distance_seconds": 0.1,
+    }
+    tracks = [
+        {
+            "candidate": candidate,
+            "first_seconds": 44.1,
+            "last_seconds": 49.05,
+            "delta_seconds": 4.95,
+            "elapsed_seconds": 5.0,
+            "live_delta_error_seconds": 0.05,
+            "monotonic": True,
+            "moving_like_timer": True,
+            "seconds": [44.1, 45.0, 46.0, 47.0, 48.0, 49.05],
+        }
+    ]
+    current = {
+        probe._numeric_candidate_key(candidate): {
+            "read_ok": True,
+            "seconds": 49.0,
+        }
+    }
+    stable = {
+        probe._numeric_candidate_key(candidate): {
+            "read_ok": True,
+            "seconds": 49.01,
+        }
+    }
+
+    result = probe._score_numeric_tracks(
+        tracks=tracks,
+        start_truth_seconds=44.0,
+        final_truth_seconds=49.0,
+        current_values=current,
+        stable_values=stable,
+        max_results=10,
+    )
+
+    assert result[0]["status"] == "validated_cycle_candidate"
+
+
+def test_numeric_parser_accepts_ground_truth_scan_command():
+    args = probe.build_parser().parse_args(
+        [
+            "scan-numeric",
+            "--ground-truth-address",
+            "0x138a5900",
+            "--kinds",
+            "f64_seconds,u32_milliseconds",
+        ]
+    )
+
+    assert args.command == "scan-numeric"
+    assert args.ground_truth_address == 0x138A5900
+    assert args.kinds == "f64_seconds,u32_milliseconds"
+
+
+def test_numeric_parser_accepts_direct_track_address():
+    args = probe.build_parser().parse_args(
+        ["track-address", "0x122e5dbc", "f32_seconds"]
+    )
+
+    assert args.command == "track-address"
+    assert args.address == 0x122E5DBC
+    assert args.kind == "f32_seconds"

@@ -344,16 +344,22 @@ once its correctness is proven.
   game-touching commands; keep `game_loop.py` and UI-control commands serialized.
 - Use screenshots for novel UI and timing boundaries.
 - Use bridge reads for combat state once combat is loaded.
-- Use the live in-game timer memory reader only when its value is correlated
-  with pause-menu `Timeline Playtime` screenshot evidence. For the current
-  Windows process/session, `0x00000000138a5900` is the calibrated
-  `Timeline Playtime` string address: it matched visible paused values at
-  `0h 1m 04s`, `0h 1m 27s`, `0h 1m 48s`, and `0h 2m 14s`. This address is
-  process-local and must be rediscovered after game restart, PID change,
-  modloader reload, or platform change. Treat unanchored context summaries,
-  `visible_timer_string` aggregates, other string hits, and `f32` candidates as
-  diagnostic only unless they are corroborated by screenshot evidence or the
-  calibrated address.
+- Use the live in-game timer memory reader only after a numeric candidate has
+  been validated against pause-menu `Timeline Playtime` across a
+  pause -> unpause -> re-pause cycle. For the current Windows process/session
+  and PID 2100, `0x00000000122e5dbc` with kind `f32_seconds` is the validated
+  live numeric timer. It survived two live tracking cycles and a 2 Hz
+  screenshot filename smoke; use it with
+  `--memory-live-timer-address 0x00000000122e5dbc --memory-live-timer-kind f32_seconds`.
+  Rediscover it after game restart, PID change, modloader reload, or platform
+  change. In the same process, `0x00000000138a5900` is only a pause-menu
+  render/cache address for
+  `Timeline Playtime`: it matched visible paused values at `0h 1m 04s`,
+  `0h 1m 27s`, `0h 1m 48s`, `0h 2m 14s`, `0h 2m 47s`, and later `0h 21m 27s`,
+  but stayed stale while the live top-right timer advanced. Use that address as
+  a ground-truth oracle after re-pausing, not as the live screenshot frame
+  clock. Treat unanchored context summaries, `visible_timer_string` aggregates,
+  other string hits, and unvalidated numeric candidates as diagnostic only.
 - Never run two live `game_loop.py` commands at the same time.
 - Stop and park when a UI state is ambiguous.
 - On failure, try to reach the pause menu first before longer thinking.

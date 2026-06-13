@@ -61,13 +61,13 @@ def test_profile_boundary_from_report_keeps_first_milestone_evidence():
     assert boundary["timer_zero"] == "lower difficulty setup Start click"
     assert (
         boundary["primary_time_source"]
-        == "calibrated_memory_timeline_playtime_address_when_configured"
+        == "validated_memory_live_numeric_candidate_when_available"
     )
     assert boundary["fallback_time_source"] == "save_profile_current_time_not_top_right_validated"
     assert boundary["archive_click_wall_seconds"] == 7.0
     assert boundary["red_map_detected_wall_seconds"] == 10.25
-    assert boundary["red_map_detected_game_seconds"] == 6.0
-    assert boundary["red_map_detected_game_timer"] == "0:00:06"
+    assert boundary["red_map_detected_game_seconds"] is None
+    assert boundary["red_map_detected_game_timer"] is None
     assert boundary["in_game_timer"]["red_map_detected"]["game_timer"] == "0:00:06"
     assert (
         boundary["in_game_timer"]["red_map_detected"]["fallback_save_timer"]["game_seconds"]
@@ -121,7 +121,7 @@ def test_wait_for_archive_red_map_returns_pass_on_first_region(monkeypatch):
     monkeypatch.setattr(
         lab,
         "read_in_game_timer",
-        lambda profile, *, label, use_memory, timer_address=None: {
+        lambda profile, *, label, use_memory, timer_address=None, live_timer_address=None, live_timer_kind=None: {
             "status": "OK",
             "clock_source": "memory_timeline_playtime_address",
             "game_timer": "0:00:06",
@@ -137,6 +137,8 @@ def test_wait_for_archive_red_map_returns_pass_on_first_region(monkeypatch):
         profile="Alpha",
         use_memory_timer=True,
         memory_timer_address=0x138A5900,
+        memory_live_timer_address=None,
+        memory_live_timer_kind=None,
         max_seconds=2.0,
         interval_seconds=0.01,
     )
@@ -228,7 +230,59 @@ def test_read_memory_timer_uses_calibrated_timeline_address(monkeypatch):
     assert result["clock_source"] == "memory_timeline_playtime_address"
     assert result["address"] == "0x00000000138a5900"
     assert result["game_seconds"] == 64.0
-    assert result["timer_validation"] == "calibrated_pause_menu_timeline_playtime_address"
+    assert result["timer_validation"] == "pause_menu_render_cache_not_live_clock"
+    assert result["live_clock_usable"] is False
+
+
+def test_frame_clock_sampler_requires_calibrated_address(monkeypatch):
+    assert lab.make_frame_clock_sampler(use_memory=False, timer_address=0x138A5900) is None
+    assert lab.make_frame_clock_sampler(use_memory=True, timer_address=None) is None
+    assert lab.make_frame_clock_sampler(use_memory=True, timer_address=0x138A5900) is None
+
+
+def test_frame_clock_sampler_reads_live_numeric_candidate(monkeypatch):
+    opened = {"count": 0}
+
+    class FakeReader:
+        def __init__(self, pid):
+            opened["count"] += 1
+            self.pid = pid
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(lab.os, "name", "nt")
+    monkeypatch.setattr(lab.memory_probe, "_find_breach_pid", lambda: 123)
+    monkeypatch.setattr(lab.memory_probe, "WindowsProcessReader", FakeReader)
+    monkeypatch.setattr(
+        lab.memory_probe,
+        "read_numeric_timer_address",
+        lambda reader, address, kind: {
+            "read_ok": True,
+            "address": f"0x{address:016x}",
+            "kind": kind,
+            "seconds": 1271.635132,
+            "game_timer": "0:21:11",
+            "raw_value": 1271.635132,
+        },
+    )
+
+    sampler = lab.make_frame_clock_sampler(
+        use_memory=True,
+        timer_address=None,
+        live_timer_address=0x122E5DBC,
+        live_timer_kind="f32_seconds",
+    )
+
+    assert sampler is not None
+    sample = sampler()
+    second = sampler()
+    assert sample["clock_source"] == "memory_live_numeric_candidate"
+    assert sample["timer_validation"] == "validated_live_numeric_cycle"
+    assert sample["game_timer"] == "0:21:11"
+    assert sample["address"] == "0x00000000122e5dbc"
+    assert second["game_seconds"] == 1271.635132
+    assert opened["count"] == 1
 
 
 def test_update_profile_keeps_faster_existing_pass(monkeypatch, tmp_path):
@@ -305,7 +359,8 @@ def test_update_profile_promotes_in_game_timer_over_wall_only_pass(monkeypatch, 
             "in_game_timers": {
                 "red_map_detected": {
                     "status": "OK",
-                    "clock_source": "memory_visible_timer_context",
+                    "clock_source": "memory_live_numeric_candidate",
+                    "source": "validated_live_numeric_cycle",
                     "game_timer": "0:00:06",
                     "game_seconds": 6.0,
                     "game_timer_ms": 6000.0,

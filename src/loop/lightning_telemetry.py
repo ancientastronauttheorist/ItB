@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 try:
     from PIL import Image, ImageChops, ImageStat
@@ -49,6 +49,88 @@ def code_version() -> dict[str, Any]:
         "git_head": _git_text(["rev-parse", "HEAD"]),
         "git_branch": _git_text(["branch", "--show-current"]),
         "git_dirty": bool(_git_text(["status", "--short"])),
+    }
+
+
+def _filename_slug(value: Any, *, default: str) -> str:
+    text = str(value or "").strip().lower()
+    out = []
+    for char in text:
+        if char.isalnum():
+            out.append(char)
+        elif char in {"-", "_"}:
+            out.append(char)
+        elif char in {":", ".", " ", "/"}:
+            out.append("-")
+    slug = "".join(out).strip("-_")
+    while "--" in slug:
+        slug = slug.replace("--", "-")
+    return slug or default
+
+
+def _timer_filename_slug(sample: dict[str, Any] | None) -> str | None:
+    if not sample:
+        return None
+    if sample.get("status") != "OK":
+        status = _filename_slug(sample.get("status"), default="unavailable")
+        return f"gt-{status}"
+    timer = sample.get("game_timer")
+    if timer:
+        return f"gt{_filename_slug(timer, default='unknown')}"
+    try:
+        seconds = int(round(float(sample.get("game_seconds"))))
+    except (TypeError, ValueError):
+        return "gt-unknown"
+    return f"gt{seconds:06d}s"
+
+
+def _screenshot_filename(
+    *,
+    index: int,
+    wall_ms: int,
+    clock_state: str,
+    timer_slug: str | None = None,
+) -> str:
+    name_parts = [f"{index:06d}", str(wall_ms)]
+    if timer_slug:
+        name_parts.append(_filename_slug(timer_slug, default="gt-unknown"))
+    name_parts.append(_filename_slug(clock_state, default="state"))
+    return "_".join(name_parts) + ".png"
+
+
+def _clock_frame_fields(sample: dict[str, Any] | None) -> dict[str, Any]:
+    if not sample:
+        return {}
+    keys = (
+        "status",
+        "clock_source",
+        "game_timer",
+        "game_seconds",
+        "game_timer_ms",
+        "timer_validation",
+        "pid",
+        "address",
+        "raw",
+        "reason",
+    )
+    compact = {
+        key: sample.get(key)
+        for key in keys
+        if sample.get(key) is not None
+    }
+    return {
+        "frame_clock_status": sample.get("status"),
+        "frame_clock": compact,
+        **{
+            key: sample.get(key)
+            for key in (
+                "clock_source",
+                "game_timer",
+                "game_seconds",
+                "game_timer_ms",
+            )
+            if sample.get(key) is not None
+        },
     }
 
 
@@ -100,6 +182,14 @@ class TelemetryRecorder:
                 fh.write(json.dumps(row, sort_keys=True) + "\n")
         return row
 
+    def progress_ledger(self, **payload: Any) -> dict[str, Any]:
+        """Record one achievement-progress burst and its timer cost."""
+        return self.event("progress_ledger", **payload)
+
+    def timer_hygiene(self, **payload: Any) -> dict[str, Any]:
+        """Record speed-run timer cost for one autonomous command burst."""
+        return self.event("timer_hygiene", **payload)
+
     def frame(self, **payload: Any) -> dict[str, Any]:
         row = {**_event_base(self.run_id, "screenshot_frame"), **payload}
         with self._lock:
@@ -115,6 +205,38 @@ class TelemetryRecorder:
             for event in events
             if event.get("game_timer")
         ]
+        progress_rows = [
+            event for event in events
+            if event.get("event_type") == "progress_ledger"
+        ]
+        hygiene_rows = [
+            event for event in events
+            if event.get("event_type") == "timer_hygiene"
+        ]
+        progress_counts: dict[str, int] = {}
+        progress_timer: dict[str, float] = {}
+        for event in progress_rows:
+            result = str(event.get("result") or "unknown")
+            progress_counts[result] = progress_counts.get(result, 0) + 1
+            try:
+                delta = float(event.get("timer_delta_seconds"))
+            except (TypeError, ValueError):
+                continue
+            if delta > 0:
+                progress_timer[result] = progress_timer.get(result, 0.0) + delta
+        hygiene_counts: dict[str, int] = {}
+        hygiene_timer: dict[str, float] = {}
+        for event in hygiene_rows:
+            classification = str(event.get("classification") or "unknown")
+            hygiene_counts[classification] = hygiene_counts.get(classification, 0) + 1
+            try:
+                delta = float(event.get("timer_delta_seconds"))
+            except (TypeError, ValueError):
+                continue
+            if delta > 0:
+                hygiene_timer[classification] = (
+                    hygiene_timer.get(classification, 0.0) + delta
+                )
         lines = [
             f"# Lightning War Telemetry - {self.run_id}",
             "",
@@ -125,7 +247,31 @@ class TelemetryRecorder:
             f"- Frames dropped: {sum(1 for frame in frames if frame.get('dropped'))}",
             f"- First timer: {timers[0] if timers else ''}",
             f"- Last timer: {timers[-1] if timers else ''}",
+            f"- Progress ledger events: {len(progress_rows)}",
+            f"- Timer hygiene events: {len(hygiene_rows)}",
         ]
+        if progress_counts:
+            counts = ", ".join(
+                f"{key}={value}" for key, value in sorted(progress_counts.items())
+            )
+            lines.append(f"- Progress results: {counts}")
+        if progress_timer:
+            timers_text = ", ".join(
+                f"{key}={round(value, 3)}s"
+                for key, value in sorted(progress_timer.items())
+            )
+            lines.append(f"- Positive timer by result: {timers_text}")
+        if hygiene_counts:
+            counts = ", ".join(
+                f"{key}={value}" for key, value in sorted(hygiene_counts.items())
+            )
+            lines.append(f"- Timer hygiene classes: {counts}")
+        if hygiene_timer:
+            timers_text = ", ".join(
+                f"{key}={round(value, 3)}s"
+                for key, value in sorted(hygiene_timer.items())
+            )
+            lines.append(f"- Positive timer by hygiene class: {timers_text}")
         if extra:
             lines.append("- Extra:")
             for key, value in sorted(extra.items()):
@@ -141,13 +287,27 @@ class ScreenshotRecorder:
         telemetry: TelemetryRecorder,
         *,
         cadence_seconds: float = 2.0,
+        max_retained_frames: int | None = None,
+        max_retained_clock_states: int | None = 3,
+        frame_clock_sampler: Callable[[], dict[str, Any] | None] | None = None,
     ) -> None:
         self.telemetry = telemetry
         self.cadence_seconds = max(0.5, float(cadence_seconds))
+        self.max_retained_frames = (
+            None
+            if max_retained_frames is None
+            else max(1, int(max_retained_frames))
+        )
+        self.max_retained_clock_states = (
+            None
+            if max_retained_clock_states is None
+            else max(1, int(max_retained_clock_states))
+        )
         self._stop = threading.Event()
         self._capture_lock = threading.Lock()
         self._thread: threading.Thread | None = None
         self._index = 0
+        self.frame_clock_sampler = frame_clock_sampler
 
     def start(self) -> None:
         if self._thread is not None:
@@ -159,6 +319,12 @@ class ScreenshotRecorder:
         self._stop.set()
         if self._thread is not None:
             self._thread.join(timeout=max(2.0, self.cadence_seconds + 1.0))
+        self.close()
+
+    def close(self) -> None:
+        close = getattr(self.frame_clock_sampler, "close", None)
+        if callable(close):
+            close()
 
     def _run(self) -> None:
         next_at = time.monotonic()
@@ -180,7 +346,15 @@ class ScreenshotRecorder:
             )
         try:
             self._index += 1
-            name = f"{self._index:06d}_{int(time.time() * 1000)}_{clock_state}.png"
+            clock_sample, clock_sample_latency = self._sample_frame_clock()
+            timer_slug = _timer_filename_slug(clock_sample)
+            wall_ms = int(time.time() * 1000)
+            name = _screenshot_filename(
+                index=self._index,
+                wall_ms=wall_ms,
+                clock_state=clock_state,
+                timer_slug=timer_slug,
+            )
             path = self.telemetry.screenshots_dir / name
             started = time.monotonic()
             result = capture_game_window(path)
@@ -190,19 +364,99 @@ class ScreenshotRecorder:
                     dropped=True,
                     drop_reason=result.get("error") or result.get("reason") or "capture_failed",
                     capture_latency_seconds=latency,
+                    clock_sample_latency_seconds=clock_sample_latency,
                     clock_state=clock_state,
                     note=note,
+                    **_clock_frame_fields(clock_sample),
                 )
-            return self.telemetry.frame(
+            row = self.telemetry.frame(
                 dropped=False,
                 screenshot_path=str(path),
                 capture_latency_seconds=latency,
+                clock_sample_latency_seconds=clock_sample_latency,
                 clock_state=clock_state,
                 note=note,
                 bounds=result.get("bounds"),
+                **_clock_frame_fields(clock_sample),
             )
+            self._prune_retained_screenshots()
+            return row
         finally:
             self._capture_lock.release()
+
+    def _sample_frame_clock(self) -> tuple[dict[str, Any] | None, float | None]:
+        if self.frame_clock_sampler is None:
+            return None, None
+        started = time.monotonic()
+        try:
+            sample = self.frame_clock_sampler()
+        except Exception as exc:
+            sample = {
+                "status": "ERROR",
+                "reason": str(exc),
+                "clock_source": "frame_clock_sampler",
+            }
+        return sample, round(time.monotonic() - started, 3)
+
+    def _prune_retained_screenshots(self) -> None:
+        self._prune_retained_clock_states()
+        self._prune_retained_frames()
+
+    def _prune_retained_clock_states(self) -> None:
+        if self.max_retained_clock_states is None:
+            return
+        rows = [
+            row for row in _load_jsonl(self.telemetry.frames_path)
+            if row.get("screenshot_path") and not row.get("dropped")
+        ]
+        ordered_states: list[str] = []
+        for row in rows:
+            clock_state = str(row.get("clock_state") or "unknown")
+            if clock_state not in ordered_states:
+                ordered_states.append(clock_state)
+        retained_states = set(ordered_states[-self.max_retained_clock_states:])
+        if len(ordered_states) <= len(retained_states):
+            return
+        screenshots_dir = self.telemetry.screenshots_dir.resolve()
+        for row in rows:
+            clock_state = str(row.get("clock_state") or "unknown")
+            if clock_state in retained_states:
+                continue
+            path = Path(str(row["screenshot_path"]))
+            try:
+                if path.resolve().parent != screenshots_dir or not path.is_file():
+                    continue
+                path.unlink()
+            except OSError:
+                continue
+
+    def _prune_retained_frames(self) -> None:
+        if self.max_retained_frames is None:
+            return
+        screenshots_dir = self.telemetry.screenshots_dir
+        try:
+            screenshots = [
+                path
+                for path in screenshots_dir.glob("*.png")
+                if path.is_file()
+            ]
+        except OSError:
+            return
+        excess = len(screenshots) - self.max_retained_frames
+        if excess <= 0:
+            return
+        sortable = []
+        for path in screenshots:
+            try:
+                sortable.append((path.stat().st_mtime, path.name, path))
+            except OSError:
+                continue
+        sortable.sort()
+        for _mtime, _name, path in sortable[:excess]:
+            try:
+                path.unlink()
+            except OSError:
+                continue
 
 
 def capture_game_window(path: Path) -> dict[str, Any]:

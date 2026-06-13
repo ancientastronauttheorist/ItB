@@ -35,8 +35,8 @@
         ],
         "pause_menu_timeline_playtime_string": {
           "address": "0x00000000138a5900",
-          "current_process_latest_direct_read": "0:02:14",
-          "current_process_latest_visible_pause_menu": "0h 2m 14s",
+          "current_process_latest_direct_read": "0:21:27",
+          "current_process_latest_visible_pause_menu": "0h 21m 27s",
           "evidence": [
             "run_notes\\lightning_ui_timing_loop\\memory_probe_cycle1_64_string_addresses.json",
             "run_notes\\lightning_ui_timing_loop\\memory_probe_cycle2_87_string_address_tracking.json",
@@ -54,12 +54,42 @@
             "unanchored_context_summaries",
             "other_stale_string_addresses"
           ],
-          "status": "TRUSTED_CURRENT_PROCESS",
-          "validity": "current_process_session_only"
+          "status": "PAUSE_MENU_ORACLE_CURRENT_PROCESS",
+          "validity": "current_process_session_only",
+          "warning": "render/cache string, not live-updating while unpaused"
+        },
+        "validated_live_numeric_candidate": {
+          "address": "0x00000000122e5dbc",
+          "kind": "f32_seconds",
+          "pid": 2100,
+          "status": "VALIDATED_CURRENT_PROCESS",
+          "validation": [
+            {
+              "evidence": "run_notes\\lightning_ui_timing_loop\\memory_numeric_score_live_1254_cycle1.json",
+              "live_delta_seconds": 3.993896,
+              "live_elapsed_seconds": 4.000087,
+              "final_pause_playtime": "0:21:11",
+              "final_numeric_timer": "0:21:11"
+            },
+            {
+              "evidence": "run_notes\\lightning_ui_timing_loop\\memory_numeric_track_address_122e5dbc_cycle2.json",
+              "live_delta_seconds": 3.994507,
+              "live_elapsed_seconds": 4.000677,
+              "final_pause_playtime": "0:21:27",
+              "final_numeric_timer": "0:21:27"
+            }
+          ],
+          "screenshot_evidence": "recordings\\lightning_live_numeric_filename_smoke_20260613_162932",
+          "rediscover_after": [
+            "process_restart",
+            "pid_change",
+            "modloader_reload",
+            "platform_change"
+          ]
         }
       },
       "intro_continue_wall_seconds": 10.509,
-      "primary_time_source": "wall_clock_for_promoted_boundary; calibrated_pause_timeline_playtime_string_available_current_process",
+      "primary_time_source": "wall_clock_for_promoted_boundary; validated_live_numeric_candidate_available_current_process",
       "red_map_detected_game_seconds": null,
       "red_map_detected_game_timer": null,
       "red_map_detected_wall_seconds": 19.276,

@@ -37,8 +37,7 @@ NOTEBOOK_PATH = ROOT / "docs" / "agent" / "lightning-war-timing-profile.md"
 REPORT_DIR = ROOT / "run_notes" / "lightning_ui_timing_loop"
 LIGHTNING_TIMER_LIMIT_SECONDS = 30 * 60
 TRUSTED_MEMORY_CLOCK_SOURCES = {
-    "memory_visible_timer_context",
-    "memory_timeline_playtime_address",
+    "memory_live_numeric_candidate",
 }
 
 
@@ -93,6 +92,8 @@ def _read_memory_in_game_timer(
     *,
     label: str,
     timer_address: int | None = None,
+    live_timer_address: int | None = None,
+    live_timer_kind: str | None = None,
 ) -> dict[str, Any]:
     if os.name != "nt":
         return {
@@ -100,7 +101,9 @@ def _read_memory_in_game_timer(
             "reason": "memory timer probe is Windows-only",
             "label": label,
             "clock_source": (
-                "memory_timeline_playtime_address"
+                "memory_live_numeric_candidate"
+                if live_timer_address is not None
+                else "memory_timeline_playtime_address"
                 if timer_address is not None
                 else "memory_visible_timer_context"
             ),
@@ -112,55 +115,37 @@ def _read_memory_in_game_timer(
             "reason": "Breach.exe not found",
             "label": label,
             "clock_source": (
-                "memory_timeline_playtime_address"
+                "memory_live_numeric_candidate"
+                if live_timer_address is not None
+                else "memory_timeline_playtime_address"
                 if timer_address is not None
                 else "memory_visible_timer_context"
             ),
         }
     try:
         with memory_probe.WindowsProcessReader(pid) as reader:
+            if live_timer_address is not None and live_timer_kind:
+                direct = memory_probe.read_numeric_timer_address(
+                    reader,
+                    live_timer_address,
+                    live_timer_kind,
+                )
+                return _live_numeric_timer_result(
+                    label=label,
+                    pid=pid,
+                    direct=direct,
+                    kind=live_timer_kind,
+                )
             if timer_address is not None:
                 direct = memory_probe.read_timeline_playtime_address(
                     reader,
                     timer_address,
                 )
-                if direct.get("status") != "OK":
-                    return {
-                        **direct,
-                        "label": label,
-                        "pid": pid,
-                        "clock_source": "memory_timeline_playtime_address",
-                        "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
-                    }
-                seconds = float(direct["seconds"])
-                if seconds > LIGHTNING_TIMER_LIMIT_SECONDS:
-                    return {
-                        "status": "REJECTED",
-                        "reason": "calibrated memory timer exceeds Lightning War 30 minute achievement limit",
-                        "label": label,
-                        "clock_source": "memory_timeline_playtime_address",
-                        "source": direct.get("source"),
-                        "pid": pid,
-                        "address": direct.get("address"),
-                        "raw": direct.get("raw"),
-                        "game_timer": direct.get("game_timer"),
-                        "game_seconds": seconds,
-                        "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
-                        "selected_timer": direct,
-                    }
-                return {
-                    "status": "OK",
-                    "label": label,
-                    "clock_source": "memory_timeline_playtime_address",
-                    "source": direct.get("source"),
-                    "pid": pid,
-                    "address": direct.get("address"),
-                    "raw": direct.get("raw"),
-                    "game_timer": direct.get("game_timer"),
-                    "game_seconds": seconds,
-                    "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
-                    "selected_timer": direct,
-                }
+                return _timeline_address_timer_result(
+                    label=label,
+                    pid=pid,
+                    direct=direct,
+                )
             context = memory_probe.scan_context_timers(
                 reader,
                 max_region_size=32 * 1024 * 1024,
@@ -172,7 +157,9 @@ def _read_memory_in_game_timer(
             "reason": str(exc),
             "label": label,
             "clock_source": (
-                "memory_timeline_playtime_address"
+                "memory_live_numeric_candidate"
+                if live_timer_address is not None
+                else "memory_timeline_playtime_address"
                 if timer_address is not None
                 else "memory_visible_timer_context"
             ),
@@ -236,10 +223,17 @@ def read_in_game_timer(
     label: str,
     use_memory: bool = True,
     timer_address: int | None = None,
+    live_timer_address: int | None = None,
+    live_timer_kind: str | None = None,
 ) -> dict[str, Any]:
     """Read the achievement clock used by Lightning War."""
     memory = (
-        _read_memory_in_game_timer(label=label, timer_address=timer_address)
+        _read_memory_in_game_timer(
+            label=label,
+            timer_address=timer_address,
+            live_timer_address=live_timer_address,
+            live_timer_kind=live_timer_kind,
+        )
         if use_memory
         else None
     )
@@ -247,7 +241,7 @@ def read_in_game_timer(
     save["label"] = label
     save["clock_source"] = "save_current_time"
     save["timer_validation"] = "fallback_not_top_right_validated"
-    if memory and memory.get("status") == "OK":
+    if memory and memory.get("status") == "OK" and _timer_sample_seconds(memory) is not None:
         result = dict(memory)
         result["fallback_save_timer"] = save
         return result
@@ -255,6 +249,222 @@ def read_in_game_timer(
     if memory:
         result["memory_timer_probe"] = memory
     return result
+
+
+def _timeline_address_timer_result(
+    *,
+    label: str,
+    pid: int,
+    direct: dict[str, Any],
+) -> dict[str, Any]:
+    if direct.get("status") != "OK":
+        return {
+            **direct,
+            "label": label,
+            "pid": pid,
+            "clock_source": "memory_timeline_playtime_address",
+            "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
+            "live_clock_usable": False,
+        }
+    seconds = float(direct["seconds"])
+    if seconds > LIGHTNING_TIMER_LIMIT_SECONDS:
+        return {
+            "status": "REJECTED",
+            "reason": "calibrated memory timer exceeds Lightning War 30 minute achievement limit",
+            "label": label,
+            "clock_source": "memory_timeline_playtime_address",
+            "source": direct.get("source"),
+            "pid": pid,
+            "address": direct.get("address"),
+            "raw": direct.get("raw"),
+            "game_timer": direct.get("game_timer"),
+            "game_seconds": seconds,
+            "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
+            "live_clock_usable": False,
+            "selected_timer": direct,
+        }
+    return {
+        "status": "OK",
+        "label": label,
+        "clock_source": "memory_timeline_playtime_address",
+        "source": direct.get("source"),
+        "pid": pid,
+        "address": direct.get("address"),
+        "raw": direct.get("raw"),
+        "game_timer": direct.get("game_timer"),
+        "game_seconds": seconds,
+        "timer_validation": "pause_menu_render_cache_not_live_clock",
+        "live_clock_usable": False,
+        "selected_timer": direct,
+    }
+
+
+def _live_numeric_timer_result(
+    *,
+    label: str,
+    pid: int,
+    direct: dict[str, Any],
+    kind: str,
+) -> dict[str, Any]:
+    if not direct.get("read_ok"):
+        return {
+            **direct,
+            "status": "ERROR",
+            "label": label,
+            "pid": pid,
+            "clock_source": "memory_live_numeric_candidate",
+            "kind": kind,
+            "timer_validation": "validated_live_numeric_cycle",
+            "live_clock_usable": True,
+        }
+    seconds = float(direct["seconds"])
+    if seconds > LIGHTNING_TIMER_LIMIT_SECONDS:
+        return {
+            "status": "REJECTED",
+            "reason": "live numeric memory timer exceeds Lightning War 30 minute achievement limit",
+            "label": label,
+            "clock_source": "memory_live_numeric_candidate",
+            "source": "validated_live_numeric_cycle",
+            "pid": pid,
+            "address": direct.get("address"),
+            "kind": kind,
+            "raw": direct.get("raw_value"),
+            "game_timer": direct.get("game_timer"),
+            "game_seconds": seconds,
+            "timer_validation": "validated_live_numeric_cycle",
+            "live_clock_usable": True,
+            "selected_timer": direct,
+        }
+    return {
+        "status": "OK",
+        "label": label,
+        "clock_source": "memory_live_numeric_candidate",
+        "source": "validated_live_numeric_cycle",
+        "pid": pid,
+        "address": direct.get("address"),
+        "kind": kind,
+        "raw": direct.get("raw_value"),
+        "game_timer": direct.get("game_timer"),
+        "game_seconds": seconds,
+        "timer_validation": "validated_live_numeric_cycle",
+        "live_clock_usable": True,
+        "selected_timer": direct,
+    }
+
+
+class CalibratedTimelineFrameClockSampler:
+    def __init__(self, timer_address: int) -> None:
+        self.timer_address = timer_address
+        self.pid: int | None = None
+        self.reader: memory_probe.WindowsProcessReader | None = None
+
+    def __call__(self) -> dict[str, Any]:
+        if os.name != "nt":
+            return {
+                "status": "UNAVAILABLE",
+                "reason": "memory timer probe is Windows-only",
+                "label": "screenshot_frame",
+                "clock_source": "memory_timeline_playtime_address",
+            }
+        reader = self._reader()
+        if reader is None or self.pid is None:
+            return {
+                "status": "UNAVAILABLE",
+                "reason": "Breach.exe not found",
+                "label": "screenshot_frame",
+                "clock_source": "memory_timeline_playtime_address",
+            }
+        direct = memory_probe.read_timeline_playtime_address(
+            reader,
+            self.timer_address,
+        )
+        return _timeline_address_timer_result(
+            label="screenshot_frame",
+            pid=self.pid,
+            direct=direct,
+        )
+
+    def close(self) -> None:
+        if self.reader is not None:
+            self.reader.close()
+            self.reader = None
+
+    def _reader(self) -> memory_probe.WindowsProcessReader | None:
+        if self.reader is not None:
+            return self.reader
+        pid = memory_probe._find_breach_pid()
+        if pid is None:
+            self.close()
+            self.pid = None
+            return None
+        self.pid = pid
+        self.reader = memory_probe.WindowsProcessReader(pid)
+        return self.reader
+
+
+class LiveNumericFrameClockSampler:
+    def __init__(self, timer_address: int, timer_kind: str) -> None:
+        self.timer_address = timer_address
+        self.timer_kind = timer_kind
+        self.pid: int | None = None
+        self.reader: memory_probe.WindowsProcessReader | None = None
+
+    def __call__(self) -> dict[str, Any]:
+        if os.name != "nt":
+            return {
+                "status": "UNAVAILABLE",
+                "reason": "memory timer probe is Windows-only",
+                "label": "screenshot_frame",
+                "clock_source": "memory_live_numeric_candidate",
+            }
+        reader = self._reader()
+        if reader is None or self.pid is None:
+            return {
+                "status": "UNAVAILABLE",
+                "reason": "Breach.exe not found",
+                "label": "screenshot_frame",
+                "clock_source": "memory_live_numeric_candidate",
+            }
+        direct = memory_probe.read_numeric_timer_address(
+            reader,
+            self.timer_address,
+            self.timer_kind,
+        )
+        return _live_numeric_timer_result(
+            label="screenshot_frame",
+            pid=self.pid,
+            direct=direct,
+            kind=self.timer_kind,
+        )
+
+    def close(self) -> None:
+        if self.reader is not None:
+            self.reader.close()
+            self.reader = None
+
+    def _reader(self) -> memory_probe.WindowsProcessReader | None:
+        if self.reader is not None:
+            return self.reader
+        pid = memory_probe._find_breach_pid()
+        if pid is None:
+            self.close()
+            self.pid = None
+            return None
+        self.pid = pid
+        self.reader = memory_probe.WindowsProcessReader(pid)
+        return self.reader
+
+
+def make_frame_clock_sampler(
+    *,
+    use_memory: bool,
+    timer_address: int | None,
+    live_timer_address: int | None = None,
+    live_timer_kind: str | None = None,
+) -> Any:
+    if use_memory and live_timer_address is not None and live_timer_kind:
+        return LiveNumericFrameClockSampler(live_timer_address, live_timer_kind)
+    return None
 
 
 def _timer_sample_seconds(sample: dict[str, Any] | None) -> float | None:
@@ -306,11 +516,12 @@ def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
     selected = red_detection.get("selected_region") or {}
     in_game_timers = report.get("in_game_timers") or {}
     red_timer = in_game_timers.get("red_map_detected")
+    trusted_red_seconds = _timer_sample_seconds(red_timer)
     return {
         "status": report.get("status"),
         "branch_label": report.get("branch_label"),
         "timer_zero": "lower difficulty setup Start click",
-        "primary_time_source": "calibrated_memory_timeline_playtime_address_when_configured",
+        "primary_time_source": "validated_memory_live_numeric_candidate_when_available",
         "fallback_time_source": "save_profile_current_time_not_top_right_validated",
         "archive_click_wall_seconds": report.get("marks", {}).get("archive_click"),
         "intro_continue_wall_seconds": report.get("marks", {}).get("intro_continue"),
@@ -322,9 +533,11 @@ def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
                 for key, value in in_game_timers.items()
             },
         },
-        "red_map_detected_game_seconds": _timer_sample_seconds(red_timer),
+        "red_map_detected_game_seconds": trusted_red_seconds,
         "red_map_detected_game_timer": (
-            red_timer.get("game_timer") if isinstance(red_timer, dict) else None
+            red_timer.get("game_timer")
+            if trusted_red_seconds is not None and isinstance(red_timer, dict)
+            else None
         ),
         "region_count": red_detection.get("region_count"),
         "chosen_probe_region": {
@@ -403,7 +616,7 @@ def append_notebook_report(report: dict[str, Any]) -> None:
         f"- Result: {report.get('status')}",
         f"- Branch: {report.get('branch_label')}",
         "- Boundary: main menu -> lower Start timer zero -> Archive -> red map",
-        "- Primary time source: validated memory probe; prefer configured `memory_timeline_playtime_address`, fallback save/profile `current.time` is not accepted as top-right proof",
+        "- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles",
         f"- Red map detected in-game timer: {red_timer.get('game_timer') or 'n/a'}",
         f"- Red map timer source: {red_timer.get('clock_source') or 'n/a'}",
         f"- Archive click wall elapsed: {_seconds_text(report.get('marks', {}).get('archive_click'))}",
@@ -464,6 +677,8 @@ def wait_for_archive_red_map(
     profile: str,
     use_memory_timer: bool,
     memory_timer_address: int | None,
+    memory_live_timer_address: int | None,
+    memory_live_timer_kind: str | None,
     max_seconds: float,
     interval_seconds: float,
 ) -> dict[str, Any]:
@@ -540,6 +755,8 @@ def wait_for_archive_red_map(
                 label="red_map_detected_screenshot_pair",
                 use_memory=use_memory_timer,
                 timer_address=memory_timer_address,
+                live_timer_address=memory_live_timer_address,
+                live_timer_kind=memory_live_timer_kind,
             )
             selected, annotated = fast.select_red_region_candidate(regions)
             return {
@@ -593,6 +810,8 @@ def prepare_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
+    memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
+    memory_live_timer_kind = args.memory_live_timer_kind
     telemetry = TelemetryRecorder(run_id=run_id, root=ROOT / "recordings")
     telemetry.write_manifest(
         {
@@ -605,6 +824,17 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
                 if memory_timer_address is not None
                 else None
             ),
+            "memory_live_timer_address": (
+                f"0x{memory_live_timer_address:016x}"
+                if memory_live_timer_address is not None
+                else None
+            ),
+            "memory_live_timer_kind": memory_live_timer_kind,
+            "screenshot_filename_timer_source": (
+                "memory_live_numeric_candidate"
+                if memory_live_timer_address is not None and args.memory_timer_probe
+                else None
+            ),
         }
     )
     startup = prepare_from_main_menu(args)
@@ -612,10 +842,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     in_game_timers: dict[str, Any] = {
         "pre_timer": read_in_game_timer(
             args.profile,
-            label="pre_timer",
-            use_memory=args.memory_timer_probe,
-            timer_address=memory_timer_address,
-        ),
+        label="pre_timer",
+        use_memory=args.memory_timer_probe,
+        timer_address=memory_timer_address,
+        live_timer_address=memory_live_timer_address,
+        live_timer_kind=memory_live_timer_kind,
+    ),
     }
 
     timer_start = time.perf_counter()
@@ -624,6 +856,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         cadence_seconds=args.screenshot_cadence,
         max_retained_frames=args.max_retained_frames,
         max_retained_clock_states=None,
+        frame_clock_sampler=make_frame_clock_sampler(
+            use_memory=args.memory_timer_probe,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        ),
     )
     marks: dict[str, Any] = {"timer_zero": 0.0}
     telemetry.event(
@@ -641,6 +879,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         label="timer_zero_click",
         use_memory=args.memory_timer_probe,
         timer_address=memory_timer_address,
+        live_timer_address=memory_live_timer_address,
+        live_timer_kind=memory_live_timer_kind,
     )
 
     capture_until(
@@ -662,6 +902,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         label="archive_click",
         use_memory=args.memory_timer_probe,
         timer_address=memory_timer_address,
+        live_timer_address=memory_live_timer_address,
+        live_timer_kind=memory_live_timer_kind,
     )
 
     if args.continue_click_seconds >= 0:
@@ -684,6 +926,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             label="intro_continue",
             use_memory=args.memory_timer_probe,
             timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
         )
 
     red_detection = wait_for_archive_red_map(
@@ -693,6 +937,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         profile=args.profile,
         use_memory_timer=args.memory_timer_probe,
         memory_timer_address=memory_timer_address,
+        memory_live_timer_address=memory_live_timer_address,
+        memory_live_timer_kind=memory_live_timer_kind,
         max_seconds=args.red_map_timeout_seconds,
         interval_seconds=args.red_probe_interval_seconds,
     )
@@ -704,6 +950,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             label="red_map_detected",
             use_memory=args.memory_timer_probe,
             timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
         )
     )
     frame_report = generate_frame_delta_report(telemetry.run_dir)
@@ -773,6 +1021,18 @@ def build_parser() -> argparse.ArgumentParser:
             "Process-local calibrated pause-menu Timeline Playtime string "
             "address, for example 0x00000000138a5900."
         ),
+    )
+    parser.add_argument(
+        "--memory-live-timer-address",
+        help=(
+            "Process-local validated live numeric timer address, for example "
+            "0x00000000122e5dbc."
+        ),
+    )
+    parser.add_argument(
+        "--memory-live-timer-kind",
+        default="f32_seconds",
+        help="Numeric timer representation for --memory-live-timer-address.",
     )
     parser.add_argument("--screenshot-cadence", type=float, default=0.5)
     parser.add_argument("--max-retained-frames", type=int, default=360)

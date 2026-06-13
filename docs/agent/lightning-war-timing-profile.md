@@ -7,21 +7,26 @@ This notebook explains the executable timings stored in
 
 - Status: PASS on `lightning_ui_timing_20260613_145559`
 - Timer zero: lower difficulty setup Start click
-- Primary time source: wall-clock for the promoted boundary; calibrated
-  pause-menu `Timeline Playtime` memory string is available for the current
-  process/session
+- Primary time source: wall-clock for the promoted boundary; validated live
+  numeric memory timer is available for the current process/session
 - Red-map in-game timer: not recorded for the current promoted pass
-- Memory probe validation: trusted for the current process only. Address
-  `0x00000000138a5900` tracked pause-menu `Timeline Playtime` from
-  `0h 1m 04s` to `0h 1m 27s` to `0h 1m 48s`, then matched the visible pause
-  menu at `0h 2m 14s` after another toggle. Rediscover after restart or PID
-  change.
+- Memory probe validation: `0x00000000122e5dbc` as `f32_seconds` is the
+  validated live numeric timer for PID 2100. It advanced `3.993896s` over a
+  `4.000087s` live track, then `3.994507s` over a second `4.000677s` live
+  track; after re-pausing it matched pause-menu `Timeline Playtime` at
+  `0:21:11` and `0:21:27` respectively, with fractional seconds preserved in
+  memory.
+- Pause-menu oracle: `0x00000000138a5900` is a process-local
+  `Timeline Playtime` render/cache string. It is useful after re-pausing, but
+  it stayed stale while the live top-right timer advanced and must not be used
+  as the screenshot frame clock.
 - Profile Archive click wall elapsed: 7.975s
 - Profile intro Continue wall elapsed: 10.509s
 - Profile red detection wall elapsed: 19.276s with 2 red regions
 - Pass condition: at least one red Archive mission region detected on the map
-- Next patch: rerun the opening lab with in-game timer capture, then promote the
-  best screenshot-anchored memory timer timing and extend to
+- Next patch: rerun the opening lab with
+  `--memory-live-timer-address 0x00000000122e5dbc --memory-live-timer-kind f32_seconds`,
+  then promote the best screenshot-anchored memory timer timing and extend to
   `red_map_to_mission_preview`.
 
 ## lightning_ui_timing_20260613_145305
@@ -98,9 +103,9 @@ This notebook explains the executable timings stored in
 
 ## memory_probe_cycles_20260613_pause_timeline
 
-- Result: TRUSTED_CURRENT_PROCESS
+- Result: PAUSE_MENU_ORACLE_CURRENT_PROCESS
 - PID: 2100
-- Trusted address: `0x00000000138a5900`
+- Oracle address: `0x00000000138a5900`
 - Scope: current Windows process/session only; rediscover after restart, PID
   change, modloader reload, or platform change.
 - Evidence: cycle0 screenshot showed `0h 0m 46s`; cycle1 found
@@ -115,9 +120,34 @@ This notebook explains the executable timings stored in
   intersection, rereading cycle0 candidates at 64s did not produce near-64
   values, and other string addresses either froze at old values or became
   unrelated text.
-- Next patch: use
-  `python scripts/lightning_war_timing_lab.py --memory-timer-address 0x00000000138a5900`
-  for this process/session, then rediscover the address after game restart.
+- Next patch: use this only as the post-pause ground-truth oracle. Do not use
+  it for live screenshot filenames.
+
+## memory_probe_live_numeric_20260613
+
+- Result: VALIDATED_CURRENT_PROCESS
+- PID: 2100
+- Live timer address: `0x00000000122e5dbc`
+- Kind: `f32_seconds`
+- Validation cycle 1:
+  `run_notes\lightning_ui_timing_loop\memory_numeric_score_live_1254_cycle1.json`
+  reported one validated candidate. It advanced `1259.680420 -> 1263.674316`
+  over `4.000087s`, then after re-pausing read `0:21:11` against pause-menu
+  Playtime `0:21:11`.
+- Validation cycle 2:
+  `run_notes\lightning_ui_timing_loop\memory_numeric_track_address_122e5dbc_cycle2.json`
+  advanced `1276.528564 -> 1280.523071` over `4.000677s`; final paused read
+  was `1287.440186s`, matching pause-menu Playtime `0:21:27` with fractional
+  seconds preserved.
+- 2 Hz screenshot filename smoke:
+  `recordings\lightning_live_numeric_filename_smoke_20260613_162932` captured
+  six frames with filenames advancing from `gt0-21-40` through `gt0-21-44`;
+  no frames dropped, and memory clock sample latency was `0.0s` after the
+  initial reader open.
+- Usage for this process/session:
+  `python scripts/lightning_war_timing_lab.py --memory-live-timer-address 0x00000000122e5dbc --memory-live-timer-kind f32_seconds`
+- Scope: current Windows process/session only; rediscover after restart, PID
+  change, modloader reload, or platform change.
 
 ## manual_probe_20260613_1517
 
