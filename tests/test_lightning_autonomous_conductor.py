@@ -926,6 +926,54 @@ def test_autonomous_restarts_on_nested_safety_blocked_attempt():
     assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
 
 
+def test_autonomous_parks_when_route_auto_start_is_vetoed():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "route_auto_start_not_allowed",
+                "primary_route_candidate_index": 5,
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor(route_auto_start=True)._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert result["reason"] == "route_auto_start_unavailable"
+    assert result["primary_route_candidate_index"] == 5
+    assert [name for name, _ in calls] == [
+        "pause_guard",
+        "preflight",
+        "segment",
+    ]
+
+
 def test_timer_helpers_read_real_segment_last_attempt_budget():
     segment = {
         "status": "LIGHTNING_SEGMENT_STOPPED",
@@ -978,6 +1026,43 @@ def test_restartable_attempt_stop_detects_nested_post_enemy_missed_window():
         _restartable_attempt_stop(segment)
         == "post_enemy_audit_missed_window_attempt_restart"
     )
+    assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_ignores_nonblocking_post_enemy_record():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "repeated_progress_state",
+        "last_attempt": {
+            "action": {
+                "post_enemy_result": {
+                    "status": "POST_ENEMY_RECORDED",
+                    "blocking": False,
+                    "deltas": {"enemies_alive_diff": 1},
+                },
+            },
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) is None
+    assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_keeps_blocking_post_enemy_restart():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "combat_loop_returned",
+        "last_attempt": {
+            "action": {
+                "post_enemy_result": {
+                    "status": "INVESTIGATE_POST_ENEMY",
+                    "blocking": True,
+                },
+            },
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) == "investigate_attempt_restart"
     assert not _hard_stop(segment)
 
 

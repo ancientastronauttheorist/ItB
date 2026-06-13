@@ -365,11 +365,18 @@ class AutonomousLightningConductor:
                         segment=_compact(segment),
                     )
                     continue
-                if _route_ready(segment) and not cfg.route_auto_start:
+                if _route_ready(segment):
                     return self._finish(
                         "PARKED_SAFE",
-                        "route_ready_requires_autostart_or_safe_policy",
+                        (
+                            "route_auto_start_unavailable"
+                            if cfg.route_auto_start
+                            else "route_ready_requires_autostart_or_safe_policy"
+                        ),
                         primary_next_command=segment.get("primary_next_command"),
+                        primary_route_candidate_index=segment.get(
+                            "primary_route_candidate_index"
+                        ),
                         telemetry_dir=str(self.telemetry.telemetry_dir),
                     )
                 if str(segment.get("reason")) in {"max_steps_reached", "repeated_progress_state"}:
@@ -687,11 +694,11 @@ def _achievement_unlocked(result: dict[str, Any] | None) -> bool:
 def _hard_stop(result: dict[str, Any] | None) -> bool:
     if _restartable_attempt_stop(result) is not None:
         return False
-    return _find_stop_token(result, HARD_STOP_TOKENS) is not None
+    return _find_contextual_stop_token(result, HARD_STOP_TOKENS) is not None
 
 
 def _restartable_attempt_stop(result: dict[str, Any] | None) -> str | None:
-    token = _find_stop_token(result, RESTARTABLE_ATTEMPT_STOP_TOKENS)
+    token = _find_restartable_stop_token(result)
     if token is None:
         return None
     if (
@@ -701,6 +708,44 @@ def _restartable_attempt_stop(result: dict[str, Any] | None) -> str | None:
     ):
         return None
     return f"{token.lower()}_attempt_restart"
+
+
+def _find_restartable_stop_token(value: Any) -> str | None:
+    """Find attempt-ending stop tokens without treating harmless audit records as fatal."""
+    return _find_contextual_stop_token(value, RESTARTABLE_ATTEMPT_STOP_TOKENS)
+
+
+def _find_contextual_stop_token(value: Any, tokens: tuple[str, ...]) -> str | None:
+    """Find stop tokens while ignoring nonblocking post-enemy bookkeeping."""
+    if isinstance(value, dict):
+        status = str(value.get("status") or "").upper()
+        reason = str(value.get("reason") or "").upper()
+        blocking = bool(value.get("blocking"))
+        nonblocking_post_enemy_record = (
+            not blocking
+            and status in {"POST_ENEMY_RECORDED", "POST_ENEMY_ALREADY_RECORDED"}
+        )
+        if nonblocking_post_enemy_record:
+            for nested in value.values():
+                found = _find_contextual_stop_token(nested, tokens)
+                if found is not None:
+                    return found
+            return None
+        status_reason = f"{status} {reason}"
+        for token in tokens:
+            if token in status_reason:
+                return token
+        for nested in value.values():
+            found = _find_contextual_stop_token(nested, tokens)
+            if found is not None:
+                return found
+        return None
+    if isinstance(value, list):
+        for nested in value:
+            found = _find_contextual_stop_token(nested, tokens)
+            if found is not None:
+                return found
+    return None
 
 
 def _restartable_preflight_failure(result: dict[str, Any] | None) -> str | None:
@@ -737,9 +782,11 @@ def _find_stop_token(value: Any, tokens: tuple[str, ...]) -> str | None:
 def _route_ready(result: dict[str, Any] | None) -> bool:
     if not isinstance(result, dict):
         return False
-    return result.get("reason") in {"route_ready", "visible_island_map_without_bridge"} or bool(
-        result.get("primary_next_command")
-    )
+    return result.get("reason") in {
+        "route_ready",
+        "route_auto_start_not_allowed",
+        "visible_island_map_without_bridge",
+    } or bool(result.get("primary_next_command"))
 
 
 def _safe_to_think(result: dict[str, Any] | None) -> bool:
