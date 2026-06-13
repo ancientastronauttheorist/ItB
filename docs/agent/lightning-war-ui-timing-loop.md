@@ -18,12 +18,17 @@ to automate without wasting live timer.
 
 ## Operating Pattern
 
-Each discovery cycle starts from a known fresh state, preferably the main menu
-or new-run setup before the Lightning War timer starts.
+Each discovery cycle starts from the main menu and replays from the top.
+
+Do not treat an intermediate UI state as a restart anchor. We cannot reliably
+restart directly to arbitrary points such as new-run setup, island selection,
+mission preview, or deployment. Those states can be observed during a pass, but
+the next proof pass must reset to the main menu and replay every already proven
+slice before extending the route.
 
 The cycle is:
 
-1. Reset to the known start state.
+1. Reset to the main menu known start state.
 2. Start high-cadence screenshots at 0.5 seconds.
 3. Execute only the next intended UI/action slice.
 4. Stop at the first new uncertain UI boundary.
@@ -33,13 +38,13 @@ The cycle is:
    - first frame where the control is safely clickable
    - any animation, dialogue, focus, or stale-bridge delay
 6. Encode the newly proven click/wait/check pattern.
-7. Restart from the known start state.
+7. Restart to the main menu known start state.
 8. Replay the proven route plus the new slice.
 9. Repeat until the whole two-island Lightning War route is covered.
 
 Do not try to discover multiple uncertain UI boundaries in one live attempt.
-The loop is intentionally repetitive: prove one boundary, restart, extend the
-script by one boundary, and test again.
+The loop is intentionally repetitive: prove one boundary, restart to the main
+menu, replay from the top, extend the script by one boundary, and test again.
 
 ## Screenshot Cadence
 
@@ -140,8 +145,9 @@ state proof, a better click target, or a smaller slice.
 
 ## Automation Rules
 
-- Start from main menu or new-run setup for discovery unless testing a later
-  slice requires a saved parked state.
+- Start from the main menu for discovery. A parked or intermediate state may be
+  used only to inspect evidence or recover safely, not as the canonical start of
+  the next timing proof.
 - Keep the user in the loop during discovery, especially when choosing the next
   slice to extend.
 - Use screenshots for novel UI and timing boundaries.
@@ -161,12 +167,17 @@ After each newly proven UI boundary:
 
 1. Save the evidence.
 2. Update the script or route notes.
-3. Restart from the known start state.
+3. Restart to the main menu known start state.
 4. Replay all proven slices.
 5. Extend by exactly one new uncertain slice.
 
 This keeps timing comparable across attempts and prevents late-run state drift
 from being mistaken for a reliable route.
+
+In practice, "restart" means return to the title/main menu, then execute the
+full proven sequence again. If the live game is parked at setup, island map,
+deployment, combat, or a reward screen, first abandon or otherwise recover to
+the main menu before starting the next measurement pass.
 
 ## Relationship To Other Lightning Plans
 
