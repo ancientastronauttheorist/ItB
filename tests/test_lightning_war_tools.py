@@ -931,19 +931,24 @@ def test_lightning_start_run_segment_defaults_to_baseline_safety(monkeypatch):
     )
 
     assert result["status"] == "OK"
+    assert result["route_routing"] == "lightning_war"
     assert segment_calls[0]["allow_objective_loss"] is False
     assert segment_calls[0]["lightning_speed_loss_policy"] is False
+    assert segment_calls[0]["route_routing"] == "lightning_war"
 
     result = commands.cmd_lightning_start_run(
         advanced_content="off",
         route_auto_start=False,
+        route_routing="lightning_baseline",
         allow_objective_loss=True,
         lightning_speed_loss_policy=True,
     )
 
     assert result["status"] == "OK"
+    assert result["route_routing"] == "lightning_baseline"
     assert segment_calls[1]["allow_objective_loss"] is True
     assert segment_calls[1]["lightning_speed_loss_policy"] is True
+    assert segment_calls[1]["route_routing"] == "lightning_baseline"
 
 
 def test_stale_active_solution_guard_preserves_pending_post_enemy_turn():
@@ -3735,22 +3740,27 @@ def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
     assert result["route_start_candidates"][0]["command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--route-start-mode dialogue-region-repeat-preview-board"
     )
+    assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
     assert result["primary_route_candidate_index"] == 0
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
         "--visual-region-index 0 "
         "--expected-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--start-mode dialogue-region-repeat-preview-board"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
         "--window-x 430 --window-y 320 "
         "--expected-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--start-mode dialogue-region-repeat-preview-board"
     )
 
@@ -5490,20 +5500,91 @@ def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch)
     assert result["route_start_candidates"][0]["command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Armored_Train "
+        "--route-routing lightning_war "
         "--route-start-mode dialogue-region-repeat-preview-board-twice"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Armored_Train "
+        "--route-routing lightning_war "
         "--route-start-mode dialogue-region-repeat-preview-board-twice"
     )
+    assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
+    assert result["primary_route_candidate"]["route_routing"] == "lightning_war"
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
         "--visual-region-index 0 "
         "--expected-mission-id Mission_Armored_Train "
+        "--route-routing lightning_war "
         "--start-mode dialogue-region-repeat-preview-board-twice"
     )
     assert "candidate" in result["next_step"]
+
+
+def test_lightning_map_regions_command_uses_explicit_route_policy_in_candidates(
+    monkeypatch,
+):
+    recommend_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": str(path),
+            "region_count": 1,
+            "regions": [{"index": 0, "window_x": 735, "window_y": 313}],
+        },
+    )
+
+    def fake_recommend_save_routes(*args, **kwargs):
+        recommend_calls.append({"args": args, **kwargs})
+        return {
+            "status": "OK",
+            "source": "saveData",
+            "ranked": [
+                {
+                    "mission_id": "Mission_Tides",
+                    "mission_slot": "Mission1",
+                    "mission_index": 1,
+                    "save_region_index": 0,
+                    "save_region_name": "Flooded Quarter",
+                    "score": 42,
+                    "source": "saveData",
+                }
+            ],
+            "top3": [
+                {
+                    "mission_id": "Mission_Tides",
+                    "save_region_index": 0,
+                    "save_region_name": "Flooded Quarter",
+                    "score": 42,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recommend_save_routes",
+        fake_recommend_save_routes,
+    )
+
+    result = commands.cmd_lightning_map_regions(
+        "/tmp/map.png",
+        route_routing="lightning_baseline",
+    )
+
+    candidate = result["route_start_candidates"][0]
+    assert recommend_calls == [
+        {"args": ("Alpha",), "routing": "lightning_baseline"}
+    ]
+    assert result["route_routing"] == "lightning_baseline"
+    assert result["save_route_recommendation"]["routing"] == "lightning_baseline"
+    assert candidate["route_routing"] == "lightning_baseline"
+    assert candidate["route_option"]["routing"] == "lightning_baseline"
+    assert "--route-routing lightning_baseline " in candidate["command"]
+    assert "--route-routing lightning_baseline " in candidate["route_start_command"]
+    assert "--route-routing lightning_baseline " in candidate["coordinate_command"]
 
 
 def test_lightning_map_regions_blocks_obscured_route_preview(monkeypatch):
@@ -8809,6 +8890,7 @@ def test_lightning_segment_continues_panel_clear_to_route_ready(monkeypatch):
                 "primary_next_command": (
                     "python3 game_loop.py lightning_segment "
                     "--route-visual-region-index 0 "
+                    "--route-routing lightning_war "
                     "--route-start-mode dialogue-region-repeat-preview-board"
                 ),
                 "primary_route_candidate_index": 0,
@@ -8843,7 +8925,9 @@ def test_lightning_segment_continues_panel_clear_to_route_ready(monkeypatch):
     assert result["steps"][1]["top_mission"] == "Mission_Train"
     assert result["steps"][1]["primary_route_candidate_index"] == 0
     assert result["primary_next_command"].endswith(
-        "--route-visual-region-index 0 --route-start-mode dialogue-region-repeat-preview-board"
+        "--route-visual-region-index 0 "
+        "--route-routing lightning_war "
+        "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_route_target_hint"]["match_label"] == "Mission_Train"
     assert calls[0]["run_preflight"] is True
@@ -9943,6 +10027,7 @@ def test_lightning_segment_passes_route_routing_to_attempt(monkeypatch):
     )
 
     assert result["reason"] == "needs_more_work"
+    assert result["route_routing"] == "lightning_baseline"
     assert attempt_calls[0]["route_routing"] == "lightning_baseline"
 
 
@@ -12087,6 +12172,59 @@ def test_visible_map_route_plan_ignores_stale_bridge_preview(monkeypatch):
     assert result["route_start_candidates"][0]["index"] == 1
 
 
+def test_visible_map_route_plan_preserves_explicit_policy_for_partial_recommendation(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge",
+            "ranked": [
+                {
+                    "mission_id": "Mission_Tides",
+                    "save_region_index": 0,
+                    "save_region_name": "Flooded Quarter",
+                    "score": 23,
+                }
+            ],
+            "top3": [
+                {
+                    "mission_id": "Mission_Tides",
+                    "save_region_index": 0,
+                    "save_region_name": "Flooded Quarter",
+                    "score": 23,
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "regions": [{"index": 0, "window_x": 812, "window_y": 423}],
+        },
+    )
+
+    result = commands._lightning_visible_map_route_plan(
+        profile="Alpha",
+        visible_ui={
+            "status": "OK",
+            "visible_ui": "island_map",
+            "screenshot_path": "map.png",
+        },
+        route_routing="lightning_baseline",
+    )
+
+    candidate = result["route_start_candidates"][0]
+    assert result["recommendation"]["routing"] == "lightning_baseline"
+    assert candidate["route_routing"] == "lightning_baseline"
+    assert candidate["route_option"]["routing"] == "lightning_baseline"
+    assert "--route-routing lightning_baseline " in candidate["command"]
+
+
 def test_visible_map_route_plan_probes_ambiguous_bridge_preview_without_assignment(
     monkeypatch,
 ):
@@ -13393,22 +13531,27 @@ def test_lightning_route_start_auto_pauses_before_route_check(monkeypatch):
     assert result["route_start_candidates"][0]["command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--route-start-mode dialogue-region-repeat-preview-board"
     )
+    assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
         "--visual-region-index 0 "
         "--expected-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--start-mode dialogue-region-repeat-preview-board"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
         "--window-x 902 --window-y 349 "
         "--expected-mission-id Mission_Train "
+        "--route-routing lightning_war "
         "--start-mode dialogue-region-repeat-preview-board"
     )
 
@@ -13516,16 +13659,25 @@ def test_lightning_route_start_returns_visual_regions_when_route_check_unavailab
     assert result["status"] == "ROUTE_READY_VISUAL"
     assert result["visual_regions"]["regions"][0]["window_x"] == 420
     assert result["route_start_candidates"][0]["command"].endswith(
-        "--route-visual-region-index 0 --route-start-mode dialogue-region-repeat-preview-board"
+        "--route-visual-region-index 0 "
+        "--route-routing lightning_war "
+        "--route-start-mode dialogue-region-repeat-preview-board"
     )
     assert result["primary_next_command"].endswith(
-        "--route-visual-region-index 0 --route-start-mode dialogue-region-repeat-preview-board"
+        "--route-visual-region-index 0 "
+        "--route-routing lightning_war "
+        "--route-start-mode dialogue-region-repeat-preview-board"
     )
+    assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
-        "--visual-region-index 0 --start-mode dialogue-region-repeat-preview-board"
+        "--visual-region-index 0 "
+        "--route-routing lightning_war "
+        "--start-mode dialogue-region-repeat-preview-board"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
-        "--window-x 420 --window-y 210 --start-mode dialogue-region-repeat-preview-board"
+        "--window-x 420 --window-y 210 "
+        "--route-routing lightning_war "
+        "--start-mode dialogue-region-repeat-preview-board"
     )
 
 
@@ -17192,18 +17344,22 @@ def test_lightning_route_start_candidates_from_visual_regions():
             "command": (
                 "python3 game_loop.py lightning_segment "
                 "--route-visual-region-index 2 "
+                "--route-routing lightning_war "
                 "--route-start-mode dialogue-region-repeat-preview-board-twice"
             ),
             "route_start_command": (
                 "python3 game_loop.py lightning_route_start "
                 "--visual-region-index 2 "
+                "--route-routing lightning_war "
                 "--start-mode dialogue-region-repeat-preview-board-twice"
             ),
             "coordinate_command": (
                 "python3 game_loop.py lightning_route_start --no-route-check "
                 "--window-x 743 --window-y 316 "
+                "--route-routing lightning_war "
                 "--start-mode dialogue-region-repeat-preview-board-twice"
             ),
+            "route_routing": "lightning_war",
         },
         {
             "index": 3,
@@ -17212,18 +17368,22 @@ def test_lightning_route_start_candidates_from_visual_regions():
             "command": (
                 "python3 game_loop.py lightning_segment "
                 "--route-visual-region-index 3 "
+                "--route-routing lightning_war "
                 "--route-start-mode dialogue-region-repeat-preview-board-twice"
             ),
             "route_start_command": (
                 "python3 game_loop.py lightning_route_start "
                 "--visual-region-index 3 "
+                "--route-routing lightning_war "
                 "--start-mode dialogue-region-repeat-preview-board-twice"
             ),
             "coordinate_command": (
                 "python3 game_loop.py lightning_route_start --no-route-check "
                 "--window-x 902 --window-y 349 "
+                "--route-routing lightning_war "
                 "--start-mode dialogue-region-repeat-preview-board-twice"
             ),
+            "route_routing": "lightning_war",
         },
     ]
 

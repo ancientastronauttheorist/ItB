@@ -764,6 +764,12 @@ def main():
     p_lightning_map_regions.add_argument("--out-dir", default=None)
     p_lightning_map_regions.add_argument("--profile", default="Alpha")
     p_lightning_map_regions.add_argument(
+        "--route-routing",
+        choices=["default", "lightning_war", "lightning_baseline"],
+        default="lightning_war",
+        help="Mission route scoring policy for save-backed candidate commands",
+    )
+    p_lightning_map_regions.add_argument(
         "--start-mode",
         choices=[
             "preview-board",
@@ -1334,6 +1340,12 @@ def main():
         help="Stop at the first route-ready map instead of auto-starting it",
     )
     p_lightning_start.add_argument(
+        "--route-routing",
+        choices=["default", "lightning_war", "lightning_baseline"],
+        default="lightning_war",
+        help="Mission route scoring policy for the initial segment handoff",
+    )
+    p_lightning_start.add_argument(
         "--no-segment",
         dest="run_segment",
         action="store_false",
@@ -1649,6 +1661,7 @@ def main():
             dry_run=args.dry_run,
             start_mode=args.start_mode,
             profile=args.profile,
+            route_routing=args.route_routing,
             use_save_route_plan=args.use_save_route_plan,
             target_name=args.target_name,
             target_mission_id=args.target_mission_id,
@@ -1748,6 +1761,7 @@ def main():
             lightning_speed_loss_policy=args.speed_loss_policy,
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
+            route_routing=args.route_routing,
         )
     elif args.command == "lightning_attempt":
         cmd_lightning_attempt(
@@ -1852,6 +1866,7 @@ def main():
             max_wait=args.max_wait,
             max_wall_seconds=args.max_wall_seconds,
             route_auto_start=args.route_auto_start,
+            route_routing=args.route_routing,
             run_segment=args.run_segment,
             allow_objective_loss=args.allow_objective_loss,
             lightning_speed_loss_policy=args.speed_loss_policy,

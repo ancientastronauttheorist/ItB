@@ -9451,6 +9451,7 @@ def _lightning_route_start_candidates(
             "python3 game_loop.py lightning_route_start "
             f"--visual-region-index {region_index} "
             f"{route_start_target_arg}"
+            f"--route-routing {route_routing} "
             f"--start-mode {start_mode}"
         )
         coordinate_command = (
@@ -9458,6 +9459,7 @@ def _lightning_route_start_candidates(
             "--no-route-check "
             f"--window-x {window_x} --window-y {window_y} "
             f"{route_start_target_arg}"
+            f"--route-routing {route_routing} "
             f"--start-mode {start_mode}"
         )
         if isinstance(region_index, int):
@@ -9465,6 +9467,7 @@ def _lightning_route_start_candidates(
                 "python3 game_loop.py lightning_segment "
                 f"--route-visual-region-index {region_index} "
                 f"{route_target_arg}"
+                f"--route-routing {route_routing} "
                 f"--route-start-mode {start_mode}"
             )
         else:
@@ -9477,6 +9480,7 @@ def _lightning_route_start_candidates(
             "command": command,
             "route_start_command": route_start_command,
             "coordinate_command": coordinate_command,
+            "route_routing": route_routing,
         }
         if isinstance(route_option, dict) and route_option:
             candidate["route_option"] = dict(route_option)
@@ -9634,6 +9638,7 @@ def _lightning_attach_primary_route_candidate(
             "auto_route_block_reason",
             "forced_preview_route",
             "forced_preview_ambiguous",
+            "route_routing",
             "route_option",
         )
         if first.get(key) is not None
@@ -14613,6 +14618,8 @@ def _lightning_visible_map_route_plan(
         pause_map_peek=True,
         quiet=quiet,
     )
+    if isinstance(recommendation, dict):
+        recommendation.setdefault("routing", route_routing)
     if recommendation_output:
         recommendation["quiet_output"] = recommendation_output
     route_target_hint = _lightning_route_target_hint_from_recommendation(
@@ -14676,6 +14683,8 @@ def _lightning_visible_map_route_plan(
             profile=profile,
             routing=route_routing,
         )
+        if isinstance(save_recommendation, dict):
+            save_recommendation.setdefault("routing", route_routing)
         save_visual_regions = _lightning_assign_visual_route_options(
             raw_visual_regions,
             save_recommendation,
@@ -15288,6 +15297,7 @@ def cmd_lightning_map_regions(
     dry_run: bool = False,
     start_mode: str = _LIGHTNING_ROUTE_DEFAULT_START_MODE,
     profile: str = "Alpha",
+    route_routing: str = "lightning_war",
     use_save_route_plan: bool = True,
     target_name: str | None = None,
     target_mission_id: str | None = None,
@@ -15339,11 +15349,14 @@ def cmd_lightning_map_regions(
     )
     if target_hint:
         result["route_target_hint"] = target_hint
+    result["route_routing"] = route_routing
     save_recommendation = (
-        _lightning_recommend_save_routes(profile, routing="lightning_war")
+        _lightning_recommend_save_routes(profile, routing=route_routing)
         if use_save_route_plan
         else None
     )
+    if isinstance(save_recommendation, dict):
+        save_recommendation.setdefault("routing", route_routing)
     if save_recommendation:
         result["save_route_recommendation"] = save_recommendation
     if screen_guard is not None and screen_guard.get("status") == "BLOCKED":
@@ -21460,6 +21473,7 @@ def cmd_lightning_segment(
         "steps": steps,
         "lightning_speed_loss_policy": lightning_speed_loss_policy,
         "route_auto_start": route_auto_start,
+        "route_routing": route_routing,
         "dirty_consent_still_pending": dirty_pending,
         "route_start_performed": last_route_start is not None,
         "route_visual_region_index_pending": (
@@ -22190,6 +22204,7 @@ def cmd_lightning_start_run(
     max_wait: float = 45.0,
     max_wall_seconds: float | None = None,
     route_auto_start: bool = True,
+    route_routing: str = "lightning_war",
     run_segment: bool = True,
     allow_objective_loss: bool = False,
     lightning_speed_loss_policy: bool = False,
@@ -22233,6 +22248,7 @@ def cmd_lightning_start_run(
         ],
         "run_segment": run_segment,
         "route_auto_start": route_auto_start,
+        "route_routing": route_routing,
         "allow_objective_loss": allow_objective_loss,
         "lightning_speed_loss_policy": lightning_speed_loss_policy,
     }
@@ -22404,6 +22420,7 @@ def cmd_lightning_start_run(
             allow_objective_loss=allow_objective_loss,
             lightning_speed_loss_policy=lightning_speed_loss_policy,
             route_auto_start=route_auto_start,
+            route_routing=route_routing,
         )
         result["segment"] = segment
         result["status"] = (

@@ -142,6 +142,11 @@ class AutonomousLightningConductor:
     def _run_inner(self, commands: Any) -> dict[str, Any]:
         cfg = self.config
         assert self.telemetry is not None
+        route_routing = (
+            "lightning_war"
+            if cfg.mode == "speed"
+            else "lightning_baseline"
+        )
 
         if cfg.achievement.lower() != LIGHTNING_WAR.lower():
             return self._finish(
@@ -213,6 +218,7 @@ class AutonomousLightningConductor:
                 max_wait=45.0,
                 max_wall_seconds=cfg.max_wall_seconds,
                 route_auto_start=cfg.route_auto_start,
+                route_routing=route_routing,
                 run_segment=False,
                 allow_objective_loss=True,
                 dry_run=cfg.dry_run,
@@ -288,6 +294,7 @@ class AutonomousLightningConductor:
                     auto_clear_panels=True,
                     allow_objective_loss=True,
                     lightning_speed_loss_policy=True,
+                    route_routing=route_routing,
                     route_auto_start=cfg.route_auto_start,
                     route_speed_vetoes=(cfg.mode == "speed"),
                 )
@@ -507,6 +514,11 @@ class AutonomousLightningConductor:
             "difficulty": self.config.difficulty,
             "advanced_content": self.config.advanced_content,
             "mode": self.config.mode,
+            "route_routing": (
+                "lightning_war"
+                if self.config.mode == "speed"
+                else "lightning_baseline"
+            ),
             "target_islands": self.config.target_islands,
             "time_limit": self.config.time_limit,
             "first_island_gate_seconds": self.config.first_island_gate_seconds,

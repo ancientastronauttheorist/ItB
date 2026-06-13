@@ -341,6 +341,50 @@ def test_autonomous_passes_segment_timeout_as_wall_cap():
     assert segment_call["max_wall_seconds"] == 123.0
 
 
+def test_autonomous_passes_mode_route_policy_to_segment():
+    def run_mode(mode: str) -> dict:
+        calls: list[tuple[str, dict]] = []
+
+        def record(name, payload):
+            def fn(*args, **kwargs):
+                calls.append((name, {"args": args, **kwargs}))
+                return payload
+
+            return fn
+
+        commands = SimpleNamespace(
+            cmd_lightning_pause_guard=record(
+                "pause_guard",
+                {
+                    "status": "OK",
+                    "reason": "already_paused",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            ),
+            cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+            cmd_lightning_segment=record(
+                "segment",
+                {
+                    "status": "LIGHTNING_SEGMENT_STOPPED",
+                    "reason": "max_steps_reached",
+                    "pause_guard": {
+                        "status": "OK",
+                        "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                    },
+                },
+            ),
+            cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+        )
+
+        result = make_conductor(mode=mode)._run_inner(commands)
+
+        assert result["status"] == "PARKED_SAFE"
+        return next(payload for name, payload in calls if name == "segment")
+
+    assert run_mode("baseline")["route_routing"] == "lightning_baseline"
+    assert run_mode("speed")["route_routing"] == "lightning_war"
+
+
 def test_autonomous_prefers_explicit_max_wall_seconds():
     calls: list[tuple[str, dict]] = []
 
