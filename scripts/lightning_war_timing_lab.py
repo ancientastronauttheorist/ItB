@@ -112,10 +112,18 @@ def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
 
 def update_profile(report: dict[str, Any]) -> dict[str, Any]:
     profile = _load_profile()
-    profile["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
-    profile.setdefault("boundaries", {})[
-        "main_menu_to_archive_red_map"
-    ] = _profile_boundary_from_report(report)
+    boundaries = profile.setdefault("boundaries", {})
+    key = "main_menu_to_archive_red_map"
+    previous = boundaries.get(key) or {}
+    promoted = _profile_boundary_from_report(report)
+    previous_time = previous.get("red_map_detected_seconds")
+    promoted_time = promoted.get("red_map_detected_seconds")
+    should_promote = previous.get("status") != "PASS"
+    if not should_promote and previous_time is not None and promoted_time is not None:
+        should_promote = float(promoted_time) <= float(previous_time)
+    if should_promote:
+        profile["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
+        boundaries[key] = promoted
     _atomic_write_json(PROFILE_PATH, profile)
     return profile
 

@@ -109,3 +109,45 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.island_click_seconds == 7.0
     assert args.continue_click_seconds == 9.5
     assert args.red_map_timeout_seconds == 10.0
+
+
+def test_update_profile_keeps_faster_existing_pass(monkeypatch, tmp_path):
+    profile_path = tmp_path / "profile.json"
+    monkeypatch.setattr(lab, "PROFILE_PATH", profile_path)
+    profile_path.write_text(
+        """
+{
+  "schema_version": 1,
+  "current_milestone": "main_menu_to_archive_red_map",
+  "updated_at": "old",
+  "boundaries": {
+    "main_menu_to_archive_red_map": {
+      "status": "PASS",
+      "red_map_detected_seconds": 19.276,
+      "evidence": {"run_id": "fast"}
+    }
+  }
+}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    lab.update_profile(
+        {
+            "status": "PASS",
+            "branch_label": "archive_intro.default",
+            "run_id": "slow",
+            "marks": {"archive_click": 7.978, "intro_continue": 10.315},
+            "red_detection": {
+                "detected_at_seconds": 19.413,
+                "region_count": 2,
+                "selected_region": {"window_x": 1806, "window_y": 703},
+            },
+        }
+    )
+
+    result = lab._load_profile()
+    boundary = result["boundaries"]["main_menu_to_archive_red_map"]
+    assert boundary["red_map_detected_seconds"] == 19.276
+    assert boundary["evidence"]["run_id"] == "fast"

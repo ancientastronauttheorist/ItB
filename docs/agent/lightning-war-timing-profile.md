@@ -38,3 +38,15 @@ This notebook explains the executable timings stored in
 - Contact sheet: recordings\lightning_ui_timing_20260613_145559\telemetry\contact_sheet.png
 - Red map screenshot: recordings\lightning_ui_timing_20260613_145559\telemetry\screenshots\000014_1781380617192_opening_probe.png
 - Next patch: Extend to red_map_to_mission_preview after user review.
+## lightning_ui_timing_20260613_150106
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main menu -> lower Start timer zero -> Archive -> red map
+- Archive click: 7.978s
+- Intro continue: 10.315s
+- Red map detected: 19.413s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_20260613_150106\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_20260613_150106\telemetry\screenshots\000013_1781380924854_opening_probe.png
+- Next patch: Extend to red_map_to_mission_preview after user review.
