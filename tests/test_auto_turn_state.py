@@ -869,6 +869,36 @@ def test_threat_audit_blocks_unresolved_building_threat_on_normal_grid():
     ) is True
 
 
+def test_enemy_survived_fuzzy_blocks_end_turn_even_when_audit_clean():
+    block = cmd_mod._fuzzy_detections_require_end_turn_block([{
+        "signature": "death|Brute_Grapple|attack",
+        "asymmetry": ["enemy_survived_unexpectedly"],
+        "confidence": 0.8,
+        "proposed_tier": 2,
+        "context": {
+            "weapon": "Brute_Grapple",
+            "action_index": 2,
+        },
+    }])
+
+    assert block == {
+        "reason": "enemy_survived_unexpectedly",
+        "signature": "death|Brute_Grapple|attack",
+        "weapon": "Brute_Grapple",
+        "action_index": 2,
+        "confidence": 0.8,
+        "proposed_tier": 2,
+    }
+
+
+def test_benign_fuzzy_does_not_block_end_turn():
+    assert cmd_mod._fuzzy_detections_require_end_turn_block([{
+        "signature": "status|Prime_Lightning|attack",
+        "asymmetry": [],
+        "context": {"weapon": "Prime_Lightning"},
+    }]) is None
+
+
 # ---------------------------------------------------------------------------
 # cmd_auto_turn entry-point invalidation logic.
 #

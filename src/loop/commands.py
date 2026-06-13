@@ -25743,6 +25743,43 @@ def _maybe_soft_disable(
         )
 
 
+def _fuzzy_detections_require_end_turn_block(
+    detections: list[dict] | None,
+) -> dict | None:
+    """Return the first fuzzy signal that makes End Turn unsafe.
+
+    A re-solve can recover remaining player actions after a desync, but if the
+    final live board still contains an enemy the solver believed was dead, the
+    enemy phase is no longer trustworthy. Hold End Turn so the operator can
+    reset, inspect, or consciously resolve the miss from the fresh board.
+    """
+    for signal in detections or []:
+        asymmetry = set(signal.get("asymmetry") or [])
+        if "enemy_survived_unexpectedly" in asymmetry:
+            return {
+                "reason": "enemy_survived_unexpectedly",
+                "signature": signal.get("signature"),
+                "weapon": (signal.get("context") or {}).get("weapon"),
+                "action_index": (signal.get("context") or {}).get(
+                    "action_index"
+                ),
+                "confidence": signal.get("confidence"),
+                "proposed_tier": signal.get("proposed_tier"),
+            }
+        if "mech_died_unexpectedly" in asymmetry:
+            return {
+                "reason": "mech_died_unexpectedly",
+                "signature": signal.get("signature"),
+                "weapon": (signal.get("context") or {}).get("weapon"),
+                "action_index": (signal.get("context") or {}).get(
+                    "action_index"
+                ),
+                "confidence": signal.get("confidence"),
+                "proposed_tier": signal.get("proposed_tier"),
+            }
+    return None
+
+
 def _maybe_flag_grid_drop(
     investigations: list,
     diff,
@@ -27436,6 +27473,45 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "next_step": (
                 "Resolve each investigation before dispatching the held "
                 "End Turn click. No bridge END_TURN side effect was sent."
+            ),
+            "fuzzy_detections": fuzzy_detections,
+            "soft_disabled": list(session.disabled_actions),
+            "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+            "unknowns_flagged": unknowns_flagged,
+            "solver_gap_events": solver_gap_events,
+            "research_queue_peek": _research_peek(session),
+        }
+        if threat_audit is not None:
+            result["threat_audit"] = threat_audit
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        if lightning_research_auto_resolved:
+            result["lightning_research_auto_resolved"] = lightning_research_auto_resolved
+        _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                       unknowns_flagged,
+                       research_peek=result["research_queue_peek"])
+        _print_result(result)
+        return result
+
+    unsafe_fuzzy = _fuzzy_detections_require_end_turn_block(fuzzy_detections)
+    if unsafe_fuzzy:
+        pending_plan = _end_turn_click_plan_result()
+        result = {
+            "status": "FUZZY_INVESTIGATE_BLOCKED",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "held_end_turn_batch": pending_plan["batch"],
+            "held_end_turn_codex_computer_use_batch": pending_plan.get(
+                "codex_computer_use_batch", []
+            ),
+            "block_reason": unsafe_fuzzy,
+            "next_step": (
+                "A post-action desync left an enemy alive or a mech dead "
+                "contrary to prediction. Do not click End Turn; inspect the "
+                "fresh board, reset if available, or resolve the miss before "
+                "continuing."
             ),
             "fuzzy_detections": fuzzy_detections,
             "soft_disabled": list(session.disabled_actions),

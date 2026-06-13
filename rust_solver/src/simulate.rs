@@ -4539,6 +4539,11 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
         let (pdx, pdy) = DIRS[pull_dir];
         let nx_i = cx as i8 + pdx;
         let ny_i = cy as i8 + pdy;
+        if in_bounds(nx_i, ny_i) && board.wreck_at(nx_i as u8, ny_i as u8) {
+            // Live Grappling Hook treats wrecks as inert movement blockers:
+            // the pulled pawn stops before the wreck without bump damage.
+            break;
+        }
         let terminal_after_step = in_bounds(nx_i, ny_i)
             && ((nx_i as i16 - ax as i16).abs() + (ny_i as i16 - ay as i16).abs() <= 1);
         if terminal_after_step {
@@ -10043,6 +10048,42 @@ mod tests {
         assert_eq!(board.units[target].y, 3, "Target stays in pull lane");
         assert_eq!(board.units[target].hp, 2, "Transit mine does not kill target");
         assert!(board.tile(4, 3).old_earth_mine(), "Transit mine remains armed");
+    }
+
+    #[test]
+    fn test_brute_grapple_stops_before_wreck_without_bump_damage() {
+        // Lightning War run 20260613_002031_059 Mission_Survive turn 1:
+        // Hook pulled a 1-HP Leaper toward WallMech, but a dead Leaper wreck
+        // occupied the final adjacent tile. Live stopped the target before the
+        // wreck without applying bump damage.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 1, 4, 6, 3, WId::BruteGrapple);
+        let wreck = add_enemy(&mut board, 2489, 4, 5, 0);
+        let target = add_enemy(&mut board, 2490, 4, 3, 1);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 4, 3);
+        assert_eq!(board.units[target].x, 4, "Target stays in the pull lane");
+        assert_eq!(board.units[target].y, 4, "Target stops before the wreck");
+        assert_eq!(board.units[target].hp, 1, "Wreck does not bump-damage target");
+        assert_eq!(board.units[wreck].x, 4);
+        assert_eq!(board.units[wreck].y, 5);
+        assert_eq!(board.units[wreck].hp, 0, "Wreck remains inert");
+    }
+
+    #[test]
+    fn test_brute_grapple_target_scan_ignores_dead_wreck() {
+        // Dead pawns do not block Hook targeting, even though they stop the
+        // pulled pawn during movement.
+        use crate::solver::get_weapon_targets;
+        use crate::weapons::WEAPONS;
+        let mut board = make_test_board();
+        let _mech_idx = add_mech(&mut board, 0, 4, 6, 3, WId::BruteGrapple);
+        let _wreck = add_enemy(&mut board, 2489, 4, 5, 0);
+        let _target = add_enemy(&mut board, 2490, 4, 3, 1);
+
+        let targets = get_weapon_targets(&board, 4, 6, WId::BruteGrapple, (4, 6), &WEAPONS);
+        assert!(targets.contains(&(4, 3)),
+            "Dead wreck should not hide the live Hook target behind it; got {:?}", targets);
     }
 
     // ── Brute_Grapple no-pawn self-charge (mountain/building target) ──────────

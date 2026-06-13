@@ -1312,7 +1312,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v264 - Powered Blast achievement event and scoring hook for AP Cannon kills
 # through Walking Bomb. Pre-v264 corpus archived as
 # failure_db_snapshot_sim_v263.jsonl.
-SIMULATOR_VERSION = 264
+# v265 - Brute_Grapple full-pull stops before dead unit wrecks without bump
+# damage. Fixes Lightning War run 20260613_002031_059 Mission_Survive turn 1.
+# Pre-v265 corpus archived as failure_db_snapshot_sim_v264.jsonl.
+SIMULATOR_VERSION = 265
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

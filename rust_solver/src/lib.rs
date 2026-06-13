@@ -1807,7 +1807,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v264 - Powered Blast achievement event and scoring hook for AP Cannon kills
 //   through Walking Bomb. Pre-v264 corpus archived as
 //   failure_db_snapshot_sim_v263.jsonl.
-pub const SIMULATOR_VERSION: u32 = 264;
+// v265 - Brute_Grapple full-pull stops before dead unit wrecks without bump
+//   damage. Fixes Lightning War run 20260613_002031_059 Mission_Survive turn 1,
+//   where Hook over-killed a Leaper against a wreck and the survivor destroyed
+//   ElectricMech after End Turn. Pre-v265 corpus archived as
+//   failure_db_snapshot_sim_v264.jsonl.
+pub const SIMULATOR_VERSION: u32 = 265;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
