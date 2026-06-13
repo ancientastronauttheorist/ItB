@@ -422,3 +422,63 @@ This notebook explains the executable timings stored in
 - Contact sheet: recordings\lightning_ui_timing_startmission_opt_20260613_2\telemetry\contact_sheet.png
 - Red map screenshot: recordings\lightning_ui_timing_startmission_opt_20260613_2\telemetry\screenshots\000012_1781393375634_gt0-00-06_opening_probe.png
 - Next patch: Measure deployment placement and confirm click after user review.
+## lightning_ui_timing_deploy_20260613_1
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_deployed_mechs
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.942s
+- Intro continue wall elapsed: 10.315s
+- Red map detected wall elapsed: 10.922s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_deploy_20260613_1\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_deploy_20260613_1\telemetry\screenshots\000012_1781394034703_gt0-00-06_opening_probe.png
+- Next patch: Measure deploy Confirm click after user review.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.96s
+- Post-deploy frame in-game timer: 0:00:20
+## lightning_ui_timing_deploy_20260613_2
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_deployed_mechs
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.954s
+- Intro continue wall elapsed: 10.319s
+- Red map detected wall elapsed: 10.902s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_deploy_20260613_2\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_deploy_20260613_2\telemetry\screenshots\000012_1781394333550_gt0-00-06_opening_probe.png
+- Next patch: Measure deploy Confirm click after user review.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.864s
+- Post-deploy frame in-game timer: 0:00:12
+## lightning_ui_timing_deploy_20260613_3
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_deployed_mechs
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 8.049s
+- Intro continue wall elapsed: 10.31s
+- Red map detected wall elapsed: 10.947s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_deploy_20260613_3\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_deploy_20260613_3\telemetry\screenshots\000012_1781394541544_gt0-00-06_opening_probe.png
+- Next patch: Measure deploy Confirm click after user review.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.78s
+- Post-deploy frame in-game timer: 0:00:11

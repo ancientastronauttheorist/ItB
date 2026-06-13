@@ -505,6 +505,7 @@ def test_click_start_mission_from_preview_clicks_highlighted_thumbnail(monkeypat
         interval_seconds=0.01,
         pause_after_click=True,
         pre_start_visible_probe=False,
+        deployment_trigger_source="visible_ui",
     )
 
     assert result["status"] == "PASS"
@@ -532,6 +533,246 @@ def test_click_start_mission_from_preview_clicks_highlighted_thumbnail(monkeypat
     assert result["first_bridge_deployment_sample"]["bridge_deployment_ready"] is True
 
 
+def test_click_start_mission_can_trigger_on_screenshot_yellow(monkeypatch):
+    events = []
+    clicks = []
+    yellow_calls = {"count": 0}
+    live_snapshot_calls = {"count": 0}
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def __init__(self):
+            self.calls = []
+
+        def capture_once(self, *, clock_state, note):
+            self.calls.append((clock_state, note))
+            return {
+                "screenshot_path": f"{clock_state}_{len(self.calls)}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": {
+                    "status": "OK",
+                    "clock_source": "memory_live_numeric_candidate",
+                    "game_timer": "0:00:14",
+                    "game_seconds": 14.0,
+                    "pid": 123,
+                    "address": "0x00000000122e5dbc",
+                    "raw": 14.0,
+                    "timer_validation": "validated_live_numeric_cycle",
+                },
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:14",
+                "game_seconds": 14.0,
+            }
+
+    def fake_yellow(frame):
+        yellow_calls["count"] += 1
+        if yellow_calls["count"] < 2:
+            return {
+                "status": "OK",
+                "yellow": 300,
+                "threshold": 5000,
+                "deployment_visible": False,
+            }
+        return {
+            "status": "OK",
+            "yellow": 6500,
+            "threshold": 5000,
+            "deployment_visible": True,
+        }
+
+    def fake_live_snapshot():
+        live_snapshot_calls["count"] += 1
+        return {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "in_active_mission": True,
+            "mission_id": "Mission_Volatile",
+            "deployment_zone_count": 14,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        }
+
+    def fake_click_hovered(name, x, y, *, hover_seconds, settle_seconds, hold_seconds):
+        clicks.append({"name": name, "x": x, "y": y})
+        return {"status": "OK", "window_x": x, "window_y": y}
+
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_visible_ui_snapshot",
+        lambda include_ocr=False: (_ for _ in ()).throw(
+            AssertionError("slow visible classifier should be skipped")
+        ),
+    )
+    monkeypatch.setattr(lab, "_deployment_yellow_signal_from_frame", fake_yellow)
+    monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", fake_live_snapshot)
+    monkeypatch.setattr(lab.fast, "deployment_snapshot_ready", lambda snapshot: bool(snapshot))
+    monkeypatch.setattr(lab.fast, "click_hovered_point", fake_click_hovered)
+    monkeypatch.setattr(lab.sys, "platform", "win32")
+    monkeypatch.setattr(lab.fast, "_lightning_ensure_pause_state", lambda *, reason: {"status": "OK", "reason": reason})
+    monkeypatch.setattr(lab, "_elapsed", lambda start: 40.0 + len(events))
+    monkeypatch.setattr(
+        lab,
+        "read_in_game_timer",
+        lambda profile, *, label, use_memory, timer_address=None, live_timer_address=None, live_timer_kind=None: {
+            "status": "OK",
+            "label": label,
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:14",
+            "game_seconds": 14.0,
+            "timer_validation": "validated_live_numeric_cycle",
+        },
+    )
+
+    result = lab.click_start_mission_from_preview(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        profile="Alpha",
+        use_memory_timer=True,
+        memory_timer_address=None,
+        memory_live_timer_address=0x122E5DBC,
+        memory_live_timer_kind="f32_seconds",
+        settle_seconds=0.25,
+        hover_seconds=0.05,
+        hold_seconds=0.12,
+        max_seconds=2.0,
+        interval_seconds=0.01,
+        pause_after_click=True,
+        pre_start_visible_probe=False,
+        deployment_trigger_source="screenshot_yellow",
+    )
+
+    assert result["status"] == "PASS"
+    assert result["reason"] == "deployment_yellow_screenshot"
+    assert yellow_calls["count"] == 2
+    assert live_snapshot_calls["count"] == 0
+    assert events[2][1]["deployment_yellow_signal"]["yellow"] == 300
+    assert events[2][1]["visible_ui"] is None
+    assert events[3][1]["deployment_yellow_signal"]["yellow"] == 6500
+    assert result["first_bridge_deployment_sample"] is None
+
+
+def test_deploy_recommended_after_visible_deployment_runs_helper_and_pauses(monkeypatch):
+    events = []
+    deploy_calls = []
+    timer_labels = []
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def capture_once(self, *, clock_state, note):
+            return {
+                "screenshot_path": f"{clock_state}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": {
+                    "status": "OK",
+                    "clock_source": "memory_live_numeric_candidate",
+                    "game_timer": "0:00:13",
+                    "game_seconds": 13.0,
+                    "pid": 123,
+                    "address": "0x00000000122e5dbc",
+                    "raw": 13.0,
+                    "timer_validation": "validated_live_numeric_cycle",
+                },
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:13",
+                "game_seconds": 13.0,
+            }
+
+    def fake_deploy(*, profile, ui_fallback, verify_after):
+        deploy_calls.append(
+            {
+                "profile": profile,
+                "ui_fallback": ui_fallback,
+                "verify_after": verify_after,
+            }
+        )
+        return {
+            "status": "OK",
+            "phase": "combat_player",
+            "deployments": [
+                {"uid": 1, "visual": "A1"},
+                {"uid": 2, "visual": "A2"},
+                {"uid": 3, "visual": "A3"},
+            ],
+        }
+
+    monkeypatch.setattr(lab.fast, "cmd_deploy_recommended", fake_deploy)
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_ensure_pause_state",
+        lambda *, reason: {"status": "OK", "reason": reason},
+    )
+    monkeypatch.setattr(lab, "_elapsed", lambda start: 30.0 + len(events))
+
+    def fake_timer(
+        profile,
+        *,
+        label,
+        use_memory,
+        timer_address=None,
+        live_timer_address=None,
+        live_timer_kind=None,
+    ):
+        timer_labels.append(label)
+        return {
+            "status": "OK",
+            "label": label,
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:13",
+            "game_seconds": 13.0,
+            "timer_validation": "validated_live_numeric_cycle",
+        }
+
+    monkeypatch.setattr(lab, "read_in_game_timer", fake_timer)
+
+    result = lab.deploy_recommended_after_visible_deployment(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        profile="Alpha",
+        use_memory_timer=True,
+        memory_timer_address=None,
+        memory_live_timer_address=0x122E5DBC,
+        memory_live_timer_kind="f32_seconds",
+        pause_after_deploy=True,
+        trigger_frame_timer={
+            "status": "OK",
+            "label": "deployment_probe_frame",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:13",
+            "game_seconds": 13.0,
+        },
+    )
+
+    assert result["status"] == "PASS"
+    assert deploy_calls == [
+        {"profile": "Alpha", "ui_fallback": True, "verify_after": False}
+    ]
+    assert result["deploy_result_compact"]["deployment_count"] == 3
+    assert result["before_in_game_timer"]["label"] == "deploy_recommended_trigger_frame"
+    assert result["post_deploy_frame_timer"]["source"] == "screenshot_frame_clock"
+    assert result["pause"]["reason"] == "timing_lab_after_deploy_recommended"
+    assert timer_labels == [
+        "deploy_recommended_after",
+        "deploy_recommended_after_pause",
+    ]
+    assert [event_type for event_type, _payload in events] == [
+        "deploy_recommended_start",
+        "deploy_recommended_result",
+        "post_deploy_probe",
+        "deploy_recommended_pause",
+    ]
+
+
 def test_build_parser_defaults_match_first_milestone():
     args = lab.build_parser().parse_args([])
 
@@ -545,8 +786,11 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.click_start_mission is False
     assert args.start_mission_click_hover_seconds == 0.05
     assert args.start_mission_pre_click_probe is False
+    assert args.deployment_trigger_source == "visible-ui"
     assert args.pause_after_red_mission_click is True
     assert args.pause_after_start_mission_click is True
+    assert args.deploy_after_visible_deployment is False
+    assert args.pause_after_deploy_recommended is True
 
 
 def test_timer_sample_seconds_rejects_unvalidated_save_fallback():

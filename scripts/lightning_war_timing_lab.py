@@ -536,6 +536,54 @@ def _timer_sample_from_frame(frame: dict[str, Any], *, label: str) -> dict[str, 
     return {key: value for key, value in sample.items() if value is not None}
 
 
+def _deployment_yellow_signal_from_frame(frame: dict[str, Any]) -> dict[str, Any]:
+    path = frame.get("screenshot_path")
+    if not path:
+        return {
+            "status": "UNKNOWN",
+            "reason": "screenshot_path_missing",
+            "deployment_visible": False,
+        }
+    try:
+        from PIL import Image
+
+        with Image.open(path) as image:
+            image = image.convert("RGB")
+            width, height = image.size
+            crop = (
+                int(width * 480 / 2560),
+                int(height * 173 / 1440),
+                int(width * 1960 / 2560),
+                int(height * 1232 / 1440),
+            )
+            region = image.crop(crop)
+            pixels = region.size[0] * region.size[1]
+            yellow = sum(
+                1
+                for red, green, blue in region.getdata()
+                if red >= 120
+                and green >= 95
+                and blue <= 95
+                and red >= green * 0.8
+                and red <= green * 1.8
+            )
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": str(exc),
+            "deployment_visible": False,
+        }
+    threshold = 5000
+    return {
+        "status": "OK",
+        "yellow": yellow,
+        "pixels": pixels,
+        "threshold": threshold,
+        "deployment_visible": yellow >= threshold,
+        "crop": list(crop),
+    }
+
+
 def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
     red_detection = report.get("red_detection") or {}
     selected = red_detection.get("selected_region") or {}
@@ -643,13 +691,16 @@ def append_notebook_report(report: dict[str, Any]) -> None:
     frame_report = report.get("frame_delta_report") or {}
     in_game_timers = report.get("in_game_timers") or {}
     red_timer = in_game_timers.get("red_map_detected") or {}
+    deploy = report.get("deploy_recommended") or {}
+    deploy_compact = deploy.get("deploy_result_compact") or {}
+    post_deploy_timer = in_game_timers.get("post_deploy_frame") or {}
     lines = [
         "",
         f"## {report.get('run_id')}",
         "",
         f"- Result: {report.get('status')}",
         f"- Branch: {report.get('branch_label')}",
-        "- Boundary: main menu -> lower Start timer zero -> Archive -> red map",
+        f"- Boundary: {report.get('route_slice') or 'main_menu_to_archive_red_map'}",
         "- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles",
         f"- Red map detected in-game timer: {red_timer.get('game_timer') or 'n/a'}",
         f"- Red map timer source: {red_timer.get('clock_source') or 'n/a'}",
@@ -662,6 +713,15 @@ def append_notebook_report(report: dict[str, Any]) -> None:
         f"- Red map screenshot: {_repo_relative_text(red_detection.get('screenshot_path'))}",
         f"- Next patch: {report.get('next_patch')}",
     ]
+    if deploy:
+        lines.extend(
+            [
+                f"- Deploy recommended result: {deploy_compact.get('status') or 'n/a'}",
+                f"- Deploy recommended placements: {deploy_compact.get('deployment_count')}",
+                f"- Deploy recommended duration: {_seconds_text(deploy.get('deploy_duration_seconds'))}",
+                f"- Post-deploy frame in-game timer: {post_deploy_timer.get('game_timer') or 'n/a'}",
+            ]
+        )
     NOTEBOOK_PATH.write_text(existing + "\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -993,6 +1053,7 @@ def click_start_mission_from_preview(
     interval_seconds: float,
     pause_after_click: bool,
     pre_start_visible_probe: bool,
+    deployment_trigger_source: str,
 ) -> dict[str, Any]:
     if pre_start_visible_probe:
         visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
@@ -1068,15 +1129,31 @@ def click_start_mission_from_preview(
         )
         frame["timer_seconds"] = _elapsed(timer_start)
         frame_timer = _timer_sample_from_frame(frame, label="deployment_probe_frame")
-        visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
-        snapshot = fast._lightning_live_snapshot()
-        deployment_visible = fast.visible_deployment_screen(visible)
+        visible: dict[str, Any] | None = None
+        snapshot: dict[str, Any] = {}
+        deployment_yellow_signal: dict[str, Any] | None = None
+        if deployment_trigger_source == "screenshot_yellow":
+            deployment_yellow_signal = _deployment_yellow_signal_from_frame(frame)
+            deployment_visible = bool(
+                deployment_yellow_signal.get("deployment_visible")
+            )
+            snapshot = {}
+        else:
+            visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
+            snapshot = fast._lightning_live_snapshot()
+            deployment_visible = fast.visible_deployment_screen(visible)
         bridge_deployment_ready = fast.deployment_snapshot_ready(snapshot)
         sample = {
             "timer_seconds": frame["timer_seconds"],
             "screenshot_path": frame.get("screenshot_path"),
             "frame_timer": frame_timer,
-            "visible_ui": fast.compact_visible_ui(visible),
+            "trigger_source": deployment_trigger_source,
+            "visible_ui": (
+                fast.compact_visible_ui(visible)
+                if isinstance(visible, dict)
+                else None
+            ),
+            "deployment_yellow_signal": deployment_yellow_signal,
             "deployment_visible": deployment_visible,
             "bridge_deployment_ready": bridge_deployment_ready,
             "snapshot": {
@@ -1096,7 +1173,11 @@ def click_start_mission_from_preview(
         telemetry.event("deployment_probe", **sample)
         if deployment_visible:
             result_status = "PASS"
-            result_reason = "deployment_visible"
+            result_reason = (
+                "deployment_yellow_screenshot"
+                if deployment_trigger_source == "screenshot_yellow"
+                else "deployment_visible"
+            )
             break
         time.sleep(max(0.05, interval_seconds))
     if result_status != "PASS" and first_bridge_deployment_sample is not None:
@@ -1138,15 +1219,158 @@ def click_start_mission_from_preview(
     }
 
 
+def _deploy_recommended_status_ok(result: dict[str, Any]) -> bool:
+    status = result.get("status")
+    if status == "OK":
+        return True
+    deployments = result.get("deployments") or []
+    ui_fallback = result.get("ui_fallback") or {}
+    return (
+        status == "WARN"
+        and ui_fallback.get("status") == "OK"
+        and len(deployments) >= 1
+    )
+
+
+def _compact_deploy_recommended_result(result: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(result, dict):
+        return {"status": "UNKNOWN", "reason": "non_dict_result"}
+    ui_fallback = result.get("ui_fallback") or {}
+    return {
+        "status": result.get("status") or ("ERROR" if result.get("error") else None),
+        "reason": result.get("reason") or result.get("error"),
+        "deployment_count": len(result.get("deployments") or []),
+        "existing_deployment_count": len(result.get("existing_deployments") or {}),
+        "phase": result.get("phase"),
+        "ui_fallback_status": ui_fallback.get("status"),
+        "accepted": _deploy_recommended_status_ok(result),
+    }
+
+
+def deploy_recommended_after_visible_deployment(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    profile: str,
+    use_memory_timer: bool,
+    memory_timer_address: int | None,
+    memory_live_timer_address: int | None,
+    memory_live_timer_kind: str | None,
+    pause_after_deploy: bool,
+    trigger_frame_timer: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if isinstance(trigger_frame_timer, dict):
+        before_timer = {
+            **trigger_frame_timer,
+            "label": "deploy_recommended_trigger_frame",
+        }
+    else:
+        before_timer = read_in_game_timer(
+            profile,
+            label="deploy_recommended_before",
+            use_memory=use_memory_timer,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        )
+    telemetry.event(
+        "deploy_recommended_start",
+        timer_seconds=_elapsed(timer_start),
+        before_in_game_timer=before_timer,
+    )
+
+    deploy_started = time.perf_counter()
+    deploy = fast.cmd_deploy_recommended(
+        profile=profile,
+        ui_fallback=True,
+        verify_after=False,
+    )
+    deploy_duration = round(time.perf_counter() - deploy_started, 3)
+    compact_deploy = _compact_deploy_recommended_result(deploy)
+    telemetry.event(
+        "deploy_recommended_result",
+        timer_seconds=_elapsed(timer_start),
+        duration_seconds=deploy_duration,
+        result=compact_deploy,
+    )
+
+    post_frame = screenshots.capture_once(
+        clock_state="post_deploy_probe",
+        note="after_deploy_recommended",
+    )
+    post_frame["timer_seconds"] = _elapsed(timer_start)
+    post_frame_timer = _timer_sample_from_frame(post_frame, label="post_deploy_frame")
+    after_timer = read_in_game_timer(
+        profile,
+        label="deploy_recommended_after",
+        use_memory=use_memory_timer,
+        timer_address=memory_timer_address,
+        live_timer_address=memory_live_timer_address,
+        live_timer_kind=memory_live_timer_kind,
+    )
+    telemetry.event(
+        "post_deploy_probe",
+        timer_seconds=post_frame["timer_seconds"],
+        screenshot_path=post_frame.get("screenshot_path"),
+        frame_timer=post_frame_timer,
+        after_in_game_timer=after_timer,
+    )
+
+    pause: dict[str, Any] | None = None
+    after_pause_timer: dict[str, Any] | None = None
+    if pause_after_deploy:
+        pause = fast._lightning_ensure_pause_state(
+            reason="timing_lab_after_deploy_recommended",
+        )
+        after_pause_timer = read_in_game_timer(
+            profile,
+            label="deploy_recommended_after_pause",
+            use_memory=use_memory_timer,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        )
+        telemetry.event(
+            "deploy_recommended_pause",
+            timer_seconds=_elapsed(timer_start),
+            click=pause,
+            after_pause_timer=after_pause_timer,
+        )
+
+    return {
+        "status": "PASS" if compact_deploy.get("accepted") else "FAIL",
+        "reason": "deploy_recommended_accepted"
+        if compact_deploy.get("accepted")
+        else "deploy_recommended_failed",
+        "before_in_game_timer": before_timer,
+        "deploy_duration_seconds": deploy_duration,
+        "deploy_result": deploy,
+        "deploy_result_compact": compact_deploy,
+        "post_deploy_frame": post_frame,
+        "post_deploy_frame_timer": post_frame_timer,
+        "after_in_game_timer": after_timer,
+        "pause": pause,
+        "after_pause_timer": after_pause_timer,
+    }
+
+
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
     memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
     memory_live_timer_kind = args.memory_live_timer_kind
-    click_red_mission = bool(args.click_red_mission or args.click_start_mission)
+    deploy_after_visible_deployment = bool(args.deploy_after_visible_deployment)
+    deployment_trigger_source = str(args.deployment_trigger_source).replace("-", "_")
+    if deploy_after_visible_deployment:
+        deployment_trigger_source = "screenshot_yellow"
+    click_start_mission = bool(args.click_start_mission or deploy_after_visible_deployment)
+    click_red_mission = bool(args.click_red_mission or click_start_mission)
     route_slice = (
-        "main_menu_to_archive_red_map_to_deployment"
-        if args.click_start_mission
+        "main_menu_to_archive_red_map_to_deployed_mechs"
+        if deploy_after_visible_deployment
+        else "main_menu_to_archive_red_map_to_deployment"
+        if click_start_mission
         else "main_menu_to_archive_red_map_to_preview"
         if click_red_mission
         else "main_menu_to_archive_red_map"
@@ -1170,15 +1394,23 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "memory_live_timer_kind": memory_live_timer_kind,
             "click_red_mission": click_red_mission,
-            "click_start_mission": bool(args.click_start_mission),
+            "click_start_mission": click_start_mission,
+            "deploy_after_visible_deployment": deploy_after_visible_deployment,
+            "deployment_trigger_source": deployment_trigger_source,
             "pause_after_red_mission_click": (
                 bool(args.pause_after_red_mission_click)
-                if click_red_mission and not args.click_start_mission
+                if click_red_mission and not click_start_mission
                 else None
             ),
             "pause_after_start_mission_click": (
                 bool(args.pause_after_start_mission_click)
-                if args.click_start_mission
+                and not deploy_after_visible_deployment
+                if click_start_mission
+                else None
+            ),
+            "pause_after_deploy_recommended": (
+                bool(args.pause_after_deploy_recommended)
+                if deploy_after_visible_deployment
                 else None
             ),
             "screenshot_filename_timer_source": (
@@ -1331,7 +1563,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             hold_seconds=args.red_mission_click_hold_seconds,
             pause_after_click=(
                 bool(args.pause_after_red_mission_click)
-                and not args.click_start_mission
+                and not click_start_mission
             ),
         )
         in_game_timers["mission_preview_frame"] = (
@@ -1350,7 +1582,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             else None
         )
     start_mission: dict[str, Any] | None = None
-    if args.click_start_mission and isinstance(mission_preview, dict):
+    deployment_result: dict[str, Any] | None = None
+    if click_start_mission and isinstance(mission_preview, dict):
         start_mission = click_start_mission_from_preview(
             timer_start=timer_start,
             telemetry=telemetry,
@@ -1365,8 +1598,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             hold_seconds=args.start_mission_click_hold_seconds,
             max_seconds=args.deployment_timeout_seconds,
             interval_seconds=args.deployment_probe_interval_seconds,
-            pause_after_click=args.pause_after_start_mission_click,
+            pause_after_click=(
+                bool(args.pause_after_start_mission_click)
+                and not deploy_after_visible_deployment
+            ),
             pre_start_visible_probe=args.start_mission_pre_click_probe,
+            deployment_trigger_source=deployment_trigger_source,
         )
         in_game_timers["start_mission_click_before"] = start_mission.get(
             "before_in_game_timer"
@@ -1390,6 +1627,45 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         in_game_timers["deployment_after_pause"] = start_mission.get(
             "after_pause_timer"
         )
+    if (
+        deploy_after_visible_deployment
+        and isinstance(start_mission, dict)
+        and start_mission.get("status") == "PASS"
+    ):
+        deployment_visible_samples = [
+            sample
+            for sample in start_mission.get("samples", [])
+            if isinstance(sample, dict) and sample.get("deployment_visible")
+        ]
+        deployment_trigger_frame_timer = (
+            deployment_visible_samples[0].get("frame_timer")
+            if deployment_visible_samples
+            else None
+        )
+        deployment_result = deploy_recommended_after_visible_deployment(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            profile=args.profile,
+            use_memory_timer=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+            pause_after_deploy=args.pause_after_deploy_recommended,
+            trigger_frame_timer=deployment_trigger_frame_timer,
+        )
+        in_game_timers["deploy_recommended_before"] = deployment_result.get(
+            "before_in_game_timer"
+        )
+        in_game_timers["deploy_recommended_after"] = deployment_result.get(
+            "after_in_game_timer"
+        )
+        in_game_timers["post_deploy_frame"] = deployment_result.get(
+            "post_deploy_frame_timer"
+        )
+        in_game_timers["deploy_recommended_after_pause"] = deployment_result.get(
+            "after_pause_timer"
+        )
     frame_report = generate_frame_delta_report(telemetry.run_dir)
 
     branch_label = (
@@ -1403,9 +1679,23 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         and int(red_detection.get("region_count") or 0) >= 1
         else "FAIL"
     )
+    if deploy_after_visible_deployment:
+        status = (
+            "PASS"
+            if status == "PASS"
+            and isinstance(deployment_result, dict)
+            and deployment_result.get("status") == "PASS"
+            else "FAIL"
+        )
     if status != "PASS":
-        next_patch = "Improve Archive intro wait/dismissal or red-region detector."
-    elif args.click_start_mission:
+        next_patch = (
+            "Fix deployment placement trigger after deployment-visible screenshot."
+            if deploy_after_visible_deployment
+            else "Improve Archive intro wait/dismissal or red-region detector."
+        )
+    elif deploy_after_visible_deployment:
+        next_patch = "Measure deploy Confirm click after user review."
+    elif click_start_mission:
         next_patch = "Measure deployment placement and confirm click after user review."
     elif click_red_mission:
         next_patch = "Measure preview-to-deployment click after user review."
@@ -1423,6 +1713,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         "red_detection": red_detection,
         "mission_preview": mission_preview,
         "start_mission": start_mission,
+        "deploy_recommended": deployment_result,
         "frame_delta_report": frame_report,
         "next_patch": next_patch,
     }
@@ -1537,10 +1828,34 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--deployment-timeout-seconds", type=float, default=8.0)
     parser.add_argument("--deployment-probe-interval-seconds", type=float, default=0.5)
     parser.add_argument(
+        "--deployment-trigger-source",
+        choices=("visible-ui", "screenshot-yellow"),
+        default="visible-ui",
+        help=(
+            "Detection source for Start Mission -> deployment. The deploy "
+            "extension forces screenshot-yellow so the trigger is the timing "
+            "lab frame itself."
+        ),
+    )
+    parser.add_argument(
         "--pause-after-start-mission-click",
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Pause after the deployment probe window completes.",
+    )
+    parser.add_argument(
+        "--deploy-after-visible-deployment",
+        action="store_true",
+        help=(
+            "After the screenshot probe first detects deployment squares, run "
+            "deploy_recommended without clicking Confirm."
+        ),
+    )
+    parser.add_argument(
+        "--pause-after-deploy-recommended",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Pause after deploy_recommended and the post-deploy screenshot.",
     )
     parser.add_argument(
         "--startup-codex-visual-check",
