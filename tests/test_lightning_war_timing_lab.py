@@ -40,8 +40,10 @@ def test_profile_boundary_from_report_keeps_first_milestone_evidence():
 
     assert boundary["status"] == "PASS"
     assert boundary["timer_zero"] == "lower difficulty setup Start click"
-    assert boundary["archive_click_seconds"] == 7.0
-    assert boundary["red_map_detected_seconds"] == 10.25
+    assert boundary["time_source"] == "wall_clock_perf_counter"
+    assert boundary["archive_click_wall_seconds"] == 7.0
+    assert boundary["red_map_detected_wall_seconds"] == 10.25
+    assert boundary["in_game_timer"]["status"] == "NOT_RECORDED"
     assert boundary["region_count"] == 5
     assert boundary["chosen_probe_region"]["window_x"] == 620
     assert boundary["evidence"]["contact_sheet_path"] == "contact.png"
@@ -123,7 +125,7 @@ def test_update_profile_keeps_faster_existing_pass(monkeypatch, tmp_path):
   "boundaries": {
     "main_menu_to_archive_red_map": {
       "status": "PASS",
-      "red_map_detected_seconds": 19.276,
+      "red_map_detected_wall_seconds": 19.276,
       "evidence": {"run_id": "fast"}
     }
   }
@@ -149,5 +151,5 @@ def test_update_profile_keeps_faster_existing_pass(monkeypatch, tmp_path):
 
     result = lab._load_profile()
     boundary = result["boundaries"]["main_menu_to_archive_red_map"]
-    assert boundary["red_map_detected_seconds"] == 19.276
+    assert boundary["red_map_detected_wall_seconds"] == 19.276
     assert boundary["evidence"]["run_id"] == "fast"

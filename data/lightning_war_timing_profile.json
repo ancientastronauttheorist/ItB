@@ -1,7 +1,7 @@
 {
   "boundaries": {
     "main_menu_to_archive_red_map": {
-      "archive_click_seconds": 7.975,
+      "archive_click_wall_seconds": 7.975,
       "branch_label": "archive_intro.default",
       "chosen_probe_region": {
         "area_window": 26830.2,
@@ -16,10 +16,15 @@
         "report_path": "run_notes\\lightning_ui_timing_loop\\lightning_ui_timing_20260613_145559_opening_red_map_report.json",
         "run_id": "lightning_ui_timing_20260613_145559"
       },
-      "intro_continue_seconds": 10.509,
-      "red_map_detected_seconds": 19.276,
+      "in_game_timer": {
+        "reason": "opening lab v1 did not read the top-right timer or memory timer",
+        "status": "NOT_RECORDED"
+      },
+      "intro_continue_wall_seconds": 10.509,
+      "red_map_detected_wall_seconds": 19.276,
       "region_count": 2,
       "status": "PASS",
+      "time_source": "wall_clock_perf_counter",
       "timer_zero": "lower difficulty setup Start click"
     }
   },

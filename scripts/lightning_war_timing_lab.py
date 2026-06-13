@@ -82,9 +82,14 @@ def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
         "status": report.get("status"),
         "branch_label": report.get("branch_label"),
         "timer_zero": "lower difficulty setup Start click",
-        "archive_click_seconds": report.get("marks", {}).get("archive_click"),
-        "intro_continue_seconds": report.get("marks", {}).get("intro_continue"),
-        "red_map_detected_seconds": red_detection.get("detected_at_seconds"),
+        "time_source": "wall_clock_perf_counter",
+        "archive_click_wall_seconds": report.get("marks", {}).get("archive_click"),
+        "intro_continue_wall_seconds": report.get("marks", {}).get("intro_continue"),
+        "red_map_detected_wall_seconds": red_detection.get("detected_at_seconds"),
+        "in_game_timer": {
+            "status": "NOT_RECORDED",
+            "reason": "opening lab v1 did not read the top-right timer or memory timer",
+        },
         "region_count": red_detection.get("region_count"),
         "chosen_probe_region": {
             key: selected.get(key)
@@ -116,8 +121,11 @@ def update_profile(report: dict[str, Any]) -> dict[str, Any]:
     key = "main_menu_to_archive_red_map"
     previous = boundaries.get(key) or {}
     promoted = _profile_boundary_from_report(report)
-    previous_time = previous.get("red_map_detected_seconds")
-    promoted_time = promoted.get("red_map_detected_seconds")
+    previous_time = previous.get(
+        "red_map_detected_wall_seconds",
+        previous.get("red_map_detected_seconds"),
+    )
+    promoted_time = promoted.get("red_map_detected_wall_seconds")
     should_promote = previous.get("status") != "PASS"
     if not should_promote and previous_time is not None and promoted_time is not None:
         should_promote = float(promoted_time) <= float(previous_time)
@@ -150,9 +158,11 @@ def append_notebook_report(report: dict[str, Any]) -> None:
         f"- Result: {report.get('status')}",
         f"- Branch: {report.get('branch_label')}",
         "- Boundary: main menu -> lower Start timer zero -> Archive -> red map",
-        f"- Archive click: {_seconds_text(report.get('marks', {}).get('archive_click'))}",
-        f"- Intro continue: {_seconds_text(report.get('marks', {}).get('intro_continue'))}",
-        f"- Red map detected: {_seconds_text(red_detection.get('detected_at_seconds'))}",
+        "- Time source: wall-clock `perf_counter`, not the in-game top-right timer",
+        f"- Archive click wall elapsed: {_seconds_text(report.get('marks', {}).get('archive_click'))}",
+        f"- Intro continue wall elapsed: {_seconds_text(report.get('marks', {}).get('intro_continue'))}",
+        f"- Red map detected wall elapsed: {_seconds_text(red_detection.get('detected_at_seconds'))}",
+        "- In-game timer: not recorded by opening lab v1",
         f"- Red regions: {red_detection.get('region_count')}",
         f"- Contact sheet: {_repo_relative_text(frame_report.get('contact_sheet_path'))}",
         f"- Red map screenshot: {_repo_relative_text(red_detection.get('screenshot_path'))}",
