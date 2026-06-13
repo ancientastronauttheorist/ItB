@@ -17494,12 +17494,21 @@ def cmd_lightning_route_start(
             or preview_bridge_stale
             or not actual_preview_mission
         )
-        allow_unverified_start = (
-            (manual_coordinate_start or allow_unverified_preview_start)
-            and not expected_preview_mission
+        manual_expected_unverified_start = (
+            allow_unverified_preview_start
+            and manual_coordinate_start
+            and bool(expected_preview_mission)
             and not preview_bridge_stale
             and not require_auto_start_safe_preview
         )
+        allow_unverified_start = (
+            (
+                (manual_coordinate_start or allow_unverified_preview_start)
+                and not expected_preview_mission
+            )
+            or manual_expected_unverified_start
+        ) and not preview_bridge_stale and not require_auto_start_safe_preview
+        manual_unverified_preview_authorization = None
         visible_preview_ocr = None
         ocr_authorized_preview_start = False
         if preview_unverified and not allow_unverified_start:
@@ -17645,6 +17654,23 @@ def cmd_lightning_route_start(
                 }
                 _print_result(result)
                 return result
+        elif manual_expected_unverified_start and preview_unverified:
+            manual_unverified_preview_authorization = {
+                "status": "OK",
+                "reason": "manual_expected_visible_preview_authorized",
+                "expected_route_mission_id": expected_preview_mission,
+                "region_window_x": region_window_x,
+                "region_window_y": region_window_y,
+            }
+            actual_preview_mission = expected_preview_mission
+            preview_source = "manual_expected_visible_preview"
+            preview_recommendation = {
+                **preview_recommendation,
+                "source": preview_source,
+                "manual_unverified_preview_authorization": (
+                    manual_unverified_preview_authorization
+                ),
+            }
 
         auto_start_preview_validation = None
         baseline_unassigned_multi_region_preview = False
@@ -18379,6 +18405,10 @@ def cmd_lightning_route_start(
         if auto_start_preview_validation is not None:
             click_result["auto_start_preview_validation"] = (
                 auto_start_preview_validation
+            )
+        if manual_unverified_preview_authorization is not None:
+            click_result["manual_unverified_preview_authorization"] = (
+                manual_unverified_preview_authorization
             )
         if stale_route_target_override is not None:
             click_result["stale_route_target_override"] = stale_route_target_override

@@ -639,6 +639,15 @@ def main():
         ),
     )
     p_lightning_route_start.add_argument(
+        "--allow-unverified-preview-start",
+        action="store_true",
+        help=(
+            "Allow a manually selected visible preview to start without bridge/OCR "
+            "preview proof. Requires --expected-mission-id and post-start "
+            "deployment verification still applies."
+        ),
+    )
+    p_lightning_route_start.add_argument(
         "--route-routing",
         choices=["default", "lightning_war", "lightning_baseline"],
         default="lightning_war",
@@ -1596,6 +1605,7 @@ def main():
             start_window_x=args.start_window_x,
             start_window_y=args.start_window_y,
             expected_route_mission_id=args.expected_route_mission_id,
+            allow_unverified_preview_start=args.allow_unverified_preview_start,
             route_routing=args.route_routing,
             dry_run=args.dry_run,
         )
