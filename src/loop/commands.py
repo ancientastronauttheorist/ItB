@@ -9246,6 +9246,85 @@ def _lightning_assign_visual_route_options(
     return out
 
 
+def _lightning_map_region_screen_guard(image_path: str | Path) -> dict | None:
+    """Return a blocking guard when a screenshot is not a clean island map."""
+    visible_ui = _classify_lightning_ui_image(image_path)
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return None
+    visible_name = str(visible_ui.get("visible_ui") or "")
+    if visible_name == "pause_menu":
+        return {
+            "status": "BLOCKED",
+            "reason": "pause_menu_visible",
+            "visible_ui": visible_name,
+            "confidence": visible_ui.get("confidence"),
+            "next_step": (
+                "Resume briefly, capture a clean island-map screenshot, then "
+                "rerun lightning_map_regions."
+            ),
+        }
+    if visible_name == "mission_preview_panel":
+        return {
+            "status": "BLOCKED",
+            "reason": "mission_preview_panel_visible",
+            "visible_ui": visible_name,
+            "confidence": visible_ui.get("confidence"),
+            "recommended_control": visible_ui.get("recommended_control"),
+            "next_step": (
+                "Do not derive route candidates from an open mission preview; "
+                "dismiss or reselect the preview first."
+            ),
+        }
+
+    scores = visible_ui.get("scores")
+    if not isinstance(scores, dict):
+        return None
+    preview = scores.get("mission_preview_dialogue")
+    if not isinstance(preview, dict):
+        return None
+    card = preview.get("card")
+    if not isinstance(card, dict):
+        card = {}
+    dialogue = preview.get("dialogue")
+    if not isinstance(dialogue, dict):
+        dialogue = {}
+    try:
+        preview_score = float(preview.get("score") or 0.0)
+        card_blue = int(card.get("blue") or 0)
+        card_bright = int(card.get("bright") or 0)
+        card_dark = float(card.get("dark_fraction") or 0.0)
+        dialogue_red = int(dialogue.get("red") or 0)
+    except (TypeError, ValueError):
+        return None
+
+    # A selected island mission shows a dark hover/preview card over the map.
+    # Red-region extraction still sees blobs behind it, but visual-order route
+    # assignment can be wrong because the card occludes/splits the regions.
+    if (
+        visible_name in {"island_map", "island_map_or_unknown"}
+        and preview_score >= 0.30
+        and card_bright >= 2500
+        and card_blue >= 2000
+        and card_dark >= 0.20
+        and dialogue_red >= 4000
+    ):
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_card_visible",
+            "visible_ui": visible_name,
+            "preview_score": preview_score,
+            "card_blue": card_blue,
+            "card_bright": card_bright,
+            "card_dark_fraction": card_dark,
+            "dialogue_red": dialogue_red,
+            "next_step": (
+                "Dismiss the open route preview or use a reselect start mode, "
+                "then capture a clean map before emitting route candidates."
+            ),
+        }
+    return None
+
+
 def _lightning_candidate_auto_block_reason(
     candidate: dict,
     *,
@@ -15250,6 +15329,9 @@ def cmd_lightning_map_regions(
 
     result = _lightning_extract_red_regions_from_image(target_path)
     result["capture_result"] = captured
+    screen_guard = _lightning_map_region_screen_guard(target_path)
+    if screen_guard is not None:
+        result["screen_guard"] = screen_guard
     target_hint = _lightning_route_target_hint_from_args(
         target_name=target_name,
         target_mission_id=target_mission_id,
@@ -15264,22 +15346,43 @@ def cmd_lightning_map_regions(
     )
     if save_recommendation:
         result["save_route_recommendation"] = save_recommendation
-        assigned = _lightning_assign_visual_route_options(result, save_recommendation)
-        if isinstance(assigned, dict):
-            result = assigned
-    route_candidates = _lightning_route_start_candidates(
-        result,
-        start_mode=start_mode,
-        target_hint=target_hint,
-        recommendation=save_recommendation,
-    )
+    if screen_guard is not None and screen_guard.get("status") == "BLOCKED":
+        result["status"] = "BLOCKED"
+        result["reason"] = screen_guard.get("reason")
+        result["route_assignment"] = {
+            "status": "BLOCKED",
+            "method": "screen_guard",
+            "reason": screen_guard.get("reason"),
+        }
+        result["next_step"] = screen_guard.get(
+            "next_step",
+            "Capture a clean island-map screenshot before choosing a route.",
+        )
+        route_candidates = []
+    else:
+        if save_recommendation:
+            assigned = _lightning_assign_visual_route_options(
+                result,
+                save_recommendation,
+            )
+            if isinstance(assigned, dict):
+                result = assigned
+        route_candidates = _lightning_route_start_candidates(
+            result,
+            start_mode=start_mode,
+            target_hint=target_hint,
+            recommendation=save_recommendation,
+        )
     if route_candidates:
         result["route_start_candidates"] = route_candidates
         _lightning_attach_primary_route_candidate(result, route_candidates)
-    result["next_step"] = (
-        "Pick the visual red-region candidate matching the intended mission, "
-        "then run its command. Use route_start_command only for a narrower "
-        "start-only handoff."
+    result.setdefault(
+        "next_step",
+        (
+            "Pick the visual red-region candidate matching the intended mission, "
+            "then run its command. Use route_start_command only for a narrower "
+            "start-only handoff."
+        ),
     )
     print("\n=== LIGHTNING MAP REGIONS ===")
     print(f"  screenshot: {target_path}")

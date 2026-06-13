@@ -5506,6 +5506,88 @@ def test_lightning_map_regions_command_analyzes_existing_screenshot(monkeypatch)
     assert "candidate" in result["next_step"]
 
 
+def test_lightning_map_regions_blocks_obscured_route_preview(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": str(path),
+            "region_count": 3,
+            "regions": [
+                {"index": 0, "window_x": 1356, "window_y": 545},
+                {"index": 1, "window_x": 1062, "window_y": 694},
+                {"index": 2, "window_x": 1870, "window_y": 1106},
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "confidence": 0.23,
+            "scores": {
+                "mission_preview_dialogue": {
+                    "score": 0.39,
+                    "card": {
+                        "blue": 3082,
+                        "bright": 3485,
+                        "dark_fraction": 0.32,
+                    },
+                    "dialogue": {"red": 13728},
+                }
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recommend_save_routes",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "source": "saveData",
+            "routing": "lightning_war",
+            "ranked": [
+                {
+                    "mission_id": "Mission_Armored_Train",
+                    "save_region_index": 2,
+                    "save_region_name": "Safeguard Valley",
+                    "score": 35,
+                },
+                {
+                    "mission_id": "Mission_Tides",
+                    "save_region_index": 3,
+                    "save_region_name": "Storage Vaults",
+                    "score": 12,
+                },
+                {
+                    "mission_id": "Mission_Dam",
+                    "save_region_index": 7,
+                    "save_region_name": "Chronology Hall",
+                    "score": -105,
+                },
+            ],
+        },
+    )
+
+    result = commands.cmd_lightning_map_regions(
+        "/tmp/map-with-open-route-preview.png",
+        target_mission_id="Mission_Tides",
+        target_region_id=3,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_card_visible"
+    assert result["route_assignment"] == {
+        "status": "BLOCKED",
+        "method": "screen_guard",
+        "reason": "route_preview_card_visible",
+    }
+    assert "route_start_candidates" not in result
+    assert "primary_next_command" not in result
+
+
 def test_lightning_ui_classifier_prioritizes_mission_preview(tmp_path):
     from PIL import Image, ImageDraw
 
