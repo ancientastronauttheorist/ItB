@@ -274,7 +274,8 @@ Every cycle should record:
 - first clickable frame timestamp
 - click coordinates or named control
 - live timer before and after the slice, when available
-- memory-reader in-game timer value, when available
+- memory-reader in-game timer value, when available and validated against the
+  visible screenshot timer
 - whether the slice advanced achievement progress
 - whether any timer seconds were spent without progress
 - next hypothesis or patch needed
@@ -343,8 +344,16 @@ once its correctness is proven.
   game-touching commands; keep `game_loop.py` and UI-control commands serialized.
 - Use screenshots for novel UI and timing boundaries.
 - Use bridge reads for combat state once combat is loaded.
-- Use the live in-game timer memory reader when available as complementary
-  structured data, but screenshots remain the source of truth for UI timing.
+- Use the live in-game timer memory reader only when its value is correlated
+  with pause-menu `Timeline Playtime` screenshot evidence. For the current
+  Windows process/session, `0x00000000138a5900` is the calibrated
+  `Timeline Playtime` string address: it matched visible paused values at
+  `0h 1m 04s`, `0h 1m 27s`, `0h 1m 48s`, and `0h 2m 14s`. This address is
+  process-local and must be rediscovered after game restart, PID change,
+  modloader reload, or platform change. Treat unanchored context summaries,
+  `visible_timer_string` aggregates, other string hits, and `f32` candidates as
+  diagnostic only unless they are corroborated by screenshot evidence or the
+  calibrated address.
 - Never run two live `game_loop.py` commands at the same time.
 - Stop and park when a UI state is ambiguous.
 - On failure, try to reach the pause menu first before longer thinking.

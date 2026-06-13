@@ -28,6 +28,7 @@ PROCESS_VM_READ = 0x0010
 MEM_COMMIT = 0x1000
 PAGE_NOACCESS = 0x01
 PAGE_GUARD = 0x100
+DEFAULT_MAX_VISIBLE_TIMER_SECONDS = 30 * 60
 
 
 @dataclass
@@ -233,6 +234,25 @@ def _parse_timer_label(label: str) -> float | None:
     return float(int(h) * 3600 + minutes * 60 + seconds)
 
 
+def _parse_timer_words(label: str) -> float | None:
+    match = re.fullmatch(r"\s*(\d{1,2})h\s+(\d{1,2})m\s+(\d{1,2})s\s*", label)
+    if not match:
+        return None
+    hours = int(match.group(1))
+    minutes = int(match.group(2))
+    seconds = int(match.group(3))
+    if minutes >= 60 or seconds >= 60:
+        return None
+    return float(hours * 3600 + minutes * 60 + seconds)
+
+
+def _parse_int_auto(value: str) -> int:
+    try:
+        return int(value, 0)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid integer/address: {value}") from exc
+
+
 _DATE_WORD_RE = re.compile(
     r"\b(mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b",
     re.IGNORECASE,
@@ -267,6 +287,17 @@ def _extract_context_timers(text: str) -> list[dict[str, Any]]:
                 "raw": match.group(1),
                 "seconds": seconds,
                 "game_timer": _format_seconds(seconds),
+                "text_offset": match.start(1),
+            })
+    for match in re.finditer(r"(?<!\d)(\d{1,2}h\s+\d{1,2}m\s+\d{1,2}s)", text):
+        seconds = _parse_timer_words(match.group(1))
+        if seconds is not None:
+            timers.append({
+                "source": "visible_timeline_playtime_string",
+                "raw": match.group(1),
+                "seconds": seconds,
+                "game_timer": _format_seconds(seconds),
+                "text_offset": match.start(1),
             })
     return timers
 
@@ -291,6 +322,8 @@ def summarize_context_timers(context: list[dict[str, Any]]) -> list[dict[str, An
         bucket["raw_values"][str(item.get("raw", item.get("seconds")))] += 1
         if item.get("region_base"):
             bucket["regions"][str(item["region_base"])] += 1
+        if item.get("address"):
+            bucket.setdefault("addresses", Counter())[str(item["address"])] += 1
 
     summary: list[dict[str, Any]] = []
     for bucket in buckets.values():
@@ -301,15 +334,70 @@ def summarize_context_timers(context: list[dict[str, Any]]) -> list[dict[str, An
             "sources": dict(bucket["sources"].most_common()),
             "raw_values": dict(bucket["raw_values"].most_common(8)),
             "regions": dict(bucket["regions"].most_common(8)),
+            "addresses": dict(bucket.get("addresses", Counter()).most_common(8)),
         })
     summary.sort(key=lambda item: (int(item["count"]), float(item["seconds"])), reverse=True)
     return summary
 
 
-def select_visible_timer_context(context: list[dict[str, Any]]) -> dict[str, Any] | None:
-    visible = [item for item in context if item.get("source") == "visible_timer_string"]
-    summary = summarize_context_timers(visible or context)
+def select_visible_timer_context(
+    context: list[dict[str, Any]],
+    *,
+    max_visible_seconds: float | None = DEFAULT_MAX_VISIBLE_TIMER_SECONDS,
+) -> dict[str, Any] | None:
+    visible = filter_visible_timer_context(
+        context,
+        max_visible_seconds=max_visible_seconds,
+    )
+    timeline_visible = [
+        item for item in visible
+        if item.get("source") == "visible_timeline_playtime_string"
+    ]
+    if timeline_visible:
+        visible = timeline_visible
+    if not visible:
+        return None
+    summary = summarize_context_timers(visible)
     return summary[0] if summary else None
+
+
+def filter_visible_timer_context(
+    context: list[dict[str, Any]],
+    *,
+    max_visible_seconds: float | None = DEFAULT_MAX_VISIBLE_TIMER_SECONDS,
+) -> list[dict[str, Any]]:
+    visible: list[dict[str, Any]] = []
+    for item in context:
+        if not _is_visible_timer_source(item.get("source")):
+            continue
+        try:
+            seconds = float(item.get("seconds"))
+        except (TypeError, ValueError):
+            continue
+        if max_visible_seconds is not None and seconds > max_visible_seconds:
+            continue
+        if _looks_like_placeholder_timer(item.get("raw")):
+            continue
+        visible.append(item)
+    return visible
+
+
+def _is_visible_timer_source(source: Any) -> bool:
+    return str(source) in {
+        "visible_timer_string",
+        "visible_timeline_playtime_string",
+    }
+
+
+def _looks_like_placeholder_timer(raw: Any) -> bool:
+    text = str(raw or "").strip()
+    colon = re.fullmatch(r"(\d{1,2}):(\d{2}):(\d{2})", text)
+    if colon and len({colon.group(1), colon.group(2), colon.group(3)}) == 1:
+        return text != "0:00:00"
+    words = re.fullmatch(r"(\d{1,2})h\s+(\d{1,2})m\s+(\d{1,2})s", text)
+    if words and len({words.group(1), words.group(2), words.group(3)}) == 1:
+        return text != "0h 0m 0s"
+    return False
 
 
 def scan_context_timers(
@@ -326,13 +414,61 @@ def scan_context_timers(
             continue
         if not any(pattern in data for pattern in patterns):
             continue
-        text = data.decode("utf-8", "replace")
+        text = data.decode("latin-1")
         for timer in _extract_context_timers(text):
             timer["region_base"] = f"0x{base:016x}"
+            if timer.get("text_offset") is not None:
+                timer["address"] = f"0x{base + int(timer['text_offset']):016x}"
             hits.append(timer)
             if len(hits) >= max_hits:
                 return hits
     return hits
+
+
+def read_timeline_playtime_address(
+    reader: WindowsProcessReader,
+    address: int,
+    *,
+    size: int = 64,
+) -> dict[str, Any]:
+    data = reader.read(address, size)
+    if not data:
+        return {
+            "status": "ERROR",
+            "reason": "address could not be read",
+            "address": f"0x{address:016x}",
+        }
+    text = data.decode("utf-8", "replace")
+    leading = re.match(r"\s*(\d{1,2}h\s+\d{1,2}m\s+\d{1,2}s)", text)
+    if leading:
+        seconds = _parse_timer_words(leading.group(1))
+        if seconds is not None:
+            return {
+                "status": "OK",
+                "address": f"0x{address:016x}",
+                "raw_text": text,
+                "source": "visible_timeline_playtime_string",
+                "raw": leading.group(1),
+                "seconds": seconds,
+                "game_timer": _format_seconds(seconds),
+            }
+    for timer in _extract_context_timers(text):
+        if timer.get("source") != "visible_timeline_playtime_string":
+            continue
+        if int(timer.get("text_offset") or 0) != 0:
+            continue
+        timer.pop("text_offset", None)
+        return {
+            "status": "OK",
+            "address": f"0x{address:016x}",
+            "raw_text": text,
+            **timer,
+        }
+    return {
+        "status": "NO_TIMER",
+        "address": f"0x{address:016x}",
+        "raw_text": text,
+    }
 
 
 def _score_candidate(
@@ -504,15 +640,21 @@ def resolve_expected_seconds(
                 "reason": "selected the largest observed timer-like context value",
             }
 
-        visible = [item for item in context if item.get("source") == "visible_timer_string"]
-        selected_context = visible or context
-        summary = summarize_context_timers(selected_context)
+        visible = filter_visible_timer_context(
+            context,
+            max_visible_seconds=args.max_visible_timer_seconds,
+        )
+        best = select_visible_timer_context(
+            context,
+            max_visible_seconds=args.max_visible_timer_seconds,
+        )
+        summary = [best] if best else summarize_context_timers(context)
         if summary:
             best = summary[0]
             seconds = float(best["seconds"])
             return seconds, {
                 "strategy": "mode_context",
-                "source_filter": "visible_timer_string" if visible else "all_context",
+                "source_filter": "plausible_visible_timer" if visible else "all_context",
                 "seconds": seconds,
                 "game_timer": best["game_timer"],
                 "count": best["count"],
@@ -589,6 +731,24 @@ def cmd_scan(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_read_address(args: argparse.Namespace) -> int:
+    pid = args.pid or _find_breach_pid()
+    if pid is None:
+        print("Could not find Breach.exe; pass --pid", flush=True)
+        return 2
+    with WindowsProcessReader(pid) as reader:
+        module = reader.module()
+        payload = read_timeline_playtime_address(
+            reader,
+            args.address,
+            size=args.bytes,
+        )
+    payload["pid"] = pid
+    payload["module"] = module.__dict__ if module else None
+    print(json.dumps(payload, indent=2))
+    return 0 if payload.get("status") == "OK" else 1
+
+
 def cmd_watch_context(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
@@ -604,7 +764,10 @@ def cmd_watch_context(args: argparse.Namespace) -> int:
                 max_region_size=args.max_region_size,
                 max_hits=args.max_context_hits,
             )
-        top = select_visible_timer_context(context)
+        top = select_visible_timer_context(
+            context,
+            max_visible_seconds=args.max_visible_timer_seconds,
+        )
         samples.append({
             "index": idx,
             "created_at": time.time(),
@@ -659,6 +822,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--sample-seconds", type=float, default=2.5)
     scan.add_argument("--max-region-size", type=int, default=32 * 1024 * 1024)
     scan.add_argument("--max-context-hits", type=int, default=200)
+    scan.add_argument("--max-visible-timer-seconds", type=float, default=DEFAULT_MAX_VISIBLE_TIMER_SECONDS)
     scan.add_argument("--max-candidates", type=int, default=20000)
     scan.add_argument("--max-results", type=int, default=25)
     scan.add_argument("--max-field-offset", type=int, default=0x20000)
@@ -677,9 +841,19 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--movement-threshold", type=float, default=1.0)
     watch.add_argument("--max-region-size", type=int, default=32 * 1024 * 1024)
     watch.add_argument("--max-context-hits", type=int, default=240)
+    watch.add_argument("--max-visible-timer-seconds", type=float, default=DEFAULT_MAX_VISIBLE_TIMER_SECONDS)
     watch.add_argument("--max-summary", type=int, default=12)
     watch.add_argument("--output")
     watch.set_defaults(func=cmd_watch_context)
+
+    read_address = sub.add_parser(
+        "read-address",
+        help="Read a calibrated pause-menu Timeline Playtime string address",
+    )
+    read_address.add_argument("address", type=_parse_int_auto)
+    read_address.add_argument("--pid", type=int)
+    read_address.add_argument("--bytes", type=int, default=64)
+    read_address.set_defaults(func=cmd_read_address)
     return parser
 
 

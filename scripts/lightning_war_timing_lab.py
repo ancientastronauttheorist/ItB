@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from datetime import datetime
@@ -25,13 +26,20 @@ from src.loop.lightning_telemetry import (
     TelemetryRecorder,
     generate_frame_delta_report,
 )
+from src.loop.commands import _lightning_read_save_game_timer
 
 from scripts import lightning_war_fast_walkthrough as fast
+from scripts import itb_timer_memory_probe as memory_probe
 
 
 PROFILE_PATH = ROOT / "data" / "lightning_war_timing_profile.json"
 NOTEBOOK_PATH = ROOT / "docs" / "agent" / "lightning-war-timing-profile.md"
 REPORT_DIR = ROOT / "run_notes" / "lightning_ui_timing_loop"
+LIGHTNING_TIMER_LIMIT_SECONDS = 30 * 60
+TRUSTED_MEMORY_CLOCK_SOURCES = {
+    "memory_visible_timer_context",
+    "memory_timeline_playtime_address",
+}
 
 
 def _now_run_id() -> str:
@@ -75,21 +83,249 @@ def _seconds_text(value: Any) -> str:
     return f"{value}s"
 
 
+def _parse_optional_timer_address(value: str | None) -> int | None:
+    if not value:
+        return None
+    return int(str(value), 0)
+
+
+def _read_memory_in_game_timer(
+    *,
+    label: str,
+    timer_address: int | None = None,
+) -> dict[str, Any]:
+    if os.name != "nt":
+        return {
+            "status": "UNAVAILABLE",
+            "reason": "memory timer probe is Windows-only",
+            "label": label,
+            "clock_source": (
+                "memory_timeline_playtime_address"
+                if timer_address is not None
+                else "memory_visible_timer_context"
+            ),
+        }
+    pid = memory_probe._find_breach_pid()
+    if pid is None:
+        return {
+            "status": "UNAVAILABLE",
+            "reason": "Breach.exe not found",
+            "label": label,
+            "clock_source": (
+                "memory_timeline_playtime_address"
+                if timer_address is not None
+                else "memory_visible_timer_context"
+            ),
+        }
+    try:
+        with memory_probe.WindowsProcessReader(pid) as reader:
+            if timer_address is not None:
+                direct = memory_probe.read_timeline_playtime_address(
+                    reader,
+                    timer_address,
+                )
+                if direct.get("status") != "OK":
+                    return {
+                        **direct,
+                        "label": label,
+                        "pid": pid,
+                        "clock_source": "memory_timeline_playtime_address",
+                        "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
+                    }
+                seconds = float(direct["seconds"])
+                if seconds > LIGHTNING_TIMER_LIMIT_SECONDS:
+                    return {
+                        "status": "REJECTED",
+                        "reason": "calibrated memory timer exceeds Lightning War 30 minute achievement limit",
+                        "label": label,
+                        "clock_source": "memory_timeline_playtime_address",
+                        "source": direct.get("source"),
+                        "pid": pid,
+                        "address": direct.get("address"),
+                        "raw": direct.get("raw"),
+                        "game_timer": direct.get("game_timer"),
+                        "game_seconds": seconds,
+                        "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
+                        "selected_timer": direct,
+                    }
+                return {
+                    "status": "OK",
+                    "label": label,
+                    "clock_source": "memory_timeline_playtime_address",
+                    "source": direct.get("source"),
+                    "pid": pid,
+                    "address": direct.get("address"),
+                    "raw": direct.get("raw"),
+                    "game_timer": direct.get("game_timer"),
+                    "game_seconds": seconds,
+                    "timer_validation": "calibrated_pause_menu_timeline_playtime_address",
+                    "selected_timer": direct,
+                }
+            context = memory_probe.scan_context_timers(
+                reader,
+                max_region_size=32 * 1024 * 1024,
+                max_hits=8000,
+            )
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": str(exc),
+            "label": label,
+            "clock_source": (
+                "memory_timeline_playtime_address"
+                if timer_address is not None
+                else "memory_visible_timer_context"
+            ),
+        }
+    top = memory_probe.select_visible_timer_context(
+        context,
+        max_visible_seconds=LIGHTNING_TIMER_LIMIT_SECONDS,
+    )
+    if not top:
+        return {
+            "status": "UNAVAILABLE",
+            "reason": "no visible timer-like context found",
+            "label": label,
+            "clock_source": "memory_visible_timer_context",
+            "context_count": len(context),
+        }
+    try:
+        seconds = float(top.get("seconds"))
+    except (TypeError, ValueError):
+        seconds = None
+    if seconds is None:
+        return {
+            "status": "REJECTED",
+            "reason": "selected memory timer did not include numeric seconds",
+            "label": label,
+            "clock_source": "memory_visible_timer_context",
+            "context_count": len(context),
+            "selected_timer": top,
+        }
+    if seconds > LIGHTNING_TIMER_LIMIT_SECONDS:
+        return {
+            "status": "REJECTED",
+            "reason": "selected memory timer exceeds Lightning War 30 minute achievement limit",
+            "label": label,
+            "clock_source": "memory_visible_timer_context",
+            "game_timer": top.get("game_timer"),
+            "game_seconds": seconds,
+            "context_count": len(context),
+            "selected_timer": top,
+        }
+    return {
+        "status": "OK",
+        "label": label,
+        "clock_source": "memory_visible_timer_context",
+        "source": next(iter((top.get("sources") or {"visible_timer_string": 1}).keys())),
+        "pid": pid,
+        "game_timer": top.get("game_timer"),
+        "game_seconds": seconds,
+        "context_count": len(context),
+        "source_counts": top.get("sources"),
+        "raw_values": top.get("raw_values"),
+        "regions": top.get("regions"),
+        "timer_validation": "range_checked_lightning_limit",
+        "selected_timer": top,
+    }
+
+
+def read_in_game_timer(
+    profile: str,
+    *,
+    label: str,
+    use_memory: bool = True,
+    timer_address: int | None = None,
+) -> dict[str, Any]:
+    """Read the achievement clock used by Lightning War."""
+    memory = (
+        _read_memory_in_game_timer(label=label, timer_address=timer_address)
+        if use_memory
+        else None
+    )
+    save = dict(_lightning_read_save_game_timer(profile))
+    save["label"] = label
+    save["clock_source"] = "save_current_time"
+    save["timer_validation"] = "fallback_not_top_right_validated"
+    if memory and memory.get("status") == "OK":
+        result = dict(memory)
+        result["fallback_save_timer"] = save
+        return result
+    result = save
+    if memory:
+        result["memory_timer_probe"] = memory
+    return result
+
+
+def _timer_sample_seconds(sample: dict[str, Any] | None) -> float | None:
+    if not isinstance(sample, dict) or sample.get("status") != "OK":
+        return None
+    if sample.get("clock_source") not in TRUSTED_MEMORY_CLOCK_SOURCES:
+        return None
+    try:
+        return float(sample.get("game_seconds"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _timer_sample_compact(sample: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(sample, dict):
+        return {"status": "UNKNOWN"}
+    compact = {
+        key: sample.get(key)
+        for key in (
+            "status",
+            "label",
+            "clock_source",
+            "source",
+            "game_timer",
+            "game_seconds",
+            "game_timer_ms",
+            "pid",
+            "address",
+            "raw",
+            "context_count",
+            "timer_validation",
+            "reason",
+        )
+        if sample.get(key) is not None
+    }
+    if sample.get("fallback_save_timer"):
+        compact["fallback_save_timer"] = _timer_sample_compact(
+            sample.get("fallback_save_timer")
+        )
+    if sample.get("memory_timer_probe"):
+        compact["memory_timer_probe"] = _timer_sample_compact(
+            sample.get("memory_timer_probe")
+        )
+    return compact
+
+
 def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
     red_detection = report.get("red_detection") or {}
     selected = red_detection.get("selected_region") or {}
+    in_game_timers = report.get("in_game_timers") or {}
+    red_timer = in_game_timers.get("red_map_detected")
     return {
         "status": report.get("status"),
         "branch_label": report.get("branch_label"),
         "timer_zero": "lower difficulty setup Start click",
-        "time_source": "wall_clock_perf_counter",
+        "primary_time_source": "calibrated_memory_timeline_playtime_address_when_configured",
+        "fallback_time_source": "save_profile_current_time_not_top_right_validated",
         "archive_click_wall_seconds": report.get("marks", {}).get("archive_click"),
         "intro_continue_wall_seconds": report.get("marks", {}).get("intro_continue"),
         "red_map_detected_wall_seconds": red_detection.get("detected_at_seconds"),
         "in_game_timer": {
-            "status": "NOT_RECORDED",
-            "reason": "opening lab v1 did not read the top-right timer or memory timer",
+            "red_map_detected": _timer_sample_compact(red_timer),
+            "all_samples": {
+                key: _timer_sample_compact(value)
+                for key, value in in_game_timers.items()
+            },
         },
+        "red_map_detected_game_seconds": _timer_sample_seconds(red_timer),
+        "red_map_detected_game_timer": (
+            red_timer.get("game_timer") if isinstance(red_timer, dict) else None
+        ),
         "region_count": red_detection.get("region_count"),
         "chosen_probe_region": {
             key: selected.get(key)
@@ -121,14 +357,21 @@ def update_profile(report: dict[str, Any]) -> dict[str, Any]:
     key = "main_menu_to_archive_red_map"
     previous = boundaries.get(key) or {}
     promoted = _profile_boundary_from_report(report)
-    previous_time = previous.get(
+    previous_game_time = previous.get("red_map_detected_game_seconds")
+    promoted_game_time = promoted.get("red_map_detected_game_seconds")
+    previous_wall_time = previous.get(
         "red_map_detected_wall_seconds",
         previous.get("red_map_detected_seconds"),
     )
-    promoted_time = promoted.get("red_map_detected_wall_seconds")
+    promoted_wall_time = promoted.get("red_map_detected_wall_seconds")
     should_promote = previous.get("status") != "PASS"
-    if not should_promote and previous_time is not None and promoted_time is not None:
-        should_promote = float(promoted_time) <= float(previous_time)
+    if not should_promote:
+        if promoted_game_time is not None and previous_game_time is None:
+            should_promote = True
+        elif promoted_game_time is not None and previous_game_time is not None:
+            should_promote = float(promoted_game_time) <= float(previous_game_time)
+        elif previous_game_time is None and previous_wall_time is not None and promoted_wall_time is not None:
+            should_promote = float(promoted_wall_time) <= float(previous_wall_time)
     if should_promote:
         profile["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
         boundaries[key] = promoted
@@ -151,6 +394,8 @@ def append_notebook_report(report: dict[str, Any]) -> None:
         )
     red_detection = report.get("red_detection") or {}
     frame_report = report.get("frame_delta_report") or {}
+    in_game_timers = report.get("in_game_timers") or {}
+    red_timer = in_game_timers.get("red_map_detected") or {}
     lines = [
         "",
         f"## {report.get('run_id')}",
@@ -158,11 +403,12 @@ def append_notebook_report(report: dict[str, Any]) -> None:
         f"- Result: {report.get('status')}",
         f"- Branch: {report.get('branch_label')}",
         "- Boundary: main menu -> lower Start timer zero -> Archive -> red map",
-        "- Time source: wall-clock `perf_counter`, not the in-game top-right timer",
+        "- Primary time source: validated memory probe; prefer configured `memory_timeline_playtime_address`, fallback save/profile `current.time` is not accepted as top-right proof",
+        f"- Red map detected in-game timer: {red_timer.get('game_timer') or 'n/a'}",
+        f"- Red map timer source: {red_timer.get('clock_source') or 'n/a'}",
         f"- Archive click wall elapsed: {_seconds_text(report.get('marks', {}).get('archive_click'))}",
         f"- Intro continue wall elapsed: {_seconds_text(report.get('marks', {}).get('intro_continue'))}",
         f"- Red map detected wall elapsed: {_seconds_text(red_detection.get('detected_at_seconds'))}",
-        "- In-game timer: not recorded by opening lab v1",
         f"- Red regions: {red_detection.get('region_count')}",
         f"- Contact sheet: {_repo_relative_text(frame_report.get('contact_sheet_path'))}",
         f"- Red map screenshot: {_repo_relative_text(red_detection.get('screenshot_path'))}",
@@ -215,6 +461,9 @@ def wait_for_archive_red_map(
     timer_start: float,
     telemetry: TelemetryRecorder,
     screenshots: ScreenshotRecorder,
+    profile: str,
+    use_memory_timer: bool,
+    memory_timer_address: int | None,
     max_seconds: float,
     interval_seconds: float,
 ) -> dict[str, Any]:
@@ -286,11 +535,18 @@ def wait_for_archive_red_map(
         samples.append(sample)
         telemetry.event("opening_red_region_probe", **sample)
         if candidates:
+            paired_timer = read_in_game_timer(
+                profile,
+                label="red_map_detected_screenshot_pair",
+                use_memory=use_memory_timer,
+                timer_address=memory_timer_address,
+            )
             selected, annotated = fast.select_red_region_candidate(regions)
             return {
                 "status": "PASS",
                 "detected_at_seconds": frame["timer_seconds"],
                 "screenshot_path": screenshot_path,
+                "paired_in_game_timer": paired_timer,
                 "region_count": regions.get("region_count"),
                 "selected_region": selected,
                 "candidate_order": annotated.get("candidate_order"),
@@ -336,6 +592,7 @@ def prepare_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
 
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
+    memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
     telemetry = TelemetryRecorder(run_id=run_id, root=ROOT / "recordings")
     telemetry.write_manifest(
         {
@@ -343,10 +600,23 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "route_slice": "main_menu_to_archive_red_map",
             "screenshot_cadence_seconds": args.screenshot_cadence,
             "timer_zero": "lower difficulty setup Start click",
+            "memory_timer_address": (
+                f"0x{memory_timer_address:016x}"
+                if memory_timer_address is not None
+                else None
+            ),
         }
     )
     startup = prepare_from_main_menu(args)
     fast.log(f"timing lab pre-timer visible={fast.visible_ui_name()}")
+    in_game_timers: dict[str, Any] = {
+        "pre_timer": read_in_game_timer(
+            args.profile,
+            label="pre_timer",
+            use_memory=args.memory_timer_probe,
+            timer_address=memory_timer_address,
+        ),
+    }
 
     timer_start = time.perf_counter()
     screenshots = ScreenshotRecorder(
@@ -366,6 +636,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         settle_seconds=args.modal_start_settle_seconds,
         hold_seconds=args.modal_start_hold_seconds,
     )
+    in_game_timers["timer_zero_click"] = read_in_game_timer(
+        args.profile,
+        label="timer_zero_click",
+        use_memory=args.memory_timer_probe,
+        timer_address=memory_timer_address,
+    )
 
     capture_until(
         timer_start=timer_start,
@@ -380,6 +656,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         "archive_island_click",
         timer_seconds=marks["archive_click"],
         click=archive_click,
+    )
+    in_game_timers["archive_click"] = read_in_game_timer(
+        args.profile,
+        label="archive_click",
+        use_memory=args.memory_timer_probe,
+        timer_address=memory_timer_address,
     )
 
     if args.continue_click_seconds >= 0:
@@ -397,13 +679,32 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             timer_seconds=marks["intro_continue"],
             click=intro_continue,
         )
+        in_game_timers["intro_continue"] = read_in_game_timer(
+            args.profile,
+            label="intro_continue",
+            use_memory=args.memory_timer_probe,
+            timer_address=memory_timer_address,
+        )
 
     red_detection = wait_for_archive_red_map(
         timer_start=timer_start,
         telemetry=telemetry,
         screenshots=screenshots,
+        profile=args.profile,
+        use_memory_timer=args.memory_timer_probe,
+        memory_timer_address=memory_timer_address,
         max_seconds=args.red_map_timeout_seconds,
         interval_seconds=args.red_probe_interval_seconds,
+    )
+    in_game_timers["red_map_detected"] = (
+        red_detection.get("paired_in_game_timer")
+        if isinstance(red_detection.get("paired_in_game_timer"), dict)
+        else read_in_game_timer(
+            args.profile,
+            label="red_map_detected",
+            use_memory=args.memory_timer_probe,
+            timer_address=memory_timer_address,
+        )
     )
     frame_report = generate_frame_delta_report(telemetry.run_dir)
 
@@ -431,6 +732,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         "route_slice": "main_menu_to_archive_red_map",
         "startup": startup,
         "marks": marks,
+        "in_game_timers": in_game_timers,
         "red_detection": red_detection,
         "frame_delta_report": frame_report,
         "next_patch": next_patch,
@@ -459,6 +761,19 @@ def build_parser() -> argparse.ArgumentParser:
         description="Run the first Lightning War UI timing lab milestone.",
     )
     parser.add_argument("--run-id")
+    parser.add_argument("--profile", default="Alpha")
+    parser.add_argument(
+        "--memory-timer-probe",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    parser.add_argument(
+        "--memory-timer-address",
+        help=(
+            "Process-local calibrated pause-menu Timeline Playtime string "
+            "address, for example 0x00000000138a5900."
+        ),
+    )
     parser.add_argument("--screenshot-cadence", type=float, default=0.5)
     parser.add_argument("--max-retained-frames", type=int, default=360)
     parser.add_argument("--island-click-seconds", type=float, default=7.0)

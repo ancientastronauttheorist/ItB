@@ -17,18 +17,58 @@
         "run_id": "lightning_ui_timing_20260613_145559"
       },
       "in_game_timer": {
-        "reason": "opening lab v1 did not read the top-right timer or memory timer",
-        "status": "NOT_RECORDED"
+        "red_map_detected": {
+          "reason": "opening lab v1 did not read a validated top-right or memory timer",
+          "status": "NOT_RECORDED"
+        },
+        "validation_notes": [
+          {
+            "evidence": {
+              "probe_json": "run_notes\\lightning_ui_timing_loop\\timer_probe_expected_38_words.json",
+              "screenshot": "run_notes\\lightning_ui_timing_loop\\timer_probe_expected_38_screen.png"
+            },
+            "observed_screen_timer": "0h 0m 38s",
+            "result": "superseded diagnostic; later toggle cycles showed f32 candidates can be stale copies",
+            "run_id": "manual_probe_20260613_1517",
+            "status": "SUPERSEDED_DIAGNOSTIC"
+          }
+        ],
+        "pause_menu_timeline_playtime_string": {
+          "address": "0x00000000138a5900",
+          "current_process_latest_direct_read": "0:02:14",
+          "current_process_latest_visible_pause_menu": "0h 2m 14s",
+          "evidence": [
+            "run_notes\\lightning_ui_timing_loop\\memory_probe_cycle1_64_string_addresses.json",
+            "run_notes\\lightning_ui_timing_loop\\memory_probe_cycle2_87_string_address_tracking.json",
+            "run_notes\\lightning_ui_timing_loop\\memory_probe_cycle3_108_tracking.json"
+          ],
+          "pid": 2100,
+          "rediscover_after": [
+            "process_restart",
+            "pid_change",
+            "modloader_reload",
+            "platform_change"
+          ],
+          "rejected_sources": [
+            "uncorroborated_f32_candidates",
+            "unanchored_context_summaries",
+            "other_stale_string_addresses"
+          ],
+          "status": "TRUSTED_CURRENT_PROCESS",
+          "validity": "current_process_session_only"
+        }
       },
       "intro_continue_wall_seconds": 10.509,
+      "primary_time_source": "wall_clock_for_promoted_boundary; calibrated_pause_timeline_playtime_string_available_current_process",
+      "red_map_detected_game_seconds": null,
+      "red_map_detected_game_timer": null,
       "red_map_detected_wall_seconds": 19.276,
       "region_count": 2,
       "status": "PASS",
-      "time_source": "wall_clock_perf_counter",
       "timer_zero": "lower difficulty setup Start click"
     }
   },
   "current_milestone": "main_menu_to_archive_red_map",
   "schema_version": 1,
-  "updated_at": "2026-06-13T14:56:58-05:00"
+  "updated_at": "2026-06-13T15:47:00-05:00"
 }
