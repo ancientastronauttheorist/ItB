@@ -15,6 +15,7 @@ tmp/
 .local_runs/
 run/
 recordings/[0-9]*/
+recordings/lightning_*/
 recordings/lw/
 recordings/timer_screenshot_probe/
 snapshots/*/
@@ -29,6 +30,9 @@ run_notes/lightning_war_walkthrough/*.err.log
 run_notes/lightning_war_walkthrough/*.out.log
 run_notes/lightning_war_walkthrough/*.png
 run_notes/lightning_war_walkthrough/timing_screenshots/
+run_notes/lightning_war_walkthrough/full_timer_screenshots/
+run_notes/lightning_progress_attempts/
+run_notes/lightning_ui_timing_loop/
 data/wiki_raw/*
 research_crops/
 run_screenshots/
