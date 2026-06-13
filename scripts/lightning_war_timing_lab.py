@@ -511,11 +511,42 @@ def _timer_sample_compact(sample: dict[str, Any] | None) -> dict[str, Any]:
     return compact
 
 
+def _timer_sample_from_frame(frame: dict[str, Any], *, label: str) -> dict[str, Any]:
+    frame_clock = frame.get("frame_clock")
+    if not isinstance(frame_clock, dict):
+        return {
+            "status": frame.get("frame_clock_status") or "UNKNOWN",
+            "label": label,
+            "reason": "frame_clock_missing",
+        }
+    sample = {
+        "status": frame_clock.get("status") or frame.get("frame_clock_status"),
+        "label": label,
+        "clock_source": frame.get("clock_source") or frame_clock.get("clock_source"),
+        "source": "screenshot_frame_clock",
+        "game_timer": frame.get("game_timer") or frame_clock.get("game_timer"),
+        "game_seconds": frame.get("game_seconds") or frame_clock.get("game_seconds"),
+        "game_timer_ms": frame.get("game_timer_ms") or frame_clock.get("game_timer_ms"),
+        "pid": frame_clock.get("pid"),
+        "address": frame_clock.get("address"),
+        "raw": frame_clock.get("raw"),
+        "timer_validation": frame_clock.get("timer_validation"),
+        "reason": frame_clock.get("reason"),
+    }
+    return {key: value for key, value in sample.items() if value is not None}
+
+
 def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
     red_detection = report.get("red_detection") or {}
     selected = red_detection.get("selected_region") or {}
     in_game_timers = report.get("in_game_timers") or {}
-    red_timer = in_game_timers.get("red_map_detected")
+    paired_red_timer = in_game_timers.get("red_map_detected")
+    frame_red_timer = red_detection.get("detected_frame_timer")
+    red_timer = (
+        frame_red_timer
+        if _timer_sample_seconds(frame_red_timer) is not None
+        else paired_red_timer
+    )
     trusted_red_seconds = _timer_sample_seconds(red_timer)
     return {
         "status": report.get("status"),
@@ -528,6 +559,9 @@ def _profile_boundary_from_report(report: dict[str, Any]) -> dict[str, Any]:
         "red_map_detected_wall_seconds": red_detection.get("detected_at_seconds"),
         "in_game_timer": {
             "red_map_detected": _timer_sample_compact(red_timer),
+            "red_map_detected_paired_after_detection": _timer_sample_compact(
+                paired_red_timer
+            ),
             "all_samples": {
                 key: _timer_sample_compact(value)
                 for key, value in in_game_timers.items()
@@ -619,6 +653,7 @@ def append_notebook_report(report: dict[str, Any]) -> None:
         "- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles",
         f"- Red map detected in-game timer: {red_timer.get('game_timer') or 'n/a'}",
         f"- Red map timer source: {red_timer.get('clock_source') or 'n/a'}",
+        f"- Red map paired post-detection timer: {(red_detection.get('paired_in_game_timer') or {}).get('game_timer') or 'n/a'}",
         f"- Archive click wall elapsed: {_seconds_text(report.get('marks', {}).get('archive_click'))}",
         f"- Intro continue wall elapsed: {_seconds_text(report.get('marks', {}).get('intro_continue'))}",
         f"- Red map detected wall elapsed: {_seconds_text(red_detection.get('detected_at_seconds'))}",
@@ -687,24 +722,6 @@ def wait_for_archive_red_map(
     dialogue_clears: list[dict[str, Any]] = []
 
     while time.perf_counter() - started <= max_seconds:
-        visible = fast._lightning_visible_ui_snapshot(include_ocr=True)
-        telemetry.event(
-            "opening_visible_ui_probe",
-            timer_seconds=_elapsed(timer_start),
-            visible_ui=fast.compact_visible_ui(visible),
-        )
-        if fast.visible_route_dialogue(visible):
-            click = fast.click_ui_control("bottom_continue", settle_seconds=0.0)
-            clear = {
-                "timer_seconds": _elapsed(timer_start),
-                "visible_ui": fast.compact_visible_ui(visible),
-                "click": click,
-            }
-            dialogue_clears.append(clear)
-            telemetry.event("opening_dialogue_continue", **clear)
-            time.sleep(0.25)
-            continue
-
         frame = _capture_probe_frame(
             screenshots,
             timer_start=timer_start,
@@ -727,9 +744,11 @@ def wait_for_archive_red_map(
             for region in (regions.get("regions") or [])
             if isinstance(region, dict)
         ]
+        frame_timer = _timer_sample_from_frame(frame, label="red_map_detected_frame")
         sample = {
             "timer_seconds": frame["timer_seconds"],
             "screenshot_path": screenshot_path,
+            "detected_frame_timer": frame_timer,
             "region_count": regions.get("region_count"),
             "status": regions.get("status"),
             "candidate_order": [
@@ -763,6 +782,7 @@ def wait_for_archive_red_map(
                 "status": "PASS",
                 "detected_at_seconds": frame["timer_seconds"],
                 "screenshot_path": screenshot_path,
+                "detected_frame_timer": frame_timer,
                 "paired_in_game_timer": paired_timer,
                 "region_count": regions.get("region_count"),
                 "selected_region": selected,
@@ -770,6 +790,23 @@ def wait_for_archive_red_map(
                 "dialogue_clears": dialogue_clears,
                 "samples": samples,
             }
+        visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
+        telemetry.event(
+            "opening_visible_ui_probe",
+            timer_seconds=_elapsed(timer_start),
+            visible_ui=fast.compact_visible_ui(visible),
+        )
+        if fast.visible_route_dialogue(visible):
+            click = fast.click_ui_control("bottom_continue", settle_seconds=0.0)
+            clear = {
+                "timer_seconds": _elapsed(timer_start),
+                "visible_ui": fast.compact_visible_ui(visible),
+                "click": click,
+            }
+            dialogue_clears.append(clear)
+            telemetry.event("opening_dialogue_continue", **clear)
+            time.sleep(0.25)
+            continue
         time.sleep(max(0.05, interval_seconds))
 
     return {
@@ -807,16 +844,318 @@ def prepare_from_main_menu(args: argparse.Namespace) -> dict[str, Any]:
     return startup
 
 
+def click_selected_red_mission_preview(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    red_detection: dict[str, Any],
+    profile: str,
+    use_memory_timer: bool,
+    memory_timer_address: int | None,
+    memory_live_timer_address: int | None,
+    memory_live_timer_kind: str | None,
+    hover_seconds: float,
+    settle_seconds: float,
+    hold_seconds: float,
+    pause_after_click: bool,
+) -> dict[str, Any]:
+    selected = red_detection.get("selected_region")
+    if not isinstance(selected, dict):
+        return {
+            "status": "SKIPPED",
+            "reason": "no_selected_red_region",
+        }
+    try:
+        x = int(selected["window_x"])
+        y = int(selected["window_y"])
+    except (KeyError, TypeError, ValueError):
+        return {
+            "status": "BLOCKED",
+            "reason": "selected_region_missing_click_coordinates",
+            "selected_region": selected,
+        }
+
+    before_timer = read_in_game_timer(
+        profile,
+        label="red_mission_click_before",
+        use_memory=use_memory_timer,
+        timer_address=memory_timer_address,
+        live_timer_address=memory_live_timer_address,
+        live_timer_kind=memory_live_timer_kind,
+    )
+    click = fast.click_hovered_point(
+        "red_mission_region",
+        x,
+        y,
+        hover_seconds=hover_seconds,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+    click_wall_seconds = _elapsed(timer_start)
+    telemetry.event(
+        "red_mission_region_click",
+        timer_seconds=click_wall_seconds,
+        selected_region={
+            key: selected.get(key)
+            for key in (
+                "index",
+                "window_x",
+                "window_y",
+                "area_window",
+                "coordinate_space",
+            )
+            if selected.get(key) is not None
+        },
+        before_in_game_timer=before_timer,
+        click=click,
+    )
+
+    preview_frame = screenshots.capture_once(
+        clock_state="mission_preview_probe",
+        note="after_red_mission_click",
+    )
+    preview_frame["timer_seconds"] = _elapsed(timer_start)
+    preview_timer = _timer_sample_from_frame(
+        preview_frame,
+        label="mission_preview_frame",
+    )
+    after_preview_timer = read_in_game_timer(
+        profile,
+        label="mission_preview_after_click",
+        use_memory=use_memory_timer,
+        timer_address=memory_timer_address,
+        live_timer_address=memory_live_timer_address,
+        live_timer_kind=memory_live_timer_kind,
+    )
+    telemetry.event(
+        "mission_preview_probe",
+        timer_seconds=preview_frame["timer_seconds"],
+        screenshot_path=preview_frame.get("screenshot_path"),
+        preview_frame_timer=preview_timer,
+        after_preview_timer=after_preview_timer,
+    )
+
+    pause: dict[str, Any] | None = None
+    after_pause_timer: dict[str, Any] | None = None
+    if pause_after_click:
+        pause = fast.click_hovered_point(
+            "pause",
+            38,
+            28,
+            hover_seconds=0.0,
+            settle_seconds=0.05,
+            hold_seconds=0.12,
+        )
+        after_pause_timer = read_in_game_timer(
+            profile,
+            label="mission_preview_after_pause",
+            use_memory=use_memory_timer,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        )
+        telemetry.event(
+            "mission_preview_pause",
+            timer_seconds=_elapsed(timer_start),
+            click=pause,
+            after_pause_timer=after_pause_timer,
+        )
+
+    return {
+        "status": "OK",
+        "selected_region": selected,
+        "before_in_game_timer": before_timer,
+        "click": click,
+        "click_wall_seconds": click_wall_seconds,
+        "preview_frame": preview_frame,
+        "preview_frame_timer": preview_timer,
+        "after_preview_timer": after_preview_timer,
+        "pause": pause,
+        "after_pause_timer": after_pause_timer,
+    }
+
+
+def click_start_mission_from_preview(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    profile: str,
+    use_memory_timer: bool,
+    memory_timer_address: int | None,
+    memory_live_timer_address: int | None,
+    memory_live_timer_kind: str | None,
+    settle_seconds: float,
+    hover_seconds: float,
+    hold_seconds: float,
+    max_seconds: float,
+    interval_seconds: float,
+    pause_after_click: bool,
+    pre_start_visible_probe: bool,
+) -> dict[str, Any]:
+    if pre_start_visible_probe:
+        visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
+        dialogue_visible = fast.visible_route_dialogue(visible)
+        telemetry.event(
+            "mission_preview_pre_start_visible_probe",
+            timer_seconds=_elapsed(timer_start),
+            visible_ui=fast.compact_visible_ui(visible),
+            route_dialogue_visible=dialogue_visible,
+        )
+        dialogue_observation = {
+            "timer_seconds": _elapsed(timer_start),
+            "visible_ui": fast.compact_visible_ui(visible),
+            "route_dialogue_visible": dialogue_visible,
+            "action": "click_start_thumbnail_directly",
+        }
+        if dialogue_visible:
+            telemetry.event("mission_preview_dialogue_observed", **dialogue_observation)
+    else:
+        dialogue_observation = {
+            "timer_seconds": _elapsed(timer_start),
+            "visible_ui": None,
+            "route_dialogue_visible": None,
+            "action": "click_start_thumbnail_directly",
+            "pre_start_visible_probe": "skipped_after_proven_hover_target",
+        }
+        telemetry.event("mission_preview_pre_start_probe_skipped", **dialogue_observation)
+
+    before_timer = read_in_game_timer(
+        profile,
+        label="start_mission_click_before",
+        use_memory=use_memory_timer,
+        timer_address=memory_timer_address,
+        live_timer_address=memory_live_timer_address,
+        live_timer_kind=memory_live_timer_kind,
+    )
+    if sys.platform.startswith("win"):
+        x, y = fast.WINDOWS_HOVER_CONTROL_POINTS.get(
+            "mission_preview_board",
+            (1450, 790),
+        )
+        click = fast.click_hovered_point(
+            "mission_preview_board",
+            x,
+            y,
+            hover_seconds=hover_seconds,
+            settle_seconds=settle_seconds,
+            hold_seconds=hold_seconds,
+        )
+    else:
+        click = fast.click_ui_control(
+            "mission_preview_board",
+            settle_seconds=settle_seconds,
+            hold_seconds=hold_seconds,
+        )
+    click_wall_seconds = _elapsed(timer_start)
+    telemetry.event(
+        "start_mission_click",
+        timer_seconds=click_wall_seconds,
+        before_in_game_timer=before_timer,
+        click=click,
+    )
+
+    samples: list[dict[str, Any]] = []
+    first_bridge_deployment_sample: dict[str, Any] | None = None
+    started = time.perf_counter()
+    result_status = "FAIL"
+    result_reason = "deployment_not_detected"
+    while time.perf_counter() - started <= max_seconds:
+        frame = screenshots.capture_once(
+            clock_state="deployment_probe",
+            note="after_start_mission_click",
+        )
+        frame["timer_seconds"] = _elapsed(timer_start)
+        frame_timer = _timer_sample_from_frame(frame, label="deployment_probe_frame")
+        visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
+        snapshot = fast._lightning_live_snapshot()
+        deployment_visible = fast.visible_deployment_screen(visible)
+        bridge_deployment_ready = fast.deployment_snapshot_ready(snapshot)
+        sample = {
+            "timer_seconds": frame["timer_seconds"],
+            "screenshot_path": frame.get("screenshot_path"),
+            "frame_timer": frame_timer,
+            "visible_ui": fast.compact_visible_ui(visible),
+            "deployment_visible": deployment_visible,
+            "bridge_deployment_ready": bridge_deployment_ready,
+            "snapshot": {
+                "status": snapshot.get("status"),
+                "phase": snapshot.get("phase"),
+                "turn": snapshot.get("turn"),
+                "in_active_mission": snapshot.get("in_active_mission"),
+                "mission_id": snapshot.get("mission_id"),
+                "deployment_zone_count": snapshot.get("deployment_zone_count"),
+                "bridge_heartbeat_alive": snapshot.get("bridge_heartbeat_alive"),
+                "bridge_heartbeat_stale": snapshot.get("bridge_heartbeat_stale"),
+            },
+        }
+        if bridge_deployment_ready and first_bridge_deployment_sample is None:
+            first_bridge_deployment_sample = sample
+        samples.append(sample)
+        telemetry.event("deployment_probe", **sample)
+        if deployment_visible:
+            result_status = "PASS"
+            result_reason = "deployment_visible"
+            break
+        time.sleep(max(0.05, interval_seconds))
+    if result_status != "PASS" and first_bridge_deployment_sample is not None:
+        result_status = "PARTIAL"
+        result_reason = "bridge_deployment_ready_only"
+
+    pause: dict[str, Any] | None = None
+    after_pause_timer: dict[str, Any] | None = None
+    if pause_after_click:
+        pause = fast._lightning_ensure_pause_state(
+            reason="timing_lab_start_mission_deployment_probe",
+        )
+        after_pause_timer = read_in_game_timer(
+            profile,
+            label="deployment_after_pause",
+            use_memory=use_memory_timer,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        )
+        telemetry.event(
+            "deployment_pause",
+            timer_seconds=_elapsed(timer_start),
+            click=pause,
+            after_pause_timer=after_pause_timer,
+        )
+
+    return {
+        "status": result_status,
+        "reason": result_reason,
+        "dialogue_observation": dialogue_observation,
+        "before_in_game_timer": before_timer,
+        "click": click,
+        "click_wall_seconds": click_wall_seconds,
+        "samples": samples,
+        "first_bridge_deployment_sample": first_bridge_deployment_sample,
+        "pause": pause,
+        "after_pause_timer": after_pause_timer,
+    }
+
+
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
     memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
     memory_live_timer_kind = args.memory_live_timer_kind
+    click_red_mission = bool(args.click_red_mission or args.click_start_mission)
+    route_slice = (
+        "main_menu_to_archive_red_map_to_deployment"
+        if args.click_start_mission
+        else "main_menu_to_archive_red_map_to_preview"
+        if click_red_mission
+        else "main_menu_to_archive_red_map"
+    )
     telemetry = TelemetryRecorder(run_id=run_id, root=ROOT / "recordings")
     telemetry.write_manifest(
         {
             "achievement": "Lightning War",
-            "route_slice": "main_menu_to_archive_red_map",
+            "route_slice": route_slice,
             "screenshot_cadence_seconds": args.screenshot_cadence,
             "timer_zero": "lower difficulty setup Start click",
             "memory_timer_address": (
@@ -830,6 +1169,18 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
                 else None
             ),
             "memory_live_timer_kind": memory_live_timer_kind,
+            "click_red_mission": click_red_mission,
+            "click_start_mission": bool(args.click_start_mission),
+            "pause_after_red_mission_click": (
+                bool(args.pause_after_red_mission_click)
+                if click_red_mission and not args.click_start_mission
+                else None
+            ),
+            "pause_after_start_mission_click": (
+                bool(args.pause_after_start_mission_click)
+                if args.click_start_mission
+                else None
+            ),
             "screenshot_filename_timer_source": (
                 "memory_live_numeric_candidate"
                 if memory_live_timer_address is not None and args.memory_timer_probe
@@ -942,7 +1293,10 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         max_seconds=args.red_map_timeout_seconds,
         interval_seconds=args.red_probe_interval_seconds,
     )
-    in_game_timers["red_map_detected"] = (
+    detected_frame_timer = red_detection.get("detected_frame_timer")
+    if isinstance(detected_frame_timer, dict):
+        in_game_timers["red_map_detected_frame"] = detected_frame_timer
+    paired_red_timer = (
         red_detection.get("paired_in_game_timer")
         if isinstance(red_detection.get("paired_in_game_timer"), dict)
         else read_in_game_timer(
@@ -954,6 +1308,88 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             live_timer_kind=memory_live_timer_kind,
         )
     )
+    in_game_timers["red_map_detected_paired_after_detection"] = paired_red_timer
+    in_game_timers["red_map_detected"] = (
+        detected_frame_timer
+        if _timer_sample_seconds(detected_frame_timer) is not None
+        else paired_red_timer
+    )
+    mission_preview: dict[str, Any] | None = None
+    if click_red_mission and red_detection.get("status") == "PASS":
+        mission_preview = click_selected_red_mission_preview(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            red_detection=red_detection,
+            profile=args.profile,
+            use_memory_timer=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+            hover_seconds=args.red_mission_click_hover_seconds,
+            settle_seconds=args.red_mission_click_settle_seconds,
+            hold_seconds=args.red_mission_click_hold_seconds,
+            pause_after_click=(
+                bool(args.pause_after_red_mission_click)
+                and not args.click_start_mission
+            ),
+        )
+        in_game_timers["mission_preview_frame"] = (
+            mission_preview.get("preview_frame_timer")
+            if isinstance(mission_preview, dict)
+            else None
+        )
+        in_game_timers["mission_preview_after_click"] = (
+            mission_preview.get("after_preview_timer")
+            if isinstance(mission_preview, dict)
+            else None
+        )
+        in_game_timers["mission_preview_after_pause"] = (
+            mission_preview.get("after_pause_timer")
+            if isinstance(mission_preview, dict)
+            else None
+        )
+    start_mission: dict[str, Any] | None = None
+    if args.click_start_mission and isinstance(mission_preview, dict):
+        start_mission = click_start_mission_from_preview(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            profile=args.profile,
+            use_memory_timer=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+            settle_seconds=args.start_mission_click_settle_seconds,
+            hover_seconds=args.start_mission_click_hover_seconds,
+            hold_seconds=args.start_mission_click_hold_seconds,
+            max_seconds=args.deployment_timeout_seconds,
+            interval_seconds=args.deployment_probe_interval_seconds,
+            pause_after_click=args.pause_after_start_mission_click,
+            pre_start_visible_probe=args.start_mission_pre_click_probe,
+        )
+        in_game_timers["start_mission_click_before"] = start_mission.get(
+            "before_in_game_timer"
+        )
+        if start_mission.get("samples"):
+            first_deployment_sample = start_mission["samples"][0]
+            in_game_timers["deployment_first_probe_frame"] = (
+                first_deployment_sample.get("frame_timer")
+                if isinstance(first_deployment_sample, dict)
+                else None
+            )
+            deployment_visible_samples = [
+                sample
+                for sample in start_mission["samples"]
+                if isinstance(sample, dict) and sample.get("deployment_visible")
+            ]
+            if deployment_visible_samples:
+                in_game_timers["deployment_visible_frame"] = deployment_visible_samples[
+                    0
+                ].get("frame_timer")
+        in_game_timers["deployment_after_pause"] = start_mission.get(
+            "after_pause_timer"
+        )
     frame_report = generate_frame_delta_report(telemetry.run_dir)
 
     branch_label = (
@@ -967,21 +1403,26 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         and int(red_detection.get("region_count") or 0) >= 1
         else "FAIL"
     )
-    next_patch = (
-        "Extend to red_map_to_mission_preview after user review."
-        if status == "PASS"
-        else "Improve Archive intro wait/dismissal or red-region detector."
-    )
+    if status != "PASS":
+        next_patch = "Improve Archive intro wait/dismissal or red-region detector."
+    elif args.click_start_mission:
+        next_patch = "Measure deployment placement and confirm click after user review."
+    elif click_red_mission:
+        next_patch = "Measure preview-to-deployment click after user review."
+    else:
+        next_patch = "Extend to red_map_to_mission_preview after user review."
     report = {
         "schema_version": 1,
         "run_id": run_id,
         "status": status,
         "branch_label": branch_label,
-        "route_slice": "main_menu_to_archive_red_map",
+        "route_slice": route_slice,
         "startup": startup,
         "marks": marks,
         "in_game_timers": in_game_timers,
         "red_detection": red_detection,
+        "mission_preview": mission_preview,
+        "start_mission": start_mission,
         "frame_delta_report": frame_report,
         "next_patch": next_patch,
     }
@@ -1058,6 +1499,49 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hot-title-settle-seconds", type=float, default=0.35)
     parser.add_argument("--hot-setup-start-settle-seconds", type=float, default=1.0)
     parser.add_argument("--hot-modal-start-settle-seconds", type=float, default=0.35)
+    parser.add_argument(
+        "--click-red-mission",
+        action="store_true",
+        help="After detecting red regions, click the selected red mission immediately.",
+    )
+    parser.add_argument("--red-mission-click-hover-seconds", type=float, default=0.05)
+    parser.add_argument("--red-mission-click-settle-seconds", type=float, default=0.25)
+    parser.add_argument("--red-mission-click-hold-seconds", type=float, default=0.12)
+    parser.add_argument(
+        "--pause-after-red-mission-click",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Pause immediately after capturing the post-click mission preview frame.",
+    )
+    parser.add_argument(
+        "--click-start-mission",
+        action="store_true",
+        help=(
+            "After opening the selected mission preview, clear preview dialogue, "
+            "click Start Mission via the preview board, capture deployment probes, "
+            "and pause."
+        ),
+    )
+    parser.add_argument("--start-mission-click-settle-seconds", type=float, default=0.25)
+    parser.add_argument("--start-mission-click-hover-seconds", type=float, default=0.05)
+    parser.add_argument("--start-mission-click-hold-seconds", type=float, default=0.12)
+    parser.add_argument(
+        "--start-mission-pre-click-probe",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Run the slower visible-UI probe before clicking Start Mission. "
+            "Default is off after the thumbnail hover target was proven."
+        ),
+    )
+    parser.add_argument("--deployment-timeout-seconds", type=float, default=8.0)
+    parser.add_argument("--deployment-probe-interval-seconds", type=float, default=0.5)
+    parser.add_argument(
+        "--pause-after-start-mission-click",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Pause after the deployment probe window completes.",
+    )
     parser.add_argument(
         "--startup-codex-visual-check",
         action=argparse.BooleanOptionalAction,
