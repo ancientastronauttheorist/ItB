@@ -42,6 +42,9 @@ TRUSTED_MEMORY_CLOCK_SOURCES = {
 }
 DEFAULT_SPEED_EXPECTED_PLAYER_TURNS = 3
 DEFAULT_SPEED_FINAL_TURN_VISIBLE_POLL_SECONDS = 0.2
+LIGHTNING_WAR_ACHIEVEMENT = "Lightning War"
+LIGHTNING_WAR_SQUAD = "Blitzkrieg"
+LIGHTNING_WAR_TIMING_TAGS = ["achievement", "lightning_war_timing_lab"]
 
 
 def _now_run_id() -> str:
@@ -67,6 +70,31 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(payload, indent=2, sort_keys=True) + "\n"
     path.write_text(text, encoding="utf-8")
+
+
+def _stamp_lightning_war_timing_session(path: Path | None = None) -> dict[str, Any]:
+    """Align live solver policy with the timing lab's UI-selected run."""
+    from src.loop.session import RunSession
+
+    session = RunSession.new_run(
+        LIGHTNING_WAR_SQUAD,
+        [LIGHTNING_WAR_ACHIEVEMENT],
+        difficulty=0,
+        tags=list(LIGHTNING_WAR_TIMING_TAGS),
+    )
+    if path is None:
+        session.save()
+    else:
+        session.save(path)
+    return {
+        "status": "OK",
+        "run_id": session.run_id,
+        "squad": session.squad,
+        "achievement_targets": list(session.achievement_targets),
+        "difficulty": session.difficulty,
+        "tags": list(session.tags),
+        "path": str(path) if path is not None else "default",
+    }
 
 
 def _repo_relative_text(value: Any) -> Any:
@@ -235,6 +263,7 @@ def build_turn_timing_audit(report: dict[str, Any]) -> dict[str, Any]:
     post_end_to_player: list[float] = []
     enemy_animation: list[float] = []
     end_to_enemy: list[float] = []
+    end_to_enemy_visual: list[float] = []
     ready_frame_lags: list[float] = []
     ready_pause_lags: list[float] = []
     player_turns = 0
@@ -272,9 +301,11 @@ def build_turn_timing_audit(report: dict[str, Any]) -> dict[str, Any]:
         sequence_tokens.append(_format_sequence_token("player", index))
 
         left_sample = turn.get("first_non_player_bridge") or {}
+        visual_left_sample = turn.get("first_non_player_visual") or {}
         ready_sample = turn.get("first_player_ready_bridge") or {}
         terminal_visible = turn.get("first_region_secured_visible") or {}
         left_timer = _sample_timer(left_sample)
+        visual_left_timer = _sample_timer(visual_left_sample, "frame_timer")
         ready_timer = _sample_timer(ready_sample)
         terminal_timer = _sample_timer(terminal_visible, "visible_timer")
         ready_frame_timer = _sample_timer(
@@ -286,12 +317,17 @@ def build_turn_timing_audit(report: dict[str, Any]) -> dict[str, Any]:
         if ready_timer:
             enemy_phases_after_player += 1
             end_to_enemy_delta = _delta_seconds(end_turn_timer, left_timer)
+            end_to_enemy_visual_delta = _delta_seconds(
+                end_turn_timer,
+                visual_left_timer,
+            )
             enemy_animation_delta = _delta_seconds(left_timer, ready_timer)
             post_end_delta = _delta_seconds(end_turn_timer, ready_timer)
             frame_lag = _delta_seconds(ready_timer, ready_frame_timer)
             pause_lag = _delta_seconds(ready_timer, after_pause_timer)
             for collection, value in (
                 (end_to_enemy, end_to_enemy_delta),
+                (end_to_enemy_visual, end_to_enemy_visual_delta),
                 (enemy_animation, enemy_animation_delta),
                 (post_end_to_player, post_end_delta),
                 (ready_frame_lags, frame_lag),
@@ -305,8 +341,14 @@ def build_turn_timing_audit(report: dict[str, Any]) -> dict[str, Any]:
                     "after_player_turn_index": index,
                     "end_turn_click_game_timer": _timer_game_text(end_turn_timer),
                     "left_player_bridge_game_timer": _timer_game_text(left_timer),
+                    "left_player_visual_game_timer": _timer_game_text(
+                        visual_left_timer
+                    ),
                     "next_player_ready_game_timer": _timer_game_text(ready_timer),
                     "end_turn_to_left_player_seconds": end_to_enemy_delta,
+                    "end_turn_to_left_player_visual_seconds": (
+                        end_to_enemy_visual_delta
+                    ),
                     "left_player_to_next_player_seconds": enemy_animation_delta,
                     "end_turn_to_next_player_seconds": post_end_delta,
                     "ready_bridge_to_first_frame_seconds": frame_lag,
@@ -322,12 +364,22 @@ def build_turn_timing_audit(report: dict[str, Any]) -> dict[str, Any]:
         if terminal_timer:
             enemy_phases_after_player += 1
             terminal_delta = _delta_seconds(end_turn_timer, terminal_timer)
+            terminal_visual_left_delta = _delta_seconds(
+                end_turn_timer,
+                visual_left_timer,
+            )
             terminal_phase = {
                 "phase": "terminal_enemy",
                 "after_player_turn_index": index,
                 "end_turn_click_game_timer": _timer_game_text(end_turn_timer),
+                "left_player_visual_game_timer": _timer_game_text(
+                    visual_left_timer
+                ),
                 "region_secured_visible_game_timer": _timer_game_text(
                     terminal_timer
+                ),
+                "end_turn_to_left_player_visual_seconds": (
+                    terminal_visual_left_delta
                 ),
                 "end_turn_to_region_secured_visible_seconds": terminal_delta,
                 "visible_elapsed_after_end_turn_wall_seconds": terminal_visible.get(
@@ -358,6 +410,11 @@ def build_turn_timing_audit(report: dict[str, Any]) -> dict[str, Any]:
             "values": end_to_enemy,
             "average": _mean(end_to_enemy),
             "max": max(end_to_enemy) if end_to_enemy else None,
+        },
+        "end_turn_to_enemy_visual_seconds": {
+            "values": end_to_enemy_visual,
+            "average": _mean(end_to_enemy_visual),
+            "max": max(end_to_enemy_visual) if end_to_enemy_visual else None,
         },
         "enemy_bridge_to_next_player_seconds": {
             "values": enemy_animation,
@@ -941,7 +998,7 @@ def _deployment_yellow_signal_from_frame(frame: dict[str, Any]) -> dict[str, Any
             "reason": str(exc),
             "deployment_visible": False,
         }
-    threshold = 5000
+    threshold = 4500
     return {
         "status": "OK",
         "yellow": yellow,
@@ -949,6 +1006,80 @@ def _deployment_yellow_signal_from_frame(frame: dict[str, Any]) -> dict[str, Any
         "threshold": threshold,
         "deployment_visible": yellow >= threshold,
         "crop": list(crop),
+    }
+
+
+def _post_end_turn_transition_banner_from_frame(frame: dict[str, Any]) -> dict[str, Any]:
+    """Detect the central ENEMY/PLAYER TURN transition banner without OCR."""
+    path = frame.get("screenshot_path")
+    if not path:
+        return {
+            "status": "UNKNOWN",
+            "reason": "screenshot_path_missing",
+            "transition_visible": False,
+        }
+    try:
+        from PIL import Image
+
+        with Image.open(path) as image:
+            image = image.convert("RGB")
+            width, height = image.size
+            text_crop = (
+                int(width * 0.42),
+                int(height * 0.48),
+                int(width * 0.58),
+                int(height * 0.535),
+            )
+            band_crop = (
+                0,
+                int(height * 0.47),
+                width,
+                int(height * 0.56),
+            )
+            text_region = image.crop(text_crop)
+            band_region = image.crop(band_crop)
+            text_pixels = list(text_region.getdata())
+            band_pixels = list(band_region.getdata())
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": str(exc),
+            "transition_visible": False,
+        }
+
+    def fraction(count: int, total: int) -> float:
+        return round(count / total, 4) if total else 0.0
+
+    text_total = len(text_pixels)
+    band_total = len(band_pixels)
+    text_bright = sum(
+        1 for red, green, blue in text_pixels
+        if red >= 180 and green >= 180 and blue >= 180
+    )
+    text_dark = sum(
+        1 for red, green, blue in text_pixels
+        if red <= 35 and green <= 45 and blue <= 60
+    )
+    band_dark = sum(
+        1 for red, green, blue in band_pixels
+        if red <= 35 and green <= 45 and blue <= 60
+    )
+    text_bright_fraction = fraction(text_bright, text_total)
+    text_dark_fraction = fraction(text_dark, text_total)
+    band_dark_fraction = fraction(band_dark, band_total)
+    transition_visible = (
+        text_bright_fraction >= 0.06
+        and text_dark_fraction >= 0.45
+        and band_dark_fraction >= 0.55
+    )
+    return {
+        "status": "OK",
+        "transition_visible": transition_visible,
+        "text_bright_fraction": text_bright_fraction,
+        "text_dark_fraction": text_dark_fraction,
+        "band_dark_fraction": band_dark_fraction,
+        "text_crop": list(text_crop),
+        "band_crop": list(band_crop),
     }
 
 
@@ -2196,6 +2327,41 @@ def _auto_turn_time_pod_left_alive_block(auto_turn: dict[str, Any] | None) -> bo
     return bool(blocking_kinds) and set(blocking_kinds) <= {"pod_unrecovered_final"}
 
 
+def _wait_for_deployment_bridge_ready(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    max_seconds: float,
+    interval_seconds: float,
+) -> dict[str, Any]:
+    samples: list[dict[str, Any]] = []
+    started = time.perf_counter()
+    while True:
+        snapshot = fast._lightning_live_snapshot()
+        sample = {
+            "timer_seconds": _elapsed(timer_start),
+            "ready": fast.deployment_snapshot_ready(snapshot),
+            "snapshot": _compact_bridge_snapshot(snapshot),
+        }
+        samples.append(sample)
+        telemetry.event("deployment_bridge_ready_wait", **sample)
+        if sample["ready"]:
+            return {
+                "status": "OK",
+                "ready_sample": sample,
+                "samples": samples,
+                "elapsed_seconds": round(time.perf_counter() - started, 3),
+            }
+        if time.perf_counter() - started >= max(0.0, max_seconds):
+            return {
+                "status": "TIMEOUT",
+                "ready_sample": None,
+                "samples": samples,
+                "elapsed_seconds": round(time.perf_counter() - started, 3),
+            }
+        time.sleep(max(0.01, interval_seconds))
+
+
 def deploy_recommended_after_visible_deployment(
     *,
     timer_start: float,
@@ -2209,6 +2375,8 @@ def deploy_recommended_after_visible_deployment(
     pause_after_deploy: bool,
     trigger_frame_timer: dict[str, Any] | None = None,
     capture_post_deploy_probe: bool = True,
+    bridge_ready_wait_seconds: float = 1.5,
+    bridge_ready_poll_seconds: float = 0.05,
 ) -> dict[str, Any]:
     if isinstance(trigger_frame_timer, dict):
         before_timer = {
@@ -2229,6 +2397,36 @@ def deploy_recommended_after_visible_deployment(
         timer_seconds=_elapsed(timer_start),
         before_in_game_timer=before_timer,
     )
+
+    bridge_ready_wait = _wait_for_deployment_bridge_ready(
+        timer_start=timer_start,
+        telemetry=telemetry,
+        max_seconds=bridge_ready_wait_seconds,
+        interval_seconds=bridge_ready_poll_seconds,
+    )
+    if bridge_ready_wait.get("status") != "OK":
+        return {
+            "status": "FAIL",
+            "reason": "deployment_bridge_not_ready",
+            "before_in_game_timer": before_timer,
+            "bridge_ready_wait": bridge_ready_wait,
+            "deploy_duration_seconds": 0.0,
+            "deploy_result": None,
+            "deploy_result_compact": {
+                "status": "ERROR",
+                "reason": "deployment_bridge_not_ready",
+                "deployment_count": 0,
+                "existing_deployment_count": 0,
+                "phase": None,
+                "ui_fallback_status": None,
+                "accepted": False,
+            },
+            "post_deploy_frame": None,
+            "post_deploy_frame_timer": None,
+            "after_in_game_timer": None,
+            "pause": None,
+            "after_pause_timer": None,
+        }
 
     deploy_started = time.perf_counter()
     deploy = fast.cmd_deploy_recommended(
@@ -2307,6 +2505,7 @@ def deploy_recommended_after_visible_deployment(
         if compact_deploy.get("accepted")
         else "deploy_recommended_failed",
         "before_in_game_timer": before_timer,
+        "bridge_ready_wait": bridge_ready_wait,
         "deploy_duration_seconds": deploy_duration,
         "deploy_result": deploy,
         "deploy_result_compact": compact_deploy,
@@ -2654,10 +2853,13 @@ def solve_execute_end_turn_and_observe_next_turn(
     first_terminal_visible: dict[str, Any] | None = None
     first_region_secured_visible: dict[str, Any] | None = None
     first_player_ready_bridge: dict[str, Any] | None = None
+    first_non_player_visual: dict[str, Any] | None = None
     ready_frames_seen = 0
     ready_frame: dict[str, Any] | None = None
     retry_click: dict[str, Any] | None = None
     retry_timer: dict[str, Any] | None = None
+    retry_elapsed_after_end_turn: float | None = None
+    retry_bridge_sample_count: int | None = None
 
     while True:
         now = time.perf_counter()
@@ -2666,35 +2868,6 @@ def solve_execute_end_turn_and_observe_next_turn(
             break
 
         did_work = False
-        if now >= next_frame_at:
-            frame = screenshots.capture_once(
-                clock_state="post_end_turn_observe",
-                note="after_combat_end_turn",
-            )
-            frame["timer_seconds"] = _elapsed(timer_start)
-            frame_timer = _timer_sample_from_frame(
-                frame,
-                label="post_end_turn_observe_frame",
-            )
-            frame_sample = {
-                "timer_seconds": frame["timer_seconds"],
-                "screenshot_path": frame.get("screenshot_path"),
-                "frame_timer": frame_timer,
-                "after_player_ready_bridge": first_player_ready_bridge is not None,
-            }
-            frames.append(frame_sample)
-            telemetry.event("post_end_turn_frame", **frame_sample)
-            if first_player_ready_bridge is not None:
-                ready_frames_seen += 1
-                if ready_frame is None:
-                    ready_frame = frame_sample
-            next_frame_at = max(
-                next_frame_at + max(0.1, screenshot_cadence),
-                time.perf_counter() + 0.01,
-            )
-            did_work = True
-
-        now = time.perf_counter()
         if now >= next_bridge_at:
             snapshot = fast._lightning_live_snapshot()
             compact = _compact_bridge_snapshot(snapshot)
@@ -2732,6 +2905,86 @@ def solve_execute_end_turn_and_observe_next_turn(
             telemetry.event("post_end_turn_bridge_probe", **sample)
             next_bridge_at = max(
                 next_bridge_at + max(0.05, bridge_poll_seconds),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        now = time.perf_counter()
+        elapsed = now - started
+        if (
+            retry_click is None
+            and first_non_player_bridge is None
+            and first_non_player_visual is None
+            and elapsed >= max(0.1, retry_after_seconds)
+        ):
+            observed = {
+                "status": "END_TURN_CLICK_NOT_OBSERVED",
+                "reason": "bridge_still_player_turn",
+                "samples": [
+                    sample.get("snapshot") or {}
+                    for sample in bridge_samples
+                    if isinstance(sample, dict)
+                ],
+            }
+            if fast._lightning_end_turn_retryable(observed, turn):
+                retry_elapsed_after_end_turn = round(elapsed, 3)
+                retry_bridge_sample_count = len(observed["samples"])
+                retry_timer = _timer_sample_from_recorder(
+                    screenshots,
+                    label="combat_end_turn_retry_before",
+                )
+                retry_click = fast.click_control("end_turn", settle_seconds=0.0)
+                telemetry.event(
+                    "combat_end_turn_retry_click",
+                    timer_seconds=_elapsed(timer_start),
+                    elapsed_after_end_turn_seconds=retry_elapsed_after_end_turn,
+                    bridge_sample_count=retry_bridge_sample_count,
+                    before_in_game_timer=retry_timer,
+                    click=retry_click,
+                )
+                did_work = True
+
+        now = time.perf_counter()
+        if now >= next_frame_at:
+            frame = screenshots.capture_once(
+                clock_state="post_end_turn_observe",
+                note="after_combat_end_turn",
+            )
+            frame["timer_seconds"] = _elapsed(timer_start)
+            frame_timer = _timer_sample_from_frame(
+                frame,
+                label="post_end_turn_observe_frame",
+            )
+            frame_sample = {
+                "timer_seconds": frame["timer_seconds"],
+                "screenshot_path": frame.get("screenshot_path"),
+                "frame_timer": frame_timer,
+                "after_player_ready_bridge": first_player_ready_bridge is not None,
+            }
+            transition_banner = _post_end_turn_transition_banner_from_frame(frame)
+            frame_sample["post_end_turn_transition_banner"] = transition_banner
+            if (
+                first_non_player_visual is None
+                and transition_banner.get("transition_visible")
+            ):
+                first_non_player_visual = {
+                    "timer_seconds": frame["timer_seconds"],
+                    "elapsed_after_end_turn_seconds": round(
+                        time.perf_counter() - started,
+                        3,
+                    ),
+                    "screenshot_path": frame.get("screenshot_path"),
+                    "frame_timer": frame_timer,
+                    "transition_banner": transition_banner,
+                }
+            frames.append(frame_sample)
+            telemetry.event("post_end_turn_frame", **frame_sample)
+            if first_player_ready_bridge is not None:
+                ready_frames_seen += 1
+                if ready_frame is None:
+                    ready_frame = frame_sample
+            next_frame_at = max(
+                next_frame_at + max(0.1, screenshot_cadence),
                 time.perf_counter() + 0.01,
             )
             did_work = True
@@ -2786,35 +3039,6 @@ def solve_execute_end_turn_and_observe_next_turn(
                 time.perf_counter() + 0.01,
             )
             did_work = True
-
-        elapsed = time.perf_counter() - started
-        if (
-            retry_click is None
-            and first_non_player_bridge is None
-            and elapsed >= max(0.5, retry_after_seconds)
-        ):
-            observed = {
-                "status": "END_TURN_CLICK_NOT_OBSERVED",
-                "reason": "bridge_still_player_turn",
-                "samples": [
-                    sample.get("snapshot") or {}
-                    for sample in bridge_samples
-                    if isinstance(sample, dict)
-                ],
-            }
-            if fast._lightning_end_turn_retryable(observed, turn):
-                retry_timer = _timer_sample_from_recorder(
-                    screenshots,
-                    label="combat_end_turn_retry_before",
-                )
-                retry_click = fast.click_control("end_turn", settle_seconds=0.0)
-                telemetry.event(
-                    "combat_end_turn_retry_click",
-                    timer_seconds=_elapsed(timer_start),
-                    before_in_game_timer=retry_timer,
-                    click=retry_click,
-                )
-                did_work = True
 
         if first_region_secured_visible is not None:
             break
@@ -2929,12 +3153,17 @@ def solve_execute_end_turn_and_observe_next_turn(
         "end_turn_click_duration_seconds": end_turn_click_duration,
         "end_turn_retry_click": retry_click,
         "end_turn_retry_before_in_game_timer": retry_timer,
+        "end_turn_retry_elapsed_after_end_turn_seconds": (
+            retry_elapsed_after_end_turn
+        ),
+        "end_turn_retry_bridge_sample_count": retry_bridge_sample_count,
         "observe_seconds_requested": observe_seconds,
         "observed_seconds": round(time.perf_counter() - started, 3),
         "frames": frames,
         "bridge_samples": bridge_samples,
         "visible_samples": visible_samples,
         "first_non_player_bridge": first_non_player_bridge,
+        "first_non_player_visual": first_non_player_visual,
         "first_terminal_bridge": first_terminal_bridge,
         "first_terminal_visible": first_terminal_visible,
         "first_region_secured_visible": first_region_secured_visible,
@@ -3540,6 +3769,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         }
     )
     startup = prepare_from_main_menu(args)
+    session_stamp = _stamp_lightning_war_timing_session()
     fast.log(f"timing lab pre-timer visible={fast.visible_ui_name()}")
     in_game_timers: dict[str, Any] = {
         "pre_timer": read_in_game_timer(
@@ -3571,6 +3801,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         timer_seconds=0.0,
         control="setup_modal_start",
         meaning="lower difficulty setup Start click",
+        session_stamp=session_stamp,
     )
     startup["setup_modal_start"] = fast.click_setup_modal_start_control(
         settle_seconds=args.modal_start_settle_seconds,
@@ -4271,7 +4502,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--post-end-turn-observe-seconds", type=float, default=30.0)
     parser.add_argument("--post-end-turn-bridge-poll-seconds", type=float, default=0.2)
     parser.add_argument("--post-end-turn-extra-ready-frames", type=int, default=0)
-    parser.add_argument("--end-turn-retry-after-seconds", type=float, default=2.0)
+    parser.add_argument("--end-turn-retry-after-seconds", type=float, default=0.75)
     parser.add_argument("--region-secured-visible-poll-seconds", type=float, default=0.5)
     parser.add_argument("--region-secured-terminal-settle-seconds", type=float, default=1.0)
     parser.add_argument("--region-secured-continue-hover-seconds", type=float, default=1.0)

@@ -102,6 +102,11 @@ the Difficulty Setup modal. The first milestone succeeds only when at least one
 red mission region is detected on the Archive mission map. Merely reaching the
 island selection screen or a generic island map is not enough.
 
+Before the timer-zero click, the timing lab must stamp the live run session as
+`Blitzkrieg` / `Lightning War` / Easy. The UI route can otherwise start the
+right visible squad while the solver session still carries a stale achievement
+target from another lab, which disables Lightning War-only speed-loss policy.
+
 Hardcoded island order for Lightning War calibration:
 
 1. Archive, Inc.
@@ -452,6 +457,13 @@ once its correctness is proven.
   `--pause-after-combat-player-turn` by default so bridge-ready pauses the
   in-game clock immediately and solver thinking happens while paused. Do not
   add screenshot-ready frames unless a slower audit/proof run needs them.
+- If the first End Turn click is not observed, retry quickly only after bridge
+  proof shows the same `combat_player` turn with `active_mechs == 0`. The
+  timing lab defaults `--end-turn-retry-after-seconds 0.75`, but suppresses
+  retry when a post-click screenshot frame shows the central turn-transition
+  banner because that proves the first click already took and the bridge is
+  merely lagging. Continue to use bridge-ready, not screenshots, for the next
+  player-turn pause.
 - The from-top speed-route expectation is the short sequence
   `enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done`.
   Treat this only as a fallback/report expectation. The general fast path is

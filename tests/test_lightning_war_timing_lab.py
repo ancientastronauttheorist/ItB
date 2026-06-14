@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -12,6 +13,19 @@ lab = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 sys.modules[SPEC.name] = lab
 SPEC.loader.exec_module(lab)
+
+
+def test_stamp_lightning_war_timing_session_sets_solver_target(tmp_path):
+    session_path = tmp_path / "active_session.json"
+
+    result = lab._stamp_lightning_war_timing_session(session_path)
+    saved = json.loads(session_path.read_text(encoding="utf-8"))
+
+    assert result["status"] == "OK"
+    assert saved["squad"] == "Blitzkrieg"
+    assert saved["achievement_targets"] == ["Lightning War"]
+    assert saved["difficulty"] == 0
+    assert "lightning_war_timing_lab" in saved["tags"]
 
 
 def test_profile_boundary_from_report_keeps_first_milestone_evidence():
@@ -733,6 +747,16 @@ def test_deploy_recommended_after_visible_deployment_runs_helper_and_pauses(monk
         }
 
     monkeypatch.setattr(lab, "read_in_game_timer", fake_timer)
+    monkeypatch.setattr(
+        lab,
+        "_wait_for_deployment_bridge_ready",
+        lambda **kwargs: {
+            "status": "OK",
+            "ready_sample": {"ready": True},
+            "samples": [{"ready": True}],
+            "elapsed_seconds": 0.05,
+        },
+    )
 
     result = lab.deploy_recommended_after_visible_deployment(
         timer_start=0.0,
@@ -759,6 +783,7 @@ def test_deploy_recommended_after_visible_deployment_runs_helper_and_pauses(monk
     ]
     assert result["deploy_result_compact"]["deployment_count"] == 3
     assert result["before_in_game_timer"]["label"] == "deploy_recommended_trigger_frame"
+    assert result["bridge_ready_wait"]["status"] == "OK"
     assert result["post_deploy_frame_timer"]["source"] == "screenshot_frame_clock"
     assert result["pause"]["reason"] == "timing_lab_after_deploy_recommended"
     assert timer_labels == [
@@ -770,6 +795,54 @@ def test_deploy_recommended_after_visible_deployment_runs_helper_and_pauses(monk
         "deploy_recommended_result",
         "post_deploy_probe",
         "deploy_recommended_pause",
+    ]
+
+
+def test_wait_for_deployment_bridge_ready_polls_until_ready(monkeypatch):
+    events = []
+    snapshots = [
+        {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "in_active_mission": True,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": None,
+        },
+        {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "in_active_mission": True,
+            "deployment_zone_count": 6,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": None,
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", lambda: snapshots.pop(0))
+    monkeypatch.setattr(lab.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(lab, "_elapsed", lambda start: float(len(events)))
+
+    result = lab._wait_for_deployment_bridge_ready(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        max_seconds=1.0,
+        interval_seconds=0.01,
+    )
+
+    assert result["status"] == "OK"
+    assert len(result["samples"]) == 2
+    assert result["ready_sample"]["snapshot"]["deployment_zone_count"] == 6
+    assert [event_type for event_type, _payload in events] == [
+        "deployment_bridge_ready_wait",
+        "deployment_bridge_ready_wait",
     ]
 
 
@@ -1245,6 +1318,282 @@ def test_solve_execute_end_turn_accepts_direct_next_player_turn(monkeypatch):
     assert result["first_non_player_bridge"] is None
     assert result["first_player_ready_bridge"]["snapshot"]["turn"] == 3
     assert clicks == [("end_turn", 0.0)]
+    assert key_presses
+
+
+def test_solve_execute_end_turn_retries_spent_turn_quickly(monkeypatch):
+    clicks = []
+    key_presses = []
+    capture_calls = []
+    state = {"after_retry_samples": 0}
+
+    class FakeTelemetry:
+        def __init__(self):
+            self.events = []
+
+        def event(self, event_type, **payload):
+            self.events.append((event_type, payload))
+            return {"event_type": event_type, **payload}
+
+    class FakeScreenshots:
+        frame_clock_sampler = None
+
+        def __init__(self):
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:34",
+                "game_seconds": 34.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            capture_calls.append((clock_state, note))
+            return {
+                "screenshot_path": f"{clock_state}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": self.sample_clock(),
+            }
+
+    def fake_snapshot():
+        if len(clicks) < 2:
+            return {
+                "status": "OK",
+                "phase": "combat_player",
+                "turn": 2,
+                "active_mechs": 0,
+                "mech_count": 3,
+                "deployment_zone_count": 0,
+                "bridge_heartbeat_alive": True,
+                "bridge_heartbeat_stale": False,
+            }
+        state["after_retry_samples"] += 1
+        if state["after_retry_samples"] == 1:
+            return {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 2,
+                "active_mechs": 0,
+                "mech_count": 3,
+                "deployment_zone_count": 0,
+                "bridge_heartbeat_alive": True,
+                "bridge_heartbeat_stale": False,
+            }
+        return {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "cmd_auto_turn",
+        lambda **kwargs: {
+            "status": "PLAN",
+            "turn": 2,
+            "actions_completed": 3,
+            "score": 1234,
+            "re_solves": 0,
+            "batch": [{"type": "left_click"}],
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda control, *, settle_seconds=0.0: clicks.append(
+            (control, settle_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", fake_snapshot)
+    monkeypatch.setattr(lab.fast, "APP_NAME", "Into the Breach")
+    monkeypatch.setattr(
+        lab.fast,
+        "press_key",
+        lambda key, *, description, app_name, settle_seconds=0.05: key_presses.append(
+            (key, description, app_name, settle_seconds)
+        )
+        or {"status": "OK", "key": key},
+    )
+
+    telemetry = FakeTelemetry()
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=telemetry,
+        screenshots=FakeScreenshots(),
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=1.0,
+        screenshot_cadence=0.5,
+        bridge_poll_seconds=0.02,
+        extra_ready_frames=0,
+        pause_after_ready=True,
+        retry_after_seconds=0.01,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["reason"] == "combat_post_end_turn_player_ready"
+    assert result["first_non_player_bridge"]["snapshot"]["phase"] == "combat_enemy"
+    assert result["first_player_ready_bridge"]["snapshot"]["turn"] == 3
+    assert clicks == [("end_turn", 0.0), ("end_turn", 0.0)]
+    assert key_presses
+    assert result["end_turn_retry_click"]["status"] == "OK"
+    assert result["end_turn_retry_elapsed_after_end_turn_seconds"] < 0.3
+    assert result["end_turn_retry_bridge_sample_count"] >= 1
+    retry_events = [
+        payload
+        for event_type, payload in telemetry.events
+        if event_type == "combat_end_turn_retry_click"
+    ]
+    assert retry_events
+    assert retry_events[0]["elapsed_after_end_turn_seconds"] < 0.3
+
+
+def test_solve_execute_end_turn_suppresses_retry_on_visual_transition(monkeypatch):
+    clicks = []
+    key_presses = []
+    state = {"snapshots": 0}
+
+    class FakeTelemetry:
+        def __init__(self):
+            self.events = []
+
+        def event(self, event_type, **payload):
+            self.events.append((event_type, payload))
+            return {"event_type": event_type, **payload}
+
+    class FakeScreenshots:
+        frame_clock_sampler = None
+
+        def __init__(self):
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:36",
+                "game_seconds": 36.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            return {
+                "screenshot_path": f"{clock_state}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": self.sample_clock(),
+            }
+
+    def fake_snapshot():
+        state["snapshots"] += 1
+        if state["snapshots"] <= 6:
+            return {
+                "status": "OK",
+                "phase": "combat_player",
+                "turn": 2,
+                "active_mechs": 0,
+                "mech_count": 3,
+                "deployment_zone_count": 0,
+                "bridge_heartbeat_alive": True,
+                "bridge_heartbeat_stale": False,
+            }
+        if state["snapshots"] == 7:
+            return {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 2,
+                "active_mechs": 0,
+                "mech_count": 3,
+                "deployment_zone_count": 0,
+                "bridge_heartbeat_alive": True,
+                "bridge_heartbeat_stale": False,
+            }
+        return {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "cmd_auto_turn",
+        lambda **kwargs: {
+            "status": "PLAN",
+            "turn": 2,
+            "actions_completed": 3,
+            "score": 1234,
+            "re_solves": 0,
+            "batch": [{"type": "left_click"}],
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda control, *, settle_seconds=0.0: clicks.append(
+            (control, settle_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", fake_snapshot)
+    monkeypatch.setattr(
+        lab,
+        "_post_end_turn_transition_banner_from_frame",
+        lambda frame: {
+            "status": "OK",
+            "transition_visible": True,
+            "text_bright_fraction": 0.13,
+            "text_dark_fraction": 0.74,
+            "band_dark_fraction": 0.73,
+        },
+    )
+    monkeypatch.setattr(lab.fast, "APP_NAME", "Into the Breach")
+    monkeypatch.setattr(
+        lab.fast,
+        "press_key",
+        lambda key, *, description, app_name, settle_seconds=0.05: key_presses.append(
+            (key, description, app_name, settle_seconds)
+        )
+        or {"status": "OK", "key": key},
+    )
+
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=1.0,
+        screenshot_cadence=0.5,
+        bridge_poll_seconds=0.02,
+        extra_ready_frames=0,
+        pause_after_ready=True,
+        retry_after_seconds=0.01,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["reason"] == "combat_post_end_turn_player_ready"
+    assert clicks == [("end_turn", 0.0)]
+    assert result["end_turn_retry_click"] is None
+    assert result["first_non_player_visual"]["transition_banner"][
+        "transition_visible"
+    ] is True
+    assert result["first_non_player_bridge"]["snapshot"]["phase"] == "combat_enemy"
+    assert result["first_player_ready_bridge"]["snapshot"]["turn"] == 3
     assert key_presses
 
 
@@ -2212,7 +2561,7 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.post_end_turn_observe_seconds == 30.0
     assert args.post_end_turn_bridge_poll_seconds == 0.2
     assert args.post_end_turn_extra_ready_frames == 0
-    assert args.end_turn_retry_after_seconds == 2.0
+    assert args.end_turn_retry_after_seconds == 0.75
     assert args.region_secured_visible_poll_seconds == 0.5
     assert args.region_secured_terminal_settle_seconds == 1.0
     assert args.region_secured_continue_hover_seconds == 1.0
