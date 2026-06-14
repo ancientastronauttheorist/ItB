@@ -536,6 +536,28 @@ def _timer_sample_from_frame(frame: dict[str, Any], *, label: str) -> dict[str, 
     return {key: value for key, value in sample.items() if value is not None}
 
 
+def _timer_sample_from_recorder(
+    screenshots: ScreenshotRecorder,
+    *,
+    label: str,
+) -> dict[str, Any]:
+    sampler = getattr(screenshots, "frame_clock_sampler", None)
+    if not callable(sampler):
+        return {
+            "status": "UNAVAILABLE",
+            "label": label,
+            "reason": "frame_clock_sampler_unavailable",
+        }
+    sample = sampler()
+    if not isinstance(sample, dict):
+        return {
+            "status": "UNKNOWN",
+            "label": label,
+            "reason": "frame_clock_sampler_returned_non_dict",
+        }
+    return {**sample, "label": label}
+
+
 def _deployment_yellow_signal_from_frame(frame: dict[str, Any]) -> dict[str, Any]:
     path = frame.get("screenshot_path")
     if not path:
@@ -694,6 +716,12 @@ def append_notebook_report(report: dict[str, Any]) -> None:
     deploy = report.get("deploy_recommended") or {}
     deploy_compact = deploy.get("deploy_result_compact") or {}
     post_deploy_timer = in_game_timers.get("post_deploy_frame") or {}
+    confirm = report.get("deploy_confirm") or {}
+    confirm_click_timer = in_game_timers.get("deploy_confirm_click_before") or {}
+    bridge_ready_timer = in_game_timers.get("opening_player_turn_bridge_ready") or {}
+    ready_frame_timer = (
+        in_game_timers.get("opening_player_turn_first_frame_after_bridge") or {}
+    )
     lines = [
         "",
         f"## {report.get('run_id')}",
@@ -720,6 +748,17 @@ def append_notebook_report(report: dict[str, Any]) -> None:
                 f"- Deploy recommended placements: {deploy_compact.get('deployment_count')}",
                 f"- Deploy recommended duration: {_seconds_text(deploy.get('deploy_duration_seconds'))}",
                 f"- Post-deploy frame in-game timer: {post_deploy_timer.get('game_timer') or 'n/a'}",
+            ]
+        )
+    if confirm:
+        lines.extend(
+            [
+                f"- Deploy Confirm signal: {confirm.get('confirm_signal_source') or 'n/a'}",
+                f"- Deploy Confirm click timer: {confirm_click_timer.get('game_timer') or 'n/a'}",
+                f"- Opening player-turn signal: {confirm.get('player_turn_signal_source') or 'n/a'}",
+                f"- Opening player-turn bridge timer: {bridge_ready_timer.get('game_timer') or 'n/a'}",
+                f"- First frame after bridge-ready timer: {ready_frame_timer.get('game_timer') or 'n/a'}",
+                f"- Post-confirm observed seconds: {_seconds_text(confirm.get('observed_seconds'))}",
             ]
         )
     NOTEBOOK_PATH.write_text(existing + "\n".join(lines) + "\n", encoding="utf-8")
@@ -1247,6 +1286,48 @@ def _compact_deploy_recommended_result(result: dict[str, Any]) -> dict[str, Any]
     }
 
 
+def _compact_bridge_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": snapshot.get("status"),
+        "phase": snapshot.get("phase"),
+        "turn": snapshot.get("turn"),
+        "active_mechs": snapshot.get("active_mechs"),
+        "mech_count": snapshot.get("mech_count"),
+        "deployment_zone_count": snapshot.get("deployment_zone_count"),
+        "grid_power": snapshot.get("grid_power"),
+        "in_active_mission": snapshot.get("in_active_mission"),
+        "mission_id": snapshot.get("mission_id"),
+        "bridge_heartbeat_alive": snapshot.get("bridge_heartbeat_alive"),
+        "bridge_heartbeat_stale": snapshot.get("bridge_heartbeat_stale"),
+    }
+
+
+def _snapshot_after_deploy_confirm_live(snapshot: dict[str, Any]) -> bool:
+    if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
+        return False
+    if snapshot.get("bridge_heartbeat_alive") is False:
+        return False
+    if snapshot.get("bridge_heartbeat_stale") is True:
+        return False
+    return snapshot.get("phase") in {"combat_enemy", "combat_player"}
+
+
+def _snapshot_actionable_player_turn(snapshot: dict[str, Any]) -> bool:
+    if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
+        return False
+    if snapshot.get("phase") != "combat_player":
+        return False
+    try:
+        active_mechs = int(snapshot.get("active_mechs") or 0)
+    except (TypeError, ValueError):
+        active_mechs = 0
+    return (
+        active_mechs > 0
+        and snapshot.get("bridge_heartbeat_alive") is not False
+        and snapshot.get("bridge_heartbeat_stale") is not True
+    )
+
+
 def deploy_recommended_after_visible_deployment(
     *,
     timer_start: float,
@@ -1259,6 +1340,7 @@ def deploy_recommended_after_visible_deployment(
     memory_live_timer_kind: str | None,
     pause_after_deploy: bool,
     trigger_frame_timer: dict[str, Any] | None = None,
+    capture_post_deploy_probe: bool = True,
 ) -> dict[str, Any]:
     if isinstance(trigger_frame_timer, dict):
         before_timer = {
@@ -1295,27 +1377,40 @@ def deploy_recommended_after_visible_deployment(
         result=compact_deploy,
     )
 
-    post_frame = screenshots.capture_once(
-        clock_state="post_deploy_probe",
-        note="after_deploy_recommended",
-    )
-    post_frame["timer_seconds"] = _elapsed(timer_start)
-    post_frame_timer = _timer_sample_from_frame(post_frame, label="post_deploy_frame")
-    after_timer = read_in_game_timer(
-        profile,
-        label="deploy_recommended_after",
-        use_memory=use_memory_timer,
-        timer_address=memory_timer_address,
-        live_timer_address=memory_live_timer_address,
-        live_timer_kind=memory_live_timer_kind,
-    )
-    telemetry.event(
-        "post_deploy_probe",
-        timer_seconds=post_frame["timer_seconds"],
-        screenshot_path=post_frame.get("screenshot_path"),
-        frame_timer=post_frame_timer,
-        after_in_game_timer=after_timer,
-    )
+    post_frame: dict[str, Any] | None = None
+    post_frame_timer: dict[str, Any] | None = None
+    after_timer: dict[str, Any] | None = None
+    if capture_post_deploy_probe:
+        post_frame = screenshots.capture_once(
+            clock_state="post_deploy_probe",
+            note="after_deploy_recommended",
+        )
+        post_frame["timer_seconds"] = _elapsed(timer_start)
+        post_frame_timer = _timer_sample_from_frame(
+            post_frame,
+            label="post_deploy_frame",
+        )
+        after_timer = read_in_game_timer(
+            profile,
+            label="deploy_recommended_after",
+            use_memory=use_memory_timer,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        )
+        telemetry.event(
+            "post_deploy_probe",
+            timer_seconds=post_frame["timer_seconds"],
+            screenshot_path=post_frame.get("screenshot_path"),
+            frame_timer=post_frame_timer,
+            after_in_game_timer=after_timer,
+        )
+    else:
+        telemetry.event(
+            "post_deploy_probe_skipped",
+            timer_seconds=_elapsed(timer_start),
+            reason="confirm_after_deploy_hot_path",
+        )
 
     pause: dict[str, Any] | None = None
     after_pause_timer: dict[str, Any] | None = None
@@ -1355,18 +1450,197 @@ def deploy_recommended_after_visible_deployment(
     }
 
 
+def confirm_deployment_and_observe_opening_turn(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    observe_seconds: float,
+    screenshot_cadence: float,
+    bridge_poll_seconds: float,
+    extra_ready_frames: int,
+    pause_after_ready: bool,
+) -> dict[str, Any]:
+    before_timer = _timer_sample_from_recorder(
+        screenshots,
+        label="deploy_confirm_click_before",
+    )
+    telemetry.event(
+        "deploy_confirm_signal",
+        timer_seconds=_elapsed(timer_start),
+        signal_source="deploy_recommended_result",
+        before_in_game_timer=before_timer,
+        conclusion=(
+            "deployment helper return is the fastest confirm-click signal; "
+            "screenshots are retained as evidence only"
+        ),
+    )
+    click_started = time.perf_counter()
+    click = fast.click_control("deploy_confirm", settle_seconds=0.05)
+    click_duration = round(time.perf_counter() - click_started, 3)
+    confirm_click_wall = _elapsed(timer_start)
+    telemetry.event(
+        "deploy_confirm_click",
+        timer_seconds=confirm_click_wall,
+        before_in_game_timer=before_timer,
+        duration_seconds=click_duration,
+        click=click,
+    )
+
+    started = time.perf_counter()
+    next_frame_at = started
+    next_bridge_at = started
+    frames: list[dict[str, Any]] = []
+    bridge_samples: list[dict[str, Any]] = []
+    first_confirm_live_bridge: dict[str, Any] | None = None
+    first_player_ready_bridge: dict[str, Any] | None = None
+    ready_frames_seen = 0
+    ready_frame: dict[str, Any] | None = None
+
+    while True:
+        now = time.perf_counter()
+        elapsed = now - started
+        if elapsed >= max(0.0, observe_seconds):
+            break
+
+        did_work = False
+        if now >= next_frame_at:
+            frame = screenshots.capture_once(
+                clock_state="post_confirm_observe",
+                note="after_deploy_confirm",
+            )
+            frame["timer_seconds"] = _elapsed(timer_start)
+            frame_timer = _timer_sample_from_frame(
+                frame,
+                label="post_confirm_observe_frame",
+            )
+            frame_sample = {
+                "timer_seconds": frame["timer_seconds"],
+                "screenshot_path": frame.get("screenshot_path"),
+                "frame_timer": frame_timer,
+                "after_player_ready_bridge": first_player_ready_bridge is not None,
+            }
+            frames.append(frame_sample)
+            telemetry.event("post_confirm_frame", **frame_sample)
+            if first_player_ready_bridge is not None:
+                ready_frames_seen += 1
+                if ready_frame is None:
+                    ready_frame = frame_sample
+            next_frame_at = max(
+                next_frame_at + max(0.1, screenshot_cadence),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        now = time.perf_counter()
+        if now >= next_bridge_at:
+            snapshot = fast._lightning_live_snapshot()
+            sample = {
+                "timer_seconds": _elapsed(timer_start),
+                "elapsed_after_confirm_seconds": round(now - started, 3),
+                "snapshot": _compact_bridge_snapshot(snapshot),
+                "confirm_live": _snapshot_after_deploy_confirm_live(snapshot),
+                "player_ready": _snapshot_actionable_player_turn(snapshot),
+            }
+            if first_confirm_live_bridge is None and sample["confirm_live"]:
+                sample["bridge_timer"] = _timer_sample_from_recorder(
+                    screenshots,
+                    label="deploy_confirm_bridge_live",
+                )
+                first_confirm_live_bridge = sample
+            if first_player_ready_bridge is None and sample["player_ready"]:
+                sample["bridge_timer"] = _timer_sample_from_recorder(
+                    screenshots,
+                    label="opening_player_turn_bridge_ready",
+                )
+                first_player_ready_bridge = sample
+            bridge_samples.append(sample)
+            telemetry.event("post_confirm_bridge_probe", **sample)
+            next_bridge_at = max(
+                next_bridge_at + max(0.05, bridge_poll_seconds),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        if (
+            first_player_ready_bridge is not None
+            and ready_frames_seen >= max(0, int(extra_ready_frames))
+        ):
+            break
+
+        if not did_work:
+            next_due = min(next_frame_at, next_bridge_at)
+            time.sleep(max(0.01, min(0.05, next_due - time.perf_counter())))
+
+    pause: dict[str, Any] | None = None
+    after_pause_timer: dict[str, Any] | None = None
+    if pause_after_ready and first_player_ready_bridge is not None:
+        pause = fast.press_key(
+            "esc",
+            description="pause after opening player turn",
+            app_name=fast.APP_NAME,
+            settle_seconds=0.05,
+        )
+        after_pause_timer = _timer_sample_from_recorder(
+            screenshots,
+            label="opening_player_turn_after_pause",
+        )
+        telemetry.event(
+            "opening_player_turn_pause",
+            timer_seconds=_elapsed(timer_start),
+            click=pause,
+            after_pause_timer=after_pause_timer,
+        )
+
+    status = (
+        "PASS"
+        if click.get("status") == "OK" and first_player_ready_bridge is not None
+        else "FAIL"
+    )
+    return {
+        "status": status,
+        "reason": (
+            "opening_player_turn_bridge_ready"
+            if first_player_ready_bridge is not None
+            else "opening_player_turn_not_detected"
+        ),
+        "confirm_signal_source": "deploy_recommended_result",
+        "player_turn_signal_source": "bridge_lua_live_snapshot",
+        "visual_evidence_role": "2hz_screenshots_for_audit_not_primary_signal",
+        "before_in_game_timer": before_timer,
+        "click": click,
+        "click_wall_seconds": confirm_click_wall,
+        "click_duration_seconds": click_duration,
+        "observe_seconds_requested": observe_seconds,
+        "observed_seconds": round(time.perf_counter() - started, 3),
+        "frames": frames,
+        "bridge_samples": bridge_samples,
+        "first_confirm_live_bridge": first_confirm_live_bridge,
+        "first_player_ready_bridge": first_player_ready_bridge,
+        "first_player_ready_frame_after_bridge": ready_frame,
+        "pause": pause,
+        "after_pause_timer": after_pause_timer,
+    }
+
+
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
     memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
     memory_live_timer_kind = args.memory_live_timer_kind
-    deploy_after_visible_deployment = bool(args.deploy_after_visible_deployment)
+    confirm_after_deploy = bool(args.confirm_after_deploy)
+    deploy_after_visible_deployment = bool(
+        args.deploy_after_visible_deployment or confirm_after_deploy
+    )
     deployment_trigger_source = str(args.deployment_trigger_source).replace("-", "_")
     if deploy_after_visible_deployment:
         deployment_trigger_source = "screenshot_yellow"
     click_start_mission = bool(args.click_start_mission or deploy_after_visible_deployment)
     click_red_mission = bool(args.click_red_mission or click_start_mission)
     route_slice = (
+        "main_menu_to_archive_red_map_to_opening_player_turn"
+        if confirm_after_deploy
+        else
         "main_menu_to_archive_red_map_to_deployed_mechs"
         if deploy_after_visible_deployment
         else "main_menu_to_archive_red_map_to_deployment"
@@ -1396,6 +1670,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "click_red_mission": click_red_mission,
             "click_start_mission": click_start_mission,
             "deploy_after_visible_deployment": deploy_after_visible_deployment,
+            "confirm_after_deploy": confirm_after_deploy,
             "deployment_trigger_source": deployment_trigger_source,
             "pause_after_red_mission_click": (
                 bool(args.pause_after_red_mission_click)
@@ -1410,7 +1685,16 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "pause_after_deploy_recommended": (
                 bool(args.pause_after_deploy_recommended)
+                and not confirm_after_deploy
                 if deploy_after_visible_deployment
+                else None
+            ),
+            "post_confirm_observe_seconds": (
+                args.post_confirm_observe_seconds if confirm_after_deploy else None
+            ),
+            "post_confirm_bridge_poll_seconds": (
+                args.post_confirm_bridge_poll_seconds
+                if confirm_after_deploy
                 else None
             ),
             "screenshot_filename_timer_source": (
@@ -1583,6 +1867,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         )
     start_mission: dict[str, Any] | None = None
     deployment_result: dict[str, Any] | None = None
+    confirm_result: dict[str, Any] | None = None
     if click_start_mission and isinstance(mission_preview, dict):
         start_mission = click_start_mission_from_preview(
             timer_start=timer_start,
@@ -1651,8 +1936,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             memory_timer_address=memory_timer_address,
             memory_live_timer_address=memory_live_timer_address,
             memory_live_timer_kind=memory_live_timer_kind,
-            pause_after_deploy=args.pause_after_deploy_recommended,
+            pause_after_deploy=(
+                bool(args.pause_after_deploy_recommended)
+                and not confirm_after_deploy
+            ),
             trigger_frame_timer=deployment_trigger_frame_timer,
+            capture_post_deploy_probe=not confirm_after_deploy,
         )
         in_game_timers["deploy_recommended_before"] = deployment_result.get(
             "before_in_game_timer"
@@ -1664,6 +1953,39 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "post_deploy_frame_timer"
         )
         in_game_timers["deploy_recommended_after_pause"] = deployment_result.get(
+            "after_pause_timer"
+        )
+    if (
+        confirm_after_deploy
+        and isinstance(deployment_result, dict)
+        and deployment_result.get("status") == "PASS"
+    ):
+        confirm_result = confirm_deployment_and_observe_opening_turn(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            observe_seconds=args.post_confirm_observe_seconds,
+            screenshot_cadence=args.screenshot_cadence,
+            bridge_poll_seconds=args.post_confirm_bridge_poll_seconds,
+            extra_ready_frames=args.post_confirm_extra_ready_frames,
+            pause_after_ready=args.pause_after_opening_player_turn,
+        )
+        in_game_timers["deploy_confirm_click_before"] = confirm_result.get(
+            "before_in_game_timer"
+        )
+        first_confirm_live = confirm_result.get("first_confirm_live_bridge") or {}
+        in_game_timers["deploy_confirm_bridge_live"] = first_confirm_live.get(
+            "bridge_timer"
+        )
+        first_player_ready = confirm_result.get("first_player_ready_bridge") or {}
+        in_game_timers["opening_player_turn_bridge_ready"] = first_player_ready.get(
+            "bridge_timer"
+        )
+        ready_frame = confirm_result.get("first_player_ready_frame_after_bridge") or {}
+        in_game_timers["opening_player_turn_first_frame_after_bridge"] = (
+            ready_frame.get("frame_timer")
+        )
+        in_game_timers["opening_player_turn_after_pause"] = confirm_result.get(
             "after_pause_timer"
         )
     frame_report = generate_frame_delta_report(telemetry.run_dir)
@@ -1687,12 +2009,25 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             and deployment_result.get("status") == "PASS"
             else "FAIL"
         )
+    if confirm_after_deploy:
+        status = (
+            "PASS"
+            if status == "PASS"
+            and isinstance(confirm_result, dict)
+            and confirm_result.get("status") == "PASS"
+            else "FAIL"
+        )
     if status != "PASS":
         next_patch = (
+            "Fix Confirm click or opening enemy-turn/player-turn detection."
+            if confirm_after_deploy
+            else
             "Fix deployment placement trigger after deployment-visible screenshot."
             if deploy_after_visible_deployment
             else "Improve Archive intro wait/dismissal or red-region detector."
         )
+    elif confirm_after_deploy:
+        next_patch = "Compare bridge/player-turn timing with screenshot evidence; then measure first combat action."
     elif deploy_after_visible_deployment:
         next_patch = "Measure deploy Confirm click after user review."
     elif click_start_mission:
@@ -1714,6 +2049,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         "mission_preview": mission_preview,
         "start_mission": start_mission,
         "deploy_recommended": deployment_result,
+        "deploy_confirm": confirm_result,
         "frame_delta_report": frame_report,
         "next_patch": next_patch,
     }
@@ -1856,6 +2192,23 @@ def build_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Pause after deploy_recommended and the post-deploy screenshot.",
+    )
+    parser.add_argument(
+        "--confirm-after-deploy",
+        action="store_true",
+        help=(
+            "After deploy_recommended accepts placements, click Deploy Confirm "
+            "immediately and observe the opening enemy turn."
+        ),
+    )
+    parser.add_argument("--post-confirm-observe-seconds", type=float, default=30.0)
+    parser.add_argument("--post-confirm-bridge-poll-seconds", type=float, default=0.2)
+    parser.add_argument("--post-confirm-extra-ready-frames", type=int, default=1)
+    parser.add_argument(
+        "--pause-after-opening-player-turn",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Pause once the bridge reports the first actionable player turn.",
     )
     parser.add_argument(
         "--startup-codex-visual-check",

@@ -773,6 +773,158 @@ def test_deploy_recommended_after_visible_deployment_runs_helper_and_pauses(monk
     ]
 
 
+def test_confirm_deployment_observes_bridge_player_turn_and_pauses(monkeypatch):
+    events = []
+    clicks = []
+    key_presses = []
+    clock_samples = [
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:12",
+            "game_seconds": 12.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:13",
+            "game_seconds": 13.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:19",
+            "game_seconds": 19.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:19",
+            "game_seconds": 19.5,
+        },
+    ]
+    snapshots = [
+        {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 10,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+        {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 1,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def __init__(self):
+            self.calls = []
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            if clock_samples:
+                return clock_samples.pop(0)
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:20",
+                "game_seconds": 20.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            self.calls.append((clock_state, note))
+            return {
+                "screenshot_path": f"{clock_state}_{len(self.calls)}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": {
+                    "status": "OK",
+                    "clock_source": "memory_live_numeric_candidate",
+                    "game_timer": "0:00:18",
+                    "game_seconds": 18.0 + len(self.calls),
+                    "timer_validation": "validated_live_numeric_cycle",
+                },
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:18",
+                "game_seconds": 18.0 + len(self.calls),
+            }
+
+    def fake_snapshot():
+        if snapshots:
+            return snapshots.pop(0)
+        return {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 1,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda control, *, settle_seconds=0.05: clicks.append(
+            (control, settle_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", fake_snapshot)
+    monkeypatch.setattr(lab.fast, "APP_NAME", "Into the Breach")
+    monkeypatch.setattr(
+        lab.fast,
+        "press_key",
+        lambda key, *, description, app_name, settle_seconds=0.05: key_presses.append(
+            (key, description, app_name, settle_seconds)
+        )
+        or {"status": "OK", "key": key},
+    )
+
+    result = lab.confirm_deployment_and_observe_opening_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        observe_seconds=1.0,
+        screenshot_cadence=0.01,
+        bridge_poll_seconds=0.01,
+        extra_ready_frames=1,
+        pause_after_ready=True,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["confirm_signal_source"] == "deploy_recommended_result"
+    assert result["player_turn_signal_source"] == "bridge_lua_live_snapshot"
+    assert clicks == [("deploy_confirm", 0.05)]
+    assert key_presses == [
+        ("esc", "pause after opening player turn", "Into the Breach", 0.05)
+    ]
+    assert result["first_confirm_live_bridge"]["snapshot"]["phase"] == "combat_enemy"
+    assert result["first_player_ready_bridge"]["snapshot"]["phase"] == "combat_player"
+    assert result["first_player_ready_frame_after_bridge"] is not None
+    assert result["before_in_game_timer"]["label"] == "deploy_confirm_click_before"
+    assert [event_type for event_type, _payload in events][:3] == [
+        "deploy_confirm_signal",
+        "deploy_confirm_click",
+        "post_confirm_frame",
+    ]
+
+
 def test_build_parser_defaults_match_first_milestone():
     args = lab.build_parser().parse_args([])
 
@@ -791,6 +943,11 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.pause_after_start_mission_click is True
     assert args.deploy_after_visible_deployment is False
     assert args.pause_after_deploy_recommended is True
+    assert args.confirm_after_deploy is False
+    assert args.post_confirm_observe_seconds == 30.0
+    assert args.post_confirm_bridge_poll_seconds == 0.2
+    assert args.post_confirm_extra_ready_frames == 1
+    assert args.pause_after_opening_player_turn is True
 
 
 def test_timer_sample_seconds_rejects_unvalidated_save_fallback():

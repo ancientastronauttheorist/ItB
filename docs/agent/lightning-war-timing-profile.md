@@ -522,3 +522,55 @@ This notebook explains the executable timings stored in
 - Deploy recommended placements: 3
 - Deploy recommended duration: 0.968s
 - Post-deploy frame in-game timer: 0:00:11
+## lightning_ui_timing_confirm_20260613_1
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_opening_player_turn
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 7.811s
+- Intro continue wall elapsed: 10.308s
+- Red map detected wall elapsed: 10.977s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_confirm_20260613_1\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_confirm_20260613_1\telemetry\screenshots\000011_1781395655337_gt0-00-06_opening_probe.png
+- Next patch: Compare bridge/player-turn timing with screenshot evidence; then measure first combat action.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.883s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:11
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:22
+- First frame after bridge-ready timer: 0:00:22
+- Post-confirm observed seconds: 18.198s
+## lightning_ui_timing_confirm_20260613_2
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_opening_player_turn
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 8.05s
+- Intro continue wall elapsed: 10.317s
+- Red map detected wall elapsed: 10.888s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_confirm_20260613_2\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_confirm_20260613_2\telemetry\screenshots\000012_1781395830366_gt0-00-06_opening_probe.png
+- Next patch: Compare bridge/player-turn timing with screenshot evidence; then measure first combat action.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.79s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:11
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:27
+- First frame after bridge-ready timer: 0:00:27
+- Post-confirm observed seconds: 15.715s
