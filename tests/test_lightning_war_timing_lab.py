@@ -1710,6 +1710,48 @@ def test_solve_execute_end_turn_detects_region_secured_and_hovers(monkeypatch):
     ]
 
 
+def test_terminal_after_end_turn_accepts_inactive_mission_with_stale_heartbeat():
+    assert lab._snapshot_terminal_or_clear_after_end_turn(
+        {
+            "status": "OK",
+            "phase": "unknown",
+            "turn": 4,
+            "active_mechs": 0,
+            "deployment_zone_count": 0,
+            "in_active_mission": False,
+            "bridge_heartbeat_alive": False,
+            "bridge_heartbeat_stale": True,
+        }
+    )
+
+
+def test_bridge_final_turn_signal_uses_total_turn_count():
+    final = lab._bridge_final_turn_signal(
+        {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 4,
+            "total_turns": 4,
+            "remaining_spawns": 1,
+            "is_infinite_spawn": True,
+        }
+    )
+    not_final = lab._bridge_final_turn_signal(
+        {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "total_turns": 4,
+            "remaining_spawns": 0,
+        }
+    )
+
+    assert final["expected_final_turn"] is True
+    assert final["source"] == "bridge_turn_reached_total_turns"
+    assert not_final["expected_final_turn"] is False
+    assert not_final["source"] == "bridge_turn_before_total_turns"
+
+
 def test_solve_until_region_secured_repeats_until_terminal(monkeypatch):
     calls = []
     results = [
@@ -1769,6 +1811,93 @@ def test_solve_until_region_secured_repeats_until_terminal(monkeypatch):
     assert len(calls) == 2
     assert all(call["stop_on_region_secured"] is True for call in calls)
     assert all(call["click_region_continue"] is True for call in calls)
+
+
+def test_solve_until_region_secured_tightens_on_bridge_final_turn(monkeypatch):
+    calls = []
+    results = [
+        {
+            "status": "PASS",
+            "boundary": "player_turn_ready",
+            "reason": "next_turn",
+            "first_player_ready_bridge": {
+                "snapshot": {
+                    "status": "OK",
+                    "phase": "combat_player",
+                    "turn": 4,
+                    "total_turns": 4,
+                    "remaining_spawns": 1,
+                }
+            },
+        },
+        {
+            "status": "PASS",
+            "boundary": "region_secured",
+            "reason": "combat_region_secured_visible",
+            "first_region_secured_visible": {"visible_ui": {"visible_ui": "reward_panel"}},
+            "region_secured_continue_hover": {"status": "OK"},
+            "region_secured_continue_click": {"status": "OK"},
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            return {"event_type": event_type, **payload}
+
+    def fake_turn(**kwargs):
+        result = results.pop(0)
+        calls.append({**kwargs, "_result": result})
+        return result
+
+    monkeypatch.setattr(
+        lab,
+        "solve_execute_end_turn_and_observe_next_turn",
+        fake_turn,
+    )
+
+    result = lab.solve_until_region_secured(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=object(),
+        max_turns=3,
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=30.0,
+        screenshot_cadence=0.5,
+        bridge_poll_seconds=0.2,
+        visible_poll_seconds=0.5,
+        terminal_visual_settle_seconds=1.0,
+        extra_ready_frames=0,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+        hover_region_continue=True,
+        region_continue_hover_seconds=1.0,
+        click_region_continue=True,
+        region_continue_click_settle_seconds=0.35,
+        expected_terminal_after_turn=3,
+        expected_terminal_visible_poll_seconds=0.2,
+        initial_player_ready_snapshot={
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "total_turns": 4,
+            "remaining_spawns": 0,
+        },
+    )
+
+    assert result["status"] == "PASS"
+    assert calls[0]["visible_poll_seconds"] == 0.5
+    assert calls[1]["visible_poll_seconds"] == 0.2
+    assert result["turns"][0]["expected_final_turn"] is False
+    assert result["turns"][0]["expected_final_turn_source"] == (
+        "bridge_turn_before_total_turns"
+    )
+    assert result["turns"][1]["expected_final_turn"] is True
+    assert result["turns"][1]["expected_final_turn_source"] == (
+        "bridge_turn_reached_total_turns"
+    )
 
 
 def test_build_turn_timing_audit_counts_sequence_and_deltas():
@@ -1901,7 +2030,7 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.post_confirm_observe_seconds == 30.0
     assert args.post_confirm_bridge_poll_seconds == 0.2
     assert args.post_confirm_extra_ready_frames == 0
-    assert args.pause_after_opening_player_turn is False
+    assert args.pause_after_opening_player_turn is True
     assert args.combat_turn_after_confirm is False
     assert args.combat_until_region_secured is False
     assert args.current_combat_until_region_secured is False
@@ -1922,7 +2051,7 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.region_secured_click_continue is True
     assert args.combat_continue_after_fuzzy_block is True
     assert args.combat_fuzzy_block_min_actions == 3
-    assert args.pause_after_combat_player_turn is False
+    assert args.pause_after_combat_player_turn is True
 
 
 def test_timer_sample_seconds_rejects_unvalidated_save_fallback():

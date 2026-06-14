@@ -361,15 +361,24 @@ once its correctness is proven.
   default; use `--no-region-secured-click-continue` only for hover-only audits.
 - Bridge-ready is the default speed signal after Deploy Confirm and End Turn.
   The timing lab should use `--post-confirm-extra-ready-frames 0`,
-  `--post-end-turn-extra-ready-frames 0`, `--no-pause-after-opening-player-turn`,
-  and `--no-pause-after-combat-player-turn` by default so the next solve starts
-  from the bridge transition instead of waiting for screenshot/pause evidence.
-  Re-enable the pause flags only for slower audit/proof runs.
+  `--post-end-turn-extra-ready-frames 0`,
+  `--pause-after-opening-player-turn`, and
+  `--pause-after-combat-player-turn` by default so bridge-ready pauses the
+  in-game clock immediately and solver thinking happens while paused. Do not
+  add screenshot-ready frames unless a slower audit/proof run needs them.
 - The from-top speed-route expectation is the short sequence
   `enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done`.
-  The timing lab hard-records this with `--speed-expected-player-turns 3` and
-  tightens Region Secured visible polling on expected turn 3. If a longer
-  route appears, the lab must report the mismatch and continue the dynamic loop
+  Treat this only as a fallback/report expectation. The general fast path is
+  the bridge countdown: use `turn >= total_turns` to identify the final player
+  turn. `remaining_spawns == 0` can appear one turn earlier and should be logged
+  as "no more spawns", not treated as a terminal guarantee. Likewise,
+  `is_infinite_spawn=true` is spawn telemetry and must not override
+  `turn >= total_turns`; a live train mission reported both
+  `is_infinite_spawn=true` and `turn == total_turns` immediately before
+  Region Secured. After the final End Turn, prefer the bridge mission-ended
+  signal (`in_active_mission=false`, even if the heartbeat has gone stale) and
+  then tight-poll the visible Region Secured Continue panel. If a longer route
+  appears, the lab must report the mismatch and continue the dynamic loop
   rather than stopping early.
 - Use the live in-game timer memory reader only after a numeric candidate has
   been validated against pause-menu `Timeline Playtime` across a

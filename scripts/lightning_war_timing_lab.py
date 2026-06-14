@@ -1691,6 +1691,9 @@ def _compact_bridge_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
         "status": snapshot.get("status"),
         "phase": snapshot.get("phase"),
         "turn": snapshot.get("turn"),
+        "total_turns": snapshot.get("total_turns"),
+        "remaining_spawns": snapshot.get("remaining_spawns"),
+        "is_infinite_spawn": snapshot.get("is_infinite_spawn"),
         "active_mechs": snapshot.get("active_mechs"),
         "mech_count": snapshot.get("mech_count"),
         "deployment_zone_count": snapshot.get("deployment_zone_count"),
@@ -1728,6 +1731,56 @@ def _snapshot_actionable_player_turn(snapshot: dict[str, Any]) -> bool:
     )
 
 
+def _int_or_none(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _bridge_final_turn_signal(snapshot: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
+        return {
+            "expected_final_turn": False,
+            "countdown_available": False,
+            "source": "no_valid_bridge_snapshot",
+        }
+
+    turn = _int_or_none(snapshot.get("turn"))
+    total_turns = _int_or_none(snapshot.get("total_turns"))
+    remaining_spawns = _int_or_none(snapshot.get("remaining_spawns"))
+    is_infinite_spawn = snapshot.get("is_infinite_spawn")
+    if turn is None or total_turns is None or total_turns <= 0:
+        return {
+            "expected_final_turn": False,
+            "countdown_available": remaining_spawns is not None,
+            "source": (
+                "bridge_turn_countdown_missing_remaining_spawns_present"
+                if remaining_spawns is not None
+                else "bridge_turn_countdown_missing"
+            ),
+            "turn": turn,
+            "total_turns": total_turns,
+            "remaining_spawns": remaining_spawns,
+            "is_infinite_spawn": is_infinite_spawn,
+        }
+
+    expected = turn >= total_turns
+    return {
+        "expected_final_turn": expected,
+        "countdown_available": True,
+        "source": (
+            "bridge_turn_reached_total_turns"
+            if expected
+            else "bridge_turn_before_total_turns"
+        ),
+        "turn": turn,
+        "total_turns": total_turns,
+        "remaining_spawns": remaining_spawns,
+        "is_infinite_spawn": is_infinite_spawn,
+    }
+
+
 def _snapshot_left_player_turn_after_end_turn(snapshot: dict[str, Any]) -> bool:
     if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
         return False
@@ -1742,15 +1795,15 @@ def _snapshot_left_player_turn_after_end_turn(snapshot: dict[str, Any]) -> bool:
 def _snapshot_terminal_or_clear_after_end_turn(snapshot: dict[str, Any]) -> bool:
     if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
         return False
-    if snapshot.get("bridge_heartbeat_alive") is False:
-        return False
-    if snapshot.get("bridge_heartbeat_stale") is True:
-        return False
     if snapshot.get("in_active_mission") is False:
         return True
     phase = snapshot.get("phase")
     if phase in {"between_missions", "mission_ending"}:
         return True
+    if snapshot.get("bridge_heartbeat_alive") is False:
+        return False
+    if snapshot.get("bridge_heartbeat_stale") is True:
+        return False
     if phase == "unknown":
         try:
             active_mechs = int(snapshot.get("active_mechs") or 0)
@@ -2718,12 +2771,36 @@ def solve_until_region_secured(
     expected_terminal_after_turn: int | None = None,
     expected_terminal_visible_poll_seconds: float | None = None,
     refresh_paused_bridge_before_auto_turn: bool = False,
+    initial_player_ready_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     turns: list[dict[str, Any]] = []
+    player_ready_snapshot = (
+        _compact_bridge_snapshot(initial_player_ready_snapshot)
+        if isinstance(initial_player_ready_snapshot, dict)
+        else None
+    )
     for turn_index in range(1, max(1, int(max_turns)) + 1):
-        expected_final_turn = (
+        final_turn_signal = _bridge_final_turn_signal(player_ready_snapshot)
+        fallback_expected_final_turn = (
             expected_terminal_after_turn is not None
             and turn_index >= int(expected_terminal_after_turn)
+        )
+        expected_final_turn = bool(
+            final_turn_signal.get("expected_final_turn")
+            or (
+                not final_turn_signal.get("countdown_available")
+                and fallback_expected_final_turn
+            )
+        )
+        expected_final_turn_source = (
+            final_turn_signal.get("source")
+            if final_turn_signal.get("expected_final_turn")
+            or final_turn_signal.get("countdown_available")
+            else (
+                "fallback_expected_turn_index"
+                if fallback_expected_final_turn
+                else final_turn_signal.get("source")
+            )
         )
         turn_visible_poll_seconds = visible_poll_seconds
         if expected_final_turn and expected_terminal_visible_poll_seconds is not None:
@@ -2736,6 +2813,9 @@ def solve_until_region_secured(
             timer_seconds=_elapsed(timer_start),
             loop_turn_index=turn_index,
             expected_final_turn=expected_final_turn,
+            expected_final_turn_source=expected_final_turn_source,
+            final_turn_signal=final_turn_signal,
+            player_ready_snapshot=player_ready_snapshot,
         )
         turn_result = solve_execute_end_turn_and_observe_next_turn(
             timer_start=timer_start,
@@ -2766,6 +2846,9 @@ def solve_until_region_secured(
         )
         turn_result["loop_turn_index"] = turn_index
         turn_result["expected_final_turn"] = expected_final_turn
+        turn_result["expected_final_turn_source"] = expected_final_turn_source
+        turn_result["final_turn_signal"] = final_turn_signal
+        turn_result["pre_turn_player_ready_snapshot"] = player_ready_snapshot
         turn_result["visible_poll_seconds_used"] = turn_visible_poll_seconds
         turns.append(turn_result)
         telemetry.event(
@@ -2777,6 +2860,8 @@ def solve_until_region_secured(
             boundary=turn_result.get("boundary"),
             auto_turn_summary=turn_result.get("auto_turn_summary"),
             expected_final_turn=expected_final_turn,
+            expected_final_turn_source=expected_final_turn_source,
+            final_turn_signal=final_turn_signal,
         )
         if expected_final_turn and turn_result.get("boundary") == "player_turn_ready":
             telemetry.event(
@@ -2784,6 +2869,8 @@ def solve_until_region_secured(
                 timer_seconds=_elapsed(timer_start),
                 loop_turn_index=turn_index,
                 expected_terminal_after_turn=expected_terminal_after_turn,
+                expected_final_turn_source=expected_final_turn_source,
+                final_turn_signal=final_turn_signal,
                 observed_boundary=turn_result.get("boundary"),
                 fallback="continuing_dynamic_region_loop",
             )
@@ -2814,6 +2901,13 @@ def solve_until_region_secured(
                 "turns_attempted": turn_index,
                 "last_turn": turn_result,
             }
+        next_ready = turn_result.get("first_player_ready_bridge") or {}
+        next_snapshot = next_ready.get("snapshot")
+        player_ready_snapshot = (
+            _compact_bridge_snapshot(next_snapshot)
+            if isinstance(next_snapshot, dict)
+            else None
+        )
     return {
         "status": "FAIL",
         "reason": "region_secured_not_seen_before_max_turns",
@@ -2974,6 +3068,7 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
             expected_terminal_after_turn=None,
             expected_terminal_visible_poll_seconds=None,
             refresh_paused_bridge_before_auto_turn=True,
+            initial_player_ready_snapshot=_compact_bridge_snapshot(initial_bridge),
         )
     region_secured = region_loop.get("region_secured") or {}
     continue_hover = region_loop.get("continue_hover") or {}
@@ -3491,6 +3586,11 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
                 args.speed_final_turn_visible_poll_seconds
             ),
             refresh_paused_bridge_before_auto_turn=False,
+            initial_player_ready_snapshot=(
+                (confirm_result.get("first_player_ready_bridge") or {}).get(
+                    "snapshot"
+                )
+            ),
         )
         region_secured = combat_region_result.get("region_secured") or {}
         continue_hover = combat_region_result.get("continue_hover") or {}
@@ -3813,11 +3913,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--pause-after-opening-player-turn",
         action=argparse.BooleanOptionalAction,
-        default=False,
+        default=True,
         help=(
             "Pause once the bridge reports the first actionable player turn. "
-            "Default is off for Lightning War speed timing; use this only for "
-            "slower audit runs."
+            "Default is on so bridge-ready pauses the in-game clock before "
+            "solver thinking."
         ),
     )
     parser.add_argument(
@@ -3911,10 +4011,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--pause-after-combat-player-turn",
         action=argparse.BooleanOptionalAction,
-        default=False,
+        default=True,
         help=(
             "Pause once the bridge reports the post-End-Turn player turn. "
-            "Default is off so bridge-ready immediately triggers the next solve."
+            "Default is on so the next solve starts from a paused player turn."
         ),
     )
     parser.add_argument(
