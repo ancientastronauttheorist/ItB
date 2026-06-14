@@ -384,6 +384,56 @@ def _parse_optional_timer_address(value: str | None) -> int | None:
     return int(str(value), 0)
 
 
+def _resolve_live_timer_from_proof(
+    proof_path: str | None,
+    *,
+    pause_stability_seconds: float = 0.0,
+) -> tuple[int | None, str | None, dict[str, Any] | None]:
+    if not proof_path:
+        return None, None, None
+    path = Path(proof_path)
+    proof = json.loads(path.read_text(encoding="utf-8"))
+    validation = memory_probe.validate_session_clock_proof(
+        proof,
+        pause_stability_seconds=pause_stability_seconds,
+    )
+    validation["proof_path"] = str(path)
+    if validation.get("status") != "OK":
+        raise RuntimeError(
+            "memory live timer proof invalid: "
+            f"{validation.get('reason') or validation.get('status')}"
+        )
+    address = validation.get("address")
+    kind = validation.get("kind")
+    if not address or not kind:
+        raise RuntimeError("memory live timer proof missing address/kind")
+    return int(str(address), 16), str(kind), validation
+
+
+def _resolve_live_timer_config(
+    args: argparse.Namespace,
+    *,
+    pause_stability_seconds: float = 0.0,
+) -> tuple[int | None, str | None, dict[str, Any] | None]:
+    proof_address, proof_kind, proof_validation = _resolve_live_timer_from_proof(
+        getattr(args, "memory_live_timer_proof", None),
+        pause_stability_seconds=pause_stability_seconds,
+    )
+    if proof_address is not None:
+        raw_address = _parse_optional_timer_address(args.memory_live_timer_address)
+        if raw_address is not None and raw_address != proof_address:
+            raise RuntimeError(
+                "memory live timer proof address conflicts with "
+                "--memory-live-timer-address"
+            )
+        return proof_address, proof_kind, proof_validation
+    return (
+        _parse_optional_timer_address(args.memory_live_timer_address),
+        args.memory_live_timer_kind,
+        None,
+    )
+
+
 def _read_memory_in_game_timer(
     *,
     label: str,
@@ -2316,6 +2366,7 @@ def solve_execute_end_turn_and_observe_next_turn(
     retry_after_seconds: float,
     continue_after_fuzzy_block: bool,
     fuzzy_block_min_actions: int,
+    destroy_time_pods: bool = True,
     stop_on_region_secured: bool = False,
     visible_poll_seconds: float = 0.5,
     terminal_visual_settle_seconds: float = 1.0,
@@ -2356,6 +2407,7 @@ def solve_execute_end_turn_and_observe_next_turn(
         wait_poll_interval=0.2,
         resume_before_execute=True,
         lightning_speed_loss_policy=True,
+        destroy_time_pods=destroy_time_pods,
     )
     auto_duration = round(time.perf_counter() - auto_started, 3)
     auto_done_timer = _timer_sample_from_recorder(
@@ -2768,6 +2820,7 @@ def solve_until_region_secured(
     region_continue_hover_seconds: float,
     click_region_continue: bool,
     region_continue_click_settle_seconds: float,
+    destroy_time_pods: bool = True,
     expected_terminal_after_turn: int | None = None,
     expected_terminal_visible_poll_seconds: float | None = None,
     refresh_paused_bridge_before_auto_turn: bool = False,
@@ -2823,6 +2876,7 @@ def solve_until_region_secured(
             screenshots=screenshots,
             auto_turn_time_limit=auto_turn_time_limit,
             auto_turn_max_wait=auto_turn_max_wait,
+            destroy_time_pods=destroy_time_pods,
             observe_seconds=observe_seconds,
             screenshot_cadence=screenshot_cadence,
             bridge_poll_seconds=bridge_poll_seconds,
@@ -2936,8 +2990,11 @@ def _region_loop_next_patch(region_loop: dict[str, Any] | None) -> str:
 def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
-    memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
-    memory_live_timer_kind = args.memory_live_timer_kind
+    (
+        memory_live_timer_address,
+        memory_live_timer_kind,
+        memory_live_timer_proof_validation,
+    ) = _resolve_live_timer_config(args)
     telemetry = TelemetryRecorder(run_id=run_id, root=ROOT / "recordings")
     route_slice = (
         "current_combat_to_region_secured_continue_click"
@@ -2956,6 +3013,8 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
                 else None
             ),
             "memory_live_timer_kind": memory_live_timer_kind,
+            "memory_live_timer_proof": args.memory_live_timer_proof,
+            "memory_live_timer_proof_validation": memory_live_timer_proof_validation,
             "combat_loop_max_turns": args.combat_loop_max_turns,
             "region_secured_hover_continue": args.region_secured_hover_continue,
             "region_secured_click_continue": args.region_secured_click_continue,
@@ -3049,6 +3108,7 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
             max_turns=args.combat_loop_max_turns,
             auto_turn_time_limit=args.combat_auto_turn_time_limit,
             auto_turn_max_wait=args.combat_auto_turn_max_wait,
+            destroy_time_pods=args.destroy_time_pods,
             observe_seconds=args.post_end_turn_observe_seconds,
             screenshot_cadence=args.screenshot_cadence,
             bridge_poll_seconds=args.post_end_turn_bridge_poll_seconds,
@@ -3131,8 +3191,11 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
-    memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
-    memory_live_timer_kind = args.memory_live_timer_kind
+    (
+        memory_live_timer_address,
+        memory_live_timer_kind,
+        memory_live_timer_proof_validation,
+    ) = _resolve_live_timer_config(args)
     combat_until_region_secured = bool(args.combat_until_region_secured)
     combat_turn_after_confirm = bool(
         args.combat_turn_after_confirm or combat_until_region_secured
@@ -3186,6 +3249,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
                 else None
             ),
             "memory_live_timer_kind": memory_live_timer_kind,
+            "memory_live_timer_proof": args.memory_live_timer_proof,
+            "memory_live_timer_proof_validation": memory_live_timer_proof_validation,
             "click_red_mission": click_red_mission,
             "click_start_mission": click_start_mission,
             "deploy_after_visible_deployment": deploy_after_visible_deployment,
@@ -3235,6 +3300,11 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "combat_continue_after_fuzzy_block": (
                 args.combat_continue_after_fuzzy_block
+                if combat_turn_after_confirm
+                else None
+            ),
+            "destroy_time_pods": (
+                args.destroy_time_pods
                 if combat_turn_after_confirm
                 else None
             ),
@@ -3561,6 +3631,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             max_turns=args.combat_loop_max_turns,
             auto_turn_time_limit=args.combat_auto_turn_time_limit,
             auto_turn_max_wait=args.combat_auto_turn_max_wait,
+            destroy_time_pods=args.destroy_time_pods,
             observe_seconds=args.post_end_turn_observe_seconds,
             screenshot_cadence=args.screenshot_cadence,
             bridge_poll_seconds=args.post_end_turn_bridge_poll_seconds,
@@ -3621,6 +3692,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             screenshots=screenshots,
             auto_turn_time_limit=args.combat_auto_turn_time_limit,
             auto_turn_max_wait=args.combat_auto_turn_max_wait,
+            destroy_time_pods=args.destroy_time_pods,
             observe_seconds=args.post_end_turn_observe_seconds,
             screenshot_cadence=args.screenshot_cadence,
             bridge_poll_seconds=args.post_end_turn_bridge_poll_seconds,
@@ -3801,6 +3873,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Process-local validated live numeric timer address, for example "
             "0x00000000122e5dbc."
+        ),
+    )
+    parser.add_argument(
+        "--memory-live-timer-proof",
+        help=(
+            "Session clock proof JSON created by "
+            "`itb_timer_memory_probe.py session-clock-proof`; when provided, "
+            "the lab validates process identity and uses its address/kind."
         ),
     )
     parser.add_argument(
@@ -4007,6 +4087,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=3,
         help="Minimum completed actions required before the fuzzy-block speedrun skip.",
+    )
+    parser.add_argument(
+        "--destroy-time-pods",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Enable the Chronophobia pod-destruction combat policy during "
+            "Lightning War timing attempts. Default is on to avoid Time Pod "
+            "reward/recovery UI."
+        ),
     )
     parser.add_argument(
         "--pause-after-combat-player-turn",

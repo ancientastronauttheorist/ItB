@@ -1108,6 +1108,7 @@ def test_solve_execute_end_turn_observes_next_player_turn(monkeypatch):
             "wait_poll_interval": 0.2,
             "resume_before_execute": True,
             "lightning_speed_loss_policy": True,
+            "destroy_time_pods": True,
         }
     ]
     assert clicks == [("end_turn", 0.0)]
@@ -2017,6 +2018,7 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.red_map_timeout_seconds == 10.0
     assert args.memory_timer_probe is True
     assert args.memory_timer_address is None
+    assert args.memory_live_timer_proof is None
     assert args.click_red_mission is False
     assert args.click_start_mission is False
     assert args.start_mission_click_hover_seconds == 0.05
@@ -2176,6 +2178,30 @@ def test_frame_clock_sampler_reads_live_numeric_candidate(monkeypatch):
     assert sample["address"] == "0x00000000122e5dbc"
     assert second["game_seconds"] == 1271.635132
     assert opened["count"] == 1
+
+
+def test_resolve_live_timer_config_uses_validated_proof(monkeypatch, tmp_path):
+    proof_path = tmp_path / "proof.json"
+    proof_path.write_text('{"status": "OK"}\n', encoding="utf-8")
+    monkeypatch.setattr(
+        lab.memory_probe,
+        "validate_session_clock_proof",
+        lambda proof, **_kwargs: {
+            "status": "OK",
+            "address": "0x0000000010e144fc",
+            "kind": "f32_seconds",
+            "game_timer": "0:02:13",
+        },
+    )
+    args = lab.build_parser().parse_args(
+        ["--memory-live-timer-proof", str(proof_path)]
+    )
+
+    address, kind, validation = lab._resolve_live_timer_config(args)
+
+    assert address == 0x10E144FC
+    assert kind == "f32_seconds"
+    assert validation["proof_path"] == str(proof_path)
 
 
 def test_update_profile_keeps_faster_existing_pass(monkeypatch, tmp_path):

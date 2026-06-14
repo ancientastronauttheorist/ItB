@@ -17,6 +17,7 @@ import struct
 import time
 from collections import Counter
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +30,8 @@ MEM_COMMIT = 0x1000
 PAGE_NOACCESS = 0x01
 PAGE_GUARD = 0x100
 DEFAULT_MAX_VISIBLE_TIMER_SECONDS = 30 * 60
+DEFAULT_SESSION_CLOCK_PROOF_PATH = Path("recordings/lightning_session_clock_proof.json")
+SESSION_CLOCK_PROOF_SCHEMA_VERSION = 1
 
 
 @dataclass(frozen=True)
@@ -145,6 +148,14 @@ class WindowsProcessReader:
         k.Module32First.restype = wintypes.BOOL
         k.Module32Next.argtypes = [wintypes.HANDLE, ctypes.POINTER(MODULEENTRY32)]
         k.Module32Next.restype = wintypes.BOOL
+        k.GetProcessTimes.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(wintypes.FILETIME),
+            ctypes.POINTER(wintypes.FILETIME),
+            ctypes.POINTER(wintypes.FILETIME),
+            ctypes.POINTER(wintypes.FILETIME),
+        ]
+        k.GetProcessTimes.restype = wintypes.BOOL
 
     def close(self) -> None:
         if getattr(self, "handle", None):
@@ -219,6 +230,25 @@ class WindowsProcessReader:
             self.kernel32.CloseHandle(snap)
         return None
 
+    def process_start_time_unix(self) -> float | None:
+        created = wintypes.FILETIME()
+        exited = wintypes.FILETIME()
+        kernel = wintypes.FILETIME()
+        user = wintypes.FILETIME()
+        ok = self.kernel32.GetProcessTimes(
+            self.handle,
+            ctypes.byref(created),
+            ctypes.byref(exited),
+            ctypes.byref(kernel),
+            ctypes.byref(user),
+        )
+        if not ok:
+            return None
+        value = (int(created.dwHighDateTime) << 32) + int(created.dwLowDateTime)
+        if value <= 0:
+            return None
+        return (value - 116444736000000000) / 10_000_000.0
+
 
 def _is_readable_protection(protect: int) -> bool:
     if protect & PAGE_GUARD or protect & PAGE_NOACCESS:
@@ -244,6 +274,75 @@ def _find_breach_pid() -> int | None:
         return None
     text = result.stdout.strip()
     return int(text) if text.isdigit() else None
+
+
+def _iso_from_unix(value: float | None) -> str | None:
+    if value is None:
+        return None
+    return datetime.fromtimestamp(value, tz=timezone.utc).isoformat()
+
+
+def _module_payload(module: ModuleInfo | None) -> dict[str, Any] | None:
+    if module is None:
+        return None
+    return {
+        "base": int(module.base),
+        "size": int(module.size),
+        "path": module.path,
+    }
+
+
+def _reader_process_start_unix(reader: Any) -> float | None:
+    getter = getattr(reader, "process_start_time_unix", None)
+    if not callable(getter):
+        return None
+    try:
+        value = getter()
+    except Exception:
+        return None
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _process_identity(
+    *,
+    pid: int,
+    reader: Any,
+    module: ModuleInfo | None = None,
+) -> dict[str, Any]:
+    started = _reader_process_start_unix(reader)
+    return {
+        "pid": int(pid),
+        "process_start_unix": round(started, 6) if started is not None else None,
+        "process_start_iso": _iso_from_unix(started),
+        "module": _module_payload(module),
+    }
+
+
+def _identity_match(
+    expected: dict[str, Any] | None,
+    actual: dict[str, Any],
+) -> tuple[bool, str | None]:
+    if not isinstance(expected, dict):
+        return False, "missing_process_identity"
+    if int(expected.get("pid") or -1) != int(actual.get("pid") or -2):
+        return False, "pid_mismatch"
+    expected_start = expected.get("process_start_unix")
+    actual_start = actual.get("process_start_unix")
+    if expected_start is not None and actual_start is not None:
+        try:
+            if abs(float(expected_start) - float(actual_start)) > 0.01:
+                return False, "process_start_time_mismatch"
+        except (TypeError, ValueError):
+            return False, "process_start_time_invalid"
+    expected_module = expected.get("module") or {}
+    actual_module = actual.get("module") or {}
+    for key in ("path", "size"):
+        if expected_module.get(key) != actual_module.get(key):
+            return False, f"module_{key}_mismatch"
+    return True, None
 
 
 def _format_seconds(seconds: float) -> str:
@@ -656,6 +755,54 @@ def read_numeric_timer_address(
     )
 
 
+def _numeric_track_row(
+    candidate: dict[str, Any],
+    *,
+    seconds: list[Any],
+    raw_values: list[Any],
+    sample_count: int,
+    elapsed_total: float,
+) -> dict[str, Any] | None:
+    values = [
+        float(value)
+        for value in seconds
+        if value is not None
+    ]
+    if len(values) < 2:
+        return None
+    delta = values[-1] - values[0]
+    monotonic = all(
+        values[idx + 1] >= values[idx] - 0.05
+        for idx in range(len(values) - 1)
+    )
+    live_delta_error = abs(delta - elapsed_total)
+    return {
+        "candidate": candidate,
+        "read_count": len(values),
+        "sample_count": sample_count,
+        "seconds": seconds,
+        "raw_values": raw_values,
+        "first_seconds": round(values[0], 6),
+        "last_seconds": round(values[-1], 6),
+        "delta_seconds": round(delta, 6),
+        "elapsed_seconds": round(elapsed_total, 6),
+        "live_delta_error_seconds": round(live_delta_error, 6),
+        "monotonic": monotonic,
+        "moving_like_timer": bool(monotonic and live_delta_error <= 1.0 and delta >= 0.5),
+    }
+
+
+def _sort_numeric_track_rows(track_rows: list[dict[str, Any]]) -> None:
+    track_rows.sort(
+        key=lambda item: (
+            not bool(item["moving_like_timer"]),
+            float(item["live_delta_error_seconds"]),
+            float(item["candidate"].get("distance_seconds", 0.0)),
+            int(str(item["candidate"].get("address")), 16),
+        )
+    )
+
+
 def _append_bounded_candidate(
     bucket: list[dict[str, Any]],
     candidate: dict[str, Any],
@@ -973,46 +1120,195 @@ def _candidate_tracks(
     )
     track_rows: list[dict[str, Any]] = []
     for track in tracks.values():
-        values = [
-            float(value)
-            for value in track["seconds"]
-            if value is not None
-        ]
-        if len(values) < 2:
-            continue
-        delta = values[-1] - values[0]
-        monotonic = all(
-            values[idx + 1] >= values[idx] - 0.05
-            for idx in range(len(values) - 1)
+        row = _numeric_track_row(
+            track["candidate"],
+            seconds=track["seconds"],
+            raw_values=track["raw_values"],
+            sample_count=samples,
+            elapsed_total=elapsed_total,
         )
-        live_delta_error = abs(delta - elapsed_total)
-        track_rows.append({
-            "candidate": track["candidate"],
-            "read_count": len(values),
-            "sample_count": samples,
-            "seconds": track["seconds"],
-            "raw_values": track["raw_values"],
-            "first_seconds": round(values[0], 6),
-            "last_seconds": round(values[-1], 6),
-            "delta_seconds": round(delta, 6),
-            "elapsed_seconds": round(elapsed_total, 6),
-            "live_delta_error_seconds": round(live_delta_error, 6),
-            "monotonic": monotonic,
-            "moving_like_timer": bool(monotonic and live_delta_error <= 1.0 and delta >= 0.5),
-        })
-    track_rows.sort(
-        key=lambda item: (
-            not bool(item["moving_like_timer"]),
-            float(item["live_delta_error_seconds"]),
-            float(item["candidate"].get("distance_seconds", 0.0)),
-            int(str(item["candidate"].get("address")), 16),
-        )
-    )
+        if row is not None:
+            track_rows.append(row)
+    _sort_numeric_track_rows(track_rows)
     return {
         "samples": samples_out,
         "elapsed_seconds": round(elapsed_total, 6),
         "tracks": track_rows,
         "track_count": len(track_rows),
+    }
+
+
+def _bulk_numeric_spans(
+    candidates: list[dict[str, Any]],
+    *,
+    max_span_bytes: int,
+) -> tuple[list[dict[str, Any]], Counter[str]]:
+    grouped: dict[int, list[dict[str, Any]]] = {}
+    skipped: Counter[str] = Counter()
+    for index, candidate in enumerate(candidates):
+        kind = NUMERIC_TIMER_KIND_BY_NAME.get(str(candidate.get("kind")))
+        if kind is None:
+            skipped["invalid_kind"] += 1
+            continue
+        try:
+            base = int(str(candidate.get("region_base")), 16)
+            offset = int(candidate.get("offset"))
+        except (TypeError, ValueError):
+            skipped["missing_region_metadata"] += 1
+            continue
+        grouped.setdefault(base, []).append({
+            "index": index,
+            "candidate": candidate,
+            "offset": offset,
+            "width": kind.width,
+            "kind": kind,
+        })
+
+    spans: list[dict[str, Any]] = []
+    for base, items in grouped.items():
+        items.sort(key=lambda item: int(item["offset"]))
+        current: list[dict[str, Any]] = []
+        span_start = 0
+        span_end = 0
+        for item in items:
+            offset = int(item["offset"])
+            item_end = offset + int(item["width"])
+            if not current:
+                current = [item]
+                span_start = offset
+                span_end = item_end
+                continue
+            proposed_end = max(span_end, item_end)
+            if proposed_end - span_start > max_span_bytes:
+                spans.append({
+                    "base": base,
+                    "start": span_start,
+                    "end": span_end,
+                    "items": current,
+                })
+                current = [item]
+                span_start = offset
+                span_end = item_end
+            else:
+                current.append(item)
+                span_end = proposed_end
+        if current:
+            spans.append({
+                "base": base,
+                "start": span_start,
+                "end": span_end,
+                "items": current,
+            })
+    return spans, skipped
+
+
+def _candidate_bulk_tracks(
+    reader: WindowsProcessReader,
+    candidates: list[dict[str, Any]],
+    *,
+    samples: int,
+    interval_seconds: float,
+    max_span_bytes: int,
+) -> dict[str, Any]:
+    spans, skipped = _bulk_numeric_spans(
+        candidates,
+        max_span_bytes=max(64, max_span_bytes),
+    )
+    samples_out: list[dict[str, Any]] = []
+    tracks: dict[str, dict[str, Any]] = {
+        _numeric_candidate_key(candidate): {
+            "candidate": candidate,
+            "seconds": [],
+            "raw_values": [],
+            "read_ok": [],
+        }
+        for candidate in candidates
+    }
+    started = time.monotonic()
+    for idx in range(samples):
+        now = time.monotonic()
+        elapsed = round(now - started, 6)
+        sample_info = {
+            "index": idx,
+            "elapsed_seconds": elapsed,
+            "created_at": time.time(),
+            "span_count": len(spans),
+            "ok_spans": 0,
+            "bytes_read": 0,
+        }
+        seen_keys: set[str] = set()
+        for span in spans:
+            base = int(span["base"])
+            start = int(span["start"])
+            end = int(span["end"])
+            data = reader.read(base + start, end - start)
+            if data:
+                sample_info["ok_spans"] += 1
+                sample_info["bytes_read"] += len(data)
+            for item in span["items"]:
+                candidate = item["candidate"]
+                key = _numeric_candidate_key(candidate)
+                seen_keys.add(key)
+                track = tracks[key]
+                if not data:
+                    track["read_ok"].append(False)
+                    track["seconds"].append(None)
+                    track["raw_values"].append(None)
+                    continue
+                decoded = _decode_numeric_timer(
+                    data,
+                    int(item["offset"]) - start,
+                    item["kind"],
+                )
+                if decoded is None:
+                    track["read_ok"].append(False)
+                    track["seconds"].append(None)
+                    track["raw_values"].append(None)
+                    continue
+                raw, seconds = decoded
+                track["read_ok"].append(True)
+                track["seconds"].append(round(seconds, 6))
+                track["raw_values"].append(_json_number(raw))
+        for key, track in tracks.items():
+            if key in seen_keys:
+                continue
+            track["read_ok"].append(False)
+            track["seconds"].append(None)
+            track["raw_values"].append(None)
+        samples_out.append(sample_info)
+        if idx + 1 < samples:
+            target = started + (idx + 1) * max(0.05, interval_seconds)
+            delay = target - time.monotonic()
+            if delay > 0:
+                time.sleep(delay)
+
+    elapsed_total = (
+        float(samples_out[-1]["elapsed_seconds"])
+        if samples_out
+        else 0.0
+    )
+    track_rows: list[dict[str, Any]] = []
+    for track in tracks.values():
+        row = _numeric_track_row(
+            track["candidate"],
+            seconds=track["seconds"],
+            raw_values=track["raw_values"],
+            sample_count=samples,
+            elapsed_total=elapsed_total,
+        )
+        if row is not None:
+            track_rows.append(row)
+    _sort_numeric_track_rows(track_rows)
+    return {
+        "samples": samples_out,
+        "elapsed_seconds": round(elapsed_total, 6),
+        "tracks": track_rows,
+        "track_count": len(track_rows),
+        "bulk_tracking": {
+            "span_count": len(spans),
+            "max_span_bytes": max_span_bytes,
+            "skipped_candidates": dict(skipped),
+        },
     }
 
 
@@ -1112,6 +1408,220 @@ def _score_numeric_tracks(
         )
     )
     return scored[:max_results]
+
+
+def _best_validated_score_result(score_payload: dict[str, Any]) -> dict[str, Any] | None:
+    for item in score_payload.get("results") or []:
+        if not isinstance(item, dict):
+            continue
+        if item.get("status") == "validated_cycle_candidate":
+            return item
+    return None
+
+
+def _expected_seconds_from_args(
+    *,
+    expected_seconds: float | None = None,
+    expected_timer: str | None = None,
+) -> float | None:
+    if expected_seconds is not None:
+        return float(expected_seconds)
+    if expected_timer:
+        return _parse_timer_label(expected_timer)
+    return None
+
+
+def build_session_clock_proof(
+    *,
+    score_payload: dict[str, Any],
+    source_score_path: str | None,
+    pid: int,
+    reader: Any,
+    module: ModuleInfo | None = None,
+) -> dict[str, Any]:
+    result = _best_validated_score_result(score_payload)
+    if result is None:
+        raise ValueError("score payload has no validated_cycle_candidate")
+    candidate = result.get("candidate")
+    if not isinstance(candidate, dict):
+        raise ValueError("validated score result has no candidate")
+    direct = _read_numeric_candidate(reader, candidate)
+    if not direct.get("read_ok"):
+        raise ValueError(f"validated candidate direct read failed: {direct.get('reason')}")
+    seconds = float(direct["seconds"])
+    if seconds > DEFAULT_MAX_VISIBLE_TIMER_SECONDS:
+        raise ValueError("validated candidate exceeds Lightning War timer limit")
+    proof = {
+        "schema_version": SESSION_CLOCK_PROOF_SCHEMA_VERSION,
+        "status": "OK",
+        "created_at": time.time(),
+        "created_at_iso": datetime.now(tz=timezone.utc).isoformat(),
+        "clock_source": "memory_live_numeric_candidate",
+        "timer_validation": "validated_session_clock_proof",
+        "process_identity": _process_identity(pid=pid, reader=reader, module=module),
+        "address": direct.get("address"),
+        "kind": candidate.get("kind"),
+        "game_timer": direct.get("game_timer"),
+        "game_seconds": seconds,
+        "candidate": candidate,
+        "direct_read": direct,
+        "validated_result": result,
+        "source_score": source_score_path,
+        "source_scan": score_payload.get("source_scan"),
+        "source_track": score_payload.get("source_track"),
+        "notes": [
+            "This proof is valid only for the exact Breach.exe process identity.",
+            "Validate process identity before using the address for screenshot filenames or timing deltas.",
+        ],
+    }
+    return proof
+
+
+def validate_session_clock_proof_with_reader(
+    proof: dict[str, Any],
+    *,
+    pid: int,
+    reader: Any,
+    module: ModuleInfo | None = None,
+    expected_seconds: float | None = None,
+    pause_stability_seconds: float = 0.0,
+    visible_tolerance_seconds: float = 1.0,
+    max_timer_seconds: float = DEFAULT_MAX_VISIBLE_TIMER_SECONDS,
+) -> dict[str, Any]:
+    actual_identity = _process_identity(pid=pid, reader=reader, module=module)
+    identity_ok, identity_reason = _identity_match(
+        proof.get("process_identity") if isinstance(proof, dict) else None,
+        actual_identity,
+    )
+    if not identity_ok:
+        return {
+            "status": "INVALID",
+            "reason": identity_reason,
+            "clock_source": "memory_live_numeric_candidate",
+            "process_identity": actual_identity,
+            "proof_process_identity": (
+                proof.get("process_identity") if isinstance(proof, dict) else None
+            ),
+        }
+    candidate = proof.get("candidate") if isinstance(proof, dict) else None
+    if not isinstance(candidate, dict):
+        candidate = {
+            "address": proof.get("address") if isinstance(proof, dict) else None,
+            "kind": proof.get("kind") if isinstance(proof, dict) else None,
+        }
+    direct = _read_numeric_candidate(reader, candidate)
+    if not direct.get("read_ok"):
+        return {
+            "status": "INVALID",
+            "reason": direct.get("reason") or "direct_read_failed",
+            "clock_source": "memory_live_numeric_candidate",
+            "process_identity": actual_identity,
+            "direct_read": direct,
+        }
+    seconds = float(direct["seconds"])
+    if seconds > max_timer_seconds:
+        return {
+            "status": "INVALID",
+            "reason": "timer_exceeds_limit",
+            "clock_source": "memory_live_numeric_candidate",
+            "process_identity": actual_identity,
+            "direct_read": direct,
+            "game_seconds": seconds,
+            "game_timer": direct.get("game_timer"),
+        }
+    final_read = direct
+    if pause_stability_seconds > 0:
+        time.sleep(pause_stability_seconds)
+        final_read = _read_numeric_candidate(reader, candidate)
+        if not final_read.get("read_ok"):
+            return {
+                "status": "INVALID",
+                "reason": final_read.get("reason") or "stability_read_failed",
+                "clock_source": "memory_live_numeric_candidate",
+                "process_identity": actual_identity,
+                "direct_read": direct,
+                "stable_read": final_read,
+            }
+    stable_seconds = float(final_read["seconds"])
+    paused_delta = abs(stable_seconds - seconds)
+    if pause_stability_seconds > 0 and paused_delta > 0.25:
+        return {
+            "status": "INVALID",
+            "reason": "timer_moved_during_paused_stability_sample",
+            "clock_source": "memory_live_numeric_candidate",
+            "process_identity": actual_identity,
+            "direct_read": direct,
+            "stable_read": final_read,
+            "paused_delta_seconds": round(paused_delta, 6),
+        }
+    expected_error = None
+    if expected_seconds is not None:
+        expected_error = abs(stable_seconds - float(expected_seconds))
+        if expected_error > visible_tolerance_seconds:
+            return {
+                "status": "INVALID",
+                "reason": "visible_timer_mismatch",
+                "clock_source": "memory_live_numeric_candidate",
+                "process_identity": actual_identity,
+                "direct_read": direct,
+                "stable_read": final_read,
+                "expected_seconds": float(expected_seconds),
+                "expected_timer": _format_seconds(float(expected_seconds)),
+                "expected_error_seconds": round(expected_error, 6),
+                "paused_delta_seconds": round(paused_delta, 6),
+            }
+    return {
+        "status": "OK",
+        "clock_source": "memory_live_numeric_candidate",
+        "timer_validation": "validated_session_clock_proof",
+        "process_identity": actual_identity,
+        "address": direct.get("address"),
+        "kind": candidate.get("kind"),
+        "game_seconds": stable_seconds,
+        "game_timer": final_read.get("game_timer"),
+        "direct_read": direct,
+        "stable_read": final_read,
+        "paused_delta_seconds": round(paused_delta, 6),
+        "expected_seconds": float(expected_seconds) if expected_seconds is not None else None,
+        "expected_error_seconds": (
+            round(expected_error, 6) if expected_error is not None else None
+        ),
+    }
+
+
+def validate_session_clock_proof(
+    proof: dict[str, Any],
+    *,
+    pid: int | None = None,
+    expected_seconds: float | None = None,
+    expected_timer: str | None = None,
+    pause_stability_seconds: float = 0.0,
+    visible_tolerance_seconds: float = 1.0,
+    max_timer_seconds: float = DEFAULT_MAX_VISIBLE_TIMER_SECONDS,
+) -> dict[str, Any]:
+    resolved_pid = pid or _find_breach_pid()
+    if resolved_pid is None:
+        return {
+            "status": "UNAVAILABLE",
+            "reason": "Breach.exe not found",
+            "clock_source": "memory_live_numeric_candidate",
+        }
+    expected = _expected_seconds_from_args(
+        expected_seconds=expected_seconds,
+        expected_timer=expected_timer,
+    )
+    with WindowsProcessReader(resolved_pid) as reader:
+        module = reader.module()
+        return validate_session_clock_proof_with_reader(
+            proof,
+            pid=resolved_pid,
+            reader=reader,
+            module=module,
+            expected_seconds=expected,
+            pause_stability_seconds=pause_stability_seconds,
+            visible_tolerance_seconds=visible_tolerance_seconds,
+            max_timer_seconds=max_timer_seconds,
+        )
 
 
 def scan_f32_candidates(
@@ -1647,6 +2157,74 @@ def cmd_track_numeric(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_track_numeric_bulk(args: argparse.Namespace) -> int:
+    pid = args.pid or _find_breach_pid()
+    if pid is None:
+        print("Could not find Breach.exe; pass --pid", flush=True)
+        return 2
+    scan_payload, candidates = _load_numeric_scan_candidates(Path(args.candidates))
+    candidates.sort(
+        key=lambda item: (
+            float(item.get("distance_seconds", 999999.0)),
+            str(item.get("kind")),
+            int(str(item.get("address")), 16),
+        )
+    )
+    candidates = candidates[:args.candidate_limit]
+    with WindowsProcessReader(pid) as reader:
+        module = reader.module()
+        tracks = _candidate_bulk_tracks(
+            reader,
+            candidates,
+            samples=args.samples,
+            interval_seconds=args.interval_seconds,
+            max_span_bytes=args.max_span_bytes,
+        )
+
+    payload = {
+        "status": "OK",
+        "pid": pid,
+        "created_at": time.time(),
+        "module": module.__dict__ if module else None,
+        "source_scan": {
+            "path": str(Path(args.candidates)),
+            "expected_selection": scan_payload.get("expected_selection"),
+            "expected_seconds": (scan_payload.get("numeric_scan") or {}).get("expected_seconds"),
+            "candidate_count": len((scan_payload.get("numeric_scan") or {}).get("candidates") or []),
+        },
+        "tracked_candidate_count": len(candidates),
+        "interval_seconds": args.interval_seconds,
+        **tracks,
+        "notes": [
+            "Run this only during the controlled unpaused window.",
+            "Bulk tracking can follow broad paused scans where exact static copies would crowd out the live timer.",
+            "Use score-numeric after re-pausing to reject moving counters that do not land on pause-menu Playtime.",
+        ],
+    }
+    output_path: str | None = None
+    if args.output:
+        path = Path(args.output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        output_path = str(path)
+    summary = {
+        "status": payload["status"],
+        "pid": pid,
+        "tracked_candidate_count": payload["tracked_candidate_count"],
+        "elapsed_seconds": payload["elapsed_seconds"],
+        "track_count": payload["track_count"],
+        "moving_like_timer_count": sum(
+            1 for track in payload["tracks"] if track.get("moving_like_timer")
+        ),
+        "bulk_tracking": payload["bulk_tracking"],
+        "top_tracks": payload["tracks"][:20],
+    }
+    if output_path:
+        summary["output"] = output_path
+    print(json.dumps(payload if args.full_output else summary, indent=2))
+    return 0
+
+
 def cmd_track_address(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
@@ -1903,6 +2481,105 @@ def cmd_score_numeric(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_session_clock_proof(args: argparse.Namespace) -> int:
+    if args.score:
+        pid = args.pid or _find_breach_pid()
+        if pid is None:
+            print("Could not find Breach.exe; pass --pid", flush=True)
+            return 2
+        score_path = Path(args.score)
+        score_payload = json.loads(score_path.read_text(encoding="utf-8"))
+        with WindowsProcessReader(pid) as reader:
+            module = reader.module()
+            try:
+                proof = build_session_clock_proof(
+                    score_payload=score_payload,
+                    source_score_path=str(score_path),
+                    pid=pid,
+                    reader=reader,
+                    module=module,
+                )
+            except ValueError as exc:
+                payload = {
+                    "status": "INVALID_SCORE",
+                    "reason": str(exc),
+                    "pid": pid,
+                    "source_score": str(score_path),
+                    "module": _module_payload(module),
+                }
+                print(json.dumps(payload, indent=2))
+                return 1
+            validation = validate_session_clock_proof_with_reader(
+                proof,
+                pid=pid,
+                reader=reader,
+                module=module,
+                pause_stability_seconds=args.pause_stability_seconds,
+                visible_tolerance_seconds=args.visible_tolerance_seconds,
+            )
+            proof["self_validation"] = validation
+        if validation.get("status") != "OK":
+            payload = {
+                "status": "INVALID_PROOF",
+                "reason": validation.get("reason"),
+                "proof": proof,
+            }
+            print(json.dumps(payload, indent=2))
+            return 1
+        output_path = Path(args.output or DEFAULT_SESSION_CLOCK_PROOF_PATH)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(proof, indent=2) + "\n", encoding="utf-8")
+        summary = {
+            "status": "OK",
+            "proof_path": str(output_path),
+            "pid": pid,
+            "address": proof.get("address"),
+            "kind": proof.get("kind"),
+            "game_timer": proof.get("game_timer"),
+            "game_seconds": proof.get("game_seconds"),
+            "process_identity": proof.get("process_identity"),
+            "self_validation": validation,
+        }
+        print(json.dumps(proof if args.full_output else summary, indent=2))
+        return 0
+
+    proof_path = Path(args.proof or DEFAULT_SESSION_CLOCK_PROOF_PATH)
+    if not proof_path.exists():
+        payload = {
+            "status": "UNAVAILABLE",
+            "reason": "proof_file_not_found",
+            "proof_path": str(proof_path),
+        }
+        print(json.dumps(payload, indent=2))
+        return 1
+    proof = json.loads(proof_path.read_text(encoding="utf-8"))
+    expected = _expected_seconds_from_args(
+        expected_seconds=args.expected_seconds,
+        expected_timer=args.expected_timer,
+    )
+    validation = validate_session_clock_proof(
+        proof,
+        pid=args.pid,
+        expected_seconds=expected,
+        pause_stability_seconds=args.pause_stability_seconds,
+        visible_tolerance_seconds=args.visible_tolerance_seconds,
+    )
+    validation["proof_path"] = str(proof_path)
+    print(json.dumps(validation if args.full_output else {
+        "status": validation.get("status"),
+        "reason": validation.get("reason"),
+        "proof_path": str(proof_path),
+        "pid": (validation.get("process_identity") or {}).get("pid"),
+        "address": validation.get("address"),
+        "kind": validation.get("kind"),
+        "game_timer": validation.get("game_timer"),
+        "game_seconds": validation.get("game_seconds"),
+        "paused_delta_seconds": validation.get("paused_delta_seconds"),
+        "expected_error_seconds": validation.get("expected_error_seconds"),
+    }, indent=2))
+    return 0 if validation.get("status") == "OK" else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1989,6 +2666,20 @@ def build_parser() -> argparse.ArgumentParser:
     track_numeric.add_argument("--output")
     track_numeric.set_defaults(func=cmd_track_numeric)
 
+    track_numeric_bulk = sub.add_parser(
+        "track-numeric-bulk",
+        help="Bulk-track broad numeric scans during a controlled unpaused window",
+    )
+    track_numeric_bulk.add_argument("candidates")
+    track_numeric_bulk.add_argument("--pid", type=int)
+    track_numeric_bulk.add_argument("--samples", type=int, default=11)
+    track_numeric_bulk.add_argument("--interval-seconds", type=float, default=0.5)
+    track_numeric_bulk.add_argument("--candidate-limit", type=int, default=50000)
+    track_numeric_bulk.add_argument("--max-span-bytes", type=int, default=16 * 1024 * 1024)
+    track_numeric_bulk.add_argument("--full-output", action="store_true")
+    track_numeric_bulk.add_argument("--output")
+    track_numeric_bulk.set_defaults(func=cmd_track_numeric_bulk)
+
     track_address = sub.add_parser(
         "track-address",
         help="Track one numeric timer candidate address",
@@ -2041,6 +2732,32 @@ def build_parser() -> argparse.ArgumentParser:
     score_numeric.add_argument("--full-output", action="store_true")
     score_numeric.add_argument("--output")
     score_numeric.set_defaults(func=cmd_score_numeric)
+
+    session_clock_proof = sub.add_parser(
+        "session-clock-proof",
+        help="Write or validate a process-local Lightning War timer proof",
+    )
+    session_clock_proof.add_argument(
+        "--score",
+        help="score-numeric JSON with a validated_cycle_candidate to promote",
+    )
+    session_clock_proof.add_argument(
+        "--proof",
+        default=str(DEFAULT_SESSION_CLOCK_PROOF_PATH),
+        help="Proof file to validate when --score is omitted.",
+    )
+    session_clock_proof.add_argument(
+        "--output",
+        default=str(DEFAULT_SESSION_CLOCK_PROOF_PATH),
+        help="Proof output path when --score is provided.",
+    )
+    session_clock_proof.add_argument("--pid", type=int)
+    session_clock_proof.add_argument("--expected-seconds", type=float)
+    session_clock_proof.add_argument("--expected-timer")
+    session_clock_proof.add_argument("--pause-stability-seconds", type=float, default=1.0)
+    session_clock_proof.add_argument("--visible-tolerance-seconds", type=float, default=1.0)
+    session_clock_proof.add_argument("--full-output", action="store_true")
+    session_clock_proof.set_defaults(func=cmd_session_clock_proof)
     return parser
 
 

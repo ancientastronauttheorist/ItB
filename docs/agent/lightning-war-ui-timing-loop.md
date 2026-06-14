@@ -21,6 +21,74 @@ Each pass isolates one UI boundary, captures 2 Hz visual evidence, updates the
 executable timing profile when the evidence improves it, then restarts from the
 main menu and repeats from the top.
 
+## Timer Source Gate
+
+The in-game timer is the only timing authority. Every Lightning War lab session
+must start by proving the timer source before trusting timing numbers or
+filename timestamps.
+
+Use a two-tier gate:
+
+1. Cheap session check every time:
+   - record current `Breach.exe` PID, process start time, and module metadata
+   - if a validated memory timer address exists for that exact process
+     identity, read it directly
+   - when the game is parked on the pause menu, compare the direct read to
+     visible `Timeline Playtime`/top-right `Game Time`
+   - require the address to match the visible timer to the same second and stay
+     flat across a short paused stability sample
+2. Full relock only when needed:
+   - PID or process start time changed
+   - the cached address is unmapped, reads `0`, or reads an impossible/stale
+     value
+   - the cached address disagrees with the visible paused timer
+   - the address changes while the pause menu is visibly open
+   - no validated address exists for the current process
+
+Do not run the full relock by habit inside a real speed attempt. It costs a
+controlled live timer window and should be treated as calibration work. If the
+timer source is untrusted, park or reset first, relock from a paused continued
+game when possible, then start the measured from-top pass with a validated
+timer source.
+
+The robust relock method is intentionally value-based rather than
+address-based: use the visible paused timer as the seed, scan broadly for
+numeric candidates near that value, unpause briefly, bulk-track the full
+candidate set, re-pause, then accept only a candidate that advances like elapsed
+live time and lands on the new visible paused timer. Absolute addresses are
+session-local evidence only.
+
+After scoring a relock cycle, promote it to a process-local proof file before
+running timing scripts:
+
+```bash
+python scripts/itb_timer_memory_probe.py session-clock-proof \
+  --score recordings/<label>_score.json \
+  --output recordings/lightning_session_clock_proof.json \
+  --pause-stability-seconds 1
+```
+
+Before a measured pass, run the cheap gate:
+
+```bash
+python scripts/itb_timer_memory_probe.py session-clock-proof \
+  --proof recordings/lightning_session_clock_proof.json \
+  --expected-seconds <visible_paused_seconds> \
+  --pause-stability-seconds 1
+```
+
+Use the proof with the timing lab instead of passing raw timer addresses:
+
+```bash
+python scripts/lightning_war_timing_lab.py \
+  --memory-live-timer-proof recordings/lightning_session_clock_proof.json
+```
+
+The timing lab validates the proof against the current `Breach.exe` PID,
+process start time, and module metadata before using the address for screenshot
+filenames or in-game timer deltas. If validation fails, relock from a paused
+continued game rather than falling back to a stale raw address.
+
 ## Current Calibration Target
 
 The first autonomous lab target is:
@@ -394,20 +462,52 @@ once its correctness is proven.
   rather than stopping early.
 - Use the live in-game timer memory reader only after a numeric candidate has
   been validated against pause-menu `Timeline Playtime` across a
-  pause -> unpause -> re-pause cycle. For the current Windows process/session
-  and PID 2100, `0x00000000122e5dbc` with kind `f32_seconds` is the validated
-  live numeric timer. It survived two live tracking cycles and a 2 Hz
-  screenshot filename smoke; use it with
-  `--memory-live-timer-address 0x00000000122e5dbc --memory-live-timer-kind f32_seconds`.
-  Rediscover it after game restart, PID change, modloader reload, or platform
-  change. In the same process, `0x00000000138a5900` is only a pause-menu
-  render/cache address for
-  `Timeline Playtime`: it matched visible paused values at `0h 1m 04s`,
+  pause -> unpause -> re-pause cycle. Rediscover it after game restart, PID
+  change, modloader reload, or platform change. Do not reuse a previous
+  process address without revalidation: the old PID 2100 address
+  `0x00000000122e5dbc` read `0:00:01` in the 2026-06-14 PID 46092 process and
+  was stale. For the current Windows process/session observed on 2026-06-14,
+  PID 46092, `0x000000001233714c` with kind `f32_seconds` is the validated live
+  numeric timer. It was rediscovered from a paused `0:02:41` Timeline Playtime
+  anchor by broad `scan-numeric`, full candidate `track-numeric-bulk`, and
+  screenshot revalidation; it then matched visible top-right and Timeline
+  values at `0:03:23`, `0:03:52`, and `0:04:09`, and stayed stable while the
+  pause menu was visible. Use it with
+  `--memory-live-timer-address 0x000000001233714c --memory-live-timer-kind f32_seconds`
+  only while PID 46092 is still the active `Breach.exe` process. The previously
+  noted `0x00000000138a5900` address is only a pause-menu render/cache address
+  for `Timeline Playtime`: it matched visible paused values at `0h 1m 04s`,
   `0h 1m 27s`, `0h 1m 48s`, `0h 2m 14s`, `0h 2m 47s`, and later `0h 21m 27s`,
-  but stayed stale while the live top-right timer advanced. Use that address as
-  a ground-truth oracle after re-pausing, not as the live screenshot frame
-  clock. Treat unanchored context summaries, `visible_timer_string` aggregates,
-  other string hits, and unvalidated numeric candidates as diagnostic only.
+  but stayed stale while the live top-right timer advanced. Use any such
+  Timeline Playtime address as a ground-truth oracle after re-pausing, not as
+  the live screenshot frame clock. If exact-value scans are polluted by static
+  timer copies, scan broadly while paused, unpause briefly, run
+  `track-numeric-bulk` on the full candidate set, re-pause, and accept only a
+  candidate that both moves like elapsed live time and matches the visible
+  paused top-right/Timeline timer afterward. Treat unanchored context summaries,
+  `visible_timer_string` aggregates, other string hits, and unvalidated numeric
+  candidates as diagnostic only.
+- Restart-tested Windows relock recipe, proven on 2026-06-14 after restarting
+  into PID 19788: park on the pause menu, read visible `Timeline Playtime`, and
+  run a high-cap paused scan:
+  `python scripts/itb_timer_memory_probe.py scan-numeric --pid <pid> --expected-seconds <visible_seconds> --seconds-window 3 --kinds f32_seconds --max-candidates-per-kind 50000 --output recordings/<label>_scan.json`.
+  Then unpause, immediately run a short full bulk track, and re-pause:
+  `python scripts/itb_timer_memory_probe.py track-numeric-bulk recordings/<label>_scan.json --pid <pid> --samples 7 --interval-seconds 0.5 --candidate-limit 50000 --output recordings/<label>_track.json`.
+  Finally score against the newly visible paused timer with
+  `python scripts/itb_timer_memory_probe.py score-numeric recordings/<label>_scan.json recordings/<label>_track.json --pid <pid> --final-expected-seconds <final_visible_seconds> --ignore-start-truth --pause-stability-seconds 2 --output recordings/<label>_score.json`.
+  `--ignore-start-truth` is required when there is any delay between the paused
+  scan and the first live track sample; the final re-paused `Timeline Playtime`
+  is the authority. Accept only a result with `validated_count >= 1`, a
+  `validated_cycle_candidate`, monotonic live samples, low live-delta error, and
+  zero/near-zero paused delta. Promote the score to
+  `recordings/lightning_session_clock_proof.json` with
+  `session-clock-proof --score ...`, then pass that proof to timing scripts with
+  `--memory-live-timer-proof`. In PID 19788, this reduced 26,221 paused
+  `f32_seconds` candidates to one live-moving candidate:
+  `0x0000000010e144fc`, which matched visible `0:02:13` as `133.065247s` and
+  stayed flat while paused. Earlier session addresses were stale after restart:
+  PID 17424's `0x00000000118eda5c` read `0:00:00`, and PID 46092's
+  `0x000000001233714c` was unmapped/read-failed in PID 19788.
 - Never run two live `game_loop.py` commands at the same time.
 - Stop and park when a UI state is ambiguous.
 - On failure, try to reach the pause menu first before longer thinking.

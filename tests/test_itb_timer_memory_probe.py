@@ -33,6 +33,19 @@ class FakeReader:
                 yield address, len(data), 0
 
 
+class SequencedReader:
+    def __init__(self, sequence: list[bytes]):
+        self.sequence = sequence
+        self.index = 0
+
+    def read(self, address: int, size: int) -> bytes | None:
+        if not self.sequence:
+            return None
+        data = self.sequence[min(self.index, len(self.sequence) - 1)]
+        self.index += 1
+        return data[:size]
+
+
 def test_read_timeline_playtime_address_reads_calibrated_string():
     result = probe.read_timeline_playtime_address(
         FakeReader({0x138A5900: b"0h 1m 04s\x00"}),
@@ -329,6 +342,136 @@ def test_score_numeric_tracks_accepts_cycle_candidate():
     assert result[0]["status"] == "validated_cycle_candidate"
 
 
+class ProofReader(FakeReader):
+    def __init__(self, memory: dict[int, bytes]):
+        super().__init__(memory)
+        self._module = probe.ModuleInfo(
+            base=0x400000,
+            size=123456,
+            path=r"B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe",
+        )
+
+    def module(self):
+        return self._module
+
+    def process_start_time_unix(self):
+        return 1781469000.0
+
+
+def test_session_clock_proof_round_trips_validated_candidate():
+    candidate = {
+        "address": "0x0000000000002000",
+        "region_base": "0x0000000000001000",
+        "offset": 0x1000,
+        "kind": "f32_seconds",
+        "distance_seconds": 0.1,
+    }
+    score_payload = {
+        "source_scan": "scan.json",
+        "source_track": "track.json",
+        "results": [
+            {
+                "status": "validated_cycle_candidate",
+                "candidate": candidate,
+                "current_seconds": 49.0,
+                "stable_seconds": 49.0,
+                "paused_delta_seconds": 0.0,
+            }
+        ],
+    }
+    reader = ProofReader({0x2000: probe.struct.pack("<f", 49.0)})
+    module = reader.module()
+
+    proof = probe.build_session_clock_proof(
+        score_payload=score_payload,
+        source_score_path="score.json",
+        pid=123,
+        reader=reader,
+        module=module,
+    )
+    validation = probe.validate_session_clock_proof_with_reader(
+        proof,
+        pid=123,
+        reader=reader,
+        module=module,
+        expected_seconds=49.0,
+    )
+
+    assert proof["address"] == "0x0000000000002000"
+    assert proof["kind"] == "f32_seconds"
+    assert proof["process_identity"]["pid"] == 123
+    assert validation["status"] == "OK"
+    assert validation["game_timer"] == "0:00:49"
+
+
+def test_session_clock_proof_rejects_process_identity_mismatch():
+    candidate = {
+        "address": "0x0000000000002000",
+        "kind": "f32_seconds",
+    }
+    proof = {
+        "process_identity": {
+            "pid": 123,
+            "process_start_unix": 1781469000.0,
+            "module": {
+                "path": r"B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe",
+                "size": 123456,
+            },
+        },
+        "candidate": candidate,
+    }
+    reader = ProofReader({0x2000: probe.struct.pack("<f", 49.0)})
+
+    validation = probe.validate_session_clock_proof_with_reader(
+        proof,
+        pid=456,
+        reader=reader,
+        module=reader.module(),
+    )
+
+    assert validation["status"] == "INVALID"
+    assert validation["reason"] == "pid_mismatch"
+
+
+def test_bulk_numeric_tracks_prefers_moving_candidate_over_static_copy():
+    static = {
+        "address": "0x0000000000002000",
+        "region_base": "0x0000000000002000",
+        "offset": 0,
+        "kind": "f32_seconds",
+        "distance_seconds": 0.0,
+    }
+    moving = {
+        "address": "0x0000000000002004",
+        "region_base": "0x0000000000002000",
+        "offset": 4,
+        "kind": "f32_seconds",
+        "distance_seconds": 0.0,
+    }
+    sequence = [
+        probe.struct.pack("<ff", 44.0, 44.0 + idx * 0.05)
+        for idx in range(12)
+    ]
+
+    result = probe._candidate_bulk_tracks(
+        SequencedReader(sequence),
+        [static, moving],
+        samples=12,
+        interval_seconds=0.05,
+        max_span_bytes=64,
+    )
+
+    assert result["track_count"] == 2
+    assert result["tracks"][0]["candidate"]["address"] == moving["address"]
+    assert result["tracks"][0]["moving_like_timer"] is True
+    static_track = next(
+        track for track in result["tracks"]
+        if track["candidate"]["address"] == static["address"]
+    )
+    assert static_track["moving_like_timer"] is False
+    assert static_track["delta_seconds"] == 0.0
+
+
 def test_numeric_parser_accepts_ground_truth_scan_command():
     args = probe.build_parser().parse_args(
         [
@@ -353,3 +496,37 @@ def test_numeric_parser_accepts_direct_track_address():
     assert args.command == "track-address"
     assert args.address == 0x122E5DBC
     assert args.kind == "f32_seconds"
+
+
+def test_numeric_parser_accepts_bulk_track_command():
+    args = probe.build_parser().parse_args(
+        [
+            "track-numeric-bulk",
+            "scan.json",
+            "--candidate-limit",
+            "50000",
+            "--max-span-bytes",
+            "1048576",
+        ]
+    )
+
+    assert args.command == "track-numeric-bulk"
+    assert args.candidates == "scan.json"
+    assert args.candidate_limit == 50000
+    assert args.max_span_bytes == 1048576
+
+
+def test_numeric_parser_accepts_session_clock_proof_command():
+    args = probe.build_parser().parse_args(
+        [
+            "session-clock-proof",
+            "--score",
+            "score.json",
+            "--output",
+            "proof.json",
+        ]
+    )
+
+    assert args.command == "session-clock-proof"
+    assert args.score == "score.json"
+    assert args.output == "proof.json"
