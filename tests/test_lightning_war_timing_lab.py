@@ -1136,6 +1136,109 @@ def test_solve_execute_end_turn_observes_next_player_turn(monkeypatch):
     ]
 
 
+def test_solve_execute_end_turn_accepts_direct_next_player_turn(monkeypatch):
+    clicks = []
+    key_presses = []
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            return {"event_type": event_type, **payload}
+
+    class FakeScreenshots:
+        frame_clock_sampler = None
+
+        def __init__(self):
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:01:23",
+                "game_seconds": 83.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            return {
+                "screenshot_path": f"{clock_state}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": self.sample_clock(),
+            }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "cmd_auto_turn",
+        lambda **kwargs: {
+            "status": "PLAN",
+            "turn": 2,
+            "actions_completed": 3,
+            "score": 1234,
+            "re_solves": 0,
+            "batch": [{"type": "left_click"}],
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda control, *, settle_seconds=0.0: clicks.append(
+            (control, settle_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 3,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_end_turn_retryable",
+        lambda observed, turn: False,
+    )
+    monkeypatch.setattr(lab.fast, "APP_NAME", "Into the Breach")
+    monkeypatch.setattr(
+        lab.fast,
+        "press_key",
+        lambda key, *, description, app_name, settle_seconds=0.05: key_presses.append(
+            (key, description, app_name, settle_seconds)
+        )
+        or {"status": "OK", "key": key},
+    )
+
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=0.5,
+        screenshot_cadence=0.01,
+        bridge_poll_seconds=0.01,
+        extra_ready_frames=0,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["reason"] == "combat_post_end_turn_player_ready"
+    assert result["boundary"] == "player_turn_ready"
+    assert result["first_non_player_bridge"] is None
+    assert result["first_player_ready_bridge"]["snapshot"]["turn"] == 3
+    assert clicks == [("end_turn", 0.0)]
+    assert key_presses
+
+
 def test_solve_execute_end_turn_stops_on_auto_turn_block(monkeypatch):
     events = []
     auto_calls = []
@@ -1412,6 +1515,370 @@ def test_solve_execute_end_turn_skips_qualified_fuzzy_block(monkeypatch):
     ]
 
 
+def test_solve_execute_end_turn_detects_region_secured_and_hovers(monkeypatch):
+    events = []
+    clicks = []
+    hovers = []
+    continue_clicks = []
+    clock_samples = [
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:52",
+            "game_seconds": 52.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:58",
+            "game_seconds": 58.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:58",
+            "game_seconds": 58.1,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:01:04",
+            "game_seconds": 64.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:01:04",
+            "game_seconds": 64.2,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:01:04",
+            "game_seconds": 64.4,
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def __init__(self):
+            self.calls = []
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            if clock_samples:
+                return clock_samples.pop(0)
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:01:05",
+                "game_seconds": 65.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            self.calls.append((clock_state, note))
+            return {
+                "screenshot_path": f"{clock_state}_{len(self.calls)}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": self.sample_clock(),
+            }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "cmd_auto_turn",
+        lambda **kwargs: {
+            "status": "PLAN",
+            "turn": 3,
+            "actions_completed": 3,
+            "score": 100,
+            "re_solves": 0,
+            "batch": [{"type": "left_click"}],
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda control, *, settle_seconds=0.0: clicks.append(
+            (control, settle_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "mission_ending",
+            "turn": 3,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "in_active_mission": False,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_visible_ui_snapshot",
+        lambda include_ocr=False: {
+            "status": "OK",
+            "visible_ui": "island_complete_leave",
+            "recommended_control": "leave_island",
+            "region_secured_visible": None,
+            "screenshot_path": "region.png",
+        },
+    )
+    monkeypatch.setattr(
+        lab,
+        "list_known_window_controls",
+        lambda: {
+            "reward_continue": {
+                "name": "reward_continue",
+                "window_x": 1647,
+                "window_y": 985,
+            }
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "hover_window_point",
+        lambda name, x, y, *, hover_seconds: hovers.append(
+            (name, x, y, hover_seconds)
+        )
+        or {
+            "status": "OK",
+            "name": name,
+            "window_x": x,
+            "window_y": y,
+            "screen_x": x + 10,
+            "screen_y": y + 20,
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "click_ui_control",
+        lambda control, *, settle_seconds=0.05, hold_seconds=None: continue_clicks.append(
+            (control, settle_seconds, hold_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=1.0,
+        screenshot_cadence=0.01,
+        bridge_poll_seconds=0.01,
+        extra_ready_frames=1,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+        stop_on_region_secured=True,
+        visible_poll_seconds=0.01,
+        terminal_visual_settle_seconds=0.0,
+        hover_region_continue=True,
+        region_continue_hover_seconds=0.25,
+        click_region_continue=True,
+        region_continue_click_settle_seconds=0.35,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["boundary"] == "region_secured"
+    assert result["reason"] == "combat_region_secured_visible"
+    assert clicks == [("end_turn", 0.0)]
+    assert hovers == [("region_secured_continue", 1647, 985, 0.25)]
+    assert continue_clicks == [("reward_continue", 0.35, None)]
+    assert result["first_region_secured_visible"]["visible_ui"]["visible_ui"] == (
+        "island_complete_leave"
+    )
+    assert result["region_secured_continue_hover"]["control"]["window_x"] == 1647
+    assert result["region_secured_continue_click"]["control"]["window_x"] == 1647
+    assert "region_secured_continue_hover" in [
+        event_type for event_type, _payload in events
+    ]
+    assert "region_secured_continue_click" in [
+        event_type for event_type, _payload in events
+    ]
+
+
+def test_solve_until_region_secured_repeats_until_terminal(monkeypatch):
+    calls = []
+    results = [
+        {"status": "PASS", "boundary": "player_turn_ready", "reason": "next_turn"},
+        {
+            "status": "PASS",
+            "boundary": "region_secured",
+            "reason": "combat_region_secured_visible",
+            "first_region_secured_visible": {"visible_ui": {"visible_ui": "reward_panel"}},
+            "region_secured_continue_hover": {"status": "OK"},
+            "region_secured_continue_click": {"status": "OK"},
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            return {"event_type": event_type, **payload}
+
+    def fake_turn(**kwargs):
+        calls.append(kwargs)
+        return results.pop(0)
+
+    monkeypatch.setattr(
+        lab,
+        "solve_execute_end_turn_and_observe_next_turn",
+        fake_turn,
+    )
+
+    result = lab.solve_until_region_secured(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=object(),
+        max_turns=4,
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=30.0,
+        screenshot_cadence=0.5,
+        bridge_poll_seconds=0.2,
+        visible_poll_seconds=0.5,
+        terminal_visual_settle_seconds=1.0,
+        extra_ready_frames=1,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+        hover_region_continue=True,
+        region_continue_hover_seconds=1.0,
+        click_region_continue=True,
+        region_continue_click_settle_seconds=0.35,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["reason"] == "region_secured_visible_continue_clicked"
+    assert result["turns_attempted"] == 2
+    assert result["region_secured"]["visible_ui"]["visible_ui"] == "reward_panel"
+    assert result["continue_click"]["status"] == "OK"
+    assert len(calls) == 2
+    assert all(call["stop_on_region_secured"] is True for call in calls)
+    assert all(call["click_region_continue"] is True for call in calls)
+
+
+def test_build_turn_timing_audit_counts_sequence_and_deltas():
+    def timer(text, seconds):
+        return {"game_timer": text, "game_seconds": seconds}
+
+    report = {
+        "in_game_timers": {
+            "deploy_confirm_click_before": timer("0:00:12", 12.0),
+        },
+        "deploy_confirm": {
+            "first_player_ready_bridge": {
+                "bridge_timer": timer("0:00:23", 23.0),
+            },
+            "first_player_ready_frame_after_bridge": {
+                "frame_timer": timer("0:00:23", 23.4),
+            },
+        },
+        "combat_until_region_secured": {
+            "turns": [
+                {
+                    "loop_turn_index": 1,
+                    "before_in_game_timer": timer("0:00:24", 24.0),
+                    "auto_turn_done_timer": timer("0:00:30", 30.0),
+                    "end_turn_before_in_game_timer": timer("0:00:36", 36.0),
+                    "auto_turn_duration_seconds": 6.0,
+                    "auto_turn_summary": {"actions_completed": 3},
+                    "boundary": "player_turn_ready",
+                    "first_non_player_bridge": {
+                        "bridge_timer": timer("0:00:41", 41.0),
+                    },
+                    "first_player_ready_bridge": {
+                        "bridge_timer": timer("0:00:47", 47.0),
+                        "snapshot": {"turn": 2},
+                    },
+                    "first_player_ready_frame_after_bridge": {
+                        "frame_timer": timer("0:00:47", 47.5),
+                    },
+                    "after_pause_timer": timer("0:00:47", 47.7),
+                },
+                {
+                    "loop_turn_index": 2,
+                    "before_in_game_timer": timer("0:00:48", 48.0),
+                    "end_turn_before_in_game_timer": timer("0:01:00", 60.0),
+                    "auto_turn_summary": {"actions_completed": 3},
+                    "boundary": "region_secured",
+                    "first_region_secured_visible": {
+                        "visible_timer": timer("0:01:18", 78.0),
+                        "elapsed_after_end_turn_seconds": 18.2,
+                    },
+                },
+            ],
+        },
+    }
+
+    audit = lab.build_turn_timing_audit(report)
+
+    assert audit["status"] == "OK"
+    assert audit["player_turn_count"] == 2
+    assert audit["enemy_phase_count"] == 3
+    assert audit["sequence_text"] == (
+        "enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2->done"
+    )
+    assert audit["post_end_turn_to_next_player_seconds"]["values"] == [11.0]
+    assert audit["end_turn_to_enemy_bridge_seconds"]["values"] == [5.0]
+    assert audit["enemy_bridge_to_next_player_seconds"]["values"] == [6.0]
+    assert audit["ready_bridge_to_first_frame_seconds"]["values"] == [0.5]
+    assert audit["ready_bridge_to_pause_seconds"]["values"] == [0.7]
+    assert (
+        audit["terminal_phase"]["end_turn_to_region_secured_visible_seconds"]
+        == 18.0
+    )
+
+
+def test_speed_sequence_expectation_matches_short_route():
+    audit = {
+        "sequence_text": "enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done",
+        "player_turn_count": 3,
+        "enemy_phase_count": 4,
+    }
+
+    result = lab.evaluate_speed_sequence_expectation(
+        audit,
+        expected_player_turns=3,
+    )
+
+    assert result["status"] == "MATCH"
+    assert result["expected_player_turn_count"] == 3
+    assert result["expected_enemy_phase_count"] == 4
+    assert result["expected_sequence"] == audit["sequence_text"]
+
+
+def test_speed_sequence_expectation_flags_long_route_mismatch():
+    audit = {
+        "sequence_text": "enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3 -> us4 -> enemy4->done",
+        "player_turn_count": 4,
+        "enemy_phase_count": 5,
+    }
+
+    result = lab.evaluate_speed_sequence_expectation(
+        audit,
+        expected_player_turns=3,
+    )
+
+    assert result["status"] == "MISMATCH"
+    assert result["fallback"] == (
+        "continue_dynamic_loop_if_expected_terminal_turn_returns_player_ready"
+    )
+
+
 def test_build_parser_defaults_match_first_milestone():
     args = lab.build_parser().parse_args([])
 
@@ -1433,18 +1900,29 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.confirm_after_deploy is False
     assert args.post_confirm_observe_seconds == 30.0
     assert args.post_confirm_bridge_poll_seconds == 0.2
-    assert args.post_confirm_extra_ready_frames == 1
-    assert args.pause_after_opening_player_turn is True
+    assert args.post_confirm_extra_ready_frames == 0
+    assert args.pause_after_opening_player_turn is False
     assert args.combat_turn_after_confirm is False
+    assert args.combat_until_region_secured is False
+    assert args.current_combat_until_region_secured is False
     assert args.combat_auto_turn_time_limit == 10.0
     assert args.combat_auto_turn_max_wait == 8.0
+    assert args.combat_loop_max_turns == 6
+    assert args.speed_expected_player_turns == 3
+    assert args.speed_final_turn_visible_poll_seconds == 0.2
     assert args.post_end_turn_observe_seconds == 30.0
     assert args.post_end_turn_bridge_poll_seconds == 0.2
-    assert args.post_end_turn_extra_ready_frames == 1
+    assert args.post_end_turn_extra_ready_frames == 0
     assert args.end_turn_retry_after_seconds == 2.0
+    assert args.region_secured_visible_poll_seconds == 0.5
+    assert args.region_secured_terminal_settle_seconds == 1.0
+    assert args.region_secured_continue_hover_seconds == 1.0
+    assert args.region_secured_continue_click_settle_seconds == 0.35
+    assert args.region_secured_hover_continue is True
+    assert args.region_secured_click_continue is True
     assert args.combat_continue_after_fuzzy_block is True
     assert args.combat_fuzzy_block_min_actions == 3
-    assert args.pause_after_combat_player_turn is True
+    assert args.pause_after_combat_player_turn is False
 
 
 def test_timer_sample_seconds_rejects_unvalidated_save_fallback():

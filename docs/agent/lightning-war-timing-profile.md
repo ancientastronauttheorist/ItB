@@ -649,3 +649,434 @@ This notebook explains the executable timings stored in
 - Combat next player-turn bridge timer: n/a
 - Combat first frame after bridge-ready timer: n/a
 - Combat post-End-Turn observed seconds: n/a
+## lightning_ui_timing_region_secured_20260613_1
+
+- Result: FAIL
+- Branch: current_combat
+- Boundary: current_combat_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: n/a
+- Red map timer source: n/a
+- Red map paired post-detection timer: n/a
+- Archive click wall elapsed: n/a
+- Intro continue wall elapsed: n/a
+- Red map detected wall elapsed: n/a
+- Red regions: None
+- Contact sheet: recordings\lightning_ui_timing_region_secured_20260613_1\telemetry\contact_sheet.png
+- Red map screenshot: None
+- Next patch: Diagnose combat auto_turn safety block before End Turn timing.
+- Region Secured loop status: FAIL
+- Region Secured turns attempted: 1
+- Last End Turn click timer: n/a
+- Region Secured visible timer: n/a
+- Region Secured visible elapsed after End Turn: n/a
+- Continue hover control: reward_continue @ (None, None)
+- Continue hover result: n/a screen=(None, None)
+- Continue hover frame timer: n/a
+## lightning_ui_timing_region_secured_20260613_3
+
+- Result: PASS
+- Branch: current_combat
+- Boundary: current_combat_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: n/a
+- Red map timer source: n/a
+- Red map paired post-detection timer: n/a
+- Archive click wall elapsed: n/a
+- Intro continue wall elapsed: n/a
+- Red map detected wall elapsed: n/a
+- Red regions: None
+- Contact sheet: recordings\lightning_ui_timing_region_secured_20260613_3\telemetry\contact_sheet.png
+- Red map screenshot: None
+- Next patch: Review Region Secured Continue hover coordinates, then append safe Continue click.
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 0
+- Last End Turn click timer: n/a
+- Region Secured visible timer: 0:27:22
+- Region Secured visible elapsed after End Turn: n/a
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:27:23
+## lightning_ui_timing_region_secured_from_top_20260613_200511
+
+- Result: FAIL
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.819s
+- Intro continue wall elapsed: 10.316s
+- Red map detected wall elapsed: 10.925s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_region_secured_from_top_20260613_200511\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_region_secured_from_top_20260613_200511\telemetry\screenshots\000011_1781399160809_gt0-00-06_opening_probe.png
+- Next patch: Fix combat post-End-Turn player-ready detection.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.883s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:26
+- First frame after bridge-ready timer: 0:00:26
+- Post-confirm observed seconds: 14.104s
+- Region Secured loop status: FAIL
+- Region Secured turns attempted: 3
+- Last End Turn click timer: n/a
+- Region Secured visible timer: n/a
+- Region Secured visible elapsed after End Turn: n/a
+- Continue hover control: reward_continue @ (None, None)
+- Continue hover result: n/a screen=(None, None)
+- Continue hover frame timer: n/a
+## lightning_ui_timing_region_secured_from_top_fixed_20260613_201313
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.933s
+- Intro continue wall elapsed: 10.312s
+- Red map detected wall elapsed: 10.947s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_region_secured_from_top_fixed_20260613_201313\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_region_secured_from_top_fixed_20260613_201313\telemetry\screenshots\000011_1781399675648_gt0-00-06_opening_probe.png
+- Next patch: Review Region Secured Continue hover coordinates, then append safe Continue click.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.881s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:11
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:26
+- First frame after bridge-ready timer: 0:00:26
+- Post-confirm observed seconds: 14.546s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 4
+- Last End Turn click timer: 0:02:16
+- Region Secured visible timer: 0:02:41
+- Region Secured visible elapsed after End Turn: 15.178s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:02:42
+## lightning_ui_timing_3x_top_1_20260613_202318
+
+- Result: FAIL
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 7.81s
+- Intro continue wall elapsed: 10.321s
+- Red map detected wall elapsed: 10.912s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_3x_top_1_20260613_202318\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_3x_top_1_20260613_202318\telemetry\screenshots\000011_1781400259564_gt0-00-06_opening_probe.png
+- Next patch: Fix combat post-End-Turn player-ready detection.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.881s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:23
+- First frame after bridge-ready timer: 0:00:23
+- Post-confirm observed seconds: 11.222s
+- Region Secured loop status: FAIL
+- Region Secured turns attempted: 2
+- Last End Turn click timer: n/a
+- Region Secured visible timer: n/a
+- Region Secured visible elapsed after End Turn: n/a
+- Continue hover control: reward_continue @ (None, None)
+- Continue hover result: n/a screen=(None, None)
+- Continue hover frame timer: n/a
+## lightning_ui_timing_3x_top_1b_20260613_202914
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.813s
+- Intro continue wall elapsed: 10.311s
+- Red map detected wall elapsed: 10.938s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_3x_top_1b_20260613_202914\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_3x_top_1b_20260613_202914\telemetry\screenshots\000011_1781400623360_gt0-00-06_opening_probe.png
+- Next patch: Review Region Secured Continue hover coordinates, then append safe Continue click.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.878s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:25
+- First frame after bridge-ready timer: 0:00:25
+- Post-confirm observed seconds: 12.623s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 4
+- Last End Turn click timer: 0:02:09
+- Region Secured visible timer: 0:02:31
+- Region Secured visible elapsed after End Turn: 14.419s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:02:32
+## lightning_ui_timing_3x_top_2b_20260613_203708
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.814s
+- Intro continue wall elapsed: 10.312s
+- Red map detected wall elapsed: 10.892s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_3x_top_2b_20260613_203708\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_3x_top_2b_20260613_203708\telemetry\screenshots\000011_1781401112019_gt0-00-06_opening_probe.png
+- Next patch: Review Region Secured Continue hover coordinates, then append safe Continue click.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.896s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:23
+- First frame after bridge-ready timer: 0:00:23
+- Post-confirm observed seconds: 11.207s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 4
+- Last End Turn click timer: 0:02:07
+- Region Secured visible timer: 0:02:31
+- Region Secured visible elapsed after End Turn: 15.318s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:02:32
+## lightning_ui_timing_3x_top_3_20260613_204446
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_hover
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.818s
+- Intro continue wall elapsed: 10.315s
+- Red map detected wall elapsed: 10.949s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_3x_top_3_20260613_204446\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_3x_top_3_20260613_204446\telemetry\screenshots\000011_1781401568988_gt0-00-06_opening_probe.png
+- Next patch: Review Region Secured Continue hover coordinates, then append safe Continue click.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.903s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:11
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:21
+- First frame after bridge-ready timer: 0:00:22
+- Post-confirm observed seconds: 10.175s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 3
+- Last End Turn click timer: 0:01:31
+- Region Secured visible timer: 0:01:59
+- Region Secured visible elapsed after End Turn: 19.739s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:02:00
+## region_continue_click_watch_20260613_211117
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_click
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 7.817s
+- Intro continue wall elapsed: 10.315s
+- Red map detected wall elapsed: 10.959s
+- Red regions: 2
+- Contact sheet: recordings\region_continue_click_watch_20260613_211117\telemetry\contact_sheet.png
+- Red map screenshot: recordings\region_continue_click_watch_20260613_211117\telemetry\screenshots\000011_1781403272270_gt0-00-06_opening_probe.png
+- Next patch: Learn the next post-Region-Secured island-map route step.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.767s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:23
+- First frame after bridge-ready timer: 0:00:23
+- Post-confirm observed seconds: 11.26s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 4
+- Last End Turn click timer: 0:02:13
+- Region Secured visible timer: 0:02:46
+- Region Secured visible elapsed after End Turn: 23.476s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:02:47
+- Continue click control: reward_continue @ (1647, 985)
+- Continue click result: OK
+- Continue click before timer: 0:02:47
+- Continue click after frame timer: 0:02:48
+## turn_audit_fast_20260613_213349
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_click
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 7.829s
+- Intro continue wall elapsed: 10.344s
+- Red map detected wall elapsed: 11.069s
+- Red regions: 2
+- Contact sheet: recordings\turn_audit_fast_20260613_213349\telemetry\contact_sheet.png
+- Red map screenshot: recordings\turn_audit_fast_20260613_213349\telemetry\screenshots\000011_1781404557526_gt0-00-06_opening_probe.png
+- Next patch: Learn the next post-Region-Secured island-map route step.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.736s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:23
+- First frame after bridge-ready timer: n/a
+- Post-confirm observed seconds: 10.138s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 4
+- Last End Turn click timer: 0:03:07
+- Region Secured visible timer: 0:03:18
+- Region Secured visible elapsed after End Turn: 0.35s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:03:19
+- Continue click control: reward_continue @ (1647, 985)
+- Continue click result: OK
+- Continue click before timer: 0:03:19
+- Continue click after frame timer: 0:03:21
+- Turn sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3 -> us4 -> enemy4->done
+- Player turns observed: 4
+- Enemy phases observed: 5
+- End Turn -> enemy bridge avg/max: 7.057s / 7.578s
+- Enemy bridge -> next player avg/max: 8.995s / 10.994s
+- End Turn -> next player avg/max: 16.052s / 17.954s
+- Ready bridge -> first audit frame avg/max: n/a / n/a
+- Ready bridge -> pause avg/max: n/a / n/a
+- Terminal End Turn -> Region Secured: 11.035s
+## turn_sequence_confirm_20260613_214704
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_click
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 7.845s
+- Intro continue wall elapsed: 10.328s
+- Red map detected wall elapsed: 10.944s
+- Red regions: 2
+- Contact sheet: recordings\turn_sequence_confirm_20260613_214704\telemetry\contact_sheet.png
+- Red map screenshot: recordings\turn_sequence_confirm_20260613_214704\telemetry\screenshots\000011_1781405306252_gt0-00-06_opening_probe.png
+- Next patch: Learn the next post-Region-Secured island-map route step.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 1.032s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:13
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:24
+- First frame after bridge-ready timer: n/a
+- Post-confirm observed seconds: 10.936s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 3
+- Last End Turn click timer: 0:02:46
+- Region Secured visible timer: 0:03:13
+- Region Secured visible elapsed after End Turn: 16.092s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:03:14
+- Continue click control: reward_continue @ (1647, 985)
+- Continue click result: OK
+- Continue click before timer: 0:03:14
+- Continue click after frame timer: 0:03:15
+- Turn sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done
+- Player turns observed: 3
+- Enemy phases observed: 4
+- End Turn -> enemy bridge avg/max: 9.818s / 11.478s
+- Enemy bridge -> next player avg/max: 8.101s / 11.219s
+- End Turn -> next player avg/max: 17.919s / 19.377s
+- Ready bridge -> first audit frame avg/max: n/a / n/a
+- Ready bridge -> pause avg/max: n/a / n/a
+- Terminal End Turn -> Region Secured: 26.828s
+## bridge_default_sequence_20260613_215902
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_region_secured_continue_click
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 7.842s
+- Intro continue wall elapsed: 10.325s
+- Red map detected wall elapsed: 10.992s
+- Red regions: 2
+- Contact sheet: recordings\bridge_default_sequence_20260613_215902\telemetry\contact_sheet.png
+- Red map screenshot: recordings\bridge_default_sequence_20260613_215902\telemetry\screenshots\000011_1781406031291_gt0-00-06_opening_probe.png
+- Next patch: Learn the next post-Region-Secured island-map route step.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 1.04s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:24
+- First frame after bridge-ready timer: n/a
+- Post-confirm observed seconds: 11.372s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 3
+- Last End Turn click timer: 0:02:38
+- Region Secured visible timer: 0:03:05
+- Region Secured visible elapsed after End Turn: 17.523s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:03:06
+- Continue click control: reward_continue @ (1647, 985)
+- Continue click result: OK
+- Continue click before timer: 0:03:06
+- Continue click after frame timer: 0:03:07
+- Turn sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done
+- Player turns observed: 3
+- Enemy phases observed: 4
+- End Turn -> enemy bridge avg/max: 7.944s / 7.944s
+- Enemy bridge -> next player avg/max: 6.398s / 6.398s
+- End Turn -> next player avg/max: 18.224s / 22.106s
+- Ready bridge -> first audit frame avg/max: n/a / n/a
+- Ready bridge -> pause avg/max: n/a / n/a
+- Terminal End Turn -> Region Secured: 27.476s

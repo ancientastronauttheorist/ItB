@@ -27,6 +27,7 @@ from src.loop.lightning_telemetry import (
     generate_frame_delta_report,
 )
 from src.loop.commands import _lightning_read_save_game_timer
+from src.control.mac_click import list_known_window_controls
 
 from scripts import lightning_war_fast_walkthrough as fast
 from scripts import itb_timer_memory_probe as memory_probe
@@ -39,6 +40,8 @@ LIGHTNING_TIMER_LIMIT_SECONDS = 30 * 60
 TRUSTED_MEMORY_CLOCK_SOURCES = {
     "memory_live_numeric_candidate",
 }
+DEFAULT_SPEED_EXPECTED_PLAYER_TURNS = 3
+DEFAULT_SPEED_FINAL_TURN_VISIBLE_POLL_SECONDS = 0.2
 
 
 def _now_run_id() -> str:
@@ -80,6 +83,299 @@ def _seconds_text(value: Any) -> str:
     if value is None:
         return "n/a"
     return f"{value}s"
+
+
+def _timer_game_seconds(timer: Any) -> float | None:
+    if not isinstance(timer, dict):
+        return None
+    value = timer.get("game_seconds")
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _timer_game_text(timer: Any) -> str | None:
+    if not isinstance(timer, dict):
+        return None
+    text = timer.get("game_timer")
+    return str(text) if text else None
+
+
+def _sample_timer(sample: Any, key: str = "bridge_timer") -> dict[str, Any]:
+    if not isinstance(sample, dict):
+        return {}
+    timer = sample.get(key)
+    return timer if isinstance(timer, dict) else {}
+
+
+def _delta_seconds(start: Any, end: Any) -> float | None:
+    start_seconds = _timer_game_seconds(start)
+    end_seconds = _timer_game_seconds(end)
+    if start_seconds is None or end_seconds is None:
+        return None
+    return round(end_seconds - start_seconds, 3)
+
+
+def _mean(values: list[float]) -> float | None:
+    if not values:
+        return None
+    return round(sum(values) / len(values), 3)
+
+
+def _format_sequence_token(phase: str, index: int | None = None) -> str:
+    if phase == "opening_enemy":
+        return "enemy(opening)"
+    if phase == "player":
+        return f"us{index}" if index is not None else "us"
+    if phase == "enemy":
+        return f"enemy{index}" if index is not None else "enemy"
+    if phase == "terminal_enemy":
+        return f"enemy{index}->done" if index is not None else "enemy->done"
+    return phase
+
+
+def expected_speed_sequence_text(player_turns: int) -> str:
+    tokens = [_format_sequence_token("opening_enemy")]
+    for index in range(1, max(1, int(player_turns)) + 1):
+        tokens.append(_format_sequence_token("player", index))
+        if index == player_turns:
+            tokens.append(_format_sequence_token("terminal_enemy", index))
+        else:
+            tokens.append(_format_sequence_token("enemy", index))
+    return " -> ".join(tokens)
+
+
+def evaluate_speed_sequence_expectation(
+    audit: dict[str, Any],
+    *,
+    expected_player_turns: int | None,
+) -> dict[str, Any]:
+    if expected_player_turns is None or expected_player_turns <= 0:
+        return {
+            "status": "DISABLED",
+            "reason": "no_expected_player_turn_count",
+        }
+    expected_sequence = expected_speed_sequence_text(expected_player_turns)
+    observed_sequence = audit.get("sequence_text")
+    status = "MATCH" if observed_sequence == expected_sequence else "MISMATCH"
+    return {
+        "status": status,
+        "expected_player_turn_count": expected_player_turns,
+        "expected_enemy_phase_count": expected_player_turns + 1,
+        "expected_sequence": expected_sequence,
+        "observed_player_turn_count": audit.get("player_turn_count"),
+        "observed_enemy_phase_count": audit.get("enemy_phase_count"),
+        "observed_sequence": observed_sequence,
+        "speed_assumption": (
+            "short_route_terminal_after_expected_final_player_turn"
+        ),
+        "fallback": (
+            "continue_dynamic_loop_if_expected_terminal_turn_returns_player_ready"
+        ),
+    }
+
+
+def build_turn_timing_audit(report: dict[str, Any]) -> dict[str, Any]:
+    """Summarize bridge/UI turn boundaries on the in-game timer."""
+    in_game_timers = report.get("in_game_timers") or {}
+    confirm = report.get("deploy_confirm") or {}
+    region_loop = report.get("combat_until_region_secured") or {}
+    turns = region_loop.get("turns") or []
+
+    phases: list[dict[str, Any]] = []
+    sequence_tokens: list[str] = []
+
+    confirm_click_timer = (
+        in_game_timers.get("deploy_confirm_click_before")
+        or confirm.get("before_in_game_timer")
+        or {}
+    )
+    opening_ready_sample = confirm.get("first_player_ready_bridge") or {}
+    opening_ready_timer = (
+        _sample_timer(opening_ready_sample)
+        or in_game_timers.get("opening_player_turn_bridge_ready")
+        or {}
+    )
+    opening_ready_frame_timer = (
+        _sample_timer(
+            confirm.get("first_player_ready_frame_after_bridge"),
+            "frame_timer",
+        )
+        or in_game_timers.get("opening_player_turn_first_frame_after_bridge")
+        or {}
+    )
+    if confirm_click_timer or opening_ready_timer:
+        phases.append(
+            {
+                "phase": "opening_enemy",
+                "start_event": "deploy_confirm_click",
+                "end_event": "opening_player_turn_bridge_ready",
+                "start_game_timer": _timer_game_text(confirm_click_timer),
+                "end_game_timer": _timer_game_text(opening_ready_timer),
+                "duration_game_seconds": _delta_seconds(
+                    confirm_click_timer,
+                    opening_ready_timer,
+                ),
+                "bridge_to_first_frame_seconds": _delta_seconds(
+                    opening_ready_timer,
+                    opening_ready_frame_timer,
+                ),
+                "bridge_elapsed_wall_seconds": opening_ready_sample.get(
+                    "elapsed_after_confirm_seconds"
+                )
+                if isinstance(opening_ready_sample, dict)
+                else None,
+            }
+        )
+        sequence_tokens.append(_format_sequence_token("opening_enemy"))
+
+    post_end_to_player: list[float] = []
+    enemy_animation: list[float] = []
+    end_to_enemy: list[float] = []
+    ready_frame_lags: list[float] = []
+    ready_pause_lags: list[float] = []
+    player_turns = 0
+    enemy_phases_after_player = 0
+    terminal_phase: dict[str, Any] | None = None
+
+    for fallback_index, turn in enumerate(turns, start=1):
+        if not isinstance(turn, dict):
+            continue
+        index = int(turn.get("loop_turn_index") or fallback_index)
+        player_turns += 1
+        turn_start_timer = turn.get("before_in_game_timer") or {}
+        auto_done_timer = turn.get("auto_turn_done_timer") or {}
+        end_turn_timer = turn.get("end_turn_before_in_game_timer") or {}
+        phases.append(
+            {
+                "phase": "player",
+                "index": index,
+                "start_game_timer": _timer_game_text(turn_start_timer),
+                "auto_turn_done_game_timer": _timer_game_text(auto_done_timer),
+                "end_turn_click_game_timer": _timer_game_text(end_turn_timer),
+                "start_to_end_turn_game_seconds": _delta_seconds(
+                    turn_start_timer,
+                    end_turn_timer,
+                ),
+                "auto_turn_duration_wall_seconds": turn.get(
+                    "auto_turn_duration_seconds"
+                ),
+                "actions_completed": (
+                    (turn.get("auto_turn_summary") or {}).get("actions_completed")
+                ),
+                "boundary": turn.get("boundary"),
+            }
+        )
+        sequence_tokens.append(_format_sequence_token("player", index))
+
+        left_sample = turn.get("first_non_player_bridge") or {}
+        ready_sample = turn.get("first_player_ready_bridge") or {}
+        terminal_visible = turn.get("first_region_secured_visible") or {}
+        left_timer = _sample_timer(left_sample)
+        ready_timer = _sample_timer(ready_sample)
+        terminal_timer = _sample_timer(terminal_visible, "visible_timer")
+        ready_frame_timer = _sample_timer(
+            turn.get("first_player_ready_frame_after_bridge"),
+            "frame_timer",
+        )
+        after_pause_timer = turn.get("after_pause_timer") or {}
+
+        if ready_timer:
+            enemy_phases_after_player += 1
+            end_to_enemy_delta = _delta_seconds(end_turn_timer, left_timer)
+            enemy_animation_delta = _delta_seconds(left_timer, ready_timer)
+            post_end_delta = _delta_seconds(end_turn_timer, ready_timer)
+            frame_lag = _delta_seconds(ready_timer, ready_frame_timer)
+            pause_lag = _delta_seconds(ready_timer, after_pause_timer)
+            for collection, value in (
+                (end_to_enemy, end_to_enemy_delta),
+                (enemy_animation, enemy_animation_delta),
+                (post_end_to_player, post_end_delta),
+                (ready_frame_lags, frame_lag),
+                (ready_pause_lags, pause_lag),
+            ):
+                if value is not None:
+                    collection.append(value)
+            phases.append(
+                {
+                    "phase": "enemy",
+                    "after_player_turn_index": index,
+                    "end_turn_click_game_timer": _timer_game_text(end_turn_timer),
+                    "left_player_bridge_game_timer": _timer_game_text(left_timer),
+                    "next_player_ready_game_timer": _timer_game_text(ready_timer),
+                    "end_turn_to_left_player_seconds": end_to_enemy_delta,
+                    "left_player_to_next_player_seconds": enemy_animation_delta,
+                    "end_turn_to_next_player_seconds": post_end_delta,
+                    "ready_bridge_to_first_frame_seconds": frame_lag,
+                    "ready_bridge_to_pause_seconds": pause_lag,
+                    "bridge_turn": (ready_sample.get("snapshot") or {}).get("turn")
+                    if isinstance(ready_sample, dict)
+                    else None,
+                }
+            )
+            sequence_tokens.append(_format_sequence_token("enemy", index))
+            continue
+
+        if terminal_timer:
+            enemy_phases_after_player += 1
+            terminal_delta = _delta_seconds(end_turn_timer, terminal_timer)
+            terminal_phase = {
+                "phase": "terminal_enemy",
+                "after_player_turn_index": index,
+                "end_turn_click_game_timer": _timer_game_text(end_turn_timer),
+                "region_secured_visible_game_timer": _timer_game_text(
+                    terminal_timer
+                ),
+                "end_turn_to_region_secured_visible_seconds": terminal_delta,
+                "visible_elapsed_after_end_turn_wall_seconds": terminal_visible.get(
+                    "elapsed_after_end_turn_seconds"
+                )
+                if isinstance(terminal_visible, dict)
+                else None,
+            }
+            phases.append(terminal_phase)
+            sequence_tokens.append(_format_sequence_token("terminal_enemy", index))
+
+    return {
+        "status": "OK" if phases else "NO_DATA",
+        "player_turn_count": player_turns,
+        "enemy_phase_count": (
+            (1 if opening_ready_timer else 0) + enemy_phases_after_player
+        ),
+        "enemy_phase_count_after_players": enemy_phases_after_player,
+        "sequence": sequence_tokens,
+        "sequence_text": " -> ".join(sequence_tokens),
+        "phases": phases,
+        "post_end_turn_to_next_player_seconds": {
+            "values": post_end_to_player,
+            "average": _mean(post_end_to_player),
+            "max": max(post_end_to_player) if post_end_to_player else None,
+        },
+        "end_turn_to_enemy_bridge_seconds": {
+            "values": end_to_enemy,
+            "average": _mean(end_to_enemy),
+            "max": max(end_to_enemy) if end_to_enemy else None,
+        },
+        "enemy_bridge_to_next_player_seconds": {
+            "values": enemy_animation,
+            "average": _mean(enemy_animation),
+            "max": max(enemy_animation) if enemy_animation else None,
+        },
+        "ready_bridge_to_first_frame_seconds": {
+            "values": ready_frame_lags,
+            "average": _mean(ready_frame_lags),
+            "max": max(ready_frame_lags) if ready_frame_lags else None,
+        },
+        "ready_bridge_to_pause_seconds": {
+            "values": ready_pause_lags,
+            "average": _mean(ready_pause_lags),
+            "max": max(ready_pause_lags) if ready_pause_lags else None,
+        },
+        "terminal_phase": terminal_phase,
+    }
 
 
 def _parse_optional_timer_address(value: str | None) -> int | None:
@@ -732,6 +1028,19 @@ def append_notebook_report(report: dict[str, Any]) -> None:
     combat_ready_frame_timer = (
         in_game_timers.get("combat_post_end_turn_first_frame_after_bridge") or {}
     )
+    region_loop = report.get("combat_until_region_secured") or {}
+    region_visible_timer = in_game_timers.get("region_secured_visible") or {}
+    region_hover_timer = (
+        in_game_timers.get("region_secured_continue_hover_frame") or {}
+    )
+    region_click_before_timer = (
+        in_game_timers.get("region_secured_continue_click_before") or {}
+    )
+    region_click_after_timer = (
+        in_game_timers.get("region_secured_continue_click_after") or {}
+    )
+    timing_audit = report.get("turn_timing_audit") or {}
+    speed_expectation = report.get("speed_sequence_expectation") or {}
     lines = [
         "",
         f"## {report.get('run_id')}",
@@ -797,6 +1106,59 @@ def append_notebook_report(report: dict[str, Any]) -> None:
                 f"- Combat next player-turn bridge timer: {combat_ready_timer.get('game_timer') or 'n/a'}",
                 f"- Combat first frame after bridge-ready timer: {combat_ready_frame_timer.get('game_timer') or 'n/a'}",
                 f"- Combat post-End-Turn observed seconds: {_seconds_text(combat.get('observed_seconds'))}",
+            ]
+        )
+    if region_loop:
+        region = region_loop.get("region_secured") or {}
+        hover = region_loop.get("continue_hover") or {}
+        hover_control = hover.get("control") or {}
+        hover_result = hover.get("hover") or {}
+        click = region_loop.get("continue_click") or {}
+        click_control = click.get("control") or {}
+        click_result = click.get("click") or {}
+        last_turn = region_loop.get("last_end_turn") or {}
+        lines.extend(
+            [
+                f"- Region Secured loop status: {region_loop.get('status') or 'n/a'}",
+                f"- Region Secured turns attempted: {region_loop.get('turns_attempted')}",
+                f"- Last End Turn click timer: {((last_turn.get('end_turn_before_in_game_timer') or {}).get('game_timer')) or 'n/a'}",
+                f"- Region Secured visible timer: {region_visible_timer.get('game_timer') or 'n/a'}",
+                f"- Region Secured visible elapsed after End Turn: {_seconds_text(region.get('elapsed_after_end_turn_seconds'))}",
+                f"- Continue hover control: {hover_control.get('name') or 'reward_continue'} @ ({hover_control.get('window_x')}, {hover_control.get('window_y')})",
+                f"- Continue hover result: {hover_result.get('status') or 'n/a'} screen=({hover_result.get('screen_x')}, {hover_result.get('screen_y')})",
+                f"- Continue hover frame timer: {region_hover_timer.get('game_timer') or 'n/a'}",
+                f"- Continue click control: {click_control.get('name') or 'reward_continue'} @ ({click_control.get('window_x')}, {click_control.get('window_y')})",
+                f"- Continue click result: {click_result.get('status') or 'n/a'}",
+                f"- Continue click before timer: {region_click_before_timer.get('game_timer') or 'n/a'}",
+                f"- Continue click after frame timer: {region_click_after_timer.get('game_timer') or 'n/a'}",
+            ]
+        )
+    if timing_audit:
+        post_end = timing_audit.get("post_end_turn_to_next_player_seconds") or {}
+        end_to_enemy = timing_audit.get("end_turn_to_enemy_bridge_seconds") or {}
+        enemy_to_player = timing_audit.get("enemy_bridge_to_next_player_seconds") or {}
+        ready_frame = timing_audit.get("ready_bridge_to_first_frame_seconds") or {}
+        ready_pause = timing_audit.get("ready_bridge_to_pause_seconds") or {}
+        terminal = timing_audit.get("terminal_phase") or {}
+        lines.extend(
+            [
+                f"- Turn sequence: {timing_audit.get('sequence_text') or 'n/a'}",
+                f"- Player turns observed: {timing_audit.get('player_turn_count')}",
+                f"- Enemy phases observed: {timing_audit.get('enemy_phase_count')}",
+                f"- End Turn -> enemy bridge avg/max: {_seconds_text(end_to_enemy.get('average'))} / {_seconds_text(end_to_enemy.get('max'))}",
+                f"- Enemy bridge -> next player avg/max: {_seconds_text(enemy_to_player.get('average'))} / {_seconds_text(enemy_to_player.get('max'))}",
+                f"- End Turn -> next player avg/max: {_seconds_text(post_end.get('average'))} / {_seconds_text(post_end.get('max'))}",
+                f"- Ready bridge -> first audit frame avg/max: {_seconds_text(ready_frame.get('average'))} / {_seconds_text(ready_frame.get('max'))}",
+                f"- Ready bridge -> pause avg/max: {_seconds_text(ready_pause.get('average'))} / {_seconds_text(ready_pause.get('max'))}",
+                f"- Terminal End Turn -> Region Secured: {_seconds_text(terminal.get('end_turn_to_region_secured_visible_seconds'))}",
+            ]
+        )
+    if speed_expectation:
+        lines.extend(
+            [
+                f"- Speed sequence expectation: {speed_expectation.get('status') or 'n/a'}",
+                f"- Expected speed sequence: {speed_expectation.get('expected_sequence') or 'n/a'}",
+                f"- Observed speed sequence: {speed_expectation.get('observed_sequence') or 'n/a'}",
             ]
         )
     NOTEBOOK_PATH.write_text(existing + "\n".join(lines) + "\n", encoding="utf-8")
@@ -1377,6 +1739,179 @@ def _snapshot_left_player_turn_after_end_turn(snapshot: dict[str, Any]) -> bool:
     return isinstance(phase, str) and phase != "combat_player"
 
 
+def _snapshot_terminal_or_clear_after_end_turn(snapshot: dict[str, Any]) -> bool:
+    if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
+        return False
+    if snapshot.get("bridge_heartbeat_alive") is False:
+        return False
+    if snapshot.get("bridge_heartbeat_stale") is True:
+        return False
+    if snapshot.get("in_active_mission") is False:
+        return True
+    phase = snapshot.get("phase")
+    if phase in {"between_missions", "mission_ending"}:
+        return True
+    if phase == "unknown":
+        try:
+            active_mechs = int(snapshot.get("active_mechs") or 0)
+            zones = int(snapshot.get("deployment_zone_count") or 0)
+        except (TypeError, ValueError):
+            return False
+        return active_mechs == 0 and zones == 0
+    return False
+
+
+def _compact_visible_snapshot(visible: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(visible, dict):
+        return {"status": "ERROR", "error": "visible_snapshot_not_dict"}
+    return {
+        "status": visible.get("status"),
+        "visible_ui": visible.get("visible_ui"),
+        "recommended_control": visible.get("recommended_control"),
+        "confidence": visible.get("confidence"),
+        "screenshot_path": visible.get("screenshot_path"),
+        "ocr_text": visible.get("ocr_text"),
+        "terminal_outcome": visible.get("terminal_outcome"),
+        "terminal_outcome_visible": visible.get("terminal_outcome_visible"),
+        "region_secured_visible": visible.get("region_secured_visible"),
+    }
+
+
+def _visible_text_lower(visible: dict[str, Any] | None) -> str:
+    try:
+        parts = fast._lightning_visible_ui_text_parts(visible)
+    except Exception:
+        parts = []
+    return "\n".join(str(part) for part in parts).lower()
+
+
+def _visible_region_secured(visible: dict[str, Any] | None) -> bool:
+    if not isinstance(visible, dict) or visible.get("status") != "OK":
+        return False
+    if visible.get("region_secured_visible") is True:
+        return True
+    visible_name = visible.get("visible_ui")
+    if visible_name in {"island_complete_leave", "bottom_continue_panel"}:
+        return True
+    text = _visible_text_lower(visible)
+    if "region secured" in text:
+        return True
+    outcome = str(visible.get("terminal_outcome") or "").lower()
+    return "region secured" in outcome
+
+
+def _visible_terminal_or_clear(visible: dict[str, Any] | None) -> bool:
+    if not isinstance(visible, dict) or visible.get("status") != "OK":
+        return False
+    visible_name = visible.get("visible_ui")
+    if visible_name in fast.TERMINAL_OR_CLEAR_UIS:
+        return True
+    return _visible_region_secured(visible)
+
+
+def hover_region_secured_continue(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    hover_seconds: float,
+) -> dict[str, Any]:
+    controls = list_known_window_controls()
+    control = controls.get("reward_continue") or {
+        "name": "reward_continue",
+        "window_x": 1647,
+        "window_y": 985,
+    }
+    x = int(control["window_x"])
+    y = int(control["window_y"])
+    before_timer = _timer_sample_from_recorder(
+        screenshots,
+        label="region_secured_continue_hover_before",
+    )
+    hover = fast.hover_window_point(
+        "region_secured_continue",
+        x,
+        y,
+        hover_seconds=hover_seconds,
+    )
+    proof_frame = screenshots.capture_once(
+        clock_state="region_secured_continue_hover",
+        note="hover_region_secured_continue",
+    )
+    proof_frame["timer_seconds"] = _elapsed(timer_start)
+    proof_timer = _timer_sample_from_frame(
+        proof_frame,
+        label="region_secured_continue_hover_frame",
+    )
+    telemetry.event(
+        "region_secured_continue_hover",
+        timer_seconds=_elapsed(timer_start),
+        control=control,
+        hover=hover,
+        before_in_game_timer=before_timer,
+        screenshot_path=proof_frame.get("screenshot_path"),
+        proof_frame_timer=proof_timer,
+    )
+    return {
+        "status": "OK" if hover.get("status") == "OK" else "FAIL",
+        "control": control,
+        "hover": hover,
+        "before_in_game_timer": before_timer,
+        "proof_frame": proof_frame,
+        "proof_frame_timer": proof_timer,
+    }
+
+
+def click_region_secured_continue(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    settle_seconds: float,
+) -> dict[str, Any]:
+    controls = list_known_window_controls()
+    control = controls.get("reward_continue") or {
+        "name": "reward_continue",
+        "window_x": 1647,
+        "window_y": 985,
+    }
+    before_timer = _timer_sample_from_recorder(
+        screenshots,
+        label="region_secured_continue_click_before",
+    )
+    click_started = time.perf_counter()
+    click = fast.click_ui_control("reward_continue", settle_seconds=settle_seconds)
+    click_duration = round(time.perf_counter() - click_started, 3)
+    after_frame = screenshots.capture_once(
+        clock_state="region_secured_continue_click_after",
+        note="click_region_secured_continue",
+    )
+    after_frame["timer_seconds"] = _elapsed(timer_start)
+    after_timer = _timer_sample_from_frame(
+        after_frame,
+        label="region_secured_continue_click_after",
+    )
+    telemetry.event(
+        "region_secured_continue_click",
+        timer_seconds=_elapsed(timer_start),
+        control=control,
+        before_in_game_timer=before_timer,
+        click=click,
+        duration_seconds=click_duration,
+        screenshot_path=after_frame.get("screenshot_path"),
+        after_frame_timer=after_timer,
+    )
+    return {
+        "status": "OK" if click.get("status") == "OK" else "FAIL",
+        "control": control,
+        "click": click,
+        "duration_seconds": click_duration,
+        "before_in_game_timer": before_timer,
+        "after_frame": after_frame,
+        "after_frame_timer": after_timer,
+    }
+
+
 def _combat_fuzzy_block_skip_decision(
     turn: dict[str, Any],
     *,
@@ -1728,7 +2263,25 @@ def solve_execute_end_turn_and_observe_next_turn(
     retry_after_seconds: float,
     continue_after_fuzzy_block: bool,
     fuzzy_block_min_actions: int,
+    stop_on_region_secured: bool = False,
+    visible_poll_seconds: float = 0.5,
+    terminal_visual_settle_seconds: float = 1.0,
+    hover_region_continue: bool = False,
+    region_continue_hover_seconds: float = 1.0,
+    click_region_continue: bool = False,
+    region_continue_click_settle_seconds: float = 0.35,
+    refresh_paused_bridge_before_auto_turn: bool = False,
 ) -> dict[str, Any]:
+    bridge_refresh_before_auto_turn: dict[str, Any] | None = None
+    if refresh_paused_bridge_before_auto_turn:
+        bridge_refresh_before_auto_turn = fast.refresh_bridge_before_paused_solve(
+            turn_index=0
+        )
+        telemetry.event(
+            "combat_auto_turn_bridge_refresh",
+            timer_seconds=_elapsed(timer_start),
+            refresh=bridge_refresh_before_auto_turn,
+        )
     before_timer = _timer_sample_from_recorder(
         screenshots,
         label="combat_auto_turn_before",
@@ -1795,6 +2348,7 @@ def solve_execute_end_turn_and_observe_next_turn(
             "before_in_game_timer": before_timer,
             "auto_turn_duration_seconds": auto_duration,
             "auto_turn_done_timer": auto_done_timer,
+            "bridge_refresh_before_auto_turn": bridge_refresh_before_auto_turn,
             "auto_turn": turn,
             "auto_turn_summary": turn_summary,
             "auto_turn_block_skip_decision": fuzzy_skip,
@@ -1826,9 +2380,14 @@ def solve_execute_end_turn_and_observe_next_turn(
     started = time.perf_counter()
     next_frame_at = started
     next_bridge_at = started
+    next_visible_at = started
     frames: list[dict[str, Any]] = []
     bridge_samples: list[dict[str, Any]] = []
+    visible_samples: list[dict[str, Any]] = []
     first_non_player_bridge: dict[str, Any] | None = None
+    first_terminal_bridge: dict[str, Any] | None = None
+    first_terminal_visible: dict[str, Any] | None = None
+    first_region_secured_visible: dict[str, Any] | None = None
     first_player_ready_bridge: dict[str, Any] | None = None
     ready_frames_seen = 0
     ready_frame: dict[str, Any] | None = None
@@ -1881,6 +2440,9 @@ def solve_execute_end_turn_and_observe_next_turn(
                 "left_player_turn": _snapshot_left_player_turn_after_end_turn(
                     snapshot
                 ),
+                "terminal_or_clear": _snapshot_terminal_or_clear_after_end_turn(
+                    snapshot
+                ),
                 "player_ready": _snapshot_actionable_player_turn(snapshot),
             }
             if first_non_player_bridge is None and sample["left_player_turn"]:
@@ -1889,6 +2451,12 @@ def solve_execute_end_turn_and_observe_next_turn(
                     label="combat_end_turn_bridge_left_player",
                 )
                 first_non_player_bridge = sample
+            if first_terminal_bridge is None and sample["terminal_or_clear"]:
+                sample["bridge_timer"] = _timer_sample_from_recorder(
+                    screenshots,
+                    label="combat_end_turn_bridge_terminal",
+                )
+                first_terminal_bridge = sample
             if first_player_ready_bridge is None and sample["player_ready"]:
                 sample["bridge_timer"] = _timer_sample_from_recorder(
                     screenshots,
@@ -1899,6 +2467,50 @@ def solve_execute_end_turn_and_observe_next_turn(
             telemetry.event("post_end_turn_bridge_probe", **sample)
             next_bridge_at = max(
                 next_bridge_at + max(0.05, bridge_poll_seconds),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        now = time.perf_counter()
+        if stop_on_region_secured and now >= next_visible_at:
+            include_ocr = (
+                first_terminal_bridge is not None
+                and now - started
+                >= float(first_terminal_bridge.get("elapsed_after_end_turn_seconds") or 0.0)
+                + max(0.0, terminal_visual_settle_seconds)
+            )
+            visible = fast._lightning_visible_ui_snapshot(include_ocr=include_ocr)
+            compact_visible = _compact_visible_snapshot(visible)
+            visible_sample = {
+                "timer_seconds": _elapsed(timer_start),
+                "elapsed_after_end_turn_seconds": round(now - started, 3),
+                "visible_ui": compact_visible,
+                "terminal_or_clear": _visible_terminal_or_clear(visible),
+                "region_secured": _visible_region_secured(visible),
+                "include_ocr": include_ocr,
+            }
+            if (
+                first_terminal_visible is None
+                and visible_sample["terminal_or_clear"]
+            ):
+                visible_sample["visible_timer"] = _timer_sample_from_recorder(
+                    screenshots,
+                    label="combat_end_turn_visible_terminal",
+                )
+                first_terminal_visible = visible_sample
+            if (
+                first_region_secured_visible is None
+                and visible_sample["region_secured"]
+            ):
+                visible_sample["visible_timer"] = _timer_sample_from_recorder(
+                    screenshots,
+                    label="combat_region_secured_visible",
+                )
+                first_region_secured_visible = visible_sample
+            visible_samples.append(visible_sample)
+            telemetry.event("post_end_turn_visible_probe", **visible_sample)
+            next_visible_at = max(
+                next_visible_at + max(0.1, visible_poll_seconds),
                 time.perf_counter() + 0.01,
             )
             did_work = True
@@ -1932,6 +2544,9 @@ def solve_execute_end_turn_and_observe_next_turn(
                 )
                 did_work = True
 
+        if first_region_secured_visible is not None:
+            break
+
         if (
             first_player_ready_bridge is not None
             and ready_frames_seen >= max(0, int(extra_ready_frames))
@@ -1962,18 +2577,48 @@ def solve_execute_end_turn_and_observe_next_turn(
             after_pause_timer=after_pause_timer,
         )
 
+    region_continue_hover: dict[str, Any] | None = None
+    if hover_region_continue and first_region_secured_visible is not None:
+        region_continue_hover = hover_region_secured_continue(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            hover_seconds=region_continue_hover_seconds,
+        )
+
+    region_continue_click: dict[str, Any] | None = None
+    if click_region_continue and first_region_secured_visible is not None:
+        region_continue_click = click_region_secured_continue(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            settle_seconds=region_continue_click_settle_seconds,
+        )
+
+    boundary = (
+        "region_secured"
+        if first_region_secured_visible is not None
+        else "player_turn_ready"
+        if first_player_ready_bridge is not None
+        else "unknown"
+    )
     status = (
         "PASS"
         if (
             end_turn_click.get("status") == "OK"
-            and first_non_player_bridge is not None
-            and first_player_ready_bridge is not None
+            and (
+                first_region_secured_visible is not None
+                or first_player_ready_bridge is not None
+            )
         )
         else "FAIL"
     )
     return {
         "status": status,
         "reason": (
+            "combat_region_secured_visible"
+            if first_region_secured_visible is not None
+            else
             "combat_post_end_turn_player_ready"
             if first_player_ready_bridge is not None
             and not fuzzy_skip.get("skip")
@@ -1981,6 +2626,7 @@ def solve_execute_end_turn_and_observe_next_turn(
             if first_player_ready_bridge is not None
             else "combat_post_end_turn_not_detected"
         ),
+        "boundary": boundary,
         "solver_action_signal_source": "cmd_auto_turn",
         "end_turn_signal_source": (
             "fuzzy_block_held_end_turn_speedrun_skip"
@@ -1999,6 +2645,7 @@ def solve_execute_end_turn_and_observe_next_turn(
         "before_in_game_timer": before_timer,
         "auto_turn": turn,
         "auto_turn_summary": turn_summary,
+        "bridge_refresh_before_auto_turn": bridge_refresh_before_auto_turn,
         "auto_turn_duration_seconds": auto_duration,
         "auto_turn_done_timer": auto_done_timer,
         "end_turn_before_in_game_timer": end_turn_before_timer,
@@ -2011,7 +2658,13 @@ def solve_execute_end_turn_and_observe_next_turn(
         "observed_seconds": round(time.perf_counter() - started, 3),
         "frames": frames,
         "bridge_samples": bridge_samples,
+        "visible_samples": visible_samples,
         "first_non_player_bridge": first_non_player_bridge,
+        "first_terminal_bridge": first_terminal_bridge,
+        "first_terminal_visible": first_terminal_visible,
+        "first_region_secured_visible": first_region_secured_visible,
+        "region_secured_continue_hover": region_continue_hover,
+        "region_secured_continue_click": region_continue_click,
         "first_player_ready_bridge": first_player_ready_bridge,
         "first_player_ready_frame_after_bridge": ready_frame,
         "pause": pause,
@@ -2040,12 +2693,355 @@ def _combat_next_patch(combat_turn_result: dict[str, Any] | None) -> str:
     return "Fix combat post-End-Turn player-ready detection."
 
 
+def solve_until_region_secured(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    max_turns: int,
+    auto_turn_time_limit: float,
+    auto_turn_max_wait: float,
+    observe_seconds: float,
+    screenshot_cadence: float,
+    bridge_poll_seconds: float,
+    visible_poll_seconds: float,
+    terminal_visual_settle_seconds: float,
+    extra_ready_frames: int,
+    pause_after_ready: bool,
+    retry_after_seconds: float,
+    continue_after_fuzzy_block: bool,
+    fuzzy_block_min_actions: int,
+    hover_region_continue: bool,
+    region_continue_hover_seconds: float,
+    click_region_continue: bool,
+    region_continue_click_settle_seconds: float,
+    expected_terminal_after_turn: int | None = None,
+    expected_terminal_visible_poll_seconds: float | None = None,
+    refresh_paused_bridge_before_auto_turn: bool = False,
+) -> dict[str, Any]:
+    turns: list[dict[str, Any]] = []
+    for turn_index in range(1, max(1, int(max_turns)) + 1):
+        expected_final_turn = (
+            expected_terminal_after_turn is not None
+            and turn_index >= int(expected_terminal_after_turn)
+        )
+        turn_visible_poll_seconds = visible_poll_seconds
+        if expected_final_turn and expected_terminal_visible_poll_seconds is not None:
+            turn_visible_poll_seconds = min(
+                visible_poll_seconds,
+                max(0.05, float(expected_terminal_visible_poll_seconds)),
+            )
+        telemetry.event(
+            "combat_region_loop_turn_start",
+            timer_seconds=_elapsed(timer_start),
+            loop_turn_index=turn_index,
+            expected_final_turn=expected_final_turn,
+        )
+        turn_result = solve_execute_end_turn_and_observe_next_turn(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            auto_turn_time_limit=auto_turn_time_limit,
+            auto_turn_max_wait=auto_turn_max_wait,
+            observe_seconds=observe_seconds,
+            screenshot_cadence=screenshot_cadence,
+            bridge_poll_seconds=bridge_poll_seconds,
+            extra_ready_frames=extra_ready_frames,
+            pause_after_ready=pause_after_ready,
+            retry_after_seconds=retry_after_seconds,
+            continue_after_fuzzy_block=continue_after_fuzzy_block,
+            fuzzy_block_min_actions=fuzzy_block_min_actions,
+            stop_on_region_secured=True,
+            visible_poll_seconds=turn_visible_poll_seconds,
+            terminal_visual_settle_seconds=terminal_visual_settle_seconds,
+            hover_region_continue=hover_region_continue,
+            region_continue_hover_seconds=region_continue_hover_seconds,
+            click_region_continue=click_region_continue,
+            region_continue_click_settle_seconds=(
+                region_continue_click_settle_seconds
+            ),
+            refresh_paused_bridge_before_auto_turn=(
+                refresh_paused_bridge_before_auto_turn
+            ),
+        )
+        turn_result["loop_turn_index"] = turn_index
+        turn_result["expected_final_turn"] = expected_final_turn
+        turn_result["visible_poll_seconds_used"] = turn_visible_poll_seconds
+        turns.append(turn_result)
+        telemetry.event(
+            "combat_region_loop_turn_result",
+            timer_seconds=_elapsed(timer_start),
+            loop_turn_index=turn_index,
+            status=turn_result.get("status"),
+            reason=turn_result.get("reason"),
+            boundary=turn_result.get("boundary"),
+            auto_turn_summary=turn_result.get("auto_turn_summary"),
+            expected_final_turn=expected_final_turn,
+        )
+        if expected_final_turn and turn_result.get("boundary") == "player_turn_ready":
+            telemetry.event(
+                "combat_region_loop_expected_sequence_mismatch",
+                timer_seconds=_elapsed(timer_start),
+                loop_turn_index=turn_index,
+                expected_terminal_after_turn=expected_terminal_after_turn,
+                observed_boundary=turn_result.get("boundary"),
+                fallback="continuing_dynamic_region_loop",
+            )
+        if (
+            turn_result.get("status") == "PASS"
+            and turn_result.get("boundary") == "region_secured"
+        ):
+            continue_click = turn_result.get("region_secured_continue_click")
+            return {
+                "status": "PASS",
+                "reason": (
+                    "region_secured_visible_continue_clicked"
+                    if continue_click
+                    else "region_secured_visible_continue_hovered"
+                ),
+                "turns": turns,
+                "turns_attempted": turn_index,
+                "last_end_turn": turn_result,
+                "region_secured": turn_result.get("first_region_secured_visible"),
+                "continue_hover": turn_result.get("region_secured_continue_hover"),
+                "continue_click": continue_click,
+            }
+        if turn_result.get("status") != "PASS":
+            return {
+                "status": "FAIL",
+                "reason": "combat_turn_failed_before_region_secured",
+                "turns": turns,
+                "turns_attempted": turn_index,
+                "last_turn": turn_result,
+            }
+    return {
+        "status": "FAIL",
+        "reason": "region_secured_not_seen_before_max_turns",
+        "turns": turns,
+        "turns_attempted": len(turns),
+        "max_turns": max_turns,
+    }
+
+
+def _region_loop_next_patch(region_loop: dict[str, Any] | None) -> str:
+    if not isinstance(region_loop, dict):
+        return "Fix combat-to-Region-Secured timing loop startup."
+    if region_loop.get("status") == "PASS":
+        click = region_loop.get("continue_click") or {}
+        if click.get("status") == "OK":
+            return "Learn the next post-Region-Secured island-map route step."
+        return "Review Region Secured Continue hover coordinates, then append safe Continue click."
+    if region_loop.get("reason") == "region_secured_not_seen_before_max_turns":
+        return "Increase combat loop max turns or inspect why Region Secured did not appear."
+    last_turn = region_loop.get("last_turn") or region_loop.get("last_end_turn")
+    if isinstance(last_turn, dict):
+        return _combat_next_patch(last_turn)
+    return "Fix combat-to-Region-Secured timing loop."
+
+
+def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any]:
+    run_id = args.run_id or _now_run_id()
+    memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
+    memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
+    memory_live_timer_kind = args.memory_live_timer_kind
+    telemetry = TelemetryRecorder(run_id=run_id, root=ROOT / "recordings")
+    route_slice = (
+        "current_combat_to_region_secured_continue_click"
+        if args.region_secured_click_continue
+        else "current_combat_to_region_secured_continue_hover"
+    )
+    telemetry.write_manifest(
+        {
+            "achievement": "Lightning War",
+            "route_slice": route_slice,
+            "screenshot_cadence_seconds": args.screenshot_cadence,
+            "starting_anchor": "current_combat_state",
+            "memory_live_timer_address": (
+                f"0x{memory_live_timer_address:016x}"
+                if memory_live_timer_address is not None
+                else None
+            ),
+            "memory_live_timer_kind": memory_live_timer_kind,
+            "combat_loop_max_turns": args.combat_loop_max_turns,
+            "region_secured_hover_continue": args.region_secured_hover_continue,
+            "region_secured_click_continue": args.region_secured_click_continue,
+        }
+    )
+    timer_start = time.perf_counter()
+    screenshots = ScreenshotRecorder(
+        telemetry,
+        cadence_seconds=args.screenshot_cadence,
+        max_retained_frames=args.max_retained_frames,
+        max_retained_clock_states=None,
+        frame_clock_sampler=make_frame_clock_sampler(
+            use_memory=args.memory_timer_probe,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        ),
+    )
+    initial_visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
+    initial_bridge = fast._lightning_live_snapshot()
+    in_game_timers: dict[str, Any] = {
+        "pre_timer": read_in_game_timer(
+            args.profile,
+            label="pre_timer",
+            use_memory=args.memory_timer_probe,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
+        )
+    }
+    telemetry.event(
+        "current_combat_region_loop_start",
+        timer_seconds=0.0,
+        visible_ui=_compact_visible_snapshot(initial_visible),
+        bridge_snapshot=_compact_bridge_snapshot(initial_bridge),
+    )
+    if _visible_terminal_or_clear(initial_visible):
+        visible_timer = _timer_sample_from_recorder(
+            screenshots,
+            label="region_secured_visible",
+        )
+        visible_sample = {
+            "timer_seconds": _elapsed(timer_start),
+            "elapsed_after_end_turn_seconds": None,
+            "visible_ui": _compact_visible_snapshot(initial_visible),
+            "terminal_or_clear": True,
+            "region_secured": _visible_region_secured(initial_visible),
+            "include_ocr": False,
+            "visible_timer": visible_timer,
+            "note": "terminal_continue_panel_already_visible_at_entry",
+        }
+        continue_hover = (
+            hover_region_secured_continue(
+                timer_start=timer_start,
+                telemetry=telemetry,
+                screenshots=screenshots,
+                hover_seconds=args.region_secured_continue_hover_seconds,
+            )
+            if args.region_secured_hover_continue
+            else None
+        )
+        continue_click = (
+            click_region_secured_continue(
+                timer_start=timer_start,
+                telemetry=telemetry,
+                screenshots=screenshots,
+                settle_seconds=args.region_secured_continue_click_settle_seconds,
+            )
+            if args.region_secured_click_continue
+            else None
+        )
+        region_loop = {
+            "status": "PASS",
+            "reason": (
+                "terminal_continue_panel_already_visible_clicked"
+                if continue_click
+                else "terminal_continue_panel_already_visible"
+            ),
+            "turns": [],
+            "turns_attempted": 0,
+            "region_secured": visible_sample,
+            "continue_hover": continue_hover,
+            "continue_click": continue_click,
+            "initial_visible_terminal": True,
+        }
+    else:
+        region_loop = solve_until_region_secured(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            max_turns=args.combat_loop_max_turns,
+            auto_turn_time_limit=args.combat_auto_turn_time_limit,
+            auto_turn_max_wait=args.combat_auto_turn_max_wait,
+            observe_seconds=args.post_end_turn_observe_seconds,
+            screenshot_cadence=args.screenshot_cadence,
+            bridge_poll_seconds=args.post_end_turn_bridge_poll_seconds,
+            visible_poll_seconds=args.region_secured_visible_poll_seconds,
+            terminal_visual_settle_seconds=args.region_secured_terminal_settle_seconds,
+            extra_ready_frames=args.post_end_turn_extra_ready_frames,
+            pause_after_ready=args.pause_after_combat_player_turn,
+            retry_after_seconds=args.end_turn_retry_after_seconds,
+            continue_after_fuzzy_block=args.combat_continue_after_fuzzy_block,
+            fuzzy_block_min_actions=args.combat_fuzzy_block_min_actions,
+            hover_region_continue=args.region_secured_hover_continue,
+            region_continue_hover_seconds=args.region_secured_continue_hover_seconds,
+            click_region_continue=args.region_secured_click_continue,
+            region_continue_click_settle_seconds=(
+                args.region_secured_continue_click_settle_seconds
+            ),
+            expected_terminal_after_turn=None,
+            expected_terminal_visible_poll_seconds=None,
+            refresh_paused_bridge_before_auto_turn=True,
+        )
+    region_secured = region_loop.get("region_secured") or {}
+    continue_hover = region_loop.get("continue_hover") or {}
+    continue_click = region_loop.get("continue_click") or {}
+    in_game_timers["region_secured_visible"] = region_secured.get("visible_timer")
+    in_game_timers["region_secured_continue_hover_before"] = continue_hover.get(
+        "before_in_game_timer"
+    )
+    in_game_timers["region_secured_continue_hover_frame"] = continue_hover.get(
+        "proof_frame_timer"
+    )
+    in_game_timers["region_secured_continue_click_before"] = continue_click.get(
+        "before_in_game_timer"
+    )
+    in_game_timers["region_secured_continue_click_after"] = continue_click.get(
+        "after_frame_timer"
+    )
+    frame_report = generate_frame_delta_report(telemetry.run_dir)
+    status = "PASS" if region_loop.get("status") == "PASS" else "FAIL"
+    next_patch = _region_loop_next_patch(region_loop)
+    report = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "status": status,
+        "branch_label": "current_combat",
+        "route_slice": route_slice,
+        "marks": {"timer_zero": 0.0},
+        "in_game_timers": in_game_timers,
+        "initial_visible_ui": _compact_visible_snapshot(initial_visible),
+        "initial_bridge_snapshot": _compact_bridge_snapshot(initial_bridge),
+        "combat_until_region_secured": region_loop,
+        "frame_delta_report": frame_report,
+        "next_patch": next_patch,
+    }
+    report["turn_timing_audit"] = build_turn_timing_audit(report)
+    report["speed_sequence_expectation"] = evaluate_speed_sequence_expectation(
+        report["turn_timing_audit"],
+        expected_player_turns=None,
+    )
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    report_path = REPORT_DIR / f"{run_id}_region_secured_report.json"
+    report["report_path"] = str(report_path)
+    report_path.write_text(
+        json.dumps(report, indent=2, default=str) + "\n",
+        encoding="utf-8",
+    )
+    append_notebook_report(report)
+    telemetry.summary(
+        status=status,
+        reason=next_patch,
+        extra={
+            "report_path": str(report_path),
+            "branch_label": "current_combat",
+            "turns_attempted": region_loop.get("turns_attempted"),
+        },
+    )
+    return report
+
+
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
     memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
     memory_live_timer_kind = args.memory_live_timer_kind
-    combat_turn_after_confirm = bool(args.combat_turn_after_confirm)
+    combat_until_region_secured = bool(args.combat_until_region_secured)
+    combat_turn_after_confirm = bool(
+        args.combat_turn_after_confirm or combat_until_region_secured
+    )
     confirm_after_deploy = bool(args.confirm_after_deploy or combat_turn_after_confirm)
     deploy_after_visible_deployment = bool(
         args.deploy_after_visible_deployment or confirm_after_deploy
@@ -2056,6 +3052,13 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     click_start_mission = bool(args.click_start_mission or deploy_after_visible_deployment)
     click_red_mission = bool(args.click_red_mission or click_start_mission)
     route_slice = (
+        (
+            "main_menu_to_archive_red_map_to_region_secured_continue_click"
+            if args.region_secured_click_continue
+            else "main_menu_to_archive_red_map_to_region_secured_continue_hover"
+        )
+        if combat_until_region_secured
+        else
         "main_menu_to_archive_red_map_to_combat_turn_2_player_ready"
         if combat_turn_after_confirm
         else
@@ -2093,6 +3096,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "deploy_after_visible_deployment": deploy_after_visible_deployment,
             "confirm_after_deploy": confirm_after_deploy,
             "combat_turn_after_confirm": combat_turn_after_confirm,
+            "combat_until_region_secured": combat_until_region_secured,
             "deployment_trigger_source": deployment_trigger_source,
             "pause_after_red_mission_click": (
                 bool(args.pause_after_red_mission_click)
@@ -2142,6 +3146,19 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "combat_fuzzy_block_min_actions": (
                 args.combat_fuzzy_block_min_actions
                 if combat_turn_after_confirm
+                else None
+            ),
+            "combat_loop_max_turns": (
+                args.combat_loop_max_turns if combat_until_region_secured else None
+            ),
+            "region_secured_hover_continue": (
+                args.region_secured_hover_continue
+                if combat_until_region_secured
+                else None
+            ),
+            "region_secured_click_continue": (
+                args.region_secured_click_continue
+                if combat_until_region_secured
                 else None
             ),
             "screenshot_filename_timer_source": (
@@ -2316,6 +3333,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     deployment_result: dict[str, Any] | None = None
     confirm_result: dict[str, Any] | None = None
     combat_turn_result: dict[str, Any] | None = None
+    combat_region_result: dict[str, Any] | None = None
     if click_start_mission and isinstance(mission_preview, dict):
         start_mission = click_start_mission_from_preview(
             timer_start=timer_start,
@@ -2437,6 +3455,62 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "after_pause_timer"
         )
     if (
+        combat_until_region_secured
+        and isinstance(confirm_result, dict)
+        and confirm_result.get("status") == "PASS"
+    ):
+        combat_region_result = solve_until_region_secured(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            max_turns=args.combat_loop_max_turns,
+            auto_turn_time_limit=args.combat_auto_turn_time_limit,
+            auto_turn_max_wait=args.combat_auto_turn_max_wait,
+            observe_seconds=args.post_end_turn_observe_seconds,
+            screenshot_cadence=args.screenshot_cadence,
+            bridge_poll_seconds=args.post_end_turn_bridge_poll_seconds,
+            visible_poll_seconds=args.region_secured_visible_poll_seconds,
+            terminal_visual_settle_seconds=args.region_secured_terminal_settle_seconds,
+            extra_ready_frames=args.post_end_turn_extra_ready_frames,
+            pause_after_ready=args.pause_after_combat_player_turn,
+            retry_after_seconds=args.end_turn_retry_after_seconds,
+            continue_after_fuzzy_block=args.combat_continue_after_fuzzy_block,
+            fuzzy_block_min_actions=args.combat_fuzzy_block_min_actions,
+            hover_region_continue=args.region_secured_hover_continue,
+            region_continue_hover_seconds=args.region_secured_continue_hover_seconds,
+            click_region_continue=args.region_secured_click_continue,
+            region_continue_click_settle_seconds=(
+                args.region_secured_continue_click_settle_seconds
+            ),
+            expected_terminal_after_turn=(
+                args.speed_expected_player_turns
+                if args.speed_expected_player_turns > 0
+                else None
+            ),
+            expected_terminal_visible_poll_seconds=(
+                args.speed_final_turn_visible_poll_seconds
+            ),
+            refresh_paused_bridge_before_auto_turn=False,
+        )
+        region_secured = combat_region_result.get("region_secured") or {}
+        continue_hover = combat_region_result.get("continue_hover") or {}
+        continue_click = combat_region_result.get("continue_click") or {}
+        in_game_timers["region_secured_visible"] = region_secured.get(
+            "visible_timer"
+        )
+        in_game_timers["region_secured_continue_hover_before"] = (
+            continue_hover.get("before_in_game_timer")
+        )
+        in_game_timers["region_secured_continue_hover_frame"] = (
+            continue_hover.get("proof_frame_timer")
+        )
+        in_game_timers["region_secured_continue_click_before"] = (
+            continue_click.get("before_in_game_timer")
+        )
+        in_game_timers["region_secured_continue_click_after"] = (
+            continue_click.get("after_frame_timer")
+        )
+    elif (
         combat_turn_after_confirm
         and isinstance(confirm_result, dict)
         and confirm_result.get("status") == "PASS"
@@ -2512,15 +3586,27 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             else "FAIL"
         )
     if combat_turn_after_confirm:
-        status = (
-            "PASS"
-            if status == "PASS"
-            and isinstance(combat_turn_result, dict)
-            and combat_turn_result.get("status") == "PASS"
-            else "FAIL"
-        )
+        if combat_until_region_secured:
+            status = (
+                "PASS"
+                if status == "PASS"
+                and isinstance(combat_region_result, dict)
+                and combat_region_result.get("status") == "PASS"
+                else "FAIL"
+            )
+        else:
+            status = (
+                "PASS"
+                if status == "PASS"
+                and isinstance(combat_turn_result, dict)
+                and combat_turn_result.get("status") == "PASS"
+                else "FAIL"
+            )
     if status != "PASS":
         next_patch = (
+            _region_loop_next_patch(combat_region_result)
+            if combat_until_region_secured
+            else
             _combat_next_patch(combat_turn_result)
             if combat_turn_after_confirm
             else
@@ -2531,6 +3617,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             if deploy_after_visible_deployment
             else "Improve Archive intro wait/dismissal or red-region detector."
         )
+    elif combat_until_region_secured:
+        next_patch = _region_loop_next_patch(combat_region_result)
     elif combat_turn_after_confirm:
         next_patch = "Compare combat-turn bridge timing with screenshots; then measure the next combat turn or mission-clear branch."
     elif confirm_after_deploy:
@@ -2558,9 +3646,19 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         "deploy_recommended": deployment_result,
         "deploy_confirm": confirm_result,
         "combat_turn": combat_turn_result,
+        "combat_until_region_secured": combat_region_result,
         "frame_delta_report": frame_report,
         "next_patch": next_patch,
     }
+    report["turn_timing_audit"] = build_turn_timing_audit(report)
+    report["speed_sequence_expectation"] = evaluate_speed_sequence_expectation(
+        report["turn_timing_audit"],
+        expected_player_turns=(
+            args.speed_expected_player_turns
+            if combat_until_region_secured and args.speed_expected_player_turns > 0
+            else None
+        ),
+    )
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     report_path = REPORT_DIR / f"{run_id}_opening_red_map_report.json"
     report["report_path"] = str(report_path)
@@ -2711,12 +3809,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--post-confirm-observe-seconds", type=float, default=30.0)
     parser.add_argument("--post-confirm-bridge-poll-seconds", type=float, default=0.2)
-    parser.add_argument("--post-confirm-extra-ready-frames", type=int, default=1)
+    parser.add_argument("--post-confirm-extra-ready-frames", type=int, default=0)
     parser.add_argument(
         "--pause-after-opening-player-turn",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Pause once the bridge reports the first actionable player turn.",
+        default=False,
+        help=(
+            "Pause once the bridge reports the first actionable player turn. "
+            "Default is off for Lightning War speed timing; use this only for "
+            "slower audit runs."
+        ),
     )
     parser.add_argument(
         "--combat-turn-after-confirm",
@@ -2726,12 +3828,69 @@ def build_parser() -> argparse.ArgumentParser:
             "Turn, and observe the enemy turn back to the next player turn."
         ),
     )
+    parser.add_argument(
+        "--combat-until-region-secured",
+        action="store_true",
+        help=(
+            "After opening combat, repeat auto_turn + End Turn until the "
+            "Region Secured panel appears, hover its Continue button, then "
+            "click it unless --no-region-secured-click-continue is set."
+        ),
+    )
+    parser.add_argument(
+        "--current-combat-until-region-secured",
+        action="store_true",
+        help=(
+            "Start from the current live combat/player-turn state instead of "
+            "the main menu, and run until Region Secured Continue is handled."
+        ),
+    )
     parser.add_argument("--combat-auto-turn-time-limit", type=float, default=10.0)
     parser.add_argument("--combat-auto-turn-max-wait", type=float, default=8.0)
+    parser.add_argument("--combat-loop-max-turns", type=int, default=6)
+    parser.add_argument(
+        "--speed-expected-player-turns",
+        type=int,
+        default=DEFAULT_SPEED_EXPECTED_PLAYER_TURNS,
+        help=(
+            "Expected player-turn count for the Lightning War short route. "
+            "The lab uses this as a speed assumption/report check and falls "
+            "back to the dynamic loop if the sequence mismatches."
+        ),
+    )
+    parser.add_argument(
+        "--speed-final-turn-visible-poll-seconds",
+        type=float,
+        default=DEFAULT_SPEED_FINAL_TURN_VISIBLE_POLL_SECONDS,
+        help=(
+            "Region Secured visible-UI poll cadence on the expected final "
+            "player turn."
+        ),
+    )
     parser.add_argument("--post-end-turn-observe-seconds", type=float, default=30.0)
     parser.add_argument("--post-end-turn-bridge-poll-seconds", type=float, default=0.2)
-    parser.add_argument("--post-end-turn-extra-ready-frames", type=int, default=1)
+    parser.add_argument("--post-end-turn-extra-ready-frames", type=int, default=0)
     parser.add_argument("--end-turn-retry-after-seconds", type=float, default=2.0)
+    parser.add_argument("--region-secured-visible-poll-seconds", type=float, default=0.5)
+    parser.add_argument("--region-secured-terminal-settle-seconds", type=float, default=1.0)
+    parser.add_argument("--region-secured-continue-hover-seconds", type=float, default=1.0)
+    parser.add_argument(
+        "--region-secured-continue-click-settle-seconds",
+        type=float,
+        default=0.35,
+    )
+    parser.add_argument(
+        "--region-secured-hover-continue",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Hover the Region Secured Continue button before any click.",
+    )
+    parser.add_argument(
+        "--region-secured-click-continue",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Click the Region Secured Continue button after the proven hover.",
+    )
     parser.add_argument(
         "--combat-continue-after-fuzzy-block",
         action=argparse.BooleanOptionalAction,
@@ -2752,8 +3911,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--pause-after-combat-player-turn",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Pause once the bridge reports the post-End-Turn player turn.",
+        default=False,
+        help=(
+            "Pause once the bridge reports the post-End-Turn player turn. "
+            "Default is off so bridge-ready immediately triggers the next solve."
+        ),
     )
     parser.add_argument(
         "--startup-codex-visual-check",
@@ -2777,7 +3939,10 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        report = run_opening_milestone(args)
+        if args.current_combat_until_region_secured:
+            report = run_current_combat_region_secured(args)
+        else:
+            report = run_opening_milestone(args)
     except Exception as exc:
         parked = fast.park_on_error()
         print("---LIGHTNING_TIMING_LAB_ERROR---")

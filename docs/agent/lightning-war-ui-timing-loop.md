@@ -334,6 +334,11 @@ once its correctness is proven.
 - Start from the main menu for discovery. A parked or intermediate state may be
   used only to inspect evidence or recover safely, not as the canonical start of
   the next timing proof.
+- Unless the user explicitly asks to continue from the current screen/state,
+  every timing-lab proof run starts from the main menu and replays the proven
+  route from the top. Current-combat or already-visible-panel probes may collect
+  useful side evidence, but they do not satisfy a timing proof request by
+  themselves.
 - Build the autonomous timing lab as a new small script rather than adding more
   complexity to the fast walkthrough script.
 - Keep the user in the loop during discovery, especially when choosing the next
@@ -351,6 +356,21 @@ once its correctness is proven.
   signature in the timing report, click End Turn, and keep measuring the route.
   Do not generalize this exception to ordinary achievement play, diagnosis
   runs, or combat states without a held End Turn plan.
+- Region Secured Continue is a proven Windows control at window-relative
+  `(1647, 985)`. The timing lab should hover it for proof and then click it by
+  default; use `--no-region-secured-click-continue` only for hover-only audits.
+- Bridge-ready is the default speed signal after Deploy Confirm and End Turn.
+  The timing lab should use `--post-confirm-extra-ready-frames 0`,
+  `--post-end-turn-extra-ready-frames 0`, `--no-pause-after-opening-player-turn`,
+  and `--no-pause-after-combat-player-turn` by default so the next solve starts
+  from the bridge transition instead of waiting for screenshot/pause evidence.
+  Re-enable the pause flags only for slower audit/proof runs.
+- The from-top speed-route expectation is the short sequence
+  `enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done`.
+  The timing lab hard-records this with `--speed-expected-player-turns 3` and
+  tightens Region Secured visible polling on expected turn 3. If a longer
+  route appears, the lab must report the mismatch and continue the dynamic loop
+  rather than stopping early.
 - Use the live in-game timer memory reader only after a numeric candidate has
   been validated against pause-menu `Timeline Playtime` across a
   pause -> unpause -> re-pause cycle. For the current Windows process/session
