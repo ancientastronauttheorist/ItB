@@ -925,6 +925,493 @@ def test_confirm_deployment_observes_bridge_player_turn_and_pauses(monkeypatch):
     ]
 
 
+def test_solve_execute_end_turn_observes_next_player_turn(monkeypatch):
+    events = []
+    clicks = []
+    key_presses = []
+    auto_calls = []
+    clock_samples = [
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:28",
+            "game_seconds": 28.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:29",
+            "game_seconds": 29.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:29",
+            "game_seconds": 29.5,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:30",
+            "game_seconds": 30.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:40",
+            "game_seconds": 40.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:40",
+            "game_seconds": 40.5,
+        },
+    ]
+    snapshots = [
+        {
+            "status": "ERROR",
+            "error": "transient_bridge_read",
+        },
+        {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 1,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+        {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def __init__(self):
+            self.calls = []
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            if clock_samples:
+                return clock_samples.pop(0)
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:41",
+                "game_seconds": 41.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            self.calls.append((clock_state, note))
+            return {
+                "screenshot_path": f"{clock_state}_{len(self.calls)}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": {
+                    "status": "OK",
+                    "clock_source": "memory_live_numeric_candidate",
+                    "game_timer": "0:00:40",
+                    "game_seconds": 40.0 + len(self.calls),
+                    "timer_validation": "validated_live_numeric_cycle",
+                },
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:40",
+                "game_seconds": 40.0 + len(self.calls),
+            }
+
+    def fake_auto_turn(**kwargs):
+        auto_calls.append(kwargs)
+        return {
+            "status": "PLAN",
+            "turn": 1,
+            "actions_completed": 3,
+            "score": 1234,
+            "re_solves": 0,
+            "wait_entry_seconds": 0.0,
+            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
+        }
+
+    def fake_snapshot():
+        if snapshots:
+            return snapshots.pop(0)
+        return {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "deployment_zone_count": 0,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        }
+
+    fake_screenshots = FakeScreenshots()
+    monkeypatch.setattr(lab.fast, "cmd_auto_turn", fake_auto_turn)
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda control, *, settle_seconds=0.0: clicks.append(
+            (control, settle_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", fake_snapshot)
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_end_turn_retryable",
+        lambda observed, turn: False,
+    )
+    monkeypatch.setattr(lab.fast, "APP_NAME", "Into the Breach")
+    monkeypatch.setattr(
+        lab.fast,
+        "press_key",
+        lambda key, *, description, app_name, settle_seconds=0.05: key_presses.append(
+            (key, description, app_name, settle_seconds)
+        )
+        or {"status": "OK", "key": key},
+    )
+
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=fake_screenshots,
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=1.0,
+        screenshot_cadence=0.01,
+        bridge_poll_seconds=0.01,
+        extra_ready_frames=1,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+    )
+
+    assert result["status"] == "PASS"
+    assert auto_calls == [
+        {
+            "time_limit": 10.0,
+            "max_wait": 8.0,
+            "wait_poll_interval": 0.2,
+            "resume_before_execute": True,
+            "lightning_speed_loss_policy": True,
+        }
+    ]
+    assert clicks == [("end_turn", 0.0)]
+    assert key_presses == [
+        (
+            "esc",
+            "pause after combat post-end-turn player ready",
+            "Into the Breach",
+            0.05,
+        )
+    ]
+    assert fake_screenshots.calls[0] == (
+        "post_end_turn_observe",
+        "after_combat_end_turn",
+    )
+    assert result["auto_turn_summary"]["actions_completed"] == 3
+    assert result["first_non_player_bridge"]["snapshot"]["phase"] == "combat_enemy"
+    assert result["bridge_samples"][0]["left_player_turn"] is False
+    assert result["bridge_samples"][0]["snapshot"]["status"] == "ERROR"
+    assert result["first_player_ready_bridge"]["snapshot"]["phase"] == "combat_player"
+    assert result["first_player_ready_frame_after_bridge"] is not None
+    assert [event_type for event_type, _payload in events][:3] == [
+        "combat_auto_turn_start",
+        "combat_auto_turn_result",
+        "combat_end_turn_click",
+    ]
+
+
+def test_solve_execute_end_turn_stops_on_auto_turn_block(monkeypatch):
+    events = []
+    auto_calls = []
+    clock_samples = [
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:22",
+            "game_seconds": 22.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:34",
+            "game_seconds": 34.0,
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        frame_clock_sampler = None
+
+        def __init__(self):
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            if clock_samples:
+                return clock_samples.pop(0)
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:34",
+                "game_seconds": 34.0,
+            }
+
+    def fake_auto_turn(**kwargs):
+        auto_calls.append(kwargs)
+        return {
+            "status": "FUZZY_INVESTIGATE_BLOCKED",
+            "turn": 1,
+            "actions_completed": 3,
+            "score": 139507,
+            "re_solves": 2,
+            "held_end_turn_batch": [{"type": "left_click"}],
+            "block_reason": {
+                "reason": "enemy_survived_unexpectedly",
+                "signature": "death|Ranged_Rockthrow|attack",
+                "weapon": "Ranged_Rockthrow",
+            },
+            "next_step": "Do not click End Turn.",
+        }
+
+    monkeypatch.setattr(lab.fast, "cmd_auto_turn", fake_auto_turn)
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda *args, **kwargs: pytest.fail("End Turn must not be clicked"),
+    )
+
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=1.0,
+        screenshot_cadence=0.5,
+        bridge_poll_seconds=0.2,
+        extra_ready_frames=1,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=False,
+        fuzzy_block_min_actions=3,
+    )
+
+    assert result["status"] == "FAIL"
+    assert result["reason"] == "auto_turn_did_not_return_end_turn_plan"
+    assert result["solver_action_signal_source"] == "cmd_auto_turn"
+    assert result["end_turn_signal_source"] == "not_clicked_auto_turn_safety_stop"
+    assert result["auto_turn_summary"]["status"] == "FUZZY_INVESTIGATE_BLOCKED"
+    assert result["safety_stop_reason"]["signature"] == "death|Ranged_Rockthrow|attack"
+    assert "death|Ranged_Rockthrow|attack" in lab._combat_next_patch(result)
+    assert auto_calls
+    assert [event_type for event_type, _payload in events] == [
+        "combat_auto_turn_start",
+        "combat_auto_turn_result",
+    ]
+
+
+def test_solve_execute_end_turn_skips_qualified_fuzzy_block(monkeypatch):
+    events = []
+    clicks = []
+    key_presses = []
+    clock_samples = [
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:22",
+            "game_seconds": 22.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:34",
+            "game_seconds": 34.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:34",
+            "game_seconds": 34.2,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:42",
+            "game_seconds": 42.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:50",
+            "game_seconds": 50.0,
+        },
+        {
+            "status": "OK",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:00:50",
+            "game_seconds": 50.3,
+        },
+    ]
+    snapshots = [
+        {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 1,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+        {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        },
+    ]
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def __init__(self):
+            self.calls = []
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            if clock_samples:
+                return clock_samples.pop(0)
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:51",
+                "game_seconds": 51.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            self.calls.append((clock_state, note))
+            return {
+                "screenshot_path": f"{clock_state}_{len(self.calls)}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": {
+                    "status": "OK",
+                    "clock_source": "memory_live_numeric_candidate",
+                    "game_timer": "0:00:50",
+                    "game_seconds": 50.0,
+                    "timer_validation": "validated_live_numeric_cycle",
+                },
+            }
+
+    def fake_snapshot():
+        if snapshots:
+            return snapshots.pop(0)
+        return {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "active_mechs": 3,
+            "mech_count": 3,
+            "bridge_heartbeat_alive": True,
+            "bridge_heartbeat_stale": False,
+        }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "cmd_auto_turn",
+        lambda **kwargs: {
+            "status": "FUZZY_INVESTIGATE_BLOCKED",
+            "turn": 1,
+            "actions_completed": 3,
+            "score": 139507,
+            "re_solves": 2,
+            "held_end_turn_batch": [{"type": "left_click"}],
+            "block_reason": {
+                "reason": "enemy_survived_unexpectedly",
+                "signature": "death|Ranged_Rockthrow|attack",
+                "weapon": "Ranged_Rockthrow",
+            },
+            "next_step": "Do not click End Turn during ordinary play.",
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda control, *, settle_seconds=0.0: clicks.append(
+            (control, settle_seconds)
+        )
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", fake_snapshot)
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_end_turn_retryable",
+        lambda observed, turn: False,
+    )
+    monkeypatch.setattr(lab.fast, "APP_NAME", "Into the Breach")
+    monkeypatch.setattr(
+        lab.fast,
+        "press_key",
+        lambda key, *, description, app_name, settle_seconds=0.05: key_presses.append(
+            (key, description, app_name, settle_seconds)
+        )
+        or {"status": "OK", "key": key},
+    )
+
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=1.0,
+        screenshot_cadence=0.01,
+        bridge_poll_seconds=0.01,
+        extra_ready_frames=1,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["reason"] == "combat_post_end_turn_player_ready_after_fuzzy_block_skip"
+    assert result["auto_turn_block_skipped"] is True
+    assert result["auto_turn_block_skip_decision"]["signature"] == (
+        "death|Ranged_Rockthrow|attack"
+    )
+    assert result["end_turn_signal_source"] == "fuzzy_block_held_end_turn_speedrun_skip"
+    assert result["safety_stop_reason"]["signature"] == "death|Ranged_Rockthrow|attack"
+    assert clicks == [("end_turn", 0.0)]
+    assert key_presses
+    assert "combat_auto_turn_fuzzy_block_skipped" in [
+        event_type for event_type, _payload in events
+    ]
+
+
 def test_build_parser_defaults_match_first_milestone():
     args = lab.build_parser().parse_args([])
 
@@ -948,6 +1435,16 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.post_confirm_bridge_poll_seconds == 0.2
     assert args.post_confirm_extra_ready_frames == 1
     assert args.pause_after_opening_player_turn is True
+    assert args.combat_turn_after_confirm is False
+    assert args.combat_auto_turn_time_limit == 10.0
+    assert args.combat_auto_turn_max_wait == 8.0
+    assert args.post_end_turn_observe_seconds == 30.0
+    assert args.post_end_turn_bridge_poll_seconds == 0.2
+    assert args.post_end_turn_extra_ready_frames == 1
+    assert args.end_turn_retry_after_seconds == 2.0
+    assert args.combat_continue_after_fuzzy_block is True
+    assert args.combat_fuzzy_block_min_actions == 3
+    assert args.pause_after_combat_player_turn is True
 
 
 def test_timer_sample_seconds_rejects_unvalidated_save_fallback():

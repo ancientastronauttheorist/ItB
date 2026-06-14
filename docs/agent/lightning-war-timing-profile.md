@@ -574,3 +574,78 @@ This notebook explains the executable timings stored in
 - Opening player-turn bridge timer: 0:00:27
 - First frame after bridge-ready timer: 0:00:27
 - Post-confirm observed seconds: 15.715s
+## lightning_ui_timing_combat_turn_20260613_1
+
+- Result: PASS
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_combat_turn_2_player_ready
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.815s
+- Intro continue wall elapsed: 10.311s
+- Red map detected wall elapsed: 10.867s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_combat_turn_20260613_1\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_combat_turn_20260613_1\telemetry\screenshots\000012_1781396564638_gt0-00-06_opening_probe.png
+- Next patch: Compare combat-turn bridge timing with screenshots; then measure the next combat turn or mission-clear branch.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.977s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:11
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:25
+- First frame after bridge-ready timer: 0:00:25
+- Post-confirm observed seconds: 14.202s
+- Combat solver/action signal: cmd_auto_turn
+- Combat auto_turn status: PLAN
+- Combat actions completed: 3
+- Combat auto_turn duration: 39.542s
+- Combat auto_turn done timer: 0:00:35
+- Combat End Turn click timer: 0:00:35
+- Combat bridge left player timer: 0:00:42
+- Combat bridge left-player note: superseded for this marker; the first version allowed a transient bridge error sample to count as non-player phase, and the classifier is now hardened to require a valid fresh bridge snapshot.
+- Combat next player-turn bridge timer: 0:00:50
+- Combat first frame after bridge-ready timer: 0:00:50
+- Combat post-End-Turn observed seconds: 15.152s
+## lightning_ui_timing_combat_turn_20260613_2
+
+- Result: FAIL
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_combat_turn_2_player_ready
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.811s
+- Intro continue wall elapsed: 10.316s
+- Red map detected wall elapsed: 10.916s
+- Red regions: 2
+- Contact sheet: recordings\lightning_ui_timing_combat_turn_20260613_2\telemetry\contact_sheet.png
+- Red map screenshot: recordings\lightning_ui_timing_combat_turn_20260613_2\telemetry\screenshots\000011_1781396862383_gt0-00-06_opening_probe.png
+- Next patch: Diagnose combat auto_turn safety block before End Turn timing (death|Ranged_Rockthrow|attack).
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.896s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:11
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:22
+- First frame after bridge-ready timer: 0:00:22
+- Post-confirm observed seconds: 10.567s
+- Combat solver/action signal: cmd_auto_turn
+- Combat auto_turn status: FUZZY_INVESTIGATE_BLOCKED
+- Combat actions completed: 3
+- Combat safety stop: death|Ranged_Rockthrow|attack
+- Combat policy update: future timing-lab fast attempts skip this class only when `auto_turn` completed the full opening squad action count and produced a held End Turn plan; ordinary play still investigates.
+- Combat auto_turn duration: 37.119s
+- Combat auto_turn done timer: 0:00:34
+- Combat End Turn click timer: n/a
+- Combat bridge left player timer: n/a
+- Combat next player-turn bridge timer: n/a
+- Combat first frame after bridge-ready timer: n/a
+- Combat post-End-Turn observed seconds: n/a

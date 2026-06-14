@@ -722,6 +722,16 @@ def append_notebook_report(report: dict[str, Any]) -> None:
     ready_frame_timer = (
         in_game_timers.get("opening_player_turn_first_frame_after_bridge") or {}
     )
+    combat = report.get("combat_turn") or {}
+    combat_auto_done_timer = in_game_timers.get("combat_auto_turn_done") or {}
+    combat_end_click_timer = in_game_timers.get("combat_end_turn_click_before") or {}
+    combat_left_player_timer = (
+        in_game_timers.get("combat_end_turn_bridge_left_player") or {}
+    )
+    combat_ready_timer = in_game_timers.get("combat_post_end_turn_player_ready") or {}
+    combat_ready_frame_timer = (
+        in_game_timers.get("combat_post_end_turn_first_frame_after_bridge") or {}
+    )
     lines = [
         "",
         f"## {report.get('run_id')}",
@@ -759,6 +769,34 @@ def append_notebook_report(report: dict[str, Any]) -> None:
                 f"- Opening player-turn bridge timer: {bridge_ready_timer.get('game_timer') or 'n/a'}",
                 f"- First frame after bridge-ready timer: {ready_frame_timer.get('game_timer') or 'n/a'}",
                 f"- Post-confirm observed seconds: {_seconds_text(confirm.get('observed_seconds'))}",
+            ]
+        )
+    if combat:
+        combat_summary = combat.get("auto_turn_summary") or {}
+        safety_stop = combat.get("safety_stop_reason")
+        if isinstance(safety_stop, dict):
+            safety_stop_text = (
+                safety_stop.get("signature")
+                or safety_stop.get("reason")
+                or json.dumps(safety_stop, sort_keys=True)
+            )
+        else:
+            safety_stop_text = safety_stop
+        lines.extend(
+            [
+                f"- Combat solver/action signal: {combat.get('solver_action_signal_source') or 'n/a'}",
+                f"- Combat auto_turn status: {combat_summary.get('status') or 'n/a'}",
+                f"- Combat actions completed: {combat_summary.get('actions_completed')}",
+                f"- Combat safety stop: {safety_stop_text or 'n/a'}",
+                f"- Combat fuzzy block speedrun skip: {'yes' if combat.get('auto_turn_block_skipped') else 'no'}",
+                f"- Combat End Turn signal: {combat.get('end_turn_signal_source') or 'n/a'}",
+                f"- Combat auto_turn duration: {_seconds_text(combat.get('auto_turn_duration_seconds'))}",
+                f"- Combat auto_turn done timer: {combat_auto_done_timer.get('game_timer') or 'n/a'}",
+                f"- Combat End Turn click timer: {combat_end_click_timer.get('game_timer') or 'n/a'}",
+                f"- Combat bridge left player timer: {combat_left_player_timer.get('game_timer') or 'n/a'}",
+                f"- Combat next player-turn bridge timer: {combat_ready_timer.get('game_timer') or 'n/a'}",
+                f"- Combat first frame after bridge-ready timer: {combat_ready_frame_timer.get('game_timer') or 'n/a'}",
+                f"- Combat post-End-Turn observed seconds: {_seconds_text(combat.get('observed_seconds'))}",
             ]
         )
     NOTEBOOK_PATH.write_text(existing + "\n".join(lines) + "\n", encoding="utf-8")
@@ -1328,6 +1366,58 @@ def _snapshot_actionable_player_turn(snapshot: dict[str, Any]) -> bool:
     )
 
 
+def _snapshot_left_player_turn_after_end_turn(snapshot: dict[str, Any]) -> bool:
+    if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
+        return False
+    if snapshot.get("bridge_heartbeat_alive") is False:
+        return False
+    if snapshot.get("bridge_heartbeat_stale") is True:
+        return False
+    phase = snapshot.get("phase")
+    return isinstance(phase, str) and phase != "combat_player"
+
+
+def _combat_fuzzy_block_skip_decision(
+    turn: dict[str, Any],
+    *,
+    enabled: bool,
+    min_actions_completed: int,
+) -> dict[str, Any]:
+    if not enabled:
+        return {"skip": False, "reason": "policy_disabled"}
+    if not isinstance(turn, dict):
+        return {"skip": False, "reason": "turn_result_not_dict"}
+    auto_status = turn.get("status")
+    if auto_status != "FUZZY_INVESTIGATE_BLOCKED":
+        return {"skip": False, "reason": "auto_turn_status_not_fuzzy_block"}
+    held_batch = turn.get("held_end_turn_batch") or turn.get(
+        "held_end_turn_codex_computer_use_batch"
+    )
+    if not held_batch:
+        return {"skip": False, "reason": "missing_held_end_turn_batch"}
+    try:
+        actions_completed = int(turn.get("actions_completed") or 0)
+    except (TypeError, ValueError):
+        actions_completed = 0
+    if actions_completed < int(min_actions_completed):
+        return {
+            "skip": False,
+            "reason": "insufficient_completed_actions",
+            "actions_completed": actions_completed,
+            "min_actions_completed": int(min_actions_completed),
+        }
+    block = turn.get("block_reason") or {}
+    return {
+        "skip": True,
+        "reason": "lightning_war_speedrun_fuzzy_block_skip",
+        "auto_turn_status": auto_status,
+        "actions_completed": actions_completed,
+        "min_actions_completed": int(min_actions_completed),
+        "block_reason": block,
+        "signature": block.get("signature") if isinstance(block, dict) else None,
+    }
+
+
 def deploy_recommended_after_visible_deployment(
     *,
     timer_start: float,
@@ -1623,12 +1713,340 @@ def confirm_deployment_and_observe_opening_turn(
     }
 
 
+def solve_execute_end_turn_and_observe_next_turn(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    auto_turn_time_limit: float,
+    auto_turn_max_wait: float,
+    observe_seconds: float,
+    screenshot_cadence: float,
+    bridge_poll_seconds: float,
+    extra_ready_frames: int,
+    pause_after_ready: bool,
+    retry_after_seconds: float,
+    continue_after_fuzzy_block: bool,
+    fuzzy_block_min_actions: int,
+) -> dict[str, Any]:
+    before_timer = _timer_sample_from_recorder(
+        screenshots,
+        label="combat_auto_turn_before",
+    )
+    telemetry.event(
+        "combat_auto_turn_start",
+        timer_seconds=_elapsed(timer_start),
+        before_in_game_timer=before_timer,
+        signal_source="opening_player_turn_bridge_ready_pause",
+        note=(
+            "auto_turn solves and verifies the combat actions; "
+            "resume_before_execute keeps solver thinking out of live timer"
+        ),
+    )
+    auto_started = time.perf_counter()
+    turn = fast.cmd_auto_turn(
+        time_limit=auto_turn_time_limit,
+        max_wait=auto_turn_max_wait,
+        wait_poll_interval=0.2,
+        resume_before_execute=True,
+        lightning_speed_loss_policy=True,
+    )
+    auto_duration = round(time.perf_counter() - auto_started, 3)
+    auto_done_timer = _timer_sample_from_recorder(
+        screenshots,
+        label="combat_auto_turn_done",
+    )
+    turn_summary = {
+        "status": turn.get("status") or turn.get("error"),
+        "turn": turn.get("turn"),
+        "actions_completed": turn.get("actions_completed"),
+        "score": turn.get("score"),
+        "re_solves": turn.get("re_solves"),
+        "wait_entry_seconds": turn.get("wait_entry_seconds"),
+        "has_end_turn_batch": bool(
+            turn.get("batch")
+            or turn.get("pending_end_turn_batch")
+            or turn.get("held_end_turn_batch")
+            or turn.get("held_end_turn_codex_computer_use_batch")
+        ),
+        "next_step": turn.get("next_step"),
+    }
+    telemetry.event(
+        "combat_auto_turn_result",
+        timer_seconds=_elapsed(timer_start),
+        duration_seconds=auto_duration,
+        after_in_game_timer=auto_done_timer,
+        result=turn_summary,
+    )
+    fuzzy_skip = _combat_fuzzy_block_skip_decision(
+        turn,
+        enabled=continue_after_fuzzy_block,
+        min_actions_completed=fuzzy_block_min_actions,
+    )
+    if turn.get("status") != "PLAN" and not fuzzy_skip.get("skip"):
+        return {
+            "status": "FAIL",
+            "reason": "auto_turn_did_not_return_end_turn_plan",
+            "solver_action_signal_source": "cmd_auto_turn",
+            "end_turn_signal_source": "not_clicked_auto_turn_safety_stop",
+            "player_turn_signal_source": None,
+            "visual_evidence_role": "2hz_screenshots_before_solver_stop_only",
+            "safety_stop_reason": turn.get("block_reason") or turn.get("next_step"),
+            "before_in_game_timer": before_timer,
+            "auto_turn_duration_seconds": auto_duration,
+            "auto_turn_done_timer": auto_done_timer,
+            "auto_turn": turn,
+            "auto_turn_summary": turn_summary,
+            "auto_turn_block_skip_decision": fuzzy_skip,
+        }
+    if fuzzy_skip.get("skip"):
+        telemetry.event(
+            "combat_auto_turn_fuzzy_block_skipped",
+            timer_seconds=_elapsed(timer_start),
+            decision=fuzzy_skip,
+            safety_stop_reason=turn.get("block_reason") or turn.get("next_step"),
+        )
+
+    end_turn_before_timer = _timer_sample_from_recorder(
+        screenshots,
+        label="combat_end_turn_click_before",
+    )
+    click_started = time.perf_counter()
+    end_turn_click = fast.click_control("end_turn", settle_seconds=0.0)
+    end_turn_click_duration = round(time.perf_counter() - click_started, 3)
+    end_turn_click_wall = _elapsed(timer_start)
+    telemetry.event(
+        "combat_end_turn_click",
+        timer_seconds=end_turn_click_wall,
+        before_in_game_timer=end_turn_before_timer,
+        duration_seconds=end_turn_click_duration,
+        click=end_turn_click,
+    )
+
+    started = time.perf_counter()
+    next_frame_at = started
+    next_bridge_at = started
+    frames: list[dict[str, Any]] = []
+    bridge_samples: list[dict[str, Any]] = []
+    first_non_player_bridge: dict[str, Any] | None = None
+    first_player_ready_bridge: dict[str, Any] | None = None
+    ready_frames_seen = 0
+    ready_frame: dict[str, Any] | None = None
+    retry_click: dict[str, Any] | None = None
+    retry_timer: dict[str, Any] | None = None
+
+    while True:
+        now = time.perf_counter()
+        elapsed = now - started
+        if elapsed >= max(0.0, observe_seconds):
+            break
+
+        did_work = False
+        if now >= next_frame_at:
+            frame = screenshots.capture_once(
+                clock_state="post_end_turn_observe",
+                note="after_combat_end_turn",
+            )
+            frame["timer_seconds"] = _elapsed(timer_start)
+            frame_timer = _timer_sample_from_frame(
+                frame,
+                label="post_end_turn_observe_frame",
+            )
+            frame_sample = {
+                "timer_seconds": frame["timer_seconds"],
+                "screenshot_path": frame.get("screenshot_path"),
+                "frame_timer": frame_timer,
+                "after_player_ready_bridge": first_player_ready_bridge is not None,
+            }
+            frames.append(frame_sample)
+            telemetry.event("post_end_turn_frame", **frame_sample)
+            if first_player_ready_bridge is not None:
+                ready_frames_seen += 1
+                if ready_frame is None:
+                    ready_frame = frame_sample
+            next_frame_at = max(
+                next_frame_at + max(0.1, screenshot_cadence),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        now = time.perf_counter()
+        if now >= next_bridge_at:
+            snapshot = fast._lightning_live_snapshot()
+            compact = _compact_bridge_snapshot(snapshot)
+            sample = {
+                "timer_seconds": _elapsed(timer_start),
+                "elapsed_after_end_turn_seconds": round(now - started, 3),
+                "snapshot": compact,
+                "left_player_turn": _snapshot_left_player_turn_after_end_turn(
+                    snapshot
+                ),
+                "player_ready": _snapshot_actionable_player_turn(snapshot),
+            }
+            if first_non_player_bridge is None and sample["left_player_turn"]:
+                sample["bridge_timer"] = _timer_sample_from_recorder(
+                    screenshots,
+                    label="combat_end_turn_bridge_left_player",
+                )
+                first_non_player_bridge = sample
+            if first_player_ready_bridge is None and sample["player_ready"]:
+                sample["bridge_timer"] = _timer_sample_from_recorder(
+                    screenshots,
+                    label="combat_post_end_turn_player_ready",
+                )
+                first_player_ready_bridge = sample
+            bridge_samples.append(sample)
+            telemetry.event("post_end_turn_bridge_probe", **sample)
+            next_bridge_at = max(
+                next_bridge_at + max(0.05, bridge_poll_seconds),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        elapsed = time.perf_counter() - started
+        if (
+            retry_click is None
+            and first_non_player_bridge is None
+            and elapsed >= max(0.5, retry_after_seconds)
+        ):
+            observed = {
+                "status": "END_TURN_CLICK_NOT_OBSERVED",
+                "reason": "bridge_still_player_turn",
+                "samples": [
+                    sample.get("snapshot") or {}
+                    for sample in bridge_samples
+                    if isinstance(sample, dict)
+                ],
+            }
+            if fast._lightning_end_turn_retryable(observed, turn):
+                retry_timer = _timer_sample_from_recorder(
+                    screenshots,
+                    label="combat_end_turn_retry_before",
+                )
+                retry_click = fast.click_control("end_turn", settle_seconds=0.0)
+                telemetry.event(
+                    "combat_end_turn_retry_click",
+                    timer_seconds=_elapsed(timer_start),
+                    before_in_game_timer=retry_timer,
+                    click=retry_click,
+                )
+                did_work = True
+
+        if (
+            first_player_ready_bridge is not None
+            and ready_frames_seen >= max(0, int(extra_ready_frames))
+        ):
+            break
+
+        if not did_work:
+            next_due = min(next_frame_at, next_bridge_at)
+            time.sleep(max(0.01, min(0.05, next_due - time.perf_counter())))
+
+    pause: dict[str, Any] | None = None
+    after_pause_timer: dict[str, Any] | None = None
+    if pause_after_ready and first_player_ready_bridge is not None:
+        pause = fast.press_key(
+            "esc",
+            description="pause after combat post-end-turn player ready",
+            app_name=fast.APP_NAME,
+            settle_seconds=0.05,
+        )
+        after_pause_timer = _timer_sample_from_recorder(
+            screenshots,
+            label="combat_post_end_turn_after_pause",
+        )
+        telemetry.event(
+            "combat_post_end_turn_pause",
+            timer_seconds=_elapsed(timer_start),
+            click=pause,
+            after_pause_timer=after_pause_timer,
+        )
+
+    status = (
+        "PASS"
+        if (
+            end_turn_click.get("status") == "OK"
+            and first_non_player_bridge is not None
+            and first_player_ready_bridge is not None
+        )
+        else "FAIL"
+    )
+    return {
+        "status": status,
+        "reason": (
+            "combat_post_end_turn_player_ready"
+            if first_player_ready_bridge is not None
+            and not fuzzy_skip.get("skip")
+            else "combat_post_end_turn_player_ready_after_fuzzy_block_skip"
+            if first_player_ready_bridge is not None
+            else "combat_post_end_turn_not_detected"
+        ),
+        "solver_action_signal_source": "cmd_auto_turn",
+        "end_turn_signal_source": (
+            "fuzzy_block_held_end_turn_speedrun_skip"
+            if fuzzy_skip.get("skip")
+            else "auto_turn_end_turn_plan_then_ui_click"
+        ),
+        "player_turn_signal_source": "bridge_lua_live_snapshot",
+        "visual_evidence_role": "2hz_screenshots_for_audit_not_primary_signal",
+        "auto_turn_block_skipped": bool(fuzzy_skip.get("skip")),
+        "auto_turn_block_skip_decision": fuzzy_skip,
+        "safety_stop_reason": (
+            turn.get("block_reason") or turn.get("next_step")
+            if fuzzy_skip.get("skip")
+            else None
+        ),
+        "before_in_game_timer": before_timer,
+        "auto_turn": turn,
+        "auto_turn_summary": turn_summary,
+        "auto_turn_duration_seconds": auto_duration,
+        "auto_turn_done_timer": auto_done_timer,
+        "end_turn_before_in_game_timer": end_turn_before_timer,
+        "end_turn_click": end_turn_click,
+        "end_turn_click_wall_seconds": end_turn_click_wall,
+        "end_turn_click_duration_seconds": end_turn_click_duration,
+        "end_turn_retry_click": retry_click,
+        "end_turn_retry_before_in_game_timer": retry_timer,
+        "observe_seconds_requested": observe_seconds,
+        "observed_seconds": round(time.perf_counter() - started, 3),
+        "frames": frames,
+        "bridge_samples": bridge_samples,
+        "first_non_player_bridge": first_non_player_bridge,
+        "first_player_ready_bridge": first_player_ready_bridge,
+        "first_player_ready_frame_after_bridge": ready_frame,
+        "pause": pause,
+        "after_pause_timer": after_pause_timer,
+    }
+
+
+def _combat_next_patch(combat_turn_result: dict[str, Any] | None) -> str:
+    if not isinstance(combat_turn_result, dict):
+        return "Fix combat auto_turn startup before End Turn timing."
+    auto_summary = combat_turn_result.get("auto_turn_summary") or {}
+    auto_status = auto_summary.get("status")
+    if auto_status and auto_status != "PLAN":
+        stop = combat_turn_result.get("safety_stop_reason")
+        if not isinstance(stop, dict):
+            auto_turn = combat_turn_result.get("auto_turn") or {}
+            stop = auto_turn.get("block_reason")
+        signature = stop.get("signature") if isinstance(stop, dict) else None
+        suffix = f" ({signature})" if signature else ""
+        return (
+            "Diagnose combat auto_turn safety block before End Turn timing"
+            f"{suffix}."
+        )
+    if not combat_turn_result.get("end_turn_click"):
+        return "Fix combat End Turn click before post-End-Turn timing."
+    return "Fix combat post-End-Turn player-ready detection."
+
+
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
     memory_live_timer_address = _parse_optional_timer_address(args.memory_live_timer_address)
     memory_live_timer_kind = args.memory_live_timer_kind
-    confirm_after_deploy = bool(args.confirm_after_deploy)
+    combat_turn_after_confirm = bool(args.combat_turn_after_confirm)
+    confirm_after_deploy = bool(args.confirm_after_deploy or combat_turn_after_confirm)
     deploy_after_visible_deployment = bool(
         args.deploy_after_visible_deployment or confirm_after_deploy
     )
@@ -1638,6 +2056,9 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     click_start_mission = bool(args.click_start_mission or deploy_after_visible_deployment)
     click_red_mission = bool(args.click_red_mission or click_start_mission)
     route_slice = (
+        "main_menu_to_archive_red_map_to_combat_turn_2_player_ready"
+        if combat_turn_after_confirm
+        else
         "main_menu_to_archive_red_map_to_opening_player_turn"
         if confirm_after_deploy
         else
@@ -1671,6 +2092,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "click_start_mission": click_start_mission,
             "deploy_after_visible_deployment": deploy_after_visible_deployment,
             "confirm_after_deploy": confirm_after_deploy,
+            "combat_turn_after_confirm": combat_turn_after_confirm,
             "deployment_trigger_source": deployment_trigger_source,
             "pause_after_red_mission_click": (
                 bool(args.pause_after_red_mission_click)
@@ -1695,6 +2117,31 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "post_confirm_bridge_poll_seconds": (
                 args.post_confirm_bridge_poll_seconds
                 if confirm_after_deploy
+                else None
+            ),
+            "combat_auto_turn_time_limit": (
+                args.combat_auto_turn_time_limit
+                if combat_turn_after_confirm
+                else None
+            ),
+            "post_end_turn_observe_seconds": (
+                args.post_end_turn_observe_seconds
+                if combat_turn_after_confirm
+                else None
+            ),
+            "post_end_turn_bridge_poll_seconds": (
+                args.post_end_turn_bridge_poll_seconds
+                if combat_turn_after_confirm
+                else None
+            ),
+            "combat_continue_after_fuzzy_block": (
+                args.combat_continue_after_fuzzy_block
+                if combat_turn_after_confirm
+                else None
+            ),
+            "combat_fuzzy_block_min_actions": (
+                args.combat_fuzzy_block_min_actions
+                if combat_turn_after_confirm
                 else None
             ),
             "screenshot_filename_timer_source": (
@@ -1868,6 +2315,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     start_mission: dict[str, Any] | None = None
     deployment_result: dict[str, Any] | None = None
     confirm_result: dict[str, Any] | None = None
+    combat_turn_result: dict[str, Any] | None = None
     if click_start_mission and isinstance(mission_preview, dict):
         start_mission = click_start_mission_from_preview(
             timer_start=timer_start,
@@ -1988,6 +2436,52 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         in_game_timers["opening_player_turn_after_pause"] = confirm_result.get(
             "after_pause_timer"
         )
+    if (
+        combat_turn_after_confirm
+        and isinstance(confirm_result, dict)
+        and confirm_result.get("status") == "PASS"
+    ):
+        combat_turn_result = solve_execute_end_turn_and_observe_next_turn(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            auto_turn_time_limit=args.combat_auto_turn_time_limit,
+            auto_turn_max_wait=args.combat_auto_turn_max_wait,
+            observe_seconds=args.post_end_turn_observe_seconds,
+            screenshot_cadence=args.screenshot_cadence,
+            bridge_poll_seconds=args.post_end_turn_bridge_poll_seconds,
+            extra_ready_frames=args.post_end_turn_extra_ready_frames,
+            pause_after_ready=args.pause_after_combat_player_turn,
+            retry_after_seconds=args.end_turn_retry_after_seconds,
+            continue_after_fuzzy_block=args.combat_continue_after_fuzzy_block,
+            fuzzy_block_min_actions=args.combat_fuzzy_block_min_actions,
+        )
+        in_game_timers["combat_auto_turn_before"] = combat_turn_result.get(
+            "before_in_game_timer"
+        )
+        in_game_timers["combat_auto_turn_done"] = combat_turn_result.get(
+            "auto_turn_done_timer"
+        )
+        in_game_timers["combat_end_turn_click_before"] = combat_turn_result.get(
+            "end_turn_before_in_game_timer"
+        )
+        first_left_player = combat_turn_result.get("first_non_player_bridge") or {}
+        in_game_timers["combat_end_turn_bridge_left_player"] = first_left_player.get(
+            "bridge_timer"
+        )
+        first_combat_player = combat_turn_result.get("first_player_ready_bridge") or {}
+        in_game_timers["combat_post_end_turn_player_ready"] = (
+            first_combat_player.get("bridge_timer")
+        )
+        ready_frame = (
+            combat_turn_result.get("first_player_ready_frame_after_bridge") or {}
+        )
+        in_game_timers["combat_post_end_turn_first_frame_after_bridge"] = (
+            ready_frame.get("frame_timer")
+        )
+        in_game_timers["combat_post_end_turn_after_pause"] = (
+            combat_turn_result.get("after_pause_timer")
+        )
     frame_report = generate_frame_delta_report(telemetry.run_dir)
 
     branch_label = (
@@ -2017,8 +2511,19 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             and confirm_result.get("status") == "PASS"
             else "FAIL"
         )
+    if combat_turn_after_confirm:
+        status = (
+            "PASS"
+            if status == "PASS"
+            and isinstance(combat_turn_result, dict)
+            and combat_turn_result.get("status") == "PASS"
+            else "FAIL"
+        )
     if status != "PASS":
         next_patch = (
+            _combat_next_patch(combat_turn_result)
+            if combat_turn_after_confirm
+            else
             "Fix Confirm click or opening enemy-turn/player-turn detection."
             if confirm_after_deploy
             else
@@ -2026,6 +2531,8 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             if deploy_after_visible_deployment
             else "Improve Archive intro wait/dismissal or red-region detector."
         )
+    elif combat_turn_after_confirm:
+        next_patch = "Compare combat-turn bridge timing with screenshots; then measure the next combat turn or mission-clear branch."
     elif confirm_after_deploy:
         next_patch = "Compare bridge/player-turn timing with screenshot evidence; then measure first combat action."
     elif deploy_after_visible_deployment:
@@ -2050,6 +2557,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         "start_mission": start_mission,
         "deploy_recommended": deployment_result,
         "deploy_confirm": confirm_result,
+        "combat_turn": combat_turn_result,
         "frame_delta_report": frame_report,
         "next_patch": next_patch,
     }
@@ -2209,6 +2717,43 @@ def build_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Pause once the bridge reports the first actionable player turn.",
+    )
+    parser.add_argument(
+        "--combat-turn-after-confirm",
+        action="store_true",
+        help=(
+            "After the opening player turn is ready, run auto_turn, click End "
+            "Turn, and observe the enemy turn back to the next player turn."
+        ),
+    )
+    parser.add_argument("--combat-auto-turn-time-limit", type=float, default=10.0)
+    parser.add_argument("--combat-auto-turn-max-wait", type=float, default=8.0)
+    parser.add_argument("--post-end-turn-observe-seconds", type=float, default=30.0)
+    parser.add_argument("--post-end-turn-bridge-poll-seconds", type=float, default=0.2)
+    parser.add_argument("--post-end-turn-extra-ready-frames", type=int, default=1)
+    parser.add_argument("--end-turn-retry-after-seconds", type=float, default=2.0)
+    parser.add_argument(
+        "--combat-continue-after-fuzzy-block",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Lightning War timing-lab policy: if auto_turn completed the full "
+            "opening squad action count and only holds End Turn because of a "
+            "FUZZY_INVESTIGATE_BLOCKED safety stop, click End Turn anyway and "
+            "keep timing the route."
+        ),
+    )
+    parser.add_argument(
+        "--combat-fuzzy-block-min-actions",
+        type=int,
+        default=3,
+        help="Minimum completed actions required before the fuzzy-block speedrun skip.",
+    )
+    parser.add_argument(
+        "--pause-after-combat-player-turn",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Pause once the bridge reports the post-End-Turn player turn.",
     )
     parser.add_argument(
         "--startup-codex-visual-check",

@@ -344,6 +344,13 @@ once its correctness is proven.
   game-touching commands; keep `game_loop.py` and UI-control commands serialized.
 - Use screenshots for novel UI and timing boundaries.
 - Use bridge reads for combat state once combat is loaded.
+- Lightning War timing-lab fast attempts may skip a post-action
+  `FUZZY_INVESTIGATE_BLOCKED` safety stop only when `auto_turn` has already
+  completed the full opening squad action count and returned a held End Turn
+  plan. This is a speedrun-specific edge-case policy: record the skipped block
+  signature in the timing report, click End Turn, and keep measuring the route.
+  Do not generalize this exception to ordinary achievement play, diagnosis
+  runs, or combat states without a held End Turn plan.
 - Use the live in-game timer memory reader only after a numeric candidate has
   been validated against pause-menu `Timeline Playtime` across a
   pause -> unpause -> re-pause cycle. For the current Windows process/session
