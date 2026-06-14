@@ -429,6 +429,17 @@ once its correctness is proven.
   signature in the timing report, click End Turn, and keep measuring the route.
   Do not generalize this exception to ordinary achievement play, diagnosis
   runs, or combat states without a held End Turn plan.
+- Lightning War timing-lab fast attempts should also auto-consent ordinary
+  `SAFETY_BLOCKED` combat plans. In this loop, speed is the point and solver
+  safety blocks are evidence for later solver-improvement work, not a reason
+  to stop the timing route. Record the blocked plan, rerun `auto_turn` with its
+  exact emitted `dirty_consent_id` and `candidate_rank`, pass the broad dirty
+  objective/protected-objective flags needed for the reviewed line, and keep
+  going if the rerun returns an End Turn plan. Keep this policy scoped to
+  Lightning War timing/attempt scripts; ordinary achievement loops still obey
+  the safety-gates doc. Do not auto-consent a `pod_unrecovered_final` line:
+  surviving Time Pods create post-mission UI, so the Lightning route must
+  destroy the pod or reroute.
 - Always enable the Chronophobia pod-destruction policy during Lightning War
   attempts. Time Pod reward/recovery screens add route UI and live timer waste,
   so the speed route should destroy discovered pods instead of collecting or

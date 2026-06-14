@@ -107,6 +107,38 @@ def _repo_relative_text(value: Any) -> Any:
         return str(value)
 
 
+def _mission_timer_sample(
+    mission_timers: dict[str, Any],
+    key: str,
+) -> dict[str, Any] | None:
+    value = mission_timers.get(key)
+    return value if isinstance(value, dict) else None
+
+
+def _mission_status(
+    *,
+    red_detection: dict[str, Any] | None,
+    mission_preview: dict[str, Any] | None,
+    start_mission: dict[str, Any] | None,
+    deployment_result: dict[str, Any] | None,
+    confirm_result: dict[str, Any] | None,
+    combat_region_result: dict[str, Any] | None,
+) -> str:
+    if not isinstance(red_detection, dict) or red_detection.get("status") != "PASS":
+        return "FAIL"
+    if not isinstance(mission_preview, dict) or mission_preview.get("status") != "OK":
+        return "FAIL"
+    if not isinstance(start_mission, dict) or start_mission.get("status") != "PASS":
+        return "FAIL"
+    if not isinstance(deployment_result, dict) or deployment_result.get("status") != "PASS":
+        return "FAIL"
+    if not isinstance(confirm_result, dict) or confirm_result.get("status") != "PASS":
+        return "FAIL"
+    if not isinstance(combat_region_result, dict) or combat_region_result.get("status") != "PASS":
+        return "FAIL"
+    return "PASS"
+
+
 def _seconds_text(value: Any) -> str:
     if value is None:
         return "n/a"
@@ -2327,6 +2359,46 @@ def _auto_turn_time_pod_left_alive_block(auto_turn: dict[str, Any] | None) -> bo
     return bool(blocking_kinds) and set(blocking_kinds) <= {"pod_unrecovered_final"}
 
 
+def _combat_safety_block_auto_consent_decision(
+    turn: dict[str, Any],
+    *,
+    enabled: bool,
+) -> dict[str, Any]:
+    if not enabled:
+        return {"consent": False, "reason": "policy_disabled"}
+    if not isinstance(turn, dict):
+        return {"consent": False, "reason": "turn_result_not_dict"}
+    if turn.get("status") != "SAFETY_BLOCKED":
+        return {"consent": False, "reason": "auto_turn_status_not_safety_blocked"}
+    if _auto_turn_time_pod_left_alive_block(turn):
+        return {
+            "consent": False,
+            "reason": "time_pod_left_alive_speed_policy_block",
+        }
+    dirty_consent_id = turn.get("dirty_consent_id")
+    if not dirty_consent_id:
+        return {"consent": False, "reason": "missing_dirty_consent_id"}
+    if turn.get("final_cave_resist_gamble"):
+        return {"consent": False, "reason": "final_cave_resist_requires_review"}
+    plan_safety = turn.get("plan_safety") or {}
+    blocking_kinds = sorted(
+        {
+            str(violation.get("kind"))
+            for violation in plan_safety.get("violations", []) or []
+            if isinstance(violation, dict)
+            and violation.get("blocking")
+            and violation.get("kind")
+        }
+    )
+    return {
+        "consent": True,
+        "reason": "lightning_war_timing_lab_speed_auto_consent",
+        "dirty_consent_id": dirty_consent_id,
+        "candidate_rank": turn.get("selected_candidate_rank"),
+        "blocking_kinds": blocking_kinds,
+    }
+
+
 def _wait_for_deployment_bridge_ready(
     *,
     timer_start: float,
@@ -2705,6 +2777,7 @@ def solve_execute_end_turn_and_observe_next_turn(
     retry_after_seconds: float,
     continue_after_fuzzy_block: bool,
     fuzzy_block_min_actions: int,
+    auto_consent_safety_block: bool = True,
     destroy_time_pods: bool = True,
     stop_on_region_secured: bool = False,
     visible_poll_seconds: float = 0.5,
@@ -2741,7 +2814,27 @@ def solve_execute_end_turn_and_observe_next_turn(
             "resume_before_execute keeps solver thinking out of live timer"
         ),
     )
+    def summarize_turn(turn_result: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "status": turn_result.get("status") or turn_result.get("error"),
+            "turn": turn_result.get("turn"),
+            "actions_completed": turn_result.get("actions_completed"),
+            "score": turn_result.get("score"),
+            "re_solves": turn_result.get("re_solves"),
+            "wait_entry_seconds": turn_result.get("wait_entry_seconds"),
+            "selected_candidate_rank": turn_result.get("selected_candidate_rank"),
+            "dirty_consent_id": turn_result.get("dirty_consent_id"),
+            "has_end_turn_batch": bool(
+                turn_result.get("batch")
+                or turn_result.get("pending_end_turn_batch")
+                or turn_result.get("held_end_turn_batch")
+                or turn_result.get("held_end_turn_codex_computer_use_batch")
+            ),
+            "next_step": turn_result.get("next_step"),
+        }
+
     auto_started = time.perf_counter()
+    attempt_started = time.perf_counter()
     turn = fast.cmd_auto_turn(
         time_limit=auto_turn_time_limit,
         max_wait=auto_turn_max_wait,
@@ -2750,33 +2843,78 @@ def solve_execute_end_turn_and_observe_next_turn(
         lightning_speed_loss_policy=True,
         destroy_time_pods=destroy_time_pods,
     )
-    auto_duration = round(time.perf_counter() - auto_started, 3)
+    first_auto_duration = round(time.perf_counter() - attempt_started, 3)
     auto_done_timer = _timer_sample_from_recorder(
         screenshots,
         label="combat_auto_turn_done",
     )
-    turn_summary = {
-        "status": turn.get("status") or turn.get("error"),
-        "turn": turn.get("turn"),
-        "actions_completed": turn.get("actions_completed"),
-        "score": turn.get("score"),
-        "re_solves": turn.get("re_solves"),
-        "wait_entry_seconds": turn.get("wait_entry_seconds"),
-        "has_end_turn_batch": bool(
-            turn.get("batch")
-            or turn.get("pending_end_turn_batch")
-            or turn.get("held_end_turn_batch")
-            or turn.get("held_end_turn_codex_computer_use_batch")
-        ),
-        "next_step": turn.get("next_step"),
-    }
+    turn_summary = summarize_turn(turn)
+    auto_turn_attempts = [
+        {
+            "attempt": 1,
+            "kind": "initial",
+            "duration_seconds": first_auto_duration,
+            "done_timer": auto_done_timer,
+            "summary": turn_summary,
+        }
+    ]
     telemetry.event(
         "combat_auto_turn_result",
         timer_seconds=_elapsed(timer_start),
-        duration_seconds=auto_duration,
+        duration_seconds=first_auto_duration,
         after_in_game_timer=auto_done_timer,
         result=turn_summary,
     )
+    safety_auto_consent = _combat_safety_block_auto_consent_decision(
+        turn,
+        enabled=auto_consent_safety_block,
+    )
+    if safety_auto_consent.get("consent"):
+        telemetry.event(
+            "combat_auto_turn_safety_block_auto_consented",
+            timer_seconds=_elapsed(timer_start),
+            decision=safety_auto_consent,
+            blocked_result=turn_summary,
+        )
+        retry_started = time.perf_counter()
+        turn = fast.cmd_auto_turn(
+            time_limit=auto_turn_time_limit,
+            max_wait=auto_turn_max_wait,
+            wait_poll_interval=0.2,
+            resume_before_execute=True,
+            lightning_speed_loss_policy=True,
+            destroy_time_pods=destroy_time_pods,
+            allow_dirty_plan=True,
+            candidate_rank=safety_auto_consent.get("candidate_rank"),
+            dirty_consent_id=safety_auto_consent.get("dirty_consent_id"),
+            allow_protected_objective_loss=True,
+            allow_objective_loss=True,
+        )
+        retry_duration = round(time.perf_counter() - retry_started, 3)
+        auto_done_timer = _timer_sample_from_recorder(
+            screenshots,
+            label="combat_auto_turn_dirty_consent_done",
+        )
+        turn_summary = summarize_turn(turn)
+        auto_turn_attempts.append(
+            {
+                "attempt": 2,
+                "kind": "dirty_consent",
+                "duration_seconds": retry_duration,
+                "done_timer": auto_done_timer,
+                "summary": turn_summary,
+                "decision": safety_auto_consent,
+            }
+        )
+        telemetry.event(
+            "combat_auto_turn_dirty_consent_result",
+            timer_seconds=_elapsed(timer_start),
+            duration_seconds=retry_duration,
+            after_in_game_timer=auto_done_timer,
+            result=turn_summary,
+            decision=safety_auto_consent,
+        )
+    auto_duration = round(time.perf_counter() - auto_started, 3)
     fuzzy_skip = _combat_fuzzy_block_skip_decision(
         turn,
         enabled=continue_after_fuzzy_block,
@@ -2815,6 +2953,8 @@ def solve_execute_end_turn_and_observe_next_turn(
             "bridge_refresh_before_auto_turn": bridge_refresh_before_auto_turn,
             "auto_turn": turn,
             "auto_turn_summary": turn_summary,
+            "auto_turn_attempts": auto_turn_attempts,
+            "auto_turn_safety_block_auto_consent": safety_auto_consent,
             "auto_turn_block_skip_decision": fuzzy_skip,
         }
     if fuzzy_skip.get("skip"):
@@ -3136,6 +3276,7 @@ def solve_execute_end_turn_and_observe_next_turn(
         "visual_evidence_role": "2hz_screenshots_for_audit_not_primary_signal",
         "auto_turn_block_skipped": bool(fuzzy_skip.get("skip")),
         "auto_turn_block_skip_decision": fuzzy_skip,
+        "auto_turn_safety_block_auto_consent": safety_auto_consent,
         "safety_stop_reason": (
             turn.get("block_reason") or turn.get("next_step")
             if fuzzy_skip.get("skip")
@@ -3144,6 +3285,7 @@ def solve_execute_end_turn_and_observe_next_turn(
         "before_in_game_timer": before_timer,
         "auto_turn": turn,
         "auto_turn_summary": turn_summary,
+        "auto_turn_attempts": auto_turn_attempts,
         "bridge_refresh_before_auto_turn": bridge_refresh_before_auto_turn,
         "auto_turn_duration_seconds": auto_duration,
         "auto_turn_done_timer": auto_done_timer,
@@ -3225,6 +3367,7 @@ def solve_until_region_secured(
     region_continue_hover_seconds: float,
     click_region_continue: bool,
     region_continue_click_settle_seconds: float,
+    auto_consent_safety_block: bool = True,
     region_continue_post_observe_seconds: float = 0.0,
     region_continue_post_visible_poll_seconds: float = 0.25,
     destroy_time_pods: bool = True,
@@ -3292,6 +3435,7 @@ def solve_until_region_secured(
             retry_after_seconds=retry_after_seconds,
             continue_after_fuzzy_block=continue_after_fuzzy_block,
             fuzzy_block_min_actions=fuzzy_block_min_actions,
+            auto_consent_safety_block=auto_consent_safety_block,
             stop_on_region_secured=True,
             visible_poll_seconds=turn_visible_poll_seconds,
             terminal_visual_settle_seconds=terminal_visual_settle_seconds,
@@ -3431,6 +3575,9 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
             "combat_loop_max_turns": args.combat_loop_max_turns,
             "region_secured_hover_continue": args.region_secured_hover_continue,
             "region_secured_click_continue": args.region_secured_click_continue,
+            "combat_auto_consent_safety_block": (
+                getattr(args, "combat_auto_consent_safety_block", True)
+            ),
         }
     )
     timer_start = time.perf_counter()
@@ -3539,6 +3686,11 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
             retry_after_seconds=args.end_turn_retry_after_seconds,
             continue_after_fuzzy_block=args.combat_continue_after_fuzzy_block,
             fuzzy_block_min_actions=args.combat_fuzzy_block_min_actions,
+            auto_consent_safety_block=getattr(
+                args,
+                "combat_auto_consent_safety_block",
+                True,
+            ),
             hover_region_continue=args.region_secured_hover_continue,
             region_continue_hover_seconds=args.region_secured_continue_hover_seconds,
             click_region_continue=args.region_secured_click_continue,
@@ -3623,6 +3775,292 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
     return report
 
 
+def run_followup_mission_from_island_map(
+    *,
+    mission_index: int,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    args: argparse.Namespace,
+    memory_timer_address: int | None,
+    memory_live_timer_address: int | None,
+    memory_live_timer_kind: str | None,
+    deployment_trigger_source: str,
+    preview_transition: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    telemetry.event(
+        "followup_mission_start",
+        timer_seconds=_elapsed(timer_start),
+        mission_index=mission_index,
+    )
+    mission_preview: dict[str, Any] | None = None
+    mission_timers: dict[str, Any] = {}
+    if preview_transition is not None:
+        preview_timer = _mission_timer_sample(
+            "mission_preview_after_result_clear",
+            profile=args.profile,
+            use_memory=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+        )
+        red_region = preview_transition.get("red_region")
+        red_detection = {
+            "status": "PASS",
+            "reason": "mission_preview_opened_by_result_clear",
+            "region_count": 1 if isinstance(red_region, dict) else None,
+            "selected_region": red_region,
+            "result_clear_transition": preview_transition,
+        }
+        mission_preview = {
+            "status": "OK",
+            "reason": "mission_preview_opened_by_result_clear",
+            "selected_region": red_region,
+            "after_preview_timer": preview_timer,
+            "result_clear_transition": preview_transition,
+        }
+        mission_timers["mission_preview_after_result_clear"] = preview_timer
+        telemetry.event(
+            "followup_mission_preview_opened_by_result_clear",
+            timer_seconds=_elapsed(timer_start),
+            mission_index=mission_index,
+            preview_timer=preview_timer,
+            transition_status=preview_transition.get("status"),
+        )
+    else:
+        red_detection = wait_for_archive_red_map(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            profile=args.profile,
+            use_memory_timer=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+            max_seconds=args.red_map_timeout_seconds,
+            interval_seconds=args.red_probe_interval_seconds,
+        )
+        detected_frame_timer = red_detection.get("detected_frame_timer")
+        if isinstance(detected_frame_timer, dict):
+            mission_timers["red_map_detected_frame"] = detected_frame_timer
+        mission_timers["red_map_detected"] = (
+            detected_frame_timer
+            if _timer_sample_seconds(detected_frame_timer) is not None
+            else red_detection.get("paired_in_game_timer")
+        )
+
+    if red_detection.get("status") == "PASS" and mission_preview is None:
+        mission_preview = click_selected_red_mission_preview(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            red_detection=red_detection,
+            profile=args.profile,
+            use_memory_timer=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+            hover_seconds=args.red_mission_click_hover_seconds,
+            settle_seconds=args.red_mission_click_settle_seconds,
+            hold_seconds=args.red_mission_click_hold_seconds,
+            pause_after_click=False,
+        )
+        mission_timers["mission_preview_frame"] = mission_preview.get(
+            "preview_frame_timer"
+        )
+        mission_timers["mission_preview_after_click"] = mission_preview.get(
+            "after_preview_timer"
+        )
+
+    start_mission: dict[str, Any] | None = None
+    if isinstance(mission_preview, dict) and mission_preview.get("status") == "OK":
+        start_mission = click_start_mission_from_preview(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            profile=args.profile,
+            use_memory_timer=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+            settle_seconds=args.start_mission_click_settle_seconds,
+            hover_seconds=args.start_mission_click_hover_seconds,
+            hold_seconds=args.start_mission_click_hold_seconds,
+            max_seconds=args.deployment_timeout_seconds,
+            interval_seconds=args.deployment_probe_interval_seconds,
+            pause_after_click=False,
+            pre_start_visible_probe=args.start_mission_pre_click_probe,
+            deployment_trigger_source=deployment_trigger_source,
+        )
+        mission_timers["start_mission_click_before"] = start_mission.get(
+            "before_in_game_timer"
+        )
+        deployment_visible_samples = [
+            sample
+            for sample in start_mission.get("samples", [])
+            if isinstance(sample, dict) and sample.get("deployment_visible")
+        ]
+        if deployment_visible_samples:
+            mission_timers["deployment_visible_frame"] = deployment_visible_samples[
+                0
+            ].get("frame_timer")
+
+    deployment_result: dict[str, Any] | None = None
+    if isinstance(start_mission, dict) and start_mission.get("status") == "PASS":
+        deployment_visible_samples = [
+            sample
+            for sample in start_mission.get("samples", [])
+            if isinstance(sample, dict) and sample.get("deployment_visible")
+        ]
+        deployment_trigger_frame_timer = (
+            deployment_visible_samples[0].get("frame_timer")
+            if deployment_visible_samples
+            else None
+        )
+        deployment_result = deploy_recommended_after_visible_deployment(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            profile=args.profile,
+            use_memory_timer=args.memory_timer_probe,
+            memory_timer_address=memory_timer_address,
+            memory_live_timer_address=memory_live_timer_address,
+            memory_live_timer_kind=memory_live_timer_kind,
+            pause_after_deploy=False,
+            trigger_frame_timer=deployment_trigger_frame_timer,
+            capture_post_deploy_probe=False,
+        )
+        mission_timers["deploy_recommended_before"] = deployment_result.get(
+            "before_in_game_timer"
+        )
+        mission_timers["deploy_recommended_after"] = deployment_result.get(
+            "after_in_game_timer"
+        )
+
+    confirm_result: dict[str, Any] | None = None
+    if isinstance(deployment_result, dict) and deployment_result.get("status") == "PASS":
+        confirm_result = confirm_deployment_and_observe_opening_turn(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            observe_seconds=args.post_confirm_observe_seconds,
+            screenshot_cadence=args.screenshot_cadence,
+            bridge_poll_seconds=args.post_confirm_bridge_poll_seconds,
+            extra_ready_frames=args.post_confirm_extra_ready_frames,
+            pause_after_ready=args.pause_after_opening_player_turn,
+        )
+        mission_timers["deploy_confirm_click_before"] = confirm_result.get(
+            "before_in_game_timer"
+        )
+        first_player_ready = confirm_result.get("first_player_ready_bridge") or {}
+        mission_timers["opening_player_turn_bridge_ready"] = first_player_ready.get(
+            "bridge_timer"
+        )
+
+    combat_region_result: dict[str, Any] | None = None
+    if isinstance(confirm_result, dict) and confirm_result.get("status") == "PASS":
+        combat_region_result = solve_until_region_secured(
+            timer_start=timer_start,
+            telemetry=telemetry,
+            screenshots=screenshots,
+            max_turns=args.combat_loop_max_turns,
+            auto_turn_time_limit=args.combat_auto_turn_time_limit,
+            auto_turn_max_wait=args.combat_auto_turn_max_wait,
+            destroy_time_pods=args.destroy_time_pods,
+            observe_seconds=args.post_end_turn_observe_seconds,
+            screenshot_cadence=args.screenshot_cadence,
+            bridge_poll_seconds=args.post_end_turn_bridge_poll_seconds,
+            visible_poll_seconds=args.region_secured_visible_poll_seconds,
+            terminal_visual_settle_seconds=args.region_secured_terminal_settle_seconds,
+            extra_ready_frames=args.post_end_turn_extra_ready_frames,
+            pause_after_ready=args.pause_after_combat_player_turn,
+            retry_after_seconds=args.end_turn_retry_after_seconds,
+            continue_after_fuzzy_block=args.combat_continue_after_fuzzy_block,
+            fuzzy_block_min_actions=args.combat_fuzzy_block_min_actions,
+            auto_consent_safety_block=getattr(
+                args,
+                "combat_auto_consent_safety_block",
+                True,
+            ),
+            hover_region_continue=args.region_secured_hover_continue,
+            region_continue_hover_seconds=args.region_secured_continue_hover_seconds,
+            click_region_continue=args.region_secured_click_continue,
+            region_continue_click_settle_seconds=(
+                args.region_secured_continue_click_settle_seconds
+            ),
+            region_continue_post_observe_seconds=(
+                args.region_secured_post_continue_observe_seconds
+            ),
+            region_continue_post_visible_poll_seconds=(
+                args.region_secured_post_continue_visible_poll_seconds
+            ),
+            expected_terminal_after_turn=(
+                args.speed_expected_player_turns
+                if args.speed_expected_player_turns > 0
+                else None
+            ),
+            expected_terminal_visible_poll_seconds=(
+                args.speed_final_turn_visible_poll_seconds
+            ),
+            refresh_paused_bridge_before_auto_turn=False,
+            initial_player_ready_snapshot=(
+                (confirm_result.get("first_player_ready_bridge") or {}).get(
+                    "snapshot"
+                )
+            ),
+        )
+        region_secured = combat_region_result.get("region_secured") or {}
+        continue_click = combat_region_result.get("continue_click") or {}
+        mission_timers["region_secured_visible"] = region_secured.get(
+            "visible_timer"
+        )
+        mission_timers["region_secured_continue_click_before"] = (
+            continue_click.get("before_in_game_timer")
+        )
+        mission_timers["region_secured_continue_click_after"] = (
+            continue_click.get("after_frame_timer")
+        )
+
+    status = _mission_status(
+        red_detection=red_detection,
+        mission_preview=mission_preview,
+        start_mission=start_mission,
+        deployment_result=deployment_result,
+        confirm_result=confirm_result,
+        combat_region_result=combat_region_result,
+    )
+    result = {
+        "mission_index": mission_index,
+        "status": status,
+        "in_game_timers": mission_timers,
+        "red_detection": red_detection,
+        "mission_preview": mission_preview,
+        "start_mission": start_mission,
+        "deploy_recommended": deployment_result,
+        "deploy_confirm": confirm_result,
+        "combat_until_region_secured": combat_region_result,
+        "turn_timing_audit": build_turn_timing_audit(
+            {
+                "in_game_timers": mission_timers,
+                "deploy_confirm": confirm_result,
+                "combat_until_region_secured": combat_region_result,
+            }
+        ),
+    }
+    telemetry.event(
+        "followup_mission_result",
+        timer_seconds=_elapsed(timer_start),
+        mission_index=mission_index,
+        status=status,
+        reason=(
+            (combat_region_result or {}).get("reason")
+            if isinstance(combat_region_result, dict)
+            else None
+        ),
+    )
+    return result
+
+
 def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     run_id = args.run_id or _now_run_id()
     memory_timer_address = _parse_optional_timer_address(args.memory_timer_address)
@@ -3635,6 +4073,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     combat_turn_after_confirm = bool(
         args.combat_turn_after_confirm or combat_until_region_secured
     )
+    mission_count = max(1, int(args.mission_count or 1))
     confirm_after_deploy = bool(args.confirm_after_deploy or combat_turn_after_confirm)
     deploy_after_visible_deployment = bool(
         args.deploy_after_visible_deployment or confirm_after_deploy
@@ -3646,6 +4085,9 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     click_red_mission = bool(args.click_red_mission or click_start_mission)
     route_slice = (
         (
+            f"main_menu_to_archive_red_map_to_{mission_count}_missions"
+            if mission_count > 1
+            else
             "main_menu_to_archive_red_map_to_region_secured_continue_click"
             if args.region_secured_click_continue
             else "main_menu_to_archive_red_map_to_region_secured_continue_hover"
@@ -3692,6 +4134,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "confirm_after_deploy": confirm_after_deploy,
             "combat_turn_after_confirm": combat_turn_after_confirm,
             "combat_until_region_secured": combat_until_region_secured,
+            "mission_count": mission_count if combat_until_region_secured else None,
             "deployment_trigger_source": deployment_trigger_source,
             "pause_after_red_mission_click": (
                 bool(args.pause_after_red_mission_click)
@@ -3735,6 +4178,11 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "combat_continue_after_fuzzy_block": (
                 args.combat_continue_after_fuzzy_block
+                if combat_turn_after_confirm
+                else None
+            ),
+            "combat_auto_consent_safety_block": (
+                getattr(args, "combat_auto_consent_safety_block", True)
                 if combat_turn_after_confirm
                 else None
             ),
@@ -3936,6 +4384,7 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
     confirm_result: dict[str, Any] | None = None
     combat_turn_result: dict[str, Any] | None = None
     combat_region_result: dict[str, Any] | None = None
+    additional_missions: list[dict[str, Any]] = []
     if click_start_mission and isinstance(mission_preview, dict):
         start_mission = click_start_mission_from_preview(
             timer_start=timer_start,
@@ -4079,6 +4528,11 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             retry_after_seconds=args.end_turn_retry_after_seconds,
             continue_after_fuzzy_block=args.combat_continue_after_fuzzy_block,
             fuzzy_block_min_actions=args.combat_fuzzy_block_min_actions,
+            auto_consent_safety_block=getattr(
+                args,
+                "combat_auto_consent_safety_block",
+                True,
+            ),
             hover_region_continue=args.region_secured_hover_continue,
             region_continue_hover_seconds=args.region_secured_continue_hover_seconds,
             click_region_continue=args.region_secured_click_continue,
@@ -4153,6 +4607,11 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             retry_after_seconds=args.end_turn_retry_after_seconds,
             continue_after_fuzzy_block=args.combat_continue_after_fuzzy_block,
             fuzzy_block_min_actions=args.combat_fuzzy_block_min_actions,
+            auto_consent_safety_block=getattr(
+                args,
+                "combat_auto_consent_safety_block",
+                True,
+            ),
         )
         in_game_timers["combat_auto_turn_before"] = combat_turn_result.get(
             "before_in_game_timer"
@@ -4180,6 +4639,49 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         in_game_timers["combat_post_end_turn_after_pause"] = (
             combat_turn_result.get("after_pause_timer")
         )
+    if (
+        combat_until_region_secured
+        and mission_count > 1
+        and isinstance(combat_region_result, dict)
+        and combat_region_result.get("status") == "PASS"
+    ):
+        for mission_index in range(2, mission_count + 1):
+            result_clear = fast.clear_mission_result_to_island_map(
+                mission_index=mission_index - 1,
+                timer_start=timer_start,
+                continue_after_island=False,
+            )
+            telemetry.event(
+                "followup_mission_result_clear",
+                timer_seconds=_elapsed(timer_start),
+                mission_index=mission_index,
+                status=result_clear.get("status"),
+            )
+            if result_clear.get("status") != "MISSION_PREVIEW_OPENED":
+                additional_missions.append(
+                    {
+                        "mission_index": mission_index,
+                        "status": "FAIL",
+                        "reason": "result_clear_did_not_open_mission_preview",
+                        "result_clear": result_clear,
+                    }
+                )
+                break
+            mission_result = run_followup_mission_from_island_map(
+                mission_index=mission_index,
+                timer_start=timer_start,
+                telemetry=telemetry,
+                screenshots=screenshots,
+                args=args,
+                memory_timer_address=memory_timer_address,
+                memory_live_timer_address=memory_live_timer_address,
+                memory_live_timer_kind=memory_live_timer_kind,
+                deployment_trigger_source=deployment_trigger_source,
+                preview_transition=result_clear,
+            )
+            additional_missions.append(mission_result)
+            if mission_result.get("status") != "PASS":
+                break
     frame_report = generate_frame_delta_report(telemetry.run_dir)
 
     branch_label = (
@@ -4226,6 +4728,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
                 and combat_turn_result.get("status") == "PASS"
                 else "FAIL"
             )
+    if status == "PASS" and additional_missions:
+        status = (
+            "PASS"
+            if all(mission.get("status") == "PASS" for mission in additional_missions)
+            else "FAIL"
+        )
     if status != "PASS":
         next_patch = (
             _region_loop_next_patch(combat_region_result)
@@ -4240,6 +4748,10 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             "Fix deployment placement trigger after deployment-visible screenshot."
             if deploy_after_visible_deployment
             else "Improve Archive intro wait/dismissal or red-region detector."
+        )
+    elif combat_until_region_secured and mission_count > 1:
+        next_patch = (
+            f"Learn the next post-mission-{mission_count} island-map route step."
         )
     elif combat_until_region_secured:
         next_patch = _region_loop_next_patch(combat_region_result)
@@ -4271,6 +4783,33 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         "deploy_confirm": confirm_result,
         "combat_turn": combat_turn_result,
         "combat_until_region_secured": combat_region_result,
+        "missions": [
+            {
+                "mission_index": 1,
+                "status": _mission_status(
+                    red_detection=red_detection,
+                    mission_preview=mission_preview,
+                    start_mission=start_mission,
+                    deployment_result=deployment_result,
+                    confirm_result=confirm_result,
+                    combat_region_result=combat_region_result,
+                ),
+                "in_game_timers": in_game_timers,
+                "red_detection": red_detection,
+                "mission_preview": mission_preview,
+                "start_mission": start_mission,
+                "deploy_recommended": deployment_result,
+                "deploy_confirm": confirm_result,
+                "combat_until_region_secured": combat_region_result,
+                "turn_timing_audit": build_turn_timing_audit(
+                    {
+                        "in_game_timers": in_game_timers,
+                        "deploy_confirm": confirm_result,
+                        "combat_until_region_secured": combat_region_result,
+                    }
+                ),
+            }
+        ] + additional_missions,
         "frame_delta_report": frame_report,
         "next_patch": next_patch,
     }
@@ -4470,6 +5009,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--mission-count",
+        type=int,
+        default=1,
+        help=(
+            "When running the full Region Secured route from the main menu, "
+            "continue from the island map until this many missions are cleared."
+        ),
+    )
+    parser.add_argument(
         "--current-combat-until-region-secured",
         action="store_true",
         help=(
@@ -4554,6 +5102,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=3,
         help="Minimum completed actions required before the fuzzy-block speedrun skip.",
+    )
+    parser.add_argument(
+        "--combat-auto-consent-safety-block",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Lightning War timing-lab policy: rerun an auto_turn "
+            "SAFETY_BLOCKED result with its exact dirty consent token so the "
+            "best available action line is executed for speed. Default is on; "
+            "Time Pod unrecovered-final blocks still stop."
+        ),
     )
     parser.add_argument(
         "--destroy-time-pods",

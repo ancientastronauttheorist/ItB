@@ -3122,6 +3122,22 @@ def clear_mission_result_to_island_map(
             "live_snapshot": compact_live_snapshot(bridge_snapshot),
             "game_timer_seconds": elapsed(timer_start),
         }
+        if visible_name == "island_map":
+            try:
+                probe = click_stable_red_mission_after_result()
+            except Exception as exc:
+                step["red_probe_error"] = str(exc)
+                steps.append(step)
+                time.sleep(0.2)
+                continue
+            step["red_probe_clicked"] = probe
+            steps.append(step)
+            return {
+                "status": "MISSION_PREVIEW_OPENED",
+                "mission_index": mission_index + 1,
+                "steps": steps,
+                "red_region": probe,
+            }
         if visible_name == "island_complete_leave" and not continue_after_island:
             return {
                 "status": "ISLAND_COMPLETE_LEAVE_VISIBLE",
