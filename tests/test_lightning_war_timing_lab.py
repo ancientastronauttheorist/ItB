@@ -1202,6 +1202,13 @@ def test_solve_execute_end_turn_accepts_direct_next_player_turn(monkeypatch):
     )
     monkeypatch.setattr(
         lab.fast,
+        "_lightning_visible_ui_snapshot",
+        lambda include_ocr=False: (_ for _ in ()).throw(
+            AssertionError("visible UI probe should not run after bridge-ready")
+        ),
+    )
+    monkeypatch.setattr(
+        lab.fast,
         "_lightning_end_turn_retryable",
         lambda observed, turn: False,
     )
@@ -1229,6 +1236,7 @@ def test_solve_execute_end_turn_accepts_direct_next_player_turn(monkeypatch):
         retry_after_seconds=2.0,
         continue_after_fuzzy_block=True,
         fuzzy_block_min_actions=3,
+        stop_on_region_secured=True,
     )
 
     assert result["status"] == "PASS"
@@ -1327,6 +1335,106 @@ def test_solve_execute_end_turn_stops_on_auto_turn_block(monkeypatch):
     assert result["safety_stop_reason"]["signature"] == "death|Ranged_Rockthrow|attack"
     assert "death|Ranged_Rockthrow|attack" in lab._combat_next_patch(result)
     assert auto_calls
+    assert [event_type for event_type, _payload in events] == [
+        "combat_auto_turn_start",
+        "combat_auto_turn_result",
+    ]
+
+
+def test_combat_next_patch_calls_out_time_pod_left_alive_block():
+    result = {
+        "auto_turn_summary": {"status": "SAFETY_BLOCKED"},
+        "auto_turn": {
+            "status": "SAFETY_BLOCKED",
+            "plan_safety": {
+                "violations": [
+                    {
+                        "kind": "pod_unrecovered_final",
+                        "blocking": True,
+                    }
+                ]
+            },
+        },
+    }
+
+    assert lab._auto_turn_time_pod_left_alive_block(result["auto_turn"]) is True
+    next_patch = lab._combat_next_patch(result)
+    assert "Force a Time Pod destruction line" in next_patch
+    assert "do not dirty-consent pod_unrecovered_final" in next_patch
+
+
+def test_solve_execute_end_turn_reports_time_pod_left_alive_block(monkeypatch):
+    events = []
+    clicks = []
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def __init__(self):
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:00:51",
+                "game_seconds": 51.0,
+            }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "cmd_auto_turn",
+        lambda **kwargs: {
+            "status": "SAFETY_BLOCKED",
+            "turn": 2,
+            "score": 122502,
+            "dirty_consent_id": "pod-token",
+            "plan_safety": {
+                "status": "DIRTY",
+                "blocking": True,
+                "violations": [
+                    {
+                        "kind": "pod_unrecovered_final",
+                        "blocking": True,
+                    }
+                ],
+            },
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "click_control",
+        lambda *args, **kwargs: clicks.append(args) or {"status": "OK"},
+    )
+
+    result = lab.solve_execute_end_turn_and_observe_next_turn(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        auto_turn_time_limit=10.0,
+        auto_turn_max_wait=8.0,
+        observe_seconds=1.0,
+        screenshot_cadence=0.5,
+        bridge_poll_seconds=0.2,
+        extra_ready_frames=0,
+        pause_after_ready=True,
+        retry_after_seconds=2.0,
+        continue_after_fuzzy_block=True,
+        fuzzy_block_min_actions=3,
+    )
+
+    assert result["status"] == "FAIL"
+    assert result["reason"] == "time_pod_left_alive_speed_policy_block"
+    assert result["end_turn_signal_source"] == (
+        "not_clicked_time_pod_left_alive_speed_policy"
+    )
+    assert result["speed_policy_stop"]["required_resolution"] == (
+        "destroy_time_pod_or_reroute"
+    )
+    assert clicks == []
     assert [event_type for event_type, _payload in events] == [
         "combat_auto_turn_start",
         "combat_auto_turn_result",
@@ -1711,6 +1819,66 @@ def test_solve_execute_end_turn_detects_region_secured_and_hovers(monkeypatch):
     ]
 
 
+def test_post_region_continue_observer_records_next_visible_ui(monkeypatch):
+    events = []
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def __init__(self):
+            self.frame_clock_sampler = self.sample_clock
+
+        def sample_clock(self):
+            return {
+                "status": "OK",
+                "clock_source": "memory_live_numeric_candidate",
+                "game_timer": "0:01:06",
+                "game_seconds": 66.0,
+            }
+
+        def capture_once(self, *, clock_state, note):
+            return {
+                "screenshot_path": f"{clock_state}.png",
+                "frame_clock_status": "OK",
+                "frame_clock": self.sample_clock(),
+            }
+
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_visible_ui_snapshot",
+        lambda include_ocr=False: {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "recommended_control": "archive",
+            "region_secured_visible": False,
+            "screenshot_path": "island_map.png",
+        },
+    )
+
+    result = lab.observe_after_region_secured_continue(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        observe_seconds=0.01,
+        screenshot_cadence=0.5,
+        visible_poll_seconds=0.25,
+    )
+
+    assert result["status"] == "OK"
+    assert result["first_non_region_visible"]["visible_ui"]["visible_ui"] == (
+        "island_map"
+    )
+    assert result["first_non_region_visible"]["visible_timer"]["game_timer"] == (
+        "0:01:06"
+    )
+    assert "post_region_secured_continue_visible_probe" in [
+        event_type for event_type, _payload in events
+    ]
+
+
 def test_terminal_after_end_turn_accepts_inactive_mission_with_stale_heartbeat():
     assert lab._snapshot_terminal_or_clear_after_end_turn(
         {
@@ -2049,6 +2217,8 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.region_secured_terminal_settle_seconds == 1.0
     assert args.region_secured_continue_hover_seconds == 1.0
     assert args.region_secured_continue_click_settle_seconds == 0.35
+    assert args.region_secured_post_continue_observe_seconds == 8.0
+    assert args.region_secured_post_continue_visible_poll_seconds == 0.25
     assert args.region_secured_hover_continue is True
     assert args.region_secured_click_continue is True
     assert args.combat_continue_after_fuzzy_block is True

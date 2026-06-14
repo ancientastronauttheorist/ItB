@@ -427,7 +427,10 @@ once its correctness is proven.
 - Always enable the Chronophobia pod-destruction policy during Lightning War
   attempts. Time Pod reward/recovery screens add route UI and live timer waste,
   so the speed route should destroy discovered pods instead of collecting or
-  preserving them. For CLI combat commands, pass `--destroy-time-pods` to
+  preserving them. External rule checks confirmed that an intact Time Pod left
+  on the board is normally recovered at mission end; for Lightning War that is
+  still a route failure because the recovered pod adds post-mission UI. For
+  CLI combat commands, pass `--destroy-time-pods` to
   `solve`, `auto_turn`, `lightning_loop`, `lightning_attempt`, or
   `lightning_segment`; if calling the Python helpers directly, pass
   `destroy_time_pods=True`. The policy is also activated automatically when
@@ -435,7 +438,9 @@ once its correctness is proven.
   removing live pods, heavily penalizes mech pod pickup, permits predicted
   `pod_lost` only for pod destruction, and still blocks
   `pod_unrecovered_final` because an intact final-turn pod would be recovered
-  and add the unwanted post-mission UI.
+  and add the unwanted post-mission UI. Do not dirty-consent a
+  `pod_unrecovered_final` line in this timing lab; force pod destruction or
+  reroute.
 - Region Secured Continue is a proven Windows control at window-relative
   `(1647, 985)`. The timing lab should hover it for proof and then click it by
   default; use `--no-region-secured-click-continue` only for hover-only audits.

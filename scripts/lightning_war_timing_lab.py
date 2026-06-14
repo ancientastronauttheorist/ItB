@@ -1166,6 +1166,14 @@ def append_notebook_report(report: dict[str, Any]) -> None:
         click = region_loop.get("continue_click") or {}
         click_control = click.get("control") or {}
         click_result = click.get("click") or {}
+        post_continue = click.get("post_continue_observe") or {}
+        post_continue_next = (
+            post_continue.get("first_non_region_visible")
+            or post_continue.get("first_visible_sample")
+            or {}
+        )
+        post_continue_visible = post_continue_next.get("visible_ui") or {}
+        post_continue_timer = post_continue_next.get("visible_timer") or {}
         last_turn = region_loop.get("last_end_turn") or {}
         lines.extend(
             [
@@ -1181,6 +1189,9 @@ def append_notebook_report(report: dict[str, Any]) -> None:
                 f"- Continue click result: {click_result.get('status') or 'n/a'}",
                 f"- Continue click before timer: {region_click_before_timer.get('game_timer') or 'n/a'}",
                 f"- Continue click after frame timer: {region_click_after_timer.get('game_timer') or 'n/a'}",
+                f"- Post-Continue observed seconds: {_seconds_text(post_continue.get('observed_seconds'))}",
+                f"- Post-Continue next visible UI: {post_continue_visible.get('visible_ui') or 'n/a'}",
+                f"- Post-Continue next visible timer: {post_continue_timer.get('game_timer') or 'n/a'}",
             ]
         )
     if timing_audit:
@@ -1971,6 +1982,9 @@ def click_region_secured_continue(
     telemetry: TelemetryRecorder,
     screenshots: ScreenshotRecorder,
     settle_seconds: float,
+    post_observe_seconds: float = 0.0,
+    screenshot_cadence: float = 0.5,
+    post_visible_poll_seconds: float = 0.25,
 ) -> dict[str, Any]:
     controls = list_known_window_controls()
     control = controls.get("reward_continue") or {
@@ -2004,6 +2018,14 @@ def click_region_secured_continue(
         screenshot_path=after_frame.get("screenshot_path"),
         after_frame_timer=after_timer,
     )
+    post_continue_observe = observe_after_region_secured_continue(
+        timer_start=timer_start,
+        telemetry=telemetry,
+        screenshots=screenshots,
+        observe_seconds=post_observe_seconds,
+        screenshot_cadence=screenshot_cadence,
+        visible_poll_seconds=post_visible_poll_seconds,
+    )
     return {
         "status": "OK" if click.get("status") == "OK" else "FAIL",
         "control": control,
@@ -2012,6 +2034,108 @@ def click_region_secured_continue(
         "before_in_game_timer": before_timer,
         "after_frame": after_frame,
         "after_frame_timer": after_timer,
+        "post_continue_observe": post_continue_observe,
+    }
+
+
+def observe_after_region_secured_continue(
+    *,
+    timer_start: float,
+    telemetry: TelemetryRecorder,
+    screenshots: ScreenshotRecorder,
+    observe_seconds: float,
+    screenshot_cadence: float,
+    visible_poll_seconds: float,
+) -> dict[str, Any]:
+    if observe_seconds <= 0:
+        return {
+            "status": "SKIPPED",
+            "reason": "post_continue_observe_seconds_zero",
+            "observe_seconds_requested": observe_seconds,
+        }
+
+    started = time.perf_counter()
+    next_frame_at = started
+    next_visible_at = started
+    frames: list[dict[str, Any]] = []
+    visible_samples: list[dict[str, Any]] = []
+    first_visible_sample: dict[str, Any] | None = None
+    first_non_region_visible: dict[str, Any] | None = None
+
+    while True:
+        now = time.perf_counter()
+        elapsed = now - started
+        if elapsed >= max(0.0, observe_seconds):
+            break
+
+        did_work = False
+        if now >= next_frame_at:
+            frame = screenshots.capture_once(
+                clock_state="post_region_secured_continue_observe",
+                note="after_region_secured_continue",
+            )
+            frame["timer_seconds"] = _elapsed(timer_start)
+            frame_timer = _timer_sample_from_frame(
+                frame,
+                label="post_region_secured_continue_frame",
+            )
+            frame_sample = {
+                "timer_seconds": frame["timer_seconds"],
+                "elapsed_after_continue_seconds": round(now - started, 3),
+                "screenshot_path": frame.get("screenshot_path"),
+                "frame_timer": frame_timer,
+            }
+            frames.append(frame_sample)
+            telemetry.event("post_region_secured_continue_frame", **frame_sample)
+            next_frame_at = max(
+                next_frame_at + max(0.1, screenshot_cadence),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        now = time.perf_counter()
+        if now >= next_visible_at:
+            visible = fast._lightning_visible_ui_snapshot(include_ocr=False)
+            compact = _compact_visible_snapshot(visible)
+            visible_timer = _timer_sample_from_recorder(
+                screenshots,
+                label="post_region_secured_continue_visible",
+            )
+            visible_sample = {
+                "timer_seconds": _elapsed(timer_start),
+                "elapsed_after_continue_seconds": round(now - started, 3),
+                "visible_ui": compact,
+                "region_secured": _visible_region_secured(visible),
+                "visible_timer": visible_timer,
+            }
+            if first_visible_sample is None:
+                first_visible_sample = visible_sample
+            if (
+                first_non_region_visible is None
+                and not visible_sample["region_secured"]
+                and compact.get("status") == "OK"
+            ):
+                first_non_region_visible = visible_sample
+            visible_samples.append(visible_sample)
+            telemetry.event("post_region_secured_continue_visible_probe", **visible_sample)
+            next_visible_at = max(
+                next_visible_at + max(0.1, visible_poll_seconds),
+                time.perf_counter() + 0.01,
+            )
+            did_work = True
+
+        if not did_work:
+            next_due = min(next_frame_at, next_visible_at)
+            time.sleep(max(0.01, min(0.05, next_due - time.perf_counter())))
+
+    return {
+        "status": "OK",
+        "observe_seconds_requested": observe_seconds,
+        "observed_seconds": round(time.perf_counter() - started, 3),
+        "frames": frames,
+        "visible_samples": visible_samples,
+        "first_visible_sample": first_visible_sample,
+        "first_non_region_visible": first_non_region_visible,
     }
 
 
@@ -2054,6 +2178,22 @@ def _combat_fuzzy_block_skip_decision(
         "block_reason": block,
         "signature": block.get("signature") if isinstance(block, dict) else None,
     }
+
+
+def _auto_turn_time_pod_left_alive_block(auto_turn: dict[str, Any] | None) -> bool:
+    if not isinstance(auto_turn, dict):
+        return False
+    if auto_turn.get("status") != "SAFETY_BLOCKED":
+        return False
+    plan_safety = auto_turn.get("plan_safety")
+    if not isinstance(plan_safety, dict):
+        return False
+    blocking_kinds = [
+        violation.get("kind")
+        for violation in plan_safety.get("violations", []) or []
+        if isinstance(violation, dict) and violation.get("blocking")
+    ]
+    return bool(blocking_kinds) and set(blocking_kinds) <= {"pod_unrecovered_final"}
 
 
 def deploy_recommended_after_visible_deployment(
@@ -2374,6 +2514,8 @@ def solve_execute_end_turn_and_observe_next_turn(
     region_continue_hover_seconds: float = 1.0,
     click_region_continue: bool = False,
     region_continue_click_settle_seconds: float = 0.35,
+    region_continue_post_observe_seconds: float = 0.0,
+    region_continue_post_visible_poll_seconds: float = 0.25,
     refresh_paused_bridge_before_auto_turn: bool = False,
 ) -> dict[str, Any]:
     bridge_refresh_before_auto_turn: dict[str, Any] | None = None
@@ -2441,15 +2583,33 @@ def solve_execute_end_turn_and_observe_next_turn(
         enabled=continue_after_fuzzy_block,
         min_actions_completed=fuzzy_block_min_actions,
     )
+    pod_left_alive_block = _auto_turn_time_pod_left_alive_block(turn)
     if turn.get("status") != "PLAN" and not fuzzy_skip.get("skip"):
         return {
             "status": "FAIL",
-            "reason": "auto_turn_did_not_return_end_turn_plan",
+            "reason": (
+                "time_pod_left_alive_speed_policy_block"
+                if pod_left_alive_block
+                else "auto_turn_did_not_return_end_turn_plan"
+            ),
             "solver_action_signal_source": "cmd_auto_turn",
-            "end_turn_signal_source": "not_clicked_auto_turn_safety_stop",
+            "end_turn_signal_source": (
+                "not_clicked_time_pod_left_alive_speed_policy"
+                if pod_left_alive_block
+                else "not_clicked_auto_turn_safety_stop"
+            ),
             "player_turn_signal_source": None,
             "visual_evidence_role": "2hz_screenshots_before_solver_stop_only",
             "safety_stop_reason": turn.get("block_reason") or turn.get("next_step"),
+            "speed_policy_stop": (
+                {
+                    "kind": "time_pod_left_alive",
+                    "required_resolution": "destroy_time_pod_or_reroute",
+                    "dirty_consent_allowed": False,
+                }
+                if pod_left_alive_block
+                else None
+            ),
             "before_in_game_timer": before_timer,
             "auto_turn_duration_seconds": auto_duration,
             "auto_turn_done_timer": auto_done_timer,
@@ -2577,6 +2737,13 @@ def solve_execute_end_turn_and_observe_next_turn(
             did_work = True
 
         now = time.perf_counter()
+        if (
+            first_player_ready_bridge is not None
+            and first_terminal_bridge is None
+            and ready_frames_seen >= max(0, int(extra_ready_frames))
+        ):
+            break
+
         if stop_on_region_secured and now >= next_visible_at:
             include_ocr = (
                 first_terminal_bridge is not None
@@ -2698,6 +2865,9 @@ def solve_execute_end_turn_and_observe_next_turn(
             telemetry=telemetry,
             screenshots=screenshots,
             settle_seconds=region_continue_click_settle_seconds,
+            post_observe_seconds=region_continue_post_observe_seconds,
+            screenshot_cadence=screenshot_cadence,
+            post_visible_poll_seconds=region_continue_post_visible_poll_seconds,
         )
 
     boundary = (
@@ -2780,12 +2950,18 @@ def solve_execute_end_turn_and_observe_next_turn(
 def _combat_next_patch(combat_turn_result: dict[str, Any] | None) -> str:
     if not isinstance(combat_turn_result, dict):
         return "Fix combat auto_turn startup before End Turn timing."
+    auto_turn = combat_turn_result.get("auto_turn") or {}
+    if _auto_turn_time_pod_left_alive_block(auto_turn):
+        return (
+            "Force a Time Pod destruction line or reroute; do not "
+            "dirty-consent pod_unrecovered_final because a surviving Time Pod "
+            "is recovered and adds post-mission UI."
+        )
     auto_summary = combat_turn_result.get("auto_turn_summary") or {}
     auto_status = auto_summary.get("status")
     if auto_status and auto_status != "PLAN":
         stop = combat_turn_result.get("safety_stop_reason")
         if not isinstance(stop, dict):
-            auto_turn = combat_turn_result.get("auto_turn") or {}
             stop = auto_turn.get("block_reason")
         signature = stop.get("signature") if isinstance(stop, dict) else None
         suffix = f" ({signature})" if signature else ""
@@ -2820,6 +2996,8 @@ def solve_until_region_secured(
     region_continue_hover_seconds: float,
     click_region_continue: bool,
     region_continue_click_settle_seconds: float,
+    region_continue_post_observe_seconds: float = 0.0,
+    region_continue_post_visible_poll_seconds: float = 0.25,
     destroy_time_pods: bool = True,
     expected_terminal_after_turn: int | None = None,
     expected_terminal_visible_poll_seconds: float | None = None,
@@ -2893,6 +3071,12 @@ def solve_until_region_secured(
             click_region_continue=click_region_continue,
             region_continue_click_settle_seconds=(
                 region_continue_click_settle_seconds
+            ),
+            region_continue_post_observe_seconds=(
+                region_continue_post_observe_seconds
+            ),
+            region_continue_post_visible_poll_seconds=(
+                region_continue_post_visible_poll_seconds
             ),
             refresh_paused_bridge_before_auto_turn=(
                 refresh_paused_bridge_before_auto_turn
@@ -3082,6 +3266,13 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
                 telemetry=telemetry,
                 screenshots=screenshots,
                 settle_seconds=args.region_secured_continue_click_settle_seconds,
+                post_observe_seconds=(
+                    args.region_secured_post_continue_observe_seconds
+                ),
+                screenshot_cadence=args.screenshot_cadence,
+                post_visible_poll_seconds=(
+                    args.region_secured_post_continue_visible_poll_seconds
+                ),
             )
             if args.region_secured_click_continue
             else None
@@ -3125,6 +3316,12 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
             region_continue_click_settle_seconds=(
                 args.region_secured_continue_click_settle_seconds
             ),
+            region_continue_post_observe_seconds=(
+                args.region_secured_post_continue_observe_seconds
+            ),
+            region_continue_post_visible_poll_seconds=(
+                args.region_secured_post_continue_visible_poll_seconds
+            ),
             expected_terminal_after_turn=None,
             expected_terminal_visible_poll_seconds=None,
             refresh_paused_bridge_before_auto_turn=True,
@@ -3145,6 +3342,15 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
     )
     in_game_timers["region_secured_continue_click_after"] = continue_click.get(
         "after_frame_timer"
+    )
+    post_continue_observe = continue_click.get("post_continue_observe") or {}
+    post_continue_next = (
+        post_continue_observe.get("first_non_region_visible")
+        or post_continue_observe.get("first_visible_sample")
+        or {}
+    )
+    in_game_timers["region_secured_post_continue_next_visible"] = (
+        post_continue_next.get("visible_timer")
     )
     frame_report = generate_frame_delta_report(telemetry.run_dir)
     status = "PASS" if region_loop.get("status") == "PASS" else "FAIL"
@@ -3648,6 +3854,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
             region_continue_click_settle_seconds=(
                 args.region_secured_continue_click_settle_seconds
             ),
+            region_continue_post_observe_seconds=(
+                args.region_secured_post_continue_observe_seconds
+            ),
+            region_continue_post_visible_poll_seconds=(
+                args.region_secured_post_continue_visible_poll_seconds
+            ),
             expected_terminal_after_turn=(
                 args.speed_expected_player_turns
                 if args.speed_expected_player_turns > 0
@@ -3680,6 +3892,15 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         )
         in_game_timers["region_secured_continue_click_after"] = (
             continue_click.get("after_frame_timer")
+        )
+        post_continue_observe = continue_click.get("post_continue_observe") or {}
+        post_continue_next = (
+            post_continue_observe.get("first_non_region_visible")
+            or post_continue_observe.get("first_visible_sample")
+            or {}
+        )
+        in_game_timers["region_secured_post_continue_next_visible"] = (
+            post_continue_next.get("visible_timer")
         )
     elif (
         combat_turn_after_confirm
@@ -4058,6 +4279,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--region-secured-continue-click-settle-seconds",
         type=float,
         default=0.35,
+    )
+    parser.add_argument(
+        "--region-secured-post-continue-observe-seconds",
+        type=float,
+        default=8.0,
+        help=(
+            "After clicking Region Secured Continue, passively capture "
+            "screenshots and visible UI samples for this many seconds."
+        ),
+    )
+    parser.add_argument(
+        "--region-secured-post-continue-visible-poll-seconds",
+        type=float,
+        default=0.25,
+        help="Visible-UI probe cadence during the post-Continue observation.",
     )
     parser.add_argument(
         "--region-secured-hover-continue",
