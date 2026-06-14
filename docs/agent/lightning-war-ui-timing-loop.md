@@ -434,9 +434,10 @@ once its correctness is proven.
   `solve`, `auto_turn`, `lightning_loop`, `lightning_attempt`, or
   `lightning_segment`; if calling the Python helpers directly, pass
   `destroy_time_pods=True`. The policy is also activated automatically when
-  the run session has achievement target/tag `Chronophobia`. It rewards
-  removing live pods, heavily penalizes mech pod pickup, permits predicted
-  `pod_lost` only for pod destruction, and still blocks
+  the run session has achievement target/tag `Lightning War`, `Chronophobia`,
+  or an explicit destroy-pod label. It rewards
+  removing live pods, applies route-dominating penalties to live or collected
+  pods, permits predicted `pod_lost` only for pod destruction, and still blocks
   `pod_unrecovered_final` because an intact final-turn pod would be recovered
   and add the unwanted post-mission UI. Do not dirty-consent a
   `pod_unrecovered_final` line in this timing lab; force pod destruction or

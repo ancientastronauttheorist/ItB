@@ -100,6 +100,7 @@ def _get_logger(session: RunSession) -> DecisionLog:
 
 _DESTROY_TIME_PODS_TARGETS = {
     "chronophobia",
+    "lightning war",
     "destroy pods",
     "destroy time pod",
     "destroy time pods",
@@ -129,6 +130,10 @@ def _destroy_time_pods_policy_active(
     return bool(_normalized_target_labels(session) & _DESTROY_TIME_PODS_TARGETS)
 
 
+_DESTROY_TIME_PODS_SURVIVAL_PENALTY = -1_000_000.0
+_DESTROY_TIME_PODS_PICKUP_PENALTY = -2_000_000.0
+
+
 def _destroy_time_pods_weight_overlay(
     base_weights: dict | None,
     applied: list[str] | None = None,
@@ -138,7 +143,7 @@ def _destroy_time_pods_weight_overlay(
     overlays = list(applied or [])
     weights["pod_uncollected"] = min(
         float(weights.get("pod_uncollected", 0) or 0),
-        -12000.0,
+        _DESTROY_TIME_PODS_SURVIVAL_PENALTY,
     )
     weights["pod_proximity"] = min(
         float(weights.get("pod_proximity", 0) or 0),
@@ -146,7 +151,7 @@ def _destroy_time_pods_weight_overlay(
     )
     weights["pod_collected"] = min(
         float(weights.get("pod_collected", 0) or 0),
-        -120000.0,
+        _DESTROY_TIME_PODS_PICKUP_PENALTY,
     )
     if "destroy_time_pods" not in overlays:
         overlays.append("destroy_time_pods")
@@ -224,13 +229,6 @@ def _achievement_weight_overlay(
         )
         applied.append("powered_blast")
 
-    normalized_targets = {
-        target.replace("_", " ").replace("-", " ")
-        for target in targets
-    }
-    if normalized_targets & _DESTROY_TIME_PODS_TARGETS:
-        weights, applied = _destroy_time_pods_weight_overlay(weights, applied)
-
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove
@@ -249,6 +247,13 @@ def _achievement_weight_overlay(
             1600.0,
         )
         applied.append("lightning_war")
+
+    normalized_targets = {
+        target.replace("_", " ").replace("-", " ")
+        for target in targets
+    }
+    if normalized_targets & _DESTROY_TIME_PODS_TARGETS:
+        weights, applied = _destroy_time_pods_weight_overlay(weights, applied)
 
     return weights, applied
 
@@ -659,8 +664,10 @@ def _allow_lightning_war_pod_loss(
     session: RunSession,
     plan_safety: dict | None,
 ) -> bool:
-    """Lightning War ignores Time Pod value but not other objective losses."""
+    """Legacy Lightning War pod allowance for sessions without destroy policy."""
     if "lightning war" not in _target_names(session):
+        return False
+    if _destroy_time_pods_policy_active(session):
         return False
     if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
         return False

@@ -238,9 +238,10 @@ def test_lightning_war_weight_overlay_penalizes_pod_pickup():
     )
 
     assert "lightning_war" in applied
-    assert weights["pod_uncollected"] == 0.0
+    assert "destroy_time_pods" in applied
+    assert weights["pod_uncollected"] == -1_000_000.0
     assert weights["pod_proximity"] == 0.0
-    assert weights["pod_collected"] == -4000.0
+    assert weights["pod_collected"] == -2_000_000.0
     assert weights["spawn_blocked"] == 1600.0
 
 
@@ -261,9 +262,37 @@ def test_chronophobia_weight_overlay_targets_pod_destruction():
     )
 
     assert "destroy_time_pods" in applied
-    assert weights["pod_uncollected"] == -12000.0
+    assert weights["pod_uncollected"] == -1_000_000.0
     assert weights["pod_proximity"] == 0.0
-    assert weights["pod_collected"] == -120000.0
+    assert weights["pod_collected"] == -2_000_000.0
+
+
+def test_destroy_time_pods_selects_destroy_candidate_over_live_final_pod():
+    live_final_pod = {
+        "rank": 0,
+        "plan_safety": {
+            "blocking": True,
+            "violations": [
+                {"kind": "pod_unrecovered_final", "blocking": True},
+            ],
+        },
+    }
+    destroyed_pod = {
+        "rank": 1,
+        "plan_safety": {
+            "blocking": True,
+            "violations": [
+                {"kind": "pod_lost", "blocking": True},
+            ],
+        },
+    }
+
+    selected = commands._select_safe_plan_candidate(
+        [live_final_pod, destroyed_pod],
+        allow_pod_destroy_dirty=True,
+    )
+
+    assert selected is destroyed_pod
 
 
 def test_lightning_war_routing_penalizes_forest_fire_friction():
@@ -11629,7 +11658,7 @@ def test_lightning_speed_policy_blocks_unplanned_pylon_threat():
     ) is True
 
 
-def test_lightning_war_allows_pod_only_loss():
+def test_lightning_war_destroy_policy_blocks_live_final_pod_allowance():
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
@@ -11643,7 +11672,8 @@ def test_lightning_war_allows_pod_only_loss():
         ],
     }
 
-    assert commands._allow_lightning_war_pod_loss(session, plan_safety) is True
+    assert commands._destroy_time_pods_policy_active(session) is True
+    assert commands._allow_lightning_war_pod_loss(session, plan_safety) is False
 
 
 def test_lightning_war_pod_loss_allowance_does_not_cover_grid_loss():
