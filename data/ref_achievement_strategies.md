@@ -516,12 +516,13 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium-Hard
 
 ### Chronophobia (6.7%)
+- **Status:** Completed on 2026-06-14 in Zenith Guard Easy run `20260613_234901_918`; Steam sync raised the tracker to 54/70 after confirming `Leave Island` from R.S.T.
 - **Requirement:** Finish 3 Corporate Islands and destroy every Time Pod discovered.
 - **Squad:** Any
-- **Strategy:** When a Time Pod appears in a mission, it must be destroyed (let enemies or your attacks hit it) rather than collected. This means intentionally ignoring or destroying pods for 3 full islands.
-- **Bot approach:** The solver should target time pods for destruction. When a pod appears, fire a weapon at it or allow enemy attacks to destroy it. Penalize collecting pods. Do NOT walk mechs onto pod tiles.
-- **Ideal setup:** Normal difficulty, any squad. 3-island run.
-- **Estimated difficulty for bot:** Medium (counterintuitive for the bot which normally collects pods)
+- **Strategy:** When a Time Pod appears in a mission, it must be destroyed (let enemies or your attacks hit it) rather than collected. Leaving an intact pod at mission end recovers it and invalidates the attempt.
+- **Bot approach:** Pass `--destroy-time-pods` to `solve` / `auto_turn`, or set `Chronophobia` as the active target. The overlay penalizes pod collection, rewards removing live pods, and allows `pod_lost` only when no other blocking safety loss is present. Do NOT walk mechs onto pod tiles.
+- **Ideal setup:** Easy difficulty, Zenith Guard or another squad with direct/collateral pod damage. 3-island run; the achievement fires after leaving the third Corporate Island, not necessarily on the HQ result panel.
+- **Estimated difficulty for bot:** Completed; medium before the dedicated pod-destruction policy.
 
 ### Spider Breeding (6.7%)
 - **Requirement:** Spawn 15 Arachnoids in one Island with the Arachnophiles squad.
@@ -668,6 +669,7 @@ Quick reference for the bot's evaluation function weight modifications:
 | Overkill | 10000 | 500 | -100 | single_hit_damage: +3000 (if >=8) |
 | Chain Attack | 10000 | 200 | -100 | chain_length: +500 per tile |
 | Hold the Line | 10000 | 500 | -100 | spawns_blocked: +2000 |
+| Chronophobia | 10000 | 500 | -100 | pod_uncollected: -12000, pod_collected: -120000 |
 | Glittering C-Beam | 10000 | 500 | -100 | laser_targets: +2000 per enemy |
 | Mass Displacement | 10000 | 500 | -100 | enemies_pushed_single: +3000 |
 | Boosted | 10000 | 500 | -100 | boost_count: +1500 |

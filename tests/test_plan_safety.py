@@ -1067,6 +1067,27 @@ def test_uncollected_pod_loss_blocks_plan():
     assert audit["violations"][0]["kind"] == "pod_lost"
 
 
+def test_destroy_pod_allowance_only_covers_destroyed_pods():
+    destroyed = audit_plan_safety(
+        _summary(pods_present=1),
+        _summary(pods_present=0, pods_collected=0),
+    )
+    unrecovered = audit_plan_safety(
+        _summary(turn=4, total_turns=4, pods_present=1),
+        _summary(turn=4, total_turns=4, pods_present=1, pods_collected=0),
+    )
+
+    assert plan_requires_safety_block(
+        destroyed,
+        allow_pod_destroy_dirty=True,
+    ) is False
+    assert plan_requires_safety_block(
+        unrecovered,
+        allow_pod_destroy_dirty=True,
+    ) is True
+    assert unrecovered["violations"][0]["kind"] == "pod_unrecovered_final"
+
+
 def test_collected_pod_drop_is_clean():
     audit = audit_plan_safety(
         _summary(pods_present=1),

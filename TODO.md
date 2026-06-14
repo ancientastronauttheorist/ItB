@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-53 of 70 Steam-cache confirmed. **Powered Blast** unlocked and synced on 2026-06-11, leaving 17 remaining; sorted by global unlock % (easiest first).
+54 of 70 Steam-cache confirmed. **Chronophobia** unlocked and synced on 2026-06-14, leaving 16 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Bombermechs **Powered Blast** is complete. In run `20260611_202233_019`, Archive `Mission_Artillery` turn 4 spawned a Walking Bomb at C2 and fired AP Cannon from D2 through it to kill the Scarab at B2; `achievements --sync` moved the tracker to 53/70.
+Current milestone: **Chronophobia** is complete. In Zenith Guard Easy run `20260613_234901_918`, the solver used `--destroy-time-pods` to destroy every discovered Time Pod across three Corporate Islands; `achievements --sync` moved the tracker to 54/70 after confirming `Leave Island` from R.S.T.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -66,7 +66,7 @@ Current milestone: Bombermechs **Powered Blast** is complete. In run `20260611_2
 - [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
 - [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
 - [ ] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters]
-- [ ] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
+- [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod — completed in Zenith Guard run `20260613_234901_918`
 - [ ] Spider Breeding (6.7%) — Spawn 15 Arachnoids in one Island [Arachnophile]
 - [ ] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters]
 - [ ] Hold the Door (5.4%) — Block 30 Emerging Vek by end of Island 2 [Bombermechs]
@@ -79,7 +79,7 @@ Current milestone: Bombermechs **Powered Blast** is complete. In run `20260611_2
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (53 Steam-cache confirmed)
+### Already Completed (54 Steam-cache confirmed)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -132,6 +132,7 @@ Current milestone: Bombermechs **Powered Blast** is complete. In run `20260611_2
 - [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy  [Bombermechs]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]
+- [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
 - [x] Squads Victory — Beat game with 4 different Squads
 
 

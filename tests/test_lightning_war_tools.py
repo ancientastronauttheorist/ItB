@@ -244,6 +244,28 @@ def test_lightning_war_weight_overlay_penalizes_pod_pickup():
     assert weights["spawn_blocked"] == 1600.0
 
 
+def test_chronophobia_weight_overlay_targets_pod_destruction():
+    session = RunSession(
+        squad="Zenith Guard",
+        difficulty=0,
+        achievement_targets=["Chronophobia"],
+    )
+
+    weights, applied = commands._achievement_weight_overlay(
+        session,
+        {
+            "pod_uncollected": -100.0,
+            "pod_proximity": 50.0,
+            "pod_collected": 0.0,
+        },
+    )
+
+    assert "destroy_time_pods" in applied
+    assert weights["pod_uncollected"] == -12000.0
+    assert weights["pod_proximity"] == 0.0
+    assert weights["pod_collected"] == -120000.0
+
+
 def test_lightning_war_routing_penalizes_forest_fire_friction():
     result = score_mission(
         {"mission_id": "Mission_ForestFire", "bonus_objective_ids": []},

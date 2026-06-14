@@ -98,6 +98,61 @@ def _get_logger(session: RunSession) -> DecisionLog:
     return DecisionLog(run_id)
 
 
+_DESTROY_TIME_PODS_TARGETS = {
+    "chronophobia",
+    "destroy pods",
+    "destroy time pod",
+    "destroy time pods",
+    "destroy timepods",
+}
+
+
+def _normalized_target_labels(session: RunSession | None) -> set[str]:
+    labels = set()
+    for value in (
+        list(getattr(session, "achievement_targets", None) or [])
+        + list(getattr(session, "tags", None) or [])
+    ):
+        text = str(value).strip().lower().replace("_", " ").replace("-", " ")
+        if text:
+            labels.add(text)
+    return labels
+
+
+def _destroy_time_pods_policy_active(
+    session: RunSession | None,
+    *,
+    explicit: bool = False,
+) -> bool:
+    if explicit:
+        return True
+    return bool(_normalized_target_labels(session) & _DESTROY_TIME_PODS_TARGETS)
+
+
+def _destroy_time_pods_weight_overlay(
+    base_weights: dict | None,
+    applied: list[str] | None = None,
+) -> tuple[dict, list[str]]:
+    """Prefer pod destruction while making mech collection very unattractive."""
+    weights = dict(base_weights or {})
+    overlays = list(applied or [])
+    weights["pod_uncollected"] = min(
+        float(weights.get("pod_uncollected", 0) or 0),
+        -12000.0,
+    )
+    weights["pod_proximity"] = min(
+        float(weights.get("pod_proximity", 0) or 0),
+        0.0,
+    )
+    weights["pod_collected"] = min(
+        float(weights.get("pod_collected", 0) or 0),
+        -120000.0,
+    )
+    if "destroy_time_pods" not in overlays:
+        overlays.append("destroy_time_pods")
+    return weights, overlays
+
+
 def _achievement_weight_overlay(
     session: RunSession | None,
     base_weights: dict | None,
@@ -168,6 +223,13 @@ def _achievement_weight_overlay(
             120000.0,
         )
         applied.append("powered_blast")
+
+    normalized_targets = {
+        target.replace("_", " ").replace("-", " ")
+        for target in targets
+    }
+    if normalized_targets & _DESTROY_TIME_PODS_TARGETS:
+        weights, applied = _destroy_time_pods_weight_overlay(weights, applied)
 
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
@@ -2995,12 +3057,19 @@ def _candidate_mech_hp_loss(candidate_eval: dict) -> int:
     return 0
 
 
-def _select_safe_plan_candidate(candidate_evals: list[dict]) -> dict | None:
+def _select_safe_plan_candidate(
+    candidate_evals: list[dict],
+    *,
+    allow_pod_destroy_dirty: bool = False,
+) -> dict | None:
     """Prefer clean candidates; when all are dirty, minimize same-class collateral."""
     if not candidate_evals:
         return None
     for candidate in candidate_evals:
-        if not plan_requires_safety_block(candidate.get("plan_safety")):
+        if not plan_requires_safety_block(
+            candidate.get("plan_safety"),
+            allow_pod_destroy_dirty=allow_pod_destroy_dirty,
+        ):
             return candidate
 
     top_signature = _dirty_candidate_blocking_signature(candidate_evals[0])
@@ -5106,7 +5175,8 @@ def _check_wheel_sim_version() -> dict | None:
 
 
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
-              beam: int = 0, candidate_rank: int | None = None) -> dict:
+              beam: int = 0, candidate_rank: int | None = None,
+              destroy_time_pods: bool = False) -> dict:
     """Run solver on current board, store solution in session.
 
     Args:
@@ -5273,9 +5343,22 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             weight_version = weight_data.get("version", "unknown")
         except (json.JSONDecodeError, IOError):
             pass
+    destroy_time_pods_active = _destroy_time_pods_policy_active(
+        session,
+        explicit=destroy_time_pods,
+    )
     eval_weights_dict, achievement_weight_overlays = _achievement_weight_overlay(
         session, eval_weights_dict
     )
+    if destroy_time_pods and (
+        "destroy_time_pods" not in achievement_weight_overlays
+    ):
+        eval_weights_dict, achievement_weight_overlays = (
+            _destroy_time_pods_weight_overlay(
+                eval_weights_dict,
+                achievement_weight_overlays,
+            )
+        )
     if achievement_weight_overlays:
         weight_version = f"{weight_version}+{'+'.join(achievement_weight_overlays)}"
         print(f"  Achievement weight overlay: {', '.join(achievement_weight_overlays)}")
@@ -5461,12 +5544,16 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     session.save()
                     return result
             else:
-                selected_candidate_eval = _select_safe_plan_candidate(candidate_evals)
+                selected_candidate_eval = _select_safe_plan_candidate(
+                    candidate_evals,
+                    allow_pod_destroy_dirty=destroy_time_pods_active,
+                )
             if (candidate_rank is None
                     and beam == 0
                     and selected_candidate_eval is not None
                     and plan_requires_safety_block(
-                        selected_candidate_eval.get("plan_safety")
+                        selected_candidate_eval.get("plan_safety"),
+                        allow_pod_destroy_dirty=destroy_time_pods_active,
                     )):
                 # Emergency safety widening: the top-1 entry path can miss
                 # lower-ranked clean plans when the scorer strongly favors
@@ -5533,7 +5620,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         ))
                         wide_evals.append(candidate_eval)
                         if not plan_requires_safety_block(
-                            candidate_eval.get("plan_safety")
+                            candidate_eval.get("plan_safety"),
+                            allow_pod_destroy_dirty=destroy_time_pods_active,
                         ):
                             break
                     if wide_evals and not frontier_candidate_evals:
@@ -5541,7 +5629,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
                     clean_wide = next(
                         (c for c in wide_evals
-                         if not plan_requires_safety_block(c.get("plan_safety"))),
+                         if not plan_requires_safety_block(
+                             c.get("plan_safety"),
+                             allow_pod_destroy_dirty=destroy_time_pods_active,
+                         )),
                         None,
                     )
                     if clean_wide is not None:
@@ -5550,11 +5641,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         selected_candidate_eval["safety_widening"] = widening_attempts
                         candidate_count = len(wide_specs)
                         break
-                    least_bad_wide = _select_safe_plan_candidate(wide_evals)
+                    least_bad_wide = _select_safe_plan_candidate(
+                        wide_evals,
+                        allow_pod_destroy_dirty=destroy_time_pods_active,
+                    )
                     if (
                         least_bad_wide is not None
                         and plan_requires_safety_block(
-                            least_bad_wide.get("plan_safety")
+                            least_bad_wide.get("plan_safety"),
+                            allow_pod_destroy_dirty=destroy_time_pods_active,
                         )
                     ):
                         selected_candidate_eval = least_bad_wide
@@ -5570,7 +5665,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             if (
                 selected_candidate_eval is not None
                 and plan_requires_safety_block(
-                    selected_candidate_eval.get("plan_safety")
+                    selected_candidate_eval.get("plan_safety"),
+                    allow_pod_destroy_dirty=destroy_time_pods_active,
                 )
                 and summary_evals
             ):
@@ -5600,7 +5696,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                       f"{solution.permutations_tried}/{solution.total_permutations} permutations"
                       f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
                 selected_candidate_blocked = plan_requires_safety_block(
-                    selected_candidate_eval.get("plan_safety")
+                    selected_candidate_eval.get("plan_safety"),
+                    allow_pod_destroy_dirty=destroy_time_pods_active,
                 )
                 if candidate_rank is not None:
                     print(f"  Selected requested candidate #{selected_candidate_rank + 1} "
@@ -5700,6 +5797,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     predicted_board_summary = selected_candidate_eval["predicted_board_summary"]
     plan_safety = selected_candidate_eval["plan_safety"]
     result["plan_safety"] = plan_safety
+    result["destroy_time_pods_policy"] = destroy_time_pods_active
     result["candidate_count"] = candidate_count
     result["selected_candidate_rank"] = selected_candidate_rank
     result["selected_candidate_source"] = selected_candidate_source
@@ -5753,6 +5851,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             "active_mech_count": solution.active_mech_count,
         },
         "weight_version": weight_version,
+        "destroy_time_pods_policy": destroy_time_pods_active,
         "beam_mode": beam,
         "beam_chain_score": beam_chain_score,
         "candidate_count": candidate_count,
@@ -19430,6 +19529,7 @@ def _lightning_click_reviewed_held_end_turn(
     allow_protected_objective_loss: bool,
     allow_objective_loss: bool,
     lightning_speed_loss_policy: bool,
+    destroy_time_pods: bool = False,
 ) -> dict | None:
     """Click a held End Turn after re-validating a reviewed dirty/audit state."""
     active = session.active_solution
@@ -19482,6 +19582,10 @@ def _lightning_click_reviewed_held_end_turn(
         allow_protected_objective_loss_dirty=allow_lightning_speed_loss,
         allow_objective_loss_dirty=allow_lightning_speed_loss,
         allow_mech_loss_dirty=allow_lightning_speed_loss,
+        allow_pod_destroy_dirty=_destroy_time_pods_policy_active(
+            session,
+            explicit=destroy_time_pods,
+        ),
     ):
         return None
 
@@ -19615,6 +19719,7 @@ def cmd_lightning_attempt(
     dirty_consent_id: str | None = None,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    destroy_time_pods: bool = False,
     lightning_speed_loss_policy: bool = False,
     pause_before_solve: bool = True,
     pause_between_actions: bool = False,
@@ -20149,6 +20254,7 @@ def cmd_lightning_attempt(
             dirty_consent_id=dirty_consent_id,
             allow_protected_objective_loss=allow_protected_objective_loss,
             allow_objective_loss=allow_objective_loss,
+            destroy_time_pods=destroy_time_pods,
             lightning_speed_loss_policy=lightning_speed_loss_policy,
             pause_before_solve=pause_before_solve,
             pause_between_actions=pause_between_actions,
@@ -20712,6 +20818,7 @@ def cmd_lightning_attempt(
             allow_protected_objective_loss=allow_protected_objective_loss,
             allow_objective_loss=allow_objective_loss,
             lightning_speed_loss_policy=lightning_speed_loss_policy,
+            destroy_time_pods=destroy_time_pods,
         )
         if held_end_turn is not None:
             return finish(held_end_turn)
@@ -21406,6 +21513,7 @@ def cmd_lightning_segment(
     dirty_consent_id: str | None = None,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    destroy_time_pods: bool = False,
     lightning_speed_loss_policy: bool = True,
     pause_before_solve: bool = True,
     pause_between_actions: bool = False,
@@ -21709,6 +21817,7 @@ def cmd_lightning_segment(
                 allow_protected_objective_loss if dirty_pending else False
             ),
             "allow_objective_loss": allow_objective_loss if dirty_pending else False,
+            "destroy_time_pods": destroy_time_pods,
             "lightning_speed_loss_policy": lightning_speed_loss_policy,
             "pause_before_solve": pause_before_solve,
             "pause_between_actions": pause_between_actions,
@@ -23752,6 +23861,7 @@ def cmd_lightning_loop(
     dirty_consent_id: str | None = None,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    destroy_time_pods: bool = False,
     lightning_speed_loss_policy: bool = False,
     pause_before_solve: bool = True,
     pause_between_actions: bool = False,
@@ -23905,6 +24015,7 @@ def cmd_lightning_loop(
             allow_objective_loss=(
                 allow_objective_loss if dirty_allowed_this_turn else False
             ),
+            destroy_time_pods=destroy_time_pods,
             lightning_speed_loss_policy=lightning_speed_loss_policy,
             resume_before_execute=resume_before_execute,
             pause_between_actions=pause_between_actions,
@@ -25572,6 +25683,7 @@ def _re_solve_partial(
     time_limit: float,
     session: RunSession,
     allow_dirty_plan: bool = False,
+    destroy_time_pods: bool = False,
 ) -> tuple[list, list, float, dict | None, dict | None]:
     """Re-solve from actual board state with partial mech states.
 
@@ -25625,17 +25737,29 @@ def _re_solve_partial(
     weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
     weights_payload = None
     breakdown_weights = None
+    weight_version = _get_weight_version()
     if weights_path.exists():
         try:
             with open(weights_path) as wf:
                 weight_data = _json.load(wf)
             weights_payload = weight_data.get("weights")
-            bridge_data["eval_weights"] = weights_payload
-            if isinstance(weights_payload, dict):
-                from src.solver.evaluate import EvalWeights as _EW
-                breakdown_weights = _EW.from_dict(weights_payload)
         except (ValueError, OSError):
             pass
+    weights_payload, _weight_overlays = _achievement_weight_overlay(
+        session,
+        weights_payload,
+    )
+    if destroy_time_pods and "destroy_time_pods" not in _weight_overlays:
+        weights_payload, _weight_overlays = _destroy_time_pods_weight_overlay(
+            weights_payload,
+            _weight_overlays,
+        )
+    if _weight_overlays:
+        weight_version = f"{weight_version}+{'+'.join(_weight_overlays)}"
+    if isinstance(weights_payload, dict):
+        bridge_data["eval_weights"] = weights_payload
+        from src.solver.evaluate import EvalWeights as _EW
+        breakdown_weights = _EW.from_dict(weights_payload)
 
     # Inject mine data from board into bridge data
     if board is not None and "tiles" in bridge_data:
@@ -25770,7 +25894,9 @@ def _re_solve_partial(
                 ),
             )
             if plan_requires_safety_block(
-                plan_safety, allow_dirty_plan=allow_dirty_plan
+                plan_safety,
+                allow_dirty_plan=allow_dirty_plan,
+                allow_pod_destroy_dirty=destroy_time_pods,
             ):
                 print("  RE-SOLVE SAFETY BLOCK — refusing partial plan")
                 for v in plan_safety.get("violations", []):
@@ -25823,7 +25949,8 @@ def _re_solve_partial(
                     ),
                     "active_mech_count": len(actions),
                 },
-                "weight_version": _get_weight_version(),
+                "weight_version": weight_version,
+                "destroy_time_pods_policy": destroy_time_pods,
                 "beam_mode": False,
                 "beam_chain_score": None,
                 "candidate_count": 1,
@@ -26485,6 +26612,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   dirty_consent_id: str | None = None,
                   allow_protected_objective_loss: bool = False,
                   allow_objective_loss: bool = False,
+                  destroy_time_pods: bool = False,
                   lightning_speed_loss_policy: bool = False,
                   resume_before_execute: bool = False,
                   pause_between_actions: bool = False,
@@ -26931,11 +27059,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _diff_session.difficulty = _live_diff
         _diff_session.save()
 
+    destroy_time_pods_active = _destroy_time_pods_policy_active(
+        _load_session(),
+        explicit=destroy_time_pods,
+    )
+
     # 2. Solve
     solve_result = cmd_solve(
         profile=profile,
         time_limit=time_limit,
         candidate_rank=candidate_rank,
+        destroy_time_pods=destroy_time_pods,
     )
     if "error" in solve_result:
         result = {"error": f"Solve: {solve_result['error']}", "turn": turn}
@@ -27009,7 +27143,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         allow_dirty_plan
         and _allow_kill_limit_objective_dirty_consent(session)
     )
-    allow_lightning_pod_loss = _allow_lightning_war_pod_loss(session, plan_safety)
+    allow_lightning_pod_loss = (
+        not destroy_time_pods_active
+        and _allow_lightning_war_pod_loss(session, plan_safety)
+    )
     allow_lightning_speed_loss = (
         bool(lightning_speed_loss_policy)
         and _lightning_speed_policy_active_for_plan(session, plan_safety)
@@ -27064,7 +27201,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                       or allow_lightning_speed_loss
                                   ),
                                   allow_mech_loss_dirty=allow_lightning_speed_loss,
-                                  allow_pod_loss_dirty=allow_lightning_pod_loss):
+                                  allow_pod_loss_dirty=allow_lightning_pod_loss,
+                                  allow_pod_destroy_dirty=(
+                                      destroy_time_pods_active
+                                  )):
         consent_id = _dirty_consent_id(
             session,
             turn,
@@ -27393,6 +27533,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 mid_action_uid=mech_uid,
                                 time_limit=time_limit, session=session,
                                 allow_dirty_plan=allow_dirty_plan,
+                                destroy_time_pods=destroy_time_pods_active,
                             )
                             # A top-level dirty-plan acceptance applies only
                             # to the exact plan the operator reviewed. After a
@@ -27418,6 +27559,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 allow_objective_loss_dirty=re_solve_speed_loss,
                                 allow_mech_loss_dirty=re_solve_speed_loss,
                                 allow_pod_loss_dirty=re_solve_speed_loss,
+                                allow_pod_destroy_dirty=(
+                                    destroy_time_pods_active
+                                ),
                             ):
                                 result = {
                                     "status": "SAFETY_BLOCKED_RE_SOLVE",
@@ -27671,6 +27815,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             mid_action_uid=None,
                             time_limit=time_limit, session=session,
                             allow_dirty_plan=allow_dirty_plan,
+                            destroy_time_pods=destroy_time_pods_active,
                         )
                         # A top-level dirty-plan acceptance applies only to
                         # the exact plan the operator reviewed. After a
@@ -27694,6 +27839,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             allow_objective_loss_dirty=re_solve_speed_loss,
                             allow_mech_loss_dirty=re_solve_speed_loss,
                             allow_pod_loss_dirty=re_solve_speed_loss,
+                            allow_pod_destroy_dirty=destroy_time_pods_active,
                         ):
                             result = {
                                 "status": "SAFETY_BLOCKED_RE_SOLVE",

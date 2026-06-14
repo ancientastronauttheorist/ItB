@@ -86,6 +86,10 @@ POD_LOSS_DIRTY_KINDS = {
     "pod_unrecovered_final",
 }
 
+POD_DESTROY_DIRTY_KINDS = {
+    "pod_lost",
+}
+
 FINAL_CAVE_EMERGENCY_PYLON_KINDS = {
     "pylon_destroyed",
     "pylon_hp_loss",
@@ -828,17 +832,33 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                                allow_protected_objective_loss_dirty: bool = False,
                                allow_objective_loss_dirty: bool = False,
                                allow_mech_loss_dirty: bool = False,
-                               allow_pod_loss_dirty: bool = False) -> bool:
+                               allow_pod_loss_dirty: bool = False,
+                               allow_pod_destroy_dirty: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
     if not isinstance(audit, dict):
         return True
     if audit.get("status") == "UNKNOWN":
         return True
+    if allow_pod_destroy_dirty:
+        for v in audit.get("violations", []) or []:
+            if (
+                isinstance(v, dict)
+                and v.get("blocking")
+                and v.get("kind") == "pod_unrecovered_final"
+            ):
+                return True
     if allow_pod_loss_dirty and not allow_dirty_plan:
         return any(
             isinstance(v, dict)
             and v.get("blocking")
             and v.get("kind") not in POD_LOSS_DIRTY_KINDS
+            for v in audit.get("violations", []) or []
+        )
+    if allow_pod_destroy_dirty and not allow_dirty_plan:
+        return any(
+            isinstance(v, dict)
+            and v.get("blocking")
+            and v.get("kind") not in POD_DESTROY_DIRTY_KINDS
             for v in audit.get("violations", []) or []
         )
     if allow_dirty_plan:
@@ -891,6 +911,10 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             and not (
                 allow_pod_loss_dirty
                 and v.get("kind") in POD_LOSS_DIRTY_KINDS
+            )
+            and not (
+                allow_pod_destroy_dirty
+                and v.get("kind") in POD_DESTROY_DIRTY_KINDS
             )
             for v in audit.get("violations", []) or []
         )

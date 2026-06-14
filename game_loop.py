@@ -142,6 +142,11 @@ def main():
     p_solve.add_argument("--candidate-rank", type=int, default=None,
                          help="Select an exact solve_top_k candidate rank "
                               "after reviewing dirty frontier tradeoffs.")
+    p_solve.add_argument(
+        "--destroy-time-pods",
+        action="store_true",
+        help="Bias solving toward destroying Time Pods and away from collecting them",
+    )
 
     # execute
     p_exec = sub.add_parser("execute", help="Plan clicks for one mech action")
@@ -917,6 +922,11 @@ def main():
                              help="Stress-test escape hatch: with exact dirty consent, "
                                   "allow objective loss/failure kinds")
     p_auto_turn.add_argument(
+        "--destroy-time-pods",
+        action="store_true",
+        help="Bias combat solving toward destroying Time Pods instead of collecting them",
+    )
+    p_auto_turn.add_argument(
         "--pause-between-actions",
         action="store_true",
         help=(
@@ -983,6 +993,11 @@ def main():
         "--allow-objective-loss",
         action="store_true",
         help="With exact dirty consent, allow objective loss/failure kinds",
+    )
+    p_lightning_loop.add_argument(
+        "--destroy-time-pods",
+        action="store_true",
+        help="Bias combat solving toward destroying Time Pods instead of collecting them",
     )
     p_lightning_loop.add_argument(
         "--speed-loss-policy",
@@ -1100,6 +1115,11 @@ def main():
         help="With exact dirty consent, allow objective loss/failure kinds",
     )
     p_lightning_attempt.add_argument(
+        "--destroy-time-pods",
+        action="store_true",
+        help="Bias combat solving toward destroying Time Pods instead of collecting them",
+    )
+    p_lightning_attempt.add_argument(
         "--speed-loss-policy",
         action="store_true",
         help="Lightning War only: allow nonlethal speed losses and optional objective failures",
@@ -1188,6 +1208,11 @@ def main():
         action="store_true",
     )
     p_lightning_segment.add_argument("--allow-objective-loss", action="store_true")
+    p_lightning_segment.add_argument(
+        "--destroy-time-pods",
+        action="store_true",
+        help="Bias combat solving toward destroying Time Pods instead of collecting them",
+    )
     p_lightning_segment.add_argument(
         "--no-speed-loss-policy",
         dest="lightning_speed_loss_policy",
@@ -1529,7 +1554,8 @@ def main():
         cmd_read(profile=args.profile)
     elif args.command == "solve":
         cmd_solve(profile=args.profile, time_limit=args.time_limit,
-                  beam=args.beam, candidate_rank=args.candidate_rank)
+                  beam=args.beam, candidate_rank=args.candidate_rank,
+                  destroy_time_pods=args.destroy_time_pods)
     elif args.command == "execute":
         cmd_execute(args.index, profile=args.profile)
     elif args.command == "verify":
@@ -1741,6 +1767,7 @@ def main():
                       dirty_consent_id=args.dirty_consent_id,
                       allow_protected_objective_loss=args.allow_protected_objective_loss,
                       allow_objective_loss=args.allow_objective_loss,
+                      destroy_time_pods=args.destroy_time_pods,
                       pause_between_actions=args.pause_between_actions)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
@@ -1760,6 +1787,7 @@ def main():
             dirty_consent_id=args.dirty_consent_id,
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
+            destroy_time_pods=args.destroy_time_pods,
             lightning_speed_loss_policy=args.speed_loss_policy,
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
@@ -1786,6 +1814,7 @@ def main():
             dirty_consent_id=args.dirty_consent_id,
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
+            destroy_time_pods=args.destroy_time_pods,
             lightning_speed_loss_policy=args.speed_loss_policy,
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
@@ -1812,6 +1841,7 @@ def main():
             dirty_consent_id=args.dirty_consent_id,
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
+            destroy_time_pods=args.destroy_time_pods,
             lightning_speed_loss_policy=args.lightning_speed_loss_policy,
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
