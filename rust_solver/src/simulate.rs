@@ -3894,7 +3894,11 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if in_bounds(nx, ny) {
-                place_smoke(board, nx as u8, ny as u8);
+                let nx_u = nx as u8;
+                let ny_u = ny as u8;
+                if board.unit_at(nx_u, ny_u).is_none() {
+                    place_smoke(board, nx_u, ny_u);
+                }
             }
         }
     }
@@ -11309,6 +11313,30 @@ mod tests {
             "expected Backburner achievement event, got {:?}",
             result.events
         );
+    }
+
+    #[test]
+    fn test_smoldering_shells_adjacent_smoke_skips_occupied_tiles() {
+        // Live evidence: Mist Eaters Backburner run 20260615_172629_338,
+        // Mission_Acid turn 1. Smoldering Shells hit F3, but the occupied
+        // adjacent F2 Scarab was not smoked and still damaged F7.
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFire);
+        let center = add_enemy_type(&mut board, 92, 5, 2, 2, "Scarab1");
+        let adjacent = add_enemy_type(&mut board, 93, 6, 2, 2, "Scarab1");
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 5, 2);
+
+        assert_eq!(board.units[center].hp, 1);
+        assert!(board.units[center].fire(), "center target should be set on Fire");
+        assert!(
+            !board.tile(6, 2).smoke(),
+            "occupied adjacent tile must not receive Smoldering Shells smoke"
+        );
+        assert_eq!(board.units[adjacent].hp, 2);
+        assert!(board.tile(4, 2).smoke(), "empty north adjacent tile should smoke");
+        assert!(board.tile(5, 1).smoke(), "empty west adjacent tile should smoke");
+        assert!(board.tile(5, 3).smoke(), "empty east adjacent tile should smoke");
     }
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {

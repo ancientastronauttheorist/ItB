@@ -1320,7 +1320,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # fixed 1 self-damage, attack-phase landing effects, upgraded range IDs, and
 # the On the Backburner 4+ effective-damage achievement event. Pre-v266 corpus
 # archived as failure_db_snapshot_sim_v265.jsonl.
-SIMULATOR_VERSION = 266
+# v267 - Ranged_SmokeFire / Smoldering Shells adjacent smoke skips occupied
+# adjacent tiles; live Backburner run showed an occupied adjacent Scarab was not
+# smoke-cancelled. Pre-v267 corpus archived as failure_db_snapshot_sim_v266.jsonl.
+SIMULATOR_VERSION = 267
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
