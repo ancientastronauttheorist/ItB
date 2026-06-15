@@ -1315,7 +1315,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v265 - Brute_Grapple full-pull stops before dead unit wrecks without bump
 # damage. Fixes Lightning War run 20260613_002031_059 Mission_Survive turn 1.
 # Pre-v265 corpus archived as failure_db_snapshot_sim_v264.jsonl.
-SIMULATOR_VERSION = 265
+# v266 - Brute_KickBack / Reverse Thrusters modeled as a dash-away weapon:
+# clicked landing tile, distance-scaled damage and smoke on the reverse tile,
+# fixed 1 self-damage, attack-phase landing effects, upgraded range IDs, and
+# the On the Backburner 4+ effective-damage achievement event. Pre-v266 corpus
+# archived as failure_db_snapshot_sim_v265.jsonl.
+SIMULATOR_VERSION = 266
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

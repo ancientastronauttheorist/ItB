@@ -26,6 +26,7 @@ class WeaponType(str, Enum):
     GLOBAL_PUSH = "global_push"  # Pushes every unit in one chosen direction
     GLOBAL_UNIT_EFFECT = "global_unit_effect"  # Affects every live non-source unit on board
     DISPOSAL = "disposal"       # Mission_Disposal lethal A.C.I.D. Launcher cross
+    DASH_AWAY = "dash_away"     # Dash away from impact tile; damage scales by distance
     PASSIVE = "passive"       # Always-on effect
 
 
@@ -328,6 +329,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Aerial Bombs", weapon_type="leap",
         damage=2, smoke=True, range_min=2, range_max=3,
         aoe_center=False,
+    ),
+    "Brute_KickBack": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=2,
+        upgrade_a="+1 range (total 3)",
+        upgrade_b="+1 range (total 3)",
+    ),
+    "Brute_KickBack_A": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=3,
+    ),
+    "Brute_KickBack_B": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=3,
+    ),
+    "Brute_KickBack_AB": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=4,
     ),
     "Brute_Mirrorshot": WeaponDef(
         name="Mirror Shot", weapon_type="projectile",

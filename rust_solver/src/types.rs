@@ -132,6 +132,9 @@ pub enum WeaponType {
     /// Mission_Disposal's A.C.I.D. Launcher: artillery target with a
     /// cross-shaped instant-kill acid footprint that clears mountains.
     Disposal = 16,
+    /// Reverse Thrusters: click a legal landing tile, damage/smoke the tile
+    /// immediately behind the start tile, then dash away.
+    DashAway = 17,
 }
 
 impl WeaponType {
@@ -154,6 +157,7 @@ impl WeaponType {
             "global_unit_effect" => WeaponType::GlobalUnitEffect,
             "terraformer" => WeaponType::Terraformer,
             "disposal" => WeaponType::Disposal,
+            "dash_away" => WeaponType::DashAway,
             _ => WeaponType::Melee,
         }
     }

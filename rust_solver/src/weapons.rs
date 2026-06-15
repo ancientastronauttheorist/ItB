@@ -610,9 +610,17 @@ pub enum WId {
     RangedDeployBomb = 213,
     /// Bombermechs — Walking Bomb's Trigger.
     DeployUnitSelfDamage = 214,
+    /// Mist Eaters — Thruster Mech's Reverse Thrusters.
+    BruteKickBack = 215,
+    /// Reverse Thrusters with first +1 Range powered.
+    BruteKickBackA = 216,
+    /// Reverse Thrusters with second +1 Range powered.
+    BruteKickBackB = 217,
+    /// Reverse Thrusters with both +1 Range upgrades powered.
+    BruteKickBackAB = 218,
 }
 
-pub const WEAPON_COUNT: usize = 215;
+pub const WEAPON_COUNT: usize = 219;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -961,6 +969,19 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // Self-destructs and deals 1 damage to the four cardinal adjacent tiles.
     w[214] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, self_damage: 99,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 215-218: Brute_KickBack — Reverse Thrusters.
+    // Lua advanced/ae_weapons.lua:872-975. The clicked tile is the dash
+    // landing, and the damaged/smoked tile is one tile opposite that direction
+    // from the starting position. Damage equals distance travelled; Boost adds
+    // via the normal transient `damage` increment.
+    w[215] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 2, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    w[216] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 3, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    w[217] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 3, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    w[218] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 4, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1471,6 +1492,34 @@ pub fn is_walking_bomb_trigger(id: WId) -> bool {
 }
 
 #[inline]
+pub fn is_reverse_thrusters(id: WId) -> bool {
+    matches!(
+        id,
+        WId::BruteKickBack | WId::BruteKickBackA
+            | WId::BruteKickBackB | WId::BruteKickBackAB
+    )
+}
+
+#[inline]
+pub fn reverse_thrusters_hit_tile(
+    ax: u8,
+    ay: u8,
+    target_x: u8,
+    target_y: u8,
+) -> Option<(u8, u8, u8, usize)> {
+    let dir = crate::movement::cardinal_direction(ax, ay, target_x, target_y)?;
+    let distance = (target_x as i8 - ax as i8).unsigned_abs()
+        + (target_y as i8 - ay as i8).unsigned_abs();
+    let (dx, dy) = DIRS[dir];
+    let hx = ax as i8 - dx;
+    let hy = ay as i8 - dy;
+    if !in_bounds(hx, hy) {
+        return None;
+    }
+    Some((hx as u8, hy as u8, distance, dir))
+}
+
+#[inline]
 pub fn is_mass_shift(id: WId) -> bool {
     matches!(
         id,
@@ -1593,6 +1642,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Jetmech_A" => WId::BruteJetmechA,
         "Brute_Jetmech_B" => WId::BruteJetmechB,
         "Brute_Jetmech_AB" => WId::BruteJetmechAB,
+        "Brute_KickBack" => WId::BruteKickBack,
+        "Brute_KickBack_A" => WId::BruteKickBackA,
+        "Brute_KickBack_B" => WId::BruteKickBackB,
+        "Brute_KickBack_AB" => WId::BruteKickBackAB,
         "Brute_Mirrorshot" => WId::BruteMirrorshot,
         "Brute_Mirrorshot_A" => WId::BruteMirrorshotA,
         "Brute_Mirrorshot_B" => WId::BruteMirrorshotB,
@@ -1839,6 +1892,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteJetmechA => "Brute_Jetmech_A",
         WId::BruteJetmechB => "Brute_Jetmech_B",
         WId::BruteJetmechAB => "Brute_Jetmech_AB",
+        WId::BruteKickBack => "Brute_KickBack",
+        WId::BruteKickBackA => "Brute_KickBack_A",
+        WId::BruteKickBackB => "Brute_KickBack_B",
+        WId::BruteKickBackAB => "Brute_KickBack_AB",
         WId::BruteMirrorshot => "Brute_Mirrorshot",
         WId::BruteMirrorshotA => "Brute_Mirrorshot_A",
         WId::BruteMirrorshotB => "Brute_Mirrorshot_B",
@@ -2146,6 +2203,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeSmash => "Ground Smash",
         WId::BruteTankmech => "Taurus Cannon",
         WId::BruteJetmech | WId::BruteJetmechA | WId::BruteJetmechB | WId::BruteJetmechAB => "Aerial Bombs",
+        WId::BruteKickBack | WId::BruteKickBackA
+            | WId::BruteKickBackB | WId::BruteKickBackAB => "Reverse Thrusters",
         WId::BruteMirrorshot | WId::BruteMirrorshotA
             | WId::BruteMirrorshotB | WId::BruteMirrorshotAB => "Mirror Shot",
         WId::BruteBeetle => "Ramming Engines",
@@ -2509,6 +2568,32 @@ mod tests {
         assert_eq!(wid_from_str("Brute_Jetmech_AB"), WId::BruteJetmechAB);
         assert_eq!(wid_to_str(WId::BruteJetmechB), "Brute_Jetmech_B");
         assert_eq!(weapon_name(WId::BruteJetmechAB), "Aerial Bombs");
+    }
+
+    #[test]
+    fn test_reverse_thrusters_upgrades() {
+        let base = weapon_def(WId::BruteKickBack);
+        assert_eq!(base.weapon_type, WeaponType::DashAway);
+        assert_eq!(base.range_min, 1);
+        assert_eq!(base.range_max, 2);
+        assert_eq!(base.self_damage, 1);
+        assert!(base.smoke());
+
+        let range_a = weapon_def(WId::BruteKickBackA);
+        assert_eq!(range_a.range_max, 3);
+
+        let range_b = weapon_def(WId::BruteKickBackB);
+        assert_eq!(range_b.range_max, 3);
+
+        let both = weapon_def(WId::BruteKickBackAB);
+        assert_eq!(both.range_max, 4);
+
+        assert_eq!(wid_from_str("Brute_KickBack"), WId::BruteKickBack);
+        assert_eq!(wid_from_str("Brute_KickBack_A"), WId::BruteKickBackA);
+        assert_eq!(wid_from_str("Brute_KickBack_B"), WId::BruteKickBackB);
+        assert_eq!(wid_from_str("Brute_KickBack_AB"), WId::BruteKickBackAB);
+        assert_eq!(wid_to_str(WId::BruteKickBackB), "Brute_KickBack_B");
+        assert_eq!(weapon_name(WId::BruteKickBackAB), "Reverse Thrusters");
     }
 
     #[test]

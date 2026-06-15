@@ -2808,6 +2808,9 @@ pub fn simulate_weapon_with(
         },
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
         WeaponType::Charge => sim_charge(board, attacker_idx, weapon_id, wdef, attack_dir, &mut result),
+        WeaponType::DashAway => {
+            sim_reverse_thrusters(board, attacker_idx, weapon_id, wdef, target_x, target_y, &mut result)
+        }
         WeaponType::Leap => sim_leap(board, attacker_idx, weapon_id, wdef, target_x, target_y, &mut result),
         WeaponType::Laser => sim_laser(board, ax, ay, wdef, attack_dir, &mut result),
         WeaponType::HealAll => sim_heal_all(board, &mut result),
@@ -2847,6 +2850,7 @@ pub fn simulate_weapon_with(
     // recoil in the game, but the solver used to over-predict HP by 1).
     if wdef.self_damage > 0
         && wdef.weapon_type != WeaponType::Charge
+        && wdef.weapon_type != WeaponType::DashAway
         && !temporary_unit_self_destruct
     {
         let ax = board.units[attacker_idx].x;
@@ -4565,6 +4569,125 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
 }
 
 // ── Charge ───────────────────────────────────────────────────────────────────
+
+fn reverse_thrusters_landing_illegal_reason(
+    board: &Board,
+    attacker_idx: usize,
+    wdef: &WeaponDef,
+    tx: u8,
+    ty: u8,
+) -> Option<&'static str> {
+    if tx >= 8 || ty >= 8 {
+        return Some("out_of_bounds");
+    }
+    let ax = board.units[attacker_idx].x;
+    let ay = board.units[attacker_idx].y;
+    let Some(_dir) = cardinal_direction(ax, ay, tx, ty) else {
+        return Some("off_axis");
+    };
+    let distance = (tx as i8 - ax as i8).unsigned_abs()
+        + (ty as i8 - ay as i8).unsigned_abs();
+    if distance < wdef.range_min.max(1) || (wdef.range_max != 0 && distance > wdef.range_max) {
+        return Some("range");
+    }
+
+    let flying = board.units[attacker_idx].flying();
+    let landing = board.tile(tx, ty);
+    if landing.terrain.blocks_all() {
+        return Some("terrain");
+    }
+    if !flying && landing.terrain.is_deadly_ground() {
+        return Some("deadly");
+    }
+    if landing.terrain == Terrain::Building {
+        return Some("building");
+    }
+    if board.unit_at(tx, ty).is_some() {
+        return Some("unit");
+    }
+    if board.wreck_at(tx, ty) {
+        return Some("wreck");
+    }
+    None
+}
+
+fn reverse_thrusters_effective_unit_damage(unit: &Unit, base_damage: u8) -> u8 {
+    if unit.shield() || unit.frozen() {
+        0
+    } else if unit.acid() {
+        base_damage.saturating_mul(2)
+    } else if unit.armor() {
+        base_damage.saturating_sub(1)
+    } else {
+        base_damage
+    }
+}
+
+fn sim_reverse_thrusters(
+    board: &mut Board,
+    attacker_idx: usize,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    tx: u8,
+    ty: u8,
+    result: &mut ActionResult,
+) {
+    if let Some(reason) = reverse_thrusters_landing_illegal_reason(board, attacker_idx, wdef, tx, ty) {
+        result.events.push(format!(
+            "illegal_reverse_thrusters_landing:{}:{}:{}",
+            tx, ty, reason
+        ));
+        return;
+    }
+
+    let ax = board.units[attacker_idx].x;
+    let ay = board.units[attacker_idx].y;
+    let Some(dir) = cardinal_direction(ax, ay, tx, ty) else {
+        return;
+    };
+    let distance = (tx as i8 - ax as i8).unsigned_abs()
+        + (ty as i8 - ay as i8).unsigned_abs();
+    let damage = distance.saturating_add(wdef.damage);
+    let (dx, dy) = DIRS[dir];
+    let hit_x = ax as i8 - dx;
+    let hit_y = ay as i8 - dy;
+    let mut achievement_damage = 0;
+    let mut achievement_target = None;
+    if in_bounds(hit_x, hit_y) {
+        let hx = hit_x as u8;
+        let hy = hit_y as u8;
+        achievement_damage = board
+            .unit_at(hx, hy)
+            .filter(|&idx| board.units[idx].is_enemy())
+            .map(|idx| reverse_thrusters_effective_unit_damage(&board.units[idx], damage))
+            .unwrap_or(0);
+        achievement_target = Some((hx, hy));
+
+        let occupied_at_impact = board.unit_at(hx, hy).is_some();
+        apply_direct_weapon_damage(board, hx, hy, damage, wdef, result);
+        apply_weapon_status_with_impact_occupancy(board, hx, hy, wdef, occupied_at_impact);
+    }
+
+    // Lua hardcodes the recoil SpaceDamage at 1. Boost raises the outgoing
+    // dash damage, not the self-damage.
+    apply_damage(board, ax, ay, 1, result, DamageSource::SelfDamage);
+
+    board.units[attacker_idx].x = tx;
+    board.units[attacker_idx].y = ty;
+    apply_landing_effects(board, attacker_idx, result);
+
+    if achievement_damage >= 4 {
+        let (hx, hy) = achievement_target.unwrap();
+        result.events.push(format!(
+            "achievement_on_the_backburner:damage:{}:target:{}:{}",
+            achievement_damage, hx, hy
+        ));
+    }
+
+    if !is_reverse_thrusters(weapon_id) {
+        result.events.push(format!("unexpected_dash_away_weapon:{:?}", weapon_id));
+    }
+}
 
 fn sim_charge(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
     let dir = match attack_dir {
@@ -11149,6 +11272,44 @@ mod tests {
     // Regression anchor: Easy Rusting Hulks run 20260508_134925_472,
     // Mission_Cataclysm turn 3 JetMech B5 -> B3 click_miss, where B3 was
     // already Cataclysm chasm terrain.
+
+    #[test]
+    fn test_reverse_thrusters_smokes_hit_tile_self_damages_and_dashes() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
+        let enemy = add_enemy(&mut board, 10, 3, 2, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteKickBack, 3, 5);
+
+        assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
+        assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters recoil is fixed at 1");
+        assert_eq!(board.units[enemy].hp, 1, "2-tile dash should deal 2 base damage");
+        assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the damaged tile");
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_reverse_thrusters")),
+            "legal dash should not emit illegal event: {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_reverse_thrusters_acid_two_tile_dash_fires_backburner_event() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
+        let enemy = add_enemy(&mut board, 10, 3, 2, 4);
+        board.units[enemy].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteKickBack, 3, 5);
+
+        assert_eq!(board.units[enemy].hp, 0, "A.C.I.D. should double 2 damage to 4");
+        assert!(
+            result.events.iter().any(|e| {
+                e == "achievement_on_the_backburner:damage:4:target:3:2"
+            }),
+            "expected Backburner achievement event, got {:?}",
+            result.events
+        );
+    }
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
         crate::solver::get_weapon_targets(

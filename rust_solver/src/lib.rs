@@ -62,7 +62,10 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::evaluate::{consumed_spawn_block_bonus, evaluate, PsionState};
     use crate::movement::illegal_move_reason;
     use crate::simulate::simulate_action;
-    use crate::solver::viscera_nanobots_heal_from_events;
+    use crate::solver::{
+        reverse_thrusters_four_damage_from_events,
+        viscera_nanobots_heal_from_events,
+    };
     use crate::weapons::wid_from_str;
     use crate::types::{Terrain, xy_to_idx};
 
@@ -104,6 +107,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut mission_kills = 0i32;
         let mut bumps = 0i32;
         let mut nanobots_heal = 0i32;
+        let mut reverse_thrusters_four_damage = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
@@ -130,6 +134,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 illegal_events.push(event.clone());
             }
             nanobots_heal += viscera_nanobots_heal_from_events(&result.events);
+            reverse_thrusters_four_damage +=
+                reverse_thrusters_four_damage_from_events(&result.events);
             kills += result.enemies_killed as i32;
             mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -173,7 +179,9 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         }
         let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats)
             + consumed_spawn_block_bonus(&board, &spawn_points, &weights, spawn_block_result.spawns_blocked)
-            + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus;
+            + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus
+            + reverse_thrusters_four_damage as f64
+                * weights.reverse_thrusters_four_damage_bonus;
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -1812,7 +1820,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   where Hook over-killed a Leaper against a wreck and the survivor destroyed
 //   ElectricMech after End Turn. Pre-v265 corpus archived as
 //   failure_db_snapshot_sim_v264.jsonl.
-pub const SIMULATOR_VERSION: u32 = 265;
+// v266 - Brute_KickBack / Reverse Thrusters modeled as a dash-away weapon:
+//   clicked landing tile, distance-scaled damage and smoke on the reverse tile,
+//   fixed 1 self-damage, attack-phase landing effects, upgraded range IDs, and
+//   the On the Backburner 4+ effective-damage achievement event. Pre-v266
+//   corpus archived as failure_db_snapshot_sim_v265.jsonl.
+pub const SIMULATOR_VERSION: u32 = 266;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

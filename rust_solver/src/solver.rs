@@ -69,6 +69,13 @@ pub(crate) fn powered_blast_from_events(events: &[String]) -> i32 {
         .count() as i32
 }
 
+pub(crate) fn reverse_thrusters_four_damage_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_on_the_backburner:"))
+        .count() as i32
+}
+
 // ── MechAction ───────────────────────────────────────────────────────────────
 
 #[derive(Clone, Debug)]
@@ -205,6 +212,30 @@ impl BoundedTopK {
 }
 
 // ── Weapon target enumeration ────────────────────────────────────────────────
+
+fn reverse_thrusters_landing_blocked(
+    board: &Board,
+    x: u8,
+    y: u8,
+    flying: bool,
+    vacated: (u8, u8),
+) -> bool {
+    let tile = board.tile(x, y);
+    if tile.terrain.blocks_all() {
+        return true;
+    }
+    if !flying && tile.terrain.is_deadly_ground() {
+        return true;
+    }
+    if tile.terrain == Terrain::Building {
+        return true;
+    }
+    if (x, y) != vacated {
+        board.unit_at(x, y).is_some() || board.wreck_at(x, y)
+    } else {
+        false
+    }
+}
 
 pub(crate) fn get_weapon_targets(
     board: &Board,
@@ -455,6 +486,33 @@ pub(crate) fn get_weapon_targets(
                 let ny = my as i8 + dy;
                 if in_bounds(nx, ny) {
                     targets.push((nx as u8, ny as u8));
+                }
+            }
+        }
+        WeaponType::DashAway => {
+            let attacker_flying = board
+                .unit_at(mx, my)
+                .or_else(|| board.unit_at(mech_from.0, mech_from.1))
+                .map(|idx| board.units[idx].flying())
+                .unwrap_or(false);
+            let min_r = wdef.range_min.max(1);
+            let max_r = if wdef.range_max == 0 { 7 } else { wdef.range_max };
+            for &(dx, dy) in &DIRS {
+                for i in (min_r as i8)..=(max_r as i8) {
+                    let nx = mx as i8 + dx * i;
+                    let ny = my as i8 + dy * i;
+                    if !in_bounds(nx, ny) { break; }
+                    let ux = nx as u8;
+                    let uy = ny as u8;
+                    if !reverse_thrusters_landing_blocked(
+                        board,
+                        ux,
+                        uy,
+                        attacker_flying,
+                        mech_from,
+                    ) {
+                        targets.push((ux, uy));
+                    }
                 }
             }
         }
@@ -1215,6 +1273,35 @@ fn prune_actions(
                 weapon_id,
                 wdef,
             );
+            if is_reverse_thrusters(weapon_id) {
+                if let Some((hx, hy, distance, _dir)) = reverse_thrusters_hit_tile(
+                    attack_origin.0,
+                    attack_origin.1,
+                    target.0,
+                    target.1,
+                ) {
+                    let hit_bit = 1u64 << xy_to_idx(hx, hy);
+                    if threat_tiles & hit_bit != 0 { s += 100; }
+                    if let Some(idx) = board.unit_at(hx, hy) {
+                        if board.units[idx].is_enemy() {
+                            s += 40;
+                            let base = distance.saturating_add(wdef.damage);
+                            let effective = if board.units[idx].acid() {
+                                base.saturating_mul(2)
+                            } else if board.units[idx].armor() {
+                                base.saturating_sub(1)
+                            } else {
+                                base
+                            };
+                            if effective >= 4 {
+                                s += 2000;
+                            }
+                        } else if board.units[idx].is_player() {
+                            s -= 300;
+                        }
+                    }
+                }
+            }
             if wdef.push != PushDir::None {
                 match wdef.weapon_type {
                     // Melee / Projectile / Charge / Laser: Forward push on the hit target
@@ -1397,6 +1484,7 @@ fn search_recursive(
     bumps_so_far: i32,
     nanobots_heal_so_far: i32,
     powered_blast_so_far: i32,
+    reverse_thrusters_four_damage_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
@@ -1467,12 +1555,16 @@ fn search_recursive(
             nanobots_heal_so_far as f64 * weights.viscera_nanobots_heal_bonus;
         let powered_blast_bonus =
             powered_blast_so_far as f64 * weights.powered_blast_bonus;
+        let reverse_thrusters_four_damage_bonus =
+            reverse_thrusters_four_damage_so_far as f64
+                * weights.reverse_thrusters_four_damage_bonus;
         let pod_collected_penalty =
             pods_collected_so_far as f64 * weights.pod_collected;
         let score = raw
             + mission_action_bonus
             + nanobots_heal_bonus
             + powered_blast_bonus
+            + reverse_thrusters_four_damage_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
 
@@ -1501,6 +1593,7 @@ fn search_recursive(
             board, mech_order, depth + 1,
             actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far,
             nanobots_heal_so_far, powered_blast_so_far,
+            reverse_thrusters_four_damage_so_far,
             pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
@@ -1554,6 +1647,8 @@ fn search_recursive(
         let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target, weapons);
         let nanobots_heal_add = viscera_nanobots_heal_from_events(&result.events);
         let powered_blast_add = powered_blast_from_events(&result.events);
+        let reverse_thrusters_four_damage_add =
+            reverse_thrusters_four_damage_from_events(&result.events);
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
         // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
@@ -1579,6 +1674,7 @@ fn search_recursive(
             bumps_so_far + result.buildings_bump_damaged,
             nanobots_heal_so_far + nanobots_heal_add,
             powered_blast_so_far + powered_blast_add,
+            reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
@@ -1754,7 +1850,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -1951,7 +2047,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -2287,6 +2383,44 @@ mod top_k_tests {
         assert!(
             !targets.contains(&(4, 1)),
             "Hydraulic Legs should not enumerate non-cardinal landing G4 from E3; got {:?}",
+            targets
+        );
+    }
+
+    #[test]
+    fn reverse_thrusters_targets_include_vacated_start_tile() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE
+                | UnitFlags::IS_MECH
+                | UnitFlags::CAN_MOVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::FLYING,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::BruteKickBack as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("NeedleMech");
+
+        let targets = get_weapon_targets(
+            &board,
+            3,
+            5,
+            WId::BruteKickBack,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert!(
+            targets.contains(&(3, 3)),
+            "Reverse Thrusters should allow landing on the tile vacated by pre-attack movement; got {:?}",
             targets
         );
     }

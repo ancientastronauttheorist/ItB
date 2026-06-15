@@ -173,6 +173,10 @@ def _achievement_weight_overlay(
 
     weights = dict(base_weights or {})
     applied: list[str] = []
+    normalized_targets = {
+        target.replace("_", " ").replace("-", " ")
+        for target in targets
+    }
 
     if "this is fine" in targets:
         # The run goal is five enemies burning at once, not fast cleanup.
@@ -229,6 +233,15 @@ def _achievement_weight_overlay(
         )
         applied.append("powered_blast")
 
+    if normalized_targets & {"on the backburner", "on the backbuner"}:
+        # Mist Eaters: reward the exact 4+ effective-damage Reverse Thrusters
+        # event, including the Detritus A.C.I.D. two-tile cheese.
+        weights["reverse_thrusters_four_damage_bonus"] = max(
+            float(weights.get("reverse_thrusters_four_damage_bonus", 0) or 0),
+            120000.0,
+        )
+        applied.append("on_the_backburner")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove
@@ -248,10 +261,6 @@ def _achievement_weight_overlay(
         )
         applied.append("lightning_war")
 
-    normalized_targets = {
-        target.replace("_", " ").replace("-", " ")
-        for target in targets
-    }
     if normalized_targets & _DESTROY_TIME_PODS_TARGETS:
         weights, applied = _destroy_time_pods_weight_overlay(weights, applied)
 
