@@ -1829,7 +1829,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   adjacent tiles; live Backburner run showed an occupied adjacent Scarab was
 //   not smoke-cancelled. Pre-v267 corpus archived as
 //   failure_db_snapshot_sim_v266.jsonl.
-pub const SIMULATOR_VERSION: u32 = 267;
+// v268 - Passive_HealingSmoke / Nanofilter Mending is parsed from bridge
+//   weapons and consumes smoke under player mechs to heal 1 HP. Reverse
+//   Thrusters now places source smoke instead of impact smoke, matching live
+//   Backburner damage_amount desyncs. Pre-v268 corpus archived as
+//   failure_db_snapshot_sim_v267.jsonl.
+pub const SIMULATOR_VERSION: u32 = 268;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

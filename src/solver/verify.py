@@ -1323,7 +1323,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v267 - Ranged_SmokeFire / Smoldering Shells adjacent smoke skips occupied
 # adjacent tiles; live Backburner run showed an occupied adjacent Scarab was not
 # smoke-cancelled. Pre-v267 corpus archived as failure_db_snapshot_sim_v266.jsonl.
-SIMULATOR_VERSION = 267
+# v268 - Passive_HealingSmoke / Nanofilter Mending is parsed from bridge
+# weapons and consumes smoke under player mechs to heal 1 HP. Reverse Thrusters
+# now places source smoke instead of impact smoke, matching live Backburner
+# damage_amount desyncs. Pre-v268 corpus archived as
+# failure_db_snapshot_sim_v267.jsonl.
+SIMULATOR_VERSION = 268
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

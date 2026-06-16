@@ -365,6 +365,33 @@ fn apply_smoke_tile_extinguish(board: &mut Board, unit_idx: usize, x: u8, y: u8)
     }
 }
 
+fn apply_healing_smoke_at(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+    if !board.healing_smoke || !board.tile(x, y).smoke() {
+        return;
+    }
+
+    let unit = &board.units[unit_idx];
+    if unit.x != x || unit.y != y || !unit.is_player() || !unit.is_mech() || unit.hp <= 0 {
+        return;
+    }
+
+    let unit = &mut board.units[unit_idx];
+    if unit.hp < unit.max_hp {
+        unit.hp += 1;
+    }
+    unit.set_fire(false);
+    board.tile_mut(x, y).set_smoke(false);
+}
+
+fn apply_healing_smoke_unit_on_tile(board: &mut Board, x: u8, y: u8) {
+    if !board.healing_smoke || !board.tile(x, y).smoke() {
+        return;
+    }
+    if let Some(idx) = board.unit_at(x, y) {
+        apply_healing_smoke_at(board, idx, x, y);
+    }
+}
+
 fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     let nx = board.units[unit_idx].x;
     let ny = board.units[unit_idx].y;
@@ -385,6 +412,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
 
     // 4. Smoke tile: carried unit fire is extinguished on landing.
     apply_smoke_tile_extinguish(board, unit_idx, nx, ny);
+    apply_healing_smoke_at(board, unit_idx, nx, ny);
 
     // 5. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
@@ -575,6 +603,7 @@ fn place_smoke(board: &mut Board, x: u8, y: u8) {
             break_web_from(board, uid);
         }
     }
+    apply_healing_smoke_unit_on_tile(board, x, y);
 }
 
 // ── apply_damage ─────────────────────────────────────────────────────────────
@@ -4667,14 +4696,15 @@ fn sim_reverse_thrusters(
             .unwrap_or(0);
         achievement_target = Some((hx, hy));
 
-        let occupied_at_impact = board.unit_at(hx, hy).is_some();
         apply_direct_weapon_damage(board, hx, hy, damage, wdef, result);
-        apply_weapon_status_with_impact_occupancy(board, hx, hy, wdef, occupied_at_impact);
     }
 
     // Lua hardcodes the recoil SpaceDamage at 1. Boost raises the outgoing
     // dash damage, not the self-damage.
     apply_damage(board, ax, ay, 1, result, DamageSource::SelfDamage);
+    if wdef.smoke() {
+        place_smoke(board, ax, ay);
+    }
 
     board.units[attacker_idx].x = tx;
     board.units[attacker_idx].y = ty;
@@ -11278,7 +11308,7 @@ mod tests {
     // already Cataclysm chasm terrain.
 
     #[test]
-    fn test_reverse_thrusters_smokes_hit_tile_self_damages_and_dashes() {
+    fn test_reverse_thrusters_smokes_start_tile_self_damages_and_dashes() {
         let mut board = make_test_board();
         let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
         let enemy = add_enemy(&mut board, 10, 3, 2, 3);
@@ -11288,12 +11318,36 @@ mod tests {
         assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
         assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters recoil is fixed at 1");
         assert_eq!(board.units[enemy].hp, 1, "2-tile dash should deal 2 base damage");
-        assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the damaged tile");
+        assert!(board.tile(3, 3).smoke(), "Reverse Thrusters smokes the start tile");
+        assert!(!board.tile(3, 2).smoke(), "Reverse Thrusters does not smoke the damaged tile");
         assert!(
             !result.events.iter().any(|e| e.starts_with("illegal_reverse_thrusters")),
             "legal dash should not emit illegal event: {:?}",
             result.events
         );
+    }
+
+    #[test]
+    fn test_reverse_thrusters_healing_smoke_consumes_recoil_and_source_smoke() {
+        let mut board = make_test_board();
+        board.healing_smoke = true;
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
+        let enemy = add_enemy(&mut board, 10, 3, 2, 3);
+
+        let _ = simulate_weapon(&mut board, mech, WId::BruteKickBack, 3, 5);
+
+        assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
+        assert_eq!(
+            board.units[mech].hp,
+            3,
+            "Nanofilter Mending should heal Reverse Thrusters recoil before the dash completes"
+        );
+        assert_eq!(board.units[enemy].hp, 1);
+        assert!(
+            !board.tile(3, 3).smoke(),
+            "Nanofilter Mending consumes the source smoke immediately"
+        );
+        assert!(!board.tile(3, 2).smoke());
     }
 
     #[test]

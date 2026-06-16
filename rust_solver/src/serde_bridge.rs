@@ -1025,6 +1025,7 @@ pub fn board_from_json(json_str: &str)
                         match wname.as_str() {
                             "Passive_Electric" => board.storm_generator = true,
                             "Passive_FlameImmune" => board.flame_shielding = true,
+                            "Passive_HealingSmoke" => board.healing_smoke = true,
                             "Passive_Leech" => {
                                 board.viscera_nanobots_heal = board.viscera_nanobots_heal.max(1);
                             }
@@ -1202,6 +1203,34 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.viscera_nanobots_heal, 2);
+    }
+
+    #[test]
+    fn test_smog_mech_enables_healing_smoke() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "SmokeMech",
+                    "x": 2,
+                    "y": 2,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "active": true,
+                    "weapons": ["Ranged_SmokeFire", "Passive_HealingSmoke"]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.healing_smoke);
     }
 
     #[test]
