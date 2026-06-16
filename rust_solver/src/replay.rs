@@ -560,14 +560,16 @@ mod tests {
     }
 
     #[test]
-    fn replay_solution_reverse_thrusters_source_smoke_does_not_same_action_heal() {
+    fn replay_solution_reverse_thrusters_backblast_smoke_does_not_same_action_heal() {
         let bridge = r#"{
           "tiles": [],
           "units": [
             {"uid": 0, "type": "NeedleMech", "x": 3, "y": 3,
              "hp": 3, "max_hp": 3, "team": 1, "mech": true,
              "flying": true, "move": 4, "active": true,
-             "weapons": ["Brute_KickBack", "Passive_HealingSmoke"]}
+             "weapons": ["Brute_KickBack", "Passive_HealingSmoke"]},
+            {"uid": 10, "type": "Spiderling1", "x": 3, "y": 2,
+             "hp": 1, "max_hp": 1, "team": 6}
           ],
           "grid_power": 7,
           "grid_power_max": 7,
@@ -595,6 +597,18 @@ mod tests {
         assert_eq!(
             mech["hp"], 2,
             "Reverse Thrusters recoil should remain in replay snapshots until a later Nanofilter trigger"
+        );
+        let tiles = post_attack["tiles_changed"].as_array().unwrap();
+        let backblast = tiles.iter()
+            .find(|t| t["x"] == 3 && t["y"] == 2)
+            .expect("backblast tile should be serialized");
+        assert_eq!(
+            backblast["smoke"], true,
+            "Reverse Thrusters smokes the damaged backblast tile"
+        );
+        assert!(
+            tiles.iter().all(|t| !(t["x"] == 3 && t["y"] == 3 && t["smoke"] == true)),
+            "Reverse Thrusters should not leave smoke on the launch tile"
         );
     }
 

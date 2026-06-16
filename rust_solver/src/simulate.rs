@@ -4699,6 +4699,7 @@ fn sim_reverse_thrusters(
     let hit_y = ay as i8 - dy;
     let mut achievement_damage = 0;
     let mut achievement_target = None;
+    let mut smoke_target = None;
     if in_bounds(hit_x, hit_y) {
         let hx = hit_x as u8;
         let hy = hit_y as u8;
@@ -4710,15 +4711,19 @@ fn sim_reverse_thrusters(
         achievement_target = Some((hx, hy));
 
         apply_direct_weapon_damage(board, hx, hy, damage, wdef, result);
+        smoke_target = Some((hx, hy));
     }
 
     // Lua hardcodes the recoil SpaceDamage at 1. Boost raises the outgoing
     // dash damage, not the self-damage.
     apply_damage(board, ax, ay, 1, result, DamageSource::SelfDamage);
     if wdef.smoke() {
-        // Live Reverse Thrusters leaves the recoil damage in place; the source
-        // smoke can heal later only after a separate movement/phase trigger.
-        place_smoke_no_healing(board, ax, ay);
+        // Live Reverse Thrusters smokes the damaged backblast tile, not the
+        // launch tile; Nanofilter Mending must not heal recoil in this action.
+        if let Some((sx, sy)) = smoke_target {
+            place_smoke_no_healing(board, sx, sy);
+            result.events.push(format!("reverse_thrusters_smoke:({},{})", sx, sy));
+        }
     }
 
     board.units[attacker_idx].x = tx;
@@ -11323,7 +11328,7 @@ mod tests {
     // already Cataclysm chasm terrain.
 
     #[test]
-    fn test_reverse_thrusters_smokes_start_tile_self_damages_and_dashes() {
+    fn test_reverse_thrusters_smokes_backblast_tile_self_damages_and_dashes() {
         let mut board = make_test_board();
         let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
         let enemy = add_enemy(&mut board, 10, 3, 2, 3);
@@ -11333,8 +11338,8 @@ mod tests {
         assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
         assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters recoil is fixed at 1");
         assert_eq!(board.units[enemy].hp, 1, "2-tile dash should deal 2 base damage");
-        assert!(board.tile(3, 3).smoke(), "Reverse Thrusters smokes the start tile");
-        assert!(!board.tile(3, 2).smoke(), "Reverse Thrusters does not smoke the damaged tile");
+        assert!(!board.tile(3, 3).smoke(), "Reverse Thrusters does not smoke the start tile");
+        assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the damaged tile");
         assert!(
             !result.events.iter().any(|e| e.starts_with("illegal_reverse_thrusters")),
             "legal dash should not emit illegal event: {:?}",
@@ -11343,7 +11348,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reverse_thrusters_source_smoke_does_not_same_action_heal() {
+    fn test_reverse_thrusters_backblast_smoke_does_not_same_action_heal() {
         let mut board = make_test_board();
         board.healing_smoke = true;
         let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
@@ -11355,14 +11360,14 @@ mod tests {
         assert_eq!(
             board.units[mech].hp,
             2,
-            "Reverse Thrusters source smoke should not heal its own recoil in the same action"
+            "Reverse Thrusters backblast smoke should not heal recoil in the same action"
         );
         assert_eq!(board.units[enemy].hp, 1);
         assert!(
-            board.tile(3, 3).smoke(),
-            "Reverse Thrusters source smoke should remain for a later Nanofilter trigger"
+            board.tile(3, 2).smoke(),
+            "Reverse Thrusters backblast smoke remains on the damaged tile"
         );
-        assert!(!board.tile(3, 2).smoke());
+        assert!(!board.tile(3, 3).smoke());
     }
 
     #[test]

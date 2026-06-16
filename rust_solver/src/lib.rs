@@ -1853,7 +1853,17 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   units without leaving smoke or canceling attacks. Fixes Stay With Me run
 //   20260616_083357_196 Mission_Acid turn 2 status/tile_status desync.
 //   Pre-v272 corpus archived as failure_db_snapshot_sim_v271.jsonl.
-pub const SIMULATOR_VERSION: u32 = 272;
+// v273 - Bridge import no longer force-adds A.C.I.D. to effectively flying
+//   units hovering over acid pools; grounded units still inherit missing pool
+//   status. Fixes Stay With Me run 20260616_083357_196 Mission_Acid turn 4
+//   status desync on Hornet1 uid660. Pre-v273 corpus archived as
+//   failure_db_snapshot_sim_v272.jsonl.
+// v274 - Brute_KickBack / Reverse Thrusters smoke lands on the damaged
+//   backblast tile, not the launch tile, while still avoiding same-action
+//   Nanofilter recoil healing. Fixes Stay With Me run 20260616_083357_196
+//   Mission_Acid turn 4 tile_status desync. Pre-v274 corpus archived as
+//   failure_db_snapshot_sim_v273.jsonl.
+pub const SIMULATOR_VERSION: u32 = 274;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

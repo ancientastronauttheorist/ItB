@@ -1347,7 +1347,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # without leaving smoke or canceling attacks. Fixes Stay With Me run
 # 20260616_083357_196 Mission_Acid turn 2 status/tile_status desync.
 # Pre-v272 corpus archived as failure_db_snapshot_sim_v271.jsonl.
-SIMULATOR_VERSION = 272
+# v273 - Bridge import no longer force-adds A.C.I.D. to effectively flying units
+# hovering over acid pools; grounded units still inherit missing pool status.
+# Fixes Stay With Me run 20260616_083357_196 Mission_Acid turn 4 status desync
+# on Hornet1 uid660. Pre-v273 corpus archived as failure_db_snapshot_sim_v272.jsonl.
+# v274 - Brute_KickBack / Reverse Thrusters smoke lands on the damaged backblast
+# tile, not the launch tile, while still avoiding same-action Nanofilter recoil
+# healing. Fixes Stay With Me run 20260616_083357_196 Mission_Acid turn 4
+# tile_status desync. Pre-v274 corpus archived as failure_db_snapshot_sim_v273.jsonl.
+SIMULATOR_VERSION = 274
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
