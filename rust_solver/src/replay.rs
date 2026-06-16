@@ -599,6 +599,60 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_smoldering_shells_adjacent_live_footprint() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 4, "y": 3, "terrain": "building", "building_hp": 1}
+          ],
+          "units": [
+            {"uid": 1, "type": "SmokeMech", "x": 4, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true,
+             "weapons": ["Ranged_SmokeFire"]},
+            {"uid": 653, "type": "Scorpion1", "x": 4, "y": 2,
+             "hp": 3, "max_hp": 3, "team": 6, "mech": false,
+             "move": 3, "active": false,
+             "weapons": ["ScorpionAtk1"]},
+            {"uid": 655, "type": "Spiderling1", "x": 3, "y": 2,
+             "hp": 1, "max_hp": 1, "team": 6, "mech": false,
+             "move": 3, "active": false, "fire": true,
+             "weapons": ["SpiderlingAtk1"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [4, 4],
+          "weapon_id": "Ranged_SmokeFire",
+          "target": [4, 2]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let units = post_attack["units"].as_array().unwrap();
+        let spiderling = units.iter().find(|u| u["uid"] == 655).unwrap();
+        assert_eq!(
+            spiderling["status"]["fire"], false,
+            "Smoldering Shells adjacent effect should extinguish occupied adjacent units"
+        );
+        let building_tile = post_attack["tiles_changed"].as_array().unwrap()
+            .iter()
+            .find(|t| t["x"] == 4 && t["y"] == 3)
+            .unwrap();
+        assert_eq!(
+            building_tile["smoke"], false,
+            "Smoldering Shells adjacent effect should skip building tiles"
+        );
+    }
+
+    #[test]
     fn replay_solution_counts_aerial_bombs_pod_collection() {
         let bridge = r#"{
           "tiles": [

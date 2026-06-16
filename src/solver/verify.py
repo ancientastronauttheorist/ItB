@@ -1342,7 +1342,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # remains for a later movement/phase trigger. Fixes Stay With Me run
 # 20260616_083357_196 Mission_Acid turn 2 damage_amount desync.
 # Pre-v271 corpus archived as failure_db_snapshot_sim_v270.jsonl.
-SIMULATOR_VERSION = 271
+# v272 - Ranged_SmokeFire / Smoldering Shells adjacent footprint skips
+# building tiles and only extinguishes carried fire on occupied adjacent units
+# without leaving smoke or canceling attacks. Fixes Stay With Me run
+# 20260616_083357_196 Mission_Acid turn 2 status/tile_status desync.
+# Pre-v272 corpus archived as failure_db_snapshot_sim_v271.jsonl.
+SIMULATOR_VERSION = 272
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

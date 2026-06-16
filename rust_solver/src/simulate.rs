@@ -3922,9 +3922,9 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
         board, tx, ty, wdef, center_occupied_at_impact,
     );
 
-    // Smoldering Shells: fire and damage the center tile, then place smoke on
-    // the four cardinal adjacent tiles. Normal SMOKE status would smoke the
-    // center, so the Mist Eaters artillery footprint is WId-specific here.
+    // Smoldering Shells: fire and damage the center tile, then affect the
+    // four cardinal adjacent tiles. Empty non-building tiles receive smoke;
+    // occupied adjacent units only have carried fire extinguished.
     if weapon_id == WId::RangedSmokeFire {
         for &(dx, dy) in DIRS.iter() {
             let nx = tx as i8 + dx;
@@ -3932,9 +3932,15 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             if in_bounds(nx, ny) {
                 let nx_u = nx as u8;
                 let ny_u = ny as u8;
-                if board.unit_at(nx_u, ny_u).is_none() {
-                    place_smoke(board, nx_u, ny_u);
+                if let Some(idx) = board.unit_at(nx_u, ny_u) {
+                    board.units[idx].set_fire(false);
+                    board.tile_mut(nx_u, ny_u).set_on_fire(false);
+                    continue;
                 }
+                if board.tile(nx_u, ny_u).terrain == Terrain::Building {
+                    continue;
+                }
+                place_smoke(board, nx_u, ny_u);
             }
         }
     }
@@ -11387,6 +11393,9 @@ mod tests {
         let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFire);
         let center = add_enemy_type(&mut board, 92, 5, 2, 2, "Scarab1");
         let adjacent = add_enemy_type(&mut board, 93, 6, 2, 2, "Scarab1");
+        board.units[adjacent].set_fire(true);
+        board.tile_mut(5, 3).terrain = Terrain::Building;
+        board.tile_mut(5, 3).building_hp = 1;
 
         let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 5, 2);
 
@@ -11397,9 +11406,16 @@ mod tests {
             "occupied adjacent tile must not receive Smoldering Shells smoke"
         );
         assert_eq!(board.units[adjacent].hp, 2);
+        assert!(
+            !board.units[adjacent].fire(),
+            "occupied adjacent units have carried fire extinguished without receiving smoke"
+        );
         assert!(board.tile(4, 2).smoke(), "empty north adjacent tile should smoke");
         assert!(board.tile(5, 1).smoke(), "empty west adjacent tile should smoke");
-        assert!(board.tile(5, 3).smoke(), "empty east adjacent tile should smoke");
+        assert!(
+            !board.tile(5, 3).smoke(),
+            "adjacent building tiles should not receive Smoldering Shells smoke"
+        );
     }
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
