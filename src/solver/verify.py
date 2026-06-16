@@ -1328,7 +1328,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # now places source smoke instead of impact smoke, matching live Backburner
 # damage_amount desyncs. Pre-v268 corpus archived as
 # failure_db_snapshot_sim_v267.jsonl.
-SIMULATOR_VERSION = 268
+# v269 - Ranged_Arachnoid / Arachnoid Injector target enumeration is
+# cardinal-only; live FireWeapon accepts off-axis targets but no-ops them.
+# Fixes Lucky Start run 20260615_221604_970 Mission_Airstrike turn 1.
+# Pre-v269 corpus archived as failure_db_snapshot_sim_v268.jsonl.
+SIMULATOR_VERSION = 269
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

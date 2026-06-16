@@ -404,12 +404,11 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::Artillery => {
             let min_r = wdef.range_min;
-            let omnidirectional = is_arachnoid_injector(weapon_id);
             for x in 0..8u8 {
                 for y in 0..8u8 {
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r { continue; }
-                    if !omnidirectional && x != mx && y != my { continue; } // axis-aligned only
+                    if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     let zero_damage_building_center_ok = matches!(
                         weapon_id,
@@ -2749,6 +2748,68 @@ mod top_k_tests {
         assert!(
             targets.contains(&(2, 2)),
             "Artemis should still target cardinal F6 from D6"
+        );
+    }
+
+    #[test]
+    fn arachnoid_injector_rejects_off_axis_targets() {
+        // Live Arachnoid Injector no-ops when FireWeapon is pointed off-axis.
+        // Regression anchor: Lucky Start run 20260615_221604_970
+        // Mission_Airstrike turn 1 tried ScorpioMech D5 -> off-axis E1;
+        // live Firefly1 stayed at 3 HP while the simulator predicted 2 HP.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedArachnoid as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 102,
+            x: 7,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 103,
+            x: 7,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::RangedArachnoid,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(
+            !targets.contains(&(7, 3)),
+            "Arachnoid D5->E1 is off-axis and live FireWeapon spends an effectless shot"
+        );
+        assert!(
+            targets.contains(&(7, 4)),
+            "Arachnoid should still target cardinal D1 from D5"
         );
     }
 
