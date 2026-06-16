@@ -1838,7 +1838,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   cardinal-only; live FireWeapon accepts off-axis targets but no-ops them.
 //   Fixes Lucky Start run 20260615_221604_970 Mission_Airstrike turn 1.
 //   Pre-v269 corpus archived as failure_db_snapshot_sim_v268.jsonl.
-pub const SIMULATOR_VERSION: u32 = 269;
+// v270 - Mission_Dam Dam_Pawn does not take the generic enemy-phase fire tick;
+//   a burning 1 HP dam can still fail the objective at reward time, and must
+//   not trigger a phantom flood that preempts queued Vek attacks. Fixes Lucky
+//   Start run 20260615_221604_970 Mission_Dam turn 4 KIA mismatch.
+//   Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
+pub const SIMULATOR_VERSION: u32 = 270;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

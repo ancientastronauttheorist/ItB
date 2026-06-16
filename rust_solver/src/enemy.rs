@@ -645,6 +645,13 @@ pub fn simulate_enemy_attacks(
                 board.units[i].set_fire(false);
                 continue;
             }
+            if board.units[i].type_name_str() == "Dam_Pawn" {
+                // Live Mission_Dam can show the neutral dam burning at 1 HP
+                // on the final reward panel while the objective still fails.
+                // Do not let the generic enemy-phase tick destroy it and
+                // preempt queued Vek attacks with a phantom flood.
+                continue;
+            }
             // Fire Psion (LEADER_FIRE, Jelly_Fire1): all Vek immune to fire
             // damage while alive. The Fire Psion itself is exempt from this
             // immunity per the standard "aura source isn't subject to its
@@ -2694,6 +2701,55 @@ mod tests {
         assert_eq!(board.units[target_idx].hp, 2, "Bouncer horn deals 1 damage");
         assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (4, 5),
             "Bouncer horn pushes the target forward");
+    }
+
+    #[test]
+    fn test_burning_dam_does_not_flood_before_bouncer_attack() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Dam".to_string();
+        board.dam_alive = true;
+        board.dam_primary = Some((4, 0));
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 2;
+
+        let mut dam = Unit {
+            uid: 121,
+            x: 4,
+            y: 0,
+            hp: 1,
+            max_hp: 2,
+            team: Team::Neutral,
+            flags: UnitFlags::MASSIVE | UnitFlags::FIRE,
+            ..Default::default()
+        };
+        dam.set_type_name("Dam_Pawn");
+        let dam_idx = board.add_unit(dam);
+
+        let mut dam_extra = dam;
+        dam_extra.x = 5;
+        dam_extra.flags.insert(UnitFlags::EXTRA_TILE);
+        board.add_unit(dam_extra);
+
+        let exchange_idx = add_mech_unit(&mut board, 2, 4, 3, 2);
+        board.units[exchange_idx].set_type_name("ExchangeMech");
+        board.units[exchange_idx].flags.insert(UnitFlags::MASSIVE);
+
+        let bouncer_idx = add_enemy_with_type(&mut board, 146, 5, 3, 3, "Bouncer1", 4, 3);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[dam_idx].hp, 1, "Dam_Pawn fire should not tick in enemy phase");
+        assert!(board.dam_alive, "Burning dam should not trigger a phantom flood");
+        assert!(board.units[bouncer_idx].hp > 0, "Bouncer should not drown before attacking");
+        assert!(board.units[exchange_idx].hp <= 0,
+            "Bouncer hit plus building bump should match the live KIA");
+        assert_eq!(result.mechs_killed, 1);
+        assert_eq!(board.tile(3, 3).building_hp, 1,
+            "Exchange should bump the E5 building after the horn hit");
     }
 
     #[test]

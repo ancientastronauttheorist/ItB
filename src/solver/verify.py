@@ -1332,7 +1332,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # cardinal-only; live FireWeapon accepts off-axis targets but no-ops them.
 # Fixes Lucky Start run 20260615_221604_970 Mission_Airstrike turn 1.
 # Pre-v269 corpus archived as failure_db_snapshot_sim_v268.jsonl.
-SIMULATOR_VERSION = 269
+# v270 - Mission_Dam Dam_Pawn does not take the generic enemy-phase fire tick;
+# a burning 1 HP dam can still fail the objective at reward time, and must not
+# trigger a phantom flood that preempts queued Vek attacks. Fixes Lucky Start
+# run 20260615_221604_970 Mission_Dam turn 4 KIA mismatch.
+# Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
+SIMULATOR_VERSION = 270
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
