@@ -1843,7 +1843,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   not trigger a phantom flood that preempts queued Vek attacks. Fixes Lucky
 //   Start run 20260615_221604_970 Mission_Dam turn 4 KIA mismatch.
 //   Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
-pub const SIMULATOR_VERSION: u32 = 270;
+// v271 - Brute_KickBack / Reverse Thrusters source smoke does not apply
+//   Nanofilter Mending to its own recoil in the same action. The source smoke
+//   remains for a later movement/phase trigger. Fixes Stay With Me run
+//   20260616_083357_196 Mission_Acid turn 2 damage_amount desync.
+//   Pre-v271 corpus archived as failure_db_snapshot_sim_v270.jsonl.
+pub const SIMULATOR_VERSION: u32 = 271;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

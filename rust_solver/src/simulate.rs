@@ -590,9 +590,10 @@ fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
     }
 }
 
-/// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
-/// the smoke-cancelled queued attack releases that grapple immediately.
-fn place_smoke(board: &mut Board, x: u8, y: u8) {
+/// Place smoke on a tile without applying Nanofilter Mending.
+/// If the tile holds an enemy currently webbing a unit, the smoke-cancelled
+/// queued attack releases that grapple immediately.
+fn place_smoke_no_healing(board: &mut Board, x: u8, y: u8) {
     let tile = board.tile_mut(x, y);
     tile.set_on_fire(false); // smoke replaces fire
     tile.set_smoke(true);
@@ -603,6 +604,12 @@ fn place_smoke(board: &mut Board, x: u8, y: u8) {
             break_web_from(board, uid);
         }
     }
+}
+
+/// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
+/// the smoke-cancelled queued attack releases that grapple immediately.
+fn place_smoke(board: &mut Board, x: u8, y: u8) {
+    place_smoke_no_healing(board, x, y);
     apply_healing_smoke_unit_on_tile(board, x, y);
 }
 
@@ -4703,7 +4710,9 @@ fn sim_reverse_thrusters(
     // dash damage, not the self-damage.
     apply_damage(board, ax, ay, 1, result, DamageSource::SelfDamage);
     if wdef.smoke() {
-        place_smoke(board, ax, ay);
+        // Live Reverse Thrusters leaves the recoil damage in place; the source
+        // smoke can heal later only after a separate movement/phase trigger.
+        place_smoke_no_healing(board, ax, ay);
     }
 
     board.units[attacker_idx].x = tx;
@@ -11328,7 +11337,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reverse_thrusters_healing_smoke_consumes_recoil_and_source_smoke() {
+    fn test_reverse_thrusters_source_smoke_does_not_same_action_heal() {
         let mut board = make_test_board();
         board.healing_smoke = true;
         let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
@@ -11339,13 +11348,13 @@ mod tests {
         assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
         assert_eq!(
             board.units[mech].hp,
-            3,
-            "Nanofilter Mending should heal Reverse Thrusters recoil before the dash completes"
+            2,
+            "Reverse Thrusters source smoke should not heal its own recoil in the same action"
         );
         assert_eq!(board.units[enemy].hp, 1);
         assert!(
-            !board.tile(3, 3).smoke(),
-            "Nanofilter Mending consumes the source smoke immediately"
+            board.tile(3, 3).smoke(),
+            "Reverse Thrusters source smoke should remain for a later Nanofilter trigger"
         );
         assert!(!board.tile(3, 2).smoke());
     }

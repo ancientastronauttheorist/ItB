@@ -560,6 +560,45 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_reverse_thrusters_source_smoke_does_not_same_action_heal() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 0, "type": "NeedleMech", "x": 3, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "flying": true, "move": 4, "active": true,
+             "weapons": ["Brute_KickBack", "Passive_HealingSmoke"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 3],
+          "weapon_id": "Brute_KickBack",
+          "target": [3, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(v["action_results"][0]["mech_damage_taken"], 1);
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let mech = post_attack["units"].as_array().unwrap()
+            .iter()
+            .find(|u| u["uid"] == 0)
+            .unwrap();
+        assert_eq!(
+            mech["hp"], 2,
+            "Reverse Thrusters recoil should remain in replay snapshots until a later Nanofilter trigger"
+        );
+    }
+
+    #[test]
     fn replay_solution_counts_aerial_bombs_pod_collection() {
         let bridge = r#"{
           "tiles": [

@@ -1337,7 +1337,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # trigger a phantom flood that preempts queued Vek attacks. Fixes Lucky Start
 # run 20260615_221604_970 Mission_Dam turn 4 KIA mismatch.
 # Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
-SIMULATOR_VERSION = 270
+# v271 - Brute_KickBack / Reverse Thrusters source smoke does not apply
+# Nanofilter Mending to its own recoil in the same action. The source smoke
+# remains for a later movement/phase trigger. Fixes Stay With Me run
+# 20260616_083357_196 Mission_Acid turn 2 damage_amount desync.
+# Pre-v271 corpus archived as failure_db_snapshot_sim_v270.jsonl.
+SIMULATOR_VERSION = 271
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
