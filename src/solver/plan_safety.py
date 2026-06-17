@@ -299,12 +299,24 @@ def audit_plan_safety(current: dict[str, Any],
     pred_turn = _int_or_none(predicted.get("turn"))
     cur_total_turns = _int_or_none(current.get("total_turns"))
     pred_total_turns = _int_or_none(predicted.get("total_turns"))
-    # Bridge turn counters are effectively "turns elapsed" for ordinary
-    # missions: a player turn with UI text "Victory in 1 turn" arrives as
-    # turn == total_turns - 1. Treat that as final because there is no later
-    # player phase to recover pods, counters, or asset threats.
-    if cur_turn is not None and cur_total_turns is not None:
+    cur_remaining_spawns = _int_or_none(current.get("remaining_spawns"))
+    pred_remaining_spawns = _int_or_none(predicted.get("remaining_spawns"))
+    cur_spawn_points = _int_or_none(current.get("spawn_points"))
+    pred_spawn_points = _int_or_none(predicted.get("spawn_points"))
+    # Visible live spawn arrows mean the mission is not on the final player
+    # turn, even if Mission:IsFinalTurn()/remaining_spawns is unreliable for
+    # a specific mission. Otherwise prefer the bridge's final-turn signal over
+    # raw turn-limit math.
+    if cur_spawn_points is not None and cur_spawn_points > 0:
+        final_turn = False
+    elif cur_remaining_spawns is not None:
+        final_turn = cur_remaining_spawns == 0
+    elif cur_turn is not None and cur_total_turns is not None:
         final_turn = cur_turn >= max(0, cur_total_turns - 1)
+    elif pred_spawn_points is not None and pred_spawn_points > 0:
+        final_turn = False
+    elif pred_remaining_spawns is not None:
+        final_turn = pred_remaining_spawns == 0
     elif pred_turn is not None and pred_total_turns is not None:
         final_turn = pred_turn >= pred_total_turns
     else:
@@ -740,6 +752,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": cur_turn,
             "total_turns": cur_total_turns,
+            "remaining_spawns": cur_remaining_spawns,
+            "spawn_points": cur_spawn_points,
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
             "building_hp_total": cur_hp,
@@ -782,6 +796,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": pred_turn,
             "total_turns": pred_total_turns,
+            "remaining_spawns": pred_remaining_spawns,
+            "spawn_points": pred_spawn_points,
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,
             "building_hp_total": pred_hp,
