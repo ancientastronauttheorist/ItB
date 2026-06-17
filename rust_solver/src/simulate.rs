@@ -299,6 +299,14 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
         let cap = board.units[unit_idx].max_hp.saturating_add(2);
         board.units[unit_idx].hp = before.saturating_add(10).min(cap);
     }
+    let healed = (board.units[unit_idx].hp - before).max(0) as i32;
+    if healed > 0 && board.units[unit_idx].is_player() && board.units[unit_idx].is_mech() {
+        result.mech_hp_repaired += healed;
+        result.events.push(format!(
+            "mech_hp_repaired:repair_platform:{}:{}",
+            board.units[unit_idx].uid, healed
+        ));
+    }
     refresh_arrogant_boost(&mut board.units[unit_idx]);
     board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
     result.repair_platforms_used += 1;
@@ -365,7 +373,13 @@ fn apply_smoke_tile_extinguish(board: &mut Board, unit_idx: usize, x: u8, y: u8)
     }
 }
 
-fn apply_healing_smoke_at(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+fn apply_healing_smoke_at(
+    board: &mut Board,
+    unit_idx: usize,
+    x: u8,
+    y: u8,
+    mut result: Option<&mut ActionResult>,
+) {
     if !board.healing_smoke || !board.tile(x, y).smoke() {
         return;
     }
@@ -376,8 +390,19 @@ fn apply_healing_smoke_at(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
     }
 
     let unit = &mut board.units[unit_idx];
+    let before = unit.hp;
     if unit.hp < unit.max_hp {
         unit.hp += 1;
+    }
+    let healed = (unit.hp - before).max(0) as i32;
+    if healed > 0 {
+        if let Some(result) = result.as_deref_mut() {
+            result.mech_hp_repaired += healed;
+            result.events.push(format!(
+                "mech_hp_repaired:nanofilter_smoke:{}:{}",
+                unit.uid, healed
+            ));
+        }
     }
     unit.set_fire(false);
     board.tile_mut(x, y).set_smoke(false);
@@ -388,7 +413,7 @@ fn apply_healing_smoke_unit_on_tile(board: &mut Board, x: u8, y: u8) {
         return;
     }
     if let Some(idx) = board.unit_at(x, y) {
-        apply_healing_smoke_at(board, idx, x, y);
+        apply_healing_smoke_at(board, idx, x, y, None);
     }
 }
 
@@ -412,7 +437,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
 
     // 4. Smoke tile: carried unit fire is extinguished on landing.
     apply_smoke_tile_extinguish(board, unit_idx, nx, ny);
-    apply_healing_smoke_at(board, unit_idx, nx, ny);
+    apply_healing_smoke_at(board, unit_idx, nx, ny, Some(result));
 
     // 5. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
@@ -5476,8 +5501,17 @@ pub fn simulate_attack(
         let storm_active = acid_storm_active(board);
         let (is_repairman, rx, ry) = {
             let unit = &mut board.units[mech_idx];
+            let before = unit.hp;
             let heal: i8 = if unit.boosted() { 2 } else { 1 };
             unit.hp = unit.hp.min(unit.max_hp - heal) + heal;
+            let healed = (unit.hp - before).max(0) as i32;
+            if healed > 0 {
+                result.mech_hp_repaired += healed;
+                result.events.push(format!(
+                    "mech_hp_repaired:repair:{}:{}",
+                    unit.uid, healed
+                ));
+            }
             unit.set_fire(false);
             unit.set_acid(false);
             unit.set_frozen(false);

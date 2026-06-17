@@ -107,6 +107,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut mission_kills = 0i32;
         let mut bumps = 0i32;
         let mut nanobots_heal = 0i32;
+        let mut stay_with_me_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
@@ -134,6 +135,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 illegal_events.push(event.clone());
             }
             nanobots_heal += viscera_nanobots_heal_from_events(&result.events);
+            stay_with_me_heal += result.mech_hp_repaired;
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
             kills += result.enemies_killed as i32;
@@ -180,6 +182,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats)
             + consumed_spawn_block_bonus(&board, &spawn_points, &weights, spawn_block_result.spawns_blocked)
             + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus
+            + stay_with_me_heal as f64 * weights.stay_with_me_heal_bonus
             + reverse_thrusters_four_damage as f64
                 * weights.reverse_thrusters_four_damage_bonus;
 
@@ -203,6 +206,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "judo_hp": judo_hp,
             "kills": kills,
             "mission_kills": mission_kills,
+            "stay_with_me_heal": stay_with_me_heal,
             "bldgs_alive": bldgs_alive,
             "bldg_hp_total": bldg_hp_total,
             "dead_mechs": dead_mechs,
@@ -298,6 +302,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
                 "grid_damage": result.grid_damage,
                 "enemy_damage_dealt": result.enemy_damage_dealt,
                 "mech_damage_taken": result.mech_damage_taken,
+                "mech_hp_repaired": result.mech_hp_repaired,
                 "spawns_blocked": result.spawns_blocked,
                 "pods_collected": result.pods_collected,
                 "repair_platforms_used": result.repair_platforms_used,
@@ -386,6 +391,7 @@ fn project_plan_scenarios(
                     "grid_damage": s.action_result.grid_damage,
                     "enemy_damage_dealt": s.action_result.enemy_damage_dealt,
                     "mech_damage_taken": s.action_result.mech_damage_taken,
+                    "mech_hp_repaired": s.action_result.mech_hp_repaired,
                     "spawns_blocked": s.action_result.spawns_blocked,
                     "pods_collected": s.action_result.pods_collected,
                     "repair_platforms_used": s.action_result.repair_platforms_used,

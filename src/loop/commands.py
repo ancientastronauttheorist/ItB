@@ -206,6 +206,25 @@ def _achievement_weight_overlay(
         )
         applied.append("healing")
 
+    if "stay with me!" in normalized_targets or "stay with me" in normalized_targets:
+        # Mist Eaters: the achievement counts real HP restored across the
+        # island. Reward actual repairs from Nanofilter Mending, direct Repair,
+        # and repair platforms enough to beat routine kills, while leaving
+        # building/grid safety high in the candidate frontier.
+        weights["stay_with_me_heal_bonus"] = max(
+            float(weights.get("stay_with_me_heal_bonus", 0) or 0),
+            3000.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 900) or 900),
+            250.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("stay_with_me")
+
     if "hold the line" in targets:
         # The Blitzkrieg achievement needs four simultaneous spawn blocks.
         # Strongly prefer safe blocks over routine kills so earlier blocked
@@ -269,7 +288,7 @@ def _achievement_weight_overlay(
 
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
-_SAFETY_WIDENING_TOP_K = 1000
+_SAFETY_WIDENING_TOP_K = 10000
 _LIGHTNING_MIN_FAST_SETTINGS_SPEED = 1000
 _LIGHTNING_ACHIEVEMENT_SECONDS = 30 * 60
 _HARD_STOP_STATUSES = {
@@ -2143,6 +2162,9 @@ def _carry_projected_summary_metadata(
         projected_data["mech_stat_overlays"] = list(
             bridge_data.get("mech_stat_overlays") or []
         )
+    projected_victory = _projected_victory_turns(bridge_data, projected_data)
+    if projected_victory is not None and "victory_turns" not in projected_data:
+        projected_data["victory_turns"] = projected_victory
     raw_units = _bridge_units_by_uid(bridge_data)
     for unit in projected_data.get("units") or []:
         if not isinstance(unit, dict):
@@ -2159,6 +2181,27 @@ def _carry_projected_summary_metadata(
         ):
             unit["bridge_reported_max_hp"] = raw.get("bridge_reported_max_hp")
     return projected_data
+
+
+def _projected_victory_turns(
+    source_bridge: dict | None,
+    projected_bridge: dict | None,
+) -> int | None:
+    if not isinstance(source_bridge, dict) or not isinstance(projected_bridge, dict):
+        return None
+    victory_turns = source_bridge.get("victory_turns")
+    if not isinstance(victory_turns, int):
+        return None
+    source_turn = source_bridge.get("turn")
+    projected_turn = projected_bridge.get("turn")
+    delta = 1
+    if (
+        isinstance(source_turn, int)
+        and isinstance(projected_turn, int)
+        and projected_turn >= source_turn
+    ):
+        delta = max(0, projected_turn - source_turn)
+    return max(0, victory_turns - delta)
 
 
 def _environment_danger_info(board: Board,
@@ -2319,6 +2362,16 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     )
     if not isinstance(total_turns, int):
         total_turns = getattr(board, "total_turns", None)
+    remaining_spawns = (
+        bridge_data.get("remaining_spawns")
+        if isinstance(bridge_data, dict) else None
+    )
+    if not isinstance(remaining_spawns, int):
+        remaining_spawns = getattr(board, "remaining_spawns", None)
+    victory_turns = (
+        bridge_data.get("victory_turns")
+        if isinstance(bridge_data, dict) else None
+    )
     is_final_cave = mission_id == "Mission_Final_Cave"
     buildings_alive = 0
     building_hp_total = 0
@@ -2636,6 +2689,10 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         ),
         "turn": turn if isinstance(turn, int) else None,
         "total_turns": total_turns if isinstance(total_turns, int) else None,
+        "remaining_spawns": (
+            remaining_spawns if isinstance(remaining_spawns, int) else None
+        ),
+        "victory_turns": victory_turns if isinstance(victory_turns, int) else None,
         "destroy_objective_units": destroy_objective_units,
         "destroy_objective_units_alive": sum(
             1 for u in destroy_objective_units if u["alive"]
@@ -3279,6 +3336,9 @@ def _prepare_projected_bridge(
     ):
         if key in source_bridge and key not in out:
             out[key] = source_bridge[key]
+    projected_victory = _projected_victory_turns(source_bridge, out)
+    if projected_victory is not None and "victory_turns" not in out:
+        out["victory_turns"] = projected_victory
     return out
 
 

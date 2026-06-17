@@ -43,7 +43,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     "pause": KnownWindowControl(
         name="pause",
         window_x=38,
-        window_y=28,
+        window_y=58,
         description="Pause / open game menu",
         settle_seconds=0.2,
     ),

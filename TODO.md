@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-54 of 70 Steam-cache confirmed. **Chronophobia** unlocked and synced on 2026-06-14, leaving 16 remaining; sorted by global unlock % (easiest first).
+57 of 70 Steam-cache confirmed. **Stay With Me!** unlocked and synced on 2026-06-17, leaving 13 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: **Chronophobia** is complete. In Zenith Guard Easy run `20260613_234901_918`, the solver used `--destroy-time-pods` to destroy every discovered Time Pod across three Corporate Islands; `achievements --sync` moved the tracker to 54/70 after confirming `Leave Island` from R.S.T.
+Current milestone: **Stay With Me!** is complete. In Mist Eaters Easy R.S.T. play, the solver used Reverse Thrusters self-damage, smoke/Nanofilter repairs, and direct repair credit to cross the 12-HP single-island healing threshold after Blast Bunker / `Mission_Trapped`; `achievements --sync` moved the tracker to 57/70.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -60,12 +60,12 @@ Current milestone: **Chronophobia** is complete. In Zenith Guard Easy run `20260
 - [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans] — Steam-cache confirmed on 2026-06-02 after offline-to-online reconciliation
 - [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
 - [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs] — completed in Bombermechs run `20260611_202233_019` on Archive `Mission_Artillery`
-- [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
+- [x] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters] — completed in Mist Eaters run `20260615_172629_338` on Detritus `Mission_Acid`
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom — completed alongside Mech Specialist with 3x Ice Mech in run `20260526_204256_831`
-- [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
+- [x] Lucky Start (7.3%) — Beat game without spending Reputation [Random] — Steam-cache confirmed before the Stay With Me run
 - [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
-- [ ] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters]
+- [x] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters] — Steam-cache confirmed on 2026-06-17 after R.S.T. Blast Bunker / `Mission_Trapped`
 - [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod — completed in Zenith Guard run `20260613_234901_918`
 - [ ] Spider Breeding (6.7%) — Spawn 15 Arachnoids in one Island [Arachnophile]
 - [ ] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters]
@@ -79,7 +79,7 @@ Current milestone: **Chronophobia** is complete. In Zenith Guard Easy run `20260
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (54 Steam-cache confirmed)
+### Already Completed (57 Steam-cache confirmed)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -130,8 +130,11 @@ Current milestone: **Chronophobia** is complete. In Zenith Guard Easy run `20260
 - [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon  [Frozen Titans]
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
 - [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy  [Bombermechs]
+- [x] On the Backburner (8.2%) — 4 damage with Reverse Thrusters  [Mist Eaters]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]
+- [x] Lucky Start (7.3%) — Beat game without spending Reputation  [Random Squad]
+- [x] Stay With Me! (7.2%) — Heal 12 damage over single Island  [Mist Eaters]
 - [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
 - [x] Squads Victory — Beat game with 4 different Squads
 

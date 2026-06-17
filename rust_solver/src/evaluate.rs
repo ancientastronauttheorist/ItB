@@ -162,6 +162,7 @@ pub struct EvalWeights {
     pub smoke_placed: f64,
     pub tiles_frozen: f64,
     pub viscera_nanobots_heal_bonus: f64,
+    pub stay_with_me_heal_bonus: f64,
     pub powered_blast_bonus: f64,
     pub reverse_thrusters_four_damage_bonus: f64,
 
@@ -335,6 +336,7 @@ impl Default for EvalWeights {
             smoke_placed: 0.0,
             tiles_frozen: 0.0,
             viscera_nanobots_heal_bonus: 0.0,
+            stay_with_me_heal_bonus: 0.0,
             powered_blast_bonus: 0.0,
             reverse_thrusters_four_damage_bonus: 0.0,
             // Mission-specific bonuses (zero by default; set via active.json)

@@ -1484,6 +1484,7 @@ fn search_recursive(
     nanobots_heal_so_far: i32,
     powered_blast_so_far: i32,
     reverse_thrusters_four_damage_so_far: i32,
+    stay_with_me_heal_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
@@ -1557,6 +1558,8 @@ fn search_recursive(
         let reverse_thrusters_four_damage_bonus =
             reverse_thrusters_four_damage_so_far as f64
                 * weights.reverse_thrusters_four_damage_bonus;
+        let stay_with_me_heal_bonus =
+            stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
         let pod_collected_penalty =
             pods_collected_so_far as f64 * weights.pod_collected;
         let score = raw
@@ -1564,6 +1567,7 @@ fn search_recursive(
             + nanobots_heal_bonus
             + powered_blast_bonus
             + reverse_thrusters_four_damage_bonus
+            + stay_with_me_heal_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
 
@@ -1593,6 +1597,7 @@ fn search_recursive(
             actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far,
             nanobots_heal_so_far, powered_blast_so_far,
             reverse_thrusters_four_damage_so_far,
+            stay_with_me_heal_so_far,
             pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
@@ -1648,6 +1653,7 @@ fn search_recursive(
         let powered_blast_add = powered_blast_from_events(&result.events);
         let reverse_thrusters_four_damage_add =
             reverse_thrusters_four_damage_from_events(&result.events);
+        let stay_with_me_heal_add = result.mech_hp_repaired;
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
         // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
@@ -1674,6 +1680,7 @@ fn search_recursive(
             nanobots_heal_so_far + nanobots_heal_add,
             powered_blast_so_far + powered_blast_add,
             reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
+            stay_with_me_heal_so_far + stay_with_me_heal_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
@@ -1849,7 +1856,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2046,7 +2053,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
