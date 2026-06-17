@@ -3922,11 +3922,32 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
         board, tx, ty, wdef, center_occupied_at_impact,
     );
 
-    // Smoldering Shells: fire and damage the center tile, then affect the
-    // four cardinal adjacent tiles. Empty non-building tiles receive smoke;
-    // occupied adjacent units only have carried fire extinguished.
-    if weapon_id == WId::RangedSmokeFire {
-        for &(dx, dy) in DIRS.iter() {
+    // Smoldering Shells: fire and damage the center tile, then affect nearby
+    // tiles. Base/+Damage use the four cardinal neighbors; More Smoke variants
+    // add the four diagonals. Empty non-building tiles receive smoke; occupied
+    // neighboring units only have carried fire extinguished.
+    if matches!(
+        weapon_id,
+        WId::RangedSmokeFire
+            | WId::RangedSmokeFireA
+            | WId::RangedSmokeFireB
+            | WId::RangedSmokeFireAB
+    ) {
+        const MORE_SMOKE_DIRS: [(i8, i8); 8] = [
+            (0, 1),
+            (1, 0),
+            (0, -1),
+            (-1, 0),
+            (1, 1),
+            (1, -1),
+            (-1, 1),
+            (-1, -1),
+        ];
+        let smoke_dirs: &[(i8, i8)] = match weapon_id {
+            WId::RangedSmokeFireA | WId::RangedSmokeFireAB => &MORE_SMOKE_DIRS,
+            _ => &DIRS,
+        };
+        for &(dx, dy) in smoke_dirs.iter() {
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if in_bounds(nx, ny) {
@@ -11423,6 +11444,63 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_smoldering_shells_more_smoke_adds_diagonal_footprint() {
+        let mut base_board = make_test_board();
+        let base_smog = add_mech(&mut base_board, 1, 2, 2, 3, WId::RangedSmokeFire);
+        let _ = add_enemy_type(&mut base_board, 92, 4, 4, 2, "Scarab1");
+
+        let _ = simulate_weapon(&mut base_board, base_smog, WId::RangedSmokeFire, 4, 4);
+
+        assert!(
+            base_board.tile(4, 5).smoke(),
+            "base Smoldering Shells still smokes cardinal neighbors"
+        );
+        assert!(
+            !base_board.tile(3, 5).smoke(),
+            "base Smoldering Shells must not smoke diagonal neighbors"
+        );
+
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFireA);
+        let _ = add_enemy_type(&mut board, 92, 4, 4, 2, "Scarab1");
+        let occupied_diag = add_enemy_type(&mut board, 93, 3, 3, 2, "Scarab1");
+        board.units[occupied_diag].set_fire(true);
+        board.tile_mut(5, 5).terrain = Terrain::Building;
+        board.tile_mut(5, 5).building_hp = 1;
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFireA, 4, 4);
+
+        assert!(board.tile(4, 5).smoke(), "cardinal neighbor should smoke");
+        assert!(board.tile(3, 5).smoke(), "diagonal neighbor should smoke");
+        assert!(board.tile(5, 3).smoke(), "diagonal neighbor should smoke");
+        assert!(
+            !board.tile(3, 3).smoke(),
+            "occupied diagonal tile must not receive More Smoke"
+        );
+        assert!(
+            !board.units[occupied_diag].fire(),
+            "occupied diagonal units have carried fire extinguished"
+        );
+        assert!(
+            !board.tile(5, 5).smoke(),
+            "diagonal building tile must not receive More Smoke"
+        );
+    }
+
+    #[test]
+    fn test_smoldering_shells_damage_upgrade_variants() {
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFireAB);
+        let center = add_enemy_type(&mut board, 92, 4, 4, 4, "Scarab1");
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFireAB, 4, 4);
+
+        assert_eq!(board.units[center].hp, 1, "+2 Damage upgrade should deal 3");
+        assert!(board.units[center].fire(), "center target should be set on Fire");
+        assert!(board.tile(3, 5).smoke(), "AB should keep More Smoke diagonals");
+    }
+
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
         crate::solver::get_weapon_targets(
             board, mech_pos.0, mech_pos.1, WId::BruteJetmech, mech_pos, &WEAPONS,
@@ -12130,6 +12208,65 @@ mod tests {
         assert_eq!(board.units[rocket].hp, 2, "blocked wind push bumps mech");
         assert_eq!(board.tile(5, 6).building_hp, 0, "wind bump destroys building");
         assert_eq!(board.grid_power, grid_before - 1);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_mission_wind_fire_kill_corpse_does_not_block_later_gust() {
+        // Mist Eaters live run 20260616_083357_196, Mission_Wind turn 3:
+        // a burning 1 HP Scorpion at (5,5) died before attacks, then the
+        // Wind Storm pushed Firefly1 from (5,4) to (5,5). The Firefly kept
+        // its original leftward shot direction and destroyed the building at
+        // (3,5). A fire-tick corpse must not stay as a wreck that blocks the
+        // later gust.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+
+        let json = r#"{
+          "mission_id": "Mission_Wind",
+          "tiles": [
+            {"x": 3, "y": 5, "terrain": "building", "terrain_id": 1, "building_hp": 1},
+            {"x": 5, "y": 6, "terrain": "building", "terrain_id": 1, "building_hp": 2}
+          ],
+          "units": [
+            {"uid": 931, "type": "Scorpion1", "x": 5, "y": 5,
+             "hp": 1, "max_hp": 3, "team": 6, "pushable": true,
+             "fire": true, "weapons": ["ScorpionAtk1"],
+             "has_queued_attack": true, "queued_target": [5, 6],
+             "weapon_damage": 1},
+            {"uid": 955, "type": "Firefly1", "x": 5, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 6, "pushable": true,
+             "ranged": 1, "weapons": ["FireflyAtk1"],
+             "has_queued_attack": true, "queued_target": [4, 4],
+             "weapon_damage": 1}
+          ],
+          "grid_power": 5,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[5, 4, 1, 0, 0], [5, 5, 1, 0, 0]],
+          "environment_wind_dir": 2,
+          "env_type": "wind",
+          "remaining_spawns": 0,
+          "turn": 3,
+          "total_turns": 4
+        }"#;
+
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        let firefly = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 955)
+            .unwrap();
+
+        assert!(board.units.iter().any(|u| u.uid == 931 && u.hp <= 0));
+        assert_eq!((board.units[firefly].x, board.units[firefly].y), (5, 5));
+        assert_eq!(board.tile(3, 5).building_hp, 0);
+        assert_eq!(board.grid_power, 4);
         assert_eq!(result.grid_damage, 1);
     }
 

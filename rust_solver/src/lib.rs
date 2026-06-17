@@ -1863,7 +1863,18 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Nanofilter recoil healing. Fixes Stay With Me run 20260616_083357_196
 //   Mission_Acid turn 4 tile_status desync. Pre-v274 corpus archived as
 //   failure_db_snapshot_sim_v273.jsonl.
-pub const SIMULATOR_VERSION: u32 = 274;
+// v275 - Ranged_SmokeFire_A/B/AB overlays model Smoldering Shells upgrades:
+//   More Smoke expands the surrounding smoke footprint to diagonals, while
+//   +2 Damage raises the center hit to 3. Needed after powering More Smoke in
+//   Stay With Me run 20260616_083357_196 before second island routing.
+//   Pre-v275 corpus archived as failure_db_snapshot_sim_v274.jsonl.
+// v276 - Enemy-phase pre-attack deaths from fire, smoke storm, environment,
+//   conveyors, and wind clear enemy wreck occupancy before later enemy-phase
+//   steps. Fixes Stay With Me run 20260616_083357_196 Mission_Wind turn 3,
+//   where a fire-killed Scorpion corpse falsely blocked Wind Storm from
+//   pushing Firefly1 into a building shot line. Pre-v276 corpus archived as
+//   failure_db_snapshot_sim_v275.jsonl.
+pub const SIMULATOR_VERSION: u32 = 276;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

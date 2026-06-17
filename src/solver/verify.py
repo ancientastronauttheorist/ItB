@@ -1355,7 +1355,18 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # tile, not the launch tile, while still avoiding same-action Nanofilter recoil
 # healing. Fixes Stay With Me run 20260616_083357_196 Mission_Acid turn 4
 # tile_status desync. Pre-v274 corpus archived as failure_db_snapshot_sim_v273.jsonl.
-SIMULATOR_VERSION = 274
+# v275 - Ranged_SmokeFire_A/B/AB overlays model Smoldering Shells upgrades:
+# More Smoke expands the surrounding smoke footprint to diagonals, while +2
+# Damage raises the center hit to 3. Needed after powering More Smoke in Stay
+# With Me run 20260616_083357_196 before second island routing.
+# Pre-v275 corpus archived as failure_db_snapshot_sim_v274.jsonl.
+# v276 - Enemy-phase pre-attack deaths from fire, smoke storm, environment,
+# conveyors, and wind clear enemy wreck occupancy before later enemy-phase
+# steps. Fixes Stay With Me run 20260616_083357_196 Mission_Wind turn 3, where
+# a fire-killed Scorpion corpse falsely blocked Wind Storm from pushing
+# Firefly1 into a building shot line. Pre-v276 corpus archived as
+# failure_db_snapshot_sim_v275.jsonl.
+SIMULATOR_VERSION = 276
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

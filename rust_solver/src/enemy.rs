@@ -581,6 +581,16 @@ fn simulate_mission_wind(board: &mut Board, result: &mut ActionResult) {
     }
 }
 
+fn clear_pre_attack_dead_enemy_wrecks(board: &mut Board) {
+    for i in 0..board.unit_count as usize {
+        let u = &mut board.units[i];
+        if u.hp <= 0 && u.is_enemy() {
+            u.x = 8;
+            u.y = 8;
+        }
+    }
+}
+
 fn hatch_spawn_destination(board: &Board, x: u8, y: u8) -> Option<(u8, u8)> {
     // Live HQ capture: a WebbEgg at E6 hatched onto adjacent F6, destroying a
     // 2-HP building. The Lua skill queues `sPawn` at the occupied egg tile, and
@@ -789,6 +799,7 @@ pub fn simulate_enemy_attacks(
             }
         }
     }
+    clear_pre_attack_dead_enemy_wrecks(board);
 
     // Environment danger (air strikes, lightning, tidal waves) — fires BEFORE Vek attacks
     // Exception: Mission_Tides resolves queued attacks first, then advances the
@@ -796,6 +807,7 @@ pub fn simulate_enemy_attacks(
     let tide_env_after_attacks = board.mission_id == "Mission_Tides";
     if board.env_danger != 0 && !tide_env_after_attacks {
         apply_env_danger_board(board, &mut result);
+        clear_pre_attack_dead_enemy_wrecks(board);
     }
 
     // Ice Storm freeze (sim v25). Fires at start of enemy turn — same step as
@@ -838,11 +850,13 @@ pub fn simulate_enemy_attacks(
     // moved Vek re-aim from their conveyor-shifted tile using the original
     // queued direction below.
     simulate_conveyor_belts(board, &mut result);
+    clear_pre_attack_dead_enemy_wrecks(board);
 
     // Mission_Wind rows are push lanes, not damage tiles. The gust resolves
     // before attacks; Vek then fire from their pushed tile while preserving
     // the original queued direction.
     simulate_mission_wind(board, &mut result);
+    clear_pre_attack_dead_enemy_wrecks(board);
 
     // Egg hatch step: transform any surviving spider/spiderling egg into
     // its hatched live unit (sim v22/v115). Runs AFTER fire tick + env_danger

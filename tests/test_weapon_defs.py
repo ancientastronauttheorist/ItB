@@ -49,6 +49,23 @@ def test_dung_attack_aliases_match_tumblebug_weapon_defs():
     assert alpha.damage == 3
 
 
+def test_smoldering_shells_upgrade_weapon_defs():
+    base = get_weapon_def("Ranged_SmokeFire")
+    more_smoke = get_weapon_def("Ranged_SmokeFire_A")
+    damage = get_weapon_def("Ranged_SmokeFire_B")
+    both = get_weapon_def("Ranged_SmokeFire_AB")
+
+    assert base is not None
+    assert more_smoke is not None
+    assert damage is not None
+    assert both is not None
+    assert base.damage == 1
+    assert more_smoke.damage == 1
+    assert damage.damage == 3
+    assert both.damage == 3
+    assert more_smoke.upgrade_a == "more smoke"
+
+
 def test_arachnophiles_catalog_entries_match_observed_lua_ids():
     known = json.loads(Path("data/known_types.json").read_text())
 
