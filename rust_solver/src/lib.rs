@@ -1842,7 +1842,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   a true two-click bridge protocol exists, Heat Engines consumes fire/lava
 //   for Boost, and Firestorm lights the tile beyond its clicked endpoint.
 //   Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
-pub const SIMULATOR_VERSION: u32 = 270;
+// v271 - Firestorm Generator stops at the clicked endpoint. Live v270 evidence
+//   from Heat Sinkers Feed the Flame run 20260617_121029_596 showed the extra
+//   beyond-endpoint tile was not lit, even when that tile held the queued Vek.
+//   Pre-v271 corpus archived as failure_db_snapshot_sim_v270.jsonl.
+pub const SIMULATOR_VERSION: u32 = 271;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

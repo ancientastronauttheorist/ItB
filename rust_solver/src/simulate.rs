@@ -3454,7 +3454,7 @@ fn sim_firestorm_generator(
 
     let (dx, dy) = DIRS[dir];
     let mut newly_burning = 0;
-    for i in 1..=((distance as i8) + 1) {
+    for i in 1..=(distance as i8) {
         let px = ax as i8 + dx * i;
         let py = ay as i8 + dy * i;
         if !in_bounds(px, py) { break; }
@@ -5780,18 +5780,18 @@ mod tests {
     }
 
     #[test]
-    fn test_firestorm_generator_lights_one_tile_beyond_clicked_endpoint() {
+    fn test_firestorm_generator_stops_at_clicked_endpoint() {
         let mut board = make_test_board();
         let mech = add_mech(&mut board, 0, 4, 7, 2, WId::ScienceRainingFire);
         let beyond = add_enemy(&mut board, 1, 4, 4, 3);
 
         let result = simulate_weapon(&mut board, mech, WId::ScienceRainingFire, 4, 5);
 
-        assert!(board.units[beyond].fire());
+        assert!(!board.units[beyond].fire());
         assert_eq!((board.units[beyond].x, board.units[beyond].y), (4, 4));
         assert!(board.tile(4, 6).on_fire());
         assert!(board.tile(4, 5).on_fire());
-        assert!(board.tile(4, 4).on_fire());
+        assert!(!board.tile(4, 4).on_fire());
         assert!(result.events.iter().all(|e| {
             !e.starts_with("achievement_feed_the_flame:")
         }), "one fresh enemy must not pop Feed the Flame: {:?}", result.events);
