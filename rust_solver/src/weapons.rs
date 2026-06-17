@@ -618,9 +618,26 @@ pub enum WId {
     BruteKickBackB = 217,
     /// Reverse Thrusters with both +1 Range upgrades powered.
     BruteKickBackAB = 218,
+    /// Heat Sinkers - Quick-Fire Mech's Quick-Fire Rockets. The live bridge
+    /// currently fires two-click weapons through Pawn:FireWeapon(target, slot),
+    /// which executes the first-click projectile effect only.
+    BruteTcDoubleShot = 219,
+    BruteTcDoubleShotA = 220,
+    BruteTcDoubleShotB = 221,
+    BruteTcDoubleShotAB = 222,
+    /// Heat Sinkers - Dispersal Mech's Thermal Discharger.
+    PrimeFlamespreader = 223,
+    PrimeFlamespreaderA = 224,
+    PrimeFlamespreaderB = 225,
+    PrimeFlamespreaderAB = 226,
+    /// Heat Sinkers - Napalm Mech's Firestorm Generator.
+    ScienceRainingFire = 227,
+    ScienceRainingFireA = 228,
+    ScienceRainingFireB = 229,
+    ScienceRainingFireAB = 230,
 }
 
-pub const WEAPON_COUNT: usize = 219;
+pub const WEAPON_COUNT: usize = 231;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -982,6 +999,29 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         range_min: 1, range_max: 3, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
     w[218] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
         range_min: 1, range_max: 4, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+
+    // 219-222: Brute_TC_DoubleShot - Quick-Fire Rockets. Two-click live
+    // protocol is not modeled yet; the bridge-executable first projectile is
+    // a standard line shot. A adds push, B adds +1 damage, AB has both.
+    w[219] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0, flags: C, ..DEF };
+    w[220] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[221] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, range_max: 0, flags: C, ..DEF };
+    w[222] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+
+    // 223-226: Prime_Flamespreader - Thermal Discharger. Bespoke line damage
+    // plus perpendicular side pushes live in simulate.rs; range and Add Fire
+    // are encoded here for targeting and status.
+    w[223] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 2, path_size: 2, flags: C, ..DEF };
+    w[224] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 4, path_size: 4, flags: C, ..DEF };
+    w[225] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 2, path_size: 2, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[226] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 4, path_size: 4, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+
+    // 227-230: Science_RainingFire - Firestorm Generator. Line artillery that
+    // lights every tile from shooter to target, then pushes the target tile.
+    w[227] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 2, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[228] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 3, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[229] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 4, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[230] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 5, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1451,6 +1491,33 @@ pub fn is_hydraulic_lifter(id: WId) -> bool {
 }
 
 #[inline]
+pub fn is_quick_fire_rockets(id: WId) -> bool {
+    matches!(
+        id,
+        WId::BruteTcDoubleShot | WId::BruteTcDoubleShotA
+            | WId::BruteTcDoubleShotB | WId::BruteTcDoubleShotAB
+    )
+}
+
+#[inline]
+pub fn is_thermal_discharger(id: WId) -> bool {
+    matches!(
+        id,
+        WId::PrimeFlamespreader | WId::PrimeFlamespreaderA
+            | WId::PrimeFlamespreaderB | WId::PrimeFlamespreaderAB
+    )
+}
+
+#[inline]
+pub fn is_firestorm_generator(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceRainingFire | WId::ScienceRainingFireA
+            | WId::ScienceRainingFireB | WId::ScienceRainingFireAB
+    )
+}
+
+#[inline]
 pub fn is_tri_rocket(id: WId) -> bool {
     matches!(
         id,
@@ -1617,6 +1684,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Flamethrower_A" => WId::PrimeFlamethrowerA,
         "Prime_Flamethrower_B" => WId::PrimeFlamethrowerB,
         "Prime_Flamethrower_AB" => WId::PrimeFlamethrowerAB,
+        "Prime_Flamespreader" => WId::PrimeFlamespreader,
+        "Prime_Flamespreader_A" => WId::PrimeFlamespreaderA,
+        "Prime_Flamespreader_B" => WId::PrimeFlamespreaderB,
+        "Prime_Flamespreader_AB" => WId::PrimeFlamespreaderAB,
         "Prime_TC_Punt" => WId::PrimeTcPunt,
         "PrimeTcPunt" => WId::PrimeTcPunt,
         "Prime_TC_Punt_A" => WId::PrimeTcPuntA,
@@ -1669,6 +1740,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_TC_Ricochet_A" => WId::BruteTcRicochetA,
         "Brute_TC_Ricochet_B" => WId::BruteTcRicochetB,
         "Brute_TC_Ricochet_AB" => WId::BruteTcRicochetAB,
+        "Brute_TC_DoubleShot" => WId::BruteTcDoubleShot,
+        "Brute_TC_DoubleShot_A" => WId::BruteTcDoubleShotA,
+        "Brute_TC_DoubleShot_B" => WId::BruteTcDoubleShotB,
+        "Brute_TC_DoubleShot_AB" => WId::BruteTcDoubleShotAB,
         "Archive_ArtShot" => WId::ArchiveArtShot,
         "Ranged_Artillerymech" => WId::RangedArtillerymech,
         "Ranged_Artillerymech_A" => WId::RangedArtillerymechA,
@@ -1724,6 +1799,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_Swap_A" => WId::ScienceSwapA,
         "Science_Swap_B" => WId::ScienceSwapB,
         "Science_Swap_AB" => WId::ScienceSwapAB,
+        "Science_RainingFire" => WId::ScienceRainingFire,
+        "Science_RainingFire_A" => WId::ScienceRainingFireA,
+        "Science_RainingFire_B" => WId::ScienceRainingFireB,
+        "Science_RainingFire_AB" => WId::ScienceRainingFireAB,
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
         "Science_Confuse" => WId::ScienceConfuse,
@@ -1871,6 +1950,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeFlamethrowerA => "Prime_Flamethrower_A",
         WId::PrimeFlamethrowerB => "Prime_Flamethrower_B",
         WId::PrimeFlamethrowerAB => "Prime_Flamethrower_AB",
+        WId::PrimeFlamespreader => "Prime_Flamespreader",
+        WId::PrimeFlamespreaderA => "Prime_Flamespreader_A",
+        WId::PrimeFlamespreaderB => "Prime_Flamespreader_B",
+        WId::PrimeFlamespreaderAB => "Prime_Flamespreader_AB",
         WId::PrimeTcPunt => "Prime_TC_Punt",
         WId::PrimeTcPuntA => "Prime_TC_Punt_A",
         WId::PrimeTcPuntB => "Prime_TC_Punt_B",
@@ -1919,6 +2002,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteTcRicochetA => "Brute_TC_Ricochet_A",
         WId::BruteTcRicochetB => "Brute_TC_Ricochet_B",
         WId::BruteTcRicochetAB => "Brute_TC_Ricochet_AB",
+        WId::BruteTcDoubleShot => "Brute_TC_DoubleShot",
+        WId::BruteTcDoubleShotA => "Brute_TC_DoubleShot_A",
+        WId::BruteTcDoubleShotB => "Brute_TC_DoubleShot_B",
+        WId::BruteTcDoubleShotAB => "Brute_TC_DoubleShot_AB",
         WId::ArchiveArtShot => "Archive_ArtShot",
         WId::RangedArtillerymech => "Ranged_Artillerymech",
         WId::RangedArtillerymechA => "Ranged_Artillerymech_A",
@@ -1959,6 +2046,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceSwapA => "Science_Swap_A",
         WId::ScienceSwapB => "Science_Swap_B",
         WId::ScienceSwapAB => "Science_Swap_AB",
+        WId::ScienceRainingFire => "Science_RainingFire",
+        WId::ScienceRainingFireA => "Science_RainingFire_A",
+        WId::ScienceRainingFireB => "Science_RainingFire_B",
+        WId::ScienceRainingFireAB => "Science_RainingFire_AB",
         WId::ScienceAcidShot => "Science_AcidShot",
         WId::ScienceShield => "Science_Shield",
         WId::ScienceConfuse => "Science_Confuse",
@@ -2190,6 +2281,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeShift => "Vice Fist",
         WId::PrimeFlamethrower | WId::PrimeFlamethrowerA
             | WId::PrimeFlamethrowerB | WId::PrimeFlamethrowerAB => "Flamethrower",
+        WId::PrimeFlamespreader | WId::PrimeFlamespreaderA
+            | WId::PrimeFlamespreaderB | WId::PrimeFlamespreaderAB => "Thermal Discharger",
         WId::PrimeTcPunt | WId::PrimeTcPuntA
             | WId::PrimeTcPuntB | WId::PrimeTcPuntAB => "Hydraulic Lifter",
         WId::PrimeAreablast => "Area Blast",
@@ -2222,6 +2315,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BrutePierceShot => "AP Cannon",
         WId::BruteTcRicochet | WId::BruteTcRicochetA
             | WId::BruteTcRicochetB | WId::BruteTcRicochetAB => "Ricochet Rocket",
+        WId::BruteTcDoubleShot | WId::BruteTcDoubleShotA
+            | WId::BruteTcDoubleShotB | WId::BruteTcDoubleShotAB => "Quick-Fire Rockets",
         WId::ArchiveArtShot => "Old Earth Artillery",
         WId::RangedArtillerymech => "Artemis Artillery",
         WId::RangedArtillerymechA => "Artemis Artillery",
@@ -2252,6 +2347,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScienceRepulseA => "Repulse",
         WId::ScienceSwap | WId::ScienceSwapA
             | WId::ScienceSwapB | WId::ScienceSwapAB => "Teleporter",
+        WId::ScienceRainingFire | WId::ScienceRainingFireA
+            | WId::ScienceRainingFireB | WId::ScienceRainingFireAB => "Firestorm Generator",
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
@@ -2432,6 +2529,40 @@ mod tests {
         assert_eq!(wid_from_str("Prime_Flamethrower_AB"), WId::PrimeFlamethrowerAB);
         assert_eq!(wid_to_str(WId::PrimeFlamethrowerAB), "Prime_Flamethrower_AB");
         assert_eq!(weapon_name(WId::PrimeFlamethrowerAB), "Flamethrower");
+    }
+
+    #[test]
+    fn test_heat_sinkers_weapon_defs_and_mappings() {
+        let quick = weapon_def(WId::BruteTcDoubleShot);
+        assert_eq!(quick.weapon_type, WeaponType::Projectile);
+        assert_eq!(quick.damage, 1);
+        assert_eq!(quick.push, PushDir::None);
+        assert_eq!(weapon_def(WId::BruteTcDoubleShotA).push, PushDir::Forward);
+        assert_eq!(weapon_def(WId::BruteTcDoubleShotB).damage, 2);
+        assert_eq!(weapon_def(WId::BruteTcDoubleShotAB).damage, 2);
+        assert!(is_quick_fire_rockets(WId::BruteTcDoubleShotAB));
+
+        let thermal = weapon_def(WId::PrimeFlamespreader);
+        assert_eq!(thermal.weapon_type, WeaponType::Melee);
+        assert_eq!(thermal.range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamespreaderA).range_max, 4);
+        assert!(weapon_def(WId::PrimeFlamespreaderB).fire());
+        assert!(is_thermal_discharger(WId::PrimeFlamespreaderAB));
+
+        let firestorm = weapon_def(WId::ScienceRainingFire);
+        assert_eq!(firestorm.weapon_type, WeaponType::Artillery);
+        assert_eq!(firestorm.range_min, 2);
+        assert_eq!(firestorm.range_max, 2);
+        assert!(firestorm.fire());
+        assert_eq!(weapon_def(WId::ScienceRainingFireA).range_max, 3);
+        assert_eq!(weapon_def(WId::ScienceRainingFireB).range_max, 4);
+        assert_eq!(weapon_def(WId::ScienceRainingFireAB).range_max, 5);
+        assert!(is_firestorm_generator(WId::ScienceRainingFireAB));
+
+        assert_eq!(wid_from_str("Brute_TC_DoubleShot_AB"), WId::BruteTcDoubleShotAB);
+        assert_eq!(wid_to_str(WId::PrimeFlamespreaderB), "Prime_Flamespreader_B");
+        assert_eq!(wid_from_str("Science_RainingFire"), WId::ScienceRainingFire);
+        assert_eq!(weapon_name(WId::ScienceRainingFireAB), "Firestorm Generator");
     }
 
     #[test]
@@ -2878,6 +3009,9 @@ mod tests {
         assert_eq!(wid_from_str("TotemAtkB"), WId::TotemAtkB);
         assert_eq!(wid_from_str("Armored_Train_Move"), WId::ArmoredTrainMove);
         assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
+        assert_eq!(wid_from_str("Brute_TC_DoubleShot"), WId::BruteTcDoubleShot);
+        assert_eq!(wid_from_str("Prime_Flamespreader"), WId::PrimeFlamespreader);
+        assert_eq!(wid_from_str("Science_RainingFire"), WId::ScienceRainingFire);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -2929,6 +3063,18 @@ mod tests {
             ("Science_Swap_B", WId::ScienceSwapB),
             ("Science_Swap_AB", WId::ScienceSwapAB),
             ("Science_TC_SwapOther", WId::ScienceTcSwapOther),
+            ("Brute_TC_DoubleShot", WId::BruteTcDoubleShot),
+            ("Brute_TC_DoubleShot_A", WId::BruteTcDoubleShotA),
+            ("Brute_TC_DoubleShot_B", WId::BruteTcDoubleShotB),
+            ("Brute_TC_DoubleShot_AB", WId::BruteTcDoubleShotAB),
+            ("Prime_Flamespreader", WId::PrimeFlamespreader),
+            ("Prime_Flamespreader_A", WId::PrimeFlamespreaderA),
+            ("Prime_Flamespreader_B", WId::PrimeFlamespreaderB),
+            ("Prime_Flamespreader_AB", WId::PrimeFlamespreaderAB),
+            ("Science_RainingFire", WId::ScienceRainingFire),
+            ("Science_RainingFire_A", WId::ScienceRainingFireA),
+            ("Science_RainingFire_B", WId::ScienceRainingFireB),
+            ("Science_RainingFire_AB", WId::ScienceRainingFireAB),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),
         ];

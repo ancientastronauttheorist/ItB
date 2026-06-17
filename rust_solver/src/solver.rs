@@ -78,6 +78,13 @@ pub(crate) fn reverse_thrusters_four_damage_from_events(events: &[String]) -> i3
 
 // ── MechAction ───────────────────────────────────────────────────────────────
 
+pub(crate) fn feed_the_flame_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_feed_the_flame:"))
+        .count() as i32
+}
+
 #[derive(Clone, Debug)]
 pub struct MechAction {
     pub mech_uid: u16,
@@ -256,6 +263,33 @@ pub(crate) fn get_weapon_targets(
         for pos in reachable_tiles_with_speed(board, unit_idx, range) {
             if pos != (mx, my) {
                 targets.push(pos);
+            }
+        }
+        return targets;
+    }
+
+    if is_thermal_discharger(weapon_id) {
+        let max_r = wdef.range_max.max(1);
+        for &(dx, dy) in &DIRS {
+            for i in 1..=(max_r as i8) {
+                let nx = mx as i8 + dx * i;
+                let ny = my as i8 + dy * i;
+                if !in_bounds(nx, ny) { break; }
+                targets.push((nx as u8, ny as u8));
+            }
+        }
+        return targets;
+    }
+
+    if is_firestorm_generator(weapon_id) {
+        let min_r = wdef.range_min.max(1);
+        let max_r = wdef.range_max.max(min_r);
+        for &(dx, dy) in &DIRS {
+            for i in (min_r as i8)..=(max_r as i8) {
+                let nx = mx as i8 + dx * i;
+                let ny = my as i8 + dy * i;
+                if !in_bounds(nx, ny) { break; }
+                targets.push((nx as u8, ny as u8));
             }
         }
         return targets;
@@ -677,6 +711,17 @@ fn tile_weapon_terrain_effect(tile: &Tile, weapon_id: WId, wdef: &WeaponDef) -> 
     }
 }
 
+fn tile_fire_weapon_status_effect(tile: &Tile) -> bool {
+    if !matches!(
+        tile.terrain,
+        Terrain::Ground | Terrain::Sand | Terrain::Forest | Terrain::Rubble
+            | Terrain::Building | Terrain::Ice | Terrain::Fire | Terrain::Mountain
+    ) {
+        return false;
+    }
+    !tile.on_fire() || tile.smoke() || matches!(tile.terrain, Terrain::Sand | Terrain::Forest)
+}
+
 /// Check if a weapon action would have any effect on the board.
 /// Returns false when firing at empty space where no unit can be hit or pushed —
 /// the solver should prefer move-only/skip in that case. Conservative: returns
@@ -714,6 +759,61 @@ fn weapon_action_has_effect(
         let tile = board.tile(x, y);
         tile.is_building() && !tile.shield()
     };
+
+    if is_thermal_discharger(weapon_id) {
+        let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+            return false;
+        };
+        let (dx, dy) = DIRS[dir];
+        let distance = (target.0 as i8 - mx as i8).unsigned_abs()
+            + (target.1 as i8 - my as i8).unsigned_abs();
+        if distance == 0 || distance > wdef.range_max.max(1) {
+            return false;
+        }
+        for i in 1..=(distance as i8) {
+            let px = mx as i8 + dx * i;
+            let py = my as i8 + dy * i;
+            if !in_bounds(px, py) { break; }
+            let ux = px as u8;
+            let uy = py as u8;
+            if unit_at(ux, uy)
+                || tile_weapon_terrain_effect(board.tile(ux, uy), weapon_id, wdef)
+                || (wdef.fire() && tile_fire_weapon_status_effect(board.tile(ux, uy)))
+            {
+                return true;
+            }
+            for &side in &[(dir + 1) % 4, (dir + 3) % 4] {
+                let (sdx, sdy) = DIRS[side];
+                let sx = px + sdx;
+                let sy = py + sdy;
+                if in_bounds(sx, sy) && unit_at(sx as u8, sy as u8) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    if is_firestorm_generator(weapon_id) {
+        let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+            return false;
+        };
+        let distance = (target.0 as i8 - mx as i8).unsigned_abs()
+            + (target.1 as i8 - my as i8).unsigned_abs();
+        if distance < wdef.range_min || distance > wdef.range_max {
+            return false;
+        }
+        let (dx, dy) = DIRS[dir];
+        for i in 1..=(distance as i8) {
+            let px = mx as i8 + dx * i;
+            let py = my as i8 + dy * i;
+            if !in_bounds(px, py) { break; }
+            if tile_fire_weapon_status_effect(board.tile(px as u8, py as u8)) {
+                return true;
+            }
+        }
+        return unit_at(target.0, target.1);
+    }
 
     match wdef.weapon_type {
         WeaponType::Melee => {
@@ -1485,6 +1585,7 @@ fn search_recursive(
     nanobots_heal_so_far: i32,
     powered_blast_so_far: i32,
     reverse_thrusters_four_damage_so_far: i32,
+    feed_the_flame_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
@@ -1558,6 +1659,8 @@ fn search_recursive(
         let reverse_thrusters_four_damage_bonus =
             reverse_thrusters_four_damage_so_far as f64
                 * weights.reverse_thrusters_four_damage_bonus;
+        let feed_the_flame_bonus =
+            feed_the_flame_so_far as f64 * weights.feed_the_flame_bonus;
         let pod_collected_penalty =
             pods_collected_so_far as f64 * weights.pod_collected;
         let score = raw
@@ -1565,6 +1668,7 @@ fn search_recursive(
             + nanobots_heal_bonus
             + powered_blast_bonus
             + reverse_thrusters_four_damage_bonus
+            + feed_the_flame_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
 
@@ -1594,6 +1698,7 @@ fn search_recursive(
             actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far,
             nanobots_heal_so_far, powered_blast_so_far,
             reverse_thrusters_four_damage_so_far,
+            feed_the_flame_so_far,
             pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
@@ -1649,6 +1754,7 @@ fn search_recursive(
         let powered_blast_add = powered_blast_from_events(&result.events);
         let reverse_thrusters_four_damage_add =
             reverse_thrusters_four_damage_from_events(&result.events);
+        let feed_the_flame_add = feed_the_flame_from_events(&result.events);
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
         // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
@@ -1675,6 +1781,7 @@ fn search_recursive(
             nanobots_heal_so_far + nanobots_heal_add,
             powered_blast_so_far + powered_blast_add,
             reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
+            feed_the_flame_so_far + feed_the_flame_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
@@ -1850,7 +1957,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2047,7 +2154,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -2129,6 +2236,17 @@ mod top_k_tests {
         ];
 
         assert_eq!(viscera_nanobots_heal_from_events(&events), 5);
+    }
+
+    #[test]
+    fn feed_the_flame_events_count_exact_achievement_events() {
+        let events = vec![
+            "achievement_feed_the_flame:new_fire:3:weapon:Science_RainingFire_A:target:3:4".to_string(),
+            "other_event".to_string(),
+            "achievement_on_the_backburner:damage:4:target:3:2".to_string(),
+        ];
+
+        assert_eq!(feed_the_flame_from_events(&events), 1);
     }
 
     #[test]

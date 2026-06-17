@@ -2712,6 +2712,49 @@ pub fn apply_weapon_status_with_impact_occupancy(
 
 // ── Weapon simulation dispatch ───────────────────────────────────────────────
 
+fn apply_weapon_fire_and_count_new_enemy(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    wdef: &WeaponDef,
+) -> i32 {
+    let before = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.is_enemy() && u.hp > 0 {
+            Some((idx, u.fire()))
+        } else {
+            None
+        }
+    });
+    let occupied_at_impact = board.unit_at(x, y).is_some();
+    apply_weapon_status_with_impact_occupancy(board, x, y, wdef, occupied_at_impact);
+    if let Some((idx, was_fire)) = before {
+        let u = &board.units[idx];
+        if !was_fire && u.hp > 0 && u.fire() {
+            return 1;
+        }
+    }
+    0
+}
+
+fn record_feed_the_flame_event(
+    result: &mut ActionResult,
+    newly_burning_enemies: i32,
+    weapon_id: WId,
+    target_x: u8,
+    target_y: u8,
+) {
+    if newly_burning_enemies >= 3 {
+        result.events.push(format!(
+            "achievement_feed_the_flame:new_fire:{}:weapon:{}:target:{}:{}",
+            newly_burning_enemies,
+            wid_to_str(weapon_id),
+            target_x,
+            target_y
+        ));
+    }
+}
+
 /// Simulate firing a weapon using the compile-time default weapon table.
 /// Thin wrapper around `simulate_weapon_with` retained for test call sites.
 pub fn simulate_weapon(
@@ -2795,10 +2838,20 @@ pub fn simulate_weapon_with(
     let leech_uncapped_before = result.leech_uncapped_kills;
 
     match wdef.weapon_type {
+        WeaponType::Melee if is_thermal_discharger(weapon_id) => {
+            sim_thermal_discharger(
+                board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result,
+            )
+        }
         WeaponType::Melee => sim_melee(board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => {
             sim_projectile(board, ax, ay, weapon_id, wdef, attack_dir, &mut result)
         },
+        WeaponType::Artillery if is_firestorm_generator(weapon_id) => {
+            sim_firestorm_generator(
+                board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result,
+            )
+        }
         WeaponType::Artillery if is_arachnoid_injector(weapon_id) => {
             sim_arachnoid_injector(
                 board,
@@ -3290,6 +3343,116 @@ fn create_adjacent_cracks(board: &mut Board, x: u8, y: u8, result: &mut ActionRe
 }
 
 // ── Melee ────────────────────────────────────────────────────────────────────
+
+fn sim_thermal_discharger(
+    board: &mut Board,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let Some(dir) = attack_dir else { return; };
+    let distance = (tx as i8 - ax as i8).unsigned_abs()
+        + (ty as i8 - ay as i8).unsigned_abs();
+    if distance == 0 || distance > wdef.range_max.max(1) {
+        return;
+    }
+
+    let (dx, dy) = DIRS[dir];
+    let mut newly_burning = 0;
+    let mut side_pushes: Vec<(u8, u8, usize)> = Vec::with_capacity((distance as usize) * 2);
+
+    for i in 1..=(distance as i8) {
+        let px = ax as i8 + dx * i;
+        let py = ay as i8 + dy * i;
+        if !in_bounds(px, py) { break; }
+        let ux = px as u8;
+        let uy = py as u8;
+        let before_fire = board.unit_at(ux, uy).and_then(|idx| {
+            let u = &board.units[idx];
+            if u.is_enemy() && u.hp > 0 {
+                Some((idx, u.fire()))
+            } else {
+                None
+            }
+        });
+        let occupied_at_impact = board.unit_at(ux, uy).is_some();
+        apply_direct_weapon_damage(board, ux, uy, wdef.damage, wdef, result);
+        if wdef.fire() {
+            apply_weapon_status_with_impact_occupancy(
+                board,
+                ux,
+                uy,
+                wdef,
+                occupied_at_impact,
+            );
+            if let Some((idx, was_fire)) = before_fire {
+                let u = &board.units[idx];
+                if !was_fire && u.hp > 0 && u.fire() {
+                    newly_burning += 1;
+                }
+            }
+        }
+
+        for &side in &[(dir + 1) % 4, (dir + 3) % 4] {
+            let (sdx, sdy) = DIRS[side];
+            let sx = px + sdx;
+            let sy = py + sdy;
+            if in_bounds(sx, sy) {
+                side_pushes.push((sx as u8, sy as u8, side));
+            }
+        }
+    }
+
+    for (sx, sy, push_dir) in side_pushes {
+        apply_push(board, sx, sy, push_dir, result);
+    }
+
+    record_feed_the_flame_event(result, newly_burning, weapon_id, tx, ty);
+}
+
+fn sim_firestorm_generator(
+    board: &mut Board,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let Some(dir) = attack_dir else { return; };
+    let distance = (tx as i8 - ax as i8).unsigned_abs()
+        + (ty as i8 - ay as i8).unsigned_abs();
+    if distance < wdef.range_min || distance > wdef.range_max {
+        return;
+    }
+
+    let (dx, dy) = DIRS[dir];
+    let mut newly_burning = 0;
+    for i in 1..=(distance as i8) {
+        let px = ax as i8 + dx * i;
+        let py = ay as i8 + dy * i;
+        if !in_bounds(px, py) { break; }
+        newly_burning += apply_weapon_fire_and_count_new_enemy(
+            board,
+            px as u8,
+            py as u8,
+            wdef,
+        );
+    }
+
+    if matches!(wdef.push, PushDir::Forward) {
+        apply_push(board, tx, ty, dir, result);
+    }
+
+    record_feed_the_flame_event(result, newly_burning, weapon_id, tx, ty);
+}
 
 fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     // path_size>1 melee (Prime_Spear: Lua scripts/weapons_prime.lua:792-846).
@@ -5554,6 +5717,88 @@ mod tests {
             move_speed: 3,
             ..Default::default()
         })
+    }
+
+    #[test]
+    fn test_firestorm_generator_lights_three_fresh_enemies_and_pushes_target() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 1, 2, WId::ScienceRainingFireA);
+        let first = add_enemy(&mut board, 1, 3, 2, 3);
+        let second = add_enemy(&mut board, 2, 3, 3, 3);
+        let third = add_enemy(&mut board, 3, 3, 4, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::ScienceRainingFireA, 3, 4);
+
+        assert!(board.units[first].fire());
+        assert!(board.units[second].fire());
+        assert!(board.units[third].fire());
+        assert_eq!((board.units[third].x, board.units[third].y), (3, 5));
+        assert!(board.tile(3, 2).on_fire());
+        assert!(board.tile(3, 3).on_fire());
+        assert!(board.tile(3, 4).on_fire());
+        assert!(result.events.iter().any(|e| {
+            e.starts_with("achievement_feed_the_flame:new_fire:3:weapon:Science_RainingFire_A")
+        }), "missing Feed the Flame event: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_firestorm_generator_does_not_count_already_burning_enemy() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 1, 2, WId::ScienceRainingFireA);
+        let already = add_enemy(&mut board, 1, 3, 2, 3);
+        let second = add_enemy(&mut board, 2, 3, 3, 3);
+        let third = add_enemy(&mut board, 3, 3, 4, 3);
+        board.units[already].set_fire(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::ScienceRainingFireA, 3, 4);
+
+        assert!(board.units[already].fire());
+        assert!(board.units[second].fire());
+        assert!(board.units[third].fire());
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_feed_the_flame:")
+        }), "already-burning enemy should not count: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_thermal_discharger_add_fire_line_and_side_push() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 1, 3, WId::PrimeFlamespreaderAB);
+        let first = add_enemy(&mut board, 1, 3, 2, 3);
+        let second = add_enemy(&mut board, 2, 3, 3, 3);
+        let third = add_enemy(&mut board, 3, 3, 4, 3);
+        let side = add_enemy(&mut board, 4, 4, 2, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeFlamespreaderAB, 3, 4);
+
+        assert_eq!(board.units[first].hp, 2);
+        assert_eq!(board.units[second].hp, 2);
+        assert_eq!(board.units[third].hp, 2);
+        assert!(board.units[first].fire());
+        assert!(board.units[second].fire());
+        assert!(board.units[third].fire());
+        assert_eq!((board.units[side].x, board.units[side].y), (5, 2));
+        assert!(result.events.iter().any(|e| {
+            e.starts_with("achievement_feed_the_flame:new_fire:3:weapon:Prime_Flamespreader_AB")
+        }), "missing Feed the Flame event: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_firestorm_generator_target_enumeration_respects_base_range() {
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceRainingFire);
+
+        let targets = crate::solver::get_weapon_targets(
+            &board,
+            3,
+            3,
+            WId::ScienceRainingFire,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert!(targets.contains(&(3, 5)), "range-2 target missing: {:?}", targets);
+        assert!(!targets.contains(&(3, 6)), "base Firestorm should not reach range 3");
     }
 
     fn add_mission_ally(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, weapon: WId, type_name: &str) -> usize {

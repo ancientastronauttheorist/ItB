@@ -1834,7 +1834,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Thrusters now places source smoke instead of impact smoke, matching live
 //   Backburner damage_amount desyncs. Pre-v268 corpus archived as
 //   failure_db_snapshot_sim_v267.jsonl.
-pub const SIMULATOR_VERSION: u32 = 268;
+// v269 - Heat Sinkers weapon coverage: Quick-Fire Rockets, Thermal
+//   Discharger, and Firestorm Generator IDs, line/fire simulation, and the
+//   Feed the Flame fresh-ignition achievement event. Pre-v269 corpus archived
+//   as failure_db_snapshot_sim_v268.jsonl.
+pub const SIMULATOR_VERSION: u32 = 269;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -242,6 +242,19 @@ def _achievement_weight_overlay(
         )
         applied.append("on_the_backburner")
 
+    if "feed the flame" in targets:
+        # Heat Sinkers: reward the exact three-fresh-enemy ignition event.
+        # The simulator event excludes enemies that were already burning.
+        weights["feed_the_flame_bonus"] = max(
+            float(weights.get("feed_the_flame_bonus", 0) or 0),
+            140000.0,
+        )
+        weights["enemy_on_fire_bonus"] = max(
+            float(weights.get("enemy_on_fire_bonus", 0) or 0),
+            2200.0,
+        )
+        applied.append("feed_the_flame")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove
