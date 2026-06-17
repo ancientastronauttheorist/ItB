@@ -1332,7 +1332,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Discharger, and Firestorm Generator IDs, line/fire simulation, and the Feed
 # the Flame fresh-ignition achievement event. Pre-v269 corpus archived as
 # failure_db_snapshot_sim_v268.jsonl.
-SIMULATOR_VERSION = 269
+# v270 - Heat Sinkers parity: Quick-Fire Rockets are kept non-enumerated until
+# a true two-click bridge protocol exists, Heat Engines consumes fire/lava for
+# Boost, and Firestorm lights the tile beyond its clicked endpoint. Pre-v270
+# corpus archived as failure_db_snapshot_sim_v269.jsonl.
+SIMULATOR_VERSION = 270
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

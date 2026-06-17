@@ -309,7 +309,26 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
 }
 
 fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
-    if !board.tile(x, y).on_fire() {
+    let standing_on_fire = board.tile(x, y).on_fire();
+    let standing_in_lava = board.tile(x, y).terrain == Terrain::Lava;
+    if board.heat_engines
+        && board.units[unit_idx].is_player()
+        && board.units[unit_idx].is_mech()
+        && board.units[unit_idx].hp > 0
+        && (standing_on_fire || standing_in_lava)
+    {
+        if standing_on_fire {
+            if board.tile(x, y).terrain == Terrain::Forest {
+                board.tile_mut(x, y).terrain = Terrain::Ground;
+            }
+            board.tile_mut(x, y).set_on_fire(false);
+        }
+        board.units[unit_idx].set_fire(false);
+        board.units[unit_idx].set_boosted(true);
+        return;
+    }
+
+    if !standing_on_fire {
         return;
     }
     if board.tile(x, y).terrain == Terrain::Forest {
@@ -3435,7 +3454,7 @@ fn sim_firestorm_generator(
 
     let (dx, dy) = DIRS[dir];
     let mut newly_burning = 0;
-    for i in 1..=(distance as i8) {
+    for i in 1..=((distance as i8) + 1) {
         let px = ax as i8 + dx * i;
         let py = ay as i8 + dy * i;
         if !in_bounds(px, py) { break; }
@@ -5758,6 +5777,56 @@ mod tests {
         assert!(!result.events.iter().any(|e| {
             e.starts_with("achievement_feed_the_flame:")
         }), "already-burning enemy should not count: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_firestorm_generator_lights_one_tile_beyond_clicked_endpoint() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 4, 7, 2, WId::ScienceRainingFire);
+        let beyond = add_enemy(&mut board, 1, 4, 4, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::ScienceRainingFire, 4, 5);
+
+        assert!(board.units[beyond].fire());
+        assert_eq!((board.units[beyond].x, board.units[beyond].y), (4, 4));
+        assert!(board.tile(4, 6).on_fire());
+        assert!(board.tile(4, 5).on_fire());
+        assert!(board.tile(4, 4).on_fire());
+        assert!(result.events.iter().all(|e| {
+            !e.starts_with("achievement_feed_the_flame:")
+        }), "one fresh enemy must not pop Feed the Flame: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_heat_engines_consumes_fire_tile_and_boosts_mech_on_move() {
+        let mut board = make_test_board();
+        board.heat_engines = true;
+        let mech = add_mech(&mut board, 0, 6, 4, 2, WId::ScienceRainingFire);
+        board.tile_mut(6, 5).set_on_fire(true);
+
+        let _result = simulate_move(&mut board, mech, (6, 5));
+
+        assert!(!board.tile(6, 5).on_fire());
+        assert!(!board.units[mech].fire());
+        assert!(board.units[mech].boosted());
+    }
+
+    #[test]
+    fn test_quick_fire_rockets_do_not_enumerate_without_two_click_bridge() {
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShot);
+        let _enemy = add_enemy(&mut board, 1, 3, 5, 3);
+
+        let targets = crate::solver::get_weapon_targets(
+            &board,
+            3,
+            3,
+            WId::BruteTcDoubleShot,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert!(targets.is_empty(), "unsupported Quick-Fire targets: {:?}", targets);
     }
 
     #[test]

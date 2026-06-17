@@ -1025,6 +1025,7 @@ pub fn board_from_json(json_str: &str)
                         match wname.as_str() {
                             "Passive_Electric" => board.storm_generator = true,
                             "Passive_FlameImmune" => board.flame_shielding = true,
+                            "Passive_FireBoost" => board.heat_engines = true,
                             "Passive_HealingSmoke" => board.healing_smoke = true,
                             "Passive_Leech" => {
                                 board.viscera_nanobots_heal = board.viscera_nanobots_heal.max(1);

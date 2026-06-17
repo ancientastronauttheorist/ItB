@@ -1838,7 +1838,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Discharger, and Firestorm Generator IDs, line/fire simulation, and the
 //   Feed the Flame fresh-ignition achievement event. Pre-v269 corpus archived
 //   as failure_db_snapshot_sim_v268.jsonl.
-pub const SIMULATOR_VERSION: u32 = 269;
+// v270 - Heat Sinkers parity: Quick-Fire Rockets are kept non-enumerated until
+//   a true two-click bridge protocol exists, Heat Engines consumes fire/lava
+//   for Boost, and Firestorm lights the tile beyond its clicked endpoint.
+//   Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
+pub const SIMULATOR_VERSION: u32 = 270;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
