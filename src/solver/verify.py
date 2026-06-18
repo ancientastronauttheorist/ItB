@@ -1349,7 +1349,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # from Heat Sinkers Feed the Flame run 20260617_222359_646 showed Bouncer1
 # pushed out of the flood strip and F3 pod destroyed by flooding. Pre-v273
 # corpus archived as failure_db_snapshot_sim_v272.jsonl.
-SIMULATOR_VERSION = 273
+SIMULATOR_VERSION = 274
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

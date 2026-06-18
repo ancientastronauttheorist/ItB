@@ -1855,7 +1855,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   evidence from Heat Sinkers Feed the Flame run 20260617_222359_646 showed
 //   Bouncer1 pushed out of the flood strip and F3 pod destroyed by flooding.
 //   Pre-v273 corpus archived as failure_db_snapshot_sim_v272.jsonl.
-pub const SIMULATOR_VERSION: u32 = 273;
+// v274 - Mission_BeltRandom random conveyor event can resolve after queued
+//   Vek attacks, and simultaneous conveyor collisions into a unit that already
+//   moved this tick do not apply bump damage. Live v273 evidence from Heat
+//   Sinkers Feed the Flame run 20260617_222359_646 m06 t01 showed a F4 Bouncer
+//   hit G4 before the belt tick instead of being safely moved/killed.
+//   Pre-v274 corpus archived as failure_db_snapshot_sim_v273.jsonl.
+pub const SIMULATOR_VERSION: u32 = 274;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

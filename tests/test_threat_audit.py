@@ -463,6 +463,31 @@ def test_threat_audit_attacker_will_be_moved_by_conveyor():
     assert audit["entries"][0]["coverage"]["reason"] == "attacker_will_be_moved_by_conveyor"
 
 
+def test_threat_audit_beltrandom_conveyor_does_not_cover_attack():
+    board = Board()
+    board.mission_id = "Mission_BeltRandom"
+    board.tile(6, 3).terrain = "building"
+    board.tile(6, 3).building_hp = 2
+    board.tile(5, 3).conveyor = 0
+    board.units.append(_enemy(
+        uid=136,
+        pawn_type="Scorpion1",
+        x=5,
+        y=3,
+        tx=6,
+        ty=3,
+        hp=3,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
+
+
 def test_threat_audit_attacker_will_be_moved_by_wind():
     board = Board()
     board.mission_id = "Mission_Wind"

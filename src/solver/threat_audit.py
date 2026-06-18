@@ -310,6 +310,9 @@ def _projected_attack_building_after_conveyor(
     board: Board,
     attacker: Unit,
 ) -> tuple[bool, tuple[int, int] | None, tuple[int, int] | None]:
+    if getattr(board, "mission_id", "") == "Mission_BeltRandom":
+        return False, None, None
+
     conveyor_delta = _conveyor_delta(board, attacker)
     if conveyor_delta is None:
         return False, None, None

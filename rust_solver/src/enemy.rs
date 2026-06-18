@@ -501,6 +501,7 @@ fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
             .then_with(|| a.2.cmp(&b.2))
     });
 
+    let mut moved_uids: Vec<u16> = Vec::new();
     for (dir, _projection, uid, x, y) in moves {
         let Some(idx) = (0..board.unit_count as usize)
             .find(|&i| board.units[i].uid == uid)
@@ -509,7 +510,24 @@ fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
         };
         let u = &board.units[idx];
         if u.hp <= 0 || u.x != x || u.y != y { continue; }
+        let (dx, dy) = DIRS[dir];
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if in_bounds(nx, ny) {
+            let nxu = nx as u8;
+            let nyu = ny as u8;
+            if let Some(blocker_idx) = board.unit_at(nxu, nyu) {
+                let blocker_uid = board.units[blocker_idx].uid;
+                if blocker_idx != idx && moved_uids.contains(&blocker_uid) {
+                    continue;
+                }
+            }
+        }
         apply_push(board, x, y, dir, result);
+        let moved = board.units[idx].x != x || board.units[idx].y != y;
+        if moved {
+            moved_uids.push(uid);
+        }
     }
 }
 
@@ -827,10 +845,14 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    // Conveyor belts resolve before Vek attacks on active belt missions, so
-    // moved Vek re-aim from their conveyor-shifted tile using the original
-    // queued direction below.
-    simulate_conveyor_belts(board, &mut result);
+    // Standard belt missions resolve conveyors before Vek attacks, so moved
+    // Vek re-aim from their conveyor-shifted tile using the original queued
+    // direction below. Mission_BeltRandom's environment event can appear after
+    // queued attacks in the displayed attack order, so its belt tick is
+    // applied after the attack loop.
+    if board.mission_id == "Mission_Belt" {
+        simulate_conveyor_belts(board, &mut result);
+    }
 
     // Mission_Wind rows are push lanes, not damage tiles. The gust resolves
     // before attacks; Vek then fire from their pushed tile while preserving
@@ -1835,6 +1857,10 @@ pub fn simulate_enemy_attacks(
         apply_env_danger_board(board, &mut result);
     }
 
+    if board.mission_id == "Mission_BeltRandom" {
+        simulate_conveyor_belts(board, &mut result);
+    }
+
     // Psion Tyrant: 1 damage to all player units (passive, not an attack — smoke doesn't cancel)
     if board.tyrant_psion {
         let tyrant_alive = (0..board.unit_count as usize).any(|i|
@@ -2377,6 +2403,59 @@ mod tests {
         assert_eq!(board.units[0].hp, 2);
         assert_eq!(board.tile(3, 6).building_hp, 1);
         assert_eq!(board.grid_power, 4);
+    }
+
+    #[test]
+    fn test_beltrandom_queued_attack_resolves_before_random_belt_tick() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_BeltRandom".to_string();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(4, 1).terrain = Terrain::Building;
+        board.tile_mut(4, 1).building_hp = 1;
+        board.tile_mut(4, 2).conveyor_dir = 3;
+
+        let bouncer_idx = add_enemy_with_type(&mut board, 9, 4, 2, 1, "Bouncer1", 4, 1);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.tile(4, 1).building_hp,
+            0,
+            "Mission_BeltRandom attack-order can let the queued Bouncer hit before belts"
+        );
+        assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_conveyor_collision_with_same_tick_mover_does_not_bump_damage() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_BeltRandom".to_string();
+        board.tile_mut(2, 2).conveyor_dir = 1;
+        board.tile_mut(4, 2).conveyor_dir = 3;
+        add_mech_unit(&mut board, 0, 2, 2, 3);
+        let bouncer_idx = add_enemy_with_type(&mut board, 9, 4, 2, 1, "Bouncer1", 4, 1);
+
+        let mut result = ActionResult::default();
+        simulate_conveyor_belts(&mut board, &mut result);
+
+        assert_eq!(
+            (board.units[0].x, board.units[0].y),
+            (3, 2),
+            "first belt rider should occupy the shared destination"
+        );
+        assert_eq!(
+            (board.units[bouncer_idx].x, board.units[bouncer_idx].y),
+            (4, 2),
+            "second belt rider should remain in place when the shared tile is occupied"
+        );
+        assert_eq!(
+            board.units[bouncer_idx].hp,
+            1,
+            "blocked same-tick belt collision should not kill the Bouncer"
+        );
     }
 
     #[test]
