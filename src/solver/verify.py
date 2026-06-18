@@ -1340,7 +1340,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # from Heat Sinkers Feed the Flame run 20260617_121029_596 showed the extra
 # beyond-endpoint tile was not lit, even when that tile held the queued Vek.
 # Pre-v271 corpus archived as failure_db_snapshot_sim_v270.jsonl.
-SIMULATOR_VERSION = 271
+# v272 - Firestorm Generator destroys Time Pods on fire-line tiles. Live v271
+# evidence from Heat Sinkers run 20260617_164955_853 showed a pod at F4 was
+# destroyed when Firestorm fired from E4 to G4. Pre-v272 corpus archived as
+# failure_db_snapshot_sim_v271.jsonl.
+SIMULATOR_VERSION = 272
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

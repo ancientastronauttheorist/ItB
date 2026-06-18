@@ -3458,12 +3458,13 @@ fn sim_firestorm_generator(
         let px = ax as i8 + dx * i;
         let py = ay as i8 + dy * i;
         if !in_bounds(px, py) { break; }
-        newly_burning += apply_weapon_fire_and_count_new_enemy(
-            board,
-            px as u8,
-            py as u8,
-            wdef,
-        );
+        let x = px as u8;
+        let y = py as u8;
+        newly_burning += apply_weapon_fire_and_count_new_enemy(board, x, y, wdef);
+        if board.tile(x, y).has_pod() && board.tile(x, y).on_fire() {
+            board.tile_mut(x, y).set_has_pod(false);
+            result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
+        }
     }
 
     if matches!(wdef.push, PushDir::Forward) {
@@ -5758,6 +5759,20 @@ mod tests {
         assert!(result.events.iter().any(|e| {
             e.starts_with("achievement_feed_the_flame:new_fire:3:weapon:Science_RainingFire_A")
         }), "missing Feed the Flame event: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_firestorm_generator_destroys_time_pod_on_fire_line() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 4, 3, 2, WId::ScienceRainingFireA);
+        board.tile_mut(4, 2).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::ScienceRainingFireA, 4, 1);
+
+        assert!(board.tile(4, 2).on_fire());
+        assert!(!board.tile(4, 2).has_pod());
+        assert_eq!(result.pods_collected, 0);
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_damage:4:2"));
     }
 
     #[test]
