@@ -3610,6 +3610,24 @@ def _is_harmless_player_hp_gain_diff(diff) -> bool:
     return True
 
 
+def _is_harmless_burrower_missing_drift(diff) -> bool:
+    """Return true for Burrowers that temporarily leave the bridge board."""
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    for ud in unit_diffs:
+        if ud.get("field") != "missing_in_actual":
+            return False
+        utype = str(ud.get("type") or "")
+        if not utype.startswith("Burrower"):
+            return False
+        if ud.get("predicted") != "present" or ud.get("actual") != "absent":
+            return False
+    return True
+
+
 def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
     """Return true for the harmless active-flag drift after a no-attack skip."""
     return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
@@ -27501,6 +27519,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         print("  MOVE VERIFIED: PASS (prior active-state drift ignored)")
                     elif _is_harmless_player_hp_gain_diff(diff):
                         print("  MOVE VERIFIED: PASS (player HP gain drift ignored)")
+                    elif _is_harmless_burrower_missing_drift(diff):
+                        print("  MOVE VERIFIED: PASS "
+                              "(Burrower missing-after-damage drift ignored)")
                     else:
                         classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
                         fuzzy_signal = fuzzy_detector.evaluate(
@@ -27765,6 +27786,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 elif _is_harmless_player_hp_gain_diff(diff):
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(player HP gain drift ignored)")
+                elif _is_harmless_burrower_missing_drift(diff):
+                    print(f"  {final_phase.upper()} VERIFIED: PASS "
+                          "(Burrower missing-after-damage drift ignored)")
                 else:
                     classification = classify_diff(diff, mech_uid=mech_uid,
                                                    phase=final_phase)
