@@ -1680,11 +1680,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     // uid-independent detection — works regardless of which tile took the
     // fatal hit. Idempotent via dam_alive gate.
     if board.dam_alive {
-        let dam_dead = (0..board.unit_count as usize).all(|i| {
-            let u = &board.units[i];
-            u.type_name_str() != "Dam_Pawn" || u.hp <= 0
-        });
-        if dam_dead {
+        if dam_dead(board) {
             trigger_dam_flood(board, result);
             board.dam_alive = false;
         }
@@ -1725,7 +1721,12 @@ pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     if x >= 8 || y >= 8 { return; }
     let t = board.tile(x, y);
     if t.terrain == Terrain::Water {
-        board.tile_mut(x, y).set_on_fire(false);
+        let tile = board.tile_mut(x, y);
+        tile.set_on_fire(false);
+        if tile.has_pod() {
+            tile.set_has_pod(false);
+            result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
+        }
         return;
     }
     if matches!(t.terrain, Terrain::Mountain | Terrain::Building) { return; }
@@ -1734,6 +1735,10 @@ pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     tile.terrain = Terrain::Water;
     tile.set_cracked(false);
     tile.set_on_fire(false);
+    if tile.has_pod() {
+        tile.set_has_pod(false);
+        result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
+    }
 
     if let Some(idx) = board.unit_at(x, y) {
         let drowns = {
@@ -1750,6 +1755,13 @@ fn flood_ice_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     if board.tile(x, y).terrain == Terrain::Ice {
         flood_tile(board, x, y, result);
     }
+}
+
+fn dam_dead(board: &Board) -> bool {
+    (0..board.unit_count as usize).all(|i| {
+        let u = &board.units[i];
+        u.type_name_str() != "Dam_Pawn" || u.hp <= 0
+    })
 }
 
 /// Trigger the Dam_Pawn death flood. Fires exactly once when the dam
@@ -3384,6 +3396,13 @@ fn sim_thermal_discharger(
     let (dx, dy) = DIRS[dir];
     let mut newly_burning = 0;
     let mut side_pushes: Vec<(u8, u8, usize)> = Vec::with_capacity((distance as usize) * 2);
+    let dam_was_alive = board.dam_alive;
+    if dam_was_alive {
+        // Thermal Discharger queues perpendicular pushes and applies them
+        // after line damage. Mission_Dam resolves its flood after those pushes,
+        // not at the instant the dam pawn takes lethal damage.
+        board.dam_alive = false;
+    }
 
     for i in 1..=(distance as i8) {
         let px = ax as i8 + dx * i;
@@ -3429,6 +3448,14 @@ fn sim_thermal_discharger(
 
     for (sx, sy, push_dir) in side_pushes {
         apply_push(board, sx, sy, push_dir, result);
+    }
+
+    if dam_was_alive {
+        if dam_dead(board) {
+            trigger_dam_flood(board, result);
+        } else {
+            board.dam_alive = true;
+        }
     }
 
     record_feed_the_flame_event(result, newly_burning, weapon_id, tx, ty);
@@ -5739,6 +5766,35 @@ mod tests {
         })
     }
 
+    fn add_dam(board: &mut Board, uid: u16, primary: (u8, u8), extra: (u8, u8), hp: i8) {
+        let primary_idx = board.add_unit(Unit {
+            uid,
+            x: primary.0,
+            y: primary.1,
+            hp,
+            max_hp: hp,
+            team: Team::Neutral,
+            ..Default::default()
+        });
+        board.units[primary_idx].set_type_name("Dam_Pawn");
+
+        let extra_idx = board.add_unit(Unit {
+            uid,
+            x: extra.0,
+            y: extra.1,
+            hp,
+            max_hp: hp,
+            team: Team::Neutral,
+            flags: UnitFlags::EXTRA_TILE,
+            ..Default::default()
+        });
+        board.units[extra_idx].set_type_name("Dam_Pawn");
+
+        board.mission_id = "Mission_Dam".to_string();
+        board.dam_alive = true;
+        board.dam_primary = Some(primary);
+    }
+
     #[test]
     fn test_firestorm_generator_lights_three_fresh_enemies_and_pushes_target() {
         let mut board = make_test_board();
@@ -5865,6 +5921,28 @@ mod tests {
         assert!(result.events.iter().any(|e| {
             e.starts_with("achievement_feed_the_flame:new_fire:3:weapon:Prime_Flamespreader_AB")
         }), "missing Feed the Flame event: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_thermal_discharger_side_pushes_before_dam_flood_and_flood_destroys_pod() {
+        let mut board = make_test_board();
+        add_dam(&mut board, 900, (4, 0), (5, 0), 1);
+        let mech = add_mech(&mut board, 0, 4, 2, 3, WId::PrimeFlamespreader);
+        let bouncer = add_enemy_type(&mut board, 1301, 5, 1, 3, "Bouncer1");
+        board.tile_mut(5, 2).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeFlamespreader, 4, 0);
+
+        assert!(!board.dam_alive, "dam should be destroyed");
+        assert_eq!(
+            (board.units[bouncer].x, board.units[bouncer].y),
+            (6, 1),
+            "Thermal side-push should move Bouncer out of the flood strip before flood"
+        );
+        assert_eq!(board.units[bouncer].hp, 3, "Bouncer should survive outside the flood strip");
+        assert_eq!(board.tile(5, 2).terrain, Terrain::Water);
+        assert!(!board.tile(5, 2).has_pod(), "dam flood should destroy pod on flooded tile");
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_damage:5:2"));
     }
 
     #[test]

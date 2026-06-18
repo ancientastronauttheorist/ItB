@@ -890,7 +890,7 @@ def validate_agent_response(
             )
             continue
         try:
-            with open(full) as f:
+            with open(full, encoding="utf-8") as f:
                 line_count = sum(1 for _ in f)
         except OSError as e:
             errors.append(f"suspect_files[{i}] read failed: {e}")
@@ -1225,7 +1225,7 @@ def write_markdown(
     )
     body.append("")
 
-    out_path.write_text(frontmatter + "\n".join(body))
+    out_path.write_text(frontmatter + "\n".join(body), encoding="utf-8")
     return out_path
 
 
@@ -1418,7 +1418,7 @@ def write_agent_proposed_markdown(
     )
     body.append("")
 
-    out_path.write_text(frontmatter + "\n".join(body))
+    out_path.write_text(frontmatter + "\n".join(body), encoding="utf-8")
     return out_path
 
 
