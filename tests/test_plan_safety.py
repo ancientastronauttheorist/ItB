@@ -278,6 +278,39 @@ def test_final_turn_objective_target_is_clean_after_safe_enemy_phase_projection(
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
 
 
+def test_final_turn_objective_target_still_blocks_before_post_mission_projection():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Repair",
+            turn=3,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Repair",
+            turn=4,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 106,
+                "type": "Moth1",
+                "pos": [6, 2],
+                "target": [4, 2],
+            }],
+            buildings_destroyed_by_enemies=0,
+            enemies_killed_by_enemy_phase=0,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "objective_building_targeted_final"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
 def test_nonfinal_objective_building_target_is_not_terminal():
     audit = audit_plan_safety(
         _summary(

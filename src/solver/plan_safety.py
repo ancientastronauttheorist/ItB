@@ -181,6 +181,14 @@ def _final_objective_targets_resolved_without_damage(
     if not any(key in predicted for key in projection_keys):
         return False
 
+    pred_turn = _int_or_none(predicted.get("turn"))
+    total_turns = (
+        _int_or_none(predicted.get("total_turns"))
+        or _int_or_none(current.get("total_turns"))
+    )
+    if pred_turn is None or total_turns is None or pred_turn <= total_turns:
+        return False
+
     for key in (
         "grid_power",
         "buildings_alive",
