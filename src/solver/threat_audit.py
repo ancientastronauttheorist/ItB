@@ -194,8 +194,14 @@ def _will_be_frozen_by_environment_before_attack(board: Board, attacker: Unit) -
     return True
 
 
+def _lethal_environment_resolves_after_attacks(board: Board) -> bool:
+    return getattr(board, "mission_id", "") in {"Mission_Tides", "Mission_Satellite"}
+
+
 def _will_die_to_lethal_environment_before_attack(board: Board, attacker: Unit) -> bool:
     """True when enemy-phase lethal environment resolves before this attack."""
+    if _lethal_environment_resolves_after_attacks(board):
+        return False
     pos = (int(attacker.x), int(attacker.y))
     v2 = getattr(board, "environment_danger_v2", {}) or {}
     if pos in v2:

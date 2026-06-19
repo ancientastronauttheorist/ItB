@@ -1861,7 +1861,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Sinkers Feed the Flame run 20260617_222359_646 m06 t01 showed a F4 Bouncer
 //   hit G4 before the belt tick instead of being safely moved/killed.
 //   Pre-v274 corpus archived as failure_db_snapshot_sim_v273.jsonl.
-pub const SIMULATOR_VERSION: u32 = 274;
+// v275 - Mission_Satellite launch danger resolves after queued Vek attacks,
+//   not before them, and threat audit no longer credits launch death as
+//   pre-attack coverage. Live v274 evidence from Heat Sinkers Feed the Flame
+//   run 20260619_004557_388 m06 t02 showed Scarab1 on G3 hit G7 before the
+//   launch removed it. Pre-v275 corpus archived as failure_db_snapshot_sim_v274.jsonl.
+pub const SIMULATOR_VERSION: u32 = 275;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

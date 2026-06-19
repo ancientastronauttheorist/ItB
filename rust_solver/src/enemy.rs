@@ -801,11 +801,14 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    // Environment danger (air strikes, lightning, tidal waves) — fires BEFORE Vek attacks
-    // Exception: Mission_Tides resolves queued attacks first, then advances the
-    // wave, so tide danger is deferred below until after the attack loop.
-    let tide_env_after_attacks = board.mission_id == "Mission_Tides";
-    if board.env_danger != 0 && !tide_env_after_attacks {
+    // Environment danger (air strikes, lightning, etc.) usually fires BEFORE
+    // Vek attacks. Some mission hazards resolve after queued attacks, so those
+    // are deferred below until after the attack loop.
+    let env_after_attacks = matches!(
+        board.mission_id.as_str(),
+        "Mission_Tides" | "Mission_Satellite"
+    );
+    if board.env_danger != 0 && !env_after_attacks {
         apply_env_danger_board(board, &mut result);
     }
 
@@ -1853,7 +1856,7 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    if board.env_danger != 0 && tide_env_after_attacks {
+    if board.env_danger != 0 && env_after_attacks {
         apply_env_danger_board(board, &mut result);
     }
 

@@ -1349,7 +1349,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # from Heat Sinkers Feed the Flame run 20260617_222359_646 showed Bouncer1
 # pushed out of the flood strip and F3 pod destroyed by flooding. Pre-v273
 # corpus archived as failure_db_snapshot_sim_v272.jsonl.
-SIMULATOR_VERSION = 274
+# v274 - Mission_BeltRandom random conveyor event can resolve after queued Vek
+# attacks, and simultaneous conveyor collisions into a unit that already moved
+# this tick do not apply bump damage. Pre-v274 corpus archived as
+# failure_db_snapshot_sim_v273.jsonl.
+# v275 - Mission_Satellite launch danger resolves after queued Vek attacks,
+# not before them, and threat audit no longer credits launch death as
+# pre-attack coverage. Pre-v275 corpus archived as
+# failure_db_snapshot_sim_v274.jsonl.
+SIMULATOR_VERSION = 275
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

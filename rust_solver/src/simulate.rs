@@ -12316,6 +12316,39 @@ mod tests {
     }
 
     #[test]
+    fn test_mission_satellite_vek_attack_before_launch() {
+        // Heat Sinkers Feed the Flame run 20260619_004557_388,
+        // Mission_Satellite turn 2: a Scarab on a satellite launch tile still
+        // fired at G7 before the launch removed it.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Satellite".to_string();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(2, 1).terrain = Terrain::Building;
+        board.tile_mut(2, 1).building_hp = 1;
+        let enemy = add_enemy_type(&mut board, 1090, 5, 1, 2, "Scarab1");
+        board.units[enemy].queued_target_x = 2;
+        board.units[enemy].queued_target_y = 1;
+        board.units[enemy].weapon_damage = 1;
+        board.units[enemy].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let bit = 1u64 << xy_to_idx(5, 1);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+        let mut original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        original_positions[enemy] = (5, 1);
+
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(board.tile(2, 1).building_hp, 0);
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
     fn test_cataclysm_lethal_spares_flying() {
         // Flying enemy on a Cataclysm tile (chasm-conversion): flyer hovers
         // over the new chasm and lives. Mirrors the Tidal Wave path — same
