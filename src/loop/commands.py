@@ -2156,6 +2156,8 @@ def _carry_projected_summary_metadata(
         projected_data["mech_stat_overlays"] = list(
             bridge_data.get("mech_stat_overlays") or []
         )
+    if "is_infinite_spawn" in bridge_data and "is_infinite_spawn" not in projected_data:
+        projected_data["is_infinite_spawn"] = bridge_data.get("is_infinite_spawn")
     raw_units = _bridge_units_by_uid(bridge_data)
     for unit in projected_data.get("units") or []:
         if not isinstance(unit, dict):
@@ -2332,6 +2334,12 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     )
     if not isinstance(total_turns, int):
         total_turns = getattr(board, "total_turns", None)
+    is_infinite_spawn = (
+        bridge_data.get("is_infinite_spawn")
+        if isinstance(bridge_data, dict) else None
+    )
+    if not isinstance(is_infinite_spawn, bool):
+        is_infinite_spawn = None
     is_final_cave = mission_id == "Mission_Final_Cave"
     buildings_alive = 0
     building_hp_total = 0
@@ -2629,6 +2637,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mites_remaining": len(mechs_infected),
         "mites_status_tracked": mite_status_tracked,
         "mission_id": mission_id,
+        "is_infinite_spawn": is_infinite_spawn,
         "mission_kill_target": getattr(board, "mission_kill_target", 0),
         "mission_kill_limit": getattr(board, "mission_kill_limit", 0),
         "mission_kills_done": getattr(board, "mission_kills_done", 0),

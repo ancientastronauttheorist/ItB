@@ -213,6 +213,35 @@ def _final_objective_targets_resolved_without_damage(
     return True
 
 
+def _destroy_objective_final_turn(
+    current: dict[str, Any],
+    predicted: dict[str, Any],
+    default_final_turn: bool,
+) -> bool:
+    if not (
+        current.get("is_infinite_spawn") is True
+        or predicted.get("is_infinite_spawn") is True
+    ):
+        return default_final_turn
+
+    total_turns = (
+        _int_or_none(current.get("total_turns"))
+        or _int_or_none(predicted.get("total_turns"))
+    )
+    if total_turns is None:
+        return default_final_turn
+
+    cur_turn = _int_or_none(current.get("turn"))
+    if cur_turn is not None:
+        return cur_turn >= total_turns
+
+    pred_turn = _int_or_none(predicted.get("turn"))
+    if pred_turn is not None:
+        return pred_turn >= total_turns
+
+    return default_final_turn
+
+
 def _violation(kind: str, current: Any, predicted: Any,
                message: str, details: Any | None = None,
                *, blocking: bool | None = None) -> dict[str, Any]:
@@ -709,7 +738,12 @@ def audit_plan_safety(current: dict[str, Any],
     pred_destroy = _int_or_none(predicted.get("destroy_objective_units_alive"))
     if cur_destroy is not None and pred_destroy is not None:
         compared.append("destroy_objective_units_alive")
-        if final_turn and pred_destroy > 0:
+        destroy_final_turn = _destroy_objective_final_turn(
+            current,
+            predicted,
+            final_turn,
+        )
+        if destroy_final_turn and pred_destroy > 0:
             violations.append(_violation(
                 "destroy_objective_unit_alive_final",
                 cur_destroy,
@@ -792,6 +826,7 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": cur_turn,
             "total_turns": cur_total_turns,
+            "is_infinite_spawn": current.get("is_infinite_spawn"),
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
             "building_hp_total": cur_hp,
@@ -834,6 +869,7 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": pred_turn,
             "total_turns": pred_total_turns,
+            "is_infinite_spawn": predicted.get("is_infinite_spawn"),
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,
             "building_hp_total": pred_hp,

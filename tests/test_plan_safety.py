@@ -567,6 +567,59 @@ def test_final_turn_destroy_objective_unit_alive_blocks():
     assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
 
 
+def test_penultimate_infinite_spawn_destroy_objective_unit_alive_does_not_block():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=3,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert not any(
+        v["kind"] == "destroy_objective_unit_alive_final"
+        for v in audit["violations"]
+    )
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_final_infinite_spawn_destroy_objective_unit_alive_blocks():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
 def test_freezebots_protected_unit_unfreeze_blocks_plan():
     audit = audit_plan_safety(
         _summary(
