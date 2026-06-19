@@ -3798,6 +3798,10 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         # (new spawns inflate actual count — that's expected, not a solver failure)
         "enemies_alive_diff": actual["enemies_alive"] - predicted["enemies_alive"],
     }
+    if "pods_present" in predicted and "pods_present" in actual:
+        deltas["pods_present_diff"] = (
+            actual["pods_present"] - predicted["pods_present"]
+        )
     if (
         "protected_objective_units_alive" in predicted
         and "protected_objective_units_alive" in actual
@@ -3918,6 +3922,9 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     if deltas.get("protected_objective_units_frozen_diff", 0) < 0:
         unexpected.append(
             "Protected objective unit(s) unexpectedly unfroze")
+    if deltas.get("pods_present_diff", 0) < 0:
+        unexpected.append(
+            f"Lost {-deltas['pods_present_diff']} unexpected pod(s)")
     for md in mech_deltas:
         if md["diff"] < 0:
             unexpected.append(
@@ -3994,6 +4001,7 @@ def _post_enemy_needs_investigation(
             "grid_power_diff",
             "buildings_alive_diff",
             "building_hp_diff",
+            "pods_present_diff",
             "protected_objective_units_alive_diff",
             "protected_objective_units_frozen_diff",
         )
