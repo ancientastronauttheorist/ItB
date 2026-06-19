@@ -9371,6 +9371,32 @@ def test_lightning_segment_continues_panel_clear_to_route_ready(monkeypatch):
     assert result["pause_guard"]["status"] == "OK"
 
 
+def test_lightning_segment_stops_on_terminal_mission_end(monkeypatch):
+    calls = []
+
+    def fake_attempt(**kwargs):
+        calls.append(kwargs)
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "combat_loop_returned",
+            "action": {
+                "action": "combat_loop",
+                "combat_loop": {"reason": "terminal_or_mission_end"},
+            },
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+
+    result = commands.cmd_lightning_segment(pause_on_stop=False)
+
+    assert result["reason"] == "terminal_or_mission_end"
+    assert result["steps_attempted"] == 1
+    assert result["last_attempt"]["action"]["combat_loop"]["reason"] == (
+        "terminal_or_mission_end"
+    )
+    assert len(calls) == 1
+
+
 def test_lightning_segment_dirty_consent_survives_panel_clear_until_combat(monkeypatch):
     attempts = iter(
         [
@@ -11646,7 +11672,7 @@ def test_lightning_speed_loss_policy_rejects_timeline_collapse():
     assert commands._allow_lightning_war_speed_loss(session, plan_safety) is False
 
 
-def test_lightning_speed_loss_policy_allows_mech_loss():
+def test_lightning_speed_loss_policy_rejects_mech_loss():
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
@@ -11663,13 +11689,10 @@ def test_lightning_speed_loss_policy_allows_mech_loss():
         "predicted": {"grid_power": 2, "mechs_alive": 2},
     }
 
-    assert commands._allow_lightning_war_speed_loss(session, plan_safety) is True
-    summary = commands._lightning_speed_loss_summary(plan_safety)
-    assert summary["losses"]["grid_power"] == 1
-    assert summary["losses"]["mechs_alive"] == 1
+    assert commands._allow_lightning_war_speed_loss(session, plan_safety) is False
 
 
-def test_lightning_speed_loss_policy_allows_nonlethal_mech_hp_loss():
+def test_lightning_speed_loss_policy_rejects_nonlethal_mech_hp_loss():
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
@@ -11685,7 +11708,7 @@ def test_lightning_speed_loss_policy_allows_nonlethal_mech_hp_loss():
         "predicted": {"mechs_alive": 3, "mech_hp_total": 7},
     }
 
-    assert commands._allow_lightning_war_speed_loss(session, plan_safety) is True
+    assert commands._allow_lightning_war_speed_loss(session, plan_safety) is False
 
 
 def test_lightning_speed_policy_satisfies_threat_audit_without_dirty_consent():

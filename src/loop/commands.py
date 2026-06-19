@@ -712,8 +712,6 @@ _LIGHTNING_SPEED_LOSS_KINDS = (
         "grid_damage",
         "building_destroyed",
         "building_hp_loss",
-        "mech_lost",
-        "mech_hp_loss",
     }
     | OBJECTIVE_LOSS_DIRTY_KINDS
     | POD_LOSS_DIRTY_KINDS
@@ -21910,6 +21908,8 @@ def _lightning_segment_should_continue(result: dict) -> bool:
 def _lightning_segment_success_reason(result: dict) -> str | None:
     status = result.get("status")
     reason = result.get("reason")
+    if _lightning_attempt_loop_reason(result) == "terminal_or_mission_end":
+        return "terminal_or_mission_end"
     if status == "LIGHTNING_ATTEMPT_ROUTE_READY":
         return "route_ready"
     if (
