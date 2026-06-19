@@ -153,6 +153,8 @@ LOSS_KINDS = {
     "kill_limit_objective_failed": "mission_kills_done",
 }
 
+_UNKNOWN_REMAINING_SPAWNS = 2**31 - 1
+
 
 def _int_or_none(value: Any) -> int | None:
     if isinstance(value, bool):
@@ -223,6 +225,14 @@ def _infinite_spawn_objective_final_turn(
         or predicted.get("is_infinite_spawn") is True
     ):
         return default_final_turn
+
+    for source in (current, predicted):
+        remaining_spawns = _int_or_none(source.get("remaining_spawns"))
+        if (
+            remaining_spawns is not None
+            and remaining_spawns < _UNKNOWN_REMAINING_SPAWNS
+        ):
+            return remaining_spawns <= 0
 
     total_turns = (
         _int_or_none(current.get("total_turns"))
@@ -843,6 +853,7 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": cur_turn,
             "total_turns": cur_total_turns,
+            "remaining_spawns": _int_or_none(current.get("remaining_spawns")),
             "is_infinite_spawn": current.get("is_infinite_spawn"),
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
@@ -886,6 +897,7 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": pred_turn,
             "total_turns": pred_total_turns,
+            "remaining_spawns": _int_or_none(predicted.get("remaining_spawns")),
             "is_infinite_spawn": predicted.get("is_infinite_spawn"),
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,

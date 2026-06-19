@@ -35,6 +35,22 @@ def _bridge_with_mech(*, flying=False, danger=None):
     }
 
 
+def test_summary_carries_bridge_remaining_spawns_signal():
+    data = _bridge_with_mech()
+    data.update({
+        "mission_id": "Mission_BurnbugBoss",
+        "turn": 4,
+        "total_turns": 4,
+        "remaining_spawns": 1,
+        "is_infinite_spawn": True,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["remaining_spawns"] == 1
+
+
 def test_summary_flags_mech_on_lethal_environment_danger():
     data = _bridge_with_mech(danger=[[2, 5, 1, 1, 0]])
     board = Board.from_bridge_data(data)

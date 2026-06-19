@@ -2334,6 +2334,12 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     )
     if not isinstance(total_turns, int):
         total_turns = getattr(board, "total_turns", None)
+    remaining_spawns = (
+        bridge_data.get("remaining_spawns")
+        if isinstance(bridge_data, dict) else None
+    )
+    if isinstance(remaining_spawns, bool) or not isinstance(remaining_spawns, int):
+        remaining_spawns = None
     is_infinite_spawn = (
         bridge_data.get("is_infinite_spawn")
         if isinstance(bridge_data, dict) else None
@@ -2658,6 +2664,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         ),
         "turn": turn if isinstance(turn, int) else None,
         "total_turns": total_turns if isinstance(total_turns, int) else None,
+        "remaining_spawns": remaining_spawns,
         "destroy_objective_units": destroy_objective_units,
         "destroy_objective_units_alive": sum(
             1 for u in destroy_objective_units if u["alive"]

@@ -687,6 +687,63 @@ def test_final_infinite_spawn_destroy_objective_unit_alive_blocks():
     assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
 
 
+def test_infinite_spawn_remaining_spawn_signal_overrides_synthetic_final_turn():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=1,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=5,
+            total_turns=4,
+            remaining_spawns=1,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert not any(
+        v["kind"] == "destroy_objective_unit_alive_final"
+        for v in audit["violations"]
+    )
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_infinite_spawn_zero_remaining_spawns_still_blocks_destroy_objective_unit():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=5,
+            total_turns=4,
+            remaining_spawns=0,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
 def test_freezebots_protected_unit_unfreeze_blocks_plan():
     audit = audit_plan_safety(
         _summary(
