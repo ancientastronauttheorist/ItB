@@ -51,8 +51,9 @@ def _load_mission_metadata() -> dict:
 
 
 def _is_infinite_spawn_mission(mission_id: str) -> bool:
-    """Return True iff `mission_id` has `infinite_spawn: true` (or is a
-    boss mission with turn_limit=null) per data/mission_metadata.json.
+    """Return True iff `mission_id` has `infinite_spawn: true`, is a
+    boss mission with turn_limit=null per data/mission_metadata.json, or
+    is a missing-metadata Boss mission id.
 
     Boss missions and Mission_Infinite subclasses have no fixed turn
     limit; the bridge reports total_turns = current_turn so the solver
@@ -63,7 +64,7 @@ def _is_infinite_spawn_mission(mission_id: str) -> bool:
     md = _load_mission_metadata()
     rec = md.get(mission_id)
     if not isinstance(rec, dict):
-        return False
+        return mission_id.endswith("Boss")
     if rec.get("infinite_spawn"):
         return True
     # Boss missions also have turn_limit=null and grind for many turns.
