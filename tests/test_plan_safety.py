@@ -687,7 +687,7 @@ def test_final_infinite_spawn_destroy_objective_unit_alive_blocks():
     assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
 
 
-def test_infinite_spawn_remaining_spawn_signal_overrides_synthetic_final_turn():
+def test_infinite_spawn_remaining_spawn_signal_does_not_relax_hq_objective_gate():
     audit = audit_plan_safety(
         _summary(
             mission_id="Mission_BurnbugBoss",
@@ -709,12 +709,9 @@ def test_infinite_spawn_remaining_spawn_signal_overrides_synthetic_final_turn():
         ),
     )
 
-    assert audit["status"] == "CLEAN"
-    assert not any(
-        v["kind"] == "destroy_objective_unit_alive_final"
-        for v in audit["violations"]
-    )
-    assert plan_requires_safety_block(audit) is False
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
 
 
 def test_infinite_spawn_zero_remaining_spawns_still_blocks_destroy_objective_unit():
