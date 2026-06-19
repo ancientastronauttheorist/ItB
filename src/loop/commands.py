@@ -7182,6 +7182,7 @@ def _lightning_bridge_island_map_pause_peek(
     panel_clear = None
     read_error = None
     pause_verify = None
+    pause_timer_probe = None
     pause_ok = False
     try:
         time.sleep(max(0.0, float(settle_seconds)))
@@ -7231,12 +7232,16 @@ def _lightning_bridge_island_map_pause_peek(
                     and pause_verify.get("status") == "OK"
                     and pause_verify.get("visible_ui") == "pause_menu"
                 )
+                if not pause_ok and pause.get("status") == "OK":
+                    pause_timer_probe = _lightning_read_visible_pause_timer()
+                    pause_ok = pause_timer_probe.get("status") == "OK"
                 steps.append(
                     {
                         "phase": "pause",
                         "attempt": attempt + 1,
                         "click": pause,
                         "pause_verify": pause_verify,
+                        "pause_timer_probe": pause_timer_probe,
                     }
                 )
                 if pause_ok:
@@ -7262,6 +7267,7 @@ def _lightning_bridge_island_map_pause_peek(
             "map_screenshot": map_screenshot,
             "pause_verified": False,
             "pause_verify": pause_verify,
+            "pause_timer_probe": pause_timer_probe,
             "bridge_data": bridge_data,
         }
     if not bridge_data:
@@ -7287,6 +7293,7 @@ def _lightning_bridge_island_map_pause_peek(
         "map_screenshot": map_screenshot,
         "pause_verified": pause_ok,
         "pause_verify": pause_verify,
+        "pause_timer_probe": pause_timer_probe,
         "bridge_data": bridge_data,
     }
 
@@ -8249,6 +8256,13 @@ _LIGHTNING_VISIBLE_PREVIEW_MISSION_PATTERNS: tuple[tuple[str, tuple[str, ...]], 
         (
             "tidal waves",
             "tidal wave",
+        ),
+    ),
+    (
+        "Mission_Force",
+        (
+            "defensive shields active",
+            "block vek spawning",
         ),
     ),
     (
@@ -10812,6 +10826,13 @@ _LIGHTNING_TERMINAL_OCR_AUDIT_UIS = (
         "kia_panel",
     }
 )
+_LIGHTNING_PAUSE_MENU_OCR_PHRASES = {
+    "timelineplaytime": "Timeline Playtime",
+    "abandontimeline": "ABANDON TIMELINE",
+    "saveandquit": "SAVE and QUIT",
+    "savequit": "SAVE QUIT",
+    "mainmenu": "MAIN MENU",
+}
 _LIGHTNING_TERMINAL_UIS = {
     "kia_panel",
 }
@@ -11018,6 +11039,45 @@ def _lightning_visible_ui_text_parts(visible_ui: dict | None) -> list[str]:
             if isinstance(value, list):
                 text_parts.extend(str(item) for item in value if str(item).strip())
     return text_parts
+
+
+def _lightning_pause_menu_ocr_match(visible_ui: dict | None) -> str | None:
+    text_parts = _lightning_visible_ui_text_parts(visible_ui)
+    if not text_parts:
+        return None
+    text = "\n".join(text_parts).lower()
+    normalized = re.sub(r"[^a-z0-9]+", " ", text).strip()
+    compact = re.sub(r"[^a-z0-9]+", "", text)
+    if not compact:
+        return None
+    for phrase, label in _LIGHTNING_PAUSE_MENU_OCR_PHRASES.items():
+        if phrase in compact:
+            return label
+    tokens = set(normalized.split())
+    if "menu" in tokens and "continue" in tokens:
+        return "MENU + CONTINUE"
+    return None
+
+
+def _lightning_apply_pause_menu_ocr_override(visible_ui: dict) -> dict:
+    """Prefer explicit pause-menu OCR over color/button false positives."""
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return visible_ui
+    matched = _lightning_pause_menu_ocr_match(visible_ui)
+    if matched is None:
+        return visible_ui
+    original_visible = visible_ui.get("visible_ui")
+    result = dict(visible_ui)
+    result["visible_ui"] = "pause_menu"
+    result["recommended_control"] = _LIGHTNING_UI_BUTTON_CROPS["pause_menu"]["control"]
+    result["pause_ocr_match"] = matched
+    if original_visible != "pause_menu":
+        result["pause_ocr_override"] = {
+            "from_visible_ui": original_visible,
+            "from_recommended_control": visible_ui.get("recommended_control"),
+            "matched": matched,
+        }
+    return result
 
 
 def _lightning_visible_ui_has_intro_continue_text(
@@ -12340,10 +12400,14 @@ def _lightning_refine_visible_ui_with_bridge(visible_ui: dict) -> dict:
 
 
 def _lightning_attach_visible_ocr(result: dict, image_path: str | Path) -> dict:
-    """Attach OCR text for visible panels where terminal outcomes can hide."""
+    """Attach OCR text for visible panels where outcomes or pause text can hide."""
     if result.get("status") != "OK":
         return result
-    if result.get("visible_ui") not in _LIGHTNING_TERMINAL_OCR_AUDIT_UIS:
+    visible_name = result.get("visible_ui")
+    if (
+        visible_name not in _LIGHTNING_TERMINAL_OCR_AUDIT_UIS
+        and visible_name != "pause_menu"
+    ):
         return result
     ocr = _lightning_ocr_texts_from_image(image_path)
     result["ocr"] = ocr
@@ -12353,17 +12417,20 @@ def _lightning_attach_visible_ocr(result: dict, image_path: str | Path) -> dict:
     result["ocr_texts"] = texts
     if texts:
         result["visible_text"] = "\n".join(texts)
-    return result
+    return _lightning_apply_pause_menu_ocr_override(result)
 
 
 def _lightning_audit_visible_ui_for_terminal_text(visible_ui: dict) -> dict:
     """Attach OCR to terminal-prone panels when a screenshot is available."""
     if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
         return visible_ui
+    visible_ui = _lightning_apply_pause_menu_ocr_override(visible_ui)
+    if visible_ui.get("visible_ui") == "pause_menu":
+        return visible_ui
     if visible_ui.get("visible_ui") not in _LIGHTNING_TERMINAL_OCR_AUDIT_UIS:
         return visible_ui
     if any(key in visible_ui for key in ("ocr", "ocr_text", "ocr_texts", "visible_text")):
-        return visible_ui
+        return _lightning_apply_pause_menu_ocr_override(visible_ui)
     screenshot_path = visible_ui.get("screenshot_path")
     if not screenshot_path:
         return visible_ui
@@ -12785,6 +12852,8 @@ def _lightning_visible_ui_snapshot(*, include_ocr: bool = False) -> dict:
     result = _lightning_refine_visible_ui_with_bridge(result)
     if include_ocr:
         result = _lightning_attach_visible_ocr(result, tmp_path)
+    else:
+        result = _lightning_apply_pause_menu_ocr_override(result)
     result["screenshot_path"] = str(tmp_path)
     return result
 
@@ -13381,7 +13450,9 @@ def _lightning_ensure_pause_state(
 ) -> dict:
     """Conservatively move the run into the pause menu when no panel is open."""
     session = _load_session()
-    visible_ui = _lightning_visible_ui_snapshot()
+    visible_ui = _lightning_audit_visible_ui_for_terminal_text(
+        _lightning_visible_ui_snapshot()
+    )
     status = visible_ui.get("status")
     visible_name = visible_ui.get("visible_ui")
     recommended = visible_ui.get("recommended_control")
@@ -13508,7 +13579,7 @@ def _lightning_ensure_pause_state(
             "click_result": click_result,
         }
         if click_result.get("status") == "OK":
-            pause_verify = _lightning_visible_ui_snapshot()
+            pause_verify = _lightning_visible_ui_snapshot(include_ocr=True)
             pause_attempt["pause_verify"] = pause_verify
             pause_verified = (
                 pause_verify.get("status") == "OK"
@@ -13855,7 +13926,7 @@ def _lightning_timer_pause_guard_once(
             "click_result": click_result,
         }
         if click_result.get("status") == "OK":
-            pause_verify = _lightning_visible_ui_snapshot()
+            pause_verify = _lightning_visible_ui_snapshot(include_ocr=True)
             pause_attempt["pause_verify"] = pause_verify
             pause_verified = (
                 pause_verify.get("status") == "OK"
@@ -16608,6 +16679,35 @@ def _lightning_route_start_sequence_parts(
                 }
             )
     elif normalized_start_mode in {
+        "region_repeat_preview_board",
+        "repeat_region_preview_board",
+        "region_repeat_preview_board_twice",
+        "repeat_region_preview_board_twice",
+    }:
+        if dismiss_dialogue:
+            preview_sequence.extend(_lightning_dialogue_dismiss_control_steps())
+        commit_sequence.append(
+            {
+                "kind": "point",
+                "window_x": int(region_window_x),
+                "window_y": int(region_window_y),
+                "description": "Lightning route repeat region before board start",
+                "settle_seconds": float(region_settle_seconds),
+                "hold_seconds": 0.06,
+                "source": "region_repeat_preview_board",
+            }
+        )
+        board_clicks = 2 if normalized_start_mode.endswith("_twice") else 1
+        for index in range(board_clicks):
+            commit_sequence.append(
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                    "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
+                    "hold_seconds": 0.06,
+                }
+            )
+    elif normalized_start_mode in {
         "hover_enter",
         "hover_confirm",
         "hover_enter_twice",
@@ -16714,6 +16814,8 @@ def _lightning_route_start_sequence_parts(
                 "visible-text",
                 "region-repeat",
                 "region-double",
+                "region-repeat-preview-board",
+                "region-repeat-preview-board-twice",
                 "hover-enter-twice",
                 "hover-space-enter",
                 "preview-only",
@@ -16749,6 +16851,102 @@ def _lightning_route_start_mode_can_reselect_existing_preview(
         "advisor_region_repeat_preview_board_twice",
         "dialogue_repeat_preview_board",
         "dialogue_repeat_preview_board_twice",
+    }
+
+
+def _lightning_route_start_mode_can_commit_existing_preview(
+    start_mode: str | None,
+    *,
+    start_window_x: int | None = None,
+    start_window_y: int | None = None,
+) -> bool:
+    """Return true when an already-open preview can be committed directly."""
+    if start_window_x is not None or start_window_y is not None:
+        return start_window_x is not None and start_window_y is not None
+    return _lightning_normalized_route_start_mode(start_mode) in {
+        "preview_board",
+        "board",
+        "mission_preview_board",
+        "preview_board_twice",
+        "board_twice",
+        "mission_preview_board_twice",
+        "visible_text",
+        "text",
+        "yellow_text",
+    }
+
+
+def _lightning_existing_preview_sequence_parts(
+    *,
+    start_mode: str,
+    dismiss_dialogue: bool = False,
+    start_window_x: int | None = None,
+    start_window_y: int | None = None,
+) -> dict:
+    """Build a commit-only sequence for an already visible mission preview."""
+    commit_sequence: list[dict] = []
+    if dismiss_dialogue:
+        commit_sequence.extend(_lightning_dialogue_dismiss_control_steps())
+
+    normalized_start_mode = (
+        "manual_point"
+        if start_window_x is not None and start_window_y is not None
+        else _lightning_normalized_route_start_mode(start_mode)
+    )
+    if start_window_x is not None and start_window_y is not None:
+        commit_sequence.append(
+            {
+                "kind": "point",
+                "window_x": int(start_window_x),
+                "window_y": int(start_window_y),
+                "description": "Lightning existing preview manual start",
+                "settle_seconds": 0.8,
+                "hold_seconds": 0.06,
+            }
+        )
+    elif normalized_start_mode in {
+        "preview_board",
+        "board",
+        "mission_preview_board",
+        "preview_board_twice",
+        "board_twice",
+        "mission_preview_board_twice",
+    }:
+        board_clicks = 2 if normalized_start_mode.endswith("_twice") else 1
+        for index in range(board_clicks):
+            commit_sequence.append(
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                    "settle_seconds": 0.8 if index == board_clicks - 1 else 0.25,
+                    "hold_seconds": 0.06,
+                }
+            )
+    elif normalized_start_mode in {"visible_text", "text", "yellow_text"}:
+        commit_sequence.append(
+            {
+                "kind": "start_visible",
+                "dismiss_dialogue": False,
+            }
+        )
+    else:
+        return {
+            "status": "ERROR",
+            "reason": "existing_preview_start_mode_requires_region",
+            "start_mode": start_mode,
+            "known_existing_preview_start_modes": [
+                "preview-board",
+                "preview-board-twice",
+                "visible-text",
+                "manual point via --start-window-x/--start-window-y",
+            ],
+        }
+
+    return {
+        "status": "OK",
+        "sequence": list(commit_sequence),
+        "preview_sequence": [],
+        "commit_sequence": commit_sequence,
     }
 
 
@@ -16956,6 +17154,7 @@ def _lightning_execute_guarded_route_preview_sequence(
     sequence: list[dict],
     *,
     require_plain_map: bool,
+    allow_existing_preview: bool = False,
     dry_run: bool = False,
 ) -> dict:
     """Execute a route-preview click only after verifying the unpaused map."""
@@ -17026,6 +17225,15 @@ def _lightning_execute_guarded_route_preview_sequence(
                         ),
                     }
             if visible_name == "mission_preview_panel":
+                if allow_existing_preview:
+                    return {
+                        "status": "OK",
+                        "reason": "existing_mission_preview_accepted",
+                        "resume_click": resume_click,
+                        "visible_ui": visible_ui,
+                        "live_snapshot": live_snapshot,
+                        "steps": list(resume_click.get("steps") or []),
+                    }
                 return _lightning_guarded_route_preview_block(
                     reason=(
                         "route_preview_existing_mission_preview_before_region_click"
@@ -17379,6 +17587,28 @@ def _lightning_committed_preview_after_click(
                 "lightning_segment."
             ),
         }
+    if (
+        expected_mission != "auto_start_safe_preview"
+        and actual_mission
+        and actual_mission == expected_mission
+        and not auto_route_block_reason
+    ):
+        return {
+            "status": "OK",
+            "reason": "route_preview_committed_expected_mission_before_start",
+            "expected_route_mission_id": expected_mission,
+            "actual_started_mission_id": actual_mission,
+            "actual_preview_mission_id": actual_mission
+            or actual_preview_mission
+            or None,
+            "auto_route_block_reason": None,
+            "post_preview_snapshot": snapshot,
+            "next_step": (
+                "The preview click reached turn-zero deployment for the "
+                "expected route mission. Continue with deployment through "
+                "lightning_segment."
+            ),
+        }
     session = _load_session()
     mismatch_block = _lightning_write_route_mismatch_block(
         session,
@@ -17588,6 +17818,10 @@ def cmd_lightning_route_start(
         and region_window_x is not None
         and region_window_y is not None
     )
+    manual_visible_region_start = (
+        manual_coordinate_start
+        or visual_region_index is not None
+    )
     if visual_region_index is not None and (
         region_window_x is not None or region_window_y is not None
     ):
@@ -17622,12 +17856,31 @@ def cmd_lightning_route_start(
             return result
 
     visible_pause_timer_proof = _lightning_preflight_has_visible_pause_timer(preflight)
+    visible_pause_timer_probe = None
     auto_pause = None
     initial_ui = _lightning_visible_ui_snapshot()
+    initial_existing_preview_authorized = (
+        initial_ui.get("status") == "OK"
+        and initial_ui.get("visible_ui") == "mission_preview_panel"
+        and include_start_click
+        and (
+            bool(str(expected_route_mission_id or "").strip())
+            or allow_unverified_preview_start
+        )
+    )
+    if (
+        initial_ui.get("status") == "OK"
+        and initial_ui.get("visible_ui")
+        not in {"pause_menu", "island_map", "deployment_screen"}
+        and not visible_pause_timer_proof
+    ):
+        visible_pause_timer_probe = _lightning_read_visible_pause_timer()
+        visible_pause_timer_proof = visible_pause_timer_probe.get("status") == "OK"
     if (
         initial_ui.get("status") == "OK"
         and initial_ui.get("visible_ui") != "pause_menu"
         and not visible_pause_timer_proof
+        and not initial_existing_preview_authorized
         and auto_pause_if_needed
     ):
         auto_pause = _lightning_ensure_pause_state(
@@ -17644,15 +17897,25 @@ def cmd_lightning_route_start(
             "visible_ui": "pause_menu",
             "classifier_visible_ui": initial_ui.get("visible_ui"),
             "pause_proof": "visible_pause_menu_timer",
+            "visible_pause_timer_probe": visible_pause_timer_probe,
         }
     can_start_from_live_map = (
         not auto_pause_if_needed
         and initial_ui.get("status") == "OK"
         and initial_visible_name == "island_map"
     )
+    can_start_from_existing_preview = (
+        initial_existing_preview_authorized
+        and initial_ui.get("status") == "OK"
+        and initial_visible_name == "mission_preview_panel"
+    )
     if (
         initial_ui.get("status") != "OK"
-        or (initial_visible_name != "pause_menu" and not can_start_from_live_map)
+        or (
+            initial_visible_name != "pause_menu"
+            and not can_start_from_live_map
+            and not can_start_from_existing_preview
+        )
     ):
         result = {
             "status": "BLOCKED",
@@ -17660,6 +17923,7 @@ def cmd_lightning_route_start(
             "initial_ui": initial_ui,
             "auto_pause": auto_pause,
             "visible_pause_timer_proof": visible_pause_timer_proof,
+            "visible_pause_timer_probe": visible_pause_timer_probe,
             "next_step": "Run lightning_ui ensure_pause before route_start.",
         }
         _print_result(result)
@@ -17834,49 +18098,6 @@ def cmd_lightning_route_start(
         region_window_x = selected_visual_region["window_x"]
         region_window_y = selected_visual_region["window_y"]
 
-    if region_window_x is None or region_window_y is None:
-        if visual_regions is None:
-            visual_regions = _lightning_visual_regions_from_recommendation(
-                recommendation,
-            )
-            visual_regions = _lightning_assign_visual_route_options(
-                visual_regions,
-                recommendation,
-            )
-        result = {
-            "status": "ROUTE_READY",
-            "reason": "no_region_point_supplied",
-            "preflight": preflight,
-            "initial_ui": initial_ui,
-            "auto_pause": auto_pause,
-            "recommendation": recommendation,
-            "route_target_hint": route_target_hint,
-            "next_step": (
-                "Pick the visible red region matching the recommendation, "
-                "then rerun lightning_route_start --window-x X --window-y Y."
-            ),
-        }
-        if visual_regions:
-            result["visual_regions"] = visual_regions
-            route_candidates = _lightning_route_start_candidates(
-                visual_regions,
-                target_hint=route_target_hint,
-                recommendation=recommendation,
-            )
-            if route_candidates:
-                result["route_start_candidates"] = route_candidates
-                _lightning_attach_primary_route_candidate(result, route_candidates)
-            if (
-                visual_regions.get("status") == "OK"
-                and visual_regions.get("regions")
-            ):
-                result["next_step"] = (
-                    "Pick the visual red-region candidate matching the top "
-                        "recommendation, then run its candidate command."
-                )
-        _print_result(result)
-        return result
-
     if (
         expected_route_mission_id is None
         and visual_region_index is not None
@@ -17925,6 +18146,66 @@ def cmd_lightning_route_start(
         and _lightning_normalized_route_start_mode(effective_start_mode)
         == "visible_text"
     )
+    existing_preview_start_only = (
+        can_start_from_existing_preview
+        and visual_region_index is None
+        and region_window_x is None
+        and region_window_y is None
+        and validate_preview_mission
+        and not dry_run
+        and _lightning_route_start_mode_can_commit_existing_preview(
+            effective_start_mode,
+            start_window_x=start_window_x,
+            start_window_y=start_window_y,
+        )
+    )
+
+    if region_window_x is None or region_window_y is None:
+        if existing_preview_start_only:
+            pass
+        else:
+            if visual_regions is None:
+                visual_regions = _lightning_visual_regions_from_recommendation(
+                    recommendation,
+                )
+                visual_regions = _lightning_assign_visual_route_options(
+                    visual_regions,
+                    recommendation,
+                )
+            result = {
+                "status": "ROUTE_READY",
+                "reason": "no_region_point_supplied",
+                "preflight": preflight,
+                "initial_ui": initial_ui,
+                "auto_pause": auto_pause,
+                "recommendation": recommendation,
+                "route_target_hint": route_target_hint,
+                "next_step": (
+                    "Pick the visible red region matching the recommendation, "
+                    "then rerun lightning_route_start --window-x X --window-y Y."
+                ),
+            }
+            if visual_regions:
+                result["visual_regions"] = visual_regions
+                route_candidates = _lightning_route_start_candidates(
+                    visual_regions,
+                    target_hint=route_target_hint,
+                    recommendation=recommendation,
+                )
+                if route_candidates:
+                    result["route_start_candidates"] = route_candidates
+                    _lightning_attach_primary_route_candidate(result, route_candidates)
+                if (
+                    visual_regions.get("status") == "OK"
+                    and visual_regions.get("regions")
+                ):
+                    result["next_step"] = (
+                        "Pick the visual red-region candidate matching the top "
+                            "recommendation, then run its candidate command."
+                    )
+            _print_result(result)
+            return result
+
     if include_start_click and validate_preview_mission and not dry_run:
         preview_start_mode = _lightning_safe_probe_start_mode(
             start_mode=effective_start_mode,
@@ -17933,16 +18214,24 @@ def cmd_lightning_route_start(
             start_window_x=start_window_x,
             start_window_y=start_window_y,
         )
-        sequence_parts = _lightning_route_start_sequence_parts(
-            int(region_window_x),
-            int(region_window_y),
-            include_start_click=True,
-            dismiss_dialogue=dismiss_dialogue,
-            start_mode=preview_start_mode,
-            start_window_x=start_window_x,
-            start_window_y=start_window_y,
-            resume_from_pause=(initial_visible_name == "pause_menu"),
-        )
+        if existing_preview_start_only:
+            sequence_parts = _lightning_existing_preview_sequence_parts(
+                start_mode=preview_start_mode,
+                dismiss_dialogue=dismiss_dialogue,
+                start_window_x=start_window_x,
+                start_window_y=start_window_y,
+            )
+        else:
+            sequence_parts = _lightning_route_start_sequence_parts(
+                int(region_window_x),
+                int(region_window_y),
+                include_start_click=True,
+                dismiss_dialogue=dismiss_dialogue,
+                start_mode=preview_start_mode,
+                start_window_x=start_window_x,
+                start_window_y=start_window_y,
+                resume_from_pause=(initial_visible_name == "pause_menu"),
+            )
         if sequence_parts.get("status") != "OK":
             result = {
                 "status": "BLOCKED",
@@ -17965,30 +18254,49 @@ def cmd_lightning_route_start(
             _print_result(result)
             return result
 
-        preview_click = _lightning_execute_guarded_route_preview_sequence(
-            list(sequence_parts.get("preview_sequence") or []),
-            require_plain_map=(
-                (
-                    require_auto_start_safe_preview
-                    and not expected_preview_mission
-                    and start_window_x is None
-                    and start_window_y is None
+        if existing_preview_start_only:
+            preview_click = {
+                "status": "OK",
+                "reason": "existing_mission_preview_accepted",
+                "visible_ui": initial_ui,
+                "steps": [],
+            }
+            active_mission_handoff = None
+        else:
+            preview_click = _lightning_execute_guarded_route_preview_sequence(
+                list(sequence_parts.get("preview_sequence") or []),
+                require_plain_map=(
+                    (
+                        require_auto_start_safe_preview
+                        and not expected_preview_mission
+                        and start_window_x is None
+                        and start_window_y is None
+                    )
+                    or (
+                        visual_region_index is not None
+                        and not expected_preview_mission
+                        and start_window_x is None
+                        and start_window_y is None
+                    )
+                ),
+                allow_existing_preview=(
+                    bool(expected_preview_mission) or allow_unverified_preview_start
                 )
-                or (
-                    visual_region_index is not None
-                    and not expected_preview_mission
-                    and start_window_x is None
-                    and start_window_y is None
+                and _lightning_route_start_mode_can_commit_existing_preview(
+                    effective_start_mode,
+                    start_window_x=start_window_x,
+                    start_window_y=start_window_y,
+                ),
+                dry_run=False,
+            )
+            active_mission_handoff = (
+                _lightning_active_mission_before_region_click_result(
+                    preview_click,
+                    profile=profile,
+                    expected_preview_mission=expected_preview_mission,
+                    route_routing=route_routing,
                 )
-            ),
-            dry_run=False,
-        )
-        active_mission_handoff = _lightning_active_mission_before_region_click_result(
-            preview_click,
-            profile=profile,
-            expected_preview_mission=expected_preview_mission,
-            route_routing=route_routing,
-        )
+            )
         if active_mission_handoff is not None:
             click_result = {
                 **active_mission_handoff,
@@ -18130,19 +18438,22 @@ def cmd_lightning_route_start(
             or preview_bridge_stale
             or not actual_preview_mission
         )
-        manual_expected_unverified_start = (
+        expected_visible_unverified_start = (
             allow_unverified_preview_start
-            and manual_coordinate_start
+            and (manual_visible_region_start or existing_preview_start_only)
             and bool(expected_preview_mission)
             and not preview_bridge_stale
             and not require_auto_start_safe_preview
+        )
+        manual_expected_unverified_start = (
+            expected_visible_unverified_start and manual_visible_region_start
         )
         allow_unverified_start = (
             (
                 (manual_coordinate_start or allow_unverified_preview_start)
                 and not expected_preview_mission
             )
-            or manual_expected_unverified_start
+            or expected_visible_unverified_start
         ) and not preview_bridge_stale and not require_auto_start_safe_preview
         manual_unverified_preview_authorization = None
         visible_preview_ocr = None
@@ -18290,16 +18601,34 @@ def cmd_lightning_route_start(
                 }
                 _print_result(result)
                 return result
-        elif manual_expected_unverified_start and preview_unverified:
+        elif expected_visible_unverified_start and preview_unverified:
+            authorization_reason = (
+                "manual_expected_visible_preview_authorized"
+                if manual_expected_unverified_start
+                else "existing_expected_visible_preview_authorized"
+            )
             manual_unverified_preview_authorization = {
                 "status": "OK",
-                "reason": "manual_expected_visible_preview_authorized",
+                "reason": authorization_reason,
                 "expected_route_mission_id": expected_preview_mission,
-                "region_window_x": region_window_x,
-                "region_window_y": region_window_y,
             }
+            if manual_expected_unverified_start:
+                manual_unverified_preview_authorization.update(
+                    {
+                        "region_window_x": region_window_x,
+                        "region_window_y": region_window_y,
+                    }
+                )
+                if visual_region_index is not None:
+                    manual_unverified_preview_authorization[
+                        "visual_region_index"
+                    ] = visual_region_index
             actual_preview_mission = expected_preview_mission
-            preview_source = "manual_expected_visible_preview"
+            preview_source = (
+                "manual_expected_visible_preview"
+                if manual_expected_unverified_start
+                else "existing_expected_visible_preview"
+            )
             preview_recommendation = {
                 **preview_recommendation,
                 "source": preview_source,
@@ -19428,6 +19757,9 @@ def cmd_lightning_peek(
         return result
 
     initially_paused = initial_ui.get("visible_ui") == "pause_menu"
+    if require_paused and not initially_paused and include_ocr:
+        initial_ui = _lightning_visible_ui_snapshot(include_ocr=True)
+        initially_paused = initial_ui.get("visible_ui") == "pause_menu"
     if require_paused and not initially_paused:
         result = {
             "status": "BLOCKED",
@@ -19542,7 +19874,7 @@ def cmd_lightning_peek(
         capture_note_written = True
 
     if pause_click is not None and pause_click.get("status") == "OK":
-        pause_verify = _lightning_visible_ui_snapshot()
+        pause_verify = _lightning_visible_ui_snapshot(include_ocr=include_ocr)
 
     status = "OK"
     reason = "micro_peek_captured_and_paused"
@@ -20882,6 +21214,51 @@ def cmd_lightning_attempt(
         )
 
     if phase == "combat_player" and active_mechs <= 0:
+        initial_no_active_snapshot = {
+            key: snapshot.get(key)
+            for key in (
+                "status",
+                "phase",
+                "turn",
+                "mission_id",
+                "active_mechs",
+                "mech_count",
+                "in_active_mission",
+                "bridge_heartbeat_alive",
+                "bridge_heartbeat_stale",
+            )
+            if key in snapshot
+        }
+        refreshed_snapshot = _lightning_live_snapshot()
+        if _lightning_snapshot_is_fresh_actionable_player_turn(refreshed_snapshot):
+            action_record["action"] = "combat_loop_after_no_active_refresh"
+            action_record["initial_no_active_snapshot"] = initial_no_active_snapshot
+            action_record["refreshed_snapshot"] = {
+                key: refreshed_snapshot.get(key)
+                for key in (
+                    "status",
+                    "phase",
+                    "turn",
+                    "mission_id",
+                    "active_mechs",
+                    "mech_count",
+                    "in_active_mission",
+                    "bridge_heartbeat_alive",
+                    "bridge_heartbeat_stale",
+                )
+                if key in refreshed_snapshot
+            }
+            snapshot = refreshed_snapshot
+            return run_combat_loop(action="combat_loop_after_no_active_refresh")
+        visible_ui = _lightning_visible_ui_snapshot()
+        snapshot["visible_ui"] = visible_ui
+        bridge_refine = visible_ui.get("bridge_refine_snapshot")
+        if _lightning_snapshot_is_fresh_actionable_player_turn(bridge_refine):
+            action_record["action"] = "combat_loop_after_no_active_bridge_refine"
+            action_record["initial_no_active_snapshot"] = initial_no_active_snapshot
+            action_record["bridge_refine_snapshot"] = bridge_refine
+            snapshot = {**bridge_refine, "visible_ui": visible_ui}
+            return run_combat_loop(action="combat_loop_after_no_active_bridge_refine")
         held_end_turn = _lightning_click_reviewed_held_end_turn(
             session=session,
             snapshot=snapshot,
@@ -20898,8 +21275,6 @@ def cmd_lightning_attempt(
         )
         if held_end_turn is not None:
             return finish(held_end_turn)
-        visible_ui = _lightning_visible_ui_snapshot()
-        snapshot["visible_ui"] = visible_ui
         if (
             visible_ui.get("status") == "OK"
             and visible_ui.get("recommended_control")
@@ -21615,10 +21990,14 @@ def cmd_lightning_segment(
     route_start_expected_mission_id = route_target_mission_id
     route_start_window_x: int | None = None
     route_start_window_y: int | None = None
-    active_route_expected_mission_id: str | None = None
+    active_route_expected_mission_id: str | None = route_target_mission_id
     seen_progress_keys: dict[tuple[object, object, object, object], int] = {}
     route_auto_start_rejected_indices: set[int] = set()
     route_auto_start_rejected_candidates: list[dict] = []
+    manual_targeted_visual_route_start_pending = (
+        route_visual_region_index is not None
+        and route_target_mission_id is not None
+    )
 
     for step_index in range(max(1, int(max_steps))):
         if (
@@ -21676,6 +22055,9 @@ def cmd_lightning_segment(
                     start_mode=route_start_mode,
                     expected_route_mission_id=route_start_expected_mission_id,
                     route_routing=route_routing,
+                    allow_unverified_preview_start=(
+                        manual_targeted_visual_route_start_pending
+                    ),
                     allow_pause_map_peek=(
                         route_visual_region_index is not None
                         and route_start_window_x is None
@@ -21696,6 +22078,7 @@ def cmd_lightning_segment(
                 ),
                 timeout_reason="route_start_subcall_timeout",
             )
+            manual_targeted_visual_route_start_pending = False
             last_route_start = route_start
             route_summary = _lightning_segment_route_start_summary(
                 route_start,
@@ -23228,12 +23611,18 @@ def cmd_lightning_start_run(
 
     # Windows first-island selection highlights the corporation on the first
     # click and requires the same island click again before the island map
-    # intro appears. If a platform/build confirms on the first click, this
-    # coordinate is harmless under the intro overlay and avoids a live-clock
-    # stall on Windows.
+    # intro appears. On macOS, reusing the island coordinate after the corp map
+    # opens can land on a province and start an unintended mission.
     time.sleep(0.8)
-    island_confirm_click = click_known_window_control(island_control)
-    result["first_island_confirm_click"] = island_confirm_click
+    if os.name == "nt":
+        island_confirm_click = click_known_window_control(island_control)
+        result["first_island_confirm_click"] = island_confirm_click
+    else:
+        result["first_island_confirm_click"] = {
+            "status": "SKIPPED",
+            "reason": "non_windows_single_click_selection",
+            "control": island_control,
+        }
 
     session_pending = _lightning_mark_session_first_island_pending(
         session,
@@ -23803,6 +24192,16 @@ def _lightning_snapshot_is_actionable_player_turn(snapshot: dict | None) -> bool
         return int(snapshot.get("active_mechs") or 0) > 0
     except (TypeError, ValueError):
         return False
+
+
+def _lightning_snapshot_is_fresh_actionable_player_turn(
+    snapshot: dict | None,
+) -> bool:
+    """True when bridge state proves a live player turn with usable actors."""
+    return (
+        _lightning_snapshot_is_actionable_player_turn(snapshot)
+        and _lightning_bridge_snapshot_fresh_enough(snapshot)
+    )
 
 
 def _lightning_ui_evidence_is_live_combat(evidence: dict | None) -> bool:
