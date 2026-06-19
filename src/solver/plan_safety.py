@@ -213,7 +213,7 @@ def _final_objective_targets_resolved_without_damage(
     return True
 
 
-def _destroy_objective_final_turn(
+def _infinite_spawn_objective_final_turn(
     current: dict[str, Any],
     predicted: dict[str, Any],
     default_final_turn: bool,
@@ -240,6 +240,18 @@ def _destroy_objective_final_turn(
         return pred_turn >= total_turns
 
     return default_final_turn
+
+
+def _destroy_objective_final_turn(
+    current: dict[str, Any],
+    predicted: dict[str, Any],
+    default_final_turn: bool,
+) -> bool:
+    return _infinite_spawn_objective_final_turn(
+        current,
+        predicted,
+        default_final_turn,
+    )
 
 
 def _violation(kind: str, current: Any, predicted: Any,
@@ -386,10 +398,15 @@ def audit_plan_safety(current: dict[str, Any],
 
     cur_obj_targeted = _int_or_none(current.get("objective_buildings_targeted"))
     pred_obj_targeted = _int_or_none(predicted.get("objective_buildings_targeted"))
+    objective_target_final_turn = _infinite_spawn_objective_final_turn(
+        current,
+        predicted,
+        final_turn,
+    )
     if cur_obj_targeted is not None and pred_obj_targeted is not None:
         compared.append("objective_buildings_targeted")
         if (
-            final_turn
+            objective_target_final_turn
             and pred_obj_targeted > 0
             and not _final_objective_targets_resolved_without_damage(
                 current,

@@ -334,6 +334,73 @@ def test_nonfinal_objective_building_target_is_not_terminal():
     assert audit["status"] == "CLEAN"
 
 
+def test_penultimate_infinite_spawn_objective_building_target_is_not_terminal():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Solar",
+            turn=3,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Solar",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 798,
+                "type": "Jelly_Explode1",
+                "pos": [6, 2],
+                "target": [4, 3],
+            }],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert not any(
+        v["kind"] == "objective_building_targeted_final"
+        for v in audit["violations"]
+    )
+
+
+def test_final_infinite_spawn_objective_building_target_blocks():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Solar",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Solar",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 798,
+                "type": "Jelly_Explode1",
+                "pos": [6, 2],
+                "target": [4, 3],
+            }],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "objective_building_targeted_final"
+
+
 def test_final_cave_resist_gamble_rejects_before_last_turn():
     audit = audit_plan_safety(
         _summary(
