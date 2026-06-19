@@ -236,6 +236,48 @@ def test_final_turn_objective_building_target_blocks_without_hp_loss():
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
 
 
+def test_final_turn_objective_target_is_clean_after_safe_enemy_phase_projection():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Artillery",
+            turn=4,
+            total_turns=4,
+            grid=6,
+            buildings=7,
+            hp=9,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+        ),
+        _summary(
+            mission_id="Mission_Artillery",
+            turn=5,
+            total_turns=4,
+            grid=6,
+            buildings=7,
+            hp=9,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 672,
+                "type": "Burnbug1",
+                "pos": [6, 4],
+                "target": [5, 5],
+            }],
+            buildings_destroyed_by_enemies=0,
+            enemies_killed_by_enemy_phase=0,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert not any(
+        v["kind"] == "objective_building_targeted_final"
+        for v in audit["violations"]
+    )
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
+
+
 def test_nonfinal_objective_building_target_is_not_terminal():
     audit = audit_plan_safety(
         _summary(

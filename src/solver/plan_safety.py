@@ -168,6 +168,43 @@ def _list_or_empty(value: Any) -> list[Any]:
     return []
 
 
+def _final_objective_targets_resolved_without_damage(
+    current: dict[str, Any],
+    predicted: dict[str, Any],
+) -> bool:
+    """Return true when replayed enemy-phase data proves queued targets harmless."""
+    projection_keys = {
+        "buildings_destroyed_by_enemies",
+        "enemies_killed_by_enemy_phase",
+        "mission_kills_by_enemy_phase",
+    }
+    if not any(key in predicted for key in projection_keys):
+        return False
+
+    for key in (
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+    ):
+        cur_value = _int_or_none(current.get(key))
+        pred_value = _int_or_none(predicted.get(key))
+        if (
+            cur_value is not None
+            and pred_value is not None
+            and pred_value < cur_value
+        ):
+            return False
+
+    destroyed_by_enemies = _int_or_none(
+        predicted.get("buildings_destroyed_by_enemies")
+    )
+    if destroyed_by_enemies is not None and destroyed_by_enemies > 0:
+        return False
+    return True
+
+
 def _violation(kind: str, current: Any, predicted: Any,
                message: str, details: Any | None = None,
                *, blocking: bool | None = None) -> dict[str, Any]:
@@ -314,7 +351,14 @@ def audit_plan_safety(current: dict[str, Any],
     pred_obj_targeted = _int_or_none(predicted.get("objective_buildings_targeted"))
     if cur_obj_targeted is not None and pred_obj_targeted is not None:
         compared.append("objective_buildings_targeted")
-        if final_turn and pred_obj_targeted > 0:
+        if (
+            final_turn
+            and pred_obj_targeted > 0
+            and not _final_objective_targets_resolved_without_damage(
+                current,
+                predicted,
+            )
+        ):
             violations.append(_violation(
                 "objective_building_targeted_final",
                 cur_obj_targeted,
