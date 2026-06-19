@@ -1080,3 +1080,137 @@ This notebook explains the executable timings stored in
 - Ready bridge -> first audit frame avg/max: n/a / n/a
 - Ready bridge -> pause avg/max: n/a / n/a
 - Terminal End Turn -> Region Secured: 27.476s
+## live_top_mainmenu_20260615_165306
+
+- Result: FAIL
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_10_missions
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.816s
+- Intro continue wall elapsed: 10.307s
+- Red map detected wall elapsed: 10.87s
+- Red regions: 2
+- Contact sheet: recordings\live_top_mainmenu_20260615_165306\telemetry\contact_sheet.png
+- Red map screenshot: recordings\live_top_mainmenu_20260615_165306\telemetry\screenshots\000011_1781560437671_gt0-00-06_opening_probe.png
+- Next patch: Learn the next post-Region-Secured island-map route step.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.875s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:12
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:22
+- First frame after bridge-ready timer: n/a
+- Post-confirm observed seconds: 10.136s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 4
+- Last End Turn click timer: 0:01:46
+- Region Secured visible timer: 0:02:15
+- Region Secured visible elapsed after End Turn: 20.034s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:02:16
+- Continue click control: reward_continue @ (1647, 985)
+- Continue click result: OK
+- Continue click before timer: 0:02:16
+- Continue click after frame timer: 0:02:17
+- Post-Continue observed seconds: 8.688s
+- Post-Continue next visible UI: island_map
+- Post-Continue next visible timer: 0:02:26
+- Turn sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3 -> us4 -> enemy4->done
+- Player turns observed: 4
+- Enemy phases observed: 5
+- End Turn -> enemy bridge avg/max: 8.884s / 10.231s
+- Enemy bridge -> next player avg/max: 6.483s / 9.328s
+- End Turn -> next player avg/max: 15.368s / 15.902s
+- Ready bridge -> first audit frame avg/max: 0.0s / 0.0s
+- Ready bridge -> pause avg/max: 0.36s / 0.371s
+- Terminal End Turn -> Region Secured: 28.978s
+- Speed sequence expectation: MISMATCH
+- Expected speed sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done
+- Observed speed sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3 -> us4 -> enemy4->done
+## live_top_mainmenu_20260615_170130
+
+- Result: FAIL
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_10_missions
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:06
+- Archive click wall elapsed: 7.848s
+- Intro continue wall elapsed: 10.311s
+- Red map detected wall elapsed: 10.888s
+- Red regions: 2
+- Contact sheet: recordings\live_top_mainmenu_20260615_170130\telemetry\contact_sheet.png
+- Red map screenshot: recordings\live_top_mainmenu_20260615_170130\telemetry\screenshots\000011_1781560950125_gt0-00-06_opening_probe.png
+- Next patch: Learn the next post-Region-Secured island-map route step.
+- Deploy recommended result: OK
+- Deploy recommended placements: 3
+- Deploy recommended duration: 0.778s
+- Post-deploy frame in-game timer: n/a
+- Deploy Confirm signal: deploy_recommended_result
+- Deploy Confirm click timer: 0:00:11
+- Opening player-turn signal: bridge_lua_live_snapshot
+- Opening player-turn bridge timer: 0:00:22
+- First frame after bridge-ready timer: n/a
+- Post-confirm observed seconds: 9.808s
+- Region Secured loop status: PASS
+- Region Secured turns attempted: 4
+- Last End Turn click timer: 0:01:39
+- Region Secured visible timer: 0:01:48
+- Region Secured visible elapsed after End Turn: 0.413s
+- Continue hover control: reward_continue @ (1647, 985)
+- Continue hover result: OK screen=(1647, 985)
+- Continue hover frame timer: 0:01:50
+- Continue click control: reward_continue @ (1647, 985)
+- Continue click result: OK
+- Continue click before timer: 0:01:50
+- Continue click after frame timer: 0:01:51
+- Post-Continue observed seconds: 10.256s
+- Post-Continue next visible UI: pause_menu
+- Post-Continue next visible timer: 0:01:54
+- Turn sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3 -> us4 -> enemy4->done
+- Player turns observed: 4
+- Enemy phases observed: 5
+- End Turn -> enemy bridge avg/max: 4.737s / 4.873s
+- Enemy bridge -> next player avg/max: 8.435s / 8.56s
+- End Turn -> next player avg/max: 13.172s / 13.433s
+- Ready bridge -> first audit frame avg/max: 0.0s / 0.0s
+- Ready bridge -> pause avg/max: 0.316s / 0.322s
+- Terminal End Turn -> Region Secured: 9.246s
+- Speed sequence expectation: MISMATCH
+- Expected speed sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done
+- Observed speed sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3 -> us4 -> enemy4->done
+## live_top_mainmenu_20260615_171650
+
+- Result: FAIL
+- Branch: archive_intro.default
+- Boundary: main_menu_to_archive_red_map_to_10_missions
+- Primary time source: validated live numeric memory candidate when available; pause-menu `Timeline Playtime` addresses are only re-pause calibration oracles
+- Red map detected in-game timer: 0:00:06
+- Red map timer source: memory_live_numeric_candidate
+- Red map paired post-detection timer: 0:00:07
+- Archive click wall elapsed: 8.048s
+- Intro continue wall elapsed: 10.329s
+- Red map detected wall elapsed: 10.975s
+- Red regions: 2
+- Contact sheet: recordings\live_top_mainmenu_20260615_171650\telemetry\contact_sheet.png
+- Red map screenshot: recordings\live_top_mainmenu_20260615_171650\telemetry\screenshots\000012_1781561863191_gt0-00-06_opening_probe.png
+- Next patch: Fix combat-to-Region-Secured timing loop startup.
+- Turn sequence: n/a
+- Player turns observed: 0
+- Enemy phases observed: 0
+- End Turn -> enemy bridge avg/max: n/a / n/a
+- Enemy bridge -> next player avg/max: n/a / n/a
+- End Turn -> next player avg/max: n/a / n/a
+- Ready bridge -> first audit frame avg/max: n/a / n/a
+- Ready bridge -> pause avg/max: n/a / n/a
+- Terminal End Turn -> Region Secured: n/a
+- Speed sequence expectation: MISMATCH
+- Expected speed sequence: enemy(opening) -> us1 -> enemy1 -> us2 -> enemy2 -> us3 -> enemy3->done
+- Observed speed sequence: n/a

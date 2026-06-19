@@ -476,6 +476,7 @@ def _parse_optional_timer_address(value: str | None) -> int | None:
 def _resolve_live_timer_from_proof(
     proof_path: str | None,
     *,
+    proof_selection: str = "explicit",
     pause_stability_seconds: float = 0.0,
 ) -> tuple[int | None, str | None, dict[str, Any] | None]:
     if not proof_path:
@@ -492,6 +493,7 @@ def _resolve_live_timer_from_proof(
             "memory live timer proof invalid: "
             f"{validation.get('reason') or validation.get('status')}"
         )
+    validation["proof_selection"] = proof_selection
     address = validation.get("address")
     kind = validation.get("kind")
     if not address or not kind:
@@ -499,13 +501,43 @@ def _resolve_live_timer_from_proof(
     return int(str(address), 16), str(kind), validation
 
 
+def _default_memory_live_timer_proof_path() -> Path:
+    return ROOT / memory_probe.DEFAULT_SESSION_CLOCK_PROOF_PATH
+
+
+def _selected_memory_live_timer_proof_path(
+    args: argparse.Namespace,
+) -> tuple[str | None, str | None]:
+    explicit = getattr(args, "memory_live_timer_proof", None)
+    if explicit:
+        return str(explicit), "explicit"
+    if not getattr(args, "auto_memory_live_timer_proof", True):
+        return None, None
+    default_path = _default_memory_live_timer_proof_path()
+    if default_path.exists():
+        return str(default_path), "auto_default"
+    return None, None
+
+
 def _resolve_live_timer_config(
     args: argparse.Namespace,
     *,
     pause_stability_seconds: float = 0.0,
 ) -> tuple[int | None, str | None, dict[str, Any] | None]:
+    proof_path, proof_selection = _selected_memory_live_timer_proof_path(args)
+    if (
+        proof_path is None
+        and getattr(args, "require_memory_live_timer_proof", False)
+    ):
+        raise RuntimeError(
+            "memory live timer proof required but missing; create "
+            f"{_default_memory_live_timer_proof_path()} with "
+            "`python scripts/itb_timer_memory_probe.py session-clock-proof "
+            "--score <score.json> --output recordings/lightning_session_clock_proof.json`"
+        )
     proof_address, proof_kind, proof_validation = _resolve_live_timer_from_proof(
-        getattr(args, "memory_live_timer_proof", None),
+        proof_path,
+        proof_selection=proof_selection or "explicit",
         pause_stability_seconds=pause_stability_seconds,
     )
     if proof_address is not None:
@@ -1744,6 +1776,36 @@ def click_start_mission_from_preview(
             "pre_start_visible_probe": "skipped_after_proven_hover_target",
         }
         telemetry.event("mission_preview_pre_start_probe_skipped", **dialogue_observation)
+
+    startable_visible = fast._lightning_visible_ui_snapshot(include_ocr=True)
+    startable_preview_visible = fast.visible_startable_mission_preview(startable_visible)
+    telemetry.event(
+        "mission_preview_startable_probe",
+        timer_seconds=_elapsed(timer_start),
+        visible_ui=fast.compact_visible_ui(startable_visible),
+        startable_preview_visible=startable_preview_visible,
+    )
+    explicit_non_startable = (
+        "no vek detected" in fast.visible_text_lower(startable_visible)
+    )
+    if not startable_preview_visible and explicit_non_startable:
+        return {
+            "status": "FAIL",
+            "reason": "mission_preview_not_startable",
+            "dialogue_observation": dialogue_observation,
+            "startable_probe": {
+                "visible_ui": fast.compact_visible_ui(startable_visible),
+                "startable_preview_visible": startable_preview_visible,
+                "explicit_non_startable": explicit_non_startable,
+            },
+            "before_in_game_timer": None,
+            "click": None,
+            "click_wall_seconds": None,
+            "samples": [],
+            "first_bridge_deployment_sample": None,
+            "pause": None,
+            "after_pause_timer": None,
+        }
 
     before_timer = read_in_game_timer(
         profile,
@@ -3570,7 +3632,12 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
                 else None
             ),
             "memory_live_timer_kind": memory_live_timer_kind,
-            "memory_live_timer_proof": args.memory_live_timer_proof,
+            "memory_live_timer_proof": _repo_relative_text(
+                (memory_live_timer_proof_validation or {}).get("proof_path")
+                or args.memory_live_timer_proof
+            ),
+            "auto_memory_live_timer_proof": args.auto_memory_live_timer_proof,
+            "require_memory_live_timer_proof": args.require_memory_live_timer_proof,
             "memory_live_timer_proof_validation": memory_live_timer_proof_validation,
             "combat_loop_max_turns": args.combat_loop_max_turns,
             "region_secured_hover_continue": args.region_secured_hover_continue,
@@ -3796,13 +3863,13 @@ def run_followup_mission_from_island_map(
     mission_preview: dict[str, Any] | None = None
     mission_timers: dict[str, Any] = {}
     if preview_transition is not None:
-        preview_timer = _mission_timer_sample(
-            "mission_preview_after_result_clear",
+        preview_timer = read_in_game_timer(
             profile=args.profile,
+            label="mission_preview_after_result_clear",
             use_memory=args.memory_timer_probe,
-            memory_timer_address=memory_timer_address,
-            memory_live_timer_address=memory_live_timer_address,
-            memory_live_timer_kind=memory_live_timer_kind,
+            timer_address=memory_timer_address,
+            live_timer_address=memory_live_timer_address,
+            live_timer_kind=memory_live_timer_kind,
         )
         red_region = preview_transition.get("red_region")
         red_detection = {
@@ -4126,7 +4193,12 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
                 else None
             ),
             "memory_live_timer_kind": memory_live_timer_kind,
-            "memory_live_timer_proof": args.memory_live_timer_proof,
+            "memory_live_timer_proof": _repo_relative_text(
+                (memory_live_timer_proof_validation or {}).get("proof_path")
+                or args.memory_live_timer_proof
+            ),
+            "auto_memory_live_timer_proof": args.auto_memory_live_timer_proof,
+            "require_memory_live_timer_proof": args.require_memory_live_timer_proof,
             "memory_live_timer_proof_validation": memory_live_timer_proof_validation,
             "click_red_mission": click_red_mission,
             "click_start_mission": click_start_mission,
@@ -4872,6 +4944,23 @@ def build_parser() -> argparse.ArgumentParser:
             "Session clock proof JSON created by "
             "`itb_timer_memory_probe.py session-clock-proof`; when provided, "
             "the lab validates process identity and uses its address/kind."
+        ),
+    )
+    parser.add_argument(
+        "--auto-memory-live-timer-proof",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Automatically use recordings/lightning_session_clock_proof.json "
+            "when it exists and --memory-live-timer-proof is not set."
+        ),
+    )
+    parser.add_argument(
+        "--require-memory-live-timer-proof",
+        action="store_true",
+        help=(
+            "Fail at startup when neither --memory-live-timer-proof nor the "
+            "auto-discovered default proof file is available."
         ),
     )
     parser.add_argument(

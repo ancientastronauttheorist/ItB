@@ -1,34 +1,22 @@
 {
-  "run_id": "20260602_095732_968",
-  "squad": "Frozen Titans",
-  "achievement_targets": [],
+  "run_id": "20260619_004557_388",
+  "squad": "Heat Sinkers",
+  "achievement_targets": [
+    "Feed the Flame"
+  ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Terratide",
+  "current_mission": "Mission_Barrels",
   "islands_completed": [],
-  "mission_index": 8,
-  "last_mission_turn": 3,
-  "current_turn": 3,
+  "mission_index": 16,
+  "last_mission_turn": 4,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "GuardMech",
-        "move_to": [
-          4,
-          2
-        ],
-        "weapon": "Prime_ShieldBash",
-        "target": [
-          4,
-          1
-        ],
-        "description": "GuardMech, fire Shield Bash at G4"
-      },
-      {
         "mech_uid": 1,
-        "mech_type": "MirrorMech",
+        "mech_type": "DoubletankMech",
         "move_to": [
           3,
           5
@@ -38,26 +26,40 @@
           255,
           255
         ],
-        "description": "MirrorMech, move C6\u2192C5"
+        "description": "DoubletankMech, move D4\u2192C5"
       },
       {
         "mech_uid": 2,
-        "mech_type": "IceMech",
+        "mech_type": "NapalmMech",
         "move_to": [
-          0,
-          5
+          4,
+          0
         ],
-        "weapon": "Unknown",
+        "weapon": "Science_RainingFire_A",
         "target": [
-          255,
-          255
+          4,
+          3
         ],
-        "description": "IceMech, move B6\u2192C8"
+        "description": "NapalmMech, move F5\u2192H4, fire Firestorm Generator at E4"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "InfernoMech",
+        "move_to": [
+          5,
+          2
+        ],
+        "weapon": "Prime_Flamespreader",
+        "target": [
+          5,
+          0
+        ],
+        "description": "InfernoMech, move E5\u2192F3, fire Thermal Discharger at H3"
       }
     ],
-    "score": 93784.14286695208,
-    "turn": 3,
-    "input_fingerprint": "0:4,2:5|1:2,5:3|2416:4,5:2|2418:1,2:2|2419:4,1:2|2420:2,3:3|2421:4,3:3|2:2,6:2"
+    "score": -69841.57117182868,
+    "turn": 4,
+    "input_fingerprint": "0:3,3:3|1563:5,1:3|1565:5,5:3|1566:6,1:2|1567:4,2:3|1589:4,3:1|1:4,4:2|2:3,2:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -66,502 +68,1265 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-06-02T10:49:40.029188",
+      "timestamp": "2026-06-19T00:57:20.281042",
       "turn": 1,
       "label": "solve",
-      "score": 136357.14285714284,
+      "score": 123957.14285714284,
       "actions": [
-        "GuardMech, move F5\u2192F3",
-        "IceMech, fire Cryo-Launcher at G2",
-        "MirrorMech, move E6\u2192G5, fire Mirror Shot at G4"
+        "DoubletankMech",
+        "NapalmMech, move C6\u2192E7, fire Firestorm Generator at E5",
+        "InfernoMech, move D5\u2192D2, fire Thermal Discharger at D4"
       ]
     },
     {
-      "timestamp": "2026-06-02T10:50:36.925718",
+      "timestamp": "2026-06-19T01:00:12.835305",
       "turn": 2,
       "label": "solve",
-      "score": 140197.142857143,
+      "score": 117347.14285714277,
       "actions": [
-        "GuardMech, move F3\u2192D3, fire Shield Bash at E3",
-        "MirrorMech, move G5\u2192G8, fire Mirror Shot at G7",
-        "IceMech, move G6\u2192D6"
+        "InfernoMech, fire Thermal Discharger at E2",
+        "DoubletankMech, repair",
+        "NapalmMech, move E7\u2192D4, fire Firestorm Generator at F4"
       ]
     },
     {
-      "timestamp": "2026-06-02T10:51:31.139156",
+      "timestamp": "2026-06-19T01:02:16.073411",
       "turn": 3,
       "label": "solve",
-      "score": 148077.14285714284,
+      "score": 126317.14285714286,
       "actions": [
-        "MirrorMech, move G8\u2192F8, fire Mirror Shot at F7",
-        "GuardMech, move C3\u2192F4, fire Shield Bash at F5",
-        "IceMech"
+        "DoubletankMech, repair",
+        "NapalmMech, move D4\u2192C4, fire Firestorm Generator at C2",
+        "InfernoMech, move D2\u2192B2, fire Thermal Discharger at B4"
       ]
     },
     {
-      "timestamp": "2026-06-02T10:52:57.465699",
+      "timestamp": "2026-06-19T01:04:10.311983",
       "turn": 4,
       "label": "solve",
-      "score": 136777.14285714284,
+      "score": 121832.14285714286,
       "actions": [
-        "GuardMech, move F4\u2192E6",
-        "MirrorMech, move F8\u2192F7, fire Mirror Shot at F6",
-        "IceMech, move D6\u2192F5, fire Cryo-Launcher at C5"
+        "InfernoMech, move B2\u2192E2, fire Thermal Discharger at F2",
+        "DoubletankMech",
+        "NapalmMech, repair"
       ]
     },
     {
-      "timestamp": "2026-06-02T10:59:33.699246",
+      "timestamp": "2026-06-19T01:12:29.104777",
       "turn": 1,
       "label": "solve",
-      "score": 144878.57142857142,
+      "score": 181492.85714285713,
       "actions": [
-        "GuardMech, move E6\u2192G5",
-        "MirrorMech, move D5\u2192B5, fire Mirror Shot at C5",
-        "IceMech, move C6\u2192D5, fire Cryo-Launcher at D3"
+        "InfernoMech, move D6\u2192D2, fire Thermal Discharger at D4",
+        "DoubletankMech, move B5\u2192B6",
+        "NapalmMech, move C7\u2192B5, fire Firestorm Generator at D5"
       ]
     },
     {
-      "timestamp": "2026-06-02T11:00:35.893313",
+      "timestamp": "2026-06-19T01:14:53.710806",
       "turn": 2,
       "label": "solve",
-      "score": 153018.57142857142,
+      "score": 175846.19047619062,
       "actions": [
-        "GuardMech, move G5\u2192D6, fire Shield Bash at D5",
-        "IceMech, move C5\u2192B7, fire Cryo-Launcher at D7",
-        "MirrorMech, move B5\u2192C5, fire Mirror Shot at B5"
+        "InfernoMech, move D2\u2192B3, fire Thermal Discharger at B2",
+        "DoubletankMech",
+        "NapalmMech, move B5\u2192D6, fire Firestorm Generator at D8"
       ]
     },
     {
-      "timestamp": "2026-06-02T11:17:36.286423",
+      "timestamp": "2026-06-19T01:17:03.792972",
       "turn": 3,
       "label": "solve",
-      "score": 150053.57142857142,
+      "score": 176562.85714285713,
       "actions": [
-        "GuardMech, move D6\u2192C5, fire Shield Bash at C4",
-        "MirrorMech, move C7\u2192C8, fire Mirror Shot at C7",
-        "IceMech, move A7\u2192D7"
+        "DoubletankMech",
+        "NapalmMech, move D6\u2192B4, fire Firestorm Generator at B2",
+        "InfernoMech, move B3\u2192D2, fire Thermal Discharger at D4"
       ]
     },
     {
-      "timestamp": "2026-06-02T11:30:11.507159",
+      "timestamp": "2026-06-19T01:19:03.045744",
+      "turn": 4,
+      "label": "solve",
+      "score": 170742.85714285713,
+      "actions": [
+        "InfernoMech, move D2\u2192C3, fire Thermal Discharger at D3",
+        "DoubletankMech, move B6\u2192C7",
+        "NapalmMech, move B5\u2192B6, fire Firestorm Generator at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T01:28:16.140942",
       "turn": 1,
       "label": "solve",
-      "score": 130478.57142857142,
+      "score": 139857.14285714284,
       "actions": [
-        "IceMech, move E5\u2192E2, fire Cryo-Launcher at G2",
-        "GuardMech, move F6\u2192E3, fire Shield Bash at E2",
-        "MirrorMech, move G5\u2192E5, fire Mirror Shot at E4"
+        "InfernoMech, fire Thermal Discharger at E6",
+        "NapalmMech, move B5\u2192C3, fire Firestorm Generator at E3",
+        "DoubletankMech, move E4\u2192C4"
       ]
     },
     {
-      "timestamp": "2026-06-02T11:32:19.571031",
+      "timestamp": "2026-06-19T01:29:33.581771",
       "turn": 2,
       "label": "solve",
-      "score": 133291.90476190488,
+      "score": 160887.14285714284,
       "actions": [
-        "GuardMech, move E3\u2192D5",
-        "IceMech, move E2\u2192C3, fire Cryo-Launcher at C5",
-        "MirrorMech, move E5\u2192E3, fire Mirror Shot at D3"
+        "InfernoMech, move C7\u2192C6, fire Thermal Discharger at E6",
+        "DoubletankMech, repair",
+        "NapalmMech, fire Firestorm Generator at C1"
       ]
     },
     {
-      "timestamp": "2026-06-02T11:33:30.845664",
+      "timestamp": "2026-06-19T01:30:42.477281",
       "turn": 3,
       "label": "solve",
-      "score": 125768.57142857142,
+      "score": 145875.0,
       "actions": [
-        "GuardMech",
-        "MirrorMech, move E3\u2192D4",
-        "IceMech, fire Cryo-Launcher at C5"
+        "InfernoMech, repair",
+        "NapalmMech, move B3\u2192B5, fire Firestorm Generator at D5",
+        "DoubletankMech, move C4\u2192B3, repair"
       ]
     },
     {
-      "timestamp": "2026-06-02T11:38:18.043701",
-      "turn": 3,
-      "label": "solve",
-      "score": 125718.57142857142,
-      "actions": [
-        "GuardMech",
-        "MirrorMech, move E3\u2192E2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T11:39:17.536994",
-      "turn": 4,
-      "label": "solve",
-      "score": 127568.57142857142,
-      "actions": [
-        "MirrorMech, move E2\u2192E1, fire Mirror Shot at E2",
-        "GuardMech, fire Shield Bash at E5",
-        "IceMech, move C4\u2192E3, fire Cryo-Launcher at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T11:49:16.953505",
+      "timestamp": "2026-06-19T01:59:45.498380",
       "turn": 1,
       "label": "solve",
-      "score": 130978.57142857142,
+      "score": 141100.0,
       "actions": [
-        "GuardMech, move D5\u2192E2, fire Shield Bash at F2",
-        "IceMech, move D7\u2192D5, fire Cryo-Launcher at D3",
-        "MirrorMech, move F5\u2192E5, fire Mirror Shot at D5"
+        "InfernoMech, move E6\u2192B4, fire Thermal Discharger at B2",
+        "DoubletankMech, move G5\u2192E3",
+        "NapalmMech, move B5\u2192D4, fire Firestorm Generator at G4"
       ]
     },
     {
-      "timestamp": "2026-06-02T11:51:00.176606",
+      "timestamp": "2026-06-19T02:01:11.160392",
       "turn": 2,
       "label": "solve",
-      "score": 133078.57142857142,
+      "score": 151300.00000000012,
       "actions": [
-        "MirrorMech, move E5\u2192D5, fire Mirror Shot at D4",
-        "GuardMech, move E2\u2192D1, fire Shield Bash at D2",
-        "IceMech, move C5\u2192B7, fire Cryo-Launcher at B2"
+        "InfernoMech, move B4\u2192E4, fire Thermal Discharger at F4",
+        "DoubletankMech, move E3\u2192G1, repair",
+        "NapalmMech, move D4\u2192E3, repair"
       ]
     },
     {
-      "timestamp": "2026-06-02T12:01:14.809978",
+      "timestamp": "2026-06-19T02:02:38.424116",
       "turn": 3,
       "label": "solve",
-      "score": 103459.14287137985,
+      "score": 150810.0,
       "actions": [
-        "GuardMech, move D1\u2192C1",
-        "MirrorMech, move D5\u2192D7, fire Mirror Shot at C7",
-        "IceMech, move A7\u2192C6"
+        "InfernoMech",
+        "DoubletankMech, move G1\u2192F1, repair",
+        "NapalmMech, move E3\u2192G4, fire Firestorm Generator at G2"
       ]
     },
     {
-      "timestamp": "2026-06-02T12:15:45.468774",
+      "timestamp": "2026-06-19T02:03:20.496567",
+      "turn": 3,
+      "label": "solve",
+      "score": 150810.0,
+      "actions": [
+        "InfernoMech",
+        "DoubletankMech, move G1\u2192F1, repair",
+        "NapalmMech, move E3\u2192G4, fire Firestorm Generator at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T02:03:57.422674",
+      "turn": 3,
+      "label": "solve",
+      "score": 150810.0,
+      "actions": [
+        "InfernoMech",
+        "DoubletankMech, move G1\u2192F1, repair",
+        "NapalmMech, move E3\u2192G4, fire Firestorm Generator at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T02:05:19.022515",
+      "turn": 4,
+      "label": "solve",
+      "score": 149190.0,
+      "actions": [
+        "DoubletankMech, move F1\u2192C2",
+        "NapalmMech, move G4\u2192E6, fire Firestorm Generator at E4",
+        "InfernoMech, move E4\u2192D4, fire Thermal Discharger at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T02:05:45.738327",
+      "turn": 4,
+      "label": "solve",
+      "score": 152012.71427551337,
+      "actions": [
+        "NapalmMech, move G4\u2192E6, fire Firestorm Generator at E4",
+        "InfernoMech, move E4\u2192D4, fire Thermal Discharger at D2",
+        "DoubletankMech, move F1\u2192E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T02:07:16.787483",
+      "turn": 4,
+      "label": "solve",
+      "score": 149190.0,
+      "actions": [
+        "DoubletankMech, move F1\u2192C2",
+        "NapalmMech, move G4\u2192E6, fire Firestorm Generator at E4",
+        "InfernoMech, move E4\u2192D4, fire Thermal Discharger at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T02:14:37.882015",
       "turn": 1,
       "label": "solve",
-      "score": 97649.99999999999,
+      "score": -1135550.0035762787,
       "actions": [
-        "GuardMech, move E5\u2192F5, fire Shield Bash at F4",
-        "IceMech, move D6\u2192E7, fire Cryo-Launcher at E4",
-        "MirrorMech, move F6\u2192F7, fire Mirror Shot at E7"
+        "DoubletankMech, move B6\u2192D8",
+        "NapalmMech, move E6\u2192C8, fire Firestorm Generator at C5",
+        "InfernoMech, fire Thermal Discharger at B5"
       ]
     },
     {
-      "timestamp": "2026-06-02T12:26:16.609275",
-      "turn": 2,
-      "label": "solve",
-      "score": 108739.99999999993,
-      "actions": [
-        "GuardMech, move F5\u2192F3, fire Shield Bash at F2",
-        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E5",
-        "MirrorMech, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T12:27:35.353418",
-      "turn": 3,
-      "label": "solve",
-      "score": 113309.99999999999,
-      "actions": [
-        "GuardMech, fire Shield Bash at E3",
-        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E3",
-        "MirrorMech, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T12:28:29.114473",
-      "turn": 3,
-      "label": "solve",
-      "score": 113309.99999999999,
-      "actions": [
-        "GuardMech, fire Shield Bash at E3",
-        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E3",
-        "MirrorMech, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T12:34:34.089406",
-      "turn": 3,
-      "label": "solve",
-      "score": 113309.99999999999,
-      "actions": [
-        "GuardMech, fire Shield Bash at E3",
-        "IceMech, move D7\u2192E7, fire Cryo-Launcher at E3",
-        "MirrorMech, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T12:36:23.489469",
-      "turn": 4,
-      "label": "solve",
-      "score": 113299.99999999999,
-      "actions": [
-        "GuardMech, move F3\u2192C2, fire Shield Bash at B2",
-        "IceMech, move D7\u2192B7, fire Cryo-Launcher at B2",
-        "MirrorMech, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T12:36:55.699752",
-      "turn": 4,
-      "label": "solve",
-      "score": 113299.99999999999,
-      "actions": [
-        "GuardMech, move F3\u2192C2, fire Shield Bash at B2",
-        "IceMech, move D7\u2192B7, fire Cryo-Launcher at B2",
-        "MirrorMech, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T12:51:35.410416",
-      "turn": 4,
-      "label": "solve",
-      "score": 113409.99999999999,
-      "actions": [
-        "MirrorMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T12:52:55.553767",
-      "turn": 4,
-      "label": "solve",
-      "score": 113409.99999999999,
-      "actions": [
-        "MirrorMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T13:25:32.700795",
+      "timestamp": "2026-06-19T02:18:12.236863",
       "turn": 1,
       "label": "solve",
-      "score": 135450.0,
+      "score": -1135550.0035762787,
       "actions": [
-        "GuardMech, move F5\u2192E5, repair",
-        "MirrorMech, move D6\u2192D7, repair",
-        "IceMech, move C5\u2192C3, fire Cryo-Launcher at C6"
+        "DoubletankMech, move B6\u2192D8",
+        "NapalmMech, move E6\u2192C8, fire Firestorm Generator at C5",
+        "InfernoMech, fire Thermal Discharger at B5"
       ]
     },
     {
-      "timestamp": "2026-06-02T13:27:27.708045",
-      "turn": 2,
-      "label": "solve",
-      "score": 143520.00000000015,
-      "actions": [
-        "GuardMech, fire Shield Bash at E4",
-        "MirrorMech",
-        "IceMech, move C3\u2192C1, fire Cryo-Launcher at C4"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T13:29:08.175763",
-      "turn": 3,
-      "label": "solve",
-      "score": 149840.0,
-      "actions": [
-        "GuardMech, fire Shield Bash at D5",
-        "MirrorMech, move D7\u2192C5, fire Mirror Shot at D5",
-        "IceMech, move C1\u2192D3, fire Cryo-Launcher at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T13:52:11.307172",
-      "turn": 3,
-      "label": "solve",
-      "score": 149760.0,
-      "actions": [
-        "MirrorMech",
-        "IceMech, move C1\u2192D3, fire Cryo-Launcher at D8"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T13:52:25.017922",
-      "turn": 3,
-      "label": "solve",
-      "score": 149760.0,
-      "actions": [
-        "MirrorMech",
-        "IceMech, move C1\u2192D3, fire Cryo-Launcher at D8"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T13:54:03.357861",
-      "turn": 4,
-      "label": "solve",
-      "score": 137221.57142608508,
-      "actions": [
-        "GuardMech",
-        "MirrorMech",
-        "IceMech, move D3\u2192B2, fire Cryo-Launcher at G2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T13:54:41.427298",
-      "turn": 4,
-      "label": "solve",
-      "score": 137221.57142608508,
-      "actions": [
-        "GuardMech",
-        "MirrorMech",
-        "IceMech, move D3\u2192B2, fire Cryo-Launcher at G2"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:09:45.308571",
+      "timestamp": "2026-06-19T02:25:14.317790",
       "turn": 1,
       "label": "solve",
-      "score": 193707.14285714287,
+      "score": -1135550.0035762787,
       "actions": [
-        "IceMech, move F6\u2192C6, fire Cryo-Launcher at G6",
-        "MirrorMech, move D6\u2192C4, fire Mirror Shot at C3",
-        "GuardMech, move C5\u2192D2, fire Shield Bash at C2"
+        "DoubletankMech, move B6\u2192D8",
+        "NapalmMech, move E6\u2192C8, fire Firestorm Generator at C5",
+        "InfernoMech, fire Thermal Discharger at B5"
       ]
     },
     {
-      "timestamp": "2026-06-02T14:10:56.182507",
-      "turn": 2,
-      "label": "solve",
-      "score": 197463.80952380967,
-      "actions": [
-        "GuardMech, move D2\u2192E4, fire Shield Bash at F4",
-        "IceMech, move C6\u2192C5",
-        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:14:06.099799",
-      "turn": 2,
-      "label": "solve",
-      "score": 195763.8095238097,
-      "actions": [
-        "IceMech, move C6\u2192C5",
-        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:16:50.273457",
-      "turn": 2,
-      "label": "solve",
-      "score": 195763.8095238097,
-      "actions": [
-        "IceMech, move C6\u2192C5",
-        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:17:13.902426",
-      "turn": 2,
-      "label": "solve",
-      "score": 195763.8095238097,
-      "actions": [
-        "IceMech, move C6\u2192C5",
-        "MirrorMech, move C4\u2192A5, fire Mirror Shot at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:18:40.302512",
-      "turn": 3,
-      "label": "solve",
-      "score": 199713.42855501175,
-      "actions": [
-        "GuardMech, fire Shield Bash at F4",
-        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
-        "MirrorMech, fire Mirror Shot at A6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:19:16.319457",
-      "turn": 3,
-      "label": "solve",
-      "score": 199713.42855501175,
-      "actions": [
-        "GuardMech, fire Shield Bash at F4",
-        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
-        "MirrorMech, fire Mirror Shot at A6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:32:22.226918",
-      "turn": 3,
-      "label": "solve",
-      "score": 199713.42855501175,
-      "actions": [
-        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
-        "MirrorMech, fire Mirror Shot at A6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:33:35.850415",
-      "turn": 3,
-      "label": "solve",
-      "score": 199713.42855501175,
-      "actions": [
-        "IceMech, move C5\u2192A6, fire Cryo-Launcher at D6",
-        "MirrorMech, fire Mirror Shot at A6"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:34:31.506977",
-      "turn": 4,
-      "label": "solve",
-      "score": 191858.57142857142,
-      "actions": [
-        "GuardMech, move E4\u2192F3, fire Shield Bash at F2",
-        "IceMech, move A7\u2192A4, fire Cryo-Launcher at F4",
-        "MirrorMech, move A5\u2192C4, fire Mirror Shot at B4"
-      ]
-    },
-    {
-      "timestamp": "2026-06-02T14:42:45.001964",
+      "timestamp": "2026-06-19T02:32:49.508795",
       "turn": 1,
       "label": "solve",
-      "score": 108150.0,
+      "score": 114457.14285714286,
       "actions": [
-        "IceMech, move D6\u2192C6, fire Cryo-Launcher at C4",
-        "MirrorMech, move E5\u2192D6, fire Mirror Shot at C6",
-        "GuardMech, move C5\u2192E6, fire Shield Bash at F6"
+        "InfernoMech, move F5\u2192C4, fire Thermal Discharger at C2",
+        "DoubletankMech",
+        "NapalmMech, move D5\u2192F6, fire Firestorm Generator at F4"
       ]
     },
     {
-      "timestamp": "2026-06-02T14:43:37.509557",
+      "timestamp": "2026-06-19T02:33:44.788708",
       "turn": 2,
       "label": "solve",
-      "score": 119540.0,
+      "score": 133363.80952380973,
       "actions": [
-        "GuardMech, move E6\u2192F4, fire Shield Bash at G4",
-        "MirrorMech, move D6\u2192C6",
-        "IceMech"
+        "InfernoMech, move C4\u2192D6",
+        "NapalmMech, move F6\u2192F4, fire Firestorm Generator at F2",
+        "DoubletankMech, move E6\u2192F3"
       ]
     },
     {
-      "timestamp": "2026-06-02T14:45:04.473388",
+      "timestamp": "2026-06-19T02:53:41.634793",
+      "turn": 3,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260619_004557_388_m06_t02_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "blocking": true,
+        "run_id": "20260619_004557_388",
+        "mission_index": 6,
+        "turn": 2,
+        "created_at": "2026-06-19T02:34:54.380080",
+        "source": "record_post_enemy",
+        "record_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\recordings\\20260619_004557_388\\m06_turn_02_post_enemy.json",
+        "reason": null,
+        "deltas": {
+          "buildings_alive_diff": -1,
+          "building_hp_diff": -1,
+          "grid_power_diff": -1,
+          "enemies_alive_diff": 2,
+          "pods_present_diff": 0,
+          "protected_objective_units_alive_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "mech_hp_diff": [
+            {
+              "uid": 0,
+              "type": "InfernoMech",
+              "predicted_hp": 3,
+              "actual_hp": 3,
+              "diff": 0
+            },
+            {
+              "uid": 1,
+              "type": "DoubletankMech",
+              "predicted_hp": 1,
+              "actual_hp": 1,
+              "diff": 0
+            },
+            {
+              "uid": 2,
+              "type": "NapalmMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            }
+          ],
+          "mech_status_diff": [],
+          "unexpected_events": [
+            "Lost 1 unexpected building(s)",
+            "Grid power dropped by 1 unexpectedly"
+          ]
+        },
+        "triggers": [
+          {
+            "trigger": "building_lost_unexpected",
+            "tier": 1,
+            "severity": "critical",
+            "details": "Predicted 7 buildings, actual 6 (-1)"
+          },
+          {
+            "trigger": "grid_power_drop_unexpected",
+            "tier": 1,
+            "severity": "high",
+            "details": "Predicted grid 5, actual 4 (-1)"
+          },
+          {
+            "trigger": "mech_on_danger",
+            "tier": 4,
+            "severity": "critical",
+            "details": "NapalmMech moved to danger tile (4,2)"
+          }
+        ],
+        "actual_outcome": {
+          "buildings_alive": 6,
+          "building_hp_total": 9,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "objective_buildings_targeted": 0,
+          "objective_building_targets": [],
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "grid_power": 4,
+          "enemies_alive": 2,
+          "enemy_hp_total": 6,
+          "mechs_alive": 3,
+          "mech_hp_total": 6,
+          "mech_damage_taken_total": 1,
+          "mech_damage_objective_limit": null,
+          "bigbomb_alive": false,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "InfernoMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 1,
+              "type": "DoubletankMech",
+              "hp": 1,
+              "max_hp": 2
+            },
+            {
+              "uid": 2,
+              "type": "NapalmMech",
+              "hp": 2,
+              "max_hp": 2
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [
+            {
+              "uid": 2,
+              "type": "NapalmMech",
+              "pos": [
+                4,
+                2
+              ],
+              "damage": 1
+            }
+          ],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mission_id": "Mission_Satellite",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 0,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 3,
+          "total_turns": 4,
+          "remaining_spawns": 0,
+          "spawn_points": 4,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0
+        },
+        "predicted_outcome": {
+          "building_hp_total": 10,
+          "buildings_alive": 7,
+          "buildings_destroyed_by_enemies": 0,
+          "enemies_alive": 0,
+          "enemies_killed_by_enemy_phase": 1,
+          "enemies_killed_by_player": 0,
+          "enemies_killed_by_spawn_block": 1,
+          "enemies_killed_total_projected": 2,
+          "enemy_hp_total": 0,
+          "grid_power": 5,
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "InfernoMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 1,
+              "type": "DoubletankMech",
+              "hp": 1,
+              "max_hp": 2
+            },
+            {
+              "uid": 2,
+              "type": "NapalmMech",
+              "hp": 2,
+              "max_hp": 2
+            }
+          ],
+          "mechs_alive": 3,
+          "mission_kills_by_enemy_phase": 1,
+          "mission_kills_by_player": 0,
+          "mission_kills_by_spawn_block": 1,
+          "mission_kills_done_projected": 2,
+          "mission_kills_total_projected": 2,
+          "mission_mountains_destroyed_projected": 0,
+          "bigbomb_alive": false,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "objective_buildings_targeted": 0,
+          "objective_building_targets": [],
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "mech_hp_total": 6,
+          "mech_damage_taken_total": 1,
+          "mech_damage_objective_limit": null,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": false,
+          "mission_id": "Mission_Satellite",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 2,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 3,
+          "total_turns": 4,
+          "remaining_spawns": 1,
+          "spawn_points": 4,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "pods_collected": 0
+        },
+        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
+        "resolved_at": "2026-06-19T02:53:41.634723",
+        "resolve_reason": "Mission_Satellite launch danger resolves after queued attacks; v275 fixes simulator timing and threat audit no longer credits launch death as pre-attack coverage"
+      }
+    },
+    {
+      "timestamp": "2026-06-19T02:54:03.549909",
       "turn": 3,
       "label": "solve",
-      "score": 93784.14286695208,
+      "score": 107914.28571428572,
       "actions": [
-        "GuardMech, fire Shield Bash at G4",
-        "MirrorMech, move C6\u2192C5",
-        "IceMech, move B6\u2192C8"
+        "DoubletankMech, move F3\u2192E1, repair",
+        "NapalmMech, move F4\u2192G1, fire Firestorm Generator at G3",
+        "InfernoMech, move D6\u2192F5, fire Thermal Discharger at F3"
       ]
     },
     {
-      "timestamp": "2026-06-02T14:45:34.267404",
+      "timestamp": "2026-06-19T02:54:31.381399",
       "turn": 3,
       "label": "solve",
-      "score": 93784.14286695208,
+      "score": 107914.28571428572,
       "actions": [
-        "GuardMech, fire Shield Bash at G4",
-        "MirrorMech, move C6\u2192C5",
-        "IceMech, move B6\u2192C8"
+        "DoubletankMech, move F3\u2192E1, repair",
+        "NapalmMech, move F4\u2192G1, fire Firestorm Generator at G3",
+        "InfernoMech, move D6\u2192F5, fire Thermal Discharger at F3"
       ]
+    },
+    {
+      "timestamp": "2026-06-19T02:55:39.706505",
+      "turn": 4,
+      "label": "solve",
+      "score": 50847.00009802409,
+      "actions": [
+        "InfernoMech, move F5\u2192E6, fire Thermal Discharger at E5",
+        "DoubletankMech, move E1\u2192C3",
+        "NapalmMech, move G1\u2192D2, fire Firestorm Generator at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T02:56:58.696780",
+      "turn": 4,
+      "label": "solve",
+      "score": 50847.00009802409,
+      "actions": [
+        "InfernoMech, move F5\u2192E6, fire Thermal Discharger at E5",
+        "DoubletankMech, move E1\u2192C3",
+        "NapalmMech, move G1\u2192D2, fire Firestorm Generator at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:03:29.883485",
+      "turn": 4,
+      "label": "note",
+      "message": "Turn 4 Firestorm desync left extra enemies alive, but fresh read after research shows F4/E5/E2 attacks hit emptied mech tiles and only Scarab B3 still threatens B7, matching the reviewed one-grid dirty consent f4646b581bc41f25; Reset Turn unavailable, proceed to End Turn."
+    },
+    {
+      "timestamp": "2026-06-19T03:14:09.185475",
+      "turn": 1,
+      "label": "solve",
+      "score": -260441.99949789047,
+      "actions": [
+        "InfernoMech, fire Thermal Discharger at E4",
+        "DoubletankMech, move G5\u2192F4",
+        "NapalmMech, move B5\u2192B7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:14:50.694446",
+      "turn": 1,
+      "label": "note",
+      "message": "Relic Preserves turn 1 has no clean candidate among 1000; best exact dirty line a2b003631c502bac predicts grid 3 to 1, one building loss, and train objective loss, but no mech death and nonzero grid. Feed the Flame is the active goal, optional objectives are expendable, and resetting route is no longer available after mission start; accepting this exact dirty line."
+    },
+    {
+      "timestamp": "2026-06-19T03:15:22.674275",
+      "turn": 1,
+      "label": "solve",
+      "score": -260441.99949789047,
+      "actions": [
+        "InfernoMech, fire Thermal Discharger at E4",
+        "DoubletankMech, move G5\u2192F4",
+        "NapalmMech, move B5\u2192B7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:16:26.755922",
+      "turn": 1,
+      "label": "note",
+      "message": "Advancing Relic Preserves turn 1 past THREAT_AUDIT_BLOCKED after screenshot and fresh read review: Reset Turn is greyed out, all mechs are DONE, remaining threats are ordinary buildings G6 and C5, matching the accepted dirty grid loss profile for consent a2b003631c502bac; no mech, generator, or pod is targeted."
+    },
+    {
+      "timestamp": "2026-06-19T03:17:40.333581",
+      "turn": 2,
+      "label": "solve",
+      "score": -31567.28465611594,
+      "actions": [
+        "DoubletankMech, move F4\u2192G3",
+        "InfernoMech, fire Thermal Discharger at F6",
+        "NapalmMech, move B7\u2192C7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:18:33.753026",
+      "turn": 2,
+      "label": "note",
+      "message": "Relic Preserves turn 2 is a non-consentable timeline-collapse state: fresh read shows grid 2 with three building threats, and auto_turn widened frontier reports only grid_timeline_collapse candidates. Abandoning this timeline path rather than executing a dirty plan; will intentionally End Turn and restart the Feed the Flame hunt."
+    },
+    {
+      "timestamp": "2026-06-19T03:33:49.359695",
+      "turn": 1,
+      "label": "solve",
+      "score": 163055.57143148355,
+      "actions": [
+        "DoubletankMech, move C5\u2192D6",
+        "NapalmMech, move F7\u2192C7, fire Firestorm Generator at C5",
+        "InfernoMech, move E5\u2192C5, fire Thermal Discharger at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:34:09.977014",
+      "turn": 1,
+      "label": "note",
+      "message": "OhmTown turn 1 safety block reviewed: selected dirty candidate rank 2 with consent 32ab52fa58c95efa predicts grid 5 to 4 and building HP 12 to 11, no building destroyed, no objective loss, no mech death. Accepting this exact nonfatal grid-loss line for Feed the Flame run survival."
+    },
+    {
+      "timestamp": "2026-06-19T03:34:53.338832",
+      "turn": 1,
+      "label": "solve",
+      "score": 163055.57143148355,
+      "actions": [
+        "DoubletankMech, move C5\u2192D6",
+        "NapalmMech, move F7\u2192C7, fire Firestorm Generator at C5",
+        "InfernoMech, move E5\u2192C5, fire Thermal Discharger at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:36:19.963357",
+      "turn": 2,
+      "label": "solve",
+      "score": 167187.61904761923,
+      "actions": [
+        "InfernoMech, move C5\u2192D3, fire Thermal Discharger at F3",
+        "DoubletankMech",
+        "NapalmMech, move C7\u2192E5, fire Firestorm Generator at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:38:54.687472",
+      "turn": 2,
+      "label": "note",
+      "message": "OhmTown turn 2 Firestorm push_dir fuzzy reviewed after snapshot feed_flame_ohmtown_t2_firestorm_pushdir: research cleared for Scarab1, fresh bridge read shows all mechs DONE, grid 4/7, no threatened buildings, no pending research, and no board uncertainty. Safe to use emitted End Turn click."
+    },
+    {
+      "timestamp": "2026-06-19T03:39:41.235287",
+      "turn": 3,
+      "label": "solve",
+      "score": 167944.28571428574,
+      "actions": [
+        "InfernoMech, move D3\u2192E3, fire Thermal Discharger at C3",
+        "DoubletankMech, move D6\u2192C6",
+        "NapalmMech, move E5\u2192D4, fire Firestorm Generator at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:40:49.232359",
+      "turn": 4,
+      "label": "solve",
+      "score": 115952.00007716246,
+      "actions": [
+        "InfernoMech, move E3\u2192C2, fire Thermal Discharger at B2",
+        "DoubletankMech, move C6\u2192D6",
+        "NapalmMech, move D4\u2192E4, fire Firestorm Generator at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:41:17.379156",
+      "turn": 4,
+      "label": "note",
+      "message": "OhmTown turn 4 safety block reviewed: selected dirty candidate rank 0 with consent daedd9f8bdb0a4e1 predicts ordinary grid/building loss only, grid 4 to 3, buildings alive 8 to 7, building HP 11 to 10, protected objective building remains alive, no mech death, no pending research, no desync. Accepting this exact nonfatal grid-loss line to finish the mission and preserve Feed the Flame run progress."
+    },
+    {
+      "timestamp": "2026-06-19T03:41:51.992350",
+      "turn": 4,
+      "label": "solve",
+      "score": 115952.00007716246,
+      "actions": [
+        "InfernoMech, move E3\u2192C2, fire Thermal Discharger at B2",
+        "DoubletankMech, move C6\u2192D6",
+        "NapalmMech, move D4\u2192E4, fire Firestorm Generator at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:42:16.413896",
+      "turn": 4,
+      "label": "note",
+      "message": "OhmTown turn 4 threat audit block reviewed after executing dirty line daedd9f8bdb0a4e1: fresh bridge read shows all mechs DONE, no desync or research, B3 remains threatened by Mosquito1 and Scorpion1 exactly as predicted, and the safety prediction kept objective_buildings_alive at 1 with objective_buildings_targeted 0. Proceeding with End Turn for the accepted ordinary grid/building loss."
+    },
+    {
+      "timestamp": "2026-06-19T03:49:34.701963",
+      "turn": 1,
+      "label": "solve",
+      "score": 168507.14285714287,
+      "actions": [
+        "InfernoMech, move C5\u2192E4, fire Thermal Discharger at E2",
+        "NapalmMech, move F5\u2192F6, fire Firestorm Generator at D6",
+        "DoubletankMech, move C6\u2192D6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:50:15.419870",
+      "turn": 1,
+      "label": "note",
+      "message": "Archival Flats turn 1 repair-platform damage_amount fuzzy reviewed after snapshot feed_flame_archival_flats_t1_repair_damage_fuzzy: fresh bridge read shows all mechs DONE, Napalm repaired to full, grid 4/7, no threatened buildings, no pending research, and no board uncertainty. Proceeding with emitted End Turn click."
+    },
+    {
+      "timestamp": "2026-06-19T03:51:30.962150",
+      "turn": 2,
+      "label": "solve",
+      "score": 118668.66674425511,
+      "actions": [
+        "InfernoMech, move E4\u2192C4, fire Thermal Discharger at E4",
+        "DoubletankMech",
+        "NapalmMech, move F6\u2192G4, fire Firestorm Generator at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:51:43.141200",
+      "turn": 2,
+      "label": "note",
+      "message": "Archival Flats turn 2 safety block reviewed: selected dirty candidate rank 0 with consent 3d7eafcf5bb1b13a predicts grid 4 to 3 and building HP 13 to 12 only, no building destroyed, no mech death, no objective loss, no pending research or desync. Robust lookahead returns clean next turn. Accepting this exact nonfatal grid-loss line for Feed the Flame run survival."
+    },
+    {
+      "timestamp": "2026-06-19T03:52:27.274312",
+      "turn": 2,
+      "label": "solve",
+      "score": 118668.66674425511,
+      "actions": [
+        "InfernoMech, move E4\u2192C4, fire Thermal Discharger at E4",
+        "DoubletankMech",
+        "NapalmMech, move F6\u2192G4, fire Firestorm Generator at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:53:09.879294",
+      "turn": 2,
+      "label": "note",
+      "message": "Archival Flats turn 2 post-action review: snapshot feed_flame_archival_flats_t2_firestorm_status_fuzzy captured Firestorm status fuzzy; fresh bridge read shows all mechs DONE, no pending research, grid still 4/7 before enemy phase, only F4 threatened by Mosquito1 as predicted by accepted dirty line 3d7eafcf5bb1b13a, and other attacks retargeted nonbuildings. Proceeding with End Turn for accepted one-grid/building-HP loss."
+    },
+    {
+      "timestamp": "2026-06-19T03:54:32.772006",
+      "turn": 3,
+      "label": "solve",
+      "score": 148951.42857142858,
+      "actions": [
+        "InfernoMech, move C4\u2192D4, fire Thermal Discharger at C4",
+        "DoubletankMech, move D6\u2192D5",
+        "NapalmMech, move G4\u2192H2, fire Firestorm Generator at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:56:06.998231",
+      "turn": 4,
+      "label": "solve",
+      "score": 97187.00011777878,
+      "actions": [
+        "NapalmMech, move H2\u2192F2, fire Firestorm Generator at D2",
+        "InfernoMech, move D4\u2192E4, fire Thermal Discharger at C4",
+        "DoubletankMech, move D6\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:56:19.827208",
+      "turn": 4,
+      "label": "note",
+      "message": "Archival Flats turn 4 safety block reviewed: selected dirty candidate rank 0 with consent 69f5d329d09bb811 predicts grid 3 to 2 and building HP 12 to 11 only, no building destroyed, no mech death, no objective loss, and take-less-than-3-grid-damage objective remains within limit for the mission. Feed-looking C-column was out of unupgraded Firestorm range, so accepting this exact nonfatal grid-loss line to finish the mission."
+    },
+    {
+      "timestamp": "2026-06-19T03:57:03.769632",
+      "turn": 4,
+      "label": "solve",
+      "score": 97187.00011777878,
+      "actions": [
+        "NapalmMech, move H2\u2192F2, fire Firestorm Generator at D2",
+        "InfernoMech, move D4\u2192E4, fire Thermal Discharger at C4",
+        "DoubletankMech, move D6\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:57:55.641924",
+      "turn": 4,
+      "label": "solve",
+      "score": 97187.00011777878,
+      "actions": [
+        "InfernoMech, move D4\u2192E4, fire Thermal Discharger at C4",
+        "DoubletankMech, move D6\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:58:06.383182",
+      "turn": 4,
+      "label": "note",
+      "message": "Archival Flats turn 4 partial-turn re-solve reviewed after snapshot feed_flame_archival_flats_t4_partial_firestorm_status_stop: Napalm is DONE at F2 after Firestorm status fuzzy, fresh solve for remaining Inferno/Doubletank selects dirty consent 943894aa0ade693a with grid 3 to 2 and building HP 12 to 11 only, no building destroyed, no mech death, and no objective loss. Proceeding with this exact current-board line."
+    },
+    {
+      "timestamp": "2026-06-19T03:58:40.950233",
+      "turn": 4,
+      "label": "solve",
+      "score": 97187.00011777878,
+      "actions": [
+        "InfernoMech, move D4\u2192E4, fire Thermal Discharger at C4",
+        "DoubletankMech, move D6\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:59:23.774512",
+      "turn": 4,
+      "label": "solve",
+      "score": 93357.00011777878,
+      "actions": [
+        "DoubletankMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T03:59:36.544825",
+      "turn": 4,
+      "label": "note",
+      "message": "Archival Flats turn 4 one-mech re-solve reviewed after snapshot feed_flame_archival_flats_t4_partial_inferno_status_stop: only Doubletank remains active, solve selects dirty consent 93400271cc921ce8 with grid 3 to 2 and building HP 12 to 11 only, no building destroyed, no mech death, and no objective loss. Proceeding with this exact current-board one-mech line."
+    },
+    {
+      "timestamp": "2026-06-19T04:00:04.391499",
+      "turn": 4,
+      "label": "solve",
+      "score": 93357.00011777878,
+      "actions": [
+        "DoubletankMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:00:28.413774",
+      "turn": 4,
+      "label": "note",
+      "message": "Archival Flats turn 4 final threat audit reviewed: fresh bridge read shows all mechs DONE, no pending research or desync, grid still 3/7 before enemy phase, and only B4 is threatened by Mosquito1 exactly as accepted in dirty consent 93400271cc921ce8. Proceeding with End Turn for the accepted one-grid/building-HP loss."
+    },
+    {
+      "timestamp": "2026-06-19T04:09:47.872733",
+      "turn": 1,
+      "label": "solve",
+      "score": 101642.85714285716,
+      "actions": [
+        "DoubletankMech, move C6\u2192D4",
+        "NapalmMech, move D5\u2192F6, fire Firestorm Generator at F4",
+        "InfernoMech, move F5\u2192F4, fire Thermal Discharger at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:11:49.238638",
+      "turn": 2,
+      "label": "solve",
+      "score": 100199.52380952376,
+      "actions": [
+        "DoubletankMech, move D4\u2192C5",
+        "InfernoMech, move F4\u2192F3, fire Thermal Discharger at F5",
+        "NapalmMech, move F6\u2192F4, fire Firestorm Generator at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:13:51.737102",
+      "turn": 3,
+      "label": "solve",
+      "score": 119497.85714285716,
+      "actions": [
+        "InfernoMech, fire Thermal Discharger at F2",
+        "Archive_Tank, move D4\u2192D6, fire Stock Cannon at D5",
+        "DoubletankMech",
+        "Archive_Tank, move C3\u2192D4, fire Stock Cannon at D3",
+        "NapalmMech, move F4\u2192D3, fire Firestorm Generator at B3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:15:49.012291",
+      "turn": 4,
+      "label": "solve",
+      "score": 126762.85714285716,
+      "actions": [
+        "Archive_Tank, move D6\u2192E3, fire Stock Cannon at E2",
+        "Archive_Tank, move D4\u2192E2, fire Stock Cannon at E1",
+        "NapalmMech, move D3\u2192D4",
+        "InfernoMech, move F3\u2192F4, repair",
+        "DoubletankMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:16:42.689717",
+      "turn": 4,
+      "label": "solve",
+      "score": 118052.85714285716,
+      "actions": [
+        "InfernoMech, move F3\u2192F2, fire Thermal Discharger at F1",
+        "DoubletankMech",
+        "NapalmMech, move D3\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:17:11.200074",
+      "turn": 4,
+      "label": "solve",
+      "score": 118052.85714285716,
+      "actions": [
+        "InfernoMech, move F3\u2192F2, fire Thermal Discharger at F1",
+        "DoubletankMech",
+        "NapalmMech, move D3\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:32:03.542741",
+      "turn": 1,
+      "label": "solve",
+      "score": 126750.00000000003,
+      "actions": [
+        "DoubletankMech, move E5\u2192C7",
+        "NapalmMech, move B6\u2192B2, fire Firestorm Generator at D2",
+        "InfernoMech, move C5\u2192C2, fire Thermal Discharger at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:33:56.022201",
+      "turn": 2,
+      "label": "solve",
+      "score": 113800.00000000003,
+      "actions": [
+        "InfernoMech, move C2\u2192B4, repair",
+        "DoubletankMech, move C7\u2192C6",
+        "NapalmMech, move B2\u2192B3, fire Firestorm Generator at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:36:12.224582",
+      "turn": 3,
+      "label": "solve",
+      "score": 93780.00000000003,
+      "actions": [
+        "InfernoMech, move B4\u2192C3, fire Thermal Discharger at C2",
+        "DoubletankMech, move C6\u2192B6",
+        "NapalmMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:36:48.726084",
+      "turn": 3,
+      "label": "solve",
+      "score": 93780.00000000003,
+      "actions": [
+        "InfernoMech, move B4\u2192C3, fire Thermal Discharger at C2",
+        "DoubletankMech, move C6\u2192B6",
+        "NapalmMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:45:44.646075",
+      "turn": 1,
+      "label": "solve",
+      "score": 102500.0,
+      "actions": [
+        "NapalmMech, move D7\u2192D3, fire Firestorm Generator at B3",
+        "InfernoMech, move D5\u2192D7, fire Thermal Discharger at E7",
+        "DoubletankMech, move E5\u2192E1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:47:38.498028",
+      "turn": 2,
+      "label": "solve",
+      "score": 105836.66666666658,
+      "actions": [
+        "DoubletankMech, repair",
+        "NapalmMech, move D3\u2192E3, fire Firestorm Generator at E5",
+        "InfernoMech, move E7\u2192E5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:49:39.394734",
+      "turn": 3,
+      "label": "solve",
+      "score": 134295.0,
+      "actions": [
+        "DoubletankMech, move E1\u2192D4, repair",
+        "NapalmMech, move E3\u2192E7, fire Firestorm Generator at E5",
+        "InfernoMech, move E4\u2192D2, fire Thermal Discharger at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:51:23.511624",
+      "turn": 4,
+      "label": "solve",
+      "score": 125575.0,
+      "actions": [
+        "InfernoMech, fire Thermal Discharger at D4",
+        "DoubletankMech, move D4\u2192D5, repair",
+        "NapalmMech, move E7\u2192E4, fire Firestorm Generator at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T04:52:06.735838",
+      "turn": 4,
+      "label": "solve",
+      "score": 125575.0,
+      "actions": [
+        "InfernoMech, fire Thermal Discharger at D4",
+        "DoubletankMech, move D4\u2192D5, repair",
+        "NapalmMech, move E7\u2192E4, fire Firestorm Generator at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:14:46.173794",
+      "turn": 1,
+      "label": "solve",
+      "score": 112059.42858512061,
+      "actions": [
+        "Acid_Tank",
+        "DoubletankMech",
+        "NapalmMech, move F7\u2192E5, fire Firestorm Generator at E3",
+        "InfernoMech, move F6\u2192E4, fire Thermal Discharger at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:15:47.828395",
+      "turn": 1,
+      "label": "solve",
+      "score": 112059.42858512061,
+      "actions": [
+        "Acid_Tank",
+        "DoubletankMech",
+        "NapalmMech, move F7\u2192E5, fire Firestorm Generator at E3",
+        "InfernoMech, move F6\u2192E4, fire Thermal Discharger at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:16:58.190588",
+      "turn": 2,
+      "label": "solve",
+      "score": 119097.61904761897,
+      "actions": [
+        "Acid_Tank, move G5\u2192H4, fire A.C.I.D. Cannon at G4",
+        "InfernoMech, fire Thermal Discharger at G4",
+        "DoubletankMech",
+        "NapalmMech, move E5\u2192G5, fire Firestorm Generator at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:18:25.576305",
+      "turn": 3,
+      "label": "solve",
+      "score": 118736.5714715549,
+      "actions": [
+        "Acid_Tank",
+        "InfernoMech, move E4\u2192E3, fire Thermal Discharger at C3",
+        "DoubletankMech",
+        "NapalmMech, fire Firestorm Generator at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:19:30.538008",
+      "turn": 3,
+      "label": "solve",
+      "score": 118736.5714715549,
+      "actions": [
+        "Acid_Tank",
+        "InfernoMech, move E4\u2192E3, fire Thermal Discharger at C3",
+        "DoubletankMech",
+        "NapalmMech, fire Firestorm Generator at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:20:31.965963",
+      "turn": 3,
+      "label": "solve",
+      "score": 118736.5714715549,
+      "actions": [
+        "InfernoMech, fire Thermal Discharger at C3",
+        "DoubletankMech",
+        "NapalmMech, fire Firestorm Generator at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:21:23.330942",
+      "turn": 3,
+      "label": "solve",
+      "score": 118736.5714715549,
+      "actions": [
+        "InfernoMech, fire Thermal Discharger at C3",
+        "DoubletankMech",
+        "NapalmMech, fire Firestorm Generator at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:22:53.667538",
+      "turn": 4,
+      "label": "solve",
+      "score": 59532.0000971726,
+      "actions": [
+        "Acid_Tank",
+        "InfernoMech, move E3\u2192E5, fire Thermal Discharger at C5",
+        "DoubletankMech",
+        "NapalmMech, move G5\u2192D6, fire Firestorm Generator at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:25:12.737435",
+      "turn": 4,
+      "label": "solve",
+      "score": 59532.0000971726,
+      "actions": [
+        "Acid_Tank",
+        "InfernoMech, move E3\u2192E5, fire Thermal Discharger at C5",
+        "DoubletankMech",
+        "NapalmMech, move G5\u2192D6, fire Firestorm Generator at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:32:18.994404",
+      "turn": 1,
+      "label": "solve",
+      "score": 114414.28571428574,
+      "actions": [
+        "DoubletankMech, move D7\u2192C5",
+        "NapalmMech, move G6\u2192G5, fire Firestorm Generator at D5",
+        "InfernoMech, move D6\u2192D5, fire Thermal Discharger at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:37:45.625414",
+      "turn": 1,
+      "label": "note",
+      "message": "Accepted The Heap turn 1 threat-audit block after reset probe failed: shielded Mosquito1 at E5 still targets ordinary E4, all mechs DONE, no objective/pod/pylon/mech risk, grid 3 to expected 2 remains above zero."
+    },
+    {
+      "timestamp": "2026-06-19T05:38:58.485163",
+      "turn": 2,
+      "label": "solve",
+      "score": 127010.95238095263,
+      "actions": [
+        "NapalmMech, fire Firestorm Generator at D5",
+        "InfernoMech, move C5\u2192B4, fire Thermal Discharger at D4",
+        "DoubletankMech, move B5\u2192C5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:40:16.003910",
+      "turn": 3,
+      "label": "solve",
+      "score": 134454.28571428574,
+      "actions": [
+        "InfernoMech, move B4\u2192D5, repair",
+        "DoubletankMech, move B5\u2192C5",
+        "NapalmMech, move E5\u2192D4, fire Firestorm Generator at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:41:15.077954",
+      "turn": 4,
+      "label": "solve",
+      "score": 111734.28571428574,
+      "actions": [
+        "DoubletankMech, move B5\u2192B4",
+        "NapalmMech, move D4\u2192E3, fire Firestorm Generator at G3",
+        "InfernoMech, move C5\u2192D5, fire Thermal Discharger at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:41:58.704232",
+      "turn": 4,
+      "label": "solve",
+      "score": 111734.28571428574,
+      "actions": [
+        "DoubletankMech, move B5\u2192B4",
+        "NapalmMech, move D4\u2192E3, fire Firestorm Generator at G3",
+        "InfernoMech, move C5\u2192D5, fire Thermal Discharger at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:50:53.752303",
+      "turn": 1,
+      "label": "solve",
+      "score": 227042.85714285716,
+      "actions": [
+        "InfernoMech, move D6\u2192E5, fire Thermal Discharger at E3",
+        "DoubletankMech, move F5\u2192F3",
+        "NapalmMech, move C5\u2192D6, fire Firestorm Generator at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:52:25.480762",
+      "turn": 2,
+      "label": "solve",
+      "score": 94476.19047619042,
+      "actions": [
+        "DoubletankMech, move F3\u2192D3, repair",
+        "InfernoMech, move E5\u2192H5, fire Thermal Discharger at H3",
+        "NapalmMech, move D6\u2192F5, fire Firestorm Generator at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:54:04.541740",
+      "turn": 3,
+      "label": "solve",
+      "score": 82757.85714285716,
+      "actions": [
+        "InfernoMech, move H5\u2192E5",
+        "DoubletankMech, move D3\u2192D4, repair",
+        "NapalmMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:56:02.228481",
+      "turn": 4,
+      "label": "solve",
+      "score": -67786.57117182868,
+      "actions": [
+        "DoubletankMech",
+        "NapalmMech, move F5\u2192C5, fire Firestorm Generator at E5",
+        "InfernoMech, move F5\u2192H4, fire Thermal Discharger at H2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:56:59.194820",
+      "turn": 4,
+      "label": "solve",
+      "score": -69841.57117182868,
+      "actions": [
+        "DoubletankMech, move D4\u2192C5",
+        "NapalmMech, move F5\u2192H4, fire Firestorm Generator at E4",
+        "InfernoMech, move E5\u2192F3, fire Thermal Discharger at H3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:58:01.542132",
+      "turn": 4,
+      "label": "solve",
+      "score": -69841.57117182868,
+      "actions": [
+        "DoubletankMech, move D4\u2192C5",
+        "NapalmMech, move F5\u2192H4, fire Firestorm Generator at E4",
+        "InfernoMech, move E5\u2192F3, fire Thermal Discharger at H3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-19T05:58:33.231708",
+      "turn": 4,
+      "label": "note",
+      "message": "Accepted Downtown final turn dirty rank 39: Firefly1 at C3 still targets ordinary B3, matching predicted one grid/building HP loss 2 to 1, while G4 threats are covered and no objective/pod/pylon/mech loss is predicted."
     }
   ],
   "recorded_post_enemy_turns": [
     [
-      0,
+      1,
       1
     ],
     [
-      0,
+      1,
       2
     ],
     [
-      0,
+      1,
       3
     ],
     [
@@ -573,16 +1338,16 @@
       2
     ],
     [
+      2,
+      3
+    ],
+    [
       3,
       1
     ],
     [
       3,
       2
-    ],
-    [
-      3,
-      3
     ],
     [
       4,
@@ -593,15 +1358,7 @@
       2
     ],
     [
-      5,
-      1
-    ],
-    [
-      5,
-      2
-    ],
-    [
-      5,
+      4,
       3
     ],
     [
@@ -619,14 +1376,6 @@
     [
       7,
       1
-    ],
-    [
-      7,
-      2
-    ],
-    [
-      7,
-      3
     ],
     [
       8,
@@ -635,46 +1384,134 @@
     [
       8,
       2
+    ],
+    [
+      8,
+      3
+    ],
+    [
+      9,
+      1
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      9,
+      3
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
+      3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      12,
+      2
+    ],
+    [
+      14,
+      1
+    ],
+    [
+      14,
+      2
+    ],
+    [
+      14,
+      3
+    ],
+    [
+      15,
+      1
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      15,
+      3
+    ],
+    [
+      16,
+      1
+    ],
+    [
+      16,
+      2
+    ],
+    [
+      16,
+      3
     ]
   ],
   "post_enemy_block": null,
   "dirty_consent_used": [
-    "d516ea759b703c51",
-    "7800855dfe40f6f2",
-    "3bd6b25901f624ac",
-    "1f861f8cb812d051",
-    "2e4e4c40908376a5",
-    "601622fe157d27c6",
-    "833c22645abffc5c"
+    "f4646b581bc41f25",
+    "a2b003631c502bac",
+    "32ab52fa58c95efa",
+    "daedd9f8bdb0a4e1",
+    "3d7eafcf5bb1b13a",
+    "69f5d329d09bb811",
+    "943894aa0ade693a",
+    "93400271cc921ce8",
+    "1e1802e995a0b79c",
+    "84d93df40879672c",
+    "87c032d884bdfc54",
+    "e232d2a4ce1fe4ba",
+    "c3b6284fa5459188"
   ],
   "tags": [
-    "achievement"
+    "achievement",
+    "feed_the_flame"
   ],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "terrain",
       "categories": [
-        "status"
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Prime_ShieldBash|attack",
+      "signature": "terrain|Prime_Flamespreader|move",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.4,
+      "confidence": 0.3,
       "context": {
         "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Prime_ShieldBash",
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Prime_Flamespreader",
         "target": [
-          3,
-          4
+          4,
+          6
         ]
       }
     },
@@ -683,11 +1520,68 @@
       "top_category": "status",
       "categories": [
         "status",
-        "terrain"
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
+      "signature": "status|Science_RainingFire|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Science_RainingFire",
+        "target": [
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "damage_amount",
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_RainingFire|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Science_RainingFire",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Science_RainingFire|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -699,65 +1593,66 @@
         "sub_action": "attack",
         "action_index": 2,
         "turn": 2,
-        "weapon": "Ranged_Ice",
+        "weapon": "Science_RainingFire",
         "target": [
-          6,
-          6
+          5,
+          3
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "damage_amount",
       "categories": [
+        "damage_amount",
+        "repair_platform"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_RainingFire|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Science_RainingFire",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "repair_platform",
         "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Prime_ShieldBash|attack",
-      "frequency": 1,
+      "signature": "damage_amount|Science_RainingFire|attack",
+      "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
-        "mech_uid": 0,
+        "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Prime_ShieldBash",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Science_RainingFire",
         "target": [
-          6,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "spawn",
-        "status",
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Prime_ShieldBash|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "Prime_ShieldBash",
-        "target": [
-          3,
+          2,
           4
         ]
       }
@@ -770,8 +1665,145 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Prime_ShieldBash|attack",
+      "signature": "status|Science_RainingFire|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_RainingFire",
+        "target": [
+          6,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_RainingFire|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Science_RainingFire",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Flamespreader|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Flamespreader",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_RainingFire|attack",
       "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Science_RainingFire",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_RainingFire|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_RainingFire",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Flamespreader|attack",
+      "frequency": 1,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
@@ -782,22 +1814,132 @@
         "sub_action": "attack",
         "action_index": 0,
         "turn": 3,
-        "weapon": "Prime_ShieldBash",
+        "weapon": "Prime_Flamespreader",
         "target": [
-          4,
+          6,
           2
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "grid_power",
+      "top_category": "damage_amount",
       "categories": [
-        "grid_power"
+        "damage_amount"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "grid_power|Brute_Mirrorshot|attack",
+      "signature": "damage_amount|Deploy_TankShot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1221,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Deploy_TankShot",
+        "target": [
+          7,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Flamespreader|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Flamespreader",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "spawn",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Prime_Flamespreader|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Flamespreader",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Flamespreader|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Flamespreader",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|_REPAIR|repair",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -805,14 +1947,41 @@
       "confidence": 0.4,
       "context": {
         "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
+        "phase": "repair",
+        "sub_action": "repair",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "_REPAIR",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|_REPAIR|repair",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "repair",
+        "sub_action": "repair",
         "action_index": 1,
         "turn": 3,
-        "weapon": "Brute_Mirrorshot",
+        "weapon": "_REPAIR",
         "target": [
-          2,
-          7
+          4,
+          4
         ]
       }
     }
@@ -820,147 +1989,180 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "GuardMech",
+      "type": "InfernoMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Satellite",
-      "first_seen_turn": 0,
-      "attempts": 1,
+      "mission_id": "Mission_ForestFire",
+      "first_seen_turn": 1,
+      "attempts": 0,
       "status": "done",
       "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Aegis Mech",
-            "hp": 0,
-            "move": 4,
-            "class_icons": [],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": "Coral",
-            "weapon_slot_count": 2,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Aegis Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Aegis+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Aegis+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "bf72df22f08b",
-      "last_kind": "mech"
+        "source": "manual_resolved",
+        "reason": "Known player mech type already covered in data known_types and solver model; stale current-board research queue item.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
     },
     {
-      "type": "MirrorMech",
+      "type": "DoubletankMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Satellite",
-      "first_seen_turn": 0,
-      "attempts": 1,
+      "mission_id": "Mission_ForestFire",
+      "first_seen_turn": 1,
+      "attempts": 0,
       "status": "done",
       "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Mirror Mech",
-            "hp": 0,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": "Stefan Tigani",
-            "weapon_slot_count": 2,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Mirror Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Mirror+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Mirror+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "0f34dec75851",
-      "last_kind": "mech"
+        "source": "manual_resolved",
+        "reason": "Known player mech type already covered in data known_types and solver model; stale current-board research queue item.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
     },
     {
-      "type": "IceMech",
+      "type": "NapalmMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Satellite",
-      "first_seen_turn": 0,
-      "attempts": 1,
+      "mission_id": "Mission_ForestFire",
+      "first_seen_turn": 1,
+      "attempts": 0,
       "status": "done",
       "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Ice Mech",
-            "hp": 0,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": "Charlie Ferry",
-            "weapon_slot_count": 2,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Ice Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Ice+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Ice+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "01832994e635",
-      "last_kind": "mech"
+        "source": "manual_resolved",
+        "reason": "Known player mech type already covered in data known_types and solver model; stale current-board research queue item.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
     },
     {
-      "type": "Moth1",
+      "type": "Bouncer1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_Armored_Train",
-      "first_seen_turn": 2,
+      "mission_id": "Mission_Satellite",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Bouncer",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Bouncer",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Bouncer",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Bouncer&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "eace155b9575",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Jelly_Boost1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Satellite",
+      "first_seen_turn": 4,
       "attempts": 0,
       "status": "done",
       "result": {
         "source": "auto_resolved",
         "reason": "low_severity_known_type",
-        "diff_field": "status.fire",
-        "diff_predicted": false,
-        "diff_actual": true
+        "diff_field": "hp",
+        "diff_predicted": 1,
+        "diff_actual": 2
       },
-      "diff_field": "status.fire",
-      "diff_predicted": false,
-      "diff_actual": true,
+      "diff_field": "hp",
+      "diff_predicted": 1,
+      "diff_actual": 2,
       "severity": "low"
     },
     {
-      "type": "Firefly1",
+      "type": "Scarab1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_CentipedeBoss",
-      "first_seen_turn": 4,
+      "mission_id": "Mission_Survive",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Scarab",
+            "hp": 2,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Scarab",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Scarab",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Scarab&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        6,
+        3
+      ],
+      "diff_actual": [
+        5,
+        3
+      ],
+      "severity": "medium",
+      "research_id": "d6ae15197a92",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Mosquito1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Tanks",
+      "first_seen_turn": 1,
       "attempts": 0,
       "status": "done",
       "result": {
@@ -980,31 +2182,29 @@
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_Crack",
-      "first_seen_turn": 3,
-      "attempts": 1,
+      "mission_id": "Mission_Tanks",
+      "first_seen_turn": 2,
+      "attempts": 0,
       "status": "done",
       "result": {
-        "source": "manual_resolved",
-        "reason": "stale after verified Shield Bash kill; no researchable Scorpion remains on current board",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "missing_in_actual",
-        "diff_predicted": "present",
-        "diff_actual": "absent"
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "status.fire",
+        "diff_predicted": false,
+        "diff_actual": true
       },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium"
+      "diff_field": "status.fire",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "low"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "ce13b537233941bd",
-    "classes": "sbgwwgbggggbbggggggggggggbwgggsgggsssibssgggggggmgggggsmwmgsggmw",
-    "mission_index": 8,
-    "turn": 3
+    "hash": "191343c813a39503",
+    "classes": "mgggggggggbgbbbgggbgggggggggwggggbggggggggggggbmggggwgmmmgggggmc",
+    "mission_index": 16,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }
