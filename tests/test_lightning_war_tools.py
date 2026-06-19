@@ -11711,6 +11711,35 @@ def test_lightning_speed_loss_policy_rejects_nonlethal_mech_hp_loss():
     assert commands._allow_lightning_war_speed_loss(session, plan_safety) is False
 
 
+@pytest.mark.parametrize("kind", ["mech_hp_loss", "mech_fire"])
+def test_lightning_speed_loss_policy_rejects_nonblocking_mech_debt(kind):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    plan_safety = {
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": kind, "blocking": False},
+        ],
+        "current": {
+            "grid_power": 3,
+            "mech_hp_total": 8,
+            "mechs_fire": [],
+        },
+        "predicted": {
+            "grid_power": 2,
+            "mech_hp_total": 7,
+            "mechs_fire": [{"uid": 1}],
+        },
+    }
+
+    assert commands._allow_lightning_war_speed_loss(session, plan_safety) is False
+
+
 def test_lightning_speed_policy_satisfies_threat_audit_without_dirty_consent():
     session = RunSession(
         run_id="lw",

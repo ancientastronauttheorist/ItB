@@ -717,6 +717,16 @@ _LIGHTNING_SPEED_LOSS_KINDS = (
     | POD_LOSS_DIRTY_KINDS
 )
 
+_LIGHTNING_SPEED_FORBIDDEN_MECH_DEBT_KINDS = {
+    "mech_acid",
+    "mech_disabled",
+    "mech_fire",
+    "mech_hp_loss",
+    "mech_lost",
+    "mech_on_danger",
+    "mech_webbed",
+}
+
 
 def _blocking_plan_safety_kinds(plan_safety: dict | None) -> set[str]:
     if not isinstance(plan_safety, dict):
@@ -725,6 +735,16 @@ def _blocking_plan_safety_kinds(plan_safety: dict | None) -> set[str]:
         str(v.get("kind"))
         for v in plan_safety.get("violations", []) or []
         if isinstance(v, dict) and v.get("blocking") and v.get("kind")
+    }
+
+
+def _plan_safety_violation_kinds(plan_safety: dict | None) -> set[str]:
+    if not isinstance(plan_safety, dict):
+        return set()
+    return {
+        str(v.get("kind"))
+        for v in plan_safety.get("violations", []) or []
+        if isinstance(v, dict) and v.get("kind")
     }
 
 
@@ -748,6 +768,10 @@ def _allow_lightning_war_speed_loss(
     if "lightning war" not in _target_names(session):
         return False
     if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
+        return False
+    if _plan_safety_violation_kinds(plan_safety) & (
+        _LIGHTNING_SPEED_FORBIDDEN_MECH_DEBT_KINDS
+    ):
         return False
     blocking_kinds = _blocking_plan_safety_kinds(plan_safety)
     if not blocking_kinds or not blocking_kinds <= _LIGHTNING_SPEED_LOSS_KINDS:
@@ -2908,6 +2932,7 @@ def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
 
 
 _ZERO_MECH_DAMAGE_ACHIEVEMENTS = {
+    "lightning war",
     "perfect battle",
     "untouchable",
 }
@@ -2957,7 +2982,7 @@ def _blocks_mech_hp_loss_for_perfect_battle(session: RunSession | None) -> bool:
 
 
 def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
-    """Hard/Hard Victory runs should not accept new fire/web status debt."""
+    """Runs with strict mech safety should not accept new fire/web status debt."""
     if session is None:
         return False
     targets = {str(t).strip().lower() for t in (session.achievement_targets or [])}
@@ -2965,6 +2990,7 @@ def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
     return (
         int(getattr(session, "difficulty", 0) or 0) >= 2
         or "hard victory" in targets
+        or "lightning war" in targets
         or "hard_victory" in tags
     )
 
