@@ -252,6 +252,7 @@ fn apply_env_danger(
     lethal: bool,
     flying_immune: bool,
     flying_immune_damage: u8,
+    skip_enemy_units: bool,
     result: &mut ActionResult,
 ) {
     // Damage unit if present. Track whether an enemy died so we can run
@@ -260,7 +261,7 @@ fn apply_env_danger(
     let mut enemy_died_idx: Option<usize> = None;
     if let Some(uidx) = board.unit_at(x, y) {
         let unit = &mut board.units[uidx];
-        if unit.hp > 0 {
+        if unit.hp > 0 && !(skip_enemy_units && unit.is_enemy()) {
             // Tidal/Cataclysm/Seismic spare effectively-flying units. Massive
             // non-flying still die: water-conversion is destroy-not-drown per
             // project convention; chasm rules ignore Massive.
@@ -382,6 +383,11 @@ fn apply_env_danger(
 
 fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
     let flying_immune_damage = if board.mission_id == "Mission_Tides" { 1 } else { 0 };
+    // Live Mission_Satellite launches have enough timing/displacement nuance
+    // that treating marked tiles as reliable pre-attack enemy kills is unsafe.
+    // Keep them dangerous for player units/buildings, but let queued Vek attacks
+    // resolve instead of crediting speculative enemy deaths.
+    let skip_enemy_units = board.mission_id == "Mission_Satellite";
     for tile_idx in 0usize..64 {
         if board.env_danger & (1u64 << tile_idx) == 0 { continue; }
         let (x, y) = idx_to_xy(tile_idx);
@@ -395,6 +401,7 @@ fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
             lethal,
             flying_immune,
             flying_immune_damage,
+            skip_enemy_units,
             result,
         );
     }

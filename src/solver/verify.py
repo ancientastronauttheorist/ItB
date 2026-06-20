@@ -1336,7 +1336,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # credit. Fixes Bombermechs Complete Victory run 20260619_234224_725
 # Mission_Dam turn 1, where live washed away a pod at (4,5) but Rust kept
 # has_pod=True. Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
-SIMULATOR_VERSION = 270
+# v271 - Mission_Satellite launch danger is no longer trusted as reliable
+# pre-attack enemy kill coverage. The live launch can preserve or displace a
+# queued Vek, so projections and threat audit must not clear building threats
+# solely because an attacker stands on a launch marker. Pre-v271 corpus
+# archived as failure_db_snapshot_sim_v270.jsonl.
+SIMULATOR_VERSION = 271
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -12510,6 +12510,51 @@ mod tests {
     }
 
     #[test]
+    fn test_satellite_launch_danger_does_not_prevent_queued_enemy_attack() {
+        // Bombermechs Complete Victory run 20260620_065709_879,
+        // Mission_Satellite turn 2. A 1 HP Scorpion stood on a launch marker
+        // at G5 and targeted the G6 building. Live play still lost that grid
+        // and the Scorpion survived/displaced, so satellite launch markers must
+        // not be credited as reliable pre-attack enemy kills.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+
+        let json = r#"{
+          "mission_id": "Mission_Satellite",
+          "tiles": [
+            {"x": 2, "y": 1, "terrain": "building", "terrain_id": 1, "building_hp": 1}
+          ],
+          "units": [
+            {"uid": 2171, "type": "Scorpion1", "x": 3, "y": 1,
+             "hp": 1, "max_hp": 3, "team": 6, "pushable": true,
+             "weapons": ["ScorpionAtk1"], "weapon_damage": 1,
+             "has_queued_attack": true, "queued_target": [2, 1]}
+          ],
+          "grid_power": 5,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[3, 1, 1, 1, 1]],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[0].hp, 1, "satellite marker must not kill attacker");
+        assert_eq!(board.tile(2, 1).building_hp, 0, "queued Scorpion attack lands");
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
     fn test_env_danger_v2_legacy_4field_falls_back_to_env_type() {
         // Older recordings emit only 4 fields. Fallback path: when 5th is
         // missing, derive flying_immune from `env_type`.
