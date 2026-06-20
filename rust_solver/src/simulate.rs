@@ -1715,6 +1715,10 @@ pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     tile.terrain = Terrain::Water;
     tile.set_cracked(false);
     tile.set_on_fire(false);
+    if tile.has_pod() {
+        tile.set_has_pod(false);
+        result.events.push(format!("pod_destroyed_by_flood:{}:{}", x, y));
+    }
 
     if let Some(idx) = board.unit_at(x, y) {
         let drowns = {
@@ -6836,6 +6840,20 @@ mod tests {
         assert!(!board.tile(3, 4).has_pod());
         assert_eq!(result.pods_collected, 0);
         assert!(result.events.iter().any(|e| e == "pod_destroyed_by_damage:3:4"));
+    }
+
+    #[test]
+    fn test_dam_flood_destroys_time_pod_without_collecting() {
+        let mut board = make_test_board();
+        board.tile_mut(4, 5).set_has_pod(true);
+
+        let mut result = ActionResult::default();
+        flood_tile(&mut board, 4, 5, &mut result);
+
+        assert_eq!(board.tile(4, 5).terrain, Terrain::Water);
+        assert!(!board.tile(4, 5).has_pod());
+        assert_eq!(result.pods_collected, 0);
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_flood:4:5"));
     }
 
     #[test]

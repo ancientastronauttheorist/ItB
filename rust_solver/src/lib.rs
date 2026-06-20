@@ -1838,7 +1838,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Discharger, and Firestorm Generator IDs, line/fire simulation, and the
 //   Feed the Flame fresh-ignition achievement event. Pre-v269 corpus archived
 //   as failure_db_snapshot_sim_v268.jsonl.
-pub const SIMULATOR_VERSION: u32 = 269;
+// v270 - Dam flood destroys Time Pods on flooded tiles without collection
+//   credit. Fixes Bombermechs Complete Victory run 20260619_234224_725
+//   Mission_Dam turn 1, where live washed away a pod at (4,5) but Rust kept
+//   has_pod=true. Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
+pub const SIMULATOR_VERSION: u32 = 270;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
