@@ -995,7 +995,7 @@ fn acid_storm_active(board: &Board) -> bool {
             .any(|u| u.hp > 0 && u.type_name_str() == "Storm_Generator")
 }
 
-fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
+fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) -> bool {
     if board.unit_count as usize >= board.units.len() {
         return false;
     }
@@ -1021,7 +1021,8 @@ fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
     if acid_storm_active(board) {
         unit.set_acid(true);
     }
-    board.add_unit(unit);
+    let idx = board.add_unit(unit);
+    apply_pod_on_land(board, idx, result);
     true
 }
 
@@ -4082,7 +4083,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     // impact. The pre-impact blocked check prevents replacing mountains,
     // buildings, units, wrecks, or deadly terrain cleared by the shot.
     if rockthrow_spawns_empty_center {
-        spawn_rock_thrown(board, tx, ty);
+        spawn_rock_thrown(board, tx, ty, result);
     }
 
     // Behind tile damage (Old Earth Artillery)
@@ -7857,6 +7858,32 @@ mod tests {
         assert!(
             !board.tile(5, 3).on_fire(),
             "empty-target RockThrown spawn should not consume or ignite Forest"
+        );
+    }
+
+    #[test]
+    fn test_rock_accelerator_spawn_on_time_pod_destroys_pod() {
+        // Lightning War regression 20260620_102304_211: RockartMech fired
+        // Rock Launcher at a Time Pod tile to destroy it for speed policy.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+        board.tile_mut(6, 4).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        let rock = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|u| u.type_name_str() == "RockThrown")
+            .expect("Rock Accelerator should spawn a RockThrown on an empty Time Pod tile");
+        assert_eq!((rock.x, rock.y), (6, 4));
+        assert!(
+            !board.tile(6, 4).has_pod(),
+            "neutral RockThrown landing should destroy the Time Pod"
+        );
+        assert_eq!(result.pods_collected, 0);
+        assert!(
+            result.events.iter().any(|e| e == "pod_destroyed_by_landing:6:4"),
+            "pod destruction should be accounted for in the action result"
         );
     }
 

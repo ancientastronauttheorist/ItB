@@ -1366,7 +1366,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # a fire-killed Scorpion corpse falsely blocked Wind Storm from pushing
 # Firefly1 into a building shot line. Pre-v276 corpus archived as
 # failure_db_snapshot_sim_v275.jsonl.
-SIMULATOR_VERSION = 276
+# v277 - Rock Launcher empty-target RockThrown spawn now destroys Time Pods on
+# the spawn tile without collection credit, matching live Mission_Acid run
+# 20260620_102304_211 turn 1. Pre-v277 corpus archived as
+# failure_db_snapshot_sim_v276.jsonl.
+SIMULATOR_VERSION = 277
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1880,7 +1880,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   where a fire-killed Scorpion corpse falsely blocked Wind Storm from
 //   pushing Firefly1 into a building shot line. Pre-v276 corpus archived as
 //   failure_db_snapshot_sim_v275.jsonl.
-pub const SIMULATOR_VERSION: u32 = 276;
+// v277 - Rock Launcher empty-target RockThrown spawn now destroys Time Pods on
+//   the spawn tile without collection credit, matching live Mission_Acid run
+//   20260620_102304_211 turn 1. Pre-v277 corpus archived as
+//   failure_db_snapshot_sim_v276.jsonl.
+pub const SIMULATOR_VERSION: u32 = 277;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
