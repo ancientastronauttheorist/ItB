@@ -12,12 +12,56 @@ from src.loop.session import ActiveSolution, RunSession, SolverAction
 from src.strategy.mission_picker import score_mission
 
 
+def test_run_session_round_trips_lightning_route_probe_cache():
+    session = RunSession(run_id="lw", squad="Blitzkrieg")
+    session.lightning_route_probe_cache = [
+        {
+            "signature": {
+                "first_island": "rst",
+                "route_routing": "lightning_war",
+                "mission_index": 0,
+                "label_key": "newterra",
+            },
+            "auto_route_block_reason": (
+                "route_preview_mission_unverified_before_start"
+            ),
+            "visible_preview_ocr_reason": "no_known_preview_text_match",
+            "retry_policy": "hard_prune",
+            "hits": 1,
+        }
+    ]
+
+    restored = RunSession.from_dict(session.to_dict())
+
+    assert restored.lightning_route_probe_cache == session.lightning_route_probe_cache
+
+
 def _lightning_peek_resume_control() -> str:
     return "menu_continue" if os.name == "nt" else "pause_menu_escape"
 
 
 def _post_setup_non_prompt_ui() -> dict:
     return {"status": "OK", "visible_ui": "island_select_or_unknown"}
+
+
+def _patch_first_mission_start_timer(
+    monkeypatch,
+    *,
+    seconds: float = 4.0,
+    text: str = "Oh 0m 045",
+) -> None:
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_visible_pause_timer",
+        lambda: {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": seconds,
+            "game_timer": commands._lightning_format_seconds(seconds),
+            "ocr_text": text,
+            "timeline_label_seen": True,
+        },
+    )
 
 
 def _pinnacle_intro_continue_visible_ui() -> dict:
@@ -30,6 +74,22 @@ def _pinnacle_intro_continue_visible_ui() -> dict:
             "Pinnacle Robotics Head Of f ice",
             "On behalf of Pinnacle, I welcome you.",
             "The climate on our island isn't ideal for humans.",
+            "CONTINUE",
+        ],
+    }
+
+
+def _rst_intro_continue_visible_ui() -> dict:
+    return {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "dark_overlay_fraction": 0.48,
+        "ocr_texts": [
+            "MENU",
+            "Open the Game Menu",
+            "R.S.T. Corporation Head Office",
+            "My advisors insist we're losing the fight.",
             "CONTINUE",
         ],
     }
@@ -105,6 +165,36 @@ def _patch_verified_first_island_save_guard(monkeypatch, *, advanced_value=0):
             },
         },
     )
+
+
+def test_read_git_short_hash_from_files_reads_branch_ref(tmp_path):
+    git_dir = tmp_path / ".git"
+    refs_dir = git_dir / "refs" / "heads"
+    refs_dir.mkdir(parents=True)
+    (git_dir / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+    (refs_dir / "main").write_text(
+        "0123456789abcdef0123456789abcdef01234567\n",
+        encoding="utf-8",
+    )
+
+    assert commands._read_git_short_hash_from_files(tmp_path) == "0123456"
+
+
+def test_get_solver_version_does_not_spawn_git(monkeypatch):
+    def fail_git(*_args, **_kwargs):
+        raise AssertionError("solver version lookup must not spawn git")
+
+    monkeypatch.setattr(commands.subprocess, "run", fail_git)
+    monkeypatch.setattr(
+        commands,
+        "_read_git_short_hash_from_files",
+        lambda _repo: "abcdef0",
+    )
+
+    version = commands._get_solver_version()
+
+    assert version.startswith("rust-")
+    assert version.endswith("-abcdef0")
 
 
 def test_lightning_ocr_texts_from_image_keeps_top_nonempty_candidate(
@@ -188,6 +278,7 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
 
     controls = list_known_window_controls()
     available = controls["abandon_pilot_available"]
+    confirm = controls["abandon_confirm_yes"]
     control = controls["abandon_pilot_slot"]
     two_left = controls["abandon_pilot_slot_two_left"]
     two_right = controls["abandon_pilot_slot_two_right"]
@@ -197,6 +288,8 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
     assert available["window_x"] == 95
     assert available["window_y"] == 254
     if os.name == "nt":
+        assert confirm["window_x"] == 1208
+        assert confirm["window_y"] == 795
         assert control["window_x"] == 1205
         assert control["window_y"] == 660
         assert two_left["window_x"] == 1205
@@ -208,6 +301,8 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
         assert right["window_x"] == 1385
         assert right["window_y"] == 660
     else:
+        assert confirm["window_x"] == 496
+        assert confirm["window_y"] == 445
         assert control["window_x"] == 491
         assert control["window_y"] == 329
         assert two_left["window_x"] == 562
@@ -218,6 +313,35 @@ def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
         assert wide["window_y"] == 329
         assert right["window_x"] == 773
         assert right["window_y"] == 329
+
+
+def test_options_close_control_is_calibrated():
+    from src.control.mac_click import list_known_window_controls
+
+    controls = list_known_window_controls()
+    close = controls["options_close"]
+
+    assert close["window_x"] == 890
+    assert close["window_y"] == 678
+
+
+def test_setup_modal_start_releases_away_from_detritus():
+    from src.control.mac_click import click_known_window_control, list_known_window_controls
+
+    controls = list_known_window_controls()
+    control = controls["setup_modal_start"]
+
+    assert control["window_x"] == 1072
+    assert control["window_y"] == 641
+    assert control["hold_seconds"] <= 0.05
+    assert control["release_window_x"] == 38
+    assert control["release_window_y"] == 58
+
+    dry_run = click_known_window_control("setup_modal_start", dry_run=True)
+
+    assert dry_run["status"] == "DRY_RUN"
+    assert dry_run["release_window_x"] == 38
+    assert dry_run["release_window_y"] == 58
 
 
 def test_lightning_war_weight_overlay_penalizes_pod_pickup():
@@ -313,6 +437,7 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
     saved: list[object] = []
     new_run_args: list[dict] = []
     verify_setup_calls: list[dict] = []
+    tail_calls: list[dict] = []
 
     class FakeSession:
         run_id = "fresh_lw"
@@ -370,19 +495,39 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
             "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
         },
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: tail_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(monkeypatch)
 
     result = commands.cmd_lightning_start_run(run_segment=False)
 
     assert result["status"] == "OK"
     assert result["run_id"] == "fresh_lw"
-    assert calls == ["setup_modal_start", "island_archive", "island_archive"]
+    expected_calls = ["setup_modal_start", "island_archive"]
+    if os.name == "nt":
+        expected_calls.append("island_archive")
+    assert calls == expected_calls
     assert verify_setup_calls == [
         {"expected_difficulty": 0, "advanced_content": "off"}
     ]
-    assert result["first_island_confirm_click"] == {
-        "status": "OK",
-        "control": "island_archive",
-    }
+    if os.name == "nt":
+        assert result["first_island_confirm_click"] == {
+            "status": "OK",
+            "control": "island_archive",
+        }
+    else:
+        assert result["first_island_confirm_click"]["status"] == "SKIPPED"
     assert result["session_first_island_pending"] == {
         "status": "OK",
         "pending_first_island": "archive",
@@ -392,6 +537,11 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
         "status": "OK",
         "current_island": "archive",
     }
+    assert result["post_pause_intro_clear"]["reason"] == "tail_cleared_and_paused"
+    assert result["pause_after_intro_clear"]["pause_verify"]["visible_ui"] == "pause_menu"
+    assert tail_calls == [
+        {"max_steps": 4, "lightning_speed_loss_policy": False}
+    ]
     assert saved == [manifests[0][0], manifests[0][0], manifests[0][0]]
     assert new_run_args == [
         {
@@ -402,6 +552,199 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
         }
     ]
     assert manifests[0][1]["advanced_content"] == "off"
+
+
+def test_lightning_start_run_retries_when_first_island_click_stays_on_world_map(
+    monkeypatch,
+):
+    calls: list[str] = []
+    saved: list[object] = []
+    snapshots = iter(
+        [
+            {"status": "OK", "visible_ui": "island_select_or_unknown"},
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "screenshot_path": "/tmp/world-map.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/route-map.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/route-map.png",
+            },
+        ]
+    )
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    def fake_regions(path):
+        return {
+            "status": "OK",
+            "region_count": 0 if "world" in str(path) else 2,
+            "segmentation": "raw",
+            "raw_region_count": 0 if "world" in str(path) else 2,
+            "eroded_region_count": 0 if "world" in str(path) else 2,
+        }
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(commands, "_lightning_extract_red_regions_from_image", fake_regions)
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {"status": "NO_ACTION", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(monkeypatch)
+
+    result = commands.cmd_lightning_start_run(run_segment=False)
+
+    assert result["status"] == "OK"
+    assert result["first_island_selection_retry_evidence"]["red_region_probe"][
+        "region_count"
+    ] == 0
+    assert result["post_first_island_retry_ui"]["screenshot_path"] == (
+        "/tmp/route-map.png"
+    )
+    expected_calls = ["setup_modal_start", "island_archive"]
+    if os.name == "nt":
+        expected_calls.append("island_archive")
+    expected_calls.append("island_archive")
+    assert calls == expected_calls
+    assert result["session_current_island"] == {
+        "status": "OK",
+        "current_island": "archive",
+    }
+    assert len(saved) == 3
+
+
+def test_lightning_start_run_blocks_when_first_mission_timer_did_not_reset(monkeypatch):
+    calls: list[str] = []
+    saved: list[object] = []
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        _post_setup_non_prompt_ui,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {"status": "NO_ACTION", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(
+        monkeypatch,
+        seconds=316.0,
+        text="Oh 5m 165",
+    )
+
+    result = commands.cmd_lightning_start_run(run_segment=False)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "first_mission_start_timer_not_reset"
+    guard = result["first_mission_start_timer_guard"]
+    assert guard["game_budget"]["game_timer"] == "0:05:16"
+    assert guard["game_budget"]["max_game_timer"] == "0:03:00"
+    assert result["session_first_island_pending"]["pending_first_island"] == "archive"
+    assert "session_current_island" not in result
+    expected_calls = ["setup_modal_start", "island_archive"]
+    if os.name == "nt":
+        expected_calls.append("island_archive")
+    assert calls == expected_calls
 
 
 def test_lightning_start_run_blocks_prompt_after_setup_start(monkeypatch):
@@ -468,9 +811,490 @@ def test_lightning_start_run_blocks_prompt_after_setup_start(monkeypatch):
     assert len(saved) == 1
 
 
+def test_lightning_start_run_waits_for_first_island_picker(monkeypatch):
+    calls: list[str] = []
+    saved: list[object] = []
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "dark_overlay_fraction": 0.88,
+                "screenshot_path": "/tmp/transition.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_select_or_unknown",
+                "dark_overlay_fraction": 0.40,
+                "screenshot_path": "/tmp/picker.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/route-map.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/route-map.png",
+            },
+        ]
+    )
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {"status": "NO_ACTION", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(monkeypatch)
+
+    result = commands.cmd_lightning_start_run(
+        first_island="pinnacle",
+        run_segment=False,
+    )
+
+    assert result["status"] == "OK"
+    assert result["first_island_picker_wait"]["poll_count"] == 2
+    assert result["post_setup_start_ui"]["screenshot_path"] == "/tmp/picker.png"
+    expected_calls = ["setup_modal_start", "island_pinnacle"]
+    if os.name == "nt":
+        expected_calls.append("island_pinnacle")
+    assert calls == expected_calls
+    assert result["session_current_island"] == {
+        "status": "OK",
+        "current_island": "pinnacle",
+    }
+
+
+def test_lightning_start_run_blocks_before_island_click_when_picker_unverified(
+    monkeypatch,
+):
+    calls: list[str] = []
+    saved: list[object] = []
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_first_island_picker",
+        lambda: {
+            "status": "BLOCKED",
+            "reason": "first_island_picker_not_visible",
+            "visible_ui": {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "dark_overlay_fraction": 0.92,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("should not clear panels before first-island picker")
+        ),
+    )
+
+    result = commands.cmd_lightning_start_run(
+        first_island="pinnacle",
+        run_segment=False,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "first_island_picker_not_visible"
+    assert calls == ["setup_modal_start"]
+    assert len(saved) == 1
+
+
+def test_lightning_first_island_picker_ready_accepts_corp_info_panel():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "promotion_panel",
+        "dark_overlay_fraction": 0.71,
+        "screenshot_path": "/tmp/detritus-corp-panel.png",
+        "scores": {
+            "deployment_screen": {"score": 0.01},
+            "perfect_island_panel": {"score": 0.77},
+            "mission_preview_dialogue": {"score": 0.79},
+        },
+    }
+
+    result = commands._lightning_first_island_picker_ready(visible_ui)
+
+    assert result is not None
+    assert result["reason"] == "first_island_corporation_panel_visible"
+    assert result["confirm_panel_evidence"]["visible_ui"] == "promotion_panel"
+
+
+def test_lightning_first_island_identity_prefers_corp_panel_title():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "promotion_panel",
+        "dark_overlay_fraction": 0.71,
+        "screenshot_path": "/tmp/detritus-corp-panel.png",
+        "scores": {
+            "deployment_screen": {"score": 0.01},
+            "perfect_island_panel": {"score": 0.77},
+            "mission_preview_dialogue": {"score": 0.79},
+        },
+        "ocr_texts": [
+            "Detritus Disposal",
+            "I'm back... and there's Archive, restored.",
+        ],
+    }
+
+    result = commands._lightning_selected_first_island_from_corp_panel(visible_ui)
+
+    assert result["selected_island"] == "detritus"
+    assert result["matched_text"] == "Detritus Disposal"
+
+
+def test_lightning_first_island_identity_ignores_dialogue_rst_for_detritus_title():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "promotion_panel",
+        "dark_overlay_fraction": 0.71,
+        "screenshot_path": "/tmp/detritus-corp-panel.png",
+        "scores": {
+            "deployment_screen": {"score": 0.01},
+            "perfect_island_panel": {"score": 0.77},
+            "mission_preview_dialogue": {"score": 0.79},
+        },
+        "ocr_texts": [
+            "Sensors confirm R.S.T. is holding the line. For now.",
+            "Detritus Disposal",
+        ],
+    }
+
+    result = commands._lightning_selected_first_island_from_corp_panel(visible_ui)
+
+    assert result["selected_island"] == "detritus"
+    assert result["matched_text"] == "Detritus Disposal"
+
+
+def test_lightning_first_island_identity_uses_ocr_fallback_for_corp_panel(
+    monkeypatch,
+):
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "promotion_panel",
+        "dark_overlay_fraction": 0.71,
+        "screenshot_path": "/tmp/detritus-corp-panel.png",
+        "scores": {
+            "deployment_screen": {"score": 0.01},
+            "perfect_island_panel": {"score": 0.77},
+            "mission_preview_dialogue": {"score": 0.79},
+        },
+    }
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": [
+                "There it is - sensors confirm R.S.T. is holding.",
+                "Detritus Disposal",
+            ],
+        },
+    )
+
+    result = commands._lightning_selected_first_island_from_corp_panel(visible_ui)
+
+    assert result["selected_island"] == "detritus"
+    assert result["matched_text"] == "Detritus Disposal"
+    assert result["ocr_fallback"]["matched"] is True
+
+
+def test_lightning_start_run_blocks_wrong_preselected_corp_panel(monkeypatch):
+    calls: list[str] = []
+    saved: list[object] = []
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    detritus_panel = {
+        "status": "OK",
+        "visible_ui": "promotion_panel",
+        "dark_overlay_fraction": 0.71,
+        "screenshot_path": "/tmp/detritus-corp-panel.png",
+        "scores": {
+            "deployment_screen": {"score": 0.01},
+            "perfect_island_panel": {"score": 0.77},
+            "mission_preview_dialogue": {"score": 0.79},
+        },
+        "ocr_texts": ["Detritus Disposal"],
+    }
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_first_island_picker",
+        lambda: {
+            "status": "OK",
+            "reason": "first_island_picker_ready",
+            "visible_ui": detritus_panel,
+            "evidence": {
+                "status": "OK",
+                "reason": "first_island_corporation_panel_visible",
+            },
+            "poll_count": 2,
+            "elapsed_seconds": 2.4,
+        },
+    )
+
+    result = commands.cmd_lightning_start_run(
+        first_island="rst",
+        run_segment=False,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "first_island_selected_mismatch"
+    assert result["preselected_first_island"]["selected_island"] == "detritus"
+    assert calls == ["setup_modal_start"]
+    assert len(saved) == 1
+
+
+def test_lightning_start_run_clicks_after_unreadable_picker_false_panel(
+    monkeypatch,
+):
+    calls: list[str] = []
+    saved: list[object] = []
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/route-map.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/route-map.png",
+            },
+        ]
+    )
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    unreadable_picker = {
+        "status": "OK",
+        "visible_ui": "perfect_island_panel",
+        "dark_overlay_fraction": 0.36,
+        "screenshot_path": "/tmp/first-island-world-map.png",
+        "scores": {
+            "deployment_screen": {"score": 0.01},
+            "perfect_island_panel": {"score": 0.77},
+            "mission_preview_dialogue": {"score": 0.30},
+        },
+        "ocr_texts": [],
+    }
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_first_island_picker",
+        lambda: {
+            "status": "OK",
+            "reason": "first_island_picker_ready",
+            "visible_ui": unreadable_picker,
+            "evidence": {
+                "status": "OK",
+                "reason": "first_island_corporation_panel_visible",
+            },
+            "poll_count": 2,
+            "elapsed_seconds": 1.0,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda _path: {"status": "OK", "texts": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda _path: {
+            "status": "OK",
+            "region_count": 0,
+            "segmentation": "raw",
+            "raw_region_count": 0,
+            "eroded_region_count": 0,
+        },
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {"status": "NO_ACTION", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(monkeypatch)
+
+    result = commands.cmd_lightning_start_run(
+        first_island="archive",
+        run_segment=False,
+    )
+
+    assert result["status"] == "OK"
+    assert result["preselected_first_island"]["reason"] == (
+        "first_island_corp_panel_identity_unreadable"
+    )
+    assert result["preselected_first_island_picker_fallback"]["reason"] == (
+        "unreadable_first_island_panel_without_mission_regions"
+    )
+    expected_calls = ["setup_modal_start", "island_archive"]
+    if os.name == "nt":
+        expected_calls.append("island_archive")
+    assert calls == expected_calls
+    assert result["session_current_island"] == {
+        "status": "OK",
+        "current_island": "archive",
+    }
+    assert len(saved) == 3
+
+
 def test_lightning_select_first_island_records_session_and_pauses(monkeypatch):
     calls: list[str] = []
     saved: list[object] = []
+    tail_calls: list[dict] = []
 
     class FakeSession:
         run_id = "fresh_lw"
@@ -512,11 +1336,26 @@ def test_lightning_select_first_island_records_session_and_pauses(monkeypatch):
             "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
         },
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: tail_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
 
     result = commands.cmd_lightning_select_first_island(first_island="archive")
 
     assert result["status"] == "OK"
     assert result["reason"] == "first_island_paused"
+    assert result["post_pause_intro_clear"]["reason"] == "tail_cleared_and_paused"
+    assert result["pause_after_intro_clear"]["pause_verify"]["visible_ui"] == "pause_menu"
     assert result["session_first_island_pending"] == {
         "status": "OK",
         "pending_first_island": "archive",
@@ -529,7 +1368,166 @@ def test_lightning_select_first_island_records_session_and_pauses(monkeypatch):
     assert session.current_island == "archive"
     assert session.tags == []
     assert calls == ["island_archive"]
+    assert tail_calls == [
+        {"max_steps": 4, "lightning_speed_loss_policy": False}
+    ]
     assert saved == [session, session]
+
+
+def test_lightning_select_first_island_pending_pause_clears_intro_tail(
+    monkeypatch,
+):
+    saved: list[object] = []
+    tail_calls: list[dict] = []
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        current_island = ""
+        current_mission = ""
+        mission_index = 0
+        islands_completed: list[str] = []
+        tags = ["lightning_first_island_clicked:rst"]
+
+        def save(self):
+            saved.append(self)
+
+    session = FakeSession()
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    _patch_verified_first_island_save_guard(monkeypatch)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: (_ for _ in ()).throw(
+            AssertionError("pending first island should not click island again")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: tail_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+
+    result = commands.cmd_lightning_select_first_island(first_island="archive")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "first_island_pending_confirmed"
+    assert result["pending_first_island"] == "rst"
+    assert result["session_current_island"] == {
+        "status": "OK",
+        "current_island": "rst",
+    }
+    assert result["post_pause_intro_clear"]["reason"] == "tail_cleared_and_paused"
+    assert session.current_island == "rst"
+    assert session.tags == []
+    assert tail_calls == [
+        {"max_steps": 4, "lightning_speed_loss_policy": False}
+    ]
+    assert saved == [session]
+
+
+def test_lightning_select_first_island_confirms_pending_corp_panel(monkeypatch):
+    calls: list[str] = []
+    saved: list[object] = []
+    tail_calls: list[dict] = []
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        current_island = ""
+        current_mission = ""
+        mission_index = 0
+        islands_completed: list[str] = []
+        tags = ["lightning_first_island_clicked:rst"]
+
+        def save(self):
+            saved.append(self)
+
+    session = FakeSession()
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "deployment_screen",
+                "recommended_control": "deploy_confirm",
+                "scores": {
+                    "deployment_screen": {"score": 0.03},
+                    "perfect_island_panel": {"score": 0.79},
+                    "mission_preview_dialogue": {"score": 0.74},
+                },
+                "screenshot_path": "/tmp/rst-corp-panel.png",
+            },
+            {"status": "OK", "visible_ui": "island_map"},
+        ],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    _patch_verified_first_island_save_guard(monkeypatch)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: tail_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+
+    result = commands.cmd_lightning_select_first_island(first_island="archive")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "first_island_pending_confirmed"
+    assert result["pending_first_island"] == "rst"
+    assert result["pending_island_control"] == "island_rst"
+    assert result["pending_first_island_confirm_panel_evidence"]["reason"] == (
+        "first_island_confirm_panel_visible"
+    )
+    assert result["post_pending_first_island_confirm_ui"]["visible_ui"] == "island_map"
+    assert result["session_current_island"] == {
+        "status": "OK",
+        "current_island": "rst",
+    }
+    assert session.current_island == "rst"
+    assert session.tags == []
+    assert calls == ["island_rst"]
+    assert tail_calls == [
+        {"max_steps": 4, "lightning_speed_loss_policy": False}
+    ]
+    assert saved == [session]
 
 
 def test_lightning_select_first_island_blocks_recorded_session(monkeypatch):
@@ -540,7 +1538,7 @@ def test_lightning_select_first_island_blocks_recorded_session(monkeypatch):
         achievement_targets=["Lightning War"],
         difficulty=0,
         current_island="archive",
-        current_mission="",
+        current_mission="Mission_Train",
         mission_index=0,
         islands_completed=[],
     )
@@ -566,6 +1564,232 @@ def test_lightning_select_first_island_blocks_recorded_session(monkeypatch):
     assert clicked is False
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "first_island_already_recorded"
+
+
+def test_lightning_select_first_island_confirms_recorded_selection_map(
+    monkeypatch,
+):
+    calls: list[str] = []
+    saved: list[object] = []
+    tail_calls: list[dict] = []
+    session = SimpleNamespace(
+        run_id="fresh_lw",
+        squad="Blitzkrieg",
+        achievement_targets=["Lightning War"],
+        difficulty=0,
+        current_island="pinnacle",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+        tags=[],
+        save=lambda: None,
+    )
+
+    def save():
+        saved.append(session)
+
+    session.save = save
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "screenshot_path": "/tmp/recorded-picker.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/selected-route-map.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/selected-route-map.png",
+            },
+        ],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    _patch_verified_first_island_save_guard(monkeypatch)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_island_selection_map_evidence",
+        lambda ui: (
+            {
+                "status": "MATCH",
+                "reason": "island_selection_map_without_mission_regions",
+                "visible_ui": ui.get("visible_ui"),
+            }
+            if isinstance(ui, dict)
+            and ui.get("screenshot_path") == "/tmp/recorded-picker.png"
+            else None
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {
+            "status": "NO_ACTION",
+            "steps": [],
+            "visible_ui": {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/selected-route-map.png",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: tail_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+
+    result = commands.cmd_lightning_select_first_island(first_island="pinnacle")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "recorded_first_island_confirmed"
+    assert result["recorded_first_island_selection_evidence"]["status"] == "MATCH"
+    assert result["session_current_island"] == {
+        "status": "OK",
+        "current_island": "pinnacle",
+    }
+    assert session.current_island == "pinnacle"
+    assert calls == ["island_pinnacle"]
+    assert tail_calls == [{"max_steps": 4, "lightning_speed_loss_policy": False}]
+    assert saved == [session]
+
+
+def test_lightning_select_first_island_confirms_recorded_selection_map_from_pause(
+    monkeypatch,
+):
+    calls: list[str] = []
+    saved: list[object] = []
+    session = SimpleNamespace(
+        run_id="fresh_lw",
+        squad="Blitzkrieg",
+        achievement_targets=["Lightning War"],
+        difficulty=0,
+        current_island="pinnacle",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+        tags=[],
+        save=lambda: None,
+    )
+
+    def save():
+        saved.append(session)
+
+    session.save = save
+    snapshots = iter(
+        [
+            {"status": "OK", "visible_ui": "pause_menu"},
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "screenshot_path": "/tmp/recorded-picker.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/selected-route-map.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/selected-route-map.png",
+            },
+        ],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    _patch_verified_first_island_save_guard(monkeypatch)
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: {"status": "OK", "reason": "resumed_from_pause"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_island_selection_map_evidence",
+        lambda ui: (
+            {
+                "status": "MATCH",
+                "reason": "island_selection_map_without_mission_regions",
+                "visible_ui": ui.get("visible_ui"),
+            }
+            if isinstance(ui, dict)
+            and ui.get("screenshot_path") == "/tmp/recorded-picker.png"
+            else None
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {
+            "status": "NO_ACTION",
+            "steps": [],
+            "visible_ui": {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "screenshot_path": "/tmp/selected-route-map.png",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+
+    result = commands.cmd_lightning_select_first_island(first_island="pinnacle")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "recorded_first_island_confirmed"
+    assert result["resume_from_pause"]["status"] == "OK"
+    assert calls == ["island_pinnacle"]
+    assert saved == [session]
 
 
 def test_lightning_select_first_island_blocks_unverified_session(monkeypatch):
@@ -863,6 +2087,18 @@ def test_lightning_select_first_island_promotes_pending_from_pause(monkeypatch):
         "_lightning_visible_ui_snapshot",
         lambda: {"status": "OK", "visible_ui": "pause_menu"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
 
     result = commands.cmd_lightning_select_first_island(first_island="archive")
 
@@ -874,6 +2110,88 @@ def test_lightning_select_first_island_promotes_pending_from_pause(monkeypatch):
     }
     assert session.current_island == "archive"
     assert session.tags == ["achievement"]
+    assert saved == [session]
+
+
+def test_lightning_select_first_island_promotes_pending_from_pause_ocr_false_preview(
+    monkeypatch,
+):
+    saved: list[object] = []
+    tail_calls: list[dict] = []
+    session = SimpleNamespace(
+        run_id="fresh_lw",
+        squad="Blitzkrieg",
+        achievement_targets=["Lightning War"],
+        difficulty=0,
+        current_island="",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+        tags=["achievement", "lightning_first_island_clicked:rst"],
+        save=lambda: None,
+    )
+
+    def save():
+        saved.append(session)
+
+    session.save = save
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    _patch_verified_first_island_save_guard(monkeypatch)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: (_ for _ in ()).throw(
+            AssertionError("pending island should be promoted without clicking")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+            "pause_ocr_match": "Timeline Playtime",
+            "pause_ocr_override": {
+                "from_visible_ui": "mission_preview_panel",
+                "from_recommended_control": "dialogue_textbox",
+                "matched": "Timeline Playtime",
+            },
+            "ocr_texts": [
+                "Archive",
+                "RST Corp",
+                "Timeline Playtime",
+                "Oh 5m 165",
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: tail_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+
+    result = commands.cmd_lightning_select_first_island(first_island="archive")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "first_island_pending_confirmed"
+    assert result["pending_first_island"] == "rst"
+    assert result["session_current_island"] == {
+        "status": "OK",
+        "current_island": "rst",
+    }
+    assert result["visible_ui"]["pause_ocr_match"] == "Timeline Playtime"
+    assert session.current_island == "rst"
+    assert session.tags == ["achievement"]
+    assert tail_calls == [{"max_steps": 4, "lightning_speed_loss_policy": False}]
     assert saved == [session]
 
 
@@ -939,6 +2257,19 @@ def test_lightning_start_run_clears_archive_intro_dialogue_fallback(monkeypatch)
             "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
         },
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(monkeypatch)
 
     result = commands.cmd_lightning_start_run(
         advanced_content="off",
@@ -946,12 +2277,11 @@ def test_lightning_start_run_clears_archive_intro_dialogue_fallback(monkeypatch)
     )
 
     assert result["status"] == "OK"
-    assert calls == [
-        "setup_modal_start",
-        "island_archive",
-        "island_archive",
-        "bottom_continue",
-    ]
+    expected_calls = ["setup_modal_start", "island_archive"]
+    if os.name == "nt":
+        expected_calls.append("island_archive")
+    expected_calls.append("bottom_continue")
+    assert calls == expected_calls
     assert result["intro_bottom_continue_fallback"]["control"] == "bottom_continue"
     assert result["clear_intro_after_continue"]["status"] == "NO_ACTION"
 
@@ -999,6 +2329,7 @@ def test_lightning_start_run_segment_defaults_to_baseline_safety(monkeypatch):
             "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
         },
     )
+    _patch_first_mission_start_timer(monkeypatch)
 
     def fake_segment(**kwargs):
         segment_calls.append(kwargs)
@@ -1604,6 +2935,67 @@ def test_lightning_prefers_bottom_continue_for_ocr_intro_unknown_map():
     )
 
 
+def test_lightning_prefers_bottom_continue_for_ocr_intro_island_map():
+    visible_ui = _rst_intro_continue_visible_ui()
+    visible_ui["visible_ui"] = "island_map"
+    visible_ui["recommended_control"] = None
+    visible_ui["bridge_refine_snapshot"] = {
+        "status": "OK",
+        "phase": "unknown",
+        "turn": 0,
+        "mission_id": "Mission_Lightning",
+        "deployment_zone_count": 11,
+        "in_active_mission": True,
+    }
+
+    result = commands._lightning_preferred_visible_control(
+        "island_map",
+        None,
+        visible_ui,
+    )
+
+    assert result == "bottom_continue"
+    assert commands._lightning_intro_continue_likely_visible(visible_ui)
+    assert commands._lightning_is_safe_clear_ui(
+        "island_map",
+        "bottom_continue",
+        visible_ui,
+    )
+    assert not commands._lightning_is_safe_clear_ui(
+        "island_map",
+        "bottom_continue",
+        {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "ocr_texts": ["Choose your first island", "CONTINUE"],
+        },
+    )
+
+
+def test_lightning_pause_menu_ocr_does_not_override_active_intro_continue():
+    visible_ui = _rst_intro_continue_visible_ui()
+
+    result = commands._lightning_apply_pause_menu_ocr_override(dict(visible_ui))
+
+    assert commands._lightning_pause_menu_ocr_match(visible_ui) is None
+    assert not commands._lightning_visible_ui_is_pause_menu(visible_ui)
+    assert result["visible_ui"] == "mission_preview_panel"
+    assert result["recommended_control"] == "dialogue_textbox"
+    assert commands._lightning_visible_ui_is_intro_continue_panel(result)
+
+
+def test_lightning_pause_menu_score_overlay_counts_as_pause_without_ocr():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "dark_overlay_fraction": 0.9189,
+        "scores": {"pause_menu": {"score": 0.4554}},
+    }
+
+    assert commands._lightning_visible_ui_is_pause_menu(visible_ui)
+
+
 def test_lightning_intro_continue_likely_visible_for_archive_head_office_panel():
     visible_ui = {
         "status": "OK",
@@ -1874,6 +3266,16 @@ def test_lightning_ui_ensure_pause_recognizes_pause_menu(monkeypatch):
     monkeypatch.setattr(commands, "_load_session", lambda: session)
     visible_states = iter(
         [
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
             {
                 "status": "OK",
                 "visible_ui": "pause_menu",
@@ -2551,6 +3953,11 @@ def test_lightning_ui_clear_tail_to_pause_resumes_clears_and_pauses(monkeypatch)
             },
             {
                 "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+            {
+                "status": "OK",
                 "visible_ui": "island_map_or_unknown",
                 "recommended_control": None,
             },
@@ -2592,6 +3999,123 @@ def test_lightning_ui_clear_tail_to_pause_resumes_clears_and_pauses(monkeypatch)
     assert result["reason"] == "tail_cleared_and_paused"
     expected_resume = "menu_continue" if os.name == "nt" else "pause_menu_escape"
     assert calls == [expected_resume, "clear_chain", "ensure_pause"]
+
+
+def test_lightning_ui_clear_tail_to_pause_resumes_pause_ocr_overlay(monkeypatch):
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+    calls = []
+
+    pause_ocr_overlay = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "pause_ocr_match": "Timeline Playtime",
+        "ocr_texts": [
+            "MENU",
+            "CONTINUE",
+            "Timeline Playtime",
+            "Oh Om 435",
+        ],
+    }
+    visible_states = iter(
+        [
+            pause_ocr_overlay,
+            pause_ocr_overlay,
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: next(visible_states),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls.append("pause_menu_escape")
+        or {"status": "OK", "control": "pause_menu_escape"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: calls.append("clear_chain")
+        or {"status": "NO_ACTION", "reason": "no_safe_panel_visible", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: calls.append("ensure_pause")
+        or {
+            "status": "OK",
+            "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+
+    result = commands.cmd_lightning_ui("clear_tail_pause")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "tail_cleared_and_paused"
+    expected_resume = "menu_continue" if os.name == "nt" else "pause_menu_escape"
+    assert calls == [expected_resume, "clear_chain", "ensure_pause"]
+    assert result["resume_result"]["reason"] == "resumed_from_pause"
+
+
+def test_lightning_clear_tail_blocks_when_intro_still_visible(monkeypatch):
+    calls = []
+    intro_ui = _rst_intro_continue_visible_ui()
+    intro_ui["visible_ui"] = "island_map"
+    intro_ui["recommended_control"] = None
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "recommended_control": "menu_continue",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: calls.append("resume")
+        or {"status": "OK", "reason": "resumed_from_pause"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: calls.append("clear_chain")
+        or {
+            "status": "NO_ACTION",
+            "reason": "no_safe_panel_visible",
+            "steps": [],
+            "visible_ui": intro_ui,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: calls.append("ensure_pause")
+        or {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    result = commands._lightning_clear_tail_to_pause()
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "intro_continue_still_visible"
+    assert calls == ["resume", "clear_chain", "ensure_pause"]
 
 
 def test_lightning_ui_clear_tail_blocks_when_resume_stays_paused(monkeypatch):
@@ -2720,6 +4244,31 @@ def test_lightning_ui_handle_screen_blocks_mission_preview_board(monkeypatch):
     assert calls == []
 
 
+def test_lightning_ui_handle_screen_closes_options_menu(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "options_menu",
+            "recommended_control": "options_close",
+        },
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append((control, kwargs))
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands.cmd_lightning_ui("handle_screen")
+
+    assert result["status"] == "OK"
+    assert result["control"] == "options_close"
+    assert calls == [("options_close", {"dry_run": False})]
+
+
 def test_lightning_ui_handle_screen_blocks_terminal_text_before_click(monkeypatch):
     calls = []
 
@@ -2846,6 +4395,72 @@ def test_lightning_terminal_evidence_handles_structured_and_split_objectives():
         )
         is None
     )
+
+
+def test_lightning_speed_policy_allows_time_pod_failure_only():
+    time_pod_panel = {
+        "status": "OK",
+        "visible_ui": "reward_panel",
+        "recommended_control": "reward_continue",
+        "visible_text": "Region Secured\nProtect the Time Pod (Failed)",
+    }
+
+    assert commands._lightning_terminal_outcome_evidence(time_pod_panel) == {
+        "kind": "terminal_text",
+        "path": "visible_text",
+        "phrase": "(failed)",
+        "text": "Region Secured\nProtect the Time Pod (Failed)",
+    }
+    assert (
+        commands._lightning_terminal_outcome_evidence(
+            time_pod_panel,
+            lightning_speed_loss_policy=True,
+        )
+        is None
+    )
+    assert (
+        commands._lightning_terminal_outcome_evidence(
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "objectives": [
+                    {"text": "Protect the Time Pod", "status": "failed"},
+                ],
+            },
+            lightning_speed_loss_policy=True,
+        )
+        is None
+    )
+    assert commands._lightning_terminal_outcome_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "visible_text": (
+                "Region Secured\nProtect the Time Pod (Failed)\nTimeline Lost"
+            ),
+        },
+        lightning_speed_loss_policy=True,
+    ) == {
+        "kind": "terminal_text",
+        "path": "visible_text",
+        "phrase": "timeline lost",
+        "text": "Region Secured\nProtect the Time Pod (Failed)\nTimeline Lost",
+    }
+    assert commands._lightning_terminal_outcome_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "objectives": [
+                {"text": "Protect the Train", "status": "failed"},
+            ],
+        },
+        lightning_speed_loss_policy=True,
+    ) == {
+        "kind": "objective_failure_field",
+        "path": "objectives.0.status",
+        "field": "status",
+        "value": "failed",
+    }
 
 
 def test_lightning_terminal_outcome_detects_visual_kia_without_ocr(tmp_path):
@@ -3056,6 +4671,74 @@ def test_lightning_ui_handle_screen_blocks_terminal_fallback(monkeypatch):
     assert calls == [("reward_continue", {"dry_run": False})]
 
 
+def test_lightning_ui_recover_timeline_lost_selects_pilot_to_setup(monkeypatch):
+    calls = []
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "mission_preview_panel",
+                "recommended_control": "dialogue_textbox",
+                "visible_text": "Timeline Lost\nSelect one pilot to continue.",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "new_game_setup",
+                "recommended_control": None,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: next(visible_states),
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append((control, kwargs))
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_bridge_files_after_timeline_reset",
+        lambda: {"status": "OK", "removed": ["/tmp/itb_state.json"]},
+    )
+
+    result = commands.cmd_lightning_ui("recover_timeline_lost")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "timeline_lost_recovered_to_setup"
+    assert result["final_ui"]["visible_ui"] == "new_game_setup"
+    assert result["bridge_reset_cleanup"]["status"] == "OK"
+    assert calls == [("abandon_pilot_slot", {})]
+
+
+def test_lightning_ui_recover_timeline_lost_blocks_without_terminal_proof(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+            "visible_text": "Advisor dialogue",
+        },
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append((control, kwargs))
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands.cmd_lightning_ui("recover_timeline_lost")
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "timeline_lost_not_verified"
+    assert calls == []
+
+
 def test_lightning_ui_handle_screen_dismisses_mission_preview_dialogue(monkeypatch):
     calls = []
 
@@ -3066,6 +4749,7 @@ def test_lightning_ui_handle_screen_dismisses_mission_preview_dialogue(monkeypat
             "status": "OK",
             "visible_ui": "mission_preview_panel",
             "recommended_control": "dialogue_textbox",
+            "pause_ocr_match": "Timeline Playtime",
         },
     )
     monkeypatch.setattr(
@@ -3459,6 +5143,137 @@ def test_lightning_visible_preview_ocr_detects_tanks(monkeypatch, tmp_path):
     assert result["start_authority"] == "veto_only"
 
 
+def test_lightning_visible_preview_ocr_detects_defensive_shields_force(
+    monkeypatch,
+    tmp_path,
+):
+    screenshot = tmp_path / "preview.png"
+    screenshot.write_text("placeholder")
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": [
+                "Turbine Cluster",
+                "Defensive Shields Active",
+                "Take less than 3 Grid Damage",
+            ],
+        },
+    )
+
+    result = commands._lightning_visible_preview_mission_from_screenshot(screenshot)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_preview_ocr"
+    assert result["mission_id"] == "Mission_Force"
+    assert result["matched_pattern"] == "defensive shields active"
+    assert result["start_authority"] == "veto_only"
+
+
+def test_lightning_visible_preview_ocr_rejects_generic_spawn_block_as_force():
+    result = commands._lightning_visible_preview_mission_from_texts(
+        [
+            "Vek Threat Detected!",
+            "Block Vek Spawning 3 times",
+            "Protect the Coal Plant",
+        ],
+    )
+
+    assert result["status"] == "UNKNOWN"
+    assert result["reason"] == "no_known_preview_text_match"
+
+
+def test_lightning_visible_preview_ocr_detects_proximity_mines_with_spawn_bonus():
+    result = commands._lightning_visible_preview_mission_from_texts(
+        [
+            "Old Earth proximity mines have been discovered here.",
+            "Protect the Coal Plant",
+            "Block Vek Spawning 3 times",
+        ],
+    )
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_preview_ocr"
+    assert result["mission_id"] == "Mission_Mines"
+    assert result["matched_pattern"] == "old earth proximity mines"
+    assert result["start_authority"] == "veto_only"
+
+
+def test_lightning_visible_preview_ocr_blocks_conflicting_mission_matches():
+    result = commands._lightning_visible_preview_mission_from_texts(
+        [
+            "Defensive Shields Active",
+            "Tidal waves are expected in this region.",
+        ],
+    )
+
+    assert result["status"] == "UNKNOWN"
+    assert result["reason"] == "conflicting_known_preview_text_matches"
+    assert result["matched_missions"] == ["Mission_Force", "Mission_Tides"]
+
+
+def test_lightning_visible_preview_ocr_detects_air_support_batteries(
+    monkeypatch,
+    tmp_path,
+):
+    screenshot = tmp_path / "preview.png"
+    screenshot.write_text("placeholder")
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": [
+                "Relic Preserves",
+                "This region has an old airfield that can provide air support.",
+                "End battle with less than 4 Mech Damage",
+                "Protect the Emergency Batteries",
+            ],
+        },
+    )
+
+    result = commands._lightning_visible_preview_mission_from_screenshot(screenshot)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_preview_ocr"
+    assert result["mission_id"] == "Mission_Airstrike"
+    assert result["matched_pattern"] == "air support"
+    assert result["start_authority"] == "veto_only"
+
+
+def test_lightning_visible_preview_ocr_tides_with_emergency_batteries_not_airstrike():
+    result = commands._lightning_visible_preview_mission_from_texts(
+        [
+            "An offshore volcano is causing tidal waves to wash away the Vek.",
+            "Vek Threat Detected!",
+            "Protect the Emergency Batteries",
+            "WARNING!",
+            "TIDAL WAVES",
+        ],
+    )
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_preview_ocr"
+    assert result["mission_id"] == "Mission_Tides"
+    assert result["matched_pattern"] == "tidal waves"
+    assert result["start_authority"] == "veto_only"
+
+
+def test_lightning_visible_preview_ocr_emergency_batteries_alone_is_unknown():
+    result = commands._lightning_visible_preview_mission_from_texts(
+        [
+            "Vek Threat Detected!",
+            "BONUS OBJECTIVES",
+            "Protect the Emergency Batteries",
+            "Take less than 3 Grid Damage",
+        ],
+    )
+
+    assert result["status"] == "UNKNOWN"
+    assert result["reason"] == "no_known_preview_text_match"
+
+
 def test_lightning_visible_preview_ocr_detects_satellite(monkeypatch, tmp_path):
     screenshot = tmp_path / "preview.png"
     screenshot.write_text("placeholder")
@@ -3481,6 +5296,86 @@ def test_lightning_visible_preview_ocr_detects_satellite(monkeypatch, tmp_path):
     assert result["source"] == "visible_preview_ocr"
     assert result["mission_id"] == "Mission_Satellite"
     assert result["matched_pattern"] == "defend the satellite launches"
+    assert result["start_authority"] == "veto_only"
+
+
+def test_lightning_visible_preview_ocr_detects_volatile(monkeypatch, tmp_path):
+    screenshot = tmp_path / "preview.png"
+    screenshot.write_text("placeholder")
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": [
+                "A Volatile Vek has been spotted.",
+                "Do not kill the Volatile Vek",
+                "Protect the Power Generator",
+            ],
+        },
+    )
+
+    result = commands._lightning_visible_preview_mission_from_screenshot(screenshot)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_preview_ocr"
+    assert result["mission_id"] == "Mission_Volatile"
+    assert result["matched_pattern"] == "volatile vek"
+    assert result["start_authority"] == "veto_only"
+
+
+def test_lightning_visible_preview_ocr_detects_volatile_power_generator(
+    monkeypatch,
+    tmp_path,
+):
+    screenshot = tmp_path / "preview.png"
+    screenshot.write_text("placeholder")
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": [
+                "Excavation Site",
+                "Vek Threat Detected!",
+                "Protect the Power Generator",
+            ],
+        },
+    )
+
+    result = commands._lightning_visible_preview_mission_from_screenshot(screenshot)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_preview_ocr"
+    assert result["mission_id"] == "Mission_Volatile"
+    assert result["matched_pattern"] == "protect the power generator"
+    assert result["start_authority"] == "veto_only"
+
+
+def test_lightning_visible_preview_ocr_detects_cataclysm(monkeypatch, tmp_path):
+    screenshot = tmp_path / "preview.png"
+    screenshot.write_text("placeholder")
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": [
+                "Maglev Bunkers",
+                "WARNING",
+                "CATACLYSM",
+                "The ground here is unstable and will fall into the depths.",
+                "Protect the Coal Plant",
+            ],
+        },
+    )
+
+    result = commands._lightning_visible_preview_mission_from_screenshot(screenshot)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_preview_ocr"
+    assert result["mission_id"] == "Mission_Cataclysm"
+    assert result["matched_pattern"] == "cataclysm"
     assert result["start_authority"] == "veto_only"
 
 
@@ -3791,6 +5686,7 @@ def test_lightning_preflight_blocks_exceeded_visible_timer(monkeypatch):
 
 
 def test_lightning_refine_rejects_terminal_panel_during_live_combat(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
@@ -3818,6 +5714,7 @@ def test_lightning_refine_rejects_terminal_panel_during_live_combat(monkeypatch)
 
 
 def test_lightning_refine_rejects_terminal_panel_during_enemy_animation(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
@@ -3845,6 +5742,7 @@ def test_lightning_refine_rejects_terminal_panel_during_enemy_animation(monkeypa
 
 
 def test_lightning_refine_rejects_island_map_during_fresh_live_combat(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
@@ -3876,6 +5774,7 @@ def test_lightning_refine_rejects_island_map_during_fresh_live_combat(monkeypatc
 
 
 def test_lightning_refine_keeps_island_map_when_active_bridge_is_stale(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
@@ -3903,6 +5802,31 @@ def test_lightning_refine_keeps_island_map_when_active_bridge_is_stale(monkeypat
 
     assert result["visible_ui"] == "island_map"
     assert result["bridge_refine_snapshot"]["bridge_heartbeat_stale"] is True
+
+
+def test_lightning_refine_skips_stale_bridge_without_refresh(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: False)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("stale bridge should not be refreshed during UI refine")
+        ),
+    )
+
+    result = commands._lightning_refine_visible_ui_with_bridge(
+        {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "recommended_control": None,
+        }
+    )
+
+    assert result["visible_ui"] == "island_map"
+    assert result["bridge_refine_snapshot"] == {
+        "status": "SKIPPED",
+        "reason": "bridge_heartbeat_stale_or_missing",
+    }
 
 
 def test_lightning_mark_records_timer_delta(monkeypatch, tmp_path):
@@ -3967,6 +5891,12 @@ def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
     )
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -3990,13 +5920,24 @@ def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
     )
     monkeypatch.setattr(
         commands,
-        "cmd_recommend_mission",
+        "_lightning_recommend_save_routes",
         lambda **kwargs: {
             "status": "OK",
+            "source": "saveData",
+            "routing": "lightning_war",
+            "ranked": [
+                {
+                    "mission_id": "Mission_Train",
+                    "region_id": 5,
+                    "save_region_index": 5,
+                    "save_region_name": "The Pasture",
+                }
+            ],
             "top3": [
                 {
                     "mission_id": "Mission_Train",
                     "region_id": 5,
+                    "save_region_index": 5,
                     "save_region_name": "The Pasture",
                 }
             ],
@@ -4025,13 +5966,13 @@ def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--route-start-mode dialogue-region-repeat-preview-board"
+        "--route-start-mode visible-text"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--route-start-mode dialogue-region-repeat-preview-board"
+        "--route-start-mode visible-text"
     )
     assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
     assert result["primary_route_candidate_index"] == 0
@@ -4039,13 +5980,13 @@ def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
         "--visual-region-index 0 "
         "--expected-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--start-mode dialogue-region-repeat-preview-board"
+        "--start-mode visible-text"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
         "--window-x 430 --window-y 320 "
         "--expected-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--start-mode dialogue-region-repeat-preview-board"
+        "--start-mode visible-text"
     )
 
 
@@ -4556,6 +6497,49 @@ def test_lightning_ui_classifier_detects_new_game_setup_before_pause(tmp_path):
     assert result["recommended_control"] is None
 
 
+def test_lightning_ui_classifier_detects_options_before_advisor_preview(
+    monkeypatch,
+    tmp_path,
+):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (8, 10, 14))
+    draw = ImageDraw.Draw(image)
+    for cx, cy, w, h in (
+        (250 * scale, 95 * scale, 220 * scale, 80 * scale),
+        (890 * scale, 680 * scale, 360 * scale, 80 * scale),
+    ):
+        draw.rectangle(
+            [cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2],
+            fill=(24, 32, 48),
+            outline=(92, 122, 180),
+            width=8,
+        )
+        draw.rectangle(
+            [cx - 70 * scale, cy - 10 * scale, cx + 70 * scale, cy + 10 * scale],
+            fill=(235, 235, 235),
+        )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_advisor_preview_score",
+        lambda _image: {
+            "score": 0.8,
+            "card": {"blue": 10000},
+            "dialogue": {"blue": 5000, "bright": 3000, "dark_fraction": 0.85},
+        },
+    )
+
+    path = tmp_path / "options_menu.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "options_menu"
+    assert result["recommended_control"] == "options_close"
+
+
 def test_lightning_ui_classifier_detects_windows_setup_before_advisor_preview(
     monkeypatch, tmp_path
 ):
@@ -4782,6 +6766,52 @@ def test_lightning_pause_guard_blocks_system_privacy_prompt():
     assert result["pause_allowed"] is False
 
 
+def test_lightning_visible_ocr_promotes_macos_privacy_prompt(monkeypatch, tmp_path):
+    screenshot = tmp_path / "privacy_prompt.png"
+    screenshot.write_text("placeholder")
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda _path: {
+            "status": "OK",
+            "texts": [
+                "MENU",
+                "CONTINUE",
+                '"Codex" is requesting to bypass',
+                "the system private window",
+                "picker and directly access your",
+                "screen and audio.",
+                "Allow",
+                "Open System Settings",
+                "ABANDON TIMELINE",
+            ],
+        },
+    )
+
+    result = commands._lightning_attach_visible_ocr(
+        {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "recommended_control": "menu_continue",
+        },
+        screenshot,
+    )
+
+    assert result["visible_ui"] == "system_privacy_prompt"
+    assert result["recommended_control"] is None
+    assert result["requires_user_authorization"] is True
+    assert result["external_prompt"] == {
+        "status": "OK",
+        "matched": True,
+        "kind": "macos_screen_audio_privacy_prompt",
+        "source": "visible_ocr",
+    }
+    assert result["system_prompt_ocr_override"]["from_visible_ui"] == "pause_menu"
+    assert "pause_ocr_override" not in result
+    assert commands._lightning_external_system_prompt_visible(result)
+
+
 def test_lightning_ui_classifier_detects_title_screen(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -5002,6 +7032,7 @@ def test_lightning_ui_classifier_detects_deployment_screen(tmp_path):
 
 
 def test_lightning_refine_deployment_false_positive_with_bridge(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
@@ -5030,6 +7061,7 @@ def test_lightning_refine_deployment_false_positive_with_bridge(monkeypatch):
 
 
 def test_lightning_refine_keeps_real_deployment_with_bridge(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
@@ -5056,7 +7088,61 @@ def test_lightning_refine_keeps_real_deployment_with_bridge(monkeypatch):
     assert result["non_pauseable"] is True
 
 
+def test_lightning_visible_ui_snapshot_does_not_fast_path_deployment(monkeypatch):
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 0,
+                "deployment_zone_count": 8,
+                "mech_count": 0,
+                "in_active_mission": True,
+            },
+            {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 0,
+                "deployment_zone_count": 8,
+                "mech_count": 0,
+                "in_active_mission": True,
+            },
+        ]
+    )
+    captures = []
+
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(
+        "src.capture.window.take_screenshot",
+        lambda path: captures.append(path),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
+            "non_pauseable": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_apply_pause_menu_ocr_override",
+        lambda result: result,
+    )
+
+    result = commands._lightning_visible_ui_snapshot()
+
+    assert captures
+    assert result["visible_ui"] == "deployment_screen"
+    assert result["recommended_control"] == "deploy_confirm"
+    assert result.get("bridge_fast_path") is None
+
+
 def test_lightning_refine_maps_active_intro_false_positive_to_bottom_continue(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
@@ -5650,6 +7736,30 @@ def test_lightning_extract_red_regions_from_image(tmp_path):
         assert first["coordinate_space"] == "base_window"
 
 
+def test_lightning_first_island_selection_evidence_ignores_pause_overlay(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: (_ for _ in ()).throw(
+            AssertionError("pause overlays should not be scanned as picker proof")
+        ),
+    )
+
+    result = commands._lightning_first_island_selection_map_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "screenshot_path": "/tmp/pause-overlay.png",
+            "pause_ocr_match": "Timeline Playtime",
+            "dark_overlay_fraction": 0.91,
+        }
+    )
+
+    assert result is None
+
+
 def test_lightning_extract_red_regions_splits_adjacent_regions(tmp_path):
     from PIL import Image, ImageDraw
 
@@ -5889,6 +7999,292 @@ def test_lightning_map_regions_command_uses_explicit_route_policy_in_candidates(
     assert "--route-routing lightning_baseline " in candidate["coordinate_command"]
 
 
+def test_lightning_map_regions_blocks_primary_for_unassigned_multi_region_war(
+    monkeypatch,
+    capsys,
+):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": str(path),
+            "region_count": 2,
+            "regions": [
+                {"index": 0, "window_x": 833, "window_y": 423},
+                {"index": 1, "window_x": 993, "window_y": 594},
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {"status": "OK", "visible_ui": "island_map"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recommend_save_routes",
+        lambda *args, **kwargs: {
+            "status": "NO_ISLAND_MAP",
+            "routing": "lightning_war",
+            "ranked": [],
+            "top3": [],
+        },
+    )
+
+    result = commands.cmd_lightning_map_regions(
+        "/tmp/map.png",
+        route_routing="lightning_war",
+    )
+
+    assert result["status"] == "OK"
+    assert len(result["route_start_candidates"]) == 2
+    assert "primary_next_command" not in result
+    assert "primary_route_candidate_index" not in result
+    assert result["primary_route_candidate"] == {
+        "auto_route_allowed": False,
+        "auto_route_block_reason": "multi_region_route_identity_unassigned",
+        "route_routing": "lightning_war",
+        "candidate_count": 2,
+        "candidate_indices": [0, 1],
+    }
+    assert result["primary_route_block_reason"] == (
+        "multi_region_route_identity_unassigned"
+    )
+    assert "Do not start" in result["next_step"]
+    assert "route identity" in result["next_step"]
+    stdout = capsys.readouterr().out
+    assert "primary blocked: multi_region_route_identity_unassigned" in stdout
+
+
+def test_lightning_region_ocr_labels_attach_to_route_candidates(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "observations": [
+                {
+                    "text": "Excavation",
+                    "center_image": [1481.0, 845.0],
+                    "bbox_image": [1392.0, 834.0, 1570.0, 856.0],
+                },
+                {
+                    "text": "Site",
+                    "center_image": [1487.0, 885.0],
+                    "bbox_image": [1456.0, 874.0, 1518.0, 896.0],
+                },
+                {
+                    "text": "Old Earth Park",
+                    "center_image": [1747.0, 1153.0],
+                    "bbox_image": [1630.0, 1142.0, 1864.0, 1164.0],
+                },
+            ],
+        },
+    )
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 0,
+                "window_x": 833,
+                "window_y": 423,
+                "bbox_image": [1369, 520, 1624, 1152],
+            },
+            {
+                "index": 1,
+                "window_x": 993,
+                "window_y": 594,
+                "bbox_image": [1518, 1044, 1960, 1372],
+            },
+        ],
+    }
+
+    labeled = commands._lightning_attach_region_ocr_labels(
+        visual_regions,
+        "map.png",
+    )
+    candidates = commands._lightning_route_start_candidates(
+        labeled,
+        recommendation={
+            "status": "NO_ISLAND_MAP",
+            "source": "saveData",
+            "routing": "lightning_war",
+            "ranked": [],
+        },
+    )
+
+    assert labeled["visible_label_ocr"]["status"] == "OK"
+    assert labeled["regions"][0]["visible_label"] == "Excavation Site"
+    assert labeled["regions"][1]["visible_label"] == "Old Earth Park"
+    assert candidates[0]["visible_label"] == "Excavation Site"
+    assert candidates[0]["visible_label_texts"] == ["Excavation", "Site"]
+    assert candidates[1]["visible_label"] == "Old Earth Park"
+    assert all("mission_id" not in candidate for candidate in candidates)
+
+
+def test_lightning_region_ocr_labels_filter_pause_menu_text(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "observations": [
+                {"text": "OPTIONS", "center_image": [837.0, 629.0]},
+                {"text": "ACHIEVEMENTS", "center_image": [837.0, 757.0]},
+                {"text": "MAIN MENU", "center_image": [837.0, 885.0]},
+            ],
+        },
+    )
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 1,
+                "window_x": 390,
+                "window_y": 390,
+                "bbox_image": [477, 646, 879, 942],
+            },
+        ],
+    }
+
+    labeled = commands._lightning_attach_region_ocr_labels(
+        visual_regions,
+        "paused-map.png",
+    )
+
+    assert labeled["visible_label_ocr"]["status"] == "NO_MATCH"
+    assert labeled["visible_label_ocr"]["labels_attached"] == 0
+    assert "visible_label" not in labeled["regions"][0]
+
+
+def test_lightning_region_ocr_label_click_target_feeds_route_candidate(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "observations": [
+                {
+                    "text": "Lif eless",
+                    "center_image": [1038.0, 699.0],
+                    "bbox_image": [974.0, 688.0, 1102.0, 710.0],
+                },
+                {
+                    "text": "Basin",
+                    "center_image": [1042.0, 739.0],
+                    "bbox_image": [998.0, 728.0, 1086.0, 750.0],
+                },
+            ],
+        },
+    )
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 0,
+                "window_x": 604,
+                "window_y": 386,
+                "bbox_window": [495, 261, 695, 505],
+                "base_window_x": 604,
+                "base_window_y": 386,
+                "bbox_base_window": [495, 261, 695, 505],
+                "image_x": 1072,
+                "image_y": 772,
+                "bbox_image": [879, 522, 1234, 1010],
+            },
+        ],
+    }
+
+    labeled = commands._lightning_attach_region_ocr_labels(
+        visual_regions,
+        "map.png",
+    )
+    candidate = commands._lightning_route_start_candidates(
+        labeled,
+        recommendation={
+            "status": "NO_ISLAND_MAP",
+            "source": "saveData",
+            "routing": "lightning_war",
+            "ranked": [],
+        },
+    )[0]
+
+    assert labeled["regions"][0]["visible_label"] == "Lif eless Basin"
+    assert labeled["regions"][0]["route_click_target"] == {
+        "window_x": 586,
+        "window_y": 383,
+        "source": "ocr_label_below",
+    }
+    assert candidate["window_x"] == 586
+    assert candidate["window_y"] == 383
+    assert candidate["visual_region_window_x"] == 604
+    assert candidate["visual_region_window_y"] == 386
+    assert candidate["route_click_target"]["source"] == "ocr_label_below"
+
+
+def test_lightning_region_ocr_label_click_target_stays_above_objective_icons(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "observations": [
+                {
+                    "text": "Beautif ul",
+                    "center_image": [1670.0, 739.0],
+                    "bbox_image": [1596.0, 728.0, 1744.0, 750.0],
+                },
+                {
+                    "text": "Corner",
+                    "center_image": [1674.0, 779.0],
+                    "bbox_image": [1616.0, 768.0, 1732.0, 790.0],
+                },
+            ],
+        },
+    )
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 0,
+                "window_x": 932,
+                "window_y": 396,
+                "bbox_window": [859, 294, 1025, 502],
+                "base_window_x": 932,
+                "base_window_y": 396,
+                "bbox_base_window": [859, 294, 1025, 502],
+                "image_x": 1654,
+                "image_y": 792,
+                "bbox_image": [1525, 588, 1819, 1004],
+            },
+        ],
+    }
+
+    labeled = commands._lightning_attach_region_ocr_labels(
+        visual_regions,
+        "map.png",
+    )
+    candidate = commands._lightning_route_start_candidates(
+        labeled,
+        recommendation={
+            "status": "NO_ISLAND_MAP",
+            "source": "saveData",
+            "routing": "lightning_war",
+            "ranked": [],
+        },
+    )[0]
+
+    assert labeled["regions"][0]["visible_label"] == "Beautif ul Corner"
+    assert labeled["regions"][0]["route_click_target"] == {
+        "window_x": 942,
+        "window_y": 403,
+        "source": "ocr_label_below",
+    }
+    assert candidate["window_x"] == 942
+    assert candidate["window_y"] == 403
+
+
 def test_lightning_map_regions_blocks_obscured_route_preview(monkeypatch):
     monkeypatch.setattr(
         commands,
@@ -5969,6 +8365,75 @@ def test_lightning_map_regions_blocks_obscured_route_preview(monkeypatch):
     }
     assert "route_start_candidates" not in result
     assert "primary_next_command" not in result
+
+
+def test_lightning_map_regions_allows_labeled_plain_route_map(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": str(path),
+            "region_count": 3,
+            "regions": [
+                {
+                    "index": 0,
+                    "window_x": 734,
+                    "window_y": 270,
+                    "visible_label": "Secondary Cooling",
+                    "visible_label_texts": ["Secondary", "Cooling"],
+                },
+                {
+                    "index": 1,
+                    "window_x": 758,
+                    "window_y": 416,
+                    "visible_label": "Pinnacle Garden",
+                    "visible_label_texts": ["Pinnacle", "Garden"],
+                },
+                {
+                    "index": 2,
+                    "window_x": 1042,
+                    "window_y": 423,
+                    "visible_label": "Thermal Dampeners",
+                    "visible_label_texts": ["Thermal", "Dampeners"],
+                },
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_attach_region_ocr_labels",
+        lambda result, path: result,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "confidence": 0.20,
+            "scores": {
+                "mission_preview_dialogue": {
+                    "score": 0.76,
+                    "card": {
+                        "blue": 4106,
+                        "bright": 4350,
+                        "dark_fraction": 0.2782,
+                    },
+                    "dialogue": {"red": 9456},
+                }
+            },
+        },
+    )
+
+    result = commands.cmd_lightning_map_regions(
+        "/tmp/labeled-pinnacle-route-map.png",
+        use_save_route_plan=False,
+    )
+
+    assert result["status"] == "OK"
+    assert "screen_guard" not in result
+    assert result["region_count"] == 3
 
 
 def test_lightning_ui_classifier_prioritizes_mission_preview(tmp_path):
@@ -6224,6 +8689,12 @@ def test_lightning_attempt_deploys_confirms_and_runs_loop(monkeypatch):
     calls = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6239,6 +8710,16 @@ def test_lightning_attempt_deploys_confirms_and_runs_loop(monkeypatch):
             "active_mechs": 0,
             "mech_count": 0,
             "deployment_zone_count": 4,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
         },
     )
 
@@ -6300,6 +8781,12 @@ def test_lightning_attempt_blocks_ui_fallback_deploy_when_confirm_never_goes_liv
     }
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6361,6 +8848,12 @@ def test_lightning_attempt_deploys_when_bridge_reports_enemy_phase(monkeypatch):
     calls = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6376,6 +8869,16 @@ def test_lightning_attempt_deploys_when_bridge_reports_enemy_phase(monkeypatch):
             "active_mechs": 0,
             "mech_count": 0,
             "deployment_zone_count": 11,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
         },
     )
 
@@ -6400,6 +8903,92 @@ def test_lightning_attempt_deploys_when_bridge_reports_enemy_phase(monkeypatch):
     assert [call[0] for call in calls] == ["deploy", "click", "loop"]
 
 
+def test_lightning_attempt_recovers_transient_deployment_visible_miss(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+    snapshots = iter(
+        [
+            {
+                "status": "OK",
+                "phase": "unknown",
+                "turn": 0,
+                "mission_id": "Mission_Tides",
+                "active_mechs": 0,
+                "mech_count": 0,
+                "deployment_zone_count": 14,
+                "in_active_mission": True,
+            },
+            {
+                "status": "OK",
+                "phase": "combat_enemy",
+                "turn": 0,
+                "mission_id": "Mission_Tides",
+                "active_mechs": 0,
+                "mech_count": 0,
+                "deployment_zone_count": 14,
+                "in_active_mission": True,
+            },
+        ]
+    )
+    visible = iter(
+        [
+            {"status": "OK", "visible_ui": "combat_screen"},
+            {
+                "status": "OK",
+                "visible_ui": "deployment_screen",
+                "recommended_control": "deploy_confirm",
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible))
+    monkeypatch.setattr(
+        commands,
+        "cmd_deploy_recommended",
+        lambda **kwargs: calls.append(("deploy", kwargs)) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda name, **kwargs: calls.append(("click", name)) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_loop",
+        lambda **kwargs: calls.append(("loop", kwargs)) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_attempt(max_wait=10)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "combat_loop_returned"
+    assert result["action"]["deployment_visible_ui_recheck"]["reason"] == (
+        "fresh_visible_deployment_recovered"
+    )
+    assert result["action"]["deployment_visible_ui_recheck"]["snapshot"]["phase"] == (
+        "combat_enemy"
+    )
+    assert [call[0] for call in calls] == ["deploy", "click", "loop"]
+    assert calls[2][1]["max_wait"] == 30.0
+
+
 def test_lightning_attempt_blocks_route_mission_mismatch_before_deploy(monkeypatch):
     session = RunSession(
         run_id="lw",
@@ -6409,6 +8998,12 @@ def test_lightning_attempt_blocks_route_mission_mismatch_before_deploy(monkeypat
     )
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6425,6 +9020,16 @@ def test_lightning_attempt_blocks_route_mission_mismatch_before_deploy(monkeypat
             "mech_count": 0,
             "deployment_zone_count": 11,
             "mission_id": "Mission_Satellite",
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
         },
     )
     monkeypatch.setattr(
@@ -6479,15 +9084,26 @@ def test_lightning_attempt_keeps_active_route_mismatch_blocked(monkeypatch):
         "mech_count": 0,
         "deployment_zone_count": 11,
         "mission_id": "Mission_Survive",
+        "in_active_mission": True,
     }
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
         lambda **kwargs: {"status": "PASS"},
     )
     monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: snapshot)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "deployment_screen",
+            "recommended_control": "deploy_confirm",
+        },
+    )
     monkeypatch.setattr(
         commands,
         "_lightning_active_route_mismatch_block",
@@ -6525,6 +9141,12 @@ def test_lightning_attempt_finishes_partial_deployment_before_waiting(monkeypatc
     calls = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6575,6 +9197,7 @@ def test_lightning_attempt_does_not_deploy_from_unknown_phase(monkeypatch):
     )
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6629,6 +9252,7 @@ def test_lightning_attempt_does_not_deploy_from_visible_island_map(monkeypatch):
     )
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6686,6 +9310,12 @@ def test_lightning_attempt_deploys_active_unknown_phase_with_noisy_map_classifie
     calls = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_active_route_mismatch_block",
+        lambda session, snapshot: None,
+    )
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6772,6 +9402,7 @@ def test_lightning_attempt_blocks_stale_active_visible_map_before_deploy(
     events = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
         commands,
         "cmd_lightning_preflight",
@@ -6947,7 +9578,16 @@ def test_lightning_attempt_uses_visible_island_map_when_bridge_missing(monkeypat
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Mines",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -6970,6 +9610,245 @@ def test_lightning_attempt_uses_visible_island_map_when_bridge_missing(monkeypat
     assert result["status"] == "LIGHTNING_ATTEMPT_NEEDS_UI"
     assert result["reason"] == "bridge_snapshot_unavailable_visible_island_map"
     assert result["snapshot"]["visible_ui"]["visible_ui"] == "island_map"
+
+
+@pytest.mark.parametrize(
+    ("session_kwargs", "expected"),
+    [
+        ({}, False),
+        ({"current_island": "archive"}, True),
+        ({"current_mission": "Mission_Train"}, True),
+        ({"mission_index": 1}, True),
+        ({"mission_index": "2"}, True),
+        ({"islands_completed": ["archive"]}, True),
+    ],
+)
+def test_lightning_session_has_selected_island_context(
+    session_kwargs,
+    expected,
+):
+    base = {
+        "current_island": "",
+        "current_mission": "",
+        "mission_index": 0,
+        "islands_completed": [],
+    }
+    base.update(session_kwargs)
+
+    assert (
+        commands._lightning_session_has_selected_island_context(
+            SimpleNamespace(**base)
+        )
+        is expected
+    )
+
+
+def test_lightning_attempt_first_island_evidence_beats_route_candidates(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    assert commands._lightning_session_has_selected_island_context(session) is False
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: False)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "island_map_or_unknown",
+        "screenshot_path": "/tmp/first_island_picker.png",
+    }
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: visible_ui)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_audit_visible_ui_for_terminal_text",
+        lambda ui: ui,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: {
+            "recommendation": {"status": "OK"},
+            "route_target_hint": {"mission_id": "Mission_Train"},
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 430,
+                    "window_y": 320,
+                    "mission_id": "Mission_Train",
+                    "auto_route_allowed": True,
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_island_selection_map_evidence",
+        lambda ui: {
+            "status": "MATCH",
+            "reason": "island_selection_map_without_mission_regions",
+            "visible_ui": ui.get("visible_ui"),
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_stale_bridge_files_for_visible_map",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("first-island picker must not be accepted as route-ready")
+        ),
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_NEEDS_UI"
+    assert result["reason"] == "first_island_selection_map_without_route_context"
+    assert result["first_island_selection_evidence"]["status"] == "MATCH"
+    assert result["route_start_candidates"][0]["mission_id"] == "Mission_Train"
+    assert "primary_next_command" not in result
+    assert "stale_bridge_cleanup" not in result
+
+
+def test_lightning_attempt_routes_recorded_first_island_picker_to_confirm(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="pinnacle",
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: False)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "island_map_or_unknown",
+        "screenshot_path": "/tmp/selected_island_map.png",
+    }
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: visible_ui)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_audit_visible_ui_for_terminal_text",
+        lambda ui: ui,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: {
+            "recommendation": {"status": "NO_ISLAND_MAP"},
+            "route_target_hint": None,
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_island_selection_map_evidence",
+        lambda ui: {
+            "status": "MATCH",
+            "reason": "island_selection_map_without_mission_regions",
+            "visible_ui": ui.get("visible_ui"),
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_stale_bridge_files_for_visible_map",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("no route candidates should not clear bridge files")
+        ),
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_NEEDS_UI"
+    assert result["reason"] == "recorded_first_island_selection_map_requires_confirm"
+    assert result["session_current_island"] == "pinnacle"
+    assert result["first_island_selection_evidence"]["status"] == "MATCH"
+    assert result["primary_next_command"].endswith(
+        "lightning_select_first_island --first-island pinnacle"
+    )
+    assert "stale_bridge_cleanup" not in result
+
+
+def test_lightning_attempt_suppresses_first_island_evidence_after_mission_context(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="pinnacle",
+        mission_index=1,
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: False)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "island_map_or_unknown",
+        "screenshot_path": "/tmp/stale-zero-region-map.png",
+    }
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: visible_ui)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_audit_visible_ui_for_terminal_text",
+        lambda ui: ui,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: {
+            "recommendation": {"status": "NO_ISLAND_MAP"},
+            "route_target_hint": None,
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_island_selection_map_evidence",
+        lambda ui: {
+            "status": "MATCH",
+            "reason": "island_selection_map_without_mission_regions",
+            "visible_ui": ui.get("visible_ui"),
+        },
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_NEEDS_UI"
+    assert result["reason"] == "bridge_snapshot_unavailable_visible_island_map"
+    assert result["first_island_selection_guard_suppressed"] == {
+        "status": "MATCH",
+        "reason": "island_selection_map_without_mission_regions",
+        "visible_ui": "island_map_or_unknown",
+        "suppressed_reason": "session_mission_route_context_recorded",
+        "current_island": "pinnacle",
+        "current_mission": "",
+        "mission_index": 1,
+        "islands_completed": [],
+    }
 
 
 def test_lightning_attempt_routes_paused_island_map_when_bridge_missing(monkeypatch):
@@ -7004,7 +9883,16 @@ def test_lightning_attempt_routes_paused_island_map_when_bridge_missing(monkeypa
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_DungBoss",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: paused_map)
 
@@ -7048,6 +9936,99 @@ def test_lightning_attempt_routes_paused_island_map_when_bridge_missing(monkeypa
     assert cleanups[0]["visible_ui"]["visible_ui"] == "island_map"
 
 
+def test_lightning_attempt_routes_pause_ocr_preview_false_positive_map(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    seen = {}
+    cleanups = []
+    paused_preview_false_positive = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "pause_ocr_match": "Timeline Playtime",
+        "pause_ocr_override": {
+            "from_visible_ui": "mission_preview_panel",
+            "from_recommended_control": "dialogue_textbox",
+            "matched": "Timeline Playtime",
+        },
+        "scores": {
+            "island_map": {
+                "score": 0.0011,
+                "red": 464,
+                "green": 944,
+                "colored": 1408,
+            },
+        },
+    }
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "unknown",
+            "turn": 0,
+            "mission_id": "Mission_Survive",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: paused_preview_false_positive,
+    )
+
+    def fake_route_plan(**kwargs):
+        seen.update(kwargs)
+        return {
+            "recommendation": {"status": "NO_ISLAND_MAP"},
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 976,
+                    "window_y": 417,
+                    "auto_route_probe": "live_preview_required",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(commands, "_lightning_visible_map_route_plan", fake_route_plan)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_stale_bridge_files_for_visible_map",
+        lambda **kwargs: cleanups.append(kwargs)
+        or {"status": "OK", "reason": kwargs["reason"], "removed": ["state"]},
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
+    assert result["reason"] == "paused_visible_island_map_save_route_plan"
+    assert seen["visible_ui"]["visible_ui"] == "island_map"
+    assert seen["visible_ui"]["pause_underlay_visible_ui"] == "pause_menu"
+    assert result["snapshot"]["visible_ui"]["visible_ui"] == "island_map"
+    assert result["snapshot"]["pause_menu_visible_ui"] == paused_preview_false_positive
+    assert result["primary_route_candidate_index"] == 0
+    assert result["stale_bridge_cleanup"]["reason"] == (
+        "paused_map_route_ready_bridge_unavailable"
+    )
+    assert cleanups[0]["snapshot"]["mission_id"] == "Mission_Survive"
+
+
 def test_pause_menu_underlay_accepts_dim_windows_route_map_signal():
     assert commands._lightning_pause_menu_has_island_map_underlay(
         {
@@ -7084,7 +10065,16 @@ def test_lightning_attempt_does_not_route_generic_pause_without_map_signal(
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Dam",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -7146,7 +10136,16 @@ def test_lightning_attempt_clears_ocr_intro_when_bridge_missing(monkeypatch):
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Bomb",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -7167,6 +10166,68 @@ def test_lightning_attempt_clears_ocr_intro_when_bridge_missing(monkeypatch):
     assert clicks == ["bottom_continue"]
 
 
+def test_lightning_attempt_clears_intro_preview_before_route_validation(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    visible_states = iter(
+        [
+            _rst_intro_continue_visible_ui(),
+            _rst_intro_continue_visible_ui(),
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "recommended_control": None,
+            },
+        ]
+    )
+    clicks = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "unknown",
+            "turn": 0,
+            "mission_id": "Mission_Holes",
+            "deployment_zone_count": 11,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+            "bridge_heartbeat_alive": False,
+            "bridge_heartbeat_stale": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: next(visible_states),
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: clicks.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands.cmd_lightning_attempt()
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["reason"] == "intro_continue_cleared_from_stale_deployment_preview"
+    assert result["action"]["control"] == "dialogue_textbox"
+    assert clicks == ["dialogue_textbox"]
+
+
 def test_lightning_attempt_clicks_mission_preview_dialogue_when_bridge_missing(monkeypatch):
     session = RunSession(
         run_id="lw",
@@ -7185,7 +10246,16 @@ def test_lightning_attempt_clicks_mission_preview_dialogue_when_bridge_missing(m
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Mines",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -7194,6 +10264,9 @@ def test_lightning_attempt_clicks_mission_preview_dialogue_when_bridge_missing(m
             "status": "OK",
             "visible_ui": "mission_preview_panel",
             "recommended_control": "dialogue_textbox",
+            "scores": {
+                "mission_preview_panel": {"score": 0.01, "yellow": 2500},
+            },
         },
     )
     monkeypatch.setattr(commands.time, "sleep", lambda seconds: None)
@@ -7229,7 +10302,16 @@ def test_lightning_attempt_blocks_mission_preview_board_when_bridge_missing(monk
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_DungBoss",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -7392,7 +10474,16 @@ def test_lightning_attempt_routes_ambiguous_visible_map_when_bridge_missing(monk
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Dam",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     monkeypatch.setattr(
         commands,
@@ -7627,6 +10718,92 @@ def test_lightning_attempt_routes_visible_map_over_stale_active_combat(monkeypat
     )
     assert cleanups[0]["visible_ui"]["visible_ui"] == "island_map"
     assert result["pause_guard"]["status"] == "OK"
+
+
+def test_lightning_attempt_skips_stale_bridge_wait_for_resumed_visible_map(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    seen = {}
+    cleanups = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_alive", lambda **kwargs: False)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: (_ for _ in ()).throw(AssertionError("should not refresh bridge")),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_live_snapshot",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("should not wait for bridge on visible map")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: {"status": "OK", "reason": "resumed_from_pause"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "recommended_control": None,
+            "screenshot_path": "map.png",
+        },
+    )
+
+    def fake_route_plan(**kwargs):
+        seen.update(kwargs)
+        return {
+            "recommendation": {"status": "OK"},
+            "route_target_hint": {"mission_id": "Mission_Train"},
+            "visual_regions": {"status": "OK", "regions": []},
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 430,
+                    "window_y": 320,
+                    "mission_id": "Mission_Train",
+                    "command": (
+                        "python game_loop.py lightning_route_start "
+                        "--visual-region-index 0"
+                    ),
+                    "auto_route_allowed": True,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(commands, "_lightning_visible_map_route_plan", fake_route_plan)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_stale_bridge_files_for_visible_map",
+        lambda **kwargs: cleanups.append(kwargs)
+        or {"status": "OK", "reason": kwargs["reason"], "removed": ["state"]},
+    )
+
+    result = commands.cmd_lightning_attempt(resume_if_paused=True)
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_ROUTE_READY"
+    assert result["reason"] == "visible_island_map_save_route_plan"
+    assert seen["visible_ui"]["visible_ui"] == "island_map"
+    assert seen["allow_pause_map_peek"] is False
+    assert cleanups[0]["snapshot"]["reason"] == (
+        "bridge_heartbeat_stale_or_missing_before_attempt"
+    )
+    assert cleanups[0]["reason"] == "visible_map_route_ready_bridge_unavailable"
 
 
 def test_lightning_attempt_runs_combat_on_ambiguous_stale_active_ui(monkeypatch):
@@ -8922,6 +12099,37 @@ def test_lightning_clear_panel_chain_repeats_same_class(monkeypatch):
     assert result["visible_ui"]["visible_ui"] == "island_map_or_unknown"
 
 
+def test_lightning_clear_panel_chain_can_hold_preview_dialogue(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+            "scores": {
+                "mission_preview_panel": {"score": 0.01, "yellow": 2500},
+            },
+        },
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands._lightning_clear_visible_panel_chain(
+        allow_mission_preview_dialogue=False,
+    )
+
+    assert result["status"] == "NO_ACTION"
+    assert result["reason"] == "mission_preview_dialogue_requires_route_validation"
+    assert result["visible_ui"]["visible_ui"] == "mission_preview_panel"
+    assert calls == []
+
+
 def test_lightning_attempt_auto_clears_visible_pod_panel(monkeypatch):
     session = RunSession(
         run_id="lw",
@@ -9101,6 +12309,37 @@ def test_lightning_clear_panel_chain_clears_ocr_intro_unknown_map(monkeypatch):
     assert result["steps"][0]["control"] == "bottom_continue"
 
 
+def test_lightning_clear_panel_chain_clears_ocr_intro_island_map(monkeypatch):
+    intro_ui = _rst_intro_continue_visible_ui()
+    intro_ui["visible_ui"] = "island_map"
+    intro_ui["recommended_control"] = None
+    states = iter(
+        [
+            intro_ui,
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "recommended_control": None,
+            },
+        ]
+    )
+    calls = []
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(states))
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands._lightning_clear_visible_panel_chain()
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "panel_chain_cleared"
+    assert calls == ["bottom_continue"]
+    assert result["steps"][0]["control"] == "bottom_continue"
+
+
 def test_lightning_attempt_auto_clears_safe_panel_without_bridge(monkeypatch):
     session = RunSession(
         run_id="lw",
@@ -9119,7 +12358,16 @@ def test_lightning_attempt_auto_clears_safe_panel_without_bridge(monkeypatch):
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Bomb",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
     visible_states = iter(
         [
@@ -9324,7 +12572,7 @@ def test_lightning_segment_continues_panel_clear_to_route_ready(monkeypatch):
                     "python3 game_loop.py lightning_segment "
                     "--route-visual-region-index 0 "
                     "--route-routing lightning_war "
-                    "--route-start-mode dialogue-region-repeat-preview-board"
+                    "--route-start-mode visible-text"
                 ),
                 "primary_route_candidate_index": 0,
                 "primary_route_target_hint": {
@@ -9360,7 +12608,7 @@ def test_lightning_segment_continues_panel_clear_to_route_ready(monkeypatch):
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
         "--route-routing lightning_war "
-        "--route-start-mode dialogue-region-repeat-preview-board"
+        "--route-start-mode visible-text"
     )
     assert result["primary_route_target_hint"]["match_label"] == "Mission_Train"
     assert calls[0]["run_preflight"] is True
@@ -9440,6 +12688,11 @@ def test_lightning_segment_dirty_consent_survives_panel_clear_until_combat(monke
         commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -9562,6 +12815,11 @@ def test_lightning_segment_bounds_route_start_subcall(monkeypatch):
     monkeypatch.setattr(commands, "_lightning_quiet_call", fake_quiet_call)
     monkeypatch.setattr(
         commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
         "_lightning_timer_pause_guard_once",
         lambda **kwargs: {"status": "OK", "reason": "already_paused"},
     )
@@ -9575,7 +12833,129 @@ def test_lightning_segment_bounds_route_start_subcall(monkeypatch):
 
     assert result["reason"] == "route_start_subcall_timeout"
     assert quiet_calls[0]["timeout_reason"] == "route_start_subcall_timeout"
-    assert 0 < quiet_calls[0]["timeout_seconds"] <= 30
+    assert (
+        quiet_calls[0]["timeout_seconds"]
+        == commands._LIGHTNING_ROUTE_START_SUBCALL_TIMEOUT_SECONDS
+    )
+
+
+def test_lightning_segment_bounds_attempt_subcall(monkeypatch):
+    quiet_calls = []
+
+    def fake_quiet_call(_func, *args, **kwargs):
+        quiet_calls.append(kwargs)
+        return (
+            {
+                "status": "BLOCKED",
+                "reason": kwargs.get("timeout_reason"),
+                "timeout_seconds": kwargs.get("timeout_seconds"),
+            },
+            {"captured_stdout_lines": 0, "captured_stdout_chars": 0},
+        )
+
+    monkeypatch.setattr(commands, "_lightning_quiet_call", fake_quiet_call)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {"status": "OK", "reason": "already_paused"},
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        max_steps=1,
+        max_wall_seconds=25,
+    )
+
+    assert result["reason"] == "attempt_subcall_timeout"
+    assert quiet_calls[0]["timeout_reason"] == "attempt_subcall_timeout"
+    assert 0 < quiet_calls[0]["timeout_seconds"] <= 25
+
+
+def test_lightning_segment_speed_mode_uses_default_wall_cap(monkeypatch):
+    quiet_calls = []
+
+    def fake_quiet_call(_func, *args, **kwargs):
+        quiet_calls.append(kwargs)
+        return (
+            {
+                "status": "BLOCKED",
+                "reason": kwargs.get("timeout_reason"),
+                "timeout_seconds": kwargs.get("timeout_seconds"),
+            },
+            {"captured_stdout_lines": 0, "captured_stdout_chars": 0},
+        )
+
+    monkeypatch.setattr(commands, "_lightning_quiet_call", fake_quiet_call)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {"status": "OK", "reason": "already_paused"},
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        max_steps=1,
+        max_wall_seconds=None,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["reason"] == "attempt_subcall_timeout"
+    assert quiet_calls[0]["timeout_reason"] == "attempt_subcall_timeout"
+    assert (
+        0
+        < quiet_calls[0]["timeout_seconds"]
+        <= commands._LIGHTNING_SPEED_SEGMENT_WALL_SECONDS
+    )
+
+
+def test_lightning_segment_blocks_late_first_mission_route_start(monkeypatch):
+    session = SimpleNamespace(
+        run_id="fresh_lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="rst",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_visible_pause_timer",
+        lambda: {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 120.0,
+            "game_timer": "0:02:00",
+            "ocr_text": "Oh 2m OOs",
+            "timeline_label_seen": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_quiet_call",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("route start should be gated before subcall")
+        ),
+    )
+
+    result = commands.cmd_lightning_segment(
+        route_visual_region_index=0,
+        run_preflight=False,
+        max_steps=1,
+        pause_on_stop=False,
+    )
+
+    assert result["status"] == "LIGHTNING_SEGMENT_STOPPED"
+    assert result["reason"] == "first_mission_route_start_pace_gate"
+    assert result["route_start_performed"] is False
+    assert result["game_budget"]["game_timer"] == "0:02:00"
+    assert result["game_budget"]["max_game_timer"] == "0:02:00"
+    assert result["first_mission_route_start_gate"]["visible_timer"]["ocr_text"] == (
+        "Oh 2m OOs"
+    )
 
 
 def test_lightning_segment_stops_on_visible_map_without_bridge(monkeypatch):
@@ -9623,6 +13003,11 @@ def test_lightning_segment_starts_route_from_stale_deployment_map(monkeypatch):
         commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -9676,6 +13061,11 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
     result = commands.cmd_lightning_segment(max_steps=2, route_auto_start=True)
@@ -9685,7 +13075,7 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
     assert route_calls[0]["visual_region_index"] == 2
     assert route_calls[0]["auto_pause_if_needed"] is False
     assert route_calls[0]["allow_pause_map_peek"] is True
-    assert route_calls[0]["start_mode"] == "dialogue-region-repeat-preview-board"
+    assert route_calls[0]["start_mode"] == "visible-text"
     assert result["steps"][0]["route_auto_start_mission"] == "Mission_Train"
     assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
 
@@ -9726,6 +13116,11 @@ def test_lightning_segment_probes_auto_start_without_expected_mission(monkeypatc
         commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -9779,6 +13174,11 @@ def test_lightning_segment_blocks_non_exact_lightning_route_identity(monkeypatch
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
     result = commands.cmd_lightning_segment(
@@ -9793,6 +13193,78 @@ def test_lightning_segment_blocks_non_exact_lightning_route_identity(monkeypatch
     blocked = result["steps"][0]["route_auto_start_blocked_candidate"]
     assert blocked["auto_route_block_reason"] == "non_exact_route_identity:diagnostic"
     assert blocked["route_identity"]["exact"] is False
+
+
+def test_lightning_segment_strict_route_match_validates_non_exact_primary(monkeypatch):
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "primary_route_candidate": {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                    "mission_id": "Mission_Lightning",
+                    "auto_route_allowed": True,
+                    "route_routing": "lightning_war",
+                    "route_identity": {
+                        "status": "diagnostic",
+                        "exact": False,
+                        "mission_id": "Mission_Lightning",
+                    },
+                },
+                "recommendation": {
+                    "ranked": [
+                        {
+                            "mission_id": "Mission_Lightning",
+                            "region_id": 1,
+                        },
+                    ],
+                    "speed_route_status": {
+                        "status": "AUTO_START_OK",
+                        "auto_start_allowed": True,
+                        "top_mission_id": "Mission_Lightning",
+                    },
+                },
+            },
+            {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "deployment_waiting_for_ui_settle",
+            },
+        ]
+    )
+    route_calls = []
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", lambda **kwargs: next(attempts))
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_preview_validated_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        route_auto_start=True,
+        route_strict_mismatch=True,
+        pause_on_stop=False,
+        max_steps=2,
+    )
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["route_start_performed"] is True
+    assert route_calls[0]["visual_region_index"] is None
+    assert route_calls[0]["region_window_x"] == 812
+    assert route_calls[0]["region_window_y"] == 423
+    assert route_calls[0]["expected_route_mission_id"] == "Mission_Lightning"
+    assert route_calls[0]["auto_pause_if_needed"] is False
+    assert result["steps"][0]["route_auto_start_index"] == 0
+    assert result["steps"][0]["route_auto_start_mission"] == "Mission_Lightning"
 
 
 def test_lightning_auto_start_rotates_unlabeled_probe_candidates():
@@ -9864,6 +13336,11 @@ def test_lightning_segment_uses_probe_offset_for_unlabeled_auto_start(monkeypatc
     )
     monkeypatch.setattr(
         commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
@@ -9909,6 +13386,11 @@ def test_lightning_segment_blocks_vetoed_auto_start_candidate(monkeypatch):
         commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -10080,6 +13562,11 @@ def test_lightning_segment_auto_starts_detected_visual_candidate_before_save_reg
         commands,
         "cmd_lightning_route_start",
         lambda **kwargs: route_calls.append(kwargs) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
     monkeypatch.setattr(
         commands,
@@ -10521,6 +14008,11 @@ def test_lightning_segment_blocks_vetoed_former_slow_primary_route(monkeypatch):
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
 
     result = commands.cmd_lightning_segment(route_auto_start=True, max_steps=2)
 
@@ -10565,6 +14057,11 @@ def test_lightning_segment_baseline_policy_ignores_speed_route_veto(monkeypatch)
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
 
     result = commands.cmd_lightning_segment(
         route_auto_start=True,
@@ -10594,6 +14091,11 @@ def test_lightning_segment_passes_route_routing_to_attempt(monkeypatch):
         commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
 
     result = commands.cmd_lightning_segment(
@@ -10673,6 +14175,11 @@ def test_lightning_segment_auto_start_blocks_unverified_visual_route(monkeypatch
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
 
     result = commands.cmd_lightning_segment(route_auto_start=True, max_steps=2)
 
@@ -10690,6 +14197,98 @@ def test_lightning_segment_auto_start_blocks_unverified_visual_route(monkeypatch
     assert result["steps"][1]["route_auto_start_retry_suppressed"] == (
         "preview_mission_unverified"
     )
+
+
+def test_lightning_segment_auto_start_blocks_multi_region_live_preview_probes(
+    monkeypatch,
+):
+    route_calls = []
+    attempt_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: attempt_calls.append(kwargs)
+        or {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "primary_route_candidate": {
+                "index": 0,
+                "window_x": 812,
+                "window_y": 423,
+            },
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "New Terra",
+                },
+                {
+                    "index": 1,
+                    "window_x": 953,
+                    "window_y": 594,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Phoenix Park",
+                },
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {
+            "status": "BLOCKED",
+            "reason": "route_preview_not_opened_before_start",
+            "actual_preview_mission_id": None,
+            "selected_visual_region": {
+                "index": 0,
+                "window_x": 812,
+                "window_y": 423,
+            },
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                },
+                {
+                    "index": 1,
+                    "window_x": 953,
+                    "window_y": 594,
+                },
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+
+    result = commands.cmd_lightning_segment(
+        route_auto_start=True,
+        max_steps=4,
+        pause_on_stop=False,
+    )
+
+    assert result["reason"] == "route_auto_start_not_allowed"
+    assert result["route_start_performed"] is False
+    assert route_calls == []
+    blocked = result["steps"][0]["route_auto_start_blocked_candidate"]
+    assert blocked["auto_route_block_reason"] == (
+        "multi_region_live_preview_probe_without_route_identity"
+    )
+    assert blocked["probe_candidate_count"] == 2
+    assert blocked["probe_candidate_indices"] == [0, 1]
+    assert len(attempt_calls) == 1
 
 
 def test_lightning_segment_does_not_retry_unverified_probe_without_identity(
@@ -10715,12 +14314,14 @@ def test_lightning_segment_does_not_retry_unverified_probe_without_identity(
                     "window_x": 812,
                     "window_y": 423,
                     "auto_route_probe": "live_preview_required",
+                    "visible_label": "New Terra",
                 },
                 {
                     "index": 1,
                     "window_x": 953,
                     "window_y": 594,
                     "auto_route_probe": "live_preview_required",
+                    "visible_label": "Phoenix Park",
                 },
             ],
         },
@@ -10761,19 +14362,347 @@ def test_lightning_segment_does_not_retry_unverified_probe_without_identity(
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
 
-    result = commands.cmd_lightning_segment(route_auto_start=True, max_steps=4)
+    result = commands.cmd_lightning_segment(
+        route_auto_start=True,
+        max_steps=4,
+        pause_on_stop=False,
+    )
 
     assert result["reason"] == "route_auto_start_not_allowed"
     assert result["route_start_performed"] is True
     assert len(route_calls) == 1
-    assert route_calls[0]["region_window_x"] == 812
-    assert route_calls[0]["region_window_y"] == 423
+    assert route_calls[0]["visual_region_index"] == 0
+    assert route_calls[0]["region_window_x"] is None
+    assert route_calls[0]["region_window_y"] is None
     assert result["steps"][1]["route_auto_start_retry_suppressed"] == (
         "preview_ocr_unavailable"
     )
     assert "route_auto_start_retry_index" not in result["steps"][1]
     assert len(attempt_calls) == 1
+
+
+def test_lightning_segment_retries_after_preview_not_opened_probe(
+    monkeypatch,
+):
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "primary_route_candidate": {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                },
+            },
+            {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "deployment_waiting_for_ui_settle",
+            },
+        ]
+    )
+    route_calls = []
+    attempt_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return next(attempts)
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        if len(route_calls) == 1:
+            return {
+                "status": "BLOCKED",
+                "reason": "route_preview_not_opened_before_start",
+                "actual_preview_mission_id": None,
+                "selected_visual_region": {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                },
+                "route_start_candidates": [
+                    {
+                        "index": 0,
+                        "window_x": 812,
+                        "window_y": 423,
+                    },
+                    {
+                        "index": 1,
+                        "window_x": 953,
+                        "window_y": 594,
+                    },
+                ],
+            }
+        return {
+            "status": "OK",
+            "expected_route_mission_id": "Mission_Tides",
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=4, route_auto_start=True)
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["route_start_performed"] is True
+    assert [call["visual_region_index"] for call in route_calls] == [None, None]
+    assert [(call["region_window_x"], call["region_window_y"]) for call in route_calls] == [
+        (812, 423),
+        (953, 594),
+    ]
+    assert result["steps"][1]["route_auto_start_rejected_candidate"] == {
+        "index": 0,
+        "auto_route_allowed": False,
+        "auto_route_block_reason": "route_preview_not_opened_before_start",
+        "window_x": 812,
+        "window_y": 423,
+    }
+    assert result["steps"][1]["route_auto_start_retry_index"] == 1
+    assert result["steps"][1]["route_auto_start_retry_probe"] == (
+        "live_preview_required"
+    )
+    assert result["route_auto_start_rejected_candidates"][0][
+        "auto_route_block_reason"
+    ] == "route_preview_not_opened_before_start"
+    assert len(attempt_calls) == 2
+
+
+def test_lightning_segment_retries_same_candidate_alternate_click_after_preview_not_opened(
+    monkeypatch,
+):
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "primary_route_candidate": {
+                    "index": 0,
+                    "window_x": 700,
+                    "window_y": 379,
+                    "visual_region_window_x": 705,
+                    "visual_region_window_y": 355,
+                    "route_click_target": {
+                        "source": "ocr_label_below",
+                        "window_x": 700,
+                        "window_y": 379,
+                    },
+                },
+                "route_start_candidates": [
+                    {
+                        "index": 0,
+                        "window_x": 700,
+                        "window_y": 379,
+                        "visual_region_window_x": 705,
+                        "visual_region_window_y": 355,
+                        "route_click_target": {
+                            "source": "ocr_label_below",
+                            "window_x": 700,
+                            "window_y": 379,
+                        },
+                    },
+                    {
+                        "index": 1,
+                        "window_x": 953,
+                        "window_y": 594,
+                    },
+                ],
+            },
+            {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "deployment_waiting_for_ui_settle",
+            },
+        ]
+    )
+    route_calls = []
+    attempt_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return next(attempts)
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        if len(route_calls) == 1:
+            return {
+                "status": "BLOCKED",
+                "reason": "route_preview_not_opened_before_start",
+                "actual_preview_mission_id": None,
+                "selected_visual_region": {
+                    "index": 0,
+                    "window_x": 700,
+                    "window_y": 379,
+                    "visual_region_window_x": 705,
+                    "visual_region_window_y": 355,
+                },
+                "route_start_candidates": [
+                    {
+                        "index": 0,
+                        "window_x": 700,
+                        "window_y": 379,
+                        "visual_region_window_x": 705,
+                        "visual_region_window_y": 355,
+                        "route_click_target": {
+                            "source": "ocr_label_below",
+                            "window_x": 700,
+                            "window_y": 379,
+                        },
+                    },
+                    {
+                        "index": 1,
+                        "window_x": 953,
+                        "window_y": 594,
+                    },
+                ],
+            }
+        return {
+            "status": "OK",
+            "expected_route_mission_id": "Mission_Tides",
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=4, route_auto_start=True)
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["route_start_performed"] is True
+    assert [call["visual_region_index"] for call in route_calls] == [None, None]
+    assert [
+        (call["region_window_x"], call["region_window_y"]) for call in route_calls
+    ] == [
+        (700, 379),
+        (705, 355),
+    ]
+    assert result["steps"][1]["route_auto_start_retry_index"] == 0
+    assert result["steps"][1]["route_auto_start_retry_reason"] == (
+        "alternate_click_target"
+    )
+    assert result["steps"][1]["route_auto_start_alternate_click_candidate"][
+        "route_click_target"
+    ]["source"] == "visual_region_center"
+    assert "route_auto_start_rejected_candidate" not in result["steps"][1]
+    assert len(result.get("route_auto_start_rejected_candidates") or []) == 0
+    assert len(attempt_calls) == 2
+
+
+def test_lightning_segment_retries_after_unrecognized_preview_ocr(
+    monkeypatch,
+):
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "primary_route_candidate": {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                },
+            },
+            {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "deployment_waiting_for_ui_settle",
+            },
+        ]
+    )
+    route_calls = []
+    attempt_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return next(attempts)
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        if len(route_calls) == 1:
+            return {
+                "status": "BLOCKED",
+                "reason": "route_preview_mission_unverified_before_start",
+                "actual_preview_mission_id": None,
+                "visible_preview_ocr": {
+                    "status": "UNKNOWN",
+                    "reason": "no_known_preview_text_match",
+                    "texts": ["New Terra"],
+                },
+                "selected_visual_region": {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                },
+                "route_start_candidates": [
+                    {
+                        "index": 0,
+                        "window_x": 812,
+                        "window_y": 423,
+                    },
+                    {
+                        "index": 1,
+                        "window_x": 953,
+                        "window_y": 594,
+                    },
+                ],
+            }
+        return {
+            "status": "OK",
+            "expected_route_mission_id": "Mission_Tides",
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=4, route_auto_start=True)
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["route_start_performed"] is True
+    assert [(call["region_window_x"], call["region_window_y"]) for call in route_calls] == [
+        (812, 423),
+        (953, 594),
+    ]
+    assert result["steps"][1]["visible_preview_ocr"] == {
+        "status": "UNKNOWN",
+        "reason": "no_known_preview_text_match",
+    }
+    assert result["steps"][1]["route_auto_start_retry_index"] == 1
+    assert result["route_auto_start_rejected_candidates"][0][
+        "auto_route_block_reason"
+    ] == "route_preview_mission_unverified_before_start"
+    assert len(attempt_calls) == 2
 
 
 def test_lightning_segment_auto_start_blocks_vetoed_visual_preview(monkeypatch):
@@ -10811,6 +14740,12 @@ def test_lightning_segment_auto_start_blocks_vetoed_visual_preview(monkeypatch):
         commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
 
     result = commands.cmd_lightning_segment(route_auto_start=True, max_steps=2)
@@ -10897,6 +14832,11 @@ def test_lightning_segment_retries_after_vetoed_probe_preview(monkeypatch):
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
     result = commands.cmd_lightning_segment(max_steps=4, route_auto_start=True)
@@ -10920,6 +14860,865 @@ def test_lightning_segment_retries_after_vetoed_probe_preview(monkeypatch):
         "Mission_Tanks"
     )
     assert len(attempt_calls) == 2
+
+
+@pytest.mark.parametrize(
+    "mission_id",
+    ["Mission_Airstrike", "Mission_Solar", "Mission_Volatile"],
+)
+def test_lightning_segment_suppresses_retry_after_slow_vetoed_probe_preview(
+    monkeypatch,
+    mission_id,
+):
+    attempts = iter(
+        [
+            {
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "primary_route_candidate": {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                },
+            },
+        ]
+    )
+    route_calls = []
+    attempt_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return next(attempts)
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_auto_start_vetoed_before_start",
+            "actual_preview_mission_id": mission_id,
+            "auto_route_block_reason": f"vetoed_mission:{mission_id}",
+            "selected_visual_region": {
+                "index": 0,
+                "window_x": 812,
+                "window_y": 423,
+            },
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                },
+                {
+                    "index": 1,
+                    "window_x": 953,
+                    "window_y": 594,
+                },
+            ],
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=4, route_auto_start=True)
+
+    assert result["reason"] == "route_auto_start_not_allowed"
+    assert result["route_start_performed"] is True
+    assert len(route_calls) == 1
+    assert len(attempt_calls) == 1
+    assert result["steps"][1]["route_auto_start_rejected_candidate"]["mission_id"] == (
+        mission_id
+    )
+    assert result["steps"][1]["route_auto_start_retry_suppressed"] == (
+        f"vetoed_mission_retry_suppressed:{mission_id}"
+    )
+    assert "route_auto_start_retry_index" not in result["steps"][1]
+    assert result["route_auto_start_rejected_candidates"][0]["mission_id"] == (
+        mission_id
+    )
+
+
+def test_lightning_segment_blocks_retry_when_probe_cache_prunes_remaining_candidate(
+    monkeypatch,
+):
+    route_candidates = [
+        {
+            "index": 0,
+            "window_x": 812,
+            "window_y": 423,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "New Terra",
+        },
+        {
+            "index": 1,
+            "window_x": 953,
+            "window_y": 594,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "Phoenix Park",
+        },
+    ]
+    route_calls = []
+    attempt_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "route_start_candidates": route_candidates,
+        }
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_auto_start_vetoed_before_start",
+            "actual_preview_mission_id": "Mission_Tanks",
+            "auto_route_block_reason": "vetoed_mission:Mission_Tanks",
+            "selected_visual_region": {
+                "index": 0,
+                "window_x": 812,
+                "window_y": 423,
+            },
+            "route_start_candidates": route_candidates,
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=4,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        route_probe_cache=[
+            {
+                "signature": {
+                    "first_island": "archive",
+                    "route_routing": "lightning_war",
+                    "mission_index": 0,
+                    "label_key": "phoenixpark",
+                },
+                "first_island": "archive",
+                "route_routing": "lightning_war",
+                "mission_index": 0,
+                "index": 1,
+                "visible_label": "Phoenix Park",
+                "auto_route_block_reason": (
+                    "route_preview_mission_unverified_before_start"
+                ),
+                "visible_preview_ocr_reason": "no_known_preview_text_match",
+                "retry_policy": "hard_prune",
+                "hits": 1,
+            }
+        ],
+        route_probe_cache_first_island="archive",
+        route_probe_cache_mission_index=0,
+    )
+
+    assert result["reason"] == "route_auto_start_not_allowed"
+    assert result["route_start_performed"] is True
+    assert len(route_calls) == 1
+    assert len(attempt_calls) == 1
+    step = result["steps"][1]
+    assert step["route_auto_start_rejected_candidate"]["mission_id"] == (
+        "Mission_Tanks"
+    )
+    assert "route_auto_start_retry_index" not in step
+    assert step["route_auto_start_retry_suppressed"] == (
+        "route_probe_cache_all_candidates_pruned"
+    )
+    assert step["route_probe_cache"]["status"] == "APPLIED"
+    assert step["route_probe_cache"]["pruned_candidate_indices"] == [1]
+    blocked = step["route_auto_start_blocked_candidate"]
+    assert blocked["auto_route_block_reason"] == (
+        "route_probe_cache_all_candidates_pruned"
+    )
+    assert "index" not in blocked
+
+
+def test_lightning_segment_uses_session_route_probe_cache_for_auto_start(
+    monkeypatch,
+):
+    class FakeSession:
+        current_island = "archive"
+        mission_index = 0
+
+        def __init__(self):
+            self.lightning_route_probe_cache = [
+                {
+                    "signature": {
+                        "first_island": "archive",
+                        "route_routing": "lightning_war",
+                        "mission_index": 0,
+                        "label_key": "newterra",
+                    },
+                    "first_island": "archive",
+                    "route_routing": "lightning_war",
+                    "mission_index": 0,
+                    "index": 0,
+                    "visible_label": "New Terra",
+                    "auto_route_block_reason": (
+                        "route_preview_mission_unverified_before_start"
+                    ),
+                    "visible_preview_ocr_reason": "no_known_preview_text_match",
+                    "retry_policy": "hard_prune",
+                    "hits": 1,
+                }
+            ]
+            self.save_calls = 0
+
+        def save(self):
+            self.save_calls += 1
+
+    session = FakeSession()
+    route_calls = []
+    route_candidates = [
+        {
+            "index": 0,
+            "window_x": 604,
+            "window_y": 386,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "New Terra",
+        },
+        {
+            "index": 1,
+            "window_x": 390,
+            "window_y": 390,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "Phoenix Park",
+        },
+    ]
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": route_candidates,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_preview_validated_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=1,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        pause_on_stop=False,
+    )
+
+    assert route_calls[0]["visual_region_index"] is None
+    assert route_calls[0]["region_window_x"] == 390
+    assert route_calls[0]["region_window_y"] == 390
+    assert result["steps"][0]["route_auto_start_index"] == 1
+    assert result["steps"][0]["route_probe_cache"]["status"] == "APPLIED"
+    assert result["steps"][0]["route_probe_cache"]["pruned_candidate_indices"] == [0]
+    assert "route_probe_cache_record" not in result
+
+
+def test_lightning_segment_ignores_session_route_probe_cache_without_island_scope(
+    monkeypatch,
+):
+    class FakeSession:
+        current_island = ""
+        mission_index = 0
+
+        def __init__(self):
+            self.lightning_route_probe_cache = [
+                {
+                    "signature": {
+                        "first_island": "archive",
+                        "route_routing": "lightning_war",
+                        "mission_index": 0,
+                        "label_key": "newterra",
+                    },
+                    "first_island": "archive",
+                    "route_routing": "lightning_war",
+                    "mission_index": 0,
+                    "index": 0,
+                    "visible_label": "New Terra",
+                    "auto_route_block_reason": (
+                        "route_preview_mission_unverified_before_start"
+                    ),
+                    "visible_preview_ocr_reason": "no_known_preview_text_match",
+                    "retry_policy": "hard_prune",
+                    "hits": 1,
+                }
+            ]
+
+        def save(self):
+            raise AssertionError("cache read should not save")
+
+    session = FakeSession()
+    route_calls = []
+    route_candidates = [
+        {
+            "index": 0,
+            "window_x": 604,
+            "window_y": 386,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "New Terra",
+        },
+        {
+            "index": 1,
+            "window_x": 390,
+            "window_y": 390,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "Phoenix Park",
+        },
+    ]
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": route_candidates,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_preview_validated_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=1,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        pause_on_stop=False,
+    )
+
+    assert route_calls[0]["visual_region_index"] == 0
+    assert route_calls[0]["region_window_x"] is None
+    assert route_calls[0]["region_window_y"] is None
+    assert result["steps"][0]["route_auto_start_index"] == 0
+    assert "route_probe_cache" not in result["steps"][0]
+    assert "route_probe_cache_record" not in result
+
+
+def test_lightning_segment_explicit_route_probe_cache_bypasses_session(
+    monkeypatch,
+):
+    route_calls = []
+    route_candidates = [
+        {
+            "index": 0,
+            "window_x": 604,
+            "window_y": 386,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "New Terra",
+        },
+        {
+            "index": 1,
+            "window_x": 390,
+            "window_y": 390,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "Phoenix Park",
+        },
+    ]
+
+    def fail_load_session():
+        raise AssertionError("explicit route_probe_cache should not load session")
+
+    monkeypatch.setattr(commands, "_load_session", fail_load_session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": route_candidates,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_preview_validated_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=1,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        route_probe_cache=[],
+        pause_on_stop=False,
+    )
+
+    assert result["steps"][0]["route_auto_start_index"] == 0
+    assert route_calls[0]["visual_region_index"] == 0
+    assert route_calls[0]["region_window_x"] is None
+    assert route_calls[0]["region_window_y"] is None
+    assert "route_probe_cache" not in result["steps"][0]
+    assert "route_probe_cache_record" not in result
+
+
+def test_lightning_segment_records_failed_probe_in_session_cache(monkeypatch):
+    class FakeSession:
+        current_island = "archive"
+        mission_index = 0
+        run_id = "session-cache-test"
+
+        def __init__(self):
+            self.lightning_route_probe_cache = []
+            self.save_calls = 0
+
+        def save(self):
+            self.save_calls += 1
+
+    session = FakeSession()
+    route_candidates = [
+        {
+            "index": 0,
+            "window_x": 604,
+            "window_y": 386,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "New Terra",
+        },
+    ]
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": route_candidates,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: {
+            "status": "BLOCKED",
+            "reason": "route_preview_mission_unverified_before_start",
+            "auto_route_block_reason": (
+                "route_preview_mission_unverified_before_start"
+            ),
+            "selected_visual_region": {
+                "index": 0,
+                "window_x": 604,
+                "window_y": 386,
+            },
+            "visible_preview_ocr": {
+                "status": "UNKNOWN",
+                "reason": "no_known_preview_text_match",
+            },
+            "route_start_candidates": route_candidates,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=1,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        pause_on_stop=False,
+    )
+
+    assert result["reason"] == "route_auto_start_not_allowed"
+    assert result["route_probe_cache_record"]["status"] == "OK"
+    assert result["route_probe_cache_record"]["session_save"]["status"] == "OK"
+    assert result["route_probe_cache_record"]["entry_summary"]["label_key"] == (
+        "newterra"
+    )
+    assert session.save_calls == 1
+    assert session.lightning_route_probe_cache[0]["label_key"] == "newterra"
+    assert session.lightning_route_probe_cache[0]["route_routing"] == "lightning_war"
+    assert session.lightning_route_probe_cache[0]["signature"]["route_routing"] == (
+        "lightning_war"
+    )
+    assert session.lightning_route_probe_cache[0]["visible_preview_ocr_reason"] == (
+        "no_known_preview_text_match"
+    )
+
+
+def test_lightning_segment_dry_run_does_not_record_failed_probe(monkeypatch):
+    class FakeSession:
+        current_island = "archive"
+        mission_index = 0
+        run_id = "session-cache-dry-run-test"
+
+        def __init__(self):
+            self.lightning_route_probe_cache = []
+            self.save_calls = 0
+
+        def save(self):
+            self.save_calls += 1
+
+    session = FakeSession()
+    route_candidates = [
+        {
+            "index": 0,
+            "window_x": 604,
+            "window_y": 386,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "New Terra",
+        },
+    ]
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": route_candidates,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: {
+            "status": "BLOCKED",
+            "reason": "route_preview_mission_unverified_before_start",
+            "auto_route_block_reason": (
+                "route_preview_mission_unverified_before_start"
+            ),
+            "selected_visual_region": {
+                "index": 0,
+                "window_x": 604,
+                "window_y": 386,
+            },
+            "visible_preview_ocr": {
+                "status": "UNKNOWN",
+                "reason": "no_known_preview_text_match",
+            },
+            "route_start_candidates": route_candidates,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=1,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        dry_run=True,
+        pause_on_stop=False,
+    )
+
+    assert "route_probe_cache_record" not in result
+    assert session.save_calls == 0
+    assert session.lightning_route_probe_cache == []
+
+
+def test_lightning_route_probe_cache_ignores_stale_conflicting_ocr_prune():
+    candidate = {
+        "index": 1,
+        "window_x": 558,
+        "window_y": 404,
+        "auto_route_probe": "live_preview_required",
+        "visible_label": "storage Vaults",
+    }
+    cache = [
+        {
+            "signature": {
+                "first_island": "archive",
+                "route_routing": "lightning_war",
+                "mission_index": 0,
+                "index": 1,
+            },
+            "first_island": "archive",
+            "route_routing": "lightning_war",
+            "mission_index": 0,
+            "index": 1,
+            "visible_label": "storage Vaults",
+            "auto_route_block_reason": (
+                "route_preview_mission_unverified_before_start"
+            ),
+            "visible_preview_ocr_reason": "conflicting_known_preview_text_matches",
+            "retry_policy": "hard_prune",
+            "hits": 1,
+        }
+    ]
+    match = commands._lightning_route_probe_cache_match(
+        candidate,
+        cache,
+        first_island="archive",
+        route_routing="lightning_war",
+        mission_index=0,
+    )
+
+    assert match is None
+
+
+def test_lightning_route_probe_cache_requires_exact_route_scope():
+    candidate = {
+        "index": 1,
+        "window_x": 558,
+        "window_y": 404,
+        "auto_route_probe": "live_preview_required",
+        "visible_label": "New Terra",
+    }
+    cache = [
+        {
+            "signature": {
+                "first_island": "archive",
+                "route_routing": "lightning_war",
+                "mission_index": 0,
+                "label_key": "newterra",
+            },
+            "first_island": "archive",
+            "route_routing": "lightning_war",
+            "mission_index": 0,
+            "index": 1,
+            "visible_label": "New Terra",
+            "auto_route_block_reason": (
+                "route_preview_mission_unverified_before_start"
+            ),
+            "visible_preview_ocr_reason": "no_known_preview_text_match",
+            "retry_policy": "hard_prune",
+            "hits": 1,
+        }
+    ]
+    unscoped_cache = [
+        {
+            "signature": {
+                "label_key": "newterra",
+            },
+            "visible_label": "New Terra",
+            "auto_route_block_reason": (
+                "route_preview_mission_unverified_before_start"
+            ),
+            "visible_preview_ocr_reason": "no_known_preview_text_match",
+            "retry_policy": "hard_prune",
+            "hits": 1,
+        }
+    ]
+
+    same_scope = commands._lightning_route_probe_cache_match(
+        candidate,
+        cache,
+        first_island="archive",
+        route_routing="lightning_war",
+        mission_index=0,
+    )
+    missing_scope = commands._lightning_route_probe_cache_match(
+        candidate,
+        cache,
+        route_routing="lightning_war",
+    )
+    other_island = commands._lightning_route_probe_cache_match(
+        candidate,
+        cache,
+        first_island="rst",
+        route_routing="lightning_war",
+        mission_index=0,
+    )
+    other_routing = commands._lightning_route_probe_cache_match(
+        candidate,
+        cache,
+        first_island="archive",
+        route_routing="lightning_baseline",
+        mission_index=0,
+    )
+    later_mission = commands._lightning_route_probe_cache_match(
+        candidate,
+        cache,
+        first_island="archive",
+        route_routing="lightning_war",
+        mission_index=1,
+    )
+    unscoped_entry = commands._lightning_route_probe_cache_match(
+        candidate,
+        unscoped_cache,
+        first_island="archive",
+        route_routing="lightning_war",
+        mission_index=0,
+    )
+
+    assert same_scope is not None
+    assert missing_scope is None
+    assert other_island is None
+    assert other_routing is None
+    assert later_mission is None
+    assert unscoped_entry is None
+
+
+def test_lightning_segment_suppresses_retry_after_unverified_volatile_probe_preview():
+    route_start = {
+        "status": "BLOCKED",
+        "reason": "route_preview_mission_unverified_before_start",
+        "actual_preview_mission_id": "Mission_Volatile",
+    }
+
+    retryable, reason = commands._lightning_route_start_preview_block_retryable(
+        route_start,
+        route_speed_vetoes=True,
+        route_routing="lightning_war",
+    )
+
+    assert retryable is False
+    assert reason == "vetoed_mission_retry_suppressed:Mission_Volatile"
+
+
+def test_lightning_segment_pending_label_probe_retry_carries_coordinates(
+    monkeypatch,
+):
+    route_candidates = [
+        {
+            "index": 0,
+            "window_x": 612,
+            "window_y": 420,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "Dust Bowl",
+        },
+        {
+            "index": 1,
+            "window_x": 762,
+            "window_y": 465,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "Hardin Point",
+        },
+        {
+            "index": 2,
+            "window_x": 944,
+            "window_y": 510,
+            "auto_route_probe": "live_preview_required",
+            "visible_label": "Rust District",
+        },
+    ]
+    route_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "route_start_candidates": route_candidates,
+        },
+    )
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_auto_start_vetoed_before_start",
+            "actual_preview_mission_id": "Mission_Tanks",
+            "auto_route_block_reason": "vetoed_mission:Mission_Tanks",
+            "selected_visual_region": {
+                "index": 0,
+                "window_x": 612,
+                "window_y": 420,
+            },
+            "route_start_candidates": route_candidates,
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=1, route_auto_start=True)
+
+    assert route_calls[0]["visual_region_index"] == 0
+    assert route_calls[0]["region_window_x"] is None
+    assert result["reason"] == "max_steps_reached"
+    assert result["route_visual_region_index_pending"] == 1
+    assert result["route_start_pending_context"] == {
+        "visual_region_index": 1,
+        "region_window_x": 762,
+        "region_window_y": 465,
+        "verify_route": False,
+        "close_existing_preview_before_region_click": True,
+        "start_mode": "visible-text",
+    }
+    assert result["steps"][1]["route_auto_start_retry_index"] == 1
+    assert result["steps"][1]["route_auto_start_retry_probe"] == (
+        "live_preview_required"
+    )
 
 
 def test_lightning_segment_retries_after_preview_mismatch(
@@ -10988,6 +15787,11 @@ def test_lightning_segment_retries_after_preview_mismatch(
         commands,
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -11085,6 +15889,11 @@ def test_lightning_segment_retries_after_unassigned_multi_region_preview(
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
     result = commands.cmd_lightning_segment(max_steps=4, route_auto_start=True)
@@ -11161,6 +15970,11 @@ def test_lightning_segment_treats_existing_preview_as_preview_route_gate(
         "_lightning_ensure_pause_state",
         lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
     result = commands.cmd_lightning_segment(max_steps=4, route_auto_start=True)
@@ -11170,6 +15984,10 @@ def test_lightning_segment_treats_existing_preview_as_preview_route_gate(
         (812, 423),
         (953, 594),
     ]
+    assert [
+        call["close_existing_preview_before_region_click"]
+        for call in route_calls
+    ] == [False, True]
     assert [step["reason"] for step in result["steps"][1:]] == [
         "route_preview_existing_mission_preview_before_region_click",
         "route_preview_existing_mission_preview_before_region_click",
@@ -11185,6 +16003,204 @@ def test_lightning_segment_treats_existing_preview_as_preview_route_gate(
         "route_preview_existing_mission_preview_before_region_click",
         "route_preview_existing_mission_preview_before_region_click",
     ]
+
+
+def test_lightning_segment_validates_paused_existing_preview_from_attempt_evidence(
+    monkeypatch,
+):
+    route_calls = []
+    attempt_calls = []
+    existing_preview_ui = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "pause_ocr_match": "Timeline Playtime",
+        "dark_overlay_fraction": 0.91,
+        "scores": {
+            "mission_preview_panel": {"score": 0.01, "yellow": 2500},
+        },
+    }
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: attempt_calls.append(kwargs)
+        or {
+            "status": "LIGHTNING_ATTEMPT_BLOCKED",
+            "reason": "mission_preview_requires_route_validation",
+            "snapshot": {
+                "status": "NO_BRIDGE",
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "island_map",
+                },
+                "pause_menu_visible_ui": existing_preview_ui,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda *args, **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+
+    def fake_route_start(**kwargs):
+        route_calls.append(kwargs)
+        return {
+            "status": "BLOCKED",
+            "reason": "route_preview_auto_start_vetoed_before_start",
+            "actual_preview_mission_id": "Mission_Terraform",
+            "auto_route_block_reason": "vetoed_mission:Mission_Terraform",
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_route_start", fake_route_start)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "already_paused"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=3,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        pause_on_stop=False,
+    )
+
+    assert result["reason"] == "route_auto_start_not_allowed"
+    assert result["route_start_performed"] is True
+    assert len(attempt_calls) == 1
+    assert attempt_calls[0]["defer_paused_mission_preview_route_validation"] is True
+    assert len(route_calls) == 1
+    assert route_calls[0]["visual_region_index"] is None
+    assert route_calls[0]["region_window_x"] is None
+    assert route_calls[0]["region_window_y"] is None
+    assert route_calls[0]["verify_route"] is False
+    assert route_calls[0]["auto_pause_if_needed"] is False
+    assert route_calls[0]["start_mode"] == "preview-only"
+    assert route_calls[0]["allow_unverified_preview_start"] is True
+    assert route_calls[0]["require_auto_start_safe_preview"] is True
+    assert result["steps"][0]["route_auto_start_existing_preview_validation_pending"] is True
+    route_step = result["steps"][1]
+    assert route_step["route_auto_start_existing_preview_validation"] is True
+    assert route_step["route_auto_start_rejected_candidate"]["mission_id"] == (
+        "Mission_Terraform"
+    )
+
+
+def test_lightning_segment_ignores_pause_menu_preview_classifier_hint(
+    monkeypatch,
+):
+    route_calls = []
+    pause_menu_hint = {
+        "status": "OK",
+        "visible_ui": "pause_menu",
+        "classifier_visible_ui": "mission_preview_panel",
+        "recommended_control": "menu_continue",
+        "pause_ocr_match": "Timeline Playtime",
+        "pause_ocr_override": {
+            "from_visible_ui": "mission_preview_panel",
+            "from_recommended_control": "dialogue_textbox",
+            "matched": "Timeline Playtime",
+        },
+    }
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_BLOCKED",
+            "reason": "mission_preview_requires_route_validation",
+            "snapshot": {
+                "status": "NO_BRIDGE",
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "island_map",
+                },
+                "pause_menu_visible_ui": pause_menu_hint,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_preflight",
+        lambda *args, **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_route_start"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(
+        max_steps=1,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        pause_on_stop=False,
+    )
+
+    assert result["reason"] == "max_steps_reached"
+    assert result["route_start_performed"] is False
+    assert route_calls == []
+    assert (
+        "route_auto_start_existing_preview_validation_pending"
+        not in result["steps"][0]
+    )
+
+
+def test_lightning_attempt_defers_paused_existing_preview_route_validation(
+    monkeypatch,
+):
+    session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
+    preview_ui = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "pause_ocr_match": "Timeline Playtime",
+        "dark_overlay_fraction": 0.91,
+        "scores": {
+            "mission_preview_panel": {"score": 0.01, "yellow": 2500},
+        },
+    }
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: preview_ui)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("existing preview should not resume first")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "is_bridge_alive",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("existing preview should not read bridge first")
+        ),
+    )
+
+    result = commands.cmd_lightning_attempt(
+        run_preflight=False,
+        resume_if_paused=True,
+        defer_paused_mission_preview_route_validation=True,
+        pause_on_stop=False,
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_BLOCKED"
+    assert result["reason"] == "mission_preview_requires_route_validation"
+    assert result["snapshot"]["reason"] == (
+        "paused_existing_mission_preview_route_validation"
+    )
+    assert result["snapshot"]["visible_ui"] == preview_ui
 
 
 def test_lightning_segment_starts_selected_visual_route_then_continues(monkeypatch):
@@ -12596,6 +17612,18 @@ def test_lightning_route_status_vetoes_fragile_objective_missions_auto_start():
             assert result["reason"] == f"{prefix}_mission:{mission_id}"
 
 
+def test_lightning_war_route_status_vetoes_cataclysm_for_speed():
+    result = commands._lightning_speed_route_status(
+        [{"mission_id": "Mission_Cataclysm", "score": 99, "mission_tags": []}],
+        "lightning_war",
+        source="saveData",
+    )
+
+    assert result["status"] == "AUTO_START_BLOCKED"
+    assert result["auto_start_allowed"] is False
+    assert result["reason"] == "vetoed_mission:Mission_Cataclysm"
+
+
 def test_lightning_baseline_route_status_allows_reliable_speed_slow_missions():
     for mission_id in (
         "Mission_Mines",
@@ -13185,6 +18213,15 @@ def test_visible_map_route_plan_emits_lightning_live_preview_probes(
             "routing": "lightning_war",
             "ranked": [],
             "top3": [],
+            "ignored_bridge_preview": {
+                "reason": "stale_bridge_preview_ignored_for_route_scoring",
+                "mission_id": "Mission_Satellite",
+                "bridge_preview_live": False,
+            },
+            "bridge_preview_freshness": {
+                "bridge_heartbeat_stale": True,
+                "bridge_preview_live": False,
+            },
         },
     )
     monkeypatch.setattr(
@@ -13224,6 +18261,16 @@ def test_visible_map_route_plan_emits_lightning_live_preview_probes(
     assert result["route_fallback"]["reason"] == (
         "visible_map_live_preview_probe_without_save_assignment"
     )
+    assert result["route_fallback"]["ignored_bridge_preview"] == {
+        "reason": "stale_bridge_preview_ignored_for_route_scoring",
+        "mission_id": "Mission_Satellite",
+        "bridge_preview_live": False,
+    }
+    assert result["route_fallback"]["ignored_bridge_preview_diagnostic_only"] is True
+    assert result["route_fallback"]["bridge_preview_freshness"] == {
+        "bridge_heartbeat_stale": True,
+        "bridge_preview_live": False,
+    }
     assert len(result["route_start_candidates"]) == 2
     assert all(
         candidate["auto_route_probe"] == "live_preview_required"
@@ -13245,9 +18292,185 @@ def test_visible_map_route_plan_emits_lightning_live_preview_probes(
         route_routing="lightning_war",
     )
 
+    assert primary["auto_route_allowed"] is False
+    assert primary["auto_route_block_reason"] == (
+        "multi_region_live_preview_probe_without_route_identity"
+    )
+    assert primary["probe_candidate_count"] == 2
+    assert primary["probe_candidate_indices"] == [0, 1]
+
+
+def test_lightning_auto_start_allows_single_unlabeled_live_preview_probe():
+    primary = commands._lightning_auto_start_candidate_from_recommendation(
+        {
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                    "auto_route_probe": "live_preview_required",
+                },
+            ],
+        },
+        route_routing="lightning_war",
+    )
+
     assert primary["index"] == 0
     assert primary["auto_route_probe"] == "live_preview_required"
     assert "mission_id" not in primary
+
+
+def test_lightning_auto_start_selects_distinct_labeled_live_preview_probe():
+    primary = commands._lightning_auto_start_candidate_from_recommendation(
+        {
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 604,
+                    "window_y": 386,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Lif eless Basin",
+                },
+                {
+                    "index": 1,
+                    "window_x": 390,
+                    "window_y": 390,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Sub-Zero Range",
+                },
+            ],
+        },
+        route_routing="lightning_war",
+        route_probe_offset=1,
+    )
+
+    assert primary["index"] == 1
+    assert primary["auto_route_probe"] == "live_preview_required"
+    assert primary["auto_route_probe_label_selection"] is True
+    assert primary["auto_route_use_visual_index"] is True
+    assert "mission_id" not in primary
+    assert primary["probe_candidate_count"] == 2
+    assert primary["probe_candidate_indices"] == [0, 1]
+    assert primary["probe_candidate_labels"] == [
+        "Lif eless Basin",
+        "Sub-Zero Range",
+    ]
+
+
+def test_lightning_auto_start_skips_cached_failed_labeled_probe():
+    primary = commands._lightning_auto_start_candidate_from_recommendation(
+        {
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 604,
+                    "window_y": 386,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "New Terra",
+                },
+                {
+                    "index": 1,
+                    "window_x": 390,
+                    "window_y": 390,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Phoenix Park",
+                },
+            ],
+        },
+        route_routing="lightning_war",
+        route_probe_cache=[
+            {
+                "signature": {
+                    "first_island": "rst",
+                    "route_routing": "lightning_war",
+                    "mission_index": 0,
+                    "label_key": "newterra",
+                },
+                "first_island": "rst",
+                "route_routing": "lightning_war",
+                "mission_index": 0,
+                "index": 0,
+                "visible_label": "New Terra",
+                "auto_route_block_reason": (
+                    "route_preview_mission_unverified_before_start"
+                ),
+                "visible_preview_ocr_reason": "no_known_preview_text_match",
+                "retry_policy": "hard_prune",
+                "hits": 1,
+            }
+        ],
+        first_island="rst",
+        mission_index=0,
+    )
+
+    assert primary["index"] == 1
+    assert primary["auto_route_probe"] == "live_preview_required"
+    assert primary["route_probe_cache"]["status"] == "APPLIED"
+    assert primary["route_probe_cache"]["hard_pruned_count"] == 1
+    assert primary["route_probe_cache"]["pruned_candidate_indices"] == [0]
+    assert "mission_id" not in primary
+
+
+def test_lightning_auto_start_blocks_duplicate_labeled_live_preview_probes():
+    primary = commands._lightning_auto_start_candidate_from_recommendation(
+        {
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 604,
+                    "window_y": 386,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Restoration Center",
+                },
+                {
+                    "index": 1,
+                    "window_x": 390,
+                    "window_y": 390,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Restoration Center",
+                },
+            ],
+        },
+        route_routing="lightning_war",
+    )
+
+    assert primary["auto_route_allowed"] is False
+    assert primary["auto_route_block_reason"] == (
+        "multi_region_live_preview_probe_without_route_identity"
+    )
+    assert primary["probe_candidate_count"] == 2
+    assert primary["probe_candidate_indices"] == [0, 1]
+    assert primary["probe_candidate_labels"] == [
+        "Restoration Center",
+        "Restoration Center",
+    ]
+
+
+def test_lightning_auto_start_prefers_exact_identity_before_unlabeled_probes():
+    primary = commands._lightning_auto_start_candidate_from_recommendation(
+        {
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 812,
+                    "window_y": 423,
+                    "auto_route_probe": "live_preview_required",
+                },
+                {
+                    "index": 1,
+                    "window_x": 954,
+                    "window_y": 595,
+                    "mission_id": "Mission_Tides",
+                    "route_routing": "lightning_war",
+                    "route_identity": {"status": "exact", "exact": True},
+                },
+            ],
+        },
+        route_routing="lightning_war",
+    )
+
+    assert primary["index"] == 1
+    assert primary["mission_id"] == "Mission_Tides"
 
 
 def test_visible_map_route_plan_refreshes_unassigned_save_routes(monkeypatch):
@@ -13262,8 +18485,8 @@ def test_visible_map_route_plan_refreshes_unassigned_save_routes(monkeypatch):
             "source": "saveData",
             "routing": "lightning_baseline",
             "ranked": [
-                {"mission_id": "Mission_Mines", "region_id": 1, "score": 30},
-                {"mission_id": "Mission_Train", "region_id": 0, "score": -200},
+                {"mission_id": "Mission_Mines", "score": 30},
+                {"mission_id": "Mission_Train", "score": -200},
             ],
             "top3": [{"mission_id": "Mission_Mines", "region_id": 1, "score": 30}],
         },
@@ -13334,6 +18557,7 @@ def test_visible_map_route_plan_refreshes_unassigned_save_routes(monkeypatch):
 
 def test_visible_map_route_plan_prefers_fresh_pause_map_screenshot(monkeypatch):
     extract_calls = []
+    ocr_calls = []
 
     monkeypatch.setattr(
         commands,
@@ -13371,15 +18595,50 @@ def test_visible_map_route_plan_prefers_fresh_pause_map_screenshot(monkeypatch):
             return {
                 "status": "OK",
                 "screenshot_path": "fresh_map.png",
-                "regions": [{"index": 0, "window_x": 912, "window_y": 430}],
+                "regions": [
+                    {
+                        "index": 0,
+                        "window_x": 912,
+                        "window_y": 430,
+                        "bbox_image": [700, 500, 1000, 760],
+                    }
+                ],
             }
         return {
             "status": "OK",
             "screenshot_path": str(path),
-            "regions": [{"index": 0, "window_x": 111, "window_y": 222}],
+            "regions": [
+                {
+                    "index": 0,
+                    "window_x": 111,
+                    "window_y": 222,
+                    "bbox_image": [700, 500, 1000, 760],
+                }
+            ],
         }
 
     monkeypatch.setattr(commands, "_lightning_extract_red_regions_from_image", fake_extract)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: ocr_calls.append(str(path))
+        or (
+            {
+                "status": "OK",
+                "observations": [
+                    {"text": "The", "center_image": [820.0, 610.0]},
+                    {"text": "Dam", "center_image": [820.0, 650.0]},
+                ],
+            }
+            if str(path) == "fresh_map.png"
+            else {
+                "status": "OK",
+                "observations": [
+                    {"text": "OPTIONS", "center_image": [820.0, 610.0]},
+                ],
+            }
+        ),
+    )
 
     result = commands._lightning_visible_map_route_plan(
         profile="Alpha",
@@ -13392,7 +18651,10 @@ def test_visible_map_route_plan_prefers_fresh_pause_map_screenshot(monkeypatch):
     )
 
     assert extract_calls == ["fresh_map.png"]
+    assert ocr_calls
+    assert set(ocr_calls) == {"fresh_map.png"}
     assert result["visual_regions"]["screenshot_path"] == "fresh_map.png"
+    assert result["visual_regions"]["regions"][0]["visible_label"] == "The Dam"
     assert result["route_start_candidates"][0]["window_x"] == 912
     assert result["route_start_candidates"][0]["mission_id"] == "Mission_Dam"
 
@@ -13408,8 +18670,8 @@ def test_visible_map_route_plan_probes_save_refresh_without_mission_assignment(
             "source": "saveData",
             "routing": "lightning_baseline",
             "ranked": [
-                {"mission_id": "Mission_Mines", "region_id": 1, "score": 30},
-                {"mission_id": "Mission_Train", "region_id": 0, "score": -200},
+                {"mission_id": "Mission_Mines", "score": 30},
+                {"mission_id": "Mission_Train", "score": -200},
             ],
             "top3": [{"mission_id": "Mission_Mines", "region_id": 1, "score": 30}],
         },
@@ -13422,8 +18684,8 @@ def test_visible_map_route_plan_probes_save_refresh_without_mission_assignment(
             "source": "saveData",
             "routing": "lightning_baseline",
             "ranked": [
-                {"mission_id": "Mission_Mines", "region_id": 1, "score": 30},
-                {"mission_id": "Mission_Train", "region_id": 0, "score": -200},
+                {"mission_id": "Mission_Mines", "score": 30},
+                {"mission_id": "Mission_Train", "score": -200},
             ],
             "top3": [{"mission_id": "Mission_Mines", "region_id": 1, "score": 30}],
         },
@@ -13494,10 +18756,10 @@ def test_visible_map_route_plan_probes_no_bridge_visible_map_without_assignment(
             "source": "saveData",
             "routing": "lightning_baseline",
             "ranked": [
-                {"mission_id": "Mission_Mines", "region_id": 1, "score": 30},
-                {"mission_id": "Mission_Train", "region_id": 0, "score": -200},
+                {"mission_id": "Mission_Mines", "score": 30},
+                {"mission_id": "Mission_Train", "score": -200},
             ],
-            "top3": [{"mission_id": "Mission_Mines", "region_id": 1, "score": 30}],
+            "top3": [{"mission_id": "Mission_Mines", "score": 30}],
         },
     )
     monkeypatch.setattr(
@@ -13540,6 +18802,72 @@ def test_visible_map_route_plan_probes_no_bridge_visible_map_without_assignment(
         "--expected-mission-id" not in candidate["route_start_command"]
         for candidate in result["route_start_candidates"]
     )
+
+
+def test_visible_map_route_plan_no_bridge_uses_save_routes_without_pause_peek(
+    monkeypatch,
+):
+    save_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("no-bridge visible map should not pause-map peek")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recommend_save_routes",
+        lambda **kwargs: save_calls.append(kwargs) or {
+            "status": "OK",
+            "source": "saveData",
+            "routing": kwargs.get("routing"),
+            "ranked": [
+                {
+                    "mission_id": "Mission_Battle",
+                    "save_region_index": 0,
+                    "save_region_name": "Plain Flats",
+                    "score": 40,
+                },
+                {
+                    "mission_id": "Mission_Tides",
+                    "save_region_index": 1,
+                    "save_region_name": "Tidal Quarter",
+                    "score": 30,
+                },
+            ],
+            "top3": [{"mission_id": "Mission_Battle", "score": 40}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "regions": [
+                {"index": 0, "window_x": 698, "window_y": 356},
+                {"index": 1, "window_x": 547, "window_y": 388},
+            ],
+        },
+    )
+
+    result = commands._lightning_visible_map_route_plan(
+        profile="Alpha",
+        visible_ui={
+            "status": "OK",
+            "visible_ui": "island_map",
+            "screenshot_path": "map.png",
+        },
+        route_routing="lightning_war",
+        allow_pause_map_peek=False,
+    )
+
+    assert save_calls == [{"profile": "Alpha", "routing": "lightning_war"}]
+    assert result["recommendation"]["source"] == "saveData"
+    assert result["route_start_candidates"][0]["mission_id"] == "Mission_Battle"
+    assert result["route_start_candidates"][0]["index"] == 0
+    assert result["route_start_candidates"][0]["auto_route_allowed"] is True
 
 
 def test_compact_auto_route_candidate_reads_route_option_mission():
@@ -13605,9 +18933,9 @@ def test_visual_route_candidates_sort_by_save_ranked_mission():
         "status": "OK",
         "ranked": [
             {
-                "mission_id": "Mission_Cataclysm",
+                "mission_id": "Mission_Tides",
                 "save_region_index": 6,
-                "save_region_name": "Cataclysm Crossing",
+                "save_region_name": "Floodplain",
                 "score": 47,
             },
             {
@@ -13632,7 +18960,7 @@ def test_visual_route_candidates_sort_by_save_ranked_mission():
     )
 
     assert result[0]["index"] == 1
-    assert result[0]["mission_id"] == "Mission_Cataclysm"
+    assert result[0]["mission_id"] == "Mission_Tides"
     assert result[0]["auto_route_allowed"] is True
     assert result[1]["index"] == 0
     assert result[1]["mission_id"] == "Mission_Repair"
@@ -13707,6 +19035,113 @@ def test_visual_route_candidates_expose_exact_save_route_identity():
         "bbox_window": [250, 200, 350, 300],
         "visual_order": 0,
     }
+
+
+def test_visual_route_candidates_match_save_region_by_visible_ocr_label():
+    recommendation = {
+        "status": "OK",
+        "source": "saveData",
+        "routing": "lightning_war",
+        "ranked": [
+            {
+                "mission_id": "Mission_SnowBattle",
+                "mission_slot": "Mission1",
+                "save_region_index": 0,
+                "save_region_name": "Sub-Zero Range",
+                "score": 21,
+            },
+            {
+                "mission_id": "Mission_Battle",
+                "mission_slot": "Mission2",
+                "save_region_index": 1,
+                "save_region_name": "Lifeless Basin",
+                "score": 47,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 0,
+                "window_x": 604,
+                "window_y": 386,
+                "visible_label": "Lif eless Basin",
+            },
+            {
+                "index": 1,
+                "window_x": 390,
+                "window_y": 390,
+                "visible_label": "Sub-Zero Range",
+            },
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    by_index = {candidate["index"]: candidate for candidate in result}
+    assert by_index[0]["mission_id"] == "Mission_Battle"
+    assert by_index[0]["route_identity"]["status"] == "exact"
+    assert by_index[0]["route_identity"]["exact"] is True
+    assert by_index[0]["route_identity"]["assignment_method"] == (
+        "visible_ocr_label_to_save_region_name"
+    )
+    assert by_index[0]["route_identity"]["save_region_name"] == "Lifeless Basin"
+    assert by_index[1]["mission_id"] == "Mission_SnowBattle"
+    assert by_index[1]["route_identity"]["save_region_name"] == "Sub-Zero Range"
+
+
+def test_visual_route_candidates_use_region_id_when_save_index_missing():
+    recommendation = {
+        "status": "OK",
+        "source": "saveData",
+        "routing": "lightning_war",
+        "ranked": [
+            {
+                "mission_id": "Mission_Lightning",
+                "mission_slot": "Mission2",
+                "mission_index": 2,
+                "region_id": 1,
+                "score": 47,
+            },
+            {
+                "mission_id": "Mission_Repair",
+                "mission_slot": "Mission1",
+                "mission_index": 1,
+                "region_id": 0,
+                "score": 21,
+            },
+        ],
+        "speed_route_status": {
+            "status": "AUTO_START_OK",
+            "auto_start_allowed": True,
+            "top_mission_id": "Mission_Lightning",
+        },
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 0, "window_x": 300, "window_y": 250},
+            {"index": 1, "window_x": 800, "window_y": 520},
+        ],
+    }
+
+    result = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    by_index = {candidate["index"]: candidate for candidate in result}
+    assert by_index[1]["mission_id"] == "Mission_Lightning"
+    assert by_index[1]["save_region_index"] == 1
+    assert by_index[1]["route_option"]["save_region_index"] == 1
+    assert by_index[1]["route_identity"]["status"] == "exact"
+    assert by_index[1]["route_identity"]["exact"] is True
+    assert by_index[1]["route_identity"]["region_id"] == 1
+    assert by_index[1]["auto_route_allowed"] is True
 
 
 def test_visual_route_candidates_keep_duplicate_mission_identity_by_visual_region():
@@ -14596,13 +20031,13 @@ def test_lightning_route_start_auto_pauses_before_route_check(monkeypatch):
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--route-start-mode dialogue-region-repeat-preview-board"
+        "--route-start-mode visible-text"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
         "--route-target-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--route-start-mode dialogue-region-repeat-preview-board"
+        "--route-start-mode visible-text"
     )
     assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
     assert result["primary_route_target_hint"]["match_label"] == "The Pasture"
@@ -14610,13 +20045,13 @@ def test_lightning_route_start_auto_pauses_before_route_check(monkeypatch):
         "--visual-region-index 0 "
         "--expected-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--start-mode dialogue-region-repeat-preview-board"
+        "--start-mode visible-text"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
         "--window-x 902 --window-y 349 "
         "--expected-mission-id Mission_Train "
         "--route-routing lightning_war "
-        "--start-mode dialogue-region-repeat-preview-board"
+        "--start-mode visible-text"
     )
 
 
@@ -14725,23 +20160,23 @@ def test_lightning_route_start_returns_visual_regions_when_route_check_unavailab
     assert result["route_start_candidates"][0]["command"].endswith(
         "--route-visual-region-index 0 "
         "--route-routing lightning_war "
-        "--route-start-mode dialogue-region-repeat-preview-board"
+        "--route-start-mode visible-text"
     )
     assert result["primary_next_command"].endswith(
         "--route-visual-region-index 0 "
         "--route-routing lightning_war "
-        "--route-start-mode dialogue-region-repeat-preview-board"
+        "--route-start-mode visible-text"
     )
     assert result["route_start_candidates"][0]["route_routing"] == "lightning_war"
     assert result["route_start_candidates"][0]["route_start_command"].endswith(
         "--visual-region-index 0 "
         "--route-routing lightning_war "
-        "--start-mode dialogue-region-repeat-preview-board"
+        "--start-mode visible-text"
     )
     assert result["route_start_candidates"][0]["coordinate_command"].endswith(
         "--window-x 420 --window-y 210 "
         "--route-routing lightning_war "
-        "--start-mode dialogue-region-repeat-preview-board"
+        "--start-mode visible-text"
     )
 
 
@@ -14827,6 +20262,66 @@ def test_lightning_route_start_visual_index_can_use_unavailable_route_check(monk
     else:
         assert calls[0][0]["key"] == "esc"
     assert pauses == [{"reason": "route_preview_mission_unverified_before_start"}]
+
+
+def test_lightning_route_start_blocks_when_preview_click_leaves_map_visible(
+    monkeypatch,
+):
+    calls = []
+    pauses = []
+    recommendations = []
+    snapshots = iter(
+        [
+            {"status": "OK", "visible_ui": "pause_menu"},
+            {"status": "OK", "visible_ui": "island_map"},
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: next(snapshots),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence)
+        or {"status": "OK", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: recommendations.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_read_preview"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs)
+        or {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        require_auto_start_safe_preview=True,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_not_opened_before_start"
+    assert result["auto_route_block_reason"] == "route_preview_not_opened_before_start"
+    assert result["post_preview_visible_ui"]["visible_ui"] == "island_map"
+    assert recommendations == []
+    assert len(calls) == 2
+    assert not any(
+        step.get("control") == "mission_preview_board"
+        for call in calls
+        for step in call
+        if isinstance(step, dict)
+    )
+    assert pauses == [{"reason": "route_preview_not_opened_before_start"}]
 
 
 def test_lightning_route_start_baseline_accepts_save_backed_unknown_ocr(
@@ -15385,7 +20880,7 @@ def test_lightning_route_start_blocks_vetoed_unlabeled_auto_preview(monkeypatch)
         "mission_id": "Mission_Mines",
     }
     assert starts == []
-    assert sequence_kwargs[0]["start_mode"] == "dialogue-region-repeat-preview-board"
+    assert sequence_kwargs[0]["start_mode"] == "preview-only"
     assert calls == [
         [
             {
@@ -15506,6 +21001,636 @@ def test_lightning_route_start_blocks_visible_ocr_vetoed_unlabeled_preview(monke
             }
         ]
     ]
+    assert pauses == [{"reason": "route_preview_auto_start_vetoed_before_start"}]
+
+
+def test_lightning_route_start_fast_vetoes_volatile_before_refresh(
+    monkeypatch,
+    tmp_path,
+):
+    calls = []
+    starts = []
+    pauses = []
+    recommend_calls = []
+    preview_path = tmp_path / "volatile_preview.png"
+    preview_path.write_text("placeholder")
+    visible_snapshots = iter(
+        [
+            {"status": "OK", "visible_ui": "pause_menu"},
+            {
+                "status": "OK",
+                "visible_ui": "mission_preview",
+                "screenshot_path": str(preview_path),
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: next(visible_snapshots),
+    )
+
+    def fake_recommend(**kwargs):
+        recommend_calls.append(kwargs)
+        if len(recommend_calls) > 1:
+            raise AssertionError("post-preview recommendation refresh reached")
+        return {
+            "status": "NO_BRIDGE",
+            "pause_map_peek": {"map_screenshot_path": "/tmp/map.png"},
+        }
+
+    monkeypatch.setattr(commands, "cmd_recommend_mission", fake_recommend)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": path,
+            "regions": [{"index": 0, "window_x": 745, "window_y": 430}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 745,
+                    "window_y": 430,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": [
+                "Excavation Site",
+                "Do not kill the Volatile Vek",
+                "Protect the Power Generator",
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_start"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=0,
+        run_preflight=False,
+        require_auto_start_safe_preview=True,
+        route_routing="lightning_war",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_auto_start_vetoed_before_start"
+    assert result["actual_preview_mission_id"] == "Mission_Volatile"
+    assert result["auto_route_block_reason"] == "vetoed_mission:Mission_Volatile"
+    assert result["auto_start_preview_validation"] == {
+        "status": "BLOCKED",
+        "reason": "vetoed_mission:Mission_Volatile",
+        "mission_id": "Mission_Volatile",
+        "source": "visible_preview_ocr",
+    }
+    assert result["visible_preview_ocr"]["matched_pattern"] == "volatile vek"
+    assert result["preview_recommendation"]["source"] == "visible_preview_ocr"
+    assert starts == []
+    assert len(recommend_calls) == 1
+    assert calls == [
+        [
+            {
+                "kind": "point",
+                "window_x": 745,
+                "window_y": 430,
+                "description": "Lightning route region",
+            }
+        ]
+    ]
+    assert pauses == [{"reason": "route_preview_auto_start_vetoed_before_start"}]
+
+
+def test_lightning_route_start_blocks_visible_ocr_airstrike_preview(monkeypatch):
+    calls = []
+    starts = []
+    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "NO_BRIDGE",
+            "pause_map_peek": {"map_screenshot_path": "/tmp/map.png"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": path,
+            "regions": [{"index": 0, "window_x": 745, "window_y": 430}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 745,
+                    "window_y": 430,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_preview_mission_ocr",
+        lambda: {
+            "status": "OK",
+            "source": "visible_preview_ocr",
+            "mission_id": "Mission_Airstrike",
+            "matched_pattern": "air support",
+            "start_authority": "veto_only",
+            "texts": [
+                "Relic Preserves",
+                "This region has an old airfield that can provide air support.",
+                "End battle with less than 4 Mech Damage",
+                "Protect the Emergency Batteries",
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_start"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=0,
+        run_preflight=False,
+        require_auto_start_safe_preview=True,
+        route_routing="lightning_war",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_auto_start_vetoed_before_start"
+    assert result["actual_preview_mission_id"] == "Mission_Airstrike"
+    assert result["auto_route_block_reason"] == "vetoed_mission:Mission_Airstrike"
+    assert result["auto_start_preview_validation"] == {
+        "status": "BLOCKED",
+        "reason": "vetoed_mission:Mission_Airstrike",
+        "mission_id": "Mission_Airstrike",
+        "source": "visible_preview_ocr",
+    }
+    assert result["visible_preview_ocr"]["matched_pattern"] == "air support"
+    assert result["preview_recommendation"]["visible_preview_ocr"]["mission_id"] == (
+        "Mission_Airstrike"
+    )
+    assert starts == []
+    assert calls == [
+        [
+            {
+                "kind": "point",
+                "window_x": 745,
+                "window_y": 430,
+                "description": "Lightning route region",
+            }
+        ]
+    ]
+    assert pauses == [{"reason": "route_preview_auto_start_vetoed_before_start"}]
+
+
+def test_lightning_route_start_blocks_visible_ocr_cataclysm_preview(monkeypatch):
+    calls = []
+    starts = []
+    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "NO_BRIDGE",
+            "pause_map_peek": {"map_screenshot_path": "/tmp/map.png"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": path,
+            "regions": [{"index": 0, "window_x": 702, "window_y": 358}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 702,
+                    "window_y": 358,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_preview_mission_ocr",
+        lambda: {
+            "status": "OK",
+            "source": "visible_preview_ocr",
+            "mission_id": "Mission_Cataclysm",
+            "matched_pattern": "cataclysm",
+            "start_authority": "veto_only",
+            "texts": [
+                "Maglev Bunkers",
+                "The cataclysmic failure of a terraformer is destroying the land.",
+                "Try not to fall into the depths.",
+                "WARNING",
+                "CATACLYSM",
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_start"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=0,
+        run_preflight=False,
+        require_auto_start_safe_preview=True,
+        route_routing="lightning_war",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_auto_start_vetoed_before_start"
+    assert result["actual_preview_mission_id"] == "Mission_Cataclysm"
+    assert result["auto_route_block_reason"] == "vetoed_mission:Mission_Cataclysm"
+    assert result["auto_start_preview_validation"] == {
+        "status": "BLOCKED",
+        "reason": "vetoed_mission:Mission_Cataclysm",
+        "mission_id": "Mission_Cataclysm",
+        "source": "visible_preview_ocr",
+    }
+    assert result["visible_preview_ocr"]["matched_pattern"] == "cataclysm"
+    assert result["preview_recommendation"]["visible_preview_ocr"]["mission_id"] == (
+        "Mission_Cataclysm"
+    )
+    assert starts == []
+    assert calls == [
+        [
+            {
+                "kind": "point",
+                "window_x": 702,
+                "window_y": 358,
+                "description": "Lightning route region",
+            }
+        ]
+    ]
+    assert pauses == [{"reason": "route_preview_auto_start_vetoed_before_start"}]
+
+
+def test_lightning_route_start_blocks_explicit_retry_visible_ocr_veto(monkeypatch):
+    calls = []
+    starts = []
+    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "NO_BRIDGE",
+            "pause_map_peek": {"map_screenshot_path": "/tmp/map.png"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": path,
+            "regions": [{"index": 2, "window_x": 812, "window_y": 423}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 812,
+                    "window_y": 423,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence) or {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_preview_mission_ocr",
+        lambda: {
+            "status": "OK",
+            "source": "visible_preview_ocr",
+            "mission_id": "Mission_Terraform",
+            "matched_pattern": "defend the terraformer",
+            "start_authority": "veto_only",
+            "texts": [
+                "Detonation Bay",
+                "Defend the Terraformer",
+                "Terraform the grassland back to desert",
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_start"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=2,
+        run_preflight=False,
+        route_routing="lightning_war",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_auto_start_vetoed_before_start"
+    assert result["actual_preview_mission_id"] == "Mission_Terraform"
+    assert result["auto_route_block_reason"] == "vetoed_mission:Mission_Terraform"
+    assert result["auto_start_preview_validation"] == {
+        "status": "BLOCKED",
+        "reason": "vetoed_mission:Mission_Terraform",
+        "mission_id": "Mission_Terraform",
+        "source": "visible_preview_ocr",
+    }
+    assert starts == []
+    assert calls == [
+        [
+            {
+                "kind": "point",
+                "window_x": 812,
+                "window_y": 423,
+                "description": "Lightning route region",
+            }
+        ]
+    ]
+    assert pauses == [{"reason": "route_preview_auto_start_vetoed_before_start"}]
+
+
+def test_lightning_route_start_blocks_existing_preview_visible_ocr_veto(
+    monkeypatch,
+):
+    starts = []
+    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+            "scores": {
+                "mission_preview_panel": {"score": 0.01, "yellow": 2500},
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "NO_BRIDGE",
+            "source": "saveData",
+            "top3": [],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_preview_mission_ocr",
+        lambda: {
+            "status": "OK",
+            "source": "visible_preview_ocr",
+            "mission_id": "Mission_Terraform",
+            "matched_pattern": "defend the terraformer",
+            "start_authority": "veto_only",
+            "texts": [
+                "Disintegration Flats",
+                "Defend the Terraformer",
+                "Terraform the grassland back to desert",
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_start"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        run_preflight=False,
+        verify_route=False,
+        auto_pause_if_needed=False,
+        start_mode="preview-only",
+        allow_unverified_preview_start=True,
+        require_auto_start_safe_preview=True,
+        route_routing="lightning_war",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_auto_start_vetoed_before_start"
+    assert result["actual_preview_mission_id"] == "Mission_Terraform"
+    assert result["auto_route_block_reason"] == "vetoed_mission:Mission_Terraform"
+    assert result["preview_click"]["reason"] == "existing_mission_preview_accepted"
+    assert result["visible_preview_ocr"]["matched_pattern"] == "defend the terraformer"
+    assert starts == []
+    assert pauses == [{"reason": "route_preview_auto_start_vetoed_before_start"}]
+
+
+def test_lightning_route_start_uses_ignored_stale_preview_as_veto_only(
+    monkeypatch,
+):
+    starts = []
+    pauses = []
+    ocr_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+            "pause_ocr_match": "Timeline Playtime",
+            "scores": {
+                "mission_preview_panel": {"score": 0.01, "yellow": 2500},
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "NO_ISLAND_MAP",
+            "source": "bridge",
+            "top3": [],
+            "ignored_bridge_preview": {
+                "reason": "stale_bridge_preview_ignored_for_route_scoring",
+                "mission_id": "Mission_Terraform",
+                "source": "bridge_preview",
+                "bridge_preview_live": False,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_preview_mission_ocr",
+        lambda: ocr_calls.append(True)
+        or {"status": "UNKNOWN", "reason": "should_not_need_ocr"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "ERROR", "reason": "should_not_start"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands.cmd_lightning_route_start(
+        run_preflight=False,
+        verify_route=False,
+        auto_pause_if_needed=False,
+        start_mode="preview-only",
+        allow_unverified_preview_start=True,
+        require_auto_start_safe_preview=True,
+        route_routing="lightning_war",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_auto_start_vetoed_before_start"
+    assert result["actual_preview_mission_id"] == "Mission_Terraform"
+    assert result["auto_route_block_reason"] == "vetoed_mission:Mission_Terraform"
+    assert result["auto_start_preview_validation"] == {
+        "status": "BLOCKED",
+        "reason": "vetoed_mission:Mission_Terraform",
+        "mission_id": "Mission_Terraform",
+        "source": "ignored_stale_bridge_preview",
+    }
+    assert result["ignored_bridge_preview"]["bridge_preview_live"] is False
+    assert starts == []
+    assert ocr_calls == []
     assert pauses == [{"reason": "route_preview_auto_start_vetoed_before_start"}]
 
 
@@ -16039,11 +22164,252 @@ def test_lightning_route_start_coordinate_auto_probe_still_requires_ocr(
     assert starts == [{"dry_run": False, "dismiss_dialogue": False}]
 
 
-def test_lightning_route_start_keeps_speed_mode_strict_for_safe_visible_ocr(
+def test_lightning_route_start_allows_force_speed_visible_ocr(
     monkeypatch,
 ):
     starts = []
-    pauses = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "NO_BRIDGE",
+            "source": "saveData",
+            "pause_map_peek": {"map_screenshot_path": "/tmp/map.png"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": path,
+            "regions": [{"index": 0, "window_x": 702, "window_y": 358}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 702,
+                    "window_y": 358,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "control",
+                    "control": "mission_preview_board",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_preview_mission_ocr",
+        lambda: {
+            "status": "OK",
+            "source": "visible_preview_ocr",
+            "mission_id": "Mission_Force",
+            "matched_pattern": "defensive shields active",
+            "start_authority": "veto_only",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "OK", "reason": "visible_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "in_active_mission": True,
+            "mission_id": "Mission_Force",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+        },
+    )
+
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=0,
+        run_preflight=False,
+        route_routing="lightning_war",
+        require_auto_start_safe_preview=True,
+    )
+
+    assert result["status"] == "OK"
+    assert result["expected_route_mission_id"] == "Mission_Force"
+    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Force"
+    assert result["click_result"]["auto_start_preview_validation"] == {
+        "status": "OK",
+        "reason": "lightning_war_preview_safe",
+        "mission_id": "Mission_Force",
+    }
+    assert result["click_result"]["preview_recommendation"]["source"] == (
+        "visible_preview_ocr"
+    )
+    assert result["click_result"]["preview_recommendation"][
+        "visible_preview_ocr_start_authorized"
+    ] is True
+    assert starts == [{"dry_run": False, "dismiss_dialogue": False}]
+
+
+def test_lightning_route_start_force_ocr_skips_post_dialogue_recommendation(
+    monkeypatch,
+):
+    starts = []
+    recommendations = []
+    recommendation_results = iter(
+        [
+            {
+                "status": "NO_BRIDGE",
+                "source": "saveData",
+                "pause_map_peek": {"map_screenshot_path": "/tmp/map.png"},
+            },
+            {
+                "status": "NO_BRIDGE",
+                "source": "saveData",
+                "top3": [],
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_recommend(**kwargs):
+        recommendations.append(kwargs)
+        return next(recommendation_results)
+
+    monkeypatch.setattr(commands, "cmd_recommend_mission", fake_recommend)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_extract_red_regions_from_image",
+        lambda path: {
+            "status": "OK",
+            "screenshot_path": path,
+            "regions": [{"index": 0, "window_x": 702, "window_y": 358}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_route_start_sequence_parts",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "preview_sequence": [
+                {
+                    "kind": "point",
+                    "window_x": 702,
+                    "window_y": 358,
+                    "description": "Lightning route region",
+                }
+            ],
+            "commit_sequence": [
+                {
+                    "kind": "start_visible",
+                    "dismiss_dialogue": False,
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_preview_mission_ocr",
+        lambda: {
+            "status": "OK",
+            "source": "visible_preview_ocr",
+            "mission_id": "Mission_Force",
+            "matched_pattern": "defensive shields active",
+            "start_authority": "veto_only",
+        },
+    )
+
+    def fake_visible_start(**kwargs):
+        starts.append(kwargs)
+        if len(starts) == 1:
+            return {"status": "NOT_FOUND", "reason": "start_mission_text_not_found"}
+        return {"status": "OK", "reason": "visible_start_clicked"}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        fake_visible_start,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: {"status": "OK", "reason": "dialogue_dismissed"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "in_active_mission": True,
+            "mission_id": "Mission_Force",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+        },
+    )
+
+    result = commands.cmd_lightning_route_start(
+        visual_region_index=0,
+        run_preflight=False,
+        route_routing="lightning_war",
+        require_auto_start_safe_preview=True,
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    assert result["expected_route_mission_id"] == "Mission_Force"
+    assert len(recommendations) == 2
+    assert starts == [
+        {"dry_run": False, "dismiss_dialogue": False},
+        {"dry_run": False, "dismiss_dialogue": False},
+    ]
+    post_dialogue = result["click_result"]["commit_click"][
+        "post_dialogue_recommendation"
+    ]
+    assert post_dialogue["source"] == "visible_preview_ocr"
+    assert post_dialogue["post_dialogue_recommendation_skipped"] == (
+        "trusted_visible_preview_ocr"
+    )
+    assert post_dialogue["visible_preview_ocr_start_authorized"] is True
+
+
+def test_lightning_route_start_allows_tides_speed_visible_ocr(monkeypatch):
+    starts = []
 
     monkeypatch.setattr(
         commands,
@@ -16109,12 +22475,21 @@ def test_lightning_route_start_keeps_speed_mode_strict_for_safe_visible_ocr(
         commands,
         "_lightning_click_visible_start_mission",
         lambda **kwargs: starts.append(kwargs)
-        or {"status": "ERROR", "reason": "should_not_start"},
+        or {"status": "OK", "reason": "visible_start_clicked"},
     )
     monkeypatch.setattr(
         commands,
-        "_lightning_ensure_pause_state",
-        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "in_active_mission": True,
+            "mission_id": "Mission_Tides",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+        },
     )
 
     result = commands.cmd_lightning_route_start(
@@ -16124,11 +22499,126 @@ def test_lightning_route_start_keeps_speed_mode_strict_for_safe_visible_ocr(
         require_auto_start_safe_preview=True,
     )
 
-    assert result["status"] == "BLOCKED"
-    assert result["reason"] == "route_preview_mission_unverified_before_start"
-    assert result["actual_preview_mission_id"] == "Mission_Tides"
-    assert starts == []
-    assert pauses == [{"reason": "route_preview_mission_unverified_before_start"}]
+    assert result["status"] == "OK"
+    assert result["expected_route_mission_id"] == "Mission_Tides"
+    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Tides"
+    assert result["click_result"]["auto_start_preview_validation"] == {
+        "status": "OK",
+        "reason": "lightning_war_preview_safe",
+        "mission_id": "Mission_Tides",
+    }
+    assert result["click_result"]["preview_recommendation"]["source"] == (
+        "visible_preview_ocr"
+    )
+    assert result["click_result"]["preview_recommendation"][
+        "visible_preview_ocr_start_authorized"
+    ] is True
+    assert starts == [{"dry_run": False, "dismiss_dialogue": False}]
+
+
+def test_lightning_route_start_safe_probe_legacy_mode_uses_visible_text(
+    monkeypatch,
+):
+    sequences = []
+    starts = []
+    visible_calls = 0
+
+    def fake_visible_ui():
+        nonlocal visible_calls
+        visible_calls += 1
+        if visible_calls == 1:
+            return {"status": "OK", "visible_ui": "pause_menu"}
+        return {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "mission_preview_board",
+        }
+
+    def fake_execute(sequence, **kwargs):
+        sequences.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", fake_visible_ui)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "bridge_preview_live": True,
+            "bridge_heartbeat_stale": False,
+            "top3": [{"mission_id": "Mission_Tides"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: starts.append(kwargs)
+        or {"status": "OK", "reason": "visible_start_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: pytest.fail("dialogue should not be dismissed"),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "in_active_mission": True,
+            "mission_id": "Mission_Tides",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+        },
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=702,
+        region_window_y=358,
+        run_preflight=False,
+        verify_route=False,
+        route_routing="lightning_war",
+        require_auto_start_safe_preview=True,
+        start_mode="dialogue-region-repeat-preview-board",
+    )
+
+    assert result["status"] == "OK"
+    assert result["effective_start_mode"] == "visible-text"
+    assert result["expected_route_mission_id"] == "Mission_Tides"
+    assert result["reason"] == "route_preview_validated_start_clicked"
+    assert result["click_result"]["auto_start_preview_validation"] == {
+        "status": "OK",
+        "reason": "lightning_war_preview_safe",
+        "mission_id": "Mission_Tides",
+    }
+    assert starts == [{"dry_run": False, "dismiss_dialogue": False}]
+    assert len(sequences) == 2
+    assert not any(
+        step.get("kind") == "dialogue_then_region_repeat"
+        or step.get("control") == "mission_preview_board"
+        for sequence in sequences
+        for step in sequence
+        if isinstance(step, dict)
+    )
+    assert sequences[-1] == [
+        {
+            "kind": "point",
+            "window_x": 702,
+            "window_y": 358,
+            "description": "Lightning route region",
+            "settle_seconds": 0.35,
+            "hold_seconds": 0.06,
+        }
+    ]
 
 
 def test_lightning_route_start_blocks_existing_preview_before_probe_click(monkeypatch):
@@ -16277,6 +22767,62 @@ def test_lightning_guarded_route_preview_blocks_existing_preview_probe(
         ]
     ]
     assert pauses == [{"reason": "route_preview_existing_mission_preview_before_region_click"}]
+
+
+def test_lightning_guarded_route_preview_closes_existing_preview_for_retry(
+    monkeypatch,
+):
+    calls = []
+    visible = iter(
+        [
+            {"status": "OK", "visible_ui": "mission_preview_panel"},
+            {"status": "OK", "visible_ui": "island_map"},
+        ]
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {
+            "status": "OK",
+            "steps": [{"sequence": len(calls), "count": len(sequence)}],
+            "window_bounds": {"x": 0, "y": 0, "width": 1, "height": 1},
+        }
+
+    monkeypatch.setattr(commands, "_lightning_execute_route_start_sequence", fake_execute)
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: {"status": "NO_BRIDGE"})
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible))
+
+    result = commands._lightning_execute_guarded_route_preview_sequence(
+        [
+            {
+                "kind": "key",
+                "key": "esc",
+                "description": "Pause menu Escape resume",
+                "settle_seconds": 0.22,
+            },
+            {
+                "kind": "point",
+                "window_x": 953,
+                "window_y": 594,
+                "description": "Lightning retry route region",
+                "settle_seconds": 0.35,
+                "hold_seconds": 0.06,
+            },
+        ],
+        require_plain_map=True,
+        close_existing_preview_before_region_click=True,
+    )
+
+    assert result["status"] == "OK"
+    assert result["existing_preview_close"]["status"] == "OK"
+    assert calls[0][0]["key"] == "esc"
+    assert calls[1][0]["source"] == "existing_preview_close_point"
+    assert calls[2][0]["description"] == "Lightning retry route region"
+    assert result["steps"] == [
+        {"sequence": 1, "count": 1},
+        {"sequence": 2, "count": 1},
+        {"sequence": 3, "count": 1},
+    ]
 
 
 def test_lightning_guarded_route_preview_accepts_existing_preview_when_authorized(
@@ -16468,12 +23014,47 @@ def test_lightning_route_start_unassigned_auto_probe_does_not_commit(
     assert [step["kind"] for step in preview_sequences[0]] == [
         "control" if os.name == "nt" else "key",
         "point",
+        "dialogue_then_region_repeat",
     ]
     assert all(
         step.get("control") != "mission_preview_board"
         for step in preview_sequences[0]
         if isinstance(step, dict)
     )
+
+
+def test_lightning_labeled_multi_region_preview_is_not_unassigned():
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 0,
+                "window_x": 604,
+                "window_y": 386,
+                "visible_label": "Lif eless Basin",
+            },
+            {
+                "index": 1,
+                "window_x": 390,
+                "window_y": 390,
+                "visible_label": "Sub-Zero Range",
+            },
+        ],
+    }
+
+    assert (
+        commands._lightning_unassigned_multi_region_preview_block_reason(
+            visual_regions,
+            visual_regions["regions"][0],
+        )
+        is None
+    )
+
+    visual_regions["regions"][1].pop("visible_label")
+    assert commands._lightning_unassigned_multi_region_preview_block_reason(
+        visual_regions,
+        visual_regions["regions"][0],
+    ) == "unassigned_multi_region_preview"
 
 
 def test_lightning_route_start_accepts_safe_active_mission_before_probe_click(
@@ -18229,7 +24810,7 @@ def test_lightning_route_start_commits_safe_unlabeled_auto_preview(monkeypatch):
         lambda **kwargs: {
             "status": "OK",
             "source": "bridge_preview",
-            "top3": [{"mission_id": "Mission_Cataclysm"}],
+            "top3": [{"mission_id": "Mission_Tides"}],
         },
     )
     monkeypatch.setattr(
@@ -18246,7 +24827,7 @@ def test_lightning_route_start_commits_safe_unlabeled_auto_preview(monkeypatch):
             "phase": "combat_enemy",
             "turn": 0,
             "in_active_mission": True,
-            "mission_id": "Mission_Cataclysm",
+            "mission_id": "Mission_Tides",
             "deployment_zone_count": 12,
             "active_mechs": 0,
             "mech_count": 0,
@@ -18267,12 +24848,12 @@ def test_lightning_route_start_commits_safe_unlabeled_auto_preview(monkeypatch):
 
     assert result["status"] == "OK"
     assert result["reason"] == "route_preview_validated_start_clicked"
-    assert result["expected_route_mission_id"] == "Mission_Cataclysm"
-    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Cataclysm"
+    assert result["expected_route_mission_id"] == "Mission_Tides"
+    assert result["click_result"]["actual_preview_mission_id"] == "Mission_Tides"
     assert result["click_result"]["auto_start_preview_validation"] == {
         "status": "OK",
         "reason": "lightning_war_preview_safe",
-        "mission_id": "Mission_Cataclysm",
+        "mission_id": "Mission_Tides",
     }
     assert starts == [{"dry_run": False, "dismiss_dialogue": False}]
     assert calls == [
@@ -19415,7 +25996,7 @@ def test_lightning_route_start_dry_run_plans_click_sequence(monkeypatch):
                     "dry_run": True,
                     "include_start_click": True,
                     "dismiss_dialogue": False,
-                    "start_mode": "dialogue-region-repeat-preview-board",
+                        "start_mode": "visible-text",
                     "start_window_x": None,
                     "start_window_y": None,
                     "resume_from_pause": True,
@@ -19828,6 +26409,97 @@ def test_lightning_route_start_lightning_war_reproofs_after_dialogue(monkeypatch
         for step in sequence
         if isinstance(step, dict)
     )
+
+
+def test_lightning_route_start_retries_delayed_start_text_after_dialogue(
+    monkeypatch,
+):
+    calls = []
+    starts = []
+    sleeps = []
+    recommendations = iter(
+        [
+            {
+                "status": "OK",
+                "source": "bridge_preview",
+                "top3": [{"mission_id": "Mission_Force"}],
+            },
+            {
+                "status": "OK",
+                "source": "bridge_preview",
+                "top3": [{"mission_id": "Mission_Force"}],
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: calls.append(sequence)
+        or {"status": "OK", "steps": [{"count": len(sequence)}]},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: next(recommendations),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_dismiss_visible_dialogue",
+        lambda **kwargs: {"status": "OK", "dialogue_click": {"status": "OK"}},
+    )
+
+    def fake_start(**kwargs):
+        starts.append(kwargs)
+        if len(starts) < 3:
+            return {
+                "status": "NOT_FOUND",
+                "reason": "start_mission_text_not_found",
+            }
+        return {"status": "OK", "reason": "visible_start_clicked"}
+
+    monkeypatch.setattr(commands, "_lightning_click_visible_start_mission", fake_start)
+    monkeypatch.setattr(commands.time, "sleep", lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Force",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Force",
+    )
+
+    assert result["status"] == "OK"
+    commit = result["click_result"]["commit_click"]
+    assert commit["reason"] == "lightning_war_dialogue_dismissed_visible_start_clicked"
+    assert commit["post_dialogue_actual_mission_id"] == "Mission_Force"
+    assert len(commit["post_dialogue_start_attempts"]) == 2
+    assert starts == [
+        {"dry_run": False, "dismiss_dialogue": False},
+        {"dry_run": False, "dismiss_dialogue": False},
+        {"dry_run": False, "dismiss_dialogue": False},
+    ]
+    assert sleeps == [0.25]
+    assert len(calls) == 1
 
 
 def test_lightning_route_start_baseline_blocks_board_fallback_without_visible_start(
@@ -20622,6 +27294,318 @@ def test_lightning_segment_route_start_summary_includes_retry_kind():
     ]
 
 
+def test_lightning_segment_pauses_before_first_route_start_timer_gate(
+    monkeypatch,
+):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: calls.append(("pause", kwargs))
+        or {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    def fake_gate(**kwargs):
+        calls.append(("gate", kwargs))
+        return {
+            "status": "BLOCKED",
+            "reason": "first_mission_route_start_pace_gate",
+            "visible_timer": {"status": "OK", "game_seconds": 121},
+        }
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        fake_gate,
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        route_visual_region_index=0,
+        route_routing="lightning_war",
+        max_steps=1,
+        pause_on_stop=False,
+    )
+
+    assert [name for name, _kwargs in calls] == ["pause", "gate"]
+    assert calls[0][1]["reason"] == "first_mission_route_start_timer_gate"
+    assert result["status"] == "LIGHTNING_SEGMENT_STOPPED"
+    assert result["reason"] == "first_mission_route_start_pace_gate"
+    gate = result["steps"][0]["first_mission_route_start_gate"]
+    assert gate["pause_before_timer_gate"] == {
+        "status": "OK",
+        "reason": "pause_clicked",
+    }
+
+
+def test_lightning_segment_auto_start_pauses_before_route_timer_gate(
+    monkeypatch,
+):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": [
+                {"index": 1, "window_x": 640, "window_y": 420},
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_auto_start_candidate_from_recommendation",
+        lambda *args, **kwargs: {
+            "index": 1,
+            "window_x": 640,
+            "window_y": 420,
+            "auto_route_allowed": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: calls.append(("pause", kwargs))
+        or {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    def fake_gate(**kwargs):
+        calls.append(("gate", kwargs))
+        return {
+            "status": "BLOCKED",
+            "reason": "first_mission_route_start_pace_gate",
+            "visible_timer": {"status": "OK", "game_seconds": 121},
+        }
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        fake_gate,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("route start should not run after timer gate")
+        ),
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        max_steps=1,
+        pause_on_stop=False,
+    )
+
+    assert [name for name, _kwargs in calls] == ["pause", "gate"]
+    assert calls[0][1]["reason"] == "first_mission_route_start_timer_gate"
+    assert result["status"] == "LIGHTNING_SEGMENT_STOPPED"
+    assert result["reason"] == "first_mission_route_start_pace_gate"
+    gate = result["steps"][1]["first_mission_route_start_gate"]
+    assert gate["pause_before_timer_gate"] == {
+        "status": "OK",
+        "reason": "pause_clicked",
+    }
+
+
+def test_lightning_segment_labeled_probe_auto_start_uses_visual_index(
+    monkeypatch,
+):
+    route_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 604,
+                    "window_y": 386,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Restoration Center",
+                },
+                {
+                    "index": 1,
+                    "window_x": 390,
+                    "window_y": 390,
+                    "auto_route_probe": "live_preview_required",
+                    "visible_label": "Forgotten Hills",
+                },
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_started"},
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        click_ui=False,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        route_probe_offset=1,
+        max_steps=1,
+        pause_on_stop=False,
+    )
+
+    assert route_calls
+    assert route_calls[0]["visual_region_index"] == 1
+    assert route_calls[0]["region_window_x"] is None
+    assert route_calls[0]["region_window_y"] is None
+    assert route_calls[0]["allow_pause_map_peek"] is True
+    assert route_calls[0]["require_auto_start_safe_preview"] is True
+    assert route_calls[0]["defer_started_mismatch_recovery"] is True
+    assert result["steps"][0]["route_auto_start_index"] == 1
+    assert result["steps"][0]["route_auto_start_probe"] == "live_preview_required"
+
+
+def test_lightning_segment_labeled_ocr_probe_uses_label_click_target(
+    monkeypatch,
+):
+    route_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 973,
+                    "window_y": 443,
+                    "visual_region_window_x": 976,
+                    "visual_region_window_y": 416,
+                    "auto_route_probe": "live_preview_required",
+                    "ocr_probe_route": True,
+                    "visible_label": "Accord Repository",
+                    "route_click_target": {
+                        "source": "ocr_label_below",
+                        "window_x": 973,
+                        "window_y": 443,
+                    },
+                },
+                {
+                    "index": 1,
+                    "window_x": 836,
+                    "window_y": 456,
+                    "visual_region_window_x": 833,
+                    "visual_region_window_y": 422,
+                    "auto_route_probe": "live_preview_required",
+                    "ocr_probe_route": True,
+                    "visible_label": "Secondary Archives",
+                    "route_click_target": {
+                        "source": "ocr_label_below",
+                        "window_x": 836,
+                        "window_y": 456,
+                    },
+                },
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {"status": "OK", "reason": "route_started"},
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        click_ui=False,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        max_steps=1,
+        pause_on_stop=False,
+    )
+
+    assert route_calls
+    assert route_calls[0]["visual_region_index"] is None
+    assert route_calls[0]["region_window_x"] == 973
+    assert route_calls[0]["region_window_y"] == 443
+    assert route_calls[0]["allow_pause_map_peek"] is False
+    assert route_calls[0]["require_auto_start_safe_preview"] is True
+    assert route_calls[0]["defer_started_mismatch_recovery"] is True
+    assert result["steps"][0]["route_auto_start_index"] == 0
+    assert result["steps"][0]["route_auto_start_probe"] == "live_preview_required"
+
+
+def test_lightning_route_start_subcall_timeout_has_floor():
+    started_at = commands.time.monotonic() - 99.0
+
+    assert commands._lightning_segment_route_start_subcall_timeout(
+        started_at,
+        max_wall_seconds=30.0,
+    ) == commands._LIGHTNING_ROUTE_START_SUBCALL_TIMEOUT_SECONDS
+    assert commands._lightning_segment_route_start_subcall_timeout(
+        started_at,
+        max_wall_seconds=60.0,
+    ) == commands._LIGHTNING_ROUTE_START_MIN_SUBCALL_SECONDS
+    assert commands._lightning_segment_route_start_subcall_timeout(
+        started_at,
+        max_wall_seconds=None,
+    ) == commands._LIGHTNING_ROUTE_START_SUBCALL_TIMEOUT_SECONDS
+
+
+def test_lightning_speed_route_start_keeps_full_validation_floor(monkeypatch):
+    monkeypatch.setattr(commands.time, "monotonic", lambda: 100.0)
+
+    assert commands._lightning_segment_route_start_subcall_timeout(
+        82.0,
+        max_wall_seconds=30.0,
+    ) == commands._LIGHTNING_ROUTE_START_SUBCALL_TIMEOUT_SECONDS
+
+
+def test_lightning_segment_reports_full_pending_route_context():
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        click_ui=False,
+        pause_on_stop=False,
+        lightning_speed_loss_policy=False,
+        max_wall_seconds=0.0,
+        route_visual_region_index=1,
+        route_region_window_x=396,
+        route_region_window_y=438,
+        route_target_mission_id="Mission_Tides",
+        route_start_verify_route=False,
+        route_close_existing_preview=True,
+        route_start_mode="visible-text",
+    )
+
+    assert result["reason"] == "segment_wall_seconds_exceeded"
+    assert result["route_visual_region_index_pending"] == 1
+    assert result["route_start_pending_context"] == {
+        "visual_region_index": 1,
+        "region_window_x": 396,
+        "region_window_y": 438,
+        "target_mission_id": "Mission_Tides",
+        "verify_route": False,
+        "close_existing_preview_before_region_click": True,
+        "start_mode": "visible-text",
+    }
+
+
 def test_lightning_auto_route_block_adapts_stale_preview_reason():
     block = commands._lightning_auto_route_block_from_route_start(
         {
@@ -20639,6 +27623,50 @@ def test_lightning_auto_route_block_adapts_stale_preview_reason():
         "mission_id": "Mission_Belt",
         "window_x": 542,
         "window_y": 244,
+    }
+
+
+def test_lightning_auto_route_block_preserves_selected_probe_signature():
+    block = commands._lightning_auto_route_block_from_route_start(
+        {
+            "reason": "route_preview_auto_start_vetoed_before_start",
+            "actual_preview_mission_id": "Mission_Satellite",
+            "selected_visual_region": {
+                "index": 1,
+                "window_x": 836,
+                "window_y": 456,
+                "visual_region_window_x": 833,
+                "visual_region_window_y": 423,
+                "visible_label": "Secondary Archives",
+                "visible_label_source": "ocr_bbox",
+                "visible_label_texts": ["Secondary", "Archives"],
+                "route_click_target": {
+                    "source": "ocr_label_below",
+                    "window_x": 836,
+                    "window_y": 456,
+                },
+            },
+        },
+        previous_index=None,
+    )
+
+    assert block == {
+        "index": 1,
+        "auto_route_allowed": False,
+        "auto_route_block_reason": "route_preview_auto_start_vetoed_before_start",
+        "mission_id": "Mission_Satellite",
+        "window_x": 836,
+        "window_y": 456,
+        "visual_region_window_x": 833,
+        "visual_region_window_y": 423,
+        "visible_label": "Secondary Archives",
+        "visible_label_source": "ocr_bbox",
+        "visible_label_texts": ["Secondary", "Archives"],
+        "route_click_target": {
+            "source": "ocr_label_below",
+            "window_x": 836,
+            "window_y": 456,
+        },
     }
 
 
@@ -20685,7 +27713,16 @@ def test_lightning_route_start_accepts_explicit_save_backed_preview_match(
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Mines",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
 
     result = commands.cmd_lightning_route_start(
@@ -20749,7 +27786,16 @@ def test_lightning_route_start_accepts_live_boss_preview_over_stale_expected(
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_DungBoss",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
 
     result = commands.cmd_lightning_route_start(
@@ -20817,7 +27863,16 @@ def test_lightning_route_start_commits_preview_without_expected_target(
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Dam",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
 
     result = commands.cmd_lightning_route_start(
@@ -20882,7 +27937,16 @@ def test_lightning_route_start_commits_matching_preview(monkeypatch):
     monkeypatch.setattr(
         commands,
         "_lightning_live_snapshot",
-        lambda: {"status": "NO_BRIDGE"},
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Bomb",
+            "deployment_zone_count": 12,
+            "active_mechs": 0,
+            "mech_count": 0,
+            "in_active_mission": True,
+        },
     )
 
     result = commands.cmd_lightning_route_start(
@@ -20996,6 +28060,97 @@ def test_lightning_route_start_recovers_playable_post_start_mismatch(monkeypatch
     assert blocks[0][0] is session
     assert recoveries[0][1]["actual_mission_id"] == "Mission_Missiles"
     assert len(calls) == 1
+
+
+def test_lightning_route_start_can_defer_post_start_mismatch_recovery(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    calls = []
+    blocks = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {"status": "OK", "steps": [{"count": len(sequence)}]}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        fake_execute,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_recommend_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "source": "bridge_preview",
+            "top3": [{"mission_id": "Mission_Belt"}],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_visible_start_mission",
+        lambda **kwargs: {
+            "status": "OK",
+            "target": {"window_x": 848, "window_y": 448},
+            "click_result": {"status": "OK"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "mission_id": "Mission_Survive",
+            "deployment_zone_count": 10,
+            "mech_count": 0,
+            "in_active_mission": True,
+            "grid_power": "6/7",
+        },
+    )
+
+    def fake_write_block(session_arg, **kwargs):
+        blocks.append((session_arg, kwargs))
+        return {"status": "BLOCKED", **kwargs}
+
+    monkeypatch.setattr(commands, "_lightning_write_route_mismatch_block", fake_write_block)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recover_started_route_mismatch",
+        lambda *args, **kwargs: pytest.fail("recovery should be deferred"),
+    )
+
+    result = commands.cmd_lightning_route_start(
+        region_window_x=542,
+        region_window_y=244,
+        run_preflight=False,
+        verify_route=False,
+        expected_route_mission_id="Mission_Belt",
+        defer_started_mismatch_recovery=True,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_mission_mismatch_after_start"
+    click_result = result["click_result"]
+    assert click_result["actual_started_mission_id"] == "Mission_Survive"
+    assert click_result["route_mismatch_block"]["actual_mission_id"] == (
+        "Mission_Survive"
+    )
+    assert click_result["mismatch_recovery_deferred"]["status"] == "DEFERRED"
+    assert blocks[0][0] is session
+    assert calls
 
 
 def test_lightning_route_start_recovers_former_veto_post_start_mismatch(monkeypatch):
