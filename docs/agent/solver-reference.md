@@ -65,13 +65,11 @@ The solver enforces these; use them when reviewing solver output or writing test
 - **Ice:** intact → cracked → water (non-flying drowns).
 
 **Repair platforms:** Mission_Repair places `Item_Repair_Mine` tiles. Any live
-unit that lands on one triggers the item, heals by the engine's `SpaceDamage(-10)`
-(live captures show damaged 3-max-HP mechs can become `5/3`; 2-max-HP mechs cap
-at `4/2`, so model this as `max_hp + 2`, not a flat 5 HP), consumes the platform,
-and increments `repair_platforms_used` toward the 3-platform objective. If the
-unit is already at or above max HP when it lands, the platform still consumes and
-counts but does not add overheal. Raw progress can exceed the objective target
-(for example `4/3`); clamp only in UI scoring/presentation. It is not the mech
+unit that lands on one triggers the item, heals up to max HP, consumes the
+platform, and increments `repair_platforms_used` toward the 3-platform objective.
+If the unit is already at or above max HP when it lands, the platform still
+consumes and counts but does not add HP. Raw progress can exceed the objective
+target (for example `4/3`); clamp only in UI scoring/presentation. It is not the mech
 Repair action; do not assume it clears Fire/ACID/Frozen unless a capture proves
 the engine does so.
 
@@ -175,7 +173,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 
 113. **Conveyors are tile-driven, not mission-id-driven.** Detritus conveyor tiles can appear outside `Mission_Belt`, including `Mission_Acid`; if any live tile has `conveyor >= 0`, the enemy phase must apply the belt tick before Vek attacks. Do not gate conveyor simulation solely on `mission_id == "Mission_Belt"`. Regression anchor: Hard Rusting Hulks run `20260512_104120_903`, Chemical Field A turn 2 had live conveyors in `Mission_Acid`; generalized in simulator v107.
 
-114. **Repair platforms do not overheal full-health units.** `Item_Repair_Mine` still consumes and increments `repair_platforms_used` when a full or already-overcapped unit lands on it, but HP stays unchanged unless the unit was below max HP at trigger time. Damaged units can still overheal up to `max_hp + 2`. Regression anchor: Hard Rusting Hulks run `20260512_181719_119`, Forgotten Hills turn 2 PulseMech moved to `G4` at `3/3`; live consumed the platform and counted progress but left Pulse at `3/3` instead of predicted `5/3`; fixed in simulator v108.
+114. **Repair platforms heal only to max HP.** `Item_Repair_Mine` still consumes and increments `repair_platforms_used` when any live unit lands on it. Damaged units heal only up to max HP; full-health or already-overcapped units consume/count the platform with HP unchanged. Regression anchors: Hard Rusting Hulks run `20260512_181719_119`, Forgotten Hills turn 2 PulseMech moved to `G4` at `3/3`; live consumed the platform and counted progress but left Pulse at `3/3` instead of predicted `5/3`; fixed for full-health units in simulator v108. Bombermechs Complete Victory run `20260623_105703_708`, Bad Repairs turn 1 BomlingMech moved to `E4` at `1/3`; live healed to `3/3` instead of predicted `5/3`; damaged-unit cap fixed in simulator v274.
 
 118. **Leap attacks resolve landing effects and break web.** If Aerial Bombs, Bombing Run, Leap, or another Leap-style attack moves the firing unit to a new tile, that tile change breaks the unit's own web and then resolves landing effects: fire/ACID pickup, mines, repair platforms, teleporter pads, and WebbEgg adjacency. A webbed JetMech can still fire Aerial Bombs; if it lands on an already-burning tile at 1 HP, it will catch Fire and die at the next enemy-phase fire tick unless repaired or shielded. Burning Forest landing tiles are consumed to burning Ground. Regression anchor: Hard Rusting Hulks run `20260512_181719_119`, Archival Flats turn 3, Jet landed on burning `F2` after Rocket ignited the forest; fixed in simulator v109.
 

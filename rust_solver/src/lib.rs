@@ -1856,7 +1856,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260623_035936_734 Mission_Factory turn 2, where live Snowlaser fired
 //   before a lower-UID Burnbug killed it. Pre-v273 corpus archived as
 //   failure_db_snapshot_sim_v272.jsonl.
-pub const SIMULATOR_VERSION: u32 = 273;
+// v274 - Mission_Repair platform healing caps at the unit's max HP instead
+//   of overhealing to max_hp+2. Fixes Bombermechs Complete Victory run
+//   20260623_105703_708 Bad Repairs turn 1, where BomlingMech healed from
+//   1/3 to live 3/3 but the sim projected 5/3. Pre-v274 corpus archived as
+//   failure_db_snapshot_sim_v273.jsonl.
+pub const SIMULATOR_VERSION: u32 = 274;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

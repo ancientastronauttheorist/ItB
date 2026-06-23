@@ -291,13 +291,13 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
 
     board.tile_mut(x, y).set_repair_platform(false);
     let before = board.units[unit_idx].hp;
-    // Lua defines Item_Repair_Mine as SpaceDamage(-10). Live Mission_Repair
-    // captures show damaged 3-max-HP mechs healing up to 5/3 while a 2-max-HP
-    // Jet stayed at 4/2, matching an overheal cap of max_hp + 2. A full-health
-    // mech still consumes/counts the platform, but does not gain extra HP.
+    // Lua defines Item_Repair_Mine as SpaceDamage(-10), but live
+    // Mission_Repair captures cap the healing at the unit's max HP.
+    // A full-health mech still consumes/counts the platform.
     if before < board.units[unit_idx].max_hp {
-        let cap = board.units[unit_idx].max_hp.saturating_add(2);
-        board.units[unit_idx].hp = before.saturating_add(10).min(cap);
+        board.units[unit_idx].hp = before
+            .saturating_add(10)
+            .min(board.units[unit_idx].max_hp);
     }
     refresh_arrogant_boost(&mut board.units[unit_idx]);
     board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
@@ -6620,7 +6620,7 @@ mod tests {
     }
 
     #[test]
-    fn test_repair_platform_overheal_cap_is_max_hp_plus_two() {
+    fn test_repair_platform_healing_caps_at_max_hp() {
         let mut board = make_test_board();
         board.tile_mut(3, 3).set_repair_platform(true);
         let mech_idx = add_mech(&mut board, 1, 3, 2, 1, WId::PrimePunchmech);
@@ -6628,7 +6628,7 @@ mod tests {
 
         let result = simulate_move(&mut board, mech_idx, (3, 3));
 
-        assert_eq!(board.units[mech_idx].hp, 5, "1/3 mech overheals to 5/3");
+        assert_eq!(board.units[mech_idx].hp, 3, "1/3 mech heals to max HP");
         assert_eq!(board.repair_platforms_used, 1);
         assert_eq!(result.repair_platforms_used, 1);
         assert!(
@@ -6638,7 +6638,7 @@ mod tests {
     }
 
     #[test]
-    fn test_repair_platform_does_not_floor_two_hp_mech_to_five() {
+    fn test_repair_platform_preserves_existing_over_max_hp() {
         let mut board = make_test_board();
         board.tile_mut(3, 3).set_repair_platform(true);
         let mech_idx = add_mech(&mut board, 1, 3, 2, 4, WId::BruteJetmech);
@@ -6646,7 +6646,7 @@ mod tests {
 
         let _ = simulate_move(&mut board, mech_idx, (3, 3));
 
-        assert_eq!(board.units[mech_idx].hp, 4, "4/2 Jet stays capped at 4/2");
+        assert_eq!(board.units[mech_idx].hp, 4, "4/2 Jet stays at current HP");
     }
 
     #[test]

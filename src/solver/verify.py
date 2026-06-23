@@ -1349,7 +1349,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260623_035936_734 Mission_Factory turn 2, where live Snowlaser fired before
 # a lower-UID Burnbug killed it. Pre-v273 corpus archived as
 # failure_db_snapshot_sim_v272.jsonl.
-SIMULATOR_VERSION = 273
+# v274 - Mission_Repair platform healing caps at the unit's max HP instead of
+# overhealing to max_hp+2. Fixes Bombermechs Complete Victory run
+# 20260623_105703_708 Bad Repairs turn 1, where BomlingMech healed from 1/3 to
+# live 3/3 but the sim projected 5/3. Pre-v274 corpus archived as
+# failure_db_snapshot_sim_v273.jsonl.
+SIMULATOR_VERSION = 274
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
