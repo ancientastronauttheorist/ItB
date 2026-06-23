@@ -1842,7 +1842,16 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   credit. Fixes Bombermechs Complete Victory run 20260619_234224_725
 //   Mission_Dam turn 1, where live washed away a pod at (4,5) but Rust kept
 //   has_pod=true. Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
-pub const SIMULATOR_VERSION: u32 = 271;
+// v271 - Old Earth Mine mission metadata and replay safety track
+//   Mission_Mines' mech-damage objective so Complete Victory routing does not
+//   misclassify mine damage as harmless. Pre-v271 corpus archived as
+//   failure_db_snapshot_sim_v270.jsonl.
+// v272 - AP Cannon first-target push can move a friendly first target into a
+//   killed second target's tile instead of treating the dead Vek as a bumping
+//   wreck. Fixes Bombermechs Complete Victory run 20260623_014749_422
+//   Mission_Mines turn 4. Pre-v272 corpus archived as
+//   failure_db_snapshot_sim_v271.jsonl.
+pub const SIMULATOR_VERSION: u32 = 272;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

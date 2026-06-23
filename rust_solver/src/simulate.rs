@@ -2237,6 +2237,16 @@ const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
     trigger_mines: true,
 };
 
+const PIERCE_FIRST_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: false,
+    dead_bombrock_bumps_live_blocker: false,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: true,
+    live_pusher_enters_wreck: false,
+    trigger_mines: true,
+};
+
 const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
@@ -3798,7 +3808,7 @@ fn sim_pierce_projectile(
     );
     apply_push_with_policy(board, sx, sy, dir, result, DEFAULT_PUSH_POLICY);
     if board.unit_at(fx, fy).is_some() {
-        apply_push_with_policy(board, fx, fy, dir, result, DEFAULT_PUSH_POLICY);
+        apply_push_with_policy(board, fx, fy, dir, result, PIERCE_FIRST_TARGET_PUSH_POLICY);
     }
     if let Some(idx) = deferred_death_explosion {
         let ex = board.units[idx].x;
@@ -13851,6 +13861,23 @@ mod tests {
         assert_eq!((board.units[second].x, board.units[second].y), (3, 6));
         assert_eq!(board.units[second].hp, 1);
         assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_brute_pierce_shot_friendly_first_enters_killed_second_tile() {
+        let mut board = make_test_board();
+        let pierce = add_mech(&mut board, 0, 3, 1, 3, WId::BrutePierceShot);
+        let bombling = add_mech(&mut board, 1, 4, 1, 3, WId::RangedDeployBomb);
+        let scarab = add_enemy(&mut board, 2, 5, 1, 2);
+        board.tile_mut(6, 1).terrain = Terrain::Mountain;
+        board.tile_mut(6, 1).building_hp = 2;
+
+        let result = simulate_weapon(&mut board, pierce, WId::BrutePierceShot, 4, 1);
+
+        assert_eq!(board.units[bombling].hp, 3);
+        assert_eq!((board.units[bombling].x, board.units[bombling].y), (5, 1));
+        assert!(board.units[scarab].hp <= 0);
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]

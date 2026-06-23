@@ -1341,7 +1341,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # queued Vek, so projections and threat audit must not clear building threats
 # solely because an attacker stands on a launch marker. Pre-v271 corpus
 # archived as failure_db_snapshot_sim_v270.jsonl.
-SIMULATOR_VERSION = 271
+SIMULATOR_VERSION = 272
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
