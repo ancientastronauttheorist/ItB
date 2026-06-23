@@ -1,6 +1,7 @@
 /// Enemy attack simulation — post-mech-action phase.
 ///
-/// Processes enemies in UID order (ascending = game's attack order).
+/// Processes enemies in bridge-provided order, falling back to UID order for
+/// legacy payloads.
 /// Re-traces projectile paths on the post-mech board state.
 /// Uses actual weapon type dispatch (not binary ranged/melee).
 
@@ -950,11 +951,36 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    // Collect enemy indices sorted by UID
+    // Collect enemy indices. Prefer the bridge's live attack_order when it is
+    // available; UID order is only a legacy fallback. Mission_Factory captures
+    // showed Pinnacle bots resolving in unit-list order, where sorting by UID
+    // let a later Burnbug kill a Snowlaser before its live beam fired.
     let mut enemy_indices: Vec<usize> = (0..board.unit_count as usize)
         .filter(|&i| board.units[i].is_enemy())
         .collect();
-    enemy_indices.sort_by_key(|&i| board.units[i].uid);
+    if board.attack_order.is_empty() {
+        enemy_indices.sort_by_key(|&i| board.units[i].uid);
+    } else {
+        let mut ordered: Vec<usize> = Vec::with_capacity(enemy_indices.len());
+        for uid in &board.attack_order {
+            if let Some(idx) = enemy_indices
+                .iter()
+                .copied()
+                .find(|&i| board.units[i].uid == *uid)
+            {
+                if !ordered.contains(&idx) {
+                    ordered.push(idx);
+                }
+            }
+        }
+        let mut remaining: Vec<usize> = enemy_indices
+            .into_iter()
+            .filter(|idx| !ordered.contains(idx))
+            .collect();
+        remaining.sort_by_key(|&i| board.units[i].uid);
+        ordered.extend(remaining);
+        enemy_indices = ordered;
+    }
 
     for &ei in &enemy_indices {
         let enemy = &board.units[ei];
@@ -2661,6 +2687,38 @@ mod tests {
             "Cannon-Bot projectile should travel past the empty queued tile and hit PulseMech");
         assert!(board.units[pulse_idx].fire(),
             "Cannon 8R Mark I should set the hit unit on fire");
+    }
+
+    #[test]
+    fn test_bridge_attack_order_lets_snowlaser_fire_before_burnbug() {
+        let mut board = Board::default();
+        board.grid_power = 4;
+        board.tile_mut(2, 2).terrain = Terrain::Building;
+        board.tile_mut(2, 2).building_hp = 1;
+        board.tile_mut(2, 3).terrain = Terrain::Forest;
+        board.tile_mut(2, 4).terrain = Terrain::Forest;
+        let bombling_idx = add_mech_unit(&mut board, 1, 2, 3, 3);
+
+        let laser_idx = add_enemy_with_type(&mut board, 3806, 2, 4, 1, "Snowlaser1", 2, 3);
+        let burnbug_idx = add_enemy_with_type(&mut board, 3805, 5, 4, 4, "Burnbug1", 4, 4);
+        board.units[laser_idx].queued_origin_x = 2;
+        board.units[laser_idx].queued_origin_y = 4;
+        board.units[burnbug_idx].queued_origin_x = 5;
+        board.units[burnbug_idx].queued_origin_y = 4;
+        board.attack_order = vec![3806, 3805];
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[bombling_idx].hp, 1,
+            "Snowlaser should fire first and hit Bombling for 2 before Burnbug kills it");
+        assert!(board.units[bombling_idx].fire(),
+            "Forest hit by the beam should leave Bombling on fire");
+        assert_eq!(board.tile(2, 2).building_hp, 0,
+            "Snowlaser beam should continue through Bombling and destroy the 1 HP building");
+        assert!(board.units[laser_idx].hp <= 0,
+            "Burnbug should still kill the Snowlaser later in the same enemy phase");
+        assert_eq!(board.grid_power, 3);
     }
 
     #[test]

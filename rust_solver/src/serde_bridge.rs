@@ -16,6 +16,7 @@ use crate::solver::{Solution, MechAction};
 pub struct JsonInput {
     pub tiles: Option<Vec<JsonTile>>,
     pub units: Option<Vec<JsonUnit>>,
+    pub attack_order: Option<Vec<u16>>,
     pub grid_power: Option<u8>,
     pub grid_power_max: Option<u8>,
     pub turn: Option<u8>,
@@ -452,6 +453,9 @@ pub fn board_from_json(json_str: &str)
     }
 
     let mut board = Board::default();
+    if let Some(order) = &input.attack_order {
+        board.attack_order = order.clone();
+    }
 
     // Grid power
     board.grid_power = input.grid_power.unwrap_or(7);

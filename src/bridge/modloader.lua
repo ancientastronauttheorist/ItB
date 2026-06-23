@@ -869,14 +869,15 @@ local function dump_state()
         end
     end
 
-    -- Attack order: enemies with queued attacks sorted by UID (ascending)
+    -- Attack order: enemies with queued attacks in live unit-list order.
+    -- Do not sort by UID; Mission_Factory captures showed Pinnacle bots can
+    -- resolve Snowlaser before a lower-UID Burnbug kills it.
     state.attack_order = {}
     for _, u in ipairs(state.units) do
         if u.team == 6 and u.has_queued_attack then
             state.attack_order[#state.attack_order + 1] = u.uid
         end
     end
-    table.sort(state.attack_order)
 
     -- Webber fallback: for any webbed unit without a known web_source_uid
     -- (Lua API didn't expose it), pick the closest alive enemy whose primary

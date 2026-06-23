@@ -829,6 +829,7 @@ def _normalize_queued_targets(bridge_units: list) -> None:
         if origin is None:
             continue
         ox, oy = origin
+        u["queued_origin"] = [ox, oy]
         # Offset from piOrigin to piQueuedShot. It may be a full same-axis
         # distance for artillery/projectiles; only diagonal offsets are not
         # valid queued line attacks here.
@@ -886,6 +887,7 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
         if 0 <= fx < 8 and 0 <= fy < 8 and (fx, fy) in targeted:
             u["queued_target_stale_save"] = [qx, qy]
             u["queued_target"] = [fx, fy]
+            u["queued_origin"] = [cx, cy]
             u["queued_target_reconciled_via_targeted_tiles"] = True
 
 
@@ -939,6 +941,19 @@ def _recover_grapple_probe_webs(bridge_units: list) -> None:
             unit["web_source_uid"] = candidates[0].get("uid", 0)
 
 
+def _derive_attack_order_from_units(data: dict) -> None:
+    """Prefer the bridge's live unit-list order for queued enemy attacks."""
+    order: list[int] = []
+    for unit in data.get("units", []) or []:
+        if unit.get("team") != 6 or not unit.get("has_queued_attack"):
+            continue
+        uid = unit.get("uid")
+        if isinstance(uid, int):
+            order.append(uid)
+    if order:
+        data["attack_order"] = order
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -974,6 +989,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         _normalize_queued_targets(data["units"])
         _reconcile_flipped_queued_targets_with_targeted_tiles(data)
         _recover_grapple_probe_webs(data["units"])
+        _derive_attack_order_from_units(data)
         _mark_satellite_launch_danger_flying_immune(data)
 
     # Mission_Repair progress (Use 3 Repair Platforms). Old live modloader

@@ -338,6 +338,9 @@ pub struct Board {
     pub tiles: [Tile; 64],
     pub units: [Unit; 16],
     pub unit_count: u8,
+    /// Live enemy attack order from bridge JSON. Empty means legacy payloads
+    /// should fall back to UID order.
+    pub attack_order: Vec<u16>,
     pub grid_power: u8,
     pub grid_power_max: u8,
     // Grid Defense: % chance any building resists damage. Not exposed by
@@ -516,6 +519,7 @@ impl Default for Board {
             tiles: [Tile::default(); 64],
             units: [Unit::default(); 16],
             unit_count: 0,
+            attack_order: Vec::new(),
             grid_power: 7,
             grid_power_max: 7,
             grid_defense_pct: 15,

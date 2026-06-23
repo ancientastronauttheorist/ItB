@@ -1341,7 +1341,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # queued Vek, so projections and threat audit must not clear building threats
 # solely because an attacker stands on a launch marker. Pre-v271 corpus
 # archived as failure_db_snapshot_sim_v270.jsonl.
-SIMULATOR_VERSION = 272
+# v272 - AP Cannon first-target push can move a friendly first target into a
+# killed second target's tile instead of treating the dead Vek as a bumping
+# wreck. Pre-v272 corpus archived as failure_db_snapshot_sim_v271.jsonl.
+# v273 - Enemy-phase replay honors bridge-provided attack order instead of
+# blindly sorting by UID. Fixes Bombermechs Complete Victory run
+# 20260623_035936_734 Mission_Factory turn 2, where live Snowlaser fired before
+# a lower-UID Burnbug killed it. Pre-v273 corpus archived as
+# failure_db_snapshot_sim_v272.jsonl.
+SIMULATOR_VERSION = 273
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1426,6 +1434,19 @@ def snapshot_after_move(
             "active": getattr(u, "active", True),
             "is_mech": u.is_mech,
             "team": u.team,
+            "queued_target": (
+                [u.queued_target_x, u.queued_target_y]
+                if getattr(u, "queued_target_x", -1) >= 0
+                and getattr(u, "queued_target_y", -1) >= 0
+                else None
+            ),
+            "queued_origin": (
+                [u.queued_origin_x, u.queued_origin_y]
+                if getattr(u, "queued_origin_x", -1) >= 0
+                and getattr(u, "queued_origin_y", -1) >= 0
+                else None
+            ),
+            "has_queued_attack": bool(getattr(u, "has_queued_attack", False)),
             "status": {
                 "fire": u.fire,
                 "acid": u.acid,
@@ -1511,6 +1532,19 @@ def snapshot_after_action(
             "active": getattr(u, "active", True),
             "is_mech": u.is_mech,
             "team": u.team,
+            "queued_target": (
+                [u.queued_target_x, u.queued_target_y]
+                if getattr(u, "queued_target_x", -1) >= 0
+                and getattr(u, "queued_target_y", -1) >= 0
+                else None
+            ),
+            "queued_origin": (
+                [u.queued_origin_x, u.queued_origin_y]
+                if getattr(u, "queued_origin_x", -1) >= 0
+                and getattr(u, "queued_origin_y", -1) >= 0
+                else None
+            ),
+            "has_queued_attack": bool(getattr(u, "has_queued_attack", False)),
             "status": {
                 "fire": u.fire,
                 "acid": u.acid,

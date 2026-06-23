@@ -1851,7 +1851,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   wreck. Fixes Bombermechs Complete Victory run 20260623_014749_422
 //   Mission_Mines turn 4. Pre-v272 corpus archived as
 //   failure_db_snapshot_sim_v271.jsonl.
-pub const SIMULATOR_VERSION: u32 = 272;
+// v273 - Enemy-phase replay honors bridge-provided attack order instead of
+//   blindly sorting by UID. Fixes Bombermechs Complete Victory run
+//   20260623_035936_734 Mission_Factory turn 2, where live Snowlaser fired
+//   before a lower-UID Burnbug killed it. Pre-v273 corpus archived as
+//   failure_db_snapshot_sim_v272.jsonl.
+pub const SIMULATOR_VERSION: u32 = 273;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
