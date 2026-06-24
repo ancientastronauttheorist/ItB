@@ -4427,6 +4427,18 @@ fn sim_arachnoid_injector(
     attack_dir: Option<usize>,
     result: &mut ActionResult,
 ) {
+    let distance = (tx as i8 - ax as i8).unsigned_abs()
+        + (ty as i8 - ay as i8).unsigned_abs();
+    if attack_dir.is_none() || distance < wdef.range_min.max(1) {
+        result.events.push(format!(
+            "illegal_weapon_target:{}:{}:{}",
+            tx,
+            ty,
+            weapon_name(weapon_id),
+        ));
+        return;
+    }
+
     let target_before = board.unit_at(tx, ty);
     if target_before
         .map(|idx| board.units[idx].type_name_str() == "BonusDebris")
@@ -6723,6 +6735,27 @@ mod tests {
             board.units[..board.unit_count as usize]
                 .iter()
                 .all(|u| !u.type_name_str().starts_with("DeployUnit_Aracnoid"))
+        );
+    }
+
+    #[test]
+    fn test_arachnoid_injector_off_axis_target_is_live_noop() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 10, 2, 3, 3, WId::RangedArachnoid);
+        let scorpion = add_enemy_type(&mut board, 94, 6, 2, 3, "Scorpion1");
+
+        let result = simulate_weapon(&mut board, mech, WId::RangedArachnoid, 6, 2);
+
+        assert_eq!(board.units[scorpion].hp, 3);
+        assert_eq!(result.enemy_damage_dealt, 0);
+        assert_eq!(result.enemies_killed, 0);
+        assert!(
+            result
+                .events
+                .iter()
+                .any(|event| event == "illegal_weapon_target:6:2:Arachnoid Injector"),
+            "expected illegal target event, got {:?}",
+            result.events
         );
     }
 

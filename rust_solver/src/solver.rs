@@ -439,12 +439,11 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::Artillery => {
             let min_r = wdef.range_min;
-            let omnidirectional = is_arachnoid_injector(weapon_id);
             for x in 0..8u8 {
                 for y in 0..8u8 {
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r { continue; }
-                    if !omnidirectional && x != mx && y != my { continue; } // axis-aligned only
+                    if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     let zero_damage_building_center_ok = matches!(
                         weapon_id,
@@ -1009,6 +1008,16 @@ fn weapon_action_has_effect(
                 }
                 return false;
             }
+            let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+                return false;
+            };
+            let distance = (target.0 as i8 - mx as i8).unsigned_abs()
+                + (target.1 as i8 - my as i8).unsigned_abs();
+            if distance < wdef.range_min.max(1)
+                || (wdef.range_max != 0 && distance > wdef.range_max)
+            {
+                return false;
+            }
             if tile_weapon_terrain_effect(board.tile(target.0, target.1), weapon_id, wdef) {
                 return true;
             }
@@ -1016,22 +1025,20 @@ fn weapon_action_has_effect(
                 if shieldable_at(target.0, target.1) {
                     return true;
                 }
-                if let Some(dir) = cardinal_direction(mx, my, target.0, target.1) {
-                    if wdef.aoe_behind() {
-                        let (dx, dy) = DIRS[dir];
-                        let bx = target.0 as i8 + dx;
-                        let by = target.1 as i8 + dy;
-                        if in_bounds(bx, by) && shieldable_at(bx as u8, by as u8) {
-                            return true;
-                        }
+                if wdef.aoe_behind() {
+                    let (dx, dy) = DIRS[dir];
+                    let bx = target.0 as i8 + dx;
+                    let by = target.1 as i8 + dy;
+                    if in_bounds(bx, by) && shieldable_at(bx as u8, by as u8) {
+                        return true;
                     }
-                    if wdef.aoe_adjacent() {
-                        for &(dx, dy) in &DIRS {
-                            let ax = target.0 as i8 + dx;
-                            let ay = target.1 as i8 + dy;
-                            if in_bounds(ax, ay) && shieldable_at(ax as u8, ay as u8) {
-                                return true;
-                            }
+                }
+                if wdef.aoe_adjacent() {
+                    for &(dx, dy) in &DIRS {
+                        let ax = target.0 as i8 + dx;
+                        let ay = target.1 as i8 + dy;
+                        if in_bounds(ax, ay) && shieldable_at(ax as u8, ay as u8) {
+                            return true;
                         }
                     }
                 }
@@ -2798,6 +2805,51 @@ mod top_k_tests {
             (3, 3),
             WId::RangedDeployBomb,
             (3, 5),
+            &WEAPONS,
+        ));
+    }
+
+    #[test]
+    fn arachnoid_injector_targets_are_cardinal_artillery() {
+        let mut board = Board::default();
+        let _mech = board.add_unit(Unit {
+            uid: 1,
+            x: 2,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::RangedArachnoid as u16),
+            ..Default::default()
+        });
+        let _scorpion = board.add_unit(Unit {
+            uid: 94,
+            x: 6,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            2,
+            3,
+            WId::RangedArachnoid,
+            (2, 3),
+            &WEAPONS,
+        );
+
+        assert!(targets.contains(&(2, 6)), "same-column artillery tile should be legal");
+        assert!(!targets.contains(&(6, 2)), "off-axis E6->F2 live FireWeapon is a no-op");
+        assert!(!weapon_action_has_effect(
+            &board,
+            (2, 3),
+            WId::RangedArachnoid,
+            (6, 2),
             &WEAPONS,
         ));
     }

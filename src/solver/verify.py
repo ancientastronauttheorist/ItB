@@ -1385,7 +1385,9 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # enemies/buildings while Shield_Building is alive, even when the bridge
 # snapshot lacks individual shield bits. Fixes the same turn 2 Arachnoid
 # Injector hit on Scorpion1 at F2.
-SIMULATOR_VERSION = 283
+# v284 - Arachnoid Injector is cardinal-line artillery. Off-axis bridge
+# FireWeapon calls can ACK and spend the action while doing no damage.
+SIMULATOR_VERSION = 284
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

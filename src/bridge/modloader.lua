@@ -1785,6 +1785,113 @@ local function pawn_is_guarding(pawn)
     return ok_guard and guard_val
 end
 
+local function pawn_is_boosted(pawn)
+    local ok_bo, boosted = pcall(function() return pawn:IsBoosted() end)
+    return ok_bo and boosted
+end
+
+local function set_pawn_boosted(pawn, desired)
+    for _, mname in ipairs({"SetBoosted", "SetBoost"}) do
+        local ok_set, did_set = pcall(function()
+            local fn = pawn[mname]
+            if type(fn) == "function" then
+                fn(pawn, desired)
+                return true
+            end
+            return false
+        end)
+        if ok_set and did_set then return true end
+    end
+    return false
+end
+
+local function pawn_is_enemy(pawn)
+    if pawn == nil then return false end
+    local ok_team, team = pcall(function() return pawn:GetTeam() end)
+    return ok_team and team == (_G.TEAM_ENEMY or 6)
+end
+
+local function pawn_is_dead_or_zero(pawn)
+    if pawn == nil then return false end
+    local ok_dead, dead = pcall(function() return pawn:IsDead() end)
+    if ok_dead and dead then return true end
+    local ok_hp, hp = pcall(function() return pawn:GetHealth() end)
+    return ok_hp and hp <= 0
+end
+
+local function get_projectile_end_safe(source, target)
+    local ok, final = pcall(function()
+        return GetProjectileEnd(source, target, PATH_PROJECTILE)
+    end)
+    if ok and final ~= nil then return final end
+    return target
+end
+
+local function execute_ricochet_direct(pawn, wname, skill, first, second)
+    local source = pawn:GetSpace()
+    local first_dir = GetDirection(first - source)
+    local first_tar = get_projectile_end_safe(source, first)
+    local second_dir = GetDirection(second - first)
+    local second_tar = get_projectile_end_safe(first, second)
+    local damage = tonumber(skill.Damage) or 1
+    local boosted = pawn_is_boosted(pawn)
+    if boosted and damage > 0 then
+        damage = damage + 1
+    end
+
+    local uid = nil
+    local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
+    if ok_uid then uid = uid_val end
+    local save_data = _read_save_data()
+    local save_pilot = uid and save_data.pilots[uid] or nil
+
+    local targets = {
+        {point = second_tar, dir = second_dir},
+        {point = first_tar, dir = first_dir},
+    }
+    local killed_enemy = false
+    for _, entry in ipairs(targets) do
+        local pt = entry.point
+        if Board:IsValid(pt) then
+            local target_pawn = Board:GetPawn(pt)
+            local target_was_enemy = pawn_is_enemy(target_pawn)
+            local dmg = damage
+            if not skill.AllyDamage and Board:IsPawnTeam(pt, TEAM_PLAYER) then
+                dmg = DAMAGE_ZERO
+            end
+            local sd = SpaceDamage(pt, dmg, entry.dir)
+            local ok_dmg, err_dmg = pcall(function() Board:DamageSpace(sd) end)
+            if not ok_dmg then
+                return false, "Ricochet DamageSpace failed at " ..
+                       pt.x .. "," .. pt.y .. ": " .. tostring(err_dmg)
+            end
+            if target_was_enemy and pawn_is_dead_or_zero(target_pawn) then
+                killed_enemy = true
+            end
+        end
+    end
+
+    if boosted or killed_enemy then
+        local desired_boosted = false
+        if save_pilot and save_pilot.id == "Pilot_Arrogant" then
+            local hp = pawn:GetHealth()
+            local max_hp = get_pawn_max_health(pawn, uid, save_data)
+            desired_boosted = hp >= max_hp
+        elseif save_pilot and save_pilot.id == "Pilot_Chemical" and killed_enemy then
+            desired_boosted = true
+        end
+        set_pawn_boosted(pawn, desired_boosted)
+    end
+
+    log_bridge("FIRE: " .. wname .. " direct_ricochet " ..
+               source.x .. "," .. source.y .. " -> " ..
+               first.x .. "," .. first.y .. " -> " ..
+               second.x .. "," .. second.y)
+    return true, "DamageSpace(" .. wname .. ") first=" ..
+           first_tar.x .. "," .. first_tar.y .. " second=" ..
+           second_tar.x .. "," .. second_tar.y
+end
+
 local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
     local wname, _base_wname, slot, err =
         effective_weapon_name_by_slot(pawn, weapon_slot)
@@ -1817,19 +1924,7 @@ local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
                    second.x .. "," .. second.y .. " from " ..
                    first.x .. "," .. first.y
         end
-        local ok, fx_err = pcall(function()
-            Board:AddEffect(skill:GetFinalEffect(source, first, second))
-        end)
-        if not ok then
-            return false, "Ricochet GetFinalEffect failed: " .. tostring(fx_err)
-        end
-        log_bridge("FIRE: " .. wname .. " two_click slot=" .. slot .. " " ..
-                   source.x .. "," .. source.y .. " -> " ..
-                   first.x .. "," .. first.y .. " -> " ..
-                   second.x .. "," .. second.y)
-        return true, "GetFinalEffect(" .. wname .. ") first=" ..
-               first.x .. "," .. first.y .. " second=" ..
-               second.x .. "," .. second.y
+        return execute_ricochet_direct(pawn, wname, skill, first, second)
     end
 
     if string.find(wname, "^Science_TC_SwapOther") == nil then

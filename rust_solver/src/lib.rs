@@ -1903,7 +1903,9 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   enemies/buildings while Shield_Building is alive, even when the bridge
 //   snapshot lacks individual shield bits. Fixes the same turn 2 Arachnoid
 //   Injector hit on Scorpion1 at F2.
-pub const SIMULATOR_VERSION: u32 = 283;
+// v284 - Arachnoid Injector is cardinal-line artillery. Off-axis bridge
+//   FireWeapon calls can ACK and spend the action while doing no damage.
+pub const SIMULATOR_VERSION: u32 = 284;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
