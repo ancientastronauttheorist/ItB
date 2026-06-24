@@ -16,8 +16,8 @@
       "weapon_id": "Brute_Mirrorshot"
     },
     "damage_amount|Brute_PierceShot|attack": {
-      "count": 3,
-      "last_run_id": "20260530_225649_007",
+      "count": 7,
+      "last_run_id": "20260624_045955_387",
       "weapon_id": "Brute_PierceShot"
     },
     "damage_amount|Brute_Tankmech|attack": {
@@ -106,8 +106,8 @@
       "weapon_id": "ScorpionAtk1"
     },
     "damage_amount|Unknown|move": {
-      "count": 11,
-      "last_run_id": "20260601_221405_894",
+      "count": 14,
+      "last_run_id": "20260623_071503_358",
       "weapon_id": "Unknown"
     },
     "damage_amount|_REPAIR|repair": {
@@ -141,13 +141,13 @@
       "weapon_id": "Brute_Mirrorshot_A"
     },
     "death|Brute_Mirrorshot|attack": {
-      "count": 3,
-      "last_run_id": "20260601_154715_670",
+      "count": 4,
+      "last_run_id": "20260619_132357_735",
       "weapon_id": "Brute_Mirrorshot"
     },
     "death|Brute_PierceShot|attack": {
-      "count": 5,
-      "last_run_id": "20260531_114844_128",
+      "count": 14,
+      "last_run_id": "20260624_083454_845",
       "weapon_id": "Brute_PierceShot"
     },
     "death|Brute_PierceShot|move": {
@@ -161,8 +161,8 @@
       "weapon_id": "Brute_TC_Ricochet"
     },
     "death|Brute_Tankmech|attack": {
-      "count": 5,
-      "last_run_id": "20260510_213059_819",
+      "count": 6,
+      "last_run_id": "20260619_111350_246",
       "weapon_id": "Brute_Tankmech"
     },
     "death|Brute_Unstable|attack": {
@@ -295,10 +295,20 @@
       "last_run_id": "20260508_134925_472",
       "weapon_id": "Science_Repulse"
     },
+    "death|Science_TC_SwapOther|attack": {
+      "count": 7,
+      "last_run_id": "20260624_083454_845",
+      "weapon_id": "Science_TC_SwapOther"
+    },
     "death|ScorpionAtk1|attack": {
       "count": 1,
       "last_run_id": "20260421_175627_753",
       "weapon_id": "ScorpionAtk1"
+    },
+    "death|Unknown|move": {
+      "count": 1,
+      "last_run_id": "20260624_083454_845",
+      "weapon_id": "Unknown"
     },
     "grid_power|Brute_Beetle|attack": {
       "count": 1,

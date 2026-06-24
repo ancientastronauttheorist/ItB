@@ -186,10 +186,11 @@ class SolverAction:
     move_to: tuple[int, int] | None  # (x, y) or None if no move
     weapon: str                       # weapon ID or "" if no attack
     target: tuple[int, int]           # (x, y) or (-1, -1) if no attack
-    description: str
+    description: str = ""
+    target2: tuple[int, int] | None = None
 
     def to_dict(self) -> dict:
-        return {
+        data = {
             "mech_uid": self.mech_uid,
             "mech_type": self.mech_type,
             "move_to": list(self.move_to) if self.move_to else None,
@@ -197,6 +198,9 @@ class SolverAction:
             "target": list(self.target),
             "description": self.description,
         }
+        if self.target2 is not None:
+            data["target2"] = list(self.target2)
+        return data
 
     @classmethod
     def from_dict(cls, d: dict) -> SolverAction:
@@ -207,6 +211,7 @@ class SolverAction:
             weapon=d.get("weapon", ""),
             target=tuple(d.get("target", (-1, -1))),
             description=d.get("description", ""),
+            target2=tuple(d["target2"]) if d.get("target2") else None,
         )
 
 

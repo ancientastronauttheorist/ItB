@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-14T04:29:36.624711",
+    "last_steam_sync": "2026-06-20T06:38:18.714258",
     "last_steam_total": 70,
-    "last_steam_unlocked": 54
+    "last_steam_unlocked": 58
   },
   "achievements": {
     "rift_walkers": [
@@ -283,7 +283,7 @@
         "description": "Beat the game without spending any Reputation with a Random squad",
         "type": "single_run",
         "global_unlock_pct": 7.3,
-        "completed": false,
+        "completed": true,
         "strategy": "2-island run (shorter). Reroll random squad for a balanced composition. Use a compatible time-travel pilot. Don't visit the shop or spend any reputation at all.",
         "setup": "2-island run. Good starting pilot. Easy difficulty.",
         "pitfalls": "No shop purchases means no extra weapons, cores, or grid power. Must be self-sufficient."
@@ -401,7 +401,7 @@
         "description": "Heal 12 damage over the course of a single Island with Mist Eaters squad",
         "type": "single_island",
         "global_unlock_pct": 7.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Nanofilter Mending heals mechs in smoke. Upgrade Smog Mech (2 cores) for 4 smoke clouds per shot. Move damaged mechs through smoke to heal. Technician perk counts. 12 total heals across 4-5 missions.",
         "setup": "Upgraded Smog Mech. Take damage intentionally to have HP to heal.",
         "pitfalls": "Must actually take damage first. 12 heal points across entire island."
@@ -421,7 +421,7 @@
         "description": "Do 4 damage with the Reverse Thrusters with the Mist Eaters squad",
         "type": "single_battle",
         "global_unlock_pct": 8.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Detritus island A.C.I.D. mission easiest. Position Thruster Mech adjacent to A.C.I.D.-affected enemy. Dash 2 tiles forward for double damage on rear thrusters. Or use Boost mechanic for +1 damage.",
         "setup": "Detritus island A.C.I.D. pools. Or Boost + damage upgrades.",
         "pitfalls": "Rear thruster damage is usually lower than front. Need upgrades or A.C.I.D."
@@ -443,7 +443,7 @@
         "description": "Light 3 Enemies on fire with a single attack with the Heat Sinkers squad",
         "type": "single_battle",
         "global_unlock_pct": 4.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Napalm Mech range significantly. Arrange 3 enemies in a line. Fire the Napalm Launcher through all 3. Quick-Fire Mech can push enemies into position.",
         "setup": "Upgraded Napalm Launcher. 3 enemies aligned.",
         "pitfalls": "Need exact alignment of 3 enemies in fire line."
