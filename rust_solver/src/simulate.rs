@@ -4298,6 +4298,12 @@ fn sim_arachnoid_injector(
     result: &mut ActionResult,
 ) {
     let target_before = board.unit_at(tx, ty);
+    if target_before
+        .map(|idx| board.units[idx].type_name_str() == "BonusDebris")
+        .unwrap_or(false)
+    {
+        return;
+    }
     let spawn_allowed = target_before
         .map(|idx| !board.units[idx].is_mech())
         .unwrap_or(false);
@@ -6476,6 +6482,25 @@ mod tests {
         assert_eq!(board.units[spawned].weapon, WeaponId(WId::DeployUnitAracnoidAtk as u16));
         assert!(board.units[spawned].active());
         assert!(!board.wreck_at(3, 3));
+    }
+
+    #[test]
+    fn test_arachnoid_injector_does_not_damage_bonus_debris() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 10, 3, 1, 3, WId::RangedArachnoid);
+        let debris = add_enemy_type(&mut board, 104, 3, 3, 1, "BonusDebris");
+        board.units[debris].flags |= UnitFlags::MINOR;
+
+        let result = simulate_weapon(&mut board, mech, WId::RangedArachnoid, 3, 3);
+
+        assert_eq!(result.enemies_killed, 0);
+        assert_eq!(board.units[debris].hp, 1);
+        assert_eq!(board.unit_at(3, 3), Some(debris));
+        assert!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .all(|u| !u.type_name_str().starts_with("DeployUnit_Aracnoid"))
+        );
     }
 
     #[test]
