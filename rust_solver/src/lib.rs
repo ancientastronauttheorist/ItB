@@ -1890,7 +1890,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260624_083454_845 Mission_Lightning turn 1, where a swapped Bouncer
 //   killed ExchangeMech live but Rust dropped the diagonal stale-origin
 //   attack.
-pub const SIMULATOR_VERSION: u32 = 279;
+// v280 - Mission_Shields generator shields absorb damage and push without
+//   being consumed while the Shield_Building is alive, then clear when the
+//   generator dies. Fixes Arachnophiles Spider Breeding run
+//   20260624_150610_500 Mission_Shields turn 1.
+pub const SIMULATOR_VERSION: u32 = 280;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

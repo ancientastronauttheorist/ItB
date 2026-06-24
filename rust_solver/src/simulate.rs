@@ -637,6 +637,10 @@ pub(crate) fn on_enemy_death(
     let dx = board.units[idx].x;
     let dy = board.units[idx].y;
 
+    if dying_tname_owned == "Shield_Building" && board.mission_id == "Mission_Shields" {
+        clear_shield_generator_shields(board);
+    }
+
     if let Some((child_type, child_hp, child_weapon)) =
         blob_boss_death_spawn(&dying_tname_owned)
     {
@@ -961,6 +965,28 @@ fn acid_storm_active(board: &Board) -> bool {
         && board.units[..board.unit_count as usize]
             .iter()
             .any(|u| u.hp > 0 && u.type_name_str() == "Storm_Generator")
+}
+
+fn shield_generator_active(board: &Board) -> bool {
+    board.mission_id == "Mission_Shields"
+        && board.units[..board.unit_count as usize]
+            .iter()
+            .any(|u| u.hp > 0 && u.type_name_str() == "Shield_Building")
+}
+
+fn mission_shield_absorbs_without_consuming(board: &Board, unit_idx: usize) -> bool {
+    shield_generator_active(board)
+        && board.units[unit_idx].shield()
+        && board.units[unit_idx].type_name_str() != "Shield_Building"
+}
+
+fn clear_shield_generator_shields(board: &mut Board) {
+    for i in 0..board.unit_count as usize {
+        board.units[i].set_shield(false);
+    }
+    for tile in board.tiles.iter_mut() {
+        tile.set_shield(false);
+    }
 }
 
 fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
@@ -1323,11 +1349,14 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
 
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
+        let mission_shield_blocks = mission_shield_absorbs_without_consuming(board, idx);
         let unit = &mut board.units[idx];
 
         if unit.shield() {
-            // Shield absorbs any damage, consumed
-            unit.set_shield(false);
+            if !mission_shield_blocks {
+                // Shield absorbs any damage, consumed
+                unit.set_shield(false);
+            }
         } else if unit.frozen() {
             // Frozen = invincible, damage unfreezes (0 actual damage)
             unit.set_frozen(false);
@@ -1447,10 +1476,13 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         {
             let idx = xy_to_idx(x, y);
             let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+            let generator_shields_buildings = shield_generator_active(board);
             let tile = board.tile_mut(x, y);
             if tile.terrain == Terrain::Building && tile.building_hp > 0 {
                 if tile.shield() {
-                    tile.set_shield(false);
+                    if !generator_shields_buildings {
+                        tile.set_shield(false);
+                    }
                 } else if tile.frozen() {
                     tile.set_frozen(false);
                     result.events.push(format!("building_thawed:{}:{}", x, y));
@@ -2345,6 +2377,10 @@ fn apply_push_with_policy(
         && !board.units[unit_idx].is_mech()
         && !(policy.dead_nonpushable_collides && board.units[unit_idx].hp <= 0)
     {
+        return;
+    }
+
+    if mission_shield_absorbs_without_consuming(board, unit_idx) {
         return;
     }
 
@@ -7838,6 +7874,62 @@ mod tests {
         assert_eq!(board.grid_power, 3);
         assert_eq!(result.grid_damage, 1);
         assert_eq!(result.buildings_damaged, 1);
+    }
+
+    #[test]
+    fn test_shield_generator_shields_block_damage_and_push_without_consuming() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Shields".to_string();
+        add_enemy_type(&mut board, 10, 2, 2, 1, "Shield_Building");
+        let target = add_enemy(&mut board, 11, 3, 3, 3);
+        board.units[target].set_shield(true);
+        {
+            let tile = board.tile_mut(4, 4);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+            tile.set_shield(true);
+        }
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 2, &mut result, DamageSource::Weapon);
+        assert_eq!(board.units[target].hp, 3);
+        assert!(board.units[target].shield());
+
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!((board.units[target].x, board.units[target].y), (3, 3));
+        assert!(board.units[target].shield());
+
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+        assert_eq!(board.tile(4, 4).building_hp, 1);
+        assert!(board.tile(4, 4).shield());
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_shield_generator_death_clears_shields_and_restores_ordinary_behavior() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Shields".to_string();
+        let generator = add_enemy_type(&mut board, 10, 2, 2, 1, "Shield_Building");
+        let target = add_enemy(&mut board, 11, 3, 3, 3);
+        board.units[target].set_shield(true);
+        {
+            let tile = board.tile_mut(4, 4);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+            tile.set_shield(true);
+        }
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 2, 2, 1, &mut result, DamageSource::Weapon);
+        assert!(board.units[generator].hp <= 0);
+        assert!(!board.units[target].shield());
+        assert!(!board.tile(4, 4).shield());
+
+        board.units[target].set_shield(true);
+        apply_damage(&mut board, 3, 3, 2, &mut result, DamageSource::Weapon);
+        assert_eq!(board.units[target].hp, 3);
+        assert!(!board.units[target].shield());
     }
 
     #[test]

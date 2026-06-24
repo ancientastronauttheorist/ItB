@@ -1372,7 +1372,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # leaves queued_origin stale. Fixes Bombermechs Complete Victory run
 # 20260624_083454_845 Mission_Lightning turn 1, where a swapped Bouncer
 # killed ExchangeMech live but Rust dropped the diagonal stale-origin attack.
-SIMULATOR_VERSION = 279
+# v280 - Mission_Shields generator shields absorb damage and push without
+# being consumed while the Shield_Building is alive, then clear when the
+# generator dies. Fixes Arachnophiles Spider Breeding run
+# 20260624_150610_500 Mission_Shields turn 1.
+SIMULATOR_VERSION = 280
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
