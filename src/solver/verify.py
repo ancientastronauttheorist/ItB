@@ -1367,7 +1367,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Complete Victory run 20260623_105703_708 Mission_ScarabBoss turn 4, where
 # upgraded AP left the Scarab Leader at 1 HP live but Rust predicted a kill.
 # Pre-v277 corpus archived as failure_db_snapshot_sim_v276.jsonl.
-SIMULATOR_VERSION = 277
+# v278 - Standard melee Vek can recover direction from their current tile
+# when Force Swap relocates them and the bridge updates queued_target but
+# leaves queued_origin stale. Fixes Bombermechs Complete Victory run
+# 20260624_083454_845 Mission_Lightning turn 1, where a swapped Bouncer
+# killed ExchangeMech live but Rust dropped the diagonal stale-origin attack.
+SIMULATOR_VERSION = 278
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

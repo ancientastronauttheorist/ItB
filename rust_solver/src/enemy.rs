@@ -1755,9 +1755,11 @@ pub fn simulate_enemy_attacks(
                         // Standard single-tile melee preserves the original
                         // queued direction, then re-aims from the attacker's
                         // current tile after pushes, swaps, and teleports.
-                        let dx = (qtx - queued_origin.0 as i8).signum();
-                        let dy = (qty - queued_origin.1 as i8).signum();
-                        if (dx != 0) == (dy != 0) { continue; }
+                        let Some((dx, dy)) = projectile_delta_from_queued_or_current(
+                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
+                        ) else {
+                            continue;
+                        };
                         let tx = ex as i8 + dx;
                         let ty = ey as i8 + dy;
                         if !in_bounds(tx, ty) { continue; }
@@ -2092,6 +2094,14 @@ fn projectile_delta_from_queued_or_current(
     // points at that same original tile. Live then fires from the current
     // position toward that target tile.
     if qtx == orig_x as i8 && qty == orig_y as i8 && (ex, ey) != (orig_x, orig_y) {
+        return cardinal_delta(ex, ey, qtx, qty);
+    }
+    // Some live mid-turn effects (notably Science Swap on a queued Bouncer)
+    // can update the queued target to the current attack tile while leaving
+    // queued_origin at the pre-swap tile. If the origin-relative vector is no
+    // longer cardinal but the current tile can plainly attack the queued
+    // target, live fires from the current tile.
+    if (ex, ey) != (orig_x, orig_y) {
         return cardinal_delta(ex, ey, qtx, qty);
     }
     None
@@ -2759,6 +2769,28 @@ mod tests {
         assert_eq!(board.units[target_idx].hp, 2, "Bouncer horn deals 1 damage");
         assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (4, 5),
             "Bouncer horn pushes the target forward");
+    }
+
+    #[test]
+    fn test_swapped_bouncer_uses_current_cardinal_target_when_origin_stale() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        let target_idx = add_mech_unit(&mut board, 2, 2, 3, 2);
+        let bouncer_idx = add_enemy_with_type(&mut board, 6036, 3, 3, 3, "Bouncer1", 2, 3);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[bouncer_idx].set_web(true);
+        board.units[bouncer_idx].queued_origin_x = 4;
+        board.units[bouncer_idx].queued_origin_y = 2;
+        board.tile_mut(1, 3).terrain = Terrain::Building;
+        board.tile_mut(1, 3).building_hp = 1;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[target_idx].hp, 0,
+            "stale-origin swapped Bouncer should still hit and push-bump the adjacent mech");
+        assert_eq!(board.tile(1, 3).building_hp, 0,
+            "the forward push should bump into and damage the building behind the mech");
     }
 
     #[test]

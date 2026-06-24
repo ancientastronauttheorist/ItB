@@ -1884,7 +1884,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   turn 4, where upgraded AP left the Scarab Leader at 1 HP live but Rust
 //   predicted a kill. Pre-v277 corpus archived as
 //   failure_db_snapshot_sim_v276.jsonl.
-pub const SIMULATOR_VERSION: u32 = 277;
+// v278 - Standard melee Vek can recover direction from their current tile
+//   when Force Swap relocates them and the bridge updates queued_target but
+//   leaves queued_origin stale. Fixes Bombermechs Complete Victory run
+//   20260624_083454_845 Mission_Lightning turn 1, where a swapped Bouncer
+//   killed ExchangeMech live but Rust dropped the diagonal stale-origin
+//   attack.
+pub const SIMULATOR_VERSION: u32 = 278;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
