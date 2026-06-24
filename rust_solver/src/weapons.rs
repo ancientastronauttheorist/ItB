@@ -1151,18 +1151,17 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[157] = WeaponDef { weapon_type: WeaponType::Melee, damage: 255,
         flags: f(WeaponFlags::SMOKE.bits() | WeaponFlags::WEB.bits()), ..DEF };
 
-    // 158-161: Brute_TC_Ricochet — Ricochet Rocket. This is a two-click Lua
-    // weapon, but the bridge's Pawn:FireWeapon(target, slot) route can only
-    // execute the first-click projectile. Keep the simulator aligned with the
-    // executable bridge effect: one projectile, first blocker takes damage and
-    // forward push. Upgrade B zeros friendly damage but still pushes allies.
-    w[158] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+    // 158-161: Brute_TC_Ricochet — Ricochet Rocket. Two-click Lua weapon:
+    // first click chooses the initial projectile blocker, second click chooses
+    // the bounce line from that blocker. Upgrade B zeros friendly damage but
+    // still pushes allies.
+    w[158] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, push: PushDir::Forward,
         range_max: 0, flags: C, ..DEF };
-    w[159] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+    w[159] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, push: PushDir::Forward,
         range_max: 0, flags: C, ..DEF };
-    w[160] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+    w[160] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, push: PushDir::Forward,
         range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
-    w[161] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+    w[161] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, push: PushDir::Forward,
         range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
 
     // 162-165: Ranged_Arachnoid — Arachnoid Injector. Bespoke spawn-on-kill
@@ -1483,6 +1482,15 @@ pub fn is_hydraulic_lifter(id: WId) -> bool {
     matches!(
         id,
         WId::PrimeTcPunt | WId::PrimeTcPuntA | WId::PrimeTcPuntB | WId::PrimeTcPuntAB
+    )
+}
+
+#[inline]
+pub fn is_ricochet_rocket(id: WId) -> bool {
+    matches!(
+        id,
+        WId::BruteTcRicochet | WId::BruteTcRicochetA
+            | WId::BruteTcRicochetB | WId::BruteTcRicochetAB
     )
 }
 
@@ -2475,11 +2483,12 @@ mod tests {
     #[test]
     fn test_arachnophiles_weapon_defs_and_mappings() {
         let ricochet = weapon_def(WId::BruteTcRicochet);
-        assert_eq!(ricochet.weapon_type, WeaponType::Projectile);
+        assert_eq!(ricochet.weapon_type, WeaponType::TwoClick);
         assert_eq!(ricochet.damage, 1);
         assert_eq!(ricochet.push, PushDir::Forward);
         assert_eq!(weapon_def(WId::BruteTcRicochetA).damage, 2);
         assert!(weapon_def(WId::BruteTcRicochetB).friendly_immune());
+        assert!(is_ricochet_rocket(WId::BruteTcRicochetAB));
 
         let injector = weapon_def(WId::RangedArachnoid);
         assert_eq!(injector.weapon_type, WeaponType::Artillery);

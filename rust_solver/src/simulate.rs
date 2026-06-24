@@ -975,9 +975,11 @@ fn shield_generator_active(board: &Board) -> bool {
 }
 
 fn mission_shield_absorbs_without_consuming(board: &Board, unit_idx: usize) -> bool {
-    shield_generator_active(board)
-        && board.units[unit_idx].shield()
-        && board.units[unit_idx].type_name_str() != "Shield_Building"
+    if !shield_generator_active(board) {
+        return false;
+    }
+    let unit = &board.units[unit_idx];
+    unit.type_name_str() != "Shield_Building" && (unit.shield() || unit.is_enemy())
 }
 
 fn clear_shield_generator_shields(board: &mut Board) {
@@ -1352,8 +1354,8 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         let mission_shield_blocks = mission_shield_absorbs_without_consuming(board, idx);
         let unit = &mut board.units[idx];
 
-        if unit.shield() {
-            if !mission_shield_blocks {
+        if unit.shield() || mission_shield_blocks {
+            if unit.shield() && !mission_shield_blocks {
                 // Shield absorbs any damage, consumed
                 unit.set_shield(false);
             }
@@ -1479,7 +1481,10 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             let generator_shields_buildings = shield_generator_active(board);
             let tile = board.tile_mut(x, y);
             if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-                if tile.shield() {
+                if generator_shields_buildings {
+                    // Mission_Shields' generator protects buildings even when
+                    // the bridge snapshot does not expose per-tile shields.
+                } else if tile.shield() {
                     if !generator_shields_buildings {
                         tile.set_shield(false);
                     }
@@ -3868,6 +3873,95 @@ fn sim_pierce_projectile(
     }
 }
 
+fn apply_ricochet_hit(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    dir: usize,
+    wdef: &WeaponDef,
+    result: &mut ActionResult,
+) {
+    let skip_friendly_damage = wdef.friendly_immune()
+        && board.unit_at(x, y)
+            .map(|idx| board.units[idx].is_player())
+            .unwrap_or(false);
+    let deferred_death_explosion = if skip_friendly_damage {
+        None
+    } else {
+        apply_damage_defer_death_explosion(
+            board,
+            x,
+            y,
+            wdef.damage,
+            result,
+            DamageSource::Weapon,
+        )
+    };
+    apply_push_with_policy(board, x, y, dir, result, DEFAULT_PUSH_POLICY);
+    if let Some(idx) = deferred_death_explosion {
+        let ex = board.units[idx].x;
+        let ey = board.units[idx].y;
+        apply_death_explosion(board, ex, ey, result, 0);
+    }
+}
+
+fn sim_ricochet_rocket(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    wdef: &WeaponDef,
+    target_x: u8,
+    target_y: u8,
+    target2: Option<(u8, u8)>,
+    result: &mut ActionResult,
+) {
+    let Some(first_dir) = cardinal_direction(ax, ay, target_x, target_y) else {
+        result.events.push(format!(
+            "invalid_ricochet_first_target:{}:{}:from:{}:{}",
+            target_x, target_y, ax, ay
+        ));
+        return;
+    };
+    let (fdx, fdy) = DIRS[first_dir];
+    let Some(first) = find_projectile_blocker_from(
+        board,
+        ax as i8,
+        ay as i8,
+        fdx,
+        fdy,
+        wdef.phase(),
+    ) else {
+        result.events.push(format!(
+            "invalid_ricochet_no_first_blocker:{}:{}:from:{}:{}",
+            target_x, target_y, ax, ay
+        ));
+        return;
+    };
+    let Some((tx2, ty2)) = target2 else {
+        result.events.push(format!("invalid_ricochet_missing_second_target:{}:{}", first.0, first.1));
+        return;
+    };
+    if let Some(second_dir) = cardinal_direction(first.0, first.1, tx2, ty2) {
+        let (sdx, sdy) = DIRS[second_dir];
+        if let Some(second) = find_projectile_blocker_from(
+            board,
+            first.0 as i8,
+            first.1 as i8,
+            sdx,
+            sdy,
+            wdef.phase(),
+        ) {
+            apply_ricochet_hit(board, second.0, second.1, second_dir, wdef, result);
+        }
+    } else {
+        result.events.push(format!(
+            "invalid_ricochet_second_target:{}:{}:from:{}:{}",
+            tx2, ty2, first.0, first.1
+        ));
+    }
+    apply_ricochet_hit(board, first.0, first.1, first_dir, wdef, result);
+}
+
 fn sim_projectile(
     board: &mut Board,
     ax: u8,
@@ -5801,6 +5895,28 @@ pub fn simulate_attack_with_target2(
     if weapon_id != WId::None {
         if is_force_swap(weapon_id) {
             sim_force_swap(board, mech_idx, weapon_id, target, target2, &mut result);
+        } else if is_ricochet_rocket(weapon_id) {
+            if board.units[mech_idx].web() {
+                result.events.push(format!(
+                    "illegal_ricochet_webbed:{}:{}",
+                    board.units[mech_idx].x,
+                    board.units[mech_idx].y
+                ));
+            } else {
+                let ax = board.units[mech_idx].x;
+                let ay = board.units[mech_idx].y;
+                let wdef = &weapons[weapon_id as usize];
+                sim_ricochet_rocket(
+                    board,
+                    ax,
+                    ay,
+                    wdef,
+                    target.0,
+                    target.1,
+                    target2,
+                    &mut result,
+                );
+            }
         } else {
             let attack_result = simulate_weapon_with(board, mech_idx, weapon_id, target.0, target.1, weapons);
             result.merge(&attack_result);
@@ -5927,6 +6043,52 @@ mod tests {
         assert_eq!((board.units[first].x, board.units[first].y), (6, 6));
         assert_eq!((board.units[second].x, board.units[second].y), (3, 4));
         assert!(!board.units[exchange].active());
+    }
+
+    #[test]
+    fn test_ricochet_rocket_uses_second_click_and_hits_both_targets() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 0, 6, 3, 3, WId::BruteTcRicochet);
+        let first = add_enemy(&mut board, 1, 5, 3, 3);
+        let second = add_enemy(&mut board, 2, 5, 1, 3);
+
+        let _ = simulate_attack_with_target2(
+            &mut board,
+            bulk,
+            WId::BruteTcRicochet,
+            (5, 3),
+            Some((5, 1)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 2);
+        assert_eq!((board.units[first].x, board.units[first].y), (4, 3));
+        assert_eq!(board.units[second].hp, 2);
+        assert_eq!((board.units[second].x, board.units[second].y), (5, 0));
+    }
+
+    #[test]
+    fn test_webbed_ricochet_rocket_is_noop() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 0, 6, 3, 3, WId::BruteTcRicochet);
+        board.units[bulk].set_web(true);
+        let first = add_enemy(&mut board, 1, 5, 3, 3);
+        let second = add_enemy(&mut board, 2, 5, 1, 3);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            bulk,
+            WId::BruteTcRicochet,
+            (5, 3),
+            Some((5, 1)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 3);
+        assert_eq!((board.units[first].x, board.units[first].y), (5, 3));
+        assert_eq!(board.units[second].hp, 3);
+        assert_eq!((board.units[second].x, board.units[second].y), (5, 1));
+        assert!(result.events.iter().any(|e| e == "illegal_ricochet_webbed:6:3"));
     }
 
     #[test]
@@ -6532,6 +6694,31 @@ mod tests {
         assert_eq!(result.enemies_killed, 0);
         assert_eq!(board.units[debris].hp, 1);
         assert_eq!(board.unit_at(3, 3), Some(debris));
+        assert!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .all(|u| !u.type_name_str().starts_with("DeployUnit_Aracnoid"))
+        );
+    }
+
+    #[test]
+    fn test_arachnoid_injector_respects_implicit_shield_generator_protection() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Shields".to_string();
+        add_enemy_type(&mut board, 100, 2, 2, 1, "Shield_Building");
+        let mech = add_mech(&mut board, 10, 2, 3, 3, WId::RangedArachnoid);
+        let scorpion = add_enemy_type(&mut board, 94, 6, 2, 3, "Scorpion1");
+        let bulk = add_mech(&mut board, 11, 6, 3, 5, WId::BruteTcRicochet);
+        board.units[bulk].set_web(true);
+        board.units[bulk].web_source_uid = board.units[scorpion].uid;
+
+        let result = simulate_weapon(&mut board, mech, WId::RangedArachnoid, 6, 2);
+
+        assert_eq!(board.units[scorpion].hp, 3);
+        assert_eq!(result.enemy_damage_dealt, 0);
+        assert_eq!(result.enemies_killed, 0);
+        assert!(board.units[bulk].web());
+        assert_eq!(board.units[bulk].web_source_uid, board.units[scorpion].uid);
         assert!(
             board.units[..board.unit_count as usize]
                 .iter()

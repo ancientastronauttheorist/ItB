@@ -483,6 +483,11 @@ pub(crate) fn get_weapon_targets(
                 targets.push(first);
             }
         }
+        WeaponType::TwoClick if is_ricochet_rocket(weapon_id) => {
+            for (first, _second) in enumerate_ricochet_targets(board, mx, my) {
+                targets.push(first);
+            }
+        }
         WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
             let throw_range = wdef.range_max.max(1);
             for &(dx, dy) in &DIRS {
@@ -726,6 +731,77 @@ fn enumerate_force_swap_targets(board: &Board, sx: u8, sy: u8) -> Vec<((u8, u8),
                 continue;
             }
             out.push((first, (u.x, u.y)));
+        }
+    }
+    out
+}
+
+fn solver_projectile_blocker_at(board: &Board, x: u8, y: u8) -> bool {
+    let tile = board.tile(x, y);
+    tile.terrain == Terrain::Mountain || tile.is_building() || board.unit_at(x, y).is_some()
+}
+
+fn first_projectile_blocker_from(
+    board: &Board,
+    sx: i8,
+    sy: i8,
+    dx: i8,
+    dy: i8,
+) -> Option<(u8, u8)> {
+    for i in 1..8i8 {
+        let nx = sx + dx * i;
+        let ny = sy + dy * i;
+        if !in_bounds(nx, ny) {
+            break;
+        }
+        let x = nx as u8;
+        let y = ny as u8;
+        if solver_projectile_blocker_at(board, x, y) {
+            return Some((x, y));
+        }
+    }
+    None
+}
+
+fn enumerate_ricochet_targets(board: &Board, sx: u8, sy: u8) -> Vec<((u8, u8), (u8, u8))> {
+    let mut out = Vec::new();
+    for (dir, &(dx, dy)) in DIRS.iter().enumerate() {
+        let Some(first) = first_projectile_blocker_from(
+            board,
+            sx as i8,
+            sy as i8,
+            dx,
+            dy,
+        ) else {
+            continue;
+        };
+        if board.tile(first.0, first.1).is_building()
+            && board.unit_at(first.0, first.1).is_none()
+        {
+            continue;
+        }
+        for side in [(dir + 1) % 4, (dir + 3) % 4] {
+            let (sdx, sdy) = DIRS[side];
+            let mut fallback = None;
+            for i in 1..8i8 {
+                let tx = first.0 as i8 + sdx * i;
+                let ty = first.1 as i8 + sdy * i;
+                if !in_bounds(tx, ty) {
+                    break;
+                }
+                let second = (tx as u8, ty as u8);
+                if fallback.is_none() {
+                    fallback = Some(second);
+                }
+                if solver_projectile_blocker_at(board, second.0, second.1) {
+                    out.push((first, second));
+                    fallback = None;
+                    break;
+                }
+            }
+            if let Some(second) = fallback {
+                out.push((first, second));
+            }
         }
     }
     out
@@ -1111,6 +1187,10 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
                         actions.push((pos, w1_id, first, Some(second)));
                     }
+                } else if is_ricochet_rocket(w1_id) && !action_unit.web() {
+                    for (first, second) in enumerate_ricochet_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w1_id, first, Some(second)));
+                    }
                 } else {
                     for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w1_id, mech_from, weapons) {
                         if weapon_action_has_effect(action_board, attack_pos, w1_id, target, weapons) {
@@ -1125,6 +1205,10 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
             if w2_id != WId::None {
                 if is_force_swap(w2_id) {
                     for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w2_id, first, Some(second)));
+                    }
+                } else if is_ricochet_rocket(w2_id) && !action_unit.web() {
+                    for (first, second) in enumerate_ricochet_targets(action_board, attack_pos.0, attack_pos.1) {
                         actions.push((pos, w2_id, first, Some(second)));
                     }
                 } else {

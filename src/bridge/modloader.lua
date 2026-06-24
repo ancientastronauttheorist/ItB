@@ -1791,19 +1791,49 @@ local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
     if err ~= nil then
         return false, err
     end
-    if string.find(wname, "^Science_TC_SwapOther") == nil then
-        return false, "unsupported two-click weapon " .. tostring(wname)
-    end
     local skill = _G[wname]
     if not skill then
-        return false, "Force Swap skill missing: " .. tostring(wname)
+        return false, "two-click skill missing: " .. tostring(wname)
     end
 
     local source = pawn:GetSpace()
     local first = Point(tx1, ty1)
     local second = Point(tx2, ty2)
     if not Board:IsValid(first) or not Board:IsValid(second) then
-        return false, "Force Swap target off-board"
+        return false, "two-click target off-board"
+    end
+
+    if string.find(wname, "^Brute_TC_Ricochet") ~= nil then
+        if first.x == source.x and first.y == source.y then
+            return false, "Ricochet first target is source"
+        end
+        if first.x ~= source.x and first.y ~= source.y then
+            return false, "Ricochet first target not cardinal " ..
+                   first.x .. "," .. first.y .. " from " ..
+                   source.x .. "," .. source.y
+        end
+        if second.x ~= first.x and second.y ~= first.y then
+            return false, "Ricochet second target not cardinal " ..
+                   second.x .. "," .. second.y .. " from " ..
+                   first.x .. "," .. first.y
+        end
+        local ok, fx_err = pcall(function()
+            Board:AddEffect(skill:GetFinalEffect(source, first, second))
+        end)
+        if not ok then
+            return false, "Ricochet GetFinalEffect failed: " .. tostring(fx_err)
+        end
+        log_bridge("FIRE: " .. wname .. " two_click slot=" .. slot .. " " ..
+                   source.x .. "," .. source.y .. " -> " ..
+                   first.x .. "," .. first.y .. " -> " ..
+                   second.x .. "," .. second.y)
+        return true, "GetFinalEffect(" .. wname .. ") first=" ..
+               first.x .. "," .. first.y .. " second=" ..
+               second.x .. "," .. second.y
+    end
+
+    if string.find(wname, "^Science_TC_SwapOther") == nil then
+        return false, "unsupported two-click weapon " .. tostring(wname)
     end
     local dist = math.abs(first.x - source.x) + math.abs(first.y - source.y)
     if dist ~= 1 then

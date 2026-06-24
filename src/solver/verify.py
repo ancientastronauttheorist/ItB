@@ -1376,7 +1376,16 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # being consumed while the Shield_Building is alive, then clear when the
 # generator dies. Fixes Arachnophiles Spider Breeding run
 # 20260624_150610_500 Mission_Shields turn 1.
-SIMULATOR_VERSION = 280
+# v281 - Ricochet Rocket is modeled and executed as a real two-click bounce
+# instead of the old bridge one-click no-op path. Fixes Arachnophiles Spider
+# Breeding run 20260624_150610_500 Mission_Shields turn 2.
+# v282 - Webbed Ricochet Rocket is treated as a no-op and omitted from solve
+# enumeration, matching the same Mission_Shields turn 2 live bridge result.
+# v283 - Mission_Shields generator protection is implicit for non-generator
+# enemies/buildings while Shield_Building is alive, even when the bridge
+# snapshot lacks individual shield bits. Fixes the same turn 2 Arachnoid
+# Injector hit on Scorpion1 at F2.
+SIMULATOR_VERSION = 283
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
