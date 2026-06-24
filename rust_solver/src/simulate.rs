@@ -2247,6 +2247,11 @@ const PIERCE_FIRST_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
     trigger_mines: true,
 };
 
+const PIERCE_SECOND_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
+    edge_bump_damage: false,
+    ..DEFAULT_PUSH_POLICY
+};
+
 const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
@@ -2796,7 +2801,7 @@ pub fn simulate_weapon_with(
     let mut boosted_wdef;
     let wdef = if board.units[attacker_idx].boosted() {
         boosted_wdef = *base_wdef;
-        if boosted_wdef.damage > 0 {
+        if boosted_wdef.damage > 0 && weapon_id != WId::BrutePierceShot {
             boosted_wdef.damage = boosted_wdef.damage.saturating_add(1);
         }
         if boosted_wdef.damage_outer > 0 {
@@ -3806,7 +3811,7 @@ fn sim_pierce_projectile(
         result,
         DamageSource::Weapon,
     );
-    apply_push_with_policy(board, sx, sy, dir, result, DEFAULT_PUSH_POLICY);
+    apply_push_with_policy(board, sx, sy, dir, result, PIERCE_SECOND_TARGET_PUSH_POLICY);
     if board.unit_at(fx, fy).is_some() {
         apply_push_with_policy(board, fx, fy, dir, result, PIERCE_FIRST_TARGET_PUSH_POLICY);
     }
@@ -4575,6 +4580,106 @@ fn sim_trapped_explode(board: &mut Board, attacker_idx: usize, result: &mut Acti
 }
 
 // ── Pull / Swap ──────────────────────────────────────────────────────────────
+
+fn force_swap_eligible(board: &Board, unit_idx: usize) -> bool {
+    let unit = &board.units[unit_idx];
+    unit.alive() && (unit.pushable() || unit.is_mech())
+}
+
+fn force_swap_heals_allies(weapon_id: WId) -> bool {
+    matches!(weapon_id, WId::ScienceTcSwapOtherA | WId::ScienceTcSwapOtherAB)
+}
+
+fn force_swap_hurts_enemies(weapon_id: WId) -> bool {
+    matches!(weapon_id, WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB)
+}
+
+fn apply_force_swap_upgrade_effects(
+    board: &mut Board,
+    weapon_id: WId,
+    unit_idx: usize,
+    result: &mut ActionResult,
+) {
+    if !board.units[unit_idx].alive() {
+        return;
+    }
+    if force_swap_heals_allies(weapon_id) && board.units[unit_idx].is_player() {
+        let unit = &mut board.units[unit_idx];
+        unit.hp = unit.max_hp;
+        unit.set_fire(false);
+        unit.set_acid(false);
+        unit.set_frozen(false);
+        clear_mites(unit);
+        refresh_arrogant_boost(unit);
+        result.events.push(format!("force_swap_heal:{}", unit.uid));
+    }
+    if force_swap_hurts_enemies(weapon_id) && board.units[unit_idx].is_enemy() {
+        let (x, y) = (board.units[unit_idx].x, board.units[unit_idx].y);
+        apply_damage(board, x, y, 1, result, DamageSource::Weapon);
+        result.events.push(format!("force_swap_hurt:{}:{}", x, y));
+    }
+}
+
+fn sim_force_swap(
+    board: &mut Board,
+    attacker_idx: usize,
+    weapon_id: WId,
+    first: (u8, u8),
+    second: Option<(u8, u8)>,
+    result: &mut ActionResult,
+) {
+    let Some(second) = second else {
+        result.events.push("invalid_force_swap_missing_second_target".to_string());
+        return;
+    };
+    let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+    if cardinal_direction(ax, ay, first.0, first.1).is_none()
+        || (first.0 as i8 - ax as i8).unsigned_abs()
+            + (first.1 as i8 - ay as i8).unsigned_abs() != 1
+    {
+        result.events.push(format!(
+            "invalid_force_swap_first_target:{}:{}:from:{}:{}",
+            first.0, first.1, ax, ay
+        ));
+        return;
+    }
+    let Some(first_idx) = board.unit_at(first.0, first.1) else {
+        result.events.push(format!("invalid_force_swap_empty_first:{}:{}", first.0, first.1));
+        return;
+    };
+    let Some(second_idx) = board.unit_at(second.0, second.1) else {
+        result.events.push(format!("invalid_force_swap_empty_second:{}:{}", second.0, second.1));
+        return;
+    };
+    if first_idx == second_idx
+        || first_idx == attacker_idx
+        || second_idx == attacker_idx
+        || !force_swap_eligible(board, first_idx)
+        || !force_swap_eligible(board, second_idx)
+    {
+        result.events.push(format!(
+            "invalid_force_swap_units:{}:{}:{}:{}",
+            first.0, first.1, second.0, second.1
+        ));
+        return;
+    }
+
+    let first_old = (board.units[first_idx].x, board.units[first_idx].y);
+    let second_old = (board.units[second_idx].x, board.units[second_idx].y);
+    board.units[first_idx].x = second_old.0;
+    board.units[first_idx].y = second_old.1;
+    board.units[second_idx].x = first_old.0;
+    board.units[second_idx].y = first_old.1;
+    result.events.push(format!(
+        "force_swap:{}:{}:{}:{}",
+        first_old.0, first_old.1, second_old.0, second_old.1
+    ));
+
+    apply_landing_effects(board, first_idx, result);
+    apply_landing_effects(board, second_idx, result);
+    apply_force_swap_upgrade_effects(board, weapon_id, first_idx, result);
+    apply_force_swap_upgrade_effects(board, weapon_id, second_idx, result);
+}
 
 fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     if wdef.weapon_type == WeaponType::Swap {
@@ -5561,11 +5666,12 @@ pub fn simulate_move(
 
 /// Attack phase only: repair (with Frenzied Repair pushes), frozen-mech
 /// early-return, weapon fire, set_active(false) on weapon use.
-pub fn simulate_attack(
+pub fn simulate_attack_with_target2(
     board: &mut Board,
     mech_idx: usize,
     weapon_id: WId,
     target: (u8, u8),
+    target2: Option<(u8, u8)>,
     weapons: &WeaponTable,
 ) -> ActionResult {
     let mut result = ActionResult::default();
@@ -5586,7 +5692,7 @@ pub fn simulate_attack(
     // Diagnostic callers can hand us targets the UI would not offer. Treat
     // them as no-ops with an explicit event instead of simulating impossible
     // effects (for example player artillery off-axis targets).
-    if weapon_id != WId::None && weapon_id != WId::Repair {
+    if weapon_id != WId::None && weapon_id != WId::Repair && !is_force_swap(weapon_id) {
         let (sx, sy) = (board.units[mech_idx].x, board.units[mech_idx].y);
         let legal_targets = crate::solver::get_weapon_targets(
             board,
@@ -5651,8 +5757,12 @@ pub fn simulate_attack(
 
     // Attack
     if weapon_id != WId::None {
-        let attack_result = simulate_weapon_with(board, mech_idx, weapon_id, target.0, target.1, weapons);
-        result.merge(&attack_result);
+        if is_force_swap(weapon_id) {
+            sim_force_swap(board, mech_idx, weapon_id, target, target2, &mut result);
+        } else {
+            let attack_result = simulate_weapon_with(board, mech_idx, weapon_id, target.0, target.1, weapons);
+            result.merge(&attack_result);
+        }
     }
 
     // Active flag: in-game, moving without firing leaves the mech READY
@@ -5670,6 +5780,16 @@ pub fn simulate_attack(
     result
 }
 
+pub fn simulate_attack(
+    board: &mut Board,
+    mech_idx: usize,
+    weapon_id: WId,
+    target: (u8, u8),
+    weapons: &WeaponTable,
+) -> ActionResult {
+    simulate_attack_with_target2(board, mech_idx, weapon_id, target, None, weapons)
+}
+
 /// Simulate a complete mech action: move + attack. Modifies board in-place.
 /// Thin wrapper over `simulate_move` + `simulate_attack`. Existing callers
 /// (score_plan, solver tree search, turn_projection) use this; replay.rs
@@ -5682,8 +5802,20 @@ pub fn simulate_action(
     target: (u8, u8),
     weapons: &WeaponTable,
 ) -> ActionResult {
+    simulate_action_with_target2(board, mech_idx, move_to, weapon_id, target, None, weapons)
+}
+
+pub fn simulate_action_with_target2(
+    board: &mut Board,
+    mech_idx: usize,
+    move_to: (u8, u8),
+    weapon_id: WId,
+    target: (u8, u8),
+    target2: Option<(u8, u8)>,
+    weapons: &WeaponTable,
+) -> ActionResult {
     let mut result = simulate_move(board, mech_idx, move_to);
-    let attack_result = simulate_attack(board, mech_idx, weapon_id, target, weapons);
+    let attack_result = simulate_attack_with_target2(board, mech_idx, weapon_id, target, target2, weapons);
     result.merge(&attack_result);
     // Grid Defense: every grid point lost to PLAYER-phase building damage
     // (friendly fire, push-bump into building) had a `grid_defense_pct`/100
@@ -5731,6 +5863,55 @@ mod tests {
             move_speed: 3,
             ..Default::default()
         })
+    }
+
+    #[test]
+    fn test_force_swap_swaps_adjacent_unit_with_second_target() {
+        let mut board = make_test_board();
+        let exchange = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcSwapOther);
+        let first = add_enemy(&mut board, 1, 3, 4, 2);
+        let second = add_enemy(&mut board, 2, 6, 6, 2);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            exchange,
+            WId::ScienceTcSwapOther,
+            (3, 4),
+            Some((6, 6)),
+            &WEAPONS,
+        );
+
+        assert!(result.events.iter().any(|e| e == "force_swap:3:4:6:6"));
+        assert_eq!((board.units[first].x, board.units[first].y), (6, 6));
+        assert_eq!((board.units[second].x, board.units[second].y), (3, 4));
+        assert!(!board.units[exchange].active());
+    }
+
+    #[test]
+    fn test_force_swap_upgrades_hurt_enemies_and_heal_allies() {
+        let mut board = make_test_board();
+        let exchange = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcSwapOtherAB);
+        let ally = add_mech(&mut board, 10, 3, 4, 1, WId::None);
+        board.units[ally].max_hp = 3;
+        board.units[ally].set_fire(true);
+        let enemy = add_enemy(&mut board, 20, 6, 6, 3);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            exchange,
+            WId::ScienceTcSwapOtherAB,
+            (3, 4),
+            Some((6, 6)),
+            &WEAPONS,
+        );
+
+        assert!(result.events.iter().any(|e| e == "force_swap_heal:10"));
+        assert!(result.events.iter().any(|e| e == "force_swap_hurt:3:4"));
+        assert_eq!((board.units[ally].x, board.units[ally].y), (6, 6));
+        assert_eq!(board.units[ally].hp, 3);
+        assert!(!board.units[ally].fire());
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 4));
+        assert_eq!(board.units[enemy].hp, 2);
     }
 
     #[test]
@@ -13860,6 +14041,33 @@ mod tests {
         assert_eq!(board.units[first].hp, 3);
         assert_eq!((board.units[second].x, board.units[second].y), (3, 6));
         assert_eq!(board.units[second].hp, 1);
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_boosted_brute_pierce_shot_second_edge_target_deals_upgrade_damage_only() {
+        // Live regression: Bombermechs Complete Victory run
+        // 20260623_105703_708, Mission_ScarabBoss turn 4. Upgraded AP Cannon
+        // hit the Scarab Leader as the second target on the board edge; live
+        // dealt 3 damage and left the 4 HP boss alive at 1 HP, with neither
+        // generic Boost nor an off-board bump adding phantom damage.
+        let mut board = make_test_board();
+        let pierce = add_mech(&mut board, 0, 6, 4, 3, WId::BrutePierceShot);
+        board.units[pierce].set_boosted(true);
+        let first = add_mech(&mut board, 1, 6, 5, 2, WId::ScienceTcSwapOther);
+        let boss = add_enemy_type(&mut board, 4763, 6, 7, 4, "ScarabBoss");
+        let mut weapons = WEAPONS;
+        weapons[WId::BrutePierceShot as usize].damage = 3;
+
+        let result = simulate_weapon_with(&mut board, pierce, WId::BrutePierceShot, 6, 5, &weapons);
+
+        assert_eq!(board.units[first].hp, 2);
+        assert_eq!((board.units[first].x, board.units[first].y), (6, 6));
+        assert_eq!(
+            (board.units[boss].x, board.units[boss].y, board.units[boss].hp),
+            (6, 7, 1),
+            "AP Cannon second target should not take off-board bump damage"
+        );
         assert_eq!(result.enemies_killed, 0);
     }
 

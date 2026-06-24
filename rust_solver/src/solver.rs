@@ -92,6 +92,7 @@ pub struct MechAction {
     pub move_to: (u8, u8),
     pub weapon: WId,
     pub target: (u8, u8),
+    pub target2: Option<(u8, u8)>,
     pub description: String,
 }
 
@@ -477,6 +478,11 @@ pub(crate) fn get_weapon_targets(
                 }
             }
         }
+        WeaponType::TwoClick if is_force_swap(weapon_id) => {
+            for (first, _second) in enumerate_force_swap_targets(board, mx, my) {
+                targets.push(first);
+            }
+        }
         WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
             let throw_range = wdef.range_max.max(1);
             for &(dx, dy) in &DIRS {
@@ -668,7 +674,7 @@ fn prime_leap_blocked_by_web(board: &Board, mx: u8, my: u8, weapon_id: WId) -> b
 
 // ── Action enumeration ───────────────────────────────────────────────────────
 
-type Action = ((u8, u8), WId, (u8, u8)); // (move_to, weapon, target)
+type Action = ((u8, u8), WId, (u8, u8), Option<(u8, u8)>); // (move_to, weapon, target, target2)
 
 fn post_move_board_for_attack(board: &Board, mech_idx: usize, move_to: (u8, u8)) -> Option<Board> {
     let unit = &board.units[mech_idx];
@@ -689,6 +695,40 @@ fn attack_origin_after_move(board: &Board, mech_idx: usize, move_to: (u8, u8)) -
         }
     }
     move_to
+}
+
+fn force_swap_eligible(board: &Board, unit_idx: usize) -> bool {
+    let unit = &board.units[unit_idx];
+    unit.alive() && (unit.pushable() || unit.is_mech())
+}
+
+fn enumerate_force_swap_targets(board: &Board, sx: u8, sy: u8) -> Vec<((u8, u8), (u8, u8))> {
+    let mut out = Vec::new();
+    for &(dx, dy) in &DIRS {
+        let fx = sx as i8 + dx;
+        let fy = sy as i8 + dy;
+        if !in_bounds(fx, fy) {
+            continue;
+        }
+        let first = (fx as u8, fy as u8);
+        let Some(first_idx) = board.unit_at(first.0, first.1) else {
+            continue;
+        };
+        if !force_swap_eligible(board, first_idx) {
+            continue;
+        }
+        for i in 0..board.unit_count as usize {
+            if i == first_idx || !force_swap_eligible(board, i) {
+                continue;
+            }
+            let u = &board.units[i];
+            if (u.x, u.y) == (sx, sy) {
+                continue;
+            }
+            out.push((first, (u.x, u.y)));
+        }
+    }
+    out
 }
 
 fn weapon_can_damage_terrain(weapon_id: WId, wdef: &WeaponDef) -> bool {
@@ -1020,7 +1060,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         let pos = (unit.x, unit.y);
         let tile = board.tile(pos.0, pos.1);
         if !tile.smoke() {
-            actions.push((pos, WId::Repair, pos));
+            actions.push((pos, WId::Repair, pos, None));
         }
         return actions;
     }
@@ -1038,7 +1078,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
     for &pos in &positions {
         // Move-only / skip — always available so search can stay put.
         // (For MID_ACTION mechs, this is the "skip attack" option.)
-        actions.push((pos, WId::None, (255, 255)));
+        actions.push((pos, WId::None, (255, 255), None));
 
         // Teleporter pads fire during the move phase. Attack targeting,
         // smoke checks, and effect filtering must therefore use the post-swap
@@ -1067,9 +1107,15 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
             let w1_id = WId::from_raw(action_unit.weapon.0);
             if w1_id != WId::None {
                 let mech_from = (unit.x, unit.y);
-                for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w1_id, mech_from, weapons) {
-                    if weapon_action_has_effect(action_board, attack_pos, w1_id, target, weapons) {
-                        actions.push((pos, w1_id, target));
+                if is_force_swap(w1_id) {
+                    for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w1_id, first, Some(second)));
+                    }
+                } else {
+                    for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w1_id, mech_from, weapons) {
+                        if weapon_action_has_effect(action_board, attack_pos, w1_id, target, weapons) {
+                            actions.push((pos, w1_id, target, None));
+                        }
                     }
                 }
             }
@@ -1077,9 +1123,15 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
             // Secondary weapon
             let w2_id = WId::from_raw(action_unit.weapon2.0);
             if w2_id != WId::None {
-                for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w2_id, (unit.x, unit.y), weapons) {
-                    if weapon_action_has_effect(action_board, attack_pos, w2_id, target, weapons) {
-                        actions.push((pos, w2_id, target));
+                if is_force_swap(w2_id) {
+                    for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w2_id, first, Some(second)));
+                    }
+                } else {
+                    for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w2_id, (unit.x, unit.y), weapons) {
+                        if weapon_action_has_effect(action_board, attack_pos, w2_id, target, weapons) {
+                            actions.push((pos, w2_id, target, None));
+                        }
                     }
                 }
             }
@@ -1091,7 +1143,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                 || action_unit.frozen()
                 || action_unit.infected()
             {
-                actions.push((pos, WId::Repair, attack_pos));
+                actions.push((pos, WId::Repair, attack_pos, None));
             }
         }
     }
@@ -1333,7 +1385,7 @@ fn prune_actions(
     if actions.len() <= max_n { return; }
 
     // Score each action by heuristic
-    let mut scored: Vec<(i32, usize)> = actions.iter().enumerate().map(|(i, &(move_to, weapon_id, target))| {
+    let mut scored: Vec<(i32, usize)> = actions.iter().enumerate().map(|(i, &(move_to, weapon_id, target, target2))| {
         let mut s = 0i32;
         let attack_origin = attack_origin_after_move(board, mech_idx, move_to);
 
@@ -1346,6 +1398,10 @@ fn prune_actions(
         if weapon_id != WId::None && weapon_id != WId::Repair && target.0 < 8 {
             let target_bit = 1u64 << xy_to_idx(target.0, target.1);
             if threat_tiles & target_bit != 0 { s += 100; }
+            if let Some((tx2, ty2)) = target2 {
+                let target2_bit = 1u64 << xy_to_idx(tx2, ty2);
+                if threat_tiles & target2_bit != 0 { s += 100; }
+            }
 
             // Check if target has a unit (prefer attacking units over empty)
             if board.unit_at(target.0, target.1).is_some() { s += 10; }
@@ -1717,7 +1773,7 @@ fn search_recursive(
     let mut actions = enumerate_actions(board, mech_idx, weapons);
     prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, spawn_bits, max_actions, weapons);
 
-    for &(move_to, weapon_id, target) in &actions {
+    for &(move_to, weapon_id, target, target2) in &actions {
         if Instant::now() > deadline { return; }
 
         // Soft-disable: a weapon in the session's disabled_actions mask has
@@ -1749,7 +1805,15 @@ fn search_recursive(
         }
 
         let mut b_next = board.clone(); // ~800 byte memcpy
-        let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target, weapons);
+        let result = simulate_action_with_target2(
+            &mut b_next,
+            mech_idx,
+            move_to,
+            weapon_id,
+            target,
+            target2,
+            weapons,
+        );
         let nanobots_heal_add = viscera_nanobots_heal_from_events(&result.events);
         let powered_blast_add = powered_blast_from_events(&result.events);
         let reverse_thrusters_four_damage_add =
@@ -1769,7 +1833,7 @@ fn search_recursive(
             0.0
         };
 
-        let action = make_action(&board.units[mech_idx], move_to, weapon_id, target);
+        let action = make_action(&board.units[mech_idx], move_to, weapon_id, target, target2);
         actions_so_far.push(action);
 
         search_recursive(
@@ -1800,7 +1864,13 @@ fn search_recursive(
     }
 }
 
-fn make_action(unit: &Unit, move_to: (u8, u8), weapon_id: WId, target: (u8, u8)) -> MechAction {
+fn make_action(
+    unit: &Unit,
+    move_to: (u8, u8),
+    weapon_id: WId,
+    target: (u8, u8),
+    target2: Option<(u8, u8)>,
+) -> MechAction {
     let name = unit.type_name_str();
     let mut desc = name.to_string();
     if move_to != (unit.x, unit.y) {
@@ -1818,6 +1888,9 @@ fn make_action(unit: &Unit, move_to: (u8, u8), weapon_id: WId, target: (u8, u8))
         desc += &format!(", fire {} at {}",
             weapon_name(weapon_id),
             bridge_to_visual(target.0, target.1));
+        if let Some((tx2, ty2)) = target2 {
+            desc += &format!(" and {}", bridge_to_visual(tx2, ty2));
+        }
     }
 
     MechAction {
@@ -1826,6 +1899,7 @@ fn make_action(unit: &Unit, move_to: (u8, u8), weapon_id: WId, target: (u8, u8))
         move_to,
         weapon: weapon_id,
         target,
+        target2,
         description: desc,
     }
 }
@@ -2026,7 +2100,15 @@ pub fn solve_turn(
                 Some(i) => i,
                 None => continue,
             };
-            simulate_action(&mut b_check, mech_idx, action.move_to, action.weapon, action.target, weapons);
+            simulate_action_with_target2(
+                &mut b_check,
+                mech_idx,
+                action.move_to,
+                action.weapon,
+                action.target,
+                action.target2,
+                weapons,
+            );
         }
         let buildings_before_enemy = count_buildings(&b_check);
         simulate_enemy_attacks(&mut b_check, &original_positions, weapons);
@@ -2371,9 +2453,9 @@ mod top_k_tests {
         board.tile_mut(4, 2).building_hp = 1;
 
         let mut actions = vec![
-            ((4, 4), WId::None, (255, 255)),
-            ((4, 4), WId::BruteMirrorshot, (4, 3)),
-            ((4, 4), WId::BruteMirrorshot, (5, 4)),
+            ((4, 4), WId::None, (255, 255), None),
+            ((4, 4), WId::BruteMirrorshot, (4, 3), None),
+            ((4, 4), WId::BruteMirrorshot, (5, 4), None),
         ];
 
         prune_actions(
@@ -2389,7 +2471,7 @@ mod top_k_tests {
 
         assert_eq!(
             actions,
-            vec![((4, 4), WId::BruteMirrorshot, (4, 3))],
+            vec![((4, 4), WId::BruteMirrorshot, (4, 3), None)],
             "Mission_Force pruning should keep the damaged-mountain shot"
         );
     }
@@ -3504,6 +3586,7 @@ mod top_k_tests {
             move_to: (3, 4),
             weapon: WId::None,
             target: (3, 4),
+            target2: None,
             description: "test".to_string(),
         }];
         h.offer(5.0, &a);

@@ -155,6 +155,8 @@ class Unit:
     # Enemy attack details (from bridge piQueuedShot + weapon globals)
     queued_target_x: int = -1  # piQueuedShot direction point
     queued_target_y: int = -1
+    queued_origin_x: int = -1  # original firing tile for queued line attacks
+    queued_origin_y: int = -1
     weapon_damage: int = 0
     weapon_target_behind: bool = False
     weapon_push: int = 0
@@ -612,6 +614,19 @@ class Board:
             qt = ud.get("queued_target")
             qt_x = qt[0] if qt else -1
             qt_y = qt[1] if qt else -1
+            has_queued_attack = bool(ud.get("has_queued_attack", False))
+            if qt_x < 0 and bool(ud.get("queued_target_normalized", False)):
+                has_queued_attack = False
+            qo = ud.get("queued_origin")
+            if qo:
+                qo_x = qo[0]
+                qo_y = qo[1]
+            elif qt_x >= 0 and qt_y >= 0:
+                qo_x = x
+                qo_y = y
+            else:
+                qo_x = -1
+                qo_y = -1
 
             u = Unit(
                 uid=ud.get("uid", 0),
@@ -643,10 +658,12 @@ class Board:
                 target_y=qt_y,
                 queued_target_x=qt_x,
                 queued_target_y=qt_y,
+                queued_origin_x=qo_x,
+                queued_origin_y=qo_y,
                 weapon_damage=min(ud.get("weapon_damage", 0), 255),
                 weapon_target_behind=ud.get("weapon_target_behind", False),
                 weapon_push=ud.get("weapon_push", 0),
-                has_queued_attack=bool(ud.get("has_queued_attack", False)),
+                has_queued_attack=has_queued_attack,
                 is_extra_tile=ud.get("is_extra_tile", False),
                 pilot_id=ud.get("pilot_id", ""),
                 pilot_value=_compute_pilot_value(

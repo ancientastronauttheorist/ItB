@@ -952,17 +952,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // simulation are bespoke because the pawn's normal MoveSpeed is 0.
     w[191] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, range_max: 3, limited: 2, flags: C, ..DEF };
 
-    // 206-209: Science_TC_SwapOther — Force Swap. This is a two-click
-    // Bombermechs weapon: first choose an adjacent non-stable unit, then swap
-    // it with any other non-stable unit. The live bridge currently carries a
-    // single target coordinate for normal FireWeapon execution, so exposing a
-    // real simulated swap here would let the solver select actions the bridge
-    // cannot execute. Keep it catalogued but inert until the action schema and
-    // bridge grow a true second-target path.
-    w[206] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
-    w[207] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
-    w[208] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
-    w[209] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    // 206-209: Science_TC_SwapOther — Force Swap. Two-click Bombermechs
+    // weapon: first choose an adjacent non-stable unit, then swap it with any
+    // other non-stable unit on the board.
+    w[206] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, flags: C, ..DEF };
+    w[207] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, flags: C, ..DEF };
+    w[208] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, flags: C, ..DEF };
+    w[209] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, flags: C, ..DEF };
     // 210: Brute_PierceShot — AP Cannon.
     // Pushes the first projectile blocker, then damages and pushes the second.
     // The two-stage projectile semantics are WId-specific in simulate.rs.
@@ -1487,6 +1483,15 @@ pub fn is_hydraulic_lifter(id: WId) -> bool {
     matches!(
         id,
         WId::PrimeTcPunt | WId::PrimeTcPuntA | WId::PrimeTcPuntB | WId::PrimeTcPuntAB
+    )
+}
+
+#[inline]
+pub fn is_force_swap(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
+            | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB
     )
 }
 

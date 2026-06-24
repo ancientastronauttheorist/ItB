@@ -67,7 +67,7 @@ from src.bridge.reader import read_bridge_state
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
     deploy_mech, set_bridge_speed, bridge_ui_probe,
-    move_mech, attack_mech, skip_mech, repair_mech,
+    move_mech, attack_mech, attack_mech_two, skip_mech, repair_mech,
 )
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
@@ -2851,6 +2851,7 @@ def _rust_result_to_solution(rust_result: dict | None,
             move_to=tuple(ra["move_to"]),
             weapon=w_id,
             target=tuple(ra["target"]),
+            target2=tuple(ra["target2"]) if ra.get("target2") else None,
             description=ra["description"],
         ))
 
@@ -2875,6 +2876,7 @@ def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
             move_to=a.move_to,
             weapon=a.weapon,
             target=a.target,
+            target2=a.target2,
             description=a.description,
         )
         for a in solution.actions
@@ -6008,6 +6010,7 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
         move_to=action.move_to,
         weapon=action.weapon,
         target=action.target,
+        target2=action.target2,
         description=action.description,
     )
 
@@ -6909,6 +6912,7 @@ def cmd_click_action(action_index: int) -> dict:
         move_to=action.move_to,
         weapon=action.weapon,
         target=action.target,
+        target2=action.target2,
         description=action.description,
     )
     batch = plan_single_mech(mech_action, board)
@@ -25566,6 +25570,7 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
             move_to=tuple(ra["move_to"]),
             weapon=w_id,
             target=tuple(ra["target"]),
+            target2=tuple(ra["target2"]) if ra.get("target2") else None,
             description=ra["description"],
         ))
 
@@ -25877,6 +25882,7 @@ def _re_solve_partial(
                     move_to=tuple(ra["move_to"]),
                     weapon=w_id,
                     target=tuple(ra["target"]),
+                    target2=tuple(ra["target2"]) if ra.get("target2") else None,
                     description=ra["description"],
                 ))
             score = rust_result["score"]
@@ -25958,11 +25964,9 @@ def _re_solve_partial(
                 if isinstance(threats_payload, list)
                 else int(threats_payload or 0)
             )
-            solve_data = {
-                "schema_version": SOLVE_RECORD_SCHEMA_VERSION,
-                "simulator_version": _get_simulator_version(),
-                "score": score,
-                "actions": [{
+            action_payloads = []
+            for a in actions:
+                payload = {
                     "mech_uid": a.mech_uid,
                     "mech_type": a.mech_type,
                     "move_to": list(a.move_to) if a.move_to else None,
@@ -25974,7 +25978,15 @@ def _re_solve_partial(
                     "weapon_id": a.weapon,
                     "target": list(a.target),
                     "description": a.description,
-                } for a in actions],
+                }
+                if a.target2 is not None:
+                    payload["target2"] = list(a.target2)
+                action_payloads.append(payload)
+            solve_data = {
+                "schema_version": SOLVE_RECORD_SCHEMA_VERSION,
+                "simulator_version": _get_simulator_version(),
+                "score": score,
+                "actions": action_payloads,
                 "threats": threat_count,
                 "initial_building_threats": rust_result.get(
                     "initial_building_threats", []
@@ -27436,6 +27448,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             move_to=action.move_to,
             weapon=action.weapon,
             target=action.target,
+            target2=action.target2,
             description=action.description,
         )
 
@@ -27634,6 +27647,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                         move_to=a.move_to,
                                         weapon=a.weapon,
                                         target=a.target,
+                                        target2=a.target2,
                                         description=a.description,
                                     ))
                                 actions = solver_actions
@@ -27666,7 +27680,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 _print_result(pause_error)
                 return pause_error
             try:
-                ack = attack_mech(mech_uid, weapon_slot, action.target[0], action.target[1])
+                if action.target2 is not None:
+                    ack = attack_mech_two(
+                        mech_uid,
+                        weapon_slot,
+                        action.target[0],
+                        action.target[1],
+                        action.target2[0],
+                        action.target2[1],
+                    )
+                else:
+                    ack = attack_mech(mech_uid, weapon_slot, action.target[0], action.target[1])
                 print(f"  ATTACK: {ack}")
                 _mark_dirty_consent_progress()
                 if action.weapon == "Support_Wind":
@@ -27911,6 +27935,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                     move_to=a.move_to,
                                     weapon=a.weapon,
                                     target=a.target,
+                                    target2=a.target2,
                                     description=a.description,
                                 ))
                             actions = solver_actions

@@ -90,7 +90,7 @@ def test_arachnophiles_catalog_entries_match_observed_lua_ids():
     force_swap = get_weapon_def("Science_TC_SwapOther")
     assert force_swap is not None
     assert force_swap.name == "Force Swap"
-    assert force_swap.weapon_type == "passive"
+    assert force_swap.weapon_type == "two_click"
 
     assert get_pawn_stats("BulkMech").default_weapon == "Brute_TC_Ricochet"
     assert get_pawn_stats("BulkMech").class_type == "Brute"

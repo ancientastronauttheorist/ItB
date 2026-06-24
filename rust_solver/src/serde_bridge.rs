@@ -301,6 +301,7 @@ pub struct JsonUnit {
     pub weapons: Option<Vec<String>>,
     pub queued_target: Option<Vec<i8>>,
     pub queued_origin: Option<Vec<i8>>,
+    pub queued_target_normalized: Option<bool>,
     pub weapon_damage: Option<u16>,
     pub weapon_target_behind: Option<bool>,
     pub weapon_push: Option<u8>,
@@ -767,6 +768,9 @@ pub fn board_from_json(json_str: &str)
             if qtx >= 0 && qty >= 0 {
                 flags |= UnitFlags::QUEUED_ORIGIN_SET;
             }
+            if qtx < 0 && ju.queued_target_normalized.unwrap_or(false) {
+                flags.remove(UnitFlags::HAS_QUEUED_ATTACK);
+            }
 
             let move_speed = ju.move_speed.or(ju.base_move).unwrap_or(3);
             let mut unit = Unit {
@@ -1092,6 +1096,8 @@ struct JsonAction {
     weapon: String,
     weapon_id: String,
     target: [u8; 2],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target2: Option<[u8; 2]>,
     description: String,
 }
 
@@ -1112,6 +1118,7 @@ pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry])
             weapon: weapon_name(a.weapon).to_string(),
             weapon_id: wid_to_str(a.weapon).to_string(),
             target: [a.target.0, a.target.1],
+            target2: a.target2.map(|(x, y)| [x, y]),
             description: a.description.clone(),
         }
     }).collect();
@@ -1600,6 +1607,41 @@ mod tests {
             board.units[0].web_source_uid, 2791,
             "queued Mosquito Leader grapple should own the recovered web"
         );
+    }
+
+    #[test]
+    fn test_normalized_offboard_queued_target_clears_attack() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 4766,
+                    "type": "Moth1",
+                    "x": 1,
+                    "y": 2,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 6,
+                    "weapons": ["MothAtk1"],
+                    "has_queued_attack": true,
+                    "queued_origin": [5, 5],
+                    "queued_target": null,
+                    "queued_target_normalized": true
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(
+            !board.units[0].has_queued_attack(),
+            "a normalized off-board queued shot is canceled, not unknown"
+        );
+        assert_eq!(board.units[0].queued_target_x, -1);
+        assert_eq!(board.units[0].queued_origin_x, -1);
     }
 
     #[test]

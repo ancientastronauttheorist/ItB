@@ -23,7 +23,7 @@
 
 use crate::board::{Board, ActionResult, UnitFlags};
 use crate::enemy::{simulate_enemy_attacks, apply_spawn_blocking};
-use crate::simulate::simulate_action;
+use crate::simulate::simulate_action_with_target2;
 use crate::solver::MechAction;
 use crate::types::{Terrain, idx_to_xy, xy_to_idx};
 use crate::weapons::WeaponTable;
@@ -135,12 +135,13 @@ fn apply_plan_and_enemy_phase(
             Some(i) => i,
             None => continue,
         };
-        let result = simulate_action(
+        let result = simulate_action_with_target2(
             &mut b,
             mech_idx,
             action.move_to,
             action.weapon,
             action.target,
+            action.target2,
             weapons,
         );
         aggregate.merge(&result);
@@ -431,6 +432,11 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         } else {
             json!([-1i8, -1i8])
         };
+        let qo: Value = if u.queued_origin_x >= 0 {
+            json!([u.queued_origin_x, u.queued_origin_y])
+        } else {
+            json!([-1i8, -1i8])
+        };
         let mut unit_val = json!({
             "uid":        u.uid,
             "type":       u.type_name_str(),
@@ -446,6 +452,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             "can_move":   u.can_move(),
             "pushable":   u.pushable(),
             "queued_target": qt,
+            "queued_origin": qo,
         });
         if !weapons_list.is_empty()       { unit_val["weapons"]              = json!(weapons_list); }
         if u.flying()                     { unit_val["flying"]               = json!(true); }

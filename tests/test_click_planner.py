@@ -179,6 +179,22 @@ arm_click = next(c for c in plan if "Arm" in c.get("description", ""))
 check("secondary weapon → slot 2",
       (arm_click["x"], arm_click["y"]) == _ui_weapon_slot_2(), arm_click)
 
+# Test 9b: two-click Force Swap includes the second target click.
+mech = mk_unit(0, "ExchangeMech", 3, 3, weapon="Science_TC_SwapOther")
+b = mk_board([mech])
+a = mk_action(0, "ExchangeMech", (5, 3), "Science_TC_SwapOther", (5, 4))
+a.target2 = (6, 2)
+plan = plan_single_mech(a, b)
+clicks = clicks_only(plan)
+check("Force Swap: classify two_click",
+      classify_weapon("Science_TC_SwapOther") == "two_click")
+check("Force Swap: 5 clicks (select+move+arm+target+target2)",
+      len(clicks) == 5, len(clicks), plan)
+check("Force Swap: final click is second target",
+      clicks[-1]["x"] == grid_to_mcp(6, 2)[0]
+      and clicks[-1]["y"] == grid_to_mcp(6, 2)[1],
+      clicks[-1])
+
 # Test 10: end turn always emits exactly one click at the end-turn pos
 plan = plan_end_turn()
 check("end_turn: 1 click", len(plan) == 1, plan)

@@ -17,7 +17,7 @@ use crate::board::{ActionResult, Board, UnitFlags};
 use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
 use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
-use crate::simulate::{simulate_attack, simulate_move};
+use crate::simulate::{simulate_attack_with_target2, simulate_move};
 use crate::turn_projection::{
     advance_mission_tides_warning,
     board_to_json,
@@ -35,6 +35,8 @@ struct PlanAction {
     move_to: [u8; 2],
     weapon_id: String,
     target: [u8; 2],
+    #[serde(default)]
+    target2: Option<[u8; 2]>,
 }
 
 /// Top-level entrypoint. Returns the JSON string Python deserializes.
@@ -127,8 +129,13 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         let attack_result = if illegal_move.is_some() {
             ActionResult::default()
         } else {
-            simulate_attack(
-                &mut board, mech_idx, wid, (act.target[0], act.target[1]), weapons_table,
+            simulate_attack_with_target2(
+                &mut board,
+                mech_idx,
+                wid,
+                (act.target[0], act.target[1]),
+                act.target2.map(|t| (t[0], t[1])),
+                weapons_table,
             )
         };
         if illegal_move.is_none() && wid == WId::None {
@@ -350,6 +357,16 @@ fn capture_snapshot(
             crate::types::Team::Neutral => 2,
             crate::types::Team::Enemy   => 6,
         };
+        let queued_target = if u.queued_target_x >= 0 && u.queued_target_y >= 0 {
+            json!([u.queued_target_x, u.queued_target_y])
+        } else {
+            Value::Null
+        };
+        let queued_origin = if u.queued_origin_x >= 0 && u.queued_origin_y >= 0 {
+            json!([u.queued_origin_x, u.queued_origin_y])
+        } else {
+            Value::Null
+        };
         units.push(json!({
             "uid":     u.uid,
             "type":    u.type_name_str(),
@@ -360,6 +377,9 @@ fn capture_snapshot(
             "active":  u.active(),
             "is_mech": u.is_mech(),
             "team":    team_int,
+            "queued_target": queued_target,
+            "queued_origin": queued_origin,
+            "has_queued_attack": u.has_queued_attack(),
             "status": {
                 "fire":   u.fire(),
                 "acid":   u.acid(),
@@ -557,6 +577,46 @@ mod tests {
             "Replay WId::None plan entries represent bridge skips and must deactivate the unit");
         assert_eq!(jet["status"]["boosted"], true,
             "Replay snapshots must preserve Boosted so verify does not create false status diffs");
+    }
+
+    #[test]
+    fn replay_solution_snapshots_preserve_queued_attacks() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "PunchMech", "x": 4, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]},
+            {"uid": 99, "type": "BurnbugBoss", "x": 4, "y": 2,
+             "hp": 6, "max_hp": 6, "team": 6, "weapons": ["BurnbugAtkB"],
+             "has_queued_attack": true,
+             "queued_target": [3, 2],
+             "queued_origin": [4, 2]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [4, 4],
+          "weapon_id": "None",
+          "target": [255, 255]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        for phase in ["post_move", "post_attack"] {
+            let units = v["predicted_states"][0][phase]["units"].as_array().unwrap();
+            let boss = units.iter().find(|u| u["uid"] == 99).unwrap();
+            assert_eq!(boss["queued_target"], json!([3, 2]));
+            assert_eq!(boss["queued_origin"], json!([4, 2]));
+            assert_eq!(boss["has_queued_attack"], true);
+        }
     }
 
     #[test]

@@ -1354,7 +1354,20 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260623_105703_708 Bad Repairs turn 1, where BomlingMech healed from 1/3 to
 # live 3/3 but the sim projected 5/3. Pre-v274 corpus archived as
 # failure_db_snapshot_sim_v273.jsonl.
-SIMULATOR_VERSION = 274
+# v275 - Science_TC_SwapOther Force Swap is a first-class two-target action:
+# solver/replay/bridge JSON carry target2, and the simulator swaps the adjacent
+# first target with the second target plus A/B upgrade effects. Pre-v275 corpus
+# archived as failure_db_snapshot_sim_v274.jsonl.
+# v276 - A queued shot normalized off-board by the bridge is a canceled attack,
+# not an unknown phantom attack. This prevents conservative phantom damage
+# after Force Swap moves artillery Vek so their preserved offset points off the
+# board. Pre-v276 corpus archived as failure_db_snapshot_sim_v275.jsonl.
+# v277 - AP Cannon's second-target damage does not receive generic Boost and
+# its direct edge push does not add off-board bump damage. Fixes Bombermechs
+# Complete Victory run 20260623_105703_708 Mission_ScarabBoss turn 4, where
+# upgraded AP left the Scarab Leader at 1 HP live but Rust predicted a kill.
+# Pre-v277 corpus archived as failure_db_snapshot_sim_v276.jsonl.
+SIMULATOR_VERSION = 277
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

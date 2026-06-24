@@ -45,6 +45,7 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
 
     Command mapping:
       - Move + attack → MOVE_ATTACK (single command, deactivates)
+      - Two-click attack → TWO_CLICK_ATTACK (after MOVE when needed)
       - Attack only   → ATTACK (deactivates)
       - Move + repair → MOVE then REPAIR (two commands, REPAIR deactivates)
       - Repair only   → REPAIR (deactivates)
@@ -54,6 +55,7 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
     has_move = action.move_to and action.move_to != (-1, -1)
     is_repair = is_repair_action(action)
     has_attack = action_has_attack(action)
+    target2 = getattr(action, "target2", None)
 
     # Check if the mech is actually moving (not staying in place)
     if has_move:
@@ -88,6 +90,17 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
     # Move + attack: single MOVE_ATTACK command (deactivates)
     if has_move and has_attack:
         weapon_slot = _resolve_weapon_slot(action, board)
+        if target2 is not None:
+            write_command(
+                f"MOVE {action.mech_uid} "
+                f"{action.move_to[0]} {action.move_to[1]}"
+            )
+            wait_for_ack(timeout=_ACTION_TIMEOUT)
+            cmd = (f"TWO_CLICK_ATTACK {action.mech_uid} {weapon_slot} "
+                   f"{action.target[0]} {action.target[1]} "
+                   f"{target2[0]} {target2[1]}")
+            write_command(cmd)
+            return wait_for_ack(timeout=_ACTION_TIMEOUT)
         cmd = (f"MOVE_ATTACK {action.mech_uid} "
                f"{action.move_to[0]} {action.move_to[1]} "
                f"{weapon_slot} "
@@ -98,6 +111,12 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
     # Attack only (deactivates)
     if has_attack:
         weapon_slot = _resolve_weapon_slot(action, board)
+        if target2 is not None:
+            cmd = (f"TWO_CLICK_ATTACK {action.mech_uid} {weapon_slot} "
+                   f"{action.target[0]} {action.target[1]} "
+                   f"{target2[0]} {target2[1]}")
+            write_command(cmd)
+            return wait_for_ack(timeout=_ACTION_TIMEOUT)
         cmd = (f"ATTACK {action.mech_uid} {weapon_slot} "
                f"{action.target[0]} {action.target[1]}")
         write_command(cmd)
@@ -139,6 +158,22 @@ def attack_mech(uid: int, weapon_slot: int, target_x: int, target_y: int) -> str
     The Lua ATTACK handler fires and calls SetActive(false).
     """
     write_command(f"ATTACK {uid} {weapon_slot} {target_x} {target_y}")
+    return wait_for_ack(timeout=_ACTION_TIMEOUT)
+
+
+def attack_mech_two(
+    uid: int,
+    weapon_slot: int,
+    target_x: int,
+    target_y: int,
+    target2_x: int,
+    target2_y: int,
+) -> str:
+    """Fire a two-click weapon, then deactivate."""
+    write_command(
+        f"TWO_CLICK_ATTACK {uid} {weapon_slot} "
+        f"{target_x} {target_y} {target2_x} {target2_y}"
+    )
     return wait_for_ack(timeout=_ACTION_TIMEOUT)
 
 

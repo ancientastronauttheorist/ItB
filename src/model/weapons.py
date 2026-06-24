@@ -687,24 +687,23 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 range (total 2)",
         upgrade_b="+2 range (total 3)",
     ),
-    # Force Swap is a two-click Bombermechs weapon. The live bridge action
-    # schema currently has only one target coordinate, so keep this catalogued
-    # but inert until a true second-click execution path exists.
+    # Force Swap is a two-click Bombermechs weapon: first choose an adjacent
+    # unit, then choose a second unit to swap it with.
     "Science_TC_SwapOther": WeaponDef(
-        name="Force Swap", weapon_type="passive", damage=0,
+        name="Force Swap", weapon_type="two_click", damage=0,
         upgrade_a="Heal Ally",
         upgrade_b="Hurt Enemy",
     ),
     "Science_TC_SwapOther_A": WeaponDef(
-        name="Force Swap", weapon_type="passive", damage=0,
+        name="Force Swap", weapon_type="two_click", damage=0,
         upgrade_a="Heal Ally",
     ),
     "Science_TC_SwapOther_B": WeaponDef(
-        name="Force Swap", weapon_type="passive", damage=0,
+        name="Force Swap", weapon_type="two_click", damage=1,
         upgrade_b="Hurt Enemy",
     ),
     "Science_TC_SwapOther_AB": WeaponDef(
-        name="Force Swap", weapon_type="passive", damage=0,
+        name="Force Swap", weapon_type="two_click", damage=1,
         upgrade_a="Heal Ally",
         upgrade_b="Hurt Enemy",
     ),

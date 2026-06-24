@@ -61,7 +61,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
     use crate::evaluate::{consumed_spawn_block_bonus, evaluate, PsionState};
     use crate::movement::illegal_move_reason;
-    use crate::simulate::simulate_action;
+    use crate::simulate::simulate_action_with_target2;
     use crate::solver::{
         reverse_thrusters_four_damage_from_events,
         viscera_nanobots_heal_from_events,
@@ -88,6 +88,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             move_to: [u8; 2],
             weapon_id: String,
             target: [u8; 2],
+            #[serde(default)]
+            target2: Option<[u8; 2]>,
         }
         let plan: Vec<PlanAction> = serde_json::from_str(plan_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("plan parse: {}", e)))?;
@@ -123,11 +125,12 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 ));
                 continue;
             }
-            let result = simulate_action(
+            let result = simulate_action_with_target2(
                 &mut board, mech_idx,
                 (act.move_to[0], act.move_to[1]),
                 wid,
                 (act.target[0], act.target[1]),
+                act.target2.map(|t| (t[0], t[1])),
                 weapons_table,
             );
             for event in result.events.iter().filter(|e| e.starts_with("illegal_")) {
@@ -263,6 +266,8 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             move_to: [u8; 2],
             weapon_id: String,
             target: [u8; 2],
+            #[serde(default)]
+            target2: Option<[u8; 2]>,
         }
         let raw_plan: Vec<PlanAction> = serde_json::from_str(plan_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(
@@ -274,6 +279,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             move_to: (a.move_to[0], a.move_to[1]),
             weapon: wid_from_str(&a.weapon_id),
             target: (a.target[0], a.target[1]),
+            target2: a.target2.map(|t| (t[0], t[1])),
             description: String::new(),
         }).collect();
 
@@ -347,6 +353,8 @@ fn project_plan_scenarios(
             move_to: [u8; 2],
             weapon_id: String,
             target: [u8; 2],
+            #[serde(default)]
+            target2: Option<[u8; 2]>,
         }
         let raw_plan: Vec<PlanAction> = serde_json::from_str(plan_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(
@@ -358,6 +366,7 @@ fn project_plan_scenarios(
             move_to: (a.move_to[0], a.move_to[1]),
             weapon: wid_from_str(&a.weapon_id),
             target: (a.target[0], a.target[1]),
+            target2: a.target2.map(|t| (t[0], t[1])),
             description: String::new(),
         }).collect();
 
@@ -1861,7 +1870,21 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260623_105703_708 Bad Repairs turn 1, where BomlingMech healed from
 //   1/3 to live 3/3 but the sim projected 5/3. Pre-v274 corpus archived as
 //   failure_db_snapshot_sim_v273.jsonl.
-pub const SIMULATOR_VERSION: u32 = 274;
+// v275 - Science_TC_SwapOther Force Swap is a first-class two-target action:
+//   solver/replay/bridge JSON carry target2, and the simulator swaps the
+//   adjacent first target with the second target plus A/B upgrade effects.
+//   Pre-v275 corpus archived as failure_db_snapshot_sim_v274.jsonl.
+// v276 - A queued shot normalized off-board by the bridge is a canceled attack,
+//   not an unknown phantom attack. This prevents conservative phantom damage
+//   after Force Swap moves artillery Vek so their preserved offset points off
+//   the board. Pre-v276 corpus archived as failure_db_snapshot_sim_v275.jsonl.
+// v277 - AP Cannon's second-target damage does not receive generic Boost and
+//   its direct edge push does not add off-board bump damage. Fixes
+//   Bombermechs Complete Victory run 20260623_105703_708 Mission_ScarabBoss
+//   turn 4, where upgraded AP left the Scarab Leader at 1 HP live but Rust
+//   predicted a kill. Pre-v277 corpus archived as
+//   failure_db_snapshot_sim_v276.jsonl.
+pub const SIMULATOR_VERSION: u32 = 277;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

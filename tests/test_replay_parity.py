@@ -109,7 +109,8 @@ EXPECTED_SNAP_KEYS = {
 
 EXPECTED_UNIT_KEYS = {
     "uid", "type", "pos", "hp", "max_hp", "alive", "active",
-    "is_mech", "team", "status",
+    "is_mech", "team", "queued_target", "queued_origin",
+    "has_queued_attack", "status",
 }
 EXPECTED_STATUS_KEYS = {"fire", "acid", "frozen", "shield", "web", "boosted"}
 
@@ -191,6 +192,44 @@ def test_replay_solution_preserves_boosted_status():
     post_attack_units = data["predicted_states"][0]["post_attack"]["units"]
     jet = next(u for u in post_attack_units if u["uid"] == 0)
     assert jet["status"]["boosted"] is True
+
+
+@pytest.mark.regression
+def test_replay_solution_preserves_queued_attack_metadata():
+    """Queued attack metadata must survive replay snapshots for re-solves."""
+    import itb_solver
+
+    bridge = {
+        "tiles": [],
+        "units": [
+            {"uid": 1, "type": "PunchMech", "x": 4, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": True,
+             "move": 4, "active": True, "weapons": ["Prime_Punchmech"]},
+            {"uid": 99, "type": "BurnbugBoss", "x": 4, "y": 2,
+             "hp": 6, "max_hp": 6, "team": 6, "weapons": ["BurnbugAtkB"],
+             "has_queued_attack": True,
+             "queued_target": [3, 2],
+             "queued_origin": [4, 2]},
+        ],
+        "grid_power": 7, "grid_power_max": 7,
+        "spawning_tiles": [], "environment_danger": [],
+        "remaining_spawns": 0, "turn": 1, "total_turns": 5,
+    }
+    plan = [{
+        "mech_uid": 1,
+        "move_to": [4, 4],
+        "weapon_id": "None",
+        "target": [255, 255],
+    }]
+
+    raw = itb_solver.replay_solution(json.dumps(bridge), json.dumps(plan))
+    data = json.loads(raw)
+    for phase in ("post_move", "post_attack"):
+        units = data["predicted_states"][0][phase]["units"]
+        boss = next(u for u in units if u["uid"] == 99)
+        assert boss["queued_target"] == [3, 2]
+        assert boss["queued_origin"] == [4, 2]
+        assert boss["has_queued_attack"] is True
 
 
 @pytest.mark.regression

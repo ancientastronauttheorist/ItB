@@ -118,6 +118,7 @@ class MechAction:
     move_to: tuple[int, int]
     weapon: str
     target: tuple[int, int]
+    target2: tuple[int, int] | None = None
     description: str = ""
 
 
@@ -204,12 +205,15 @@ def replay_solution(
         if mt is None:
             mt = bridge_units_by_uid.get(int(a.mech_uid), (0, 0))
         target = a.target if a.target is not None else (255, 255)
-        plan.append({
+        item = {
             "mech_uid":  int(a.mech_uid),
             "move_to":   [int(mt[0]), int(mt[1])],
             "weapon_id": a.weapon or "None",
             "target":    [int(target[0]), int(target[1])],
-        })
+        }
+        if a.target2 is not None:
+            item["target2"] = [int(a.target2[0]), int(a.target2[1])]
+        plan.append(item)
     replay_annotations = _replay_annotations_for_plan(plan)
 
     raw = itb_solver.replay_solution(_json.dumps(bridge_data), _json.dumps(plan))

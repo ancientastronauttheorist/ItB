@@ -514,9 +514,10 @@ _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
     "reward_continue": (1647, 985),
     "pod_open_door": (1605, 795),
     "dialogue_textbox": (1390, 555),
-    "modal_understood": (1290, 885),
+    "modal_understood": (1305, 835),
     "panel_continue": (1500, 900),
     "perfect_reward_grid": (1460, 810),
+    "spend_reputation": (1285, 1360),
     "leave_island": (1280, 1395),
     "leave_confirm_yes": (1208, 795),
     "end_turn_confirm_yes": (1208, 742),
@@ -532,6 +533,7 @@ _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
     "abandon_pilot_slot_right": (1385, 660),
     "island_archive": (600, 430),
     "island_rst": (850, 960),
+    "reset_turn": (641, 115),
     "end_turn": (252, 190),
 }
 

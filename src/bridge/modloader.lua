@@ -1756,13 +1756,7 @@ local function execute_prime_tc_punt(pawn, wname, tx, ty)
            first.x .. "," .. first.y .. " landing=" .. tx .. "," .. ty
 end
 
--- execute_weapon_by_slot: fire weapon using a 0-based slot index from
--- the Python side (maps to 1-indexed Lua SkillList).
--- This avoids name-matching issues where the solver's weapon ID doesn't
--- match the pawn type's SkillList entry (e.g. purchased / upgraded weapons,
--- or names the Rust solver doesn't recognise → "Unknown").
-local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
-    -- weapon_slot is 0-based from Python; Lua SkillList is 1-indexed
+local function effective_weapon_name_by_slot(pawn, weapon_slot)
     local slot = weapon_slot + 1
     local ptype = pawn:GetType()
     local pawn_def = _G[ptype]
@@ -1771,10 +1765,11 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
         skill_count = #pawn_def.SkillList
     end
     if skill_count == 0 or slot > skill_count then
-        return false, "weapon slot " .. weapon_slot ..
+        return nil, nil, nil, "weapon slot " .. weapon_slot ..
                " out of range (pawn " .. ptype ..
                " has " .. skill_count .. " skills)"
     end
+
     local uid = nil
     local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
     if ok_uid then uid = uid_val end
@@ -1782,6 +1777,84 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     local save_data = _read_save_data()
     local wname, wsource =
         effective_weapon_from_save(save_data, uid, weapon_slot, base_wname)
+    return wname, base_wname, slot, nil, wsource, pawn_def, uid
+end
+
+local function pawn_is_guarding(pawn)
+    local ok_guard, guard_val = pcall(function() return pawn:IsGuarding() end)
+    return ok_guard and guard_val
+end
+
+local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
+    local wname, _base_wname, slot, err =
+        effective_weapon_name_by_slot(pawn, weapon_slot)
+    if err ~= nil then
+        return false, err
+    end
+    if string.find(wname, "^Science_TC_SwapOther") == nil then
+        return false, "unsupported two-click weapon " .. tostring(wname)
+    end
+    local skill = _G[wname]
+    if not skill then
+        return false, "Force Swap skill missing: " .. tostring(wname)
+    end
+
+    local source = pawn:GetSpace()
+    local first = Point(tx1, ty1)
+    local second = Point(tx2, ty2)
+    if not Board:IsValid(first) or not Board:IsValid(second) then
+        return false, "Force Swap target off-board"
+    end
+    local dist = math.abs(first.x - source.x) + math.abs(first.y - source.y)
+    if dist ~= 1 then
+        return false, "Force Swap first target not adjacent " ..
+               first.x .. "," .. first.y .. " from " ..
+               source.x .. "," .. source.y
+    end
+    local first_pawn = Board:GetPawn(first)
+    local second_pawn = Board:GetPawn(second)
+    if not first_pawn then
+        return false, "Force Swap first click has no pawn at " ..
+               first.x .. "," .. first.y
+    end
+    if not second_pawn then
+        return false, "Force Swap second click has no pawn at " ..
+               second.x .. "," .. second.y
+    end
+    if first.x == second.x and first.y == second.y then
+        return false, "Force Swap targets must be different"
+    end
+    if pawn_is_guarding(first_pawn) or pawn_is_guarding(second_pawn) then
+        return false, "Force Swap target is guarding/stable"
+    end
+
+    local ok, fx_err = pcall(function()
+        Board:AddEffect(skill:GetFinalEffect(source, first, second))
+    end)
+    if not ok then
+        return false, "Force Swap GetFinalEffect failed: " .. tostring(fx_err)
+    end
+    log_bridge("FIRE: " .. wname .. " two_click slot=" .. slot .. " " ..
+               source.x .. "," .. source.y .. " -> " ..
+               first.x .. "," .. first.y .. " -> " ..
+               second.x .. "," .. second.y)
+    return true, "GetFinalEffect(" .. wname .. ") first=" ..
+           first.x .. "," .. first.y .. " second=" ..
+           second.x .. "," .. second.y
+end
+
+-- execute_weapon_by_slot: fire weapon using a 0-based slot index from
+-- the Python side (maps to 1-indexed Lua SkillList).
+-- This avoids name-matching issues where the solver's weapon ID doesn't
+-- match the pawn type's SkillList entry (e.g. purchased / upgraded weapons,
+-- or names the Rust solver doesn't recognise → "Unknown").
+local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
+    -- weapon_slot is 0-based from Python; Lua SkillList is 1-indexed
+    local wname, base_wname, slot, err, wsource, pawn_def, uid =
+        effective_weapon_name_by_slot(pawn, weapon_slot)
+    if err ~= nil then
+        return false, err
+    end
     local restore_wname = nil
     if wname ~= base_wname then
         restore_wname = base_wname
@@ -2144,6 +2217,35 @@ local function execute_command(cmd_str)
         pawn:SetActive(false)
         write_ack("OK ATTACK " .. uid .. " slot=" .. weapon_slot .. " at " ..
                   tx .. "," .. ty .. " [" .. method .. "]")
+
+    elseif cmd == "TWO_CLICK_ATTACK" then
+        -- TWO_CLICK_ATTACK uid weapon_slot target1_x target1_y target2_x target2_y
+        -- weapon_slot is 0-based index (0=primary, 1=secondary)
+        local uid = tonumber(parts[2])
+        local weapon_slot = tonumber(parts[3])
+        local tx1, ty1 = tonumber(parts[4]), tonumber(parts[5])
+        local tx2, ty2 = tonumber(parts[6]), tonumber(parts[7])
+        local pawn = Board:GetPawn(uid)
+        if not pawn then
+            write_ack("ERROR: pawn " .. uid .. " not found")
+            return
+        end
+        if weapon_slot == nil then
+            write_ack("ERROR: invalid weapon slot '" .. tostring(parts[3]) .. "'")
+            return
+        end
+        local ok, method = execute_two_click_by_slot(
+            pawn, weapon_slot, tx1, ty1, tx2, ty2
+        )
+        if not ok then
+            write_ack("ERROR: " .. method)
+            return
+        end
+        wait_for_board_coro()
+        pawn:SetActive(false)
+        write_ack("OK TWO_CLICK_ATTACK " .. uid .. " slot=" .. weapon_slot ..
+                  " at " .. tx1 .. "," .. ty1 .. " and " ..
+                  tx2 .. "," .. ty2 .. " [" .. method .. "]")
 
     elseif cmd == "MOVE_ATTACK" then
         -- MOVE_ATTACK uid mx my weapon_slot tx ty
