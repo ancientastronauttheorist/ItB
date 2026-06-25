@@ -4469,7 +4469,9 @@ fn sim_arachnoid_injector(
     board.units[idx].x = 8;
     board.units[idx].y = 8;
     let acid_attack = arachnoid_injector_spawns_acid_attack(weapon_id);
-    spawn_arachnoid(board, tx, ty, acid_attack, result);
+    if spawn_arachnoid(board, tx, ty, acid_attack, result) {
+        result.events.push(format!("achievement_spider_breeding:spawn:{}:{}", tx, ty));
+    }
 }
 
 // ── Self AoE ─────────────────────────────────────────────────────────────────

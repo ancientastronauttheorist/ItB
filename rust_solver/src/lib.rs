@@ -63,6 +63,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::movement::illegal_move_reason;
     use crate::simulate::simulate_action_with_target2;
     use crate::solver::{
+        arachnoid_spawns_from_events,
         reverse_thrusters_four_damage_from_events,
         viscera_nanobots_heal_from_events,
     };
@@ -110,6 +111,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut bumps = 0i32;
         let mut nanobots_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
+        let mut arachnoid_spawns = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
@@ -139,6 +141,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             nanobots_heal += viscera_nanobots_heal_from_events(&result.events);
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
+            arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
             kills += result.enemies_killed as i32;
             mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -184,7 +187,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             + consumed_spawn_block_bonus(&board, &spawn_points, &weights, spawn_block_result.spawns_blocked)
             + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus
             + reverse_thrusters_four_damage as f64
-                * weights.reverse_thrusters_four_damage_bonus;
+                * weights.reverse_thrusters_four_damage_bonus
+            + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus;
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -206,6 +210,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "judo_hp": judo_hp,
             "kills": kills,
             "mission_kills": mission_kills,
+            "arachnoid_spawns": arachnoid_spawns,
             "bldgs_alive": bldgs_alive,
             "bldg_hp_total": bldg_hp_total,
             "dead_mechs": dead_mechs,

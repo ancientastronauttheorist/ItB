@@ -255,6 +255,17 @@ def _achievement_weight_overlay(
         )
         applied.append("feed_the_flame")
 
+    if "spider breeding" in normalized_targets:
+        # Arachnophiles: the achievement counter advances only when the
+        # Arachnoid Injector lands the killing blow and spawns a friendly
+        # Arachnoid. Reward the exact simulator event so safe setup/last-hit
+        # lines beat ordinary cleanup during this hunt.
+        weights["arachnoid_spawn_bonus"] = max(
+            float(weights.get("arachnoid_spawn_bonus", 0) or 0),
+            120000.0,
+        )
+        applied.append("spider_breeding")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove
