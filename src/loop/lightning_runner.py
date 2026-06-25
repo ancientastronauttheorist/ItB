@@ -2818,7 +2818,10 @@ class LightningWarRunner:
                     session_load=session_block,
                     segment=_compact(segment),
                 )
-            pace_gate = self._pace_gate(session, best_timer)
+            pace_gate = self._segment_initial_pace_gate(
+                session,
+                segment,
+            ) or self._pace_gate(session, best_timer)
             if (
                 deployment_handoff_grace_segments > 0
                 and pace_gate is not None
@@ -3097,7 +3100,10 @@ class LightningWarRunner:
                     session_load=session_block,
                     segment=_compact(segment),
                 )
-            pace_gate = self._pace_gate(session, best_timer)
+            pace_gate = self._segment_initial_pace_gate(
+                session,
+                segment,
+            ) or self._pace_gate(session, best_timer)
             if (
                 deployment_handoff_grace_segments > 0
                 and pace_gate is not None
@@ -3740,6 +3746,8 @@ class LightningWarRunner:
 
         segment_failure = _segment_failure_evidence(segment)
         if segment_failure is not None:
+            if self._segment_initial_pace_gate(session, segment) is not None:
+                return None
             event_error = self._best_effort_event(
                 "segment_failed",
                 status="BLOCKED",
@@ -3764,6 +3772,66 @@ class LightningWarRunner:
                 **_telemetry_errors_payload(telemetry_errors),
             )
         return None
+
+    def _segment_initial_pace_gate(
+        self,
+        session: Any,
+        segment: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        cfg = self.config
+        if not cfg.speed_mode or not isinstance(segment, dict):
+            return None
+        reason = str(segment.get("reason") or "")
+        if reason != "first_mission_start_timer_not_reset":
+            return None
+
+        completed = _completed_islands(session)
+        current_mission = str(getattr(session, "current_mission", "") or "").strip()
+        mission_index = _safe_int(getattr(session, "mission_index", 0) or 0)
+        if completed or current_mission or mission_index > 0:
+            return None
+
+        guard = segment.get("first_mission_start_timer_guard")
+        if not isinstance(guard, dict):
+            guard = {}
+        visible_timer = guard.get("visible_timer")
+        if not isinstance(visible_timer, dict):
+            visible_timer = {}
+        budget = guard.get("game_budget")
+        if not isinstance(budget, dict):
+            budget = {}
+
+        game_seconds = _timer_seconds(segment)
+        if game_seconds is None and visible_timer.get("game_seconds") is not None:
+            game_seconds = _safe_float(visible_timer.get("game_seconds"))
+        if game_seconds is None and budget.get("game_seconds") is not None:
+            game_seconds = _safe_float(budget.get("game_seconds"))
+        if game_seconds is None:
+            return None
+
+        gate_seconds = None
+        for candidate in (
+            budget.get("max_game_seconds"),
+            guard.get("gate_seconds"),
+            cfg.first_mission_route_start_gate_seconds,
+        ):
+            if candidate is None:
+                continue
+            gate_seconds = _safe_float(candidate)
+            break
+
+        return {
+            "reason": reason,
+            "game_seconds": round(float(game_seconds), 3),
+            "game_timer": _timer_label(segment) or _format_seconds(game_seconds),
+            "gate_seconds": float(gate_seconds) if gate_seconds is not None else None,
+            "gate_timer": _format_seconds(gate_seconds),
+            "islands_completed": completed,
+            "current_mission": current_mission,
+            "mission_index": mission_index,
+            "visible_timer": _compact(visible_timer) if visible_timer else None,
+            "first_mission_start_timer_guard": _compact(guard) if guard else None,
+        }
 
     def _start_from_setup(
         self,
@@ -5736,6 +5804,7 @@ class LightningWarRunner:
         pace_reason = str(pace_gate.get("reason") or "")
         if pace_reason not in {
             "mission_segment_pace_gate",
+            "first_mission_start_timer_not_reset",
             "first_mission_start_pace_gate",
             "first_mission_route_start_pace_gate",
             "first_island_pace_gate",

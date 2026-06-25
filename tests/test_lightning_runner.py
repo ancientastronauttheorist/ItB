@@ -8268,6 +8268,76 @@ def test_runner_restarts_segment_first_mission_route_start_pace_gate():
     assert len(segments) == 2
 
 
+def test_runner_restarts_segment_first_mission_timer_not_reset():
+    session = SimpleNamespace(
+        run_id="20260625_135531_717",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+    )
+    abandons = []
+    starts = []
+    segments = []
+
+    def start_run(**kwargs):
+        starts.append(kwargs)
+        session.current_island = kwargs.get("first_island") or "rst"
+        session.current_mission = ""
+        session.mission_index = 0
+        session.islands_completed = []
+        return {"status": "OK", "reason": "first_island_paused"}
+
+    def segment(**kwargs):
+        segments.append(kwargs)
+        if len(segments) == 1:
+            return {
+                "status": "BLOCKED",
+                "reason": "first_mission_start_timer_not_reset",
+                "first_mission_start_timer_guard": {
+                    "status": "BLOCKED",
+                    "reason": "first_mission_start_timer_not_reset",
+                    "visible_timer": {
+                        "status": "OK",
+                        "game_seconds": 32.0,
+                        "game_timer": "0:00:32",
+                    },
+                },
+                "pause_guard": pause_menu(),
+            }
+        session.islands_completed = ["archive", "rst"]
+        return {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": "max_steps_reached",
+            "pause_guard": pause_menu(),
+        }
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=lambda **_: pause_menu(),
+        cmd_lightning_ui=lambda *args, **kwargs: pause_menu(),
+        cmd_verify_setup_screen=lambda **_: {"status": "PASS"},
+        cmd_lightning_start_run=start_run,
+        cmd_lightning_preflight=lambda **_: preflight_pass(),
+        cmd_lightning_segment=segment,
+        cmd_lightning_abandon_to_setup=lambda **kwargs: abandons.append(kwargs)
+        or {"status": "OK", "reason": "abandoned_to_new_game_setup"},
+        cmd_lightning_peek=completion_peek(),
+    )
+
+    result = make_runner(mode="speed", max_attempts=2)._run_inner(commands)
+
+    assert result["status"] == "SUCCESS"
+    assert result["reason"] == "target_islands_completed"
+    assert len(abandons) == 1
+    assert abandons[0]["reason"] == "first_mission_start_timer_not_reset_attempt_1"
+    assert starts[0]["first_island"] == "rst"
+    assert len(segments) == 2
+
+
 def test_runner_carries_pending_route_retry_after_segment_wall_cap():
     session = SimpleNamespace(
         run_id="20260621_015027_668",
