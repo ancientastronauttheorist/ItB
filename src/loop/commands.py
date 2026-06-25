@@ -13223,6 +13223,8 @@ def _lightning_pause_menu_has_started_mission_underlay(
         return False
     if not bool(signals.get("left_mechs")):
         return False
+    if not (bool(signals.get("right_objectives")) or bool(signals.get("board_right"))):
+        return False
     island_map = scores.get("island_map")
     try:
         island_colored = (
@@ -30914,14 +30916,16 @@ def cmd_lightning_segment(
                         last_route_start = {
                             **route_start,
                             "status": "OK",
-                            "reason": route_summary["reason"],
+                            "reason": "deployment_waiting_for_ui_settle",
                             "paused_deployment_visible_ui": (
                                 transition_retry_hint.get("visible_ui")
                             ),
+                            "route_auto_start_paused_deployment_handoff": True,
                         }
                         if settle_seconds > 0:
                             time.sleep(settle_seconds)
-                        continue
+                        stopped_reason = "deployment_waiting_for_ui_settle"
+                        break
                     if transition_retry_hint.get("kind") == "intro_continue":
                         intro_clear = _lightning_clear_tail_to_pause(
                             max_steps=8,
@@ -31633,14 +31637,16 @@ def cmd_lightning_segment(
                             last_route_start = {
                                 **route_start,
                                 "status": "OK",
-                                "reason": route_summary["reason"],
+                                "reason": "deployment_waiting_for_ui_settle",
                                 "paused_deployment_visible_ui": (
                                     transition_retry_hint.get("visible_ui")
                                 ),
+                                "route_auto_start_paused_deployment_handoff": True,
                             }
                             if settle_seconds > 0:
                                 time.sleep(settle_seconds)
-                            continue
+                            stopped_reason = "deployment_waiting_for_ui_settle"
+                            break
                         if transition_retry_hint.get("kind") == "intro_continue":
                             intro_clear = _lightning_clear_tail_to_pause(
                                 max_steps=8,

@@ -15596,6 +15596,11 @@ def test_lightning_segment_starts_route_from_stale_deployment_map(monkeypatch):
         "_lightning_first_mission_route_start_pace_gate",
         lambda **kwargs: None,
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_route_retry_budget_exhausted",
+        lambda *args, **kwargs: False,
+    )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
     result = commands.cmd_lightning_segment(
@@ -15675,6 +15680,83 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
     assert route_calls[0]["start_mode"] == "visible-text"
     assert result["steps"][0]["route_auto_start_mission"] == "Mission_Train"
     assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
+
+
+def test_lightning_segment_stops_on_paused_deployment_transition_handoff(monkeypatch):
+    attempts = [
+        {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "primary_route_candidate": {
+                "index": 0,
+                "mission_id": "Mission_GenericThreat",
+                "auto_route_allowed": True,
+            },
+        },
+    ]
+    attempt_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return attempts[len(attempt_calls) - 1]
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: {
+            "status": "BLOCKED",
+            "reason": "route_start_commit_no_transition",
+            "click_result": {
+                "route_start_transition_block": {
+                    "post_start_pause_snapshot": {
+                        "status": "OK",
+                        "evidence_ui": {
+                            "status": "OK",
+                            "visible_ui": "pause_menu",
+                            "pause_ocr_match": "Timeline Playtime",
+                            "scores": {
+                                "paused_deployment_underlay": {
+                                    "visible": True,
+                                    "active_mission_under_pause": True,
+                                    "signals": {
+                                        "left_mechs": True,
+                                        "right_objectives": True,
+                                    },
+                                },
+                                "mission_preview_dialogue": {"score": 0.0},
+                                "mission_preview_panel": {"yellow": 0},
+                                "island_map": {"colored": 0},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_route_retry_budget_exhausted",
+        lambda *args, **kwargs: False,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=3, route_auto_start=True)
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["route_start_performed"] is True
+    assert len(attempt_calls) == 1
+    assert result["steps_attempted"] == 2
+    assert result["steps"][1]["route_auto_start_paused_deployment_handoff"] is True
 
 
 def test_lightning_segment_probes_auto_start_without_expected_mission(monkeypatch):
@@ -17186,6 +17268,11 @@ def test_lightning_segment_speed_retries_unknown_preview_probe(monkeypatch):
         "_lightning_first_mission_route_start_pace_gate",
         lambda **kwargs: None,
     )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_route_retry_budget_exhausted",
+        lambda *args, **kwargs: False,
+    )
 
     result = commands.cmd_lightning_segment(
         route_auto_start=True,
@@ -18059,6 +18146,11 @@ def test_lightning_segment_does_not_repeat_failed_alternate_click(monkeypatch):
         commands,
         "_lightning_first_mission_route_start_pace_gate",
         lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_route_retry_budget_exhausted",
+        lambda *args, **kwargs: False,
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -19499,6 +19591,11 @@ def test_lightning_segment_retries_after_preview_mismatch(
         commands,
         "_lightning_first_mission_route_start_pace_gate",
         lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_route_retry_budget_exhausted",
+        lambda *args, **kwargs: False,
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -35238,3 +35335,28 @@ def test_lightning_pause_deployment_underlay_accepts_clean_pause_menu():
     }
 
     assert commands._lightning_pause_menu_has_deployment_underlay(visible_ui)
+
+
+def test_lightning_started_mission_underlay_rejects_weak_left_mech_only_pause():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "pause_menu",
+        "pause_ocr_match": "Timeline Playtime",
+        "scores": {
+            "paused_deployment_underlay": {
+                "visible": False,
+                "active_mission_under_pause": True,
+                "signal_count": 2,
+                "signals": {
+                    "active_mission_header": True,
+                    "left_mechs": True,
+                    "right_objectives": False,
+                    "board_right": False,
+                },
+            },
+            "mission_preview_panel": {"yellow": 0},
+            "island_map": {"colored": 1574},
+        },
+    }
+
+    assert not commands._lightning_pause_menu_has_started_mission_underlay(visible_ui)
