@@ -701,7 +701,6 @@ def _timer_candidates(
 ) -> list[tuple[float, str | None]]:
     if not isinstance(result, dict):
         return []
-    candidates: list[tuple[float, str | None]] = []
     container_keys = (
         ("game_budget", False),
         ("effective_timer", False),
@@ -709,26 +708,44 @@ def _timer_candidates(
         ("visible_timer", True),
         ("visible_timer_budget", True),
     )
-    for key, is_visible in container_keys:
-        if visible_only and not is_visible:
-            continue
-        container = result.get(key)
-        if isinstance(container, dict) and container.get("game_seconds") is not None:
-            try:
-                seconds = float(container["game_seconds"])
-            except (TypeError, ValueError):
-                continue
-            label = (
-                str(container["game_timer"])
-                if container.get("game_timer") is not None
-                else None
-            )
-            candidates.append((seconds, label))
-    for key in ("last_attempt", "guard", "pause_guard", "resume_guard"):
-        nested = result.get(key)
-        if isinstance(nested, dict):
-            candidates.extend(_timer_candidates(nested, visible_only=visible_only))
-    return candidates
+    visited: set[int] = set()
+
+    def walk(value: Any) -> list[tuple[float, str | None]]:
+        if isinstance(value, dict):
+            value_id = id(value)
+            if value_id in visited:
+                return []
+            visited.add(value_id)
+            found: list[tuple[float, str | None]] = []
+            for key, is_visible in container_keys:
+                if visible_only and not is_visible:
+                    continue
+                container = value.get(key)
+                if (
+                    isinstance(container, dict)
+                    and container.get("game_seconds") is not None
+                ):
+                    try:
+                        seconds = float(container["game_seconds"])
+                    except (TypeError, ValueError):
+                        continue
+                    label = (
+                        str(container["game_timer"])
+                        if container.get("game_timer") is not None
+                        else None
+                    )
+                    found.append((seconds, label))
+            for nested in value.values():
+                found.extend(walk(nested))
+            return found
+        if isinstance(value, list):
+            found: list[tuple[float, str | None]] = []
+            for nested in value:
+                found.extend(walk(nested))
+            return found
+        return []
+
+    return walk(result)
 
 
 def _load_current_session(commands: Any) -> Any:

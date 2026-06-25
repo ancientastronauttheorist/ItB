@@ -10674,6 +10674,7 @@ _LIGHTNING_ROUTE_AUTO_START_SPEED_VETO_MISSIONS = {
     "Mission_Dam",
     "Mission_Satellite",
     "Mission_Solar",
+    "Mission_Terraform",
     "Mission_Tides",
     "Mission_Train",
     "Mission_Volatile",
@@ -33256,6 +33257,14 @@ def _lightning_auto_start_candidate_from_recommendation(
                 out["auto_route_block_reason"] = identity_block_reason
                 blocked_candidates.append(out)
                 continue
+            if str(out.get("mission_id") or "").strip():
+                mission_veto_reason = _lightning_route_auto_start_veto_reason(
+                    out,
+                    routing=route_routing or "lightning_war",
+                )
+                if mission_veto_reason:
+                    out["auto_route_allowed"] = False
+                    out["auto_route_block_reason"] = mission_veto_reason
             live_probe_reason = _lightning_unassigned_visible_label_live_probe_reason(
                 out,
                 routing=route_routing,
@@ -33292,6 +33301,8 @@ def _lightning_auto_start_candidate_from_recommendation(
                         and str(out.get("mission_id") or "").strip()
                         in _LIGHTNING_ROUTE_AUTO_START_LAST_RESORT_MISSIONS
                     ):
+                        blocked_candidates.append(out)
+                    elif out.get("auto_route_allowed") is False:
                         blocked_candidates.append(out)
                     continue
                 out["auto_route_veto_ignored"] = "baseline_reliability_mode"

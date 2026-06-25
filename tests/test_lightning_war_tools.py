@@ -16107,6 +16107,29 @@ def test_lightning_auto_start_prefers_known_mission_before_rotated_probe():
     assert selected["mission_id"] == "Mission_Battle"
 
 
+def test_lightning_auto_start_speed_vetoes_terraform_candidate():
+    attempt = {
+        "route_start_candidates": [
+            {
+                "index": 0,
+                "window_x": 812,
+                "window_y": 423,
+                "mission_id": "Mission_Terraform",
+            },
+        ]
+    }
+
+    selected = commands._lightning_auto_start_candidate_from_recommendation(
+        attempt,
+        route_routing="lightning_war",
+        route_speed_vetoes=True,
+    )
+
+    assert selected["auto_route_allowed"] is False
+    assert selected["auto_route_block_reason"] == "vetoed_mission:Mission_Terraform"
+    assert selected["mission_id"] == "Mission_Terraform"
+
+
 def test_lightning_segment_uses_probe_offset_for_unlabeled_auto_start(monkeypatch):
     attempts = iter(
         [

@@ -5225,6 +5225,68 @@ def test_speed_mode_blocks_on_first_island_pace_gate():
     assert segment_called is False
 
 
+def test_speed_mode_pace_gate_uses_nested_visible_timer_over_stale_save_timer():
+    session = SimpleNamespace(
+        run_id="20260625_123802_340",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="rst",
+        current_mission="Mission_Terraform",
+        mission_index=0,
+        islands_completed=[],
+    )
+    segment_calls = 0
+
+    def segment(**_):
+        nonlocal segment_calls
+        segment_calls += 1
+        return {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": "combat_loop_returned",
+            "game_budget": {
+                "source": "save_profile",
+                "game_seconds": 134.0,
+                "game_timer": "0:02:14",
+            },
+            "steps": [
+                {
+                    "action": "combat_loop",
+                    "pause_before_solve": {
+                        "guard": {
+                            "metadata": {
+                                "visible_timer": {
+                                    "status": "OK",
+                                    "source": "visible_pause_menu_timer",
+                                    "game_seconds": 186.0,
+                                    "game_timer": "0:03:06",
+                                }
+                            }
+                        }
+                    },
+                }
+            ],
+        }
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=lambda **_: pause_menu(),
+        cmd_lightning_ui=lambda *args, **kwargs: pause_menu(),
+        cmd_lightning_preflight=lambda **_: preflight_with_timer(15.0),
+        cmd_lightning_segment=segment,
+        cmd_lightning_abandon_to_setup=unexpected("abandon"),
+    )
+    runner = make_runner(mode="speed", max_attempts=1, mission_segment_gate_seconds=180)
+
+    result = runner._run_inner(commands)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "mission_segment_pace_gate"
+    assert result["pace_gate"]["game_seconds"] == 186.0
+    assert result["pace_gate"]["game_timer"] == "0:03:06"
+    assert segment_calls == 1
+
+
 def test_speed_mode_second_island_gate_allows_started_mission():
     session = SimpleNamespace(
         run_id="20260606_111114_001",
