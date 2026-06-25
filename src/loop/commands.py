@@ -10152,9 +10152,7 @@ def _lightning_first_mission_route_start_pace_gate(
                 continue
             if candidate.get("visible_ui") == "deployment_screen":
                 return None
-            if _lightning_pause_menu_has_started_mission_underlay(candidate):
-                return None
-            if _lightning_visible_ui_has_existing_mission_preview(candidate):
+            if _lightning_pause_menu_has_deployment_underlay(candidate):
                 return None
     return {
         "status": "BLOCKED",
@@ -32432,6 +32430,16 @@ def _lightning_merge_route_probe_cache_entry(
     for existing in merged:
         if _lightning_route_probe_cache_key(existing) != key:
             continue
+        existing_signature = existing.get("signature")
+        entry_signature = entry.get("signature")
+        if isinstance(existing_signature, dict) and isinstance(entry_signature, dict):
+            existing_signature.update(
+                {
+                    key: value
+                    for key, value in entry_signature.items()
+                    if value is not None
+                }
+            )
         existing["hits"] = int(existing.get("hits") or 1) + int(
             entry.get("hits") or 1,
         )
@@ -32439,12 +32447,20 @@ def _lightning_merge_route_probe_cache_entry(
             "last_seen_run_id",
             "visible_preview_ocr_reason",
             "auto_route_block_reason",
+            "actual_preview_mission_id",
+            "visible_label",
+            "label_key",
+            "window_x",
+            "window_y",
+            "visual_region_window_x",
+            "visual_region_window_y",
+            "route_click_source",
         ):
             if entry.get(field) is not None:
                 existing[field] = entry.get(field)
-        return merged[-cap:]
-    merged.append(dict(entry))
-    return merged[-cap:]
+        return merged[:cap]
+    merged.insert(0, dict(entry))
+    return merged[:cap]
 
 
 def _lightning_route_probe_cache_entry_summary(entry: dict) -> dict:

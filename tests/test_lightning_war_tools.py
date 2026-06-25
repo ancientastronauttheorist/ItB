@@ -15456,6 +15456,19 @@ def test_lightning_segment_blocks_late_first_mission_route_start(monkeypatch):
             AssertionError("route start should be gated before subcall")
         ),
     )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_snap_pause",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "pause_verified": True,
+            "evidence_ui": {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "scores": {},
+            },
+        },
+    )
 
     result = commands.cmd_lightning_segment(
         route_visual_region_index=0,
@@ -15472,6 +15485,64 @@ def test_lightning_segment_blocks_late_first_mission_route_start(monkeypatch):
     assert result["first_mission_route_start_gate"]["visible_timer"]["ocr_text"] == (
         "Oh Om 3Os"
     )
+
+
+def test_lightning_route_gate_blocks_late_existing_preview(monkeypatch):
+    session = SimpleNamespace(
+        run_id="fresh_lw_preview",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="rst",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+    )
+    preview_ui = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "scores": {
+            "mission_preview_panel": {
+                "score": 0.02,
+                "yellow": 2500,
+            },
+        },
+        "visible_preview_ocr": {
+            "status": "OK",
+            "source": "visible_preview_ocr",
+            "mission_id": "Mission_Train",
+        },
+    }
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_visible_pause_timer",
+        lambda: {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 45.0,
+            "game_timer": "0:00:45",
+            "timeline_label_seen": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_snap_pause",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "pause_verified": True,
+            "evidence_ui": preview_ui,
+        },
+    )
+
+    result = commands._lightning_first_mission_route_start_pace_gate()
+
+    assert result is not None
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "first_mission_route_start_pace_gate"
+    assert result["deployment_probe"]["evidence_ui"] == preview_ui
 
 
 def test_lightning_segment_stops_on_visible_map_without_bridge(monkeypatch):

@@ -5258,22 +5258,37 @@ class LightningWarRunner:
         ]
         for existing in merged:
             if cls._route_probe_cache_key(existing) == key:
+                existing_signature = existing.get("signature")
+                entry_signature = entry.get("signature")
+                if isinstance(existing_signature, dict) and isinstance(entry_signature, dict):
+                    existing_signature.update(
+                        {
+                            key: value
+                            for key, value in entry_signature.items()
+                            if value is not None
+                        }
+                    )
                 existing["hits"] = int(existing.get("hits") or 1) + int(
                     entry.get("hits") or 1,
                 )
-                if entry.get("last_seen_run_id") is not None:
-                    existing["last_seen_run_id"] = entry.get("last_seen_run_id")
-                if entry.get("visible_preview_ocr_reason") is not None:
-                    existing["visible_preview_ocr_reason"] = entry.get(
-                        "visible_preview_ocr_reason",
-                    )
-                if entry.get("auto_route_block_reason") is not None:
-                    existing["auto_route_block_reason"] = entry.get(
-                        "auto_route_block_reason",
-                    )
-                return merged[-cap:]
-        merged.append(dict(entry))
-        return merged[-cap:]
+                for field in (
+                    "last_seen_run_id",
+                    "visible_preview_ocr_reason",
+                    "auto_route_block_reason",
+                    "actual_preview_mission_id",
+                    "visible_label",
+                    "label_key",
+                    "window_x",
+                    "window_y",
+                    "visual_region_window_x",
+                    "visual_region_window_y",
+                    "route_click_source",
+                ):
+                    if entry.get(field) is not None:
+                        existing[field] = entry.get(field)
+                return merged[:cap]
+        merged.insert(0, dict(entry))
+        return merged[:cap]
 
     def _route_probe_cache_for_segment(self, session: Any) -> list[dict[str, Any]]:
         self._rehydrate_recent_route_probe_cache()
@@ -5285,8 +5300,18 @@ class LightningWarRunner:
                 for item in session_cache
                 if isinstance(item, dict)
             )
-        for entry in self.route_probe_cache:
+        for entry in reversed(self.route_probe_cache):
             cache = self._merge_route_probe_cache_entry(cache, entry)
+        current_run_id = str(getattr(session, "run_id", "") or "").strip()
+        if current_run_id:
+            cache.sort(
+                key=lambda entry: (
+                    0
+                    if str(entry.get("last_seen_run_id") or "") == current_run_id
+                    or str(entry.get("first_seen_run_id") or "") == current_run_id
+                    else 1
+                ),
+            )
         return cache
 
     def _rehydrate_recent_route_probe_cache(self, *, force: bool = False) -> None:
