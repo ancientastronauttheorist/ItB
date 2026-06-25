@@ -31367,6 +31367,9 @@ def cmd_lightning_segment(
 
         success_reason = _lightning_segment_success_reason(attempt)
         if success_reason:
+            if success_reason == "terminal_or_mission_end":
+                stopped_reason = success_reason
+                break
             if not route_start_pending and route_auto_start:
                 primary = _lightning_auto_start_candidate_from_recommendation(
                     attempt,
@@ -32020,6 +32023,13 @@ def cmd_lightning_segment(
 
         stopped_reason = str(attempt.get("reason") or attempt.get("status"))
         break
+
+    if (
+        stopped_reason == "route_auto_start_not_allowed"
+        and isinstance(last_attempt, dict)
+        and _lightning_segment_success_reason(last_attempt) == "terminal_or_mission_end"
+    ):
+        stopped_reason = "terminal_or_mission_end"
 
     result = {
         "status": "LIGHTNING_SEGMENT_STOPPED",

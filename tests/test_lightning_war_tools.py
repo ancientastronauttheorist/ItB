@@ -15097,6 +15097,37 @@ def test_lightning_segment_stops_on_terminal_mission_end(monkeypatch):
     assert len(calls) == 1
 
 
+def test_lightning_segment_terminal_end_ignores_stale_route_auto_start_block(
+    monkeypatch,
+):
+    def fake_attempt(**kwargs):
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "combat_loop_returned",
+            "action": {
+                "action": "combat_loop",
+                "combat_loop": {"reason": "terminal_or_mission_end"},
+            },
+            "primary_route_candidate": {
+                "index": 0,
+                "mission_id": "Mission_Solar",
+                "auto_route_allowed": False,
+                "auto_route_block_reason": "vetoed_mission:Mission_Solar",
+            },
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+
+    result = commands.cmd_lightning_segment(
+        route_auto_start=True,
+        pause_on_stop=False,
+    )
+
+    assert result["reason"] == "terminal_or_mission_end"
+    assert "route_auto_start_blocked_candidate" not in result["steps"][0]
+    assert "route_auto_start_rejected_candidates" not in result
+
+
 def test_lightning_segment_dirty_consent_survives_panel_clear_until_combat(monkeypatch):
     attempts = iter(
         [
