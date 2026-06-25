@@ -5287,6 +5287,36 @@ def test_speed_mode_pace_gate_uses_nested_visible_timer_over_stale_save_timer():
     assert segment_calls == 1
 
 
+def test_timer_seconds_uses_nested_pause_menu_ocr_over_stale_visible_sample():
+    result = {
+        "visible_timer": {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 32.0,
+            "game_timer": "0:00:32",
+        },
+        "steps": [
+            {
+                "pause_before_solve": {
+                    "pause_result": {
+                        "pause_verify": {
+                            "visible_ui": "pause_menu",
+                            "pause_ocr_match": "Timeline Playtime",
+                            "ocr_texts": [
+                                "Timeline Playtime",
+                                "Oh 2m 075",
+                            ],
+                        }
+                    }
+                }
+            }
+        ],
+    }
+
+    assert lightning_runner._timer_seconds(result) == 127.0
+    assert lightning_runner._timer_label(result) == "0:02:07"
+
+
 def test_speed_mode_second_island_gate_allows_started_mission():
     session = SimpleNamespace(
         run_id="20260606_111114_001",

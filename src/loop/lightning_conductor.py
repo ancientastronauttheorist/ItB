@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -694,6 +695,98 @@ def _timer_label(result: dict[str, Any] | None) -> str | None:
     return max(candidates, key=lambda item: item[0])[1]
 
 
+def _parse_visible_timer_ocr_seconds(text: str | None) -> int | None:
+    raw = str(text or "").strip()
+    spaced_colon = re.search(
+        r"(?<![0-9oil])([0-9oil])\s+([0-9oil]{1,2}:[0-9oil]{1,2}:[0-9oil]{1,2})(?![0-9oil])",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    if spaced_colon:
+        parsed = _parse_visible_timer_ocr_seconds(spaced_colon.group(2))
+        if parsed is not None:
+            return parsed
+    if not re.search(r"\d\s+\d", raw):
+        colon = re.search(
+            r"(?<![0-9])([0-9]{1,2}:[0-9]{1,2}(?::[0-9]{1,2})?)(?![0-9])",
+            raw,
+        )
+        if colon:
+            parts = [int(part) for part in colon.group(1).split(":")]
+            if len(parts) == 2 and parts[1] < 60:
+                return parts[0] * 60 + parts[1]
+            if len(parts) == 3 and parts[1] < 60 and parts[2] < 60:
+                return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    compact = raw.lower().replace(" ", "")
+    if not compact:
+        return None
+
+    def digits(value: str) -> str:
+        return value.translate(str.maketrans({"o": "0", "i": "1", "l": "1"}))
+
+    match = re.search(r"([0-9oil]+)h([0-9oil]+)m([0-9oil]+)(?:s|5)?", compact)
+    if match:
+        hours = int(digits(match.group(1)))
+        minutes = int(digits(match.group(2)))
+        second_text = digits(match.group(3))
+        if len(second_text) > 2 and int(second_text) > 59:
+            second_text = second_text[:-1]
+        if len(second_text) > 2:
+            second_text = second_text[:2]
+        seconds = int(second_text or "0")
+        if minutes < 60 and seconds < 60:
+            return hours * 3600 + minutes * 60 + seconds
+    colon_match = re.search(
+        r"(?<![0-9oil])([0-9oil]{1,2}:[0-9oil]{1,2}(?::[0-9oil]{1,2})?)(?![0-9oil])",
+        compact,
+    )
+    if colon_match:
+        return _parse_visible_timer_ocr_seconds(digits(colon_match.group(1)))
+    dotted_match = re.search(
+        r"(?<![0-9oil])([0-9oil]{1,2}\.[0-9oil]{1,2}(?:\.[0-9oil]{1,2})?)(?![0-9oil])",
+        compact,
+    )
+    if dotted_match:
+        return _parse_visible_timer_ocr_seconds(
+            digits(dotted_match.group(1)).replace(".", ":"),
+        )
+    return None
+
+
+def _visible_timer_ocr_candidates(value: dict[str, Any]) -> list[tuple[float, str]]:
+    texts: list[str] = []
+    for text in value.get("ocr_texts") or []:
+        if isinstance(text, str):
+            texts.append(text)
+    ocr = value.get("ocr")
+    if isinstance(ocr, dict):
+        for text in ocr.get("texts") or []:
+            if isinstance(text, str):
+                texts.append(text)
+        for observation in ocr.get("observations") or []:
+            if isinstance(observation, dict) and isinstance(observation.get("text"), str):
+                texts.append(observation["text"])
+    visible_text = value.get("visible_text")
+    if isinstance(visible_text, str):
+        texts.extend(line.strip() for line in visible_text.splitlines() if line.strip())
+    if not texts:
+        return []
+    joined = "\n".join(texts)
+    has_timeline_label = (
+        "timeline playtime" in joined.lower()
+        or str(value.get("pause_ocr_match") or "").lower() == "timeline playtime"
+    )
+    if not has_timeline_label:
+        return []
+    candidates: list[tuple[float, str]] = []
+    for text in texts:
+        seconds = _parse_visible_timer_ocr_seconds(text)
+        if seconds is None:
+            continue
+        candidates.append((float(seconds), _lightning_format_seconds(seconds)))
+    return candidates
+
+
 def _timer_candidates(
     result: dict[str, Any] | None,
     *,
@@ -735,6 +828,7 @@ def _timer_candidates(
                         else None
                     )
                     found.append((seconds, label))
+            found.extend(_visible_timer_ocr_candidates(value))
             for nested in value.values():
                 found.extend(walk(nested))
             return found
