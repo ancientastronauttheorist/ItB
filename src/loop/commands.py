@@ -13561,9 +13561,197 @@ def _lightning_click_system_privacy_prompt_allow(
     post_click = _lightning_visible_ui_snapshot(include_ocr=True)
     result["post_click_visible_ui"] = post_click
     if post_click.get("visible_ui") == "system_privacy_prompt":
+        fullscreen_click = _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
+            dry_run=dry_run,
+        )
+        result["fullscreen_allow_click"] = fullscreen_click
+        if fullscreen_click.get("status") == "OK":
+            post_fullscreen_click = _lightning_visible_ui_snapshot(include_ocr=True)
+            result["post_fullscreen_click_visible_ui"] = post_fullscreen_click
+            if post_fullscreen_click.get("visible_ui") != "system_privacy_prompt":
+                result["status"] = "OK"
+                result["reason"] = (
+                    "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                )
+                return result
         result["status"] = "BLOCKED"
         result["reason"] = "system_privacy_prompt_still_visible"
     return result
+
+
+def _lightning_allow_target_from_ocr_result(ocr: dict | None) -> dict:
+    """Find an OCR-proven Allow button center in image coordinates."""
+    observations = (
+        ocr.get("observations", [])
+        if isinstance(ocr, dict) and isinstance(ocr.get("observations"), list)
+        else []
+    )
+    for observation in observations:
+        if not isinstance(observation, dict):
+            continue
+        text = str(observation.get("text") or "").strip().lower()
+        if text != "allow":
+            continue
+        center = observation.get("center_image")
+        if isinstance(center, (list, tuple)) and len(center) == 2:
+            try:
+                image_x = float(center[0])
+                image_y = float(center[1])
+            except (TypeError, ValueError):
+                continue
+            return {
+                "status": "OK",
+                "image_x": image_x,
+                "image_y": image_y,
+                "source": "fullscreen_ocr_center_image",
+                "text": observation.get("text"),
+            }
+        bbox = observation.get("bbox_image")
+        if isinstance(bbox, (list, tuple)) and len(bbox) == 4:
+            try:
+                left, top, right, bottom = [float(value) for value in bbox]
+            except (TypeError, ValueError):
+                continue
+            if right > left and bottom > top:
+                return {
+                    "status": "OK",
+                    "image_x": (left + right) / 2.0,
+                    "image_y": (top + bottom) / 2.0,
+                    "source": "fullscreen_ocr_bbox_image",
+                    "text": observation.get("text"),
+                    "bbox_image": [left, top, right, bottom],
+                }
+    return {
+        "status": "NOT_FOUND",
+        "reason": "allow_ocr_target_missing",
+        "observation_count": len(observations),
+    }
+
+
+def _lightning_pyautogui_screen_size() -> dict:
+    try:
+        import pyautogui
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"pyautogui unavailable: {exc}"}
+    try:
+        size = pyautogui.size()
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"pyautogui screen size failed: {exc}"}
+    try:
+        if hasattr(size, "width") and hasattr(size, "height"):
+            width = int(size.width)
+            height = int(size.height)
+        else:
+            width = int(size[0])
+            height = int(size[1])
+    except (TypeError, ValueError, IndexError) as exc:
+        return {"status": "ERROR", "error": f"invalid pyautogui screen size: {exc}"}
+    if width <= 0 or height <= 0:
+        return {
+            "status": "ERROR",
+            "error": "invalid pyautogui screen size",
+            "screen_size": [width, height],
+        }
+    return {"status": "OK", "screen_size": [width, height]}
+
+
+def _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
+    *,
+    dry_run: bool = False,
+) -> dict:
+    """Click macOS Allow using full-screen OCR coordinates when window scaling lies."""
+    if os.name == "nt":
+        return {"status": "SKIPPED", "reason": "not_macos"}
+    from PIL import Image
+    from src.control.mac_click import click_screen_point
+
+    with tempfile.NamedTemporaryFile(
+        prefix="itb_privacy_prompt_fullscreen_",
+        suffix=".png",
+        delete=False,
+    ) as fh:
+        screenshot_path = Path(fh.name)
+    try:
+        try:
+            capture = subprocess.run(
+                ["screencapture", "-x", str(screenshot_path)],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except Exception as exc:
+            return {
+                "status": "ERROR",
+                "reason": "fullscreen_screencapture_failed",
+                "error": str(exc),
+            }
+        if capture.returncode != 0:
+            return {
+                "status": "ERROR",
+                "reason": "fullscreen_screencapture_failed",
+                "returncode": capture.returncode,
+                "stderr": capture.stderr,
+            }
+        ocr = _lightning_ocr_texts_from_image(screenshot_path)
+        if ocr.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "fullscreen_allow_ocr_failed",
+                "ocr": ocr,
+            }
+        target = _lightning_allow_target_from_ocr_result(ocr)
+        if target.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "fullscreen_allow_target_missing",
+                "target": target,
+                "ocr_texts": ocr.get("texts", []),
+            }
+        try:
+            with Image.open(screenshot_path) as image:
+                image_w, image_h = [int(value) for value in image.size]
+        except Exception as exc:
+            return {
+                "status": "ERROR",
+                "reason": "fullscreen_image_size_failed",
+                "error": str(exc),
+                "target": target,
+            }
+        screen = _lightning_pyautogui_screen_size()
+        if screen.get("status") != "OK":
+            screen["target"] = target
+            screen["image_size"] = [image_w, image_h]
+            return screen
+        screen_w, screen_h = screen["screen_size"]
+        screen_x = int(round(float(target["image_x"]) * screen_w / image_w))
+        screen_y = int(round(float(target["image_y"]) * screen_h / image_h))
+        click = click_screen_point(
+            screen_x,
+            screen_y,
+            description="macOS privacy prompt Allow full-screen OCR",
+            dry_run=dry_run,
+            settle_seconds=0.35,
+            hold_seconds=0.08,
+        )
+        return {
+            "status": click.get("status", "ERROR"),
+            "reason": "system_privacy_prompt_allow_fullscreen_ocr_clicked",
+            "standing_permission": "user_granted_click_allow_on_macos_popups",
+            "target": target,
+            "image_size": [image_w, image_h],
+            "screen_size": [screen_w, screen_h],
+            "screen_point": [screen_x, screen_y],
+            "coordinate_scale": {
+                "x": screen_w / float(image_w),
+                "y": screen_h / float(image_h),
+            },
+            "click_result": click,
+        }
+    finally:
+        try:
+            screenshot_path.unlink()
+        except OSError:
+            pass
 
 
 def _lightning_setup_screen_ocr_match(visible_ui: dict | None) -> bool:
@@ -16307,6 +16495,14 @@ def _lightning_recover_screenshot_privacy_prompt_failure(exc: Exception) -> dict
             "reason": "screenshot_failure_not_privacy_prompt_like",
             "error": message,
         }
+    fullscreen_click = _lightning_click_system_privacy_prompt_allow_fullscreen_ocr()
+    if fullscreen_click.get("status") == "OK":
+        fullscreen_click = dict(fullscreen_click)
+        fullscreen_click["reason"] = (
+            "clicked_standing_approved_privacy_prompt_allow_fullscreen_ocr"
+        )
+        fullscreen_click["initial_error"] = message
+        return fullscreen_click
     from src.control.mac_click import click_window_point
 
     click = click_window_point(
@@ -16321,6 +16517,7 @@ def _lightning_recover_screenshot_privacy_prompt_failure(exc: Exception) -> dict
         "reason": "clicked_standing_approved_privacy_prompt_allow_fallback",
         "standing_permission": "user_granted_click_allow_on_macos_popups",
         "initial_error": message,
+        "fullscreen_click": fullscreen_click,
         "click_result": click,
     }
 
