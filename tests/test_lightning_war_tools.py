@@ -6288,7 +6288,7 @@ def test_lightning_visible_preview_ocr_detects_erosion_holes_speed_authorized():
     )
 
 
-def test_lightning_visible_preview_ocr_detects_renfield_bombs_speed_authorized():
+def test_lightning_visible_preview_ocr_detects_renfield_bombs_speed_vetoed():
     result = commands._lightning_visible_preview_mission_from_texts(
         [
             "Sandstorm Flats",
@@ -6303,7 +6303,7 @@ def test_lightning_visible_preview_ocr_detects_renfield_bombs_speed_authorized()
     assert result["mission_id"] == "Mission_Bomb"
     assert result["matched_pattern"] == "protect the renfield bombs"
     assert result["start_authority"] == "veto_only"
-    assert commands._lightning_visible_preview_ocr_start_authorized(
+    assert not commands._lightning_visible_preview_ocr_start_authorized(
         result,
         "Mission_Bomb",
         routing="lightning_war",

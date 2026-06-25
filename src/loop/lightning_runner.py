@@ -7169,6 +7169,7 @@ _PRE_START_ROUTE_GATE_REASONS = {
     "route_preview_mission_mismatch_after_dialogue",
     "route_preview_not_opened_before_start",
     "route_preview_unassigned_multi_region_before_start",
+    "start_mission_text_not_found",
     "route_preview_start_text_missing_before_start",
     "route_preview_start_text_missing_after_dialogue",
     "route_start_subcall_timeout",
@@ -7489,6 +7490,8 @@ def _first_island_for_attempt(
         str(preferred or "archive").strip().lower(),
         "archive",
     )
+    if speed_mode and preferred_key != "archive":
+        return preferred_key
     base_sequence = (
         DEFAULT_LIGHTNING_SPEED_FIRST_ISLAND_SEQUENCE
         if speed_mode

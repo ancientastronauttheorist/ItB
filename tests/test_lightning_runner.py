@@ -148,12 +148,44 @@ def test_first_island_for_attempt_speed_mode_cycles_archive_rst():
         "rst",
         2,
         speed_mode=True,
-    ) == "archive"
+    ) == "rst"
     assert lightning_runner._first_island_for_attempt(
         "pinnacle",
         2,
         speed_mode=True,
-    ) == "archive"
+    ) == "pinnacle"
+
+
+def test_start_mission_text_not_found_is_pre_start_route_gate():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "start_mission_text_not_found",
+        "route_start_performed": True,
+        "steps": [
+            {
+                "step": 1,
+                "phase": "route_start",
+                "status": "BLOCKED",
+                "reason": "start_mission_text_not_found",
+                "actual_preview_mission_id": "Mission_Bomb",
+                "visible_preview_ocr": {
+                    "status": "OK",
+                    "mission_id": "Mission_Bomb",
+                    "start_authority": "veto_only",
+                },
+            }
+        ],
+    }
+
+    evidence = lightning_runner._segment_preview_only_route_gate_evidence(segment)
+
+    assert evidence == {
+        "token": "ROUTE_AUTO_START_NOT_ALLOWED",
+        "path": "reason",
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "start_mission_text_not_found",
+        "source": "preview_only_route_gate",
+    }
 
 
 def test_game_loop_lightning_autonomous_cli_forwards_safe_defaults(monkeypatch):

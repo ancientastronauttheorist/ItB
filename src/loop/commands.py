@@ -10742,7 +10742,6 @@ _LIGHTNING_ROUTE_OCR_SPEED_START_MISSIONS = {
     # but live Lightning War runs lose more time rerolling them forever than
     # they do playing one cleanly.
     "Mission_Artillery",
-    "Mission_Bomb",
     "Mission_Cataclysm",
     "Mission_Crack",
     "Mission_Force",
