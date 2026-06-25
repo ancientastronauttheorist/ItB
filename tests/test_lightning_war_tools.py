@@ -33344,6 +33344,35 @@ def test_lightning_system_prompt_ocr_trigger_accepts_low_score_prompt_shape():
     assert commands._lightning_should_ocr_for_system_prompt(visible_ui)
 
 
+def test_lightning_screenshot_failure_clicks_privacy_allow_fallback(monkeypatch):
+    clicks = []
+
+    monkeypatch.setattr(commands.os, "name", "posix")
+    monkeypatch.setattr(
+        "src.control.mac_click.click_window_point",
+        lambda x, y, **kwargs: clicks.append((x, y, kwargs))
+        or {"status": "OK", "window_x": x, "window_y": y},
+    )
+
+    result = commands._lightning_recover_screenshot_privacy_prompt_failure(
+        RuntimeError("could not create image from display")
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "clicked_standing_approved_privacy_prompt_allow_fallback"
+    assert clicks == [
+        (
+            817,
+            551,
+            {
+                "description": "macOS privacy prompt Allow fallback",
+                "hold_seconds": 0.08,
+                "settle_seconds": 0.5,
+            },
+        )
+    ]
+
+
 def test_lightning_segment_labeled_probe_auto_start_uses_coordinates(
     monkeypatch,
 ):

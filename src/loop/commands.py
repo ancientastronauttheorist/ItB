@@ -16258,7 +16258,23 @@ def _lightning_visible_ui_snapshot(
     try:
         take_screenshot(tmp_path)
     except Exception as exc:
-        return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
+        recovery = _lightning_recover_screenshot_privacy_prompt_failure(exc)
+        if recovery.get("status") == "OK":
+            try:
+                take_screenshot(tmp_path)
+            except Exception as retry_exc:
+                return {
+                    "status": "ERROR",
+                    "error": f"screenshot failed: {retry_exc}",
+                    "screenshot_failure_recovery": recovery,
+                    "initial_screenshot_error": str(exc),
+                }
+        else:
+            return {
+                "status": "ERROR",
+                "error": f"screenshot failed: {exc}",
+                "screenshot_failure_recovery": recovery,
+            }
     result = _classify_lightning_ui_image(tmp_path)
     if bridge_refine:
         result = _lightning_refine_visible_ui_with_bridge(result)
@@ -16278,6 +16294,35 @@ def _lightning_visible_ui_snapshot(
     result["screenshot_path"] = str(tmp_path)
     result["game_focus_proof"] = _lightning_game_focus_proof(tmp_path)
     return result
+
+
+def _lightning_recover_screenshot_privacy_prompt_failure(exc: Exception) -> dict:
+    """Click standing-approved macOS Allow when the prompt blocks screenshot capture."""
+    if os.name == "nt":
+        return {"status": "SKIPPED", "reason": "not_macos"}
+    message = str(exc)
+    if "could not create image from display" not in message.lower():
+        return {
+            "status": "SKIPPED",
+            "reason": "screenshot_failure_not_privacy_prompt_like",
+            "error": message,
+        }
+    from src.control.mac_click import click_window_point
+
+    click = click_window_point(
+        817,
+        551,
+        description="macOS privacy prompt Allow fallback",
+        hold_seconds=0.08,
+        settle_seconds=0.5,
+    )
+    return {
+        "status": click.get("status", "ERROR"),
+        "reason": "clicked_standing_approved_privacy_prompt_allow_fallback",
+        "standing_permission": "user_granted_click_allow_on_macos_popups",
+        "initial_error": message,
+        "click_result": click,
+    }
 
 
 def _lightning_game_focus_proof(screenshot_path: str | Path | None = None) -> dict:
