@@ -23,6 +23,11 @@ main menu and repeats from the top.
 
 ## Timer Source Gate
 
+For the computer-use controller path, screenshot-visible game timer evidence is
+the only timing authority. Use `lightning_snap_pause` / pause-menu OCR evidence
+for run decisions, and treat memory/profile timer reads in this document as
+lab-only calibration aids rather than achievement proof.
+
 The in-game timer is the only timing authority. Every Lightning War lab session
 must start by proving the timer source before trusting timing numbers or
 filename timestamps.
@@ -158,6 +163,12 @@ menu, replay from the top, extend the script by one boundary, and test again.
 The user should stay in the loop during discovery. When a timing choice, branch
 classification, or failed click needs judgment, stop with a "next timing patch"
 report rather than silently papering over the uncertainty.
+
+Deployment is a bridge-only speed path during real attempts. If bridge
+deployment times out and cannot be proven placed from a fresh bridge read, stop
+or restart instead of falling back to deployment UI clicks. UI fallback may be
+used only as an explicit observe/build experiment, because it can spend multiple
+minutes of live timer before the next pause guard fires.
 
 ## Mode Toggle
 

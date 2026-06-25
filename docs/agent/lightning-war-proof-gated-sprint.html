@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lightning War Proof-Gated Sprint Plan</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101316;
+      --panel: #171d22;
+      --panel-2: #1d252b;
+      --text: #edf2f4;
+      --muted: #a9b4bd;
+      --line: #2d3942;
+      --red: #ff5d5d;
+      --amber: #f4b950;
+      --green: #61d394;
+      --blue: #6bb7ff;
+      --violet: #c79bff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.04), transparent 220px),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: clamp(34px, 5vw, 68px);
+      line-height: 0.95;
+      margin-bottom: 16px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: var(--blue);
+    }
+
+    p {
+      color: var(--muted);
+      max-width: 72ch;
+    }
+
+    .hero, .card, .strip {
+      border: 1px solid var(--line);
+      background: rgba(23, 29, 34, 0.92);
+      border-radius: 8px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+    }
+
+    .hero {
+      padding: 28px;
+      min-height: 360px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hero .tag {
+      color: var(--green);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      margin-bottom: 18px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 96px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card, .strip {
+      padding: 20px;
+    }
+
+    .strip {
+      margin: 16px 0;
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    ol, ul {
+      padding-left: 20px;
+      margin-bottom: 0;
+    }
+
+    li {
+      margin: 8px 0;
+      color: var(--muted);
+    }
+
+    li strong {
+      color: var(--text);
+    }
+
+    code {
+      color: #d8f3ff;
+      background: #0c1114;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 2px 5px;
+      font-size: 0.93em;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      min-height: 112px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #12181d;
+      position: relative;
+    }
+
+    .step b {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .step small {
+      color: var(--muted);
+    }
+
+    .danger {
+      color: var(--red);
+    }
+
+    .warn {
+      color: var(--amber);
+    }
+
+    .ok {
+      color: var(--green);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--text);
+      background: #202931;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: var(--muted);
+      background: #12181d;
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tick {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #12181d;
+      min-height: 96px;
+    }
+
+    .tick b {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .tick span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .grid.two,
+      .grid.three,
+      .strip,
+      .flow,
+      .timeline {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <section class="hero">
+        <div>
+          <div class="tag">Blitzkrieg - Lightning War</div>
+          <h1>Proof-Gated Sprint Plan</h1>
+          <p>
+            The achievement run is no longer treated as a live experiment. The
+            controller only spends timer through named, prevalidated transactions
+            with proof before and after. Unknown state means pause, stop, or reset.
+          </p>
+        </div>
+        <div class="pill-row">
+          <span class="pill">Screenshot timer is ground truth</span>
+          <span class="pill">LLM never thinks unpaused</span>
+          <span class="pill">Esc is the only pause toggle</span>
+          <span class="pill">Wrong window means hard stop</span>
+        </div>
+      </section>
+
+      <aside class="grid">
+        <div class="metric-grid">
+          <div class="metric">
+            <strong>&lt; 30:00</strong>
+            <span>Finish the first two islands by visible in-game timer.</span>
+          </div>
+          <div class="metric">
+            <strong>~2:00</strong>
+            <span>Target mission segment, including route and UI tail.</span>
+          </div>
+          <div class="metric">
+            <strong>&lt; 3:00</strong>
+            <span>Hard ordinary mission ceiling. Over means reset.</span>
+          </div>
+          <div class="metric">
+            <strong>&lt; 0:20</strong>
+            <span>Opening target: mechs placed and Confirm clicked.</span>
+          </div>
+        </div>
+      </aside>
+    </header>
+
+    <section class="strip">
+      <h2>Core Change</h2>
+      <div>
+        <p>
+          The plan is not simply to go faster. The plan is to go fast only through
+          states that are proven safe, current, and game-focused. The runner should
+          never treat a plausible route, stale screenshot, vague pause menu, or
+          unknown UI as permission to continue.
+        </p>
+        <div class="flow">
+          <div class="step">
+            <b>1. Prove Focus</b>
+            <small>Frontmost app, bounds, and screenshot identity must be Into the Breach.</small>
+          </div>
+          <div class="step">
+            <b>2. Prove Pause</b>
+            <small>Capture a fresh <code>PausedFrame</code> with timer and underlay class.</small>
+          </div>
+          <div class="step">
+            <b>3. Execute Burst</b>
+            <small>Esc resume, perform exact planned controls, obey max wall duration.</small>
+          </div>
+          <div class="step">
+            <b>4. Snap + Esc</b>
+            <small>Take screenshot, immediately pause, then classify the result.</small>
+          </div>
+          <div class="step">
+            <b>5. Accept or Reset</b>
+            <small>Continue only with post-burst proof; unknown state fails closed.</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <h2>Hard Invariants</h2>
+        <ul>
+          <li><strong>No game proof, no click.</strong> Codex, Desktop, Steam, macOS prompts, or stale frames cannot authorize game controls.</li>
+          <li><strong>No generic pause authority.</strong> The controller must know what screen is under the pause menu before choosing the next action.</li>
+          <li><strong>No stale execution.</strong> Combat plans require fresh bridge state; UI decisions require fresh screenshot proof.</li>
+          <li><strong>No live deliberation.</strong> All thinking happens after a verified pause proof.</li>
+          <li><strong>No route optimism.</strong> Start Mission requires exact mission identity proof immediately before the click.</li>
+          <li><strong>No hidden terminal panels.</strong> KIA, failed objective, grid death, timeline loss, region secured, and achievement pop must be classified before clearing panels.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Failure Means Stop</h2>
+        <ul>
+          <li>Wrong-window screenshot or mismatched game bounds.</li>
+          <li>Missing visible timer when timer should be visible.</li>
+          <li>Pause proof without a screen-family classification.</li>
+          <li>Route preview mismatch, stale preview, count mismatch, or unknown mission.</li>
+          <li>Any ordinary mission segment over <code>3:00</code>.</li>
+          <li>Bridge desync that one fresh read and re-solve cannot recover.</li>
+          <li>Unexpected reward/shop/map state that would require live reading.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="strip">
+      <h2>Proof Objects</h2>
+      <div class="grid two">
+        <article>
+          <h3><code>GameFocusProof</code></h3>
+          <ul>
+            <li>Frontmost app is Into the Breach.</li>
+            <li>Window title and bounds match calibration.</li>
+            <li>Screenshot contains game HUD or known game UI anchors.</li>
+            <li>Retina scale and window-local coordinate transform are current.</li>
+          </ul>
+        </article>
+        <article>
+          <h3><code>PausedFrame</code></h3>
+          <ul>
+            <li>Fresh screenshot path and capture timestamp.</li>
+            <li>Visible timer OCR, or strong pause-menu proof when timer is hidden.</li>
+            <li>Pause overlay proof plus stable game focus proof.</li>
+            <li>Underlay class: map, preview, deployment, combat, reward, shop, setup, or unknown.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Timing Gates</h2>
+      <div class="timeline">
+        <div class="tick">
+          <b>0:08</b>
+          <span>First island selected. Slow opener is an early reset.</span>
+        </div>
+        <div class="tick">
+          <b>0:20</b>
+          <span>Target for mechs placed and Confirm clicked.</span>
+        </div>
+        <div class="tick">
+          <b>0:45</b>
+          <span>Hard opening fail if no verified deployment handoff.</span>
+        </div>
+        <div class="tick">
+          <b>2:00</b>
+          <span>Target full mission segment including UI tail.</span>
+        </div>
+        <div class="tick">
+          <b>3:00</b>
+          <span>Hard ceiling for ordinary missions. Reset on overage.</span>
+        </div>
+        <div class="tick">
+          <b>30:00</b>
+          <span>Achievement deadline from visible in-game timer only.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid three">
+      <article class="card">
+        <h2>Route Policy</h2>
+        <ul>
+          <li>Prefer simple kill, survive, and spawn-control missions.</li>
+          <li>Hard-veto Bomb/Renfield Bombs and other slow objective traps unless no viable route remains.</li>
+          <li>Avoid train, fragile allies, repair/platform gimmicks, dam, satellite, mines, and pod-heavy reward paths unless measured fast and clean.</li>
+          <li>Wrong-region clicks and stale previews are run-health failures, not quirks to play through.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Combat Policy</h2>
+        <ul>
+          <li>Solve while paused with enough budget; under-solving is false economy.</li>
+          <li>Execute bridge-first, verify predicted diffs, and re-solve after mismatch.</li>
+          <li>Accept boring grid-safe plans over clever low-margin plans.</li>
+          <li>Dirty consent is exact-line, one-turn, and expires on desync or reorder.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Reward + Shop</h2>
+        <ul>
+          <li>Clear deterministic panels only after terminal OCR safety checks.</li>
+          <li>Ignore optional objectives, pods, and reputation efficiency unless free.</li>
+          <li>Buy Grid Power only if low; leave immediately when grid is safe/full.</li>
+          <li>No browsing, no reading item text live, no speculative purchases.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Transaction Checklist</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Transaction</th>
+            <th>Preconditions</th>
+            <th>Live Work</th>
+            <th>Postcondition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Island Select</td>
+            <td>Setup verified, game focus proof, first-island policy loaded.</td>
+            <td>Resume, click chosen island, screenshot, pause.</td>
+            <td>Island map/route preview class with visible timer and region proof.</td>
+          </tr>
+          <tr>
+            <td>Route Start</td>
+            <td>Exact mission proof, non-vetoed mission, visible Start control.</td>
+            <td>Resume, click Start Mission, screenshot, pause.</td>
+            <td>Deployment screen or transition proof for the expected mission.</td>
+          </tr>
+          <tr>
+            <td>Deployment</td>
+            <td>Expected deployable actors and calibrated placement plan.</td>
+            <td>Resume, deploy through bridge or proven UI fallback, click Confirm, screenshot, pause.</td>
+            <td>Combat player turn proof, active mechs, timer within gate.</td>
+          </tr>
+          <tr>
+            <td>Combat Turn</td>
+            <td>Fresh bridge snapshot, solved plan, no unresolved safety blocks.</td>
+            <td>Resume, execute bridge actions, End Turn, observe transition, screenshot, pause.</td>
+            <td>Verified board diff or next player/mission-result proof.</td>
+          </tr>
+          <tr>
+            <td>Mission Tail</td>
+            <td>Terminal panel OCR checked for KIA/failure/success.</td>
+            <td>Resume, clear known panels, screenshot, pause.</td>
+            <td>Route-ready map, reward/shop state, or achievement proof.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <h2>Readiness Tests</h2>
+        <ol>
+          <li>Wrong-window dry run refuses to click when Codex or another app is frontmost.</li>
+          <li>Pause proof captures two stable paused frames with game bounds and timer OCR.</li>
+          <li>Microburst resumes and re-pauses within expected visible timer delta.</li>
+          <li>Route preview refuses Start without exact mission proof.</li>
+          <li>Deployment cannot be accepted as a generic pause state.</li>
+          <li>Stale screenshot paths and mismatched bounds are rejected.</li>
+          <li>Overlay simulation emits no route/start/confirm clicks.</li>
+          <li>First-60-seconds trial repeatedly reaches confirmed deployment by <code>&lt;=0:20</code>.</li>
+        </ol>
+      </article>
+
+      <article class="card">
+        <h2>Telemetry</h2>
+        <ul>
+          <li>Every segment emits compact JSON: state, visible timer, focus proof, screenshot path, click target, and timer delta.</li>
+          <li>Rolling screenshot buffer keeps the last three missions worth of evidence.</li>
+          <li>Non-game captures are stored separately as failure evidence.</li>
+          <li>Timing notes track island click, preview open, Start, Confirm, first player turn, each End Turn, tail clear, shop, and leave island.</li>
+          <li>The run declares success only after achievement pop or log proof is captured.</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="footer-note">
+      Last updated from the 2026-06-25 Lightning War retrospective and adversarial
+      agent review. This document is a sprint controller specification, not a
+      general achievement-hunting guide.
+    </p>
+  </main>
+</body>
+</html>

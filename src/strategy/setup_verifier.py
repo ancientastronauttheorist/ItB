@@ -108,8 +108,33 @@ def capture_and_check_setup(
         raise RuntimeError("Pillow is required for setup verification")
     bounds = get_window_bounds()
     frontmost = is_game_frontmost() if bounds else False
-    screenshot = take_screenshot(output_path, bounds=bounds)
     bounds_dict = dict(bounds) if bounds else None
+    try:
+        screenshot = take_screenshot(output_path, bounds=bounds)
+    except Exception as exc:
+        desired_advanced = (
+            advanced_content
+            if advanced_content is not None
+            else ("on" if require_all_advanced else "any")
+        )
+        return SetupCheck(
+            status="FAIL",
+            expected_difficulty=expected_difficulty,
+            actual_difficulty=None,
+            setup_screen_detected=False,
+            setup_signature={
+                "capture_error": str(exc),
+                "capture_error_type": type(exc).__name__,
+            },
+            advanced=[],
+            missing_advanced=[],
+            unexpected_advanced=[],
+            desired_advanced=desired_advanced,
+            screenshot_path=str(output_path),
+            window_focus_verified=bounds_dict is not None and frontmost,
+            window_bounds=bounds_dict,
+            click_plan=[],
+        )
     bounds = bounds or {}
     window_size = (
         int(bounds.get("width", BASE_SIZE[0])),

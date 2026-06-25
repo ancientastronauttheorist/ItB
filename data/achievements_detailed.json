@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-17T08:56:54.887155",
+    "last_steam_sync": "2026-06-25T11:02:34.144256",
     "last_steam_total": 70,
-    "last_steam_unlocked": 57
+    "last_steam_unlocked": 59
   },
   "achievements": {
     "rift_walkers": [
@@ -443,7 +443,7 @@
         "description": "Light 3 Enemies on fire with a single attack with the Heat Sinkers squad",
         "type": "single_battle",
         "global_unlock_pct": 4.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Napalm Mech range significantly. Arrange 3 enemies in a line. Fire the Napalm Launcher through all 3. Quick-Fire Mech can push enemies into position.",
         "setup": "Upgraded Napalm Launcher. 3 enemies aligned.",
         "pitfalls": "Need exact alignment of 3 enemies in fire line."
@@ -537,7 +537,7 @@
         "description": "Beat the game with all 10 primary Squads (any length)",
         "type": "cumulative",
         "global_unlock_pct": 7.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Must win with each of the 10 primary squads (8 original + custom + random). Learn each squad's strengths. Cumulative across all games.",
         "setup": "Multiple runs. Study each squad's wiki entry.",
         "pitfalls": "Random and Custom squads also required. Random can be hard with bad RNG."

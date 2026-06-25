@@ -1370,7 +1370,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # the spawn tile without collection credit, matching live Mission_Acid run
 # 20260620_102304_211 turn 1. Pre-v277 corpus archived as
 # failure_db_snapshot_sim_v276.jsonl.
-SIMULATOR_VERSION = 277
+# v278 - Chain Whip keeps Shell Psion armor active for every node in the same
+# chain, then removes the aura after the chain if the Shell Psion died. Fixes
+# Lightning War run 20260625_064439_784 Mission_Holes turn 1, where a Hornet
+# survived at 1 HP after the Chain Whip killed Jelly_Armor1 earlier in the
+# chain. Pre-v278 corpus archived as failure_db_snapshot_sim_v277.jsonl.
+SIMULATOR_VERSION = 278
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

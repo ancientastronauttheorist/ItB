@@ -6,10 +6,19 @@ bridge is active.
 
 from __future__ import annotations
 
+import os
+
 from src.solver.solver import MechAction
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.model.board import Board
 from src.bridge.protocol import write_command, wait_for_ack
+
+
+def _action_timeout() -> float:
+    try:
+        return max(1.0, float(os.environ.get("ITB_BRIDGE_ACTION_TIMEOUT", "60.0")))
+    except ValueError:
+        return 60.0
 
 
 def _resolve_weapon_slot(action: MechAction, board: Board) -> int:
@@ -72,7 +81,7 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
     # post-attack), so the bridge may take up to 30 s wall to write the
     # ACK even on a successful action. Python must be longer than that.
     # 60 s gives a 2x margin; a healthy turn still ACKs in <2 s.
-    _ACTION_TIMEOUT = 60.0
+    _ACTION_TIMEOUT = _action_timeout()
 
     # Repair: move first if needed, then repair (which deactivates)
     if is_repair:
@@ -118,7 +127,7 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
     return wait_for_ack(timeout=_ACTION_TIMEOUT)
 
 
-_ACTION_TIMEOUT = 60.0
+_ACTION_TIMEOUT = _action_timeout()
 
 
 def move_mech(uid: int, x: int, y: int) -> str:
@@ -164,6 +173,34 @@ def execute_bridge_end_turn() -> str:
     """
     write_command("END_TURN")
     return wait_for_ack(timeout=10.0)
+
+
+def reactivate_player_pawns() -> str:
+    """Reactivate living player pawns on a fresh player turn.
+
+    This uses the existing raw LUA bridge command so a live run can recover
+    without restarting the modloader. Callers must gate this tightly to an
+    active mission, combat_player phase, turn > 0, and active_mechs == 0.
+    """
+    lua = (
+        "local team=(_G.TEAM_PLAYER or 1); "
+        "local ids=Board:GetPawns(team); "
+        "local count=0; local active=0; "
+        "if ids and ids.size then "
+        "for i=1,ids:size() do "
+        "local pid=ids:index(i); local m=Board:GetPawn(pid); "
+        "if m and not m:IsDead() then "
+        "count=count+1; m:SetActive(true); "
+        "local ok,a=pcall(function() return m:IsActive() end); "
+        "if ok and a then active=active+1 end "
+        "end end end; "
+        "return 'reactivated count='..tostring(count).."
+        "' active='..tostring(active).."
+        "' turn='..tostring(Game and Game:GetTurnCount() or '?').."
+        "' team='..tostring(Game and Game:GetTeamTurn() or '?')"
+    )
+    write_command(f"LUA {lua}")
+    return wait_for_ack(timeout=5.0)
 
 
 def deploy_mech(uid: int, x: int, y: int, *, timeout: float = 10.0) -> str:

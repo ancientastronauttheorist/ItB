@@ -185,6 +185,24 @@ def _violation(kind: str, current: Any, predicted: Any,
     return out
 
 
+def _is_final_player_turn(turn: int | None,
+                          total_turns: int | None,
+                          remaining_spawns: int | None,
+                          victory_turns: int | None) -> bool:
+    if victory_turns is not None:
+        return victory_turns <= 1
+    if turn is None or total_turns is None:
+        return False
+    if turn >= total_turns:
+        return True
+    if turn >= max(0, total_turns - 1):
+        # Older summaries did not include the bridge's IsFinalTurn-derived
+        # spawn signal, so keep them conservative. When present, zero means
+        # the current player phase is the last chance to satisfy final checks.
+        return remaining_spawns is None or remaining_spawns == 0
+    return False
+
+
 def audit_plan_safety(current: dict[str, Any],
                       predicted: dict[str, Any],
                       *,
@@ -299,14 +317,31 @@ def audit_plan_safety(current: dict[str, Any],
     pred_turn = _int_or_none(predicted.get("turn"))
     cur_total_turns = _int_or_none(current.get("total_turns"))
     pred_total_turns = _int_or_none(predicted.get("total_turns"))
+    cur_remaining_spawns = _int_or_none(current.get("remaining_spawns"))
+    pred_remaining_spawns = _int_or_none(predicted.get("remaining_spawns"))
+    cur_victory_turns = _int_or_none(current.get("victory_turns"))
+    pred_victory_turns = _int_or_none(predicted.get("victory_turns"))
     # Bridge turn counters are effectively "turns elapsed" for ordinary
     # missions: a player turn with UI text "Victory in 1 turn" arrives as
     # turn == total_turns - 1. Treat that as final because there is no later
-    # player phase to recover pods, counters, or asset threats.
+    # player phase to recover pods, counters, or asset threats. The bridge
+    # also exposes mission:IsFinalTurn() through remaining_spawns == 0; use
+    # that signal when available so boss/infinite missions with live future
+    # turns are not misclassified.
     if cur_turn is not None and cur_total_turns is not None:
-        final_turn = cur_turn >= max(0, cur_total_turns - 1)
+        final_turn = _is_final_player_turn(
+            cur_turn,
+            cur_total_turns,
+            cur_remaining_spawns,
+            cur_victory_turns,
+        )
     elif pred_turn is not None and pred_total_turns is not None:
-        final_turn = pred_turn >= pred_total_turns
+        final_turn = _is_final_player_turn(
+            pred_turn,
+            pred_total_turns,
+            pred_remaining_spawns,
+            pred_victory_turns,
+        )
     else:
         final_turn = False
 
@@ -740,6 +775,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": cur_turn,
             "total_turns": cur_total_turns,
+            "remaining_spawns": cur_remaining_spawns,
+            "victory_turns": cur_victory_turns,
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
             "building_hp_total": cur_hp,
@@ -782,6 +819,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": pred_turn,
             "total_turns": pred_total_turns,
+            "remaining_spawns": pred_remaining_spawns,
+            "victory_turns": pred_victory_turns,
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,
             "building_hp_total": pred_hp,

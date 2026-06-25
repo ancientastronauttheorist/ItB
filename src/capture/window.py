@@ -13,6 +13,22 @@ APP_PATH = (
     "/Users/aircow/Library/Application Support/Steam/steamapps/common/"
     "Into the Breach/Into the Breach.app"
 )
+_LAST_WINDOW_BOUNDS: dict | None = None
+_LAST_ACTIVATE_AT: float = 0.0
+_DEFAULT_MAC_WINDOW_BOUNDS = {"x": 215, "y": 32, "width": 1280, "height": 748}
+
+
+def _fallback_window_bounds() -> dict | None:
+    raw = os.environ.get("ITB_WINDOW_BOUNDS_FALLBACK", "").strip()
+    if raw:
+        try:
+            x, y, width, height = [int(part.strip()) for part in raw.split(",", 3)]
+        except ValueError:
+            return None
+        return {"x": x, "y": y, "width": width, "height": height}
+    if os.environ.get("ITB_DISABLE_DEFAULT_WINDOW_BOUNDS", "0") not in {"1", "true", "TRUE"}:
+        return dict(_DEFAULT_MAC_WINDOW_BOUNDS)
+    return None
 
 
 def is_game_running() -> bool:
@@ -42,6 +58,16 @@ def get_window_bounds() -> dict | None:
     if os.name == "nt":
         return _windows_window_bounds()
 
+    global _LAST_WINDOW_BOUNDS
+    fast_cached = os.environ.get("ITB_FAST_CACHED_WINDOW_BOUNDS", "1")
+    if fast_cached not in {"0", "false", "FALSE"}:
+        if _LAST_WINDOW_BOUNDS is not None:
+            return dict(_LAST_WINDOW_BOUNDS)
+        fallback = _fallback_window_bounds()
+        if fallback is not None:
+            _LAST_WINDOW_BOUNDS = dict(fallback)
+            return fallback
+
     script = '''
     tell application "System Events"
         tell process "Into the Breach"
@@ -52,17 +78,27 @@ def get_window_bounds() -> dict | None:
     end tell
     '''
     try:
+        timeout = float(os.environ.get("ITB_WINDOW_BOUNDS_TIMEOUT", "1.5"))
+    except ValueError:
+        timeout = 1.5
+    try:
         result = subprocess.run(
             ["osascript", "-e", script],
-            capture_output=True, text=True, timeout=5
+            capture_output=True, text=True, timeout=max(0.25, timeout)
         )
         if result.returncode == 0:
             parts = [p.strip() for p in result.stdout.strip().split(",")]
             if len(parts) == 4:
                 x, y, w, h = [int(p) for p in parts]
-                return {"x": x, "y": y, "width": w, "height": h}
+                _LAST_WINDOW_BOUNDS = {"x": x, "y": y, "width": w, "height": h}
+                return dict(_LAST_WINDOW_BOUNDS)
     except (subprocess.TimeoutExpired, ValueError):
-        pass
+        if _LAST_WINDOW_BOUNDS is not None:
+            return dict(_LAST_WINDOW_BOUNDS)
+        fallback = _fallback_window_bounds()
+        if fallback is not None:
+            _LAST_WINDOW_BOUNDS = dict(fallback)
+            return fallback
     return None
 
 
@@ -89,6 +125,36 @@ def is_game_frontmost() -> bool:
     if result.returncode != 0:
         return False
     return result.stdout.strip() == "Into the Breach"
+
+
+def activate_game_window() -> None:
+    """Best-effort raise of the game window before screen-region capture."""
+    if os.name == "nt":
+        return
+    global _LAST_ACTIVATE_AT
+    now = time.monotonic()
+    try:
+        min_interval = float(os.environ.get("ITB_WINDOW_ACTIVATE_MIN_INTERVAL", "5"))
+    except ValueError:
+        min_interval = 5.0
+    if now - _LAST_ACTIVATE_AT < max(0.0, min_interval):
+        return
+    try:
+        timeout = float(os.environ.get("ITB_WINDOW_ACTIVATE_TIMEOUT", "0.75"))
+    except ValueError:
+        timeout = 0.75
+    try:
+        subprocess.run(
+            ["osascript", "-e", 'tell application "Into the Breach" to activate'],
+            capture_output=True,
+            text=True,
+            timeout=max(0.1, timeout),
+            start_new_session=True,
+        )
+        _LAST_ACTIVATE_AT = time.monotonic()
+        time.sleep(0.03)
+    except Exception:
+        pass
 
 
 def take_screenshot(
@@ -126,18 +192,33 @@ def take_screenshot(
             ImageGrab.grab().save(output_path)
         return output_path
 
-    if bounds:
-        region = (
-            f"{bounds['x']},{bounds['y']},"
-            f"{bounds['width']},{bounds['height']}"
-        )
-        subprocess.run(
-            ["screencapture", "-x", "-R", region, str(output_path)],
-            timeout=10,
-        )
-    else:
-        # Fallback: capture entire screen if accessibility window bounds fail.
-        subprocess.run(["screencapture", "-x", str(output_path)], timeout=10)
+    try:
+        timeout = float(os.environ.get("ITB_SCREENSHOT_TIMEOUT", "2.5"))
+    except ValueError:
+        timeout = 2.5
+    timeout = max(0.5, timeout)
+
+    try:
+        if bounds:
+            activate_game_window()
+            region = (
+                f"{bounds['x']},{bounds['y']},"
+                f"{bounds['width']},{bounds['height']}"
+            )
+            subprocess.run(
+                ["screencapture", "-x", "-R", region, str(output_path)],
+                timeout=timeout,
+                start_new_session=True,
+            )
+        else:
+            # Fallback: capture entire screen if accessibility window bounds fail.
+            subprocess.run(
+                ["screencapture", "-x", str(output_path)],
+                timeout=timeout,
+                start_new_session=True,
+            )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"screencapture timed out after {timeout:.1f}s") from exc
 
     return output_path
 

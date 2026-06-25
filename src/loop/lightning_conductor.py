@@ -10,7 +10,6 @@ from typing import Any, Callable
 from src.loop.lightning_telemetry import (
     ScreenshotRecorder,
     TelemetryRecorder,
-    generate_frame_delta_report,
 )
 
 
@@ -61,11 +60,15 @@ class AutonomousLightningConfig:
     max_wall_seconds: float | None = None
     segment_timeout: float = 420.0
     abandon_seconds: float = 29 * 60
+    mission_segment_gate_seconds: float = 3 * 60
     first_island_gate_seconds: float = 15 * 60
     second_island_start_gate_seconds: float = 16.75 * 60
     screenshot_cadence: float = 2.0
     screenshots: bool = True
     route_auto_start: bool = False
+    route_start_mode: str = "visible-text"
+    allow_objective_loss: bool = False
+    lightning_speed_loss_policy: bool = False
     start_from_verified_setup: bool = False
     achievement_sync: bool = True
     dry_run: bool = False
@@ -75,7 +78,11 @@ class AutonomousLightningConfig:
             raise ValueError(f"unsupported Lightning War mode: {self.mode}")
         self.target_islands = max(1, int(self.target_islands))
         if self.time_limit is None:
-            self.time_limit = 2.0 if self.mode == "speed" else 10.0
+            self.time_limit = 2.0 if self.speed_mode else 10.0
+
+    @property
+    def speed_mode(self) -> bool:
+        return self.mode == "speed" or self.lightning_speed_loss_policy
 
 
 class AutonomousLightningConductor:
@@ -121,7 +128,17 @@ class AutonomousLightningConductor:
                 self.screenshots.stop()
                 self.screenshots.capture_once(clock_state="final", note=reason)
             if _safe_to_finalize(result):
-                report = generate_frame_delta_report(self.telemetry.run_dir)
+                report = {
+                    "status": "SKIPPED",
+                    "reason": "autonomous_frame_delta_report_deferred",
+                    "final_status": status,
+                    "final_reason": reason,
+                    "run_dir": str(self.telemetry.run_dir),
+                    "next_step": (
+                        "Run scripts/lightning_frame_delta_report.py after the "
+                        "live autonomous attempt is no longer active."
+                    ),
+                }
             else:
                 report = {
                     "status": "SKIPPED",
@@ -144,9 +161,11 @@ class AutonomousLightningConductor:
         assert self.telemetry is not None
         route_routing = (
             "lightning_war"
-            if cfg.mode == "speed"
+            if cfg.speed_mode
             else "lightning_baseline"
         )
+        pause_before_solve = not cfg.speed_mode
+        pause_between_actions = False
 
         if cfg.achievement.lower() != LIGHTNING_WAR.lower():
             return self._finish(
@@ -220,7 +239,8 @@ class AutonomousLightningConductor:
                 route_auto_start=cfg.route_auto_start,
                 route_routing=route_routing,
                 run_segment=False,
-                allow_objective_loss=True,
+                allow_objective_loss=cfg.allow_objective_loss,
+                lightning_speed_loss_policy=cfg.lightning_speed_loss_policy,
                 dry_run=cfg.dry_run,
             )
             if str(start.get("status")) not in {"OK", "DRY_RUN"}:
@@ -291,12 +311,15 @@ class AutonomousLightningConductor:
                     pause_on_stop=True,
                     quiet=True,
                     resume_if_paused=True,
+                    pause_before_solve=pause_before_solve,
+                    pause_between_actions=pause_between_actions,
                     auto_clear_panels=True,
-                    allow_objective_loss=True,
-                    lightning_speed_loss_policy=True,
+                    allow_objective_loss=cfg.allow_objective_loss,
+                    lightning_speed_loss_policy=cfg.lightning_speed_loss_policy,
                     route_routing=route_routing,
+                    route_start_mode=cfg.route_start_mode,
                     route_auto_start=cfg.route_auto_start,
-                    route_speed_vetoes=(cfg.mode == "speed"),
+                    route_speed_vetoes=cfg.speed_mode,
                 )
                 timer = _timer_seconds(segment)
                 if timer is not None:
@@ -309,7 +332,7 @@ class AutonomousLightningConductor:
                         segment_index=segment_index,
                     )
                 session = _load_current_session(commands)
-                pace_gate = self._pace_gate(session, best_timer)
+                pace_gate = self._pace_gate(session, best_timer, context=segment)
                 if pace_gate is not None:
                     self.telemetry.event(
                         "pace_gate",
@@ -403,12 +426,53 @@ class AutonomousLightningConductor:
             telemetry_dir=str(self.telemetry.telemetry_dir),
         )
 
-    def _pace_gate(self, session: Any, game_seconds: float | None) -> dict[str, Any] | None:
+    def _pace_gate(
+        self,
+        session: Any,
+        game_seconds: float | None,
+        *,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         cfg = self.config
         if game_seconds is None:
             return None
         completed = list(getattr(session, "islands_completed", []) or [])
-        if not completed and float(game_seconds) >= float(cfg.first_island_gate_seconds):
+        current_island = str(getattr(session, "current_island", "") or "").strip()
+        current_mission = str(getattr(session, "current_mission", "") or "").strip()
+        route_context = _route_phase_context(context)
+        try:
+            mission_index = int(getattr(session, "mission_index", 0) or 0)
+        except (TypeError, ValueError):
+            mission_index = -1
+        if (
+            not completed
+            and current_island
+            and (not current_mission or route_context is not None)
+            and mission_index == 0
+            and float(game_seconds) >= float(cfg.mission_segment_gate_seconds)
+        ):
+            return {
+                "reason": "first_mission_segment_pace_gate",
+                "game_seconds": round(float(game_seconds), 3),
+                "game_timer": _lightning_format_seconds(game_seconds),
+                "gate_seconds": float(cfg.mission_segment_gate_seconds),
+                "gate_timer": _lightning_format_seconds(cfg.mission_segment_gate_seconds),
+                "islands_completed": completed,
+                "current_island": current_island,
+                "current_mission": current_mission,
+                "mission_index": mission_index,
+                "route_context": route_context,
+            }
+        deployment_context = (
+            isinstance(context, dict)
+            and context.get("status") == "LIGHTNING_SEGMENT_STOPPED"
+            and str(context.get("reason") or "") == "deployment_confirmed_paused"
+        )
+        if (
+            not deployment_context
+            and not completed
+            and float(game_seconds) >= float(cfg.first_island_gate_seconds)
+        ):
             return {
                 "reason": "first_island_pace_gate",
                 "game_seconds": round(float(game_seconds), 3),
@@ -523,11 +587,13 @@ class AutonomousLightningConductor:
             "mode": self.config.mode,
             "route_routing": (
                 "lightning_war"
-                if self.config.mode == "speed"
+                if self.config.speed_mode
                 else "lightning_baseline"
             ),
+            "route_start_mode": self.config.route_start_mode,
             "target_islands": self.config.target_islands,
             "time_limit": self.config.time_limit,
+            "mission_segment_gate_seconds": self.config.mission_segment_gate_seconds,
             "first_island_gate_seconds": self.config.first_island_gate_seconds,
             "second_island_start_gate_seconds": (
                 self.config.second_island_start_gate_seconds
@@ -611,29 +677,42 @@ def _compact(value: Any) -> Any:
 
 
 def _timer_seconds(result: dict[str, Any] | None) -> float | None:
-    candidates = _timer_candidates(result)
+    candidates = _timer_candidates(result, visible_only=True)
+    if not candidates:
+        candidates = _timer_candidates(result)
     if not candidates:
         return None
     return max(candidates, key=lambda item: item[0])[0]
 
 
 def _timer_label(result: dict[str, Any] | None) -> str | None:
-    candidates = _timer_candidates(result)
+    candidates = _timer_candidates(result, visible_only=True)
+    if not candidates:
+        candidates = _timer_candidates(result)
     if not candidates:
         return None
     return max(candidates, key=lambda item: item[0])[1]
 
 
-def _timer_candidates(result: dict[str, Any] | None) -> list[tuple[float, str | None]]:
+def _timer_candidates(
+    result: dict[str, Any] | None,
+    *,
+    visible_only: bool = False,
+) -> list[tuple[float, str | None]]:
     if not isinstance(result, dict):
         return []
     candidates: list[tuple[float, str | None]] = []
-    for container in (
-        result.get("game_budget"),
-        result.get("effective_timer"),
-        result.get("budget"),
-        result.get("visible_timer_budget"),
-    ):
+    container_keys = (
+        ("game_budget", False),
+        ("effective_timer", False),
+        ("budget", False),
+        ("visible_timer", True),
+        ("visible_timer_budget", True),
+    )
+    for key, is_visible in container_keys:
+        if visible_only and not is_visible:
+            continue
+        container = result.get(key)
         if isinstance(container, dict) and container.get("game_seconds") is not None:
             try:
                 seconds = float(container["game_seconds"])
@@ -648,7 +727,7 @@ def _timer_candidates(result: dict[str, Any] | None) -> list[tuple[float, str | 
     for key in ("last_attempt", "guard", "pause_guard", "resume_guard"):
         nested = result.get(key)
         if isinstance(nested, dict):
-            candidates.extend(_timer_candidates(nested))
+            candidates.extend(_timer_candidates(nested, visible_only=visible_only))
     return candidates
 
 
@@ -787,6 +866,25 @@ def _route_ready(result: dict[str, Any] | None) -> bool:
         "route_auto_start_not_allowed",
         "visible_island_map_without_bridge",
     } or bool(result.get("primary_next_command"))
+
+
+def _route_phase_context(result: dict[str, Any] | None) -> str | None:
+    if not isinstance(result, dict):
+        return None
+    if _route_ready(result):
+        return str(result.get("reason") or "primary_next_command")
+    steps = result.get("steps")
+    if isinstance(steps, list):
+        for step in steps:
+            nested = _route_phase_context(step)
+            if nested is not None:
+                return f"step:{nested}"
+    last_attempt = result.get("last_attempt")
+    if isinstance(last_attempt, dict):
+        nested = _route_phase_context(last_attempt)
+        if nested is not None:
+            return f"last_attempt:{nested}"
+    return None
 
 
 def _safe_to_think(result: dict[str, Any] | None) -> bool:
@@ -958,10 +1056,17 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                     "steps": steps,
                 }
             visible = ui("classify")
-            if _visible_ui_name(visible) == "new_game_setup":
+            visible_name = _visible_ui_name(visible)
+            if visible_name == "new_game_setup":
                 return {
                     "status": "OK",
                     "reason": "abandoned_to_setup",
+                    "steps": steps,
+                }
+            if visible_name == "pause_menu":
+                return {
+                    "status": "BLOCKED",
+                    "reason": "abandon_returned_to_pause_menu",
                     "steps": steps,
                 }
             recovery_control = _restart_recovery_control(visible)
@@ -974,19 +1079,33 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                         "steps": steps,
                     }
                 visible = ui("classify")
-                if _visible_ui_name(visible) == "new_game_setup":
+                visible_name = _visible_ui_name(visible)
+                if visible_name == "new_game_setup":
                     return {
                         "status": "OK",
                         "reason": "abandoned_to_setup_after_panel",
                         "steps": steps,
                     }
+                if visible_name == "pause_menu":
+                    return {
+                        "status": "BLOCKED",
+                        "reason": "abandon_returned_to_pause_menu",
+                        "steps": steps,
+                    }
 
     for _ in range(4):
         visible = ui("classify")
-        if _visible_ui_name(visible) == "new_game_setup":
+        visible_name = _visible_ui_name(visible)
+        if visible_name == "new_game_setup":
             return {
                 "status": "OK",
                 "reason": "abandoned_to_setup",
+                "steps": steps,
+            }
+        if visible_name == "pause_menu":
+            return {
+                "status": "BLOCKED",
+                "reason": "abandon_returned_to_pause_menu",
                 "steps": steps,
             }
         recovery_control = _restart_recovery_control(visible)
@@ -1021,6 +1140,8 @@ def _restart_recovery_panel_safe(result: dict[str, Any]) -> bool:
 
 
 def _restart_recovery_control(result: dict[str, Any]) -> str | None:
+    if _visible_ui_name(result) == "options_menu":
+        return "options_close"
     if _visible_ui_name(result) == "kia_panel":
         return "abandon_pilot_slot"
     recommended = _recommended_control_name(result)

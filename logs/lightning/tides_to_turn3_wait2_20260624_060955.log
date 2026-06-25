@@ -1,0 +1,3612 @@
+
+=== LIGHTNING SNAP PAUSE ===
+  label:      tides_to_turn3_wait2
+  live burst: 10.556s
+  screenshot: run_notes/lightning_war_smoke_2026-06-24/screenshots/060_tides_to_turn3_wait2.png
+  result:     OK (snapshot_captured_and_esc_paused)
+
+--- Result ---
+{
+  "status": "OK",
+  "reason": "snapshot_captured_and_esc_paused",
+  "label": "tides_to_turn3_wait2",
+  "screenshot_path": "run_notes/lightning_war_smoke_2026-06-24/screenshots/060_tides_to_turn3_wait2.png",
+  "initial_screenshot_path": "run_notes/lightning_war_smoke_2026-06-24/screenshots/060_tides_to_turn3_wait2_initial.png",
+  "notes_path": "run_notes/lightning_war_smoke_2026-06-24/notes.md",
+  "note_written": true,
+  "live_burst_seconds": 10.556,
+  "run_seconds": 4.0,
+  "pause_toggle_policy": "escape_only",
+  "safe_to_think": true,
+  "pause_verified": true,
+  "initial_ui": {
+    "status": "OK",
+    "visible_ui": "pause_menu",
+    "recommended_control": "menu_continue",
+    "confidence": 0.8,
+    "dark_overlay_fraction": 0.9325,
+    "scores": {
+      "title_continue": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          80,
+          432,
+          600,
+          572
+        ]
+      },
+      "title_new_game": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          80,
+          560,
+          600,
+          700
+        ]
+      },
+      "pause_menu": {
+        "score": 0.4244,
+        "bright": 1443,
+        "border": 9974,
+        "pixels": 128000,
+        "crop": [
+          662,
+          402,
+          1302,
+          602
+        ]
+      },
+      "reward_panel": {
+        "score": 0.0765,
+        "bright": 0,
+        "border": 2065,
+        "pixels": 108000,
+        "crop": [
+          1702,
+          1216,
+          2302,
+          1396
+        ]
+      },
+      "bottom_continue_panel": {
+        "score": 0.0451,
+        "bright": 0,
+        "border": 1353,
+        "pixels": 120000,
+        "crop": [
+          1710,
+          1252,
+          2310,
+          1452
+        ]
+      },
+      "pod_open_panel": {
+        "score": 0.0713,
+        "bright": 0,
+        "border": 1604,
+        "pixels": 90000,
+        "crop": [
+          1780,
+          706,
+          2280,
+          886
+        ]
+      },
+      "promotion_panel": {
+        "score": 0.5397,
+        "bright": 2991,
+        "border": 8714,
+        "pixels": 120000,
+        "crop": [
+          1032,
+          936,
+          1632,
+          1136
+        ]
+      },
+      "kia_panel": {
+        "score": 0.4142,
+        "bright": 1271,
+        "border": 10241,
+        "pixels": 129600,
+        "crop": [
+          972,
+          796,
+          1692,
+          976
+        ]
+      },
+      "perfect_reward_choice": {
+        "score": 1.0792,
+        "bright": 5539,
+        "border": 6333,
+        "pixels": 74800,
+        "crop": [
+          1464,
+          830,
+          1804,
+          1050
+        ]
+      },
+      "perfect_island_panel": {
+        "score": 0.6707,
+        "bright": 8902,
+        "border": 9136,
+        "pixels": 187200,
+        "crop": [
+          1332,
+          970,
+          2052,
+          1230
+        ]
+      },
+      "island_complete_leave": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          1022,
+          1338,
+          1542,
+          1478
+        ]
+      },
+      "mission_preview_panel": {
+        "score": 0.0,
+        "yellow": 0,
+        "pixels": 540800,
+        "crop": [
+          1110,
+          676,
+          2150,
+          1196
+        ]
+      },
+      "mission_preview_dialogue": {
+        "score": 0.8,
+        "card": {
+          "red": 0,
+          "blue": 48217,
+          "bright": 14558,
+          "dark_fraction": 0.9123,
+          "pixels": 777600,
+          "crop": [
+            500,
+            700,
+            2120,
+            1180
+          ]
+        },
+        "dialogue": {
+          "red": 0,
+          "blue": 24953,
+          "bright": 5544,
+          "dark_fraction": 0.8865,
+          "pixels": 489600,
+          "crop": [
+            260,
+            330,
+            2300,
+            570
+          ]
+        }
+      },
+      "deployment_screen": {
+        "score": 0.0001,
+        "yellow": 180,
+        "pixels": 1628000,
+        "crop": [
+          480,
+          180,
+          1960,
+          1280
+        ]
+      },
+      "island_map": {
+        "score": 0.0011,
+        "red": 686,
+        "green": 888,
+        "colored": 1574,
+        "pixels": 1456000,
+        "crop": [
+          840,
+          340,
+          2240,
+          1380
+        ]
+      },
+      "new_game_setup_back": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 70400,
+        "crop": [
+          362,
+          86,
+          802,
+          246
+        ]
+      },
+      "new_game_setup_start": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 70400,
+        "crop": [
+          1790,
+          86,
+          2230,
+          246
+        ]
+      },
+      "new_game_setup_back_windows": {
+        "score": 0.2853,
+        "bright": 392,
+        "border": 652,
+        "pixels": 22880,
+        "crop": [
+          1380,
+          452,
+          1640,
+          540
+        ]
+      },
+      "new_game_setup_start_windows": {
+        "score": 0.457,
+        "bright": 748,
+        "border": 744,
+        "pixels": 22880,
+        "crop": [
+          1582,
+          452,
+          1842,
+          540
+        ]
+      },
+      "options_header": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 70400,
+        "crop": [
+          280,
+          110,
+          720,
+          270
+        ]
+      },
+      "options_close": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 115200,
+        "crop": [
+          1420,
+          1280,
+          2140,
+          1440
+        ]
+      },
+      "system_privacy_prompt": {
+        "status": "OK",
+        "matched": false,
+        "score": 0.0,
+        "strict_score": 0.0,
+        "relaxed_score": 0.0,
+        "kind": "macos_screen_audio_privacy_prompt",
+        "checks": {
+          "card_mid_dark": 0.03569247908476428,
+          "inner_mid_dark": 0.028703917592806483,
+          "button_gray": 0.009222123192711429,
+          "icon_blue": 0.0,
+          "icon_color": 0.0,
+          "text_bright": 0.08853659667176564
+        },
+        "regions": {
+          "card": {
+            "box": [
+              986,
+              322,
+              1510,
+              995
+            ],
+            "pixels": 352652,
+            "mid_dark_fraction": 0.02320011140509678,
+            "button_gray_fraction": 0.012143155549366383,
+            "bright_text_fraction": 0.01568026737223228,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "inner": {
+            "box": [
+              1037,
+              367,
+              1472,
+              965
+            ],
+            "pixels": 260130,
+            "mid_dark_fraction": 0.018657546435324215,
+            "button_gray_fraction": 0.009398287176064954,
+            "bright_text_fraction": 0.005199644088532978,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "text": {
+            "box": [
+              1037,
+              524,
+              1472,
+              808
+            ],
+            "pixels": 123540,
+            "mid_dark_fraction": 0.015157836184119037,
+            "button_gray_fraction": 0.0010846891948268669,
+            "bright_text_fraction": 0.005312195800305938,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "buttons": {
+            "box": [
+              1024,
+              823,
+              1485,
+              957
+            ],
+            "pixels": 61774,
+            "mid_dark_fraction": 0.012895499108734403,
+            "button_gray_fraction": 0.004149955436720143,
+            "bright_text_fraction": 0.00938614081996435,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "icon": {
+            "box": [
+              1024,
+              367,
+              1165,
+              501
+            ],
+            "pixels": 18894,
+            "mid_dark_fraction": 0.0,
+            "button_gray_fraction": 0.0,
+            "bright_text_fraction": 0.007727320842595533,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          }
+        }
+      }
+    },
+    "ocr": {
+      "status": "OK",
+      "texts": [
+        "Into the Breach",
+        "MENU",
+        "Squad Achievements",
+        "CONTINUE",
+        "30",
+        "OPTIONS",
+        "Island Progress",
+        "ACHIEVEMENTS",
+        "Archive",
+        "RST Corp",
+        "Pinnacle",
+        "Detritus",
+        "MAIN MENU",
+        "Timeline Playtime",
+        "SAVE and QUIT",
+        "Oh 6m 035",
+        "Dif f iculty",
+        "ABANDON TIMELINE",
+        "Easy",
+        "Base Content"
+      ],
+      "observations": [
+        {
+          "text": "Into the Breach",
+          "bbox_normalized": {
+            "x": 0.46171875,
+            "y": 0.9752673796791443,
+            "width": 0.07578124999999997,
+            "height": 0.014037433155080214
+          },
+          "bbox_image": [
+            1182.0,
+            16.0,
+            1376.0,
+            37.0
+          ],
+          "center_image": [
+            1279.0,
+            26.5
+          ]
+        },
+        {
+          "text": "MENU",
+          "bbox_normalized": {
+            "x": 0.3515625,
+            "y": 0.7566844919786097,
+            "width": 0.05937500000000001,
+            "height": 0.02941176470588236
+          },
+          "bbox_image": [
+            900.0,
+            320.0,
+            1052.0,
+            364.0
+          ],
+          "center_image": [
+            976.0,
+            342.0
+          ]
+        },
+        {
+          "text": "Squad Achievements",
+          "bbox_normalized": {
+            "x": 0.57578125,
+            "y": 0.7580213903743316,
+            "width": 0.13124999999999998,
+            "height": 0.018716577540106916
+          },
+          "bbox_image": [
+            1474.0,
+            334.0,
+            1810.0,
+            362.0
+          ],
+          "center_image": [
+            1642.0,
+            348.0
+          ]
+        },
+        {
+          "text": "CONTINUE",
+          "bbox_normalized": {
+            "x": 0.3546875,
+            "y": 0.6577540106951871,
+            "width": 0.05625000000000002,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            908.0,
+            490.0,
+            1052.0,
+            512.0
+          ],
+          "center_image": [
+            980.0,
+            501.0
+          ]
+        },
+        {
+          "text": "30",
+          "bbox_normalized": {
+            "x": 0.63203125,
+            "y": 0.6537433155080214,
+            "width": 0.013281249999999911,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            1618.0,
+            496.0,
+            1652.0,
+            518.0
+          ],
+          "center_image": [
+            1635.0,
+            507.0
+          ]
+        },
+        {
+          "text": "OPTIONS",
+          "bbox_normalized": {
+            "x": 0.35859375,
+            "y": 0.572192513368984,
+            "width": 0.04921875000000003,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            918.0,
+            618.0,
+            1044.0,
+            640.0
+          ],
+          "center_image": [
+            981.0,
+            629.0
+          ]
+        },
+        {
+          "text": "Island Progress",
+          "bbox_normalized": {
+            "x": 0.590625,
+            "y": 0.517379679144385,
+            "width": 0.10234375000000007,
+            "height": 0.018716577540107027
+          },
+          "bbox_image": [
+            1512.0,
+            694.0,
+            1774.0,
+            722.0
+          ],
+          "center_image": [
+            1643.0,
+            708.0
+          ]
+        },
+        {
+          "text": "ACHIEVEMENTS",
+          "bbox_normalized": {
+            "x": 0.33984375,
+            "y": 0.4866310160427807,
+            "width": 0.08671875000000001,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            870.0,
+            746.0,
+            1092.0,
+            768.0
+          ],
+          "center_image": [
+            981.0,
+            757.0
+          ]
+        },
+        {
+          "text": "Archive",
+          "bbox_normalized": {
+            "x": 0.575,
+            "y": 0.47058823529411764,
+            "width": 0.04921875000000009,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            1472.0,
+            770.0,
+            1598.0,
+            792.0
+          ],
+          "center_image": [
+            1535.0,
+            781.0
+          ]
+        },
+        {
+          "text": "RST Corp",
+          "bbox_normalized": {
+            "x": 0.57109375,
+            "y": 0.43983957219251335,
+            "width": 0.05703125000000009,
+            "height": 0.018716577540106916
+          },
+          "bbox_image": [
+            1462.0,
+            810.0,
+            1608.0,
+            838.0
+          ],
+          "center_image": [
+            1535.0,
+            824.0
+          ]
+        },
+        {
+          "text": "Pinnacle",
+          "bbox_normalized": {
+            "x": 0.65625,
+            "y": 0.47058823529411764,
+            "width": 0.05234375000000002,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            1680.0,
+            770.0,
+            1814.0,
+            792.0
+          ],
+          "center_image": [
+            1747.0,
+            781.0
+          ]
+        },
+        {
+          "text": "Detritus",
+          "bbox_normalized": {
+            "x": 0.65546875,
+            "y": 0.44385026737967914,
+            "width": 0.05390624999999993,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            1678.0,
+            810.0,
+            1816.0,
+            832.0
+          ],
+          "center_image": [
+            1747.0,
+            821.0
+          ]
+        },
+        {
+          "text": "MAIN MENU",
+          "bbox_normalized": {
+            "x": 0.35234375,
+            "y": 0.4010695187165776,
+            "width": 0.06171874999999999,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            902.0,
+            874.0,
+            1060.0,
+            896.0
+          ],
+          "center_image": [
+            981.0,
+            885.0
+          ]
+        },
+        {
+          "text": "Timeline Playtime",
+          "bbox_normalized": {
+            "x": 0.5875,
+            "y": 0.3836898395721925,
+            "width": 0.10781249999999998,
+            "height": 0.018716577540107027
+          },
+          "bbox_image": [
+            1504.0,
+            894.0,
+            1780.0,
+            922.0
+          ],
+          "center_image": [
+            1642.0,
+            908.0
+          ]
+        },
+        {
+          "text": "SAVE and QUIT",
+          "bbox_normalized": {
+            "x": 0.3390625,
+            "y": 0.31550802139037437,
+            "width": 0.08750000000000002,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            868.0,
+            1002.0,
+            1092.0,
+            1024.0
+          ],
+          "center_image": [
+            980.0,
+            1013.0
+          ]
+        },
+        {
+          "text": "Oh 6m 035",
+          "bbox_normalized": {
+            "x": 0.5859375,
+            "y": 0.3221925133689839,
+            "width": 0.12187499999999996,
+            "height": 0.02941176470588236
+          },
+          "bbox_image": [
+            1500.0,
+            970.0,
+            1812.0,
+            1014.0
+          ],
+          "center_image": [
+            1656.0,
+            992.0
+          ]
+        },
+        {
+          "text": "Dif f iculty",
+          "bbox_normalized": {
+            "x": 0.61171875,
+            "y": 0.2633689839572193,
+            "width": 0.05937500000000007,
+            "height": 0.018716577540106916
+          },
+          "bbox_image": [
+            1566.0,
+            1074.0,
+            1718.0,
+            1102.0
+          ],
+          "center_image": [
+            1642.0,
+            1088.0
+          ]
+        },
+        {
+          "text": "ABANDON TIMELINE",
+          "bbox_normalized": {
+            "x": 0.32734375,
+            "y": 0.20320855614973266,
+            "width": 0.11093750000000002,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            838.0,
+            1170.0,
+            1122.0,
+            1192.0
+          ],
+          "center_image": [
+            980.0,
+            1181.0
+          ]
+        },
+        {
+          "text": "Easy",
+          "bbox_normalized": {
+            "x": 0.6140625,
+            "y": 0.19518716577540107,
+            "width": 0.057812500000000044,
+            "height": 0.03743315508021394
+          },
+          "bbox_image": [
+            1572.0,
+            1148.0,
+            1720.0,
+            1204.0
+          ],
+          "center_image": [
+            1646.0,
+            1176.0
+          ]
+        },
+        {
+          "text": "Base Content",
+          "bbox_normalized": {
+            "x": 0.60078125,
+            "y": 0.1778074866310161,
+            "width": 0.0859375,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            1538.0,
+            1208.0,
+            1758.0,
+            1230.0
+          ],
+          "center_image": [
+            1648.0,
+            1219.0
+          ]
+        }
+      ]
+    },
+    "ocr_texts": [
+      "Into the Breach",
+      "MENU",
+      "Squad Achievements",
+      "CONTINUE",
+      "30",
+      "OPTIONS",
+      "Island Progress",
+      "ACHIEVEMENTS",
+      "Archive",
+      "RST Corp",
+      "Pinnacle",
+      "Detritus",
+      "MAIN MENU",
+      "Timeline Playtime",
+      "SAVE and QUIT",
+      "Oh 6m 035",
+      "Dif f iculty",
+      "ABANDON TIMELINE",
+      "Easy",
+      "Base Content"
+    ],
+    "visible_text": "Into the Breach\nMENU\nSquad Achievements\nCONTINUE\n30\nOPTIONS\nIsland Progress\nACHIEVEMENTS\nArchive\nRST Corp\nPinnacle\nDetritus\nMAIN MENU\nTimeline Playtime\nSAVE and QUIT\nOh 6m 035\nDif f iculty\nABANDON TIMELINE\nEasy\nBase Content",
+    "pause_ocr_match": "Timeline Playtime",
+    "pause_ocr_override": {
+      "from_visible_ui": "mission_preview_panel",
+      "from_recommended_control": "dialogue_textbox",
+      "matched": "Timeline Playtime"
+    }
+  },
+  "evidence_ui": {
+    "status": "OK",
+    "visible_ui": "deployment_screen",
+    "recommended_control": "deploy_confirm",
+    "confidence": 0.0595,
+    "dark_overlay_fraction": 0.4889,
+    "scores": {
+      "title_continue": {
+        "score": 0.2399,
+        "bright": 629,
+        "border": 2793,
+        "pixels": 72800,
+        "crop": [
+          80,
+          432,
+          600,
+          572
+        ]
+      },
+      "title_new_game": {
+        "score": 0.2666,
+        "bright": 511,
+        "border": 3574,
+        "pixels": 72800,
+        "crop": [
+          80,
+          560,
+          600,
+          700
+        ]
+      },
+      "pause_menu": {
+        "score": 1.3212,
+        "bright": 598,
+        "border": 40782,
+        "pixels": 128000,
+        "crop": [
+          662,
+          402,
+          1302,
+          602
+        ]
+      },
+      "reward_panel": {
+        "score": 0.0158,
+        "bright": 171,
+        "border": 0,
+        "pixels": 108000,
+        "crop": [
+          1702,
+          1216,
+          2302,
+          1396
+        ]
+      },
+      "bottom_continue_panel": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 120000,
+        "crop": [
+          1710,
+          1252,
+          2310,
+          1452
+        ]
+      },
+      "pod_open_panel": {
+        "score": 2.1892,
+        "bright": 412,
+        "border": 48228,
+        "pixels": 90000,
+        "crop": [
+          1780,
+          706,
+          2280,
+          886
+        ]
+      },
+      "promotion_panel": {
+        "score": 0.3188,
+        "bright": 514,
+        "border": 8280,
+        "pixels": 120000,
+        "crop": [
+          1032,
+          936,
+          1632,
+          1136
+        ]
+      },
+      "kia_panel": {
+        "score": 1.3016,
+        "bright": 43,
+        "border": 42064,
+        "pixels": 129600,
+        "crop": [
+          972,
+          796,
+          1692,
+          976
+        ]
+      },
+      "perfect_reward_choice": {
+        "score": 2.8163,
+        "bright": 0,
+        "border": 52665,
+        "pixels": 74800,
+        "crop": [
+          1464,
+          830,
+          1804,
+          1050
+        ]
+      },
+      "perfect_island_panel": {
+        "score": 0.9515,
+        "bright": 2817,
+        "border": 37488,
+        "pixels": 187200,
+        "crop": [
+          1332,
+          970,
+          2052,
+          1230
+        ]
+      },
+      "island_complete_leave": {
+        "score": 0.3812,
+        "bright": 2775,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          1022,
+          1338,
+          1542,
+          1478
+        ]
+      },
+      "mission_preview_panel": {
+        "score": 0.0533,
+        "yellow": 28838,
+        "pixels": 540800,
+        "crop": [
+          1110,
+          676,
+          2150,
+          1196
+        ]
+      },
+      "mission_preview_dialogue": {
+        "score": 0.8543,
+        "card": {
+          "red": 606,
+          "blue": 193172,
+          "bright": 9302,
+          "dark_fraction": 0.1613,
+          "pixels": 777600,
+          "crop": [
+            500,
+            700,
+            2120,
+            1180
+          ]
+        },
+        "dialogue": {
+          "red": 0,
+          "blue": 110029,
+          "bright": 2615,
+          "dark_fraction": 0.5952,
+          "pixels": 489600,
+          "crop": [
+            260,
+            330,
+            2300,
+            570
+          ]
+        }
+      },
+      "deployment_screen": {
+        "score": 0.0595,
+        "yellow": 96832,
+        "pixels": 1628000,
+        "crop": [
+          480,
+          180,
+          1960,
+          1280
+        ]
+      },
+      "island_map": {
+        "score": 0.0068,
+        "red": 4157,
+        "green": 5811,
+        "colored": 9968,
+        "pixels": 1456000,
+        "crop": [
+          840,
+          340,
+          2240,
+          1380
+        ]
+      },
+      "new_game_setup_back": {
+        "score": 0.7772,
+        "bright": 3952,
+        "border": 3799,
+        "pixels": 70400,
+        "crop": [
+          362,
+          86,
+          802,
+          246
+        ]
+      },
+      "new_game_setup_start": {
+        "score": 0.679,
+        "bright": 3078,
+        "border": 4256,
+        "pixels": 70400,
+        "crop": [
+          1790,
+          86,
+          2230,
+          246
+        ]
+      },
+      "new_game_setup_back_windows": {
+        "score": 3.1734,
+        "bright": 0,
+        "border": 18152,
+        "pixels": 22880,
+        "crop": [
+          1380,
+          452,
+          1640,
+          540
+        ]
+      },
+      "new_game_setup_start_windows": {
+        "score": 1.8804,
+        "bright": 0,
+        "border": 10756,
+        "pixels": 22880,
+        "crop": [
+          1582,
+          452,
+          1842,
+          540
+        ]
+      },
+      "options_header": {
+        "score": 0.867,
+        "bright": 4715,
+        "border": 3472,
+        "pixels": 70400,
+        "crop": [
+          280,
+          110,
+          720,
+          270
+        ]
+      },
+      "options_close": {
+        "score": 0.1622,
+        "bright": 1868,
+        "border": 0,
+        "pixels": 115200,
+        "crop": [
+          1420,
+          1280,
+          2140,
+          1440
+        ]
+      },
+      "system_privacy_prompt": {
+        "status": "OK",
+        "matched": false,
+        "score": 0.0,
+        "strict_score": 0.0,
+        "relaxed_score": 0.0,
+        "kind": "macos_screen_audio_privacy_prompt",
+        "checks": {
+          "card_mid_dark": 0.38314783670583696,
+          "inner_mid_dark": 0.42722209388876053,
+          "button_gray": 0.7567092493563081,
+          "icon_blue": 0.0,
+          "icon_color": 0.0,
+          "text_bright": 0.1084689194826867
+        },
+        "regions": {
+          "card": {
+            "box": [
+              986,
+              322,
+              1510,
+              995
+            ],
+            "pixels": 352652,
+            "mid_dark_fraction": 0.24904609385879403,
+            "button_gray_fraction": 0.16916863946525554,
+            "bright_text_fraction": 0.00281297869377524,
+            "blue_icon_fraction": 0.0019217379195098176,
+            "red_icon_fraction": 0.0
+          },
+          "inner": {
+            "box": [
+              1037,
+              367,
+              1472,
+              965
+            ],
+            "pixels": 260130,
+            "mid_dark_fraction": 0.27769436102769435,
+            "button_gray_fraction": 0.19010677344010676,
+            "bright_text_fraction": 0.0037259481703926147,
+            "blue_icon_fraction": 0.0013902791680569459,
+            "red_icon_fraction": 0.0
+          },
+          "text": {
+            "box": [
+              1037,
+              524,
+              1472,
+              808
+            ],
+            "pixels": 123540,
+            "mid_dark_fraction": 0.31848143512724236,
+            "button_gray_fraction": 0.18812404394381865,
+            "bright_text_fraction": 0.006508135168961202,
+            "blue_icon_fraction": 0.002558753998053122,
+            "red_icon_fraction": 0.0
+          },
+          "buttons": {
+            "box": [
+              1024,
+              823,
+              1485,
+              957
+            ],
+            "pixels": 61774,
+            "mid_dark_fraction": 0.4146613190730838,
+            "button_gray_fraction": 0.3405191622103387,
+            "bright_text_fraction": 0.00038992869875222817,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "icon": {
+            "box": [
+              1024,
+              367,
+              1165,
+              501
+            ],
+            "pixels": 18894,
+            "mid_dark_fraction": 0.0008468296813803324,
+            "button_gray_fraction": 0.0,
+            "bright_text_fraction": 0.0,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          }
+        }
+      }
+    }
+  },
+  "pause_verify": {
+    "status": "OK",
+    "visible_ui": "pause_menu",
+    "recommended_control": "menu_continue",
+    "confidence": 0.8,
+    "dark_overlay_fraction": 0.9325,
+    "scores": {
+      "title_continue": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          80,
+          432,
+          600,
+          572
+        ]
+      },
+      "title_new_game": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          80,
+          560,
+          600,
+          700
+        ]
+      },
+      "pause_menu": {
+        "score": 0.4244,
+        "bright": 1443,
+        "border": 9974,
+        "pixels": 128000,
+        "crop": [
+          662,
+          402,
+          1302,
+          602
+        ]
+      },
+      "reward_panel": {
+        "score": 0.0765,
+        "bright": 0,
+        "border": 2065,
+        "pixels": 108000,
+        "crop": [
+          1702,
+          1216,
+          2302,
+          1396
+        ]
+      },
+      "bottom_continue_panel": {
+        "score": 0.0451,
+        "bright": 0,
+        "border": 1353,
+        "pixels": 120000,
+        "crop": [
+          1710,
+          1252,
+          2310,
+          1452
+        ]
+      },
+      "pod_open_panel": {
+        "score": 0.0713,
+        "bright": 0,
+        "border": 1604,
+        "pixels": 90000,
+        "crop": [
+          1780,
+          706,
+          2280,
+          886
+        ]
+      },
+      "promotion_panel": {
+        "score": 0.5397,
+        "bright": 2991,
+        "border": 8714,
+        "pixels": 120000,
+        "crop": [
+          1032,
+          936,
+          1632,
+          1136
+        ]
+      },
+      "kia_panel": {
+        "score": 0.4127,
+        "bright": 1188,
+        "border": 10403,
+        "pixels": 129600,
+        "crop": [
+          972,
+          796,
+          1692,
+          976
+        ]
+      },
+      "perfect_reward_choice": {
+        "score": 1.105,
+        "bright": 5732,
+        "border": 6333,
+        "pixels": 74800,
+        "crop": [
+          1464,
+          830,
+          1804,
+          1050
+        ]
+      },
+      "perfect_island_panel": {
+        "score": 0.6793,
+        "bright": 9063,
+        "border": 9136,
+        "pixels": 187200,
+        "crop": [
+          1332,
+          970,
+          2052,
+          1230
+        ]
+      },
+      "island_complete_leave": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          1022,
+          1338,
+          1542,
+          1478
+        ]
+      },
+      "mission_preview_panel": {
+        "score": 0.0,
+        "yellow": 0,
+        "pixels": 540800,
+        "crop": [
+          1110,
+          676,
+          2150,
+          1196
+        ]
+      },
+      "mission_preview_dialogue": {
+        "score": 0.8,
+        "card": {
+          "red": 0,
+          "blue": 48369,
+          "bright": 14645,
+          "dark_fraction": 0.912,
+          "pixels": 777600,
+          "crop": [
+            500,
+            700,
+            2120,
+            1180
+          ]
+        },
+        "dialogue": {
+          "red": 0,
+          "blue": 24953,
+          "bright": 5544,
+          "dark_fraction": 0.8865,
+          "pixels": 489600,
+          "crop": [
+            260,
+            330,
+            2300,
+            570
+          ]
+        }
+      },
+      "deployment_screen": {
+        "score": 0.0001,
+        "yellow": 180,
+        "pixels": 1628000,
+        "crop": [
+          480,
+          180,
+          1960,
+          1280
+        ]
+      },
+      "island_map": {
+        "score": 0.0011,
+        "red": 686,
+        "green": 888,
+        "colored": 1574,
+        "pixels": 1456000,
+        "crop": [
+          840,
+          340,
+          2240,
+          1380
+        ]
+      },
+      "new_game_setup_back": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 70400,
+        "crop": [
+          362,
+          86,
+          802,
+          246
+        ]
+      },
+      "new_game_setup_start": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 70400,
+        "crop": [
+          1790,
+          86,
+          2230,
+          246
+        ]
+      },
+      "new_game_setup_back_windows": {
+        "score": 0.2853,
+        "bright": 392,
+        "border": 652,
+        "pixels": 22880,
+        "crop": [
+          1380,
+          452,
+          1640,
+          540
+        ]
+      },
+      "new_game_setup_start_windows": {
+        "score": 0.457,
+        "bright": 748,
+        "border": 744,
+        "pixels": 22880,
+        "crop": [
+          1582,
+          452,
+          1842,
+          540
+        ]
+      },
+      "options_header": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 70400,
+        "crop": [
+          280,
+          110,
+          720,
+          270
+        ]
+      },
+      "options_close": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 115200,
+        "crop": [
+          1420,
+          1280,
+          2140,
+          1440
+        ]
+      },
+      "system_privacy_prompt": {
+        "status": "OK",
+        "matched": false,
+        "score": 0.0,
+        "strict_score": 0.0,
+        "relaxed_score": 0.0,
+        "kind": "macos_screen_audio_privacy_prompt",
+        "checks": {
+          "card_mid_dark": 0.03483551680181676,
+          "inner_mid_dark": 0.026693360026693362,
+          "button_gray": 0.004765795206971678,
+          "icon_blue": 0.0,
+          "icon_color": 0.0,
+          "text_bright": 0.08853659667176564
+        },
+        "regions": {
+          "card": {
+            "box": [
+              986,
+              322,
+              1510,
+              995
+            ],
+            "pixels": 352652,
+            "mid_dark_fraction": 0.022643085921180896,
+            "button_gray_fraction": 0.011892494081604234,
+            "bright_text_fraction": 0.015401754630274335,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "inner": {
+            "box": [
+              1037,
+              367,
+              1472,
+              965
+            ],
+            "pixels": 260130,
+            "mid_dark_fraction": 0.017350684017350685,
+            "button_gray_fraction": 0.008814369925481036,
+            "bright_text_fraction": 0.004754754754754755,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "text": {
+            "box": [
+              1037,
+              524,
+              1472,
+              808
+            ],
+            "pixels": 123540,
+            "mid_dark_fraction": 0.015157836184119037,
+            "button_gray_fraction": 0.0010846891948268669,
+            "bright_text_fraction": 0.005312195800305938,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "buttons": {
+            "box": [
+              1024,
+              823,
+              1485,
+              957
+            ],
+            "pixels": 61774,
+            "mid_dark_fraction": 0.008383467023172905,
+            "button_gray_fraction": 0.002144607843137255,
+            "bright_text_fraction": 0.007269385026737968,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "icon": {
+            "box": [
+              1024,
+              367,
+              1165,
+              501
+            ],
+            "pixels": 18894,
+            "mid_dark_fraction": 0.0,
+            "button_gray_fraction": 0.0,
+            "bright_text_fraction": 0.007727320842595533,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          }
+        }
+      }
+    },
+    "ocr": {
+      "status": "OK",
+      "texts": [
+        "Into the Breach",
+        "MENU",
+        "Squad Achievements",
+        "CONTINUE",
+        "30",
+        "OPTIONS",
+        "Island Progress",
+        "ACHIEVEMENTS",
+        "Archive",
+        "RST Corp",
+        "Pinnacle",
+        "Detritus",
+        "MAIN MENU",
+        "Timeline Playtime",
+        "SAVE and QUIT",
+        "Oh 6m 085",
+        "Dif f iculty",
+        "ABANDON TIMELINE",
+        "Easy",
+        "Base Content"
+      ],
+      "observations": [
+        {
+          "text": "Into the Breach",
+          "bbox_normalized": {
+            "x": 0.46171875,
+            "y": 0.9752673796791443,
+            "width": 0.07578124999999997,
+            "height": 0.014037433155080214
+          },
+          "bbox_image": [
+            1182.0,
+            16.0,
+            1376.0,
+            37.0
+          ],
+          "center_image": [
+            1279.0,
+            26.5
+          ]
+        },
+        {
+          "text": "MENU",
+          "bbox_normalized": {
+            "x": 0.3515625,
+            "y": 0.7566844919786097,
+            "width": 0.05937500000000001,
+            "height": 0.02941176470588236
+          },
+          "bbox_image": [
+            900.0,
+            320.0,
+            1052.0,
+            364.0
+          ],
+          "center_image": [
+            976.0,
+            342.0
+          ]
+        },
+        {
+          "text": "Squad Achievements",
+          "bbox_normalized": {
+            "x": 0.57578125,
+            "y": 0.7580213903743316,
+            "width": 0.13124999999999998,
+            "height": 0.018716577540106916
+          },
+          "bbox_image": [
+            1474.0,
+            334.0,
+            1810.0,
+            362.0
+          ],
+          "center_image": [
+            1642.0,
+            348.0
+          ]
+        },
+        {
+          "text": "CONTINUE",
+          "bbox_normalized": {
+            "x": 0.3546875,
+            "y": 0.6577540106951871,
+            "width": 0.05625000000000002,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            908.0,
+            490.0,
+            1052.0,
+            512.0
+          ],
+          "center_image": [
+            980.0,
+            501.0
+          ]
+        },
+        {
+          "text": "30",
+          "bbox_normalized": {
+            "x": 0.63203125,
+            "y": 0.6537433155080214,
+            "width": 0.013281249999999911,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            1618.0,
+            496.0,
+            1652.0,
+            518.0
+          ],
+          "center_image": [
+            1635.0,
+            507.0
+          ]
+        },
+        {
+          "text": "OPTIONS",
+          "bbox_normalized": {
+            "x": 0.35859375,
+            "y": 0.572192513368984,
+            "width": 0.04921875000000003,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            918.0,
+            618.0,
+            1044.0,
+            640.0
+          ],
+          "center_image": [
+            981.0,
+            629.0
+          ]
+        },
+        {
+          "text": "Island Progress",
+          "bbox_normalized": {
+            "x": 0.590625,
+            "y": 0.517379679144385,
+            "width": 0.10234375000000007,
+            "height": 0.018716577540107027
+          },
+          "bbox_image": [
+            1512.0,
+            694.0,
+            1774.0,
+            722.0
+          ],
+          "center_image": [
+            1643.0,
+            708.0
+          ]
+        },
+        {
+          "text": "ACHIEVEMENTS",
+          "bbox_normalized": {
+            "x": 0.33984375,
+            "y": 0.4866310160427807,
+            "width": 0.08671875000000001,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            870.0,
+            746.0,
+            1092.0,
+            768.0
+          ],
+          "center_image": [
+            981.0,
+            757.0
+          ]
+        },
+        {
+          "text": "Archive",
+          "bbox_normalized": {
+            "x": 0.575,
+            "y": 0.47058823529411764,
+            "width": 0.04921875000000009,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            1472.0,
+            770.0,
+            1598.0,
+            792.0
+          ],
+          "center_image": [
+            1535.0,
+            781.0
+          ]
+        },
+        {
+          "text": "RST Corp",
+          "bbox_normalized": {
+            "x": 0.57109375,
+            "y": 0.43983957219251335,
+            "width": 0.05703125000000009,
+            "height": 0.018716577540106916
+          },
+          "bbox_image": [
+            1462.0,
+            810.0,
+            1608.0,
+            838.0
+          ],
+          "center_image": [
+            1535.0,
+            824.0
+          ]
+        },
+        {
+          "text": "Pinnacle",
+          "bbox_normalized": {
+            "x": 0.65625,
+            "y": 0.47058823529411764,
+            "width": 0.05234375000000002,
+            "height": 0.014705882352941235
+          },
+          "bbox_image": [
+            1680.0,
+            770.0,
+            1814.0,
+            792.0
+          ],
+          "center_image": [
+            1747.0,
+            781.0
+          ]
+        },
+        {
+          "text": "Detritus",
+          "bbox_normalized": {
+            "x": 0.65546875,
+            "y": 0.44385026737967914,
+            "width": 0.05390624999999993,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            1678.0,
+            810.0,
+            1816.0,
+            832.0
+          ],
+          "center_image": [
+            1747.0,
+            821.0
+          ]
+        },
+        {
+          "text": "MAIN MENU",
+          "bbox_normalized": {
+            "x": 0.35234375,
+            "y": 0.4010695187165776,
+            "width": 0.06171874999999999,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            902.0,
+            874.0,
+            1060.0,
+            896.0
+          ],
+          "center_image": [
+            981.0,
+            885.0
+          ]
+        },
+        {
+          "text": "Timeline Playtime",
+          "bbox_normalized": {
+            "x": 0.5875,
+            "y": 0.3836898395721925,
+            "width": 0.10781249999999998,
+            "height": 0.018716577540107027
+          },
+          "bbox_image": [
+            1504.0,
+            894.0,
+            1780.0,
+            922.0
+          ],
+          "center_image": [
+            1642.0,
+            908.0
+          ]
+        },
+        {
+          "text": "SAVE and QUIT",
+          "bbox_normalized": {
+            "x": 0.3390625,
+            "y": 0.31550802139037437,
+            "width": 0.08750000000000002,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            868.0,
+            1002.0,
+            1092.0,
+            1024.0
+          ],
+          "center_image": [
+            980.0,
+            1013.0
+          ]
+        },
+        {
+          "text": "Oh 6m 085",
+          "bbox_normalized": {
+            "x": 0.5859375,
+            "y": 0.3221925133689839,
+            "width": 0.12187499999999996,
+            "height": 0.02941176470588236
+          },
+          "bbox_image": [
+            1500.0,
+            970.0,
+            1812.0,
+            1014.0
+          ],
+          "center_image": [
+            1656.0,
+            992.0
+          ]
+        },
+        {
+          "text": "Dif f iculty",
+          "bbox_normalized": {
+            "x": 0.61171875,
+            "y": 0.2633689839572193,
+            "width": 0.05937500000000007,
+            "height": 0.018716577540106916
+          },
+          "bbox_image": [
+            1566.0,
+            1074.0,
+            1718.0,
+            1102.0
+          ],
+          "center_image": [
+            1642.0,
+            1088.0
+          ]
+        },
+        {
+          "text": "ABANDON TIMELINE",
+          "bbox_normalized": {
+            "x": 0.32734375,
+            "y": 0.20320855614973266,
+            "width": 0.11093750000000002,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            838.0,
+            1170.0,
+            1122.0,
+            1192.0
+          ],
+          "center_image": [
+            980.0,
+            1181.0
+          ]
+        },
+        {
+          "text": "Easy",
+          "bbox_normalized": {
+            "x": 0.6140625,
+            "y": 0.19518716577540107,
+            "width": 0.057812500000000044,
+            "height": 0.03743315508021394
+          },
+          "bbox_image": [
+            1572.0,
+            1148.0,
+            1720.0,
+            1204.0
+          ],
+          "center_image": [
+            1646.0,
+            1176.0
+          ]
+        },
+        {
+          "text": "Base Content",
+          "bbox_normalized": {
+            "x": 0.60078125,
+            "y": 0.1778074866310161,
+            "width": 0.0859375,
+            "height": 0.014705882352941124
+          },
+          "bbox_image": [
+            1538.0,
+            1208.0,
+            1758.0,
+            1230.0
+          ],
+          "center_image": [
+            1648.0,
+            1219.0
+          ]
+        }
+      ]
+    },
+    "ocr_texts": [
+      "Into the Breach",
+      "MENU",
+      "Squad Achievements",
+      "CONTINUE",
+      "30",
+      "OPTIONS",
+      "Island Progress",
+      "ACHIEVEMENTS",
+      "Archive",
+      "RST Corp",
+      "Pinnacle",
+      "Detritus",
+      "MAIN MENU",
+      "Timeline Playtime",
+      "SAVE and QUIT",
+      "Oh 6m 085",
+      "Dif f iculty",
+      "ABANDON TIMELINE",
+      "Easy",
+      "Base Content"
+    ],
+    "visible_text": "Into the Breach\nMENU\nSquad Achievements\nCONTINUE\n30\nOPTIONS\nIsland Progress\nACHIEVEMENTS\nArchive\nRST Corp\nPinnacle\nDetritus\nMAIN MENU\nTimeline Playtime\nSAVE and QUIT\nOh 6m 085\nDif f iculty\nABANDON TIMELINE\nEasy\nBase Content",
+    "pause_ocr_match": "Timeline Playtime",
+    "pause_ocr_override": {
+      "from_visible_ui": "mission_preview_panel",
+      "from_recommended_control": "dialogue_textbox",
+      "matched": "Timeline Playtime"
+    },
+    "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_52112.png"
+  },
+  "visible_timer": {
+    "status": "OK",
+    "source": "visible_pause_menu_timer",
+    "game_seconds": 368.0,
+    "game_timer": "0:06:08",
+    "ocr_text": "Oh 6m 085",
+    "timer_matches": [
+      {
+        "text": "Oh 6m 085",
+        "game_seconds": 368,
+        "game_timer": "0:06:08",
+        "pause_timer_like": true
+      }
+    ],
+    "classifier_visible_ui": "mission_preview_panel",
+    "timeline_label_seen": true,
+    "game_time_label_seen": false,
+    "visible_ui": {
+      "status": "OK",
+      "visible_ui": "mission_preview_panel",
+      "recommended_control": "dialogue_textbox",
+      "confidence": 0.8,
+      "dark_overlay_fraction": 0.9325,
+      "scores": {
+        "title_continue": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 72800,
+          "crop": [
+            80,
+            432,
+            600,
+            572
+          ]
+        },
+        "title_new_game": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 72800,
+          "crop": [
+            80,
+            560,
+            600,
+            700
+          ]
+        },
+        "pause_menu": {
+          "score": 0.4244,
+          "bright": 1443,
+          "border": 9974,
+          "pixels": 128000,
+          "crop": [
+            662,
+            402,
+            1302,
+            602
+          ]
+        },
+        "reward_panel": {
+          "score": 0.0765,
+          "bright": 0,
+          "border": 2065,
+          "pixels": 108000,
+          "crop": [
+            1702,
+            1216,
+            2302,
+            1396
+          ]
+        },
+        "bottom_continue_panel": {
+          "score": 0.0451,
+          "bright": 0,
+          "border": 1353,
+          "pixels": 120000,
+          "crop": [
+            1710,
+            1252,
+            2310,
+            1452
+          ]
+        },
+        "pod_open_panel": {
+          "score": 0.0713,
+          "bright": 0,
+          "border": 1604,
+          "pixels": 90000,
+          "crop": [
+            1780,
+            706,
+            2280,
+            886
+          ]
+        },
+        "promotion_panel": {
+          "score": 0.5397,
+          "bright": 2991,
+          "border": 8714,
+          "pixels": 120000,
+          "crop": [
+            1032,
+            936,
+            1632,
+            1136
+          ]
+        },
+        "kia_panel": {
+          "score": 0.4127,
+          "bright": 1188,
+          "border": 10403,
+          "pixels": 129600,
+          "crop": [
+            972,
+            796,
+            1692,
+            976
+          ]
+        },
+        "perfect_reward_choice": {
+          "score": 1.105,
+          "bright": 5732,
+          "border": 6333,
+          "pixels": 74800,
+          "crop": [
+            1464,
+            830,
+            1804,
+            1050
+          ]
+        },
+        "perfect_island_panel": {
+          "score": 0.6793,
+          "bright": 9063,
+          "border": 9136,
+          "pixels": 187200,
+          "crop": [
+            1332,
+            970,
+            2052,
+            1230
+          ]
+        },
+        "island_complete_leave": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 72800,
+          "crop": [
+            1022,
+            1338,
+            1542,
+            1478
+          ]
+        },
+        "mission_preview_panel": {
+          "score": 0.0,
+          "yellow": 0,
+          "pixels": 540800,
+          "crop": [
+            1110,
+            676,
+            2150,
+            1196
+          ]
+        },
+        "mission_preview_dialogue": {
+          "score": 0.8,
+          "card": {
+            "red": 0,
+            "blue": 48369,
+            "bright": 14645,
+            "dark_fraction": 0.912,
+            "pixels": 777600,
+            "crop": [
+              500,
+              700,
+              2120,
+              1180
+            ]
+          },
+          "dialogue": {
+            "red": 0,
+            "blue": 24953,
+            "bright": 5544,
+            "dark_fraction": 0.8865,
+            "pixels": 489600,
+            "crop": [
+              260,
+              330,
+              2300,
+              570
+            ]
+          }
+        },
+        "deployment_screen": {
+          "score": 0.0001,
+          "yellow": 180,
+          "pixels": 1628000,
+          "crop": [
+            480,
+            180,
+            1960,
+            1280
+          ]
+        },
+        "island_map": {
+          "score": 0.0011,
+          "red": 686,
+          "green": 888,
+          "colored": 1574,
+          "pixels": 1456000,
+          "crop": [
+            840,
+            340,
+            2240,
+            1380
+          ]
+        },
+        "new_game_setup_back": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 70400,
+          "crop": [
+            362,
+            86,
+            802,
+            246
+          ]
+        },
+        "new_game_setup_start": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 70400,
+          "crop": [
+            1790,
+            86,
+            2230,
+            246
+          ]
+        },
+        "new_game_setup_back_windows": {
+          "score": 0.2853,
+          "bright": 392,
+          "border": 652,
+          "pixels": 22880,
+          "crop": [
+            1380,
+            452,
+            1640,
+            540
+          ]
+        },
+        "new_game_setup_start_windows": {
+          "score": 0.457,
+          "bright": 748,
+          "border": 744,
+          "pixels": 22880,
+          "crop": [
+            1582,
+            452,
+            1842,
+            540
+          ]
+        },
+        "options_header": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 70400,
+          "crop": [
+            280,
+            110,
+            720,
+            270
+          ]
+        },
+        "options_close": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 115200,
+          "crop": [
+            1420,
+            1280,
+            2140,
+            1440
+          ]
+        },
+        "system_privacy_prompt": {
+          "status": "OK",
+          "matched": false,
+          "score": 0.0,
+          "strict_score": 0.0,
+          "relaxed_score": 0.0,
+          "kind": "macos_screen_audio_privacy_prompt",
+          "checks": {
+            "card_mid_dark": 0.03483551680181676,
+            "inner_mid_dark": 0.026693360026693362,
+            "button_gray": 0.004765795206971678,
+            "icon_blue": 0.0,
+            "icon_color": 0.0,
+            "text_bright": 0.08853659667176564
+          },
+          "regions": {
+            "card": {
+              "box": [
+                986,
+                322,
+                1510,
+                995
+              ],
+              "pixels": 352652,
+              "mid_dark_fraction": 0.022643085921180896,
+              "button_gray_fraction": 0.011892494081604234,
+              "bright_text_fraction": 0.015401754630274335,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "inner": {
+              "box": [
+                1037,
+                367,
+                1472,
+                965
+              ],
+              "pixels": 260130,
+              "mid_dark_fraction": 0.017350684017350685,
+              "button_gray_fraction": 0.008814369925481036,
+              "bright_text_fraction": 0.004754754754754755,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "text": {
+              "box": [
+                1037,
+                524,
+                1472,
+                808
+              ],
+              "pixels": 123540,
+              "mid_dark_fraction": 0.015157836184119037,
+              "button_gray_fraction": 0.0010846891948268669,
+              "bright_text_fraction": 0.005312195800305938,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "buttons": {
+              "box": [
+                1024,
+                823,
+                1485,
+                957
+              ],
+              "pixels": 61774,
+              "mid_dark_fraction": 0.008383467023172905,
+              "button_gray_fraction": 0.002144607843137255,
+              "bright_text_fraction": 0.007269385026737968,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "icon": {
+              "box": [
+                1024,
+                367,
+                1165,
+                501
+              ],
+              "pixels": 18894,
+              "mid_dark_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "bright_text_fraction": 0.007727320842595533,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            }
+          }
+        }
+      }
+    },
+    "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_52112.png"
+  },
+  "game_budget": {
+    "game_seconds": 368.0,
+    "game_timer": "0:06:08",
+    "max_game_seconds": 1800,
+    "max_game_timer": "0:30:00",
+    "game_status": "OK",
+    "remaining_game_seconds": 1432.0,
+    "remaining_game_timer": "0:23:52"
+  },
+  "resume_click": {
+    "status": "OK",
+    "key": "esc",
+    "description": "Pause menu Escape resume",
+    "backend": "pyautogui",
+    "control": "pause_menu_escape"
+  },
+  "capture_result": {
+    "status": "OK",
+    "screenshot_path": "run_notes/lightning_war_smoke_2026-06-24/screenshots/060_tides_to_turn3_wait2.png",
+    "rect": "215,32,1280,748",
+    "screenshot_cap": 90,
+    "pruned_screenshots": 1
+  },
+  "pause_click": {
+    "status": "OK",
+    "key": "esc",
+    "description": "Pause menu Escape resume",
+    "backend": "pyautogui",
+    "control": "pause_menu_escape"
+  },
+  "next_step": "Stay paused and inspect screenshot_path/evidence_ui before choosing any combat, inspection, map, reward, or shop action.",
+  "guard": {
+    "status": "OK",
+    "run_id": "20260624_053445_308",
+    "updated_at": "2026-06-24T06:10:07",
+    "desired_rest_state": "pause_menu",
+    "reason": "lightning_snap_pause:tides_to_turn3_wait2",
+    "visible_ui": {
+      "status": "OK",
+      "visible_ui": "pause_menu",
+      "recommended_control": "menu_continue",
+      "confidence": 0.8,
+      "dark_overlay_fraction": 0.9325,
+      "scores": {
+        "title_continue": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 72800,
+          "crop": [
+            80,
+            432,
+            600,
+            572
+          ]
+        },
+        "title_new_game": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 72800,
+          "crop": [
+            80,
+            560,
+            600,
+            700
+          ]
+        },
+        "pause_menu": {
+          "score": 0.4244,
+          "bright": 1443,
+          "border": 9974,
+          "pixels": 128000,
+          "crop": [
+            662,
+            402,
+            1302,
+            602
+          ]
+        },
+        "reward_panel": {
+          "score": 0.0765,
+          "bright": 0,
+          "border": 2065,
+          "pixels": 108000,
+          "crop": [
+            1702,
+            1216,
+            2302,
+            1396
+          ]
+        },
+        "bottom_continue_panel": {
+          "score": 0.0451,
+          "bright": 0,
+          "border": 1353,
+          "pixels": 120000,
+          "crop": [
+            1710,
+            1252,
+            2310,
+            1452
+          ]
+        },
+        "pod_open_panel": {
+          "score": 0.0713,
+          "bright": 0,
+          "border": 1604,
+          "pixels": 90000,
+          "crop": [
+            1780,
+            706,
+            2280,
+            886
+          ]
+        },
+        "promotion_panel": {
+          "score": 0.5397,
+          "bright": 2991,
+          "border": 8714,
+          "pixels": 120000,
+          "crop": [
+            1032,
+            936,
+            1632,
+            1136
+          ]
+        },
+        "kia_panel": {
+          "score": 0.4127,
+          "bright": 1188,
+          "border": 10403,
+          "pixels": 129600,
+          "crop": [
+            972,
+            796,
+            1692,
+            976
+          ]
+        },
+        "perfect_reward_choice": {
+          "score": 1.105,
+          "bright": 5732,
+          "border": 6333,
+          "pixels": 74800,
+          "crop": [
+            1464,
+            830,
+            1804,
+            1050
+          ]
+        },
+        "perfect_island_panel": {
+          "score": 0.6793,
+          "bright": 9063,
+          "border": 9136,
+          "pixels": 187200,
+          "crop": [
+            1332,
+            970,
+            2052,
+            1230
+          ]
+        },
+        "island_complete_leave": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 72800,
+          "crop": [
+            1022,
+            1338,
+            1542,
+            1478
+          ]
+        },
+        "mission_preview_panel": {
+          "score": 0.0,
+          "yellow": 0,
+          "pixels": 540800,
+          "crop": [
+            1110,
+            676,
+            2150,
+            1196
+          ]
+        },
+        "mission_preview_dialogue": {
+          "score": 0.8,
+          "card": {
+            "red": 0,
+            "blue": 48369,
+            "bright": 14645,
+            "dark_fraction": 0.912,
+            "pixels": 777600,
+            "crop": [
+              500,
+              700,
+              2120,
+              1180
+            ]
+          },
+          "dialogue": {
+            "red": 0,
+            "blue": 24953,
+            "bright": 5544,
+            "dark_fraction": 0.8865,
+            "pixels": 489600,
+            "crop": [
+              260,
+              330,
+              2300,
+              570
+            ]
+          }
+        },
+        "deployment_screen": {
+          "score": 0.0001,
+          "yellow": 180,
+          "pixels": 1628000,
+          "crop": [
+            480,
+            180,
+            1960,
+            1280
+          ]
+        },
+        "island_map": {
+          "score": 0.0011,
+          "red": 686,
+          "green": 888,
+          "colored": 1574,
+          "pixels": 1456000,
+          "crop": [
+            840,
+            340,
+            2240,
+            1380
+          ]
+        },
+        "new_game_setup_back": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 70400,
+          "crop": [
+            362,
+            86,
+            802,
+            246
+          ]
+        },
+        "new_game_setup_start": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 70400,
+          "crop": [
+            1790,
+            86,
+            2230,
+            246
+          ]
+        },
+        "new_game_setup_back_windows": {
+          "score": 0.2853,
+          "bright": 392,
+          "border": 652,
+          "pixels": 22880,
+          "crop": [
+            1380,
+            452,
+            1640,
+            540
+          ]
+        },
+        "new_game_setup_start_windows": {
+          "score": 0.457,
+          "bright": 748,
+          "border": 744,
+          "pixels": 22880,
+          "crop": [
+            1582,
+            452,
+            1842,
+            540
+          ]
+        },
+        "options_header": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 70400,
+          "crop": [
+            280,
+            110,
+            720,
+            270
+          ]
+        },
+        "options_close": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 115200,
+          "crop": [
+            1420,
+            1280,
+            2140,
+            1440
+          ]
+        },
+        "system_privacy_prompt": {
+          "status": "OK",
+          "matched": false,
+          "score": 0.0,
+          "strict_score": 0.0,
+          "relaxed_score": 0.0,
+          "kind": "macos_screen_audio_privacy_prompt",
+          "checks": {
+            "card_mid_dark": 0.03483551680181676,
+            "inner_mid_dark": 0.026693360026693362,
+            "button_gray": 0.004765795206971678,
+            "icon_blue": 0.0,
+            "icon_color": 0.0,
+            "text_bright": 0.08853659667176564
+          },
+          "regions": {
+            "card": {
+              "box": [
+                986,
+                322,
+                1510,
+                995
+              ],
+              "pixels": 352652,
+              "mid_dark_fraction": 0.022643085921180896,
+              "button_gray_fraction": 0.011892494081604234,
+              "bright_text_fraction": 0.015401754630274335,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "inner": {
+              "box": [
+                1037,
+                367,
+                1472,
+                965
+              ],
+              "pixels": 260130,
+              "mid_dark_fraction": 0.017350684017350685,
+              "button_gray_fraction": 0.008814369925481036,
+              "bright_text_fraction": 0.004754754754754755,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "text": {
+              "box": [
+                1037,
+                524,
+                1472,
+                808
+              ],
+              "pixels": 123540,
+              "mid_dark_fraction": 0.015157836184119037,
+              "button_gray_fraction": 0.0010846891948268669,
+              "bright_text_fraction": 0.005312195800305938,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "buttons": {
+              "box": [
+                1024,
+                823,
+                1485,
+                957
+              ],
+              "pixels": 61774,
+              "mid_dark_fraction": 0.008383467023172905,
+              "button_gray_fraction": 0.002144607843137255,
+              "bright_text_fraction": 0.007269385026737968,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "icon": {
+              "box": [
+                1024,
+                367,
+                1165,
+                501
+              ],
+              "pixels": 18894,
+              "mid_dark_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "bright_text_fraction": 0.007727320842595533,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            }
+          }
+        }
+      },
+      "ocr": {
+        "status": "OK",
+        "texts": [
+          "Into the Breach",
+          "MENU",
+          "Squad Achievements",
+          "CONTINUE",
+          "30",
+          "OPTIONS",
+          "Island Progress",
+          "ACHIEVEMENTS",
+          "Archive",
+          "RST Corp",
+          "Pinnacle",
+          "Detritus",
+          "MAIN MENU",
+          "Timeline Playtime",
+          "SAVE and QUIT",
+          "Oh 6m 085",
+          "Dif f iculty",
+          "ABANDON TIMELINE",
+          "Easy",
+          "Base Content"
+        ],
+        "observations": [
+          {
+            "text": "Into the Breach",
+            "bbox_normalized": {
+              "x": 0.46171875,
+              "y": 0.9752673796791443,
+              "width": 0.07578124999999997,
+              "height": 0.014037433155080214
+            },
+            "bbox_image": [
+              1182.0,
+              16.0,
+              1376.0,
+              37.0
+            ],
+            "center_image": [
+              1279.0,
+              26.5
+            ]
+          },
+          {
+            "text": "MENU",
+            "bbox_normalized": {
+              "x": 0.3515625,
+              "y": 0.7566844919786097,
+              "width": 0.05937500000000001,
+              "height": 0.02941176470588236
+            },
+            "bbox_image": [
+              900.0,
+              320.0,
+              1052.0,
+              364.0
+            ],
+            "center_image": [
+              976.0,
+              342.0
+            ]
+          },
+          {
+            "text": "Squad Achievements",
+            "bbox_normalized": {
+              "x": 0.57578125,
+              "y": 0.7580213903743316,
+              "width": 0.13124999999999998,
+              "height": 0.018716577540106916
+            },
+            "bbox_image": [
+              1474.0,
+              334.0,
+              1810.0,
+              362.0
+            ],
+            "center_image": [
+              1642.0,
+              348.0
+            ]
+          },
+          {
+            "text": "CONTINUE",
+            "bbox_normalized": {
+              "x": 0.3546875,
+              "y": 0.6577540106951871,
+              "width": 0.05625000000000002,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              908.0,
+              490.0,
+              1052.0,
+              512.0
+            ],
+            "center_image": [
+              980.0,
+              501.0
+            ]
+          },
+          {
+            "text": "30",
+            "bbox_normalized": {
+              "x": 0.63203125,
+              "y": 0.6537433155080214,
+              "width": 0.013281249999999911,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              1618.0,
+              496.0,
+              1652.0,
+              518.0
+            ],
+            "center_image": [
+              1635.0,
+              507.0
+            ]
+          },
+          {
+            "text": "OPTIONS",
+            "bbox_normalized": {
+              "x": 0.35859375,
+              "y": 0.572192513368984,
+              "width": 0.04921875000000003,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              918.0,
+              618.0,
+              1044.0,
+              640.0
+            ],
+            "center_image": [
+              981.0,
+              629.0
+            ]
+          },
+          {
+            "text": "Island Progress",
+            "bbox_normalized": {
+              "x": 0.590625,
+              "y": 0.517379679144385,
+              "width": 0.10234375000000007,
+              "height": 0.018716577540107027
+            },
+            "bbox_image": [
+              1512.0,
+              694.0,
+              1774.0,
+              722.0
+            ],
+            "center_image": [
+              1643.0,
+              708.0
+            ]
+          },
+          {
+            "text": "ACHIEVEMENTS",
+            "bbox_normalized": {
+              "x": 0.33984375,
+              "y": 0.4866310160427807,
+              "width": 0.08671875000000001,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              870.0,
+              746.0,
+              1092.0,
+              768.0
+            ],
+            "center_image": [
+              981.0,
+              757.0
+            ]
+          },
+          {
+            "text": "Archive",
+            "bbox_normalized": {
+              "x": 0.575,
+              "y": 0.47058823529411764,
+              "width": 0.04921875000000009,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              1472.0,
+              770.0,
+              1598.0,
+              792.0
+            ],
+            "center_image": [
+              1535.0,
+              781.0
+            ]
+          },
+          {
+            "text": "RST Corp",
+            "bbox_normalized": {
+              "x": 0.57109375,
+              "y": 0.43983957219251335,
+              "width": 0.05703125000000009,
+              "height": 0.018716577540106916
+            },
+            "bbox_image": [
+              1462.0,
+              810.0,
+              1608.0,
+              838.0
+            ],
+            "center_image": [
+              1535.0,
+              824.0
+            ]
+          },
+          {
+            "text": "Pinnacle",
+            "bbox_normalized": {
+              "x": 0.65625,
+              "y": 0.47058823529411764,
+              "width": 0.05234375000000002,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              1680.0,
+              770.0,
+              1814.0,
+              792.0
+            ],
+            "center_image": [
+              1747.0,
+              781.0
+            ]
+          },
+          {
+            "text": "Detritus",
+            "bbox_normalized": {
+              "x": 0.65546875,
+              "y": 0.44385026737967914,
+              "width": 0.05390624999999993,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              1678.0,
+              810.0,
+              1816.0,
+              832.0
+            ],
+            "center_image": [
+              1747.0,
+              821.0
+            ]
+          },
+          {
+            "text": "MAIN MENU",
+            "bbox_normalized": {
+              "x": 0.35234375,
+              "y": 0.4010695187165776,
+              "width": 0.06171874999999999,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              902.0,
+              874.0,
+              1060.0,
+              896.0
+            ],
+            "center_image": [
+              981.0,
+              885.0
+            ]
+          },
+          {
+            "text": "Timeline Playtime",
+            "bbox_normalized": {
+              "x": 0.5875,
+              "y": 0.3836898395721925,
+              "width": 0.10781249999999998,
+              "height": 0.018716577540107027
+            },
+            "bbox_image": [
+              1504.0,
+              894.0,
+              1780.0,
+              922.0
+            ],
+            "center_image": [
+              1642.0,
+              908.0
+            ]
+          },
+          {
+            "text": "SAVE and QUIT",
+            "bbox_normalized": {
+              "x": 0.3390625,
+              "y": 0.31550802139037437,
+              "width": 0.08750000000000002,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              868.0,
+              1002.0,
+              1092.0,
+              1024.0
+            ],
+            "center_image": [
+              980.0,
+              1013.0
+            ]
+          },
+          {
+            "text": "Oh 6m 085",
+            "bbox_normalized": {
+              "x": 0.5859375,
+              "y": 0.3221925133689839,
+              "width": 0.12187499999999996,
+              "height": 0.02941176470588236
+            },
+            "bbox_image": [
+              1500.0,
+              970.0,
+              1812.0,
+              1014.0
+            ],
+            "center_image": [
+              1656.0,
+              992.0
+            ]
+          },
+          {
+            "text": "Dif f iculty",
+            "bbox_normalized": {
+              "x": 0.61171875,
+              "y": 0.2633689839572193,
+              "width": 0.05937500000000007,
+              "height": 0.018716577540106916
+            },
+            "bbox_image": [
+              1566.0,
+              1074.0,
+              1718.0,
+              1102.0
+            ],
+            "center_image": [
+              1642.0,
+              1088.0
+            ]
+          },
+          {
+            "text": "ABANDON TIMELINE",
+            "bbox_normalized": {
+              "x": 0.32734375,
+              "y": 0.20320855614973266,
+              "width": 0.11093750000000002,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              838.0,
+              1170.0,
+              1122.0,
+              1192.0
+            ],
+            "center_image": [
+              980.0,
+              1181.0
+            ]
+          },
+          {
+            "text": "Easy",
+            "bbox_normalized": {
+              "x": 0.6140625,
+              "y": 0.19518716577540107,
+              "width": 0.057812500000000044,
+              "height": 0.03743315508021394
+            },
+            "bbox_image": [
+              1572.0,
+              1148.0,
+              1720.0,
+              1204.0
+            ],
+            "center_image": [
+              1646.0,
+              1176.0
+            ]
+          },
+          {
+            "text": "Base Content",
+            "bbox_normalized": {
+              "x": 0.60078125,
+              "y": 0.1778074866310161,
+              "width": 0.0859375,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              1538.0,
+              1208.0,
+              1758.0,
+              1230.0
+            ],
+            "center_image": [
+              1648.0,
+              1219.0
+            ]
+          }
+        ]
+      },
+      "ocr_texts": [
+        "Into the Breach",
+        "MENU",
+        "Squad Achievements",
+        "CONTINUE",
+        "30",
+        "OPTIONS",
+        "Island Progress",
+        "ACHIEVEMENTS",
+        "Archive",
+        "RST Corp",
+        "Pinnacle",
+        "Detritus",
+        "MAIN MENU",
+        "Timeline Playtime",
+        "SAVE and QUIT",
+        "Oh 6m 085",
+        "Dif f iculty",
+        "ABANDON TIMELINE",
+        "Easy",
+        "Base Content"
+      ],
+      "visible_text": "Into the Breach\nMENU\nSquad Achievements\nCONTINUE\n30\nOPTIONS\nIsland Progress\nACHIEVEMENTS\nArchive\nRST Corp\nPinnacle\nDetritus\nMAIN MENU\nTimeline Playtime\nSAVE and QUIT\nOh 6m 085\nDif f iculty\nABANDON TIMELINE\nEasy\nBase Content",
+      "pause_ocr_match": "Timeline Playtime",
+      "pause_ocr_override": {
+        "from_visible_ui": "mission_preview_panel",
+        "from_recommended_control": "dialogue_textbox",
+        "matched": "Timeline Playtime"
+      },
+      "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_52112.png"
+    },
+    "click_result": {
+      "status": "OK",
+      "key": "esc",
+      "description": "Pause menu Escape resume",
+      "backend": "pyautogui",
+      "control": "pause_menu_escape"
+    },
+    "resume_hint": "Stay in the pause menu while thinking. Use lightning_ui menu_continue only when the next UI click or combat command is ready, then return to pause as soon as the burst is done.",
+    "pause_verified": true,
+    "safe_to_think": true,
+    "timer_stop_verified": false,
+    "visible_timer": {
+      "status": "OK",
+      "source": "visible_pause_menu_timer",
+      "game_seconds": 368.0,
+      "game_timer": "0:06:08",
+      "ocr_text": "Oh 6m 085",
+      "timer_matches": [
+        {
+          "text": "Oh 6m 085",
+          "game_seconds": 368,
+          "game_timer": "0:06:08",
+          "pause_timer_like": true
+        }
+      ],
+      "classifier_visible_ui": "mission_preview_panel",
+      "timeline_label_seen": true,
+      "game_time_label_seen": false,
+      "visible_ui": {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "confidence": 0.8,
+        "dark_overlay_fraction": 0.9325,
+        "scores": {
+          "title_continue": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 72800,
+            "crop": [
+              80,
+              432,
+              600,
+              572
+            ]
+          },
+          "title_new_game": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 72800,
+            "crop": [
+              80,
+              560,
+              600,
+              700
+            ]
+          },
+          "pause_menu": {
+            "score": 0.4244,
+            "bright": 1443,
+            "border": 9974,
+            "pixels": 128000,
+            "crop": [
+              662,
+              402,
+              1302,
+              602
+            ]
+          },
+          "reward_panel": {
+            "score": 0.0765,
+            "bright": 0,
+            "border": 2065,
+            "pixels": 108000,
+            "crop": [
+              1702,
+              1216,
+              2302,
+              1396
+            ]
+          },
+          "bottom_continue_panel": {
+            "score": 0.0451,
+            "bright": 0,
+            "border": 1353,
+            "pixels": 120000,
+            "crop": [
+              1710,
+              1252,
+              2310,
+              1452
+            ]
+          },
+          "pod_open_panel": {
+            "score": 0.0713,
+            "bright": 0,
+            "border": 1604,
+            "pixels": 90000,
+            "crop": [
+              1780,
+              706,
+              2280,
+              886
+            ]
+          },
+          "promotion_panel": {
+            "score": 0.5397,
+            "bright": 2991,
+            "border": 8714,
+            "pixels": 120000,
+            "crop": [
+              1032,
+              936,
+              1632,
+              1136
+            ]
+          },
+          "kia_panel": {
+            "score": 0.4127,
+            "bright": 1188,
+            "border": 10403,
+            "pixels": 129600,
+            "crop": [
+              972,
+              796,
+              1692,
+              976
+            ]
+          },
+          "perfect_reward_choice": {
+            "score": 1.105,
+            "bright": 5732,
+            "border": 6333,
+            "pixels": 74800,
+            "crop": [
+              1464,
+              830,
+              1804,
+              1050
+            ]
+          },
+          "perfect_island_panel": {
+            "score": 0.6793,
+            "bright": 9063,
+            "border": 9136,
+            "pixels": 187200,
+            "crop": [
+              1332,
+              970,
+              2052,
+              1230
+            ]
+          },
+          "island_complete_leave": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 72800,
+            "crop": [
+              1022,
+              1338,
+              1542,
+              1478
+            ]
+          },
+          "mission_preview_panel": {
+            "score": 0.0,
+            "yellow": 0,
+            "pixels": 540800,
+            "crop": [
+              1110,
+              676,
+              2150,
+              1196
+            ]
+          },
+          "mission_preview_dialogue": {
+            "score": 0.8,
+            "card": {
+              "red": 0,
+              "blue": 48369,
+              "bright": 14645,
+              "dark_fraction": 0.912,
+              "pixels": 777600,
+              "crop": [
+                500,
+                700,
+                2120,
+                1180
+              ]
+            },
+            "dialogue": {
+              "red": 0,
+              "blue": 24953,
+              "bright": 5544,
+              "dark_fraction": 0.8865,
+              "pixels": 489600,
+              "crop": [
+                260,
+                330,
+                2300,
+                570
+              ]
+            }
+          },
+          "deployment_screen": {
+            "score": 0.0001,
+            "yellow": 180,
+            "pixels": 1628000,
+            "crop": [
+              480,
+              180,
+              1960,
+              1280
+            ]
+          },
+          "island_map": {
+            "score": 0.0011,
+            "red": 686,
+            "green": 888,
+            "colored": 1574,
+            "pixels": 1456000,
+            "crop": [
+              840,
+              340,
+              2240,
+              1380
+            ]
+          },
+          "new_game_setup_back": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 70400,
+            "crop": [
+              362,
+              86,
+              802,
+              246
+            ]
+          },
+          "new_game_setup_start": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 70400,
+            "crop": [
+              1790,
+              86,
+              2230,
+              246
+            ]
+          },
+          "new_game_setup_back_windows": {
+            "score": 0.2853,
+            "bright": 392,
+            "border": 652,
+            "pixels": 22880,
+            "crop": [
+              1380,
+              452,
+              1640,
+              540
+            ]
+          },
+          "new_game_setup_start_windows": {
+            "score": 0.457,
+            "bright": 748,
+            "border": 744,
+            "pixels": 22880,
+            "crop": [
+              1582,
+              452,
+              1842,
+              540
+            ]
+          },
+          "options_header": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 70400,
+            "crop": [
+              280,
+              110,
+              720,
+              270
+            ]
+          },
+          "options_close": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 115200,
+            "crop": [
+              1420,
+              1280,
+              2140,
+              1440
+            ]
+          },
+          "system_privacy_prompt": {
+            "status": "OK",
+            "matched": false,
+            "score": 0.0,
+            "strict_score": 0.0,
+            "relaxed_score": 0.0,
+            "kind": "macos_screen_audio_privacy_prompt",
+            "checks": {
+              "card_mid_dark": 0.03483551680181676,
+              "inner_mid_dark": 0.026693360026693362,
+              "button_gray": 0.004765795206971678,
+              "icon_blue": 0.0,
+              "icon_color": 0.0,
+              "text_bright": 0.08853659667176564
+            },
+            "regions": {
+              "card": {
+                "box": [
+                  986,
+                  322,
+                  1510,
+                  995
+                ],
+                "pixels": 352652,
+                "mid_dark_fraction": 0.022643085921180896,
+                "button_gray_fraction": 0.011892494081604234,
+                "bright_text_fraction": 0.015401754630274335,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "inner": {
+                "box": [
+                  1037,
+                  367,
+                  1472,
+                  965
+                ],
+                "pixels": 260130,
+                "mid_dark_fraction": 0.017350684017350685,
+                "button_gray_fraction": 0.008814369925481036,
+                "bright_text_fraction": 0.004754754754754755,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "text": {
+                "box": [
+                  1037,
+                  524,
+                  1472,
+                  808
+                ],
+                "pixels": 123540,
+                "mid_dark_fraction": 0.015157836184119037,
+                "button_gray_fraction": 0.0010846891948268669,
+                "bright_text_fraction": 0.005312195800305938,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "buttons": {
+                "box": [
+                  1024,
+                  823,
+                  1485,
+                  957
+                ],
+                "pixels": 61774,
+                "mid_dark_fraction": 0.008383467023172905,
+                "button_gray_fraction": 0.002144607843137255,
+                "bright_text_fraction": 0.007269385026737968,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "icon": {
+                "box": [
+                  1024,
+                  367,
+                  1165,
+                  501
+                ],
+                "pixels": 18894,
+                "mid_dark_fraction": 0.0,
+                "button_gray_fraction": 0.0,
+                "bright_text_fraction": 0.007727320842595533,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              }
+            }
+          }
+        }
+      },
+      "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_52112.png"
+    },
+    "source_screenshot_path": "run_notes/lightning_war_smoke_2026-06-24/screenshots/060_tides_to_turn3_wait2.png",
+    "label": "tides_to_turn3_wait2",
+    "path": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260624_053445_308/lightning_guard.json"
+  }
+}

@@ -85,6 +85,16 @@ def _safe_battle_mission() -> dict:
     }
 
 
+def _renfield_bombs_mission() -> dict:
+    """R.S.T. Renfield Bombs mission: fragile objective plus slow web drift."""
+    return {
+        "region_id": 24,
+        "mission_id": "Mission_Bomb",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
 def _tidal_mission() -> dict:
     """Tidal-environment mission — flying matters."""
     return {
@@ -195,6 +205,16 @@ def _trapped_power_generator_mission() -> dict:
     }
 
 
+def _mountain_force_mission() -> dict:
+    """R.S.T. Destroy Mountains objective; too slow/risky for Lightning War."""
+    return {
+        "region_id": 25,
+        "mission_id": "Mission_Force",
+        "bonus_objective_ids": [BONUS_BLOCK],
+        "environment": "Env_Null",
+    }
+
+
 def _generic_no_bonus_mission(region_id: int = 17) -> dict:
     return {
         "region_id": region_id,
@@ -290,8 +310,8 @@ def test_train_no_defender_loses_to_safe_battle():
     assert "no train_defender" in train_rationale
 
 
-def test_lightning_war_routing_prefers_fast_train_even_without_defender():
-    """Lightning War values short missions over normal reputation routing."""
+def test_lightning_war_routing_vetoes_train_speed_trap():
+    """Lightning War avoids Train because protected objective stalls runs."""
     island = [_safe_battle_mission(), _train_high_threat()]
     ranked = score_island_map(
         island,
@@ -299,8 +319,11 @@ def test_lightning_war_routing_prefers_fast_train_even_without_defender():
         grid_power=7,
         routing="lightning_war",
     )
-    assert ranked[0]["mission_id"] == "Mission_Train"
-    assert "Lightning War" in " ".join(ranked[0]["rationale_lines"])
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    train = next(e for e in ranked if e["mission_id"] == "Mission_Train")
+    rationale = " ".join(train["rationale_lines"])
+    assert "Lightning War" in rationale
+    assert "protected train objective" in rationale
 
 
 def test_lightning_baseline_routing_vetoes_train_even_when_fast():
@@ -424,6 +447,44 @@ def test_lightning_war_routing_vetoes_power_generator_trap():
     rationale = " ".join(trapped["rationale_lines"])
     assert "Power Generator trap" in rationale
     assert "mech damage" in rationale
+
+
+def test_lightning_war_routing_vetoes_mountain_force_counter():
+    """Mission_Force burned first-mission time and forced mech HP loss."""
+    island = [_mountain_force_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    force = next(e for e in ranked if e["mission_id"] == "Mission_Force")
+    assert force["score"] < -60
+    rationale = " ".join(force["rationale_lines"])
+    assert "mountain counter" in rationale
+    assert "mech damage" in rationale
+
+
+def test_lightning_war_routing_vetoes_renfield_bombs_speed_trap():
+    """Renfield Bombs caused web/objective drift and missed the pace target."""
+    island = [_renfield_bombs_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    bombs = next(e for e in ranked if e["mission_id"] == "Mission_Bomb")
+    assert bombs["score"] < -60
+    rationale = " ".join(bombs["rationale_lines"])
+    assert "Renfield Bombs" in rationale
+    assert "slow final turns" in rationale
 
 
 def test_lightning_war_routing_prefers_metadata_four_turn_mission():

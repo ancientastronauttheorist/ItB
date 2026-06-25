@@ -530,10 +530,10 @@ def _read_memory_in_game_timer(
     live_timer_address: int | None = None,
     live_timer_kind: str | None = None,
 ) -> dict[str, Any]:
-    if os.name != "nt":
+    if os.name != "nt" and sys.platform != "darwin":
         return {
             "status": "UNAVAILABLE",
-            "reason": "memory timer probe is Windows-only",
+            "reason": f"memory timer probe is unsupported on {sys.platform}",
             "label": label,
             "clock_source": (
                 "memory_live_numeric_candidate"
@@ -558,7 +558,7 @@ def _read_memory_in_game_timer(
             ),
         }
     try:
-        with memory_probe.WindowsProcessReader(pid) as reader:
+        with memory_probe.open_process_reader(pid) as reader:
             if live_timer_address is not None and live_timer_kind:
                 direct = memory_probe.read_numeric_timer_address(
                     reader,
@@ -791,13 +791,13 @@ class CalibratedTimelineFrameClockSampler:
     def __init__(self, timer_address: int) -> None:
         self.timer_address = timer_address
         self.pid: int | None = None
-        self.reader: memory_probe.WindowsProcessReader | None = None
+        self.reader: Any | None = None
 
     def __call__(self) -> dict[str, Any]:
-        if os.name != "nt":
+        if os.name != "nt" and sys.platform != "darwin":
             return {
                 "status": "UNAVAILABLE",
-                "reason": "memory timer probe is Windows-only",
+                "reason": f"memory timer probe is unsupported on {sys.platform}",
                 "label": "screenshot_frame",
                 "clock_source": "memory_timeline_playtime_address",
             }
@@ -824,7 +824,7 @@ class CalibratedTimelineFrameClockSampler:
             self.reader.close()
             self.reader = None
 
-    def _reader(self) -> memory_probe.WindowsProcessReader | None:
+    def _reader(self) -> Any | None:
         if self.reader is not None:
             return self.reader
         pid = memory_probe._find_breach_pid()
@@ -833,7 +833,7 @@ class CalibratedTimelineFrameClockSampler:
             self.pid = None
             return None
         self.pid = pid
-        self.reader = memory_probe.WindowsProcessReader(pid)
+        self.reader = memory_probe.open_process_reader(pid)
         return self.reader
 
 
@@ -842,13 +842,13 @@ class LiveNumericFrameClockSampler:
         self.timer_address = timer_address
         self.timer_kind = timer_kind
         self.pid: int | None = None
-        self.reader: memory_probe.WindowsProcessReader | None = None
+        self.reader: Any | None = None
 
     def __call__(self) -> dict[str, Any]:
-        if os.name != "nt":
+        if os.name != "nt" and sys.platform != "darwin":
             return {
                 "status": "UNAVAILABLE",
-                "reason": "memory timer probe is Windows-only",
+                "reason": f"memory timer probe is unsupported on {sys.platform}",
                 "label": "screenshot_frame",
                 "clock_source": "memory_live_numeric_candidate",
             }
@@ -877,7 +877,7 @@ class LiveNumericFrameClockSampler:
             self.reader.close()
             self.reader = None
 
-    def _reader(self) -> memory_probe.WindowsProcessReader | None:
+    def _reader(self) -> Any | None:
         if self.reader is not None:
             return self.reader
         pid = memory_probe._find_breach_pid()
@@ -886,7 +886,7 @@ class LiveNumericFrameClockSampler:
             self.pid = None
             return None
         self.pid = pid
-        self.reader = memory_probe.WindowsProcessReader(pid)
+        self.reader = memory_probe.open_process_reader(pid)
         return self.reader
 
 
@@ -2503,7 +2503,7 @@ def deploy_recommended_after_visible_deployment(
     deploy_started = time.perf_counter()
     deploy = fast.cmd_deploy_recommended(
         profile=profile,
-        ui_fallback=True,
+        ui_fallback=False,
         verify_after=False,
     )
     deploy_duration = round(time.perf_counter() - deploy_started, 3)

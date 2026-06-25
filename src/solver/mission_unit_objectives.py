@@ -11,6 +11,7 @@ state.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,8 @@ def load_mission_map(path: Path | None = None) -> dict[str, dict[str, list[str]]
     Bad or absent files return {} so objective metadata never breaks a solve.
     Underscore-prefixed keys are comments / schema hints.
     """
+    if os.environ.get("ITB_LIGHTNING_SKIP_STATIC_OBJECTIVES") == "1":
+        return {}
     p = path or DEFAULT_PATH
     if not p.exists():
         return {}

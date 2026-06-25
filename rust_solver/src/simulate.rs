@@ -980,6 +980,48 @@ fn spawn_blob_boss_child(
     true
 }
 
+fn chain_whip_armor_aura_snapshot(board: &Board) -> Vec<u16> {
+    if !board.armor_psion {
+        return Vec::new();
+    }
+    let mut armored = Vec::new();
+    for i in 0..board.unit_count as usize {
+        let unit = &board.units[i];
+        if unit.hp > 0 && unit.receives_psion_aura() && unit.type_name_str() != "Jelly_Armor1" {
+            armored.push(unit.uid);
+        }
+    }
+    armored
+}
+
+fn restore_chain_whip_armor_aura(board: &mut Board, armored_uids: &[u16]) {
+    if armored_uids.is_empty() {
+        return;
+    }
+    board.armor_psion = true;
+    for i in 0..board.unit_count as usize {
+        let unit = &mut board.units[i];
+        if unit.hp > 0 && armored_uids.contains(&unit.uid) && unit.is_enemy() {
+            unit.flags.set(UnitFlags::ARMOR, true);
+        }
+    }
+}
+
+fn settle_chain_whip_armor_aura(board: &mut Board) {
+    let armor_alive = (0..board.unit_count as usize)
+        .any(|j| board.units[j].type_name_str() == "Jelly_Armor1" && board.units[j].hp > 0);
+    board.armor_psion = armor_alive;
+    for j in 0..board.unit_count as usize {
+        if board.units[j].is_enemy() {
+            let shell_armor = armor_alive
+                && board.units[j].hp > 0
+                && board.units[j].receives_psion_aura()
+                && board.units[j].type_name_str() != "Jelly_Armor1";
+            board.units[j].flags.set(UnitFlags::ARMOR, shell_armor);
+        }
+    }
+}
+
 fn next_spawn_uid(board: &Board) -> u16 {
     let mut new_uid: u16 = 1;
     for i in 0..board.unit_count as usize {
@@ -3411,6 +3453,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
     // Live captures show it still ignites Forest under a hit pawn.
     // The shooter's own tile is excluded from the graph.
     if wdef.chain() {
+        let chain_armored_uids = chain_whip_armor_aura_snapshot(board);
         let mut visited = 0u64;
         visited |= 1u64 << xy_to_idx(ax, ay);
         let mut queue: Vec<(u8, u8)> = vec![(tx, ty)];
@@ -3429,6 +3472,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
             }
 
             if has_pawn {
+                restore_chain_whip_armor_aura(board, &chain_armored_uids);
                 apply_damage(board, cx, cy, wdef.damage, result, DamageSource::ChainWhip);
             }
 
@@ -3441,6 +3485,9 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
                     queue.push((nx as u8, ny as u8));
                 }
             }
+        }
+        if !chain_armored_uids.is_empty() {
+            settle_chain_whip_armor_aura(board);
         }
     }
 
@@ -6750,6 +6797,24 @@ mod tests {
         assert!(!board.blast_psion);
         assert_eq!(result.grid_damage, 0);
         assert_eq!(result.enemies_killed, 2);
+    }
+
+    #[test]
+    fn test_chain_whip_shell_psion_armor_lasts_until_chain_finishes() {
+        let mut board = make_test_board();
+        board.armor_psion = true;
+        let mech = add_mech(&mut board, 0, 5, 4, 3, WId::PrimeLightning);
+        let psion = add_enemy_type(&mut board, 887, 4, 4, 2, "Jelly_Armor1");
+        let hornet = add_enemy_type(&mut board, 888, 3, 4, 2, "Hornet1");
+        board.units[hornet].flags.insert(UnitFlags::ARMOR);
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightning, (4, 4), &WEAPONS);
+
+        assert_eq!(board.units[psion].hp, 0);
+        assert_eq!(board.units[hornet].hp, 1);
+        assert!(!board.armor_psion);
+        assert!(!board.units[hornet].armor());
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]

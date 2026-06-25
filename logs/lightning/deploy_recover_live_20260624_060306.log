@@ -1,0 +1,60 @@
+
+=== DEPLOY_RECOMMENDED (11 tiles available) ===
+  Already placed: uid=1 at C5
+  Deploying ElectricMech (uid=0) to B5 (3,6)
+    ACK: OK DEPLOY 0 at 3,6
+  Deploying RockartMech (uid=2) to D6 (2,4)
+    ACK: OK DEPLOY 2 at 2,4
+    VERIFY ElectricMech B5: PASS
+    VERIFY RockartMech D6: PASS
+
+--- Result ---
+{
+  "status": "OK",
+  "deployments": [
+    {
+      "uid": 0,
+      "mech_type": "ElectricMech",
+      "bridge": [
+        3,
+        6
+      ],
+      "visual": "B5",
+      "hazard": null,
+      "hazard_warning": false,
+      "ack": "OK DEPLOY 0 at 3,6",
+      "timeout_recovered": false,
+      "actual_bridge": [
+        3,
+        6
+      ],
+      "verified": true
+    },
+    {
+      "uid": 2,
+      "mech_type": "RockartMech",
+      "bridge": [
+        2,
+        4
+      ],
+      "visual": "D6",
+      "hazard": null,
+      "hazard_warning": false,
+      "ack": "OK DEPLOY 2 at 2,4",
+      "timeout_recovered": false,
+      "actual_bridge": [
+        2,
+        4
+      ],
+      "verified": true
+    }
+  ],
+  "existing_deployments": {
+    "1": [
+      3,
+      5
+    ]
+  },
+  "next_step": "click the visible CONFIRM button, then run `auto_turn --time-limit 10`",
+  "phase": "combat_enemy"
+}

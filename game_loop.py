@@ -74,6 +74,8 @@ from src.loop.commands import (
     cmd_lightning_capture,
     cmd_lightning_mark,
     cmd_lightning_peek,
+    cmd_lightning_snap_pause,
+    cmd_lightning_fast_burst,
     cmd_lightning_map_regions,
     cmd_lightning_pause_guard,
     cmd_lightning_attempt,
@@ -82,6 +84,10 @@ from src.loop.commands import (
     cmd_lightning_select_first_island,
     cmd_lightning_abandon_to_setup,
     cmd_lightning_loop,
+    cmd_lightning_auto_turn_pause,
+    cmd_lightning_execute_pause,
+    cmd_lightning_end_turn_pause,
+    cmd_lightning_wait_pause,
     cmd_verify_setup_screen,
     cmd_research_attach_community,
     cmd_research_next,
@@ -108,12 +114,12 @@ from src.loop.commands import (
     cmd_mission_end,
     cmd_annotate,
 )
-from src.loop.lightning_conductor import (
-    AutonomousLightningConfig,
+from src.loop.lightning_runner import (
+    DEFAULT_LIGHTNING_MAX_ATTEMPTS,
+    LightningRunnerConfig as AutonomousLightningConfig,
     cmd_lightning_autonomous,
 )
 
-DEFAULT_LIGHTNING_MAX_ATTEMPTS = 8
 DEFAULT_LIGHTNING_MAX_SEGMENTS = AutonomousLightningConfig.max_segments
 
 
@@ -146,6 +152,13 @@ def main():
         "--destroy-time-pods",
         action="store_true",
         help="Bias solving toward destroying Time Pods and away from collecting them",
+    )
+    p_solve.add_argument(
+        "--no-frontier-diagnostics",
+        dest="frontier_diagnostics",
+        action="store_false",
+        default=True,
+        help="Skip heavy blocked-plan lookahead/robust frontier diagnostics",
     )
 
     # execute
@@ -458,6 +471,16 @@ def main():
         help="Deploy mechs to ranked deployment tiles via bridge",
     )
     p_deploy_recommended.add_argument("--profile", default="Alpha")
+    p_deploy_recommended.add_argument(
+        "--ui-fallback",
+        action="store_true",
+        help="If the bridge deploy command times out, fall back to deployment UI clicks",
+    )
+    p_deploy_recommended.add_argument(
+        "--prefer-ui-fallback",
+        action="store_true",
+        help="Use calibrated deployment UI clicks immediately instead of bridge DEPLOY",
+    )
 
     # recommend_mission
     p_rec_mission = sub.add_parser(
@@ -550,6 +573,22 @@ def main():
         "--include-ocr",
         action="store_true",
         help="Attach macOS Vision text snippets when classifying terminal-prone panels",
+    )
+    p_lightning_ui.add_argument(
+        "--expected-mission-id",
+        default=None,
+        help="For paused visible-start controls, require preview OCR to match this mission id",
+    )
+    p_lightning_ui.add_argument(
+        "--route-routing",
+        choices=["default", "lightning_war", "lightning_baseline"],
+        default="lightning_war",
+        help="Route policy used when authorizing OCR-only visible preview starts",
+    )
+    p_lightning_ui.add_argument(
+        "--allow-expected-preview-start",
+        action="store_true",
+        help="For paused visible-start controls, allow a named expected mission after OCR match even when route policy would veto it",
     )
 
     # lightning_pause_guard
@@ -664,6 +703,15 @@ def main():
         help="Dismiss an advisor dialogue before clicking the mission preview",
     )
     p_lightning_route_start.add_argument(
+        "--close-existing-preview",
+        dest="close_existing_preview_before_region_click",
+        action="store_true",
+        help=(
+            "Close a currently open mission preview before clicking the "
+            "requested route region"
+        ),
+    )
+    p_lightning_route_start.add_argument(
         "--start-mode",
         choices=[
             "preview-board",
@@ -677,15 +725,17 @@ def main():
             "hover-space-twice",
             "hover-enter-space",
             "hover-space-enter",
+            "region-repeat-preview-board",
+            "region-repeat-preview-board-twice",
+            "region-reveal-start",
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="dialogue-region-repeat-preview-board",
+        default="visible-text",
         help=(
             "How to commit the selected preview when no manual start point is "
-            "supplied. In lightning_war routing, the default is upgraded to "
-            "visible Start Mission text only; explicit modes and baseline "
-            "routing keep the named behavior."
+            "supplied. Lightning War defaults to visible Start Mission text; "
+            "the board/dialogue modes remain available for explicit probes."
         ),
     )
     p_lightning_route_start.add_argument("--dry-run", action="store_true")
@@ -696,6 +746,7 @@ def main():
         allow_pause_map_peek=True,
         auto_pause_if_needed=True,
         include_start_click=True,
+        close_existing_preview_before_region_click=False,
     )
 
     # lightning_capture
@@ -758,6 +809,68 @@ def main():
     )
     p_lightning_peek.set_defaults(require_paused=True)
 
+    # lightning_snap_pause
+    p_lightning_snap_pause = sub.add_parser(
+        "lightning_snap_pause",
+        help=(
+            "Capture the visible game window, immediately Esc-pause, and "
+            "return screenshot/timer evidence for paused analysis"
+        ),
+    )
+    p_lightning_snap_pause.add_argument("label", nargs="?", default="snap")
+    p_lightning_snap_pause.add_argument("--note", default="")
+    p_lightning_snap_pause.add_argument("--game-timer", default=None)
+    p_lightning_snap_pause.add_argument("--out-dir", default=None)
+    p_lightning_snap_pause.add_argument("--dry-run", action="store_true")
+    p_lightning_snap_pause.add_argument(
+        "--run-seconds",
+        type=float,
+        default=0.0,
+        help=(
+            "If already paused, Esc-unpause, run this many seconds, then "
+            "snapshot and Esc-pause. Use 2.0 for the safe wait loop."
+        ),
+    )
+    p_lightning_snap_pause.add_argument("--settle-seconds", type=float, default=0.05)
+    p_lightning_snap_pause.add_argument("--pause-settle-seconds", type=float, default=0.08)
+    p_lightning_snap_pause.add_argument("--capture-timeout", type=float, default=2.0)
+    p_lightning_snap_pause.add_argument(
+        "--include-ocr",
+        action="store_true",
+        help="Attach OCR text to the captured evidence after pause is restored",
+    )
+
+    # lightning_fast_burst
+    p_lightning_fast_burst = sub.add_parser(
+        "lightning_fast_burst",
+        help="Esc-resume, run fixed UI steps, screenshot, Esc-pause",
+    )
+    p_lightning_fast_burst.add_argument("label", nargs="?", default="fast_burst")
+    p_lightning_fast_burst.add_argument(
+        "--sequence",
+        default="",
+        help=(
+            "Comma-separated steps: controls by name, key:space/key:enter, "
+            "xy:X:Y window clicks, or wait:SECONDS. Example: "
+            "xy:944:578,wait:0.5"
+        ),
+    )
+    p_lightning_fast_burst.add_argument("--note", default="")
+    p_lightning_fast_burst.add_argument("--out-dir", default=None)
+    p_lightning_fast_burst.add_argument("--dry-run", action="store_true")
+    p_lightning_fast_burst.add_argument("--settle-seconds", type=float, default=0.04)
+    p_lightning_fast_burst.add_argument(
+        "--pause-settle-seconds",
+        type=float,
+        default=0.08,
+    )
+    p_lightning_fast_burst.add_argument("--capture-timeout", type=float, default=1.2)
+    p_lightning_fast_burst.add_argument(
+        "--include-ocr",
+        action="store_true",
+        help="Attach OCR after the game is paused again",
+    )
+
     # lightning_map_regions
     p_lightning_map_regions = sub.add_parser(
         "lightning_map_regions",
@@ -784,10 +897,13 @@ def main():
             "visible-text",
             "region-repeat",
             "region-double",
+            "region-repeat-preview-board",
+            "region-repeat-preview-board-twice",
+            "region-reveal-start",
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="dialogue-region-repeat-preview-board",
+        default="visible-text",
         help="Start sequence to place in emitted route candidate commands",
     )
     p_lightning_map_regions.add_argument(
@@ -934,6 +1050,89 @@ def main():
             "verification reads, then resume for the next game command"
         ),
     )
+    p_auto_turn.add_argument(
+        "--no-frontier-diagnostics",
+        dest="frontier_diagnostics",
+        action="store_false",
+        default=True,
+        help="Skip heavy blocked-plan lookahead/robust frontier diagnostics",
+    )
+
+    # lightning_auto_turn_pause
+    p_lightning_auto_turn_pause = sub.add_parser(
+        "lightning_auto_turn_pause",
+        help="Run one auto_turn from pause, then screenshot and Esc-pause",
+    )
+    p_lightning_auto_turn_pause.add_argument("label", nargs="?", default="lightning_auto_turn")
+    p_lightning_auto_turn_pause.add_argument("--profile", default="Alpha")
+    p_lightning_auto_turn_pause.add_argument("--time-limit", type=float, default=2.0)
+    p_lightning_auto_turn_pause.add_argument("--no-wait", action="store_true")
+    p_lightning_auto_turn_pause.add_argument("--max-wait", type=float, default=45.0)
+    p_lightning_auto_turn_pause.add_argument("--allow-dirty-plan", action="store_true")
+    p_lightning_auto_turn_pause.add_argument("--candidate-rank", type=int, default=None)
+    p_lightning_auto_turn_pause.add_argument("--dirty-consent-id", default=None)
+    p_lightning_auto_turn_pause.add_argument(
+        "--allow-protected-objective-loss",
+        action="store_true",
+    )
+    p_lightning_auto_turn_pause.add_argument("--allow-objective-loss", action="store_true")
+    p_lightning_auto_turn_pause.add_argument("--destroy-time-pods", action="store_true")
+    p_lightning_auto_turn_pause.add_argument("--speed-loss-policy", action="store_true")
+    p_lightning_auto_turn_pause.add_argument("--pause-between-actions", action="store_true")
+    p_lightning_auto_turn_pause.add_argument(
+        "--no-frontier-diagnostics",
+        dest="frontier_diagnostics",
+        action="store_false",
+        default=True,
+    )
+
+    # lightning_execute_pause
+    p_lightning_execute_pause = sub.add_parser(
+        "lightning_execute_pause",
+        help="Resume, execute one stored solution action, then screenshot and Esc-pause",
+    )
+    p_lightning_execute_pause.add_argument("index", type=int)
+    p_lightning_execute_pause.add_argument("label", nargs="?", default="lightning_execute")
+    p_lightning_execute_pause.add_argument("--profile", default="Alpha")
+
+    # lightning_end_turn_pause
+    p_lightning_end_turn_pause = sub.add_parser(
+        "lightning_end_turn_pause",
+        help="Resume, click End Turn/confirmation, then screenshot and Esc-pause",
+    )
+    p_lightning_end_turn_pause.add_argument("label", nargs="?", default="lightning_end_turn")
+    p_lightning_end_turn_pause.add_argument("--run-seconds", type=float, default=2.0)
+    p_lightning_end_turn_pause.add_argument(
+        "--confirm-delay-seconds",
+        type=float,
+        default=0.25,
+    )
+    p_lightning_end_turn_pause.add_argument("--wait-until-ready", action="store_true")
+    p_lightning_end_turn_pause.add_argument("--max-wait", type=float, default=30.0)
+    p_lightning_end_turn_pause.add_argument(
+        "--wait-poll-interval",
+        type=float,
+        default=0.20,
+    )
+
+    # lightning_wait_pause
+    p_lightning_wait_pause = sub.add_parser(
+        "lightning_wait_pause",
+        help="Resume, wait for a player/terminal state, then screenshot and Esc-pause",
+    )
+    p_lightning_wait_pause.add_argument("label", nargs="?", default="lightning_wait")
+    p_lightning_wait_pause.add_argument("--max-wait", type=float, default=30.0)
+    p_lightning_wait_pause.add_argument(
+        "--wait-poll-interval",
+        type=float,
+        default=0.20,
+    )
+    p_lightning_wait_pause.add_argument(
+        "--no-ocr",
+        dest="include_ocr",
+        action="store_false",
+        default=True,
+    )
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",
@@ -1027,6 +1226,11 @@ def main():
         dest="pause_between_actions",
         action="store_true",
         help="Pause between combat sub-actions and verification reads",
+    )
+    p_lightning_loop.add_argument(
+        "--frontier-diagnostics",
+        action="store_true",
+        help="Enable heavy lookahead/robust frontier diagnostics on safety blocks",
     )
     p_lightning_loop.set_defaults(pause_before_solve=True)
     p_lightning_loop.set_defaults(pause_between_actions=False)
@@ -1131,6 +1335,15 @@ def main():
         help="Mission route scoring policy for route-ready island maps",
     )
     p_lightning_attempt.add_argument(
+        "--expected-mission-id",
+        dest="expected_route_mission_id",
+        default=None,
+        help=(
+            "Authorize deployment only if the active bridge mission id matches "
+            "this value."
+        ),
+    )
+    p_lightning_attempt.add_argument(
         "--no-pause-before-solve",
         dest="pause_before_solve",
         action="store_false",
@@ -1153,6 +1366,11 @@ def main():
         dest="pause_between_actions",
         action="store_true",
         help="Pause between combat sub-actions and verification reads",
+    )
+    p_lightning_attempt.add_argument(
+        "--frontier-diagnostics",
+        action="store_true",
+        help="Enable heavy lookahead/robust frontier diagnostics on safety blocks",
     )
     p_lightning_attempt.set_defaults(pause_on_stop=True)
     p_lightning_attempt.set_defaults(quiet=True)
@@ -1259,6 +1477,18 @@ def main():
         ),
     )
     p_lightning_segment.add_argument(
+        "--route-window-x",
+        type=int,
+        default=None,
+        help="Window-relative X coordinate for an explicit route region start",
+    )
+    p_lightning_segment.add_argument(
+        "--route-window-y",
+        type=int,
+        default=None,
+        help="Window-relative Y coordinate for an explicit route region start",
+    )
+    p_lightning_segment.add_argument(
         "--route-target-mission-id",
         default=None,
         help=(
@@ -1318,11 +1548,23 @@ def main():
             "visible-text",
             "region-repeat",
             "region-double",
+            "region-repeat-preview-board",
+            "region-repeat-preview-board-twice",
+            "region-reveal-start",
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="dialogue-region-repeat-preview-board",
+        default="visible-text",
         help="Start sequence to use with --route-visual-region-index",
+    )
+    p_lightning_segment.add_argument(
+        "--route-close-existing-preview",
+        dest="route_close_existing_preview",
+        action="store_true",
+        help=(
+            "Close a currently open mission preview before clicking the "
+            "explicit route region"
+        ),
     )
     p_lightning_segment.set_defaults(pause_on_stop=True)
     p_lightning_segment.set_defaults(quiet=True)
@@ -1373,6 +1615,23 @@ def main():
         help="Mission route scoring policy for the initial segment handoff",
     )
     p_lightning_start.add_argument(
+        "--route-start-mode",
+        choices=[
+            "preview-board",
+            "preview-board-twice",
+            "visible-text",
+            "region-repeat",
+            "region-double",
+            "region-repeat-preview-board",
+            "region-repeat-preview-board-twice",
+            "region-reveal-start",
+            "dialogue-region-repeat-preview-board",
+            "dialogue-region-repeat-preview-board-twice",
+        ],
+        default="visible-text",
+        help="Route-start sequence for the initial segment handoff",
+    )
+    p_lightning_start.add_argument(
         "--no-segment",
         dest="run_segment",
         action="store_false",
@@ -1389,12 +1648,38 @@ def main():
         action="store_true",
         help="Enable Lightning War speed-loss policy for the initial segment",
     )
+    p_lightning_start.add_argument(
+        "--no-pause-before-solve",
+        dest="pause_before_solve",
+        action="store_false",
+        help="Do not pause before combat solves during the initial segment",
+    )
+    p_lightning_start.add_argument(
+        "--pause-before-solve",
+        dest="pause_before_solve",
+        action="store_true",
+        help="Pause on each ready player turn before solving/executing",
+    )
+    p_lightning_start.add_argument(
+        "--no-pause-between-actions",
+        dest="pause_between_actions",
+        action="store_false",
+        help="Do not pause between combat sub-actions and verification reads",
+    )
+    p_lightning_start.add_argument(
+        "--pause-between-actions",
+        dest="pause_between_actions",
+        action="store_true",
+        help="Pause between combat sub-actions and verification reads",
+    )
     p_lightning_start.add_argument("--dry-run", action="store_true")
     p_lightning_start.set_defaults(
         route_auto_start=True,
         run_segment=True,
         allow_objective_loss=False,
         speed_loss_policy=False,
+        pause_before_solve=True,
+        pause_between_actions=False,
     )
 
     # lightning_select_first_island
@@ -1473,12 +1758,119 @@ def main():
     p_lightning_auto.add_argument("--max-wall-seconds", type=float, default=None)
     p_lightning_auto.add_argument("--segment-timeout", type=float, default=420.0)
     p_lightning_auto.add_argument("--abandon-seconds", type=float, default=29 * 60)
+    p_lightning_auto.add_argument(
+        "--mission-segment-gate-seconds",
+        type=float,
+        default=3 * 60,
+        help="Restart speed attempts when a mission segment reaches this timer.",
+    )
+    p_lightning_auto.add_argument(
+        "--first-mission-route-start-gate-seconds",
+        type=float,
+        default=30,
+        help="Restart speed attempts if mission one has not started by this timer.",
+    )
     p_lightning_auto.add_argument("--first-island-gate-seconds", type=float, default=15 * 60)
     p_lightning_auto.add_argument("--second-island-start-gate-seconds", type=float, default=16.75 * 60)
     p_lightning_auto.add_argument("--screenshot-cadence", type=float, default=2.0)
+    p_lightning_auto.add_argument(
+        "--collect-screenshot-cadence",
+        type=float,
+        default=2.0,
+        help="Screenshot cadence while --iteration-mode is collect or flipflop collect.",
+    )
+    p_lightning_auto.add_argument(
+        "--race-screenshot-cadence",
+        type=float,
+        default=5.0,
+        help="Screenshot cadence while --iteration-mode is race or flipflop race.",
+    )
+    p_lightning_auto.add_argument(
+        "--iteration-mode",
+        choices=["manual", "collect", "race", "flipflop"],
+        default="flipflop",
+        help=(
+            "Label attempts for the Lightning learning loop. flipflop uses "
+            "odd attempts for collect and even attempts for race."
+        ),
+    )
     p_lightning_auto.add_argument("--no-screenshots", action="store_true")
     p_lightning_auto.add_argument("--route-auto-start", dest="route_auto_start", action="store_true", default=True)
     p_lightning_auto.add_argument("--no-route-auto-start", dest="route_auto_start", action="store_false")
+    p_lightning_auto.add_argument(
+        "--route-start-mode",
+        choices=[
+            "preview-board",
+            "preview-board-twice",
+            "visible-text",
+            "region-repeat",
+            "region-double",
+            "region-repeat-preview-board",
+            "region-repeat-preview-board-twice",
+            "region-reveal-start",
+            "dialogue-region-repeat-preview-board",
+            "dialogue-region-repeat-preview-board-twice",
+        ],
+        default="visible-text",
+        help=(
+            "Start sequence to use when autonomous route-auto-start commits "
+            "a mission. The default requires visible Start Mission text proof."
+        ),
+    )
+    p_lightning_auto.add_argument(
+        "--baseline-route-policy",
+        dest="route_speed_vetoes",
+        action="store_false",
+        default=None,
+        help=(
+            "Ignore speed-only route vetoes after mission-id proof; combat "
+            "safety gates still apply"
+        ),
+    )
+    p_lightning_auto.add_argument(
+        "--speed-route-vetoes",
+        dest="route_speed_vetoes",
+        action="store_true",
+        help="Respect Lightning War speed route vetoes during auto-start",
+    )
+    p_lightning_auto.add_argument(
+        "--allow-objective-loss",
+        action="store_true",
+        help="Allow objective-loss dirty plans during autonomous Lightning segments.",
+    )
+    p_lightning_auto.add_argument(
+        "--speed-loss-policy",
+        action="store_true",
+        help="Enable Lightning War speed-loss dirty allowances during autonomous segments.",
+    )
+    p_lightning_auto.add_argument(
+        "--no-pause-before-solve",
+        dest="pause_before_solve",
+        action="store_false",
+        help="Do not pause before combat solves during autonomous segments",
+    )
+    p_lightning_auto.add_argument(
+        "--pause-before-solve",
+        dest="pause_before_solve",
+        action="store_true",
+        help="Pause on each ready player turn before solving/executing",
+    )
+    p_lightning_auto.add_argument(
+        "--no-pause-between-actions",
+        dest="pause_between_actions",
+        action="store_false",
+        help="Do not pause between combat sub-actions and verification reads",
+    )
+    p_lightning_auto.add_argument(
+        "--pause-between-actions",
+        dest="pause_between_actions",
+        action="store_true",
+        help="Pause between combat sub-actions and verification reads",
+    )
+    p_lightning_auto.set_defaults(
+        pause_before_solve=True,
+        pause_between_actions=False,
+    )
     p_lightning_auto.add_argument("--start-from-verified-setup", action="store_true")
     p_lightning_auto.add_argument("--no-achievement-sync", action="store_true")
     p_lightning_auto.add_argument("--dry-run", action="store_true")
@@ -1555,7 +1947,8 @@ def main():
     elif args.command == "solve":
         cmd_solve(profile=args.profile, time_limit=args.time_limit,
                   beam=args.beam, candidate_rank=args.candidate_rank,
-                  destroy_time_pods=args.destroy_time_pods)
+                  destroy_time_pods=args.destroy_time_pods,
+                  frontier_diagnostics=args.frontier_diagnostics)
     elif args.command == "execute":
         cmd_execute(args.index, profile=args.profile)
     elif args.command == "verify":
@@ -1584,7 +1977,11 @@ def main():
     elif args.command == "click_balanced_roll":
         cmd_click_balanced_roll()
     elif args.command == "deploy_recommended":
-        cmd_deploy_recommended(profile=args.profile)
+        cmd_deploy_recommended(
+            profile=args.profile,
+            ui_fallback=args.ui_fallback,
+            prefer_ui_fallback=args.prefer_ui_fallback,
+        )
     elif args.command == "recommend_squad":
         cmd_recommend_squad(
             args.squad,
@@ -1616,6 +2013,9 @@ def main():
             dry_run=args.dry_run,
             list_controls=args.list,
             include_ocr=args.include_ocr,
+            expected_mission_id=args.expected_mission_id,
+            route_routing=args.route_routing,
+            allow_expected_preview_start=args.allow_expected_preview_start,
         )
     elif args.command == "lightning_pause_guard":
         cmd_lightning_pause_guard(
@@ -1646,6 +2046,9 @@ def main():
             start_window_y=args.start_window_y,
             expected_route_mission_id=args.expected_route_mission_id,
             allow_unverified_preview_start=args.allow_unverified_preview_start,
+            close_existing_preview_before_region_click=(
+                args.close_existing_preview_before_region_click
+            ),
             route_routing=args.route_routing,
             dry_run=args.dry_run,
         )
@@ -1680,6 +2083,31 @@ def main():
             hold_seconds=args.hold_seconds,
             capture_timeout=args.capture_timeout,
             require_paused=args.require_paused,
+            include_ocr=args.include_ocr,
+        )
+    elif args.command == "lightning_snap_pause":
+        cmd_lightning_snap_pause(
+            args.label,
+            note=args.note,
+            game_timer=args.game_timer,
+            out_dir=args.out_dir,
+            dry_run=args.dry_run,
+            run_seconds=args.run_seconds,
+            settle_seconds=args.settle_seconds,
+            pause_settle_seconds=args.pause_settle_seconds,
+            capture_timeout=args.capture_timeout,
+            include_ocr=args.include_ocr,
+        )
+    elif args.command == "lightning_fast_burst":
+        cmd_lightning_fast_burst(
+            args.label,
+            sequence=args.sequence,
+            note=args.note,
+            out_dir=args.out_dir,
+            dry_run=args.dry_run,
+            settle_seconds=args.settle_seconds,
+            pause_settle_seconds=args.pause_settle_seconds,
+            capture_timeout=args.capture_timeout,
             include_ocr=args.include_ocr,
         )
     elif args.command == "lightning_map_regions":
@@ -1768,7 +2196,47 @@ def main():
                       allow_protected_objective_loss=args.allow_protected_objective_loss,
                       allow_objective_loss=args.allow_objective_loss,
                       destroy_time_pods=args.destroy_time_pods,
-                      pause_between_actions=args.pause_between_actions)
+                      pause_between_actions=args.pause_between_actions,
+                      frontier_diagnostics=args.frontier_diagnostics)
+    elif args.command == "lightning_auto_turn_pause":
+        cmd_lightning_auto_turn_pause(
+            label=args.label,
+            profile=args.profile,
+            time_limit=args.time_limit,
+            wait_for_turn=not args.no_wait,
+            max_wait=args.max_wait,
+            allow_dirty_plan=args.allow_dirty_plan,
+            candidate_rank=args.candidate_rank,
+            dirty_consent_id=args.dirty_consent_id,
+            allow_protected_objective_loss=args.allow_protected_objective_loss,
+            allow_objective_loss=args.allow_objective_loss,
+            destroy_time_pods=args.destroy_time_pods,
+            lightning_speed_loss_policy=args.speed_loss_policy,
+            pause_between_actions=args.pause_between_actions,
+            frontier_diagnostics=args.frontier_diagnostics,
+        )
+    elif args.command == "lightning_execute_pause":
+        cmd_lightning_execute_pause(
+            args.index,
+            label=args.label,
+            profile=args.profile,
+        )
+    elif args.command == "lightning_end_turn_pause":
+        cmd_lightning_end_turn_pause(
+            label=args.label,
+            run_seconds=args.run_seconds,
+            confirm_delay_seconds=args.confirm_delay_seconds,
+            wait_until_ready=args.wait_until_ready,
+            max_wait=args.max_wait,
+            wait_poll_interval=args.wait_poll_interval,
+        )
+    elif args.command == "lightning_wait_pause":
+        cmd_lightning_wait_pause(
+            label=args.label,
+            max_wait=args.max_wait,
+            wait_poll_interval=args.wait_poll_interval,
+            include_ocr=args.include_ocr,
+        )
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)
@@ -1791,7 +2259,7 @@ def main():
             lightning_speed_loss_policy=args.speed_loss_policy,
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
-            route_routing=args.route_routing,
+            frontier_diagnostics=args.frontier_diagnostics,
         )
     elif args.command == "lightning_attempt":
         cmd_lightning_attempt(
@@ -1818,6 +2286,8 @@ def main():
             lightning_speed_loss_policy=args.speed_loss_policy,
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
+            frontier_diagnostics=args.frontier_diagnostics,
+            expected_route_mission_id=args.expected_route_mission_id,
         )
     elif args.command == "lightning_segment":
         cmd_lightning_segment(
@@ -1848,8 +2318,11 @@ def main():
             route_routing=args.route_routing,
             settle_seconds=args.settle_seconds,
             route_visual_region_index=args.route_visual_region_index,
+            route_region_window_x=args.route_window_x,
+            route_region_window_y=args.route_window_y,
             route_target_mission_id=args.route_target_mission_id,
             route_start_mode=args.route_start_mode,
+            route_close_existing_preview=args.route_close_existing_preview,
             route_auto_start=args.route_auto_start,
             route_probe_offset=args.route_probe_offset,
             route_speed_vetoes=args.route_speed_vetoes,
@@ -1871,11 +2344,24 @@ def main():
             max_wall_seconds=args.max_wall_seconds,
             segment_timeout=args.segment_timeout,
             abandon_seconds=args.abandon_seconds,
+            mission_segment_gate_seconds=args.mission_segment_gate_seconds,
+            first_mission_route_start_gate_seconds=(
+                args.first_mission_route_start_gate_seconds
+            ),
             first_island_gate_seconds=args.first_island_gate_seconds,
             second_island_start_gate_seconds=args.second_island_start_gate_seconds,
             screenshot_cadence=args.screenshot_cadence,
+            collect_screenshot_cadence=args.collect_screenshot_cadence,
+            race_screenshot_cadence=args.race_screenshot_cadence,
+            iteration_mode=args.iteration_mode,
             screenshots=not args.no_screenshots,
             route_auto_start=args.route_auto_start,
+            route_start_mode=args.route_start_mode,
+            route_speed_vetoes=args.route_speed_vetoes,
+            allow_objective_loss=args.allow_objective_loss,
+            lightning_speed_loss_policy=args.speed_loss_policy,
+            pause_before_solve=args.pause_before_solve,
+            pause_between_actions=args.pause_between_actions,
             start_from_verified_setup=args.start_from_verified_setup,
             achievement_sync=not args.no_achievement_sync,
             dry_run=args.dry_run,
@@ -1899,9 +2385,12 @@ def main():
             max_wall_seconds=args.max_wall_seconds,
             route_auto_start=args.route_auto_start,
             route_routing=args.route_routing,
+            route_start_mode=args.route_start_mode,
             run_segment=args.run_segment,
             allow_objective_loss=args.allow_objective_loss,
             lightning_speed_loss_policy=args.speed_loss_policy,
+            pause_before_solve=args.pause_before_solve,
+            pause_between_actions=args.pause_between_actions,
             dry_run=args.dry_run,
         )
     elif args.command == "lightning_select_first_island":

@@ -280,14 +280,14 @@ class TelemetryRecorder:
 
 
 class ScreenshotRecorder:
-    """Best-effort 2-second sampler with backpressure logging."""
+    """Best-effort sampler with bounded screenshot retention."""
 
     def __init__(
         self,
         telemetry: TelemetryRecorder,
         *,
         cadence_seconds: float = 2.0,
-        max_retained_frames: int | None = None,
+        max_retained_frames: int | None = 360,
         max_retained_clock_states: int | None = 3,
         frame_clock_sampler: Callable[[], dict[str, Any] | None] | None = None,
     ) -> None:
@@ -308,6 +308,9 @@ class ScreenshotRecorder:
         self._thread: threading.Thread | None = None
         self._index = 0
         self.frame_clock_sampler = frame_clock_sampler
+
+    def set_cadence(self, cadence_seconds: float) -> None:
+        self.cadence_seconds = max(0.5, float(cadence_seconds))
 
     def start(self) -> None:
         if self._thread is not None:
