@@ -37157,9 +37157,20 @@ def cmd_lightning_loop(
                 stopped_reason = "pause_before_solve_failed"
                 break
         restored_env: dict[str, str | None] = {}
-        if lightning_speed_loss_policy and "ITB_LIGHTNING_SKIP_WEIGHT_FILE" not in os.environ:
-            restored_env["ITB_LIGHTNING_SKIP_WEIGHT_FILE"] = None
-            os.environ["ITB_LIGHTNING_SKIP_WEIGHT_FILE"] = "1"
+        loop_env: list[tuple[str, str]] = []
+        if lightning_speed_loss_policy:
+            loop_env.append(("ITB_LIGHTNING_SKIP_WEIGHT_FILE", "1"))
+        if pause_before_solve:
+            loop_env.extend(
+                [
+                    ("ITB_LIGHTNING_READ_CACHED_BRIDGE", "1"),
+                    ("ITB_LIGHTNING_READ_CACHED_MAX_AGE", "1800"),
+                ]
+            )
+        for key, value in loop_env:
+            if key not in os.environ:
+                restored_env[key] = None
+                os.environ[key] = value
         try:
             turn_result, auto_turn_output = _lightning_quiet_call(
                 cmd_auto_turn,
@@ -37184,6 +37195,12 @@ def cmd_lightning_loop(
                 pause_between_actions=pause_between_actions,
                 frontier_diagnostics=frontier_diagnostics,
                 quiet=quiet,
+                timeout_seconds=(
+                    float(_LIGHTNING_ATTEMPT_SPEED_SUBCALL_TIMEOUT_SECONDS)
+                    if lightning_speed_loss_policy
+                    else None
+                ),
+                timeout_reason="lightning_loop_auto_turn_timeout",
             )
         finally:
             for key, old_value in restored_env.items():

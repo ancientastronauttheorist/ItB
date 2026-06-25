@@ -3433,6 +3433,70 @@ def test_lightning_loop_passes_speed_loss_policy_to_every_turn(monkeypatch):
     assert [call["lightning_speed_loss_policy"] for call in calls] == [True, True]
 
 
+def test_lightning_loop_uses_cached_bridge_reads_while_solving_paused(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    seen_env = {}
+
+    def fake_auto_turn(**kwargs):
+        seen_env["cached_bridge"] = os.environ.get(
+            "ITB_LIGHTNING_READ_CACHED_BRIDGE"
+        )
+        seen_env["cached_max_age"] = os.environ.get(
+            "ITB_LIGHTNING_READ_CACHED_MAX_AGE"
+        )
+        seen_env["skip_weight"] = os.environ.get("ITB_LIGHTNING_SKIP_WEIGHT_FILE")
+        return {
+            "status": "PLAN",
+            "turn": 4,
+            "actions_completed": 3,
+            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
+        }
+
+    monkeypatch.delenv("ITB_LIGHTNING_READ_CACHED_BRIDGE", raising=False)
+    monkeypatch.delenv("ITB_LIGHTNING_READ_CACHED_MAX_AGE", raising=False)
+    monkeypatch.delenv("ITB_LIGHTNING_SKIP_WEIGHT_FILE", raising=False)
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "cmd_bridge_speed", lambda mode: {"status": "OK"})
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_player_turn_and_pause",
+        lambda **kwargs: {
+            "status": "PLAYER_TURN_READY",
+            "reason": "paused_player_turn_ready",
+            "snapshot": {
+                "status": "OK",
+                "phase": "combat_player",
+                "active_mechs": 3,
+            },
+        },
+    )
+    monkeypatch.setattr(commands, "cmd_auto_turn", fake_auto_turn)
+
+    result = commands.cmd_lightning_loop(
+        max_turns=1,
+        click_end_turn=False,
+        quiet=True,
+        pause_before_solve=True,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["reason"] == "end_turn_plan_ready_no_click"
+    assert seen_env == {
+        "cached_bridge": "1",
+        "cached_max_age": "1800",
+        "skip_weight": "1",
+    }
+    assert "ITB_LIGHTNING_READ_CACHED_BRIDGE" not in os.environ
+    assert "ITB_LIGHTNING_READ_CACHED_MAX_AGE" not in os.environ
+    assert "ITB_LIGHTNING_SKIP_WEIGHT_FILE" not in os.environ
+
+
 def test_lightning_ui_clicks_known_control_dry_run():
     result = commands.cmd_lightning_ui("deploy_confirm", dry_run=True)
 
