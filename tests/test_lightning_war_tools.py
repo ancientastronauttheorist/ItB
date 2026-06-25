@@ -3441,6 +3441,7 @@ def test_lightning_loop_uses_cached_bridge_reads_while_solving_paused(monkeypatc
         achievement_targets=["Lightning War"],
     )
     seen_env = {}
+    seen_quiet_call = {}
 
     def fake_auto_turn(**kwargs):
         seen_env["cached_bridge"] = os.environ.get(
@@ -3463,6 +3464,14 @@ def test_lightning_loop_uses_cached_bridge_reads_while_solving_paused(monkeypatc
     monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
     monkeypatch.setattr(commands, "_load_session", lambda: session)
     monkeypatch.setattr(commands, "cmd_bridge_speed", lambda mode: {"status": "OK"})
+    real_quiet_call = commands._lightning_quiet_call
+
+    def capture_quiet_call(func, *args, **kwargs):
+        seen_quiet_call["timeout_seconds"] = kwargs.get("timeout_seconds")
+        seen_quiet_call["timeout_reason"] = kwargs.get("timeout_reason")
+        return real_quiet_call(func, *args, **kwargs)
+
+    monkeypatch.setattr(commands, "_lightning_quiet_call", capture_quiet_call)
     monkeypatch.setattr(
         commands,
         "_lightning_wait_for_player_turn_and_pause",
@@ -3491,6 +3500,10 @@ def test_lightning_loop_uses_cached_bridge_reads_while_solving_paused(monkeypatc
         "cached_bridge": "1",
         "cached_max_age": "1800",
         "skip_weight": "1",
+    }
+    assert seen_quiet_call == {
+        "timeout_seconds": 45.0,
+        "timeout_reason": "lightning_loop_auto_turn_timeout",
     }
     assert "ITB_LIGHTNING_READ_CACHED_BRIDGE" not in os.environ
     assert "ITB_LIGHTNING_READ_CACHED_MAX_AGE" not in os.environ
