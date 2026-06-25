@@ -1503,7 +1503,6 @@ fn prune_actions(
 
             // Check if target has a unit (prefer attacking units over empty)
             if board.unit_at(target.0, target.1).is_some() { s += 10; }
-
             // Friendly fire penalty
             if let Some(idx) = board.unit_at(target.0, target.1) {
                 if board.units[idx].is_player() { s -= 300; }
@@ -1513,6 +1512,14 @@ fn prune_actions(
             // When a push is blocked by a building, both the unit and building take
             // 1 bump damage — losing grid power. Apply -300 per building at risk.
             let wdef = &weapons[weapon_id as usize];
+            if is_arachnoid_injector(weapon_id) {
+                if let Some(idx) = board.unit_at(target.0, target.1) {
+                    let target_unit = &board.units[idx];
+                    if target_unit.is_enemy() && direct_weapon_damage_would_kill(target_unit, wdef) {
+                        s += 2500;
+                    }
+                }
+            }
             s += mission_mountain_action_score(
                 board,
                 attack_origin,
@@ -2826,7 +2833,7 @@ mod top_k_tests {
     #[test]
     fn arachnoid_injector_targets_are_cardinal_artillery() {
         let mut board = Board::default();
-        let _mech = board.add_unit(Unit {
+        let mech_idx = board.add_unit(Unit {
             uid: 1,
             x: 2,
             y: 3,
@@ -2847,6 +2854,16 @@ mod top_k_tests {
             flags: UnitFlags::PUSHABLE,
             ..Default::default()
         });
+        let _leaper = board.add_unit(Unit {
+            uid: 95,
+            x: 2,
+            y: 6,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
 
         let targets = get_weapon_targets(
             &board,
@@ -2859,6 +2876,24 @@ mod top_k_tests {
 
         assert!(targets.contains(&(2, 6)), "same-column artillery tile should be legal");
         assert!(!targets.contains(&(6, 2)), "off-axis E6->F2 live FireWeapon is a no-op");
+        assert!(weapon_action_has_effect(
+            &board,
+            (2, 3),
+            WId::RangedArachnoid,
+            (2, 6),
+            &WEAPONS,
+        ));
+        let actions = enumerate_actions(&board, mech_idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| a.1 == WId::RangedArachnoid && a.2 == (2, 6)),
+            "Arachnoid Injector should be emitted as a live solver action",
+        );
+        let mut pruned = actions.clone();
+        prune_actions(&board, mech_idx, &mut pruned, 0, 0, 0, 1, &WEAPONS);
+        assert!(
+            pruned.iter().any(|a| a.1 == WId::RangedArachnoid && a.2 == (2, 6)),
+            "Arachnoid Injector killing blows should survive tight pruning",
+        );
         assert!(!weapon_action_has_effect(
             &board,
             (2, 3),

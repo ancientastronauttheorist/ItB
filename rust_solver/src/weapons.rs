@@ -1167,10 +1167,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 162-165: Ranged_Arachnoid — Arachnoid Injector. Bespoke spawn-on-kill
     // semantics live in simulate.rs; the definition supplies artillery damage
     // and range. B/AB spawn Arachnoids whose self-destruct melee applies ACID.
-    w[162] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
-    w[163] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
-    w[164] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
-    w[165] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
+    w[162] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, range_max: 0, flags: C, ..DEF };
+    w[163] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, range_max: 0, flags: C, ..DEF };
+    w[164] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, range_max: 0, flags: C, ..DEF };
+    w[165] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, range_max: 0, flags: C, ..DEF };
     // 166-167: DeployUnit_AracnoidAtk — spawned Arachnoid melee. Self-kill is
     // special-cased so sacrificing an Arachnoid is not scored as a mech death.
     w[166] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
@@ -2493,6 +2493,8 @@ mod tests {
         let injector = weapon_def(WId::RangedArachnoid);
         assert_eq!(injector.weapon_type, WeaponType::Artillery);
         assert_eq!(injector.damage, 1);
+        assert_eq!(injector.range_min, 2);
+        assert_eq!(injector.range_max, 0);
         assert!(is_arachnoid_injector(WId::RangedArachnoidAB));
         assert!(arachnoid_injector_spawns_acid_attack(WId::RangedArachnoidB));
 
