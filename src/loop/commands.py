@@ -14266,6 +14266,34 @@ def _lightning_pause_after_known_live_burst(
     if click_result.get("status") == "OK":
         pause_verify = _lightning_visible_ui_snapshot(include_ocr=True)
         pause_verified = _lightning_visible_ui_is_pause_menu(pause_verify)
+        if (
+            not pause_verified
+            and isinstance(pause_verify, dict)
+            and pause_verify.get("visible_ui")
+            in {"island_map", "island_map_or_unknown"}
+        ):
+            from src.control.mac_click import click_known_window_control
+
+            fallback_click = click_known_window_control("map_menu")
+            fallback_verify = None
+            fallback_verified = False
+            if fallback_click.get("status") == "OK":
+                fallback_verify = _lightning_visible_ui_snapshot(include_ocr=True)
+                fallback_verified = _lightning_visible_ui_is_pause_menu(
+                    fallback_verify,
+                )
+            if fallback_verified:
+                pause_verify = fallback_verify
+                pause_verified = True
+                click_result = fallback_click
+            else:
+                if isinstance(pause_verify, dict):
+                    pause_verify = dict(pause_verify)
+                    pause_verify["map_menu_fallback"] = {
+                        "click_result": fallback_click,
+                        "pause_verify": fallback_verify,
+                        "pause_verified": fallback_verified,
+                    }
 
     status = click_result.get("status", "ERROR")
     result = {

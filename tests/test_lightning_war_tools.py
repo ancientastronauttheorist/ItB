@@ -35185,6 +35185,54 @@ def test_lightning_fast_bridge_deploy_confirm_rejects_incomplete_post_confirm(mo
     assert result["reason"] == "post_confirm_incomplete_deployment"
 
 
+def test_lightning_pause_after_known_live_burst_uses_map_menu_fallback(monkeypatch):
+    class FakeSession:
+        run_id = "fresh_lw"
+
+    snapshots = [
+        {"status": "OK", "visible_ui": "island_map"},
+        {"status": "OK", "visible_ui": "pause_menu"},
+    ]
+    clicks = []
+
+    monkeypatch.setattr(commands, "_load_session", lambda: FakeSession())
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: {"status": "OK", "control": "pause_menu_escape"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: snapshots.pop(0),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_is_pause_menu",
+        lambda visible_ui: visible_ui.get("visible_ui") == "pause_menu",
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_guard",
+        lambda session, **kwargs: {"status": "OK", **kwargs},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: clicks.append(control)
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands._lightning_pause_after_known_live_burst(
+        reason="test_island_map_pause",
+    )
+
+    assert result["status"] == "OK"
+    assert result["pause_verified"] is True
+    assert result["pause_verify"]["visible_ui"] == "pause_menu"
+    assert result["click_result"]["control"] == "map_menu"
+    assert clicks == ["map_menu"]
+
+
 def test_lightning_route_start_reopens_region_after_sticky_dialogue(monkeypatch):
     calls = []
     visible_start_calls = []
