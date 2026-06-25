@@ -19621,6 +19621,52 @@ def _lightning_resume_if_paused(
                     "error": str(exc),
                 }
             result["reason"] = "resumed_from_verified_pause_guard"
+            post_click_visible = _lightning_visible_ui_snapshot()
+            result["post_click_visible_ui"] = {
+                key: post_click_visible.get(key)
+                for key in (
+                    "status",
+                    "visible_ui",
+                    "recommended_control",
+                    "screenshot_path",
+                )
+                if key in post_click_visible
+            }
+            if (
+                post_click_visible.get("status") == "OK"
+                and _lightning_visible_ui_is_pause_menu(post_click_visible)
+            ):
+                fallback = _lightning_press_pause_escape(settle_seconds=0.12)
+                result["fallback_resume"] = fallback
+                result["status"] = fallback.get("status", "ERROR")
+                if fallback.get("status") != "OK":
+                    result["reason"] = "fast_resume_escape_fallback_failed"
+                    result["error"] = fallback.get("error")
+                    return result
+                fallback_visible = _lightning_visible_ui_snapshot()
+                result["fallback_visible_ui"] = {
+                    key: fallback_visible.get(key)
+                    for key in (
+                        "status",
+                        "visible_ui",
+                        "recommended_control",
+                        "screenshot_path",
+                    )
+                    if key in fallback_visible
+                }
+                if (
+                    fallback_visible.get("status") == "OK"
+                    and _lightning_visible_ui_is_pause_menu(fallback_visible)
+                ):
+                    result["status"] = "BLOCKED"
+                    result["reason"] = "fast_resume_from_pause_not_verified"
+                    result["next_step"] = (
+                        "Pause menu remained visible after the verified-guard "
+                        "resume and Escape fallback; recalibrate resume before "
+                        "continuing timed play."
+                    )
+                    return result
+                result["reason"] = "resumed_from_verified_pause_guard_fallback"
             return result
 
     visible_ui = _lightning_visible_ui_snapshot()

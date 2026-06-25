@@ -5033,6 +5033,65 @@ def test_lightning_ui_clear_tail_blocks_when_resume_stays_paused(monkeypatch):
     assert calls == expected_resume
 
 
+def test_lightning_fast_resume_retries_when_pause_menu_remains(monkeypatch):
+    calls = []
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+                "screenshot_path": "/tmp/still-paused.png",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "combat_screen",
+                "recommended_control": None,
+                "screenshot_path": "/tmp/live.png",
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recent_verified_pause_guard",
+        lambda **kwargs: {"status": "OK", "guard": {"status": "OK"}},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_clear_pending_bridge_command",
+        lambda reason: {"status": "OK", "reason": reason, "cleared": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_press_pause_escape",
+        lambda **kwargs: calls.append(kwargs)
+        or {"status": "OK", "control": "pause_menu_escape"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: next(visible_states),
+    )
+    monkeypatch.setattr(commands, "_load_session", lambda: object())
+    monkeypatch.setattr(
+        commands,
+        "_lightning_write_guard",
+        lambda *args, **kwargs: {"status": "LIVE"},
+    )
+
+    result = commands._lightning_resume_if_paused(
+        use_verified_guard=True,
+        guard_max_age_seconds=300,
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "resumed_from_verified_pause_guard_fallback"
+    assert result["post_click_visible_ui"]["visible_ui"] == "pause_menu"
+    assert result["fallback_visible_ui"]["visible_ui"] == "combat_screen"
+    assert len(calls) == 2
+
+
 def test_lightning_ui_handle_screen_clicks_visible_panel(monkeypatch):
     calls = []
 
