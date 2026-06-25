@@ -5287,6 +5287,55 @@ def test_speed_mode_pace_gate_uses_nested_visible_timer_over_stale_save_timer():
     assert segment_calls == 1
 
 
+def test_speed_mode_pace_gate_blocks_before_terminal_panel_handling():
+    session = SimpleNamespace(
+        run_id="20260625_131023_001",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="rst",
+        current_mission="Mission_Crack",
+        mission_index=0,
+        islands_completed=[],
+    )
+    ui_calls = []
+
+    def lightning_ui(*args, **kwargs):
+        ui_calls.append((args, kwargs))
+        return pause_menu()
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=lambda **_: pause_menu(),
+        cmd_lightning_ui=lightning_ui,
+        cmd_lightning_preflight=lambda **_: preflight_with_timer(15.0),
+        cmd_lightning_segment=lambda **_: {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": "terminal_or_mission_end",
+            "visible_ui": "perfect_island_panel",
+            "visible_timer": {
+                "status": "OK",
+                "source": "visible_pause_menu_timer",
+                "game_seconds": 188.0,
+                "game_timer": "0:03:08",
+            },
+        },
+        cmd_lightning_abandon_to_setup=unexpected("abandon"),
+    )
+    runner = make_runner(mode="speed", max_attempts=1, mission_segment_gate_seconds=180)
+
+    result = runner._run_inner(commands)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "mission_segment_pace_gate"
+    assert result["pace_gate"]["game_seconds"] == 188.0
+    assert [
+        kwargs.get("control")
+        for _args, kwargs in ui_calls
+        if kwargs.get("control") != "classify"
+    ] == []
+
+
 def test_timer_seconds_uses_nested_pause_menu_ocr_over_stale_visible_sample():
     result = {
         "visible_timer": {

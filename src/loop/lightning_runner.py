@@ -2801,6 +2801,94 @@ class LightningWarRunner:
                     pace_gate=route_click_miss_gate,
                     segment=_compact(segment),
                     session=_session_summary(session),
+                        **_telemetry_errors_payload(telemetry_event_errors),
+                    )
+
+            session, session_block = self._load_session_or_block(
+                commands,
+                "after_lightning_segment_pre_panel",
+                segment_index=segment_index,
+                attempt_index=attempt_index,
+                segment=_compact(segment),
+            )
+            if session_block is not None:
+                return self._finish(
+                    "BLOCKED",
+                    "session_load_exception",
+                    session_load=session_block,
+                    segment=_compact(segment),
+                )
+            pace_gate = self._pace_gate(session, best_timer)
+            if (
+                deployment_handoff_grace_segments > 0
+                and pace_gate is not None
+                and str(pace_gate.get("reason") or "")
+                in {
+                    "first_mission_route_start_pace_gate",
+                    "first_island_pace_gate",
+                }
+            ):
+                deployment_handoff_grace_segments -= 1
+                event_error = self._best_effort_event(
+                    "pace_gate_suppressed_after_deployment_handoff",
+                    segment_index=segment_index,
+                    attempt_index=attempt_index,
+                    pace_gate=pace_gate,
+                    game_seconds=best_timer,
+                    game_timer=_format_seconds(best_timer),
+                )
+                if event_error is not None:
+                    self.telemetry_event_errors.append(event_error)
+                pace_gate = None
+            if pace_gate is not None:
+                restart = self._restart_after_initial_pace_gate_if_safe(
+                    commands,
+                    pace_gate=pace_gate,
+                    session=session,
+                    attempt_index=attempt_index,
+                )
+                if restart is not None:
+                    if restart.get("status") in {"OK", "DRY_RUN"}:
+                        attempt_index = int(
+                            restart.get("next_attempt_index")
+                            or attempt_index + 1
+                        )
+                        best_timer = None
+                        pending_route_visual_region_index = None
+                        pending_route_start_context = None
+                        no_progress_counts.clear()
+                        continue
+                    restart_reason = str(restart.get("reason") or "")
+                    finish_reason = (
+                        "external_system_prompt_visible"
+                        if restart.get("reason") == "external_system_prompt_visible"
+                        else restart_reason
+                        if restart_reason
+                        in {
+                            "first_mission_start_timer_not_reset",
+                            "first_mission_start_timer_unverified",
+                        }
+                        else "pace_gate_restart_failed"
+                    )
+                    return self._finish(
+                        "BLOCKED",
+                        finish_reason,
+                        restart=restart,
+                        pace_gate=pace_gate,
+                        segment=_compact(segment),
+                    )
+                event_error = self._best_effort_event(
+                    "pace_gate",
+                    status="BLOCKED",
+                    **pace_gate,
+                )
+                if event_error is not None:
+                    pace_gate.setdefault("telemetry_event_errors", []).append(event_error)
+                return self._finish(
+                    "BLOCKED",
+                    str(pace_gate["reason"]),
+                    pace_gate=pace_gate,
+                    segment=_compact(segment),
                     **_telemetry_errors_payload(telemetry_event_errors),
                 )
 
