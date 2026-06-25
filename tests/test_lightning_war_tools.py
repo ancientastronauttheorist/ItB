@@ -4157,7 +4157,8 @@ def test_lightning_pause_guard_clicks_safe_panel(monkeypatch):
         assert clicks == []
         assert len(escapes) == 1
     else:
-        assert clicks == ["pause"]
+        assert clicks == []
+        assert result["last_poll"]["click_result"]["control"] == "pause_menu_escape"
     assert result["last_poll"]["pause_verified"] is True
 
 
@@ -4214,6 +4215,27 @@ def test_lightning_pause_guard_allows_unknown_preview_context(monkeypatch):
     assert result["status"] == "OK"
     assert result["reason"] == "safe_ui_pause_available"
     assert result["pause_allowed"] is True
+
+
+def test_lightning_pause_guard_blocks_failed_game_focus_proof():
+    result = commands._lightning_pause_guard_decision(
+        {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "game_focus_proof": {
+                "status": "BLOCKED",
+                "reason": "game_focus_proof_failed",
+                "frontmost": False,
+                "failures": ["game_not_frontmost"],
+            },
+        },
+        {"status": "NO_BRIDGE"},
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "game_focus_proof_failed"
+    assert result["pause_allowed"] is False
+    assert result["game_focus_proof"]["failures"] == ["game_not_frontmost"]
 
 
 def test_lightning_pause_guard_blocks_pod_open_panel_until_clear():
@@ -8474,6 +8496,80 @@ def test_lightning_setup_ocr_accepts_blitzkrieg_squad_setup():
             ),
         }
     )
+
+
+def test_verify_setup_accepts_blitzkrieg_start_screen_with_save_proof(monkeypatch):
+    modal_fail = SimpleNamespace(
+        to_dict=lambda: {
+            "status": "FAIL",
+            "expected_difficulty": 0,
+            "actual_difficulty": None,
+            "setup_screen_detected": False,
+            "setup_signature": {
+                "advanced_checkbox_present_count": 0,
+                "advanced_checkbox_required_count": 3,
+            },
+            "advanced": [],
+            "missing_advanced": [],
+            "unexpected_advanced": [],
+            "desired_advanced": "off",
+            "screenshot_path": "tmp/modal_fail.png",
+            "window_focus_verified": True,
+            "window_bounds": {"x": 215, "y": 32, "width": 1280, "height": 748},
+            "click_plan": [],
+        }
+    )
+    visible = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "visible_text": "\n".join(
+            [
+                "Back",
+                "Start",
+                "Blitzkrieg",
+                "Lightning Mech",
+                "Hook Mech",
+                "Boulder Mech",
+                "Randomize",
+                "Change Time Traveler",
+                "Change Squad",
+            ]
+        ),
+        "screenshot_path": "/tmp/itb_start.png",
+        "game_focus_proof": {
+            "status": "OK",
+            "frontmost": True,
+            "window_bounds": {"x": 215, "y": 32, "width": 1280, "height": 748},
+        },
+    }
+    monkeypatch.setattr(commands, "capture_and_check_setup", lambda **_: modal_fail)
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda **_: visible)
+    monkeypatch.setattr(commands, "_read_save_file_difficulty", lambda _profile: 0)
+    monkeypatch.setattr(
+        commands,
+        "_read_save_advanced_content",
+        lambda _profile: {
+            "status": "OK",
+            "source": "saveData",
+            "state": {
+                "new_enemies": 0,
+                "new_missions": 0,
+                "new_equip": 0,
+                "new_abilities": 0,
+            },
+        },
+    )
+
+    result = commands.cmd_verify_setup_screen(
+        expected_difficulty=0,
+        advanced_content="off",
+    )
+
+    assert result["status"] == "PASS"
+    assert result["setup_screen_source"] == "blitzkrieg_start_screen_ocr"
+    assert result["actual_difficulty"] == 0
+    assert result["screenshot_path"] == "/tmp/itb_start.png"
+    assert result["click_plan"] == []
 
 
 def test_lightning_ui_classifier_detects_title_screen(tmp_path):

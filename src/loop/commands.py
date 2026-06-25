@@ -7342,6 +7342,14 @@ def cmd_verify_setup_screen(
         advanced_content=advanced_content,
     )
     result = check.to_dict()
+    if not result.get("setup_screen_detected"):
+        result = _verify_setup_from_blitzkrieg_start_screen(
+            result,
+            expected_difficulty=expected_difficulty,
+            advanced_content=advanced_content or (
+                "on" if require_all_advanced else "any"
+            ),
+        )
 
     print("\n=== VERIFY_SETUP_SCREEN ===")
     actual = result.get("actual_difficulty")
@@ -7349,33 +7357,156 @@ def cmd_verify_setup_screen(
     expected_label = _DIFFICULTY_LABELS.get(
         expected_difficulty, str(expected_difficulty)
     )
-    print(f"  status: {check.status}")
+    print(f"  status: {result.get('status')}")
     if not result.get("setup_screen_detected"):
         print("  screen: not the Difficulty Setup modal")
+    elif result.get("setup_screen_source") == "blitzkrieg_start_screen_ocr":
+        print("  screen: Blitzkrieg squad Start screen (OCR/save fallback)")
     print(
         "  window focus: "
         f"{'verified' if result.get('window_focus_verified') else 'NOT VERIFIED'}"
     )
     print(f"  difficulty: {actual_label} (expected {expected_label})")
-    print(f"  advanced content target: {check.desired_advanced.upper()}")
+    print(f"  advanced content target: {result.get('desired_advanced', 'any').upper()}")
     print("  advanced content:")
-    for row in check.advanced:
+    for row in result.get("advanced", []):
         state = "ON" if row["enabled"] else "OFF"
         print(
             f"    - {row['label']}: {state} "
             f"(checkbox={row.get('checkbox_brightness', 0):.3f}, "
             f"colorfulness={row['colorfulness']:.3f})"
         )
-    if check.click_plan:
+    if result.get("setup_screen_source") == "blitzkrieg_start_screen_ocr":
+        setup_signature = result.get("setup_signature", {})
+        proof = setup_signature.get("blitzkrieg_start_screen_fallback", {})
+        save_advanced = proof.get("save_advanced_content", {})
+        print(
+            "  fallback proof: "
+            f"save_difficulty={proof.get('save_difficulty')} "
+            f"advanced_source={save_advanced.get('source') or 'unknown'}"
+        )
+    if result.get("click_plan"):
         print("  suggested clicks:")
-        for i, click in enumerate(check.click_plan, start=1):
+        for i, click in enumerate(result.get("click_plan", []), start=1):
             print(
                 f"    {i}. ({click['x']}, {click['y']}) "
                 f"{click['description']}"
             )
-    print(f"  screenshot: {check.screenshot_path}")
+    print(f"  screenshot: {result.get('screenshot_path')}")
     _print_result(result)
     return result
+
+
+def _verify_setup_from_blitzkrieg_start_screen(
+    result: dict,
+    *,
+    expected_difficulty: int,
+    advanced_content: str,
+    profile: str = "Alpha",
+) -> dict:
+    """Accept the squad Start screen as setup proof when save state agrees."""
+    desired_advanced = advanced_content or "any"
+    visible_ui = _lightning_visible_ui_snapshot(include_ocr=True, bridge_refine=False)
+    visible_ui = _lightning_apply_setup_screen_ocr_override(visible_ui)
+    focus_proof = visible_ui.get("game_focus_proof") if isinstance(visible_ui, dict) else {}
+    save_difficulty = _read_save_file_difficulty(profile)
+    save_advanced = _read_save_advanced_content(profile)
+    proof = {
+        "source": "ocr_plus_save_state",
+        "visible_ui": visible_ui,
+        "game_focus_proof": focus_proof,
+        "save_difficulty": save_difficulty,
+        "save_advanced_content": save_advanced,
+    }
+
+    setup_signature = dict(result.get("setup_signature") or {})
+    setup_signature["blitzkrieg_start_screen_fallback"] = proof
+    updated = dict(result)
+    updated["setup_signature"] = setup_signature
+    updated["fallback_visible_ui"] = visible_ui
+    updated["desired_advanced"] = desired_advanced
+    if isinstance(visible_ui, dict) and visible_ui.get("screenshot_path"):
+        updated["screenshot_path"] = visible_ui.get("screenshot_path")
+    updated["window_focus_verified"] = (
+        isinstance(focus_proof, dict) and focus_proof.get("status") == "OK"
+    )
+    updated["window_bounds"] = (
+        focus_proof.get("window_bounds")
+        if isinstance(focus_proof, dict)
+        else result.get("window_bounds")
+    )
+
+    advanced_keys = ("new_enemies", "new_missions", "new_equip", "new_abilities")
+    desired_value = 1 if desired_advanced == "on" else 0
+    advanced_state = (
+        save_advanced.get("state") if isinstance(save_advanced, dict) else {}
+    ) or {}
+    missing_keys = [key for key in advanced_keys if key not in advanced_state]
+    mismatched_keys = (
+        []
+        if desired_advanced == "any"
+        else [
+            key
+            for key in advanced_keys
+            if advanced_state.get(key) != desired_value
+        ]
+    )
+
+    fallback_ok = (
+        isinstance(visible_ui, dict)
+        and visible_ui.get("status") == "OK"
+        and visible_ui.get("visible_ui") == "new_game_setup"
+        and _lightning_setup_screen_ocr_match(visible_ui)
+        and isinstance(focus_proof, dict)
+        and focus_proof.get("status") == "OK"
+        and save_difficulty == expected_difficulty
+        and (desired_advanced == "any" or not missing_keys)
+        and not mismatched_keys
+    )
+    if not fallback_ok:
+        proof["failure_reasons"] = []
+        if not (isinstance(visible_ui, dict) and visible_ui.get("visible_ui") == "new_game_setup"):
+            proof["failure_reasons"].append("blitzkrieg_start_screen_ocr_not_matched")
+        if not (isinstance(focus_proof, dict) and focus_proof.get("status") == "OK"):
+            proof["failure_reasons"].append("game_focus_not_verified")
+        if save_difficulty != expected_difficulty:
+            proof["failure_reasons"].append("save_difficulty_mismatch_or_unknown")
+        if desired_advanced != "any" and missing_keys:
+            proof["failure_reasons"].append("save_advanced_content_missing_keys")
+        if mismatched_keys:
+            proof["failure_reasons"].append("save_advanced_content_mismatch")
+        return updated
+
+    advanced_rows = []
+    for key in advanced_keys:
+        label = key.replace("new_", "").replace("_", " ").title()
+        advanced_rows.append(
+            {
+                "key": key,
+                "label": label,
+                "enabled": advanced_state.get(key) == 1,
+                "colorfulness": 0.0,
+                "checkbox_brightness": 0.0,
+                "source": "save_state",
+            }
+        )
+    updated.update(
+        {
+            "status": "PASS",
+            "actual_difficulty": expected_difficulty,
+            "setup_screen_detected": True,
+            "setup_screen_source": "blitzkrieg_start_screen_ocr",
+            "advanced": advanced_rows,
+            "missing_advanced": (
+                [] if desired_advanced != "on" else [row["label"] for row in advanced_rows if not row["enabled"]]
+            ),
+            "unexpected_advanced": (
+                [] if desired_advanced != "off" else [row["label"] for row in advanced_rows if row["enabled"]]
+            ),
+            "click_plan": [],
+        }
+    )
+    return updated
 
 
 def _lightning_bridge_island_map_pause_peek(
@@ -16055,6 +16186,7 @@ def _lightning_visible_ui_snapshot(
                 "recommended_control": None,
                 "confidence": 1.0,
                 "bridge_fast_path": True,
+                "game_focus_proof": _lightning_game_focus_proof(None),
                 "bridge_refine_snapshot": {
                     key: snapshot.get(key)
                     for key in (
@@ -16095,6 +16227,79 @@ def _lightning_visible_ui_snapshot(
             result = _lightning_apply_system_prompt_ocr_override(result)
         result = _lightning_apply_pause_menu_ocr_override(result)
     result["screenshot_path"] = str(tmp_path)
+    result["game_focus_proof"] = _lightning_game_focus_proof(tmp_path)
+    return result
+
+
+def _lightning_game_focus_proof(screenshot_path: str | Path | None = None) -> dict:
+    """Return proof that the captured frame belongs to the ITB game window."""
+    try:
+        from src.capture.window import get_window_bounds, is_game_frontmost
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "focus_probe_import_failed",
+            "exception_type": type(exc).__name__,
+            "error": str(exc),
+        }
+
+    try:
+        bounds = get_window_bounds()
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "window_bounds_probe_failed",
+            "exception_type": type(exc).__name__,
+            "error": str(exc),
+        }
+    try:
+        frontmost = bool(is_game_frontmost())
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "frontmost_probe_failed",
+            "window_bounds": bounds,
+            "exception_type": type(exc).__name__,
+            "error": str(exc),
+        }
+
+    image_size = None
+    if screenshot_path is not None:
+        try:
+            from PIL import Image
+
+            with Image.open(screenshot_path) as image:
+                image_size = [int(image.size[0]), int(image.size[1])]
+        except Exception as exc:
+            return {
+                "status": "ERROR",
+                "reason": "screenshot_identity_probe_failed",
+                "frontmost": frontmost,
+                "window_bounds": bounds,
+                "screenshot_path": str(screenshot_path),
+                "exception_type": type(exc).__name__,
+                "error": str(exc),
+            }
+
+    reasons = []
+    if not bounds:
+        reasons.append("window_bounds_unavailable")
+    if not frontmost:
+        reasons.append("game_not_frontmost")
+    if screenshot_path is not None and not image_size:
+        reasons.append("screenshot_size_unavailable")
+    status = "OK" if not reasons else "BLOCKED"
+    result = {
+        "status": status,
+        "frontmost": frontmost,
+        "window_bounds": bounds,
+        "screenshot_path": str(screenshot_path) if screenshot_path is not None else None,
+        "screenshot_image_size": image_size,
+        "expected_app": "Into the Breach",
+    }
+    if reasons:
+        result["reason"] = "game_focus_proof_failed"
+        result["failures"] = reasons
     return result
 
 
@@ -17061,6 +17266,23 @@ def _lightning_pause_guard_decision(
             "status": "ERROR",
             "reason": "screen_classification_failed",
             "pause_allowed": False,
+        }
+    focus_proof = visible_ui.get("game_focus_proof")
+    if (
+        visible_name != "system_privacy_prompt"
+        and isinstance(focus_proof, dict)
+        and focus_proof.get("status") != "OK"
+    ):
+        return {
+            "status": "BLOCKED",
+            "reason": "game_focus_proof_failed",
+            "pause_allowed": False,
+            "game_focus_proof": focus_proof,
+            "next_step": (
+                "The screenshot/focus proof does not show Into the Breach as "
+                "the frontmost bounded game window. Do not click game UI; "
+                "restore focus and resample before continuing."
+            ),
         }
     if visible_name == "pause_menu":
         return {
