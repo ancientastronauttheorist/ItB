@@ -33260,6 +33260,90 @@ def test_lightning_segment_auto_start_pauses_before_route_timer_gate(
     }
 
 
+def test_lightning_segment_passes_custom_first_route_gate(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_attempt",
+        lambda **kwargs: {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "reason": "visible_island_map_save_route_plan",
+            "route_start_candidates": [
+                {"index": 0, "window_x": 640, "window_y": 420},
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_auto_start_candidate_from_recommendation",
+        lambda *args, **kwargs: {
+            "index": 0,
+            "window_x": 640,
+            "window_y": 420,
+            "auto_route_allowed": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+
+    def fake_gate(**kwargs):
+        calls.append(kwargs)
+        return {
+            "status": "BLOCKED",
+            "reason": "first_mission_route_start_pace_gate",
+        }
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        fake_gate,
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("route start should not run after timer gate")
+        ),
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        route_auto_start=True,
+        route_routing="lightning_war",
+        first_mission_route_start_gate_seconds=45,
+        max_steps=1,
+        pause_on_stop=False,
+    )
+
+    assert result["reason"] == "first_mission_route_start_pace_gate"
+    assert calls
+    assert calls[0]["max_game_seconds"] == 45
+
+
+def test_lightning_system_prompt_ocr_trigger_accepts_low_score_prompt_shape():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "island_map_or_unknown",
+        "scores": {
+            "system_privacy_prompt": {
+                "score": 0.052,
+                "relaxed_score": 0.052,
+                "checks": {
+                    "text_bright": 1.12,
+                    "card_mid_dark": 0.68,
+                    "icon_color": 0.10,
+                },
+            },
+        },
+    }
+
+    assert commands._lightning_should_ocr_for_system_prompt(visible_ui)
+
+
 def test_lightning_segment_labeled_probe_auto_start_uses_coordinates(
     monkeypatch,
 ):

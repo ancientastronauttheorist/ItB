@@ -294,7 +294,7 @@ _LIGHTNING_MIN_FAST_SETTINGS_SPEED = 1000
 _LIGHTNING_ACHIEVEMENT_SECONDS = 30 * 60
 _LIGHTNING_MISSION_SEGMENT_SECONDS = 3 * 60
 _LIGHTNING_FIRST_MISSION_OPENING_SECONDS = 20
-_LIGHTNING_FIRST_MISSION_ROUTE_START_SECONDS = 30
+_LIGHTNING_FIRST_MISSION_ROUTE_START_SECONDS = 45
 _LIGHTNING_SPEED_SEGMENT_WALL_SECONDS = 30.0
 _LIGHTNING_ATTEMPT_SPEED_SUBCALL_TIMEOUT_SECONDS = 45.0
 _LIGHTNING_FIRST_ROUTE_START_SUBCALL_TIMEOUT_SECONDS = 18.0
@@ -13654,7 +13654,22 @@ def _lightning_should_ocr_for_system_prompt(visible_ui: dict) -> bool:
         relaxed_score = float(score.get("relaxed_score") or 0.0)
     except (TypeError, ValueError):
         return False
-    return max(prompt_score, relaxed_score) >= 0.20
+    checks = score.get("checks") if isinstance(score.get("checks"), dict) else {}
+    try:
+        text_bright = float(checks.get("text_bright") or 0.0)
+        card_mid_dark = float(checks.get("card_mid_dark") or 0.0)
+        icon_color = float(checks.get("icon_color") or 0.0)
+    except (TypeError, ValueError):
+        text_bright = card_mid_dark = icon_color = 0.0
+    return (
+        max(prompt_score, relaxed_score) >= 0.20
+        or (
+            max(prompt_score, relaxed_score) >= 0.04
+            and text_bright >= 0.75
+            and card_mid_dark >= 0.25
+            and icon_color >= 0.08
+        )
+    )
 
 
 def _lightning_visible_ui_has_intro_continue_text(
@@ -30707,6 +30722,7 @@ def cmd_lightning_segment(
     route_probe_cache: list[dict] | None = None,
     route_probe_cache_first_island: str | None = None,
     route_probe_cache_mission_index: int | None = None,
+    first_mission_route_start_gate_seconds: float = _LIGHTNING_FIRST_MISSION_ROUTE_START_SECONDS,
 ) -> dict:
     """Run repeated Lightning War conductor bursts until the next decision."""
     if max_wall_seconds is None and lightning_speed_loss_policy:
@@ -30821,6 +30837,7 @@ def cmd_lightning_segment(
             route_gate = _lightning_first_mission_route_start_pace_gate(
                 profile=profile,
                 route_routing=route_routing,
+                max_game_seconds=first_mission_route_start_gate_seconds,
             )
             if route_gate is not None:
                 if route_gate_pause is not None:
@@ -31146,6 +31163,7 @@ def cmd_lightning_segment(
                         if _lightning_first_route_retry_budget_exhausted(
                             started_at,
                             first_mission_opening=route_start_first_mission_opening,
+                            max_game_seconds=first_mission_route_start_gate_seconds,
                         ):
                             route_summary["route_auto_start_blocked_candidate"] = (
                                 auto_route_block
@@ -31238,6 +31256,7 @@ def cmd_lightning_segment(
                     if _lightning_first_route_retry_budget_exhausted(
                         started_at,
                         first_mission_opening=route_start_first_mission_opening,
+                        max_game_seconds=first_mission_route_start_gate_seconds,
                     ):
                         route_summary["route_auto_start_blocked_candidate"] = (
                             auto_route_block
@@ -31568,6 +31587,7 @@ def cmd_lightning_segment(
                 route_gate = _lightning_first_mission_route_start_pace_gate(
                     profile=profile,
                     route_routing=route_routing,
+                    max_game_seconds=first_mission_route_start_gate_seconds,
                 )
                 if route_gate is not None:
                     if route_gate_pause is not None:
@@ -31870,6 +31890,7 @@ def cmd_lightning_segment(
                             if _lightning_first_route_retry_budget_exhausted(
                                 started_at,
                                 first_mission_opening=route_start_first_mission_opening,
+                                max_game_seconds=first_mission_route_start_gate_seconds,
                             ):
                                 route_summary["route_auto_start_blocked_candidate"] = (
                                     auto_route_block
@@ -31960,6 +31981,7 @@ def cmd_lightning_segment(
                         if _lightning_first_route_retry_budget_exhausted(
                             started_at,
                             first_mission_opening=route_start_first_mission_opening,
+                            max_game_seconds=first_mission_route_start_gate_seconds,
                         ):
                             route_summary["route_auto_start_blocked_candidate"] = (
                                 auto_route_block

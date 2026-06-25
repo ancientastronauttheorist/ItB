@@ -1653,7 +1653,7 @@ class LightningRunnerConfig:
     segment_timeout: float = 420.0
     abandon_seconds: float = 29 * 60
     mission_segment_gate_seconds: float = 3 * 60
-    first_mission_route_start_gate_seconds: float = 30
+    first_mission_route_start_gate_seconds: float = 45
     first_island_gate_seconds: float = 15 * 60
     second_island_start_gate_seconds: float = 16.75 * 60
     screenshot_cadence: float = 2.0
@@ -2699,6 +2699,9 @@ class LightningWarRunner:
                     or None,
                     route_probe_cache_mission_index=_safe_int(
                         getattr(session, "mission_index", 0) or 0,
+                    ),
+                    first_mission_route_start_gate_seconds=(
+                        cfg.first_mission_route_start_gate_seconds
                     ),
                 )
             except Exception as exc:

@@ -1395,6 +1395,15 @@ def main():
     p_lightning_segment.add_argument("--no-preflight", action="store_true")
     p_lightning_segment.add_argument("--dry-run", action="store_true")
     p_lightning_segment.add_argument("--max-wall-seconds", type=float, default=None)
+    p_lightning_segment.add_argument(
+        "--first-mission-route-start-gate-seconds",
+        type=float,
+        default=45,
+        help=(
+            "Block first-mission route clicks after this visible timer value; "
+            "autonomous speed runs commonly set this to the HTML hard gate."
+        ),
+    )
     p_lightning_segment.add_argument("--allow-hold-the-line", action="store_true")
     p_lightning_segment.add_argument(
         "--no-pause-on-stop",
@@ -1767,8 +1776,12 @@ def main():
     p_lightning_auto.add_argument(
         "--first-mission-route-start-gate-seconds",
         type=float,
-        default=30,
-        help="Restart speed attempts if mission one has not started by this timer.",
+        default=45,
+        help=(
+            "Restart speed attempts if mission one has not started by this "
+            "visible timer; 45s is the HTML hard opening fail, while 20s "
+            "remains the target."
+        ),
     )
     p_lightning_auto.add_argument("--first-island-gate-seconds", type=float, default=15 * 60)
     p_lightning_auto.add_argument("--second-island-start-gate-seconds", type=float, default=16.75 * 60)
@@ -2327,6 +2340,9 @@ def main():
             route_probe_offset=args.route_probe_offset,
             route_speed_vetoes=args.route_speed_vetoes,
             route_strict_mismatch=args.route_strict_mismatch,
+            first_mission_route_start_gate_seconds=(
+                args.first_mission_route_start_gate_seconds
+            ),
         )
     elif args.command == "lightning_autonomous":
         cmd_lightning_autonomous(
