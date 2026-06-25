@@ -3347,6 +3347,47 @@ def test_lightning_wait_for_player_turn_continues_after_unverified_combat_pause(
     assert result["snapshot"] is snapshot
 
 
+def test_lightning_solve_cached_bridge_skips_live_refresh(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+
+    monkeypatch.setenv("ITB_LIGHTNING_READ_CACHED_BRIDGE", "1")
+    monkeypatch.setenv("ITB_LIGHTNING_READ_CACHED_MAX_AGE", "1800")
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_check_wheel_sim_version", lambda: None)
+    monkeypatch.setattr(commands, "_post_enemy_block_result", lambda _session: None)
+    monkeypatch.setattr(commands, "_blocks_mech_hp_loss_for_perfect_battle", lambda _session: False)
+    monkeypatch.setattr(commands, "_blocks_mech_status_loss_for_run", lambda _session: False)
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_cached_bridge_read_allowed",
+        lambda: (True, {"status": "OK", "state_age_seconds": 0.25}),
+    )
+    monkeypatch.setattr(
+        commands,
+        "refresh_bridge_state",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("cached Lightning solve must not refresh paused bridge")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: (object(), {"phase": "combat_enemy"}),
+    )
+
+    result = commands.cmd_solve(profile="Alpha", time_limit=2)
+
+    assert result["phase"] == "combat_enemy"
+    assert "No active player-turn mission" in result["error"]
+    assert result["cached_bridge_read"]["status"] == "OK"
+
+
 def test_lightning_loop_solves_when_pause_wait_reports_ready_unpaused(monkeypatch):
     session = RunSession(
         run_id="lw",

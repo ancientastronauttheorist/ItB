@@ -5463,8 +5463,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     bridge_data = None
     current_turn = 0
     environment_danger = set()
-    if is_bridge_active():
-        refresh_bridge_state()
+    cached_bridge_read, cached_bridge_info = _lightning_cached_bridge_read_allowed()
+    if is_bridge_active() or cached_bridge_read:
+        if not cached_bridge_read:
+            refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
             phase = bridge_data.get("phase", "unknown")
@@ -5473,8 +5475,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     "error": f"No active player-turn mission to solve (phase: {phase})",
                     "phase": phase,
                 }
+                if cached_bridge_info is not None:
+                    result["cached_bridge_read"] = cached_bridge_info
                 _print_result(result)
                 return result
+            if cached_bridge_info is not None:
+                bridge_data.setdefault("cached_bridge_read", cached_bridge_info)
             weapon_overlay_updates = _enrich_bridge_mech_weapons_from_save(
                 bridge_data, profile=profile,
             )
