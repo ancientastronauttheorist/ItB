@@ -3303,8 +3303,20 @@ def test_lightning_wait_for_player_turn_continues_after_unverified_combat_pause(
 
     monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: snapshot)
     monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
-    monkeypatch.setattr(commands, "read_state", lambda: {"units": []})
-    monkeypatch.setattr(commands, "_unit_roster_fingerprint", lambda data: "same")
+    monkeypatch.setattr(
+        commands,
+        "read_state",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("should pause before extra bridge reads")
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_unit_roster_fingerprint",
+        lambda data: (_ for _ in ()).throw(
+            AssertionError("should not wait for roster stability before pause")
+        ),
+    )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
     monkeypatch.setattr(
         commands,

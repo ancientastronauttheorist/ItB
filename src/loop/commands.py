@@ -36836,7 +36836,6 @@ def _lightning_wait_for_player_turn_and_pause(
     """Wait for an actionable player turn, then pause before solving."""
     started_at = time.monotonic()
     wait_poll_interval = max(0.05, float(wait_poll_interval or 0.05))
-    prev_fp: str | None = None
     last_snapshot: dict | None = None
 
     while time.monotonic() - started_at < max_wait:
@@ -36865,62 +36864,32 @@ def _lightning_wait_for_player_turn_and_pause(
                 "wait_seconds": round(time.monotonic() - started_at, 3),
             }
         if phase == "combat_player" and int(snapshot.get("active_mechs") or 0) > 0:
+            pause_result = _lightning_ensure_pause_state(
+                dry_run=False,
+                reason="lightning_pause_before_solve",
+            )
+            if _lightning_pause_failure_keeps_live_player_turn(
+                snapshot,
+                pause_result,
+            ):
+                result = {
+                    "status": "PLAYER_TURN_READY",
+                    "reason": "pause_not_verified_live_combat",
+                    "snapshot": snapshot,
+                    "pause_result": pause_result,
+                    "wait_seconds": round(time.monotonic() - started_at, 3),
+                }
+            else:
+                result = {
+                    "status": pause_result.get("status", "ERROR"),
+                    "reason": pause_result.get("reason"),
+                    "snapshot": snapshot,
+                    "pause_result": pause_result,
+                    "wait_seconds": round(time.monotonic() - started_at, 3),
+                }
             if fast_single_snapshot:
-                pause_result = _lightning_ensure_pause_state(
-                    dry_run=False,
-                    reason="lightning_pause_before_solve",
-                )
-                if _lightning_pause_failure_keeps_live_player_turn(
-                    snapshot,
-                    pause_result,
-                ):
-                    return {
-                        "status": "PLAYER_TURN_READY",
-                        "reason": "pause_not_verified_live_combat",
-                        "snapshot": snapshot,
-                        "pause_result": pause_result,
-                        "wait_seconds": round(time.monotonic() - started_at, 3),
-                        "fast_single_snapshot": True,
-                    }
-                return {
-                    "status": pause_result.get("status", "ERROR"),
-                    "reason": pause_result.get("reason"),
-                    "snapshot": snapshot,
-                    "pause_result": pause_result,
-                    "wait_seconds": round(time.monotonic() - started_at, 3),
-                    "fast_single_snapshot": True,
-                }
-            try:
-                live_data = read_state() if is_bridge_active() else None
-            except Exception:
-                live_data = None
-            cur_fp = _unit_roster_fingerprint(live_data)
-            if prev_fp is not None and cur_fp == prev_fp:
-                pause_result = _lightning_ensure_pause_state(
-                    dry_run=False,
-                    reason="lightning_pause_before_solve",
-                )
-                if _lightning_pause_failure_keeps_live_player_turn(
-                    snapshot,
-                    pause_result,
-                ):
-                    return {
-                        "status": "PLAYER_TURN_READY",
-                        "reason": "pause_not_verified_live_combat",
-                        "snapshot": snapshot,
-                        "pause_result": pause_result,
-                        "wait_seconds": round(time.monotonic() - started_at, 3),
-                    }
-                return {
-                    "status": pause_result.get("status", "ERROR"),
-                    "reason": pause_result.get("reason"),
-                    "snapshot": snapshot,
-                    "pause_result": pause_result,
-                    "wait_seconds": round(time.monotonic() - started_at, 3),
-                }
-            prev_fp = cur_fp
-        else:
-            prev_fp = None
+                result["fast_single_snapshot"] = True
+            return result
         time.sleep(wait_poll_interval)
 
     return {
