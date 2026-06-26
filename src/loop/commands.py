@@ -13475,6 +13475,16 @@ def _lightning_system_privacy_prompt_ocr_match(visible_ui: dict | None) -> bool:
         return False
     text = "\n".join(_lightning_visible_ui_text_parts(visible_ui)).lower()
     compact = re.sub(r"[^a-z0-9]+", " ", text).strip()
+    letters_only = re.sub(r"[^a-z0-9]+", "", text)
+    consent_word_seen = (
+        "allow" in compact
+        or "open system settings" in compact
+        or "bypass" in compact
+        or "pass" in compact
+        or "bypass" in letters_only
+        or "pass" in letters_only
+        or "fass" in letters_only
+    )
     return (
         "private window" in compact
         and "screen and audio" in compact
@@ -13482,7 +13492,7 @@ def _lightning_system_privacy_prompt_ocr_match(visible_ui: dict | None) -> bool:
             "requesting to bypass" in compact
             or "directly access" in compact
         )
-        and ("allow" in compact or "open system settings" in compact)
+        and consent_word_seen
     )
 
 
@@ -13655,7 +13665,15 @@ def _lightning_allow_target_from_ocr_result(ocr: dict | None) -> dict:
         if not isinstance(observation, dict):
             continue
         text = str(observation.get("text") or "").strip().lower()
-        if text != "allow":
+        letters_only = re.sub(r"[^a-z0-9]+", "", text)
+        consent_button_text = (
+            text == "allow"
+            or letters_only == "allow"
+            or letters_only == "bypass"
+            or letters_only == "pass"
+            or letters_only == "fass"
+        )
+        if not consent_button_text:
             continue
         center = observation.get("center_image")
         if isinstance(center, (list, tuple)) and len(center) == 2:
