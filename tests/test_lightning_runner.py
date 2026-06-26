@@ -570,7 +570,7 @@ def test_runner_system_prompt_allow_uses_robust_stack_drain_helper():
     assert calls == [(visible_ui, {"dry_run": False})]
 
 
-def test_runner_segment_external_prompt_success_runs_ensure_pause_before_block():
+def test_runner_segment_external_prompt_success_runs_ensure_pause_before_retry():
     session = SimpleNamespace(
         run_id="20260606_111115_003",
         squad="Blitzkrieg",
@@ -596,6 +596,50 @@ def test_runner_segment_external_prompt_success_runs_ensure_pause_before_block()
         "screenshot_path": "/tmp/segment_system_prompt.png",
     }
 
+    runner = make_runner()
+    result = runner._segment_immediate_stop(
+        {"status": "BLOCKED", "visible_ui": visible_ui},
+        commands=commands,
+        segment_index=1,
+        session=session,
+    )
+
+    assert result["status"] == "RETRY_SEGMENT"
+    assert result["reason"] == "external_system_prompt_cleared_retry"
+    assert result["system_prompt_allow"]["status"] == "OK"
+    assert result["pause_after_prompt"]["status"] == "OK"
+    assert helper_calls == [(visible_ui, {"dry_run": False})]
+    assert ui_calls == [{"control": "ensure_pause", "dry_run": False}]
+    assert any(
+        name == "external_system_prompt_recovered"
+        and payload["reason"] == "system_prompt_cleared_pause_verified"
+        for name, payload in runner.telemetry.events
+    )
+
+
+def test_runner_segment_external_prompt_blocks_when_pause_restore_fails():
+    session = SimpleNamespace(
+        run_id="20260606_111115_004",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    commands = SimpleNamespace(
+        _lightning_click_system_privacy_prompt_allow=lambda ui, **kwargs: {
+            "status": "OK",
+            "reason": "system_privacy_prompt_allow_clicked_fullscreen_ocr",
+        },
+        cmd_lightning_ui=lambda **kwargs: {
+            "status": "BLOCKED",
+            "reason": "visible_panel_should_be_cleared_first",
+        },
+    )
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "system_privacy_prompt",
+        "screenshot_path": "/tmp/segment_system_prompt.png",
+    }
+
     result = make_runner()._segment_immediate_stop(
         {"status": "BLOCKED", "visible_ui": visible_ui},
         commands=commands,
@@ -606,9 +650,7 @@ def test_runner_segment_external_prompt_success_runs_ensure_pause_before_block()
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "external_system_prompt_visible"
     assert result["system_prompt_allow"]["status"] == "OK"
-    assert result["pause_after_prompt"]["status"] == "OK"
-    assert helper_calls == [(visible_ui, {"dry_run": False})]
-    assert ui_calls == [{"control": "ensure_pause", "dry_run": False}]
+    assert result["pause_after_prompt"]["status"] == "BLOCKED"
 
 
 def test_terminal_outcome_evidence_handles_objective_failed_without_parentheses():

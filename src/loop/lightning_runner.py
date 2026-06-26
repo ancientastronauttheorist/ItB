@@ -397,6 +397,24 @@ def _successful_system_prompt_allow_result(value: Any) -> bool:
     )
 
 
+def _pause_after_system_prompt_verified(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+    if str(value.get("status") or "").upper() != "OK":
+        return False
+    if _safe_to_think(value):
+        return True
+    if value.get("pause_verified") or value.get("timer_stop_verified"):
+        return True
+    if value.get("already_paused") is True:
+        return True
+    if str(value.get("reason") or "") == "already_paused":
+        return True
+    if str(value.get("reason") or "") == "pause_clicked":
+        return value.get("pause_verified") is True
+    return _visible_ui_name(value) == "pause_menu"
+
+
 def _external_system_prompt_evidence(
     value: Any,
     *,
@@ -2913,6 +2931,17 @@ class LightningWarRunner:
                 telemetry_event_errors=telemetry_event_errors,
             )
             if immediate_stop is not None:
+                if immediate_stop.get("status") == "RETRY_SEGMENT":
+                    event_error = self._best_effort_event(
+                        "segment_interruption_recovered",
+                        segment_index=segment_index,
+                        attempt_index=attempt_index,
+                        recovery=_compact(immediate_stop),
+                    )
+                    if event_error is not None:
+                        self.telemetry_event_errors.append(event_error)
+                    no_progress_counts.clear()
+                    continue
                 return immediate_stop
 
             unexpected_menu = _current_unexpected_menu_evidence(segment)
@@ -3720,19 +3749,42 @@ class LightningWarRunner:
                 external_prompt_evidence,
                 commands=commands,
             )
+            pause_after_prompt = None
+            if prompt_click.get("status") == "OK":
+                pause_after_prompt = self._ensure_pause(commands)
+                if _pause_after_system_prompt_verified(pause_after_prompt):
+                    event_error = self._best_effort_event(
+                        "external_system_prompt_recovered",
+                        status="OK",
+                        reason="system_prompt_cleared_pause_verified",
+                        segment_index=segment_index,
+                        external_prompt_evidence=external_prompt_evidence,
+                        system_prompt_allow=_compact(prompt_click),
+                        pause_after_prompt=_compact(pause_after_prompt),
+                    )
+                    if event_error is not None:
+                        telemetry_errors.append(event_error)
+                    return {
+                        "status": "RETRY_SEGMENT",
+                        "reason": "external_system_prompt_cleared_retry",
+                        "external_prompt_evidence": external_prompt_evidence,
+                        "system_prompt_allow": _compact(prompt_click),
+                        "pause_after_prompt": _compact(pause_after_prompt),
+                        "segment": _compact(segment),
+                        "session": _session_summary(session),
+                        **_telemetry_errors_payload(telemetry_errors),
+                    }
             event_error = self._best_effort_event(
                 "external_system_prompt_visible",
                 status="BLOCKED",
                 segment_index=segment_index,
                 external_prompt_evidence=external_prompt_evidence,
                 system_prompt_allow=_compact(prompt_click),
+                pause_after_prompt=_compact(pause_after_prompt),
                 segment=_compact(segment),
             )
             if event_error is not None:
                 telemetry_errors.append(event_error)
-            pause_after_prompt = None
-            if prompt_click.get("status") == "OK":
-                pause_after_prompt = self._ensure_pause(commands)
             return self._finish(
                 "BLOCKED",
                 "external_system_prompt_visible",
