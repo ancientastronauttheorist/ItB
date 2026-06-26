@@ -14407,41 +14407,25 @@ def _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
     try:
         capture = None
         capture_errors: list[dict[str, Any]] = []
+        from src.capture.window import take_fullscreen_screenshot
+
         for attempt in range(6):
             try:
-                capture = subprocess.run(
-                    ["screencapture", "-x", str(screenshot_path)],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                )
+                take_fullscreen_screenshot(screenshot_path)
+                capture = {"status": "OK"}
             except Exception as exc:
                 capture_errors.append({
                     "attempt": attempt + 1,
                     "error": str(exc),
                 })
                 capture = None
-            if capture is not None and capture.returncode == 0:
-                break
             if capture is not None:
-                capture_errors.append({
-                    "attempt": attempt + 1,
-                    "returncode": capture.returncode,
-                    "stderr": capture.stderr,
-                })
+                break
             time.sleep(0.2)
         if capture is None:
             return {
                 "status": "ERROR",
                 "reason": "fullscreen_screencapture_failed",
-                "attempts": capture_errors,
-            }
-        if capture.returncode != 0:
-            return {
-                "status": "ERROR",
-                "reason": "fullscreen_screencapture_failed",
-                "returncode": capture.returncode,
-                "stderr": capture.stderr,
                 "attempts": capture_errors,
             }
         ocr = _lightning_ocr_texts_from_image(screenshot_path)
@@ -22325,24 +22309,12 @@ def cmd_lightning_capture(
         _print_result(result)
         return result
 
-    screenshots_dir.mkdir(parents=True, exist_ok=True)
-    rect = f"{bounds['x']},{bounds['y']},{bounds['width']},{bounds['height']}"
     try:
-        proc = subprocess.run(
-            ["screencapture", "-x", "-R", rect, str(screenshot_path)],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except subprocess.TimeoutExpired as exc:
-        result = {"status": "ERROR", "error": f"screencapture timed out: {exc}"}
-        _print_result(result)
-        return result
-    if proc.returncode != 0:
-        result = {
-            "status": "ERROR",
-            "error": proc.stderr.strip() or proc.stdout.strip() or "capture failed",
-        }
+        from src.capture.window import take_screenshot
+
+        take_screenshot(screenshot_path, bounds=bounds)
+    except Exception as exc:
+        result = {"status": "ERROR", "error": f"window capture failed: {exc}"}
         _print_result(result)
         return result
 
@@ -22831,41 +22803,20 @@ def _lightning_capture_window_screenshot(
 ) -> dict:
     screenshot_path.parent.mkdir(parents=True, exist_ok=True)
     rect = f"{bounds['x']},{bounds['y']},{bounds['width']},{bounds['height']}"
-    if os.name == "nt":
-        try:
-            from PIL import ImageGrab
-
-            bbox = (
-                int(bounds["x"]),
-                int(bounds["y"]),
-                int(bounds["x"] + bounds["width"]),
-                int(bounds["y"] + bounds["height"]),
-            )
-            ImageGrab.grab(bbox=bbox).save(screenshot_path)
-        except Exception as exc:
-            return {"status": "ERROR", "error": f"ImageGrab capture failed: {exc}"}
-        pruned = _lightning_prune_manual_screenshots(screenshot_path.parent)
-        return {
-            "status": "OK",
-            "screenshot_path": str(screenshot_path),
-            "rect": rect,
-            "screenshot_cap": _lightning_manual_screenshot_cap(),
-            "pruned_screenshots": pruned,
-        }
     try:
-        proc = subprocess.run(
-            ["screencapture", "-x", "-R", rect, str(screenshot_path)],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired as exc:
-        return {"status": "ERROR", "error": f"screencapture timed out: {exc}"}
-    if proc.returncode != 0:
-        return {
-            "status": "ERROR",
-            "error": proc.stderr.strip() or proc.stdout.strip() or "capture failed",
-        }
+        from src.capture.window import take_screenshot
+
+        old_timeout = os.environ.get("ITB_SCREENSHOT_TIMEOUT")
+        os.environ["ITB_SCREENSHOT_TIMEOUT"] = str(timeout)
+        try:
+            take_screenshot(screenshot_path, bounds=bounds)
+        finally:
+            if old_timeout is None:
+                os.environ.pop("ITB_SCREENSHOT_TIMEOUT", None)
+            else:
+                os.environ["ITB_SCREENSHOT_TIMEOUT"] = old_timeout
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"window capture failed: {exc}"}
     pruned = _lightning_prune_manual_screenshots(screenshot_path.parent)
     return {
         "status": "OK",

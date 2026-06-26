@@ -329,6 +329,37 @@ def take_screenshot(
     return output_path
 
 
+def take_fullscreen_screenshot(output_path: str | Path) -> Path:
+    """Capture the full display without querying the game window first."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if os.name == "nt":
+        from PIL import ImageGrab
+
+        ImageGrab.grab().save(output_path)
+        return output_path
+
+    backend = os.environ.get("ITB_SCREENSHOT_BACKEND", "quartz").strip().lower()
+    if backend in {"", "quartz", "auto"}:
+        try:
+            _take_quartz_screenshot(output_path, bounds=None)
+            return output_path
+        except Exception:
+            if backend != "auto" or os.environ.get(
+                "ITB_SCREENSHOT_ALLOW_SCREENCAPTURE_FALLBACK",
+                "0",
+            ) not in {"1", "true", "TRUE"}:
+                raise
+
+    try:
+        timeout = float(os.environ.get("ITB_SCREENSHOT_TIMEOUT", "4.0"))
+    except ValueError:
+        timeout = 4.0
+    _run_screencapture(["-x", str(output_path)], max(0.5, timeout))
+    return output_path
+
+
 def _take_quartz_screenshot(output_path: Path, *, bounds: dict | None = None) -> None:
     """Capture the screen/window using Quartz without spawning screencapture."""
     try:

@@ -35979,12 +35979,14 @@ def test_lightning_privacy_allow_fullscreen_ocr_scales_retina_to_screen(
 
     clicks = []
 
-    def fake_run(args, **_kwargs):
-        Image.new("RGB", (3360, 2100), (24, 24, 24)).save(args[-1])
-        return SimpleNamespace(returncode=0, stderr="")
+    def fake_take_fullscreen_screenshot(path):
+        Image.new("RGB", (3360, 2100), (24, 24, 24)).save(path)
 
     monkeypatch.setattr(commands.os, "name", "posix")
-    monkeypatch.setattr(commands.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        "src.capture.window.take_fullscreen_screenshot",
+        fake_take_fullscreen_screenshot,
+    )
     monkeypatch.setattr(
         commands,
         "_lightning_ocr_texts_from_image",

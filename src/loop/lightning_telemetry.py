@@ -465,41 +465,17 @@ class ScreenshotRecorder:
 def capture_game_window(path: Path) -> dict[str, Any]:
     try:
         from src.control.mac_click import _get_window_bounds
+        from src.capture.window import take_screenshot
     except Exception as exc:
         return {"status": "ERROR", "error": f"window bounds import failed: {exc}"}
     bounds = _get_window_bounds("Into the Breach")
     if bounds is None:
         return {"status": "ERROR", "error": "could not read Into the Breach window bounds"}
     path.parent.mkdir(parents=True, exist_ok=True)
-    if os.name == "nt":
-        if Image is None:
-            return {"status": "ERROR", "error": "Pillow is required on Windows"}
-        try:
-            from PIL import ImageGrab
-
-            bbox = (
-                int(bounds["x"]),
-                int(bounds["y"]),
-                int(bounds["x"] + bounds["width"]),
-                int(bounds["y"] + bounds["height"]),
-            )
-            ImageGrab.grab(bbox=bbox).save(path)
-        except Exception as exc:
-            return {"status": "ERROR", "error": f"ImageGrab capture failed: {exc}"}
-    else:
-        rect = f"{bounds['x']},{bounds['y']},{bounds['width']},{bounds['height']}"
-        try:
-            proc = subprocess.run(
-                ["screencapture", "-x", "-R", rect, str(path)],
-                capture_output=True,
-                text=True,
-                timeout=2.0,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            return {"status": "ERROR", "error": "screencapture timed out"}
-        if proc.returncode != 0:
-            return {"status": "ERROR", "error": proc.stderr.strip() or "capture failed"}
+    try:
+        take_screenshot(path, bounds=bounds)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"window capture failed: {exc}"}
     return {"status": "OK", "screenshot_path": str(path), "bounds": bounds}
 
 
