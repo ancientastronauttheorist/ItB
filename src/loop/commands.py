@@ -23888,7 +23888,10 @@ def _lightning_visible_ui_has_existing_mission_preview(
             pass
     if not (yellow >= 2000 and score >= 0.006):
         return False
-    return bool(preview_text_proven or recommended == "dialogue_textbox")
+    return bool(
+        preview_text_proven
+        or recommended in {"dialogue_textbox", "mission_preview_board"}
+    )
 
 
 def _lightning_pause_menu_has_mission_preview_underlay(
@@ -32142,6 +32145,24 @@ def _lightning_segment_existing_preview_visible_ui(
 
     for visible_ui in candidates:
         if _lightning_visible_ui_has_existing_mission_preview(visible_ui):
+            if (
+                isinstance(visible_ui, dict)
+                and visible_ui.get("visible_ui") == "mission_preview_panel"
+                and visible_ui.get("recommended_control") == "mission_preview_board"
+            ):
+                preview_text = _lightning_visible_preview_mission_from_visible_ui(
+                    visible_ui,
+                )
+                if not (
+                    isinstance(preview_text, dict)
+                    and preview_text.get("status") == "OK"
+                    and preview_text.get("source") == "visible_preview_ocr"
+                    and str(preview_text.get("mission_id") or "").strip()
+                ):
+                    return {
+                        **visible_ui,
+                        "speed_existing_preview_without_mission_ocr": True,
+                    }
             return visible_ui
         if (
             isinstance(visible_ui, dict)

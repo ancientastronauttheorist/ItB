@@ -21188,6 +21188,37 @@ def test_lightning_segment_accepts_board_preview_without_mission_ocr():
     assert result["speed_existing_preview_without_mission_ocr"] is True
 
 
+def test_lightning_transition_hint_accepts_board_preview_without_mission_ocr():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "mission_preview_board",
+        "scores": {
+            "mission_preview_panel": {"score": 0.026, "yellow": 14000},
+            "mission_preview_dialogue": {"score": 1.0, "card": {"red": 8800}},
+        },
+    }
+
+    hint = commands._lightning_route_start_transition_retry_hint(
+        {
+            "status": "BLOCKED",
+            "reason": "route_start_commit_no_transition",
+            "click_result": {
+                "route_start_transition_block": {
+                    "post_start_pause_snapshot": {
+                        "status": "PAUSED",
+                        "initial_ui": visible_ui,
+                    },
+                },
+            },
+        },
+    )
+
+    assert commands._lightning_visible_ui_has_existing_mission_preview(visible_ui)
+    assert hint is not None
+    assert hint["kind"] == "existing_preview"
+
+
 def test_lightning_existing_preview_accepts_pause_menu_preview_underlay():
     visible_ui = {
         "status": "OK",
