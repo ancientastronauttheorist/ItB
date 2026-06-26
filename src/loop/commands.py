@@ -13592,6 +13592,10 @@ def _lightning_click_system_privacy_prompt_allow(
         return result
     post_click = _lightning_visible_ui_snapshot(include_ocr=True)
     result["post_click_visible_ui"] = post_click
+    if post_click.get("status") != "OK":
+        result["status"] = "BLOCKED"
+        result["reason"] = "system_privacy_prompt_resample_failed"
+        return result
     if post_click.get("visible_ui") == "system_privacy_prompt":
         stack_drain = _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
             dry_run=dry_run,
@@ -13605,6 +13609,10 @@ def _lightning_click_system_privacy_prompt_allow(
                 bridge_refine=False,
             )
             result["post_fullscreen_click_visible_ui"] = current_ui
+            if current_ui.get("status") != "OK":
+                result["status"] = "BLOCKED"
+                result["reason"] = "system_privacy_prompt_resample_failed"
+                return result
             if current_ui.get("visible_ui") != "system_privacy_prompt":
                 result["status"] = "OK"
                 result["reason"] = (
@@ -13633,9 +13641,18 @@ def _lightning_click_system_privacy_prompt_allow(
                     current_ui = _lightning_visible_ui_snapshot(include_ocr=True)
                     settle_snapshots.append({
                         "settle_seconds": settle_seconds,
+                        "status": current_ui.get("status"),
                         "visible_ui": current_ui.get("visible_ui"),
                         "screenshot_path": current_ui.get("screenshot_path"),
                     })
+                    if current_ui.get("status") != "OK":
+                        attempt_record["settle_snapshots"] = settle_snapshots
+                        retry_attempts.append(attempt_record)
+                        result["prompt_clear_retries"] = retry_attempts
+                        result["post_fullscreen_click_visible_ui"] = current_ui
+                        result["status"] = "BLOCKED"
+                        result["reason"] = "system_privacy_prompt_resample_failed"
+                        return result
                     if current_ui.get("visible_ui") != "system_privacy_prompt":
                         attempt_record["settle_snapshots"] = settle_snapshots
                         retry_attempts.append(attempt_record)
@@ -13660,9 +13677,17 @@ def _lightning_click_system_privacy_prompt_allow(
                         time.sleep(0.35)
                     current_ui = _lightning_visible_ui_snapshot(include_ocr=True)
                     attempt_record["post_followup_visible_ui"] = {
+                        "status": current_ui.get("status"),
                         "visible_ui": current_ui.get("visible_ui"),
                         "screenshot_path": current_ui.get("screenshot_path"),
                     }
+                    if current_ui.get("status") != "OK":
+                        retry_attempts.append(attempt_record)
+                        result["prompt_clear_retries"] = retry_attempts
+                        result["post_followup_visible_ui"] = current_ui
+                        result["status"] = "BLOCKED"
+                        result["reason"] = "system_privacy_prompt_resample_failed"
+                        return result
                     if current_ui.get("visible_ui") != "system_privacy_prompt":
                         retry_attempts.append(attempt_record)
                         result["prompt_clear_retries"] = retry_attempts
@@ -13683,13 +13708,31 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
     dry_run: bool = False,
     max_clicks: int = 60,
     settle_seconds: float = 0.12,
+    max_wall_seconds: float | None = 25.0,
 ) -> dict:
     """Click stacked macOS Allow prompts until full-screen OCR sees none."""
     if os.name == "nt":
         return {"status": "SKIPPED", "reason": "not_macos"}
     click_limit = max(1, int(max_clicks or 1))
+    wall_limit = (
+        None
+        if max_wall_seconds is None
+        else max(0.0, float(max_wall_seconds or 0.0))
+    )
+    started = time.monotonic()
     clicks: list[dict[str, Any]] = []
     for attempt in range(click_limit):
+        elapsed = time.monotonic() - started
+        if wall_limit is not None and elapsed >= wall_limit:
+            return {
+                "status": "BLOCKED",
+                "reason": "system_privacy_prompt_stack_drain_wall_limit",
+                "click_count": len(clicks),
+                "clicks": clicks,
+                "max_clicks": click_limit,
+                "max_wall_seconds": wall_limit,
+                "elapsed_wall_seconds": round(elapsed, 3),
+            }
         click = _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
             dry_run=dry_run,
         )
@@ -13722,6 +13765,8 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
                     "clicks": clicks,
                     "terminal_fullscreen_probe": click,
                     "max_clicks": click_limit,
+                    "max_wall_seconds": wall_limit,
+                    "elapsed_wall_seconds": round(time.monotonic() - started, 3),
                 }
             return {
                 "status": "NOT_FOUND",
@@ -13729,6 +13774,8 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
                 "click_count": 0,
                 "terminal_fullscreen_probe": click,
                 "max_clicks": click_limit,
+                "max_wall_seconds": wall_limit,
+                "elapsed_wall_seconds": round(time.monotonic() - started, 3),
             }
         return {
             "status": click.get("status", "ERROR"),
@@ -13737,6 +13784,8 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
             "clicks": clicks,
             "terminal_fullscreen_probe": click,
             "max_clicks": click_limit,
+            "max_wall_seconds": wall_limit,
+            "elapsed_wall_seconds": round(time.monotonic() - started, 3),
         }
 
     return {
@@ -13745,6 +13794,8 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
         "click_count": len(clicks),
         "clicks": clicks,
         "max_clicks": click_limit,
+        "max_wall_seconds": wall_limit,
+        "elapsed_wall_seconds": round(time.monotonic() - started, 3),
         "next_step": (
             "A very large macOS privacy prompt stack is still exposing Allow "
             "after the hard click limit. Drain prompts manually or increase "
@@ -16704,27 +16755,41 @@ def _lightning_visible_ui_snapshot(
             }
 
     tmp_path = Path(tempfile.gettempdir()) / f"itb_lightning_ui_{os.getpid()}.png"
-    try:
-        take_screenshot(tmp_path)
-    except Exception as exc:
-        recovery = _lightning_recover_screenshot_privacy_prompt_failure(exc)
-        if recovery.get("status") == "OK":
-            try:
-                take_screenshot(tmp_path)
-            except Exception as retry_exc:
+    screenshot_failure_recoveries: list[dict[str, Any]] = []
+    initial_screenshot_error: str | None = None
+    last_screenshot_error: str | None = None
+    screenshot_captured = False
+    for attempt in range(4):
+        try:
+            take_screenshot(tmp_path)
+            screenshot_captured = True
+            break
+        except Exception as exc:
+            last_screenshot_error = str(exc)
+            if initial_screenshot_error is None:
+                initial_screenshot_error = last_screenshot_error
+            recovery = _lightning_recover_screenshot_privacy_prompt_failure(exc)
+            screenshot_failure_recoveries.append(recovery)
+            if recovery.get("status") != "OK":
                 return {
                     "status": "ERROR",
-                    "error": f"screenshot failed: {retry_exc}",
+                    "error": f"screenshot failed: {exc}",
                     "screenshot_failure_recovery": recovery,
-                    "initial_screenshot_error": str(exc),
+                    "screenshot_failure_recoveries": screenshot_failure_recoveries,
+                    "initial_screenshot_error": initial_screenshot_error,
                 }
-        else:
-            return {
-                "status": "ERROR",
-                "error": f"screenshot failed: {exc}",
-                "screenshot_failure_recovery": recovery,
-            }
+    if not screenshot_captured:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_failed_after_privacy_prompt_recoveries",
+            "error": f"screenshot failed: {last_screenshot_error}",
+            "screenshot_failure_recoveries": screenshot_failure_recoveries,
+            "initial_screenshot_error": initial_screenshot_error,
+        }
     result = _classify_lightning_ui_image(tmp_path)
+    if screenshot_failure_recoveries:
+        result["screenshot_failure_recoveries"] = screenshot_failure_recoveries
+        result["initial_screenshot_error"] = initial_screenshot_error
     if bridge_refine:
         result = _lightning_refine_visible_ui_with_bridge(result)
     else:

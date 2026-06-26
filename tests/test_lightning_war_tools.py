@@ -34686,6 +34686,75 @@ def test_lightning_system_privacy_prompt_drains_large_fullscreen_stack(
     assert result["post_fullscreen_click_visible_ui"] == pause_ui
 
 
+def test_lightning_privacy_prompt_allow_blocks_on_post_click_resample_error(
+    monkeypatch,
+):
+    prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
+
+    monkeypatch.setattr(
+        "src.control.mac_click.click_macos_privacy_prompt_allow",
+        lambda _ui, **_kwargs: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: {"status": "ERROR", "reason": "capture_failed"},
+    )
+
+    result = commands._lightning_click_system_privacy_prompt_allow(prompt_ui)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "system_privacy_prompt_resample_failed"
+    assert result["post_click_visible_ui"] == {
+        "status": "ERROR",
+        "reason": "capture_failed",
+    }
+
+
+def test_lightning_privacy_prompt_allow_blocks_on_post_stack_resample_error(
+    monkeypatch,
+):
+    prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
+    snapshots = iter([
+        prompt_ui,
+        {"status": "ERROR", "reason": "capture_failed_after_stack"},
+    ])
+    fullscreen_results = iter([
+        {"status": "OK", "reason": "fullscreen_clicked"},
+        {
+            "status": "ERROR",
+            "reason": "fullscreen_allow_target_missing",
+            "target": {"reason": "allow_ocr_target_missing"},
+        },
+    ])
+
+    monkeypatch.setattr(
+        "src.control.mac_click.click_macos_privacy_prompt_allow",
+        lambda _ui, **_kwargs: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: next(snapshots),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
+        lambda **_kwargs: next(fullscreen_results),
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands._lightning_click_system_privacy_prompt_allow(prompt_ui)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "system_privacy_prompt_resample_failed"
+    assert result["prompt_stack_drain"]["click_count"] == 1
+    assert result["post_fullscreen_click_visible_ui"] == {
+        "status": "ERROR",
+        "reason": "capture_failed_after_stack",
+    }
+
+
 def test_lightning_privacy_prompt_stack_drain_blocks_on_click_limit(monkeypatch):
     fullscreen_calls = []
 
@@ -34709,6 +34778,79 @@ def test_lightning_privacy_prompt_stack_drain_blocks_on_click_limit(monkeypatch)
         {"dry_run": False},
         {"dry_run": False},
         {"dry_run": False},
+    ]
+
+
+def test_lightning_stack_drain_stops_on_wall_clock_limit(monkeypatch):
+    fullscreen_calls = []
+    monotonic_values = iter([0.0, 0.0, 3.0, 3.0])
+
+    monkeypatch.setattr(commands.os, "name", "posix")
+    monkeypatch.setattr(commands.time, "monotonic", lambda: next(monotonic_values))
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
+        lambda **kwargs: fullscreen_calls.append(kwargs)
+        or {"status": "OK", "reason": "fullscreen_clicked"},
+    )
+
+    result = commands._lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
+        max_clicks=10,
+        max_wall_seconds=1.0,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "system_privacy_prompt_stack_drain_wall_limit"
+    assert result["click_count"] == 1
+    assert fullscreen_calls == [{"dry_run": False}]
+
+
+def test_lightning_visible_ui_snapshot_retries_stacked_privacy_screenshot_failures(
+    monkeypatch,
+):
+    attempts = []
+    recoveries = []
+
+    def fake_take_screenshot(path):
+        attempts.append(str(path))
+        if len(attempts) <= 2:
+            raise RuntimeError("could not create image from display")
+        Path(path).write_bytes(b"not-real-image")
+
+    def fake_recover(exc):
+        recoveries.append(str(exc))
+        return {"status": "OK", "reason": "recovered_privacy_prompt"}
+
+    monkeypatch.setattr("src.capture.window.take_screenshot", fake_take_screenshot)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recover_screenshot_privacy_prompt_failure",
+        fake_recover,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda _path: {"status": "OK", "visible_ui": "new_game_setup"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_game_focus_proof",
+        lambda _path: {"status": "OK"},
+    )
+
+    result = commands._lightning_visible_ui_snapshot(bridge_refine=False)
+
+    assert result["status"] == "OK"
+    assert result["visible_ui"] == "new_game_setup"
+    assert len(attempts) == 3
+    assert recoveries == [
+        "could not create image from display",
+        "could not create image from display",
+    ]
+    assert result["screenshot_failure_recoveries"] == [
+        {"status": "OK", "reason": "recovered_privacy_prompt"},
+        {"status": "OK", "reason": "recovered_privacy_prompt"},
     ]
 
 

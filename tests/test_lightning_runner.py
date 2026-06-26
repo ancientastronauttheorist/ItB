@@ -542,6 +542,75 @@ def test_successful_system_prompt_allow_accepts_direct_macos_click_result():
     )
 
 
+def test_runner_system_prompt_allow_uses_robust_stack_drain_helper():
+    calls = []
+    commands = SimpleNamespace(
+        _lightning_click_system_privacy_prompt_allow=lambda ui, **kwargs: calls.append(
+            (ui, kwargs)
+        )
+        or {
+            "status": "OK",
+            "reason": "system_privacy_prompt_allow_clicked_fullscreen_ocr",
+            "prompt_stack_drain": {"click_count": 16},
+        },
+    )
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "system_privacy_prompt",
+        "screenshot_path": "/tmp/system_prompt.png",
+    }
+
+    result = make_runner()._click_system_prompt_allow(
+        {"visible_ui": visible_ui},
+        commands=commands,
+    )
+
+    assert result["status"] == "OK"
+    assert result["prompt_stack_drain"]["click_count"] == 16
+    assert calls == [(visible_ui, {"dry_run": False})]
+
+
+def test_runner_segment_external_prompt_success_runs_ensure_pause_before_block():
+    session = SimpleNamespace(
+        run_id="20260606_111115_003",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    helper_calls = []
+    ui_calls = []
+    commands = SimpleNamespace(
+        _lightning_click_system_privacy_prompt_allow=lambda ui, **kwargs: helper_calls.append(
+            (ui, kwargs)
+        )
+        or {
+            "status": "OK",
+            "reason": "system_privacy_prompt_allow_clicked_fullscreen_ocr",
+        },
+        cmd_lightning_ui=lambda **kwargs: ui_calls.append(kwargs)
+        or {"status": "OK", "reason": "already_paused"},
+    )
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "system_privacy_prompt",
+        "screenshot_path": "/tmp/segment_system_prompt.png",
+    }
+
+    result = make_runner()._segment_immediate_stop(
+        {"status": "BLOCKED", "visible_ui": visible_ui},
+        commands=commands,
+        segment_index=1,
+        session=session,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "external_system_prompt_visible"
+    assert result["system_prompt_allow"]["status"] == "OK"
+    assert result["pause_after_prompt"]["status"] == "OK"
+    assert helper_calls == [(visible_ui, {"dry_run": False})]
+    assert ui_calls == [{"control": "ensure_pause", "dry_run": False}]
+
+
 def test_terminal_outcome_evidence_handles_objective_failed_without_parentheses():
     evidence = lightning_runner._terminal_outcome_evidence(
         {

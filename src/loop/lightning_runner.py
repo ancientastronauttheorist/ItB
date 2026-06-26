@@ -1849,32 +1849,48 @@ class LightningWarRunner:
         )
         return self._screenshot_cadence_for_phase(phase)
 
-    def _click_system_prompt_allow(self, guard: dict[str, Any]) -> dict[str, Any]:
+    def _click_system_prompt_allow(
+        self,
+        guard: dict[str, Any],
+        *,
+        commands: Any | None = None,
+    ) -> dict[str, Any]:
         visible_ui = _external_system_prompt_visible_ui(guard)
         if visible_ui is None:
             return {
                 "status": "ERROR",
                 "reason": "system_prompt_visible_ui_missing",
             }
+        nested_visible_ui = visible_ui.get("visible_ui")
+        if isinstance(nested_visible_ui, dict):
+            visible_ui = nested_visible_ui
         try:
-            from src.control.mac_click import click_macos_privacy_prompt_allow
+            helper = getattr(commands, "_lightning_click_system_privacy_prompt_allow", None)
+            if helper is None:
+                if commands is not None:
+                    return {
+                        "status": "ERROR",
+                        "reason": "system_prompt_allow_helper_missing",
+                    }
+                from src.loop import commands as commands_module
+
+                helper = commands_module._lightning_click_system_privacy_prompt_allow
         except Exception as exc:
             return {
                 "status": "ERROR",
-                "reason": "system_prompt_allow_import_failed",
+                "reason": "system_prompt_allow_helper_import_failed",
                 "exception_type": type(exc).__name__,
                 "error": str(exc),
             }
         try:
-            return click_macos_privacy_prompt_allow(
+            return helper(
                 visible_ui,
                 dry_run=self.config.dry_run,
-                settle_seconds=0.25,
             )
         except Exception as exc:
             return {
                 "status": "ERROR",
-                "reason": "system_prompt_allow_click_exception",
+                "reason": "system_prompt_allow_helper_exception",
                 "exception_type": type(exc).__name__,
                 "error": str(exc),
                 "traceback": traceback.format_exc(),
@@ -2071,7 +2087,7 @@ class LightningWarRunner:
         hot_combat_start = _guard_is_hot_combat_start(guard)
         startup_hidden_panel = _startup_hidden_panel_name(guard)
         if initial_visible_ui in SYSTEM_BLOCKING_UIS:
-            prompt_click = self._click_system_prompt_allow(guard)
+            prompt_click = self._click_system_prompt_allow(guard, commands=commands)
             event_error = self._best_effort_event(
                 "system_prompt_allow",
                 visible_name=initial_visible_ui,
@@ -2891,6 +2907,7 @@ class LightningWarRunner:
 
             immediate_stop = self._segment_immediate_stop(
                 segment,
+                commands=commands,
                 segment_index=segment_index,
                 session=session,
                 telemetry_event_errors=telemetry_event_errors,
@@ -3666,6 +3683,7 @@ class LightningWarRunner:
         self,
         segment: dict[str, Any],
         *,
+        commands: Any,
         segment_index: int,
         session: Any,
         telemetry_event_errors: list[dict[str, Any]] | None = None,
@@ -3698,7 +3716,10 @@ class LightningWarRunner:
 
         external_prompt_evidence = _external_system_prompt_evidence(segment)
         if external_prompt_evidence is not None:
-            prompt_click = self._click_system_prompt_allow(external_prompt_evidence)
+            prompt_click = self._click_system_prompt_allow(
+                external_prompt_evidence,
+                commands=commands,
+            )
             event_error = self._best_effort_event(
                 "external_system_prompt_visible",
                 status="BLOCKED",
@@ -3709,17 +3730,22 @@ class LightningWarRunner:
             )
             if event_error is not None:
                 telemetry_errors.append(event_error)
+            pause_after_prompt = None
+            if prompt_click.get("status") == "OK":
+                pause_after_prompt = self._ensure_pause(commands)
             return self._finish(
                 "BLOCKED",
                 "external_system_prompt_visible",
                 external_prompt_evidence=external_prompt_evidence,
                 system_prompt_allow=_compact(prompt_click),
+                pause_after_prompt=_compact(pause_after_prompt),
                 segment=_compact(segment),
                 session=_session_summary(session),
                 next_step=(
-                    "A macOS privacy prompt is covering the game, but the "
-                    "Allow button was not OCR-clickable or the prompt remained "
-                    "after clicking. Inspect before any game input."
+                    "A macOS privacy prompt interrupted the segment. If the "
+                    "standing-approved Allow clear succeeded, the runner also "
+                    "attempted to restore a safe pause/setup state before "
+                    "blocking for a clean retry."
                 ),
                 **_telemetry_errors_payload(telemetry_errors),
             )
@@ -4718,7 +4744,10 @@ class LightningWarRunner:
                 ),
             }
         if visible_name in SYSTEM_BLOCKING_UIS:
-            prompt_click = self._click_system_prompt_allow(visible)
+            prompt_click = self._click_system_prompt_allow(
+                visible,
+                commands=commands,
+            )
             if prompt_click.get("status") == "OK":
                 try:
                     post_visible = self._span(
@@ -7235,14 +7264,20 @@ class LightningWarRunner:
                 "reason": "external_system_prompt_visible_ui_missing",
                 "label": label,
             }
+        nested_visible_ui = visible_ui.get("visible_ui")
+        if isinstance(nested_visible_ui, dict):
+            visible_ui = nested_visible_ui
         try:
-            from src.control.mac_click import click_macos_privacy_prompt_allow
+            from src.loop import commands as commands_module
 
-            click = click_macos_privacy_prompt_allow(visible_ui)
+            click = commands_module._lightning_click_system_privacy_prompt_allow(
+                visible_ui,
+                dry_run=self.config.dry_run,
+            )
         except Exception as exc:
             click = {
                 "status": "ERROR",
-                "reason": "privacy_prompt_allow_click_exception",
+                "reason": "privacy_prompt_allow_helper_exception",
                 "label": label,
                 "exception_type": type(exc).__name__,
                 "error": str(exc),
