@@ -15975,6 +15975,176 @@ def test_lightning_segment_speed_mode_uses_default_wall_cap(monkeypatch):
     )
 
 
+def test_lightning_segment_recovers_timeout_visible_map_before_bridge(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        mission_index=1,
+    )
+    cleanups = []
+
+    def fake_quiet_call(_func, *args, **kwargs):
+        return (
+            {
+                "status": "BLOCKED",
+                "reason": kwargs.get("timeout_reason"),
+                "timeout_seconds": kwargs.get("timeout_seconds"),
+                "error": "bounded helper elapsed",
+            },
+            {"captured_stdout_lines": 0, "captured_stdout_chars": 0},
+        )
+
+    pause_guard = {
+        "status": "OK",
+        "reason": "already_paused",
+        "visible_ui": {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "screenshot_path": "/tmp/visible-map.png",
+        },
+        "decision": {"status": "OK", "reason": "already_paused"},
+    }
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_lightning_quiet_call", fake_quiet_call)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: pause_guard,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_map_route_plan",
+        lambda **kwargs: {
+            "recommendation": {"status": "OK"},
+            "visual_regions": {"status": "OK", "region_count": 1},
+            "route_start_candidates": [
+                {
+                    "index": 0,
+                    "window_x": 512,
+                    "window_y": 384,
+                    "mission_id": "Mission_Train",
+                    "auto_route_allowed": True,
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_stale_bridge_files_for_visible_map",
+        lambda **kwargs: cleanups.append(kwargs)
+        or {"status": "OK", "reason": kwargs["reason"], "removed": ["state"]},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("visible route timeout recovery must not read bridge")
+        ),
+    )
+
+    result = commands.cmd_lightning_segment(
+        run_preflight=False,
+        max_steps=1,
+        lightning_speed_loss_policy=False,
+        pause_on_stop=False,
+    )
+
+    assert result["reason"] == "route_ready"
+    assert result["steps"][0]["reason"] == "visible_island_map_save_route_plan"
+    assert result["primary_route_candidate_index"] == 0
+    assert cleanups[0]["reason"] == "timeout_visible_map_route_ready_bridge_unavailable"
+    assert "attempt_subcall_timeout" not in json.dumps(result)
+
+
+def test_lightning_segment_timeout_existing_preview_avoids_bridge(monkeypatch):
+    preview_ui = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "scores": {
+            "mission_preview_panel": {"score": 0.01, "yellow": 2500},
+        },
+    }
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "already_paused",
+            "visible_ui": preview_ui,
+            "decision": {"status": "OK", "reason": "already_paused"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("existing preview recovery must not read bridge")
+        ),
+    )
+
+    result = commands._lightning_segment_recover_timed_out_visible_route_ui(
+        {"status": "BLOCKED", "reason": "attempt_subcall_timeout"},
+        step_index=0,
+        profile="Alpha",
+        route_routing="lightning_war",
+        quiet=True,
+        dry_run=False,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result is not None
+    assert result["status"] == "LIGHTNING_ATTEMPT_BLOCKED"
+    assert result["reason"] == "mission_preview_requires_route_validation"
+    assert result["visible_ui"] == preview_ui
+    assert "attempt_subcall_timeout" not in json.dumps(result)
+
+
+def test_lightning_segment_timeout_uncertain_pause_avoids_bridge(monkeypatch):
+    pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "already_paused",
+            "visible_ui": pause_ui,
+            "decision": {
+                "status": "OK",
+                "reason": "already_paused",
+                "already_paused": True,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("uncertain paused timeout must not read bridge")
+        ),
+    )
+
+    result = commands._lightning_segment_recover_timed_out_visible_route_ui(
+        {"status": "BLOCKED", "reason": "attempt_subcall_timeout"},
+        step_index=0,
+        profile="Alpha",
+        route_routing="lightning_war",
+        quiet=True,
+        dry_run=False,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result is not None
+    assert result["status"] == "LIGHTNING_ATTEMPT_NEEDS_UI"
+    assert result["reason"] == "timeout_visible_pause_menu_uncertain"
+    assert result["snapshot"]["visible_ui"] == pause_ui
+    assert "attempt_subcall_timeout" not in json.dumps(result)
+
+
 def test_lightning_segment_blocks_late_first_mission_route_start(monkeypatch):
     session = SimpleNamespace(
         run_id="fresh_lw",

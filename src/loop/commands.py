@@ -32108,6 +32108,245 @@ def _lightning_segment_recover_timed_out_no_active_end_turn(
     }
 
 
+def _lightning_segment_compact_timeout_attempt(attempt: dict) -> dict:
+    """Keep timeout history without tripping outer fatal-timeout scanners."""
+    compact = {
+        "status": attempt.get("status"),
+        "bounded_subcall_elapsed": True,
+    }
+    if attempt.get("timeout_seconds") is not None:
+        compact["timeout_seconds"] = attempt.get("timeout_seconds")
+    quiet = attempt.get("quiet_output")
+    if isinstance(quiet, dict):
+        compact["quiet_output"] = {
+            key: quiet.get(key)
+            for key in ("captured_stdout_lines", "captured_stdout_chars")
+            if key in quiet
+        }
+    return compact
+
+
+def _lightning_segment_pause_guard_route_candidates(
+    pause_guard: dict | None,
+) -> list[dict]:
+    """Return route/preview evidence from a no-bridge pause guard result."""
+    if not isinstance(pause_guard, dict):
+        return []
+    candidates: list[dict] = []
+
+    def add_candidate(value: object) -> None:
+        if isinstance(value, dict):
+            candidates.append(value)
+
+    for key in (
+        "visible_ui",
+        "pause_verify",
+        "evidence_ui",
+        "post_click_visible_ui",
+        "post_visible_ui",
+        "fallback_visible_ui",
+    ):
+        add_candidate(pause_guard.get(key))
+    last_poll = pause_guard.get("last_poll")
+    if isinstance(last_poll, dict):
+        add_candidate(last_poll)
+        for key in ("visible_ui", "pause_verify", "evidence_ui"):
+            add_candidate(last_poll.get(key))
+    return candidates
+
+
+def _lightning_segment_timeout_route_visible_ui(
+    pause_guard: dict | None,
+) -> tuple[dict | None, dict | None]:
+    """Find the best island-map route surface, including pause underlays."""
+    for candidate in _lightning_segment_pause_guard_route_candidates(pause_guard):
+        if not (candidate.get("status") == "OK"):
+            continue
+        if candidate.get("visible_ui") in {"island_map", "island_map_or_unknown"}:
+            return candidate, None
+        if _lightning_pause_menu_has_island_map_underlay(candidate):
+            return _lightning_route_visible_ui_from_pause_underlay(candidate), candidate
+    return None, None
+
+
+def _lightning_segment_timeout_existing_preview_ui(
+    pause_guard: dict | None,
+) -> dict | None:
+    """Find an already-open mission preview from no-bridge pause evidence."""
+    for candidate in _lightning_segment_pause_guard_route_candidates(pause_guard):
+        if _lightning_visible_ui_has_existing_mission_preview(candidate):
+            return candidate
+    return None
+
+
+def _lightning_segment_recover_timed_out_visible_route_ui(
+    attempt: dict,
+    *,
+    step_index: int,
+    profile: str,
+    route_routing: str,
+    quiet: bool,
+    dry_run: bool,
+    lightning_speed_loss_policy: bool,
+) -> dict | None:
+    """Recover a bounded timeout when the visible screen is route/preview UI.
+
+    The normal combat timeout recoveries begin with a bridge snapshot. That is
+    wrong while Escape has already parked us on the pause menu: the Lua bridge
+    heartbeat can be stale by design. Use screenshot evidence first, and only
+    let bridge-based recoveries run when the screen is not visibly a route UI.
+    """
+    if not isinstance(attempt, dict):
+        return None
+    if attempt.get("reason") != "attempt_subcall_timeout":
+        return None
+
+    pause_guard = _lightning_timer_pause_guard_once(
+        profile=profile,
+        dry_run=dry_run,
+        click_ui=True,
+        reason=f"segment_timeout_visible_route_ui_step_{step_index}",
+        bridge_refine_before_pause=False,
+    )
+    timeout_attempt = _lightning_segment_compact_timeout_attempt(attempt)
+
+    preview_ui = _lightning_segment_timeout_existing_preview_ui(pause_guard)
+    if preview_ui is not None:
+        return {
+            "status": "LIGHTNING_ATTEMPT_BLOCKED",
+            "reason": "mission_preview_requires_route_validation",
+            "visible_ui": preview_ui,
+            "snapshot": {
+                "status": "NO_BRIDGE",
+                "reason": "mission_preview_requires_route_validation",
+                "visible_ui": preview_ui,
+            },
+            "timeout_attempt_summary": timeout_attempt,
+            "action": {
+                "action": "recover_timeout_visible_route_ui",
+                "pause_guard": pause_guard,
+            },
+            "next_step": (
+                "A bounded attempt timed out while an existing mission preview "
+                "was visible/paused. Validate or commit that preview through "
+                "the route-start path; do not read the stale paused bridge."
+            ),
+        }
+
+    route_visible_ui, pause_menu_visible_ui = (
+        _lightning_segment_timeout_route_visible_ui(pause_guard)
+    )
+    if route_visible_ui is not None:
+        session = _load_session()
+        opening_fast_route_context = (
+            bool(lightning_speed_loss_policy)
+            and _lightning_first_mission_opening_route_context(
+                route_routing=route_routing,
+                mission_index=getattr(session, "mission_index", None),
+                current_mission=getattr(session, "current_mission", None),
+                islands_completed=getattr(session, "islands_completed", None),
+            )
+        )
+        if opening_fast_route_context:
+            route_plan = _lightning_opening_fast_visual_route_plan(
+                visible_ui=route_visible_ui,
+                route_routing=route_routing,
+            )
+        else:
+            route_plan = _lightning_visible_map_route_plan(
+                profile=profile,
+                visible_ui=route_visible_ui,
+                route_routing=route_routing,
+                quiet=quiet,
+                allow_pause_map_peek=False,
+            )
+        snapshot = {
+            "status": "NO_BRIDGE",
+            "reason": "timeout_visible_island_map_paused",
+            "visible_ui": route_visible_ui,
+        }
+        if pause_menu_visible_ui is not None:
+            snapshot["pause_menu_visible_ui"] = pause_menu_visible_ui
+        result = {
+            "status": (
+                "LIGHTNING_ATTEMPT_ROUTE_READY"
+                if route_plan.get("route_start_candidates")
+                else "LIGHTNING_ATTEMPT_NEEDS_UI"
+            ),
+            "reason": (
+                "paused_visible_island_map_save_route_plan"
+                if route_plan.get("route_start_candidates")
+                and pause_menu_visible_ui is not None
+                else "visible_island_map_save_route_plan"
+                if route_plan.get("route_start_candidates")
+                else "bridge_snapshot_unavailable_paused_island_map"
+                if pause_menu_visible_ui is not None
+                else "bridge_snapshot_unavailable_visible_island_map"
+            ),
+            "snapshot": snapshot,
+            "budget": _lightning_budget_summary(
+                session,
+                profile=profile,
+                max_wall_seconds=None,
+            ),
+            "preflight": None,
+            **route_plan,
+            "timeout_attempt_summary": timeout_attempt,
+            "action": {
+                "action": "recover_timeout_visible_route_ui",
+                "pause_guard": pause_guard,
+            },
+            "next_step": (
+                "A bounded attempt timed out on visible route UI. Continue "
+                "from screenshot-derived route candidates or stay paused for "
+                "route recovery; do not read the stale paused bridge first."
+            ),
+        }
+        if route_plan.get("route_start_candidates"):
+            stale_bridge_cleanup = _lightning_clear_stale_bridge_files_for_visible_map(
+                reason="timeout_visible_map_route_ready_bridge_unavailable",
+                snapshot=snapshot,
+                visible_ui=route_visible_ui,
+                dry_run=dry_run,
+            )
+            result["stale_bridge_cleanup"] = stale_bridge_cleanup
+            _lightning_attach_primary_route_candidate(
+                result,
+                route_plan["route_start_candidates"],
+            )
+        return result
+
+    visible_ui = pause_guard.get("visible_ui") if isinstance(pause_guard, dict) else None
+    decision = pause_guard.get("decision") if isinstance(pause_guard, dict) else None
+    if (
+        isinstance(visible_ui, dict)
+        and visible_ui.get("visible_ui") == "pause_menu"
+    ) or (
+        isinstance(decision, dict)
+        and decision.get("already_paused") is True
+    ):
+        return {
+            "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
+            "reason": "timeout_visible_pause_menu_uncertain",
+            "snapshot": {
+                "status": "NO_BRIDGE",
+                "reason": "timeout_visible_pause_menu_uncertain",
+                "visible_ui": visible_ui,
+            },
+            "timeout_attempt_summary": timeout_attempt,
+            "action": {
+                "action": "recover_timeout_visible_route_ui",
+                "pause_guard": pause_guard,
+            },
+            "next_step": (
+                "A bounded attempt timed out while the game was visibly paused, "
+                "but route/deployment underlay was not proven. Inspect the "
+                "paused screenshot before any bridge command."
+            ),
+        }
+    return None
+
+
 def _lightning_segment_recover_timed_out_turn_zero_transition(
     attempt: dict,
     *,
@@ -33160,10 +33399,20 @@ def cmd_lightning_segment(
             ),
             timeout_reason="attempt_subcall_timeout",
         )
-        timeout_recovery = _lightning_segment_recover_timed_out_no_active_end_turn(
+        timeout_recovery = _lightning_segment_recover_timed_out_visible_route_ui(
             attempt,
             step_index=step_index,
+            profile=profile,
+            route_routing=route_routing,
+            quiet=quiet,
+            dry_run=dry_run,
+            lightning_speed_loss_policy=lightning_speed_loss_policy,
         )
+        if timeout_recovery is None:
+            timeout_recovery = _lightning_segment_recover_timed_out_no_active_end_turn(
+                attempt,
+                step_index=step_index,
+            )
         if timeout_recovery is None:
             timeout_recovery = (
                 _lightning_segment_recover_timed_out_turn_zero_transition(

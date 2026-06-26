@@ -8441,6 +8441,29 @@ def test_runner_does_not_restart_route_gate_after_subcall_timeout():
     assert not any(name == "attempt_restart" for name, _payload in runner.telemetry.events)
 
 
+def test_runner_timeout_scanner_detects_raw_but_not_sanitized_attempt_timeout():
+    raw = {
+        "timeout_attempt": {
+            "status": "BLOCKED",
+            "reason": "attempt_subcall_timeout",
+            "error": "attempt_subcall_timeout after 18.0s",
+        },
+    }
+    sanitized = {
+        "timeout_attempt_summary": {
+            "status": "BLOCKED",
+            "bounded_subcall_elapsed": True,
+            "timeout_seconds": 18.0,
+        },
+    }
+
+    raw_evidence = lightning_runner._lightning_subcall_timeout_evidence(raw)
+
+    assert raw_evidence is not None
+    assert raw_evidence["reason"] == "attempt_subcall_timeout"
+    assert lightning_runner._lightning_subcall_timeout_evidence(sanitized) is None
+
+
 def test_runner_restarts_visible_map_no_bridge_route_gate_with_stale_preview():
     session = SimpleNamespace(
         run_id="20260607_175155_052",
