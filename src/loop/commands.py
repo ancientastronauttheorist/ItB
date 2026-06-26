@@ -312,9 +312,9 @@ _LIGHTNING_FAST_UI_CONFIRM_SETTLE_SECONDS = 0.25
 _LIGHTNING_FAST_INTRO_APPEAR_SETTLE_SECONDS = 0.75
 _LIGHTNING_FAST_INTRO_CONTINUE_CLICK_COUNT = 12
 _LIGHTNING_FAST_INTRO_CONTINUE_SETTLE_SECONDS = 0.04
-_LIGHTNING_FAST_FIRST_ISLAND_PRECLICK_SECONDS = 1.25
-_LIGHTNING_FAST_FIRST_ISLAND_CLICK_COUNT = 12
-_LIGHTNING_FAST_FIRST_ISLAND_CLICK_INTERVAL_SECONDS = 0.055
+_LIGHTNING_FAST_FIRST_ISLAND_PRECLICK_SECONDS = 0.75
+_LIGHTNING_FAST_FIRST_ISLAND_CLICK_COUNT = 8
+_LIGHTNING_FAST_FIRST_ISLAND_CLICK_INTERVAL_SECONDS = 0.04
 _LIGHTNING_OPENING_PREVIEW_COMMIT_WINDOW_X = 800
 _LIGHTNING_OPENING_PREVIEW_COMMIT_WINDOW_Y = 470
 _LIGHTNING_OPENING_PREVIEW_REVEAL_WINDOW_X = 918
@@ -36814,6 +36814,91 @@ def _lightning_fast_first_island_click_burst(
     return result
 
 
+def _lightning_speed_pause_picker_recovery(
+    visible_ui: dict | None,
+    *,
+    island_key: str,
+    island_control: str,
+    dry_run: bool = False,
+) -> dict | None:
+    """Resume when the first-island picker is proven behind pause in speed mode."""
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return None
+    paused_picker_text_proof = _lightning_pause_menu_has_first_island_picker_text(
+        visible_ui,
+    )
+    pause_corp_panel = _lightning_pause_menu_first_island_corp_panel_identity(
+        visible_ui,
+    )
+    pause_after_setup_start = (
+        _lightning_visible_ui_is_pause_menu(visible_ui)
+        or _lightning_visible_ui_has_pause_overlay_shape(visible_ui)
+        or bool(
+            visible_ui.get("pause_ocr_match")
+            or visible_ui.get("pause_ocr_override")
+            or visible_ui.get("pause_underlay_visible_ui") == "pause_menu"
+        )
+    )
+    if not (paused_picker_text_proof or pause_corp_panel is not None or pause_after_setup_start):
+        return None
+
+    result: dict = {
+        "status": "STARTED",
+        "reason": (
+            "speed_pause_menu_over_first_island_picker"
+            if paused_picker_text_proof
+            else (
+                "speed_pause_menu_over_first_island_corp_panel"
+                if pause_corp_panel is not None
+                else "speed_pause_menu_after_setup_start_assumed_picker"
+            )
+        ),
+        "requested_island": island_key,
+        "next_control": island_control,
+        "paused_picker_text_proof": bool(paused_picker_text_proof),
+        "pause_corp_panel": pause_corp_panel,
+        "source_visible_ui": {
+            key: visible_ui.get(key)
+            for key in (
+                "status",
+                "visible_ui",
+                "recommended_control",
+                "screenshot_path",
+                "visible_text",
+                "ocr_texts",
+            )
+            if key in visible_ui
+        },
+    }
+    resume = _lightning_resume_if_paused(
+        dry_run=dry_run,
+        click_ui=True,
+        use_verified_guard=False,
+    )
+    result["resume"] = resume
+    if not isinstance(resume, dict) or resume.get("status") not in {
+        "OK",
+        "PLANNED",
+        "DRY_RUN",
+    }:
+        result["status"] = "BLOCKED"
+        result["reason"] = "speed_first_island_pause_resume_failed"
+        result["next_step"] = (
+            "The first-island picker was visible behind pause, but the bounded "
+            "resume did not succeed. Inspect before any island coordinate click."
+        )
+        return result
+
+    result["status"] = "OK" if not dry_run else "DRY_RUN"
+    result["picker_ready_after_resume"] = {
+        "status": "OK",
+        "reason": "trusted_speed_pause_picker_fast_path",
+        "requested_island": island_key,
+        "next_control": island_control,
+    }
+    return result
+
+
 def _lightning_visible_ui_has_pause_overlay_shape(visible_ui: dict | None) -> bool:
     """Best-effort pause-menu proof for classifier snapshots without OCR."""
     if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
@@ -38197,16 +38282,39 @@ def cmd_lightning_start_run(
         )
         result["speed_first_island_picker_wait"] = first_island_picker_wait
         if first_island_picker_wait.get("status") != "OK":
-            result["status"] = "BLOCKED"
-            result["reason"] = first_island_picker_wait.get("reason") or (
-                "speed_first_island_picker_not_verified"
+            speed_pause_picker_recovery = _lightning_speed_pause_picker_recovery(
+                first_island_picker_wait.get("visible_ui") or post_setup_start_ui,
+                island_key=island_key,
+                island_control=island_control,
+                dry_run=False,
             )
-            result["next_step"] = (
-                "The first-island picker was not proven before the speed "
-                "burst. Re-verify setup/picker before clicking the island."
+            result["speed_first_island_pause_picker_recovery"] = (
+                speed_pause_picker_recovery
             )
-            _print_result(result)
-            return result
+            if (
+                speed_pause_picker_recovery is None
+                or speed_pause_picker_recovery.get("status") != "OK"
+            ):
+                result["status"] = "BLOCKED"
+                result["reason"] = first_island_picker_wait.get("reason") or (
+                    "speed_first_island_picker_not_verified"
+                )
+                result["next_step"] = (
+                    "The first-island picker was not proven before the speed "
+                    "burst. Re-verify setup/picker before clicking the island."
+                )
+                _print_result(result)
+                return result
+            first_island_picker_wait = (
+                speed_pause_picker_recovery["picker_ready_after_resume"]
+            )
+            result["speed_first_island_picker_wait_after_pause_resume"] = (
+                first_island_picker_wait
+            )
+            post_setup_start_ui = (
+                speed_pause_picker_recovery.get("source_visible_ui")
+                or post_setup_start_ui
+            )
         post_setup_start_ui = first_island_picker_wait.get("visible_ui") or post_setup_start_ui
         if os.environ.get("ITB_LIGHTNING_CHECK_POST_SETUP_TITLE") == "1":
             time.sleep(0.12)

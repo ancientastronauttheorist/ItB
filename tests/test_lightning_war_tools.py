@@ -1018,6 +1018,137 @@ def test_lightning_start_run_speed_trusts_verified_pause_over_stale_picker(
     assert len(saved) == 3
 
 
+def test_lightning_start_run_speed_resumes_paused_first_island_picker(
+    monkeypatch,
+):
+    calls: list[str] = []
+    saved: list[object] = []
+    resumes: list[dict] = []
+    paused_picker = {
+        "status": "OK",
+        "visible_ui": "pause_menu",
+        "recommended_control": "menu_continue",
+        "ocr_texts": [
+            "MENU",
+            "CONTINUE",
+            "Island Progress",
+            "Archive",
+            "RST Corp",
+            "Pinnacle",
+            "Detritus",
+            "Timeline Playtime",
+            "Oh 0m 04s",
+        ],
+        "visible_text": (
+            "MENU\nCONTINUE\nIsland Progress\nArchive\nRST Corp\n"
+            "Pinnacle\nDetritus\nTimeline Playtime\nOh 0m 04s"
+        ),
+        "screenshot_path": "/tmp/paused-first-island-picker.png",
+    }
+
+    class FakeSession:
+        run_id = "fresh_lw"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(commands, "_write_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **_kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: paused_picker,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_system_privacy_prompt_clear_stable",
+        lambda **_kwargs: {"status": "OK", "visible_ui": paused_picker},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_first_island_picker",
+        lambda **_kwargs: {
+            "status": "BLOCKED",
+            "reason": "first_island_picker_not_visible",
+            "visible_ui": paused_picker,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_resume_if_paused",
+        lambda **kwargs: resumes.append(kwargs)
+        or {"status": "OK", "reason": "pause_menu_visible"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_pause_after_known_live_burst",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "pause_ocr_match": "Timeline Playtime",
+                "scores": {"deployment_screen": {"score": 0.25}},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(monkeypatch)
+
+    result = commands.cmd_lightning_start_run(
+        run_segment=False,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "first_island_paused"
+    assert result["speed_first_island_picker_wait"]["status"] == "BLOCKED"
+    recovery = result["speed_first_island_pause_picker_recovery"]
+    assert recovery["status"] == "OK"
+    assert recovery["reason"] in {
+        "speed_pause_menu_over_first_island_picker",
+        "speed_pause_menu_over_first_island_corp_panel",
+    }
+    assert result["speed_first_island_picker_wait_after_pause_resume"] == {
+        "status": "OK",
+        "reason": "trusted_speed_pause_picker_fast_path",
+        "requested_island": "archive",
+        "next_control": "island_archive",
+    }
+    assert resumes == [
+        {
+            "dry_run": False,
+            "click_ui": True,
+            "use_verified_guard": False,
+        },
+    ]
+    assert calls == (
+        ["setup_modal_start"]
+        + ["island_archive"] * commands._LIGHTNING_FAST_FIRST_ISLAND_CLICK_COUNT
+        + ["bottom_continue"] * commands._LIGHTNING_FAST_INTRO_CONTINUE_CLICK_COUNT
+    )
+    assert len(saved) == 3
+
+
 def test_lightning_start_run_blocks_when_first_mission_timer_did_not_reset(monkeypatch):
     calls: list[str] = []
     saved: list[object] = []
