@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-58 of 70 achievements are Steam-cache or visible-popup confirmed. **Lightning War** popped on 2026-06-26 after reopening Into the Breach, leaving 12 remaining; sorted by global unlock % (easiest first).
+60 of 70 achievements are Steam-cache confirmed. **Feed the Flame**, **Complete Victory**, and **Lightning War** reconciled on 2026-06-26, leaving 10 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: **Lightning War** is complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat.
+Current milestone: **Lightning War**, **Feed the Flame**, and **Complete Victory** are complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -47,7 +47,7 @@ Current milestone: **Lightning War** is complete. The Blitzkrieg speed route clo
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
 - [x] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod) — completed in Frozen Titans run `20260525_203546_657`
 - [x] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad — completed with 3x Ice Mech in run `20260526_204256_831`
-- [x] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg] — visible achievement popup confirmed on 2026-06-26 after reopening Into the Breach
+- [x] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg] — Steam-cache confirmed on 2026-06-26 after reopening Into the Breach
 - [x] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad] — completed in run `20260527_152006_916` after Archive HQ shop overpowers reached 30%
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle [Steel Judoka]
 
@@ -64,7 +64,7 @@ Current milestone: **Lightning War** is complete. The Blitzkrieg speed route clo
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom — completed alongside Mech Specialist with 3x Ice Mech in run `20260526_204256_831`
 - [x] Lucky Start (7.3%) — Beat game without spending Reputation [Random] — Steam-cache confirmed before the Stay With Me run
-- [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
+- [x] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative] — Steam-cache confirmed on 2026-06-26
 - [x] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters] — Steam-cache confirmed on 2026-06-17 after R.S.T. Blast Bunker / `Mission_Trapped`
 - [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod — completed in Zenith Guard run `20260613_234901_918`
 - [ ] Spider Breeding (6.7%) — Spawn 15 Arachnoids in one Island [Arachnophile]
@@ -75,11 +75,11 @@ Current milestone: **Lightning War** is complete. The Blitzkrieg speed route clo
 - [ ] Working Together (5.0%) — Area Shift 4 units at once [Arachnophile]
 - [ ] Efficient Explosives (4.8%) — Kill 3 Enemies with 1 Ricochet Rocket [Arachnophile]
 - [ ] Boosted (4.6%) — Boost 8 Mechs in one mission [Heat Sinkers]
-- [ ] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack [Heat Sinkers]
+- [x] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack [Heat Sinkers] — Steam-cache confirmed on 2026-06-26
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (58 Steam-cache or visible-popup confirmed)
+### Already Completed (60 Steam-cache confirmed)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -135,8 +135,10 @@ Current milestone: **Lightning War** is complete. The Blitzkrieg speed route clo
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]
 - [x] Lucky Start (7.3%) — Beat game without spending Reputation  [Random Squad]
+- [x] Complete Victory (7.2%) — Beat game with all 10 primary Squads
 - [x] Stay With Me! (7.2%) — Heal 12 damage over single Island  [Mist Eaters]
 - [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
+- [x] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack  [Heat Sinkers]
 - [x] Squads Victory — Beat game with 4 different Squads
 
 

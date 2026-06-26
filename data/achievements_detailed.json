@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-26T06:57:08.160202",
+    "last_steam_sync": "2026-06-26T11:32:50.375862",
     "last_steam_total": 70,
-    "last_steam_unlocked": 59
+    "last_steam_unlocked": 60
   },
   "achievements": {
     "rift_walkers": [
@@ -123,7 +123,7 @@
         "description": "Finish the first 2 Corporate Islands in under 30 minutes with Blitzkrieg",
         "type": "single_run",
         "global_unlock_pct": 10.5,
-        "completed": false,
+        "completed": true,
         "strategy": "Enable timer UI in settings. Max combat speed. Choose 2-island run. Pick easy 1-objective missions. Don't overthink moves \u2014 speed matters. 'Protect train' missions are shorter. Minimal shop time between islands.",
         "setup": "Timer enabled, combat speed maxed, 2-island run, easy difficulty",
         "pitfalls": "Timer is real-time. Menu/shop time counts. Don't pause to think too long."
