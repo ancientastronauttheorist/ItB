@@ -1163,6 +1163,118 @@ def test_lightning_start_run_blocks_only_when_prompt_allow_click_fails(monkeypat
     assert len(saved) == 1
 
 
+def test_lightning_post_setup_prompt_recovery_retries_verified_setup_modal(
+    monkeypatch,
+):
+    clicks: list[str] = []
+    waits = iter(
+        [
+            {
+                "status": "BLOCKED",
+                "reason": "first_island_picker_not_visible",
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "perfect_island_panel",
+                },
+            },
+            {
+                "status": "OK",
+                "reason": "first_island_picker_ready",
+                "visible_ui": _post_setup_non_prompt_ui(),
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_system_privacy_prompt_allow",
+        lambda visible_ui: {
+            "status": "OK",
+            "reason": "system_privacy_prompt_allow_clicked",
+            "visible_ui": visible_ui,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_first_island_picker",
+        lambda **_kwargs: next(waits),
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **_kwargs: {"status": "PASS"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: clicks.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands._lightning_recover_speed_post_setup_system_prompt(
+        {"status": "OK", "visible_ui": "system_privacy_prompt"},
+        difficulty=0,
+        advanced_content="off",
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "first_island_picker_ready_after_setup_retry"
+    assert clicks == ["setup_modal_start"]
+    assert result["setup_retry_attempts_after_prompt"][0]["verify_source"] == (
+        "classifier_mismatch_setup_probe"
+    )
+
+
+def test_lightning_post_setup_prompt_recovery_does_not_blind_retry_setup(
+    monkeypatch,
+):
+    clicks: list[str] = []
+    verify_calls: list[dict] = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_system_privacy_prompt_allow",
+        lambda visible_ui: {
+            "status": "OK",
+            "reason": "system_privacy_prompt_allow_clicked",
+            "visible_ui": visible_ui,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_wait_for_first_island_picker",
+        lambda **_kwargs: {
+            "status": "BLOCKED",
+            "reason": "first_island_picker_not_visible",
+            "visible_ui": {
+                "status": "OK",
+                "visible_ui": "perfect_island_panel",
+            },
+        },
+    )
+
+    def fake_verify(**kwargs):
+        verify_calls.append(kwargs)
+        return {"status": "FAIL", "reason": "setup_screen_not_verified"}
+
+    monkeypatch.setattr(commands, "cmd_verify_setup_screen", fake_verify)
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: clicks.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands._lightning_recover_speed_post_setup_system_prompt(
+        {"status": "OK", "visible_ui": "system_privacy_prompt"},
+        difficulty=0,
+        advanced_content="off",
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "prompt_cleared_but_first_island_picker_not_ready"
+    assert verify_calls == [{"expected_difficulty": 0, "advanced_content": "off"}]
+    assert clicks == []
+
+
 def test_lightning_start_run_waits_for_first_island_picker(monkeypatch):
     calls: list[str] = []
     saved: list[object] = []
@@ -16403,6 +16515,70 @@ def test_lightning_segment_auto_starts_scored_primary_route(monkeypatch):
     assert attempt_calls[1]["expected_route_mission_id"] == "Mission_Train"
 
 
+def test_lightning_segment_stops_after_route_start_deployment_screenshot(
+    monkeypatch,
+):
+    attempt_calls = []
+    route_calls = []
+
+    def fake_attempt(**kwargs):
+        attempt_calls.append(kwargs)
+        return {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "primary_route_candidate": {
+                "index": 2,
+                "mission_id": "Mission_Train",
+                "auto_route_allowed": True,
+            },
+        }
+
+    monkeypatch.setattr(commands, "cmd_lightning_attempt", fake_attempt)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_route_start",
+        lambda **kwargs: route_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "route_preview_retry_deployment_screenshot",
+            "click_result": {
+                "status": "OK",
+                "reason": "route_preview_retry_deployment_screenshot",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {"status": "OK", "reason": "pause_clicked"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_first_mission_route_start_pace_gate",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_visible_pause_timer",
+        lambda: {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 9.0,
+            "game_timer": "0:00:09",
+        },
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands.cmd_lightning_segment(max_steps=3, route_auto_start=True)
+
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["route_start_performed"] is True
+    assert len(attempt_calls) == 1
+    assert route_calls[0]["visual_region_index"] == 2
+    assert result["steps"][1]["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["steps"][1]["route_auto_start_paused_deployment_handoff"] is True
+    assert result["last_route_start"]["route_auto_start_paused_deployment_handoff"] is True
+
+
 def test_lightning_segment_stops_on_paused_deployment_transition_handoff(monkeypatch):
     attempts = [
         {
@@ -16565,6 +16741,54 @@ def test_lightning_segment_recovers_route_start_timeout_on_paused_deployment(
     assert recovery["reason"] == "route_start_timeout_paused_deployment_handoff"
     assert recovery["visible_deployment_ui"] == paused_deployment
     assert pause_calls[0]["reason"] == "route_start_timeout_deployment_probe_step_1"
+
+
+def test_lightning_timeout_visible_route_ui_prefers_paused_deployment(
+    monkeypatch,
+):
+    pause_guard = {
+        "status": "OK",
+        "visible_ui": {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "scores": {
+                "paused_deployment_underlay": {
+                    "visible": True,
+                    "active_mission_under_pause": True,
+                    "signals": {
+                        "left_mechs": True,
+                        "right_objectives": True,
+                    },
+                },
+                "island_map": {"colored": 5000},
+                "mission_preview_dialogue": {"score": 0.0},
+                "mission_preview_panel": {"yellow": 0},
+            },
+        },
+        "pause_verified": True,
+    }
+    pause_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        lambda **kwargs: pause_calls.append(kwargs) or pause_guard,
+    )
+
+    result = commands._lightning_segment_recover_timed_out_visible_route_ui(
+        {"status": "BLOCKED", "reason": "attempt_subcall_timeout"},
+        step_index=3,
+        profile="Alpha",
+        route_routing="lightning_war",
+        quiet=True,
+        dry_run=False,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "deployment_waiting_for_ui_settle"
+    assert result["action"]["visible_deployment_ui"] == pause_guard["visible_ui"]
+    assert pause_calls[0]["reason"] == "segment_timeout_visible_route_ui_step_3"
 
 
 def test_lightning_segment_recovers_no_transition_on_started_underlay(

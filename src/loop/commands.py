@@ -31855,6 +31855,105 @@ def _lightning_segment_recover_timed_out_route_start_deployment(
     }
 
 
+_LIGHTNING_ROUTE_START_DEPLOYMENT_HANDOFF_REASONS = {
+    "lightning_war_opening_fast_commit_deployment_screenshot",
+    "route_preview_island_map_retry_deployment_screenshot",
+    "route_preview_island_map_retry_preview_started",
+    "route_preview_retry_deployment_screenshot",
+    "route_preview_visible_deployment_after_click",
+}
+
+
+def _lightning_route_start_ok_deployment_handoff(route_start: dict) -> dict | None:
+    """Return deployment proof from an OK route-start result."""
+    if not isinstance(route_start, dict) or route_start.get("status") != "OK":
+        return None
+
+    def compact_visible(value: object) -> dict | None:
+        if not isinstance(value, dict) or not _lightning_visible_ui_proves_deployment(value):
+            return None
+        return {
+            key: value.get(key)
+            for key in (
+                "status",
+                "visible_ui",
+                "screenshot_path",
+                "visible_text",
+            )
+            if key in value
+        }
+
+    reason = str(route_start.get("reason") or "")
+    click_result = route_start.get("click_result")
+    click_reason = (
+        str(click_result.get("reason") or "")
+        if isinstance(click_result, dict)
+        else ""
+    )
+    if (
+        reason in _LIGHTNING_ROUTE_START_DEPLOYMENT_HANDOFF_REASONS
+        or click_reason in _LIGHTNING_ROUTE_START_DEPLOYMENT_HANDOFF_REASONS
+    ):
+        return {
+            "status": "OK",
+            "reason": "route_start_ok_reason_deployment_handoff",
+            "route_start_reason": reason or None,
+            "click_reason": click_reason or None,
+        }
+
+    candidates: list[tuple[str, object]] = []
+    for key in ("post_preview_visible_ui", "post_start_visible_ui"):
+        candidates.append((key, route_start.get(key)))
+    if isinstance(click_result, dict):
+        for key in ("post_preview_visible_ui", "post_start_visible_ui"):
+            candidates.append((f"click_result.{key}", click_result.get(key)))
+        for key in ("post_start_pause_snapshot", "post_preview_snapshot"):
+            snapshot = click_result.get(key)
+            if isinstance(snapshot, dict):
+                candidates.append((f"click_result.{key}", snapshot))
+                for visible_key in ("evidence_ui", "pause_verify", "visible_ui"):
+                    candidates.append(
+                        (
+                            f"click_result.{key}.{visible_key}",
+                            snapshot.get(visible_key),
+                        )
+                    )
+    for source, candidate in candidates:
+        visible = compact_visible(candidate)
+        if visible is not None:
+            return {
+                "status": "OK",
+                "reason": "route_start_ok_visible_deployment_handoff",
+                "source": source,
+                "visible_deployment_ui": visible,
+            }
+
+    snapshot = None
+    if isinstance(click_result, dict):
+        snapshot = click_result.get("post_preview_snapshot") or click_result.get(
+            "post_start_snapshot",
+        )
+    if _lightning_route_start_snapshot_proves_started(snapshot):
+        return {
+            "status": "OK",
+            "reason": "route_start_ok_bridge_deployment_handoff",
+            "snapshot": {
+                key: snapshot.get(key)
+                for key in (
+                    "status",
+                    "phase",
+                    "turn",
+                    "mission_id",
+                    "deployment_zone_count",
+                    "in_active_mission",
+                    "bridge_heartbeat_age_seconds",
+                )
+                if isinstance(snapshot, dict) and key in snapshot
+            },
+        }
+    return None
+
+
 def _lightning_segment_expected_after_route_start(
     route_start: dict,
     fallback_expected: str | None,
@@ -32209,6 +32308,29 @@ def _lightning_segment_recover_timed_out_visible_route_ui(
         bridge_refine_before_pause=False,
     )
     timeout_attempt = _lightning_segment_compact_timeout_attempt(attempt)
+
+    visible_deployment = _lightning_pause_guard_deployment_visible_ui(pause_guard)
+    if visible_deployment is not None:
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "deployment_waiting_for_ui_settle",
+            "snapshot": {
+                "status": "NO_BRIDGE",
+                "reason": "timeout_paused_deployment_handoff",
+                "visible_ui": visible_deployment,
+            },
+            "timeout_attempt_summary": timeout_attempt,
+            "action": {
+                "action": "recover_timeout_visible_route_ui",
+                "pause_guard": pause_guard,
+                "visible_deployment_ui": visible_deployment,
+            },
+            "next_step": (
+                "A bounded attempt timed out after route-start reached a "
+                "paused deployment screen. Continue with deployment handling "
+                "from this paused state instead of re-reading stale route UI."
+            ),
+        }
 
     preview_ui = _lightning_segment_timeout_existing_preview_ui(pause_guard)
     if preview_ui is not None:
@@ -33344,6 +33466,28 @@ def cmd_lightning_segment(
             if dry_run:
                 stopped_reason = "dry_run_route_start"
                 break
+            deployment_handoff = _lightning_route_start_ok_deployment_handoff(
+                route_start,
+            )
+            if deployment_handoff is not None:
+                route_summary["status"] = "OK"
+                route_summary["reason"] = "deployment_waiting_for_ui_settle"
+                route_summary["route_start_deployment_handoff"] = (
+                    deployment_handoff
+                )
+                route_summary[
+                    "route_auto_start_paused_deployment_handoff"
+                ] = True
+                last_route_start = {
+                    **route_start,
+                    "reason": "deployment_waiting_for_ui_settle",
+                    "route_start_deployment_handoff": deployment_handoff,
+                    "route_auto_start_paused_deployment_handoff": True,
+                }
+                if settle_seconds > 0:
+                    time.sleep(settle_seconds)
+                stopped_reason = "deployment_waiting_for_ui_settle"
+                break
             active_route_expected_mission_id = (
                 _lightning_segment_expected_after_route_start(
                     route_start,
@@ -34158,6 +34302,28 @@ def cmd_lightning_segment(
                     break
                 if dry_run:
                     stopped_reason = "dry_run_route_start"
+                    break
+                deployment_handoff = _lightning_route_start_ok_deployment_handoff(
+                    route_start,
+                )
+                if deployment_handoff is not None:
+                    route_summary["status"] = "OK"
+                    route_summary["reason"] = "deployment_waiting_for_ui_settle"
+                    route_summary["route_start_deployment_handoff"] = (
+                        deployment_handoff
+                    )
+                    route_summary[
+                        "route_auto_start_paused_deployment_handoff"
+                    ] = True
+                    last_route_start = {
+                        **route_start,
+                        "reason": "deployment_waiting_for_ui_settle",
+                        "route_start_deployment_handoff": deployment_handoff,
+                        "route_auto_start_paused_deployment_handoff": True,
+                    }
+                    if settle_seconds > 0:
+                        time.sleep(settle_seconds)
+                    stopped_reason = "deployment_waiting_for_ui_settle"
                     break
                 active_route_expected_mission_id = (
                     _lightning_segment_expected_after_route_start(
@@ -36656,23 +36822,45 @@ def _lightning_recover_speed_post_setup_system_prompt(
                 result["visible_ui"] = picker_wait.get("visible_ui")
                 return result
 
-    if (
-        isinstance(visible_after_prompt, dict)
-        and visible_after_prompt.get("visible_ui") == "new_game_setup"
-    ):
+    setup_retry_attempts: list[dict[str, Any]] = []
+    for setup_retry_attempt in range(3):
+        visible_looks_like_setup = (
+            isinstance(visible_after_prompt, dict)
+            and visible_after_prompt.get("visible_ui") == "new_game_setup"
+        )
+        if (
+            isinstance(visible_after_prompt, dict)
+            and _lightning_external_system_prompt_visible(visible_after_prompt)
+        ):
+            break
+        if not visible_looks_like_setup and setup_retry_attempt > 0:
+            break
+        setup_retry: dict[str, Any] = {"attempt": setup_retry_attempt + 1}
         verify = cmd_verify_setup_screen(
             expected_difficulty=difficulty,
             advanced_content=advanced_content,
         )
-        result["verify_setup_after_prompt"] = verify
+        setup_retry["verify_setup"] = verify
+        if not visible_looks_like_setup:
+            setup_retry["verify_source"] = "classifier_mismatch_setup_probe"
+        if setup_retry_attempt == 0:
+            result["verify_setup_after_prompt"] = verify
         if verify.get("status") != "PASS":
+            if not visible_looks_like_setup:
+                break
+            setup_retry_attempts.append(setup_retry)
+            result["setup_retry_attempts_after_prompt"] = setup_retry_attempts
             result["status"] = "BLOCKED"
             result["reason"] = "setup_verification_after_prompt_failed"
             return result
         if verify.get("setup_screen_source") == "blitzkrieg_start_screen_ocr":
             setup_screen_start = click_known_window_control("setup_start")
-            result["setup_screen_start_after_prompt"] = setup_screen_start
+            setup_retry["setup_screen_start"] = setup_screen_start
+            if setup_retry_attempt == 0:
+                result["setup_screen_start_after_prompt"] = setup_screen_start
             if setup_screen_start.get("status") != "OK":
+                setup_retry_attempts.append(setup_retry)
+                result["setup_retry_attempts_after_prompt"] = setup_retry_attempts
                 result["status"] = "BLOCKED"
                 result["reason"] = "setup_screen_start_after_prompt_failed"
                 return result
@@ -36681,15 +36869,23 @@ def _lightning_recover_speed_post_setup_system_prompt(
                 expected_difficulty=difficulty,
                 advanced_content=advanced_content,
             )
-            result["verify_setup_modal_after_prompt"] = verify
+            setup_retry["verify_setup_modal"] = verify
+            if setup_retry_attempt == 0:
+                result["verify_setup_modal_after_prompt"] = verify
             if verify.get("status") != "PASS":
+                setup_retry_attempts.append(setup_retry)
+                result["setup_retry_attempts_after_prompt"] = setup_retry_attempts
                 result["status"] = "BLOCKED"
                 result["reason"] = "setup_modal_verification_after_prompt_failed"
                 return result
 
         retry_start = click_known_window_control("setup_modal_start")
-        result["setup_modal_start_retry_after_prompt"] = retry_start
+        setup_retry["setup_modal_start"] = retry_start
+        if setup_retry_attempt == 0:
+            result["setup_modal_start_retry_after_prompt"] = retry_start
         if retry_start.get("status") != "OK":
+            setup_retry_attempts.append(setup_retry)
+            result["setup_retry_attempts_after_prompt"] = setup_retry_attempts
             result["status"] = "BLOCKED"
             result["reason"] = "setup_modal_start_retry_after_prompt_failed"
             return result
@@ -36698,12 +36894,23 @@ def _lightning_recover_speed_post_setup_system_prompt(
             poll_interval=0.10,
             min_polls=1,
         )
-        result["first_island_picker_wait_after_setup_retry"] = picker_wait
+        setup_retry["first_island_picker_wait"] = picker_wait
+        setup_retry_attempts.append(setup_retry)
+        result["setup_retry_attempts_after_prompt"] = setup_retry_attempts
+        if setup_retry_attempt == 0:
+            result["first_island_picker_wait_after_setup_retry"] = picker_wait
         if picker_wait.get("status") == "OK":
             result["status"] = "OK"
-            result["reason"] = "first_island_picker_ready_after_setup_retry"
+            result["reason"] = (
+                "first_island_picker_ready_after_setup_retry"
+                if setup_retry_attempt == 0
+                else "first_island_picker_ready_after_repeated_setup_retry"
+            )
             result["visible_ui"] = picker_wait.get("visible_ui")
             return result
+        visible_after_prompt = (
+            picker_wait.get("visible_ui") if isinstance(picker_wait, dict) else None
+        )
 
     result["status"] = "BLOCKED"
     result["reason"] = "prompt_cleared_but_first_island_picker_not_ready"
