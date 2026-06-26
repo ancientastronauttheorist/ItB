@@ -35033,6 +35033,47 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_ocr_after_stale_click(
     assert result["post_fullscreen_click_visible_ui"] == pause_ui
 
 
+def test_lightning_system_privacy_prompt_uses_fullscreen_drain_after_missing_window_target(
+    monkeypatch,
+):
+    prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
+    setup_ui = {"status": "OK", "visible_ui": "new_game_setup"}
+    drain_calls = []
+
+    monkeypatch.setattr(
+        "src.control.mac_click.click_macos_privacy_prompt_allow",
+        lambda _ui, **_kwargs: {
+            "status": "ERROR",
+            "reason": "privacy_prompt_allow_target_missing",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_drain_system_privacy_prompt_stack_fullscreen_ocr",
+        lambda **kwargs: drain_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "system_privacy_prompt_stack_drained_fullscreen_ocr",
+            "click_count": 1,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: setup_ui,
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands._lightning_click_system_privacy_prompt_allow(prompt_ui)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+    assert result["click_result"]["status"] == "ERROR"
+    assert result["prompt_stack_drain"]["click_count"] == 1
+    assert result["post_fullscreen_click_visible_ui"] == setup_ui
+    assert drain_calls == [{"dry_run": False}]
+
+
 def test_lightning_system_privacy_prompt_drains_large_fullscreen_stack(
     monkeypatch,
 ):

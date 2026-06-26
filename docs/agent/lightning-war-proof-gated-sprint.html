@@ -528,6 +528,7 @@
           <li><strong>2026-06-25 route trace:</strong> clicking a region opens the full mission preview by about <code>0.85s</code>. Hovering window <code>(800,470)</code> highlights the 8x8 preview grid with yellow <code>Start Mission</code>; clicking it entered deployment.</li>
           <li><strong>Anti-pattern:</strong> the compact hover card is preview-only, and clicking the top advisor dialogue before the grid click can collapse the full preview back to the island map.</li>
           <li><strong>Patch:</strong> paused active-mission deployment evidence suppresses first-route resets, route mismatches are ignored in speed mode after mission entry, and post-mission route gates no longer inherit stale mission timers.</li>
+          <li><strong>2026-06-26 prompt edge:</strong> macOS privacy prompts may miss the window-local Allow target while a fullscreen OCR Allow click still clears the stack. Treat prompt-gone post-proof as recovered, then retry verified setup.</li>
           <li><strong>Policy:</strong> if the route is late but deployment is proven, continue into deployment/combat and record the timing miss. Abandoning from deployment costs more than finishing and learning.</li>
           <li><strong>Still hard:</strong> no deployment proof by <code>0:45</code> remains an opening reset, and any ordinary mission over <code>3:00</code> remains a run reset.</li>
         </ul>
@@ -929,7 +930,7 @@
 
     <p class="footer-note">
       Last updated from the 2026-06-26 Lightning War human calibration answers,
-      mission-agnostic speed-policy pass, post-mission route-gate patch, and adversarial agent review. This document is a
+      mission-agnostic speed-policy pass, post-mission route-gate patch, macOS prompt recovery fix, and adversarial agent review. This document is a
       sprint controller specification, not a general achievement-hunting guide.
     </p>
   </main>

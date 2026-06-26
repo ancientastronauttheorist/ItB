@@ -13589,6 +13589,36 @@ def _lightning_click_system_privacy_prompt_allow(
     if click_result.get("status") != "OK":
         result["reason"] = click_result.get("reason") or "system_privacy_prompt_allow_failed"
         result["error"] = click_result.get("error")
+        stack_drain = _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
+            dry_run=dry_run,
+        )
+        result["prompt_stack_drain"] = stack_drain
+        if stack_drain.get("status") == "OK":
+            if not dry_run:
+                time.sleep(0.2)
+            current_ui = _lightning_visible_ui_snapshot(
+                include_ocr=True,
+                bridge_refine=False,
+            )
+            result["post_fullscreen_click_visible_ui"] = current_ui
+            if current_ui.get("status") != "OK":
+                result["status"] = "BLOCKED"
+                result["reason"] = "system_privacy_prompt_resample_failed"
+                return result
+            if current_ui.get("visible_ui") != "system_privacy_prompt":
+                result["status"] = "OK"
+                result["reason"] = (
+                    "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                )
+                return result
+            result["status"] = "BLOCKED"
+            result["reason"] = "system_privacy_prompt_still_visible"
+            return result
+        if stack_drain.get("status") == "BLOCKED":
+            result["status"] = "BLOCKED"
+            result["reason"] = stack_drain.get("reason") or (
+                "system_privacy_prompt_stack_drain_blocked"
+            )
         return result
     post_click = _lightning_visible_ui_snapshot(include_ocr=True)
     result["post_click_visible_ui"] = post_click
