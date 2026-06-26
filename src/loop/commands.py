@@ -13651,8 +13651,39 @@ def _lightning_click_system_privacy_prompt_allow(
     """Click the standing-approved macOS screen/audio prompt Allow button."""
     from src.control.mac_click import click_macos_privacy_prompt_allow
 
+    click_visible_ui = visible_ui
+    pre_click_resample: dict[str, Any] | None = None
+    if not dry_run:
+        pre_click_resample = _lightning_visible_ui_snapshot(
+            include_ocr=True,
+            bridge_refine=False,
+        )
+        if (
+            isinstance(pre_click_resample, dict)
+            and pre_click_resample.get("status") == "OK"
+        ):
+            if not _lightning_external_system_prompt_visible(pre_click_resample):
+                result = {
+                    "status": "OK",
+                    "reason": "system_privacy_prompt_already_clear_on_resample",
+                    "visible_ui": visible_ui,
+                    "pre_click_resample_visible_ui": pre_click_resample,
+                    "click_result": {
+                        "status": "SKIPPED",
+                        "reason": "system_privacy_prompt_already_clear_on_resample",
+                    },
+                    "standing_permission": "user_granted_click_allow_on_macos_popups",
+                }
+                return _lightning_accept_system_privacy_prompt_clear(
+                    result,
+                    pre_click_resample,
+                    dry_run=dry_run,
+                    success_reason="system_privacy_prompt_already_clear_on_resample",
+                )
+            click_visible_ui = pre_click_resample
+
     click_result = click_macos_privacy_prompt_allow(
-        visible_ui,
+        click_visible_ui,
         dry_run=dry_run,
         settle_seconds=0.35,
         hold_seconds=0.08,
@@ -13661,9 +13692,12 @@ def _lightning_click_system_privacy_prompt_allow(
         "status": click_result.get("status", "ERROR"),
         "reason": "system_privacy_prompt_allow_clicked",
         "visible_ui": visible_ui,
+        "click_visible_ui": click_visible_ui,
         "click_result": click_result,
         "standing_permission": "user_granted_click_allow_on_macos_popups",
     }
+    if pre_click_resample is not None:
+        result["pre_click_resample_visible_ui"] = pre_click_resample
     if click_result.get("status") != "OK":
         result["reason"] = click_result.get("reason") or "system_privacy_prompt_allow_failed"
         result["error"] = click_result.get("error")
@@ -13985,12 +14019,14 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
     dry_run: bool = False,
     max_clicks: int = 60,
     settle_seconds: float = 0.12,
-    max_wall_seconds: float | None = 60.0,
+    max_wall_seconds: float | None = 12.0,
+    max_capture_failures: int = 2,
 ) -> dict:
     """Click stacked macOS Allow prompts until full-screen OCR sees none."""
     if os.name == "nt":
         return {"status": "SKIPPED", "reason": "not_macos"}
     click_limit = max(1, int(max_clicks or 1))
+    capture_failure_limit = max(1, int(max_capture_failures or 1))
     wall_limit = (
         None
         if max_wall_seconds is None
@@ -14027,10 +14063,76 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
 
         if click.get("reason") == "fullscreen_screencapture_failed":
             capture_failures += 1
-            if capture_failures <= 5:
+            attempt_record["capture_failure_count"] = capture_failures
+            if capture_failures < capture_failure_limit:
                 if not dry_run:
                     time.sleep(min(0.75, settle_seconds + 0.25))
                 continue
+            visible_probe = _lightning_visible_ui_snapshot(
+                include_ocr=True,
+                bridge_refine=False,
+            )
+            attempt_record["post_capture_failure_visible_ui"] = (
+                _lightning_compact_prompt_clear_sample(visible_probe)
+            )
+            if (
+                isinstance(visible_probe, dict)
+                and visible_probe.get("status") == "OK"
+                and not _lightning_external_system_prompt_visible(visible_probe)
+            ):
+                return {
+                    "status": "OK",
+                    "reason": (
+                        "system_privacy_prompt_stack_already_clear_after_"
+                        "capture_failure_probe"
+                    ),
+                    "click_count": len(clicks),
+                    "clicks": clicks,
+                    "terminal_fullscreen_probe": click,
+                    "visible_probe": attempt_record[
+                        "post_capture_failure_visible_ui"
+                    ],
+                    "max_clicks": click_limit,
+                    "max_wall_seconds": wall_limit,
+                    "max_capture_failures": capture_failure_limit,
+                    "elapsed_wall_seconds": round(time.monotonic() - started, 3),
+                }
+            if (
+                isinstance(visible_probe, dict)
+                and visible_probe.get("status") == "OK"
+                and _lightning_external_system_prompt_visible(visible_probe)
+            ):
+                from src.control.mac_click import click_macos_privacy_prompt_allow
+
+                fallback_click = click_macos_privacy_prompt_allow(
+                    visible_probe,
+                    dry_run=dry_run,
+                    settle_seconds=0.25,
+                    hold_seconds=0.08,
+                )
+                attempt_record["window_allow_click_after_capture_failure"] = (
+                    fallback_click
+                )
+                if fallback_click.get("status") == "OK":
+                    clicks.append(attempt_record)
+                    capture_failures = 0
+                    if not dry_run and settle_seconds > 0:
+                        time.sleep(settle_seconds)
+                    continue
+            return {
+                "status": "BLOCKED",
+                "reason": "system_privacy_prompt_fullscreen_capture_failed",
+                "click_count": len(clicks),
+                "clicks": clicks,
+                "terminal_fullscreen_probe": click,
+                "visible_probe": attempt_record.get(
+                    "post_capture_failure_visible_ui"
+                ),
+                "max_clicks": click_limit,
+                "max_wall_seconds": wall_limit,
+                "max_capture_failures": capture_failure_limit,
+                "elapsed_wall_seconds": round(time.monotonic() - started, 3),
+            }
 
         target = click.get("target") if isinstance(click, dict) else None
         target_reason = (

@@ -35912,7 +35912,7 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_ocr_after_stale_click(
 ):
     prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
     pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
-    snapshots = iter([prompt_ui, pause_ui, pause_ui, pause_ui])
+    snapshots = iter([prompt_ui, prompt_ui, pause_ui, pause_ui, pause_ui])
     fullscreen_calls = []
     fullscreen_results = iter([
         {"status": "OK", "reason": "fullscreen_clicked"},
@@ -35956,6 +35956,7 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_drain_after_missing_win
 ):
     prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
     setup_ui = {"status": "OK", "visible_ui": "new_game_setup"}
+    snapshots = iter([prompt_ui, setup_ui, setup_ui, setup_ui])
     drain_calls = []
 
     monkeypatch.setattr(
@@ -35978,7 +35979,7 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_drain_after_missing_win
     monkeypatch.setattr(
         commands,
         "_lightning_visible_ui_snapshot",
-        lambda **_kwargs: setup_ui,
+        lambda **_kwargs: next(snapshots),
     )
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
@@ -35997,7 +35998,7 @@ def test_lightning_system_privacy_prompt_drains_large_fullscreen_stack(
 ):
     prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
     pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
-    snapshots = iter([prompt_ui, pause_ui, pause_ui, pause_ui])
+    snapshots = iter([prompt_ui, prompt_ui, pause_ui, pause_ui, pause_ui])
     fullscreen_calls = []
     fullscreen_results = iter(
         [{"status": "OK", "reason": "fullscreen_clicked"} for _ in range(14)]
@@ -36045,7 +36046,14 @@ def test_lightning_system_privacy_prompt_drains_reappearing_stability_prompt(
 ):
     prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
     setup_ui = {"status": "OK", "visible_ui": "new_game_setup"}
-    snapshots = iter([setup_ui, prompt_ui, setup_ui, setup_ui, setup_ui])
+    snapshots = iter([
+        prompt_ui,
+        setup_ui,
+        prompt_ui,
+        setup_ui,
+        setup_ui,
+        setup_ui,
+    ])
     drain_calls = []
 
     monkeypatch.setattr(
@@ -36150,6 +36158,7 @@ def test_lightning_privacy_prompt_allow_blocks_on_post_stack_resample_error(
     prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
     snapshots = iter([
         prompt_ui,
+        prompt_ui,
         {"status": "ERROR", "reason": "capture_failed_after_stack"},
     ])
     fullscreen_results = iter([
@@ -36186,6 +36195,39 @@ def test_lightning_privacy_prompt_allow_blocks_on_post_stack_resample_error(
         "status": "ERROR",
         "reason": "capture_failed_after_stack",
     }
+
+
+def test_lightning_prompt_stack_drain_stops_after_capture_failures_when_clear(
+    monkeypatch,
+):
+    fullscreen_calls = []
+    pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
+
+    monkeypatch.setattr(commands.os, "name", "posix")
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
+        lambda **kwargs: fullscreen_calls.append(kwargs)
+        or {"status": "ERROR", "reason": "fullscreen_screencapture_failed"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: pause_ui,
+    )
+
+    result = commands._lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
+        max_clicks=10,
+        max_capture_failures=2,
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == (
+        "system_privacy_prompt_stack_already_clear_after_capture_failure_probe"
+    )
+    assert result["click_count"] == 0
+    assert len(fullscreen_calls) == 2
 
 
 def test_lightning_privacy_prompt_stack_drain_blocks_on_click_limit(monkeypatch):
