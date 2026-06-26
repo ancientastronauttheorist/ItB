@@ -34604,6 +34604,14 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_ocr_after_stale_click(
     pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
     snapshots = iter([prompt_ui, pause_ui])
     fullscreen_calls = []
+    fullscreen_results = iter([
+        {"status": "OK", "reason": "fullscreen_clicked"},
+        {
+            "status": "ERROR",
+            "reason": "fullscreen_allow_target_missing",
+            "target": {"reason": "allow_ocr_target_missing"},
+        },
+    ])
 
     monkeypatch.setattr(
         "src.control.mac_click.click_macos_privacy_prompt_allow",
@@ -34618,15 +34626,90 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_ocr_after_stale_click(
         commands,
         "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
         lambda **kwargs: fullscreen_calls.append(kwargs)
-        or {"status": "OK", "reason": "fullscreen_clicked"},
+        or next(fullscreen_results),
     )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
 
     result = commands._lightning_click_system_privacy_prompt_allow(prompt_ui)
 
     assert result["status"] == "OK"
     assert result["reason"] == "system_privacy_prompt_allow_clicked_fullscreen_ocr"
-    assert fullscreen_calls == [{"dry_run": False}]
+    assert fullscreen_calls == [{"dry_run": False}, {"dry_run": False}]
+    assert result["prompt_stack_drain"]["click_count"] == 1
     assert result["post_fullscreen_click_visible_ui"] == pause_ui
+
+
+def test_lightning_system_privacy_prompt_drains_large_fullscreen_stack(
+    monkeypatch,
+):
+    prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
+    pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
+    snapshots = iter([prompt_ui, pause_ui])
+    fullscreen_calls = []
+    fullscreen_results = iter(
+        [{"status": "OK", "reason": "fullscreen_clicked"} for _ in range(14)]
+        + [
+            {
+                "status": "ERROR",
+                "reason": "fullscreen_allow_target_missing",
+                "target": {"reason": "allow_ocr_target_missing"},
+            }
+        ]
+    )
+
+    monkeypatch.setattr(
+        "src.control.mac_click.click_macos_privacy_prompt_allow",
+        lambda _ui, **_kwargs: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: next(snapshots),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
+        lambda **kwargs: fullscreen_calls.append(kwargs)
+        or next(fullscreen_results),
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands._lightning_click_system_privacy_prompt_allow(prompt_ui)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+    assert len(fullscreen_calls) == 15
+    assert result["prompt_stack_drain"]["click_count"] == 14
+    assert result["prompt_stack_drain"]["reason"] == (
+        "system_privacy_prompt_stack_drained_fullscreen_ocr"
+    )
+    assert result["post_fullscreen_click_visible_ui"] == pause_ui
+
+
+def test_lightning_privacy_prompt_stack_drain_blocks_on_click_limit(monkeypatch):
+    fullscreen_calls = []
+
+    monkeypatch.setattr(commands.os, "name", "posix")
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
+        lambda **kwargs: fullscreen_calls.append(kwargs)
+        or {"status": "OK", "reason": "fullscreen_clicked"},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands._lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
+        max_clicks=3,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "system_privacy_prompt_stack_drain_click_limit"
+    assert result["click_count"] == 3
+    assert fullscreen_calls == [
+        {"dry_run": False},
+        {"dry_run": False},
+        {"dry_run": False},
+    ]
 
 
 def test_lightning_screenshot_failure_uses_fullscreen_ocr_when_available(
@@ -34635,10 +34718,11 @@ def test_lightning_screenshot_failure_uses_fullscreen_ocr_when_available(
     monkeypatch.setattr(commands.os, "name", "posix")
     monkeypatch.setattr(
         commands,
-        "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
+        "_lightning_drain_system_privacy_prompt_stack_fullscreen_ocr",
         lambda: {
             "status": "OK",
             "reason": "system_privacy_prompt_allow_fullscreen_ocr_clicked",
+            "click_count": 2,
         },
     )
 
@@ -34652,6 +34736,7 @@ def test_lightning_screenshot_failure_uses_fullscreen_ocr_when_available(
         == "clicked_standing_approved_privacy_prompt_allow_fullscreen_ocr"
     )
     assert result["initial_error"] == "could not create image from display"
+    assert result["click_count"] == 2
 
 
 def test_lightning_screenshot_failure_clicks_privacy_allow_fallback(monkeypatch):
@@ -34660,7 +34745,7 @@ def test_lightning_screenshot_failure_clicks_privacy_allow_fallback(monkeypatch)
     monkeypatch.setattr(commands.os, "name", "posix")
     monkeypatch.setattr(
         commands,
-        "_lightning_click_system_privacy_prompt_allow_fullscreen_ocr",
+        "_lightning_drain_system_privacy_prompt_stack_fullscreen_ocr",
         lambda: {"status": "ERROR", "reason": "fullscreen_unavailable"},
     )
     monkeypatch.setattr(

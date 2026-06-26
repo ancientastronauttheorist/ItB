@@ -13593,6 +13593,30 @@ def _lightning_click_system_privacy_prompt_allow(
     post_click = _lightning_visible_ui_snapshot(include_ocr=True)
     result["post_click_visible_ui"] = post_click
     if post_click.get("visible_ui") == "system_privacy_prompt":
+        stack_drain = _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
+            dry_run=dry_run,
+        )
+        result["prompt_stack_drain"] = stack_drain
+        if stack_drain.get("status") == "OK":
+            if not dry_run:
+                time.sleep(0.2)
+            current_ui = _lightning_visible_ui_snapshot(
+                include_ocr=True,
+                bridge_refine=False,
+            )
+            result["post_fullscreen_click_visible_ui"] = current_ui
+            if current_ui.get("visible_ui") != "system_privacy_prompt":
+                result["status"] = "OK"
+                result["reason"] = (
+                    "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                )
+                return result
+        elif stack_drain.get("status") == "BLOCKED":
+            result["status"] = "BLOCKED"
+            result["reason"] = stack_drain.get("reason") or (
+                "system_privacy_prompt_stack_drain_blocked"
+            )
+            return result
         retry_attempts: list[dict[str, Any]] = []
         current_ui = post_click
         for attempt in range(12):
@@ -13652,6 +13676,81 @@ def _lightning_click_system_privacy_prompt_allow(
         result["status"] = "BLOCKED"
         result["reason"] = "system_privacy_prompt_still_visible"
     return result
+
+
+def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
+    *,
+    dry_run: bool = False,
+    max_clicks: int = 60,
+    settle_seconds: float = 0.12,
+) -> dict:
+    """Click stacked macOS Allow prompts until full-screen OCR sees none."""
+    if os.name == "nt":
+        return {"status": "SKIPPED", "reason": "not_macos"}
+    click_limit = max(1, int(max_clicks or 1))
+    clicks: list[dict[str, Any]] = []
+    for attempt in range(click_limit):
+        click = _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
+            dry_run=dry_run,
+        )
+        attempt_record = {
+            "attempt": attempt + 1,
+            "fullscreen_allow_click": click,
+        }
+        if click.get("status") == "OK":
+            clicks.append(attempt_record)
+            if not dry_run and settle_seconds > 0:
+                time.sleep(settle_seconds)
+            continue
+
+        target = click.get("target") if isinstance(click, dict) else None
+        target_reason = (
+            target.get("reason")
+            if isinstance(target, dict)
+            else None
+        )
+        allow_absent = (
+            click.get("reason") == "fullscreen_allow_target_missing"
+            or target_reason == "allow_ocr_target_missing"
+        )
+        if allow_absent:
+            if clicks:
+                return {
+                    "status": "OK",
+                    "reason": "system_privacy_prompt_stack_drained_fullscreen_ocr",
+                    "click_count": len(clicks),
+                    "clicks": clicks,
+                    "terminal_fullscreen_probe": click,
+                    "max_clicks": click_limit,
+                }
+            return {
+                "status": "NOT_FOUND",
+                "reason": "system_privacy_prompt_allow_absent_fullscreen_ocr",
+                "click_count": 0,
+                "terminal_fullscreen_probe": click,
+                "max_clicks": click_limit,
+            }
+        return {
+            "status": click.get("status", "ERROR"),
+            "reason": "system_privacy_prompt_stack_drain_probe_failed",
+            "click_count": len(clicks),
+            "clicks": clicks,
+            "terminal_fullscreen_probe": click,
+            "max_clicks": click_limit,
+        }
+
+    return {
+        "status": "BLOCKED",
+        "reason": "system_privacy_prompt_stack_drain_click_limit",
+        "click_count": len(clicks),
+        "clicks": clicks,
+        "max_clicks": click_limit,
+        "next_step": (
+            "A very large macOS privacy prompt stack is still exposing Allow "
+            "after the hard click limit. Drain prompts manually or increase "
+            "the reviewed limit before resuming the timer."
+        ),
+    }
 
 
 def _lightning_allow_target_from_ocr_result(ocr: dict | None) -> dict:
@@ -16657,14 +16756,14 @@ def _lightning_recover_screenshot_privacy_prompt_failure(exc: Exception) -> dict
             "reason": "screenshot_failure_not_privacy_prompt_like",
             "error": message,
         }
-    fullscreen_click = _lightning_click_system_privacy_prompt_allow_fullscreen_ocr()
-    if fullscreen_click.get("status") == "OK":
-        fullscreen_click = dict(fullscreen_click)
-        fullscreen_click["reason"] = (
+    fullscreen_drain = _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr()
+    if fullscreen_drain.get("status") == "OK":
+        fullscreen_drain = dict(fullscreen_drain)
+        fullscreen_drain["reason"] = (
             "clicked_standing_approved_privacy_prompt_allow_fullscreen_ocr"
         )
-        fullscreen_click["initial_error"] = message
-        return fullscreen_click
+        fullscreen_drain["initial_error"] = message
+        return fullscreen_drain
     from src.control.mac_click import click_window_point
 
     click = click_window_point(
@@ -16679,7 +16778,7 @@ def _lightning_recover_screenshot_privacy_prompt_failure(exc: Exception) -> dict
         "reason": "clicked_standing_approved_privacy_prompt_allow_fallback",
         "standing_permission": "user_granted_click_allow_on_macos_popups",
         "initial_error": message,
-        "fullscreen_click": fullscreen_click,
+        "fullscreen_click": fullscreen_drain,
         "click_result": click,
     }
 
