@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-57 of 70 Steam-cache confirmed. **Stay With Me!** unlocked and synced on 2026-06-17, leaving 13 remaining; sorted by global unlock % (easiest first).
+58 of 70 achievements are Steam-cache or visible-popup confirmed. **Lightning War** popped on 2026-06-26 after reopening Into the Breach, leaving 12 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: **Stay With Me!** is complete. In Mist Eaters Easy R.S.T. play, the solver used Reverse Thrusters self-damage, smoke/Nanofilter repairs, and direct repair credit to cross the 12-HP single-island healing threshold after Blast Bunker / `Mission_Trapped`; `achievements --sync` moved the tracker to 57/70.
+Current milestone: **Lightning War** is complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -47,7 +47,7 @@ Current milestone: **Stay With Me!** is complete. In Mist Eaters Easy R.S.T. pla
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
 - [x] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod) — completed in Frozen Titans run `20260525_203546_657`
 - [x] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad — completed with 3x Ice Mech in run `20260526_204256_831`
-- [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
+- [x] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg] — visible achievement popup confirmed on 2026-06-26 after reopening Into the Breach
 - [x] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad] — completed in run `20260527_152006_916` after Archive HQ shop overpowers reached 30%
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle [Steel Judoka]
 
@@ -79,7 +79,7 @@ Current milestone: **Stay With Me!** is complete. In Mist Eaters Easy R.S.T. pla
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (57 Steam-cache confirmed)
+### Already Completed (58 Steam-cache or visible-popup confirmed)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -120,6 +120,7 @@ Current milestone: **Stay With Me!** is complete. In Mist Eaters Easy R.S.T. pla
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
 - [x] Distant Friends (11.3%) — Encounter a familiar face  [Frozen Titans]
 - [x] Mech Specialist (11.1%) — Beat game with 3 of the same Mech  [Custom Squad]
+- [x] Lightning War (10.5%) — First 2 islands in under 30 min  [Blitzkrieg]
 - [x] Change the Odds (10.4%) — Grid Defense to 30%+  [Random Squad]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Class Specialist (9.8%) — Beat game with 3 different Mechs from the same class  [Custom Squad]
