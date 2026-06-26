@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from PIL import Image
@@ -7,6 +8,7 @@ from src.loop.lightning_telemetry import (
     ScreenshotRecorder,
     TelemetryRecorder,
     generate_frame_delta_report,
+    prune_lightning_screenshot_runs,
 )
 
 
@@ -188,3 +190,66 @@ def test_screenshot_recorder_includes_game_timer_in_filename(tmp_path, monkeypat
     assert row["game_seconds"] == 64.0
     assert row["frame_clock"]["address"] == "0x00000000138a5900"
     assert row["clock_source"] == "memory_timeline_playtime_address"
+
+
+def test_prune_lightning_screenshot_runs_keeps_newest_three(tmp_path):
+    recordings = tmp_path / "recordings"
+    run_notes = tmp_path / "run_notes"
+    run_keys = [
+        "20260626_000001_000",
+        "20260626_000002_000",
+        "20260626_000003_000",
+        "20260626_000004_000",
+    ]
+    for index, run_id in enumerate(run_keys, start=1):
+        screenshots = recordings / run_id / "telemetry" / "screenshots"
+        screenshots.mkdir(parents=True)
+        image = screenshots / "frame.png"
+        Image.new("RGB", (4, 4), (index, index, index)).save(image)
+        mtime = 1_800_000_000 + index
+        os.utime(image, (mtime, mtime))
+        os.utime(screenshots, (mtime, mtime))
+        os.utime(recordings / run_id, (mtime, mtime))
+    old_notes = run_notes / "lightning_war_smoke_2026-06-01" / "screenshots"
+    old_notes.mkdir(parents=True)
+    Image.new("RGB", (4, 4), (1, 1, 1)).save(old_notes / "old.png")
+    top_level_note = run_notes / "old_probe.png"
+    Image.new("RGB", (4, 4), (1, 1, 1)).save(top_level_note)
+    old_mtime = 1_700_000_000
+    os.utime(old_notes / "old.png", (old_mtime, old_mtime))
+    os.utime(old_notes, (old_mtime, old_mtime))
+    os.utime(top_level_note, (old_mtime, old_mtime))
+
+    result = prune_lightning_screenshot_runs(
+        recordings_root=recordings,
+        run_notes_root=run_notes,
+        max_runs=3,
+    )
+
+    assert result["status"] == "OK"
+    assert set(result["retained_run_keys"]) == set(run_keys[-3:])
+    assert not (recordings / run_keys[0] / "telemetry" / "screenshots").exists()
+    assert not old_notes.exists()
+    assert not top_level_note.exists()
+    for run_id in run_keys[-3:]:
+        assert (recordings / run_id / "telemetry" / "screenshots").exists()
+
+
+def test_telemetry_recorder_applies_screenshot_run_retention(tmp_path):
+    recordings = tmp_path / "recordings"
+    for index in range(4):
+        run_id = f"20260626_00000{index}_000"
+        screenshots = recordings / run_id / "telemetry" / "screenshots"
+        screenshots.mkdir(parents=True)
+        image = screenshots / "frame.png"
+        Image.new("RGB", (4, 4), (index, index, index)).save(image)
+        mtime = 1_800_000_000 + index
+        os.utime(image, (mtime, mtime))
+        os.utime(screenshots, (mtime, mtime))
+
+    recorder = TelemetryRecorder("20260626_000004_000", root=recordings)
+
+    assert recorder.retention_result["status"] == "OK"
+    assert not (
+        recordings / "20260626_000000_000" / "telemetry" / "screenshots"
+    ).exists()

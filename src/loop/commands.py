@@ -22368,6 +22368,9 @@ def cmd_lightning_capture(
     with notes_path.open("a") as fh:
         fh.write(note_line)
     pruned_screenshots = _lightning_prune_manual_screenshots(screenshots_dir)
+    from src.loop.lightning_telemetry import prune_lightning_screenshot_runs
+
+    retention = prune_lightning_screenshot_runs()
 
     result = {
         "status": "OK",
@@ -22380,6 +22383,7 @@ def cmd_lightning_capture(
         "window_bounds": bounds,
         "screenshot_cap": _lightning_manual_screenshot_cap(),
         "pruned_screenshots": pruned_screenshots,
+        "screenshot_retention": retention,
     }
     print("\n=== LIGHTNING CAPTURE ===")
     print(f"  label:      {label}")
@@ -22808,6 +22812,9 @@ def cmd_lightning_mark(
     events.append(event)
     _lightning_write_timing_events(events_path, events)
     _lightning_write_timing_markdown(markdown_path, events)
+    from src.loop.lightning_telemetry import prune_lightning_screenshot_runs
+
+    retention = prune_lightning_screenshot_runs()
 
     result = {
         "status": "OK",
@@ -22815,6 +22822,7 @@ def cmd_lightning_mark(
         "events_path": str(events_path),
         "markdown_path": str(markdown_path),
         "screenshot_path": str(target_screenshot),
+        "screenshot_retention": retention,
     }
     print("\n=== LIGHTNING TIMING MARK ===")
     print(f"  #{index}: {label}")
