@@ -16558,6 +16558,142 @@ def _lightning_terminal_text_haystack(value: Any, *, limit: int = 48) -> str:
     return " ".join(parts)
 
 
+def _lightning_terminal_text_time_pod_failure_only(text: str) -> bool:
+    """True only when every failed-objective-looking row is a Time Pod row."""
+    raw_text = str(text or "")
+    if not raw_text.strip():
+        return False
+    lowered = raw_text.lower()
+    hard_phrases = {
+        phrase
+        for phrase in _LIGHTNING_TERMINAL_OUTCOME_PHRASES
+        if phrase not in {"failed", "(failed)"}
+    }
+    if any(phrase in lowered for phrase in hard_phrases):
+        return False
+    if re.search(r"(?<![a-z0-9])k\.?i\.?a\.?(?![a-z0-9])", lowered):
+        return False
+
+    marked_text = re.sub(
+        r"(?i)(\(?failed\)?|failure)\s+(?=[A-Z])",
+        r"\1\n",
+        raw_text,
+    )
+    rows = [row.strip() for row in re.split(r"[\r\n]+", marked_text) if row.strip()]
+    failure_rows = [
+        row
+        for row in rows
+        if re.search(r"(?i)\bfailed\b|\bfailure\b|\(failed\)", row)
+    ]
+    if not failure_rows:
+        return False
+    return all("timepod" in re.sub(r"[^a-z0-9]+", "", row.lower()) for row in failure_rows)
+
+
+def _lightning_speed_policy_source_has_forbidden_terminal(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key in _LIGHTNING_TERMINAL_OUTCOME_FLAG_KEYS:
+            flag_evidence = _lightning_terminal_flag_value_evidence(
+                key,
+                value.get(key),
+                path=(str(key),),
+            )
+            if flag_evidence is not None and not _lightning_speed_policy_failure_is_time_pod(
+                flag_evidence,
+                source=value,
+            ):
+                return True
+        for key, nested in value.items():
+            key_lower = str(key).lower()
+            if (
+                key_lower in {"failed", "objective_failed"}
+                or key_lower.endswith("_failed")
+            ) and nested is True:
+                compact = re.sub(
+                    r"[^a-z0-9]+",
+                    "",
+                    _lightning_terminal_text_haystack(value).lower(),
+                )
+                if "timepod" not in compact:
+                    return True
+            if (
+                key_lower in {"status", "state", "result", "outcome"}
+                and isinstance(nested, str)
+                and nested.strip().lower() in {"failed", "failure", "lost"}
+            ):
+                compact = re.sub(
+                    r"[^a-z0-9]+",
+                    "",
+                    _lightning_terminal_text_haystack(value).lower(),
+                )
+                if "timepod" not in compact:
+                    return True
+            if _lightning_speed_policy_source_has_forbidden_terminal(nested):
+                return True
+        return False
+    if isinstance(value, list):
+        if all(isinstance(item, str) for item in value):
+            text_rows = [str(item).strip() for item in value]
+            for index, text in enumerate(text_rows):
+                if _lightning_standalone_failure_marker(text):
+                    context = _lightning_nearest_failure_context(text_rows, index)
+                    context_text = context[1] if context is not None else ""
+                    compact = re.sub(r"[^a-z0-9]+", "", context_text.lower())
+                    if "timepod" not in compact:
+                        return True
+                    continue
+                if _lightning_terminal_text_match(text) is not None and not (
+                    _lightning_terminal_text_time_pod_failure_only(text)
+                ):
+                    return True
+            return any(
+                _lightning_speed_policy_source_has_forbidden_terminal(item)
+                for item in value
+                if not isinstance(item, str)
+            )
+        return any(_lightning_speed_policy_source_has_forbidden_terminal(item) for item in value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return False
+        match = _lightning_terminal_text_match(text)
+        if match is None:
+            return False
+        return not _lightning_terminal_text_time_pod_failure_only(text)
+    return False
+
+
+def _lightning_speed_policy_failure_is_time_pod(
+    evidence: dict,
+    *,
+    source: Any = None,
+) -> bool:
+    context_text = evidence.get("context_text")
+    if isinstance(context_text, str):
+        compact_context = re.sub(r"[^a-z0-9]+", "", context_text.lower())
+        if "timepod" in compact_context:
+            return True
+    for key in ("text", "value"):
+        value = evidence.get(key)
+        if isinstance(value, str) and _lightning_terminal_text_time_pod_failure_only(value):
+            return True
+    if isinstance(source, str):
+        return _lightning_terminal_text_time_pod_failure_only(source)
+    compact = re.sub(
+        r"[^a-z0-9]+",
+        "",
+        " ".join(
+            part
+            for part in (
+                _lightning_terminal_text_haystack(evidence),
+                _lightning_terminal_text_haystack(source),
+            )
+            if part
+        ).lower(),
+    )
+    return "timepod" in compact and "fail" in compact
+
+
 def _lightning_speed_policy_accepts_terminal_evidence(
     evidence: dict,
     *,
@@ -16576,16 +16712,9 @@ def _lightning_speed_policy_accepts_terminal_evidence(
     )
     if not failureish:
         return False
-    haystack = " ".join(
-        part
-        for part in (
-            _lightning_terminal_text_haystack(evidence),
-            _lightning_terminal_text_haystack(source),
-        )
-        if part
-    )
-    compact = re.sub(r"[^a-z0-9]+", "", haystack.lower())
-    return "timepod" in compact and "fail" in compact
+    if _lightning_speed_policy_source_has_forbidden_terminal(source):
+        return False
+    return _lightning_speed_policy_failure_is_time_pod(evidence, source=source)
 
 
 def _lightning_terminal_visual_kia_evidence(
@@ -18089,6 +18218,8 @@ def _lightning_ensure_pause_state(
 def _lightning_pause_guard_decision(
     visible_ui: dict,
     live_snapshot: dict | None = None,
+    *,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict:
     """Decide whether the timer pause guard may click Pause on this screen."""
     visible_name = visible_ui.get("visible_ui") if isinstance(visible_ui, dict) else None
@@ -18161,7 +18292,10 @@ def _lightning_pause_guard_decision(
                 "runner has standing approval to click Allow and resample."
             ),
         }
-    terminal_evidence = _lightning_terminal_outcome_evidence(visible_ui)
+    terminal_evidence = _lightning_terminal_outcome_evidence(
+        visible_ui,
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
+    )
     if terminal_evidence is not None:
         return {
             "status": "BLOCKED",
@@ -18312,6 +18446,7 @@ def _lightning_timer_pause_guard_once(
     verify_sample_seconds: float = 0.25,
     reason: str = "lightning_pause_guard",
     bridge_refine_before_pause: bool = True,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict:
     """Click Pause from timer-bearing safe screens, including reward panels."""
     session = _load_session()
@@ -18336,7 +18471,11 @@ def _lightning_timer_pause_guard_once(
             and bridge_refine.get("status") == "OK"
             else _lightning_live_snapshot()
         )
-    decision = _lightning_pause_guard_decision(visible_ui, live_snapshot)
+    decision = _lightning_pause_guard_decision(
+        visible_ui,
+        live_snapshot,
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
+    )
     base = {
         "visible_ui": visible_ui,
         "live_snapshot": live_snapshot,
@@ -18362,6 +18501,7 @@ def _lightning_timer_pause_guard_once(
                 sample_seconds=sample_seconds,
                 verify_sample_seconds=verify_sample_seconds,
                 reason=reason,
+                lightning_speed_loss_policy=lightning_speed_loss_policy,
             )
             retry["system_privacy_prompt_clear"] = prompt_result
             return retry
@@ -18516,6 +18656,7 @@ def cmd_lightning_pause_guard(
     dry_run: bool = False,
     click_ui: bool = True,
     once: bool = False,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict:
     """Cooperatively watch for safe timer screens and pause immediately."""
     started = time.monotonic()
@@ -18529,6 +18670,7 @@ def cmd_lightning_pause_guard(
             require_timer_growth=require_timer_growth,
             sample_seconds=sample_seconds,
             reason="lightning_pause_guard_watch",
+            lightning_speed_loss_policy=lightning_speed_loss_policy,
         )
         polls.append(poll)
         poll_status = poll.get("status")
@@ -18578,7 +18720,11 @@ def cmd_lightning_pause_guard(
     return result
 
 
-def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
+def _lightning_handle_visible_screen(
+    *,
+    dry_run: bool = False,
+    lightning_speed_loss_policy: bool = False,
+) -> dict:
     """Click the obvious continuation button for supported non-combat panels."""
     visible_ui = _lightning_audit_visible_ui_for_terminal_text(
         _lightning_visible_ui_snapshot()
@@ -18589,7 +18735,10 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
             "reason": "screen_classification_failed",
             "visible_ui": visible_ui,
         }
-    terminal_block = _lightning_terminal_panel_block(visible_ui)
+    terminal_block = _lightning_terminal_panel_block(
+        visible_ui,
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
+    )
     if terminal_block is not None:
         return terminal_block
 
@@ -18655,6 +18804,7 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
         terminal_block = _lightning_terminal_panel_block(
             fallback_visible_ui,
             reason="terminal_outcome_visible_after_reward_continue",
+            lightning_speed_loss_policy=lightning_speed_loss_policy,
         )
         if terminal_block is not None:
             terminal_block["control"] = control
@@ -18693,6 +18843,7 @@ def _lightning_handle_visible_screen(*, dry_run: bool = False) -> dict:
         terminal_block = _lightning_terminal_panel_block(
             fallback_visible_ui,
             reason="terminal_outcome_visible_after_perfect_reward_grid",
+            lightning_speed_loss_policy=lightning_speed_loss_policy,
         )
         if terminal_block is not None:
             terminal_block["control"] = control
@@ -20545,6 +20696,7 @@ def _lightning_pause_after_stop(
     click_ui: bool,
     dry_run: bool,
     reason: str,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict:
     """Attach a pause guard to a stopped conductor result when requested."""
     if not enabled:
@@ -20562,6 +20714,7 @@ def _lightning_pause_after_stop(
         click_ui=True,
         reason=reason,
         bridge_refine_before_pause=False,
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
     )
     result["next_step"] = (
         str(result.get("next_step") or "").rstrip()
@@ -21406,6 +21559,7 @@ def cmd_lightning_ui(
     expected_mission_id: str | None = None,
     route_routing: str = "lightning_war",
     allow_expected_preview_start: bool = False,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict:
     """Click a calibrated Lightning War hot-path UI control locally."""
     from src.control.mac_click import (
@@ -21452,7 +21606,10 @@ def cmd_lightning_ui(
         return result
 
     if control_slug in {"handle_screen", "screen", "clear_screen"}:
-        result = _lightning_handle_visible_screen(dry_run=dry_run)
+        result = _lightning_handle_visible_screen(
+            dry_run=dry_run,
+            lightning_speed_loss_policy=lightning_speed_loss_policy,
+        )
         print("\n=== LIGHTNING UI HANDLE SCREEN ===")
         print(f"  status:  {result.get('status')}")
         print(f"  control: {result.get('control') or result.get('recommended_control')}")
@@ -29943,6 +30100,7 @@ def cmd_lightning_attempt(
             pause_before_solve=pause_before_solve,
             pause_between_actions=pause_between_actions,
             frontier_diagnostics=frontier_diagnostics,
+            pause_on_stop=False,
         )
         action_record["combat_loop"] = loop
         result = {
@@ -34612,6 +34770,7 @@ def cmd_lightning_segment(
         click_ui=click_ui,
         dry_run=dry_run,
         reason="lightning_segment_stop",
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
     )
     _print_result(result)
     return result
@@ -39898,6 +40057,7 @@ def cmd_lightning_loop(
     pause_before_solve: bool = True,
     pause_between_actions: bool = False,
     frontier_diagnostics: bool = False,
+    pause_on_stop: bool | None = None,
 ) -> dict:
     """Run clean combat turns for Lightning War and click End Turn locally."""
     initial_bridge_resume = None
@@ -40271,6 +40431,18 @@ def cmd_lightning_loop(
         result["initial_bridge_resume"] = initial_bridge_resume
     if bridge_speed_output:
         result["bridge_speed_quiet_output"] = bridge_speed_output
+    result = _lightning_pause_after_stop(
+        result,
+        enabled=(
+            bool(lightning_speed_loss_policy)
+            if pause_on_stop is None
+            else bool(pause_on_stop)
+        ),
+        click_ui=True,
+        dry_run=False,
+        reason="lightning_loop_stop",
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
+    )
     if not quiet:
         _print_result(result)
     return result

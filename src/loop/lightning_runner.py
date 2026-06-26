@@ -1198,11 +1198,197 @@ def _segment_failure_evidence(segment: Any) -> dict[str, Any] | None:
     return evidence
 
 
+def _terminal_text_haystack(value: Any, *, limit: int = 48) -> str:
+    parts: list[str] = []
+
+    def collect(nested: Any) -> None:
+        if len(parts) >= limit:
+            return
+        if isinstance(nested, dict):
+            for key, item in nested.items():
+                if len(parts) >= limit:
+                    break
+                parts.append(str(key))
+                collect(item)
+            return
+        if isinstance(nested, list):
+            for item in nested:
+                if len(parts) >= limit:
+                    break
+                collect(item)
+            return
+        if nested is None:
+            return
+        if isinstance(nested, (str, int, float, bool)):
+            parts.append(str(nested))
+
+    collect(value)
+    return " ".join(parts)
+
+
+def _terminal_text_time_pod_failure_only(text: str) -> bool:
+    raw_text = str(text or "")
+    if not raw_text.strip():
+        return False
+    lowered = raw_text.lower()
+    hard_phrases = {
+        phrase
+        for phrase in TERMINAL_OUTCOME_PHRASES
+        if phrase not in {"failed", "(failed)"}
+    }
+    if any(phrase in lowered for phrase in hard_phrases):
+        return False
+    if re.search(r"(?<![a-z0-9])k\.?i\.?a\.?(?![a-z0-9])", lowered):
+        return False
+
+    marked_text = re.sub(
+        r"(?i)(\(?failed\)?|failure)\s+(?=[A-Z])",
+        r"\1\n",
+        raw_text,
+    )
+    rows = [row.strip() for row in re.split(r"[\r\n]+", marked_text) if row.strip()]
+    failure_rows = [
+        row
+        for row in rows
+        if re.search(r"(?i)\bfailed\b|\bfailure\b|\(failed\)", row)
+    ]
+    if not failure_rows:
+        return False
+    return all("timepod" in re.sub(r"[^a-z0-9]+", "", row.lower()) for row in failure_rows)
+
+
+def _speed_policy_source_has_forbidden_terminal(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key in TERMINAL_OUTCOME_FLAG_KEYS:
+            flag_evidence = _terminal_flag_value_evidence(
+                key,
+                value.get(key),
+                path=(str(key),),
+            )
+            if flag_evidence is not None and not _speed_policy_failure_is_time_pod(
+                flag_evidence,
+                source=value,
+            ):
+                return True
+        for key, nested in value.items():
+            key_lower = str(key).lower()
+            if (
+                key_lower in {"failed", "objective_failed"}
+                or key_lower.endswith("_failed")
+            ) and nested is True:
+                compact = re.sub(
+                    r"[^a-z0-9]+",
+                    "",
+                    _terminal_text_haystack(value).lower(),
+                )
+                if "timepod" not in compact:
+                    return True
+            if (
+                key_lower in {"status", "state", "result", "outcome"}
+                and isinstance(nested, str)
+                and nested.strip().lower() in {"failed", "failure", "lost"}
+            ):
+                compact = re.sub(
+                    r"[^a-z0-9]+",
+                    "",
+                    _terminal_text_haystack(value).lower(),
+                )
+                if "timepod" not in compact:
+                    return True
+            if _speed_policy_source_has_forbidden_terminal(nested):
+                return True
+        return False
+    if isinstance(value, list):
+        if all(isinstance(item, str) for item in value):
+            text_rows = [str(item).strip() for item in value]
+            for index, text in enumerate(text_rows):
+                if _standalone_failure_marker(text):
+                    context = _nearest_failure_context(text_rows, index)
+                    context_text = context[1] if context is not None else ""
+                    compact = re.sub(r"[^a-z0-9]+", "", context_text.lower())
+                    if "timepod" not in compact:
+                        return True
+                    continue
+                if _terminal_outcome_text_match(text) is not None and not (
+                    _terminal_text_time_pod_failure_only(text)
+                ):
+                    return True
+            return any(
+                _speed_policy_source_has_forbidden_terminal(item)
+                for item in value
+                if not isinstance(item, str)
+            )
+        return any(_speed_policy_source_has_forbidden_terminal(item) for item in value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return False
+        match = _terminal_outcome_text_match(text)
+        if match is None:
+            return False
+        return not _terminal_text_time_pod_failure_only(text)
+    return False
+
+
+def _speed_policy_failure_is_time_pod(
+    evidence: dict[str, Any],
+    *,
+    source: Any = None,
+) -> bool:
+    context_text = evidence.get("context_text")
+    if isinstance(context_text, str):
+        compact_context = re.sub(r"[^a-z0-9]+", "", context_text.lower())
+        if "timepod" in compact_context:
+            return True
+    for key in ("text", "value"):
+        value = evidence.get(key)
+        if isinstance(value, str) and _terminal_text_time_pod_failure_only(value):
+            return True
+    if isinstance(source, str):
+        return _terminal_text_time_pod_failure_only(source)
+    compact = re.sub(
+        r"[^a-z0-9]+",
+        "",
+        " ".join(
+            part
+            for part in (
+                _terminal_text_haystack(evidence),
+                _terminal_text_haystack(source),
+            )
+            if part
+        ).lower(),
+    )
+    return "timepod" in compact and "fail" in compact
+
+
+def _speed_policy_accepts_terminal_evidence(
+    evidence: dict[str, Any],
+    *,
+    source: Any = None,
+) -> bool:
+    if not evidence:
+        return False
+    kind = str(evidence.get("kind") or "")
+    phrase = str(evidence.get("phrase") or "").lower()
+    flag = str(evidence.get("flag") or "").lower()
+    failureish = (
+        kind in {"objective_failure_field", "split_objective_failure_text"}
+        or phrase in {"failed", "(failed)"}
+        or ("fail" in flag and "objective" in flag)
+    )
+    if not failureish:
+        return False
+    if _speed_policy_source_has_forbidden_terminal(source):
+        return False
+    return _speed_policy_failure_is_time_pod(evidence, source=source)
+
+
 def _terminal_outcome_evidence(
     value: Any,
     *,
     path: tuple[str, ...] = (),
     text_context: bool = False,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict[str, Any] | None:
     """Find explicit terminal/failure evidence in CV/OCR payloads."""
     if isinstance(value, dict):
@@ -1211,10 +1397,24 @@ def _terminal_outcome_evidence(
             path=path,
         )
         if structured_failure is not None:
-            return structured_failure
+            if not (
+                lightning_speed_loss_policy
+                and _speed_policy_accepts_terminal_evidence(
+                    structured_failure,
+                    source=value,
+                )
+            ):
+                return structured_failure
         split_failure = _split_objective_failure_evidence(value, path=path)
         if split_failure is not None:
-            return split_failure
+            if not (
+                lightning_speed_loss_policy
+                and _speed_policy_accepts_terminal_evidence(
+                    split_failure,
+                    source=value,
+                )
+            ):
+                return split_failure
         for key in TERMINAL_OUTCOME_FLAG_KEYS:
             flag_evidence = _terminal_flag_value_evidence(
                 key,
@@ -1222,7 +1422,14 @@ def _terminal_outcome_evidence(
                 path=path + (key,),
             )
             if flag_evidence is not None:
-                return flag_evidence
+                if not (
+                    lightning_speed_loss_policy
+                    and _speed_policy_accepts_terminal_evidence(
+                        flag_evidence,
+                        source=value,
+                    )
+                ):
+                    return flag_evidence
         for key, nested in value.items():
             key_text = str(key)
             child_text_context = (
@@ -1240,9 +1447,17 @@ def _terminal_outcome_evidence(
                 nested,
                 path=path + (key_text,),
                 text_context=child_text_context,
+                lightning_speed_loss_policy=lightning_speed_loss_policy,
             )
             if found is not None:
-                return found
+                if not (
+                    lightning_speed_loss_policy
+                    and _speed_policy_accepts_terminal_evidence(
+                        found,
+                        source=nested,
+                    )
+                ):
+                    return found
         return None
     if isinstance(value, list):
         for index, nested in enumerate(value):
@@ -1250,20 +1465,36 @@ def _terminal_outcome_evidence(
                 nested,
                 path=path + (str(index),),
                 text_context=text_context,
+                lightning_speed_loss_policy=lightning_speed_loss_policy,
             )
             if found is not None:
-                return found
+                if not (
+                    lightning_speed_loss_policy
+                    and _speed_policy_accepts_terminal_evidence(
+                        found,
+                        source=nested,
+                    )
+                ):
+                    return found
         return None
     if isinstance(value, str) and text_context:
         text = value.strip()
         match = _terminal_outcome_text_match(text)
         if match is not None:
-            return {
+            evidence = {
                 "kind": "terminal_text",
                 "path": ".".join(path),
                 **match,
                 "text": text[:240],
             }
+            if not (
+                lightning_speed_loss_policy
+                and _speed_policy_accepts_terminal_evidence(
+                    evidence,
+                    source=value,
+                )
+            ):
+                return evidence
     return None
 
 
@@ -2111,6 +2342,7 @@ class LightningWarRunner:
                 seconds=5.0,
                 interval=0.25,
                 once=True,
+                lightning_speed_loss_policy=cfg.speed_mode,
             )
         except Exception as exc:
             result = {
@@ -2151,6 +2383,7 @@ class LightningWarRunner:
                         seconds=5.0,
                         interval=0.25,
                         once=True,
+                        lightning_speed_loss_policy=cfg.speed_mode,
                     )
                 except Exception as exc:
                     result = {
@@ -3860,7 +4093,10 @@ class LightningWarRunner:
                 **_telemetry_errors_payload(telemetry_errors),
             )
 
-        terminal_evidence = _terminal_outcome_evidence(segment)
+        terminal_evidence = _terminal_outcome_evidence(
+            segment,
+            lightning_speed_loss_policy=self.config.speed_mode,
+        )
         if terminal_evidence is not None:
             event_error = self._best_effort_event(
                 "terminal_outcome_visible",
@@ -4345,6 +4581,7 @@ class LightningWarRunner:
                     commands.cmd_lightning_ui,
                     control="handle_screen",
                     dry_run=self.config.dry_run,
+                    lightning_speed_loss_policy=self.config.speed_mode,
                 )
             except Exception as exc:
                 return {
@@ -4852,7 +5089,10 @@ class LightningWarRunner:
                 "visible_ui": _compact(visible),
                 "segment_index": segment_index,
             }
-        terminal_evidence = _terminal_outcome_evidence(visible)
+        terminal_evidence = _terminal_outcome_evidence(
+            visible,
+            lightning_speed_loss_policy=self.config.speed_mode,
+        )
         if terminal_evidence is not None:
             return {
                 "status": "BLOCKED",
@@ -5002,7 +5242,10 @@ class LightningWarRunner:
                     return exception_block
                 result["post_visible_ui"] = _compact(post_visible)
                 post_name = _visible_ui_name(post_visible)
-                post_terminal_evidence = _terminal_outcome_evidence(post_visible)
+                post_terminal_evidence = _terminal_outcome_evidence(
+                    post_visible,
+                    lightning_speed_loss_policy=self.config.speed_mode,
+                )
                 if post_name in SYSTEM_BLOCKING_UIS:
                     result.update(
                         {
@@ -5121,6 +5364,7 @@ class LightningWarRunner:
                     commands.cmd_lightning_ui,
                     control="handle_screen",
                     dry_run=self.config.dry_run,
+                    lightning_speed_loss_policy=self.config.speed_mode,
                 )
             except Exception as exc:
                 return panel_exception_block(
@@ -5503,6 +5747,8 @@ class LightningWarRunner:
         ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
             try:
                 kwargs: dict[str, Any] = {"control": ui_control}
+                if ui_control == "handle_screen":
+                    kwargs["lightning_speed_loss_policy"] = self.config.speed_mode
                 if include_ocr:
                     kwargs["include_ocr"] = True
                 else:
@@ -5612,7 +5858,10 @@ class LightningWarRunner:
                 return block
             assert leave_screen is not None
             leave_visible_name = _visible_ui_name(leave_screen)
-            leave_terminal_evidence = _terminal_outcome_evidence(leave_screen)
+            leave_terminal_evidence = _terminal_outcome_evidence(
+                leave_screen,
+                lightning_speed_loss_policy=self.config.speed_mode,
+            )
             if leave_visible_name in SYSTEM_BLOCKING_UIS:
                 return _shop_block(
                     "external_system_prompt_visible",
@@ -5768,7 +6017,10 @@ class LightningWarRunner:
             return block
         assert handoff is not None
         handoff_name = _visible_ui_name(handoff)
-        handoff_terminal_evidence = _terminal_outcome_evidence(handoff)
+        handoff_terminal_evidence = _terminal_outcome_evidence(
+            handoff,
+            lightning_speed_loss_policy=self.config.speed_mode,
+        )
         if handoff_name in SYSTEM_BLOCKING_UIS:
             return _shop_block(
                 "external_system_prompt_visible",
@@ -6975,6 +7227,7 @@ class LightningWarRunner:
             visible,
             completed=completed,
             allow_menu_setup=allow_menu_setup,
+            lightning_speed_loss_policy=self.config.speed_mode,
         )
         proof_event(
             "completion_screen_proof",
@@ -7098,6 +7351,7 @@ class LightningWarRunner:
             completed=completed,
             allow_menu_setup=allow_menu_setup,
             source="completion_pause_peek",
+            lightning_speed_loss_policy=self.config.speed_mode,
         )
         assert self.telemetry is not None
         proof_event(
@@ -7253,7 +7507,10 @@ class LightningWarRunner:
                 "inferred_island_count": inferred_count,
                 "session": _session_summary(session),
             }
-        terminal_evidence = _terminal_outcome_evidence(proof_visible)
+        terminal_evidence = _terminal_outcome_evidence(
+            proof_visible,
+            lightning_speed_loss_policy=self.config.speed_mode,
+        )
         if terminal_evidence is not None:
             return {
                 "status": "BLOCKED",
@@ -7971,9 +8228,13 @@ def _completion_visible_screen_block(
     completed: list[str],
     allow_menu_setup: bool = False,
     source: str = "classify",
+    lightning_speed_loss_policy: bool = False,
 ) -> dict[str, Any] | None:
     visible_name = _visible_ui_name(visible)
-    terminal_evidence = _terminal_outcome_evidence(visible)
+    terminal_evidence = _terminal_outcome_evidence(
+        visible,
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
+    )
     if not isinstance(visible, dict) or visible.get("status") != "OK":
         return {
             "reason": "completion_screen_classification_failed",

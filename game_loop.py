@@ -591,6 +591,11 @@ def main():
         action="store_true",
         help="For paused visible-start controls, allow a named expected mission after OCR match even when route policy would veto it",
     )
+    p_lightning_ui.add_argument(
+        "--speed-loss-policy",
+        action="store_true",
+        help="Lightning War speed mode: allow Time Pod-only failed reward evidence",
+    )
 
     # lightning_pause_guard
     p_lightning_pause_guard = sub.add_parser(
@@ -617,6 +622,11 @@ def main():
         "--once",
         action="store_true",
         help="Poll once instead of watching for the full duration",
+    )
+    p_lightning_pause_guard.add_argument(
+        "--speed-loss-policy",
+        action="store_true",
+        help="Lightning War speed mode: allow Time Pod-only failed reward evidence",
     )
 
     # lightning_route_start
@@ -1244,6 +1254,19 @@ def main():
         "--frontier-diagnostics",
         action="store_true",
         help="Enable heavy lookahead/robust frontier diagnostics on safety blocks",
+    )
+    p_lightning_loop.add_argument(
+        "--pause-on-stop",
+        dest="pause_on_stop",
+        action="store_true",
+        default=None,
+        help="Force a pause guard when the Lightning loop returns",
+    )
+    p_lightning_loop.add_argument(
+        "--no-pause-on-stop",
+        dest="pause_on_stop",
+        action="store_false",
+        help="Do not run the final pause guard when the Lightning loop returns",
     )
     p_lightning_loop.set_defaults(pause_before_solve=True)
     p_lightning_loop.set_defaults(pause_between_actions=False)
@@ -2043,6 +2066,7 @@ def main():
             expected_mission_id=args.expected_mission_id,
             route_routing=args.route_routing,
             allow_expected_preview_start=args.allow_expected_preview_start,
+            lightning_speed_loss_policy=args.speed_loss_policy,
         )
     elif args.command == "lightning_pause_guard":
         cmd_lightning_pause_guard(
@@ -2054,6 +2078,7 @@ def main():
             dry_run=args.dry_run,
             click_ui=not args.no_click,
             once=args.once,
+            lightning_speed_loss_policy=args.speed_loss_policy,
         )
     elif args.command == "lightning_route_start":
         cmd_lightning_route_start(
@@ -2292,6 +2317,7 @@ def main():
             pause_before_solve=args.pause_before_solve,
             pause_between_actions=args.pause_between_actions,
             frontier_diagnostics=args.frontier_diagnostics,
+            pause_on_stop=args.pause_on_stop,
         )
     elif args.command == "lightning_attempt":
         cmd_lightning_attempt(

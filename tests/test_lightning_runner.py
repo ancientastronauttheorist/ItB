@@ -1032,6 +1032,111 @@ def test_terminal_outcome_evidence_handles_split_ocr_failed_with_context():
     }
 
 
+def test_terminal_outcome_evidence_speed_policy_allows_time_pod_only():
+    assert (
+        lightning_runner._terminal_outcome_evidence(
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "visible_text": "Region Secured\nProtect the Time Pod (Failed)",
+            },
+            lightning_speed_loss_policy=True,
+        )
+        is None
+    )
+    assert (
+        lightning_runner._terminal_outcome_evidence(
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "ocr_texts": [
+                    "Region Secured",
+                    "Protect the Time Pod",
+                    "(Failed)",
+                    "Continue",
+                ],
+            },
+            lightning_speed_loss_policy=True,
+        )
+        is None
+    )
+    assert (
+        lightning_runner._terminal_outcome_evidence(
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "objectives": [
+                    {"text": "Protect the Time Pod", "status": "failed"},
+                ],
+            },
+            lightning_speed_loss_policy=True,
+        )
+        is None
+    )
+
+
+def test_terminal_outcome_evidence_speed_policy_blocks_mixed_or_hard_terminal():
+    assert (
+        lightning_runner._terminal_outcome_evidence(
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "visible_text": (
+                    "Region Secured\n"
+                    "Protect the Time Pod (Failed)\n"
+                    "Defend the Train (Failed)"
+                ),
+            },
+            lightning_speed_loss_policy=True,
+        )
+        is not None
+    )
+    assert (
+        lightning_runner._terminal_outcome_evidence(
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "ocr_texts": [
+                    "Region Secured",
+                    "Protect the Time Pod",
+                    "(Failed)",
+                    "Defend the Train",
+                    "(Failed)",
+                ],
+            },
+            lightning_speed_loss_policy=True,
+        )
+        is not None
+    )
+    assert (
+        lightning_runner._terminal_outcome_evidence(
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "objectives": [
+                    {"text": "Protect the Time Pod", "status": "failed"},
+                    {"text": "Defend the Train", "status": "failed"},
+                ],
+            },
+            lightning_speed_loss_policy=True,
+        )
+        is not None
+    )
+    assert lightning_runner._terminal_outcome_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "visible_text": "Protect the Time Pod (Failed)\nTimeline Lost",
+        },
+        lightning_speed_loss_policy=True,
+    ) == {
+        "kind": "terminal_text",
+        "path": "visible_text",
+        "phrase": "timeline lost",
+        "text": "Protect the Time Pod (Failed)\nTimeline Lost",
+    }
+
+
 def test_terminal_outcome_evidence_handles_raw_ocr_text_payloads():
     assert lightning_runner._terminal_outcome_evidence(
         {
@@ -2474,6 +2579,82 @@ def test_handle_visible_panel_does_not_block_ocr_clean_kia_crop():
     assert result["visible_ui"]["screenshot_path"] == (
         "/tmp/intro_kia_crop_false_positive.png"
     )
+
+
+def test_handle_visible_panel_passes_speed_policy_to_screen_handler():
+    calls = []
+
+    def lightning_ui(*args, **kwargs):
+        calls.append(kwargs)
+        control = kwargs.get("control") or (args[0] if args else None)
+        if control == "classify":
+            return {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "recommended_control": "reward_continue",
+                "visible_text": "Region Secured\nProtect the Time Pod (Failed)",
+            }
+        if control == "handle_screen":
+            return {"status": "OK", "reason": "visible_panel_handled"}
+        raise AssertionError(f"unexpected control {control}")
+
+    result = make_runner(mode="speed")._handle_visible_panel(
+        SimpleNamespace(cmd_lightning_ui=lightning_ui),
+        segment_index=1,
+    )
+
+    assert result["status"] == "OK"
+    handle_calls = [call for call in calls if call.get("control") == "handle_screen"]
+    assert handle_calls == [
+        {
+            "control": "handle_screen",
+            "dry_run": False,
+            "lightning_speed_loss_policy": True,
+        }
+    ]
+
+
+def test_speed_mode_passes_policy_to_initial_pause_guard():
+    session = SimpleNamespace(
+        run_id="20260626_101010_001",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+    )
+    pause_guard_calls = []
+
+    def pause_guard(**kwargs):
+        pause_guard_calls.append(kwargs)
+        return pause_menu()
+
+    def segment(**_kwargs):
+        session.islands_completed = ["archive", "rst"]
+        return {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": "max_steps_reached",
+            "pause_guard": pause_menu(),
+        }
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=pause_guard,
+        cmd_lightning_ui=lambda *args, **kwargs: {
+            "status": "OK",
+            "visible_ui": "island_map",
+        },
+        cmd_lightning_preflight=lambda **_: preflight_pass(),
+        cmd_lightning_segment=segment,
+        cmd_lightning_peek=completion_peek(),
+    )
+
+    result = make_runner(mode="speed")._run_inner(commands)
+
+    assert result["status"] == "SUCCESS"
+    assert pause_guard_calls[0]["lightning_speed_loss_policy"] is True
 
 
 def test_runner_preserves_success_when_progress_event_write_raises():

@@ -3330,6 +3330,50 @@ def test_lightning_loop_quiet_compacts_last_turn_result(monkeypatch, capsys):
     assert "LIGHTNING LOOP START" not in capsys.readouterr().out
 
 
+def test_lightning_loop_speed_policy_pauses_on_stop_by_default(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    pause_calls = []
+
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "cmd_bridge_speed", lambda mode: {"status": "OK"})
+    monkeypatch.setattr(
+        commands,
+        "cmd_auto_turn",
+        lambda **kwargs: {"status": "TERMINAL_OR_MISSION_END", "turn": 1},
+    )
+
+    def fake_pause_after_stop(result, **kwargs):
+        pause_calls.append(kwargs)
+        return {**result, "pause_guard": {"status": "OK", "reason": kwargs["reason"]}}
+
+    monkeypatch.setattr(commands, "_lightning_pause_after_stop", fake_pause_after_stop)
+
+    result = commands.cmd_lightning_loop(
+        max_turns=1,
+        quiet=True,
+        pause_before_solve=False,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["reason"] == "TERMINAL_OR_MISSION_END"
+    assert result["pause_guard"] == {"status": "OK", "reason": "lightning_loop_stop"}
+    assert pause_calls == [
+        {
+            "enabled": True,
+            "click_ui": True,
+            "dry_run": False,
+            "reason": "lightning_loop_stop",
+            "lightning_speed_loss_policy": True,
+        }
+    ]
+
+
 def test_lightning_loop_passes_dirty_consent_to_first_turn_only(monkeypatch):
     session = RunSession(
         run_id="lw",
@@ -4634,6 +4678,75 @@ def test_lightning_pause_guard_blocks_terminal_evidence_before_pause():
     }
 
 
+def test_lightning_pause_guard_speed_policy_allows_time_pod_failure():
+    result = commands._lightning_pause_guard_decision(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "recommended_control": "reward_continue",
+            "visible_text": "Region Secured\nProtect the Time Pod (Failed)",
+        },
+        {"status": "NO_BRIDGE"},
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "safe_ui_pause_available"
+    assert result["pause_allowed"] is True
+
+
+def test_lightning_pause_guard_speed_policy_still_blocks_primary_failure():
+    result = commands._lightning_pause_guard_decision(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "recommended_control": "reward_continue",
+            "visible_text": "Region Secured\nDefend the Train (Failed)",
+        },
+        {"status": "NO_BRIDGE"},
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "terminal_outcome_visible"
+    assert result["pause_allowed"] is False
+    assert result["terminal_evidence"]["phrase"] == "(failed)"
+
+
+def test_lightning_pause_after_stop_propagates_speed_policy(monkeypatch):
+    calls = []
+
+    def fake_timer_pause_guard_once(**kwargs):
+        calls.append(kwargs)
+        return {"status": "OK", "reason": "pause_clicked"}
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_timer_pause_guard_once",
+        fake_timer_pause_guard_once,
+    )
+
+    result = commands._lightning_pause_after_stop(
+        {"status": "LIGHTNING_LOOP_STOPPED", "next_step": "Inspect."},
+        enabled=True,
+        click_ui=True,
+        dry_run=False,
+        reason="unit_stop",
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["pause_guard"] == {"status": "OK", "reason": "pause_clicked"}
+    assert calls == [
+        {
+            "dry_run": False,
+            "click_ui": True,
+            "reason": "unit_stop",
+            "bridge_refine_before_pause": False,
+            "lightning_speed_loss_policy": True,
+        }
+    ]
+
+
 def test_lightning_pause_guard_audits_ocr_before_pause(monkeypatch):
     session = RunSession(run_id="lw", squad="Blitzkrieg", difficulty=0)
     clicks = []
@@ -5679,6 +5792,43 @@ def test_lightning_speed_policy_allows_time_pod_failure_only():
         "field": "status",
         "value": "failed",
     }
+    assert commands._lightning_terminal_outcome_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "visible_text": (
+                "Region Secured\n"
+                "Protect the Time Pod (Failed)\n"
+                "Defend the Train (Failed)"
+            ),
+        },
+        lightning_speed_loss_policy=True,
+    ) is not None
+    assert commands._lightning_terminal_outcome_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "ocr_texts": [
+                "Region Secured",
+                "Protect the Time Pod",
+                "(Failed)",
+                "Defend the Train",
+                "(Failed)",
+            ],
+        },
+        lightning_speed_loss_policy=True,
+    ) is not None
+    assert commands._lightning_terminal_outcome_evidence(
+        {
+            "status": "OK",
+            "visible_ui": "reward_panel",
+            "objectives": [
+                {"text": "Protect the Time Pod", "status": "failed"},
+                {"text": "Defend the Train", "status": "failed"},
+            ],
+        },
+        lightning_speed_loss_policy=True,
+    ) is not None
 
 
 def test_lightning_terminal_outcome_detects_visual_kia_without_ocr(tmp_path):
@@ -5817,6 +5967,45 @@ def test_lightning_ui_handle_screen_blocks_structured_objective_before_click(
         "value": "failed",
     }
     assert calls == []
+
+
+def test_lightning_ui_handle_screen_speed_policy_clears_time_pod_only(monkeypatch):
+    calls = []
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "reward_panel",
+                "recommended_control": "reward_continue",
+                "visible_text": "Region Secured\nProtect the Time Pod (Failed)",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map",
+                "recommended_control": None,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: next(visible_states),
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control, **kwargs: calls.append((control, kwargs))
+        or {"status": "OK", "control": control},
+    )
+
+    result = commands.cmd_lightning_ui(
+        "handle_screen",
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "OK"
+    assert result["control"] == "reward_continue"
+    assert calls == [("reward_continue", {"dry_run": False})]
 
 
 def test_lightning_ui_handle_screen_blocks_string_terminal_flag_before_click(monkeypatch):

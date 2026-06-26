@@ -532,6 +532,7 @@
           <li><strong>2026-06-26 timer OCR edge:</strong> pause-menu timer OCR can drop the hour token and read <code>0h 0m 13s</code> as <code>Om 135</code>. This is valid early-run timer proof, not a reset reason.</li>
           <li><strong>2026-06-26 route edge:</strong> a pause menu can darken the mission preview enough that the yellow board score disappears while the preview-dialogue underlay remains strong. A highlighted preview board is also valid even when mission OCR is absent. Treat either as an existing preview and perform the paused preview-board commit retry without clearing advisor dialogue first.</li>
           <li><strong>2026-06-26 combat edge:</strong> Train turn 2 produced a top plan that was dirty only in Lightning-allowed ways: one grid/building hit and pod loss, no mech or train loss. In speed mode, do not spend 30-45 seconds widening to 10,000 clean candidates after the speed policy accepts that top line; execute the accepted trade and keep racing.</li>
+          <li><strong>2026-06-26 reward edge:</strong> <code>Protect the Time Pod (Failed)</code> is clearable only in Lightning speed mode and only when it is the lone failure. Mixed reward OCR such as Time Pod failed plus Train/objective failed, KIA, mission failed, or timeline lost remains a hard terminal stop.</li>
           <li><strong>Policy:</strong> if the route is late but deployment is proven, continue into deployment/combat and record the timing miss. Abandoning from deployment costs more than finishing and learning.</li>
           <li><strong>Still hard:</strong> no deployment proof by <code>0:45</code> remains an opening reset, and any ordinary mission over <code>3:00</code> remains a run reset.</li>
         </ul>
@@ -686,6 +687,7 @@
         <h2>Combat Policy</h2>
         <ul>
           <li>Use the hot path from clean combat: <code>lightning_loop --time-limit 2 --speed-loss-policy --destroy-time-pods --quiet</code>.</li>
+          <li>Direct speed-mode <code>lightning_loop</code> calls must pause on return; nested segment calls may opt out only when the enclosing conductor owns the final pause guard.</li>
           <li>Solve while paused through Lightning wrappers; ordinary bridge commands need a fresh heartbeat after unpause.</li>
           <li>Execute bridge-first with no pause between mech actions by default, verify predicted diffs, and re-solve after mismatch.</li>
           <li>Accept boring grid-safe plans over clever low-margin plans.</li>
@@ -696,7 +698,7 @@
       <article class="card">
         <h2>Reward + Shop</h2>
         <ul>
-          <li>Clear deterministic panels only after terminal OCR safety checks.</li>
+          <li>Clear deterministic panels only after terminal OCR safety checks; Time Pod-only failed text is the lone speed-mode exception.</li>
           <li>Ignore optional objectives, pods, and reputation efficiency unless free.</li>
           <li>Read Grid Power, buy Grid Power until max or reputation is exhausted, then exit shop and leave island immediately.</li>
           <li>No browsing, no reading item text live, no speculative purchases.</li>
