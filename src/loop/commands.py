@@ -25356,7 +25356,7 @@ def cmd_lightning_route_start(
         existing_preview_fast_start_mode = "preview-board"
         sequence_parts = _lightning_existing_preview_sequence_parts(
             start_mode=existing_preview_fast_start_mode,
-            dismiss_dialogue=True,
+            dismiss_dialogue=False,
             start_window_x=start_window_x,
             start_window_y=start_window_y,
         )
@@ -25398,7 +25398,7 @@ def cmd_lightning_route_start(
                         0.05,
                     )
                 elif kind == "start_visible":
-                    tuned["dismiss_dialogue"] = True
+                    tuned["dismiss_dialogue"] = False
                     tuned["fallback_control"] = None
                     tuned["fallback_settle_seconds"] = 0.0
                     tuned["no_fallback_reason"] = (
@@ -25523,7 +25523,7 @@ def cmd_lightning_route_start(
     if paused_existing_preview_start_only:
         click_result = _lightning_click_paused_preview_start_sequence(
             dry_run=dry_run,
-            dismiss_dialogue=True,
+            dismiss_dialogue=False,
             start_clicks=1,
             pause_after_start=True,
         )
