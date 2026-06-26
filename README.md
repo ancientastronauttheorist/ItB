@@ -16,6 +16,18 @@ Current milestone: **Lightning War**, **Feed the Flame**, and **Complete Victory
 
 The final approach combined three pieces. First, combat stayed boring and reliable: the Rust solver handled board tactics, preserved buildings and objectives, blocked spawns when useful, and reset aggressively on bad clicks or avoidable grid damage. Second, the menu/deployment path became data-driven: repeated screenshots and timing notes taught the agent when island buttons, mission previews, deployment confirm, rewards, shops, and leave-island prompts were actually actionable. Third, telemetry became sustainable: Lightning capture artifacts are now pruned as a rolling three-run screenshot buffer so high-frequency data collection can continue without bloating the SSD.
 
+The turning point was a human calibration Q&A before the long successful run. Codex had been over-weighting perfect play and route analysis; the user's answers redirected the work toward a timer-first machine:
+
+- The solver was already strong enough to handle almost any mission slate, so mission shopping was usually wasted timer.
+- The fastest route through mission preview was the little highlighted 8x8 preview board, not slow Start-text probing.
+- Deployment should use the existing fast helper/script instead of being reasoned through by the LLM.
+- Shop policy should be deterministic: read Grid Power, buy only enough Grid Power to max it, then leave immediately.
+- Advanced Edition could stay off, reducing chaos and research friction without blocking the achievement.
+- Frequent screenshot/timing collection was worth it, as long as the artifacts were kept in a bounded buffer.
+- The success condition could be trusted from the offline log, on-screen popup, or achievement tile color before Steam fully reconciled.
+
+That Q&A converted the task from "play Into the Breach well" into "execute a proof-gated speedrun transaction graph." The practical result was fewer live-clock deliberation loops, fewer exploratory UI clicks, faster reset decisions, and a much clearer split between combat correctness and UI speed. The detailed sprint plan lives in [docs/agent/lightning-war-proof-gated-sprint.html](docs/agent/lightning-war-proof-gated-sprint.html); its **Human Calibration**, **Preview Rule**, **Reward + Shop**, and timing sections are the preserved form of those answers.
+
 The main lesson for future hard achievements is that autonomous play needs different modes for different risks. In combat, correctness dominates. On maps, rewards, shops, and setup screens, deliberation is the danger, so fixed rules and prelearned coordinates win. For timer achievements, the LLM must never think while the game is unpaused; every uncertain UI state should become another short run-snapshot-pause experiment, and every failed attempt should leave behind sharper timing data for the next one.
 
 ---
