@@ -1910,7 +1910,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Injector hit on Scorpion1 at F2.
 // v284 - Arachnoid Injector is cardinal-line artillery. Off-axis bridge
 //   FireWeapon calls can ACK and spend the action while doing no damage.
-pub const SIMULATOR_VERSION: u32 = 284;
+// v285 - Raw queued targets are preserved as a fallback when normalized enemy
+//   targets collapse to origin/current, fixing BurnbugBoss post-enemy grid
+//   prediction in Arachnophiles Spider Breeding run 20260624_184517_189.
+//   ACID Arachnoid self-destruct also leaves an ACID pool on its death tile.
+pub const SIMULATOR_VERSION: u32 = 285;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

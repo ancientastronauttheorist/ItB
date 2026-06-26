@@ -300,6 +300,7 @@ pub struct JsonUnit {
     pub base_move: Option<u8>,
     pub weapons: Option<Vec<String>>,
     pub queued_target: Option<Vec<i8>>,
+    pub queued_target_raw: Option<Vec<i8>>,
     pub queued_origin: Option<Vec<i8>>,
     pub queued_target_normalized: Option<bool>,
     pub weapon_damage: Option<u16>,
@@ -758,6 +759,11 @@ pub fn board_from_json(json_str: &str)
             } else {
                 (-1, -1)
             };
+            let (raw_qtx, raw_qty) = if let Some(qt) = &ju.queued_target_raw {
+                if qt.len() >= 2 { (qt[0], qt[1]) } else { (-1, -1) }
+            } else {
+                (-1, -1)
+            };
             let (qox, qoy) = if let Some(qo) = &ju.queued_origin {
                 if qo.len() >= 2 { (qo[0], qo[1]) } else { (-1, -1) }
             } else if qtx >= 0 && qty >= 0 {
@@ -767,6 +773,9 @@ pub fn board_from_json(json_str: &str)
             };
             if qtx >= 0 && qty >= 0 {
                 flags |= UnitFlags::QUEUED_ORIGIN_SET;
+            }
+            if raw_qtx >= 0 && raw_qty >= 0 {
+                flags |= UnitFlags::QUEUED_RAW_TARGET_SET;
             }
             if qtx < 0 && ju.queued_target_normalized.unwrap_or(false) {
                 flags.remove(UnitFlags::HAS_QUEUED_ATTACK);
@@ -789,6 +798,8 @@ pub fn board_from_json(json_str: &str)
                 weapon2,
                 queued_target_x: qtx,
                 queued_target_y: qty,
+                queued_target_raw_x: raw_qtx,
+                queued_target_raw_y: raw_qty,
                 queued_origin_x: if qtx >= 0 && qty >= 0 { qox } else { -1 },
                 queued_origin_y: if qtx >= 0 && qty >= 0 { qoy } else { -1 },
                 weapon_damage: ju.weapon_damage.unwrap_or(0).min(u8::MAX as u16) as u8,

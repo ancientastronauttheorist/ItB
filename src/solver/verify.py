@@ -1387,7 +1387,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Injector hit on Scorpion1 at F2.
 # v284 - Arachnoid Injector is cardinal-line artillery. Off-axis bridge
 # FireWeapon calls can ACK and spend the action while doing no damage.
-SIMULATOR_VERSION = 284
+# v285 - Raw queued targets are preserved as a fallback when normalized enemy
+# targets collapse to origin/current, fixing BurnbugBoss post-enemy grid
+# prediction in Arachnophiles Spider Breeding run 20260624_184517_189.
+# ACID Arachnoid self-destruct also leaves an ACID pool on its death tile.
+SIMULATOR_VERSION = 285
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

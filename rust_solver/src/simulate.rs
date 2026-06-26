@@ -2984,7 +2984,16 @@ pub fn simulate_weapon_with(
     let temporary_unit_self_destruct =
         is_arachnoid_attack(weapon_id) || is_walking_bomb_trigger(weapon_id);
     if temporary_unit_self_destruct {
+        let death_x = board.units[attacker_idx].x;
+        let death_y = board.units[attacker_idx].y;
+        let leaves_acid_pool = board.units[attacker_idx].acid();
         board.units[attacker_idx].hp = 0;
+        if leaves_acid_pool {
+            let terrain = board.tile(death_x, death_y).terrain;
+            if !terrain.is_deadly_ground() || terrain == Terrain::Water {
+                leave_acid_pool_on_death(board, death_x, death_y);
+            }
+        }
     }
 
     // Self damage. Skipped for Charge weapons — sim_charge applies it inline
@@ -6785,6 +6794,34 @@ mod tests {
         assert_eq!(board.units[target].hp, 1);
         assert_eq!((board.units[target].x, board.units[target].y), (3, 5));
         assert_eq!(board.units[arachnoid].hp, 0);
+        assert_eq!(result.mechs_killed, 0);
+    }
+
+    #[test]
+    fn test_acid_arachnoid_self_destruct_leaves_acid_pool() {
+        let mut board = make_test_board();
+        let arachnoid = board.add_unit(Unit {
+            uid: 20,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            move_speed: 3,
+            base_move: 3,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::DeployUnitAracnoidAtk as u16),
+            ..Default::default()
+        });
+        board.units[arachnoid].set_type_name("DeployUnit_Aracnoid");
+        board.units[arachnoid].set_acid(true);
+        let target = add_enemy(&mut board, 21, 3, 4, 2);
+
+        let result = simulate_weapon(&mut board, arachnoid, WId::DeployUnitAracnoidAtk, 3, 4);
+
+        assert_eq!(board.units[target].hp, 1);
+        assert_eq!(board.units[arachnoid].hp, 0);
+        assert!(board.tile(3, 3).acid());
         assert_eq!(result.mechs_killed, 0);
     }
 

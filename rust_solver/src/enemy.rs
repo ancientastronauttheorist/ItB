@@ -1088,6 +1088,11 @@ pub fn simulate_enemy_attacks(
         let enemy_uid = enemy.uid;
         let orig = original_positions[ei];
         let queued_origin = queued_origin_for_attack(enemy, orig);
+        let raw_queued_target = if enemy.flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET) {
+            Some((enemy.queued_target_raw_x, enemy.queued_target_raw_y))
+        } else {
+            None
+        };
 
         // Look up actual weapon type from enemy pawn type
         let mut enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
@@ -1235,6 +1240,7 @@ pub fn simulate_enemy_attacks(
                         queued_origin.1,
                         qtx,
                         qty,
+                        raw_queued_target,
                     ) {
                         for (shot_dx, shot_dy) in [(dx, dy), (-dx, -dy)] {
                             if let Some((tx, ty)) = find_projectile_target_in_direction(
@@ -1259,6 +1265,7 @@ pub fn simulate_enemy_attacks(
                     queued_origin.1,
                     qtx,
                     qty,
+                    raw_queued_target,
                 ) {
                     let hit_was_object = {
                         let tile = board.tile(tx, ty);
@@ -1303,7 +1310,7 @@ pub fn simulate_enemy_attacks(
                     }
                     if wdef.projectile_grapple() {
                         if let Some(dir) = projectile_dir_from_queued_or_current(
-                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
+                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                         ) {
                             apply_projectile_grapple(board, ei, tx, ty, dir, hit_was_object, &mut result);
                         }
@@ -1673,7 +1680,7 @@ pub fn simulate_enemy_attacks(
                     // cardinal direction. When pushed, retrace direction from the ORIGINAL
                     // position so the attack fires correctly from the new position.
                     let Some((dx, dy)) = projectile_delta_from_queued_or_current(
-                        ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
+                        ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                     ) else {
                         continue;
                     };
@@ -1711,7 +1718,7 @@ pub fn simulate_enemy_attacks(
                 } else {
                     if enemy_wid == WId::BouncerAtkB {
                         let Some(dir) = projectile_dir_from_queued_or_current(
-                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
+                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                         ) else {
                             continue;
                         };
@@ -1756,7 +1763,7 @@ pub fn simulate_enemy_attacks(
                         // queued direction, then re-aims from the attacker's
                         // current tile after pushes, swaps, and teleports.
                         let Some((dx, dy)) = projectile_delta_from_queued_or_current(
-                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty,
+                            ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                         ) else {
                             continue;
                         };
@@ -2056,8 +2063,19 @@ fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
 
 /// Trace projectile from enemy position in queued direction.
 /// Returns (hit_x, hit_y) or None.
-fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
-    let (dx, dy) = projectile_delta_from_queued_or_current(ex, ey, orig_x, orig_y, qtx, qty)?;
+fn find_projectile_target(
+    board: &Board,
+    ex: u8,
+    ey: u8,
+    orig_x: u8,
+    orig_y: u8,
+    qtx: i8,
+    qty: i8,
+    raw_target: Option<(i8, i8)>,
+) -> Option<(u8, u8)> {
+    let (dx, dy) = projectile_delta_from_queued_or_current(
+        ex, ey, orig_x, orig_y, qtx, qty, raw_target,
+    )?;
     find_projectile_target_in_direction(board, ex, ey, dx, dy)
 }
 
@@ -2085,9 +2103,20 @@ fn projectile_delta_from_queued_or_current(
     orig_y: u8,
     qtx: i8,
     qty: i8,
+    raw_target: Option<(i8, i8)>,
 ) -> Option<(i8, i8)> {
     if let Some(delta) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty) {
         return Some(delta);
+    }
+    if let Some((raw_qtx, raw_qty)) = raw_target {
+        if let Some(delta) = projectile_delta_from_queued(orig_x, orig_y, raw_qtx, raw_qty) {
+            return Some(delta);
+        }
+        if (ex, ey) != (orig_x, orig_y) {
+            if let Some(delta) = cardinal_delta(ex, ey, raw_qtx, raw_qty) {
+                return Some(delta);
+            }
+        }
     }
     // Mid-turn bridge reads after a pushed projectile Vek can report the
     // queued target as the Vek's original tile, while queued_origin still
@@ -2142,8 +2171,11 @@ fn projectile_dir_from_queued_or_current(
     orig_y: u8,
     qtx: i8,
     qty: i8,
+    raw_target: Option<(i8, i8)>,
 ) -> Option<usize> {
-    let (dx, dy) = projectile_delta_from_queued_or_current(ex, ey, orig_x, orig_y, qtx, qty)?;
+    let (dx, dy) = projectile_delta_from_queued_or_current(
+        ex, ey, orig_x, orig_y, qtx, qty, raw_target,
+    )?;
     DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy)
 }
 
@@ -2646,6 +2678,32 @@ mod tests {
         assert_eq!(board.units[target_idx].hp, 2, "Hook deals 1 damage");
         assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (3, 2),
             "Hook pulls the hit pawn until adjacent to the Gastropod");
+    }
+
+    #[test]
+    fn test_burnbug_boss_uses_raw_queued_target_when_normalized_collapses() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(0, 2).terrain = Terrain::Building;
+        board.tile_mut(0, 2).building_hp = 1;
+
+        let boss_idx = add_enemy_with_type(&mut board, 212, 4, 2, 4, "BurnbugBoss", 4, 2);
+        board.units[boss_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+        board.units[boss_idx].queued_origin_x = 4;
+        board.units[boss_idx].queued_origin_y = 2;
+        board.units[boss_idx].queued_target_raw_x = 3;
+        board.units[boss_idx].queued_target_raw_y = 2;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(0, 2).building_hp, 0);
+        assert_eq!(board.grid_power, 5);
     }
 
     #[test]

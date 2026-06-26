@@ -159,6 +159,9 @@ bitflags! {
         /// player-phase retarget effects preserve the original attack vector
         /// after the attacker has been pushed.
         const QUEUED_ORIGIN_SET = 0b0100_0000_0000_0000_0000;
+        /// Bridge provided the raw, pre-normalization queued target. Used as
+        /// a direction fallback when normalized targets collapse to origin.
+        const QUEUED_RAW_TARGET_SET = 0b1000_0000_0000_0000_0000;
     }
 }
 
@@ -205,6 +208,8 @@ pub struct Unit {
     // Enemy intent
     pub queued_target_x: i8, // -1 = no target
     pub queued_target_y: i8,
+    pub queued_target_raw_x: i8,
+    pub queued_target_raw_y: i8,
     pub queued_origin_x: i8,
     pub queued_origin_y: i8,
     pub weapon_damage: u8,
