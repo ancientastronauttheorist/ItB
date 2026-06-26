@@ -5039,6 +5039,52 @@ class LightningWarRunner:
                         }
                     )
                 return result
+            if self.config.speed_mode and recommended == "mission_preview_board":
+                try:
+                    commit = self._span(
+                        "commit_visible_mission_preview",
+                        commands.cmd_lightning_ui,
+                        control="commit_live_preview",
+                        dry_run=self.config.dry_run,
+                    )
+                except Exception as exc:
+                    return panel_exception_block(
+                        "commit_visible_mission_preview_exception",
+                        label="commit_visible_mission_preview",
+                        exc=exc,
+                        handled=False,
+                        next_step=(
+                            "The live mission-preview commit helper raised. "
+                            "Stay paused after recovery and inspect the "
+                            "traceback/window evidence before any more route, "
+                            "deployment, or combat input."
+                        ),
+                    )
+                result = {
+                    "status": commit.get("status", "ERROR"),
+                    "reason": commit.get(
+                        "reason",
+                        "visible_mission_preview_committed",
+                    ),
+                    "handled": True,
+                    "visible_name": visible_name,
+                    "visible_ui": _compact(visible),
+                    "commit_control": "commit_live_preview",
+                    "commit_result": _compact(commit),
+                    "segment_index": segment_index,
+                }
+                if commit.get("status") not in {"OK", "DRY_RUN"}:
+                    result["handled"] = False
+                    result.setdefault(
+                        "next_step",
+                        (
+                            "The live mission-preview commit did not prove a "
+                            "safe post-click pause. Preserve the screenshot-"
+                            "pause evidence and reverify the screen state before "
+                            "continuing."
+                        ),
+                    )
+                return result
             return {
                 "status": "BLOCKED",
                 "reason": "mission_preview_requires_route_validation",
@@ -5180,6 +5226,66 @@ class LightningWarRunner:
         expected_visible_name: str,
         paused_panel: dict[str, Any],
     ) -> dict[str, Any]:
+        if expected_visible_name == "mission_preview_panel" and self.config.speed_mode:
+            try:
+                commit = self._span(
+                    "commit_paused_mission_preview",
+                    commands.cmd_lightning_ui,
+                    control="commit_preview",
+                    dry_run=self.config.dry_run,
+                )
+            except Exception as exc:
+                assert self.telemetry is not None
+                result = {
+                    "status": "BLOCKED",
+                    "reason": "commit_paused_mission_preview_exception",
+                    "span": "commit_paused_mission_preview",
+                    "handled": False,
+                    "visible_name": "mission_preview_panel",
+                    "expected_visible_name": expected_visible_name,
+                    "paused_panel": _compact(paused_panel),
+                    "segment_index": segment_index,
+                    "exception_type": type(exc).__name__,
+                    "error": str(exc),
+                    "traceback": traceback.format_exc(),
+                    "next_step": (
+                        "The paused mission-preview commit helper raised. "
+                        "Stay paused and inspect the traceback/window evidence "
+                        "before any more route, deployment, or combat input."
+                    ),
+                }
+                self._record_result_event(
+                    "commit_paused_mission_preview_exception",
+                    result,
+                )
+                return result
+            result = {
+                "status": commit.get("status", "ERROR"),
+                "reason": commit.get(
+                    "reason",
+                    "paused_mission_preview_committed",
+                ),
+                "handled": True,
+                "visible_name": "mission_preview_panel",
+                "expected_visible_name": expected_visible_name,
+                "paused_panel": _compact(paused_panel),
+                "commit_control": "commit_preview",
+                "commit_result": _compact(commit),
+                "segment_index": segment_index,
+            }
+            if commit.get("status") not in {"OK", "DRY_RUN"}:
+                result["handled"] = False
+                result.setdefault(
+                    "next_step",
+                    (
+                        "The paused mission-preview commit did not prove a "
+                        "safe post-click pause. Preserve the screenshot-pause "
+                        "evidence and do not continue until the screen state is "
+                        "reverified."
+                    ),
+                )
+            return result
+
         resume_control = "menu_continue"
         try:
             resume = self._span(

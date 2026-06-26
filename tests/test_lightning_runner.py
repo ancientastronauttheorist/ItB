@@ -8000,7 +8000,76 @@ def test_runner_blocks_visible_mission_preview_start_without_route_validation():
     assert result["reason"] == "visible_panel_blocked"
     assert result["panel"]["reason"] == "mission_preview_requires_route_validation"
     assert result["panel"]["recommended_control"] == "mission_preview_board"
-    assert controls == ["classify"]
+    assert controls == ["classify", "classify"]
+
+
+def test_speed_runner_commits_visible_mission_preview_board():
+    controls: list[str] = []
+
+    def lightning_ui(*args, **kwargs):
+        control = kwargs.get("control") or (args[0] if args else None)
+        controls.append(str(control))
+        if control == "classify":
+            return {
+                "status": "OK",
+                "visible_ui": "mission_preview_panel",
+                "recommended_control": "mission_preview_board",
+            }
+        if control == "commit_live_preview":
+            return {
+                "status": "OK",
+                "post_commit_guard": {
+                    "status": "OK",
+                    "started": True,
+                    "pause_verified": True,
+                },
+            }
+        return {"status": "OK", "control": control}
+
+    runner = make_runner(mode="speed")
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+
+    result = runner._handle_visible_panel(commands, segment_index=1)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "visible_mission_preview_committed"
+    assert result["handled"] is True
+    assert result["commit_control"] == "commit_live_preview"
+    assert controls == ["classify", "classify", "commit_live_preview"]
+
+
+def test_speed_runner_commits_paused_mission_preview_board_without_resume():
+    controls: list[str] = []
+
+    def lightning_ui(*args, **kwargs):
+        control = kwargs.get("control") or (args[0] if args else None)
+        controls.append(str(control))
+        if control == "commit_preview":
+            return {
+                "status": "OK",
+                "post_commit_guard": {
+                    "status": "OK",
+                    "started": True,
+                    "pause_verified": True,
+                },
+            }
+        return {"status": "OK", "control": control}
+
+    runner = make_runner(mode="speed")
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+
+    result = runner._handle_paused_segment_panel(
+        commands,
+        segment_index=1,
+        expected_visible_name="mission_preview_panel",
+        paused_panel=pause_menu(),
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "paused_mission_preview_committed"
+    assert result["handled"] is True
+    assert result["commit_control"] == "commit_preview"
+    assert controls == ["commit_preview"]
 
 
 def test_runner_clears_mission_preview_dialogue_then_blocks_start():
@@ -8023,7 +8092,7 @@ def test_runner_clears_mission_preview_dialogue_then_blocks_start():
         controls.append(str(control))
         if control == "classify":
             classify_count += 1
-            if classify_count == 1:
+            if classify_count <= 2:
                 return {
                     "status": "OK",
                     "visible_ui": "mission_preview_panel",
@@ -8051,7 +8120,12 @@ def test_runner_clears_mission_preview_dialogue_then_blocks_start():
     assert result["status"] == "BLOCKED"
     assert result["reason"] == "visible_panel_blocked"
     assert result["panel"]["reason"] == "mission_preview_requires_route_validation"
-    assert controls[:3] == ["classify", "dialogue_textbox", "classify"]
+    assert controls[:4] == [
+        "classify",
+        "classify",
+        "dialogue_textbox",
+        "classify",
+    ]
     assert controls[-1] == "classify"
     assert "mission_preview_board" not in controls
 
@@ -8099,7 +8173,7 @@ def test_runner_blocks_when_mission_preview_dialogue_clear_raises():
     assert result["panel"]["span"] == "clear_mission_preview_dialogue"
     assert result["panel"]["error"] == "dialogue clear crashed"
     assert result["panel"]["visible_name"] == "mission_preview_panel"
-    assert controls == ["classify", "dialogue_textbox"]
+    assert controls == ["classify", "classify", "dialogue_textbox"]
     assert any(
         name == "mission_preview_dialogue_clear_exception"
         and payload["error"] == "dialogue clear crashed"
@@ -8127,7 +8201,7 @@ def test_runner_blocks_when_mission_preview_post_classify_raises():
         controls.append(str(control))
         if control == "classify":
             classify_count += 1
-            if classify_count == 1:
+            if classify_count <= 2:
                 return {
                     "status": "OK",
                     "visible_ui": "mission_preview_panel",
@@ -8157,7 +8231,7 @@ def test_runner_blocks_when_mission_preview_post_classify_raises():
     assert result["panel"]["span"] == "classify_after_mission_preview_dialogue"
     assert result["panel"]["error"] == "post-dialogue classify crashed"
     assert result["panel"]["handle_result"]["status"] == "OK"
-    assert controls == ["classify", "dialogue_textbox", "classify"]
+    assert controls == ["classify", "classify", "dialogue_textbox", "classify"]
     assert any(
         name == "mission_preview_dialogue_post_classify_exception"
         and payload["error"] == "post-dialogue classify crashed"

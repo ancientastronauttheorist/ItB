@@ -111,13 +111,16 @@ Baseline policy:
   visible KIA/timeline-lost/failed-objective evidence behind the pause menu.
 - If startup pause guard saw a safe reward/continuation/shop panel before
   entering pause, the runner may resume once, clear that hidden panel, and
-  re-pause before combat. This startup shortcut deliberately excludes mission
-  previews so route validation still owns Start Mission clicks.
+  re-pause before combat.
 - A visible mission-preview dialogue may be dismissed with its text box, but a
-  visible `Start Mission` preview board is not treated as a generic safe panel.
-  The runner blocks with `mission_preview_requires_route_validation` instead of
-  clicking the board unless the route-start path has already proved the mission
-  identity.
+  visible `Start Mission` preview board is not treated as a generic safe panel
+  in baseline mode or lower-level manual handling. In autonomous speed mode, if
+  the runner is already in the screenshot/pause wrapper and the classifier sees
+  `recommended_control=mission_preview_board`, it may commit the visible preview
+  through `commit_preview` or `commit_live_preview`; those helpers click the
+  8x8 preview board, immediately screenshot, press Esc, and require post-click
+  pause proof plus deployment/combat transition evidence. Failed proof still
+  blocks instead of guessing.
 - On `island_complete_leave`, the runner reads save grid power, clicks Spend
   Reputation, buys Grid Power until max, verifies each purchase, then leaves.
   After closing the shop it reclassifies the screen and clicks Leave only after

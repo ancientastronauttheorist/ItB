@@ -20229,6 +20229,68 @@ def _lightning_click_paused_preview_start_sequence(
     return result
 
 
+def _lightning_click_live_preview_start_sequence(*, dry_run: bool = False) -> dict:
+    """Click the already-visible mission preview board, then immediately pause."""
+    from src.control.mac_click import _get_window_bounds
+
+    sequence = [
+        {
+            "kind": "control",
+            "control": "mission_preview_board",
+            "settle_seconds": 0.8,
+            "hold_seconds": 0.06,
+        }
+    ]
+    if dry_run:
+        return {
+            "status": "DRY_RUN",
+            "sequence": sequence,
+            "pause_after_start": True,
+            "post_commit_guard": "screenshot_then_esc_pause",
+        }
+
+    bounds = _get_window_bounds("Into the Breach")
+    if bounds is None:
+        return {"status": "ERROR", "error": "could not read app window bounds"}
+
+    steps = []
+    for item in sequence:
+        click = _lightning_click_control_with_bounds(
+            item["control"],
+            bounds=bounds,
+            dry_run=False,
+            settle_seconds=item["settle_seconds"],
+            hold_seconds=item["hold_seconds"],
+        )
+        steps.append(click)
+        if click.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "live_preview_start_click_failed",
+                "failed_step": item,
+                "steps": steps,
+                "window_bounds": bounds,
+            }
+
+    result = {"status": "OK", "steps": steps, "window_bounds": bounds}
+    post_commit_guard = _lightning_post_commit_screenshot_pause_guard(
+        reason="live_preview_start_sequence",
+    )
+    result["post_commit_guard"] = post_commit_guard
+    if post_commit_guard.get("status") != "OK":
+        result["status"] = post_commit_guard.get("status", "BLOCKED")
+        result["reason"] = post_commit_guard.get(
+            "reason",
+            "post_commit_pause_guard_failed",
+        )
+        if post_commit_guard.get("safe_to_think") is False:
+            result["safe_to_think"] = False
+    elif not post_commit_guard.get("started"):
+        result["status"] = "BLOCKED"
+        result["reason"] = "live_preview_commit_no_transition"
+    return result
+
+
 def _lightning_post_commit_screenshot_pause_guard(*, reason: str) -> dict:
     """Capture the live post-click frame, immediately Esc-pause, then classify."""
     from src.capture.window import take_screenshot
@@ -21403,6 +21465,18 @@ def cmd_lightning_ui(
     }:
         result = _lightning_click_paused_preview_start_sequence(dry_run=dry_run)
         print("\n=== LIGHTNING UI COMMIT PREVIEW ===")
+        print(f"  status: {result.get('status')}")
+        _print_result(result)
+        return result
+
+    if control_slug in {
+        "commit_live_preview",
+        "start_live_preview",
+        "live_preview_board",
+        "start_visible_preview_board",
+    }:
+        result = _lightning_click_live_preview_start_sequence(dry_run=dry_run)
+        print("\n=== LIGHTNING UI COMMIT LIVE PREVIEW ===")
         print(f"  status: {result.get('status')}")
         _print_result(result)
         return result
