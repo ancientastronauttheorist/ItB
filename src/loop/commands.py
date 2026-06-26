@@ -21584,6 +21584,7 @@ def cmd_lightning_ui(
                 "start_visible_mission",
                 "start_visible_dialogue",
                 "commit_preview",
+                "commit_live_preview",
                 "commit_preview_twice",
                 "commit_preview_dialogue",
                 "commit_preview_dialogue_twice",
