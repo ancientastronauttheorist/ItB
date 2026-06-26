@@ -922,6 +922,14 @@ def main():
                              help="Stress-test escape hatch: with exact dirty consent, "
                                   "allow objective loss/failure kinds")
     p_auto_turn.add_argument(
+        "--allow-timeline-collapse",
+        action="store_true",
+        help=(
+            "Stress-test escape hatch: with exact dirty consent, allow "
+            "predicted grid timeline collapse"
+        ),
+    )
+    p_auto_turn.add_argument(
         "--destroy-time-pods",
         action="store_true",
         help="Bias combat solving toward destroying Time Pods instead of collecting them",
@@ -1767,6 +1775,7 @@ def main():
                       dirty_consent_id=args.dirty_consent_id,
                       allow_protected_objective_loss=args.allow_protected_objective_loss,
                       allow_objective_loss=args.allow_objective_loss,
+                      allow_timeline_collapse=args.allow_timeline_collapse,
                       destroy_time_pods=args.destroy_time_pods,
                       pause_between_actions=args.pause_between_actions)
     elif args.command == "auto_mission":

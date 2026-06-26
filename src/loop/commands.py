@@ -841,6 +841,7 @@ def _dirty_consent_gate(
     consume: bool = True,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    allow_timeline_collapse: bool = False,
 ) -> dict | None:
     if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
         return None
@@ -862,6 +863,7 @@ def _dirty_consent_gate(
         k for k in kinds
         if k in NON_OVERRIDABLE_KINDS
         and not (k == "grid_timeline_collapse" and debug_collapse)
+        and not (k == "grid_timeline_collapse" and allow_timeline_collapse)
         and not (k == "grid_timeline_collapse" and allow_final_cave_resist)
         and not (
             allow_final_cave_pylon
@@ -26680,6 +26682,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   dirty_consent_id: str | None = None,
                   allow_protected_objective_loss: bool = False,
                   allow_objective_loss: bool = False,
+                  allow_timeline_collapse: bool = False,
                   destroy_time_pods: bool = False,
                   lightning_speed_loss_policy: bool = False,
                   resume_before_execute: bool = False,
@@ -27241,6 +27244,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             consume=False,
             allow_protected_objective_loss=allow_protected_objective_loss,
             allow_objective_loss=allow_objective_loss,
+            allow_timeline_collapse=allow_timeline_collapse,
         )
         if consent_error is not None:
             _print_result(consent_error)
@@ -27267,6 +27271,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                   allow_objective_loss_dirty=(
                                       allow_objective_loss
                                       or allow_lightning_speed_loss
+                                  ),
+                                  allow_timeline_collapse_dirty=(
+                                      allow_timeline_collapse
                                   ),
                                   allow_mech_loss_dirty=allow_lightning_speed_loss,
                                   allow_pod_loss_dirty=allow_lightning_pod_loss,

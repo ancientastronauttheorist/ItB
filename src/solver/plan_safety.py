@@ -934,6 +934,7 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                                *,
                                allow_dirty_plan: bool = False,
                                allow_timeline_collapse_debug: bool = False,
+                               allow_timeline_collapse_dirty: bool = False,
                                allow_kill_limit_objective_dirty: bool = False,
                                allow_protected_objective_loss_dirty: bool = False,
                                allow_objective_loss_dirty: bool = False,
@@ -970,6 +971,7 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
     if allow_dirty_plan:
         debug_collapse = (
             allow_timeline_collapse_debug
+            or allow_timeline_collapse_dirty
             or os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
         )
         allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(audit)
