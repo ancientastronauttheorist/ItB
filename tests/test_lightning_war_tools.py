@@ -856,9 +856,14 @@ def test_lightning_start_run_retries_when_first_island_click_stays_on_world_map(
     )
     monkeypatch.setattr(
         "src.control.mac_click.click_known_window_control",
-        lambda control: calls.append(control) or {"status": "OK", "control": control},
+        lambda control, **_kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
     )
-    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: next(snapshots),
+    )
     monkeypatch.setattr(commands, "_lightning_extract_red_regions_from_image", fake_regions)
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
     monkeypatch.setattr(
@@ -917,6 +922,8 @@ def test_lightning_start_run_speed_trusts_verified_pause_over_stale_picker(
     snapshots = iter(
         [
             {"status": "OK", "visible_ui": "island_select_or_unknown"},
+            {"status": "OK", "visible_ui": "island_select_or_unknown"},
+            {"status": "OK", "visible_ui": "island_select_or_unknown"},
             {
                 "status": "OK",
                 "visible_ui": "island_map_or_unknown",
@@ -954,9 +961,14 @@ def test_lightning_start_run_speed_trusts_verified_pause_over_stale_picker(
     )
     monkeypatch.setattr(
         "src.control.mac_click.click_known_window_control",
-        lambda control: calls.append(control) or {"status": "OK", "control": control},
+        lambda control, **_kwargs: calls.append(control)
+        or {"status": "OK", "control": control},
     )
-    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: next(snapshots),
+    )
     monkeypatch.setattr(
         commands,
         "_lightning_extract_red_regions_from_image",
@@ -971,7 +983,7 @@ def test_lightning_start_run_speed_trusts_verified_pause_over_stale_picker(
     monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
     monkeypatch.setattr(
         commands,
-        "_lightning_ensure_pause_state",
+        "_lightning_pause_after_known_live_burst",
         lambda **kwargs: {
             "status": "OK",
             "pause_verify": {
@@ -991,21 +1003,18 @@ def test_lightning_start_run_speed_trusts_verified_pause_over_stale_picker(
 
     assert result["status"] == "OK"
     assert result["reason"] == "first_island_paused"
-    assert result["post_first_island_retry_ui"]["screenshot_path"] == (
-        "/tmp/world-map-after-retry.png"
-    )
+    assert result["speed_post_setup_prompt_clear_gate"]["status"] == "OK"
+    assert result["speed_first_island_picker_wait"]["status"] == "OK"
     assert "first_island_selection_evidence" not in result
     assert result["session_current_island"] == {
         "status": "OK",
         "current_island": "archive",
     }
-    assert calls == [
-        "setup_modal_start",
-        "island_archive",
-        "island_archive",
-        "bottom_continue",
-        "bottom_continue",
-    ]
+    assert calls == (
+        ["setup_modal_start"]
+        + ["island_archive"] * commands._LIGHTNING_FAST_FIRST_ISLAND_CLICK_COUNT
+        + ["bottom_continue"] * commands._LIGHTNING_FAST_INTRO_CONTINUE_CLICK_COUNT
+    )
     assert len(saved) == 3
 
 
@@ -8994,7 +9003,11 @@ def test_lightning_handle_screen_clicks_system_privacy_prompt_allow(monkeypatch)
         "_lightning_audit_visible_ui_for_terminal_text",
         lambda ui: ui,
     )
-    monkeypatch.setattr(commands, "_lightning_terminal_panel_block", lambda ui: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_terminal_panel_block",
+        lambda ui, **_kwargs: None,
+    )
     monkeypatch.setattr(
         commands,
         "_lightning_click_system_privacy_prompt_allow",
@@ -9042,7 +9055,11 @@ def test_lightning_handle_screen_promotes_privacy_prompt_over_pause_ocr(monkeypa
         "_lightning_audit_visible_ui_for_terminal_text",
         lambda ui: ui,
     )
-    monkeypatch.setattr(commands, "_lightning_terminal_panel_block", lambda ui: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_terminal_panel_block",
+        lambda ui, **_kwargs: None,
+    )
     monkeypatch.setattr(
         commands,
         "_lightning_click_system_privacy_prompt_allow",
@@ -35681,7 +35698,7 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_ocr_after_stale_click(
 ):
     prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
     pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
-    snapshots = iter([prompt_ui, pause_ui])
+    snapshots = iter([prompt_ui, pause_ui, pause_ui, pause_ui])
     fullscreen_calls = []
     fullscreen_results = iter([
         {"status": "OK", "reason": "fullscreen_clicked"},
@@ -35716,6 +35733,8 @@ def test_lightning_system_privacy_prompt_uses_fullscreen_ocr_after_stale_click(
     assert fullscreen_calls == [{"dry_run": False}, {"dry_run": False}]
     assert result["prompt_stack_drain"]["click_count"] == 1
     assert result["post_fullscreen_click_visible_ui"] == pause_ui
+    assert result["prompt_clear_stability"]["status"] == "OK"
+    assert result["prompt_clear_stability"]["required_clear_samples"] == 3
 
 
 def test_lightning_system_privacy_prompt_uses_fullscreen_drain_after_missing_window_target(
@@ -35764,7 +35783,7 @@ def test_lightning_system_privacy_prompt_drains_large_fullscreen_stack(
 ):
     prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
     pause_ui = {"status": "OK", "visible_ui": "pause_menu"}
-    snapshots = iter([prompt_ui, pause_ui])
+    snapshots = iter([prompt_ui, pause_ui, pause_ui, pause_ui])
     fullscreen_calls = []
     fullscreen_results = iter(
         [{"status": "OK", "reason": "fullscreen_clicked"} for _ in range(14)]
@@ -35804,6 +35823,45 @@ def test_lightning_system_privacy_prompt_drains_large_fullscreen_stack(
         "system_privacy_prompt_stack_drained_fullscreen_ocr"
     )
     assert result["post_fullscreen_click_visible_ui"] == pause_ui
+    assert result["prompt_clear_stability"]["status"] == "OK"
+
+
+def test_lightning_system_privacy_prompt_drains_reappearing_stability_prompt(
+    monkeypatch,
+):
+    prompt_ui = {"status": "OK", "visible_ui": "system_privacy_prompt"}
+    setup_ui = {"status": "OK", "visible_ui": "new_game_setup"}
+    snapshots = iter([setup_ui, prompt_ui, setup_ui, setup_ui, setup_ui])
+    drain_calls = []
+
+    monkeypatch.setattr(
+        "src.control.mac_click.click_macos_privacy_prompt_allow",
+        lambda _ui, **_kwargs: {"status": "OK"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **_kwargs: next(snapshots),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_drain_system_privacy_prompt_stack_fullscreen_ocr",
+        lambda **kwargs: drain_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "reason": "system_privacy_prompt_stack_drained_fullscreen_ocr",
+            "click_count": 1,
+        },
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+
+    result = commands._lightning_click_system_privacy_prompt_allow(prompt_ui)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "system_privacy_prompt_allow_clicked"
+    assert result["prompt_clear_stability"]["status"] == "OK"
+    assert result["prompt_clear_stability"]["drains"][0]["click_count"] == 1
+    assert drain_calls == [{"dry_run": False}]
 
 
 def test_lightning_allow_target_ignores_bypass_sentence_fragments():

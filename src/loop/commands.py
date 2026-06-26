@@ -13660,11 +13660,14 @@ def _lightning_click_system_privacy_prompt_allow(
                 result["reason"] = "system_privacy_prompt_resample_failed"
                 return result
             if current_ui.get("visible_ui") != "system_privacy_prompt":
-                result["status"] = "OK"
-                result["reason"] = (
-                    "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                return _lightning_accept_system_privacy_prompt_clear(
+                    result,
+                    current_ui,
+                    dry_run=dry_run,
+                    success_reason=(
+                        "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                    ),
                 )
-                return result
             result["status"] = "BLOCKED"
             result["reason"] = "system_privacy_prompt_still_visible"
             return result
@@ -13698,11 +13701,14 @@ def _lightning_click_system_privacy_prompt_allow(
                 result["reason"] = "system_privacy_prompt_resample_failed"
                 return result
             if current_ui.get("visible_ui") != "system_privacy_prompt":
-                result["status"] = "OK"
-                result["reason"] = (
-                    "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                return _lightning_accept_system_privacy_prompt_clear(
+                    result,
+                    current_ui,
+                    dry_run=dry_run,
+                    success_reason=(
+                        "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                    ),
                 )
-                return result
         elif stack_drain.get("status") == "BLOCKED":
             result["status"] = "BLOCKED"
             result["reason"] = stack_drain.get("reason") or (
@@ -13742,11 +13748,14 @@ def _lightning_click_system_privacy_prompt_allow(
                         retry_attempts.append(attempt_record)
                         result["prompt_clear_retries"] = retry_attempts
                         result["post_fullscreen_click_visible_ui"] = current_ui
-                        result["status"] = "OK"
-                        result["reason"] = (
-                            "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                        return _lightning_accept_system_privacy_prompt_clear(
+                            result,
+                            current_ui,
+                            dry_run=dry_run,
+                            success_reason=(
+                                "system_privacy_prompt_allow_clicked_fullscreen_ocr"
+                            ),
                         )
-                        return result
                 attempt_record["settle_snapshots"] = settle_snapshots
             if isinstance(current_ui, dict) and current_ui.get("visible_ui") == "system_privacy_prompt":
                 followup_click = click_macos_privacy_prompt_allow(
@@ -13776,14 +13785,174 @@ def _lightning_click_system_privacy_prompt_allow(
                         retry_attempts.append(attempt_record)
                         result["prompt_clear_retries"] = retry_attempts
                         result["post_followup_visible_ui"] = current_ui
-                        result["status"] = "OK"
-                        result["reason"] = "system_privacy_prompt_allow_clicked_retry"
-                        return result
+                        return _lightning_accept_system_privacy_prompt_clear(
+                            result,
+                            current_ui,
+                            dry_run=dry_run,
+                            success_reason=(
+                                "system_privacy_prompt_allow_clicked_retry"
+                            ),
+                        )
             retry_attempts.append(attempt_record)
         result["prompt_clear_retries"] = retry_attempts
         result["post_fullscreen_click_visible_ui"] = current_ui
         result["status"] = "BLOCKED"
         result["reason"] = "system_privacy_prompt_still_visible"
+    else:
+        return _lightning_accept_system_privacy_prompt_clear(
+            result,
+            post_click,
+            dry_run=dry_run,
+            success_reason="system_privacy_prompt_allow_clicked",
+        )
+    return result
+
+
+def _lightning_compact_prompt_clear_sample(visible_ui: dict | None) -> dict:
+    if not isinstance(visible_ui, dict):
+        return {"status": "MISSING", "visible_ui": None}
+    return {
+        key: visible_ui.get(key)
+        for key in (
+            "status",
+            "visible_ui",
+            "recommended_control",
+            "confidence",
+            "screenshot_path",
+            "requires_user_authorization",
+            "next_step",
+        )
+        if key in visible_ui
+    }
+
+
+def _lightning_wait_for_system_privacy_prompt_clear_stable(
+    *,
+    initial_visible_ui: dict | None = None,
+    dry_run: bool = False,
+    required_clear_samples: int = 3,
+    poll_interval: float = 0.25,
+    max_polls: int = 24,
+    max_drain_rounds: int = 4,
+) -> dict:
+    """Require repeated prompt-free samples after clicking macOS Allow."""
+    required_samples = max(1, int(required_clear_samples or 1))
+    poll_count_limit = max(required_samples, int(max_polls or required_samples))
+    drain_round_limit = max(0, int(max_drain_rounds or 0))
+    consecutive_clear = 0
+    samples: list[dict[str, Any]] = []
+    drains: list[dict[str, Any]] = []
+    started = time.monotonic()
+    current_ui = initial_visible_ui
+    last_clear_ui: dict | None = None
+
+    for poll_index in range(poll_count_limit):
+        if current_ui is None:
+            current_ui = _lightning_visible_ui_snapshot(
+                include_ocr=True,
+                bridge_refine=False,
+            )
+        sample = _lightning_compact_prompt_clear_sample(current_ui)
+        sample["poll_index"] = poll_index
+        sample["prompt_visible"] = _lightning_external_system_prompt_visible(
+            current_ui,
+        )
+        sample["consecutive_clear_before"] = consecutive_clear
+        samples.append(sample)
+
+        if not isinstance(current_ui, dict) or current_ui.get("status") != "OK":
+            return {
+                "status": "BLOCKED",
+                "reason": "system_privacy_prompt_stability_resample_failed",
+                "samples": samples,
+                "drains": drains,
+                "elapsed_wall_seconds": round(time.monotonic() - started, 3),
+                "visible_ui": current_ui,
+            }
+
+        if sample["prompt_visible"]:
+            consecutive_clear = 0
+            if len(drains) >= drain_round_limit:
+                return {
+                    "status": "BLOCKED",
+                    "reason": "system_privacy_prompt_reappeared_after_allow",
+                    "samples": samples,
+                    "drains": drains,
+                    "required_clear_samples": required_samples,
+                    "max_drain_rounds": drain_round_limit,
+                    "elapsed_wall_seconds": round(time.monotonic() - started, 3),
+                    "visible_ui": current_ui,
+                }
+            drain = _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
+                dry_run=dry_run,
+            )
+            drains.append(drain)
+            if drain.get("status") != "OK":
+                return {
+                    "status": "BLOCKED",
+                    "reason": drain.get("reason")
+                    or "system_privacy_prompt_reappeared_drain_failed",
+                    "samples": samples,
+                    "drains": drains,
+                    "required_clear_samples": required_samples,
+                    "elapsed_wall_seconds": round(time.monotonic() - started, 3),
+                    "visible_ui": current_ui,
+                }
+            current_ui = None
+            if not dry_run and poll_interval > 0:
+                time.sleep(float(poll_interval))
+            continue
+
+        consecutive_clear += 1
+        sample["consecutive_clear_after"] = consecutive_clear
+        last_clear_ui = current_ui
+        if consecutive_clear >= required_samples:
+            return {
+                "status": "OK",
+                "reason": "system_privacy_prompt_clear_stable",
+                "samples": samples,
+                "drains": drains,
+                "required_clear_samples": required_samples,
+                "elapsed_wall_seconds": round(time.monotonic() - started, 3),
+                "visible_ui": last_clear_ui,
+            }
+        current_ui = None
+        if not dry_run and poll_interval > 0:
+            time.sleep(float(poll_interval))
+
+    return {
+        "status": "BLOCKED",
+        "reason": "system_privacy_prompt_clear_stability_timeout",
+        "samples": samples,
+        "drains": drains,
+        "required_clear_samples": required_samples,
+        "elapsed_wall_seconds": round(time.monotonic() - started, 3),
+        "visible_ui": last_clear_ui or current_ui,
+    }
+
+
+def _lightning_accept_system_privacy_prompt_clear(
+    result: dict,
+    visible_ui: dict,
+    *,
+    dry_run: bool,
+    success_reason: str,
+) -> dict:
+    stability = _lightning_wait_for_system_privacy_prompt_clear_stable(
+        initial_visible_ui=visible_ui,
+        dry_run=dry_run,
+    )
+    result["prompt_clear_stability"] = stability
+    if stability.get("status") != "OK":
+        result["status"] = "BLOCKED"
+        result["reason"] = stability.get("reason") or (
+            "system_privacy_prompt_clear_not_stable"
+        )
+        result["post_stability_visible_ui"] = stability.get("visible_ui")
+        return result
+    result["status"] = "OK"
+    result["reason"] = success_reason
+    result["post_stability_visible_ui"] = stability.get("visible_ui")
     return result
 
 
@@ -37918,7 +38087,7 @@ def cmd_lightning_start_run(
     if lightning_speed_loss_policy:
         time.sleep(0.03)
         post_setup_start_ui = _lightning_visible_ui_snapshot(
-            include_ocr=False,
+            include_ocr=True,
             bridge_refine=False,
         )
         result["speed_post_setup_prompt_probe"] = {
@@ -37954,6 +38123,46 @@ def cmd_lightning_start_run(
             post_setup_start_ui = (
                 prompt_recovery.get("visible_ui") or post_setup_start_ui
             )
+        prompt_clear_gate = _lightning_wait_for_system_privacy_prompt_clear_stable(
+            initial_visible_ui=post_setup_start_ui,
+            dry_run=False,
+            required_clear_samples=2,
+            poll_interval=0.15,
+            max_polls=10,
+            max_drain_rounds=3,
+        )
+        result["speed_post_setup_prompt_clear_gate"] = prompt_clear_gate
+        if prompt_clear_gate.get("status") != "OK":
+            result["status"] = "BLOCKED"
+            result["reason"] = prompt_clear_gate.get("reason") or (
+                "speed_post_setup_prompt_clear_not_stable"
+            )
+            result["next_step"] = (
+                "The post-setup macOS prompt state was not stably clear. "
+                "Do not run the first-island speed burst until setup/picker "
+                "proof is prompt-free."
+            )
+            _print_result(result)
+            return result
+        post_setup_start_ui = prompt_clear_gate.get("visible_ui") or post_setup_start_ui
+        first_island_picker_wait = _lightning_wait_for_first_island_picker(
+            max_seconds=1.2,
+            poll_interval=0.05,
+            min_polls=1,
+        )
+        result["speed_first_island_picker_wait"] = first_island_picker_wait
+        if first_island_picker_wait.get("status") != "OK":
+            result["status"] = "BLOCKED"
+            result["reason"] = first_island_picker_wait.get("reason") or (
+                "speed_first_island_picker_not_verified"
+            )
+            result["next_step"] = (
+                "The first-island picker was not proven before the speed "
+                "burst. Re-verify setup/picker before clicking the island."
+            )
+            _print_result(result)
+            return result
+        post_setup_start_ui = first_island_picker_wait.get("visible_ui") or post_setup_start_ui
         if os.environ.get("ITB_LIGHTNING_CHECK_POST_SETUP_TITLE") == "1":
             time.sleep(0.12)
             post_setup_start_ui = _lightning_visible_ui_snapshot(
