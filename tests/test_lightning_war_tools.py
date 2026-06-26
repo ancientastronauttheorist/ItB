@@ -8970,6 +8970,23 @@ def test_lightning_privacy_prompt_relaxed_detector_handles_small_prompt():
     assert result["relaxed_score"] >= 1.0
 
 
+def test_lightning_privacy_prompt_visual_match_accepts_shifted_stack():
+    score = {
+        "matched": True,
+        "strict_score": 0.46,
+        "relaxed_score": 1.0,
+        "checks": {
+            "card_mid_dark": 1.03,
+            "inner_mid_dark": 1.19,
+            "button_gray": 0.46,
+            "icon_color": 0.94,
+            "text_bright": 0.98,
+        },
+    }
+
+    assert commands._lightning_system_privacy_prompt_visual_match(score)
+
+
 def test_lightning_pause_guard_blocks_system_privacy_prompt():
     result = commands._lightning_pause_guard_decision(
         {
@@ -9195,6 +9212,56 @@ def test_lightning_forced_visible_ocr_promotes_privacy_prompt_from_any_ui(
     )
 
 
+def test_lightning_forced_visible_ocr_promotes_fragmented_privacy_prompt(
+    monkeypatch,
+    tmp_path,
+):
+    screenshot = tmp_path / "privacy_prompt_stack_over_setup.png"
+    screenshot.write_text("placeholder")
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda _path: {
+            "status": "OK",
+            "texts": [
+                "Dif f iculty Setup",
+                "Dif f iculty:",
+                "Easy",
+                "Advanced Equipment",
+                "Enable advanced weapons and pilots.",
+                "\"Codex\" is",
+                "uesting to bypass",
+                "the system priv",
+                "window",
+                "picker and direc",
+                "access your",
+                "screen and audio.",
+                "Allow",
+                "Open System Settings",
+                "Cance",
+            ],
+        },
+    )
+
+    result = commands._lightning_attach_visible_ocr(
+        {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "recommended_control": "dialogue_textbox",
+        },
+        screenshot,
+        force=True,
+    )
+
+    assert result["visible_ui"] == "system_privacy_prompt"
+    assert result["recommended_control"] is None
+    assert result["requires_user_authorization"] is True
+    assert result["system_prompt_ocr_override"]["from_visible_ui"] == (
+        "mission_preview_panel"
+    )
+
+
 def test_lightning_forced_visible_ocr_promotes_setup_from_preview(
     monkeypatch,
     tmp_path,
@@ -9281,6 +9348,22 @@ def test_lightning_setup_ocr_accepts_blitzkrieg_squad_setup():
                     "Change Squad",
                 ]
             ),
+        }
+    )
+
+
+def test_lightning_setup_ocr_accepts_difficulty_setup_advanced_equipment():
+    assert commands._lightning_setup_screen_ocr_match(
+        {
+            "status": "OK",
+            "ocr_texts": [
+                "Dif f iculty Setup",
+                "Dif f iculty:",
+                "Easy",
+                "Advanced Equipment",
+                "Enable advanced weapons and pilots.",
+                "Cance",
+            ],
         }
     )
 

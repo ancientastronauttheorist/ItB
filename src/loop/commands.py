@@ -13529,10 +13529,37 @@ def _lightning_system_privacy_prompt_ocr_match(visible_ui: dict | None) -> bool:
         return False
     text = "\n".join(_lightning_visible_ui_text_parts(visible_ui)).lower()
     compact = re.sub(r"[^a-z0-9]+", " ", text).strip()
+    tokens = set(compact.split())
     letters_only = re.sub(r"[^a-z0-9]+", "", text)
+    has_private_window = (
+        "private window" in compact
+        or "privatewindow" in letters_only
+        or (
+            "window" in tokens
+            and (
+                "priv" in tokens
+                or "private" in tokens
+                or "systempriv" in letters_only
+            )
+        )
+    )
+    has_screen_audio = (
+        "screen and audio" in compact
+        or "screenandaudio" in letters_only
+        or ("screen" in tokens and "audio" in tokens)
+    )
+    has_prompt_request = (
+        "requesting to bypass" in compact
+        or "requestingtobypass" in letters_only
+        or "uestingtobypass" in letters_only
+        or "directly access" in compact
+        or "directlyaccess" in letters_only
+        or ("direc" in tokens and "access" in tokens)
+    )
     consent_word_seen = (
         "allow" in compact
         or "open system settings" in compact
+        or "opensystemsettings" in letters_only
         or "bypass" in compact
         or "pass" in compact
         or "bypass" in letters_only
@@ -13540,12 +13567,9 @@ def _lightning_system_privacy_prompt_ocr_match(visible_ui: dict | None) -> bool:
         or "fass" in letters_only
     )
     return (
-        "private window" in compact
-        and "screen and audio" in compact
-        and (
-            "requesting to bypass" in compact
-            or "directly access" in compact
-        )
+        has_private_window
+        and has_screen_audio
+        and has_prompt_request
         and consent_word_seen
     )
 
@@ -14405,16 +14429,28 @@ def _lightning_setup_screen_ocr_match(visible_ui: dict | None) -> bool:
     has_title = "difficultysetup" in compact or (
         "difficulty" in tokens and "setup" in tokens
     )
-    has_advanced = "advancedcontent" in compact or (
-        "advanced" in tokens and "content" in tokens
+    has_advanced = (
+        "advancedcontent" in compact
+        or "advancedequipment" in compact
+        or ("advanced" in tokens and "content" in tokens)
+        or ("advanced" in tokens and "equipment" in tokens)
+        or (
+            "advanced" in tokens
+            and "weapons" in tokens
+            and "pilots" in tokens
+        )
     )
-    has_controls = "start" in tokens or "cancel" in tokens
+    has_controls = (
+        "start" in tokens
+        or "cancel" in tokens
+        or any(token.startswith("cance") for token in tokens)
+    )
     has_difficulty_choice = bool({"easy", "normal", "hard", "unfair"} & tokens)
     difficulty_setup = (
         has_title
         and has_advanced
-        and has_controls
         and has_difficulty_choice
+        and (has_controls or "difficulty" in compact)
     )
     if difficulty_setup:
         return True
@@ -14825,9 +14861,18 @@ def _lightning_system_privacy_prompt_visual_match(score: dict | None) -> bool:
     return (
         relaxed_score >= 1.0
         and card >= 0.95
-        and button_gray >= 1.0
-        and icon_color >= 1.0
-        and text_bright >= 1.0
+        and (
+            (
+                button_gray >= 1.0
+                and icon_color >= 1.0
+                and text_bright >= 1.0
+            )
+            or (
+                button_gray >= 0.12
+                and icon_color >= 0.90
+                and text_bright >= 0.75
+            )
+        )
     )
 
 
