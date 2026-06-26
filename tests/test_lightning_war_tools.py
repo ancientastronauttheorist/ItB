@@ -17035,7 +17035,7 @@ def test_lightning_segment_retries_paused_preview_after_no_region_from_commit_mi
     assert preview_retries == [
         {
             "dry_run": False,
-            "dismiss_dialogue": True,
+            "dismiss_dialogue": False,
             "start_clicks": 1,
             "pause_after_start": True,
         }

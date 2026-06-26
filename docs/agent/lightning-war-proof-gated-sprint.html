@@ -530,7 +530,7 @@
           <li><strong>Patch:</strong> paused active-mission deployment evidence suppresses first-route resets, route mismatches are ignored in speed mode after mission entry, and post-mission route gates no longer inherit stale mission timers.</li>
           <li><strong>2026-06-26 prompt edge:</strong> macOS privacy prompts may miss the window-local Allow target while a fullscreen OCR Allow click still clears the stack. Treat prompt-gone post-proof as recovered, then retry verified setup.</li>
           <li><strong>2026-06-26 timer OCR edge:</strong> pause-menu timer OCR can drop the hour token and read <code>0h 0m 13s</code> as <code>Om 135</code>. This is valid early-run timer proof, not a reset reason.</li>
-          <li><strong>2026-06-26 route edge:</strong> a pause menu can darken the mission preview enough that the yellow board score disappears while the preview-dialogue underlay remains strong. Treat that as an existing preview and perform the paused preview-board commit retry.</li>
+          <li><strong>2026-06-26 route edge:</strong> a pause menu can darken the mission preview enough that the yellow board score disappears while the preview-dialogue underlay remains strong. Treat that as an existing preview and perform the paused preview-board commit retry without clearing advisor dialogue first.</li>
           <li><strong>Policy:</strong> if the route is late but deployment is proven, continue into deployment/combat and record the timing miss. Abandoning from deployment costs more than finishing and learning.</li>
           <li><strong>Still hard:</strong> no deployment proof by <code>0:45</code> remains an opening reset, and any ordinary mission over <code>3:00</code> remains a run reset.</li>
         </ul>

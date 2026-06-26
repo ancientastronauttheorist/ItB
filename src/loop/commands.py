@@ -32788,7 +32788,7 @@ def _lightning_segment_retry_paused_preview_commit_after_no_region(
         return False
     retry = _lightning_click_paused_preview_start_sequence(
         dry_run=dry_run,
-        dismiss_dialogue=True,
+        dismiss_dialogue=False,
         start_clicks=1,
         pause_after_start=True,
     )
