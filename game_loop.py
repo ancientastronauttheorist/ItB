@@ -105,6 +105,7 @@ from src.loop.commands import (
     cmd_log,
     cmd_calibrate,
     cmd_achievements,
+    cmd_lightning_proof,
     cmd_replay,
     cmd_auto_turn,
     cmd_auto_mission,
@@ -731,11 +732,11 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="visible-text",
+        default="preview-board",
         help=(
             "How to commit the selected preview when no manual start point is "
-            "supplied. Lightning War defaults to visible Start Mission text; "
-            "the board/dialogue modes remain available for explicit probes."
+            "supplied. Lightning War defaults to the calibrated preview-board "
+            "click; visible-text remains available for explicit OCR probes."
         ),
     )
     p_lightning_route_start.add_argument("--dry-run", action="store_true")
@@ -903,7 +904,7 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="visible-text",
+        default="preview-board",
         help="Start sequence to place in emitted route candidate commands",
     )
     p_lightning_map_regions.add_argument(
@@ -998,6 +999,18 @@ def main():
         "--sync",
         action="store_true",
         help="Update data/achievements_detailed.json from Steam results",
+    )
+
+    # lightning_proof
+    p_lightning_proof = sub.add_parser(
+        "lightning_proof",
+        help="Check durable local proof for the Lightning War achievement",
+    )
+    p_lightning_proof.add_argument("--profile", default="Alpha")
+    p_lightning_proof.add_argument(
+        "--sync-steam-api",
+        action="store_true",
+        help="Also query the Steam Web API before deciding proof status",
     )
 
     # replay
@@ -1527,15 +1540,15 @@ def main():
         dest="route_speed_vetoes",
         action="store_false",
         help=(
-            "Ignore speed-only route vetoes after mission-id proof; combat "
-            "safety gates still apply"
+            "Use permissive exact-proof route starts; combat safety gates "
+            "still apply"
         ),
     )
     p_lightning_segment.add_argument(
         "--speed-route-vetoes",
         dest="route_speed_vetoes",
         action="store_true",
-        help="Respect Lightning War speed route vetoes during auto-start",
+        help="Opt into legacy Lightning War speed route vetoes during auto-start",
     )
     p_lightning_segment.add_argument(
         "--strict-route-match",
@@ -1563,7 +1576,7 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="visible-text",
+        default="preview-board",
         help="Start sequence to use with --route-visual-region-index",
     )
     p_lightning_segment.add_argument(
@@ -1582,7 +1595,7 @@ def main():
     p_lightning_segment.set_defaults(lightning_speed_loss_policy=True)
     p_lightning_segment.set_defaults(pause_before_solve=True)
     p_lightning_segment.set_defaults(pause_between_actions=False)
-    p_lightning_segment.set_defaults(route_speed_vetoes=True)
+    p_lightning_segment.set_defaults(route_speed_vetoes=False)
     p_lightning_segment.set_defaults(route_strict_mismatch=False)
 
     # lightning_start_run
@@ -1637,7 +1650,7 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="visible-text",
+        default="preview-board",
         help="Route-start sequence for the initial segment handoff",
     )
     p_lightning_start.add_argument(
@@ -1824,10 +1837,11 @@ def main():
             "dialogue-region-repeat-preview-board",
             "dialogue-region-repeat-preview-board-twice",
         ],
-        default="visible-text",
+        default="preview-board",
         help=(
             "Start sequence to use when autonomous route-auto-start commits "
-            "a mission. The default requires visible Start Mission text proof."
+            "a mission. The default clicks the calibrated preview board after "
+            "route proof."
         ),
     )
     p_lightning_auto.add_argument(
@@ -1836,15 +1850,15 @@ def main():
         action="store_false",
         default=None,
         help=(
-            "Ignore speed-only route vetoes after mission-id proof; combat "
-            "safety gates still apply"
+            "Use permissive exact-proof route starts; combat safety gates "
+            "still apply"
         ),
     )
     p_lightning_auto.add_argument(
         "--speed-route-vetoes",
         dest="route_speed_vetoes",
         action="store_true",
-        help="Respect Lightning War speed route vetoes during auto-start",
+        help="Opt into legacy Lightning War speed route vetoes during auto-start",
     )
     p_lightning_auto.add_argument(
         "--allow-objective-loss",
@@ -2197,6 +2211,11 @@ def main():
         cmd_calibrate()
     elif args.command == "achievements":
         cmd_achievements(sync_local=args.sync)
+    elif args.command == "lightning_proof":
+        cmd_lightning_proof(
+            profile=args.profile,
+            sync_steam_api=args.sync_steam_api,
+        )
     elif args.command == "replay":
         cmd_replay(args.run_id, args.turn, args.time_limit, mission=args.mission,
                    use_rust=not args.no_rust)

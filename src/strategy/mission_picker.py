@@ -548,6 +548,7 @@ def _apply_lightning_war_routing(
     slow_mission_ids = {
         "Mission_Artillery",
         "Mission_AcidStorm",
+        "Mission_Crack",
         "Mission_Dam",
         "Mission_ForestFire",
         "Mission_FreezeBldg",

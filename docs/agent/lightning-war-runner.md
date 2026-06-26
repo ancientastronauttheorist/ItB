@@ -45,8 +45,9 @@ Baseline assumptions:
   coordinate can select a mission region.
 - After the verified setup Start click, the start helper takes one classifier
   snapshot before the first-island click. Explicit system/privacy prompt
-  evidence blocks as `external_system_prompt_visible`; unknown classifier
-  evidence is recorded but does not by itself stop the just-started timeline.
+  evidence is standing-authorized for the runner to click `Allow` and resample;
+  unknown classifier evidence is recorded but does not by itself stop the
+  just-started timeline.
   Once the first-island click is sent, the helper first records a pending
   `lightning_first_island_clicked:<island>` session tag. It promotes that tag
   to `session.current_island` only after pause/corp-map evidence is verified or
@@ -128,13 +129,14 @@ Baseline policy:
   or unexpected panel. If grid state, a purchase, the shop-to-leave transition,
   or the post-leave handoff cannot be verified, it blocks with evidence.
 - Route auto-start is on by default, using the existing route validation inside
-  the Lightning segment helpers. Baseline mode uses
-  `routing=lightning_baseline` and keeps route vetoes enforced; speed mode uses
-  `routing=lightning_war`.
+  the Lightning segment helpers. Speed mode uses `routing=lightning_war`,
+  exact mission proof, and the calibrated preview-board commit; mission names
+  are not speed vetoes after proof. Baseline mode can still keep conservative
+  route vetoes when explicitly requested.
 - `--first-island` is the preferred first attempt, not a single-island prison.
   On safe pre-combat route-gate rerolls that abandon to verified setup, the
   runner rotates fresh first-island starts through
-  Archive -> R.S.T. -> Pinnacle -> Detritus, beginning with the configured
+  Archive -> Detritus -> Pinnacle, beginning with the configured
   preference. This spends the reroll budget exploring different corporate
   mission slates instead of repeatedly sampling one bad Archive opening.
 - When a visible map only yields unlabeled red-region candidates, the
@@ -157,9 +159,9 @@ Baseline policy:
   it does not silently continue a different corporate mission.
 - Route auto-start prefers a verified expected mission id. When the visible map
   only yields unlabeled red regions, the segment may click one region to open
-  its live bridge preview, but it clicks Start Mission only if that preview
-  exposes a mission id. In speed mode that mission must also pass the
-  Lightning War speed veto policy.
+  its live bridge/OCR preview, but it commits only if that preview proves the
+  mission id. In speed mode, exact mission proof is enough; mission names are
+  not speed vetoes.
   If the Lua bridge reports a mission preview while CV still sees multiple red
   map regions, the visible map planner treats that bridge preview as ambiguous
   and falls back to save/CV route candidates, even when save-to-visual
@@ -174,33 +176,32 @@ Baseline policy:
   provide a detected red-region candidate, auto-start blocks rather than
   guessing a coordinate. If a live preview names the wrong mission before Start,
   the segment rejects that visible candidate without clicking Start Mission.
-  If a preview probe itself blocks as vetoed, unverified, mismatched, or
+  If a preview probe itself blocks as unverified, mismatched, stale, or
   unassigned before Start Mission, the segment records that route candidate as
   rejected and first tries another distinct candidate from the same island route
   recommendation/route-start candidate list. It never reuses a rejected source
-  id, never treats OCR as Start authority, and still blocks before Start when
-  candidate evidence is ambiguous. Retrying from an already-open preview is not
-  a safe same-island scouting path: the guard blocks as
+  id and still blocks before Start when candidate evidence is ambiguous.
+  Exact OCR can identify a known preview when the bridge is silent, but
+  contradictory or unknown OCR is diagnostic only. Retrying from an
+  already-open preview is not a safe same-island scouting path: the guard blocks as
   `route_preview_existing_mission_preview_before_region_click` before clicking
   another region, and the outer runner may abandon/restart only while the stop
   is still preview-only. If a preview probe reaches turn-zero deployment before
-  the explicit Start click, the runner accepts it only when the actual mission
-  is present and not vetoed by the active baseline/speed route policy; vetoed or
-  missing mission ids still write route-mismatch evidence and recover instead of
-  deploying.
+  the explicit commit click, the runner accepts it only when the actual mission
+  is present and matches route proof; missing or mismatched mission ids still
+  write route-mismatch evidence and recover instead of deploying.
   If the bridge is absent but visible preview OCR matches known mission-specific
   text such as `Defend the Satellite Launches` or `Defend the Tanks`, the
   segment records `visible_preview_ocr` and uses that mission id for route
-  policy. Speed-mode routing treats OCR as veto-only evidence and still blocks
-  safe-looking OCR previews before Start. Baseline routing may use OCR as Start
-  authority only when the recognized mission id is not vetoed by the
-  conservative baseline route policy and the normal visible Start Mission /
-  post-start mission verification path still passes. A direct route-start with
-  `--expected-mission-id` may use matching baseline OCR when the bridge preview
-  stays silent, and baseline may also accept unknown/silent OCR when the
-  selected visual region already has a save-backed, non-vetoed expected mission
-  id; contradictory OCR still blocks, and the Start commit must still produce
-  fresh deployment or combat proof before deployment automation may run.
+  policy. Speed-mode routing may use exact recognized OCR as mission proof and
+  then commit through the calibrated preview-board click. Baseline routing may
+  keep conservative vetoes, but the normal post-start mission verification path
+  still must pass. A direct route-start with `--expected-mission-id` may use
+  matching OCR when the bridge preview stays silent, and baseline may also
+  accept unknown/silent OCR when the selected visual region already has a
+  save-backed, non-vetoed expected mission id; contradictory OCR still blocks,
+  and the Start commit must still produce fresh deployment or combat proof
+  before deployment automation may run.
   If the bridge preview already has a safe mission id but multiple red regions
   are visible, the segment may still validate that exact expected mission id
   through `lightning_route_start` before Start. If there is no expected mission
@@ -208,19 +209,17 @@ Baseline policy:
   mode still blocks as `route_preview_unassigned_multi_region_before_start`
   after preview evidence and before the irreversible Start Mission click.
   Baseline mode may proceed only when the verified bridge preview is
-  baseline-safe and CV finds a visible `Start Mission` button; if that button is
-  absent, it blocks as
-  `route_preview_unassigned_multi_region_start_button_missing_before_start`
-  instead of using the board-click fallback. The segment treats preview blocks
-  as rejected candidates first; the outer runner abandons to verified setup and
-  rerolls only after same-island candidates are exhausted or the stop is no
-  longer preview-only.
+  baseline-safe. Speed mode defaults to the calibrated preview-board commit
+  after exact proof, with visible Start text kept as an explicit fallback/probe
+  mode. The segment treats preview blocks as rejected candidates first; the
+  outer runner abandons to verified setup and rerolls only after same-island
+  candidates are exhausted or the stop is no longer preview-only.
   Avoid-listed missions such as Satellite, Dam, Disposal, Bad Repairs,
   fragile/counter objectives, and kill-limit/kill-count bonuses are blocked
   before deployment in baseline when the conservative route policy marks them
-  unsafe. Speed mode keeps the narrower Lightning War speed veto policy and
-  continues to require bridge-backed proof or explicit safe OCR-free routing
-  before fast starts.
+  unsafe. Speed mode is mission-agnostic after exact proof and still requires
+  bridge/OCR/save-backed identity plus post-start deployment or combat proof
+  before automation may run.
 - If old bridge JSON reports phase-unknown deployment while CV sees
   `island_map` or `island_map_or_unknown`, the runner treats the bridge data as
   stale and asks the save/CV route planner for verified red-region candidates
@@ -519,18 +518,17 @@ Primary recovery results:
   session progress; resume an existing combat timeline only after a fresh read
   plus solve, or restart only after fresh setup verification.
 - `external_system_prompt_visible` - a macOS privacy/system prompt is covering
-  the game window. The classifier returns `system_privacy_prompt` with no
-  recommended control; runner results keep the prompt kind and screenshot path
-  as evidence. Nested segment prompts carry `external_prompt_evidence.path`.
-  The nested evidence may come from `system_privacy_prompt`,
-  `requires_user_authorization`, a matched `external_prompt`, or prompt prose.
-  The detector has a strict crop path and a relaxed prompt path for the smaller
-  translucent macOS screen/audio prompt; both require distinctive privacy icon,
-  text, button, and card evidence before overriding in-game panel classifiers.
-  Route-gate restart attempts preserve this as the top-level stop reason instead
-  of wrapping it as a generic retry failure. The runner will not click `Allow`
-  or dismiss the prompt automatically. Ask the user for explicit authorization
-  or dismissal, then resume from the current visible game screen.
+  the game window. The classifier returns `system_privacy_prompt` with prompt
+  kind and screenshot path as evidence. Nested segment prompts carry
+  `external_prompt_evidence.path`. The nested evidence may come from
+  `system_privacy_prompt`, `requires_user_authorization`, a matched
+  `external_prompt`, or prompt prose. The detector has a strict crop path and a
+  relaxed prompt path for the smaller translucent macOS screen/audio prompt;
+  both require distinctive privacy icon, text, button, and card evidence before
+  overriding in-game panel classifiers. The autonomous runner has standing
+  permission to click the OCR-proven `Allow` button and resample. It blocks only
+  when the prompt remains, the target is not clickable, or follow-up
+  classification fails.
 - `route_auto_start_not_allowed` - the route scorer, visual assignment, or live
   preview probe did not prove a safe mission handoff, and either the retry
   budget is exhausted or the refusal happened after a non-preview
@@ -540,12 +538,11 @@ Primary recovery results:
   `route_preview_mission_unverified_before_start`, and
   `route_preview_unassigned_multi_region_before_start`, are restartable only
   while attempt budget remains and no combat signal is present.
-- The default `lightning_autonomous --max-attempts` budget is 20 because Archive
-  can repeatedly roll only unsafe visible starts, such as all candidates
-  OCR-vetoed as `Mission_Tanks`. These rerolls are still limited to
-  preview-only gates before any Start Mission click or combat signal, and they
-  primarily apply to speed-mode vetoes or baseline cases where mission identity
-  could not be proven.
+- The default `lightning_autonomous --max-attempts` budget is 20 because route
+  proof can still fail on stale, unknown, mismatched, or unassigned previews.
+  These rerolls are limited to preview-only gates before any Start Mission click
+  or combat signal, and they primarily apply to cases where mission identity
+  could not be proven or the UI transition failed to show deployment/combat.
 - `route_gate_restart_failed` - a route gate was restartable, but abandoning
   back to setup, restarting, or re-verifying the new setup failed. Inspect the
   nested `restart` evidence before any more UI clicks. If the nested reason is

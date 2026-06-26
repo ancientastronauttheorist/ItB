@@ -90,6 +90,14 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Options screen Close",
         settle_seconds=0.4,
     ),
+    "achievements_close": KnownWindowControl(
+        name="achievements_close",
+        window_x=1058,
+        window_y=644,
+        description="Achievements overlay Close",
+        settle_seconds=0.35,
+        hold_seconds=0.08,
+    ),
     "setup_start": KnownWindowControl(
         name="setup_start",
         window_x=1005,
@@ -216,9 +224,9 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "mission_preview_board": KnownWindowControl(
         name="mission_preview_board",
-        window_x=680,
-        window_y=360,
-        description="Large mission preview board / Start Mission text",
+        window_x=800,
+        window_y=470,
+        description="Mission preview 8x8 grid / Start Mission hover target",
         settle_seconds=0.18,
         hold_seconds=0.08,
     ),
@@ -564,6 +572,9 @@ _CONTROL_ALIASES = {
     "close_options": "options_close",
     "options_close": "options_close",
     "options": "options_close",
+    "close_achievements": "achievements_close",
+    "achievements_close": "achievements_close",
+    "achievements": "achievements_close",
     "abandon": "abandon_timeline",
     "abandon_yes": "abandon_confirm_yes",
     "confirm_abandon": "abandon_confirm_yes",
@@ -1050,6 +1061,9 @@ def click_macos_privacy_prompt_allow(
     result["control"] = "macos_privacy_prompt_allow"
     result["target"] = target
     result["coordinate_scale"] = {"x": scale_x, "y": scale_y}
+    if result.get("status") == "OK":
+        result["stack_drain_clicks"] = []
+        result["stack_drain_policy"] = "resample_before_followup_click"
     return result
 
 

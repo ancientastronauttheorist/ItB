@@ -67,6 +67,18 @@ def test_game_loop_lightning_autonomous_uses_runner_entrypoint():
     )
 
 
+def test_lightning_war_unlocked_accepts_durable_keys():
+    assert lightning_runner._achievement_unlocked(
+        {"unlocked_list": ["Ach_Detritus_A_2"]}
+    )
+    assert lightning_runner._achievement_unlocked(
+        {"unlocked_list": ["Detritus_A_2"]}
+    )
+    assert lightning_runner._achievement_unlocked(
+        {"lightning_war_proof": {"proven": True}}
+    )
+
+
 def test_route_probe_offset_advances_with_attempt_and_progress():
     session = SimpleNamespace(
         mission_index=2,
@@ -128,7 +140,7 @@ def test_first_island_for_attempt_rotates_after_preferred_island():
     assert lightning_runner._first_island_for_attempt("r.s.t.", 2) == "archive"
 
 
-def test_first_island_for_attempt_speed_mode_cycles_archive_rst():
+def test_first_island_for_attempt_speed_mode_cycles_fast_safe_islands():
     assert lightning_runner._first_island_for_attempt(
         "archive",
         1,
@@ -138,10 +150,15 @@ def test_first_island_for_attempt_speed_mode_cycles_archive_rst():
         "archive",
         2,
         speed_mode=True,
-    ) == "rst"
+    ) == "detritus"
     assert lightning_runner._first_island_for_attempt(
         "archive",
         3,
+        speed_mode=True,
+    ) == "pinnacle"
+    assert lightning_runner._first_island_for_attempt(
+        "archive",
+        4,
         speed_mode=True,
     ) == "archive"
     assert lightning_runner._first_island_for_attempt(
@@ -221,7 +238,7 @@ def test_game_loop_lightning_autonomous_cli_forwards_safe_defaults(monkeypatch):
             "segment_timeout": 420.0,
             "abandon_seconds": 29 * 60,
             "mission_segment_gate_seconds": 3 * 60,
-            "first_mission_route_start_gate_seconds": 30,
+            "first_mission_route_start_gate_seconds": 45,
             "first_island_gate_seconds": 15 * 60,
             "second_island_start_gate_seconds": 16.75 * 60,
             "screenshot_cadence": 2.0,
@@ -230,7 +247,7 @@ def test_game_loop_lightning_autonomous_cli_forwards_safe_defaults(monkeypatch):
             "iteration_mode": "flipflop",
             "screenshots": True,
             "route_auto_start": True,
-            "route_start_mode": "visible-text",
+            "route_start_mode": "preview-board",
             "route_speed_vetoes": None,
             "allow_objective_loss": False,
             "lightning_speed_loss_policy": False,
@@ -326,7 +343,7 @@ def test_game_loop_lightning_autonomous_cli_forwards_speed_overrides(monkeypatch
             "iteration_mode": "flipflop",
             "screenshots": False,
             "route_auto_start": False,
-            "route_start_mode": "visible-text",
+            "route_start_mode": "preview-board",
             "route_speed_vetoes": False,
             "allow_objective_loss": False,
             "lightning_speed_loss_policy": False,
@@ -394,6 +411,22 @@ def pause_menu() -> dict:
         "status": "OK",
         "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
         "pause_verified": True,
+    }
+
+
+def paused_deployment_false_positive() -> dict:
+    return {
+        "status": "OK",
+        "visible_ui": "perfect_reward_choice",
+        "timeline_label_seen": True,
+        "scores": {
+            "pause_menu": {"score": 0.75},
+            "perfect_reward_choice": {"score": 1.03},
+            "paused_deployment_underlay": {
+                "active_mission_under_pause": True,
+                "signal_count": 4,
+            },
+        },
     }
 
 
@@ -491,6 +524,22 @@ def test_external_prompt_evidence_accepts_authorization_flags_and_prose():
         "path": "message",
         "text": "A macOS privacy prompt is covering Into the Breach",
     }
+
+
+def test_successful_system_prompt_allow_accepts_direct_macos_click_result():
+    assert lightning_runner._successful_system_prompt_allow_result(
+        {
+            "status": "OK",
+            "control": "macos_privacy_prompt_allow",
+            "reason": "clicked_window_point",
+        }
+    )
+    assert lightning_runner._successful_system_prompt_allow_result(
+        {
+            "status": "OK",
+            "reason": "system_privacy_prompt_allow_clicked_fullscreen_ocr",
+        }
+    )
 
 
 def test_terminal_outcome_evidence_handles_objective_failed_without_parentheses():
@@ -2590,9 +2639,13 @@ def test_speed_mode_uses_speed_policy_and_short_budget():
 
     assert result["status"] == "SUCCESS"
     assert segment_kwargs[0]["time_limit"] == 2.0
+    assert (
+        segment_kwargs[0]["max_wait"]
+        == lightning_runner.DEFAULT_LIGHTNING_SPEED_SEGMENT_MAX_WAIT
+    )
     assert segment_kwargs[0]["lightning_speed_loss_policy"] is True
     assert segment_kwargs[0]["route_routing"] == "lightning_war"
-    assert segment_kwargs[0]["route_speed_vetoes"] is True
+    assert segment_kwargs[0]["route_speed_vetoes"] is False
     assert segment_kwargs[0]["allow_dirty_plan"] is False
     assert (
         segment_kwargs[0]["max_wall_seconds"]
@@ -5319,6 +5372,77 @@ def test_speed_mode_pace_gate_uses_nested_visible_timer_over_stale_save_timer():
     assert segment_calls == 1
 
 
+def test_speed_mode_pace_gate_ignores_post_mission_route_gate_context():
+    session = SimpleNamespace(
+        run_id="20260625_223149_001",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="rst",
+        current_mission="Mission_Crack",
+        mission_index=0,
+        islands_completed=[],
+    )
+    context = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "segment_wall_seconds_exceeded",
+        "visible_ui": "pause_menu",
+        "steps": [
+            {
+                "step": 0,
+                "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+                "reason": "visible_island_map_save_route_plan",
+            },
+            {
+                "step": 1,
+                "status": "BLOCKED",
+                "phase": "route_start",
+                "reason": "route_preview_auto_start_vetoed_before_start",
+            },
+        ],
+    }
+    runner = make_runner(mode="speed", mission_segment_gate_seconds=180)
+
+    assert runner._pace_gate(session, 199.0, context=context) is None
+
+
+def test_speed_mode_pace_gate_ignores_visible_deployment_handoff_context():
+    session = SimpleNamespace(
+        run_id="20260625_225131_788",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="Mission_AcidTank",
+        mission_index=0,
+        islands_completed=[],
+        phase="unknown",
+        current_turn=0,
+        actions_executed=0,
+    )
+    context = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "deployment_visible_ui_not_deployment",
+        "visible_ui": "deployment_screen",
+        "game_seconds": 90.0,
+        "game_timer": "0:01:30",
+        "steps": [
+            {
+                "step": 0,
+                "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
+                "reason": "deployment_visible_ui_not_deployment",
+            },
+        ],
+    }
+    runner = make_runner(
+        mode="speed",
+        mission_segment_gate_seconds=180,
+        first_mission_route_start_gate_seconds=45,
+    )
+
+    assert runner._pace_gate(session, 90.0, context=context) is None
+
+
 def test_speed_mode_pace_gate_blocks_before_terminal_panel_handling():
     session = SimpleNamespace(
         run_id="20260625_131023_001",
@@ -5503,7 +5627,7 @@ def test_runner_buys_grid_before_leaving_island(monkeypatch):
         controls.append(str(control))
         if control == "classify":
             classify_count += 1
-            if classify_count < 3:
+            if classify_count < 4:
                 return {"status": "OK", "visible_ui": "island_complete_leave"}
             return {"status": "OK", "visible_ui": "island_map"}
         if control == "shop_grid_power":
@@ -5527,7 +5651,8 @@ def test_runner_buys_grid_before_leaving_island(monkeypatch):
     result = make_runner()._run_inner(commands)
 
     assert result["status"] == "SUCCESS"
-    assert controls[:9] == [
+    assert controls[:10] == [
+        "classify",
         "classify",
         "spend_reputation",
         "shop_grid_power",
@@ -5538,6 +5663,107 @@ def test_runner_buys_grid_before_leaving_island(monkeypatch):
         "leave_confirm_yes",
         "classify",
     ]
+
+
+def test_shop_leave_records_target_completion_from_stale_session():
+    controls: list[str] = []
+    session = SimpleNamespace(
+        run_id="20260606_121212_099",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="Mission_HQ",
+        current_turn=4,
+        phase="combat_player",
+        actions_executed=3,
+        active_solution=object(),
+        mission_index=9,
+        islands_completed=[],
+    )
+
+    def lightning_ui(*args, **kwargs):
+        control = kwargs.get("control") or (args[0] if args else None)
+        controls.append(str(control))
+        return {"status": "OK", "control": control}
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_ui=lightning_ui,
+    )
+
+    result = make_runner()._handle_shop_then_leave(
+        commands,
+        {"status": "OK", "visible_ui": "island_complete_leave"},
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "target_islands_completed_after_leave_confirm"
+    assert result["islands_completed"] == ["archive", "island_2"]
+    assert session.islands_completed == ["archive", "island_2"]
+    assert session.current_mission == ""
+    assert session.phase == "between_missions"
+    assert controls == ["leave_island", "leave_confirm_yes"]
+
+
+def test_stale_completion_reconcile_repairs_paused_map_session():
+    session = SimpleNamespace(
+        run_id="20260606_121212_100",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="Mission_HQ",
+        current_turn=4,
+        phase="combat_player",
+        actions_executed=3,
+        active_solution=object(),
+        mission_index=9,
+        islands_completed=[],
+    )
+    commands = SimpleNamespace(
+        cmd_lightning_peek=completion_peek("island_map"),
+    )
+    runner = make_runner()
+
+    result = runner._reconcile_stale_completion_session(
+        commands,
+        session,
+        label="test",
+        visible=pause_menu(),
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "stale_completion_reconciled_from_visible_proof"
+    assert result["islands_completed"] == ["archive", "island_2"]
+    assert session.islands_completed == ["archive", "island_2"]
+
+
+def test_stale_completion_reconcile_does_not_repair_paused_combat_session():
+    session = SimpleNamespace(
+        run_id="20260606_121212_101",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="Mission_HQ",
+        mission_index=9,
+        islands_completed=[],
+    )
+    commands = SimpleNamespace(
+        cmd_lightning_peek=completion_peek("active_combat"),
+    )
+    runner = make_runner()
+
+    result = runner._reconcile_stale_completion_session(
+        commands,
+        session,
+        label="test",
+        visible=pause_menu(),
+    )
+
+    assert result is None
+    assert session.islands_completed == []
 
 
 def test_runner_blocks_if_grid_purchase_click_raises(monkeypatch):
@@ -7167,20 +7393,20 @@ def test_runner_resumes_to_clear_segment_panel_hidden_under_pause():
         islands_completed=[],
     )
     segment_calls = 0
-    resumed_from_pause = False
+    resumed_classifies_remaining = 0
     resume_control = "menu_continue"
 
     def lightning_ui(*args, **kwargs):
-        nonlocal resumed_from_pause
+        nonlocal resumed_classifies_remaining
         control = kwargs.get("control") or (args[0] if args else None)
         controls.append(str(control))
-        if control == "classify" and resumed_from_pause:
-            resumed_from_pause = False
+        if control == "classify" and resumed_classifies_remaining > 0:
+            resumed_classifies_remaining -= 1
             return {"status": "OK", "visible_ui": "reward_panel"}
         if control == "classify":
             return pause_menu()
         if control == resume_control:
-            resumed_from_pause = True
+            resumed_classifies_remaining = 2
             return {"status": "OK", "reason": "pause_menu_resumed"}
         if control == "handle_screen":
             return {"status": "OK", "reason": "reward_panel_cleared"}
@@ -7230,6 +7456,82 @@ def test_runner_resumes_to_clear_segment_panel_hidden_under_pause():
     ]
     assert post_panel_events[0]["status"] == "OK"
     assert post_panel_events[0]["reason"] == "paused_segment_panel_handled"
+
+
+def test_runner_treats_combat_screen_after_paused_panel_resume_as_handoff():
+    controls: list[str] = []
+    session = SimpleNamespace(
+        run_id="20260606_121315_003",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="Mission_Test",
+        mission_index=0,
+        islands_completed=[],
+    )
+    segment_calls = 0
+    resumed_from_pause = False
+    resume_control = "menu_continue"
+
+    def lightning_ui(*args, **kwargs):
+        nonlocal resumed_from_pause
+        control = kwargs.get("control") or (args[0] if args else None)
+        controls.append(str(control))
+        if control == "classify" and resumed_from_pause:
+            resumed_from_pause = False
+            return {"status": "OK", "visible_ui": "combat_screen"}
+        if control == "classify":
+            return pause_menu()
+        if control == resume_control:
+            resumed_from_pause = True
+            return {"status": "OK", "reason": "pause_menu_resumed"}
+        if control == "ensure_pause":
+            return pause_menu()
+        return {"status": "OK"}
+
+    def segment(*args, **kwargs):
+        nonlocal segment_calls
+        segment_calls += 1
+        if segment_calls == 1:
+            return {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "LIGHTNING_ATTEMPT_PANEL_READY",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {
+                        "status": "OK",
+                        "visible_ui": "perfect_island_panel",
+                    },
+                },
+            }
+        session.islands_completed = ["archive", "rst"]
+        return {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": "max_steps_reached",
+            "pause_guard": pause_menu(),
+        }
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=lambda **_: pause_menu(),
+        cmd_lightning_ui=lightning_ui,
+        cmd_lightning_preflight=lambda **_: preflight_pass(),
+        cmd_lightning_segment=segment,
+        cmd_lightning_peek=completion_peek(),
+    )
+
+    runner = make_runner()
+    result = runner._run_inner(commands)
+
+    assert result["status"] == "SUCCESS"
+    assert segment_calls == 2
+    assert controls.index(resume_control) < controls.index("ensure_pause")
+    assert not any(
+        name == "post_segment_panel_blocked"
+        and payload.get("reason") == "expected_segment_panel_not_visible_after_resume"
+        for name, payload in runner.telemetry.events
+    )
 
 
 def test_runner_blocks_when_resume_paused_segment_panel_raises():
@@ -7685,7 +7987,7 @@ def test_runner_restarts_route_gate_attempt_from_setup():
     assert len(abandons) == 1
     assert abandons[0]["reason"] == "route_gate_attempt_1"
     assert len(starts) == 1
-    assert starts[0]["first_island"] == "rst"
+    assert starts[0]["first_island"] == "detritus"
     assert starts[0]["route_auto_start"] is False
     assert any(
         name == "attempt_restart"
@@ -8112,7 +8414,7 @@ def test_runner_restarts_first_mission_start_pace_gate_from_setup():
     assert result["reason"] == "target_islands_completed"
     assert len(abandons) == 1
     assert abandons[0]["reason"] == "first_mission_start_pace_gate_attempt_1"
-    assert starts[0]["first_island"] == "rst"
+    assert starts[0]["first_island"] == "detritus"
     assert len(segments) == 1
     assert len(preflight_calls) == 2
 
@@ -8175,9 +8477,91 @@ def test_runner_restarts_first_mission_route_start_pace_gate_from_setup():
     assert result["reason"] == "target_islands_completed"
     assert len(abandons) == 1
     assert abandons[0]["reason"] == "first_mission_route_start_pace_gate_attempt_1"
-    assert starts[0]["first_island"] == "rst"
+    assert starts[0]["first_island"] == "detritus"
     assert len(segments) == 1
     assert len(preflight_calls) == 2
+
+
+def test_runner_continues_late_first_route_when_preflight_proves_deployment():
+    session = SimpleNamespace(
+        run_id="20260625_213651_062",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+    )
+    abandons = []
+    segments = []
+
+    def preflight(**_kwargs):
+        result = preflight_with_timer(52.0)
+        result["visible_timer"] = {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 52.0,
+            "game_timer": "0:00:52",
+            "timeline_label_seen": True,
+            "visible_ui": paused_deployment_false_positive(),
+        }
+        result["live_snapshot"] = {
+            "status": "OK",
+            "phase": "unknown",
+            "in_active_mission": True,
+            "active_mechs": 0,
+            "deployment_zone_count": 11,
+        }
+        return result
+
+    def segment(**kwargs):
+        segments.append(kwargs)
+        session.islands_completed = ["archive", "rst"]
+        return {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": "max_steps_reached",
+            "pause_guard": pause_menu(),
+        }
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=lambda **_: pause_menu(),
+        cmd_lightning_ui=lambda *args, **kwargs: paused_deployment_false_positive()
+        if (kwargs.get("control") or (args[0] if args else None)) == "classify"
+        else {"status": "OK"},
+        cmd_verify_setup_screen=lambda **_: {"status": "PASS"},
+        cmd_lightning_preflight=preflight,
+        cmd_lightning_segment=segment,
+        cmd_lightning_abandon_to_setup=lambda **kwargs: abandons.append(kwargs)
+        or {"status": "OK"},
+        cmd_lightning_peek=completion_peek(),
+    )
+
+    result = make_runner(mode="speed", max_attempts=1)._run_inner(commands)
+
+    assert result["status"] == "SUCCESS"
+    assert result["reason"] == "target_islands_completed"
+    assert len(segments) == 1
+    assert abandons == []
+
+
+def test_visible_panel_does_not_clear_paused_deployment_false_positive():
+    clicks = []
+    commands = SimpleNamespace(
+        cmd_lightning_ui=lambda *args, **kwargs: paused_deployment_false_positive()
+        if (kwargs.get("control") or (args[0] if args else None)) == "classify"
+        else clicks.append((args, kwargs)) or {"status": "OK"},
+    )
+
+    result = make_runner(mode="speed")._handle_visible_panel(
+        commands,
+        segment_index=1,
+    )
+
+    assert result["status"] == "NO_ACTION"
+    assert result["reason"] == "paused_active_mission_deployment_handoff"
+    assert clicks == []
 
 
 def test_runner_restarts_segment_first_mission_route_start_pace_gate():
@@ -8264,7 +8648,7 @@ def test_runner_restarts_segment_first_mission_route_start_pace_gate():
     assert len(abandons) == 1
     assert abandons[0]["reason"] == "first_mission_route_start_pace_gate_attempt_1"
     assert len(starts) == 1
-    assert starts[0]["first_island"] == "rst"
+    assert starts[0]["first_island"] == "detritus"
     assert len(segments) == 2
 
 

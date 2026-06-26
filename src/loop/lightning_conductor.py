@@ -15,6 +15,13 @@ from src.loop.lightning_telemetry import (
 
 
 LIGHTNING_WAR = "Lightning War"
+LIGHTNING_WAR_STEAM_KEY = "Ach_Detritus_A_2"
+LIGHTNING_WAR_PROFILE_KEY = "Detritus_A_2"
+LIGHTNING_WAR_UNLOCK_TOKENS = {
+    LIGHTNING_WAR.lower(),
+    LIGHTNING_WAR_STEAM_KEY.lower(),
+    LIGHTNING_WAR_PROFILE_KEY.lower(),
+}
 HARD_STOP_TOKENS = (
     "RESEARCH_REQUIRED",
     "INVESTIGATE",
@@ -67,7 +74,7 @@ class AutonomousLightningConfig:
     screenshot_cadence: float = 2.0
     screenshots: bool = True
     route_auto_start: bool = False
-    route_start_mode: str = "visible-text"
+    route_start_mode: str = "preview-board"
     allow_objective_loss: bool = False
     lightning_speed_loss_policy: bool = False
     start_from_verified_setup: bool = False
@@ -165,7 +172,7 @@ class AutonomousLightningConductor:
             if cfg.speed_mode
             else "lightning_baseline"
         )
-        pause_before_solve = not cfg.speed_mode
+        pause_before_solve = True
         pause_between_actions = False
 
         if cfg.achievement.lower() != LIGHTNING_WAR.lower():
@@ -206,7 +213,18 @@ class AutonomousLightningConductor:
 
         initial_visible_ui = _visible_ui_name(guard)
         if cfg.start_from_verified_setup or initial_visible_ui == "new_game_setup":
+            setup = None
             if initial_visible_ui == "new_game_setup":
+                setup = self._prepare_setup(commands)
+                if setup.get("status") == "PASS" or cfg.dry_run:
+                    self.telemetry.event(
+                        "setup_start_skipped",
+                        reason="setup_modal_already_verified",
+                        setup=_compact(setup),
+                    )
+                else:
+                    setup = None
+            if initial_visible_ui == "new_game_setup" and setup is None:
                 setup_start = self._span(
                     "setup_start",
                     commands.cmd_lightning_ui,
@@ -218,7 +236,8 @@ class AutonomousLightningConductor:
                         "setup_start_failed",
                         setup_start=_compact(setup_start),
                     )
-            setup = self._prepare_setup(commands)
+            if setup is None:
+                setup = self._prepare_setup(commands)
             if setup.get("status") != "PASS":
                 return self._finish(
                     "BLOCKED",
@@ -499,6 +518,25 @@ class AutonomousLightningConductor:
 
     def _prepare_setup(self, commands: Any) -> dict[str, Any]:
         cfg = self.config
+        def _focus_retry_warranted(result: dict[str, Any]) -> bool:
+            if not isinstance(result, dict):
+                return False
+            if result.get("status") == "PASS":
+                return False
+            if not result.get("setup_screen_detected"):
+                return False
+            if result.get("click_plan"):
+                return False
+            if result.get("actual_difficulty") != cfg.difficulty:
+                return False
+            advanced = result.get("advanced")
+            if not isinstance(advanced, list) or not advanced:
+                return False
+            desired_on = str(cfg.advanced_content or "").lower() not in {"off", "false", "0", "no"}
+            if any(bool(item.get("enabled")) != desired_on for item in advanced if isinstance(item, dict)):
+                return False
+            return result.get("window_focus_verified") is False
+
         setup = self._span(
             "verify_setup",
             commands.cmd_verify_setup_screen,
@@ -507,6 +545,16 @@ class AutonomousLightningConductor:
         )
         if setup.get("status") == "PASS" or cfg.dry_run:
             return setup
+        if _focus_retry_warranted(setup):
+            time.sleep(0.6)
+            setup = self._span(
+                "verify_setup_focus_retry",
+                commands.cmd_verify_setup_screen,
+                expected_difficulty=cfg.difficulty,
+                advanced_content=cfg.advanced_content,
+            )
+            if setup.get("status") == "PASS":
+                return setup
         clicks = setup.get("click_plan") or []
         if not clicks:
             return setup
@@ -531,12 +579,23 @@ class AutonomousLightningConductor:
                     "click": click,
                     "click_result": click_result,
                 }
-        return self._span(
+        setup = self._span(
             "verify_setup_after_clicks",
             commands.cmd_verify_setup_screen,
             expected_difficulty=cfg.difficulty,
             advanced_content=cfg.advanced_content,
         )
+        if setup.get("status") == "PASS" or cfg.dry_run:
+            return setup
+        if _focus_retry_warranted(setup):
+            time.sleep(0.6)
+            return self._span(
+                "verify_setup_after_clicks_focus_retry",
+                commands.cmd_verify_setup_screen,
+                expected_difficulty=cfg.difficulty,
+                advanced_content=cfg.advanced_content,
+            )
+        return setup
 
     def _span(
         self,
@@ -878,7 +937,15 @@ def _lightning_format_seconds(total_seconds: int | float | None) -> str:
 def _achievement_unlocked(result: dict[str, Any] | None) -> bool:
     if not isinstance(result, dict):
         return False
-    return LIGHTNING_WAR in (result.get("unlocked_list") or [])
+    proof = result.get("lightning_war_proof") or result.get("proof")
+    if isinstance(proof, dict) and proof.get("proven") is True:
+        return True
+    unlocked = {
+        str(value).strip().lower()
+        for value in (result.get("unlocked_list") or [])
+        if str(value).strip()
+    }
+    return bool(unlocked & LIGHTNING_WAR_UNLOCK_TOKENS)
 
 
 def _hard_stop(result: dict[str, Any] | None) -> bool:

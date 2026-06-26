@@ -138,6 +138,10 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .grid.four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .card, .strip {
       padding: 20px;
     }
@@ -291,6 +295,7 @@
       header,
       .grid.two,
       .grid.three,
+      .grid.four,
       .strip,
       .flow,
       .timeline {
@@ -320,6 +325,7 @@
           <span class="pill">Screenshot timer is ground truth</span>
           <span class="pill">LLM never thinks unpaused</span>
           <span class="pill">Esc is the only pause toggle</span>
+          <span class="pill">Archive - Detritus - Pinnacle</span>
           <span class="pill">Wrong window means hard stop</span>
         </div>
       </section>
@@ -366,7 +372,7 @@
           </div>
           <div class="step">
             <b>3. Execute Burst</b>
-            <small>Esc resume, perform exact planned controls, obey max wall duration.</small>
+            <small>Esc resume, perform exact deterministic controls, obey max wall duration.</small>
           </div>
           <div class="step">
             <b>4. Snap + Esc</b>
@@ -387,8 +393,8 @@
           <li><strong>No game proof, no click.</strong> Codex, Desktop, Steam, macOS prompts, or stale frames cannot authorize game controls.</li>
           <li><strong>No generic pause authority.</strong> The controller must know what screen is under the pause menu before choosing the next action.</li>
           <li><strong>No stale execution.</strong> Combat plans require fresh bridge state; UI decisions require fresh screenshot proof.</li>
-          <li><strong>No live deliberation.</strong> All thinking happens after a verified pause proof.</li>
-          <li><strong>No route optimism.</strong> Start Mission requires exact mission identity proof immediately before the click.</li>
+          <li><strong>No live deliberation.</strong> Codex never thinks unpaused; Python may only run deterministic live bursts with fixed preconditions.</li>
+          <li><strong>No route optimism.</strong> Start Mission requires current region/preview proof and post-Start deployment proof; mission identity helps, but it is not a speed veto.</li>
           <li><strong>No hidden terminal panels.</strong> KIA, failed objective, grid death, timeline loss, region secured, and achievement pop must be classified before clearing panels.</li>
         </ul>
       </article>
@@ -399,7 +405,7 @@
           <li>Wrong-window screenshot or mismatched game bounds.</li>
           <li>Missing visible timer when timer should be visible.</li>
           <li>Pause proof without a screen-family classification.</li>
-          <li>Route preview mismatch, stale preview, count mismatch, or unknown mission.</li>
+          <li>Stale preview, wrong-region proof, impossible candidate count, or no post-Start deployment signal.</li>
           <li>Any ordinary mission segment over <code>3:00</code>.</li>
           <li>Bridge desync that one fresh read and re-solve cannot recover.</li>
           <li>Unexpected reward/shop/map state that would require live reading.</li>
@@ -426,6 +432,15 @@
             <li>Visible timer OCR, or strong pause-menu proof when timer is hidden.</li>
             <li>Pause overlay proof plus stable game focus proof.</li>
             <li>Underlay class: map, preview, deployment, combat, reward, shop, setup, or unknown.</li>
+          </ul>
+        </article>
+        <article>
+          <h3><code>BridgeFreshnessProof</code></h3>
+          <ul>
+            <li>Heartbeat age within the live threshold after unpause.</li>
+            <li>Mission id, phase, turn, active mechs, and grid snapshot.</li>
+            <li>Unit-roster fingerprint stable after enemy phase settles.</li>
+            <li>Explicit flag when a paused cached bridge read is being used by a Lightning wrapper.</li>
           </ul>
         </article>
       </div>
@@ -461,13 +476,204 @@
       </div>
     </section>
 
+    <section class="strip">
+      <h2>Opening Race Ladder</h2>
+      <div>
+        <p>
+          Treat the first minute as a qualifying lap. A run that cannot reach
+          deployment quickly is valuable data, but it is not an achievement
+          attempt. Use Esc to reach the pause menu, return through Main Menu to
+          setup, carry the evidence forward, and spend the next timer seconds
+          on a cleaner UI opening.
+        </p>
+        <div class="grid four">
+          <article class="step">
+            <b>0:03 Ideal</b>
+            <small>First island click begins. Keep pushing toward this with fixed click bursts.</small>
+          </article>
+          <article class="step">
+            <b>0:11 Proven</b>
+            <small>Current patched runs can pause on Archive around this timer. Slower than 0:15 is a reset signal.</small>
+          </article>
+          <article class="step">
+            <b>0:20 Target</b>
+            <small>Mission committed and deployment/Confirm in progress. This remains the benchmark.</small>
+          </article>
+          <article class="step">
+            <b>0:35 Reset</b>
+            <small>No current preview-board commit or deployment handoff by here means Esc pause menu to Main Menu/setup, not one more preview.</small>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <h2>Human Calibration</h2>
+        <ul>
+          <li><strong>Speed source:</strong> the solver can tackle the mission slate; the timer savings come from knowing the UI state and firing the next transaction immediately.</li>
+          <li><strong>Timer hypothesis:</strong> assume map, preview, reward, and shop screens spend timer until screenshots prove otherwise.</li>
+          <li><strong>Route commit:</strong> click the highlighted 8x8 mission preview board when route proof is current. Keep Start-text clicks as experiments or fallback only.</li>
+          <li><strong>Deployment:</strong> use the fast deployment helper/script as the deployment authority, then Confirm as soon as placement proof exists.</li>
+          <li><strong>Mission policy:</strong> do not browse for easier missions. The solver can tackle the slate; unproven UI is the real blocker.</li>
+          <li><strong>Shop policy:</strong> read Grid Power, spend only to max Grid Power, then leave immediately. Skip every other reward/shop optimization.</li>
+          <li><strong>Success proof:</strong> offline ITB log, on-screen achievement pop, or the colored middle achievement tile in the pause menu can prove Lightning War.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Latest Lesson</h2>
+        <ul>
+          <li><strong>2026-06-25:</strong> live runs proved the mission itself can finish under <code>3:00</code>; one first mission ended at <code>0:02:36</code> and reached the next route tail by <code>0:02:46</code>.</li>
+          <li><strong>2026-06-25 route trace:</strong> clicking a region opens the full mission preview by about <code>0.85s</code>. Hovering window <code>(800,470)</code> highlights the 8x8 preview grid with yellow <code>Start Mission</code>; clicking it entered deployment.</li>
+          <li><strong>Anti-pattern:</strong> the compact hover card is preview-only, and clicking the top advisor dialogue before the grid click can collapse the full preview back to the island map.</li>
+          <li><strong>Patch:</strong> paused active-mission deployment evidence suppresses first-route resets, route mismatches are ignored in speed mode after mission entry, and post-mission route gates no longer inherit stale mission timers.</li>
+          <li><strong>Policy:</strong> if the route is late but deployment is proven, continue into deployment/combat and record the timing miss. Abandoning from deployment costs more than finishing and learning.</li>
+          <li><strong>Still hard:</strong> no deployment proof by <code>0:45</code> remains an opening reset, and any ordinary mission over <code>3:00</code> remains a run reset.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <h2>First-Island Slate</h2>
+        <ul>
+          <li><strong>Speed cycle:</strong> Archive, then Detritus, then Pinnacle. Repeat only after those slates fail.</li>
+          <li><strong>Sequence:</strong> verify setup, click setup modal Start, fast-click first island, record pending island, clear intro, pause, read visible timer.</li>
+          <li><strong>RST is data-only</strong> until its opening UI path has the same measured preview-board speed as the other slates.</li>
+          <li><strong>Archive-only rerolls are wasteful.</strong> Multiple failed Archive openings can exhaust attempts without deployment.</li>
+          <li><strong>No double island click.</strong> Once the corporate map is proven, do not click the same island coordinate again.</li>
+          <li><strong>Do not weaken route gates</strong> to save a failed timing/proof gate. Reset and diversify the opening instead.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Preview Rule</h2>
+        <ul>
+          <li><strong>Preview beats shopping:</strong> once a red region opens a current mission preview, click the highlighted 8x8 preview board instead of comparing missions.</li>
+          <li><strong>Preview target:</strong> the small highlighted 8x8 board is stable per preview on the current layout; hover may prove it in data mode, but hot runs click the named target.</li>
+          <li><strong>Grid coordinate:</strong> on the current macOS layout, the preview-grid commit point is window <code>(800,470)</code>. Old point <code>(680,360)</code> selects map territory behind the preview and is unsafe.</li>
+          <li><strong>No pre-dismiss:</strong> do not clear the top advisor textbox before the grid click unless a new trace proves it is required for that screen.</li>
+          <li><strong>One cheap retry maximum</strong> only when the first preview is unknown, no Start click happened, and the timer is still under the opening ladder.</li>
+          <li><strong>Mission names are not speed vetoes.</strong> Dam, Satellite, Train, Tides, Volatile, and similar previews are playable when current preview proof and post-Start deployment proof exist.</li>
+          <li><strong>Preview uncertainty is the blocker.</strong> Stale bridge data, wrong-region proof, impossible counts, or no deployment handoff means stop or reset.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Opening Route Selection</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>Required Proof</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Route Ready</td>
+            <td>Paused map, visible timer, current island, candidate regions, and game focus proof.</td>
+            <td>Use the current red-region candidate immediately; mission identity is useful telemetry, not a browsing requirement.</td>
+          </tr>
+          <tr>
+            <td>Current Preview</td>
+            <td>Fresh screenshot proof for the selected region and the highlighted preview-board commit target.</td>
+            <td>Commit through the calibrated highlighted 8x8 preview-board click; visible Start text is a fallback probe.</td>
+          </tr>
+          <tr>
+            <td>Unknown Mission</td>
+            <td>No exact identity, no Start click, no combat/deployment signal, and timer still under the opening ladder.</td>
+            <td>Do not browse for mission names. Commit the current validated preview once; abandon only if the preview/region proof itself is stale or invalid.</td>
+          </tr>
+          <tr>
+            <td>Post Start</td>
+            <td>Deployment screen, active mission bridge state, or transition proof after the preview-board click.</td>
+            <td>Continue to deployment even if the mission id differs from stale route expectations; the solver owns combat difficulty.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Reset Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Condition</th>
+            <th>Decision</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Unknown or stale preview before Start, timer under 0:35, distinct cheap candidate exists.</td>
+            <td>One revalidated same-island retry.</td>
+            <td>Cheap second proof can beat a full setup reset only while the opening is still alive.</td>
+          </tr>
+          <tr>
+            <td>Unknown/stale preview at 0:35+, retry budget exhausted, or no distinct candidate.</td>
+            <td>Abandon to setup.</td>
+            <td>More preview work is now slower than rerolling the slate.</td>
+          </tr>
+          <tr>
+            <td>Route mismatch or uncertain identity appears after Start, deployment, or combat signal.</td>
+            <td>Ignore the stale identity in speed mode and continue from verified deployment/combat proof.</td>
+            <td>After mission entry, the mismatch is usually stale route metadata; rerolling wastes more timer than solving the board.</td>
+          </tr>
+          <tr>
+            <td>Ordinary mission over 3:00, first island over 15:00, or second island not started by 16:45.</td>
+            <td>Reset unless terminal success is already proven.</td>
+            <td>The 30:00 achievement margin is no longer healthy enough for boring reliable play.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Race Mode Defaults</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Default</th>
+            <th>Reset Or Patch Trigger</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Startup</td>
+            <td>Easy, Blitzkrieg, Advanced Content OFF, timer UI visible, speed at fast threshold.</td>
+            <td>Wrong squad, wrong difficulty, hidden timer, bad focus proof, or settings speed below threshold.</td>
+          </tr>
+          <tr>
+            <td>Route</td>
+            <td>Current preview proof, calibrated preview-board commit, and post-Start deployment proof.</td>
+            <td>Two live previews, any preview taking the run past 0:35, stale/invalid region proof, or no deployment handoff.</td>
+          </tr>
+          <tr>
+            <td>Deployment</td>
+            <td>Resume from verified pause, use the fast deployment helper/script, click Confirm, snap-pause.</td>
+            <td>Deployment fallback, stale bridge, invalid placement, or no combat handoff before the opening fail gate.</td>
+          </tr>
+          <tr>
+            <td>Combat</td>
+            <td>Bridge-first solved actions, compact burst, verify diffs, use End Turn confirmation explicitly.</td>
+            <td>Mech HP/status debt, desync after one fresh read plus re-solve, avoidable grid damage, or mission segment over 3:00.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <section class="grid three">
       <article class="card">
         <h2>Route Policy</h2>
         <ul>
-          <li>Prefer simple kill, survive, and spawn-control missions.</li>
-          <li>Hard-veto Bomb/Renfield Bombs and other slow objective traps unless no viable route remains.</li>
-          <li>Avoid train, fragile allies, repair/platform gimmicks, dam, satellite, mines, and pod-heavy reward paths unless measured fast and clean.</li>
+          <li>Click a valid red mission quickly; do not spend live timer ranking a better red mission after a preview is proven.</li>
+          <li>Current preview proof plus deployment proof is enough to play; the solver owns combat difficulty.</li>
+          <li>Unknown OCR, stale preview, wrong-region clicks, setup mismatch, terminal panels, and safety gates remain hard stops.</li>
+          <li>The calibrated preview-board click is the primary commit path; visible Start text is for fallback evidence.</li>
           <li>Wrong-region clicks and stale previews are run-health failures, not quirks to play through.</li>
         </ul>
       </article>
@@ -475,10 +681,11 @@
       <article class="card">
         <h2>Combat Policy</h2>
         <ul>
-          <li>Solve while paused with enough budget; under-solving is false economy.</li>
-          <li>Execute bridge-first, verify predicted diffs, and re-solve after mismatch.</li>
+          <li>Use the hot path from clean combat: <code>lightning_loop --time-limit 2 --speed-loss-policy --destroy-time-pods --quiet</code>.</li>
+          <li>Solve while paused through Lightning wrappers; ordinary bridge commands need a fresh heartbeat after unpause.</li>
+          <li>Execute bridge-first with no pause between mech actions by default, verify predicted diffs, and re-solve after mismatch.</li>
           <li>Accept boring grid-safe plans over clever low-margin plans.</li>
-          <li>Dirty consent is exact-line, one-turn, and expires on desync or reorder.</li>
+          <li>Reset Turn is for paused, proven tactical misses only. If the confirmation prompt is not visible, recover by fresh read/solve or restart.</li>
         </ul>
       </article>
 
@@ -487,7 +694,7 @@
         <ul>
           <li>Clear deterministic panels only after terminal OCR safety checks.</li>
           <li>Ignore optional objectives, pods, and reputation efficiency unless free.</li>
-          <li>Buy Grid Power only if low; leave immediately when grid is safe/full.</li>
+          <li>Read Grid Power, buy Grid Power until max or reputation is exhausted, then exit shop and leave island immediately.</li>
           <li>No browsing, no reading item text live, no speculative purchases.</li>
         </ul>
       </article>
@@ -513,21 +720,21 @@
           </tr>
           <tr>
             <td>Route Start</td>
-            <td>Exact mission proof, non-vetoed mission, visible Start control.</td>
-            <td>Resume, click Start Mission, screenshot, pause.</td>
-            <td>Deployment screen or transition proof for the expected mission.</td>
+            <td>Current region/preview proof, highlighted 8x8 board or fallback Start control.</td>
+            <td>Resume, click the preview board, screenshot, pause.</td>
+            <td>Deployment screen or transition proof after mission entry.</td>
           </tr>
           <tr>
             <td>Deployment</td>
-            <td>Expected deployable actors and calibrated placement plan.</td>
-            <td>Resume, deploy through bridge or proven UI fallback, click Confirm, screenshot, pause.</td>
+            <td>Expected deployable actors and the fast deployment helper/script available.</td>
+            <td>Resume, deploy through the helper, click Confirm, screenshot, pause.</td>
             <td>Combat player turn proof, active mechs, timer within gate.</td>
           </tr>
           <tr>
             <td>Combat Turn</td>
-            <td>Fresh bridge snapshot, solved plan, no unresolved safety blocks.</td>
-            <td>Resume, execute bridge actions, End Turn, observe transition, screenshot, pause.</td>
-            <td>Verified board diff or next player/mission-result proof.</td>
+            <td>Fresh or wrapper-authorized bridge snapshot, solved plan, no unresolved safety blocks.</td>
+            <td>Resume, execute bridge actions, dispatch emitted End Turn click batch, handle confirmation if visible, screenshot, pause.</td>
+            <td>Verified board diff, turn/phase transition, or next player/mission-result proof.</td>
           </tr>
           <tr>
             <td>Mission Tail</td>
@@ -541,12 +748,34 @@
 
     <section class="grid two">
       <article class="card">
+        <h2>End Turn</h2>
+        <ul>
+          <li>Use emitted window-local click batches or calibrated controls, never legacy global coordinates.</li>
+          <li>If the confirmation modal appears, click the named confirmation control explicitly.</li>
+          <li>Retry End Turn only when bridge samples still prove the same player turn with no active mechs.</li>
+          <li>After enemy activity, wait for <code>phase == combat_player</code>, <code>active_mechs &gt; 0</code>, and a stable roster before solving.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Speed Losses</h2>
+        <ul>
+          <li>Allowed only for active Lightning War attempts and only when the timeline survives.</li>
+          <li>Can trade pods, optional objectives, reputation, nonlethal buildings, or nonlethal grid when grid remains above zero.</li>
+          <li>Never trade mech HP, mech status, mech death, bombs, pylons, final-cave survival, unknown loss kinds, stale boards, research gates, or desyncs.</li>
+          <li>Destroy or ignore time pods by default; pod rewards add UI time and do not help Lightning War.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
         <h2>Readiness Tests</h2>
         <ol>
           <li>Wrong-window dry run refuses to click when Codex or another app is frontmost.</li>
           <li>Pause proof captures two stable paused frames with game bounds and timer OCR.</li>
           <li>Microburst resumes and re-pauses within expected visible timer delta.</li>
-          <li>Route preview refuses Start without exact mission proof.</li>
+          <li>Route preview refuses Start without current region/preview proof and a calibrated commit target.</li>
           <li>Deployment cannot be accepted as a generic pause state.</li>
           <li>Stale screenshot paths and mismatched bounds are rejected.</li>
           <li>Overlay simulation emits no route/start/confirm clicks.</li>
@@ -558,18 +787,150 @@
         <h2>Telemetry</h2>
         <ul>
           <li>Every segment emits compact JSON: state, visible timer, focus proof, screenshot path, click target, and timer delta.</li>
-          <li>Rolling screenshot buffer keeps the last three missions worth of evidence.</li>
+          <li>Summary rollups include segment results, speed-phase timing, pace gates, and attempt restarts.</li>
+          <li>Rolling screenshot samples can be pruned, but pinned proof frames cannot.</li>
           <li>Non-game captures are stored separately as failure evidence.</li>
           <li>Timing notes track island click, preview open, Start, Confirm, first player turn, each End Turn, tail clear, shop, and leave island.</li>
-          <li>The run declares success only after achievement pop or log proof is captured.</li>
+          <li>The run declares success only after achievement pop, offline log proof, colored middle Blitzkrieg achievement tile, or synced unlock proof is captured.</li>
         </ul>
       </article>
     </section>
 
+    <section class="card">
+      <h2>Required Telemetry Fields</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Field Group</th>
+            <th>Required Fields</th>
+            <th>Why It Matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Run Identity</td>
+            <td><code>run_id</code>, <code>attempt_index</code>, <code>segment_index</code>, mode, git head/dirty state, squad, difficulty, first island.</td>
+            <td>Lets a later patch prove which code and setup produced the timing result.</td>
+          </tr>
+          <tr>
+            <td>Visual Proof</td>
+            <td>Pre/post/final screenshot paths, screenshot role, capture latency, bounds, frontmost app, visible UI, underlay class, safe-to-think flag.</td>
+            <td>Prevents stale temp images or wrong-window frames from becoming decision authority.</td>
+          </tr>
+          <tr>
+            <td>Timer Proof</td>
+            <td>Visible timer text, parsed seconds, source, confidence, timer delta, wall duration, helper duration, live burst seconds.</td>
+            <td>Separates actual in-game cost from controller overhead and capture latency.</td>
+          </tr>
+          <tr>
+            <td>Route Proof</td>
+            <td>Candidate index, region coordinates, OCR labels, mission id, start authority, rejected reason, retry budget, click target.</td>
+            <td>Makes bad-roll resets reproducible instead of subjective.</td>
+          </tr>
+          <tr>
+            <td>Route-Roll Ledger</td>
+            <td>First island, candidate index, expected/actual mission, proof source, start mode, probe count, game timer, wall time, reset reason, next first island.</td>
+            <td>Turns failed openings into routing data that changes the next attempt.</td>
+          </tr>
+          <tr>
+            <td>Failure Proof</td>
+            <td>Failure class, owning subsystem, evidence path, hypothesis, code target, regression test, focused proof, live proof.</td>
+            <td>Turns a failed attempt into exactly one next engineering action.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Compounding Ledger</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>After Every Attempt</th>
+            <th>Record</th>
+            <th>Next Code Decision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Opening failed</td>
+            <td>Run id, island, first visible timer, route candidates, preview mission ids, and timer at reset.</td>
+            <td>Either add a cached safe route/start pattern or make that preview reset sooner.</td>
+          </tr>
+          <tr>
+            <td>Deployment leaked</td>
+            <td>Timer at Start Mission, deployment visible, Confirm click, and first player turn.</td>
+            <td>Replace extra OCR/classification with a fixed burst only if pre/post proof stayed clean.</td>
+          </tr>
+          <tr>
+            <td>Combat slowed</td>
+            <td>Turn number, solve time while paused, live action burst, End Turn burst, and final timer delta.</td>
+            <td>Patch bridge freshness, guard reuse, or solver weights; do not loosen mech-damage safety.</td>
+          </tr>
+          <tr>
+            <td>Mission completed</td>
+            <td>Visible timer, grid, objectives, reward/shop screen, and next-map handoff timer.</td>
+            <td>Keep the path only if the full route plus UI tail stayed under 3:00 and trends toward 2:00.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="footer-note">
+        Every failed attempt also needs a machine-readable ledger row marked
+        <code>patched</code>, <code>documented_no_code_change</code>,
+        <code>route_cache_updated</code>, <code>timing_updated</code>, or
+        <code>discarded_with_reason</code>.
+      </p>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <h2>Data Cadence</h2>
+        <ul>
+          <li><strong>Race mode:</strong> screenshot every 5 seconds plus every transaction boundary when intentionally racing.</li>
+          <li><strong>UI experiment mode:</strong> screenshot at 0.5 seconds / 2 Hz inside the rolling buffer; use 2 Hz whenever the next click timing is still being learned.</li>
+          <li><strong>Keep the buffer small:</strong> default sample cap is 360 PNGs; archive only named proof frames outside the cap.</li>
+          <li><strong>Mark pruned samples:</strong> frame rows whose images are removed cannot remain proof links.</li>
+          <li><strong>Every failure needs one sentence:</strong> what cost the timer, what proof showed it, and what code should change.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Success Proof</h2>
+        <ul>
+          <li>Stop after the second Corporate Island boundary; do not choose a third island before checking for the unlock.</li>
+          <li>Capture completion-screen proof, visible final timer under 30:00, current squad, difficulty/content proof, and completed-island count.</li>
+          <li>If the pop is not visible, check the offline Into the Breach log and pause-menu achievement tile while the game is safe.</li>
+          <li>Require <code>Lightning War</code> in the on-screen pop, offline ITB log, colored middle pause-menu achievement tile, or synced <code>unlocked_list</code>.</li>
+          <li>Declare completion only when there is no KIA, failed-objective, timeline-loss, or setup-mismatch evidence.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <h2>Pinned Proof Frames</h2>
+        <ul>
+          <li>Pin setup verification, first island/map, route preview before Start, post-Start deployment proof, Confirm/first player turn, every End Turn boundary, mission tail, shop/leave, blocker, and success frames.</li>
+          <li>Copy any temp screenshot proof into the run telemetry screenshot folder before citing it.</li>
+          <li>Pinned frames are exempt from rolling retention and must keep stable links in notes and summaries.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Failure-To-Code Loop</h2>
+        <ol>
+          <li>Preserve pinned evidence and classify the owner: capture, focus, route OCR, route click, deployment, bridge, combat, reward/shop, timer gate, or success proof.</li>
+          <li>Write one hypothesis and one code target.</li>
+          <li>Add or update a focused regression when possible.</li>
+          <li>Run focused proof before the next live race, unless the ledger row is explicitly <code>documented_no_code_change</code>.</li>
+        </ol>
+      </article>
+    </section>
+
     <p class="footer-note">
-      Last updated from the 2026-06-25 Lightning War retrospective and adversarial
-      agent review. This document is a sprint controller specification, not a
-      general achievement-hunting guide.
+      Last updated from the 2026-06-26 Lightning War human calibration answers,
+      mission-agnostic speed-policy pass, post-mission route-gate patch, and adversarial agent review. This document is a
+      sprint controller specification, not a general achievement-hunting guide.
     </p>
   </main>
 </body>

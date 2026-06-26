@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import json
+import signal
 import subprocess
 import time
 from pathlib import Path
@@ -16,6 +17,108 @@ APP_PATH = (
 _LAST_WINDOW_BOUNDS: dict | None = None
 _LAST_ACTIVATE_AT: float = 0.0
 _DEFAULT_MAC_WINDOW_BOUNDS = {"x": 215, "y": 32, "width": 1280, "height": 748}
+
+
+def _run_screencapture(args: list[str], timeout: float) -> None:
+    """Run macOS screencapture with a hard deadline.
+
+    Python's subprocess timeout can occasionally sit in the wait path when
+    macOS screen capture is blocked behind a system prompt. Polling and killing
+    the process group keeps Lightning runs from stalling while safely paused.
+    """
+    process = subprocess.Popen(
+        ["screencapture", *args],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    deadline = time.monotonic() + max(0.1, timeout)
+    while True:
+        returncode = process.poll()
+        if returncode is not None:
+            if returncode != 0:
+                raise RuntimeError(f"screencapture failed with code {returncode}")
+            return
+        if time.monotonic() >= deadline:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except Exception:
+                try:
+                    process.terminate()
+                except Exception:
+                    pass
+            try:
+                process.wait(timeout=0.2)
+            except Exception:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except Exception:
+                    try:
+                        process.kill()
+                    except Exception:
+                        pass
+                try:
+                    process.wait(timeout=0.2)
+                except Exception:
+                    pass
+            raise RuntimeError(f"screencapture timed out after {timeout:.1f}s")
+        time.sleep(0.02)
+
+
+def _run_command_hard_timeout(
+    command: list[str],
+    timeout: float,
+    *,
+    text: bool = False,
+) -> subprocess.CompletedProcess:
+    """Run a short macOS helper command with a process-group deadline."""
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=text,
+        start_new_session=True,
+    )
+    deadline = time.monotonic() + max(0.1, timeout)
+    while True:
+        returncode = process.poll()
+        if returncode is not None:
+            stdout, stderr = process.communicate()
+            return subprocess.CompletedProcess(
+                command,
+                returncode,
+                stdout=stdout,
+                stderr=stderr,
+            )
+        if time.monotonic() >= deadline:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except Exception:
+                try:
+                    process.terminate()
+                except Exception:
+                    pass
+            try:
+                stdout, stderr = process.communicate(timeout=0.2)
+            except Exception:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except Exception:
+                    try:
+                        process.kill()
+                    except Exception:
+                        pass
+                try:
+                    stdout, stderr = process.communicate(timeout=0.2)
+                except Exception:
+                    stdout, stderr = ("", "") if text else (b"", b"")
+            raise subprocess.TimeoutExpired(
+                command,
+                timeout,
+                output=stdout,
+                stderr=stderr,
+            )
+        time.sleep(0.02)
 
 
 def _fallback_window_bounds() -> dict | None:
@@ -82,9 +185,10 @@ def get_window_bounds() -> dict | None:
     except ValueError:
         timeout = 1.5
     try:
-        result = subprocess.run(
+        result = _run_command_hard_timeout(
             ["osascript", "-e", script],
-            capture_output=True, text=True, timeout=max(0.25, timeout)
+            max(0.25, timeout),
+            text=True,
         )
         if result.returncode == 0:
             parts = [p.strip() for p in result.stdout.strip().split(",")]
@@ -114,11 +218,14 @@ def is_game_frontmost() -> bool:
     end tell
     '''
     try:
-        result = subprocess.run(
+        timeout = float(os.environ.get("ITB_FRONTMOST_TIMEOUT", "2.0"))
+    except ValueError:
+        timeout = 2.0
+    try:
+        result = _run_command_hard_timeout(
             ["osascript", "-e", script],
-            capture_output=True,
+            max(0.1, timeout),
             text=True,
-            timeout=5,
         )
     except subprocess.TimeoutExpired:
         return False
@@ -144,12 +251,10 @@ def activate_game_window() -> None:
     except ValueError:
         timeout = 0.75
     try:
-        subprocess.run(
+        _run_command_hard_timeout(
             ["osascript", "-e", 'tell application "Into the Breach" to activate'],
-            capture_output=True,
+            max(0.1, timeout),
             text=True,
-            timeout=max(0.1, timeout),
-            start_new_session=True,
         )
         _LAST_ACTIVATE_AT = time.monotonic()
         time.sleep(0.03)
@@ -193,32 +298,21 @@ def take_screenshot(
         return output_path
 
     try:
-        timeout = float(os.environ.get("ITB_SCREENSHOT_TIMEOUT", "2.5"))
+        timeout = float(os.environ.get("ITB_SCREENSHOT_TIMEOUT", "4.0"))
     except ValueError:
-        timeout = 2.5
+        timeout = 4.0
     timeout = max(0.5, timeout)
 
-    try:
-        if bounds:
-            activate_game_window()
-            region = (
-                f"{bounds['x']},{bounds['y']},"
-                f"{bounds['width']},{bounds['height']}"
-            )
-            subprocess.run(
-                ["screencapture", "-x", "-R", region, str(output_path)],
-                timeout=timeout,
-                start_new_session=True,
-            )
-        else:
-            # Fallback: capture entire screen if accessibility window bounds fail.
-            subprocess.run(
-                ["screencapture", "-x", str(output_path)],
-                timeout=timeout,
-                start_new_session=True,
-            )
-    except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(f"screencapture timed out after {timeout:.1f}s") from exc
+    if bounds:
+        activate_game_window()
+        region = (
+            f"{bounds['x']},{bounds['y']},"
+            f"{bounds['width']},{bounds['height']}"
+        )
+        _run_screencapture(["-x", "-R", region, str(output_path)], timeout)
+    else:
+        # Fallback: capture entire screen if accessibility window bounds fail.
+        _run_screencapture(["-x", str(output_path)], timeout)
 
     return output_path
 

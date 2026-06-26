@@ -21,6 +21,8 @@ from src.capture.save_parser import load_game_state
 from src.loop.lightning_conductor import (
     HARD_STOP_TOKENS,
     LIGHTNING_WAR,
+    LIGHTNING_WAR_PROFILE_KEY,
+    LIGHTNING_WAR_STEAM_KEY,
     RESTARTABLE_ATTEMPT_STOP_TOKENS,
     _achievement_unlocked,
     _compact as _conductor_compact,
@@ -68,9 +70,10 @@ BASELINE_STOP_TOKENS = tuple(
 
 DEFAULT_LIGHTNING_MAX_ATTEMPTS = 20
 DEFAULT_LIGHTNING_MAX_SEGMENTS = 40
-DEFAULT_LIGHTNING_SPEED_SEGMENT_TIMEOUT = 30.0
+DEFAULT_LIGHTNING_SPEED_SEGMENT_TIMEOUT = 45.0
+DEFAULT_LIGHTNING_SPEED_SEGMENT_MAX_WAIT = 18.0
 DEFAULT_LIGHTNING_FIRST_ISLAND_SEQUENCE = ("archive", "rst", "pinnacle", "detritus")
-DEFAULT_LIGHTNING_SPEED_FIRST_ISLAND_SEQUENCE = ("archive", "rst")
+DEFAULT_LIGHTNING_SPEED_FIRST_ISLAND_SEQUENCE = ("archive", "detritus", "pinnacle")
 _LIGHTNING_FIRST_ISLAND_ALIASES = {
     "archive": "archive",
     "rst": "rst",
@@ -323,6 +326,18 @@ STARTUP_HIDDEN_PANEL_UIS = (SAFE_PANEL_UIS - {"mission_preview_panel"}) | {
     "island_complete_leave",
 }
 
+
+OCR_AUDIT_PANEL_UIS = (
+    TERMINAL_UIS
+    | SAFE_PANEL_UIS
+    | SYSTEM_BLOCKING_UIS
+    | {
+        "island_complete_leave",
+        "mission_preview_panel",
+    }
+)
+
+
 SEGMENT_SAFE_PANEL_RECOVERY_REASONS = {
     "deployment_visible_ui_not_deployment",
 }
@@ -375,7 +390,11 @@ def _successful_system_prompt_allow_result(value: Any) -> bool:
         return False
     status = str(value.get("status") or "").upper()
     reason = str(value.get("reason") or "")
-    return status == "OK" and reason == "system_privacy_prompt_allow_clicked"
+    control = str(value.get("control") or "")
+    return status == "OK" and (
+        reason.startswith("system_privacy_prompt_allow_clicked")
+        or control == "macos_privacy_prompt_allow"
+    )
 
 
 def _external_system_prompt_evidence(
@@ -525,14 +544,10 @@ def _external_system_prompt_visible_ui(value: Any) -> dict[str, Any] | None:
 def _external_system_prompt_text(text: str) -> bool:
     normalized = str(text or "").lower()
     phrases = (
-        "external_system_prompt_visible",
-        "system_privacy_prompt",
         "macos privacy prompt",
         "macos system prompt",
         "macos screen recording prompt",
         "privacy prompt is covering",
-        "requires user authorization",
-        "requires_user_authorization",
     )
     return any(phrase in normalized for phrase in phrases)
 
@@ -1551,6 +1566,71 @@ def _has_verified_pause_resting_state(value: Any) -> bool:
     return False
 
 
+def _iter_nested_dicts(value: Any):
+    stack = [value]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, dict):
+            yield item
+            stack.extend(item.values())
+        elif isinstance(item, list):
+            stack.extend(item)
+
+
+def _has_pause_timer_or_menu_evidence(value: Any) -> bool:
+    if _has_verified_pause_resting_state(value):
+        return True
+    for item in _iter_nested_dicts(value):
+        if item.get("source") == "visible_pause_menu_timer":
+            return True
+        if item.get("timeline_label_seen") is True:
+            return True
+        visible = item.get("visible_ui") or item.get("pause_verify")
+        if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
+            return True
+        scores = item.get("scores")
+        if isinstance(scores, dict):
+            pause_score = scores.get("pause_menu")
+            if isinstance(pause_score, dict) and _safe_float(pause_score.get("score")) >= 0.35:
+                return True
+    return False
+
+
+def _has_active_mission_deployment_evidence(value: Any) -> bool:
+    for item in _iter_nested_dicts(value):
+        if (
+            item.get("in_active_mission") is True
+            and _safe_int(item.get("deployment_zone_count")) > 0
+            and _safe_int(item.get("active_mechs")) <= 0
+        ):
+            return True
+        underlay = item.get("paused_deployment_underlay")
+        if isinstance(underlay, dict) and (
+            underlay.get("active_mission_under_pause") is True
+            and _safe_int(underlay.get("signal_count")) >= 3
+        ):
+            return True
+        if (
+            item.get("active_mission_under_pause") is True
+            and _safe_int(item.get("signal_count")) >= 3
+        ):
+            return True
+    return False
+
+
+def _paused_active_mission_deployment_handoff(value: Any) -> bool:
+    return _has_pause_timer_or_menu_evidence(value) and _has_active_mission_deployment_evidence(value)
+
+
+def _segment_visible_deployment_handoff(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return (
+        str(value.get("reason") or "") == "deployment_visible_ui_not_deployment"
+        and str(value.get("visible_ui") or "") == "deployment_screen"
+    )
+
+
 def _startup_hidden_panel_name(guard: dict[str, Any] | None) -> str | None:
     visible_name = _direct_visible_ui_name(guard)
     if visible_name not in STARTUP_HIDDEN_PANEL_UIS:
@@ -1662,7 +1742,7 @@ class LightningRunnerConfig:
     iteration_mode: str = "flipflop"
     screenshots: bool = True
     route_auto_start: bool = True
-    route_start_mode: str = "visible-text"
+    route_start_mode: str = "preview-board"
     route_speed_vetoes: bool | None = None
     allow_objective_loss: bool = False
     lightning_speed_loss_policy: bool = False
@@ -1683,6 +1763,10 @@ class LightningRunnerConfig:
         return 2.0 if self.speed_mode else 10.0
 
     @property
+    def segment_max_wait(self) -> float:
+        return DEFAULT_LIGHTNING_SPEED_SEGMENT_MAX_WAIT if self.speed_mode else 45.0
+
+    @property
     def segment_wall_timeout(self) -> float:
         if self.max_wall_seconds is not None:
             return float(self.max_wall_seconds)
@@ -1697,7 +1781,7 @@ class LightningRunnerConfig:
     @property
     def effective_route_speed_vetoes(self) -> bool:
         if self.route_speed_vetoes is None:
-            return self.speed_mode
+            return False
         return bool(self.route_speed_vetoes)
 
     @property
@@ -2265,6 +2349,31 @@ class LightningWarRunner:
                 "session_load_exception",
                 session_load=session_block,
             )
+        reconcile = self._reconcile_stale_completion_session(
+            commands,
+            session,
+            label="startup",
+            visible=guard,
+        )
+        if reconcile is not None:
+            if reconcile.get("status") == "BLOCKED":
+                return self._finish(
+                    "BLOCKED",
+                    str(reconcile.get("reason")),
+                    stale_completion_reconcile=reconcile,
+                    session=_session_summary(session),
+                )
+            session, session_block = self._load_session_or_block(
+                commands,
+                "after_startup_completion_reconcile",
+            )
+            if session_block is not None:
+                return self._finish(
+                    "BLOCKED",
+                    "session_load_exception",
+                    session_load=session_block,
+                    stale_completion_reconcile=reconcile,
+                )
         if not hot_combat_start:
             setup_proof = self._verify_run_setup(commands)
             if setup_proof.get("status") == "BLOCKED":
@@ -2411,7 +2520,11 @@ class LightningWarRunner:
                         "session_load_exception",
                         session_load=session_block,
                     )
-                pace_gate = self._pace_gate(pace_session, best_timer)
+                pace_gate = self._pace_gate(
+                    pace_session,
+                    best_timer,
+                    context=initial_preflight.get("result"),
+                )
                 if pace_gate is not None:
                     restart = self._restart_after_initial_pace_gate_if_safe(
                         commands,
@@ -2479,6 +2592,32 @@ class LightningWarRunner:
                     "session_load_exception",
                     session_load=session_block,
                 )
+            reconcile = self._reconcile_stale_completion_session(
+                commands,
+                session,
+                label=f"segment_{segment_index}",
+                visible=guard if segment_index == 1 else None,
+            )
+            if reconcile is not None:
+                if reconcile.get("status") == "BLOCKED":
+                    return self._finish(
+                        "BLOCKED",
+                        str(reconcile.get("reason")),
+                        stale_completion_reconcile=reconcile,
+                        session=_session_summary(session),
+                    )
+                session, session_block = self._load_session_or_block(
+                    commands,
+                    "after_loop_completion_reconcile",
+                    segment_index=segment_index,
+                )
+                if session_block is not None:
+                    return self._finish(
+                        "BLOCKED",
+                        "session_load_exception",
+                        session_load=session_block,
+                        stale_completion_reconcile=reconcile,
+                    )
             completed = _completed_islands(session)
             event_error = self._best_effort_event(
                 "runner_progress",
@@ -2656,7 +2795,7 @@ class LightningWarRunner:
                     time_limit=cfg.combat_time_limit,
                     max_steps=cfg.segment_steps,
                     max_turns=6,
-                    max_wait=45.0,
+                    max_wait=cfg.segment_max_wait,
                     click_ui=True,
                     set_fast_bridge=True,
                     run_preflight=False,
@@ -2824,7 +2963,7 @@ class LightningWarRunner:
             pace_gate = self._segment_initial_pace_gate(
                 session,
                 segment,
-            ) or self._pace_gate(session, best_timer)
+            ) or self._pace_gate(session, best_timer, context=segment)
             if (
                 deployment_handoff_grace_segments > 0
                 and pace_gate is not None
@@ -3106,7 +3245,7 @@ class LightningWarRunner:
             pace_gate = self._segment_initial_pace_gate(
                 session,
                 segment,
-            ) or self._pace_gate(session, best_timer)
+            ) or self._pace_gate(session, best_timer, context=segment)
             if (
                 deployment_handoff_grace_segments > 0
                 and pace_gate is not None
@@ -3284,13 +3423,20 @@ class LightningWarRunner:
 
             if (
                 segment.get("status") == "LIGHTNING_SEGMENT_STOPPED"
-                and str(segment.get("reason") or "") == "deployment_confirmed_paused"
+                and (
+                    str(segment.get("reason") or "")
+                    in {
+                        "deployment_confirmed_paused",
+                        "deployment_waiting_for_ui_settle",
+                    }
+                    or _segment_visible_deployment_handoff(segment)
+                )
             ):
                 deployment_handoff_grace_segments = max(
                     deployment_handoff_grace_segments,
                     2,
                 )
-                skip_visible_panel_once_reason = "deployment_confirmed_paused"
+                skip_visible_panel_once_reason = str(segment.get("reason") or "")
                 event_error = self._best_effort_event(
                     "deployment_confirmed_fast_handoff",
                     segment_index=segment_index,
@@ -3785,7 +3931,20 @@ class LightningWarRunner:
         if not cfg.speed_mode or not isinstance(segment, dict):
             return None
         reason = str(segment.get("reason") or "")
-        if reason != "first_mission_start_timer_not_reset":
+        timeout_evidence = _lightning_subcall_timeout_evidence(segment)
+        first_route_timeout = (
+            timeout_evidence is not None
+            and not bool(segment.get("route_start_performed"))
+            and not _segment_entered_combat(segment)
+        )
+        if (
+            reason
+            not in {
+                "first_mission_start_timer_not_reset",
+                "first_mission_route_start_pace_gate",
+            }
+            and not first_route_timeout
+        ):
             return None
 
         completed = _completed_islands(session)
@@ -3824,7 +3983,12 @@ class LightningWarRunner:
             break
 
         return {
-            "reason": reason,
+            "reason": (
+                "first_mission_route_start_pace_gate"
+                if first_route_timeout
+                or reason == "first_mission_route_start_pace_gate"
+                else reason
+            ),
             "game_seconds": round(float(game_seconds), 3),
             "game_timer": _timer_label(segment) or _format_seconds(game_seconds),
             "gate_seconds": float(gate_seconds) if gate_seconds is not None else None,
@@ -3832,6 +3996,8 @@ class LightningWarRunner:
             "islands_completed": completed,
             "current_mission": current_mission,
             "mission_index": mission_index,
+            "trigger": "first_route_subcall_timeout" if first_route_timeout else None,
+            "timeout_evidence": _compact(timeout_evidence) if first_route_timeout else None,
             "visible_timer": _compact(visible_timer) if visible_timer else None,
             "first_mission_start_timer_guard": _compact(guard) if guard else None,
         }
@@ -3849,7 +4015,18 @@ class LightningWarRunner:
             1,
             speed_mode=cfg.speed_mode,
         )
+        setup: dict[str, Any] | None = None
         if initial_visible_ui == "new_game_setup":
+            setup = self._prepare_setup(commands)
+            if setup.get("status") == "PASS" or cfg.dry_run:
+                self.telemetry.event(
+                    "setup_start_skipped",
+                    reason="setup_modal_already_verified",
+                    setup=_compact(setup),
+                )
+            else:
+                setup = None
+        if initial_visible_ui == "new_game_setup" and setup is None:
             try:
                 setup_start = self._span(
                     "setup_start",
@@ -3882,7 +4059,8 @@ class LightningWarRunner:
                     "setup_start": _compact(setup_start),
                 }
 
-        setup = self._prepare_setup(commands)
+        if setup is None:
+            setup = self._prepare_setup(commands)
         if setup.get("status") != "PASS" and not cfg.dry_run:
             return {
                 "status": "BLOCKED",
@@ -3901,7 +4079,7 @@ class LightningWarRunner:
                 time_limit=cfg.combat_time_limit,
                 max_steps=cfg.segment_steps,
                 max_turns=6,
-                max_wait=45.0,
+                    max_wait=cfg.segment_max_wait,
                 max_wall_seconds=cfg.max_wall_seconds,
                 route_auto_start=False,
                 run_segment=False,
@@ -4162,6 +4340,25 @@ class LightningWarRunner:
 
     def _prepare_setup(self, commands: Any) -> dict[str, Any]:
         cfg = self.config
+        def _focus_retry_warranted(result: dict[str, Any]) -> bool:
+            if not isinstance(result, dict):
+                return False
+            if result.get("status") == "PASS":
+                return False
+            if not result.get("setup_screen_detected"):
+                return False
+            if result.get("click_plan"):
+                return False
+            if result.get("actual_difficulty") != cfg.difficulty:
+                return False
+            advanced = result.get("advanced")
+            if not isinstance(advanced, list) or not advanced:
+                return False
+            desired_on = str(cfg.advanced_content or "").lower() not in {"off", "false", "0", "no"}
+            if any(bool(item.get("enabled")) != desired_on for item in advanced if isinstance(item, dict)):
+                return False
+            return result.get("window_focus_verified") is False
+
         try:
             setup = self._span(
                 "verify_setup",
@@ -4188,6 +4385,34 @@ class LightningWarRunner:
             return result
         if setup.get("status") == "PASS" or cfg.dry_run:
             return setup
+        if _focus_retry_warranted(setup):
+            time.sleep(0.6)
+            try:
+                setup = self._span(
+                    "verify_setup_focus_retry",
+                    commands.cmd_verify_setup_screen,
+                    expected_difficulty=cfg.difficulty,
+                    advanced_content=cfg.advanced_content,
+                )
+            except Exception as exc:
+                assert self.telemetry is not None
+                result = {
+                    "status": "FAIL",
+                    "reason": "setup_verification_exception",
+                    "span": "verify_setup_focus_retry",
+                    "exception_type": type(exc).__name__,
+                    "error": str(exc),
+                    "traceback": traceback.format_exc(),
+                    "next_step": (
+                        "The setup verifier raised during focus retry. Inspect "
+                        "the traceback/window evidence and rerun verify_setup "
+                        "before starting a Lightning War timeline."
+                    ),
+                }
+                self._record_result_event("setup_verification_exception", result)
+                return result
+            if setup.get("status") == "PASS":
+                return setup
         clicks = setup.get("click_plan") or []
         if not clicks:
             return setup
@@ -4240,7 +4465,7 @@ class LightningWarRunner:
                     failure.setdefault("telemetry_event_errors", []).append(event_error)
                 return failure
         try:
-            return self._span(
+            setup = self._span(
                 "verify_setup_after_clicks",
                 commands.cmd_verify_setup_screen,
                 expected_difficulty=cfg.difficulty,
@@ -4263,6 +4488,36 @@ class LightningWarRunner:
             }
             self._record_result_event("setup_verification_exception", result)
             return result
+        if setup.get("status") == "PASS" or cfg.dry_run:
+            return setup
+        if _focus_retry_warranted(setup):
+            time.sleep(0.6)
+            try:
+                return self._span(
+                    "verify_setup_after_clicks_focus_retry",
+                    commands.cmd_verify_setup_screen,
+                    expected_difficulty=cfg.difficulty,
+                    advanced_content=cfg.advanced_content,
+                )
+            except Exception as exc:
+                assert self.telemetry is not None
+                result = {
+                    "status": "FAIL",
+                    "reason": "setup_verification_exception",
+                    "span": "verify_setup_after_clicks_focus_retry",
+                    "exception_type": type(exc).__name__,
+                    "error": str(exc),
+                    "traceback": traceback.format_exc(),
+                    "next_step": (
+                        "The setup verifier raised during post-click focus "
+                        "retry. Inspect the traceback/window evidence and "
+                        "rerun verify_setup before starting a Lightning War "
+                        "timeline."
+                    ),
+                }
+                self._record_result_event("setup_verification_exception", result)
+                return result
+        return setup
 
     def _run_preflight(self, commands: Any, *, label: str) -> dict[str, Any]:
         try:
@@ -4324,7 +4579,7 @@ class LightningWarRunner:
                 "classify_visible",
                 commands.cmd_lightning_ui,
                 control="classify",
-                include_ocr=True,
+                include_ocr=False,
             )
         except Exception as exc:
             assert self.telemetry is not None
@@ -4346,6 +4601,37 @@ class LightningWarRunner:
             self._record_result_event("screen_classification_exception", result)
             return result
         visible_name = _visible_ui_name(visible)
+        if visible_name in OCR_AUDIT_PANEL_UIS:
+            try:
+                visible = self._span(
+                    "classify_visible_ocr_audit",
+                    commands.cmd_lightning_ui,
+                    control="classify",
+                    include_ocr=True,
+                )
+            except Exception as exc:
+                assert self.telemetry is not None
+                result = {
+                    "status": "BLOCKED",
+                    "reason": "screen_ocr_audit_exception",
+                    "span": "classify_visible_ocr_audit",
+                    "handled": False,
+                    "visible_name": visible_name,
+                    "visible_ui": _compact(visible),
+                    "segment_index": segment_index,
+                    "exception_type": type(exc).__name__,
+                    "error": str(exc),
+                    "traceback": traceback.format_exc(),
+                    "next_step": (
+                        "A terminal, reward, mission-preview, or system-prompt "
+                        "screen needed an OCR safety audit, but the audit "
+                        "classifier raised. Inspect the visible screen before "
+                        "any UI click or combat burst."
+                    ),
+                }
+                self._record_result_event("screen_ocr_audit_exception", result)
+                return result
+            visible_name = _visible_ui_name(visible)
 
         def panel_exception_block(
             reason: str,
@@ -4393,6 +4679,15 @@ class LightningWarRunner:
                     "starting a combat burst, preserve the screenshot/error "
                     "evidence, and rerun only after the visible state is known."
                 ),
+            }
+        if _paused_active_mission_deployment_handoff(visible):
+            return {
+                "status": "NO_ACTION",
+                "reason": "paused_active_mission_deployment_handoff",
+                "handled": False,
+                "visible_name": visible_name,
+                "visible_ui": _compact(visible),
+                "segment_index": segment_index,
             }
         terminal_evidence = _terminal_outcome_evidence(visible)
         if terminal_evidence is not None:
@@ -4808,6 +5103,23 @@ class LightningWarRunner:
                 return panel
             if not panel.get("handled"):
                 ensure_pause = self._ensure_pause(commands)
+                if panel.get("visible_name") == "combat_screen" or _visible_refines_to_live_combat(
+                    panel.get("visible_ui")
+                ):
+                    return {
+                        "status": "NO_ACTION",
+                        "reason": "paused_segment_panel_revealed_combat_screen",
+                        "handled": False,
+                        "visible_name": panel.get("visible_name") or _visible_ui_name(panel),
+                        "expected_visible_name": expected_visible_name,
+                        "paused_panel": _compact(paused_panel),
+                        "resume_control": resume_control,
+                        "resume_result": _compact(resume),
+                        "panel": _compact(panel),
+                        "panel_chain": panel_chain,
+                        "ensure_pause": _compact(ensure_pause),
+                        "segment_index": segment_index,
+                    }
                 return {
                     "status": "BLOCKED",
                     "reason": "expected_segment_panel_not_visible_after_resume",
@@ -5090,6 +5402,88 @@ class LightningWarRunner:
         if confirm.get("status") != "OK":
             return _shop_block("leave_confirm_failed", final_grid, steps, visible)
 
+        session, session_block = self._load_session_or_block(
+            commands,
+            "post_leave_confirm_session",
+        )
+        if session_block is not None:
+            return _shop_block(
+                "post_leave_confirm_session_load_exception",
+                final_grid,
+                steps,
+                visible,
+                exception_evidence=session_block,
+            )
+        completion_record = _record_island_completion_after_leave_confirm(session)
+        steps.append({
+            "control": "record_island_completion_after_leave_confirm",
+            "result": completion_record,
+        })
+        if completion_record.get("status") != "OK":
+            return _shop_block(
+                "post_leave_completion_record_failed",
+                final_grid,
+                steps,
+                visible,
+                exception_evidence=completion_record,
+            )
+        completed_after_leave = list(completion_record.get("islands_completed") or [])
+        if len(completed_after_leave) >= int(self.config.target_islands):
+            snap_fn = getattr(commands, "cmd_lightning_snap_pause", None)
+            post_leave_pause = None
+            if callable(snap_fn):
+                try:
+                    post_leave_pause = self._span(
+                        "post_target_leave_confirm_snap_pause",
+                        snap_fn,
+                        label="post_target_leave_confirm",
+                        note=(
+                            "Lightning War target islands completed after "
+                            "leave_confirm_yes; capture proof and pause before "
+                            "any further map navigation"
+                        ),
+                        dry_run=self.config.dry_run,
+                        run_seconds=0.0,
+                        include_ocr=True,
+                    )
+                except Exception as exc:
+                    post_leave_pause = {
+                        "status": "EXCEPTION",
+                        "exception_type": type(exc).__name__,
+                        "error": str(exc),
+                        "traceback": traceback.format_exc(),
+                    }
+                steps.append({
+                    "control": "post_target_leave_confirm_snap_pause",
+                    "result": _compact(post_leave_pause),
+                })
+                if isinstance(post_leave_pause, dict) and post_leave_pause.get("status") not in {
+                    "OK",
+                    "DRY_RUN",
+                }:
+                    return _shop_block(
+                        "post_target_leave_confirm_pause_failed",
+                        final_grid,
+                        steps,
+                        visible,
+                        observed_visible_ui=_compact(post_leave_pause),
+                    )
+            return {
+                "status": "OK",
+                "reason": "target_islands_completed_after_leave_confirm",
+                "visible_ui": _compact(visible),
+                "initial_grid": before,
+                "final_grid": final_grid,
+                "islands_completed": completed_after_leave,
+                "session_completion": completion_record,
+                "post_leave_pause": _compact(post_leave_pause),
+                "achievement_proof_keys": {
+                    "steam_or_log": LIGHTNING_WAR_STEAM_KEY,
+                    "profile": LIGHTNING_WAR_PROFILE_KEY,
+                },
+                "steps": steps,
+            }
+
         handoff, block = shop_ui(
             label="classify_after_leave_confirm",
             ui_control="classify",
@@ -5202,21 +5596,69 @@ class LightningWarRunner:
     ) -> dict[str, Any] | None:
         return _stop_token_evidence(result, BASELINE_STOP_TOKENS)
 
-    def _pace_gate(self, session: Any, game_seconds: float | None) -> dict[str, Any] | None:
+    def _pace_gate(
+        self,
+        session: Any,
+        game_seconds: float | None,
+        *,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         cfg = self.config
         if not cfg.speed_mode or game_seconds is None:
             return None
+        deployment_handoff_context = (
+            _paused_active_mission_deployment_handoff(context)
+            or _segment_visible_deployment_handoff(context)
+        )
+        route_gate_context = _segment_preview_only_route_gate(context or {})
         completed = _completed_islands(session)
         current_mission = str(getattr(session, "current_mission", "") or "").strip()
         try:
             mission_index = int(getattr(session, "mission_index", 0) or 0)
         except (TypeError, ValueError):
             mission_index = 0
+        try:
+            current_turn = int(getattr(session, "current_turn", 0) or 0)
+        except (TypeError, ValueError):
+            current_turn = 0
+        try:
+            actions_executed = int(getattr(session, "actions_executed", 0) or 0)
+        except (TypeError, ValueError):
+            actions_executed = 0
+        phase = str(getattr(session, "phase", "") or "").strip()
         mission_gate = float(cfg.mission_segment_gate_seconds)
         mission_number = max(1, mission_index + 1)
         mission_deadline = mission_number * mission_gate
         if (
+            not deployment_handoff_context
+            and not route_gate_context
+            and not completed
+            and current_mission
+            and mission_index <= 0
+            and current_turn <= 1
+            and actions_executed <= 0
+            and phase in {"combat_player", "combat_enemy", "deployment", "unknown"}
+            and float(game_seconds)
+            >= float(cfg.first_mission_route_start_gate_seconds)
+        ):
+            return {
+                "reason": "first_mission_deployment_handoff_pace_gate",
+                "game_seconds": round(float(game_seconds), 3),
+                "game_timer": _format_seconds(game_seconds),
+                "gate_seconds": float(cfg.first_mission_route_start_gate_seconds),
+                "gate_timer": _format_seconds(
+                    cfg.first_mission_route_start_gate_seconds,
+                ),
+                "islands_completed": completed,
+                "current_mission": current_mission,
+                "mission_index": mission_index,
+                "current_turn": current_turn,
+                "actions_executed": actions_executed,
+                "phase": phase,
+            }
+        if (
             current_mission
+            and not route_gate_context
             and mission_gate > 0
             and float(game_seconds) >= float(mission_deadline)
         ):
@@ -5234,7 +5676,8 @@ class LightningWarRunner:
                 "mission_number": mission_number,
             }
         if (
-            not completed
+            not deployment_handoff_context
+            and not completed
             and not current_mission
             and mission_index <= 0
             and float(game_seconds) >= float(cfg.mission_segment_gate_seconds)
@@ -5250,7 +5693,8 @@ class LightningWarRunner:
                 "mission_index": mission_index,
             }
         if (
-            not completed
+            not deployment_handoff_context
+            and not completed
             and not current_mission
             and mission_index <= 0
             and float(game_seconds)
@@ -5810,6 +6254,7 @@ class LightningWarRunner:
             "first_mission_start_timer_not_reset",
             "first_mission_start_pace_gate",
             "first_mission_route_start_pace_gate",
+            "first_mission_deployment_handoff_pace_gate",
             "first_island_pace_gate",
             "mech_loadout_route_click_miss",
         }:
@@ -6271,6 +6716,15 @@ class LightningWarRunner:
             visible_ui=_compact(visible),
         )
         if visible_block is None:
+            proof_block = self._achievement_proof_block(
+                commands,
+                completed=completed,
+                label=label,
+                source="classify",
+                visible=visible,
+            )
+            if proof_block is not None:
+                return proof_block
             return None
         if visible_block.get("reason") != "completion_pause_menu_visible":
             return visible_block
@@ -6403,7 +6857,266 @@ class LightningWarRunner:
                 )
             evidence_block["peek"] = _compact(peek)
             return evidence_block
+        proof_block = self._achievement_proof_block(
+            commands,
+            completed=completed,
+            label=label,
+            source="completion_pause_peek",
+            visible=evidence_ui,
+            peek=peek,
+        )
+        if proof_block is not None:
+            return proof_block
         return None
+
+    def _reconcile_stale_completion_session(
+        self,
+        commands: Any,
+        session: Any,
+        *,
+        label: str,
+        visible: Any | None,
+    ) -> dict[str, Any] | None:
+        completed = _completed_islands(session)
+        if len(completed) >= int(self.config.target_islands):
+            return None
+        inferred_count = _inferred_completed_island_count_from_mission_index(session)
+        if inferred_count < int(self.config.target_islands):
+            return None
+
+        proof_visible = visible
+        proof_source = "guard" if visible is not None else "classify"
+        proof_peek = None
+        if proof_visible is None:
+            try:
+                proof_visible = self._span(
+                    f"{label}_stale_completion_classify",
+                    commands.cmd_lightning_ui,
+                    control="classify",
+                    include_ocr=True,
+                )
+            except Exception as exc:
+                return {
+                    "status": "BLOCKED",
+                    "reason": "stale_completion_classification_exception",
+                    "islands_completed": completed,
+                    "inferred_island_count": inferred_count,
+                    "session": _session_summary(session),
+                    "exception_type": type(exc).__name__,
+                    "error": str(exc),
+                    "traceback": traceback.format_exc(),
+                    "next_step": (
+                        "Mission index implies the Lightning War target may "
+                        "already be complete, but visible classification raised. "
+                        "Inspect the paused screen before any route clicks."
+                    ),
+                }
+
+        proof_name = _visible_ui_name(proof_visible)
+        if proof_name == "pause_menu":
+            peek_fn = getattr(commands, "cmd_lightning_peek", None)
+            if not callable(peek_fn):
+                return {
+                    "status": "BLOCKED",
+                    "reason": "stale_completion_pause_peek_unavailable",
+                    "visible_name": proof_name,
+                    "visible_ui": _compact(proof_visible),
+                    "islands_completed": completed,
+                    "inferred_island_count": inferred_count,
+                    "session": _session_summary(session),
+                    "next_step": (
+                        "Mission index implies the target may be complete, "
+                        "but the pause menu hides the proof screen and no peek "
+                        "helper is available. Inspect before any map clicks."
+                    ),
+                }
+
+            def run_completion_peek(**kwargs: Any) -> dict[str, Any]:
+                return peek_fn(label=f"{label}_stale_completion", **kwargs)
+
+            try:
+                proof_peek = self._span(
+                    f"{label}_stale_completion_pause_peek",
+                    run_completion_peek,
+                    note="stale session completion reconcile before route clicks",
+                    dry_run=self.config.dry_run,
+                    require_paused=True,
+                    include_ocr=True,
+                )
+            except Exception as exc:
+                return {
+                    "status": "BLOCKED",
+                    "reason": "stale_completion_pause_peek_exception",
+                    "visible_name": proof_name,
+                    "visible_ui": _compact(proof_visible),
+                    "islands_completed": completed,
+                    "inferred_island_count": inferred_count,
+                    "session": _session_summary(session),
+                    "exception_type": type(exc).__name__,
+                    "error": str(exc),
+                    "traceback": traceback.format_exc(),
+                }
+            if proof_peek.get("status") != "OK":
+                return {
+                    "status": "BLOCKED",
+                    "reason": "stale_completion_pause_peek_failed",
+                    "visible_name": proof_name,
+                    "visible_ui": _compact(proof_visible),
+                    "peek": _compact(proof_peek),
+                    "islands_completed": completed,
+                    "inferred_island_count": inferred_count,
+                    "session": _session_summary(session),
+                }
+            proof_visible = proof_peek.get("evidence_ui")
+            proof_source = "pause_peek"
+            proof_name = _visible_ui_name(proof_visible)
+
+        if proof_name in SYSTEM_BLOCKING_UIS:
+            return {
+                "status": "BLOCKED",
+                "reason": "external_system_prompt_visible",
+                "visible_name": proof_name,
+                "visible_ui": _compact(proof_visible),
+                "islands_completed": completed,
+                "inferred_island_count": inferred_count,
+                "session": _session_summary(session),
+            }
+        terminal_evidence = _terminal_outcome_evidence(proof_visible)
+        if terminal_evidence is not None:
+            return {
+                "status": "BLOCKED",
+                "reason": "stale_completion_terminal_outcome_visible",
+                "visible_name": proof_name,
+                "visible_ui": _compact(proof_visible),
+                "terminal_evidence": terminal_evidence,
+                "islands_completed": completed,
+                "inferred_island_count": inferred_count,
+                "session": _session_summary(session),
+            }
+        terminal_ui_evidence = _terminal_visible_ui_evidence(proof_visible)
+        if terminal_ui_evidence is not None:
+            return {
+                "status": "BLOCKED",
+                "reason": "stale_completion_terminal_visible_ui",
+                "visible_name": proof_name,
+                "visible_ui": _compact(proof_visible),
+                "terminal_evidence": terminal_ui_evidence,
+                "islands_completed": completed,
+                "inferred_island_count": inferred_count,
+                "session": _session_summary(session),
+            }
+        if proof_name not in COMPLETION_PROOF_UIS and proof_name != "island_map_or_unknown":
+            return None
+
+        record = _record_island_completion_after_leave_confirm(
+            session,
+            reason="stale_completion_reconciled_from_visible_proof",
+        )
+        record["visible_name"] = proof_name
+        record["visible_ui"] = _compact(proof_visible)
+        record["source"] = proof_source
+        if proof_peek is not None:
+            record["peek"] = _compact(proof_peek)
+        if record.get("status") != "OK":
+            record["status"] = "BLOCKED"
+            record["reason"] = "stale_completion_record_failed"
+            return record
+        self._best_effort_event(
+            "stale_completion_reconciled",
+            status="OK",
+            label=label,
+            visible_name=proof_name,
+            inferred_island_count=inferred_count,
+            record=_compact(record),
+        )
+        return record
+
+    def _achievement_proof_block(
+        self,
+        commands: Any,
+        *,
+        completed: list[str],
+        label: str,
+        source: str,
+        visible: Any,
+        peek: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        proof_fn = getattr(commands, "cmd_lightning_proof", None)
+        if not callable(proof_fn):
+            self._best_effort_event(
+                "lightning_war_achievement_proof",
+                status="SKIPPED",
+                reason="proof_helper_unavailable",
+                label=label,
+                source=source,
+                islands_completed=completed,
+            )
+            return None
+        try:
+            proof = self._span(
+                f"{label}_achievement_proof",
+                proof_fn,
+                profile=self.config.profile,
+                sync_steam_api=False,
+            )
+        except Exception as exc:
+            block = {
+                "reason": "achievement_proof_exception",
+                "source": source,
+                "visible_name": _visible_ui_name(visible),
+                "visible_ui": _compact(visible),
+                "islands_completed": completed,
+                "exception_type": type(exc).__name__,
+                "error": str(exc),
+                "traceback": traceback.format_exc(),
+                "next_step": (
+                    "The visible completion screen looked acceptable, but the "
+                    "Lightning War proof command raised. Inspect the profile, "
+                    "log, and Steam cache before accepting success."
+                ),
+            }
+            if peek is not None:
+                block["peek"] = _compact(peek)
+            self._best_effort_event(
+                "lightning_war_achievement_proof",
+                status="BLOCKED",
+                reason="achievement_proof_exception",
+                label=label,
+                source=source,
+                islands_completed=completed,
+                exception_type=type(exc).__name__,
+                error=str(exc),
+            )
+            return block
+        proven = proof.get("proven") is True or proof.get("status") == "PROVEN"
+        self._best_effort_event(
+            "lightning_war_achievement_proof",
+            status="OK" if proven else "BLOCKED",
+            reason=None if proven else "achievement_proof_unproven",
+            label=label,
+            source=source,
+            islands_completed=completed,
+            proof=_compact(proof),
+        )
+        if proven:
+            return None
+        block = {
+            "reason": "achievement_proof_unproven",
+            "source": source,
+            "visible_name": _visible_ui_name(visible),
+            "visible_ui": _compact(visible),
+            "islands_completed": completed,
+            "proof": _compact(proof),
+            "next_step": (
+                "Two islands are recorded complete and the visible screen is "
+                "acceptable, but local durable proof does not show Lightning "
+                "War unlocked. Do not declare success; start a new attempt or "
+                "inspect the proof sources."
+            ),
+        }
+        if peek is not None:
+            block["peek"] = _compact(peek)
+        return block
 
     def _span(
         self,
@@ -7020,6 +7733,66 @@ def _completion_visible_screen_block(
     return None
 
 
+def _record_island_completion_after_leave_confirm(
+    session: Any,
+    *,
+    reason: str = "recorded_after_leave_confirm",
+) -> dict[str, Any]:
+    existing = _completed_islands(session)
+    current = str(getattr(session, "current_island", "") or "").strip()
+    mission_index = _safe_int(getattr(session, "mission_index", 0) or 0)
+    inferred_from_index = _inferred_completed_island_count_from_mission_index(session)
+
+    completed = list(existing)
+    if current and current not in completed:
+        completed.append(current)
+    elif not completed:
+        completed.append("island_1")
+
+    target_len = max(len(completed), inferred_from_index)
+    while len(completed) < target_len:
+        completed.append(f"island_{len(completed) + 1}")
+
+    result = {
+        "status": "OK",
+        "reason": reason,
+        "before_islands_completed": existing,
+        "current_island": current,
+        "mission_index": mission_index,
+        "inferred_island_count_from_mission_index": inferred_from_index,
+        "islands_completed": completed,
+    }
+    try:
+        setattr(session, "islands_completed", completed)
+        setattr(session, "current_mission", "")
+        setattr(session, "phase", "between_missions")
+        setattr(session, "current_turn", 0)
+        setattr(session, "actions_executed", 0)
+        setattr(session, "active_solution", None)
+        save = getattr(session, "save", None)
+        if callable(save):
+            save()
+            result["session_saved"] = True
+        else:
+            result["session_saved"] = False
+            result["session_save_reason"] = "save_method_unavailable"
+    except Exception as exc:
+        result["status"] = "ERROR"
+        result["reason"] = "record_after_leave_confirm_save_exception"
+        result["session_saved"] = False
+        result["exception_type"] = type(exc).__name__
+        result["error"] = str(exc)
+        result["traceback"] = traceback.format_exc()
+    return result
+
+
+def _inferred_completed_island_count_from_mission_index(session: Any) -> int:
+    mission_index = _safe_int(getattr(session, "mission_index", 0) or 0)
+    if mission_index < 4:
+        return 0
+    return max(1, (mission_index + 1) // 5)
+
+
 def _compact_external_prompt(value: Any) -> Any:
     if not isinstance(value, dict):
         return value
@@ -7249,6 +8022,13 @@ _PRE_START_ROUTE_GATE_REASONS = {
     "route_preview_unassigned_multi_region_start_button_missing_before_start",
 }
 
+_PRE_START_ROUTE_GATE_CONTAINER_REASONS = {
+    "",
+    "route_auto_start_not_allowed",
+    "segment_wall_seconds_exceeded",
+    "max_steps_reached",
+}
+
 
 def _segment_preview_only_route_gate_evidence(
     segment: dict[str, Any],
@@ -7264,7 +8044,7 @@ def _segment_preview_only_route_gate_evidence(
             "reason": top_reason,
             "source": "preview_only_route_gate",
         }
-    if top_reason and top_reason != "route_auto_start_not_allowed":
+    if top_reason not in _PRE_START_ROUTE_GATE_CONTAINER_REASONS:
         return None
     for step in segment.get("steps") or []:
         if not isinstance(step, dict):
