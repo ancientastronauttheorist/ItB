@@ -14019,7 +14019,7 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
     dry_run: bool = False,
     max_clicks: int = 60,
     settle_seconds: float = 0.12,
-    max_wall_seconds: float | None = 12.0,
+    max_wall_seconds: float | None = 45.0,
     max_capture_failures: int = 2,
 ) -> dict:
     """Click stacked macOS Allow prompts until full-screen OCR sees none."""

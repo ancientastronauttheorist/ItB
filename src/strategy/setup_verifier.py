@@ -109,6 +109,7 @@ def capture_and_check_setup(
     bounds = get_window_bounds()
     frontmost = is_game_frontmost() if bounds else False
     bounds_dict = dict(bounds) if bounds else None
+    _park_cursor_for_setup_capture(bounds_dict)
     try:
         screenshot = take_screenshot(output_path, bounds=bounds)
     except Exception as exc:
@@ -151,6 +152,24 @@ def capture_and_check_setup(
             window_focus_verified=bounds_dict is not None and frontmost,
             window_bounds=bounds_dict,
         )
+
+
+def _park_cursor_for_setup_capture(bounds: dict[str, Any] | None) -> None:
+    """Move the pointer away from setup checkboxes before screenshot analysis."""
+    if not bounds:
+        return
+    try:
+        import pyautogui
+    except Exception:
+        return
+    try:
+        pyautogui.moveTo(
+            int(bounds.get("x", 0)) + 24,
+            int(bounds.get("y", 0)) + 24,
+            duration=0.02,
+        )
+    except Exception:
+        return
 
 
 def analyze_setup_image(
