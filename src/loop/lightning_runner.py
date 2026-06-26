@@ -270,6 +270,10 @@ RECOVERABLE_PRECOMBAT_ROUTE_GATE_OVERRIDABLE_TOKENS = {
 SYSTEM_BLOCKING_UIS = {
     "system_privacy_prompt",
 }
+SYSTEM_PROMPT_CLEAR_HISTORY_KEYS = {
+    "system_privacy_prompt_clear",
+    "system_privacy_prompt_clears",
+}
 
 POST_LEAVE_HANDOFF_UIS = {
     "island_map",
@@ -434,6 +438,8 @@ def _external_system_prompt_evidence(
     *,
     path: tuple[str, ...] = (),
 ) -> dict[str, Any] | None:
+    if any(part in SYSTEM_PROMPT_CLEAR_HISTORY_KEYS for part in path):
+        return None
     if isinstance(value, str):
         if _external_system_prompt_text(value):
             return {
@@ -444,11 +450,20 @@ def _external_system_prompt_evidence(
         return None
     if isinstance(value, dict):
         if _successful_system_prompt_allow_result(value):
-            post_click = value.get("post_click_visible_ui")
-            if isinstance(post_click, dict):
+            for post_key in (
+                "post_fullscreen_click_visible_ui",
+                "post_followup_visible_ui",
+                "post_visible_ui",
+                "post_click_visible_ui",
+            ):
+                post_click = value.get(post_key)
+                if not isinstance(post_click, dict):
+                    continue
+                if _direct_visible_ui_name(post_click) not in SYSTEM_BLOCKING_UIS:
+                    return None
                 return _external_system_prompt_evidence(
                     post_click,
-                    path=path + ("post_click_visible_ui",),
+                    path=path + (post_key,),
                 )
             return None
         if (

@@ -526,6 +526,77 @@ def test_external_prompt_evidence_accepts_authorization_flags_and_prose():
     }
 
 
+def test_external_prompt_evidence_ignores_handled_prompt_clear_history():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "route_auto_start_not_allowed",
+        "last_attempt": {
+            "action": {
+                "pause_guard": {
+                    "system_privacy_prompt_clear": {
+                        "status": "OK",
+                        "reason": "system_privacy_prompt_allow_clicked",
+                        "post_click_visible_ui": {
+                            "status": "OK",
+                            "visible_ui": "system_privacy_prompt",
+                            "requires_user_authorization": True,
+                        },
+                    },
+                },
+            },
+        },
+        "pause_guard": {
+            "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    }
+
+    assert lightning_runner._external_system_prompt_evidence(segment) is None
+
+
+def test_external_prompt_evidence_prefers_final_allow_snapshot():
+    assert (
+        lightning_runner._external_system_prompt_evidence(
+            {
+                "status": "OK",
+                "reason": "system_privacy_prompt_allow_clicked_fullscreen_ocr",
+                "post_click_visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "system_privacy_prompt",
+                    "requires_user_authorization": True,
+                },
+                "post_fullscreen_click_visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "pause_menu",
+                },
+            }
+        )
+        is None
+    )
+
+
+def test_external_prompt_evidence_still_finds_current_nested_prompt():
+    assert lightning_runner._external_system_prompt_evidence(
+        {
+            "panel": {
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "system_privacy_prompt",
+                    "requires_user_authorization": True,
+                },
+            },
+        }
+    ) == {
+        "kind": "external_system_prompt",
+        "path": "panel.visible_ui",
+        "requires_user_authorization": True,
+        "visible_ui": {
+            "status": "OK",
+            "visible_ui": "system_privacy_prompt",
+            "requires_user_authorization": True,
+        },
+    }
+
+
 def test_successful_system_prompt_allow_accepts_direct_macos_click_result():
     assert lightning_runner._successful_system_prompt_allow_result(
         {
