@@ -9950,10 +9950,19 @@ def _lightning_visible_pause_timer_from_screenshot(
         }
 
     candidate_matches = matches
+    discarded_matches: list[dict] = []
     if has_timeline_label:
         pause_matches = [item for item in matches if item.get("pause_timer_like")]
         if pause_matches:
             candidate_matches = pause_matches
+    plausible_matches = [
+        item for item in candidate_matches if int(item["game_seconds"]) <= 7200
+    ]
+    if plausible_matches:
+        discarded_matches = [
+            item for item in candidate_matches if item not in plausible_matches
+        ]
+        candidate_matches = plausible_matches
     best = max(candidate_matches, key=lambda item: int(item["game_seconds"]))
     source = (
         "visible_game_timer"
@@ -9967,6 +9976,7 @@ def _lightning_visible_pause_timer_from_screenshot(
         "game_timer": best["game_timer"],
         "ocr_text": best["text"],
         "timer_matches": matches,
+        "discarded_timer_matches": discarded_matches,
         "classifier_visible_ui": visible_ui.get("visible_ui"),
         "timeline_label_seen": has_timeline_label,
         "game_time_label_seen": has_game_time_label,
@@ -10637,6 +10647,9 @@ _LIGHTNING_ROUTE_LEGACY_DIALOGUE_BOARD_START_MODES = {
     "dialogue_repeat_preview_board",
     "dialogue_repeat_preview_board_twice",
 }
+_LIGHTNING_FIRST_OPENING_DIALOGUE_START_MODE = (
+    "dialogue-region-repeat-preview-board"
+)
 _LIGHTNING_ROUTE_START_SUBCALL_TIMEOUT_SECONDS = 55.0
 
 
@@ -23113,14 +23126,17 @@ def _lightning_first_opening_route_start_mode(
     route_routing: str,
     expected_mission_id: str | None,
 ) -> str:
+    normalized = _lightning_normalized_route_start_mode(start_mode)
     if (
         not first_mission_opening
         or route_routing != "lightning_war"
         or str(expected_mission_id or "").strip()
     ):
         return start_mode
-    if _lightning_normalized_route_start_mode(start_mode) in _LIGHTNING_PREVIEW_BOARD_START_MODES:
+    if normalized in _LIGHTNING_ROUTE_LEGACY_DIALOGUE_BOARD_START_MODES:
         return start_mode
+    if normalized in _LIGHTNING_PREVIEW_BOARD_START_MODES:
+        return _LIGHTNING_FIRST_OPENING_DIALOGUE_START_MODE
     return "region-reveal-start"
 
 
@@ -24937,9 +24953,19 @@ def _lightning_fast_opening_route_commit(
         and post_start_pause_ui.get("visible_ui") == "mission_preview_panel"
     )
     if post_start_evidence_preview or post_start_pause_preview:
+        retry_dismiss_dialogue = bool(
+            dismiss_dialogue
+            or normalized_start_mode in _LIGHTNING_ROUTE_LEGACY_DIALOGUE_BOARD_START_MODES
+            or _lightning_visible_ui_has_large_preview_dialogue_board(
+                post_start_evidence_ui,
+            )
+            or _lightning_pause_menu_has_mission_preview_underlay(
+                post_start_pause_ui,
+            )
+        )
         retry_start = _lightning_click_paused_preview_start_sequence(
             dry_run=False,
-            dismiss_dialogue=False,
+            dismiss_dialogue=retry_dismiss_dialogue,
             start_clicks=2,
             pause_after_start=True,
         )
@@ -24971,7 +24997,11 @@ def _lightning_fast_opening_route_commit(
             int(region_window_y),
             dry_run=False,
             include_start_click=True,
-            dismiss_dialogue=False,
+            dismiss_dialogue=(
+                dismiss_dialogue
+                or normalized_start_mode
+                in _LIGHTNING_ROUTE_LEGACY_DIALOGUE_BOARD_START_MODES
+            ),
             start_mode=start_mode,
             start_window_x=start_window_x,
             start_window_y=start_window_y,
@@ -25016,9 +25046,24 @@ def _lightning_fast_opening_route_commit(
                 for candidate in (retry_evidence_ui, retry_pause_ui)
             )
             if retry_preview:
+                retry_preview_dismiss_dialogue = bool(
+                    dismiss_dialogue
+                    or normalized_start_mode
+                    in _LIGHTNING_ROUTE_LEGACY_DIALOGUE_BOARD_START_MODES
+                    or any(
+                        _lightning_visible_ui_has_large_preview_dialogue_board(
+                            candidate,
+                        )
+                        or _lightning_pause_menu_has_mission_preview_underlay(
+                            candidate,
+                        )
+                        for candidate in (retry_evidence_ui, retry_pause_ui)
+                        if isinstance(candidate, dict)
+                    )
+                )
                 retry_start = _lightning_click_paused_preview_start_sequence(
                     dry_run=False,
-                    dismiss_dialogue=False,
+                    dismiss_dialogue=retry_preview_dismiss_dialogue,
                     start_clicks=2,
                     pause_after_start=True,
                 )

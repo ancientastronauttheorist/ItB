@@ -6792,6 +6792,35 @@ def test_lightning_parse_visible_timer_ocr_variants():
     assert commands._lightning_parse_visible_timer_ocr_seconds("bad") is None
 
 
+def test_lightning_visible_pause_timer_discards_implausible_outlier(
+    monkeypatch,
+    tmp_path,
+):
+    screenshot = tmp_path / "pause.png"
+    screenshot.write_bytes(b"placeholder")
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {"status": "OK", "visible_ui": "pause_menu"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ocr_texts_from_image",
+        lambda path: {
+            "status": "OK",
+            "texts": ["Timeline Playtime", "0h 0m 21s", "8h 03m 55s"],
+        },
+    )
+
+    result = commands._lightning_visible_pause_timer_from_screenshot(screenshot)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "visible_pause_menu_timer"
+    assert result["game_seconds"] == 21.0
+    assert result["game_timer"] == "0:00:21"
+    assert result["discarded_timer_matches"][0]["game_timer"] == "8:03:55"
+
+
 def test_lightning_visible_preview_ocr_detects_tanks(monkeypatch, tmp_path):
     screenshot = tmp_path / "preview.png"
     screenshot.write_text("placeholder")
@@ -36137,6 +36166,36 @@ def test_lightning_speed_route_start_keeps_full_validation_floor(monkeypatch):
     ) == commands._LIGHTNING_ROUTE_START_SPEED_MIN_SUBCALL_SECONDS
 
 
+def test_lightning_first_opening_promotes_plain_preview_board_to_dialogue():
+    assert (
+        commands._lightning_first_opening_route_start_mode(
+            "preview-board",
+            first_mission_opening=True,
+            route_routing="lightning_war",
+            expected_mission_id=None,
+        )
+        == commands._LIGHTNING_FIRST_OPENING_DIALOGUE_START_MODE
+    )
+    assert (
+        commands._lightning_first_opening_route_start_mode(
+            "preview-board",
+            first_mission_opening=True,
+            route_routing="lightning_war",
+            expected_mission_id="Mission_Train",
+        )
+        == "preview-board"
+    )
+    assert (
+        commands._lightning_first_opening_route_start_mode(
+            "dialogue-region-repeat-preview-board-twice",
+            first_mission_opening=True,
+            route_routing="lightning_war",
+            expected_mission_id=None,
+        )
+        == "dialogue-region-repeat-preview-board-twice"
+    )
+
+
 def test_lightning_segment_reports_full_pending_route_context():
     result = commands.cmd_lightning_segment(
         run_preflight=False,
@@ -37743,6 +37802,82 @@ def test_lightning_fast_opening_retries_paused_preview_after_miss(monkeypatch):
         {
             "dry_run": False,
             "dismiss_dialogue": False,
+            "start_clicks": 2,
+            "pause_after_start": True,
+        }
+    ]
+    assert len(execute_calls) == 1
+
+
+def test_lightning_fast_opening_retries_paused_preview_with_dialogue(
+    monkeypatch,
+):
+    execute_calls = []
+    retry_calls = []
+
+    monkeypatch.setattr(
+        commands,
+        "_lightning_execute_route_start_sequence",
+        lambda sequence, **kwargs: execute_calls.append((sequence, kwargs))
+        or {"status": "OK", "steps": [{"count": len(sequence)}]},
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_snap_pause",
+        lambda *args, **kwargs: {
+            "status": "OK",
+            "evidence_ui": {
+                "status": "OK",
+                "visible_ui": "mission_preview_panel",
+                "recommended_control": "dialogue_textbox",
+                "scores": {"mission_preview_dialogue": {"score": 0.86}},
+            },
+            "pause_verify": {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot_with_refresh",
+        lambda **kwargs: {"status": "NO_BRIDGE"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_paused_preview_start_sequence",
+        lambda **kwargs: retry_calls.append(kwargs)
+        or {
+            "status": "OK",
+            "post_commit_guard": {
+                "status": "OK",
+                "started": True,
+                "pause_verified": True,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pytest.fail("dialogue retry should avoid block path"),
+    )
+
+    result = commands._lightning_fast_opening_route_commit(
+        region_window_x=541,
+        region_window_y=244,
+        initial_visible_name="pause_menu",
+        start_mode="preview-board",
+        expected_preview_mission_id="Mission_Force",
+        require_verified_preview_mission=True,
+        dry_run=False,
+    )
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "route_preview_retry_deployment_screenshot"
+    assert retry_calls == [
+        {
+            "dry_run": False,
+            "dismiss_dialogue": True,
             "start_clicks": 2,
             "pause_after_start": True,
         }
