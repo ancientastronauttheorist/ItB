@@ -565,7 +565,11 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
     assert result["post_pause_intro_clear"]["reason"] == "tail_cleared_and_paused"
     assert result["pause_after_intro_clear"]["pause_verify"]["visible_ui"] == "pause_menu"
     assert tail_calls == [
-        {"max_steps": 4, "lightning_speed_loss_policy": False}
+        {
+            "max_steps": 4,
+            "lightning_speed_loss_policy": False,
+            "allow_mission_preview_dialogue": False,
+        }
     ]
     assert saved == [manifests[0][0], manifests[0][0], manifests[0][0]]
     assert new_run_args == [
@@ -577,6 +581,125 @@ def test_lightning_start_run_creates_fresh_session_after_setup_start(monkeypatch
         }
     ]
     assert manifests[0][1]["advanced_content"] == "off"
+
+
+def test_lightning_start_run_applies_setup_click_plan_before_start(monkeypatch):
+    calls: list[str] = []
+    correction_clicks: list[tuple[int, int, dict]] = []
+    manifests: list[tuple[object, dict | None]] = []
+    saved: list[object] = []
+    verify_setup_calls: list[dict] = []
+
+    class FakeSession:
+        run_id = "fresh_lw_setup_fix"
+        squad = "Blitzkrieg"
+        achievement_targets = ["Lightning War"]
+        difficulty = 0
+        tags: list[str] = []
+
+        def save(self):
+            saved.append(self)
+
+    class FakeRunSession:
+        @staticmethod
+        def new_run(*args, **kwargs):
+            return FakeSession()
+
+    verify_results = iter([
+        {
+            "status": "FAIL",
+            "click_plan": [
+                {
+                    "type": "left_click",
+                    "x": 646,
+                    "y": 454,
+                    "coordinate_space": "window",
+                    "description": "Disable Advanced Content: Equipment",
+                }
+            ],
+        },
+        {"status": "PASS", "click_plan": []},
+    ])
+
+    monkeypatch.setattr(commands, "RunSession", FakeRunSession)
+    monkeypatch.setattr(
+        commands,
+        "_write_manifest",
+        lambda session, extra=None: manifests.append((session, extra)),
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_verify_setup_screen",
+        lambda **kwargs: verify_setup_calls.append(kwargs) or next(verify_results),
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_window_point",
+        lambda x, y, **kwargs: correction_clicks.append((x, y, kwargs))
+        or {"status": "OK", "window_x": x, "window_y": y},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_known_window_control",
+        lambda control: calls.append(control) or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(commands.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        _post_setup_non_prompt_ui,
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_visible_panel_chain",
+        lambda **kwargs: {"status": "NO_ACTION", "steps": []},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: {
+            "status": "OK",
+            "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_clear_tail_to_pause",
+        lambda **kwargs: {
+            "status": "OK",
+            "reason": "tail_cleared_and_paused",
+            "pause_result": {
+                "status": "OK",
+                "pause_verify": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        },
+    )
+    _patch_first_mission_start_timer(monkeypatch)
+
+    result = commands.cmd_lightning_start_run(run_segment=False)
+
+    assert result["status"] == "OK"
+    assert result["setup_click_plan_recovery"]["status"] == "OK"
+    assert result["verify_setup_after_click_plan_recovery"]["status"] == "PASS"
+    assert correction_clicks == [
+        (
+            646,
+            454,
+            {
+                "description": "Disable Advanced Content: Equipment",
+                "dry_run": False,
+                "settle_seconds": 0.12,
+                "hold_seconds": 0.08,
+            },
+        )
+    ]
+    assert verify_setup_calls == [
+        {"expected_difficulty": 0, "advanced_content": "off"},
+        {"expected_difficulty": 0, "advanced_content": "off"},
+    ]
+    expected_calls = ["setup_modal_start", "island_archive"]
+    if os.name == "nt":
+        expected_calls.append("island_archive")
+    assert calls == expected_calls
+    assert saved == [manifests[0][0], manifests[0][0], manifests[0][0]]
 
 
 def test_lightning_start_run_continues_from_title_after_setup_start(monkeypatch):

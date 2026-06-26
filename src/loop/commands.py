@@ -37585,6 +37585,21 @@ def _lightning_recover_speed_post_setup_system_prompt(
         if setup_retry_attempt == 0:
             result["verify_setup_after_prompt"] = verify
         if verify.get("status") != "PASS":
+            correction = _lightning_apply_setup_verify_click_plan(
+                verify,
+                dry_run=False,
+            )
+            setup_retry["setup_click_plan_recovery"] = correction
+            if correction.get("status") == "OK":
+                time.sleep(0.12)
+                verify = cmd_verify_setup_screen(
+                    expected_difficulty=difficulty,
+                    advanced_content=advanced_content,
+                )
+                setup_retry["verify_setup_after_click_plan_recovery"] = verify
+                if setup_retry_attempt == 0:
+                    result["verify_setup_after_click_plan_recovery"] = verify
+        if verify.get("status") != "PASS":
             if not visible_looks_like_setup:
                 break
             setup_retry_attempts.append(setup_retry)
@@ -37611,6 +37626,25 @@ def _lightning_recover_speed_post_setup_system_prompt(
             setup_retry["verify_setup_modal"] = verify
             if setup_retry_attempt == 0:
                 result["verify_setup_modal_after_prompt"] = verify
+            if verify.get("status") != "PASS":
+                correction = _lightning_apply_setup_verify_click_plan(
+                    verify,
+                    dry_run=False,
+                )
+                setup_retry["setup_modal_click_plan_recovery"] = correction
+                if correction.get("status") == "OK":
+                    time.sleep(0.12)
+                    verify = cmd_verify_setup_screen(
+                        expected_difficulty=difficulty,
+                        advanced_content=advanced_content,
+                    )
+                    setup_retry[
+                        "verify_setup_modal_after_click_plan_recovery"
+                    ] = verify
+                    if setup_retry_attempt == 0:
+                        result[
+                            "verify_setup_modal_after_click_plan_recovery"
+                        ] = verify
             if verify.get("status") != "PASS":
                 setup_retry_attempts.append(setup_retry)
                 result["setup_retry_attempts_after_prompt"] = setup_retry_attempts
@@ -37658,6 +37692,84 @@ def _lightning_recover_speed_post_setup_system_prompt(
         "visibly ready. Re-verify setup before another speed burst."
     )
     return result
+
+
+def _lightning_apply_setup_verify_click_plan(
+    verify_setup: dict | None,
+    *,
+    dry_run: bool = False,
+) -> dict:
+    """Apply only the narrow setup-screen correction clicks from verify_setup."""
+    from src.control.mac_click import click_window_point
+
+    if not isinstance(verify_setup, dict):
+        return {"status": "NO_ACTION", "reason": "missing_verify_setup"}
+    plan = verify_setup.get("click_plan")
+    if not isinstance(plan, list) or not plan:
+        return {"status": "NO_ACTION", "reason": "setup_click_plan_empty"}
+
+    clicks: list[dict[str, Any]] = []
+    for index, item in enumerate(plan):
+        if not isinstance(item, dict):
+            return {
+                "status": "BLOCKED",
+                "reason": "setup_click_plan_item_invalid",
+                "index": index,
+                "clicks": clicks,
+            }
+        if item.get("type") != "left_click":
+            return {
+                "status": "BLOCKED",
+                "reason": "setup_click_plan_unsupported_type",
+                "index": index,
+                "item": item,
+                "clicks": clicks,
+            }
+        if item.get("coordinate_space") != "window":
+            return {
+                "status": "BLOCKED",
+                "reason": "setup_click_plan_unsupported_coordinate_space",
+                "index": index,
+                "item": item,
+                "clicks": clicks,
+            }
+        try:
+            x = int(item["x"])
+            y = int(item["y"])
+        except (KeyError, TypeError, ValueError):
+            return {
+                "status": "BLOCKED",
+                "reason": "setup_click_plan_invalid_coordinates",
+                "index": index,
+                "item": item,
+                "clicks": clicks,
+            }
+        click = click_window_point(
+            x,
+            y,
+            description=item.get("description") or "Setup verification correction",
+            dry_run=dry_run,
+            settle_seconds=0.12,
+            hold_seconds=0.08,
+        )
+        record = {"index": index, "item": item, "click": click}
+        clicks.append(record)
+        if click.get("status") not in {"OK", "DRY_RUN"}:
+            return {
+                "status": "BLOCKED",
+                "reason": "setup_click_plan_click_failed",
+                "index": index,
+                "clicks": clicks,
+            }
+        if not dry_run:
+            time.sleep(0.05)
+
+    return {
+        "status": "OK",
+        "reason": "setup_click_plan_applied",
+        "click_count": len(clicks),
+        "clicks": clicks,
+    }
 
 
 def _lightning_session_has_selected_island_context(session) -> bool:
@@ -38245,6 +38357,22 @@ def cmd_lightning_start_run(
         if setup_check.get("status") == "PASS":
             result["verify_setup"] = setup_check
 
+    if setup_check.get("status") != "PASS" and not dry_run:
+        correction = _lightning_apply_setup_verify_click_plan(
+            setup_check,
+            dry_run=False,
+        )
+        result["setup_click_plan_recovery"] = correction
+        if correction.get("status") == "OK":
+            time.sleep(0.12)
+            setup_check = cmd_verify_setup_screen(
+                expected_difficulty=difficulty,
+                advanced_content=advanced_content,
+            )
+            result["verify_setup_after_click_plan_recovery"] = setup_check
+            if setup_check.get("status") == "PASS":
+                result["verify_setup"] = setup_check
+
     if setup_check.get("status") != "PASS":
         result["status"] = "BLOCKED"
         result["reason"] = "setup_verification_failed"
@@ -38275,6 +38403,21 @@ def cmd_lightning_start_run(
             advanced_content=advanced_content,
         )
         result["verify_setup_after_setup_screen_start"] = setup_check
+        if setup_check.get("status") != "PASS":
+            correction = _lightning_apply_setup_verify_click_plan(
+                setup_check,
+                dry_run=False,
+            )
+            result["setup_modal_click_plan_recovery"] = correction
+            if correction.get("status") == "OK":
+                time.sleep(0.12)
+                setup_check = cmd_verify_setup_screen(
+                    expected_difficulty=difficulty,
+                    advanced_content=advanced_content,
+                )
+                result[
+                    "verify_setup_modal_after_click_plan_recovery"
+                ] = setup_check
         if setup_check.get("status") != "PASS":
             result["status"] = "BLOCKED"
             result["reason"] = "setup_modal_verification_failed"
