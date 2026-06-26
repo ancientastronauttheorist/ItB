@@ -665,6 +665,53 @@ def test_runner_system_prompt_allow_uses_robust_stack_drain_helper():
     assert calls == [(visible_ui, {"dry_run": False})]
 
 
+def test_runner_rechecks_setup_after_prompt_authorized_before_start(monkeypatch):
+    session = SimpleNamespace(
+        run_id="lw_runner_test",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+    )
+    verify_results = iter(
+        [
+            {"status": "PASS", "system_prompt_auto_authorized": True},
+            {"status": "PASS"},
+        ]
+    )
+    verify_calls: list[dict] = []
+    start_calls: list[dict] = []
+
+    def verify_setup(**kwargs):
+        verify_calls.append(kwargs)
+        return next(verify_results)
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_verify_setup_screen=verify_setup,
+        cmd_lightning_start_run=lambda **kwargs: start_calls.append(kwargs)
+        or {"status": "OK", "reason": "first_island_paused"},
+        cmd_lightning_ui=unexpected("cmd_lightning_ui"),
+    )
+    monkeypatch.setattr(lightning_runner.time, "sleep", lambda _seconds: None)
+
+    runner = make_runner()
+    result = runner._start_from_setup(commands, "new_game_setup")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "started_from_setup"
+    assert len(verify_calls) == 2
+    assert len(start_calls) == 1
+    assert any(
+        name == "setup_prompt_stabilized"
+        and payload["checks"][0]["setup"]["status"] == "PASS"
+        for name, payload in runner.telemetry.events
+    )
+
+
 def test_runner_segment_external_prompt_success_runs_ensure_pause_before_retry():
     session = SimpleNamespace(
         run_id="20260606_111115_003",

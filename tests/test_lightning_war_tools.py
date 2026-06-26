@@ -9342,6 +9342,86 @@ def test_verify_setup_accepts_blitzkrieg_start_screen_with_save_proof(monkeypatc
     assert result["click_plan"] == []
 
 
+def test_verify_setup_rejects_prompt_covered_blitzkrieg_start_screen(monkeypatch):
+    modal_fail = SimpleNamespace(
+        to_dict=lambda: {
+            "status": "FAIL",
+            "expected_difficulty": 0,
+            "actual_difficulty": None,
+            "setup_screen_detected": False,
+            "setup_signature": {
+                "advanced_checkbox_present_count": 0,
+                "advanced_checkbox_required_count": 3,
+            },
+            "advanced": [],
+            "missing_advanced": [],
+            "unexpected_advanced": [],
+            "desired_advanced": "off",
+            "screenshot_path": "tmp/modal_fail.png",
+            "window_focus_verified": True,
+            "window_bounds": {"x": 215, "y": 32, "width": 1280, "height": 748},
+            "click_plan": [],
+        }
+    )
+    visible = {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "visible_text": "\n".join(
+            [
+                "Back",
+                "Start",
+                "Blitzkrieg",
+                '"Codex" is requesting to bypass',
+                "the system private window",
+                "picker and directly access your",
+                "screen and audio.",
+                "Allow",
+                "Open System Settings",
+                "Lightning Mech",
+                "Hook Mech",
+                "Boulder Mech",
+                "Randomize",
+                "Change Time Traveler",
+                "Change Squad",
+            ]
+        ),
+        "screenshot_path": "/tmp/prompt_over_itb_start.png",
+        "game_focus_proof": {
+            "status": "OK",
+            "frontmost": True,
+            "window_bounds": {"x": 215, "y": 32, "width": 1280, "height": 748},
+        },
+    }
+    monkeypatch.setattr(commands, "capture_and_check_setup", lambda **_: modal_fail)
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda **_: visible)
+    monkeypatch.setattr(commands, "_read_save_file_difficulty", lambda _profile: 0)
+    monkeypatch.setattr(
+        commands,
+        "_read_save_advanced_content",
+        lambda _profile: {
+            "status": "OK",
+            "source": "saveData",
+            "state": {
+                "new_enemies": 0,
+                "new_missions": 0,
+                "new_equip": 0,
+                "new_abilities": 0,
+            },
+        },
+    )
+
+    result = commands.cmd_verify_setup_screen(
+        expected_difficulty=0,
+        advanced_content="off",
+    )
+
+    assert result["status"] == "FAIL"
+    assert result["reason"] == "external_system_prompt_visible"
+    fallback = result["setup_signature"]["blitzkrieg_start_screen_fallback"]
+    assert fallback["visible_ui"]["visible_ui"] == "system_privacy_prompt"
+    assert fallback["failure_reasons"] == ["external_system_prompt_visible"]
+
+
 def test_lightning_ui_classifier_detects_title_screen(tmp_path):
     from PIL import Image, ImageDraw
 

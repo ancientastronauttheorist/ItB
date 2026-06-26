@@ -7440,6 +7440,7 @@ def _verify_setup_from_blitzkrieg_start_screen(
     """Accept the squad Start screen as setup proof when save state agrees."""
     desired_advanced = advanced_content or "any"
     visible_ui = _lightning_visible_ui_snapshot(include_ocr=True, bridge_refine=False)
+    visible_ui = _lightning_apply_system_prompt_ocr_override(visible_ui)
     visible_ui = _lightning_apply_setup_screen_ocr_override(visible_ui)
     focus_proof = visible_ui.get("game_focus_proof") if isinstance(visible_ui, dict) else {}
     save_difficulty = _read_save_file_difficulty(profile)
@@ -7468,6 +7469,11 @@ def _verify_setup_from_blitzkrieg_start_screen(
         if isinstance(focus_proof, dict)
         else result.get("window_bounds")
     )
+    if _lightning_external_system_prompt_visible(visible_ui):
+        updated["status"] = "FAIL"
+        updated["reason"] = "external_system_prompt_visible"
+        proof["failure_reasons"] = ["external_system_prompt_visible"]
+        return updated
 
     advanced_keys = ("new_enemies", "new_missions", "new_equip", "new_abilities")
     desired_value = 1 if desired_advanced == "on" else 0

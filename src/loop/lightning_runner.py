@@ -4439,6 +4439,28 @@ class LightningWarRunner:
                 "reason": "setup_not_verified",
                 "setup": _compact(setup),
             }
+        if setup.get("system_prompt_auto_authorized") and not cfg.dry_run:
+            stabilization_checks: list[dict[str, Any]] = []
+            for settle_seconds in (0.5, 1.5, 3.0):
+                time.sleep(settle_seconds)
+                setup = self._prepare_setup(commands)
+                stabilization_checks.append(
+                    {"settle_seconds": settle_seconds, "setup": _compact(setup)}
+                )
+                if setup.get("status") != "PASS":
+                    return {
+                        "status": "BLOCKED",
+                        "reason": "setup_not_stable_after_system_prompt",
+                        "setup_stabilization_checks": stabilization_checks,
+                    }
+                if not setup.get("system_prompt_auto_authorized"):
+                    break
+            if stabilization_checks:
+                self.telemetry.event(
+                    "setup_prompt_stabilized",
+                    checks=stabilization_checks,
+                    final_setup=_compact(setup),
+                )
 
         try:
             start = self._span(
