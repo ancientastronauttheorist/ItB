@@ -17432,6 +17432,16 @@ def _lightning_visible_ui_snapshot(
                 initial_screenshot_error = last_screenshot_error
             recovery = _lightning_recover_screenshot_privacy_prompt_failure(exc)
             screenshot_failure_recoveries.append(recovery)
+            if recovery.get("status") == "BLOCKED":
+                return {
+                    "status": "BLOCKED",
+                    "reason": recovery.get("reason")
+                    or "screenshot_capture_backend_unavailable",
+                    "error": f"screenshot failed: {exc}",
+                    "screenshot_failure_recovery": recovery,
+                    "screenshot_failure_recoveries": screenshot_failure_recoveries,
+                    "initial_screenshot_error": initial_screenshot_error,
+                }
             if recovery.get("status") != "OK":
                 return {
                     "status": "ERROR",
@@ -17477,7 +17487,19 @@ def _lightning_recover_screenshot_privacy_prompt_failure(exc: Exception) -> dict
     if os.name == "nt":
         return {"status": "SKIPPED", "reason": "not_macos"}
     message = str(exc)
-    if "could not create image from display" not in message.lower():
+    lower_message = message.lower()
+    if "quartz screenshot timed out" in lower_message:
+        return {
+            "status": "BLOCKED",
+            "reason": "screenshot_capture_backend_unavailable",
+            "initial_error": message,
+            "next_step": (
+                "macOS screen capture is not returning pixels; restart the "
+                "screen-capturing app/session or repair Screen & System Audio "
+                "Recording permission before resuming Lightning play."
+            ),
+        }
+    if "could not create image from display" not in lower_message:
         return {
             "status": "SKIPPED",
             "reason": "screenshot_failure_not_privacy_prompt_like",
@@ -17491,6 +17513,18 @@ def _lightning_recover_screenshot_privacy_prompt_failure(exc: Exception) -> dict
         )
         fullscreen_drain["initial_error"] = message
         return fullscreen_drain
+    if fullscreen_drain.get("reason") == "fullscreen_screencapture_failed":
+        return {
+            "status": "BLOCKED",
+            "reason": "screenshot_capture_backend_unavailable",
+            "initial_error": message,
+            "fullscreen_click": fullscreen_drain,
+            "next_step": (
+                "macOS denied both window and full-screen capture; do not "
+                "continue timer play until the capture permission/session is "
+                "repaired."
+            ),
+        }
     from src.control.mac_click import click_window_point
 
     click = click_window_point(

@@ -36454,6 +36454,33 @@ def test_lightning_visible_ui_snapshot_retries_stacked_privacy_screenshot_failur
     ]
 
 
+def test_lightning_visible_ui_snapshot_blocks_on_capture_backend_failure(
+    monkeypatch,
+):
+    attempts = []
+
+    def fake_take_screenshot(_path):
+        attempts.append(1)
+        raise RuntimeError("Quartz screenshot timed out after 3.0s")
+
+    monkeypatch.setattr("src.capture.window.take_screenshot", fake_take_screenshot)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_recover_screenshot_privacy_prompt_failure",
+        lambda exc: {
+            "status": "BLOCKED",
+            "reason": "screenshot_capture_backend_unavailable",
+            "initial_error": str(exc),
+        },
+    )
+
+    result = commands._lightning_visible_ui_snapshot(bridge_refine=False)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "screenshot_capture_backend_unavailable"
+    assert len(attempts) == 1
+
+
 def test_lightning_screenshot_failure_uses_fullscreen_ocr_when_available(
     monkeypatch,
 ):
@@ -36479,6 +36506,41 @@ def test_lightning_screenshot_failure_uses_fullscreen_ocr_when_available(
     )
     assert result["initial_error"] == "could not create image from display"
     assert result["click_count"] == 2
+
+
+def test_lightning_screenshot_failure_blocks_on_quartz_timeout(monkeypatch):
+    monkeypatch.setattr(commands.os, "name", "posix")
+
+    result = commands._lightning_recover_screenshot_privacy_prompt_failure(
+        RuntimeError("Quartz screenshot timed out after 3.0s")
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "screenshot_capture_backend_unavailable"
+
+
+def test_lightning_screenshot_failure_blocks_when_fullscreen_capture_unavailable(
+    monkeypatch,
+):
+    monkeypatch.setattr(commands.os, "name", "posix")
+    monkeypatch.setattr(
+        commands,
+        "_lightning_drain_system_privacy_prompt_stack_fullscreen_ocr",
+        lambda: {"status": "ERROR", "reason": "fullscreen_screencapture_failed"},
+    )
+    monkeypatch.setattr(
+        "src.control.mac_click.click_window_point",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("must not blind-click Allow when capture is unavailable")
+        ),
+    )
+
+    result = commands._lightning_recover_screenshot_privacy_prompt_failure(
+        RuntimeError("could not create image from display")
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "screenshot_capture_backend_unavailable"
 
 
 def test_lightning_screenshot_failure_clicks_privacy_allow_fallback(monkeypatch):
