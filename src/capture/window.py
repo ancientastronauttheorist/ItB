@@ -297,6 +297,18 @@ def take_screenshot(
             ImageGrab.grab().save(output_path)
         return output_path
 
+    backend = os.environ.get("ITB_SCREENSHOT_BACKEND", "quartz").strip().lower()
+    if backend in {"", "quartz", "auto"}:
+        try:
+            _take_quartz_screenshot(output_path, bounds=bounds)
+            return output_path
+        except Exception:
+            if backend != "auto" or os.environ.get(
+                "ITB_SCREENSHOT_ALLOW_SCREENCAPTURE_FALLBACK",
+                "0",
+            ) not in {"1", "true", "TRUE"}:
+                raise
+
     try:
         timeout = float(os.environ.get("ITB_SCREENSHOT_TIMEOUT", "4.0"))
     except ValueError:
@@ -315,6 +327,50 @@ def take_screenshot(
         _run_screencapture(["-x", str(output_path)], timeout)
 
     return output_path
+
+
+def _take_quartz_screenshot(output_path: Path, *, bounds: dict | None = None) -> None:
+    """Capture the screen/window using Quartz without spawning screencapture."""
+    try:
+        import Quartz
+        from PIL import Image
+    except Exception as exc:
+        raise RuntimeError(f"Quartz screenshot backend unavailable: {exc}") from exc
+
+    if bounds:
+        rect = Quartz.CGRectMake(
+            int(bounds["x"]),
+            int(bounds["y"]),
+            int(bounds["width"]),
+            int(bounds["height"]),
+        )
+    else:
+        rect = Quartz.CGDisplayBounds(Quartz.CGMainDisplayID())
+    image_ref = Quartz.CGWindowListCreateImage(
+        rect,
+        Quartz.kCGWindowListOptionOnScreenOnly,
+        Quartz.kCGNullWindowID,
+        Quartz.kCGWindowImageDefault,
+    )
+    if image_ref is None:
+        raise RuntimeError("Quartz screenshot returned no image")
+    width = int(Quartz.CGImageGetWidth(image_ref))
+    height = int(Quartz.CGImageGetHeight(image_ref))
+    bytes_per_row = int(Quartz.CGImageGetBytesPerRow(image_ref))
+    provider = Quartz.CGImageGetDataProvider(image_ref)
+    data = Quartz.CGDataProviderCopyData(provider)
+    if not data or width <= 0 or height <= 0:
+        raise RuntimeError("Quartz screenshot returned empty image data")
+    pil = Image.frombuffer(
+        "RGBA",
+        (width, height),
+        bytes(data),
+        "raw",
+        "BGRA",
+        bytes_per_row,
+        1,
+    ).convert("RGB")
+    pil.save(output_path)
 
 
 def _windows_breach_windows() -> list[dict]:
