@@ -542,6 +542,30 @@ def test_successful_system_prompt_allow_accepts_direct_macos_click_result():
     )
 
 
+def test_prompt_retry_pause_verification_rejects_setup_only_state():
+    assert not lightning_runner._pause_after_system_prompt_verified(
+        {
+            "status": "OK",
+            "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+        }
+    )
+    assert lightning_runner._pause_after_system_prompt_verified(
+        {
+            "status": "OK",
+            "reason": "start_failure_paused",
+            "attempts": [
+                {
+                    "step": "ensure_pause",
+                    "result": {
+                        "status": "OK",
+                        "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                    },
+                },
+            ],
+        }
+    )
+
+
 def test_runner_system_prompt_allow_uses_robust_stack_drain_helper():
     calls = []
     commands = SimpleNamespace(
@@ -615,6 +639,70 @@ def test_runner_segment_external_prompt_success_runs_ensure_pause_before_retry()
         and payload["reason"] == "system_prompt_cleared_pause_verified"
         for name, payload in runner.telemetry.events
     )
+
+
+def test_runner_segment_external_prompt_retry_preserves_route_context():
+    session = SimpleNamespace(
+        run_id="20260606_111115_005",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        current_island="archive",
+        current_mission="",
+        mission_index=0,
+        islands_completed=[],
+    )
+    segments = []
+
+    def segment(**kwargs):
+        segments.append(kwargs)
+        if len(segments) == 1:
+            return {
+                "status": "BLOCKED",
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "system_privacy_prompt",
+                    "requires_user_authorization": True,
+                },
+                "route_start_pending_context": {
+                    "visual_region_index": 0,
+                    "region_window_x": 396,
+                    "region_window_y": 438,
+                    "verify_route": False,
+                },
+            }
+        session.islands_completed = ["archive", "rst"]
+        return {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": "max_steps_reached",
+            "pause_guard": pause_menu(),
+        }
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        _lightning_click_system_privacy_prompt_allow=lambda ui, **kwargs: {
+            "status": "OK",
+            "reason": "system_privacy_prompt_allow_clicked_fullscreen_ocr",
+        },
+        cmd_lightning_pause_guard=lambda **_: pause_menu(),
+        cmd_lightning_ui=lambda *args, **kwargs: {"status": "OK", "reason": "already_paused"},
+        cmd_verify_setup_screen=lambda **_: {"status": "PASS"},
+        cmd_lightning_start_run=unexpected("cmd_lightning_start_run"),
+        cmd_lightning_preflight=lambda **_: preflight_pass(),
+        cmd_lightning_segment=segment,
+        cmd_lightning_abandon_to_setup=unexpected("cmd_lightning_abandon_to_setup"),
+        cmd_lightning_peek=completion_peek(),
+    )
+
+    result = make_runner(mode="speed", max_attempts=1)._run_inner(commands)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "completion_screen_unverified"
+    assert len(segments) == 2
+    assert segments[1]["route_visual_region_index"] == 0
+    assert segments[1]["route_region_window_x"] == 396
+    assert segments[1]["route_region_window_y"] == 438
+    assert segments[1]["route_start_verify_route"] is False
 
 
 def test_runner_segment_external_prompt_blocks_when_pause_restore_fails():
@@ -2546,6 +2634,57 @@ def test_runner_promotes_external_prompt_from_start_run_failure():
         "system_privacy_prompt"
     )
     assert result["start"]["reason"] == "external_system_prompt_visible"
+
+
+def test_runner_accepts_start_prompt_failure_when_pause_recovered():
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(
+            run_id="20260606_222222_001",
+            squad="Blitzkrieg",
+            difficulty=0,
+            achievement_targets=["Lightning War"],
+            current_island="",
+            current_mission="",
+            mission_index=0,
+            islands_completed=[],
+        ),
+        cmd_verify_setup_screen=lambda **_kwargs: {"status": "PASS"},
+        cmd_lightning_start_run=lambda **_kwargs: {
+            "status": "BLOCKED",
+            "reason": "setup_verification_failed",
+            "verify_setup": {
+                "status": "FAIL",
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "system_privacy_prompt",
+                    "requires_user_authorization": True,
+                    "external_prompt": {
+                        "matched": True,
+                        "kind": "macos_screen_audio_privacy_prompt",
+                    },
+                },
+            },
+        },
+        cmd_lightning_ui=lambda **_kwargs: {
+            "status": "OK",
+            "reason": "already_paused",
+            "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    )
+    runner = make_runner()
+    runner.telemetry.run_id = "20260606_222222_001"
+
+    result = runner._start_from_setup(commands, None, first_island="archive")
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "started_from_setup_after_prompt_recovery"
+    assert result["pause_recovery"]["status"] == "OK"
+    assert result["external_prompt_evidence"]["path"] == "verify_setup.visible_ui"
+    assert any(
+        name == "start_run_prompt_recovered"
+        and payload["reason"] == "external_prompt_cleared_pause_verified"
+        for name, payload in runner.telemetry.events
+    )
 
 
 def test_runner_blocks_when_setup_verifier_raises_after_adjustment(monkeypatch):

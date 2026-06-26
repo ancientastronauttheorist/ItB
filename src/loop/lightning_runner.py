@@ -74,6 +74,7 @@ DEFAULT_LIGHTNING_SPEED_SEGMENT_TIMEOUT = 45.0
 DEFAULT_LIGHTNING_SPEED_SEGMENT_MAX_WAIT = 18.0
 DEFAULT_LIGHTNING_FIRST_ISLAND_SEQUENCE = ("archive", "rst", "pinnacle", "detritus")
 DEFAULT_LIGHTNING_SPEED_FIRST_ISLAND_SEQUENCE = ("archive", "detritus", "pinnacle")
+MAX_SEGMENT_SYSTEM_PROMPT_RECOVERIES = 3
 _LIGHTNING_FIRST_ISLAND_ALIASES = {
     "archive": "archive",
     "rst": "rst",
@@ -402,8 +403,6 @@ def _pause_after_system_prompt_verified(value: Any) -> bool:
         return False
     if str(value.get("status") or "").upper() != "OK":
         return False
-    if _safe_to_think(value):
-        return True
     if value.get("pause_verified") or value.get("timer_stop_verified"):
         return True
     if value.get("already_paused") is True:
@@ -412,7 +411,22 @@ def _pause_after_system_prompt_verified(value: Any) -> bool:
         return True
     if str(value.get("reason") or "") == "pause_clicked":
         return value.get("pause_verified") is True
-    return _visible_ui_name(value) == "pause_menu"
+    visible = value.get("visible_ui") or value.get("pause_verify")
+    if isinstance(visible, dict) and visible.get("visible_ui") == "pause_menu":
+        return True
+    for key in ("guard", "pause_guard", "resume_guard", "last_poll"):
+        nested = value.get(key)
+        if isinstance(nested, dict) and _pause_after_system_prompt_verified(nested):
+            return True
+    attempts = value.get("attempts")
+    if isinstance(attempts, list):
+        for attempt in attempts:
+            if not isinstance(attempt, dict):
+                continue
+            nested = attempt.get("result")
+            if isinstance(nested, dict) and _pause_after_system_prompt_verified(nested):
+                return True
+    return False
 
 
 def _external_system_prompt_evidence(
@@ -2610,6 +2624,7 @@ class LightningWarRunner:
         no_progress_counts: dict[tuple[Any, ...], int] = {}
         pending_route_visual_region_index: int | None = None
         pending_route_start_context: dict[str, Any] | None = None
+        system_prompt_recovery_count = 0
         skip_visible_panel_once_reason: str | None = None
         deployment_handoff_grace_segments = 0
         for segment_index in range(1, max(1, int(cfg.max_segments)) + 1):
@@ -2932,10 +2947,37 @@ class LightningWarRunner:
             )
             if immediate_stop is not None:
                 if immediate_stop.get("status") == "RETRY_SEGMENT":
+                    system_prompt_recovery_count += 1
+                    if system_prompt_recovery_count > MAX_SEGMENT_SYSTEM_PROMPT_RECOVERIES:
+                        return self._finish(
+                            "BLOCKED",
+                            "external_system_prompt_recovery_limit",
+                            segment=_compact(segment),
+                            recovery=_compact(immediate_stop),
+                            recovery_count=system_prompt_recovery_count,
+                            max_recoveries=MAX_SEGMENT_SYSTEM_PROMPT_RECOVERIES,
+                            session=_session_summary(session),
+                        )
+                    recovered_context = segment.get("route_start_pending_context")
+                    if isinstance(recovered_context, dict):
+                        pending_route_start_context = dict(recovered_context)
+                    elif segment.get("route_visual_region_index_pending") is not None:
+                        try:
+                            pending_route_visual_region_index = int(
+                                segment["route_visual_region_index_pending"],
+                            )
+                            pending_route_start_context = {
+                                "visual_region_index": pending_route_visual_region_index,
+                            }
+                        except (TypeError, ValueError):
+                            pending_route_visual_region_index = None
+                            pending_route_start_context = None
                     event_error = self._best_effort_event(
                         "segment_interruption_recovered",
                         segment_index=segment_index,
                         attempt_index=attempt_index,
+                        recovery_count=system_prompt_recovery_count,
+                        route_start_pending_context=pending_route_start_context,
                         recovery=_compact(immediate_stop),
                     )
                     if event_error is not None:
@@ -2943,6 +2985,7 @@ class LightningWarRunner:
                     no_progress_counts.clear()
                     continue
                 return immediate_stop
+            system_prompt_recovery_count = 0
 
             unexpected_menu = _current_unexpected_menu_evidence(segment)
             if (
@@ -4188,6 +4231,33 @@ class LightningWarRunner:
             external_prompt_evidence = _external_system_prompt_evidence(start)
             start_reason = str(start.get("reason") or "")
             pause_recovery = self._recover_start_failure_to_pause(commands, start)
+            if (
+                external_prompt_evidence is not None
+                and _pause_after_system_prompt_verified(pause_recovery)
+            ):
+                self._rehome_telemetry_if_session_changed(
+                    commands,
+                    reason="lightning_start_run_prompt_recovered",
+                )
+                event_error = self._best_effort_event(
+                    "start_run_prompt_recovered",
+                    status="OK",
+                    reason="external_prompt_cleared_pause_verified",
+                    first_island=chosen_first_island,
+                    external_prompt_evidence=external_prompt_evidence,
+                    start=_compact(start),
+                    pause_recovery=_compact(pause_recovery),
+                )
+                if event_error is not None:
+                    self.telemetry_event_errors.append(event_error)
+                return {
+                    "status": "OK",
+                    "reason": "started_from_setup_after_prompt_recovery",
+                    "first_island": chosen_first_island,
+                    "start": _compact(start),
+                    "pause_recovery": _compact(pause_recovery),
+                    "external_prompt_evidence": external_prompt_evidence,
+                }
             result = {
                 "status": "BLOCKED",
                 "reason": (
