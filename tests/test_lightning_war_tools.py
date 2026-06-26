@@ -34686,6 +34686,47 @@ def test_lightning_system_privacy_prompt_drains_large_fullscreen_stack(
     assert result["post_fullscreen_click_visible_ui"] == pause_ui
 
 
+def test_lightning_allow_target_ignores_bypass_sentence_fragments():
+    ocr = {
+        "observations": [
+            {
+                "text": "pass",
+                "center_image": [3128.5, 710.5],
+            },
+            {
+                "text": '"Codex" is requesting to bypass',
+                "center_image": [2890.5, 650.0],
+            },
+        ],
+    }
+
+    result = commands._lightning_allow_target_from_ocr_result(ocr)
+
+    assert result["status"] == "NOT_FOUND"
+    assert result["reason"] == "allow_ocr_target_missing"
+
+
+def test_lightning_blue_allow_target_finds_accent_button(tmp_path):
+    from PIL import Image, ImageDraw
+
+    image_path = tmp_path / "fullscreen_prompt.png"
+    image = Image.new("RGB", (1200, 800), (24, 24, 26))
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle(
+        [640, 560, 1040, 615],
+        radius=24,
+        fill=(0, 122, 255),
+    )
+    image.save(image_path)
+
+    result = commands._lightning_blue_allow_target_from_fullscreen_image(image_path)
+
+    assert result["status"] == "OK"
+    assert result["source"] == "fullscreen_blue_button_component"
+    assert abs(result["image_x"] - 840) <= 2
+    assert abs(result["image_y"] - 587.5) <= 2
+
+
 def test_lightning_privacy_prompt_allow_blocks_on_post_click_resample_error(
     monkeypatch,
 ):

@@ -13708,7 +13708,7 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
     dry_run: bool = False,
     max_clicks: int = 60,
     settle_seconds: float = 0.12,
-    max_wall_seconds: float | None = 25.0,
+    max_wall_seconds: float | None = 60.0,
 ) -> dict:
     """Click stacked macOS Allow prompts until full-screen OCR sees none."""
     if os.name == "nt":
@@ -13721,6 +13721,7 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
     )
     started = time.monotonic()
     clicks: list[dict[str, Any]] = []
+    capture_failures = 0
     for attempt in range(click_limit):
         elapsed = time.monotonic() - started
         if wall_limit is not None and elapsed >= wall_limit:
@@ -13741,10 +13742,18 @@ def _lightning_drain_system_privacy_prompt_stack_fullscreen_ocr(
             "fullscreen_allow_click": click,
         }
         if click.get("status") == "OK":
+            capture_failures = 0
             clicks.append(attempt_record)
             if not dry_run and settle_seconds > 0:
                 time.sleep(settle_seconds)
             continue
+
+        if click.get("reason") == "fullscreen_screencapture_failed":
+            capture_failures += 1
+            if capture_failures <= 5:
+                if not dry_run:
+                    time.sleep(min(0.75, settle_seconds + 0.25))
+                continue
 
         target = click.get("target") if isinstance(click, dict) else None
         target_reason = (
@@ -13816,13 +13825,7 @@ def _lightning_allow_target_from_ocr_result(ocr: dict | None) -> dict:
             continue
         text = str(observation.get("text") or "").strip().lower()
         letters_only = re.sub(r"[^a-z0-9]+", "", text)
-        consent_button_text = (
-            text == "allow"
-            or letters_only == "allow"
-            or letters_only == "bypass"
-            or letters_only == "pass"
-            or letters_only == "fass"
-        )
+        consent_button_text = letters_only in {"allow", "alow", "aliow", "all0w"}
         if not consent_button_text:
             continue
         center = observation.get("center_image")
@@ -13858,6 +13861,124 @@ def _lightning_allow_target_from_ocr_result(ocr: dict | None) -> dict:
         "status": "NOT_FOUND",
         "reason": "allow_ocr_target_missing",
         "observation_count": len(observations),
+    }
+
+
+def _lightning_blue_allow_target_from_fullscreen_image(
+    screenshot_path: Path,
+) -> dict:
+    """Find the macOS accent-blue Allow button when OCR misses its label."""
+    try:
+        from PIL import Image
+    except Exception as exc:
+        return {"status": "ERROR", "reason": "pil_unavailable", "error": str(exc)}
+    try:
+        image = Image.open(screenshot_path).convert("RGB")
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "fullscreen_blue_allow_image_open_failed",
+            "error": str(exc),
+        }
+    width, height = image.size
+    if width <= 0 or height <= 0:
+        return {
+            "status": "ERROR",
+            "reason": "fullscreen_blue_allow_invalid_image_size",
+            "image_size": [width, height],
+        }
+
+    pixels = image.load()
+    mask = bytearray(width * height)
+    for y in range(height):
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            if (
+                b > 170
+                and 65 <= g <= 185
+                and r < 90
+                and (b - r) > 100
+                and (b - g) > 25
+            ):
+                mask[y * width + x] = 1
+
+    seen = bytearray(width * height)
+    best: tuple[int, int, int, int, int, int, int] | None = None
+    for index, value in enumerate(mask):
+        if not value or seen[index]:
+            continue
+        stack = [index]
+        seen[index] = 1
+        start_y, start_x = divmod(index, width)
+        min_x = max_x = start_x
+        min_y = max_y = start_y
+        count = 0
+        while stack:
+            point = stack.pop()
+            count += 1
+            py, px = divmod(point, width)
+            min_x = min(min_x, px)
+            max_x = max(max_x, px)
+            min_y = min(min_y, py)
+            max_y = max(max_y, py)
+            neighbors = []
+            if px > 0:
+                neighbors.append(point - 1)
+            if px < width - 1:
+                neighbors.append(point + 1)
+            if py > 0:
+                neighbors.append(point - width)
+            if py < height - 1:
+                neighbors.append(point + width)
+            for neighbor in neighbors:
+                if mask[neighbor] and not seen[neighbor]:
+                    seen[neighbor] = 1
+                    stack.append(neighbor)
+        component_w = max_x - min_x + 1
+        component_h = max_y - min_y + 1
+        if (
+            component_w >= 260
+            and 35 <= component_h <= 120
+            and count >= 5000
+            and min_y > height * 0.25
+        ):
+            candidate = (
+                count,
+                min_x,
+                min_y,
+                max_x,
+                max_y,
+                component_w,
+                component_h,
+            )
+            if best is None or (
+                candidate[4],
+                candidate[3],
+                candidate[0],
+            ) > (
+                best[4],
+                best[3],
+                best[0],
+            ):
+                best = candidate
+    if best is None:
+        return {
+            "status": "NOT_FOUND",
+            "reason": "fullscreen_blue_allow_target_missing",
+            "image_size": [width, height],
+        }
+    count, min_x, min_y, max_x, max_y, component_w, component_h = best
+    return {
+        "status": "OK",
+        "image_x": (min_x + max_x) / 2.0,
+        "image_y": (min_y + max_y) / 2.0,
+        "source": "fullscreen_blue_button_component",
+        "component": {
+            "pixel_count": count,
+            "bbox_image": [min_x, min_y, max_x, max_y],
+            "width": component_w,
+            "height": component_h,
+        },
     }
 
 
@@ -13905,18 +14026,36 @@ def _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
     ) as fh:
         screenshot_path = Path(fh.name)
     try:
-        try:
-            capture = subprocess.run(
-                ["screencapture", "-x", str(screenshot_path)],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-        except Exception as exc:
+        capture = None
+        capture_errors: list[dict[str, Any]] = []
+        for attempt in range(6):
+            try:
+                capture = subprocess.run(
+                    ["screencapture", "-x", str(screenshot_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+            except Exception as exc:
+                capture_errors.append({
+                    "attempt": attempt + 1,
+                    "error": str(exc),
+                })
+                capture = None
+            if capture is not None and capture.returncode == 0:
+                break
+            if capture is not None:
+                capture_errors.append({
+                    "attempt": attempt + 1,
+                    "returncode": capture.returncode,
+                    "stderr": capture.stderr,
+                })
+            time.sleep(0.2)
+        if capture is None:
             return {
                 "status": "ERROR",
                 "reason": "fullscreen_screencapture_failed",
-                "error": str(exc),
+                "attempts": capture_errors,
             }
         if capture.returncode != 0:
             return {
@@ -13924,6 +14063,7 @@ def _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
                 "reason": "fullscreen_screencapture_failed",
                 "returncode": capture.returncode,
                 "stderr": capture.stderr,
+                "attempts": capture_errors,
             }
         ocr = _lightning_ocr_texts_from_image(screenshot_path)
         if ocr.get("status") != "OK":
@@ -13934,12 +14074,21 @@ def _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
             }
         target = _lightning_allow_target_from_ocr_result(ocr)
         if target.get("status") != "OK":
-            return {
-                "status": "ERROR",
-                "reason": "fullscreen_allow_target_missing",
-                "target": target,
-                "ocr_texts": ocr.get("texts", []),
-            }
+            ocr_target = dict(target)
+            blue_target = _lightning_blue_allow_target_from_fullscreen_image(
+                screenshot_path,
+            )
+            if blue_target.get("status") == "OK":
+                target = blue_target
+                target["ocr_target"] = ocr_target
+            else:
+                return {
+                    "status": "ERROR",
+                    "reason": "fullscreen_allow_target_missing",
+                    "target": target,
+                    "blue_target": blue_target,
+                    "ocr_texts": ocr.get("texts", []),
+                }
         try:
             with Image.open(screenshot_path) as image:
                 image_w, image_h = [int(value) for value in image.size]

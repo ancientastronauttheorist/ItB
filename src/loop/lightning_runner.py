@@ -7651,7 +7651,12 @@ def _compact(value: Any) -> Any:
             "value_repr",
         ):
             if key in value and key not in compact:
-                compact[key] = value[key]
+                if key == "visible_ui" and isinstance(value[key], dict):
+                    compact[key] = _compact_visible_ui(value[key])
+                elif key in {"click", "click_result"} and isinstance(value[key], dict):
+                    compact[key] = _compact(value[key])
+                else:
+                    compact[key] = value[key]
         if "external_prompt" in value and "external_prompt" not in compact:
             compact["external_prompt"] = _compact_external_prompt(
                 value.get("external_prompt")
@@ -7672,6 +7677,49 @@ def _compact(value: Any) -> Any:
             compact["steps"] = _segment_steps_summary(value)
         return compact
     return value
+
+
+def _compact_visible_ui(value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+    keep: dict[str, Any] = {}
+    for key in (
+        "status",
+        "visible_ui",
+        "recommended_control",
+        "confidence",
+        "dark_overlay_fraction",
+        "requires_user_authorization",
+        "screenshot_path",
+        "visible_text",
+        "ocr_text",
+        "ocr_texts",
+    ):
+        if key in value:
+            if key in {"visible_text", "ocr_text"} and isinstance(value[key], str):
+                keep[key] = value[key][:800]
+            elif key == "ocr_texts" and isinstance(value[key], list):
+                keep[key] = [str(item)[:160] for item in value[key][:40]]
+            else:
+                keep[key] = value[key]
+    if "external_prompt" in value:
+        keep["external_prompt"] = _compact_external_prompt(
+            value.get("external_prompt")
+        )
+    game_focus = value.get("game_focus_proof")
+    if isinstance(game_focus, dict):
+        keep["game_focus_proof"] = {
+            key: game_focus.get(key)
+            for key in (
+                "status",
+                "frontmost",
+                "window_bounds",
+                "screenshot_image_size",
+                "expected_app",
+            )
+            if key in game_focus
+        }
+    return keep
 
 
 def _completion_visible_screen_block(
