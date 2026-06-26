@@ -8558,6 +8558,20 @@ def _lightning_parse_visible_timer_ocr_seconds(text: str | None) -> int | None:
         seconds = int(second_text or "0")
         if minutes < 60 and seconds < 60:
             return hours * 3600 + minutes * 60 + seconds
+    minute_second_match = re.search(
+        r"(?<![0-9oil])([0-9oil]+)m([0-9oil]+)(?:s|5)?(?![0-9oil])",
+        compact,
+    )
+    if minute_second_match:
+        minutes = int(digits(minute_second_match.group(1)))
+        second_text = digits(minute_second_match.group(2))
+        if len(second_text) > 2 and int(second_text) > 59:
+            second_text = second_text[:-1]
+        if len(second_text) > 2:
+            second_text = second_text[:2]
+        seconds = int(second_text or "0")
+        if minutes < 60 and seconds < 60:
+            return minutes * 60 + seconds
 
     colon_match = re.search(
         r"(?<![0-9oil])([0-9oil]{1,2}:[0-9oil]{1,2}(?::[0-9oil]{1,2})?)(?![0-9oil])",

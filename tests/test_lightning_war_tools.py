@@ -6589,6 +6589,7 @@ def test_lightning_parse_timer_seconds_variants():
 
 def test_lightning_parse_visible_timer_ocr_variants():
     assert commands._lightning_parse_visible_timer_ocr_seconds("Oh 23m 495") == 1429
+    assert commands._lightning_parse_visible_timer_ocr_seconds("Om 135") == 13
     assert commands._lightning_parse_visible_timer_ocr_seconds("0h 03m 04s") == 184
     assert commands._lightning_parse_visible_timer_ocr_seconds("Game Time: O.01.27") == 87
     assert (
