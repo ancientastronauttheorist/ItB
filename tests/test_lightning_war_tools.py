@@ -22129,6 +22129,307 @@ def test_lightning_speed_loss_policy_rejects_nonblocking_mech_debt(kind):
     assert commands._allow_lightning_war_speed_loss(session, plan_safety) is False
 
 
+class _FakeLightningSolveBoard:
+    total_turns = 3
+    grid_power = 5
+    grid_power_max = 7
+    units = []
+
+    def mechs(self):
+        return [
+            SimpleNamespace(
+                active=True,
+                hp=3,
+                is_mech=True,
+                weapon="Prime_Lightning",
+            )
+        ]
+
+    def get_threatened_buildings(self):
+        return []
+
+    def tile(self, _x, _y):
+        return SimpleNamespace(terrain="ground", building_hp=1)
+
+
+def _lightning_solve_bridge_state() -> dict:
+    return {
+        "phase": "combat_player",
+        "turn": 2,
+        "mission_id": "Mission_Train",
+        "grid_power": 5,
+        "grid_power_max": 7,
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "deployment_zone": [],
+        "units": [
+            {
+                "uid": 1,
+                "type": "ElectricMech",
+                "team": 1,
+                "mech": True,
+                "hp": 3,
+                "max_hp": 3,
+                "x": 1,
+                "y": 1,
+                "weapons": ["Prime_Lightning"],
+            }
+        ],
+    }
+
+
+def _lightning_rust_action() -> dict:
+    return {
+        "score": 42,
+        "actions": [
+            {
+                "mech_uid": 1,
+                "mech_type": "ElectricMech",
+                "move_to": [1, 1],
+                "weapon_id": "Prime_Lightning",
+                "target": [1, 2],
+                "description": "ElectricMech fires Lightning Whip",
+            }
+        ],
+        "stats": {
+            "timed_out": False,
+            "permutations_tried": 1,
+            "total_permutations": 1,
+        },
+    }
+
+
+def _solve_eval(plan_safety: dict) -> dict:
+    return {
+        "enriched": {
+            "action_results": [],
+            "predicted_states": [],
+            "replay_annotations": [],
+            "score_breakdown": {},
+        },
+        "current_outcome": plan_safety.get("current", {}),
+        "predicted_outcome": plan_safety.get("predicted", {}),
+        "predicted_board_summary": {},
+        "plan_safety": plan_safety,
+    }
+
+
+def _patch_cmd_solve_harness(monkeypatch, session, safeties: list[dict]):
+    rust_calls = {"solve": 0, "solve_top_k": []}
+    rust_action = _lightning_rust_action()
+
+    def fake_solve(_payload, _time_limit):
+        rust_calls["solve"] += 1
+        return json.dumps(rust_action)
+
+    def fake_solve_top_k(_payload, _time_limit, top_k):
+        rust_calls["solve_top_k"].append(top_k)
+        return json.dumps([rust_action])
+
+    fake_rust = SimpleNamespace(
+        solve=fake_solve,
+        solve_top_k=fake_solve_top_k,
+        solve_beam=lambda *_args, **_kwargs: "[]",
+    )
+    safety_iter = iter(safeties)
+
+    def fake_evaluate_solution_safety(*_args, **_kwargs):
+        try:
+            plan_safety = next(safety_iter)
+        except StopIteration:
+            plan_safety = safeties[-1]
+        return _solve_eval(plan_safety)
+
+    logger = SimpleNamespace(
+        log_error=lambda *_args, **_kwargs: None,
+        log_solver_output=lambda *_args, **_kwargs: None,
+    )
+
+    monkeypatch.setitem(sys.modules, "itb_solver", fake_rust)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_get_logger", lambda _session: logger)
+    monkeypatch.setattr(commands, "_check_wheel_sim_version", lambda: None)
+    monkeypatch.setattr(commands, "_post_enemy_block_result", lambda _session: None)
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_cached_bridge_read_allowed",
+        lambda: (False, None),
+    )
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: (_FakeLightningSolveBoard(), _lightning_solve_bridge_state()),
+    )
+    monkeypatch.setattr(commands, "_record_turn_state", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(commands, "_annotate_pending_grid_debt", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "_refresh_bridge_capped_repair_disable",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(commands, "_evaluate_solution_safety", fake_evaluate_solution_safety)
+    monkeypatch.setattr(
+        commands,
+        "_enrich_bridge_mech_weapons_from_save",
+        lambda *_args, **_kwargs: [],
+    )
+    monkeypatch.setattr(session, "save", lambda: None)
+    return rust_calls
+
+
+def test_cmd_solve_skips_safety_widening_when_lightning_speed_accepts_top(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    allowed_speed_loss = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": "building_hp_loss", "blocking": True},
+            {"kind": "pod_lost", "blocking": True},
+        ],
+        "current": {
+            "mission_id": "Mission_Train",
+            "grid_power": 5,
+            "building_hp_total": 9,
+            "mechs_alive": 3,
+            "mech_hp_total": 9,
+            "pods_present": 1,
+        },
+        "predicted": {
+            "mission_id": "Mission_Train",
+            "grid_power": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 3,
+            "mech_hp_total": 9,
+            "pods_present": 0,
+        },
+    }
+    rust_calls = _patch_cmd_solve_harness(
+        monkeypatch,
+        session,
+        [allowed_speed_loss],
+    )
+
+    result = commands.cmd_solve(
+        profile="Alpha",
+        time_limit=2,
+        frontier_diagnostics=False,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert rust_calls["solve"] == 1
+    assert rust_calls["solve_top_k"] == []
+    assert result["candidate_count"] == 1
+    assert result["selected_candidate_source"] == "top1"
+    assert result["safety_widening"] == [
+        {
+            "source": "top_k_safety",
+            "candidate_count": 1,
+            "ignored_soft_disables": False,
+            "skipped": True,
+            "reason": "lightning_speed_loss_policy_accepts_selected",
+        }
+    ]
+
+
+def test_cmd_solve_still_widens_for_forbidden_lightning_loss(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    forbidden_mech_debt = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": "mech_hp_loss", "blocking": True},
+        ],
+        "current": {"grid_power": 5, "mech_hp_total": 9, "mechs_alive": 3},
+        "predicted": {"grid_power": 4, "mech_hp_total": 8, "mechs_alive": 3},
+    }
+    clean_wide = {
+        "status": "SAFE",
+        "blocking": False,
+        "violations": [],
+        "current": {"grid_power": 5, "mech_hp_total": 9, "mechs_alive": 3},
+        "predicted": {"grid_power": 5, "mech_hp_total": 9, "mechs_alive": 3},
+    }
+    rust_calls = _patch_cmd_solve_harness(
+        monkeypatch,
+        session,
+        [forbidden_mech_debt, clean_wide],
+    )
+
+    result = commands.cmd_solve(
+        profile="Alpha",
+        time_limit=2,
+        frontier_diagnostics=False,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert rust_calls["solve"] == 1
+    assert rust_calls["solve_top_k"] == [commands._SAFETY_WIDENING_TOP_K]
+    assert result["selected_candidate_source"] == "top_k_safety"
+    assert result["safety_widening"] == [
+        {
+            "source": "top_k_safety",
+            "candidate_count": 1,
+            "ignored_soft_disables": False,
+        }
+    ]
+
+
+def test_auto_turn_forwards_lightning_speed_policy_to_solve(monkeypatch):
+    session = RunSession(
+        run_id="lw",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+    )
+    solve_calls = []
+
+    def fake_solve(**kwargs):
+        solve_calls.append(kwargs)
+        return {"error": "sentinel"}
+
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_post_enemy_block_result", lambda _session: None)
+    monkeypatch.setattr(commands, "_read_save_file_difficulty", lambda _profile: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_read",
+        lambda **_kwargs: {
+            "status": "OK",
+            "phase": "combat_player",
+            "active_mechs": 1,
+            "turn": 2,
+        },
+    )
+    monkeypatch.setattr(commands, "cmd_solve", fake_solve)
+
+    result = commands.cmd_auto_turn(
+        wait_for_turn=False,
+        lightning_speed_loss_policy=True,
+        frontier_diagnostics=False,
+    )
+
+    assert result["error"] == "Solve: sentinel"
+    assert solve_calls[0]["lightning_speed_loss_policy"] is True
+    assert solve_calls[0]["frontier_diagnostics"] is False
+
+
 def test_lightning_speed_policy_satisfies_threat_audit_without_dirty_consent():
     session = RunSession(
         run_id="lw",

@@ -5423,7 +5423,8 @@ def _check_wheel_sim_version() -> dict | None:
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
               beam: int = 0, candidate_rank: int | None = None,
               destroy_time_pods: bool = False,
-              frontier_diagnostics: bool = True) -> dict:
+              frontier_diagnostics: bool = True,
+              lightning_speed_loss_policy: bool = False) -> dict:
     """Run solver on current board, store solution in session.
 
     Args:
@@ -5439,6 +5440,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         frontier_diagnostics: when false, skip the expensive blocked-plan
               lookahead/robust frontier preview. Dirty frontier summaries are
               still kept for consent review.
+        lightning_speed_loss_policy: skip emergency clean-plan widening when
+              the current Lightning War target explicitly permits the top
+              dirty speed trade.
 
     Returns the chosen solution with actions and score. When beam>=1 the
     recording stamps `beam_mode` and `chain_score` so downstream analysis
@@ -5818,107 +5822,124 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         selected_candidate_eval.get("plan_safety"),
                         allow_pod_destroy_dirty=destroy_time_pods_active,
                     )):
-                # Emergency safety widening: the top-1 entry path can miss
-                # lower-ranked clean plans when the scorer strongly favors
-                # tactics that still concede grid. Keep both the active weight
-                # bundle and the current soft-disable mask intact so widened
-                # candidates are ranked under the same tactical assumptions as
-                # the live solve.
-                widening_attempts: list[dict] = []
-                widening_sources = [("top_k_safety", False)]
-                if session.disabled_actions:
-                    widening_sources.append(
-                        ("top_k_safety_no_soft_disable", True)
+                if (
+                    lightning_speed_loss_policy
+                    and _lightning_speed_policy_active_for_plan(
+                        session,
+                        selected_candidate_eval.get("plan_safety"),
                     )
-                for source, ignore_soft_disables in widening_sources:
-                    wide_bridge_data = dict(bridge_data)
-                    if ignore_soft_disables:
-                        wide_bridge_data["disabled_actions"] = (
-                            _hard_soft_disables_for_safety_widening(
-                                session.disabled_actions
+                ):
+                    selected_candidate_eval["safety_widening"] = [{
+                        "source": "top_k_safety",
+                        "candidate_count": candidate_count,
+                        "ignored_soft_disables": False,
+                        "skipped": True,
+                        "reason": (
+                            "lightning_speed_loss_policy_accepts_selected"
+                        ),
+                    }]
+                else:
+                    # Emergency safety widening: the top-1 entry path can miss
+                    # lower-ranked clean plans when the scorer strongly favors
+                    # tactics that still concede grid. Keep both the active
+                    # weight bundle and the current soft-disable mask intact so
+                    # widened candidates are ranked under the same tactical
+                    # assumptions as the live solve.
+                    widening_attempts: list[dict] = []
+                    widening_sources = [("top_k_safety", False)]
+                    if session.disabled_actions:
+                        widening_sources.append(
+                            ("top_k_safety_no_soft_disable", True)
+                        )
+                    for source, ignore_soft_disables in widening_sources:
+                        wide_bridge_data = dict(bridge_data)
+                        if ignore_soft_disables:
+                            wide_bridge_data["disabled_actions"] = (
+                                _hard_soft_disables_for_safety_widening(
+                                    session.disabled_actions
+                                )
                             )
-                        )
 
-                    wide_raw = _rust.solve_top_k(
-                        _json.dumps(wide_bridge_data),
-                        time_limit,
-                        _SAFETY_WIDENING_TOP_K,
-                    )
-                    wide_specs = []
-                    for idx, rust_result in enumerate(_json.loads(wide_raw) or []):
-                        wide_specs.append({
-                            "rank": idx,
+                        wide_raw = _rust.solve_top_k(
+                            _json.dumps(wide_bridge_data),
+                            time_limit,
+                            _SAFETY_WIDENING_TOP_K,
+                        )
+                        wide_specs = []
+                        for idx, rust_result in enumerate(_json.loads(wide_raw) or []):
+                            wide_specs.append({
+                                "rank": idx,
+                                "source": source,
+                                "rust_result": rust_result,
+                            })
+                        candidate_count = max(candidate_count, len(wide_specs))
+                        widening_attempts.append({
                             "source": source,
-                            "rust_result": rust_result,
+                            "candidate_count": len(wide_specs),
+                            "ignored_soft_disables": ignore_soft_disables,
                         })
-                    candidate_count = max(candidate_count, len(wide_specs))
-                    widening_attempts.append({
-                        "source": source,
-                        "candidate_count": len(wide_specs),
-                        "ignored_soft_disables": ignore_soft_disables,
-                    })
 
-                    wide_evals = []
-                    for spec in wide_specs:
-                        candidate_solution = _rust_result_to_solution(
-                            spec.get("rust_result"), rust_elapsed,
-                            len(active_mechs)
+                        wide_evals = []
+                        for spec in wide_specs:
+                            candidate_solution = _rust_result_to_solution(
+                                spec.get("rust_result"), rust_elapsed,
+                                len(active_mechs)
+                            )
+                            if candidate_solution is None:
+                                continue
+                            candidate_eval = {
+                                "rank": spec.get("rank"),
+                                "source": spec.get("source"),
+                                "chain_score": None,
+                                "solution": candidate_solution,
+                            }
+                            candidate_eval.update(_evaluate_solution_safety(
+                                board, bridge_data, candidate_solution, spawns,
+                                current_turn=current_turn,
+                                total_turns=total_turns,
+                                remaining_spawns=rem_spawns,
+                                weights=breakdown_weights,
+                                block_mech_hp_loss=block_mech_hp_loss,
+                                block_mech_status_loss=block_mech_status_loss,
+                            ))
+                            wide_evals.append(candidate_eval)
+                            if not plan_requires_safety_block(
+                                candidate_eval.get("plan_safety"),
+                                allow_pod_destroy_dirty=destroy_time_pods_active,
+                            ):
+                                break
+                        if wide_evals and not frontier_candidate_evals:
+                            frontier_candidate_evals = wide_evals
+
+                        clean_wide = next(
+                            (c for c in wide_evals
+                             if not plan_requires_safety_block(
+                                 c.get("plan_safety"),
+                                 allow_pod_destroy_dirty=destroy_time_pods_active,
+                             )),
+                            None,
                         )
-                        if candidate_solution is None:
-                            continue
-                        candidate_eval = {
-                            "rank": spec.get("rank"),
-                            "source": spec.get("source"),
-                            "chain_score": None,
-                            "solution": candidate_solution,
-                        }
-                        candidate_eval.update(_evaluate_solution_safety(
-                            board, bridge_data, candidate_solution, spawns,
-                            current_turn=current_turn,
-                            total_turns=total_turns,
-                            remaining_spawns=rem_spawns,
-                            weights=breakdown_weights,
-                            block_mech_hp_loss=block_mech_hp_loss,
-                            block_mech_status_loss=block_mech_status_loss,
-                        ))
-                        wide_evals.append(candidate_eval)
-                        if not plan_requires_safety_block(
-                            candidate_eval.get("plan_safety"),
-                            allow_pod_destroy_dirty=destroy_time_pods_active,
-                        ):
+                        if clean_wide is not None:
+                            selected_candidate_eval = clean_wide
+                            candidate_evals = wide_evals
+                            selected_candidate_eval["safety_widening"] = widening_attempts
+                            candidate_count = len(wide_specs)
                             break
-                    if wide_evals and not frontier_candidate_evals:
-                        frontier_candidate_evals = wide_evals
-
-                    clean_wide = next(
-                        (c for c in wide_evals
-                         if not plan_requires_safety_block(
-                             c.get("plan_safety"),
-                             allow_pod_destroy_dirty=destroy_time_pods_active,
-                         )),
-                        None,
-                    )
-                    if clean_wide is not None:
-                        selected_candidate_eval = clean_wide
-                        candidate_evals = wide_evals
-                        selected_candidate_eval["safety_widening"] = widening_attempts
-                        candidate_count = len(wide_specs)
-                        break
-                    least_bad_wide = _select_safe_plan_candidate(
-                        wide_evals,
-                        allow_pod_destroy_dirty=destroy_time_pods_active,
-                    )
-                    if (
-                        least_bad_wide is not None
-                        and plan_requires_safety_block(
-                            least_bad_wide.get("plan_safety"),
+                        least_bad_wide = _select_safe_plan_candidate(
+                            wide_evals,
                             allow_pod_destroy_dirty=destroy_time_pods_active,
                         )
-                    ):
-                        selected_candidate_eval = least_bad_wide
-                        candidate_evals = wide_evals
-                        selected_candidate_eval["safety_widening"] = widening_attempts
-                        candidate_count = len(wide_specs)
+                        if (
+                            least_bad_wide is not None
+                            and plan_requires_safety_block(
+                                least_bad_wide.get("plan_safety"),
+                                allow_pod_destroy_dirty=destroy_time_pods_active,
+                            )
+                        ):
+                            selected_candidate_eval = least_bad_wide
+                            candidate_evals = wide_evals
+                            selected_candidate_eval["safety_widening"] = widening_attempts
+                            candidate_count = len(wide_specs)
 
             summary_evals = frontier_candidate_evals or candidate_evals
             candidate_safety_summaries = [
@@ -43601,6 +43622,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         candidate_rank=candidate_rank,
         destroy_time_pods=destroy_time_pods,
         frontier_diagnostics=frontier_diagnostics,
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
     )
     if "error" in solve_result:
         result = {"error": f"Solve: {solve_result['error']}", "turn": turn}

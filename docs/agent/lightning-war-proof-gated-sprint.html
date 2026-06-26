@@ -531,6 +531,7 @@
           <li><strong>2026-06-26 prompt edge:</strong> macOS privacy prompts may miss the window-local Allow target while a fullscreen OCR Allow click still clears the stack. Treat prompt-gone post-proof as recovered, then retry verified setup.</li>
           <li><strong>2026-06-26 timer OCR edge:</strong> pause-menu timer OCR can drop the hour token and read <code>0h 0m 13s</code> as <code>Om 135</code>. This is valid early-run timer proof, not a reset reason.</li>
           <li><strong>2026-06-26 route edge:</strong> a pause menu can darken the mission preview enough that the yellow board score disappears while the preview-dialogue underlay remains strong. A highlighted preview board is also valid even when mission OCR is absent. Treat either as an existing preview and perform the paused preview-board commit retry without clearing advisor dialogue first.</li>
+          <li><strong>2026-06-26 combat edge:</strong> Train turn 2 produced a top plan that was dirty only in Lightning-allowed ways: one grid/building hit and pod loss, no mech or train loss. In speed mode, do not spend 30-45 seconds widening to 10,000 clean candidates after the speed policy accepts that top line; execute the accepted trade and keep racing.</li>
           <li><strong>Policy:</strong> if the route is late but deployment is proven, continue into deployment/combat and record the timing miss. Abandoning from deployment costs more than finishing and learning.</li>
           <li><strong>Still hard:</strong> no deployment proof by <code>0:45</code> remains an opening reset, and any ordinary mission over <code>3:00</code> remains a run reset.</li>
         </ul>
@@ -765,6 +766,7 @@
         <ul>
           <li>Allowed only for active Lightning War attempts and only when the timeline survives.</li>
           <li>Can trade pods, optional objectives, reputation, nonlethal buildings, or nonlethal grid when grid remains above zero.</li>
+          <li>When the selected top plan is already accepted by this policy, skip emergency clean-plan widening and record the skipped widening reason in the solve output.</li>
           <li>Never trade mech HP, mech status, mech death, bombs, pylons, final-cave survival, unknown loss kinds, stale boards, research gates, or desyncs.</li>
           <li>Destroy or ignore time pods by default; pod rewards add UI time and do not help Lightning War.</li>
         </ul>
