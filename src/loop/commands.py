@@ -13595,7 +13595,7 @@ def _lightning_click_system_privacy_prompt_allow(
     if post_click.get("visible_ui") == "system_privacy_prompt":
         retry_attempts: list[dict[str, Any]] = []
         current_ui = post_click
-        for attempt in range(3):
+        for attempt in range(12):
             attempt_record: dict[str, Any] = {"attempt": attempt + 1}
             fullscreen_click = _lightning_click_system_privacy_prompt_allow_fullscreen_ocr(
                 dry_run=dry_run,
