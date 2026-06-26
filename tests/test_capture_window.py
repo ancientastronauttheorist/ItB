@@ -23,7 +23,7 @@ def test_take_screenshot_defaults_to_quartz_without_screencapture(
         raise AssertionError("default screenshot path must not spawn screencapture")
 
     monkeypatch.delenv("ITB_SCREENSHOT_BACKEND", raising=False)
-    monkeypatch.setattr(window, "_take_quartz_screenshot", fake_quartz)
+    monkeypatch.setattr(window, "_take_quartz_screenshot_guarded", fake_quartz)
     monkeypatch.setattr(window, "_run_screencapture", fail_screencapture)
 
     output_path = tmp_path / "screen.png"
@@ -51,7 +51,7 @@ def test_take_fullscreen_screenshot_defaults_to_quartz_without_screencapture(
         raise AssertionError("default fullscreen path must not spawn screencapture")
 
     monkeypatch.delenv("ITB_SCREENSHOT_BACKEND", raising=False)
-    monkeypatch.setattr(window, "_take_quartz_screenshot", fake_quartz)
+    monkeypatch.setattr(window, "_take_quartz_screenshot_guarded", fake_quartz)
     monkeypatch.setattr(window, "_run_screencapture", fail_screencapture)
 
     output_path = tmp_path / "fullscreen.png"

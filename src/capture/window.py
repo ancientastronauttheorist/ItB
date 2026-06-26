@@ -6,6 +6,7 @@ import os
 import json
 import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -300,7 +301,7 @@ def take_screenshot(
     backend = os.environ.get("ITB_SCREENSHOT_BACKEND", "quartz").strip().lower()
     if backend in {"", "quartz", "auto"}:
         try:
-            _take_quartz_screenshot(output_path, bounds=bounds)
+            _take_quartz_screenshot_guarded(output_path, bounds=bounds)
             return output_path
         except Exception:
             if backend != "auto" or os.environ.get(
@@ -343,7 +344,7 @@ def take_fullscreen_screenshot(output_path: str | Path) -> Path:
     backend = os.environ.get("ITB_SCREENSHOT_BACKEND", "quartz").strip().lower()
     if backend in {"", "quartz", "auto"}:
         try:
-            _take_quartz_screenshot(output_path, bounds=None)
+            _take_quartz_screenshot_guarded(output_path, bounds=None)
             return output_path
         except Exception:
             if backend != "auto" or os.environ.get(
@@ -358,6 +359,46 @@ def take_fullscreen_screenshot(output_path: str | Path) -> Path:
         timeout = 4.0
     _run_screencapture(["-x", str(output_path)], max(0.5, timeout))
     return output_path
+
+
+def _take_quartz_screenshot_guarded(
+    output_path: Path,
+    *,
+    bounds: dict | None = None,
+) -> None:
+    """Run Quartz capture with a hard deadline on macOS."""
+    mode = os.environ.get("ITB_QUARTZ_CAPTURE_MODE", "subprocess").strip().lower()
+    if mode in {"inprocess", "inline", "direct"}:
+        _take_quartz_screenshot(output_path, bounds=bounds)
+        return
+    try:
+        timeout = float(os.environ.get("ITB_QUARTZ_CAPTURE_TIMEOUT", "3.0"))
+    except ValueError:
+        timeout = 3.0
+    timeout = max(0.25, timeout)
+    encoded_bounds = json.dumps(bounds) if bounds else ""
+    code = (
+        "import json, sys\n"
+        "from pathlib import Path\n"
+        "from src.capture.window import _take_quartz_screenshot\n"
+        "bounds = json.loads(sys.argv[2]) if sys.argv[2] else None\n"
+        "_take_quartz_screenshot(Path(sys.argv[1]), bounds=bounds)\n"
+    )
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", code, str(output_path), encoded_bounds],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"Quartz screenshot timed out after {timeout:.1f}s") from exc
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip()
+        if detail:
+            raise RuntimeError(f"Quartz screenshot failed: {detail}")
+        raise RuntimeError(f"Quartz screenshot failed with code {proc.returncode}")
 
 
 def _take_quartz_screenshot(output_path: Path, *, bounds: dict | None = None) -> None:
