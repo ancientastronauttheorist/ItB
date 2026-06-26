@@ -23826,6 +23826,11 @@ def _lightning_visible_ui_has_existing_mission_preview(
         and _lightning_pause_menu_has_island_map_underlay(visible_ui)
     ):
         return False
+    if (
+        visible_kind == "pause_menu"
+        and _lightning_pause_menu_has_mission_preview_underlay(visible_ui)
+    ):
+        return True
     classifier_kind = str(visible_ui.get("classifier_visible_ui") or "")
     if (
         visible_kind != "mission_preview_panel"
@@ -23884,6 +23889,43 @@ def _lightning_visible_ui_has_existing_mission_preview(
     if not (yellow >= 2000 and score >= 0.006):
         return False
     return bool(preview_text_proven or recommended == "dialogue_textbox")
+
+
+def _lightning_pause_menu_has_mission_preview_underlay(
+    visible_ui: dict | None,
+) -> bool:
+    """Return true when the pause menu is visibly covering a mission preview."""
+    if not isinstance(visible_ui, dict) or visible_ui.get("status") != "OK":
+        return False
+    if str(visible_ui.get("visible_ui") or "") != "pause_menu":
+        return False
+    if _lightning_pause_menu_has_island_map_underlay(visible_ui):
+        return False
+
+    preview_text = _lightning_visible_preview_mission_from_visible_ui(visible_ui)
+    normalized_text = ""
+    if isinstance(preview_text, dict):
+        normalized_text = str(preview_text.get("normalized_text") or "").lower()
+    if "no vek detected" in normalized_text or "corporate hq" in normalized_text:
+        return False
+
+    try:
+        dark_overlay = float(visible_ui.get("dark_overlay_fraction") or 0.0)
+    except (TypeError, ValueError):
+        dark_overlay = 0.0
+    if dark_overlay < 0.75:
+        return False
+
+    scores = visible_ui.get("scores")
+    if not isinstance(scores, dict):
+        return False
+    dialogue_score = scores.get("mission_preview_dialogue")
+    if not isinstance(dialogue_score, dict):
+        return False
+    try:
+        return float(dialogue_score.get("score") or 0.0) >= 0.78
+    except (TypeError, ValueError):
+        return False
 
 
 def _lightning_visible_ui_has_large_preview_dialogue_board(

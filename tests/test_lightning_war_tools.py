@@ -21188,6 +21188,60 @@ def test_lightning_segment_accepts_board_preview_without_mission_ocr():
     assert result["speed_existing_preview_without_mission_ocr"] is True
 
 
+def test_lightning_existing_preview_accepts_pause_menu_preview_underlay():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "pause_menu",
+        "recommended_control": "menu_continue",
+        "dark_overlay_fraction": 0.92,
+        "scores": {
+            "mission_preview_panel": {"score": 0.0, "yellow": 0},
+            "mission_preview_dialogue": {
+                "score": 0.80,
+                "card": {"red": 0, "blue": 48000},
+            },
+            "island_map": {"score": 0.001},
+        },
+    }
+
+    assert commands._lightning_visible_ui_has_existing_mission_preview(visible_ui)
+
+
+def test_lightning_transition_hint_accepts_pause_menu_preview_underlay():
+    visible_ui = {
+        "status": "OK",
+        "visible_ui": "pause_menu",
+        "recommended_control": "menu_continue",
+        "dark_overlay_fraction": 0.92,
+        "scores": {
+            "mission_preview_panel": {"score": 0.0, "yellow": 0},
+            "mission_preview_dialogue": {
+                "score": 0.80,
+                "card": {"red": 0, "blue": 48000},
+            },
+            "island_map": {"score": 0.001},
+        },
+    }
+
+    hint = commands._lightning_route_start_transition_retry_hint(
+        {
+            "status": "BLOCKED",
+            "reason": "route_start_commit_no_transition",
+            "click_result": {
+                "route_start_transition_block": {
+                    "post_start_pause_snapshot": {
+                        "status": "PAUSED",
+                        "evidence_ui": visible_ui,
+                    },
+                },
+            },
+        },
+    )
+
+    assert hint is not None
+    assert hint["kind"] == "existing_preview"
+
+
 def test_lightning_segment_ignores_pause_menu_preview_classifier_hint(
     monkeypatch,
 ):
@@ -21241,7 +21295,7 @@ def test_lightning_segment_ignores_pause_menu_preview_classifier_hint(
         pause_on_stop=False,
     )
 
-    assert result["reason"] == "max_steps_reached"
+    assert result["reason"] == "mission_preview_requires_route_validation"
     assert result["route_start_performed"] is False
     assert route_calls == []
     assert (
