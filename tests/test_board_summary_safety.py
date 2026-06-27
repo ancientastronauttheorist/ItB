@@ -639,6 +639,46 @@ def test_summary_tracks_dam_pawn_destroy_objective_from_metadata():
     ]
 
 
+def test_summary_tracks_acid_vats_destroy_objective_from_metadata():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Barrels"
+    data["units"].extend([
+        {
+            "uid": 605,
+            "type": "AcidVat",
+            "x": 4,
+            "y": 1,
+            "hp": 2,
+            "max_hp": 2,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+        {
+            "uid": 606,
+            "type": "AcidVat",
+            "x": 4,
+            "y": 2,
+            "hp": 2,
+            "max_hp": 2,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["destroy_objective_units_alive"] == 2
+    assert [u["type"] for u in summary["destroy_objective_units"]] == [
+        "AcidVat",
+        "AcidVat",
+    ]
+
+
 def test_summary_tracks_bonus_debris_objective_from_bonus_id():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_Survive"
