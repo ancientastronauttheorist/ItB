@@ -34,6 +34,7 @@ from src.capture.save_parser import (
     SAVE_DIR,
 )
 from src.model.board import Board
+from src.model.pawn_stats import get_pawn_stats
 from src.model.weapons import get_weapon_name
 from src.solver.solver import MechAction, Solution, replay_solution
 from src.solver.action_classification import action_has_attack, is_repair_action
@@ -7383,6 +7384,10 @@ def cmd_click_end_turn() -> dict:
     if block is not None:
         _print_result(block)
         return block
+    fire_block = _current_end_turn_fire_block()
+    if fire_block is not None:
+        _print_result(fire_block)
+        return fire_block
     recalibrate()
     batch = plan_end_turn()
     codex_batch = [
@@ -7411,6 +7416,90 @@ def cmd_click_end_turn() -> dict:
           "(or legacy batch via computer_batch), wait ~6s, then `read`")
     _print_result(result)
     return result
+
+
+def _board_has_player_flame_shielding(board: Board) -> bool:
+    return any(
+        getattr(u, "is_player", False)
+        and getattr(u, "is_mech", False)
+        and getattr(u, "hp", 0) > 0
+        and (
+            getattr(u, "weapon", "") == "Passive_FlameImmune"
+            or getattr(u, "weapon2", "") == "Passive_FlameImmune"
+        )
+        for u in board.units
+    )
+
+
+def _unit_takes_end_turn_fire_tick(board: Board, unit) -> bool:
+    if not getattr(unit, "fire", False):
+        return False
+    if getattr(unit, "shield", False) or getattr(unit, "frozen", False):
+        return False
+    if get_pawn_stats(getattr(unit, "type", "")).ignore_fire:
+        return False
+    if (
+        getattr(unit, "is_player", False)
+        and getattr(unit, "is_mech", False)
+        and _board_has_player_flame_shielding(board)
+    ):
+        return False
+    return True
+
+
+def _lethal_end_turn_fire_mech_debts(board: Board) -> list[dict]:
+    debts = []
+    for unit in board.units:
+        if (
+            not getattr(unit, "is_player", False)
+            or not getattr(unit, "is_mech", False)
+            or getattr(unit, "is_extra_tile", False)
+            or getattr(unit, "hp", 0) <= 0
+        ):
+            continue
+        if _unit_takes_end_turn_fire_tick(board, unit) and unit.hp <= 1:
+            debts.append({
+                "uid": unit.uid,
+                "type": unit.type,
+                "pos": [unit.x, unit.y],
+                "hp": max(0, unit.hp),
+                "max_hp": unit.max_hp,
+            })
+    return debts
+
+
+def _current_end_turn_fire_block() -> dict | None:
+    try:
+        board, bridge_data = read_bridge_state()
+    except Exception as exc:
+        return {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_fire_audit_failed",
+            "blocking": True,
+            "error": str(exc),
+            "next_step": (
+                "Run a fresh `read`; do not click End Turn until the live "
+                "board can be audited."
+            ),
+        }
+    if board is None:
+        return None
+    phase = bridge_data.get("phase") if isinstance(bridge_data, dict) else None
+    if phase is not None and phase != "combat_player":
+        return None
+    debts = _lethal_end_turn_fire_mech_debts(board)
+    if not debts:
+        return None
+    return {
+        "status": "END_TURN_BLOCKED",
+        "reason": "lethal_mech_fire_before_enemy_phase",
+        "blocking": True,
+        "fire_debt": debts,
+        "next_step": (
+            "Repair, shield, freeze, extinguish, reset, or re-solve before "
+            "clicking End Turn; the enemy phase fire tick would destroy a mech."
+        ),
+    }
 
 
 def cmd_click_balanced_roll() -> dict:

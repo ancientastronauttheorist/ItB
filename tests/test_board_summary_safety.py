@@ -1,10 +1,12 @@
 import json
 
+from src.loop import commands
 from src.loop.commands import (
     _annotate_pending_grid_debt,
     _capture_board_summary,
     _compute_deltas,
     _evaluate_solution_safety,
+    _lethal_end_turn_fire_mech_debts,
     _summary_with_pending_grid_debt,
 )
 from src.loop.session import RunSession
@@ -187,6 +189,61 @@ def test_summary_excludes_friendly_objective_units_from_mech_loss():
     assert summary["mech_hp"] == [
         {"uid": 11, "type": "TeleMech", "hp": 1, "max_hp": 2}
     ]
+
+
+def test_end_turn_fire_debt_flags_burning_one_hp_mech():
+    data = _bridge_with_mech()
+    data["units"][0]["fire"] = True
+    board = Board.from_bridge_data(data)
+
+    assert _lethal_end_turn_fire_mech_debts(board) == [{
+        "uid": 11,
+        "type": "TeleMech",
+        "pos": [2, 5],
+        "hp": 1,
+        "max_hp": 2,
+    }]
+
+
+def test_end_turn_fire_debt_ignores_shielded_burning_mech():
+    data = _bridge_with_mech()
+    data["units"][0]["fire"] = True
+    data["units"][0]["shield"] = True
+    board = Board.from_bridge_data(data)
+
+    assert _lethal_end_turn_fire_mech_debts(board) == []
+
+
+def test_click_end_turn_blocks_lethal_fire_debt(monkeypatch):
+    data = _bridge_with_mech()
+    data.update({"phase": "combat_player", "active_mechs": 0})
+    data["units"][0]["fire"] = True
+    board = Board.from_bridge_data(data)
+    session = RunSession(
+        run_id="fire-stop",
+        squad="Mist Eaters",
+        difficulty=0,
+        achievement_targets=["Let's Walk"],
+    )
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: (board, data))
+    monkeypatch.setattr(
+        commands,
+        "recalibrate",
+        lambda: (_ for _ in ()).throw(AssertionError("should not recalibrate")),
+    )
+    monkeypatch.setattr(
+        commands,
+        "plan_end_turn",
+        lambda: (_ for _ in ()).throw(AssertionError("should not plan")),
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "lethal_mech_fire_before_enemy_phase"
+    assert result["fire_debt"][0]["uid"] == 11
 
 
 def test_summary_tracks_mech_damage_objective_from_bonus_ids():
