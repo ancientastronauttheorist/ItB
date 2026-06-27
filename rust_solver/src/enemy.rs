@@ -2316,6 +2316,33 @@ mod tests {
     }
 
     #[test]
+    fn test_bouncer_attack_damages_proto_bomb() {
+        let mut board = Board::default();
+        let bomb_idx = board.add_unit(Unit {
+            uid: 398,
+            x: 5,
+            y: 4,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[bomb_idx].set_type_name("ProtoBomb");
+
+        let bouncer_idx = add_enemy_with_type(&mut board, 402, 4, 4, 3, "Bouncer1", 5, 4);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(
+            board.units[bomb_idx].hp <= 0,
+            "Bouncer queued into a ProtoBomb should destroy the 1 HP protected unit"
+        );
+    }
+
+    #[test]
     fn test_displaced_standard_melee_reaims_from_current_position() {
         let mut board = Board::default();
         let tele_idx = board.add_unit(Unit {

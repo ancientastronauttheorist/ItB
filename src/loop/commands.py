@@ -6215,6 +6215,31 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             block_mech_hp_loss=block_mech_hp_loss,
             block_mech_status_loss=block_mech_status_loss,
         )
+    elif not _projected_final_board_data(selected_candidate_eval.get("enriched") or {}):
+        rem_spawns = (
+            bridge_data.get("remaining_spawns", 2**31 - 1)
+            if bridge_data else 2**31 - 1
+        )
+        total_turns = board.total_turns if hasattr(board, "total_turns") else 5
+        replacement_eval = _evaluate_solution_safety(
+            board, bridge_data, selected_candidate_eval["solution"], spawns,
+            current_turn=current_turn,
+            total_turns=total_turns,
+            remaining_spawns=rem_spawns,
+            weights=breakdown_weights,
+            block_mech_hp_loss=block_mech_hp_loss,
+            block_mech_status_loss=block_mech_status_loss,
+        )
+        for key in (
+            "enriched",
+            "current_outcome",
+            "predicted_outcome",
+            "predicted_board_summary",
+            "plan_safety",
+        ):
+            selected_candidate_eval[key] = replacement_eval[key]
+        if replacement_eval.get("safety_widening"):
+            selected_candidate_eval["safety_widening"] = replacement_eval["safety_widening"]
     enriched = selected_candidate_eval["enriched"]
     current_outcome = selected_candidate_eval["current_outcome"]
     predicted_outcome = selected_candidate_eval["predicted_outcome"]
@@ -6297,6 +6322,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
+        "final_board": enriched.get("final_board", {}),
         "replay_annotations": enriched.get("replay_annotations", []),
         "current_outcome": current_outcome,
         "predicted_outcome": predicted_outcome,
