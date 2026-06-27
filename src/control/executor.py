@@ -94,13 +94,13 @@ def recalibrate():
 # Recalibrated 2026-04-30 from Corporate HQ: the Codex Computer Use
 # window-local center of the visible End Turn button was (126, 120).
 _UI_END_TURN = (126, 120)
-# Weapon/repair slot offsets re-calibrated 2026-04-23. Old values (191/255/111, 528)
-# missed the icons by ~25 px in Y and ~10 px in X. Empirical hover-verify
-# on Pinnacle Frozen Plains placed the Aerial Bombs icon center at image
-# (396, 585) with window at (215, 32), giving window-relative (181, 553).
-_UI_WEAPON_SLOT_1 = (181, 553)
-_UI_WEAPON_SLOT_2 = (245, 553)
-_UI_REPAIR_BUTTON = (105, 553)
+# Weapon/repair slot offsets re-calibrated 2026-06-27 on Windows during a
+# live Mist Eaters Control Shot recovery. The old y=553 offsets clicked above
+# the selected mech panel. Hover proof put Repair near window-local (181,672)
+# and the Control Shot weapon card near (281,672) on a 1296x759 window.
+_UI_WEAPON_SLOT_1 = (277, 662)
+_UI_WEAPON_SLOT_2 = (341, 662)
+_UI_REPAIR_BUTTON = (181, 662)
 
 # Squad-select screen. Calibrated 2026-04-21 via hover-verify: cursor at
 # MCP (1006, 562) with window at Quartz (215, 32, 1280, 748) triggered
