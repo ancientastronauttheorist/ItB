@@ -470,8 +470,10 @@ def _apply_lightning_war_routing(
     delta = 0
 
     if "train" in mission_tags:
-        delta += 35
-        rationale.append("+35 Lightning War: 4-turn train mission")
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: protected train objective can stall fast runs"
+        )
     if "env_tidal" in mission_tags and mission_id != "Mission_Terratide":
         delta += 25
         rationale.append("+25 Lightning War: fast Tidal Waves mission")
@@ -499,6 +501,13 @@ def _apply_lightning_war_routing(
         delta += 8
         rationale.append("+8  Lightning War: plain battle has low UI friction")
 
+    if mission_id == "Mission_Bomb":
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: Renfield Bombs causes web/objective drift and "
+            "slow final turns"
+        )
+
     if mission_id == "Mission_Satellite":
         delta -= 45
         rationale.append(
@@ -513,6 +522,11 @@ def _apply_lightning_war_routing(
         delta -= 70
         rationale.append(
             "-70 Lightning War: Power Generator trap can force mech damage"
+        )
+    if mission_id == "Mission_Force":
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: mountain counter is slow and can force mech damage"
         )
     if mission_id == "Mission_AcidStorm":
         delta -= 12
@@ -534,6 +548,7 @@ def _apply_lightning_war_routing(
     slow_mission_ids = {
         "Mission_Artillery",
         "Mission_AcidStorm",
+        "Mission_Crack",
         "Mission_Dam",
         "Mission_ForestFire",
         "Mission_FreezeBldg",
@@ -541,6 +556,7 @@ def _apply_lightning_war_routing(
         "Mission_Mines",
         "Mission_Power",
         "Mission_Solar",
+        "Mission_Survive",
         "Mission_Tanks",
         "Mission_Teleporter",
         "Mission_Terraform",

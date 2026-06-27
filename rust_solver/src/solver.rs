@@ -1746,6 +1746,7 @@ fn search_recursive(
     reverse_thrusters_four_damage_so_far: i32,
     feed_the_flame_so_far: i32,
     arachnoid_spawns_so_far: i32,
+    stay_with_me_heal_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
@@ -1823,6 +1824,8 @@ fn search_recursive(
             feed_the_flame_so_far as f64 * weights.feed_the_flame_bonus;
         let arachnoid_spawn_bonus =
             arachnoid_spawns_so_far as f64 * weights.arachnoid_spawn_bonus;
+        let stay_with_me_heal_bonus =
+            stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
         let pod_collected_penalty =
             pods_collected_so_far as f64 * weights.pod_collected;
         let score = raw
@@ -1832,6 +1835,7 @@ fn search_recursive(
             + reverse_thrusters_four_damage_bonus
             + feed_the_flame_bonus
             + arachnoid_spawn_bonus
+            + stay_with_me_heal_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
 
@@ -1863,6 +1867,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far,
             feed_the_flame_so_far,
             arachnoid_spawns_so_far,
+            stay_with_me_heal_so_far,
             pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
@@ -1928,6 +1933,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_from_events(&result.events);
         let feed_the_flame_add = feed_the_flame_from_events(&result.events);
         let arachnoid_spawns_add = arachnoid_spawns_from_events(&result.events);
+        let stay_with_me_heal_add = result.mech_hp_repaired;
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
         // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
@@ -1956,6 +1962,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
             feed_the_flame_so_far + feed_the_flame_add,
             arachnoid_spawns_so_far + arachnoid_spawns_add,
+            stay_with_me_heal_so_far + stay_with_me_heal_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
@@ -2141,7 +2148,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2346,7 +2353,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -3132,6 +3139,68 @@ mod top_k_tests {
         assert!(
             targets.contains(&(2, 2)),
             "Artemis should still target cardinal F6 from D6"
+        );
+    }
+
+    #[test]
+    fn arachnoid_injector_rejects_off_axis_targets() {
+        // Live Arachnoid Injector no-ops when FireWeapon is pointed off-axis.
+        // Regression anchor: Lucky Start run 20260615_221604_970
+        // Mission_Airstrike turn 1 tried ScorpioMech D5 -> off-axis E1;
+        // live Firefly1 stayed at 3 HP while the simulator predicted 2 HP.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedArachnoid as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 102,
+            x: 7,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 103,
+            x: 7,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::RangedArachnoid,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(
+            !targets.contains(&(7, 3)),
+            "Arachnoid D5->E1 is off-axis and live FireWeapon spends an effectless shot"
+        );
+        assert!(
+            targets.contains(&(7, 4)),
+            "Arachnoid should still target cardinal D1 from D5"
         );
     }
 

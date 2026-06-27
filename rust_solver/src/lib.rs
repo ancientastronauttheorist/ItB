@@ -110,6 +110,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut mission_kills = 0i32;
         let mut bumps = 0i32;
         let mut nanobots_heal = 0i32;
+        let mut stay_with_me_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
         let mut arachnoid_spawns = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
@@ -139,6 +140,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 illegal_events.push(event.clone());
             }
             nanobots_heal += viscera_nanobots_heal_from_events(&result.events);
+            stay_with_me_heal += result.mech_hp_repaired;
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
             arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
@@ -186,6 +188,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats)
             + consumed_spawn_block_bonus(&board, &spawn_points, &weights, spawn_block_result.spawns_blocked)
             + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus
+            + stay_with_me_heal as f64 * weights.stay_with_me_heal_bonus
             + reverse_thrusters_four_damage as f64
                 * weights.reverse_thrusters_four_damage_bonus
             + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus;
@@ -211,6 +214,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "kills": kills,
             "mission_kills": mission_kills,
             "arachnoid_spawns": arachnoid_spawns,
+            "stay_with_me_heal": stay_with_me_heal,
             "bldgs_alive": bldgs_alive,
             "bldg_hp_total": bldg_hp_total,
             "dead_mechs": dead_mechs,
@@ -309,6 +313,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
                 "grid_damage": result.grid_damage,
                 "enemy_damage_dealt": result.enemy_damage_dealt,
                 "mech_damage_taken": result.mech_damage_taken,
+                "mech_hp_repaired": result.mech_hp_repaired,
                 "spawns_blocked": result.spawns_blocked,
                 "pods_collected": result.pods_collected,
                 "repair_platforms_used": result.repair_platforms_used,
@@ -400,6 +405,7 @@ fn project_plan_scenarios(
                     "grid_damage": s.action_result.grid_damage,
                     "enemy_damage_dealt": s.action_result.enemy_damage_dealt,
                     "mech_damage_taken": s.action_result.mech_damage_taken,
+                    "mech_hp_repaired": s.action_result.mech_hp_repaired,
                     "spawns_blocked": s.action_result.spawns_blocked,
                     "pods_collected": s.action_result.pods_collected,
                     "repair_platforms_used": s.action_result.repair_platforms_used,
@@ -1919,7 +1925,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   endpoint/pod behavior, Thermal Discharger dam-flood ordering,
 //   Mission_BeltRandom late conveyor timing, and Mission_Satellite late launch
 //   threat timing. Pre-v286 corpus archived as failure_db_snapshot_sim_v285.jsonl.
-pub const SIMULATOR_VERSION: u32 = 286;
+// v287 - Merged Lightning War / Stay With Me parity onto the Complete
+//   Victory/Spider/Feed line: Dam_Pawn fire-tick skip, Reverse Thrusters
+//   backblast smoke without same-action Nanofilter recoil healing,
+//   Smoldering Shells A/B/AB overlays, pre-attack enemy wreck clearing,
+//   RockThrown pod destruction, Chain Whip Shell Psion armor snapshotting,
+//   and Stay With Me heal scoring. Pre-v287 corpus archived as
+//   failure_db_snapshot_sim_v286.jsonl.
+pub const SIMULATOR_VERSION: u32 = 287;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -233,6 +233,31 @@ def _read_active_bonus_objective_ids_from_save() -> list[int]:
     return out
 
 
+def _read_active_victory_turns_from_save() -> int | None:
+    """Return the active combat "Victory in N turns" counter from saveData."""
+    save_path = get_save_file("saveData.lua")
+    if not save_path.exists():
+        return None
+    try:
+        data = parse_save_file(save_path)
+    except Exception:
+        return None
+    region_data = data.get("RegionData", {})
+    if not isinstance(region_data, dict):
+        return None
+    battle_region = region_data.get("iBattleRegion", -1)
+    if not isinstance(battle_region, int) or battle_region < 0:
+        return None
+    region = region_data.get(f"region{battle_region}", {})
+    if not isinstance(region, dict):
+        return None
+    player = region.get("player", {})
+    if not isinstance(player, dict):
+        return None
+    victory = player.get("victory")
+    return victory if isinstance(victory, int) else None
+
+
 def _read_mission_force_progress_from_save() -> dict:
     """Return Mission_Force mountain-objective progress from saveData.
 
@@ -975,6 +1000,10 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         bonus_ids = _read_active_bonus_objective_ids_from_save()
         if bonus_ids:
             data["bonus_objective_ids"] = bonus_ids
+    if "victory_turns" not in data:
+        victory_turns = _read_active_victory_turns_from_save()
+        if isinstance(victory_turns, int):
+            data["victory_turns"] = victory_turns
 
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a

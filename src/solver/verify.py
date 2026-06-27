@@ -1396,7 +1396,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # endpoint/pod behavior, Thermal Discharger dam-flood ordering,
 # Mission_BeltRandom late conveyor timing, and Mission_Satellite late launch
 # threat timing. Pre-v286 corpus archived as failure_db_snapshot_sim_v285.jsonl.
-SIMULATOR_VERSION = 286
+# v287 - Merged Lightning War / Stay With Me parity onto the Complete
+# Victory/Spider/Feed line: Dam_Pawn fire-tick skip, Reverse Thrusters
+# backblast smoke without same-action Nanofilter recoil healing, Smoldering
+# Shells A/B/AB overlays, pre-attack enemy wreck clearing, RockThrown pod
+# destruction, Chain Whip Shell Psion armor snapshotting, and Stay With Me
+# heal scoring. Pre-v287 corpus archived as failure_db_snapshot_sim_v286.jsonl.
+SIMULATOR_VERSION = 287
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

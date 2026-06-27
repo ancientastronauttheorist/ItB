@@ -1,19 +1,24 @@
-"""Windows Into the Breach in-memory timer probe.
+"""Into the Breach in-memory timer probe.
 
 This intentionally avoids hard-coding a single pointer path. The timer address
 can move across process launches, so the resolver first searches for plausible
 timer values, validates whether they move with wall time, and only then reports
-candidate addresses/pointer roots as evidence.
+candidate addresses/pointer roots as evidence. Windows uses ReadProcessMemory;
+macOS uses Mach task memory and usually requires sudo plus task_for_pid access.
 """
 
 from __future__ import annotations
 
 import argparse
 import ctypes
+import ctypes.util
 import json
 import math
+import os
 import re
 import struct
+import subprocess
+import sys
 import time
 from collections import Counter
 from dataclasses import dataclass
@@ -250,6 +255,187 @@ class WindowsProcessReader:
         return (value - 116444736000000000) / 10_000_000.0
 
 
+class MacProcessReader:
+    """Minimal macOS reader implementing the same interface as WindowsProcessReader."""
+
+    VM_REGION_BASIC_INFO_64 = 9
+    VM_PROT_READ = 1
+    VM_PROT_WRITE = 2
+    KERN_SUCCESS = 0
+
+    class vm_region_basic_info_64(ctypes.Structure):
+        _fields_ = [
+            ("protection", ctypes.c_int),
+            ("max_protection", ctypes.c_int),
+            ("inheritance", ctypes.c_uint32),
+            ("shared", ctypes.c_int),
+            ("reserved", ctypes.c_int),
+            ("offset", ctypes.c_uint64),
+            ("behavior", ctypes.c_int),
+            ("user_wired_count", ctypes.c_ushort),
+        ]
+
+    def __init__(self, pid: int) -> None:
+        if sys.platform != "darwin":
+            raise RuntimeError("macOS process memory probing requires macOS")
+        self.pid = pid
+        self.libc = ctypes.CDLL(ctypes.util.find_library("c") or "libc.dylib")
+        self._bind()
+        task = ctypes.c_uint32()
+        kr = self.libc.task_for_pid(
+            self.libc.mach_task_self(),
+            ctypes.c_int(pid),
+            ctypes.byref(task),
+        )
+        if kr != self.KERN_SUCCESS:
+            raise RuntimeError(
+                "macOS task_for_pid failed for pid "
+                f"{pid} (kern_return={kr}); run with sudo and ensure "
+                "Developer Tools/debug permissions and SIP policy allow "
+                "task_for_pid"
+            )
+        self.task = task
+
+    def _bind(self) -> None:
+        natural_t = ctypes.c_uint32
+        self.info_count_value = (
+            ctypes.sizeof(self.vm_region_basic_info_64) // ctypes.sizeof(natural_t)
+        )
+        self.libc.mach_task_self.restype = ctypes.c_uint32
+        self.libc.task_for_pid.argtypes = [
+            ctypes.c_uint32,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_uint32),
+        ]
+        self.libc.task_for_pid.restype = ctypes.c_int
+        self.libc.mach_vm_region.argtypes = [
+            ctypes.c_uint32,
+            ctypes.POINTER(ctypes.c_uint64),
+            ctypes.POINTER(ctypes.c_uint64),
+            ctypes.c_int,
+            ctypes.POINTER(self.vm_region_basic_info_64),
+            ctypes.POINTER(ctypes.c_uint32),
+            ctypes.POINTER(ctypes.c_uint32),
+        ]
+        self.libc.mach_vm_region.restype = ctypes.c_int
+        self.libc.mach_vm_read.argtypes = [
+            ctypes.c_uint32,
+            ctypes.c_uint64,
+            ctypes.c_uint64,
+            ctypes.POINTER(ctypes.c_uint64),
+            ctypes.POINTER(ctypes.c_uint32),
+        ]
+        self.libc.mach_vm_read.restype = ctypes.c_int
+        self.libc.mach_vm_deallocate.argtypes = [
+            ctypes.c_uint32,
+            ctypes.c_uint64,
+            ctypes.c_uint64,
+        ]
+        self.libc.mach_vm_deallocate.restype = ctypes.c_int
+
+    def close(self) -> None:
+        return None
+
+    def __enter__(self) -> "MacProcessReader":
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self.close()
+
+    def read(self, address: int, size: int) -> bytes | None:
+        data_ptr = ctypes.c_uint64(0)
+        data_count = ctypes.c_uint32(0)
+        kr = self.libc.mach_vm_read(
+            self.task,
+            ctypes.c_uint64(address),
+            ctypes.c_uint64(size),
+            ctypes.byref(data_ptr),
+            ctypes.byref(data_count),
+        )
+        if kr != self.KERN_SUCCESS or int(data_count.value) != size:
+            return None
+        try:
+            return ctypes.string_at(data_ptr.value, data_count.value)
+        finally:
+            self.libc.mach_vm_deallocate(
+                self.libc.mach_task_self(),
+                data_ptr,
+                ctypes.c_uint64(data_count.value),
+            )
+
+    def regions(self, *, max_region_size: int) -> list[tuple[int, int, int]]:
+        address = ctypes.c_uint64(0)
+        out: list[tuple[int, int, int]] = []
+        while True:
+            size = ctypes.c_uint64(0)
+            info = self.vm_region_basic_info_64()
+            info_count = ctypes.c_uint32(self.info_count_value)
+            object_name = ctypes.c_uint32(0)
+            kr = self.libc.mach_vm_region(
+                self.task,
+                ctypes.byref(address),
+                ctypes.byref(size),
+                self.VM_REGION_BASIC_INFO_64,
+                ctypes.byref(info),
+                ctypes.byref(info_count),
+                ctypes.byref(object_name),
+            )
+            if kr != self.KERN_SUCCESS:
+                break
+            base = int(address.value)
+            region_size = int(size.value)
+            if (
+                info.protection & self.VM_PROT_READ
+                and 0 < region_size <= max_region_size
+            ):
+                out.append((
+                    base,
+                    region_size,
+                    self._windows_like_protection(info.protection),
+                ))
+            next_address = base + max(region_size, 0x1000)
+            if next_address <= base:
+                break
+            address.value = next_address
+        return out
+
+    def module(self, name: str = "Into the Breach") -> ModuleInfo | None:
+        # Pointer-root discovery is Windows-specific here; process identity uses
+        # pid plus start time on macOS.
+        return None
+
+    def process_start_time_unix(self) -> float | None:
+        try:
+            result = subprocess.run(
+                ["ps", "-o", "lstart=", "-p", str(self.pid)],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except Exception:
+            return None
+        text = result.stdout.strip()
+        if not text:
+            return None
+        try:
+            return datetime.strptime(text, "%a %b %d %H:%M:%S %Y").timestamp()
+        except ValueError:
+            return None
+
+    def _windows_like_protection(self, protection: int) -> int:
+        if protection & self.VM_PROT_WRITE:
+            return 0x04  # PAGE_READWRITE
+        return 0x02  # PAGE_READONLY
+
+
+def open_process_reader(pid: int) -> Any:
+    if os.name == "nt":
+        return WindowsProcessReader(pid)
+    if sys.platform == "darwin":
+        return MacProcessReader(pid)
+    raise RuntimeError(f"process memory probing is unsupported on {sys.platform}")
+
+
 def _is_readable_protection(protect: int) -> bool:
     if protect & PAGE_GUARD or protect & PAGE_NOACCESS:
         return False
@@ -257,9 +443,15 @@ def _is_readable_protection(protect: int) -> bool:
 
 
 def _find_breach_pid() -> int | None:
-    try:
-        import subprocess
+    if sys.platform == "darwin":
+        return _find_breach_pid_macos()
+    if os.name != "nt":
+        return None
+    return _find_breach_pid_windows()
 
+
+def _find_breach_pid_windows() -> int | None:
+    try:
         script = (
             "Get-Process Breach -ErrorAction SilentlyContinue | "
             "Sort-Object StartTime -Descending | Select-Object -First 1 -ExpandProperty Id"
@@ -274,6 +466,35 @@ def _find_breach_pid() -> int | None:
         return None
     text = result.stdout.strip()
     return int(text) if text.isdigit() else None
+
+
+def _find_breach_pid_macos() -> int | None:
+    try:
+        result = subprocess.run(
+            ["ps", "-axo", "pid=,command="],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        return None
+    candidates: list[int] = []
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            pid_text, command = stripped.split(maxsplit=1)
+            pid = int(pid_text)
+        except ValueError:
+            continue
+        if "/Into the Breach.app/Contents/MacOS/Into the Breach" in command:
+            candidates.append(pid)
+    return candidates[-1] if candidates else None
+
+
+def _process_name_for_message() -> str:
+    return "Breach.exe" if os.name == "nt" else "Into the Breach"
 
 
 def _iso_from_unix(value: float | None) -> str | None:
@@ -1610,7 +1831,7 @@ def validate_session_clock_proof(
         expected_seconds=expected_seconds,
         expected_timer=expected_timer,
     )
-    with WindowsProcessReader(resolved_pid) as reader:
+    with open_process_reader(resolved_pid) as reader:
         module = reader.module()
         return validate_session_clock_proof_with_reader(
             proof,
@@ -1805,9 +2026,9 @@ def resolve_expected_seconds(
 def cmd_scan(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         context = scan_context_timers(
             reader,
@@ -1869,9 +2090,9 @@ def cmd_scan(args: argparse.Namespace) -> int:
 def cmd_read_address(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         payload = read_timeline_playtime_address(
             reader,
@@ -1887,9 +2108,9 @@ def cmd_read_address(args: argparse.Namespace) -> int:
 def cmd_read_numeric(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         payload = read_numeric_timer_address(reader, args.address, args.kind)
     payload.update({
@@ -1905,12 +2126,12 @@ def cmd_read_numeric(args: argparse.Namespace) -> int:
 def cmd_watch_context(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
 
     samples: list[dict[str, Any]] = []
     for idx in range(args.samples):
-        with WindowsProcessReader(pid) as reader:
+        with open_process_reader(pid) as reader:
             module = reader.module()
             context = scan_context_timers(
                 reader,
@@ -2028,9 +2249,9 @@ def _resolve_numeric_expected_seconds(
 def cmd_scan_numeric(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         expected, selection = _resolve_numeric_expected_seconds(args, reader)
         if expected is None:
@@ -2095,7 +2316,7 @@ def _load_numeric_scan_candidates(path: Path) -> tuple[dict[str, Any], list[dict
 def cmd_track_numeric(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
     scan_payload, candidates = _load_numeric_scan_candidates(Path(args.candidates))
     candidates.sort(
@@ -2106,7 +2327,7 @@ def cmd_track_numeric(args: argparse.Namespace) -> int:
         )
     )
     candidates = candidates[:args.candidate_limit]
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         tracks = _candidate_tracks(
             reader,
@@ -2160,7 +2381,7 @@ def cmd_track_numeric(args: argparse.Namespace) -> int:
 def cmd_track_numeric_bulk(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
     scan_payload, candidates = _load_numeric_scan_candidates(Path(args.candidates))
     candidates.sort(
@@ -2171,7 +2392,7 @@ def cmd_track_numeric_bulk(args: argparse.Namespace) -> int:
         )
     )
     candidates = candidates[:args.candidate_limit]
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         tracks = _candidate_bulk_tracks(
             reader,
@@ -2228,7 +2449,7 @@ def cmd_track_numeric_bulk(args: argparse.Namespace) -> int:
 def cmd_track_address(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
     candidate = {
         "address": f"0x{args.address:016x}",
@@ -2237,7 +2458,7 @@ def cmd_track_address(args: argparse.Namespace) -> int:
         if args.kind in NUMERIC_TIMER_KIND_BY_NAME
         else None,
     }
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         tracks = _candidate_tracks(
             reader,
@@ -2278,9 +2499,9 @@ def cmd_track_address(args: argparse.Namespace) -> int:
 def cmd_hunt_numeric(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         expected, selection = _resolve_numeric_expected_seconds(args, reader)
         if expected is None:
@@ -2361,7 +2582,7 @@ def cmd_hunt_numeric(args: argparse.Namespace) -> int:
 def cmd_score_numeric(args: argparse.Namespace) -> int:
     pid = args.pid or _find_breach_pid()
     if pid is None:
-        print("Could not find Breach.exe; pass --pid", flush=True)
+        print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
         return 2
     scan_payload, _candidates = _load_numeric_scan_candidates(Path(args.scan))
     track_payload = json.loads(Path(args.track).read_text(encoding="utf-8"))
@@ -2371,7 +2592,7 @@ def cmd_score_numeric(args: argparse.Namespace) -> int:
     except (TypeError, ValueError):
         start_truth_seconds = None
 
-    with WindowsProcessReader(pid) as reader:
+    with open_process_reader(pid) as reader:
         module = reader.module()
         final_truth: dict[str, Any] | None = None
         final_truth_seconds: float | None = None
@@ -2485,11 +2706,11 @@ def cmd_session_clock_proof(args: argparse.Namespace) -> int:
     if args.score:
         pid = args.pid or _find_breach_pid()
         if pid is None:
-            print("Could not find Breach.exe; pass --pid", flush=True)
+            print(f"Could not find {_process_name_for_message()}; pass --pid", flush=True)
             return 2
         score_path = Path(args.score)
         score_payload = json.loads(score_path.read_text(encoding="utf-8"))
-        with WindowsProcessReader(pid) as reader:
+        with open_process_reader(pid) as reader:
             module = reader.module()
             try:
                 proof = build_session_clock_proof(
@@ -2764,7 +2985,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    return int(args.func(args))
+    try:
+        return int(args.func(args))
+    except RuntimeError as exc:
+        print(json.dumps({
+            "status": "UNAVAILABLE",
+            "reason": str(exc),
+            "process": _process_name_for_message(),
+        }, indent=2))
+        return 1
 
 
 if __name__ == "__main__":

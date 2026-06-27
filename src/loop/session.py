@@ -296,6 +296,11 @@ class RunSession:
     # Decision history (append-only within a run)
     decisions: list[dict] = field(default_factory=list)
 
+    # Lightning War route-preview probe memory. Entries record failed preview
+    # probes so automation can choose a different preview candidate without
+    # treating the cached evidence as Start Mission authority.
+    lightning_route_probe_cache: list[dict] = field(default_factory=list)
+
     # Per-mission post-enemy recording dedup set. Each int is the
     # ``solved_turn`` that already had ``_record_post_enemy`` fire, scoped
     # by the current ``mission_index``. Stored as a flat ``[mi, turn]``
@@ -651,6 +656,7 @@ class RunSession:
             "enemies_killed": self.enemies_killed,
             "turns_played": self.turns_played,
             "decisions": self.decisions,
+            "lightning_route_probe_cache": self.lightning_route_probe_cache,
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
             "post_enemy_block": self.post_enemy_block,
             "dirty_consent_used": self.dirty_consent_used,
@@ -703,6 +709,7 @@ class RunSession:
             enemies_killed=d.get("enemies_killed", 0),
             turns_played=d.get("turns_played", 0),
             decisions=d.get("decisions", []),
+            lightning_route_probe_cache=d.get("lightning_route_probe_cache") or [],
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             post_enemy_block=d.get("post_enemy_block"),
             dirty_consent_used=d.get("dirty_consent_used") or [],

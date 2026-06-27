@@ -530,3 +530,33 @@ def test_numeric_parser_accepts_session_clock_proof_command():
     assert args.command == "session-clock-proof"
     assert args.score == "score.json"
     assert args.output == "proof.json"
+
+
+def test_macos_pid_finder_ignores_unrelated_breach_process(monkeypatch):
+    class Result:
+        stdout = (
+            "21633 /System/Cryptexes/App/usr/libexec/PasswordBreachAgent\n"
+            "57315 /Users/me/Library/Application Support/Steam/steamapps/common/"
+            "Into the Breach/Into the Breach.app/Contents/MacOS/Into the Breach\n"
+        )
+
+    monkeypatch.setattr(probe.subprocess, "run", lambda *_args, **_kwargs: Result())
+
+    assert probe._find_breach_pid_macos() == 57315
+
+
+def test_open_process_reader_uses_macos_reader(monkeypatch):
+    opened = {}
+
+    class FakeMacReader:
+        def __init__(self, pid):
+            opened["pid"] = pid
+
+    monkeypatch.setattr(probe.os, "name", "posix")
+    monkeypatch.setattr(probe.sys, "platform", "darwin")
+    monkeypatch.setattr(probe, "MacProcessReader", FakeMacReader)
+
+    reader = probe.open_process_reader(57315)
+
+    assert isinstance(reader, FakeMacReader)
+    assert opened["pid"] == 57315

@@ -299,6 +299,14 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
             .saturating_add(10)
             .min(board.units[unit_idx].max_hp);
     }
+    let healed = (board.units[unit_idx].hp - before).max(0) as i32;
+    if healed > 0 && board.units[unit_idx].is_player() && board.units[unit_idx].is_mech() {
+        result.mech_hp_repaired += healed;
+        result.events.push(format!(
+            "mech_hp_repaired:repair_platform:{}:{}",
+            board.units[unit_idx].uid, healed
+        ));
+    }
     refresh_arrogant_boost(&mut board.units[unit_idx]);
     board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
     result.repair_platforms_used += 1;
@@ -384,7 +392,13 @@ fn apply_smoke_tile_extinguish(board: &mut Board, unit_idx: usize, x: u8, y: u8)
     }
 }
 
-fn apply_healing_smoke_at(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+fn apply_healing_smoke_at(
+    board: &mut Board,
+    unit_idx: usize,
+    x: u8,
+    y: u8,
+    mut result: Option<&mut ActionResult>,
+) {
     if !board.healing_smoke || !board.tile(x, y).smoke() {
         return;
     }
@@ -395,8 +409,19 @@ fn apply_healing_smoke_at(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
     }
 
     let unit = &mut board.units[unit_idx];
+    let before = unit.hp;
     if unit.hp < unit.max_hp {
         unit.hp += 1;
+    }
+    let healed = (unit.hp - before).max(0) as i32;
+    if healed > 0 {
+        if let Some(result) = result.as_deref_mut() {
+            result.mech_hp_repaired += healed;
+            result.events.push(format!(
+                "mech_hp_repaired:nanofilter_smoke:{}:{}",
+                unit.uid, healed
+            ));
+        }
     }
     unit.set_fire(false);
     board.tile_mut(x, y).set_smoke(false);
@@ -407,7 +432,7 @@ fn apply_healing_smoke_unit_on_tile(board: &mut Board, x: u8, y: u8) {
         return;
     }
     if let Some(idx) = board.unit_at(x, y) {
-        apply_healing_smoke_at(board, idx, x, y);
+        apply_healing_smoke_at(board, idx, x, y, None);
     }
 }
 
@@ -431,7 +456,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
 
     // 4. Smoke tile: carried unit fire is extinguished on landing.
     apply_smoke_tile_extinguish(board, unit_idx, nx, ny);
-    apply_healing_smoke_at(board, unit_idx, nx, ny);
+    apply_healing_smoke_at(board, unit_idx, nx, ny, Some(result));
 
     // 5. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
@@ -609,9 +634,10 @@ fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
     }
 }
 
-/// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
-/// the smoke-cancelled queued attack releases that grapple immediately.
-fn place_smoke(board: &mut Board, x: u8, y: u8) {
+/// Place smoke on a tile without applying Nanofilter Mending.
+/// If the tile holds an enemy currently webbing a unit, the smoke-cancelled
+/// queued attack releases that grapple immediately.
+fn place_smoke_no_healing(board: &mut Board, x: u8, y: u8) {
     let tile = board.tile_mut(x, y);
     tile.set_on_fire(false); // smoke replaces fire
     tile.set_smoke(true);
@@ -622,6 +648,12 @@ fn place_smoke(board: &mut Board, x: u8, y: u8) {
             break_web_from(board, uid);
         }
     }
+}
+
+/// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
+/// the smoke-cancelled queued attack releases that grapple immediately.
+fn place_smoke(board: &mut Board, x: u8, y: u8) {
+    place_smoke_no_healing(board, x, y);
     apply_healing_smoke_unit_on_tile(board, x, y);
 }
 
@@ -971,6 +1003,48 @@ fn spawn_blob_boss_child(
     true
 }
 
+fn chain_whip_armor_aura_snapshot(board: &Board) -> Vec<u16> {
+    if !board.armor_psion {
+        return Vec::new();
+    }
+    let mut armored = Vec::new();
+    for i in 0..board.unit_count as usize {
+        let unit = &board.units[i];
+        if unit.hp > 0 && unit.receives_psion_aura() && unit.type_name_str() != "Jelly_Armor1" {
+            armored.push(unit.uid);
+        }
+    }
+    armored
+}
+
+fn restore_chain_whip_armor_aura(board: &mut Board, armored_uids: &[u16]) {
+    if armored_uids.is_empty() {
+        return;
+    }
+    board.armor_psion = true;
+    for i in 0..board.unit_count as usize {
+        let unit = &mut board.units[i];
+        if unit.hp > 0 && armored_uids.contains(&unit.uid) && unit.is_enemy() {
+            unit.flags.set(UnitFlags::ARMOR, true);
+        }
+    }
+}
+
+fn settle_chain_whip_armor_aura(board: &mut Board) {
+    let armor_alive = (0..board.unit_count as usize)
+        .any(|j| board.units[j].type_name_str() == "Jelly_Armor1" && board.units[j].hp > 0);
+    board.armor_psion = armor_alive;
+    for j in 0..board.unit_count as usize {
+        if board.units[j].is_enemy() {
+            let shell_armor = armor_alive
+                && board.units[j].hp > 0
+                && board.units[j].receives_psion_aura()
+                && board.units[j].type_name_str() != "Jelly_Armor1";
+            board.units[j].flags.set(UnitFlags::ARMOR, shell_armor);
+        }
+    }
+}
+
 fn next_spawn_uid(board: &Board) -> u16 {
     let mut new_uid: u16 = 1;
     for i in 0..board.unit_count as usize {
@@ -1010,7 +1084,7 @@ fn clear_shield_generator_shields(board: &mut Board) {
     }
 }
 
-fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
+fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) -> bool {
     if board.unit_count as usize >= board.units.len() {
         return false;
     }
@@ -1036,7 +1110,8 @@ fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
     if acid_storm_active(board) {
         unit.set_acid(true);
     }
-    board.add_unit(unit);
+    let idx = board.add_unit(unit);
+    apply_pod_on_land(board, idx, result);
     true
 }
 
@@ -3653,6 +3728,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
     // Live captures show it still ignites Forest under a hit pawn.
     // The shooter's own tile is excluded from the graph.
     if wdef.chain() {
+        let chain_armored_uids = chain_whip_armor_aura_snapshot(board);
         let mut visited = 0u64;
         visited |= 1u64 << xy_to_idx(ax, ay);
         let mut queue: Vec<(u8, u8)> = vec![(tx, ty)];
@@ -3671,6 +3747,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
             }
 
             if has_pawn {
+                restore_chain_whip_armor_aura(board, &chain_armored_uids);
                 apply_damage(board, cx, cy, wdef.damage, result, DamageSource::ChainWhip);
             }
 
@@ -3683,6 +3760,9 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
                     queue.push((nx as u8, ny as u8));
                 }
             }
+        }
+        if !chain_armored_uids.is_empty() {
+            settle_chain_whip_armor_aura(board);
         }
     }
 
@@ -4279,19 +4359,46 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
         board, tx, ty, wdef, center_occupied_at_impact,
     );
 
-    // Smoldering Shells: fire and damage the center tile, then place smoke on
-    // the four cardinal adjacent tiles. Normal SMOKE status would smoke the
-    // center, so the Mist Eaters artillery footprint is WId-specific here.
-    if weapon_id == WId::RangedSmokeFire {
-        for &(dx, dy) in DIRS.iter() {
+    // Smoldering Shells: fire and damage the center tile, then affect nearby
+    // tiles. Base/+Damage use the four cardinal neighbors; More Smoke variants
+    // add the four diagonals. Empty non-building tiles receive smoke; occupied
+    // neighboring units only have carried fire extinguished.
+    if matches!(
+        weapon_id,
+        WId::RangedSmokeFire
+            | WId::RangedSmokeFireA
+            | WId::RangedSmokeFireB
+            | WId::RangedSmokeFireAB
+    ) {
+        const MORE_SMOKE_DIRS: [(i8, i8); 8] = [
+            (0, 1),
+            (1, 0),
+            (0, -1),
+            (-1, 0),
+            (1, 1),
+            (1, -1),
+            (-1, 1),
+            (-1, -1),
+        ];
+        let smoke_dirs: &[(i8, i8)] = match weapon_id {
+            WId::RangedSmokeFireA | WId::RangedSmokeFireAB => &MORE_SMOKE_DIRS,
+            _ => &DIRS,
+        };
+        for &(dx, dy) in smoke_dirs.iter() {
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if in_bounds(nx, ny) {
                 let nx_u = nx as u8;
                 let ny_u = ny as u8;
-                if board.unit_at(nx_u, ny_u).is_none() {
-                    place_smoke(board, nx_u, ny_u);
+                if let Some(idx) = board.unit_at(nx_u, ny_u) {
+                    board.units[idx].set_fire(false);
+                    board.tile_mut(nx_u, ny_u).set_on_fire(false);
+                    continue;
                 }
+                if board.tile(nx_u, ny_u).terrain == Terrain::Building {
+                    continue;
+                }
+                place_smoke(board, nx_u, ny_u);
             }
         }
     }
@@ -4387,7 +4494,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     // impact. The pre-impact blocked check prevents replacing mountains,
     // buildings, units, wrecks, or deadly terrain cleared by the shot.
     if rockthrow_spawns_empty_center {
-        spawn_rock_thrown(board, tx, ty);
+        spawn_rock_thrown(board, tx, ty, result);
     }
 
     // Behind tile damage (Old Earth Artillery)
@@ -5170,6 +5277,7 @@ fn sim_reverse_thrusters(
     let hit_y = ay as i8 - dy;
     let mut achievement_damage = 0;
     let mut achievement_target = None;
+    let mut smoke_target = None;
     if in_bounds(hit_x, hit_y) {
         let hx = hit_x as u8;
         let hy = hit_y as u8;
@@ -5181,13 +5289,19 @@ fn sim_reverse_thrusters(
         achievement_target = Some((hx, hy));
 
         apply_direct_weapon_damage(board, hx, hy, damage, wdef, result);
+        smoke_target = Some((hx, hy));
     }
 
     // Lua hardcodes the recoil SpaceDamage at 1. Boost raises the outgoing
     // dash damage, not the self-damage.
     apply_damage(board, ax, ay, 1, result, DamageSource::SelfDamage);
     if wdef.smoke() {
-        place_smoke(board, ax, ay);
+        // Live Reverse Thrusters smokes the damaged backblast tile, not the
+        // launch tile; Nanofilter Mending must not heal recoil in this action.
+        if let Some((sx, sy)) = smoke_target {
+            place_smoke_no_healing(board, sx, sy);
+            result.events.push(format!("reverse_thrusters_smoke:({},{})", sx, sy));
+        }
     }
 
     board.units[attacker_idx].x = tx;
@@ -5920,8 +6034,17 @@ pub fn simulate_attack_with_target2(
         let storm_active = acid_storm_active(board);
         let (is_repairman, rx, ry) = {
             let unit = &mut board.units[mech_idx];
+            let before = unit.hp;
             let heal: i8 = if unit.boosted() { 2 } else { 1 };
             unit.hp = unit.hp.min(unit.max_hp - heal) + heal;
+            let healed = (unit.hp - before).max(0) as i32;
+            if healed > 0 {
+                result.mech_hp_repaired += healed;
+                result.events.push(format!(
+                    "mech_hp_repaired:repair:{}:{}",
+                    unit.uid, healed
+                ));
+            }
             unit.set_fire(false);
             unit.set_acid(false);
             unit.set_frozen(false);
@@ -7609,6 +7732,24 @@ mod tests {
     }
 
     #[test]
+    fn test_chain_whip_shell_psion_armor_lasts_until_chain_finishes() {
+        let mut board = make_test_board();
+        board.armor_psion = true;
+        let mech = add_mech(&mut board, 0, 5, 4, 3, WId::PrimeLightning);
+        let psion = add_enemy_type(&mut board, 887, 4, 4, 2, "Jelly_Armor1");
+        let hornet = add_enemy_type(&mut board, 888, 3, 4, 2, "Hornet1");
+        board.units[hornet].flags.insert(UnitFlags::ARMOR);
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightning, (4, 4), &WEAPONS);
+
+        assert_eq!(board.units[psion].hp, 0);
+        assert_eq!(board.units[hornet].hp, 1);
+        assert!(!board.armor_psion);
+        assert!(!board.units[hornet].armor());
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
     fn test_push_into_building_both_take_damage() {
         let mut board = make_test_board();
         board.tile_mut(3, 4).terrain = Terrain::Building;
@@ -8770,6 +8911,32 @@ mod tests {
         assert!(
             !board.tile(5, 3).on_fire(),
             "empty-target RockThrown spawn should not consume or ignite Forest"
+        );
+    }
+
+    #[test]
+    fn test_rock_accelerator_spawn_on_time_pod_destroys_pod() {
+        // Lightning War regression 20260620_102304_211: RockartMech fired
+        // Rock Launcher at a Time Pod tile to destroy it for speed policy.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+        board.tile_mut(6, 4).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        let rock = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|u| u.type_name_str() == "RockThrown")
+            .expect("Rock Accelerator should spawn a RockThrown on an empty Time Pod tile");
+        assert_eq!((rock.x, rock.y), (6, 4));
+        assert!(
+            !board.tile(6, 4).has_pod(),
+            "neutral RockThrown landing should destroy the Time Pod"
+        );
+        assert_eq!(result.pods_collected, 0);
+        assert!(
+            result.events.iter().any(|e| e == "pod_destroyed_by_landing:6:4"),
+            "pod destruction should be accounted for in the action result"
         );
     }
 
@@ -12296,7 +12463,7 @@ mod tests {
     // already Cataclysm chasm terrain.
 
     #[test]
-    fn test_reverse_thrusters_smokes_start_tile_self_damages_and_dashes() {
+    fn test_reverse_thrusters_smokes_backblast_tile_self_damages_and_dashes() {
         let mut board = make_test_board();
         let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
         let enemy = add_enemy(&mut board, 10, 3, 2, 3);
@@ -12306,8 +12473,8 @@ mod tests {
         assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
         assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters recoil is fixed at 1");
         assert_eq!(board.units[enemy].hp, 1, "2-tile dash should deal 2 base damage");
-        assert!(board.tile(3, 3).smoke(), "Reverse Thrusters smokes the start tile");
-        assert!(!board.tile(3, 2).smoke(), "Reverse Thrusters does not smoke the damaged tile");
+        assert!(!board.tile(3, 3).smoke(), "Reverse Thrusters does not smoke the start tile");
+        assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the damaged tile");
         assert!(
             !result.events.iter().any(|e| e.starts_with("illegal_reverse_thrusters")),
             "legal dash should not emit illegal event: {:?}",
@@ -12316,7 +12483,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reverse_thrusters_healing_smoke_consumes_recoil_and_source_smoke() {
+    fn test_reverse_thrusters_backblast_smoke_does_not_same_action_heal() {
         let mut board = make_test_board();
         board.healing_smoke = true;
         let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
@@ -12327,15 +12494,15 @@ mod tests {
         assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
         assert_eq!(
             board.units[mech].hp,
-            3,
-            "Nanofilter Mending should heal Reverse Thrusters recoil before the dash completes"
+            2,
+            "Reverse Thrusters backblast smoke should not heal recoil in the same action"
         );
         assert_eq!(board.units[enemy].hp, 1);
         assert!(
-            !board.tile(3, 3).smoke(),
-            "Nanofilter Mending consumes the source smoke immediately"
+            board.tile(3, 2).smoke(),
+            "Reverse Thrusters backblast smoke remains on the damaged tile"
         );
-        assert!(!board.tile(3, 2).smoke());
+        assert!(!board.tile(3, 3).smoke());
     }
 
     #[test]
@@ -12366,6 +12533,9 @@ mod tests {
         let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFire);
         let center = add_enemy_type(&mut board, 92, 5, 2, 2, "Scarab1");
         let adjacent = add_enemy_type(&mut board, 93, 6, 2, 2, "Scarab1");
+        board.units[adjacent].set_fire(true);
+        board.tile_mut(5, 3).terrain = Terrain::Building;
+        board.tile_mut(5, 3).building_hp = 1;
 
         let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 5, 2);
 
@@ -12376,9 +12546,73 @@ mod tests {
             "occupied adjacent tile must not receive Smoldering Shells smoke"
         );
         assert_eq!(board.units[adjacent].hp, 2);
+        assert!(
+            !board.units[adjacent].fire(),
+            "occupied adjacent units have carried fire extinguished without receiving smoke"
+        );
         assert!(board.tile(4, 2).smoke(), "empty north adjacent tile should smoke");
         assert!(board.tile(5, 1).smoke(), "empty west adjacent tile should smoke");
-        assert!(board.tile(5, 3).smoke(), "empty east adjacent tile should smoke");
+        assert!(
+            !board.tile(5, 3).smoke(),
+            "adjacent building tiles should not receive Smoldering Shells smoke"
+        );
+    }
+
+    #[test]
+    fn test_smoldering_shells_more_smoke_adds_diagonal_footprint() {
+        let mut base_board = make_test_board();
+        let base_smog = add_mech(&mut base_board, 1, 2, 2, 3, WId::RangedSmokeFire);
+        let _ = add_enemy_type(&mut base_board, 92, 4, 4, 2, "Scarab1");
+
+        let _ = simulate_weapon(&mut base_board, base_smog, WId::RangedSmokeFire, 4, 4);
+
+        assert!(
+            base_board.tile(4, 5).smoke(),
+            "base Smoldering Shells still smokes cardinal neighbors"
+        );
+        assert!(
+            !base_board.tile(3, 5).smoke(),
+            "base Smoldering Shells must not smoke diagonal neighbors"
+        );
+
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFireA);
+        let _ = add_enemy_type(&mut board, 92, 4, 4, 2, "Scarab1");
+        let occupied_diag = add_enemy_type(&mut board, 93, 3, 3, 2, "Scarab1");
+        board.units[occupied_diag].set_fire(true);
+        board.tile_mut(5, 5).terrain = Terrain::Building;
+        board.tile_mut(5, 5).building_hp = 1;
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFireA, 4, 4);
+
+        assert!(board.tile(4, 5).smoke(), "cardinal neighbor should smoke");
+        assert!(board.tile(3, 5).smoke(), "diagonal neighbor should smoke");
+        assert!(board.tile(5, 3).smoke(), "diagonal neighbor should smoke");
+        assert!(
+            !board.tile(3, 3).smoke(),
+            "occupied diagonal tile must not receive More Smoke"
+        );
+        assert!(
+            !board.units[occupied_diag].fire(),
+            "occupied diagonal units have carried fire extinguished"
+        );
+        assert!(
+            !board.tile(5, 5).smoke(),
+            "diagonal building tile must not receive More Smoke"
+        );
+    }
+
+    #[test]
+    fn test_smoldering_shells_damage_upgrade_variants() {
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFireAB);
+        let center = add_enemy_type(&mut board, 92, 4, 4, 4, "Scarab1");
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFireAB, 4, 4);
+
+        assert_eq!(board.units[center].hp, 1, "+2 Damage upgrade should deal 3");
+        assert!(board.units[center].fire(), "center target should be set on Fire");
+        assert!(board.tile(3, 5).smoke(), "AB should keep More Smoke diagonals");
     }
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
@@ -13121,6 +13355,65 @@ mod tests {
         assert_eq!(board.units[rocket].hp, 2, "blocked wind push bumps mech");
         assert_eq!(board.tile(5, 6).building_hp, 0, "wind bump destroys building");
         assert_eq!(board.grid_power, grid_before - 1);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_mission_wind_fire_kill_corpse_does_not_block_later_gust() {
+        // Mist Eaters live run 20260616_083357_196, Mission_Wind turn 3:
+        // a burning 1 HP Scorpion at (5,5) died before attacks, then the
+        // Wind Storm pushed Firefly1 from (5,4) to (5,5). The Firefly kept
+        // its original leftward shot direction and destroyed the building at
+        // (3,5). A fire-tick corpse must not stay as a wreck that blocks the
+        // later gust.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+
+        let json = r#"{
+          "mission_id": "Mission_Wind",
+          "tiles": [
+            {"x": 3, "y": 5, "terrain": "building", "terrain_id": 1, "building_hp": 1},
+            {"x": 5, "y": 6, "terrain": "building", "terrain_id": 1, "building_hp": 2}
+          ],
+          "units": [
+            {"uid": 931, "type": "Scorpion1", "x": 5, "y": 5,
+             "hp": 1, "max_hp": 3, "team": 6, "pushable": true,
+             "fire": true, "weapons": ["ScorpionAtk1"],
+             "has_queued_attack": true, "queued_target": [5, 6],
+             "weapon_damage": 1},
+            {"uid": 955, "type": "Firefly1", "x": 5, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 6, "pushable": true,
+             "ranged": 1, "weapons": ["FireflyAtk1"],
+             "has_queued_attack": true, "queued_target": [4, 4],
+             "weapon_damage": 1}
+          ],
+          "grid_power": 5,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[5, 4, 1, 0, 0], [5, 5, 1, 0, 0]],
+          "environment_wind_dir": 2,
+          "env_type": "wind",
+          "remaining_spawns": 0,
+          "turn": 3,
+          "total_turns": 4
+        }"#;
+
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        let firefly = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 955)
+            .unwrap();
+
+        assert!(board.units.iter().any(|u| u.uid == 931 && u.hp <= 0));
+        assert_eq!((board.units[firefly].x, board.units[firefly].y), (5, 5));
+        assert_eq!(board.tile(3, 5).building_hp, 0);
+        assert_eq!(board.grid_power, 4);
         assert_eq!(result.grid_damage, 1);
     }
 

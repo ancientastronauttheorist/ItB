@@ -179,6 +179,22 @@ def test_safe_timer_uses_nested_timer_probe():
     assert conductor.safe_timer(result) == (12.5, "0:00:12")
 
 
+def test_safe_timer_uses_visible_snap_pause_timer():
+    result = {
+        "status": "OK",
+        "reason": "snapshot_captured_and_esc_paused",
+        "pause_verified": True,
+        "visible_timer": {
+            "status": "OK",
+            "source": "visible_pause_menu_timer",
+            "game_seconds": 98.0,
+            "game_timer": "0:01:38",
+        },
+    }
+
+    assert conductor.safe_timer(result) == (98.0, "0:01:38")
+
+
 def test_watchdog_marks_deployment_must_act():
     watchdog = conductor.TimerWatchdog()
 
@@ -287,7 +303,13 @@ def test_conductor_starts_from_verified_setup_without_codex_gap(monkeypatch):
         calls.append(list(args))
         if args == ["achievements", "--sync"]:
             return result(args, {"status": "OK", "unlocked_list": []})
-        if args == ["verify_setup", "--difficulty", "0"]:
+        if args == [
+            "verify_setup",
+            "--difficulty",
+            "0",
+            "--advanced-content",
+            "off",
+        ]:
             return result(args, {"status": "PASS"})
         if args == [
             "new_run",
@@ -336,7 +358,13 @@ def test_conductor_starts_from_verified_setup_without_codex_gap(monkeypatch):
     assert conductor.run_conductor(args) == 8
     assert calls[:4] == [
         ["achievements", "--sync"],
-        ["verify_setup", "--difficulty", "0"],
+        [
+            "verify_setup",
+            "--difficulty",
+            "0",
+            "--advanced-content",
+            "off",
+        ],
         [
             "new_run",
             "Blitzkrieg",
@@ -383,7 +411,13 @@ def test_conductor_start_island_handoff_verifies_pause_before_segment(monkeypatc
         calls.append(list(args))
         if args == ["achievements", "--sync"]:
             return result(args, {"status": "OK", "unlocked_list": []})
-        if args == ["verify_setup", "--difficulty", "0"]:
+        if args == [
+            "verify_setup",
+            "--difficulty",
+            "0",
+            "--advanced-content",
+            "off",
+        ]:
             return result(args, {"status": "PASS"})
         if args == [
             "new_run",
@@ -438,7 +472,13 @@ def test_conductor_start_island_handoff_verifies_pause_before_segment(monkeypatc
     assert conductor.run_conductor(args) == 8
     assert calls[:7] == [
         ["achievements", "--sync"],
-        ["verify_setup", "--difficulty", "0"],
+        [
+            "verify_setup",
+            "--difficulty",
+            "0",
+            "--advanced-content",
+            "off",
+        ],
         [
             "new_run",
             "Blitzkrieg",

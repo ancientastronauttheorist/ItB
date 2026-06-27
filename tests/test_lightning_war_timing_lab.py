@@ -899,7 +899,7 @@ def test_deploy_recommended_after_visible_deployment_runs_helper_and_pauses(monk
 
     assert result["status"] == "PASS"
     assert deploy_calls == [
-        {"profile": "Alpha", "ui_fallback": True, "verify_after": False}
+        {"profile": "Alpha", "ui_fallback": False, "verify_after": False}
     ]
     assert result["deploy_result_compact"]["deployment_count"] == 3
     assert result["before_in_game_timer"]["label"] == "deploy_recommended_trigger_frame"

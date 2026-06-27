@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -10,11 +11,17 @@ from typing import Any, Callable
 from src.loop.lightning_telemetry import (
     ScreenshotRecorder,
     TelemetryRecorder,
-    generate_frame_delta_report,
 )
 
 
 LIGHTNING_WAR = "Lightning War"
+LIGHTNING_WAR_STEAM_KEY = "Ach_Detritus_A_2"
+LIGHTNING_WAR_PROFILE_KEY = "Detritus_A_2"
+LIGHTNING_WAR_UNLOCK_TOKENS = {
+    LIGHTNING_WAR.lower(),
+    LIGHTNING_WAR_STEAM_KEY.lower(),
+    LIGHTNING_WAR_PROFILE_KEY.lower(),
+}
 HARD_STOP_TOKENS = (
     "RESEARCH_REQUIRED",
     "INVESTIGATE",
@@ -61,11 +68,15 @@ class AutonomousLightningConfig:
     max_wall_seconds: float | None = None
     segment_timeout: float = 420.0
     abandon_seconds: float = 29 * 60
+    mission_segment_gate_seconds: float = 3 * 60
     first_island_gate_seconds: float = 15 * 60
     second_island_start_gate_seconds: float = 16.75 * 60
     screenshot_cadence: float = 2.0
     screenshots: bool = True
     route_auto_start: bool = False
+    route_start_mode: str = "preview-board"
+    allow_objective_loss: bool = False
+    lightning_speed_loss_policy: bool = False
     start_from_verified_setup: bool = False
     achievement_sync: bool = True
     dry_run: bool = False
@@ -75,7 +86,11 @@ class AutonomousLightningConfig:
             raise ValueError(f"unsupported Lightning War mode: {self.mode}")
         self.target_islands = max(1, int(self.target_islands))
         if self.time_limit is None:
-            self.time_limit = 2.0 if self.mode == "speed" else 10.0
+            self.time_limit = 2.0 if self.speed_mode else 10.0
+
+    @property
+    def speed_mode(self) -> bool:
+        return self.mode == "speed" or self.lightning_speed_loss_policy
 
 
 class AutonomousLightningConductor:
@@ -121,7 +136,17 @@ class AutonomousLightningConductor:
                 self.screenshots.stop()
                 self.screenshots.capture_once(clock_state="final", note=reason)
             if _safe_to_finalize(result):
-                report = generate_frame_delta_report(self.telemetry.run_dir)
+                report = {
+                    "status": "SKIPPED",
+                    "reason": "autonomous_frame_delta_report_deferred",
+                    "final_status": status,
+                    "final_reason": reason,
+                    "run_dir": str(self.telemetry.run_dir),
+                    "next_step": (
+                        "Run scripts/lightning_frame_delta_report.py after the "
+                        "live autonomous attempt is no longer active."
+                    ),
+                }
             else:
                 report = {
                     "status": "SKIPPED",
@@ -144,9 +169,11 @@ class AutonomousLightningConductor:
         assert self.telemetry is not None
         route_routing = (
             "lightning_war"
-            if cfg.mode == "speed"
+            if cfg.speed_mode
             else "lightning_baseline"
         )
+        pause_before_solve = True
+        pause_between_actions = False
 
         if cfg.achievement.lower() != LIGHTNING_WAR.lower():
             return self._finish(
@@ -186,7 +213,18 @@ class AutonomousLightningConductor:
 
         initial_visible_ui = _visible_ui_name(guard)
         if cfg.start_from_verified_setup or initial_visible_ui == "new_game_setup":
+            setup = None
             if initial_visible_ui == "new_game_setup":
+                setup = self._prepare_setup(commands)
+                if setup.get("status") == "PASS" or cfg.dry_run:
+                    self.telemetry.event(
+                        "setup_start_skipped",
+                        reason="setup_modal_already_verified",
+                        setup=_compact(setup),
+                    )
+                else:
+                    setup = None
+            if initial_visible_ui == "new_game_setup" and setup is None:
                 setup_start = self._span(
                     "setup_start",
                     commands.cmd_lightning_ui,
@@ -198,7 +236,8 @@ class AutonomousLightningConductor:
                         "setup_start_failed",
                         setup_start=_compact(setup_start),
                     )
-            setup = self._prepare_setup(commands)
+            if setup is None:
+                setup = self._prepare_setup(commands)
             if setup.get("status") != "PASS":
                 return self._finish(
                     "BLOCKED",
@@ -220,7 +259,8 @@ class AutonomousLightningConductor:
                 route_auto_start=cfg.route_auto_start,
                 route_routing=route_routing,
                 run_segment=False,
-                allow_objective_loss=True,
+                allow_objective_loss=cfg.allow_objective_loss,
+                lightning_speed_loss_policy=cfg.lightning_speed_loss_policy,
                 dry_run=cfg.dry_run,
             )
             if str(start.get("status")) not in {"OK", "DRY_RUN"}:
@@ -291,12 +331,15 @@ class AutonomousLightningConductor:
                     pause_on_stop=True,
                     quiet=True,
                     resume_if_paused=True,
+                    pause_before_solve=pause_before_solve,
+                    pause_between_actions=pause_between_actions,
                     auto_clear_panels=True,
-                    allow_objective_loss=True,
-                    lightning_speed_loss_policy=True,
+                    allow_objective_loss=cfg.allow_objective_loss,
+                    lightning_speed_loss_policy=cfg.lightning_speed_loss_policy,
                     route_routing=route_routing,
+                    route_start_mode=cfg.route_start_mode,
                     route_auto_start=cfg.route_auto_start,
-                    route_speed_vetoes=(cfg.mode == "speed"),
+                    route_speed_vetoes=cfg.speed_mode,
                 )
                 timer = _timer_seconds(segment)
                 if timer is not None:
@@ -309,7 +352,7 @@ class AutonomousLightningConductor:
                         segment_index=segment_index,
                     )
                 session = _load_current_session(commands)
-                pace_gate = self._pace_gate(session, best_timer)
+                pace_gate = self._pace_gate(session, best_timer, context=segment)
                 if pace_gate is not None:
                     self.telemetry.event(
                         "pace_gate",
@@ -403,12 +446,53 @@ class AutonomousLightningConductor:
             telemetry_dir=str(self.telemetry.telemetry_dir),
         )
 
-    def _pace_gate(self, session: Any, game_seconds: float | None) -> dict[str, Any] | None:
+    def _pace_gate(
+        self,
+        session: Any,
+        game_seconds: float | None,
+        *,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         cfg = self.config
         if game_seconds is None:
             return None
         completed = list(getattr(session, "islands_completed", []) or [])
-        if not completed and float(game_seconds) >= float(cfg.first_island_gate_seconds):
+        current_island = str(getattr(session, "current_island", "") or "").strip()
+        current_mission = str(getattr(session, "current_mission", "") or "").strip()
+        route_context = _route_phase_context(context)
+        try:
+            mission_index = int(getattr(session, "mission_index", 0) or 0)
+        except (TypeError, ValueError):
+            mission_index = -1
+        if (
+            not completed
+            and current_island
+            and (not current_mission or route_context is not None)
+            and mission_index == 0
+            and float(game_seconds) >= float(cfg.mission_segment_gate_seconds)
+        ):
+            return {
+                "reason": "first_mission_segment_pace_gate",
+                "game_seconds": round(float(game_seconds), 3),
+                "game_timer": _lightning_format_seconds(game_seconds),
+                "gate_seconds": float(cfg.mission_segment_gate_seconds),
+                "gate_timer": _lightning_format_seconds(cfg.mission_segment_gate_seconds),
+                "islands_completed": completed,
+                "current_island": current_island,
+                "current_mission": current_mission,
+                "mission_index": mission_index,
+                "route_context": route_context,
+            }
+        deployment_context = (
+            isinstance(context, dict)
+            and context.get("status") == "LIGHTNING_SEGMENT_STOPPED"
+            and str(context.get("reason") or "") == "deployment_confirmed_paused"
+        )
+        if (
+            not deployment_context
+            and not completed
+            and float(game_seconds) >= float(cfg.first_island_gate_seconds)
+        ):
             return {
                 "reason": "first_island_pace_gate",
                 "game_seconds": round(float(game_seconds), 3),
@@ -434,6 +518,25 @@ class AutonomousLightningConductor:
 
     def _prepare_setup(self, commands: Any) -> dict[str, Any]:
         cfg = self.config
+        def _focus_retry_warranted(result: dict[str, Any]) -> bool:
+            if not isinstance(result, dict):
+                return False
+            if result.get("status") == "PASS":
+                return False
+            if not result.get("setup_screen_detected"):
+                return False
+            if result.get("click_plan"):
+                return False
+            if result.get("actual_difficulty") != cfg.difficulty:
+                return False
+            advanced = result.get("advanced")
+            if not isinstance(advanced, list) or not advanced:
+                return False
+            desired_on = str(cfg.advanced_content or "").lower() not in {"off", "false", "0", "no"}
+            if any(bool(item.get("enabled")) != desired_on for item in advanced if isinstance(item, dict)):
+                return False
+            return result.get("window_focus_verified") is False
+
         setup = self._span(
             "verify_setup",
             commands.cmd_verify_setup_screen,
@@ -442,6 +545,16 @@ class AutonomousLightningConductor:
         )
         if setup.get("status") == "PASS" or cfg.dry_run:
             return setup
+        if _focus_retry_warranted(setup):
+            time.sleep(0.6)
+            setup = self._span(
+                "verify_setup_focus_retry",
+                commands.cmd_verify_setup_screen,
+                expected_difficulty=cfg.difficulty,
+                advanced_content=cfg.advanced_content,
+            )
+            if setup.get("status") == "PASS":
+                return setup
         clicks = setup.get("click_plan") or []
         if not clicks:
             return setup
@@ -466,12 +579,23 @@ class AutonomousLightningConductor:
                     "click": click,
                     "click_result": click_result,
                 }
-        return self._span(
+        setup = self._span(
             "verify_setup_after_clicks",
             commands.cmd_verify_setup_screen,
             expected_difficulty=cfg.difficulty,
             advanced_content=cfg.advanced_content,
         )
+        if setup.get("status") == "PASS" or cfg.dry_run:
+            return setup
+        if _focus_retry_warranted(setup):
+            time.sleep(0.6)
+            return self._span(
+                "verify_setup_after_clicks_focus_retry",
+                commands.cmd_verify_setup_screen,
+                expected_difficulty=cfg.difficulty,
+                advanced_content=cfg.advanced_content,
+            )
+        return setup
 
     def _span(
         self,
@@ -523,11 +647,13 @@ class AutonomousLightningConductor:
             "mode": self.config.mode,
             "route_routing": (
                 "lightning_war"
-                if self.config.mode == "speed"
+                if self.config.speed_mode
                 else "lightning_baseline"
             ),
+            "route_start_mode": self.config.route_start_mode,
             "target_islands": self.config.target_islands,
             "time_limit": self.config.time_limit,
+            "mission_segment_gate_seconds": self.config.mission_segment_gate_seconds,
             "first_island_gate_seconds": self.config.first_island_gate_seconds,
             "second_island_start_gate_seconds": (
                 self.config.second_island_start_gate_seconds
@@ -611,45 +737,168 @@ def _compact(value: Any) -> Any:
 
 
 def _timer_seconds(result: dict[str, Any] | None) -> float | None:
-    candidates = _timer_candidates(result)
+    candidates = _timer_candidates(result, visible_only=True)
+    if not candidates:
+        candidates = _timer_candidates(result)
     if not candidates:
         return None
     return max(candidates, key=lambda item: item[0])[0]
 
 
 def _timer_label(result: dict[str, Any] | None) -> str | None:
-    candidates = _timer_candidates(result)
+    candidates = _timer_candidates(result, visible_only=True)
+    if not candidates:
+        candidates = _timer_candidates(result)
     if not candidates:
         return None
     return max(candidates, key=lambda item: item[0])[1]
 
 
-def _timer_candidates(result: dict[str, Any] | None) -> list[tuple[float, str | None]]:
+def _parse_visible_timer_ocr_seconds(text: str | None) -> int | None:
+    raw = str(text or "").strip()
+    spaced_colon = re.search(
+        r"(?<![0-9oil])([0-9oil])\s+([0-9oil]{1,2}:[0-9oil]{1,2}:[0-9oil]{1,2})(?![0-9oil])",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    if spaced_colon:
+        parsed = _parse_visible_timer_ocr_seconds(spaced_colon.group(2))
+        if parsed is not None:
+            return parsed
+    if not re.search(r"\d\s+\d", raw):
+        colon = re.search(
+            r"(?<![0-9])([0-9]{1,2}:[0-9]{1,2}(?::[0-9]{1,2})?)(?![0-9])",
+            raw,
+        )
+        if colon:
+            parts = [int(part) for part in colon.group(1).split(":")]
+            if len(parts) == 2 and parts[1] < 60:
+                return parts[0] * 60 + parts[1]
+            if len(parts) == 3 and parts[1] < 60 and parts[2] < 60:
+                return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    compact = raw.lower().replace(" ", "")
+    if not compact:
+        return None
+
+    def digits(value: str) -> str:
+        return value.translate(str.maketrans({"o": "0", "i": "1", "l": "1"}))
+
+    match = re.search(r"([0-9oil]+)h([0-9oil]+)m([0-9oil]+)(?:s|5)?", compact)
+    if match:
+        hours = int(digits(match.group(1)))
+        minutes = int(digits(match.group(2)))
+        second_text = digits(match.group(3))
+        if len(second_text) > 2 and int(second_text) > 59:
+            second_text = second_text[:-1]
+        if len(second_text) > 2:
+            second_text = second_text[:2]
+        seconds = int(second_text or "0")
+        if minutes < 60 and seconds < 60:
+            return hours * 3600 + minutes * 60 + seconds
+    colon_match = re.search(
+        r"(?<![0-9oil])([0-9oil]{1,2}:[0-9oil]{1,2}(?::[0-9oil]{1,2})?)(?![0-9oil])",
+        compact,
+    )
+    if colon_match:
+        return _parse_visible_timer_ocr_seconds(digits(colon_match.group(1)))
+    dotted_match = re.search(
+        r"(?<![0-9oil])([0-9oil]{1,2}\.[0-9oil]{1,2}(?:\.[0-9oil]{1,2})?)(?![0-9oil])",
+        compact,
+    )
+    if dotted_match:
+        return _parse_visible_timer_ocr_seconds(
+            digits(dotted_match.group(1)).replace(".", ":"),
+        )
+    return None
+
+
+def _visible_timer_ocr_candidates(value: dict[str, Any]) -> list[tuple[float, str]]:
+    texts: list[str] = []
+    for text in value.get("ocr_texts") or []:
+        if isinstance(text, str):
+            texts.append(text)
+    ocr = value.get("ocr")
+    if isinstance(ocr, dict):
+        for text in ocr.get("texts") or []:
+            if isinstance(text, str):
+                texts.append(text)
+        for observation in ocr.get("observations") or []:
+            if isinstance(observation, dict) and isinstance(observation.get("text"), str):
+                texts.append(observation["text"])
+    visible_text = value.get("visible_text")
+    if isinstance(visible_text, str):
+        texts.extend(line.strip() for line in visible_text.splitlines() if line.strip())
+    if not texts:
+        return []
+    joined = "\n".join(texts)
+    has_timeline_label = (
+        "timeline playtime" in joined.lower()
+        or str(value.get("pause_ocr_match") or "").lower() == "timeline playtime"
+    )
+    if not has_timeline_label:
+        return []
+    candidates: list[tuple[float, str]] = []
+    for text in texts:
+        seconds = _parse_visible_timer_ocr_seconds(text)
+        if seconds is None:
+            continue
+        candidates.append((float(seconds), _lightning_format_seconds(seconds)))
+    return candidates
+
+
+def _timer_candidates(
+    result: dict[str, Any] | None,
+    *,
+    visible_only: bool = False,
+) -> list[tuple[float, str | None]]:
     if not isinstance(result, dict):
         return []
-    candidates: list[tuple[float, str | None]] = []
-    for container in (
-        result.get("game_budget"),
-        result.get("effective_timer"),
-        result.get("budget"),
-        result.get("visible_timer_budget"),
-    ):
-        if isinstance(container, dict) and container.get("game_seconds") is not None:
-            try:
-                seconds = float(container["game_seconds"])
-            except (TypeError, ValueError):
-                continue
-            label = (
-                str(container["game_timer"])
-                if container.get("game_timer") is not None
-                else None
-            )
-            candidates.append((seconds, label))
-    for key in ("last_attempt", "guard", "pause_guard", "resume_guard"):
-        nested = result.get(key)
-        if isinstance(nested, dict):
-            candidates.extend(_timer_candidates(nested))
-    return candidates
+    container_keys = (
+        ("game_budget", False),
+        ("effective_timer", False),
+        ("budget", False),
+        ("visible_timer", True),
+        ("visible_timer_budget", True),
+    )
+    visited: set[int] = set()
+
+    def walk(value: Any) -> list[tuple[float, str | None]]:
+        if isinstance(value, dict):
+            value_id = id(value)
+            if value_id in visited:
+                return []
+            visited.add(value_id)
+            found: list[tuple[float, str | None]] = []
+            for key, is_visible in container_keys:
+                if visible_only and not is_visible:
+                    continue
+                container = value.get(key)
+                if (
+                    isinstance(container, dict)
+                    and container.get("game_seconds") is not None
+                ):
+                    try:
+                        seconds = float(container["game_seconds"])
+                    except (TypeError, ValueError):
+                        continue
+                    label = (
+                        str(container["game_timer"])
+                        if container.get("game_timer") is not None
+                        else None
+                    )
+                    found.append((seconds, label))
+            found.extend(_visible_timer_ocr_candidates(value))
+            for nested in value.values():
+                found.extend(walk(nested))
+            return found
+        if isinstance(value, list):
+            found: list[tuple[float, str | None]] = []
+            for nested in value:
+                found.extend(walk(nested))
+            return found
+        return []
+
+    return walk(result)
 
 
 def _load_current_session(commands: Any) -> Any:
@@ -688,7 +937,15 @@ def _lightning_format_seconds(total_seconds: int | float | None) -> str:
 def _achievement_unlocked(result: dict[str, Any] | None) -> bool:
     if not isinstance(result, dict):
         return False
-    return LIGHTNING_WAR in (result.get("unlocked_list") or [])
+    proof = result.get("lightning_war_proof") or result.get("proof")
+    if isinstance(proof, dict) and proof.get("proven") is True:
+        return True
+    unlocked = {
+        str(value).strip().lower()
+        for value in (result.get("unlocked_list") or [])
+        if str(value).strip()
+    }
+    return bool(unlocked & LIGHTNING_WAR_UNLOCK_TOKENS)
 
 
 def _hard_stop(result: dict[str, Any] | None) -> bool:
@@ -787,6 +1044,25 @@ def _route_ready(result: dict[str, Any] | None) -> bool:
         "route_auto_start_not_allowed",
         "visible_island_map_without_bridge",
     } or bool(result.get("primary_next_command"))
+
+
+def _route_phase_context(result: dict[str, Any] | None) -> str | None:
+    if not isinstance(result, dict):
+        return None
+    if _route_ready(result):
+        return str(result.get("reason") or "primary_next_command")
+    steps = result.get("steps")
+    if isinstance(steps, list):
+        for step in steps:
+            nested = _route_phase_context(step)
+            if nested is not None:
+                return f"step:{nested}"
+    last_attempt = result.get("last_attempt")
+    if isinstance(last_attempt, dict):
+        nested = _route_phase_context(last_attempt)
+        if nested is not None:
+            return f"last_attempt:{nested}"
+    return None
 
 
 def _safe_to_think(result: dict[str, Any] | None) -> bool:
@@ -958,10 +1234,17 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                     "steps": steps,
                 }
             visible = ui("classify")
-            if _visible_ui_name(visible) == "new_game_setup":
+            visible_name = _visible_ui_name(visible)
+            if visible_name == "new_game_setup":
                 return {
                     "status": "OK",
                     "reason": "abandoned_to_setup",
+                    "steps": steps,
+                }
+            if visible_name == "pause_menu":
+                return {
+                    "status": "BLOCKED",
+                    "reason": "abandon_returned_to_pause_menu",
                     "steps": steps,
                 }
             recovery_control = _restart_recovery_control(visible)
@@ -974,19 +1257,33 @@ def _restart_dead_timeline(commands: Any, previous_result: dict[str, Any]) -> di
                         "steps": steps,
                     }
                 visible = ui("classify")
-                if _visible_ui_name(visible) == "new_game_setup":
+                visible_name = _visible_ui_name(visible)
+                if visible_name == "new_game_setup":
                     return {
                         "status": "OK",
                         "reason": "abandoned_to_setup_after_panel",
                         "steps": steps,
                     }
+                if visible_name == "pause_menu":
+                    return {
+                        "status": "BLOCKED",
+                        "reason": "abandon_returned_to_pause_menu",
+                        "steps": steps,
+                    }
 
     for _ in range(4):
         visible = ui("classify")
-        if _visible_ui_name(visible) == "new_game_setup":
+        visible_name = _visible_ui_name(visible)
+        if visible_name == "new_game_setup":
             return {
                 "status": "OK",
                 "reason": "abandoned_to_setup",
+                "steps": steps,
+            }
+        if visible_name == "pause_menu":
+            return {
+                "status": "BLOCKED",
+                "reason": "abandon_returned_to_pause_menu",
                 "steps": steps,
             }
         recovery_control = _restart_recovery_control(visible)
@@ -1021,6 +1318,8 @@ def _restart_recovery_panel_safe(result: dict[str, Any]) -> bool:
 
 
 def _restart_recovery_control(result: dict[str, Any]) -> str | None:
+    if _visible_ui_name(result) == "options_menu":
+        return "options_close"
     if _visible_ui_name(result) == "kia_panel":
         return "abandon_pilot_slot"
     recommended = _recommended_control_name(result)

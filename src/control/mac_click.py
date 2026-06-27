@@ -27,9 +27,11 @@ class KnownWindowControl:
     description: str
     settle_seconds: float = 0.15
     hold_seconds: float = 0.3
+    release_window_x: int | None = None
+    release_window_y: int | None = None
 
     def to_dict(self) -> dict:
-        return {
+        out = {
             "name": self.name,
             "window_x": self.window_x,
             "window_y": self.window_y,
@@ -37,22 +39,28 @@ class KnownWindowControl:
             "settle_seconds": self.settle_seconds,
             "hold_seconds": self.hold_seconds,
         }
+        if self.release_window_x is not None and self.release_window_y is not None:
+            out["release_window_x"] = self.release_window_x
+            out["release_window_y"] = self.release_window_y
+        return out
 
 
 KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     "pause": KnownWindowControl(
         name="pause",
         window_x=38,
-        window_y=28,
+        window_y=58,
         description="Pause / open game menu",
-        settle_seconds=0.2,
+        settle_seconds=0.06,
+        hold_seconds=0.08,
     ),
     "menu_continue": KnownWindowControl(
         name="menu_continue",
         window_x=491,
         window_y=251,
         description="Pause menu Continue",
-        settle_seconds=0.2,
+        settle_seconds=0.08,
+        hold_seconds=0.08,
     ),
     "pause_main_menu": KnownWindowControl(
         name="pause_main_menu",
@@ -75,12 +83,28 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Title screen New Game",
         settle_seconds=1.0,
     ),
+    "options_close": KnownWindowControl(
+        name="options_close",
+        window_x=890,
+        window_y=678,
+        description="Options screen Close",
+        settle_seconds=0.4,
+    ),
+    "achievements_close": KnownWindowControl(
+        name="achievements_close",
+        window_x=1058,
+        window_y=644,
+        description="Achievements overlay Close",
+        settle_seconds=0.35,
+        hold_seconds=0.08,
+    ),
     "setup_start": KnownWindowControl(
         name="setup_start",
         window_x=1005,
         window_y=96,
         description="New-run setup Start",
-        settle_seconds=1.0,
+        settle_seconds=0.25,
+        hold_seconds=0.08,
     ),
     "setup_back": KnownWindowControl(
         name="setup_back",
@@ -140,49 +164,87 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         window_x=1072,
         window_y=641,
         description="Difficulty setup modal Start",
-        settle_seconds=1.0,
+        settle_seconds=0.25,
+        hold_seconds=0.05,
+    ),
+    "map_menu": KnownWindowControl(
+        name="map_menu",
+        window_x=38,
+        window_y=56,
+        description="Island map top-left menu gear",
+        settle_seconds=0.20,
+        hold_seconds=0.08,
     ),
     "reward_continue": KnownWindowControl(
         name="reward_continue",
         window_x=1005,
-        window_y=654,
+        window_y=653,
         description="Reward / Region Secured Continue",
         settle_seconds=0.35,
+    ),
+    "pod_contents_continue": KnownWindowControl(
+        name="pod_contents_continue",
+        window_x=1005,
+        window_y=655,
+        description="Pod Contents Continue",
+        settle_seconds=0.20,
+        hold_seconds=0.08,
     ),
     "bottom_continue": KnownWindowControl(
         name="bottom_continue",
         window_x=1005,
-        window_y=680,
+        window_y=690,
         description="Bottom-right Continue panel",
-        settle_seconds=0.65,
+        settle_seconds=0.15,
+        hold_seconds=0.08,
     ),
     "pod_open_door": KnownWindowControl(
         name="pod_open_door",
-        window_x=965,
-        window_y=485,
+        window_x=947,
+        window_y=491,
         description="Pod Recovered Open Door",
-        settle_seconds=1.2,
+        settle_seconds=0.45,
+        hold_seconds=0.08,
     ),
     "dialogue_textbox": KnownWindowControl(
         name="dialogue_textbox",
-        window_x=250,
-        window_y=205,
+        window_x=1005,
+        window_y=680,
         description="Advisor dialogue text box dismiss",
-        settle_seconds=0.45,
+        settle_seconds=0.12,
+        hold_seconds=0.08,
+    ),
+    "mission_preview_dialogue": KnownWindowControl(
+        name="mission_preview_dialogue",
+        window_x=565,
+        window_y=170,
+        description="Mission preview top advisor dialogue dismiss",
+        settle_seconds=0.10,
+        hold_seconds=0.06,
     ),
     "mission_preview_board": KnownWindowControl(
         name="mission_preview_board",
-        window_x=848,
-        window_y=448,
-        description="Large mission preview board / Start Mission text",
-        settle_seconds=0.8,
+        window_x=800,
+        window_y=470,
+        description="Mission preview 8x8 grid / Start Mission hover target",
+        settle_seconds=0.18,
+        hold_seconds=0.08,
+    ),
+    "top_advisor_dialogue": KnownWindowControl(
+        name="top_advisor_dialogue",
+        window_x=700,
+        window_y=114,
+        description="Top advisor dialogue dismiss",
+        settle_seconds=0.10,
+        hold_seconds=0.08,
     ),
     "deploy_confirm": KnownWindowControl(
         name="deploy_confirm",
         window_x=106,
         window_y=164,
         description="Deployment Confirm",
-        settle_seconds=0.5,
+        settle_seconds=0.12,
+        hold_seconds=0.08,
     ),
     "deploy_slot_0": KnownWindowControl(
         name="deploy_slot_0",
@@ -207,6 +269,22 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         description="Deployment mech slot 2",
         settle_seconds=0.08,
         hold_seconds=0.12,
+    ),
+    "deploy_remaining_0": KnownWindowControl(
+        name="deploy_remaining_0",
+        window_x=168,
+        window_y=154,
+        description="Deployment remaining-unit slot 0",
+        settle_seconds=0.08,
+        hold_seconds=0.10,
+    ),
+    "deploy_remaining_1": KnownWindowControl(
+        name="deploy_remaining_1",
+        window_x=202,
+        window_y=154,
+        description="Deployment remaining-unit slot 1",
+        settle_seconds=0.08,
+        hold_seconds=0.10,
     ),
     "modal_understood": KnownWindowControl(
         name="modal_understood",
@@ -302,7 +380,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     "title_new_game_confirm_yes": KnownWindowControl(
         name="title_new_game_confirm_yes",
         window_x=568,
-        window_y=444,
+        window_y=445,
         description="Title New Game overwrite confirmation Yes",
         settle_seconds=1.0,
     ),
@@ -316,7 +394,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     "abandon_confirm_yes": KnownWindowControl(
         name="abandon_confirm_yes",
         window_x=568,
-        window_y=444,
+        window_y=445,
         description="Abandon Timeline confirmation Yes",
         settle_seconds=0.8,
     ),
@@ -371,17 +449,19 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "island_archive": KnownWindowControl(
         name="island_archive",
-        window_x=215,
-        window_y=288,
+        window_x=300,
+        window_y=215,
         description="Island select Archive",
-        settle_seconds=0.6,
+        settle_seconds=0.18,
+        hold_seconds=0.08,
     ),
     "island_rst": KnownWindowControl(
         name="island_rst",
         window_x=345,
         window_y=508,
         description="Island select R.S.T.",
-        settle_seconds=0.6,
+        settle_seconds=0.18,
+        hold_seconds=0.08,
     ),
     "island_pinnacle": KnownWindowControl(
         name="island_pinnacle",
@@ -402,7 +482,8 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
         window_x=126,
         window_y=120,
         description="Click End Turn",
-        settle_seconds=0.15,
+        settle_seconds=0.08,
+        hold_seconds=0.08,
     ),
 }
 
@@ -431,6 +512,9 @@ _CONTROL_ALIASES = {
     "zenith_guard": "squad_zenith_guard",
     "modal_start": "setup_modal_start",
     "difficulty_start": "setup_modal_start",
+    "gear": "map_menu",
+    "menu_gear": "map_menu",
+    "map_gear": "map_menu",
     "reward": "reward_continue",
     "region_secured_continue": "reward_continue",
     "ceo_continue": "reward_continue",
@@ -439,9 +523,18 @@ _CONTROL_ALIASES = {
     "pod_open": "pod_open_door",
     "open_pod": "pod_open_door",
     "open_door": "pod_open_door",
+    "pod_continue": "pod_contents_continue",
+    "pod_contents": "pod_contents_continue",
+    "pod_contents_continue": "pod_contents_continue",
     "dialogue": "dialogue_textbox",
     "dialogue_continue": "dialogue_textbox",
     "textbox": "dialogue_textbox",
+    "preview_dialogue": "mission_preview_dialogue",
+    "mission_dialogue": "mission_preview_dialogue",
+    "mission_preview_textbox": "mission_preview_dialogue",
+    "top_dialogue": "top_advisor_dialogue",
+    "top_advisor": "top_advisor_dialogue",
+    "advisor_dialogue": "top_advisor_dialogue",
     "start_mission": "mission_preview_board",
     "mission_start": "mission_preview_board",
     "preview_board": "mission_preview_board",
@@ -476,6 +569,12 @@ _CONTROL_ALIASES = {
     "title_new_game_yes": "title_new_game_confirm_yes",
     "title_confirm_yes": "title_new_game_confirm_yes",
     "new_game_confirm_yes": "title_new_game_confirm_yes",
+    "close_options": "options_close",
+    "options_close": "options_close",
+    "options": "options_close",
+    "close_achievements": "achievements_close",
+    "achievements_close": "achievements_close",
+    "achievements": "achievements_close",
     "abandon": "abandon_timeline",
     "abandon_yes": "abandon_confirm_yes",
     "confirm_abandon": "abandon_confirm_yes",
@@ -551,6 +650,8 @@ def _platform_control(control: KnownWindowControl) -> KnownWindowControl:
         description=f"{control.description} (Windows calibrated)",
         settle_seconds=control.settle_seconds,
         hold_seconds=control.hold_seconds,
+        release_window_x=control.release_window_x,
+        release_window_y=control.release_window_y,
     )
 
 
@@ -634,6 +735,11 @@ def find_title_menu_button_target(
         # A disabled Continue row can be too dim to classify as a menu button.
         # In that state the four detected rows are New Game, Options, Credits,
         # and Quit, so the New Game target is the first detected row.
+        effective_row_index = 0
+    elif row_index == 1 and len(candidates) == 2:
+        # On high-DPI title screenshots the search crop can catch New Game and
+        # the clipped top of Options while missing/merging Continue. Treat the
+        # first detected row as New Game instead of clicking Options.
         effective_row_index = 0
     if len(candidates) <= effective_row_index:
         return {
@@ -767,8 +873,211 @@ def click_title_new_game_dynamic(
     return result
 
 
+def _image_size_from_visible_ui(visible_ui: dict | None) -> tuple[int, int] | None:
+    if not isinstance(visible_ui, dict):
+        return None
+    for key in ("image_size", "screenshot_size"):
+        value = visible_ui.get(key)
+        if (
+            isinstance(value, (list, tuple))
+            and len(value) == 2
+        ):
+            try:
+                return int(value[0]), int(value[1])
+            except (TypeError, ValueError):
+                pass
+    ocr = visible_ui.get("ocr")
+    if isinstance(ocr, dict):
+        for key in ("image_size", "screenshot_size"):
+            value = ocr.get(key)
+            if (
+                isinstance(value, (list, tuple))
+                and len(value) == 2
+            ):
+                try:
+                    return int(value[0]), int(value[1])
+                except (TypeError, ValueError):
+                    pass
+    screenshot_path = visible_ui.get("screenshot_path")
+    if screenshot_path:
+        try:
+            from PIL import Image
 
-def _pyautogui_click(x: int, y: int, *, hold_seconds: float = 0.3) -> dict:
+            with Image.open(str(screenshot_path)) as image:
+                return int(image.size[0]), int(image.size[1])
+        except Exception:
+            return None
+    return None
+
+
+def _privacy_prompt_allow_target_from_visible_ui(
+    visible_ui: dict | None,
+) -> dict:
+    if not isinstance(visible_ui, dict):
+        return {"status": "NOT_FOUND", "reason": "missing_visible_ui"}
+    ocr = visible_ui.get("ocr")
+    observations = []
+    if isinstance(ocr, dict) and isinstance(ocr.get("observations"), list):
+        observations = ocr["observations"]
+    elif isinstance(visible_ui.get("observations"), list):
+        observations = visible_ui["observations"]
+
+    for observation in observations:
+        if not isinstance(observation, dict):
+            continue
+        text = str(observation.get("text") or "").strip().lower()
+        if text != "allow":
+            continue
+        center = observation.get("center_image")
+        if (
+            isinstance(center, (list, tuple))
+            and len(center) == 2
+        ):
+            try:
+                image_x = float(center[0])
+                image_y = float(center[1])
+            except (TypeError, ValueError):
+                continue
+            image_size = _image_size_from_visible_ui(visible_ui)
+            if image_size is None:
+                return {
+                    "status": "NOT_FOUND",
+                    "reason": "missing_image_size",
+                    "text": observation.get("text"),
+                    "center_image": [image_x, image_y],
+                }
+            return {
+                "status": "OK",
+                "image_x": image_x,
+                "image_y": image_y,
+                "image_size": [image_size[0], image_size[1]],
+                "source": "ocr_center_image",
+                "text": observation.get("text"),
+            }
+        bbox = observation.get("bbox_image")
+        if (
+            isinstance(bbox, (list, tuple))
+            and len(bbox) == 4
+        ):
+            try:
+                image_x = (float(bbox[0]) + float(bbox[2])) / 2.0
+                image_y = (float(bbox[1]) + float(bbox[3])) / 2.0
+            except (TypeError, ValueError):
+                continue
+            image_size = _image_size_from_visible_ui(visible_ui)
+            if image_size is None:
+                return {
+                    "status": "NOT_FOUND",
+                    "reason": "missing_image_size",
+                    "text": observation.get("text"),
+                    "bbox_image": list(bbox),
+                }
+            return {
+                "status": "OK",
+                "image_x": image_x,
+                "image_y": image_y,
+                "image_size": [image_size[0], image_size[1]],
+                "source": "ocr_bbox_image",
+                "text": observation.get("text"),
+            }
+
+    prompt_score = None
+    scores = visible_ui.get("scores")
+    if isinstance(scores, dict):
+        prompt_score = scores.get("system_privacy_prompt")
+    if prompt_score is None:
+        prompt_score = visible_ui.get("external_prompt")
+    if isinstance(prompt_score, dict):
+        regions = prompt_score.get("regions")
+        buttons = regions.get("buttons") if isinstance(regions, dict) else None
+        box = buttons.get("box") if isinstance(buttons, dict) else None
+        if isinstance(box, (list, tuple)) and len(box) == 4:
+            try:
+                left, top, right, bottom = [float(value) for value in box]
+            except (TypeError, ValueError):
+                left = top = right = bottom = 0.0
+            image_size = _image_size_from_visible_ui(visible_ui)
+            if image_size is not None and right > left and bottom > top:
+                return {
+                    "status": "OK",
+                    "image_x": (left + right) / 2.0,
+                    "image_y": top + (bottom - top) * 0.28,
+                    "image_size": [image_size[0], image_size[1]],
+                    "source": "prompt_button_region_upper_button",
+                    "button_box_image": [left, top, right, bottom],
+                }
+
+    return {
+        "status": "NOT_FOUND",
+        "reason": "allow_ocr_target_missing",
+        "observation_count": len(observations),
+    }
+
+
+def click_macos_privacy_prompt_allow(
+    visible_ui: dict | None,
+    *,
+    app_name: str = "Into the Breach",
+    dry_run: bool = False,
+    settle_seconds: float = 0.5,
+    hold_seconds: float = 0.05,
+) -> dict:
+    """Click the OCR-proven Allow button on the macOS screen/audio prompt."""
+    if os.name == "nt":
+        return {"status": "SKIPPED", "reason": "not_macos"}
+    target = _privacy_prompt_allow_target_from_visible_ui(visible_ui)
+    if target.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "privacy_prompt_allow_target_missing",
+            "target": target,
+        }
+    bounds = _get_window_bounds(app_name)
+    if bounds is None:
+        return {
+            "status": "ERROR",
+            "reason": "window_bounds_unavailable",
+            "target": target,
+        }
+    image_w, image_h = target["image_size"]
+    if not image_w or not image_h:
+        return {
+            "status": "ERROR",
+            "reason": "invalid_image_size",
+            "target": target,
+            "window_bounds": bounds,
+        }
+    scale_x = bounds["width"] / float(image_w)
+    scale_y = bounds["height"] / float(image_h)
+    window_x = int(round(float(target["image_x"]) * scale_x))
+    window_y = int(round(float(target["image_y"]) * scale_y))
+    result = click_window_point(
+        window_x,
+        window_y,
+        description="macOS privacy prompt Allow",
+        app_name=app_name,
+        dry_run=dry_run,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+    result["control"] = "macos_privacy_prompt_allow"
+    result["target"] = target
+    result["coordinate_scale"] = {"x": scale_x, "y": scale_y}
+    if result.get("status") == "OK":
+        result["stack_drain_clicks"] = []
+        result["stack_drain_policy"] = "resample_before_followup_click"
+    return result
+
+
+
+def _pyautogui_click(
+    x: int,
+    y: int,
+    *,
+    hold_seconds: float = 0.3,
+    release_x: int | None = None,
+    release_y: int | None = None,
+) -> dict:
     """Click a global screen point with PyAutoGUI, if available."""
     try:
         import pyautogui
@@ -778,10 +1087,18 @@ def _pyautogui_click(x: int, y: int, *, hold_seconds: float = 0.3) -> dict:
         pyautogui.moveTo(int(x), int(y), duration=0.05)
         pyautogui.mouseDown(int(x), int(y))
         time.sleep(max(0.0, hold_seconds))
-        pyautogui.mouseUp(int(x), int(y))
+        up_x = int(x if release_x is None else release_x)
+        up_y = int(y if release_y is None else release_y)
+        if up_x != int(x) or up_y != int(y):
+            pyautogui.moveTo(up_x, up_y, duration=0.01)
+        pyautogui.mouseUp(up_x, up_y)
     except Exception as exc:
         return {"status": "ERROR", "error": f"pyautogui click failed: {exc}"}
-    return {"status": "OK", "hold_seconds": hold_seconds}
+    result = {"status": "OK", "hold_seconds": hold_seconds}
+    if release_x is not None and release_y is not None:
+        result["release_x"] = int(release_x)
+        result["release_y"] = int(release_y)
+    return result
 
 
 def _applescript_click(
@@ -799,11 +1116,16 @@ def _applescript_click(
     end tell
     '''
     try:
+        timeout = float(os.environ.get("ITB_OSASCRIPT_CLICK_TIMEOUT", "2.0"))
+    except ValueError:
+        timeout = 2.0
+    try:
         proc = subprocess.run(
             ["osascript", "-e", script],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=max(0.25, timeout),
+            start_new_session=True,
         )
     except subprocess.TimeoutExpired as exc:
         return {"status": "ERROR", "error": f"osascript timed out: {exc}"}
@@ -937,6 +1259,25 @@ def _windows_sendinput_click(
 
 def _get_window_bounds(app_name: str) -> dict | None:
     """Return the front window bounds for ``app_name`` via System Events."""
+    if os.name != "nt" and os.environ.get(
+        "ITB_FAST_CACHED_WINDOW_BOUNDS",
+        "1",
+    ) not in {"0", "false", "FALSE"}:
+        raw = os.environ.get("ITB_WINDOW_BOUNDS_FALLBACK", "").strip()
+        if raw:
+            try:
+                x, y, width, height = [
+                    int(part.strip()) for part in raw.split(",", 3)
+                ]
+                return {"x": x, "y": y, "width": width, "height": height}
+            except ValueError:
+                pass
+        if os.environ.get("ITB_DISABLE_DEFAULT_WINDOW_BOUNDS", "0") not in {
+            "1",
+            "true",
+            "TRUE",
+        }:
+            return {"x": 215, "y": 32, "width": 1280, "height": 748}
     if shutil.which("osascript") is None:
         try:
             from src.capture.detect_grid import find_game_window
@@ -964,11 +1305,16 @@ def _get_window_bounds(app_name: str) -> dict | None:
     end tell
     '''
     try:
+        timeout = float(os.environ.get("ITB_OSASCRIPT_WINDOW_BOUNDS_TIMEOUT", "1.0"))
+    except ValueError:
+        timeout = 1.0
+    try:
         proc = subprocess.run(
             ["osascript", "-e", script],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=max(0.25, timeout),
+            start_new_session=True,
         )
     except subprocess.TimeoutExpired:
         return None
@@ -1061,17 +1407,23 @@ def click_screen_point(
     settle_seconds: float = 0.15,
     hold_seconds: float = 0.3,
     pre_click_seconds: float | None = None,
+    release_x: int | None = None,
+    release_y: int | None = None,
 ) -> dict:
     """Activate the game and click a screen-coordinate point via AppleScript."""
     x = int(x)
     y = int(y)
     if dry_run:
-        return {
+        out = {
             "status": "DRY_RUN",
             "x": x,
             "y": y,
             "description": description,
         }
+        if release_x is not None and release_y is not None:
+            out["release_x"] = int(release_x)
+            out["release_y"] = int(release_y)
+        return out
 
     focus_result = None
     if os.name == "nt":
@@ -1087,12 +1439,24 @@ def click_screen_point(
         )
         backend = "win32_sendinput"
     else:
-        click_result = _pyautogui_click(x, y, hold_seconds=hold_seconds)
+        click_result = _pyautogui_click(
+            x,
+            y,
+            hold_seconds=hold_seconds,
+            release_x=release_x,
+            release_y=release_y,
+        )
         backend = "pyautogui"
     fallback_error = None
     if click_result.get("status") != "OK":
         fallback_error = click_result.get("error")
-        click_result = _pyautogui_click(x, y, hold_seconds=hold_seconds)
+        click_result = _pyautogui_click(
+            x,
+            y,
+            hold_seconds=hold_seconds,
+            release_x=release_x,
+            release_y=release_y,
+        )
         backend = "pyautogui"
     if click_result.get("status") != "OK" and os.name != "nt":
         fallback_error = fallback_error or click_result.get("error")
@@ -1120,6 +1484,8 @@ def click_screen_point(
         "backend": backend,
         "hold_seconds": click_result.get("hold_seconds"),
         "pre_click_seconds": click_result.get("pre_click_seconds"),
+        "release_x": click_result.get("release_x"),
+        "release_y": click_result.get("release_y"),
         "focus": focus_result,
     }
 
@@ -1167,15 +1533,25 @@ def press_key(
         )
         result["focus"] = focus_result
         return result
-    try:
-        subprocess.run(
-            ["osascript", "-e", f'tell application "{app_name}" to activate'],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except Exception:
-        pass
+    skip_activate = os.environ.get(
+        "ITB_SKIP_KEY_ACTIVATE",
+        os.environ.get("ITB_FAST_CACHED_WINDOW_BOUNDS", "0"),
+    )
+    if skip_activate not in {"1", "true", "TRUE", "yes", "YES"}:
+        try:
+            timeout = float(os.environ.get("ITB_OSASCRIPT_ACTIVATE_TIMEOUT", "0.75"))
+        except ValueError:
+            timeout = 0.75
+        try:
+            subprocess.run(
+                ["osascript", "-e", f'tell application "{app_name}" to activate'],
+                capture_output=True,
+                text=True,
+                timeout=max(0.1, timeout),
+                start_new_session=True,
+            )
+        except Exception:
+            pass
     try:
         import pyautogui
 
@@ -1331,17 +1707,23 @@ def click_window_point(
     dry_run: bool = False,
     settle_seconds: float = 0.15,
     hold_seconds: float = 0.3,
+    release_window_x: int | None = None,
+    release_window_y: int | None = None,
 ) -> dict:
     """Click a point relative to the game window's top-left corner."""
     x = int(x)
     y = int(y)
     if dry_run:
-        return {
+        out = {
             "status": "DRY_RUN",
             "window_x": x,
             "window_y": y,
             "description": description,
         }
+        if release_window_x is not None and release_window_y is not None:
+            out["release_window_x"] = int(release_window_x)
+            out["release_window_y"] = int(release_window_y)
+        return out
 
     bounds = _get_window_bounds(app_name)
     if bounds is None:
@@ -1355,6 +1737,16 @@ def click_window_point(
 
     screen_x = int(bounds["x"] + x)
     screen_y = int(bounds["y"] + y)
+    release_x = (
+        None
+        if release_window_x is None
+        else int(bounds["x"] + int(release_window_x))
+    )
+    release_y = (
+        None
+        if release_window_y is None
+        else int(bounds["y"] + int(release_window_y))
+    )
     result = click_screen_point(
         screen_x,
         screen_y,
@@ -1363,9 +1755,14 @@ def click_window_point(
         dry_run=False,
         settle_seconds=settle_seconds,
         hold_seconds=hold_seconds,
+        release_x=release_x,
+        release_y=release_y,
     )
     result["window_x"] = x
     result["window_y"] = y
+    if release_window_x is not None and release_window_y is not None:
+        result["release_window_x"] = int(release_window_x)
+        result["release_window_y"] = int(release_window_y)
     result["window_bounds"] = bounds
     return result
 
@@ -1387,6 +1784,21 @@ def click_known_window_control(
             "error": f"unknown control: {name}",
             "known_controls": sorted(KNOWN_WINDOW_CONTROLS),
         }
+    if key == "pause":
+        result = press_key(
+            "esc",
+            description="Pause menu Escape toggle",
+            app_name=app_name,
+            dry_run=dry_run,
+            settle_seconds=(
+                control.settle_seconds
+                if settle_seconds is None else float(settle_seconds)
+            ),
+        )
+        result["control"] = control.name
+        result["window_x"] = control.window_x
+        result["window_y"] = control.window_y
+        return result
     if key == "title_new_game":
         return click_title_new_game_dynamic(
             app_name=app_name,
@@ -1415,6 +1827,8 @@ def click_known_window_control(
             control.hold_seconds
             if hold_seconds is None else float(hold_seconds)
         ),
+        release_window_x=control.release_window_x,
+        release_window_y=control.release_window_y,
     )
     result["control"] = control.name
     return result
@@ -1459,6 +1873,28 @@ def click_known_window_sequence(
 
     results = []
     for control in controls:
+        if control.name == "pause":
+            result = press_key(
+                "esc",
+                description="Pause menu Escape toggle",
+                app_name=app_name,
+                dry_run=False,
+                settle_seconds=control.settle_seconds,
+            )
+            result["control"] = control.name
+            result["window_x"] = control.window_x
+            result["window_y"] = control.window_y
+            result["window_bounds"] = bounds
+            results.append(result)
+            if result.get("status") != "OK":
+                return {
+                    "status": "ERROR",
+                    "error": result.get("error", "key press failed"),
+                    "controls": [control.name for control in controls],
+                    "completed": results,
+                    "window_bounds": bounds,
+                }
+            continue
         screen_x = int(bounds["x"] + control.window_x)
         screen_y = int(bounds["y"] + control.window_y)
         result = click_screen_point(

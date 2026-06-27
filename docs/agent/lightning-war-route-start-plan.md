@@ -1,4 +1,4 @@
-# Lightning War Atomic Route-Start Timer Plan
+# Lightning War Atomic Preview-Board Route-Start Timer Plan
 
 ## Purpose
 
@@ -12,9 +12,10 @@ mission-start uncertainty: ambiguous route-region matching, stale preview
 state, fallback clicks, and early unpauses can spend live timer seconds without
 actually entering the next mission.
 
-The first speed patch should therefore be an atomic, proof-gated route-start
-transaction. Deeper pause/resume optimizations should come after that
-transaction is reliable.
+The current speed patch is therefore an atomic, proof-gated route-start
+transaction: prove the preview mission, then commit through the calibrated
+little 8x8 preview board that highlights yellow on hover. Deeper pause/resume
+optimizations should come after that transaction is reliable.
 
 ## Mission Timer Budget
 
@@ -96,7 +97,7 @@ auto-start without exact route identity.
 Raw coordinates and manual start coordinates may identify which preview to
 open, but they must not create an expected mission id or bypass proof gates.
 
-### 3. Atomic Start-text-only route start
+### 3. Atomic preview-board route start
 
 Default Lightning War route start should use one narrow transaction:
 
@@ -104,23 +105,29 @@ Default Lightning War route start should use one narrow transaction:
 2. Capture or read fresh proof of the mission preview.
 3. If an advisor or dialogue panel is present, dismiss it only after detection.
 4. Re-prove that the same expected mission is still selected.
-5. Click visible `Start Mission` text only.
+5. Click the calibrated small 8x8 preview board.
 6. Verify transition into deployment, combat, or another expected post-start
    state.
 
-The default Lightning War path should not use board-click, region-repeat, or
-compact-side-card fallback clicks after a missing Start text detection. Those
-fallbacks are useful only behind an explicit legacy/manual mode.
+The default Lightning War path should not deliberate over mission names once
+fresh bridge/save/OCR proof identifies the preview. Dam, Satellite, Train,
+Tides, Tanks, Volatile, and similar missions are routeable in speed mode when
+the mission id is exact and post-start proof succeeds. The solver and safety
+gates own combat risk; the route layer owns identity and transition proof.
 
-If Start text cannot be proven, the command should stop paused with evidence
-instead of spending more live timer. The output should include the screenshot,
+Visible `Start Mission` text remains a useful explicit probe/fallback mode, but
+it is no longer the speed default. If the preview board cannot be clicked, the
+mission identity is stale/unknown/mismatched, or the click does not produce
+deployment/combat proof, the command should stop paused with evidence instead
+of spending more live timer. The output should include the screenshot,
 candidate identity, expected mission, detected UI state, and the reason the
 start was blocked.
 
 ### 4. Lazy resume as a later stage
 
 Lazy resume is valuable, but it should not be the first implementation patch.
-It is only safe after route identity and Start-text-only route start are stable.
+It is only safe after route identity and proof-gated preview-board route start
+are stable.
 
 When implemented, use a single helper for live boundaries. The helper should:
 
@@ -173,11 +180,11 @@ Required coverage:
 - exact save-backed visual route identity assignment
 - duplicate mission ids staying tied to distinct visual regions
 - route start accepting exact identity matches
-- route start blocking when Start text is missing
-- default Lightning War mode refusing board/region/compact fallback clicks
+- route start blocking when mission identity is stale, missing, or mismatched
+- default Lightning War mode using calibrated preview-board commit
 - advisor/dialogue dismissal followed by re-proof before Start
 - baseline routing remaining baseline
-- Lightning War routing using the atomic Start-text-only path
+- Lightning War routing using the atomic proof-gated preview-board path
 - future lazy-resume behavior resuming only at live boundaries
 
 Existing tests that expect board-click or region-repeat fallback behavior should
@@ -189,16 +196,16 @@ Likely test names:
 - `test_lightning_build_save_island_map_mixed_slate_preserves_route_identity`
 - `test_visual_route_candidates_keep_duplicate_mission_identity_by_visual_region`
 - `test_lightning_route_start_visual_index_accepts_exact_route_identity_match`
-- `test_lightning_route_start_commits_matching_preview_with_visible_start_only`
-- `test_lightning_route_start_blocks_when_start_text_missing_without_board_fallback`
+- `test_lightning_route_start_commits_matching_preview_with_preview_board`
+- `test_lightning_route_start_blocks_when_preview_identity_missing`
 - `test_lightning_attempt_does_not_resume_before_paused_map_route_plan`
 - `test_lightning_attempt_resumes_only_for_live_end_turn_click`
 
 Likely legacy tests to rewrite or scope behind legacy mode:
 
-- tests that expect `dialogue-region-repeat-preview-board` as the default mode
+- tests that expect text-click fallback as the default mode
 - tests that expect board clicks before dialogue dismissal
-- tests that repeat route-region clicks after Start text is missing
+- tests that repeat route-region clicks after preview identity fails
 - tests that resume immediately before paused map routing
 
 ## Rollout Order
@@ -206,8 +213,9 @@ Likely legacy tests to rewrite or scope behind legacy mode:
 1. Add routing policy plumbing and logging without changing route-start behavior.
 2. Add route identity/provenance to candidates and command output.
 3. Require exact route identity for automatic Lightning War start.
-4. Switch default Lightning War route start to Start-text-only.
-5. Move old fallback click modes behind explicit legacy/manual flags.
+4. Switch default Lightning War route start to proof-gated preview-board commit.
+5. Keep visible-text, region-repeat, and compact-card clicks behind explicit
+   fallback/probe modes.
 6. Add lazy resume only after the atomic route-start path is stable.
 7. Run another live Lightning War attempt and measure timer leakage on the route
    map before touching combat timing.
@@ -221,11 +229,11 @@ The route-start patch is ready for live attempts when:
 
 - a selected route candidate has exact, save-backed identity
 - the selected preview is re-proven after any dialogue dismissal
-- `Start Mission` text is the only default mission-start click
-- missing Start text produces a paused block with evidence
+- the calibrated preview board is the default mission-start click
+- missing/stale/mismatched mission identity produces a paused block with evidence
 - baseline flows do not inherit Lightning War routing choices
-- no default path spends timer seconds on blind board, region, or compact-card
-  fallback clicks
+- no default path spends timer seconds on blind region or compact-card fallback
+  clicks
 - ordinary missions that exceed 3 minutes of in-game time are flagged as pace
   failures with enough telemetry to distinguish combat time from UI time
 
@@ -239,12 +247,18 @@ The later lazy-resume patch is ready when:
 
 ## Commit Scope
 
-This document is intended as a doc-only planning commit. It should be staged and
-committed by itself:
+This document started as a doc-only planning note, but it now tracks the active
+preview-board implementation. When committing implementation work, stage it with
+the related code/tests/docs that keep the route-start defaults coherent:
 
 ```bash
-git add docs/agent/lightning-war-route-start-plan.md
-git commit -m "Document Lightning route-start timer plan"
+git add docs/agent/lightning-war-route-start-plan.md \
+  docs/agent/lightning-war-runner.md \
+  src/loop/commands.py \
+  src/loop/lightning_runner.py \
+  tests/test_lightning_runner.py \
+  tests/test_lightning_war_tools.py
+git commit -m "Speed up Lightning War route starts"
 git push
 ```
 

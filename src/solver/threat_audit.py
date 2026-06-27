@@ -65,6 +65,8 @@ def _hatch_destination(board: Board, x: int, y: int) -> tuple[int, int] | None:
 def capture_building_threats(board: Board) -> list[dict[str, Any]]:
     """Capture enemy threats aimed at live buildings in A1-H8 terms."""
     out: list[dict[str, Any]] = []
+    seen: set[tuple[int, tuple[int, int]]] = set()
+    direct_threat_uids: set[int] = set()
     for tx, ty, attacker in board.get_threatened_buildings():
         tile = board.tile(tx, ty)
         out.append({
@@ -73,6 +75,8 @@ def capture_building_threats(board: Board) -> list[dict[str, Any]]:
             "target_hp": int(tile.building_hp),
             "attacker": _unit_record(attacker),
         })
+        seen.add((int(attacker.uid), (int(tx), int(ty))))
+        direct_threat_uids.add(int(attacker.uid))
     for attacker in board.units:
         if attacker.hp <= 0 or attacker.type not in {"WebbEgg1", "SpiderlingEgg1"}:
             continue
@@ -90,6 +94,32 @@ def capture_building_threats(board: Board) -> list[dict[str, Any]]:
             "target_hp": int(tile.building_hp),
             "attacker": _unit_record(attacker),
         })
+        seen.add((int(attacker.uid), (int(tx), int(ty))))
+    for attacker in board.units:
+        if attacker.team != 6 or attacker.hp <= 0:
+            continue
+        if int(attacker.uid) in direct_threat_uids:
+            continue
+        projected, wind_pos, wind_building = _projected_attack_building_after_wind_for_attacker(
+            board, attacker
+        )
+        if not projected or wind_pos is None or wind_building is None:
+            continue
+        tx, ty = wind_building
+        key = (int(attacker.uid), (tx, ty))
+        if key in seen:
+            continue
+        tile = board.tile(tx, ty)
+        out.append({
+            "threat_kind": "wind_projected_building",
+            "target": [int(tx), int(ty)],
+            "target_visual": _visual(int(tx), int(ty)),
+            "target_hp": int(tile.building_hp),
+            "attacker": _unit_record(attacker),
+            "projected_attacker_pos": [int(wind_pos[0]), int(wind_pos[1])],
+            "projected_attacker_visual": _visual(int(wind_pos[0]), int(wind_pos[1])),
+        })
+        seen.add(key)
     return out
 
 
@@ -235,10 +265,41 @@ def _conveyor_delta(board: Board, unit: Unit) -> tuple[int, int] | None:
     return DIRS[solver_dir]
 
 
+def _wind_delta(board: Board) -> tuple[int, int] | None:
+    if getattr(board, "mission_id", "") != "Mission_Wind":
+        return None
+    raw_dir = getattr(board, "environment_wind_dir", None)
+    if not isinstance(raw_dir, int):
+        return None
+    solver_dir = ENGINE_DIR_TO_SOLVER_DIR.get(raw_dir)
+    if solver_dir is None:
+        return None
+    return DIRS[solver_dir]
+
+
 def _unit_can_conveyor_move_to(board: Board, unit: Unit, x: int, y: int) -> bool:
     if not board.in_bounds(x, y):
         return False
     if board.unit_at(x, y) is not None or board.wreck_at(x, y):
+        return False
+    return board.tile(x, y).terrain not in {"mountain", "building"}
+
+
+def _unit_clears_before_wind(board: Board, unit: Unit) -> bool:
+    return (
+        _will_die_to_fire_before_attack(board, unit)
+        or _will_die_to_soldier_psion_fire_teardown(board, unit)
+        or _will_die_to_lethal_environment_before_attack(board, unit)
+    )
+
+
+def _unit_can_wind_move_to(board: Board, unit: Unit, x: int, y: int) -> bool:
+    if not board.in_bounds(x, y):
+        return False
+    blocker = board.unit_at(x, y)
+    if blocker is not None and not _unit_clears_before_wind(board, blocker):
+        return False
+    if blocker is None and board.wreck_at(x, y):
         return False
     return board.tile(x, y).terrain not in {"mountain", "building"}
 
@@ -265,34 +326,51 @@ def _first_projectile_building_on_line(
     return None
 
 
-def _projected_attack_building_after_wind(
-    threat: dict[str, Any],
+def _attack_direction_from_target(
+    attacker: Unit,
+    old_pos: tuple[int, int] | None = None,
+    old_target: tuple[int, int] | None = None,
+) -> tuple[int, int] | None:
+    ox, oy = old_pos or (int(attacker.x), int(attacker.y))
+    if old_target is None:
+        tx = int(attacker.queued_target_x)
+        ty = int(attacker.queued_target_y)
+        if tx < 0 or ty < 0:
+            tx = int(attacker.target_x)
+            ty = int(attacker.target_y)
+    else:
+        tx, ty = old_target
+    dx = _sign(tx - ox)
+    dy = _sign(ty - oy)
+    if (dx != 0) == (dy != 0):
+        return None
+    return dx, dy
+
+
+def _projected_attack_building_after_wind_for_attacker(
     board: Board,
     attacker: Unit,
+    old_pos: tuple[int, int] | None = None,
+    old_target: tuple[int, int] | None = None,
 ) -> tuple[bool, tuple[int, int] | None, tuple[int, int] | None]:
-    if getattr(board, "mission_id", "") != "Mission_Wind":
-        return False, None, None
     if (int(attacker.x), int(attacker.y)) not in (
         getattr(board, "environment_danger", set()) or set()
     ):
         return False, None, None
-    wind_dir = getattr(board, "environment_wind_dir", None)
-    if not isinstance(wind_dir, int) or not (0 <= wind_dir < len(DIRS)):
+    wind_delta = _wind_delta(board)
+    if wind_delta is None:
         return False, None, None
 
-    wx, wy = DIRS[wind_dir]
+    wx, wy = wind_delta
     nx = int(attacker.x) + wx
     ny = int(attacker.y) + wy
-    if not _unit_can_conveyor_move_to(board, attacker, nx, ny):
+    if not _unit_can_wind_move_to(board, attacker, nx, ny):
         return False, None, None
 
-    attacker_info = threat.get("attacker") or {}
-    old_pos = attacker_info.get("pos") or [-1, -1]
-    old_target = attacker_info.get("target") or [-1, -1]
-    dx = _sign(int(old_target[0]) - int(old_pos[0]))
-    dy = _sign(int(old_target[1]) - int(old_pos[1]))
-    if (dx != 0) == (dy != 0):
+    attack_delta = _attack_direction_from_target(attacker, old_pos, old_target)
+    if attack_delta is None:
         return False, (nx, ny), None
+    dx, dy = attack_delta
 
     wdef = get_weapon_def(attacker.weapon)
     if wdef is None:
@@ -309,6 +387,22 @@ def _projected_attack_building_after_wind(
         return False, (nx, ny), None
 
     return True, (nx, ny), projected_building
+
+
+def _projected_attack_building_after_wind(
+    threat: dict[str, Any],
+    board: Board,
+    attacker: Unit,
+) -> tuple[bool, tuple[int, int] | None, tuple[int, int] | None]:
+    attacker_info = threat.get("attacker") or {}
+    old_pos = attacker_info.get("pos") or [-1, -1]
+    old_target = attacker_info.get("target") or [-1, -1]
+    return _projected_attack_building_after_wind_for_attacker(
+        board,
+        attacker,
+        (int(old_pos[0]), int(old_pos[1])),
+        (int(old_target[0]), int(old_target[1])),
+    )
 
 
 def _projected_attack_building_after_conveyor(

@@ -1,0 +1,27 @@
+{
+  "achievement": "Lightning War",
+  "advanced_content": "off",
+  "auto_clear_panels": false,
+  "code_version": {
+    "git_branch": "codex",
+    "git_dirty": true,
+    "git_head": "d93ddf027535bcdb09a000d8543325deca9f2507"
+  },
+  "collect_screenshot_cadence": 2.0,
+  "combat_time_limit": 10.0,
+  "created_at": "2026-06-24T03:34:36.638-05:00",
+  "difficulty": 0,
+  "iteration_mode": "flipflop",
+  "max_attempts": 20,
+  "mode": "baseline",
+  "profile": "Alpha",
+  "race_screenshot_cadence": 5.0,
+  "route_auto_start": true,
+  "route_routing": "lightning_baseline",
+  "route_speed_vetoes": false,
+  "run_id": "after_start",
+  "schema_version": 1,
+  "screenshot_cadence": 2.0,
+  "squad": null,
+  "target_islands": 2
+}

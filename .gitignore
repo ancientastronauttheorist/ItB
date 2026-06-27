@@ -19,12 +19,14 @@ recordings/live_top_mainmenu_*/
 recordings/lightning_session_clock_proof.json
 recordings/lightning_*/
 recordings/lw/
+recordings/prompt_debug/
 recordings/timer_screenshot_probe/
 snapshots/*/
 snapshots/*.png
 logs/*_log.md
 run_notes/*.png
 run_notes/hover_sweep_*/
+run_notes/lightning_autonomous_current.log
 run_notes/lightning_war_conductor_*.jsonl
 run_notes/lightning_war_fast_walkthrough/
 run_notes/lightning_war_goal.md

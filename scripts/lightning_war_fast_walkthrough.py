@@ -1601,19 +1601,11 @@ def click_startable_red_mission_after_result(
 
 def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
     log("deploy_recommended")
-    deploy = cmd_deploy_recommended(ui_fallback=True, verify_after=False)
+    deploy = cmd_deploy_recommended(ui_fallback=False, verify_after=False)
     deploy_retries: list[dict[str, Any]] = []
 
     def deploy_acceptable(result: dict[str, Any]) -> bool:
-        status = result.get("status")
-        if status == "OK":
-            return True
-        deployments = result.get("deployments") or []
-        return (
-            status == "WARN"
-            and result.get("ui_fallback", {}).get("status") == "OK"
-            and len(deployments) >= 1
-        )
+        return result.get("status") == "OK"
 
     def compact_deploy(result: dict[str, Any]) -> dict[str, Any]:
         return {
@@ -1658,7 +1650,7 @@ def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
                 attempts[-1]["visible_ui"] = visible_name
                 log("confirm still pending; retrying deployment for missing units")
                 redeploy = cmd_deploy_recommended(
-                    ui_fallback=True,
+                    ui_fallback=False,
                     verify_after=False,
                 )
                 deploy_retries.append(redeploy)

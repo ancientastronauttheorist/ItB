@@ -270,6 +270,24 @@ def _violation(kind: str, current: Any, predicted: Any,
     return out
 
 
+def _is_final_player_turn(turn: int | None,
+                          total_turns: int | None,
+                          remaining_spawns: int | None,
+                          victory_turns: int | None) -> bool:
+    if victory_turns is not None:
+        return victory_turns <= 1
+    if turn is None or total_turns is None:
+        return False
+    if turn >= total_turns:
+        return True
+    if turn >= max(0, total_turns - 1):
+        # Older summaries did not include the bridge's IsFinalTurn-derived
+        # spawn signal, so keep them conservative. When present, zero means
+        # the current player phase is the last chance to satisfy final checks.
+        return remaining_spawns is None or remaining_spawns == 0
+    return False
+
+
 def audit_plan_safety(current: dict[str, Any],
                       predicted: dict[str, Any],
                       *,
@@ -388,23 +406,53 @@ def audit_plan_safety(current: dict[str, Any],
     pred_remaining_spawns = _int_or_none(predicted.get("remaining_spawns"))
     cur_spawn_points = _int_or_none(current.get("spawn_points"))
     pred_spawn_points = _int_or_none(predicted.get("spawn_points"))
+    cur_victory_turns = _int_or_none(current.get("victory_turns"))
+    pred_victory_turns = _int_or_none(predicted.get("victory_turns"))
     # Visible live spawn arrows mean the mission is not on the final player
     # turn, even if Mission:IsFinalTurn()/remaining_spawns is unreliable for
-    # a specific mission. Otherwise prefer the bridge's final-turn signal over
-    # raw turn-limit math.
+    # a specific mission. The visible victory counter is the next strongest
+    # signal for boss/timer routes, then the bridge's IsFinalTurn-derived
+    # remaining-spawns signal, then raw turn-limit math for older summaries.
     if cur_spawn_points is not None and cur_spawn_points > 0:
         final_turn = False
-    elif cur_remaining_spawns is not None:
-        final_turn = cur_remaining_spawns == 0
-    elif cur_turn is not None and cur_total_turns is not None:
-        final_turn = cur_turn >= max(0, cur_total_turns - 1)
     elif pred_spawn_points is not None and pred_spawn_points > 0:
         final_turn = False
+    elif cur_victory_turns is not None:
+        final_turn = cur_victory_turns <= 1
+    elif pred_victory_turns is not None:
+        final_turn = pred_victory_turns <= 1
+    elif cur_turn is not None and cur_total_turns is not None:
+        final_turn = _is_final_player_turn(
+            cur_turn,
+            cur_total_turns,
+            cur_remaining_spawns,
+            cur_victory_turns,
+        )
+    elif pred_turn is not None and pred_total_turns is not None:
+        final_turn = _is_final_player_turn(
+            pred_turn,
+            pred_total_turns,
+            pred_remaining_spawns,
+            pred_victory_turns,
+        )
+    elif cur_remaining_spawns is not None:
+        final_turn = cur_remaining_spawns == 0
     elif pred_remaining_spawns is not None:
         final_turn = pred_remaining_spawns == 0
-    elif pred_turn is not None and pred_total_turns is not None:
-        final_turn = pred_turn >= pred_total_turns
     else:
+        final_turn = False
+    if (
+        final_turn
+        and cur_spawn_points is None
+        and pred_spawn_points is not None
+        and pred_spawn_points > 0
+    ):
+        final_turn = False
+    if (
+        final_turn
+        and cur_spawn_points is not None
+        and cur_spawn_points > 0
+    ):
         final_turn = False
 
     cur_obj_targeted = _int_or_none(current.get("objective_buildings_targeted"))
@@ -857,6 +905,7 @@ def audit_plan_safety(current: dict[str, Any],
             "remaining_spawns": cur_remaining_spawns,
             "is_infinite_spawn": current.get("is_infinite_spawn"),
             "spawn_points": cur_spawn_points,
+            "victory_turns": cur_victory_turns,
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
             "building_hp_total": cur_hp,
@@ -902,6 +951,7 @@ def audit_plan_safety(current: dict[str, Any],
             "remaining_spawns": pred_remaining_spawns,
             "is_infinite_spawn": predicted.get("is_infinite_spawn"),
             "spawn_points": pred_spawn_points,
+            "victory_turns": pred_victory_turns,
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,
             "building_hp_total": pred_hp,

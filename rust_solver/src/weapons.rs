@@ -635,9 +635,15 @@ pub enum WId {
     ScienceRainingFireA = 228,
     ScienceRainingFireB = 229,
     ScienceRainingFireAB = 230,
+    /// Smoldering Shells with More Smoke powered.
+    RangedSmokeFireA = 231,
+    /// Smoldering Shells with +2 Damage powered.
+    RangedSmokeFireB = 232,
+    /// Smoldering Shells with More Smoke and +2 Damage powered.
+    RangedSmokeFireAB = 233,
 }
 
-pub const WEAPON_COUNT: usize = 231;
+pub const WEAPON_COUNT: usize = 234;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -969,6 +975,15 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // footprint is WId-specific in simulate.rs because normal SMOKE applies to
     // the center tile.
     w[211] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 231-233: Smoldering Shells upgrades.
+    // More Smoke expands the WId-specific surrounding smoke footprint to all
+    // eight neighboring tiles; +2 Damage raises only the center hit.
+    w[231] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[232] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[233] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     // 212: Science_TC_Control — Control Shot.
     // This needs target-unit plus destination targeting. Keep it catalogued but
@@ -1838,6 +1853,13 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_TC_SwapOther_AB" => WId::ScienceTcSwapOtherAB,
         "Science_TC_Control" => WId::ScienceTcControl,
         "Ranged_SmokeFire" => WId::RangedSmokeFire,
+        "RangedSmokeFire" => WId::RangedSmokeFire,
+        "Ranged_SmokeFire_A" => WId::RangedSmokeFireA,
+        "RangedSmokeFireA" => WId::RangedSmokeFireA,
+        "Ranged_SmokeFire_B" => WId::RangedSmokeFireB,
+        "RangedSmokeFireB" => WId::RangedSmokeFireB,
+        "Ranged_SmokeFire_AB" => WId::RangedSmokeFireAB,
+        "RangedSmokeFireAB" => WId::RangedSmokeFireAB,
         "Missiles_Shield" => WId::MissilesShield,
         "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
@@ -2081,6 +2103,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceTcSwapOtherAB => "Science_TC_SwapOther_AB",
         WId::ScienceTcControl => "Science_TC_Control",
         WId::RangedSmokeFire => "Ranged_SmokeFire",
+        WId::RangedSmokeFireA => "Ranged_SmokeFire_A",
+        WId::RangedSmokeFireB => "Ranged_SmokeFire_B",
+        WId::RangedSmokeFireAB => "Ranged_SmokeFire_AB",
         WId::ScorpionAtk1 => "ScorpionAtk1",
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
@@ -2373,7 +2398,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
             | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB => "Force Swap",
         WId::ScienceTcControl => "Control Shot",
-        WId::RangedSmokeFire => "Smoldering Shells",
+        WId::RangedSmokeFire | WId::RangedSmokeFireA
+            | WId::RangedSmokeFireB | WId::RangedSmokeFireAB => "Smoldering Shells",
         WId::Repair => "Repair",
         WId::ScorpionAtk1 => "Scorpion Strike",
         WId::ScorpionAtk2 => "Alpha Scorpion Strike",

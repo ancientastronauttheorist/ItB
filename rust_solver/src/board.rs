@@ -836,6 +836,7 @@ pub struct ActionResult {
     pub leech_uncapped_kills: i32,
     pub enemy_damage_dealt: i32,
     pub mech_damage_taken: i32,
+    pub mech_hp_repaired: i32,
     pub mechs_killed: i32,
     pub pods_collected: i32,
     pub repair_platforms_used: i32,
@@ -873,6 +874,7 @@ impl ActionResult {
         self.leech_uncapped_kills += other.leech_uncapped_kills;
         self.enemy_damage_dealt += other.enemy_damage_dealt;
         self.mech_damage_taken += other.mech_damage_taken;
+        self.mech_hp_repaired += other.mech_hp_repaired;
         self.mechs_killed += other.mechs_killed;
         self.pods_collected += other.pods_collected;
         self.repair_platforms_used += other.repair_platforms_used;

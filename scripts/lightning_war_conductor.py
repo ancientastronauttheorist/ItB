@@ -249,6 +249,15 @@ def safe_timer(result: dict[str, Any] | None) -> tuple[float | None, str | None]
     probe_timer = timer_from_probe(result)
     if probe_timer[0] is not None:
         return probe_timer
+    for key in ("visible_timer", "post_pause_timer"):
+        visible_timer = result.get(key)
+        if isinstance(visible_timer, dict) and visible_timer.get("status") == "OK":
+            seconds = visible_timer.get("game_seconds")
+            timer = visible_timer.get("game_timer")
+            try:
+                return float(seconds), str(timer) if timer is not None else None
+            except (TypeError, ValueError):
+                return None, str(timer) if timer is not None else None
     budget = result.get("game_budget") or {}
     seconds = budget.get("game_seconds")
     timer = budget.get("game_timer")
@@ -712,7 +721,13 @@ def run_conductor(args: argparse.Namespace) -> int:
                 return 0
         setup = run_observed(
             "verify_setup",
-            ["verify_setup", "--difficulty", str(args.setup_difficulty)],
+            [
+                "verify_setup",
+                "--difficulty",
+                str(args.setup_difficulty),
+                "--advanced-content",
+                "off",
+            ],
             watchdog=watchdog,
             journal=journal,
             timeout=60,
@@ -850,6 +865,8 @@ def run_conductor(args: argparse.Namespace) -> int:
         ]
         if args.route_auto_start:
             segment_args.append("--route-auto-start")
+        if args.no_speed_loss_policy:
+            segment_args.append("--no-speed-loss-policy")
         if (initial_must_act or args.no_initial_preflight) and step == 1:
             segment_args.append("--no-preflight")
         if args.no_pause_before_solve:
@@ -979,6 +996,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--route-auto-start",
         action="store_true",
         help="Let lightning_segment auto-start high-confidence route choices.",
+    )
+    parser.add_argument(
+        "--no-speed-loss-policy",
+        action="store_true",
+        help="Disable Lightning War speed-loss dirty allowances in every segment.",
     )
     parser.add_argument("--no-pause-before-solve", action="store_true")
     parser.add_argument("--no-pause-between-actions", action="store_true")

@@ -521,7 +521,7 @@ def test_threat_audit_beltrandom_conveyor_does_not_cover_attack():
 def test_threat_audit_attacker_will_be_moved_by_wind():
     board = Board()
     board.mission_id = "Mission_Wind"
-    board.environment_wind_dir = 0
+    board.environment_wind_dir = 2  # raw engine DIR_DOWN -> solver direction y + 1
     board.environment_danger.add((2, 1))
     board.environment_danger_v2[(2, 1)] = (1, False)
     board.tile(3, 1).terrain = "building"
@@ -550,7 +550,7 @@ def test_threat_audit_attacker_will_be_moved_by_wind():
 def test_threat_audit_wind_shift_into_building_still_warns():
     board = Board()
     board.mission_id = "Mission_Wind"
-    board.environment_wind_dir = 0
+    board.environment_wind_dir = 2  # raw engine DIR_DOWN -> solver direction y + 1
     board.environment_danger.add((2, 1))
     board.environment_danger_v2[(2, 1)] = (1, False)
     board.tile(3, 1).terrain = "building"
@@ -576,6 +576,50 @@ def test_threat_audit_wind_shift_into_building_still_warns():
     assert audit["entries"][0]["coverage"]["reason"] == (
         "still_threatened_after_wind"
     )
+
+
+def test_threat_audit_captures_wind_projected_threat_after_fire_clears_blocker():
+    board = Board()
+    board.mission_id = "Mission_Wind"
+    board.environment_wind_dir = 2  # raw engine DIR_DOWN -> solver direction y + 1
+    board.environment_danger.update({(5, 4), (5, 5)})
+    board.environment_danger_v2[(5, 4)] = (1, False)
+    board.environment_danger_v2[(5, 5)] = (1, False)
+    board.tile(3, 5).terrain = "building"
+    board.tile(3, 5).building_hp = 1
+    board.tile(5, 6).terrain = "building"
+    board.tile(5, 6).building_hp = 2
+    board.units.append(_enemy(
+        uid=931,
+        pawn_type="Scorpion1",
+        x=5,
+        y=5,
+        tx=5,
+        ty=6,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    board.units[-1].fire = True
+    board.units.append(_enemy(
+        uid=955,
+        pawn_type="Firefly1",
+        x=5,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=3,
+    ))
+    board.units[-1].weapon = "FireflyAtk1"
+
+    threats = capture_building_threats(board)
+    wind_threats = [
+        threat for threat in threats
+        if threat.get("threat_kind") == "wind_projected_building"
+    ]
+
+    assert wind_threats
+    assert wind_threats[0]["target"] == [3, 5]
+    assert wind_threats[0]["projected_attacker_pos"] == [5, 5]
 
 
 def test_threat_audit_conveyor_projected_building_still_warns():

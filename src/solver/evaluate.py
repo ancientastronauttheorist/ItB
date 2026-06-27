@@ -83,6 +83,7 @@ class EvalWeights:
     smoke_placed: float = 0
     tiles_frozen: float = 0
     viscera_nanobots_heal_bonus: float = 0
+    stay_with_me_heal_bonus: float = 0
     powered_blast_bonus: float = 0
     reverse_thrusters_four_damage_bonus: float = 0
     feed_the_flame_bonus: float = 0

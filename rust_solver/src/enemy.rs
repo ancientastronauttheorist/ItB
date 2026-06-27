@@ -607,6 +607,16 @@ fn simulate_mission_wind(board: &mut Board, result: &mut ActionResult) {
     }
 }
 
+fn clear_pre_attack_dead_enemy_wrecks(board: &mut Board) {
+    for i in 0..board.unit_count as usize {
+        let u = &mut board.units[i];
+        if u.hp <= 0 && u.is_enemy() {
+            u.x = 8;
+            u.y = 8;
+        }
+    }
+}
+
 fn hatch_spawn_destination(board: &Board, x: u8, y: u8) -> Option<(u8, u8)> {
     // Live HQ capture: a WebbEgg at E6 hatched onto adjacent F6, destroying a
     // 2-HP building. The Lua skill queues `sPawn` at the occupied egg tile, and
@@ -669,6 +679,13 @@ pub fn simulate_enemy_attacks(
                 // Rockman is fire-immune; clear the flag as a safety net
                 // so a stale burn doesn't sit on the unit forever.
                 board.units[i].set_fire(false);
+                continue;
+            }
+            if board.units[i].type_name_str() == "Dam_Pawn" {
+                // Live Mission_Dam can show the neutral dam burning at 1 HP
+                // on the final reward panel while the objective still fails.
+                // Do not let the generic enemy-phase tick destroy it and
+                // preempt queued Vek attacks with a phantom flood.
                 continue;
             }
             // Fire Psion (LEADER_FIRE, Jelly_Fire1): all Vek immune to fire
@@ -808,6 +825,7 @@ pub fn simulate_enemy_attacks(
             }
         }
     }
+    clear_pre_attack_dead_enemy_wrecks(board);
 
     // Environment danger (air strikes, lightning, etc.) usually fires BEFORE
     // Vek attacks. Some mission hazards resolve after queued attacks, so those
@@ -818,6 +836,7 @@ pub fn simulate_enemy_attacks(
     );
     if board.env_danger != 0 && !env_after_attacks {
         apply_env_danger_board(board, &mut result);
+        clear_pre_attack_dead_enemy_wrecks(board);
     }
 
     // Ice Storm freeze (sim v25). Fires at start of enemy turn — same step as
@@ -864,11 +883,13 @@ pub fn simulate_enemy_attacks(
     if board.mission_id == "Mission_Belt" {
         simulate_conveyor_belts(board, &mut result);
     }
+    clear_pre_attack_dead_enemy_wrecks(board);
 
     // Mission_Wind rows are push lanes, not damage tiles. The gust resolves
     // before attacks; Vek then fire from their pushed tile while preserving
     // the original queued direction.
     simulate_mission_wind(board, &mut result);
+    clear_pre_attack_dead_enemy_wrecks(board);
 
     // Egg hatch step: transform any surviving spider/spiderling egg into
     // its hatched live unit (sim v22/v115). Runs AFTER fire tick + env_danger
@@ -2931,6 +2952,55 @@ mod tests {
             "stale-origin swapped Bouncer should still hit and push-bump the adjacent mech");
         assert_eq!(board.tile(1, 3).building_hp, 0,
             "the forward push should bump into and damage the building behind the mech");
+    }
+
+    #[test]
+    fn test_burning_dam_does_not_flood_before_bouncer_attack() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Dam".to_string();
+        board.dam_alive = true;
+        board.dam_primary = Some((4, 0));
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 2;
+
+        let mut dam = Unit {
+            uid: 121,
+            x: 4,
+            y: 0,
+            hp: 1,
+            max_hp: 2,
+            team: Team::Neutral,
+            flags: UnitFlags::MASSIVE | UnitFlags::FIRE,
+            ..Default::default()
+        };
+        dam.set_type_name("Dam_Pawn");
+        let dam_idx = board.add_unit(dam);
+
+        let mut dam_extra = dam;
+        dam_extra.x = 5;
+        dam_extra.flags.insert(UnitFlags::EXTRA_TILE);
+        board.add_unit(dam_extra);
+
+        let exchange_idx = add_mech_unit(&mut board, 2, 4, 3, 2);
+        board.units[exchange_idx].set_type_name("ExchangeMech");
+        board.units[exchange_idx].flags.insert(UnitFlags::MASSIVE);
+
+        let bouncer_idx = add_enemy_with_type(&mut board, 146, 5, 3, 3, "Bouncer1", 4, 3);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[dam_idx].hp, 1, "Dam_Pawn fire should not tick in enemy phase");
+        assert!(board.dam_alive, "Burning dam should not trigger a phantom flood");
+        assert!(board.units[bouncer_idx].hp > 0, "Bouncer should not drown before attacking");
+        assert!(board.units[exchange_idx].hp <= 0,
+            "Bouncer hit plus building bump should match the live KIA");
+        assert_eq!(result.mechs_killed, 1);
+        assert_eq!(board.tile(3, 3).building_hp, 1,
+            "Exchange should bump the E5 building after the horn hit");
     }
 
     #[test]

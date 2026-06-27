@@ -857,16 +857,21 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Apply tile-borne A.C.I.D. to units standing on ACID pools.
-    // Game rule: a unit on an A.C.I.D. tile carries the A.C.I.D. status,
-    // doubling weapon damage taken. The bridge reports tile.acid correctly
-    // but often does NOT propagate that to unit.acid — surfaced on
-    // Disposal Site boards where Scarab2 on D4 (ACID pool) should take
-    // 4-dmg Chain Whip hits but the sim predicted 2-dmg survival. Applied
-    // after unit population so late-join mechs (tanks) pick it up too.
+    // Apply tile-borne A.C.I.D. to grounded units standing on ACID pools.
+    // The bridge reports tile.acid correctly but sometimes does NOT propagate
+    // it to grounded unit.acid — surfaced on Disposal Site boards where Scarab2
+    // on D4 (ACID pool) should take 4-dmg Chain Whip hits but the sim predicted
+    // 2-dmg survival. Flying units can hover over acid pools without carrying
+    // A.C.I.D.; trusting the bridge status for them avoids phantom damage.
+    // Applied after unit population so late-join mechs (tanks) pick it up too.
     for i in 0..board.unit_count as usize {
         let (ux, uy) = (board.units[i].x, board.units[i].y);
-        if ux < 8 && uy < 8 && board.tile(ux, uy).acid() && !board.units[i].acid() {
+        if ux < 8
+            && uy < 8
+            && board.tile(ux, uy).acid()
+            && !board.units[i].acid()
+            && !board.units[i].effectively_flying()
+        {
             board.units[i].set_acid(true);
         }
     }
@@ -1714,5 +1719,50 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.teleporter_pairs, vec![(2, 3, 2, 5)]);
+    }
+
+    #[test]
+    fn test_acid_pool_import_respects_flying_units() {
+        let input = r#"{
+            "mission_id": "Mission_Acid",
+            "tiles": [
+                {"x": 1, "y": 3, "terrain": "ground", "acid": true},
+                {"x": 2, "y": 2, "terrain": "ground", "acid": true}
+            ],
+            "units": [
+                {
+                    "uid": 660,
+                    "type": "Hornet1",
+                    "x": 1,
+                    "y": 3,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 6,
+                    "flying": true,
+                    "acid": false
+                },
+                {
+                    "uid": 661,
+                    "type": "Scarab1",
+                    "x": 2,
+                    "y": 2,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 6,
+                    "acid": false
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        let hornet = board.units.iter().find(|u| u.uid == 660).expect("hornet");
+        let scarab = board.units.iter().find(|u| u.uid == 661).expect("scarab");
+
+        assert!(!hornet.acid(), "flying unit hovering over acid pool stays clean");
+        assert!(scarab.acid(), "grounded unit on acid pool inherits A.C.I.D.");
     }
 }

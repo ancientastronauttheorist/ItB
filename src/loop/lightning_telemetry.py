@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import shutil
 import threading
 import time
 import uuid
@@ -22,6 +23,7 @@ except ImportError:  # pragma: no cover - only used on stripped environments
 
 
 SCHEMA_VERSION = 1
+DEFAULT_SCREENSHOT_RUN_CAP = 3
 
 
 def _now_iso() -> str:
@@ -98,6 +100,147 @@ def _screenshot_filename(
     return "_".join(name_parts) + ".png"
 
 
+def lightning_screenshot_run_cap() -> int | None:
+    """Return the cross-run Lightning screenshot retention cap."""
+    raw = os.environ.get(
+        "ITB_LIGHTNING_SCREENSHOT_RUNS_CAP",
+        str(DEFAULT_SCREENSHOT_RUN_CAP),
+    ).strip()
+    if raw.lower() in {"", "none", "off", "0"}:
+        return None
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return DEFAULT_SCREENSHOT_RUN_CAP
+
+
+def prune_lightning_screenshot_runs(
+    *,
+    recordings_root: Path | str = Path("recordings"),
+    run_notes_root: Path | str = Path("run_notes"),
+    max_runs: int | None = None,
+) -> dict[str, Any]:
+    """Delete screenshot-heavy Lightning artifacts outside the newest runs."""
+    cap = lightning_screenshot_run_cap() if max_runs is None else max_runs
+    if cap is None:
+        return {"status": "SKIPPED", "reason": "retention_disabled", "max_runs": None}
+    cap = max(1, int(cap))
+    groups = [
+        *_recording_screenshot_groups(Path(recordings_root)),
+        *_run_note_screenshot_groups(Path(run_notes_root)),
+    ]
+    groups.sort(key=lambda item: (item["mtime"], item["run_key"]), reverse=True)
+    retained_keys: set[str] = set()
+    for group in groups:
+        if len(retained_keys) >= cap and group["run_key"] not in retained_keys:
+            continue
+        retained_keys.add(group["run_key"])
+    deleted: list[str] = []
+    errors: list[dict[str, str]] = []
+    for group in groups:
+        if group["run_key"] in retained_keys:
+            continue
+        path = Path(str(group["path"]))
+        try:
+            if path.is_dir():
+                shutil.rmtree(path)
+            elif path.is_file():
+                path.unlink()
+            else:
+                continue
+            deleted.append(str(path))
+        except OSError as exc:
+            errors.append({"path": str(path), "error": str(exc)})
+    status = "OK" if not errors else "PARTIAL"
+    return {
+        "status": status,
+        "max_runs": cap,
+        "retained_run_keys": sorted(retained_keys),
+        "deleted_count": len(deleted),
+        "deleted": deleted,
+        "errors": errors,
+    }
+
+
+def _recording_screenshot_groups(root: Path) -> list[dict[str, Any]]:
+    if not root.exists():
+        return []
+    groups: list[dict[str, Any]] = []
+    for run_dir in root.iterdir():
+        if not run_dir.is_dir():
+            continue
+        run_key = run_dir.name
+        screenshots_dir = run_dir / "telemetry" / "screenshots"
+        if _has_png_descendant(screenshots_dir):
+            groups.append(_artifact_group(run_key, screenshots_dir))
+        telemetry_dir = run_dir / "telemetry"
+        if telemetry_dir.exists():
+            for child in telemetry_dir.iterdir():
+                if child.name == "screenshots" or not child.is_dir():
+                    continue
+                if _has_png_descendant(child):
+                    groups.append(_artifact_group(run_key, child))
+            for png in telemetry_dir.glob("*.png"):
+                if png.is_file():
+                    groups.append(_artifact_group(run_key, png))
+        if run_dir.name == "prompt_debug" and _has_png_descendant(run_dir):
+            groups.append(_artifact_group(run_key, run_dir))
+    return groups
+
+
+def _run_note_screenshot_groups(root: Path) -> list[dict[str, Any]]:
+    if not root.exists():
+        return []
+    groups: list[dict[str, Any]] = []
+    for note_dir in root.iterdir():
+        if note_dir.is_file() and note_dir.suffix.lower() == ".png":
+            groups.append(_artifact_group(f"run_notes/{note_dir.stem}", note_dir))
+            continue
+        if not note_dir.is_dir():
+            continue
+        if note_dir.name.startswith("research_") and _has_png_descendant(note_dir):
+            groups.append(_artifact_group(f"run_notes/{note_dir.name}", note_dir))
+            continue
+        if not note_dir.name.startswith("lightning_"):
+            continue
+        for child in note_dir.iterdir():
+            if child.is_dir() and _has_png_descendant(child):
+                groups.append(_artifact_group(f"{note_dir.name}/{child.name}", child))
+            elif child.is_file() and child.suffix.lower() == ".png":
+                groups.append(_artifact_group(note_dir.name, child))
+    return groups
+
+
+def _artifact_group(run_key: str, path: Path) -> dict[str, Any]:
+    return {"run_key": run_key, "path": path, "mtime": _artifact_mtime(path)}
+
+
+def _artifact_mtime(path: Path) -> float:
+    try:
+        if path.is_file():
+            return path.stat().st_mtime
+        newest = path.stat().st_mtime
+        for child in path.rglob("*"):
+            try:
+                newest = max(newest, child.stat().st_mtime)
+            except OSError:
+                continue
+        return newest
+    except OSError:
+        return 0.0
+
+
+def _has_png_descendant(path: Path) -> bool:
+    if not path.exists():
+        return False
+    try:
+        if path.is_file():
+            return path.suffix.lower() == ".png"
+        return any(child.is_file() for child in path.rglob("*.png"))
+    except OSError:
+        return False
+
+
 def _clock_frame_fields(sample: dict[str, Any] | None) -> dict[str, Any]:
     if not sample:
         return {}
@@ -161,6 +304,15 @@ class TelemetryRecorder:
         self.telemetry_dir.mkdir(parents=True, exist_ok=True)
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
+        run_notes_root = (
+            Path("run_notes")
+            if self.root == Path("recordings")
+            else self.root.parent / "run_notes"
+        )
+        self.retention_result = prune_lightning_screenshot_runs(
+            recordings_root=self.root,
+            run_notes_root=run_notes_root,
+        )
 
     def write_manifest(self, payload: dict[str, Any]) -> None:
         manifest = {
@@ -168,6 +320,7 @@ class TelemetryRecorder:
             "run_id": self.run_id,
             "created_at": _now_iso(),
             "code_version": code_version(),
+            "screenshot_retention": self.retention_result,
             **payload,
         }
         (self.telemetry_dir / "manifest.json").write_text(
@@ -280,14 +433,14 @@ class TelemetryRecorder:
 
 
 class ScreenshotRecorder:
-    """Best-effort 2-second sampler with backpressure logging."""
+    """Best-effort sampler with bounded screenshot retention."""
 
     def __init__(
         self,
         telemetry: TelemetryRecorder,
         *,
         cadence_seconds: float = 2.0,
-        max_retained_frames: int | None = None,
+        max_retained_frames: int | None = 360,
         max_retained_clock_states: int | None = 3,
         frame_clock_sampler: Callable[[], dict[str, Any] | None] | None = None,
     ) -> None:
@@ -308,6 +461,9 @@ class ScreenshotRecorder:
         self._thread: threading.Thread | None = None
         self._index = 0
         self.frame_clock_sampler = frame_clock_sampler
+
+    def set_cadence(self, cadence_seconds: float) -> None:
+        self.cadence_seconds = max(0.5, float(cadence_seconds))
 
     def start(self) -> None:
         if self._thread is not None:
@@ -462,41 +618,17 @@ class ScreenshotRecorder:
 def capture_game_window(path: Path) -> dict[str, Any]:
     try:
         from src.control.mac_click import _get_window_bounds
+        from src.capture.window import take_screenshot
     except Exception as exc:
         return {"status": "ERROR", "error": f"window bounds import failed: {exc}"}
     bounds = _get_window_bounds("Into the Breach")
     if bounds is None:
         return {"status": "ERROR", "error": "could not read Into the Breach window bounds"}
     path.parent.mkdir(parents=True, exist_ok=True)
-    if os.name == "nt":
-        if Image is None:
-            return {"status": "ERROR", "error": "Pillow is required on Windows"}
-        try:
-            from PIL import ImageGrab
-
-            bbox = (
-                int(bounds["x"]),
-                int(bounds["y"]),
-                int(bounds["x"] + bounds["width"]),
-                int(bounds["y"] + bounds["height"]),
-            )
-            ImageGrab.grab(bbox=bbox).save(path)
-        except Exception as exc:
-            return {"status": "ERROR", "error": f"ImageGrab capture failed: {exc}"}
-    else:
-        rect = f"{bounds['x']},{bounds['y']},{bounds['width']},{bounds['height']}"
-        try:
-            proc = subprocess.run(
-                ["screencapture", "-x", "-R", rect, str(path)],
-                capture_output=True,
-                text=True,
-                timeout=2.0,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            return {"status": "ERROR", "error": "screencapture timed out"}
-        if proc.returncode != 0:
-            return {"status": "ERROR", "error": proc.stderr.strip() or "capture failed"}
+    try:
+        take_screenshot(path, bounds=bounds)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"window capture failed: {exc}"}
     return {"status": "OK", "screenshot_path": str(path), "bounds": bounds}
 
 

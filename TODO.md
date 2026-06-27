@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-59 of 70 Steam-cache confirmed. **Complete Victory** unlocked and synced on 2026-06-24, leaving 11 remaining; sorted by global unlock % (easiest first).
+60 of 70 achievements are Steam-cache confirmed. **Feed the Flame**, **Complete Victory**, and **Lightning War** reconciled on 2026-06-26. **Spider Breeding** is also locally proven from offline Into the Breach logs/profile state, so the working tracker is 61/70 proven with 9 tactical targets remaining.
 
-Current milestone: **Complete Victory** is complete. In Bombermechs Easy run `20260624_083454_845`, the profile tracker reached `Global_Victory_Complete = 10`, the ITB log wrote `Set Steam Achievement Ach_Global_Victory_Complete`, and Steam's local cache marked the achievement achieved at `2026-06-24T17:12:30Z`.
+Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, and locally proven **Spider Breeding** are complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat. Spider Breeding closed offline in Arachnophiles run `20260626_125732_442` when the profile tracker reached `Squad_Spiders_1 = 15`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -47,7 +47,7 @@ Current milestone: **Complete Victory** is complete. In Bombermechs Easy run `20
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
 - [x] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod) — completed in Frozen Titans run `20260525_203546_657`
 - [x] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad — completed with 3x Ice Mech in run `20260526_204256_831`
-- [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
+- [x] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg] — Steam-cache confirmed on 2026-06-26 after reopening Into the Breach
 - [x] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad] — completed in run `20260527_152006_916` after Archive HQ shop overpowers reached 30%
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle [Steel Judoka]
 
@@ -60,14 +60,14 @@ Current milestone: **Complete Victory** is complete. In Bombermechs Easy run `20
 - [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans] — Steam-cache confirmed on 2026-06-02 after offline-to-online reconciliation
 - [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
 - [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs] — completed in Bombermechs run `20260611_202233_019` on Archive `Mission_Artillery`
-- [x] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters] — completed in Mist Eaters run `20260615_172629_338`
-- [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
-- [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom — completed alongside Mech Specialist with 3x Ice Mech in run `20260526_204256_831`
-- [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
-- [x] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative] — completed in Bombermechs run `20260624_083454_845`
-- [ ] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters]
-- [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod — completed in Zenith Guard run `20260613_234901_918`
-- [ ] Spider Breeding (6.7%) — Spawn 15 Arachnoids in one Island [Arachnophile]
+- [x] On the Backburner (8.2%) - 4 damage with Reverse Thrusters [Mist Eaters] - completed in Mist Eaters run `20260615_172629_338` on Detritus `Mission_Acid`
+- [x] Unstable Ground (7.9%) - Crack 10 tiles in one mission [Cataclysm] - Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
+- [x] Flight Specialist (7.8%) - Beat game with 3 flying Mechs in Custom - completed alongside Mech Specialist with 3x Ice Mech in run `20260526_204256_831`
+- [x] Lucky Start (7.3%) - Beat game without spending Reputation [Random] - Steam-cache confirmed before the Stay With Me run
+- [x] Complete Victory (7.2%) - Beat game with all 10 primary Squads [cumulative] - Steam-cache confirmed on 2026-06-26
+- [x] Stay With Me! (7.2%) - Heal 12 damage over single Island [Mist Eaters] - Steam-cache confirmed on 2026-06-17 after R.S.T. Blast Bunker / `Mission_Trapped`
+- [x] Chronophobia (6.7%) - 3 islands, destroy every Time Pod - completed in Zenith Guard run `20260613_234901_918`
+- [x] Spider Breeding (6.7%) - Spawn 15 Arachnoids in one Island [Arachnophile] - locally proven offline on 2026-06-26; awaiting Steam-cache reconciliation
 - [ ] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters]
 - [ ] Hold the Door (5.4%) — Block 30 Emerging Vek by end of Island 2 [Bombermechs]
 - [ ] Core of the Earth (5.2%) — Drop 10 Enemies into pits on one Island [Cataclysm]
@@ -75,11 +75,11 @@ Current milestone: **Complete Victory** is complete. In Bombermechs Easy run `20
 - [ ] Working Together (5.0%) — Area Shift 4 units at once [Arachnophile]
 - [ ] Efficient Explosives (4.8%) — Kill 3 Enemies with 1 Ricochet Rocket [Arachnophile]
 - [ ] Boosted (4.6%) — Boost 8 Mechs in one mission [Heat Sinkers]
-- [ ] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack [Heat Sinkers]
+- [x] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack [Heat Sinkers] — Steam-cache confirmed on 2026-06-26
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (59 Steam-cache confirmed)
+### Already Completed (60 Steam-cache confirmed, 61 locally proven)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -120,6 +120,7 @@ Current milestone: **Complete Victory** is complete. In Bombermechs Easy run `20
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
 - [x] Distant Friends (11.3%) — Encounter a familiar face  [Frozen Titans]
 - [x] Mech Specialist (11.1%) — Beat game with 3 of the same Mech  [Custom Squad]
+- [x] Lightning War (10.5%) — First 2 islands in under 30 min  [Blitzkrieg]
 - [x] Change the Odds (10.4%) — Grid Defense to 30%+  [Random Squad]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Class Specialist (9.8%) — Beat game with 3 different Mechs from the same class  [Custom Squad]
@@ -130,9 +131,14 @@ Current milestone: **Complete Victory** is complete. In Bombermechs Easy run `20
 - [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon  [Frozen Titans]
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
 - [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy  [Bombermechs]
+- [x] On the Backburner (8.2%) — 4 damage with Reverse Thrusters  [Mist Eaters]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
 - [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]
+- [x] Lucky Start (7.3%) — Beat game without spending Reputation  [Random Squad]
+- [x] Complete Victory (7.2%) — Beat game with all 10 primary Squads
+- [x] Stay With Me! (7.2%) — Heal 12 damage over single Island  [Mist Eaters]
 - [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
+- [x] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack  [Heat Sinkers]
 - [x] Squads Victory — Beat game with 4 different Squads
 
 

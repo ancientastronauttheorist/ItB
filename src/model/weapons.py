@@ -569,6 +569,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="more smoke",
         upgrade_b="+2 damage (total 3)",
     ),
+    "Ranged_SmokeFire_A": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=1, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Ranged_SmokeFire_B": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=3, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Ranged_SmokeFire_AB": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=3, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
     "Ranged_Crack": WeaponDef(
         name="Tri-Rocket", weapon_type="artillery",
         damage=1, push="forward", range_min=2, path_size=3,

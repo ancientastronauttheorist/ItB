@@ -685,7 +685,32 @@ def test_penultimate_infinite_spawn_destroy_objective_unit_alive_does_not_block(
         v["kind"] == "destroy_objective_unit_alive_final"
         for v in audit["violations"]
     )
+    assert audit["blocking"] is False
     assert plan_requires_safety_block(audit) is False
+
+
+def test_penultimate_turn_with_future_spawns_does_not_final_block_destroy_objective():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=1,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=1,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert audit["blocking"] is False
 
 
 def test_final_infinite_spawn_destroy_objective_unit_alive_blocks():
@@ -759,6 +784,57 @@ def test_infinite_spawn_zero_remaining_spawns_still_blocks_destroy_objective_uni
             is_infinite_spawn=True,
             destroy_objective_units_alive=1,
             destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
+def test_visible_victory_counter_overrides_spawn_clock_for_destroy_objective():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=0,
+            victory_turns=2,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            victory_turns=1,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert audit["blocking"] is False
+
+
+def test_penultimate_turn_without_future_spawns_final_blocks_destroy_objective():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=0,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
         ),
     )
 

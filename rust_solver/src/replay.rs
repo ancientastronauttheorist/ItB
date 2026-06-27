@@ -91,6 +91,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                     "buildings_lost": 0,
                     "buildings_damaged": 0,
                     "mech_damage_taken": 0,
+                    "mech_hp_repaired": 0,
                     "pods_collected": 0,
                     "repair_platforms_used": 0,
                     "spawns_blocked": 0,
@@ -159,6 +160,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             "buildings_damaged":  attack_result.buildings_damaged,
             "grid_damage":        attack_result.grid_damage,
             "mech_damage_taken":  attack_result.mech_damage_taken,
+            "mech_hp_repaired":   move_result.mech_hp_repaired + attack_result.mech_hp_repaired,
             "mechs_killed":       attack_result.mechs_killed,
             "pods_collected":     move_result.pods_collected + attack_result.pods_collected,
             "repair_platforms_used": move_result.repair_platforms_used + attack_result.repair_platforms_used,
@@ -617,6 +619,113 @@ mod tests {
             assert_eq!(boss["queued_origin"], json!([4, 2]));
             assert_eq!(boss["has_queued_attack"], true);
         }
+    }
+
+    #[test]
+    fn replay_solution_reverse_thrusters_backblast_smoke_does_not_same_action_heal() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 0, "type": "NeedleMech", "x": 3, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "flying": true, "move": 4, "active": true,
+             "weapons": ["Brute_KickBack", "Passive_HealingSmoke"]},
+            {"uid": 10, "type": "Spiderling1", "x": 3, "y": 2,
+             "hp": 1, "max_hp": 1, "team": 6}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 3],
+          "weapon_id": "Brute_KickBack",
+          "target": [3, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(v["action_results"][0]["mech_damage_taken"], 1);
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let mech = post_attack["units"].as_array().unwrap()
+            .iter()
+            .find(|u| u["uid"] == 0)
+            .unwrap();
+        assert_eq!(
+            mech["hp"], 2,
+            "Reverse Thrusters recoil should remain in replay snapshots until a later Nanofilter trigger"
+        );
+        let tiles = post_attack["tiles_changed"].as_array().unwrap();
+        let backblast = tiles.iter()
+            .find(|t| t["x"] == 3 && t["y"] == 2)
+            .expect("backblast tile should be serialized");
+        assert_eq!(
+            backblast["smoke"], true,
+            "Reverse Thrusters smokes the damaged backblast tile"
+        );
+        assert!(
+            tiles.iter().all(|t| !(t["x"] == 3 && t["y"] == 3 && t["smoke"] == true)),
+            "Reverse Thrusters should not leave smoke on the launch tile"
+        );
+    }
+
+    #[test]
+    fn replay_solution_smoldering_shells_adjacent_live_footprint() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 4, "y": 3, "terrain": "building", "building_hp": 1}
+          ],
+          "units": [
+            {"uid": 1, "type": "SmokeMech", "x": 4, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true,
+             "weapons": ["Ranged_SmokeFire"]},
+            {"uid": 653, "type": "Scorpion1", "x": 4, "y": 2,
+             "hp": 3, "max_hp": 3, "team": 6, "mech": false,
+             "move": 3, "active": false,
+             "weapons": ["ScorpionAtk1"]},
+            {"uid": 655, "type": "Spiderling1", "x": 3, "y": 2,
+             "hp": 1, "max_hp": 1, "team": 6, "mech": false,
+             "move": 3, "active": false, "fire": true,
+             "weapons": ["SpiderlingAtk1"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [4, 4],
+          "weapon_id": "Ranged_SmokeFire",
+          "target": [4, 2]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let units = post_attack["units"].as_array().unwrap();
+        let spiderling = units.iter().find(|u| u["uid"] == 655).unwrap();
+        assert_eq!(
+            spiderling["status"]["fire"], false,
+            "Smoldering Shells adjacent effect should extinguish occupied adjacent units"
+        );
+        let building_tile = post_attack["tiles_changed"].as_array().unwrap()
+            .iter()
+            .find(|t| t["x"] == 4 && t["y"] == 3)
+            .unwrap();
+        assert_eq!(
+            building_tile["smoke"], false,
+            "Smoldering Shells adjacent effect should skip building tiles"
+        );
     }
 
     #[test]

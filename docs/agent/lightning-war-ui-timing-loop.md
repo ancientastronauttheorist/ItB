@@ -23,6 +23,15 @@ main menu and repeats from the top.
 
 ## Timer Source Gate
 
+For the computer-use controller path, screenshot-visible game timer evidence is
+the only timing authority. Use `lightning_snap_pause` / pause-menu OCR evidence
+for run decisions, and treat memory/profile timer reads in this document as
+lab-only calibration aids rather than achievement proof.
+
+Working hypothesis for speed attempts: setup, map, preview, reward, and shop UI
+can all spend the visible in-game timer. Verify each boundary with 2 Hz
+screenshot evidence before treating any UI screen as free time.
+
 The in-game timer is the only timing authority. Every Lightning War lab session
 must start by proving the timer source before trusting timing numbers or
 filename timestamps.
@@ -103,19 +112,31 @@ red mission region is detected on the Archive mission map. Merely reaching the
 island selection screen or a generic island map is not enough.
 
 Before the timer-zero click, the timing lab must stamp the live run session as
-`Blitzkrieg` / `Lightning War` / Easy. The UI route can otherwise start the
-right visible squad while the solver session still carries a stale achievement
-target from another lab, which disables Lightning War-only speed-loss policy.
+`Blitzkrieg` / `Lightning War` / Easy / Advanced Content OFF. The UI route can
+otherwise start the right visible squad while the solver session still carries a
+stale achievement target from another lab, which disables Lightning War-only
+speed-loss policy.
 
 Hardcoded island order for Lightning War calibration:
 
 1. Archive, Inc.
-2. Pinnacle Robotics
+2. Detritus Disposal
+3. Pinnacle Robotics
 
 The mission target itself should not require strategy thinking during timing
-calibration: click a valid red mission, not the "best" red mission. The red
-mission detector must still be robust enough to avoid boundary clicks between
-two adjacent red regions and must return proof for the chosen target.
+calibration: click a valid red mission, not the "best" red mission. Once a
+preview opens and the small 8x8 board highlight proves it is clickable, commit
+with the preview-board click instead of comparing routes. On the current layout
+the highlighted 8x8 board is stable per preview; keep hover proof for data
+mode, but hot runs should click the named preview-board target. The red mission
+detector must still be robust enough to avoid boundary clicks between two
+adjacent red regions and must return proof for the chosen target.
+
+Exact mission identity is a guardrail, not a shopping signal. If a Dam,
+Satellite, Train, Tides, Volatile, or similar mission is exactly proven and the
+post-Start handoff proves deployment or combat, keep going and let the solver
+handle the board. Reset for unknown/stale UI proof or missing
+handoff, not because a different mission might be cleaner.
 
 Expected island structure: each island has five red missions to clear. The first
 four ordinary missions should be UI-equivalent for mission selection. The fifth
@@ -151,6 +172,10 @@ The cycle is:
 8. Replay the proven route plus the new slice.
 9. Repeat until the whole two-island Lightning War route is covered.
 
+During reward/shop discovery, the fixed rule is: read Grid Power, buy Grid
+Power until it is maxed or reputation runs out, then leave the shop and island
+immediately. Do not browse items or optimize purchases during a timed attempt.
+
 Do not try to discover multiple uncertain UI boundaries in one live attempt.
 The loop is intentionally repetitive: prove one boundary, restart to the main
 menu, replay from the top, extend the script by one boundary, and test again.
@@ -158,6 +183,12 @@ menu, replay from the top, extend the script by one boundary, and test again.
 The user should stay in the loop during discovery. When a timing choice, branch
 classification, or failed click needs judgment, stop with a "next timing patch"
 report rather than silently papering over the uncertainty.
+
+Deployment is owned by the existing fast placement helper/script during real
+attempts. If fast deployment times out and cannot be proven placed from a fresh
+bridge read, stop or restart instead of falling back to deployment UI clicks.
+UI fallback may be used only as an explicit observe/build experiment, because it
+can spend multiple minutes of live timer before the next pause guard fires.
 
 ## Mode Toggle
 
@@ -565,10 +596,20 @@ After each newly proven UI boundary:
 This keeps timing comparable across attempts and prevents late-run state drift
 from being mistaken for a reliable route.
 
-In practice, "restart" means return to the title/main menu, then execute the
-full proven sequence again. If the live game is parked at setup, island map,
-deployment, combat, or a reward screen, first abandon or otherwise recover to
-the main menu before starting the next measurement pass.
+In practice, "restart" means Esc to the pause menu, click Main Menu, confirm,
+then execute the full proven sequence again. If the live game is parked at
+setup, island map, deployment, combat, or a reward screen, first abandon or
+otherwise recover to the main menu before starting the next measurement pass.
+Screens where Esc cannot reach the pause menu need their own documented
+exception.
+
+## Success Proof
+
+Steam may be offline during Lightning War attempts. Success proof may come from
+the on-screen achievement pop, the offline Into the Breach log, or the pause
+menu achievement page showing the middle Blitzkrieg achievement colored in. If
+Steam sync later exposes `Lightning War` in the synced `unlocked_list`, that is
+also acceptable, but do not require online sync before preserving offline proof.
 
 ## Relationship To Other Lightning Plans
 

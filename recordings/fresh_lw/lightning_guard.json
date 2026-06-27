@@ -1,0 +1,807 @@
+{
+  "status": "BLOCKED",
+  "run_id": "fresh_lw",
+  "updated_at": "2026-06-26T07:54:41",
+  "desired_rest_state": "pause_menu",
+  "reason": "first_mission_route_start_timer_gate",
+  "visible_ui": {
+    "status": "OK",
+    "visible_ui": "title_screen",
+    "recommended_control": "title_new_game",
+    "confidence": 0.6831,
+    "dark_overlay_fraction": 0.2531,
+    "scores": {
+      "title_continue": {
+        "score": 0.6831,
+        "bright": 4973,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          80,
+          432,
+          600,
+          572
+        ]
+      },
+      "title_new_game": {
+        "score": 0.8595,
+        "bright": 6257,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          80,
+          560,
+          600,
+          700
+        ]
+      },
+      "pause_menu": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 128000,
+        "crop": [
+          662,
+          402,
+          1302,
+          602
+        ]
+      },
+      "reward_panel": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 108000,
+        "crop": [
+          1702,
+          1216,
+          2302,
+          1396
+        ]
+      },
+      "bottom_continue_panel": {
+        "score": 0.0174,
+        "bright": 209,
+        "border": 0,
+        "pixels": 120000,
+        "crop": [
+          1710,
+          1252,
+          2310,
+          1452
+        ]
+      },
+      "pod_open_panel": {
+        "score": 0.2726,
+        "bright": 0,
+        "border": 6133,
+        "pixels": 90000,
+        "crop": [
+          1780,
+          706,
+          2280,
+          886
+        ]
+      },
+      "promotion_panel": {
+        "score": 1.373,
+        "bright": 0,
+        "border": 41189,
+        "pixels": 120000,
+        "crop": [
+          1032,
+          936,
+          1632,
+          1136
+        ]
+      },
+      "kia_panel": {
+        "score": 1.4314,
+        "bright": 0,
+        "border": 46376,
+        "pixels": 129600,
+        "crop": [
+          972,
+          796,
+          1692,
+          976
+        ]
+      },
+      "perfect_reward_choice": {
+        "score": 0.956,
+        "bright": 0,
+        "border": 17878,
+        "pixels": 74800,
+        "crop": [
+          1464,
+          830,
+          1804,
+          1050
+        ]
+      },
+      "perfect_island_panel": {
+        "score": 0.6299,
+        "bright": 0,
+        "border": 29480,
+        "pixels": 187200,
+        "crop": [
+          1332,
+          970,
+          2052,
+          1230
+        ]
+      },
+      "island_complete_leave": {
+        "score": 0.5091,
+        "bright": 3706,
+        "border": 0,
+        "pixels": 72800,
+        "crop": [
+          1022,
+          1338,
+          1542,
+          1478
+        ]
+      },
+      "mission_preview_panel": {
+        "score": 0.0,
+        "yellow": 0,
+        "pixels": 540800,
+        "crop": [
+          1110,
+          676,
+          2150,
+          1196
+        ]
+      },
+      "mission_preview_dialogue": {
+        "score": 0.4671,
+        "card": {
+          "red": 0,
+          "blue": 232845,
+          "bright": 0,
+          "dark_fraction": 0.1987,
+          "pixels": 777600,
+          "crop": [
+            500,
+            700,
+            2120,
+            1180
+          ]
+        },
+        "dialogue": {
+          "red": 0,
+          "blue": 0,
+          "bright": 6007,
+          "dark_fraction": 0.2517,
+          "pixels": 489600,
+          "crop": [
+            260,
+            330,
+            2300,
+            570
+          ]
+        }
+      },
+      "deployment_screen": {
+        "score": 0.0,
+        "yellow": 0,
+        "pixels": 1628000,
+        "crop": [
+          480,
+          180,
+          1960,
+          1280
+        ]
+      },
+      "paused_deployment_underlay": {
+        "score": 1.0,
+        "visible": true,
+        "active_mission_under_pause": true,
+        "signal_count": 7,
+        "signals": {
+          "header": true,
+          "active_mission_header": true,
+          "left_mechs": true,
+          "remaining": true,
+          "bottom_left": true,
+          "right_objectives": true,
+          "board_right": true
+        },
+        "header": {
+          "over20": 199500,
+          "over35": 198026,
+          "over50": 146143,
+          "blue": 26723,
+          "pixels": 199500,
+          "crop": [
+            10,
+            70,
+            1060,
+            260
+          ]
+        },
+        "remaining": {
+          "over20": 49000,
+          "over35": 46199,
+          "over50": 43933,
+          "blue": 9734,
+          "pixels": 49000,
+          "crop": [
+            10,
+            260,
+            500,
+            360
+          ]
+        },
+        "left_mechs": {
+          "over20": 423336,
+          "over35": 275610,
+          "over50": 194559,
+          "blue": 235972,
+          "pixels": 423360,
+          "crop": [
+            0,
+            320,
+            360,
+            1496
+          ]
+        },
+        "bottom_left": {
+          "over20": 306677,
+          "over35": 183818,
+          "over50": 137174,
+          "blue": 293554,
+          "pixels": 306720,
+          "crop": [
+            0,
+            1070,
+            720,
+            1496
+          ]
+        },
+        "right_objectives": {
+          "over20": 175697,
+          "over35": 175697,
+          "over50": 172223,
+          "blue": 3475,
+          "pixels": 264600,
+          "crop": [
+            2000,
+            250,
+            2540,
+            740
+          ]
+        },
+        "board_right": {
+          "over20": 259730,
+          "over35": 259730,
+          "over50": 174202,
+          "blue": 191066,
+          "pixels": 464000,
+          "crop": [
+            1940,
+            640,
+            2520,
+            1440
+          ]
+        }
+      },
+      "island_map": {
+        "score": 0.0,
+        "red": 0,
+        "green": 0,
+        "colored": 0,
+        "pixels": 1456000,
+        "crop": [
+          840,
+          340,
+          2240,
+          1380
+        ]
+      },
+      "mech_loadout_screen": {
+        "score": 0.0,
+        "header": {
+          "score": 1.3512,
+          "bright": 17853,
+          "border": 17792,
+          "pixels": 184800,
+          "crop": [
+            280,
+            282,
+            1600,
+            422
+          ]
+        },
+        "storage": {
+          "score": 0.5168,
+          "bright": 0,
+          "border": 27906,
+          "pixels": 216000,
+          "crop": [
+            1750,
+            460,
+            2050,
+            1180
+          ]
+        },
+        "test_mech": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 30000,
+          "crop": [
+            1420,
+            1180,
+            1720,
+            1280
+          ]
+        },
+        "install": {
+          "score": 1.4559,
+          "bright": 0,
+          "border": 16015,
+          "pixels": 44000,
+          "crop": [
+            820,
+            900,
+            1040,
+            1100
+          ]
+        }
+      },
+      "new_game_setup_back": {
+        "score": 0.8497,
+        "bright": 4464,
+        "border": 3795,
+        "pixels": 70400,
+        "crop": [
+          362,
+          86,
+          802,
+          246
+        ]
+      },
+      "new_game_setup_start": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 70400,
+        "crop": [
+          1790,
+          86,
+          2230,
+          246
+        ]
+      },
+      "new_game_setup_back_windows": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 22880,
+        "crop": [
+          1380,
+          452,
+          1640,
+          540
+        ]
+      },
+      "new_game_setup_start_windows": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 22880,
+        "crop": [
+          1582,
+          452,
+          1842,
+          540
+        ]
+      },
+      "options_header": {
+        "score": 1.4974,
+        "bright": 7728,
+        "border": 7034,
+        "pixels": 70400,
+        "crop": [
+          280,
+          110,
+          720,
+          270
+        ]
+      },
+      "options_close": {
+        "score": 0.0,
+        "bright": 0,
+        "border": 0,
+        "pixels": 115200,
+        "crop": [
+          1420,
+          1280,
+          2140,
+          1440
+        ]
+      },
+      "system_privacy_prompt": {
+        "status": "OK",
+        "matched": false,
+        "score": 0.0,
+        "strict_score": 0.0,
+        "relaxed_score": 0.0,
+        "kind": "macos_screen_audio_privacy_prompt",
+        "checks": {
+          "card_mid_dark": 0.8080725847053657,
+          "inner_mid_dark": 0.8333975000641666,
+          "button_gray": 0.0,
+          "icon_blue": 0.0,
+          "icon_color": 0.0,
+          "text_bright": 0.0
+        },
+        "regions": {
+          "card": {
+            "box": [
+              986,
+              322,
+              1510,
+              995
+            ],
+            "pixels": 352652,
+            "mid_dark_fraction": 0.5252471800584877,
+            "button_gray_fraction": 0.5161398133964629,
+            "bright_text_fraction": 0.007074223645731792,
+            "blue_icon_fraction": 0.007464141484472915,
+            "red_icon_fraction": 0.0
+          },
+          "inner": {
+            "box": [
+              1037,
+              367,
+              1472,
+              965
+            ],
+            "pixels": 260130,
+            "mid_dark_fraction": 0.5417083750417083,
+            "button_gray_fraction": 0.5417083750417083,
+            "bright_text_fraction": 0.0,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "text": {
+            "box": [
+              1037,
+              524,
+              1472,
+              808
+            ],
+            "pixels": 123540,
+            "mid_dark_fraction": 0.5883187317480184,
+            "button_gray_fraction": 0.5883187317480184,
+            "bright_text_fraction": 0.0,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "buttons": {
+            "box": [
+              1024,
+              823,
+              1485,
+              957
+            ],
+            "pixels": 61774,
+            "mid_dark_fraction": 0.0,
+            "button_gray_fraction": 0.0,
+            "bright_text_fraction": 0.0,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          },
+          "icon": {
+            "box": [
+              1024,
+              367,
+              1165,
+              501
+            ],
+            "pixels": 18894,
+            "mid_dark_fraction": 1.0,
+            "button_gray_fraction": 1.0,
+            "bright_text_fraction": 0.0,
+            "blue_icon_fraction": 0.0,
+            "red_icon_fraction": 0.0
+          }
+        }
+      }
+    },
+    "bridge_refine_snapshot": {
+      "status": "SKIPPED",
+      "reason": "bridge_heartbeat_stale_or_missing"
+    },
+    "ocr": {
+      "status": "OK",
+      "texts": [
+        "Into the Breach",
+        "llNTo Offt@fi]@N]",
+        "Continue",
+        "New Game",
+        "Options",
+        "Credits",
+        "Quit",
+        "Prof ile: Alpha",
+        "Achievement5",
+        "stati5tiC5",
+        "(c) 2018 Subset Games",
+        "Steam v. 1.2.9313-12-2024)"
+      ],
+      "observations": [
+        {
+          "text": "Into the Breach",
+          "bbox_normalized": {
+            "x": 0.46171875,
+            "y": 0.9752673796791443,
+            "width": 0.07578124999999997,
+            "height": 0.014037433155080214
+          },
+          "bbox_image": [
+            1182.0,
+            16.0,
+            1376.0,
+            37.0
+          ],
+          "center_image": [
+            1279.0,
+            26.5
+          ]
+        },
+        {
+          "text": "llNTo Offt@fi]@N]",
+          "bbox_normalized": {
+            "x": 0.0453125,
+            "y": 0.7767379679144385,
+            "width": 0.6218750000000001,
+            "height": 0.13636363636363635
+          },
+          "bbox_image": [
+            116.0,
+            130.0,
+            1708.0,
+            334.0
+          ],
+          "center_image": [
+            912.0,
+            232.0
+          ]
+        },
+        {
+          "text": "Continue",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.6363636363636364,
+            "width": 0.1109375,
+            "height": 0.02941176470588236
+          },
+          "bbox_image": [
+            140.0,
+            500.0,
+            424.0,
+            544.0
+          ],
+          "center_image": [
+            282.0,
+            522.0
+          ]
+        },
+        {
+          "text": "New Game",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.5668449197860963,
+            "width": 0.12031249999999999,
+            "height": 0.02941176470588225
+          },
+          "bbox_image": [
+            140.0,
+            604.0,
+            448.0,
+            648.0
+          ],
+          "center_image": [
+            294.0,
+            626.0
+          ]
+        },
+        {
+          "text": "Options",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.48930481283422456,
+            "width": 0.0953125,
+            "height": 0.03743315508021394
+          },
+          "bbox_image": [
+            140.0,
+            708.0,
+            384.0,
+            764.0
+          ],
+          "center_image": [
+            262.0,
+            736.0
+          ]
+        },
+        {
+          "text": "Credits",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.4278074866310161,
+            "width": 0.0953125,
+            "height": 0.02941176470588236
+          },
+          "bbox_image": [
+            140.0,
+            812.0,
+            384.0,
+            856.0
+          ],
+          "center_image": [
+            262.0,
+            834.0
+          ]
+        },
+        {
+          "text": "Quit",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.3582887700534759,
+            "width": 0.048437499999999994,
+            "height": 0.02941176470588236
+          },
+          "bbox_image": [
+            140.0,
+            916.0,
+            264.0,
+            960.0
+          ],
+          "center_image": [
+            202.0,
+            938.0
+          ]
+        },
+        {
+          "text": "Prof ile: Alpha",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.12700534759358284,
+            "width": 0.1703125,
+            "height": 0.03743315508021394
+          },
+          "bbox_image": [
+            140.0,
+            1250.0,
+            576.0,
+            1306.0
+          ],
+          "center_image": [
+            358.0,
+            1278.0
+          ]
+        },
+        {
+          "text": "Achievement5",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.08155080213903743,
+            "width": 0.11875,
+            "height": 0.020053475935828846
+          },
+          "bbox_image": [
+            140.0,
+            1344.0,
+            444.0,
+            1374.0
+          ],
+          "center_image": [
+            292.0,
+            1359.0
+          ]
+        },
+        {
+          "text": "stati5tiC5",
+          "bbox_normalized": {
+            "x": 0.0546875,
+            "y": 0.03208556149732622,
+            "width": 0.084375,
+            "height": 0.020053475935828846
+          },
+          "bbox_image": [
+            140.0,
+            1418.0,
+            356.0,
+            1448.0
+          ],
+          "center_image": [
+            248.0,
+            1433.0
+          ]
+        },
+        {
+          "text": "(c) 2018 Subset Games",
+          "bbox_normalized": {
+            "x": 0.4171875,
+            "y": 0.008021390374331583,
+            "width": 0.16640625000000003,
+            "height": 0.024064171122994638
+          },
+          "bbox_image": [
+            1068.0,
+            1448.0,
+            1494.0,
+            1484.0
+          ],
+          "center_image": [
+            1281.0,
+            1466.0
+          ]
+        },
+        {
+          "text": "Steam v. 1.2.9313-12-2024)",
+          "bbox_normalized": {
+            "x": 0.78125,
+            "y": 0.008021390374331583,
+            "width": 0.20546874999999998,
+            "height": 0.024064171122994638
+          },
+          "bbox_image": [
+            2000.0,
+            1448.0,
+            2526.0,
+            1484.0
+          ],
+          "center_image": [
+            2263.0,
+            1466.0
+          ]
+        }
+      ]
+    },
+    "ocr_texts": [
+      "Into the Breach",
+      "llNTo Offt@fi]@N]",
+      "Continue",
+      "New Game",
+      "Options",
+      "Credits",
+      "Quit",
+      "Prof ile: Alpha",
+      "Achievement5",
+      "stati5tiC5",
+      "(c) 2018 Subset Games",
+      "Steam v. 1.2.9313-12-2024)"
+    ],
+    "visible_text": "Into the Breach\nllNTo Offt@fi]@N]\nContinue\nNew Game\nOptions\nCredits\nQuit\nProf ile: Alpha\nAchievement5\nstati5tiC5\n(c) 2018 Subset Games\nSteam v. 1.2.9313-12-2024)",
+    "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_50922.png",
+    "game_focus_proof": {
+      "status": "OK",
+      "frontmost": true,
+      "window_bounds": {
+        "x": 215,
+        "y": 32,
+        "width": 1280,
+        "height": 748
+      },
+      "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_50922.png",
+      "screenshot_image_size": [
+        2560,
+        1496
+      ],
+      "expected_app": "Into the Breach"
+    }
+  },
+  "click_result": {
+    "status": "OK",
+    "key": "esc",
+    "description": "Pause menu Escape resume",
+    "backend": "pyautogui",
+    "control": "pause_menu_escape"
+  },
+  "resume_hint": "Stay in the pause menu while thinking. Use lightning_ui menu_continue only when the next UI click or combat command is ready, then return to pause as soon as the burst is done."
+}
