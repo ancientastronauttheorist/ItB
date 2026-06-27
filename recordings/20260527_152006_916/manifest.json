@@ -1,0 +1,18 @@
+{
+  "run_id": "20260527_152006_916",
+  "squad": "Balanced Roll",
+  "difficulty": 0,
+  "achievement_targets": [
+    "Change the Odds"
+  ],
+  "tags": [
+    "achievement",
+    "random_squad"
+  ],
+  "solver_version": "rust-0.1.0-79a0a20",
+  "weight_version": "v011",
+  "updated": "2026-05-27T15:20:06.941717",
+  "created": "2026-05-27T15:20:06.941733",
+  "missions": [],
+  "outcome": null
+}

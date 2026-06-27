@@ -1,0 +1,195 @@
+{
+  "boundaries": {
+    "main_menu_to_archive_red_map": {
+      "archive_click_wall_seconds": 7.816,
+      "branch_label": "archive_intro.default",
+      "chosen_probe_region": {
+        "area_window": 14647.0,
+        "coordinate_space": "physical_window",
+        "index": 0,
+        "window_x": 1806,
+        "window_y": 703
+      },
+      "evidence": {
+        "contact_sheet_path": "recordings\\lightning_ui_timing_20260613_172553\\telemetry\\contact_sheet.png",
+        "red_map_screenshot": "recordings\\lightning_ui_timing_20260613_172553\\telemetry\\screenshots\\000011_1781389625381_gt0-00-05_opening_probe.png",
+        "report_path": "run_notes\\lightning_ui_timing_loop\\lightning_ui_timing_20260613_172553_opening_red_map_report.json",
+        "run_id": "lightning_ui_timing_20260613_172553"
+      },
+      "fallback_time_source": "save_profile_current_time_not_top_right_validated",
+      "in_game_timer": {
+        "all_samples": {
+          "archive_click": {
+            "address": "0x00000000122e5dbc",
+            "clock_source": "memory_live_numeric_candidate",
+            "fallback_save_timer": {
+              "clock_source": "save_current_time",
+              "game_seconds": 0.0,
+              "game_timer": "0:00:00",
+              "game_timer_ms": 0.0,
+              "label": "archive_click",
+              "source": "saveData_current_time",
+              "status": "OK",
+              "timer_validation": "fallback_not_top_right_validated"
+            },
+            "game_seconds": 3.613216,
+            "game_timer": "0:00:03",
+            "label": "archive_click",
+            "pid": 2100,
+            "raw": 3.613216,
+            "source": "validated_live_numeric_cycle",
+            "status": "OK",
+            "timer_validation": "validated_live_numeric_cycle"
+          },
+          "intro_continue": {
+            "address": "0x00000000122e5dbc",
+            "clock_source": "memory_live_numeric_candidate",
+            "fallback_save_timer": {
+              "clock_source": "save_current_time",
+              "game_seconds": 0.0,
+              "game_timer": "0:00:00",
+              "game_timer_ms": 0.0,
+              "label": "intro_continue",
+              "source": "saveData_current_time",
+              "status": "OK",
+              "timer_validation": "fallback_not_top_right_validated"
+            },
+            "game_seconds": 5.984191,
+            "game_timer": "0:00:05",
+            "label": "intro_continue",
+            "pid": 2100,
+            "raw": 5.984191,
+            "source": "validated_live_numeric_cycle",
+            "status": "OK",
+            "timer_validation": "validated_live_numeric_cycle"
+          },
+          "pre_timer": {
+            "address": "0x00000000122e5dbc",
+            "clock_source": "memory_live_numeric_candidate",
+            "fallback_save_timer": {
+              "clock_source": "save_current_time",
+              "game_seconds": 3.861,
+              "game_timer": "0:00:04",
+              "game_timer_ms": 3860.941,
+              "label": "pre_timer",
+              "source": "saveData_current_time",
+              "status": "OK",
+              "timer_validation": "fallback_not_top_right_validated"
+            },
+            "game_seconds": 21.661894,
+            "game_timer": "0:00:21",
+            "label": "pre_timer",
+            "pid": 2100,
+            "raw": 21.661894,
+            "source": "validated_live_numeric_cycle",
+            "status": "OK",
+            "timer_validation": "validated_live_numeric_cycle"
+          },
+          "red_map_detected": {
+            "address": "0x00000000122e5dbc",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_seconds": 5.998129,
+            "game_timer": "0:00:05",
+            "label": "red_map_detected_frame",
+            "pid": 2100,
+            "raw": 5.998129,
+            "source": "screenshot_frame_clock",
+            "status": "OK",
+            "timer_validation": "validated_live_numeric_cycle"
+          },
+          "red_map_detected_frame": {
+            "address": "0x00000000122e5dbc",
+            "clock_source": "memory_live_numeric_candidate",
+            "game_seconds": 5.998129,
+            "game_timer": "0:00:05",
+            "label": "red_map_detected_frame",
+            "pid": 2100,
+            "raw": 5.998129,
+            "source": "screenshot_frame_clock",
+            "status": "OK",
+            "timer_validation": "validated_live_numeric_cycle"
+          },
+          "red_map_detected_paired_after_detection": {
+            "address": "0x00000000122e5dbc",
+            "clock_source": "memory_live_numeric_candidate",
+            "fallback_save_timer": {
+              "clock_source": "save_current_time",
+              "game_seconds": 0.0,
+              "game_timer": "0:00:00",
+              "game_timer_ms": 0.0,
+              "label": "red_map_detected_screenshot_pair",
+              "source": "saveData_current_time",
+              "status": "OK",
+              "timer_validation": "fallback_not_top_right_validated"
+            },
+            "game_seconds": 6.834888,
+            "game_timer": "0:00:06",
+            "label": "red_map_detected_screenshot_pair",
+            "pid": 2100,
+            "raw": 6.834888,
+            "source": "validated_live_numeric_cycle",
+            "status": "OK",
+            "timer_validation": "validated_live_numeric_cycle"
+          },
+          "timer_zero_click": {
+            "address": "0x00000000122e5dbc",
+            "clock_source": "memory_live_numeric_candidate",
+            "fallback_save_timer": {
+              "clock_source": "save_current_time",
+              "game_seconds": 3.861,
+              "game_timer": "0:00:04",
+              "game_timer_ms": 3860.941,
+              "label": "timer_zero_click",
+              "source": "saveData_current_time",
+              "status": "OK",
+              "timer_validation": "fallback_not_top_right_validated"
+            },
+            "game_seconds": 21.661894,
+            "game_timer": "0:00:21",
+            "label": "timer_zero_click",
+            "pid": 2100,
+            "raw": 21.661894,
+            "source": "validated_live_numeric_cycle",
+            "status": "OK",
+            "timer_validation": "validated_live_numeric_cycle"
+          }
+        },
+        "red_map_detected": {
+          "address": "0x00000000122e5dbc",
+          "clock_source": "memory_live_numeric_candidate",
+          "game_seconds": 5.998129,
+          "game_timer": "0:00:05",
+          "label": "red_map_detected_frame",
+          "pid": 2100,
+          "raw": 5.998129,
+          "source": "screenshot_frame_clock",
+          "status": "OK",
+          "timer_validation": "validated_live_numeric_cycle"
+        },
+        "red_map_detected_paired_after_detection": {
+          "address": "0x00000000122e5dbc",
+          "clock_source": "memory_live_numeric_candidate",
+          "game_seconds": 5.998129,
+          "game_timer": "0:00:05",
+          "label": "red_map_detected_frame",
+          "pid": 2100,
+          "raw": 5.998129,
+          "source": "screenshot_frame_clock",
+          "status": "OK",
+          "timer_validation": "validated_live_numeric_cycle"
+        }
+      },
+      "intro_continue_wall_seconds": 10.335,
+      "primary_time_source": "validated_memory_live_numeric_candidate_when_available",
+      "red_map_detected_game_seconds": 5.998129,
+      "red_map_detected_game_timer": "0:00:05",
+      "red_map_detected_wall_seconds": 10.899,
+      "region_count": 2,
+      "status": "PASS",
+      "timer_zero": "lower difficulty setup Start click"
+    }
+  },
+  "current_milestone": "main_menu_to_archive_red_map",
+  "schema_version": 1,
+  "updated_at": "2026-06-13T17:27:06-05:00"
+}

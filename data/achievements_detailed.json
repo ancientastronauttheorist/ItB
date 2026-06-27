@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-24T21:08:19.254702",
+    "last_steam_sync": "2026-06-26T11:32:50.375862",
     "last_steam_total": 70,
-    "last_steam_unlocked": 43
+    "last_steam_unlocked": 60
   },
   "achievements": {
     "rift_walkers": [
@@ -123,7 +123,7 @@
         "description": "Finish the first 2 Corporate Islands in under 30 minutes with Blitzkrieg",
         "type": "single_run",
         "global_unlock_pct": 10.5,
-        "completed": false,
+        "completed": true,
         "strategy": "Enable timer UI in settings. Max combat speed. Choose 2-island run. Pick easy 1-objective missions. Don't overthink moves \u2014 speed matters. 'Protect train' missions are shorter. Minimal shop time between islands.",
         "setup": "Timer enabled, combat speed maxed, 2-island run, easy difficulty",
         "pitfalls": "Timer is real-time. Menu/shop time counts. Don't pause to think too long."
@@ -219,10 +219,10 @@
         "description": "Kill 3 enemies with a single attack of the Janus Cannon with Frozen Titans",
         "type": "single_battle",
         "global_unlock_pct": 9.1,
-        "completed": false,
-        "strategy": "Janus Cannon fires in BOTH directions. Need 3 enemies in the two lines. Archive island dam destruction can line up enemies. Spider Boss with spiderlings provides many low-HP targets. Upgrade Janus damage.",
-        "setup": "Upgraded Janus Cannon. Spider Leader mission or dam map. Low-HP targets.",
-        "pitfalls": "Damage decreases with range. Further enemies may survive. Need exact alignment."
+        "completed": true,
+        "strategy": "Janus Cannon fires in BOTH directions. Need 3 enemies in the two lines. Archive dam destruction can drown three enemies and count toward the Janus attack; otherwise line up one kill on one side and two on the other via direct damage plus bump/collision. Spiderlings, Blobs, Leapers, A.C.I.D., and upgraded Janus damage all help.",
+        "setup": "Frozen Titans on Easy/Normal. Prefer +1 Reactor pilot or early core in Mirror Mech, power +1 Janus damage, then hunt Archive dam or dense low-HP enemy missions.",
+        "pitfalls": "Offline Steam can delay the visible cache/API credit until Steam returns online and Into the Breach restarts. Local ITB logs record the achievement call without an exact per-line timestamp. Damage decreases with range; further enemies may survive unless A.C.I.D., bumps, or dam flooding finish them."
       },
       {
         "name": "Pacifist",
@@ -251,7 +251,7 @@
         "description": "Finish 4 Corporate Islands without a Mech destroyed at battle end with Hazardous Mechs squad",
         "type": "single_run",
         "global_unlock_pct": 9.5,
-        "completed": false,
+        "completed": true,
         "strategy": "4-island run. No mech can be destroyed (0 HP) at end of any battle across all 4 islands. Abe Isamu (Armor) helps survival. Harold Schmidt repairs. Prioritize damage upgrades for faster kills. Complete hardest islands first while fresh.",
         "setup": "4-island run. Abe Isamu pilot. Damage upgrades. Easy difficulty.",
         "pitfalls": "A mech being destroyed at ANY battle end fails the whole achievement. Very long run."
@@ -273,7 +273,7 @@
         "description": "Open 5 Time Pods in a single game with a Random squad",
         "type": "single_run",
         "global_unlock_pct": 9.4,
-        "completed": false,
+        "completed": true,
         "strategy": "4-island run required for enough missions. Protect every Time Pod encountered. Use mobility to collect pods. Not every mission has a pod \u2014 need luck plus protection.",
         "setup": "4-island run. Random squad. Prioritize pod protection.",
         "pitfalls": "Pod spawns are random. May not get 5 across a run. Must protect every one."
@@ -283,7 +283,7 @@
         "description": "Beat the game without spending any Reputation with a Random squad",
         "type": "single_run",
         "global_unlock_pct": 7.3,
-        "completed": false,
+        "completed": true,
         "strategy": "2-island run (shorter). Reroll random squad for a balanced composition. Use a compatible time-travel pilot. Don't visit the shop or spend any reputation at all.",
         "setup": "2-island run. Good starting pilot. Easy difficulty.",
         "pitfalls": "No shop purchases means no extra weapons, cores, or grid power. Must be self-sufficient."
@@ -293,10 +293,10 @@
         "description": "Raise Grid Defense to 30% or more with a Random squad",
         "type": "single_run",
         "global_unlock_pct": 10.4,
-        "completed": false,
-        "strategy": "Prioritize reputation for grid defense at shop (not grid power). Perfect Islands yield extra defense. Pilot +3 Grid Defense perks stack. Need ~30% total.",
-        "setup": "Random squad. Focus all resources on grid defense. Corporate islands with good reputation.",
-        "pitfalls": "Grid defense is percentage chance, not guaranteed. Takes many investments to reach 30%."
+        "completed": true,
+        "strategy": "Fill the grid, then buy or earn extra Grid Power while full. Starting from 15% Grid Defense on Easy/Normal/Hard, the first five overpowers add +2% each and later overpowers add +1%, so 10 total overpowered Grid Power reaches 30% without pilot bonuses.",
+        "setup": "Random squad, preferably Easy Balanced Roll. Save reputation, buy Grid Power to full before other shop items, then sell spare weapons/pilots if needed and buy Overpower Grid until the visible defense reaches 30%.",
+        "pitfalls": "Unfair starts Grid Defense at 0% and is much harder. Grid Defense is the percentage chance, not Grid Power. Do not leave the shop before the visible Grid Defense reaches 30% or the achievement pops."
       }
     ],
     "custom_squad": [
@@ -305,19 +305,19 @@
         "description": "Beat the game with 3 of the same Mech in a Custom squad",
         "type": "single_run",
         "global_unlock_pct": 11.1,
-        "completed": false,
-        "strategy": "3x Combat Mech is effective (high damage, good all-around). Collect supporting weapons from shops/pods. 2-island run recommended.",
-        "setup": "Custom squad: 3 identical mechs. Easy difficulty. 2-island run.",
-        "pitfalls": "Limited versatility. Need to compensate with found weapons."
+        "completed": true,
+        "strategy": "Completed with 3x Ice Mech on Easy, which also satisfies Flight Specialist because Ice Mechs fly. Bethany/Mafan shielded Cryo is the cleanest opener, but the route can still win if the shielded pilot is disabled before final-cave completion.",
+        "setup": "Custom squad: 3 identical mechs. Proven setup: 3x Ice Mech, Easy difficulty, Advanced Edition ON, 2-island run.",
+        "pitfalls": "Low damage and repeated Cryo self-freeze create action-economy debt. Optional bonuses and leader kills are expendable, but final-cave Renfield Bomb survival and grid > 0 are not."
       },
       {
         "name": "Class Specialist",
         "description": "Beat the game with 3 different Mechs from the same class in Custom squad",
         "type": "single_run",
         "global_unlock_pct": 9.8,
-        "completed": false,
-        "strategy": "Prime class recommended: Combat Mech + Laser Mech + Aegis Mech. All have strong melee attacks. 2-island run.",
-        "setup": "Custom squad: 3 Prime-class mechs. Easy difficulty.",
+        "completed": true,
+        "strategy": "Completed with Combat Mech + Laser Mech + Aegis Mech on Easy. Prime class has strong melee/control tools; buy Grid Power first, then cores and useful Prime-class weapons.",
+        "setup": "Custom squad: 3 Prime-class mechs. Proven setup: Combat Mech + Laser Mech + Aegis Mech, Easy difficulty, Advanced Edition ON, 2-island run.",
         "pitfalls": "Same-class squads lack support variety. Primes lack ranged attacks."
       },
       {
@@ -325,10 +325,10 @@
         "description": "Beat the game with 3 flying Mechs in a Custom squad",
         "type": "single_run",
         "global_unlock_pct": 7.8,
-        "completed": false,
-        "strategy": "Flying mechs: Jet Mech, Defense Mech, Ice Mech, Nano Mech, Swap Mech, Thruster Mech, Drill Mech, Control Mech. Ice Mech with Bethany/Mafan is strong. Avoid final mission freeze trap.",
-        "setup": "Custom squad: 3 flying mechs. Bethany on Ice Mech.",
-        "pitfalls": "Flying mechs tend to be fragile. Final mission lava is not a problem (flying ignores lava)."
+        "completed": true,
+        "strategy": "Completed with 3x Ice Mech in the same run as Mech Specialist. Triple Ice is both three identical mechs and three flying mechs, so it double-dips both Custom Squad achievements.",
+        "setup": "Custom squad: 3 flying mechs. Proven setup: 3x Ice Mech on Easy with Bethany or Mafan preferred on one Ice Mech.",
+        "pitfalls": "Flying avoids lava, but triple Ice has low damage and can self-freeze. Watch final-cave action economy, research gates, and Renfield Bomb protection."
       }
     ],
     "bombermechs": [
@@ -337,7 +337,7 @@
         "description": "Pierce a Walking Bomb with the AP Cannon to kill an Enemy with Bombermechs",
         "type": "single_battle",
         "global_unlock_pct": 8.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Place a Bombling between Pierce Mech and a target enemy. Pierce Shot goes through the Bombling and kills the enemy behind. Low-HP targets ideal.",
         "setup": "Position Bombling in line between Pierce Mech and enemy",
         "pitfalls": "Bombling must be in the line of fire. Enemy must die from the shot."
@@ -401,7 +401,7 @@
         "description": "Heal 12 damage over the course of a single Island with Mist Eaters squad",
         "type": "single_island",
         "global_unlock_pct": 7.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Nanofilter Mending heals mechs in smoke. Upgrade Smog Mech (2 cores) for 4 smoke clouds per shot. Move damaged mechs through smoke to heal. Technician perk counts. 12 total heals across 4-5 missions.",
         "setup": "Upgraded Smog Mech. Take damage intentionally to have HP to heal.",
         "pitfalls": "Must actually take damage first. 12 heal points across entire island."
@@ -421,7 +421,7 @@
         "description": "Do 4 damage with the Reverse Thrusters with the Mist Eaters squad",
         "type": "single_battle",
         "global_unlock_pct": 8.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Detritus island A.C.I.D. mission easiest. Position Thruster Mech adjacent to A.C.I.D.-affected enemy. Dash 2 tiles forward for double damage on rear thrusters. Or use Boost mechanic for +1 damage.",
         "setup": "Detritus island A.C.I.D. pools. Or Boost + damage upgrades.",
         "pitfalls": "Rear thruster damage is usually lower than front. Need upgrades or A.C.I.D."
@@ -443,7 +443,7 @@
         "description": "Light 3 Enemies on fire with a single attack with the Heat Sinkers squad",
         "type": "single_battle",
         "global_unlock_pct": 4.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Napalm Mech range significantly. Arrange 3 enemies in a line. Fire the Napalm Launcher through all 3. Quick-Fire Mech can push enemies into position.",
         "setup": "Upgraded Napalm Launcher. 3 enemies aligned.",
         "pitfalls": "Need exact alignment of 3 enemies in fire line."
@@ -537,7 +537,7 @@
         "description": "Beat the game with all 10 primary Squads (any length)",
         "type": "cumulative",
         "global_unlock_pct": 7.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Must win with each of the 10 primary squads (8 original + custom + random). Learn each squad's strengths. Cumulative across all games.",
         "setup": "Multiple runs. Study each squad's wiki entry.",
         "pitfalls": "Random and Custom squads also required. Random can be hard with bad RNG."
@@ -641,7 +641,7 @@
         "description": "Encounter a familiar face",
         "type": "single_run",
         "global_unlock_pct": 11.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Look for faintly glowing damaged Mountain or Ice tiles at mission start. Destroy tile to spawn Beacon. Collect Beacon with mech. Very luck-dependent.",
         "setup": "Pinnacle island (more ice tiles) or Archive (mountains). Check every mission.",
         "pitfalls": "Extremely rare spawn. Purely luck-based. Just keep playing and checking."
@@ -715,7 +715,7 @@
         "description": "Finish 3 Corporate Islands without powering a Weapon Modification",
         "type": "single_run",
         "global_unlock_pct": 9.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Don't power any weapon upgrades. Only use base weapons, HP upgrades, and movement upgrades. Rift Walkers are strong without upgrades.",
         "setup": "3-island run. Rift Walkers. Health/mobility upgrades only.",
         "pitfalls": "No weapon upgrades makes combat harder. Rely on base weapon stats."
@@ -725,7 +725,7 @@
         "description": "Finish 3 Corporate Islands and destroy every Time Pod discovered",
         "type": "single_run",
         "global_unlock_pct": 6.7,
-        "completed": false,
+        "completed": true,
         "strategy": "Destroy every Time Pod you find. Push Vek into pods or attack them directly. This fails bonus objectives (normally you protect pods). Can't get perfect islands.",
         "setup": "3-island run. Actively destroy all Time Pods.",
         "pitfalls": "Failing pod objectives reduces reputation. Compensate with other objectives."

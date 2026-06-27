@@ -10,11 +10,23 @@ This is the operational runbook for running Into the Breach through the bridge a
 
 **Fallback manual play** (`click_action <i>` / `verify_action <i>` / `click_end_turn`) exists for when the bridge is unavailable — don't use it otherwise.
 
+**Pause-menu heartbeat rule.** The Lua bridge heartbeat is written from mission
+`BaseUpdate`. A real pause menu can suspend `BaseUpdate`, so the heartbeat will
+go stale after about five seconds while paused. This is normal and safe when the
+pause menu is visibly open; do not treat it as a dead bridge by itself. The
+live-burst boundary is the important part: after clicking Continue or toggling
+Escape out of pause, wait until the heartbeat is fresh again before `read`,
+`solve`, `deploy_recommended`, `auto_turn`, or any bridge combat command. If it
+does not become fresh after unpause, or if a bridge command reports stale
+heartbeat while the game should be ticking, recover from a fresh read plus
+solve and do not reuse any old plan.
+
 **Coordinate mapping:**
 - Bridge `(x, y)` → visual: `Row = 8 - x`, `Col = chr(72 - y)`. Example: bridge `(3, 5)` = `C5`. Always use A1–H8 visual notation in communication.
-- MCP pixel coords: `grid_to_mcp(x, y)` (in `src/control/executor.py`) or `python3 tile_hover.py <TILE>`. Both auto-detect window position via Quartz.
+- MCP pixel coords: `grid_to_mcp(x, y)` (in `src/control/executor.py`) or `python3 tile_hover.py <TILE>`. Both auto-detect window position via Quartz on macOS or Win32 APIs on Windows.
 - Island-select click coords: `python3 island_select.py`.
 - **End Turn button: `python3 game_loop.py click_end_turn`** — emits both legacy screen/global coords and `codex_computer_use_batch` window-local coords for Codex Computer Use. In Codex Computer Use, dispatch `codex_computer_use_batch` (or the per-click `window_x`/`window_y`), not the legacy `x`/`y`. The calibrated End Turn offset is `(126, 120)` window-relative.
+- If Codex Computer Use is unavailable, use the emitted legacy screen coordinates only after activating the Into the Breach window and doing a fresh `read`. On macOS, a minimal fallback is `osascript -e 'tell application "Into the Breach" to activate'`; on Windows, bring the HWND titled `Into the Breach` foreground with Win32 APIs. Then use a short `pyautogui` click on the current `click_end_turn` screen coordinate, wait, and read again. Do not repeat a fallback End Turn click just because the save parser says `mission_ending`; compare the visible game, bridge `phase`, active mechs, and countdown first.
 
 ## Phase Protocols
 
@@ -33,9 +45,48 @@ Each phase: read → act → verify. Detailed command semantics are in **Game Lo
 
 - **Unexpected screen:** screenshot, log to decision log, diagnose visually.
 - **State not updating:** `refresh_bridge_state`. If bridge dead, retry save-file verify up to 5× with 1.5s delay.
+- **Stale heartbeat while paused:** expected. Keep using pause as the safe
+  thinking surface. Before live bridge work, unpause and wait for the heartbeat
+  to refresh; only escalate if it stays stale after unpause.
+- **Windows state-file fallback:** the ModLoader can leave the freshest valid bridge payload in `itb_state.json.tmp` while `itb_state.json` is stale. `src/bridge/protocol.py` reads the newest valid state candidate. When the visible screen contradicts a combat read on Windows, inspect the screen and avoid resuming an old solution until a fresh bridge/read agrees.
 - **Solve/auto_turn stall:** inspect the latest `recordings/<run_id>/mNN_turn_NN_solve_input.json` first. That file captures the exact Rust payload before solving starts, so reproduce with `itb_solver.solve` / `solve_top_k` / `solve_beam` from it. Do not rely on the next `*_board.json` after a stall; live recovery may have already executed actions or advanced animations, making that board post-action or stale.
 - **Grid power = 0:** log, snapshot, analyze.
 - **Crash/timeout:** fresh `cmd_read` + `cmd_solve`. Never resume an old solution.
+- **Lightning startup helper crash:** `lightning_autonomous` reports
+  `title_new_game_exception`, `classify_after_title_new_game_exception`,
+  `setup_start_exception`, `setup_verification_exception`, or
+  `setup_click_exception`, or `lightning_start_run_exception` instead of
+  continuing from uncertain setup state. Preserve the traceback/window
+  evidence, regain a visible title/setup screen, and rerun visual setup proof
+  before starting or accepting a timeline.
+- **Lightning runner helper crash:** `pause_guard_initial_exception`,
+  `achievement_sync_exception`, `preflight_exception`, or
+  `lightning_segment_exception` is a named stop, not permission to continue.
+  Inspect the traceback plus any `command_span` exception event; after segment
+  crashes, recover only from a fresh read plus solve or fresh setup proof.
+- **Lightning panel evidence crash:** `screen_classification_exception`,
+  `visible_panel_handle_exception`,
+  `mission_preview_dialogue_clear_exception`,
+  `mission_preview_dialogue_post_classify_exception`, or nested
+  `resume_paused_segment_panel_exception` / `ensure_pause_exception` means
+  CV/UI evidence failed around a panel click. Preserve the traceback/window
+  evidence and re-establish a verified pause, panel, or map state before
+  continuing.
+- **Lightning shop/leave helper crash:** nested `*_exception` shop reasons keep
+  `exception_evidence`, grid state, and ordered shop `steps`. Do not click
+  Leave, Confirm, or route again until the shop/handoff evidence is understood.
+- **Lightning session read crash:** `session_load_exception` means the runner
+  could not read active session metadata. Inspect the `stage` and traceback;
+  do not trust stale island progress, pace gates, or post-leave handoff state
+  until the session read succeeds again.
+- **Lightning evidence startup crash:** `telemetry_start_exception` or
+  `screenshot_start_exception` means the runner stopped before taking live
+  actions because its evidence trail could not be initialized. Fix the recorder
+  path/capture problem, or rerun with a consciously weaker evidence setup.
+- **Lightning telemetry rehome crash:** `telemetry_rehome_exception` means a new
+  Lightning timeline began but recordings could not move to the new run
+  directory. The runner keeps the previous telemetry active; reconcile
+  screenshots/manifests from that event before using the logs as timing proof.
 
 ## Game Loop Command Reference
 
@@ -56,7 +107,10 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 - `click_action <i>` — Pure planner for manual play. Emits a `computer_batch`-ready sequence for ONE mech action (select-tile, optional move, weapon icon, target). Handles dash weapons (skip move click), Repair (click Repair button), passives (no-op).
 - `click_end_turn` — Pure planner. Emits a single click on End Turn.
 - `recommend_squad [squad|auto] [--achieve ...] [--mode achievement_hunt|solver_eval|random_squad|custom]` — Pure strategist. Uses `data/achievements_detailed.json` to choose a named squad for achievement hunting, or Balanced Roll for solver-eval/random-squad runs.
-- `verify_setup [--difficulty N]` — Visual setup guard for the Difficulty Setup overlay. Captures the game window, verifies the selected difficulty and that all four Advanced Content row icons are colored/enabled, and emits window-local clicks for any missing rows before the final setup **Start**.
+- `verify_setup [--difficulty N]` — Visual setup guard for the Difficulty Setup overlay. Captures the game window, verifies the selected difficulty and Advanced Content target, reports `window_focus_verified`, and emits window-local clicks for any mismatched rows before the final setup **Start**. If the Into the Breach window bounds or frontmost status cannot be proven, it fails closed with no click plan.
+- In Lightning automation, `setup_start` opens the Difficulty Setup overlay; the
+  final `setup_modal_start` that begins the timeline is clicked only inside
+  `lightning_start_run` after `verify_setup` passes.
 - `click_balanced_roll` — Pure planner. Emits a single click on the Balanced Roll button on the squad-select screen. Dispatch before clicking Start only when the setup recommendation says Balanced Roll.
 - `deploy_recommended` — Bridge deployment helper. Sends `DEPLOY uid x y` for the ranked recommended tiles, verifies placed mech coordinates, and leaves only the visible CONFIRM click for Computer Use.
 - `execute <index>` / `end_turn` — Bridge-mode action commands. Used internally by `auto_turn`. In manual play, use `click_action` / `click_end_turn` instead. These refuse to run while a persistent post-enemy block exists.
@@ -65,6 +119,96 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 
 **Full-mission automation:**
 - `auto_mission [--max-turns N]` — Full mission: auto-deploy → combat loop → mission end. Final turn is force-flushed to failure_db on exit. Falls back to the agent for reward/shop/map screens.
+- `lightning_autonomous [--mode baseline|speed] [--target-islands 2] [--max-attempts N]` — Top-level Lightning War runner. Baseline mode starts from verified title/setup/in-run states, verifies setup before Start, routes automatically, keeps combat inside `lightning_segment`, intercepts island-complete panels for grid-first shopping, and stops on unresolved safety/research/desync/terminal gates. The runner pauses on rest/UI screens, but combat bursts run unpaused to keep the Lua heartbeat fresh. Speed mode is mission-agnostic after exact route proof: Dam/Satellite/Train/Tides-style names are not speed vetoes. Pre-combat route-auto-start refusals for unknown OCR, stale bridge data, mismatched mission identity, or missing post-Start deployment proof can abandon back to verified setup and retry up to `--max-attempts`; generic combat safety gates still stop with evidence. Unlabeled visual route candidates may be probed once through the live preview. In autonomous speed mode, an already-visible mission-preview board inside the pause wrapper can be committed through the guarded preview-board helpers, which screenshot and Esc-pause immediately after the click; failed post-click deployment/combat proof still blocks. Visible preview OCR can be Start authority in speed mode when the mission id is exact and the post-start handoff proves deployment/combat. Speed mode uses the same state machine with the Lightning War speed-loss policy and a 2-second default combat budget. See `docs/agent/lightning-war-runner.md`.
+- Treat the Lightning War runner as live-unproven until a baseline command
+  reaches `target_islands_completed` from the main menu or verified setup state
+  with the final OCR-backed success proof. The proof must show a known reward,
+  island-complete, or verified island-map screen; if pause covers the game, the
+  runner uses an OCR `lightning_peek` before accepting success. Ambiguous
+  `island_map_or_unknown` evidence still blocks. Repo tests do not replace that
+  live two-island evidence.
+- `lightning_segment [--time-limit 2] [--max-turns N] [--max-steps N]` — Lightning War start-to-start conductor. It loops `lightning_attempt`, runs preflight only once, keeps exact dirty consent pending until an attempt actually enters combat, clears safe reward/pod panels and mission-preview dialogue text, and stops on the next route-ready island map or hard/unclear gate. Defaults are optimized for the achievement: resume-if-paused, auto-clear-safe-panels, quiet nested output, pause-on-stop, and Lightning War speed-loss policy. Use this from a paused mission preview, deployment, combat, reward, or map tail when the goal is "get to the next Start Mission click" with minimal UI handling.
+- `lightning_loop [--time-limit 2] [--max-turns N] [--speed-loss-policy]` — Lightning War hot path: repeatedly runs `auto_turn`, uses the verified local End Turn click, and immediately lets the next `auto_turn` wait through enemy animations. If the bridge does not observe the End Turn transition quickly, it stops instead of burning the full wait window. It refuses unresolved research queues, persistent post-enemy blocks, Hold the Line targeting, and all normal safety/investigation gates. Use from a clean unpaused player-turn state; pause only for route decisions, rewards/shops, dirty review, research, or unexpected visuals. The optional speed-loss policy is target-scoped to Lightning War and still blocks timeline collapse, mech losses, and uncertain boards.
+- `lightning_attempt [--time-limit 2] [--max-turns N] [--speed-loss-policy]` — Lightning War conductor. It does preflight, reads a compact bridge snapshot, deploys with `deploy_recommended` plus the calibrated local CONFIRM click when on deployment, then hands combat to `lightning_loop`. On island-map screens it runs `recommend_mission --routing lightning_war` and stops for visual route selection; on unknown screens it stops instead of guessing. A visible Start Mission preview board is clicked only when it matches an expected route mission from the route-start path; no-bridge previews and deployment-looking previews without that expected mission block with `mission_preview_requires_route_validation`. CLI use defaults to resume-if-paused, auto-clear-safe-panels, quiet nested output, and `pause_on_stop`: when the pause menu is visible it clicks Continue first, reward/promotion/perfect/bottom Continue panels are cleared automatically, chained Region Secured/Pod Recovered panels are reclassified after each click, then it conservatively tries `lightning_ui ensure_pause` so the pause menu becomes the resting/thinking state before the large result prints. Its budget guard reads the save/profile `["current"]["time"]` game clock in milliseconds and stops at 30:00; ignore profile `["timer"]`, which is not the achievement clock. Add `--speed-loss-policy` when using this lower-level command for the same optional-objective/grid/building speed tradeoff that `lightning_segment` enables by default, `--no-auto-clear-panels` when auditing panel handling, `--no-resume-if-paused` only when inspecting a paused screen, `--verbose` only for diagnosis, `--no-pause-on-stop` only when the next action must stay live, `--dry-run` to see the next action without clicking, `--no-click` to emit only the action plan, and `--max-wall-seconds N` as an extra conservative restart guard. It does not request bridge fast mode from preflight; fast mode is set only when entering combat so reward/map panels do not pay a bridge ACK timeout.
+- `lightning_segment [--route-visual-region-index N] [--route-start-mode MODE]` — Higher-level start-to-next-decision conductor. With a route index selected from `lightning_attempt` / `lightning_route_start` / `lightning_map_regions` output, it can start that red region once, continue through deployment/combat/post-mission tails, and stop at the next route decision. With `--route-auto-start`, an unlabeled visual index is first treated as a preview probe: if the preview is missing, unverified, stale, or mismatched, the segment stops before the Start click. The default Lightning War route-start mode is `preview-board`; exact mission OCR or bridge proof plus post-start deployment/combat proof is sufficient to play the mission. Baseline mode can still keep conservative route vetoes when explicitly requested. Unknown previews, stale bridge previews, route mismatches, and no-transition starts remain blockers. Route-ready results expose `primary_next_command` for the fastest handoff; route candidate JSON uses this as the primary `command`; `route_start_command` is the narrower start-only fallback. Use `--route-start-mode dialogue-region-repeat-preview-board-twice` for R.S.T.-style dialogue/preview loops when the screenshot evidence shows that pattern; the index is consumed once and is not reused for the following map.
+- From a fresh island map during Lightning War, prefer the full segment handoff over a bare preview click: `python3 game_loop.py lightning_segment --route-auto-start --route-routing lightning_war --route-start-mode preview-board --strict-route-match` when letting the scorer pick, or `python3 game_loop.py lightning_segment --route-visual-region-index N --route-target-mission-id Mission_X --route-routing lightning_war --route-start-mode preview-board --strict-route-match` when using a specific candidate. Use the emitted `primary_next_command` when available; it preserves the mission guard with `--route-target-mission-id`. Use a candidate `route_start_command` only as a narrower start-only fallback, and keep its `--expected-mission-id` when present. If the screen is already an exact proven mission preview, use the existing-preview route start with preview-board commit and require post-Start deployment/combat proof.
+- `lightning_autonomous` defaults to 8 safe timeline attempts. This budget exists
+  for RNG/UI openings where every visible candidate is unknown, stale, or fails
+  post-Start proof; it is not permission to restart after combat, desync, or
+  any non-preview stop sign.
+- `lightning_autonomous` stops with `route_gate_restart_failed` if a safe
+  pre-combat route-gate retry cannot abandon back to setup, restart, or
+  re-verify the new timeline. Inspect nested `restart` evidence first; an
+  `abandon_to_setup_exception` means the window/setup state is uncertain and
+  must be visually re-established before any more clicks.
+- `lightning_autonomous` stops with `stale_bridge_heartbeat` when a combat burst
+  reports `Bridge heartbeat stale` / `Lua stopped ticking`, especially after a
+  partial action. Inspect `heartbeat_evidence.path`, recover the bridge, then
+  resume only from a fresh read plus solve; do not reuse the old partial-turn
+  plan.
+- `lightning_autonomous` stops with `combat_desync` when nested combat evidence
+  reports `DESYNC`. It preserves `stop_evidence.path` and does not pause-click
+  or route-restart from that uncertain board; recover from a fresh read plus
+  solve before any more combat commands or End Turn clicks.
+- `lightning_autonomous` stops with `reload_or_main_menu_visible` if title/setup
+  appears during an active run. Treat this as reload/crash/main-menu evidence:
+  do not trust stale session progress, resume existing combat only after a fresh
+  read plus solve, and restart only after fresh setup verification.
+- `lightning_autonomous` stops with
+  `post_leave_handoff_ambiguous_before_target` when an island-exit handoff is
+  only `island_map_or_unknown` and more islands remain. Inspect the screenshot
+  and regain a verified next-island map, bottom-continue, or pause state before
+  routing.
+- `lightning_autonomous` promotes stop-sign tokens to named results:
+  `research_required`, `post_enemy_blocked`, `threat_audit_blocked`,
+  `safety_blocked`, or `investigation_required`. Inspect `stop_evidence.path`
+  / `preflight.stop_evidence.path` when present and follow that protocol before
+  any more combat commands or End Turn clicks.
+- `lightning_autonomous` stops with `segment_failed` if `lightning_segment`
+  returns a tokenless top-level `ERROR`/`BLOCKED` result. Inspect
+  `segment_failure` and the compact segment evidence; do not let the same helper
+  failure repeat into a no-progress loop.
+- `lightning_autonomous` treats macOS privacy/system prompts as standing
+  authorized blockers. The runner should click the OCR-proven `Allow` button,
+  resample, and continue when the prompt clears. If the prompt remains or the
+  `Allow` target is not OCR-clickable, inspect `external_prompt_evidence.path`
+  and resume from the current visible game screen after recovery.
+- For suspicious reward/continue/leave panels, use
+  `python3 game_loop.py lightning_ui classify --include-ocr`. The autonomous
+  runner requests this OCR-backed evidence at terminal-prone panel, handoff, and
+  success-proof classify points and blocks on KIA, timeline-lost, or failed
+  objective text. `lightning_ui handle_screen` and `clear_tail_pause` also
+  refuse to clear panels when explicit terminal/OCR evidence is present.
+- `lightning_abandon_to_setup [--reason text]` — Calibrated Lightning War recovery from a verified pause-safe state. It clicks Abandon Timeline, confirms, selects the carry-forward pilot, requires the final visible UI to classify as `new_game_setup`, and clears stale bridge state/command files from the abandoned timeline.
+- `lightning_start_run` uses a single first-island click after the setup modal.
+  Never double-click the same island coordinate as a confirmation; after the
+  corp map opens that coordinate can select a mission region. Its initial
+  segment is baseline-safe by default: Easy difficulty, Advanced Content OFF,
+  no speed-loss policy, and no objective-loss consent. Use
+  `--speed-loss-policy` only for the explicit Lightning War speed-loss mode,
+  and `--allow-objective-loss` only for reviewed exact dirty objective-loss
+  consent.
+- `lightning_ui [control]` — Calibrated local held-clicks for known Lightning War UI buttons: `pause`, `menu_continue`, `title_continue`, `reward_continue`, `bottom_continue`, `pod_open_door`, `dialogue_textbox`, `mission_preview_board`, `deploy_confirm`, `deploy_slot_0`, `deploy_slot_1`, `deploy_slot_2`, `modal_understood`, `panel_continue`, `perfect_reward_grid`, `spend_reputation`, `shop_grid_power`, `shop_continue`, `leave_island`, `leave_confirm_yes`, `island_archive`, `island_rst`, `island_pinnacle`, `island_detritus`, and `end_turn`. Use `--dry-run` to verify the window-local coordinate first, `--list` to print the full table, or `lightning_ui classify` to screenshot-classify visible non-combat panels before trusting bridge `island_map`. Special speed controls: `lightning_ui ensure_pause` clicks pause only when no blocking panel is covering the screen; `lightning_ui handle_screen` clears obvious reward/promotion/perfect/bottom-continue/pod panels and dismisses mission-preview dialogue text boxes, but Start Mission boards still require route proof outside runner-owned speed commits; `lightning_ui commit_preview` resumes from a paused visible preview board, clicks it, screenshots, and re-pauses; `lightning_ui commit_live_preview` does the same from an already-live preview board; `lightning_ui start_visible_mission` clicks the detected yellow Start Mission text when the preview board shifted away from the static coordinate; `lightning_ui start_visible_dialogue` dismisses CEO dialogue first, then uses the visual detector; `lightning_ui guard_status` reads the last pause-resting-state note. Named bursts include `to_archive`, `to_rst`, `leave_confirmed`, `start_from_dialogue`, `resume_start_mission`, and first-island handoffs `first_island_to_rst_pause`, `first_island_perfect_grid_to_rst_pause`, and `first_island_perfect_full_to_rst_pause`; explicit ad-hoc hurry sequences can still join controls with `+` or `,`, for example `lightning_ui menu_continue+rst`. `title_continue` resumes from the title screen after a game restart; `bottom_continue` is the bottom-right panel button used by CEO/island intro screens; `pod_open_door` opens a recovered Time Pod before the contents Continue appears; `dialogue_textbox` dismisses no-button advisor text boxes; `mission_preview_board` starts the selected mission from the large preview board when it is in the calibrated position.
+- `lightning_capture <label> --game-timer M --clock-state ticks|paused --note ...` — Capture the game window and append a timing note under `run_notes/lightning_war_smoke_<date>/`. Use this during smoke tests and after surprising clock movement.
+- `lightning_autonomous --mode speed` writes `speed_phase_timing` telemetry rows
+  for phase/island/mission timing and compact combat-turn totals. Use those rows
+  for speed tuning after a safe baseline, not as permission to bypass stop
+  signs. Expected phase labels are `between_missions`, `route`, `mission`,
+  `reward_shop`, and `target_complete`.
+- `lightning_peek [label] [--include-ocr]` — Visual-only micro-peek for ambiguous paused states. It requires the pause menu by default, precomputes the screenshot path/window bounds while paused, clicks `menu_continue`, captures one persistent screenshot, immediately clicks `pause`, classifies the captured evidence, and returns the screenshot path for paused analysis. With `--include-ocr`, terminal-prone revealed panels also carry OCR text snippets. It never clicks End Turn, route/start/shop controls, combat actions, or bridge commands. If the final pause menu is not verified, treat the result as blocked before any follow-up command.
+- `lightning_snap_pause [label] [--run-seconds 2] [--include-ocr]` — Esc-only screenshot boundary for a computer-use Lightning War controller. It captures the visible game window, classifies that screenshot only enough to avoid toggling out of an already-visible pause menu, then presses **Esc** to pause and verifies the pause menu from a fresh screenshot before returning evidence for LLM analysis. With `--run-seconds 2`, it may intentionally Esc-unpause from a verified pause menu, let the game run for the requested short wait, capture, and Esc-pause again. It never uses the calibrated pause button, never clicks End Turn, and reports screenshot-derived `visible_timer` / `game_budget` when pause timer OCR is visible. If `pause_verified` is false, regain a verified pause state before any LLM planning or live click.
+- `lightning_map_regions --screenshot-path PATH [--start-mode MODE] [--target-name NAME]` — Extract red island-map region centers from a paused peek screenshot and emit route candidate commands. The primary candidate `command` is `lightning_segment --route-visual-region-index ...`; `route_start_command` and `coordinate_command` are fallbacks. Use `--start-mode dialogue-region-repeat-preview-board-twice` on R.S.T.-style preview/dialogue loops when the screenshot evidence suggests the ordinary preview-board start will not commit. When `recommend_mission` identifies a save-region name, pass it as `--target-name` so each candidate carries a visual matching hint.
+- `lightning_preflight [--set-bridge-fast]` — Read-only speed-run blocker check except for the optional bridge fast-mode request. Checks Blitzkrieg/Easy targeting, pending research/diagnosis, persistent post-enemy blocks, timer setting, settings speed, and the save/profile `current.time` game clock against the 30:00 Lightning War limit. If the pause menu is visible, it OCRs `Timeline Playtime` and uses that visible timer when it is newer than stale save/profile files.
+- `bridge_speed [fast|visual]` — Requests the Lua bridge animation/execution mode. For timed attempts, prefer `fast`.
+- Archive Air Support / `Mission_Airstrike` previews can require the isometric preview-board start click while advisor dialogue is still visible. Do not dismiss the dialogue first if the board is visible; click the preview board and let deployment load.
+- During Lightning War, trust the visible screen over `island_map` if reward, promotion, Perfect Island, or bottom-right Continue panels are still open: the bridge can expose the map behind the panel. Clear visible panels first with `lightning_ui handle_screen` or the exact calibrated control, then run `lightning_ui ensure_pause` before routing/thinking and rerun `lightning_attempt --dry-run` before committing to a route.
+- If `lightning_attempt` sees `phase=combat_player` with `active_mechs=0`, it should stop or clear an obvious safe panel instead of entering the full combat wait. That state is usually a held End Turn, a just-clicked transition gap, or a post-mission panel; spending `max_wait` there burns Lightning War clock without making tactical progress.
+- For Lightning War pace, measure the live segment as **mission Start click to the next mission Start click**, not just combat time. The 3-minute target includes region click/preview/dialogue, deployment, all combat actions and End Turn waits, Region Secured, hidden-pod popups, reward/XP panels, map return, next region selection, and the next preview-board Start click. Think only from pause between these live segments.
+- `recommend_mission --routing lightning_war` is tuned for start-to-start speed: it boosts metadata `turn_limit == 3`, Tidal aliases including `Mission_Tides` / `Mission_Terratide`, Cataclysm/Seismic, Sandstorm, and Train, while pushing Time Pod / asset rewards and Detritus barrels/vats (`Mission_Barrels`, `Mission_AcidTank`, `Mission_Disposal`) below plain fast alternatives.
+- For active Lightning War targets, Time Pods are expendable. The speed loop may ignore `pod_lost` / `pod_unrecovered_final` as a pod-only safety loss. With `lightning_segment`'s default speed-loss policy, or `--speed-loss-policy` on the lower-level commands, the loop may also accept predicted nonlethal grid/building damage and optional objective/protected-unit loss for speed. This does not permit timeline collapse, mech death/HP/status loss, pylon/bomb/final-cave loss, unknown loss kinds, stale boards, or unresolved research/desync gates.
+- On deployment screens, the bridge can report `phase=combat_enemy` while `deployment_zone_count > 0`, and bridge deploy ACKs can time out after the mech was actually placed. Some deployment screens do not run the Lua command poll before CONFIRM; `deploy_recommended` now uses a short bridge timeout, clears stale pending `/tmp/itb_cmd.txt` data, and falls back to calibrated `deploy_slot_N` + ranked tile UI clicks when the bridge is not ticking. `lightning_attempt` treats `turn=0`, visible deployment zones, and `mech_count < 3` as deployment, calls `deploy_recommended` to finish only missing mechs, clicks CONFIRM, then lets `lightning_loop` wait into the first player turn. `deploy_recommended` skips already placed mechs and treats an ACK timeout as recovered only when a fresh bridge read shows that UID placed; UI fallback returns `WARN` because verification happens after CONFIRM.
+- If the bridge reports `phase=unknown`, `turn=0`, and deployment zones, trust the screen. A visible mission preview is started with the preview-board control and then re-read; a visible island map or `island_map_or_unknown` screen routes through the save/CV route planner instead of deploying. An active deployment state can still finish missing mechs only when the bridge heartbeat is fresh; stale active-mission/deployment snapshots are evidence, not permission to deploy. During the 2026-05-28 smoke test, preview/deployment ambiguity, stale island-map/deployment state, and partial deployment burned more than a minute before this recovery path existed.
+- After End Turn or environmental cleanup, the bridge can briefly report `phase=combat_player` with `active_mechs == 0`. Treat that as a wait/retry state, not a solveable turn.
 
 **Analysis & tuning:**
 - `replay <run_id> <turn> [--time-limit N]` — Reconstruct Board from a recorded JSON and re-run the solver. Compares new solution with original.
@@ -74,10 +218,11 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 
 **Run management:**
 - `new_run [squad|auto] [--achieve X Y] [--difficulty N] [--mode achievement_hunt|solver_eval|random_squad|custom] [--tags audit ...]` — Initialize new session. Omit the squad or pass `auto` to let `recommend_squad` choose the achievement-aware setup. Use `--tags audit` / `--mode solver_eval` for environment-audit playthroughs (those failures stay out of the tuner corpus).
-- `recommend_mission` has no achievement-target flag; do not invent `--target` / `--tags` arguments mid-run. If a mission-pick command shape is uncertain, inspect the parser/help in a standalone command first, then call only supported flags. Regression anchor: Rusting Hulks There Is No Try run `20260519_133059_179`, Archive island 2 selection, where `recommend_mission --target there_is_no_try` failed during map triage.
+- `recommend_mission` has no achievement-target flag; do not invent `--target` / `--tags` arguments mid-run. It does support `--routing lightning_war` for Blitzkrieg speed routing. If a mission-pick command shape is uncertain, inspect the parser/help in a standalone command first, then call only supported flags. Regression anchor: Rusting Hulks There Is No Try run `20260519_133059_179`, Archive island 2 selection, where `recommend_mission --target there_is_no_try` failed during map triage.
 - On mission-preview screens, `Escape` opens the pause menu instead of safely closing the preview. To back out of a rejected preview, click clearly empty water / non-region map space and verify the preview closed before selecting another region. Regression anchor: Rusting Hulks There Is No Try run `20260519_133059_179`, Archive island 2 mission scouting, where `Escape` opened the menu over Storage Vaults.
 - `snapshot <label>` — Save current state for regression.
 - `log <message>` — Append reasoning to the decision log.
+- `island_select.py --lightning-war [--completed archive]` — Non-session helper for Lightning War island coordinates. It prints Archive first, then R.S.T. after Archive is listed as completed.
 - When a `game_loop.py log` message contains shell metacharacters such as `;`,
   `&`, `|`, `(`, `)`, `<`, `>`, or quotes, wrap the whole message in single
   quotes (escaping internal single quotes) or avoid those characters. Do not
@@ -135,13 +280,13 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 
 154. **Mission preview overlays can eat adjacent-region clicks.** After selecting an island-map region, the tilted preview board and large **Start Mission** text sit over nearby red regions; clicking what looks like another region through that overlay can immediately start the currently selected mission. To inspect a different mission, first click a clearly exposed non-start part of that red region outside the preview board, or use save/visual evidence and decide without cycling previews. Regression anchor: Easy Rift Walkers/Ramming Speed run `20260516_120646_726`, Detritus Teleport Facility preview started when a Scrapheap-looking click landed on the active Start Mission overlay.
 
-170. **Status checks are session commands too.** Treat `python3 game_loop.py status` like `read`, `solve`, `auto_turn`, and other session-touching commands: run it alone, never inside `multi_tool_use.parallel` with file reads, helper scripts, screenshots, or UI inspection. A quick status check can still take the active session lock and should stay auditable as its own step. Regression anchor: Blitzkrieg Easy run `20260517_105759_344`, Archive Artifact Vaults turn 2, where a status check was accidentally bundled with a skill file read.
+170. **Status checks are session commands too.** Treat `python3 game_loop.py status` like `read`, `solve`, `auto_turn`, and other session-touching commands: run it alone, never inside `multi_tool_use.parallel` with file reads, helper scripts, screenshots, or UI inspection. A quick status/read check can still take the active session lock and should stay auditable as its own step. Regression anchor: Blitzkrieg Easy run `20260517_105759_344`, Archive Artifact Vaults turn 2, where a status check was accidentally bundled with a skill file read. Follow-up anchor: Blitzkrieg Lightning War run `20260603`, where a fresh `read` during route-mismatch triage was incorrectly bundled with an `rg` search.
 
 180. **Mission preview clicks must be title-verified before starting.** After inspecting a rejected mission, do not click the board preview or any large preview panel until the visible mission title matches the intended target. First click an exposed part of the desired red region, wait for the preview title/objectives to update, then start only if that title/objective set is acceptable. Regression anchor: Perfect Strategy farming run `20260517_184341_140`, after rejecting `Accord Repository` ("Do not kill the Volatile Vek" + "Protect the Clinic"), a click intended for `Historic County` landed on the active `Accord Repository` preview and started the rejected fire-squad no-kill mission.
 
 184. **A visible `Start Mission` overlay is a live launch button.** Once a mission preview board is active, any click inside the yellow-outlined preview board can start that mission, even if the intent is to inspect a different region behind it. To switch targets, click only clearly exposed map/label pixels outside the preview board and outside the yellow outline; if the desired region is obscured, dismiss or choose a visible safe region instead. Regression anchor: Flame Behemoths Easy run `20260517_191517_652`, after rejecting Downtown (`Defend the Train`), a click intended for Pumping Station landed on the active Downtown preview board and started the train mission.
 
-187. **Preview-revealed unit objectives must be mapped before launch.** If a mission preview shows a unit objective that is not already in `data/mission_unit_objectives.json`, add the exact Lua pawn type from the game scripts and a focused resolver test before starting that mission. Detritus examples: `Mission_Civilians` protects `VIP_Truck`; `Mission_Power` with "Destroy 2 Vek Egg Sacks" destroys `BonusDebris`. This lets `auto_turn` safety compare `protected_objective_units_alive` / objective unit destroy value instead of treating those pawns as ordinary units.
+187. **Preview-revealed unit objectives must be mapped before launch.** If a mission preview shows a unit objective that is not already in `data/mission_unit_objectives.json`, add the exact Lua pawn type from the game scripts and a focused resolver test before starting that mission. Detritus examples: `Mission_Civilians` protects `VIP_Truck`; `Mission_Power` with "Destroy 2 Vek Egg Sacks" destroys `BonusDebris`; generic `Mission_Survive` can also pair bonus id `7` with live `BonusDebris` egg sacks, so require the injected destroy-objective list before trusting the solve. This lets `auto_turn` safety compare `protected_objective_units_alive` / objective unit destroy value instead of treating those pawns as ordinary units.
 
 190. **Verify Advanced Content by colored icons, not empty checkboxes.** The Difficulty Setup screen's Advanced Content squares do not draw a normal persistent tick in captures; enabled rows are confirmed by the colored row icons, while disabled rows are grayscale. Before pressing the setup **Start** button for achievement runs, run `python3 game_loop.py verify_setup --difficulty 0` (or the target difficulty) and require `status: PASS`. If it reports missing rows, click the emitted window-local `click_plan`, move the cursor away from the rows, and rerun `verify_setup`. Regression anchor: Perfect Strategy restart on 2026-05-17 where several row clicks only produced hover outlines and the old process had no machine check for Advanced Content state.
 
@@ -246,3 +391,5 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 386. **Live UI-coordinate searches should stay out of bulky data folders.** When a visible menu is open and the goal is just to identify a click target, do not run broad `rg` over `data/` or other large reference folders; inspect the visible UI or search the specific command implementation file instead. Regression anchor: Blitzkrieg Hold the Line run `20260524_195401_412`, Detritus island map after `Mission_Power`, where a broad Start Mission text search stalled while a mission panel was already visible.
 
 387. **Hold the Line HQ and boss deployments use the same read-only wait.** Boss fights often show spawn markers immediately after deployment, so do not treat Corporate HQ as an exception to rules 370/371/383. After pressing CONFIRM on any active `Hold the Line` mission, including HQ, poll with standalone `read` until `phase == combat_player` and `active_mechs > 0`; if `spawn_points >= 2`, run the offline spawn-block sweep before calling `auto_turn`. Regression anchor: Blitzkrieg Hold the Line run `20260524_195401_412`, Detritus `Mission_BlobberBoss` turn 1, where `auto_turn` waited through HQ deployment, found 3 spawn markers, and executed top-1 before the four-block precheck could run.
+
+394. **Computer Use fallback clicks must be refocused and re-read.** After a reboot or Codex Desktop interruption, the in-app Computer Use tools may disappear while bridge commands still work. If using `pyautogui` as a fallback for the End Turn button, first activate Into the Breach, use the latest `click_end_turn` screen coordinate, wait for the enemy phase, and run a standalone `read` before any next click. If the save parser reports `mission_ending` but the visible game still shows an End Turn button, action banners, or a final-cave countdown, treat that as save-phase lag and rely on the fresh bridge/visual state. Regression anchor: Easy Custom Squad run `20260526_204256_831`, final cave, where raw bridge state and the visible screen stayed authoritative while saveData intermittently claimed `mission_ending`.

@@ -23,9 +23,9 @@
 
 use crate::board::{Board, ActionResult, UnitFlags};
 use crate::enemy::{simulate_enemy_attacks, apply_spawn_blocking};
-use crate::simulate::simulate_action;
+use crate::simulate::simulate_action_with_target2;
 use crate::solver::MechAction;
-use crate::types::{Terrain, idx_to_xy};
+use crate::types::{Terrain, idx_to_xy, xy_to_idx};
 use crate::weapons::WeaponTable;
 
 #[derive(Clone, Debug)]
@@ -135,12 +135,13 @@ fn apply_plan_and_enemy_phase(
             Some(i) => i,
             None => continue,
         };
-        let result = simulate_action(
+        let result = simulate_action_with_target2(
             &mut b,
             mech_idx,
             action.move_to,
             action.weapon,
             action.target,
+            action.target2,
             weapons,
         );
         aggregate.merge(&result);
@@ -170,7 +171,38 @@ fn apply_plan_and_enemy_phase(
         }
     }
     b.current_turn = b.current_turn.saturating_add(1);
+    advance_mission_tides_warning(&mut b);
     (b, aggregate)
+}
+
+pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
+    if board.mission_id != "Mission_Tides" || board.env_danger == 0 {
+        return;
+    }
+    let mut next_danger = 0u64;
+    let mut next_kill = 0u64;
+    let mut next_flying_immune = 0u64;
+    for idx in 0..64usize {
+        let bit = 1u64 << idx;
+        if board.env_danger & bit == 0 {
+            continue;
+        }
+        let (x, y) = idx_to_xy(idx);
+        if y >= 7 {
+            continue;
+        }
+        let next_bit = 1u64 << xy_to_idx(x, y + 1);
+        next_danger |= next_bit;
+        if board.env_danger_kill & bit != 0 {
+            next_kill |= next_bit;
+        }
+        if board.env_danger_flying_immune & bit != 0 {
+            next_flying_immune |= next_bit;
+        }
+    }
+    board.env_danger = next_danger;
+    board.env_danger_kill = next_kill;
+    board.env_danger_flying_immune = next_flying_immune;
 }
 
 pub fn project_plan(
@@ -400,6 +432,11 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         } else {
             json!([-1i8, -1i8])
         };
+        let qo: Value = if u.queued_origin_x >= 0 {
+            json!([u.queued_origin_x, u.queued_origin_y])
+        } else {
+            json!([-1i8, -1i8])
+        };
         let mut unit_val = json!({
             "uid":        u.uid,
             "type":       u.type_name_str(),
@@ -415,6 +452,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             "can_move":   u.can_move(),
             "pushable":   u.pushable(),
             "queued_target": qt,
+            "queued_origin": qo,
         });
         if !weapons_list.is_empty()       { unit_val["weapons"]              = json!(weapons_list); }
         if u.flying()                     { unit_val["flying"]               = json!(true); }
@@ -574,6 +612,31 @@ mod tests {
         let initial = board.current_turn;
         let (projected, _) = project_plan(&board, &[], &spawn_points, &WEAPONS);
         assert_eq!(projected.current_turn, initial + 1);
+    }
+
+    #[test]
+    fn test_mission_tides_projection_advances_warning_lane() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.total_turns = 3;
+        b.current_turn = 2;
+        b.remaining_spawns = 0;
+        for x in [1u8, 6u8] {
+            let bit = 1u64 << xy_to_idx(x, 3);
+            b.env_danger |= bit;
+            b.env_danger_kill |= bit;
+            b.env_danger_flying_immune |= bit;
+        }
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.current_turn, 3);
+        assert!(!projected.is_env_danger(1, 3));
+        assert!(!projected.is_env_danger(6, 3));
+        assert!(projected.is_env_danger(1, 4));
+        assert!(projected.is_env_danger(6, 4));
+        assert!(projected.is_env_danger_kill(1, 4));
+        assert!(projected.is_env_danger_flying_immune(6, 4));
     }
 
     #[test]

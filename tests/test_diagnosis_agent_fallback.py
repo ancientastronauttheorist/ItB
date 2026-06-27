@@ -23,6 +23,7 @@ from pathlib import Path
 import pytest
 
 from src.solver.diagnosis import (
+    MatchResult,
     REPO_ROOT,
     apply_agent_response,
     build_agent_prompt,
@@ -33,6 +34,7 @@ from src.solver.diagnosis import (
     record_rejection,
     reject,
     validate_agent_response,
+    write_markdown,
 )
 
 
@@ -89,6 +91,25 @@ def _frozen_status_failure() -> tuple[dict, dict]:
         "description": "PunchMech, fire Titan Fist at E5",
     }
     return failure, action
+
+
+@pytest.mark.regression
+def test_write_markdown_uses_utf8_for_unicode_action_text(tmp_path):
+    """Windows defaults to cp1252; live action arrows must still write."""
+    failure, action = _frozen_status_failure()
+    action["description"] = "PunchMech, move G4→F4, fire Titan Fist at E5"
+
+    out_path = write_markdown(
+        failure,
+        action,
+        MatchResult(),
+        known_gap_id=None,
+        out_dir=tmp_path,
+        agent_prompt="Investigate G4→F4.",
+    )
+
+    text = out_path.read_text(encoding="utf-8")
+    assert "G4→F4" in text
 
 
 # ---------------------------------------------------------------------------

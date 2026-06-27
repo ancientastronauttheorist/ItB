@@ -1,9 +1,11 @@
 from src.loop.commands import (
     _blocks_mech_hp_loss_for_perfect_battle,
+    _blocks_mech_status_loss_for_run,
     _candidate_dirty_frontier,
     _candidate_frontier_representatives,
     _is_harmless_active_state_diff,
     _is_expected_skip_state_diff,
+    _is_implausible_stale_verify_actual,
     _lookahead_result_sort_key,
     _lookahead_robust_frontier,
     _lookahead_robust_summary,
@@ -146,6 +148,26 @@ def test_untouchable_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch):
     session = RunSession(achievement_targets=["Untouchable"])
 
     assert _blocks_mech_hp_loss_for_perfect_battle(session) is True
+
+
+def test_lightning_war_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch):
+    achievements_path = tmp_path / "achievements_detailed.json"
+    achievements_path.write_text(
+        '{"achievements": {"global": [{"name": "Lightning War", "completed": false}]}}'
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.ACHIEVEMENTS_PATH",
+        achievements_path,
+    )
+    session = RunSession(achievement_targets=["Lightning War"])
+
+    assert _blocks_mech_hp_loss_for_perfect_battle(session) is True
+
+
+def test_lightning_war_target_blocks_mech_status_loss():
+    session = RunSession(achievement_targets=["Lightning War"], difficulty=0)
+
+    assert _blocks_mech_status_loss_for_run(session) is True
 
 
 def test_completed_untouchable_target_keeps_default_mech_hp_safety_mode(tmp_path, monkeypatch):
@@ -470,3 +492,53 @@ def test_active_state_reactivation_is_not_harmless():
     ])
 
     assert _is_harmless_active_state_diff(diff, allowed_uids={7}) is False
+
+
+def test_verify_actual_mission_mismatch_is_stale():
+    diff = DiffResult(unit_diffs=[
+        {"uid": 1, "type": "MirrorMech", "field": "pos",
+         "predicted": [2, 5], "actual": [2, 3]},
+    ])
+
+    assert _is_implausible_stale_verify_actual(
+        diff,
+        {"mission_id": "Mission_Acid"},
+        "Mission_MosquitoBoss",
+    ) is True
+
+
+def test_broad_grid_verify_diff_is_stale_even_without_mission_id():
+    diff = DiffResult(
+        unit_diffs=[
+            {"uid": i, "type": f"Unit{i}", "field": "pos",
+             "predicted": [0, i % 8], "actual": [1, i % 8]}
+            for i in range(5)
+        ],
+        tile_diffs=[
+            {"x": i % 8, "y": i // 8, "field": "terrain",
+             "predicted": "building", "actual": "ground"}
+            for i in range(6)
+        ],
+        scalar_diffs=[
+            {"field": "grid_power", "predicted": 7, "actual": 6},
+        ],
+    )
+
+    assert _is_implausible_stale_verify_actual(
+        diff,
+        {"mission_id": "Mission_MosquitoBoss"},
+        "Mission_MosquitoBoss",
+    ) is True
+
+
+def test_small_verify_diff_is_not_stale():
+    diff = DiffResult(unit_diffs=[
+        {"uid": 1, "type": "MirrorMech", "field": "active",
+         "predicted": True, "actual": False},
+    ])
+
+    assert _is_implausible_stale_verify_actual(
+        diff,
+        {"mission_id": "Mission_MosquitoBoss"},
+        "Mission_MosquitoBoss",
+    ) is False

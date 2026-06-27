@@ -4,9 +4,10 @@ The game writes Lua table literals to save files. We parse these into
 Python dicts, then extract structured game state. This replaces computer
 vision for state extraction — faster, 100% accurate, complete.
 
-Save file locations (macOS):
+Default save file locations:
   ~/Library/Application Support/IntoTheBreach/profile_<name>/saveData.lua
   ~/Library/Application Support/IntoTheBreach/profile_<name>/undoSave.lua
+  ~/Documents/My Games/Into The Breach/profile_<name>/saveData.lua
 """
 
 from __future__ import annotations
@@ -17,8 +18,10 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.itb_paths import get_save_dir
+
 # Save directory
-SAVE_DIR = Path.home() / "Library" / "Application Support" / "IntoTheBreach"
+SAVE_DIR = get_save_dir()
 
 # Terrain type mapping from save file integers
 TERRAIN_MAP = {
@@ -53,9 +56,14 @@ _MODELED_UPGRADED_WEAPONS = {
     "Prime_Leap_A",
     "Prime_Leap_B",
     "Prime_Leap_AB",
+    "Prime_ShieldBash_B",
+    "Prime_ShieldBash_AB",
     "Brute_Jetmech_A",
     "Brute_Jetmech_B",
     "Brute_Jetmech_AB",
+    "Brute_Mirrorshot_A",
+    "Brute_Mirrorshot_B",
+    "Brute_Mirrorshot_AB",
     "Brute_Unstable_A",
     "Brute_Unstable_B",
     "Brute_Unstable_AB",
@@ -64,6 +72,9 @@ _MODELED_UPGRADED_WEAPONS = {
     "Ranged_Rocket_A",
     "Ranged_Rocket_B",
     "Ranged_Rocket_AB",
+    "Ranged_SmokeFire_A",
+    "Ranged_SmokeFire_B",
+    "Ranged_SmokeFire_AB",
     "Ranged_Crack_A",
     "Ranged_Crack_B",
     "Ranged_Crack_AB",
@@ -75,6 +86,9 @@ _MODELED_UPGRADED_WEAPONS = {
     "Science_KO_Crack_A",
     "Science_KO_Crack_B",
     "Science_KO_Crack_AB",
+    "Science_RainingFire_A",
+    "Science_RainingFire_B",
+    "Science_RainingFire_AB",
     "Passive_Leech_A",
 }
 

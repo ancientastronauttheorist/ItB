@@ -150,6 +150,44 @@ def test_swap_mech_full_range_overlay_from_save(monkeypatch):
     assert bridge_data["units"][0]["weapons"] == ["Science_Swap_AB"]
 
 
+def test_firestorm_range_overlay_from_save(monkeypatch):
+    bridge_data = {
+        "units": [
+            {
+                "uid": 2,
+                "type": "NapalmMech",
+                "mech": True,
+                "weapons": ["Science_RainingFire"],
+            }
+        ]
+    }
+
+    class FakeState:
+        weapons = [
+            "Prime_Flamethrower",
+            "",
+            "Brute_TC_DoubleShot",
+            "",
+            "Science_RainingFire_A",
+            "",
+        ]
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+    assert updates == [{
+        "uid": 2,
+        "slot": 0,
+        "base": "Science_RainingFire",
+        "upgraded": "Science_RainingFire_A",
+    }]
+    assert bridge_data["units"][0]["weapons"] == ["Science_RainingFire_A"]
+
+
 def test_artemis_buildings_immune_overlay_from_save(monkeypatch):
     bridge_data = {
         "units": [
@@ -266,6 +304,47 @@ def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
             upgraded,
             "Passive_Electric",
         ]
+
+
+def test_force_amp_passive_overlay_from_save(monkeypatch):
+    bridge_data = {
+        "units": [
+            {
+                "uid": 1,
+                "type": "MirrorMech",
+                "mech": True,
+                "weapons": ["Brute_Mirrorshot_A"],
+            }
+        ]
+    }
+
+    class FakeState:
+        weapons = [
+            "Prime_ShieldBash",
+            "",
+            "Brute_Mirrorshot_A",
+            "Passive_ForceAmp",
+            "Ranged_Ice",
+            "",
+        ]
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+    assert updates == [{
+        "uid": 1,
+        "slot": 1,
+        "base": "Passive_ForceAmp",
+        "upgraded": "Passive_ForceAmp",
+    }]
+    assert bridge_data["units"][0]["weapons"] == [
+        "Brute_Mirrorshot_A",
+        "Passive_ForceAmp",
+    ]
 
 
 def test_cataclysm_upgraded_weapons_overlay_from_save(monkeypatch):

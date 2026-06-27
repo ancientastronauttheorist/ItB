@@ -24,20 +24,25 @@ Existing design docs remain authoritative for their domains:
 
 ## Project Goal
 
-Earn all 70 Into the Breach achievements autonomously on macOS while the user
-watches in real time. Combat state comes from the Lua bridge through `/tmp/`.
+Earn all 70 Into the Breach achievements autonomously on macOS and Windows while
+the user watches in real time. Combat state comes from the Lua bridge through
+the platform bridge directory (`/tmp/` on macOS, profile-local `itb_bridge/` on
+Windows).
 Combat actions go through the bridge; deployment, menus, shop, rewards, and
 island navigation use Codex Computer Use clicks.
 
 Steam App ID: `590380`.
 
-After editing `src/bridge/modloader.lua`, run:
+After editing `src/bridge/modloader.lua` on macOS, run:
 
 ```bash
 bash scripts/install_modloader.sh
 ```
 
 Then restart the game.
+
+On Windows, install the same `src/bridge/modloader.lua` into the ITB-ModLoader
+location used by the game, then restart the game.
 
 ## Architecture
 
@@ -92,6 +97,13 @@ bridge, verifies after each sub-action, re-solves on desync when possible, and
 emits an End Turn click plan. It waits at entry for both
 `phase == combat_player` and `active_mechs > 0`.
 
+The Lua bridge heartbeat is written from mission `BaseUpdate`. A visible pause
+menu can suspend that tick and make the heartbeat stale; this is expected while
+paused and is not by itself a bridge failure. Before any bridge combat command,
+unpause or otherwise return to a ticking game state and wait for a fresh
+heartbeat. If the heartbeat remains stale after unpausing, or goes stale during
+a bridge command, recover from a fresh `read` plus `solve`.
+
 Typical turn rhythm:
 
 ```text
@@ -126,8 +138,11 @@ Never call bridge sub-action commands such as `move_mech`, `attack_mech`,
    `multi_tool_use.parallel`, chain them with `&&`, pipe them to filters, or run
    them beside screenshots/UI inspection.
 2. Always verify after each mech action. `auto_turn` does this automatically.
-3. After a crash, timeout, stale heartbeat, or desync recovery, start from a
-   fresh `read` plus `solve`; never resume an old solution.
+3. After a crash, timeout, stale heartbeat outside a verified pause menu, stale
+   heartbeat that persists after unpausing, or desync recovery, start from a
+   fresh `read` plus `solve`; never resume an old solution. A stale heartbeat
+   while visibly paused is expected; unpause and wait for a fresh heartbeat
+   before bridge combat commands.
 4. Trust the solver by default. Do not override it unless it times out, returns
    empty, or an explicit dirty/manual protocol authorizes the exact line.
 5. Use all mech actions every turn unless the solver or a safety gate says
@@ -156,7 +171,7 @@ Stop before further combat commands or End Turn clicks when any of these appear:
 - `INVESTIGATE` or `INVESTIGATE_POST_ENEMY`.
 - `THREAT_AUDIT_BLOCKED`.
 - A persistent `post_enemy_block`.
-- `SAFETY_BLOCKED` without reviewed dirty consent.
+- `SAFETY_BLOCKED` that has not had its dirty frontier reviewed.
 - A post-action desync that leaves the board uncertain.
 - Visible reward text showing KIA, failed objective, Region Secured mismatch, or
   another terminal outcome that contradicts the solver.
@@ -168,12 +183,20 @@ types with `research_resolve`, and repeat until no work remains.
 Diagnosis protocol: drain between turns, one entry per call unless the user asks
 to clear the queue. Run dry-run before applying an agent proposal. If a concrete
 diagnosis fix applies, verify it, rebuild Rust if needed, run focused proof and
-regression when possible, then commit and push only the relevant files.
+regression when possible, then stage only the relevant fix/regression/doc files,
+commit, and push before resuming achievement play. Do not leave verified
+solver/simulator fixes sitting uncommitted through the next mission unless the
+user explicitly asks you to pause.
 
-Dirty-plan protocol: inspect the dirty frontier first. A plain
-`--allow-dirty-plan` is insufficient; rerun only with the exact single-use
-`--dirty-consent-id` for the reviewed line. Timeline collapse is not
-dirty-consentable except the documented final-cave resist emergency.
+Dirty-plan protocol: inspect the dirty frontier first. The user has granted
+standing consent to run reviewed dirty lines when there is no desync,
+investigation gate, unresolved research, threat-audit block, persistent
+post-enemy block, or board uncertainty. A plain `--allow-dirty-plan` is
+insufficient; rerun only with the exact single-use `--dirty-consent-id` for the
+reviewed line, plus any required broad dirty flag for that exact loss class.
+Timeline collapse is not covered by standing consent. The documented
+final-cave resist emergency needs explicit live user authorization for the exact
+resist line before spending the token.
 
 ## Achievement Setup
 
@@ -220,8 +243,10 @@ The solver enforces the full rules in `docs/agent/solver-reference.md` and
 - Smoke prevents attacks and repair.
 - Webbed units cannot move but can still attack. A blocked push does not clear
   web.
-- Environment danger ticks before Vek attacks. `environment_danger_v2` entries
-  are `[x, y, damage, kill_int]`; `kill_int=1` means lethal.
+- Environment danger normally ticks before Vek attacks. `Mission_Tides` is the
+  exception: queued Vek attacks land before the wave advances, and flying units
+  on tide tiles take 1 damage. `environment_danger_v2` entries are
+  `[x, y, damage, kill_int]`; `kill_int=1` means lethal for grounded units.
 
 ## Command Cheat Sheet
 

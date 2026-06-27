@@ -577,9 +577,73 @@ pub enum WId {
     BruteUnstableB = 196,
     /// Unstable Cannon with both damage upgrades powered.
     BruteUnstableAB = 197,
+    /// AE Shaman Totem / Spore secretion: fixed-impact projectile, then self-death.
+    TotemAtk1 = 198,
+    /// Alpha Totem secretion: fixed-impact projectile, then self-death.
+    TotemAtk2 = 199,
+    /// Leader-spawned Totem secretion: fixed-impact projectile, then self-death.
+    TotemAtkB = 200,
+    /// Janus Cannon with one +1 Damage upgrade powered.
+    BruteMirrorshotA = 201,
+    /// Janus Cannon with the alternate +1 Damage upgrade powered.
+    BruteMirrorshotB = 202,
+    /// Janus Cannon with both +1 Damage upgrades powered.
+    BruteMirrorshotAB = 203,
+    /// Spartan Shield with +1 Damage powered.
+    PrimeShieldBashB = 204,
+    /// Spartan Shield with Gain Shield and +1 Damage powered.
+    PrimeShieldBashAB = 205,
+    /// Bombermechs — Exchange Mech's Force Swap.
+    /// Conservatively modeled as no-op until bridge execution supports the
+    /// weapon's two-click first-unit/second-unit target pair.
+    ScienceTcSwapOther = 206,
+    ScienceTcSwapOtherA = 207,
+    ScienceTcSwapOtherB = 208,
+    ScienceTcSwapOtherAB = 209,
+    /// Bombermechs — Pierce Mech's AP Cannon.
+    BrutePierceShot = 210,
+    /// Mist Eaters — Smog Mech's Smoldering Shells.
+    RangedSmokeFire = 211,
+    /// Mist Eaters — Control Mech's Control Shot.
+    ScienceTcControl = 212,
+    /// Bombermechs — Bombling Mech's Bomb Dispenser.
+    RangedDeployBomb = 213,
+    /// Bombermechs — Walking Bomb's Trigger.
+    DeployUnitSelfDamage = 214,
+    /// Mist Eaters — Thruster Mech's Reverse Thrusters.
+    BruteKickBack = 215,
+    /// Reverse Thrusters with first +1 Range powered.
+    BruteKickBackA = 216,
+    /// Reverse Thrusters with second +1 Range powered.
+    BruteKickBackB = 217,
+    /// Reverse Thrusters with both +1 Range upgrades powered.
+    BruteKickBackAB = 218,
+    /// Heat Sinkers - Quick-Fire Mech's Quick-Fire Rockets. This is a true
+    /// two-click weapon; keep it non-enumerated until the bridge can supply
+    /// both target directions.
+    BruteTcDoubleShot = 219,
+    BruteTcDoubleShotA = 220,
+    BruteTcDoubleShotB = 221,
+    BruteTcDoubleShotAB = 222,
+    /// Heat Sinkers - Dispersal Mech's Thermal Discharger.
+    PrimeFlamespreader = 223,
+    PrimeFlamespreaderA = 224,
+    PrimeFlamespreaderB = 225,
+    PrimeFlamespreaderAB = 226,
+    /// Heat Sinkers - Napalm Mech's Firestorm Generator.
+    ScienceRainingFire = 227,
+    ScienceRainingFireA = 228,
+    ScienceRainingFireB = 229,
+    ScienceRainingFireAB = 230,
+    /// Smoldering Shells with More Smoke powered.
+    RangedSmokeFireA = 231,
+    /// Smoldering Shells with +2 Damage powered.
+    RangedSmokeFireB = 232,
+    /// Smoldering Shells with More Smoke and +2 Damage powered.
+    RangedSmokeFireAB = 233,
 }
 
-pub const WEAPON_COUNT: usize = 198;
+pub const WEAPON_COUNT: usize = 234;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -620,6 +684,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 4: Prime_ShieldBash — Spartan Shield.
     // Bashes the adjacent target for 2 damage and flips its queued attack.
     w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
+    // 204-205: Spartan Shield damage upgrade. The A/AB shield-self benefit is
+    // conservative in the sim today; the damage upgrade is mission-critical.
+    w[204] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Flip, flags: C, ..DEF };
+    w[205] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Flip, flags: C, ..DEF };
     // 5: Prime_Shift — Vice Fist (grab and toss target to tile behind attacker)
     w[5] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Throw, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 6: Prime_Flamethrower — Flamethrower.
@@ -698,6 +766,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[142] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, range_min: 2, range_max: 3, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
     // 18: Brute_Mirrorshot — Mirror Shot
     w[18] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
+    // 201-203: Janus Cannon damage upgrades. Both arms use the same Damage.
+    w[201] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
+    w[202] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
+    w[203] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 19: Brute_Beetle — Ramming Engines
     w[19] = WeaponDef { weapon_type: WeaponType::Charge, damage: 2, push: PushDir::Forward, self_damage: 1, range_max: 0,
         flags: f(WeaponFlags::CHARGE.bits() | WeaponFlags::FLYING_CHARGE.bits()), ..DEF };
@@ -725,6 +797,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     w[197] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, push: PushDir::Forward, self_damage: 2, range_max: 0,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 198-200: AE Shaman Totem / Spore secretion. Lua queues a projectile at
+    // GetProjectileEnd(p1,p2), then queues DAMAGE_DEATH at p1. The fixed
+    // impact + self-death semantics are handled in enemy.rs; keep the def as
+    // a projectile for targeting/scoring metadata.
+    w[198] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[199] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[200] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     // 22: Brute_PhaseShot — Phase Cannon
     w[22] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0,
         flags: f(WeaponFlags::PHASE.bits()), ..DEF };
@@ -879,6 +958,83 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // simulation are bespoke because the pawn's normal MoveSpeed is 0.
     w[191] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, range_max: 3, limited: 2, flags: C, ..DEF };
 
+    // 206-209: Science_TC_SwapOther — Force Swap. Two-click Bombermechs
+    // weapon: first choose an adjacent non-stable unit, then swap it with any
+    // other non-stable unit on the board.
+    w[206] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, flags: C, ..DEF };
+    w[207] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, flags: C, ..DEF };
+    w[208] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, flags: C, ..DEF };
+    w[209] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, flags: C, ..DEF };
+    // 210: Brute_PierceShot — AP Cannon.
+    // Pushes the first projectile blocker, then damages and pushes the second.
+    // The two-stage projectile semantics are WId-specific in simulate.rs.
+    w[210] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    // 211: Ranged_SmokeFire — Smoldering Shells.
+    // Base Mist Eaters artillery: deals 1 and lights the target tile on Fire,
+    // then adds Smoke to the four cardinal adjacent tiles. The adjacent smoke
+    // footprint is WId-specific in simulate.rs because normal SMOKE applies to
+    // the center tile.
+    w[211] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 231-233: Smoldering Shells upgrades.
+    // More Smoke expands the WId-specific surrounding smoke footprint to all
+    // eight neighboring tiles; +2 Damage raises only the center hit.
+    w[231] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[232] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[233] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 212: Science_TC_Control — Control Shot.
+    // This needs target-unit plus destination targeting. Keep it catalogued but
+    // inert until the action schema/bridge can carry that second click safely.
+    w[212] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    // 213: Ranged_DeployBomb — Bomb Dispenser.
+    // Deployable extends LineArtillery in Lua: cardinal lines, min range 2,
+    // empty ground target only. The Walking Bomb spawn itself is in simulate.rs.
+    w[213] = WeaponDef { weapon_type: WeaponType::Deploy, damage: 0, range_min: 2, range_max: 0, flags: C, ..DEF };
+    // 214: DeployUnit_SelfDamage — Walking Bomb Trigger.
+    // Self-destructs and deals 1 damage to the four cardinal adjacent tiles.
+    w[214] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, self_damage: 99,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 215-218: Brute_KickBack — Reverse Thrusters.
+    // Lua advanced/ae_weapons.lua:872-975. The clicked tile is the dash
+    // landing, and the damaged/smoked tile is one tile opposite that direction
+    // from the starting position. Damage equals distance travelled; Boost adds
+    // via the normal transient `damage` increment.
+    w[215] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 2, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    w[216] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 3, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    w[217] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 3, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    w[218] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
+        range_min: 1, range_max: 4, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+
+    // 219-222: Brute_TC_DoubleShot - Quick-Fire Rockets. Live requires two
+    // chosen directions; the current bridge has no two-target protocol for
+    // this weapon, so do not let the solver plan one-projectile stand-ins. A
+    // adds push, B adds +1 damage, AB has both for future bridge support.
+    w[219] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, range_max: 0, flags: C, ..DEF };
+    w[220] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[221] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, range_max: 0, flags: C, ..DEF };
+    w[222] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+
+    // 223-226: Prime_Flamespreader - Thermal Discharger. Bespoke line damage
+    // plus perpendicular side pushes live in simulate.rs; range and Add Fire
+    // are encoded here for targeting and status.
+    w[223] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 2, path_size: 2, flags: C, ..DEF };
+    w[224] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 4, path_size: 4, flags: C, ..DEF };
+    w[225] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 2, path_size: 2, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[226] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, range_max: 4, path_size: 4, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+
+    // 227-230: Science_RainingFire - Firestorm Generator. Line artillery that
+    // lights every tile from shooter to target, then pushes the target tile.
+    w[227] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 2, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[228] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 3, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[229] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 4, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[230] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 5, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
     w[47] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: f(WeaponFlags::WEB.bits()), ..DEF };
@@ -1011,27 +1167,26 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[157] = WeaponDef { weapon_type: WeaponType::Melee, damage: 255,
         flags: f(WeaponFlags::SMOKE.bits() | WeaponFlags::WEB.bits()), ..DEF };
 
-    // 158-161: Brute_TC_Ricochet — Ricochet Rocket. This is a two-click Lua
-    // weapon, but the bridge's Pawn:FireWeapon(target, slot) route can only
-    // execute the first-click projectile. Keep the simulator aligned with the
-    // executable bridge effect: one projectile, first blocker takes damage and
-    // forward push. Upgrade B zeros friendly damage but still pushes allies.
-    w[158] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+    // 158-161: Brute_TC_Ricochet — Ricochet Rocket. Two-click Lua weapon:
+    // first click chooses the initial projectile blocker, second click chooses
+    // the bounce line from that blocker. Upgrade B zeros friendly damage but
+    // still pushes allies.
+    w[158] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, push: PushDir::Forward,
         range_max: 0, flags: C, ..DEF };
-    w[159] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+    w[159] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, push: PushDir::Forward,
         range_max: 0, flags: C, ..DEF };
-    w[160] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+    w[160] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, push: PushDir::Forward,
         range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
-    w[161] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+    w[161] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, push: PushDir::Forward,
         range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
 
     // 162-165: Ranged_Arachnoid — Arachnoid Injector. Bespoke spawn-on-kill
     // semantics live in simulate.rs; the definition supplies artillery damage
     // and range. B/AB spawn Arachnoids whose self-destruct melee applies ACID.
-    w[162] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
-    w[163] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
-    w[164] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
-    w[165] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
+    w[162] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, range_max: 0, flags: C, ..DEF };
+    w[163] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, range_max: 0, flags: C, ..DEF };
+    w[164] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, range_max: 0, flags: C, ..DEF };
+    w[165] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, range_max: 0, flags: C, ..DEF };
     // 166-167: DeployUnit_AracnoidAtk — spawned Arachnoid melee. Self-kill is
     // special-cased so sacrificing an Arachnoid is not scored as a mech death.
     w[166] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
@@ -1347,6 +1502,51 @@ pub fn is_hydraulic_lifter(id: WId) -> bool {
 }
 
 #[inline]
+pub fn is_ricochet_rocket(id: WId) -> bool {
+    matches!(
+        id,
+        WId::BruteTcRicochet | WId::BruteTcRicochetA
+            | WId::BruteTcRicochetB | WId::BruteTcRicochetAB
+    )
+}
+
+#[inline]
+pub fn is_force_swap(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
+            | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB
+    )
+}
+
+#[inline]
+pub fn is_quick_fire_rockets(id: WId) -> bool {
+    matches!(
+        id,
+        WId::BruteTcDoubleShot | WId::BruteTcDoubleShotA
+            | WId::BruteTcDoubleShotB | WId::BruteTcDoubleShotAB
+    )
+}
+
+#[inline]
+pub fn is_thermal_discharger(id: WId) -> bool {
+    matches!(
+        id,
+        WId::PrimeFlamespreader | WId::PrimeFlamespreaderA
+            | WId::PrimeFlamespreaderB | WId::PrimeFlamespreaderAB
+    )
+}
+
+#[inline]
+pub fn is_firestorm_generator(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceRainingFire | WId::ScienceRainingFireA
+            | WId::ScienceRainingFireB | WId::ScienceRainingFireAB
+    )
+}
+
+#[inline]
 pub fn is_tri_rocket(id: WId) -> bool {
     matches!(
         id,
@@ -1380,6 +1580,39 @@ pub fn arachnoid_injector_spawns_acid_attack(id: WId) -> bool {
 #[inline]
 pub fn is_arachnoid_attack(id: WId) -> bool {
     matches!(id, WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB)
+}
+
+#[inline]
+pub fn is_walking_bomb_trigger(id: WId) -> bool {
+    id == WId::DeployUnitSelfDamage
+}
+
+#[inline]
+pub fn is_reverse_thrusters(id: WId) -> bool {
+    matches!(
+        id,
+        WId::BruteKickBack | WId::BruteKickBackA
+            | WId::BruteKickBackB | WId::BruteKickBackAB
+    )
+}
+
+#[inline]
+pub fn reverse_thrusters_hit_tile(
+    ax: u8,
+    ay: u8,
+    target_x: u8,
+    target_y: u8,
+) -> Option<(u8, u8, u8, usize)> {
+    let dir = crate::movement::cardinal_direction(ax, ay, target_x, target_y)?;
+    let distance = (target_x as i8 - ax as i8).unsigned_abs()
+        + (target_y as i8 - ay as i8).unsigned_abs();
+    let (dx, dy) = DIRS[dir];
+    let hx = ax as i8 - dx;
+    let hy = ay as i8 - dy;
+    if !in_bounds(hx, hy) {
+        return None;
+    }
+    Some((hx as u8, hy as u8, distance, dir))
 }
 
 #[inline]
@@ -1473,11 +1706,17 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Lasermech_B" => WId::PrimeLasermechB,
         "Prime_Lasermech_AB" => WId::PrimeLasermechAB,
         "Prime_ShieldBash" => WId::PrimeShieldBash,
+        "Prime_ShieldBash_B" => WId::PrimeShieldBashB,
+        "Prime_ShieldBash_AB" => WId::PrimeShieldBashAB,
         "Prime_Shift" => WId::PrimeShift,
         "Prime_Flamethrower" => WId::PrimeFlamethrower,
         "Prime_Flamethrower_A" => WId::PrimeFlamethrowerA,
         "Prime_Flamethrower_B" => WId::PrimeFlamethrowerB,
         "Prime_Flamethrower_AB" => WId::PrimeFlamethrowerAB,
+        "Prime_Flamespreader" => WId::PrimeFlamespreader,
+        "Prime_Flamespreader_A" => WId::PrimeFlamespreaderA,
+        "Prime_Flamespreader_B" => WId::PrimeFlamespreaderB,
+        "Prime_Flamespreader_AB" => WId::PrimeFlamespreaderAB,
         "Prime_TC_Punt" => WId::PrimeTcPunt,
         "PrimeTcPunt" => WId::PrimeTcPunt,
         "Prime_TC_Punt_A" => WId::PrimeTcPuntA,
@@ -1503,7 +1742,14 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Jetmech_A" => WId::BruteJetmechA,
         "Brute_Jetmech_B" => WId::BruteJetmechB,
         "Brute_Jetmech_AB" => WId::BruteJetmechAB,
+        "Brute_KickBack" => WId::BruteKickBack,
+        "Brute_KickBack_A" => WId::BruteKickBackA,
+        "Brute_KickBack_B" => WId::BruteKickBackB,
+        "Brute_KickBack_AB" => WId::BruteKickBackAB,
         "Brute_Mirrorshot" => WId::BruteMirrorshot,
+        "Brute_Mirrorshot_A" => WId::BruteMirrorshotA,
+        "Brute_Mirrorshot_B" => WId::BruteMirrorshotB,
+        "Brute_Mirrorshot_AB" => WId::BruteMirrorshotAB,
         "Brute_Beetle" => WId::BruteBeetle,
         "Brute_Grapple" => WId::BruteGrapple,
         "Brute_Unstable" => WId::BruteUnstable,
@@ -1518,10 +1764,15 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Sniper" => WId::BruteSniper,
         "Brute_Splitshot" => WId::BruteSplitshot,
         "Brute_Bombrun" => WId::BruteBombrun,
+        "Brute_PierceShot" => WId::BrutePierceShot,
         "Brute_TC_Ricochet" => WId::BruteTcRicochet,
         "Brute_TC_Ricochet_A" => WId::BruteTcRicochetA,
         "Brute_TC_Ricochet_B" => WId::BruteTcRicochetB,
         "Brute_TC_Ricochet_AB" => WId::BruteTcRicochetAB,
+        "Brute_TC_DoubleShot" => WId::BruteTcDoubleShot,
+        "Brute_TC_DoubleShot_A" => WId::BruteTcDoubleShotA,
+        "Brute_TC_DoubleShot_B" => WId::BruteTcDoubleShotB,
+        "Brute_TC_DoubleShot_AB" => WId::BruteTcDoubleShotAB,
         "Archive_ArtShot" => WId::ArchiveArtShot,
         "Ranged_Artillerymech" => WId::RangedArtillerymech,
         "Ranged_Artillerymech_A" => WId::RangedArtillerymechA,
@@ -1564,6 +1815,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Ranged_Arachnoid_AB" => WId::RangedArachnoidAB,
         "DeployUnit_AracnoidAtk" => WId::DeployUnitAracnoidAtk,
         "DeployUnit_AracnoidAtkB" => WId::DeployUnitAracnoidAtkB,
+        "Ranged_DeployBomb" => WId::RangedDeployBomb,
+        "DeployUnit_SelfDamage" => WId::DeployUnitSelfDamage,
         "Science_Pullmech" => WId::SciencePullmech,
         "Science_Gravwell" => WId::ScienceGravwell,
         "Science_Repulse" => WId::ScienceRepulse,
@@ -1575,6 +1828,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_Swap_A" => WId::ScienceSwapA,
         "Science_Swap_B" => WId::ScienceSwapB,
         "Science_Swap_AB" => WId::ScienceSwapAB,
+        "Science_RainingFire" => WId::ScienceRainingFire,
+        "Science_RainingFire_A" => WId::ScienceRainingFireA,
+        "Science_RainingFire_B" => WId::ScienceRainingFireB,
+        "Science_RainingFire_AB" => WId::ScienceRainingFireAB,
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
         "Science_Confuse" => WId::ScienceConfuse,
@@ -1590,6 +1847,19 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_MassShift_A" => WId::ScienceMassShiftA,
         "Science_MassShift_B" => WId::ScienceMassShiftB,
         "Science_MassShift_AB" => WId::ScienceMassShiftAB,
+        "Science_TC_SwapOther" => WId::ScienceTcSwapOther,
+        "Science_TC_SwapOther_A" => WId::ScienceTcSwapOtherA,
+        "Science_TC_SwapOther_B" => WId::ScienceTcSwapOtherB,
+        "Science_TC_SwapOther_AB" => WId::ScienceTcSwapOtherAB,
+        "Science_TC_Control" => WId::ScienceTcControl,
+        "Ranged_SmokeFire" => WId::RangedSmokeFire,
+        "RangedSmokeFire" => WId::RangedSmokeFire,
+        "Ranged_SmokeFire_A" => WId::RangedSmokeFireA,
+        "RangedSmokeFireA" => WId::RangedSmokeFireA,
+        "Ranged_SmokeFire_B" => WId::RangedSmokeFireB,
+        "RangedSmokeFireB" => WId::RangedSmokeFireB,
+        "Ranged_SmokeFire_AB" => WId::RangedSmokeFireAB,
+        "RangedSmokeFireAB" => WId::RangedSmokeFireAB,
         "Missiles_Shield" => WId::MissilesShield,
         "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
@@ -1626,6 +1896,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "BurnbugAtk1" => WId::BurnbugAtk1,
         "BurnbugAtk2" => WId::BurnbugAtk2,
         "SnowtankAtk1" => WId::SnowtankAtk1,
+        "SnowtankAtk1_Player" => WId::SnowtankAtk1,
         "SnowtankAtk2" => WId::SnowtankAtk2,
         "SnowlaserAtk1" => WId::SnowlaserAtk1,
         "SnowlaserAtk2" => WId::SnowlaserAtk2,
@@ -1654,6 +1925,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
         "ScorpionAtkB" => WId::ScorpionAtkB,
+        "TotemAtk1" => WId::TotemAtk1,
+        "TotemAtk2" => WId::TotemAtk2,
+        "TotemAtkB" => WId::TotemAtkB,
         "BouncerAtkB" => WId::BouncerAtkB,
         "Armored_Train_Move" => WId::ArmoredTrainMove,
         "VIP_Truck_Move" => WId::VipTruckMove,
@@ -1705,11 +1979,17 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeLasermechB => "Prime_Lasermech_B",
         WId::PrimeLasermechAB => "Prime_Lasermech_AB",
         WId::PrimeShieldBash => "Prime_ShieldBash",
+        WId::PrimeShieldBashB => "Prime_ShieldBash_B",
+        WId::PrimeShieldBashAB => "Prime_ShieldBash_AB",
         WId::PrimeShift => "Prime_Shift",
         WId::PrimeFlamethrower => "Prime_Flamethrower",
         WId::PrimeFlamethrowerA => "Prime_Flamethrower_A",
         WId::PrimeFlamethrowerB => "Prime_Flamethrower_B",
         WId::PrimeFlamethrowerAB => "Prime_Flamethrower_AB",
+        WId::PrimeFlamespreader => "Prime_Flamespreader",
+        WId::PrimeFlamespreaderA => "Prime_Flamespreader_A",
+        WId::PrimeFlamespreaderB => "Prime_Flamespreader_B",
+        WId::PrimeFlamespreaderAB => "Prime_Flamespreader_AB",
         WId::PrimeTcPunt => "Prime_TC_Punt",
         WId::PrimeTcPuntA => "Prime_TC_Punt_A",
         WId::PrimeTcPuntB => "Prime_TC_Punt_B",
@@ -1731,7 +2011,14 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteJetmechA => "Brute_Jetmech_A",
         WId::BruteJetmechB => "Brute_Jetmech_B",
         WId::BruteJetmechAB => "Brute_Jetmech_AB",
+        WId::BruteKickBack => "Brute_KickBack",
+        WId::BruteKickBackA => "Brute_KickBack_A",
+        WId::BruteKickBackB => "Brute_KickBack_B",
+        WId::BruteKickBackAB => "Brute_KickBack_AB",
         WId::BruteMirrorshot => "Brute_Mirrorshot",
+        WId::BruteMirrorshotA => "Brute_Mirrorshot_A",
+        WId::BruteMirrorshotB => "Brute_Mirrorshot_B",
+        WId::BruteMirrorshotAB => "Brute_Mirrorshot_AB",
         WId::BruteBeetle => "Brute_Beetle",
         WId::BruteGrapple => "Brute_Grapple",
         WId::BruteUnstable => "Brute_Unstable",
@@ -1746,10 +2033,15 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteSniper => "Brute_Sniper",
         WId::BruteSplitshot => "Brute_Splitshot",
         WId::BruteBombrun => "Brute_Bombrun",
+        WId::BrutePierceShot => "Brute_PierceShot",
         WId::BruteTcRicochet => "Brute_TC_Ricochet",
         WId::BruteTcRicochetA => "Brute_TC_Ricochet_A",
         WId::BruteTcRicochetB => "Brute_TC_Ricochet_B",
         WId::BruteTcRicochetAB => "Brute_TC_Ricochet_AB",
+        WId::BruteTcDoubleShot => "Brute_TC_DoubleShot",
+        WId::BruteTcDoubleShotA => "Brute_TC_DoubleShot_A",
+        WId::BruteTcDoubleShotB => "Brute_TC_DoubleShot_B",
+        WId::BruteTcDoubleShotAB => "Brute_TC_DoubleShot_AB",
         WId::ArchiveArtShot => "Archive_ArtShot",
         WId::RangedArtillerymech => "Ranged_Artillerymech",
         WId::RangedArtillerymechA => "Ranged_Artillerymech_A",
@@ -1780,6 +2072,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedArachnoidAB => "Ranged_Arachnoid_AB",
         WId::DeployUnitAracnoidAtk => "DeployUnit_AracnoidAtk",
         WId::DeployUnitAracnoidAtkB => "DeployUnit_AracnoidAtkB",
+        WId::RangedDeployBomb => "Ranged_DeployBomb",
+        WId::DeployUnitSelfDamage => "DeployUnit_SelfDamage",
         WId::SciencePullmech => "Science_Pullmech",
         WId::ScienceGravwell => "Science_Gravwell",
         WId::ScienceRepulse => "Science_Repulse",
@@ -1788,6 +2082,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceSwapA => "Science_Swap_A",
         WId::ScienceSwapB => "Science_Swap_B",
         WId::ScienceSwapAB => "Science_Swap_AB",
+        WId::ScienceRainingFire => "Science_RainingFire",
+        WId::ScienceRainingFireA => "Science_RainingFire_A",
+        WId::ScienceRainingFireB => "Science_RainingFire_B",
+        WId::ScienceRainingFireAB => "Science_RainingFire_AB",
         WId::ScienceAcidShot => "Science_AcidShot",
         WId::ScienceShield => "Science_Shield",
         WId::ScienceConfuse => "Science_Confuse",
@@ -1799,6 +2097,15 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceMassShiftA => "Science_MassShift_A",
         WId::ScienceMassShiftB => "Science_MassShift_B",
         WId::ScienceMassShiftAB => "Science_MassShift_AB",
+        WId::ScienceTcSwapOther => "Science_TC_SwapOther",
+        WId::ScienceTcSwapOtherA => "Science_TC_SwapOther_A",
+        WId::ScienceTcSwapOtherB => "Science_TC_SwapOther_B",
+        WId::ScienceTcSwapOtherAB => "Science_TC_SwapOther_AB",
+        WId::ScienceTcControl => "Science_TC_Control",
+        WId::RangedSmokeFire => "Ranged_SmokeFire",
+        WId::RangedSmokeFireA => "Ranged_SmokeFire_A",
+        WId::RangedSmokeFireB => "Ranged_SmokeFire_B",
+        WId::RangedSmokeFireAB => "Ranged_SmokeFire_AB",
         WId::ScorpionAtk1 => "ScorpionAtk1",
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
@@ -1856,6 +2163,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PlasmodiaAtk2 => "PlasmodiaAtk2",
         WId::FireflyAtkB => "FireflyAtkB",
         WId::ScorpionAtkB => "ScorpionAtkB",
+        WId::TotemAtk1 => "TotemAtk1",
+        WId::TotemAtk2 => "TotemAtk2",
+        WId::TotemAtkB => "TotemAtkB",
         WId::BeetleAtkB => "BeetleAtkB",
         WId::Repair => "_REPAIR",
         WId::SupportRepair => "Support_Repair",
@@ -1936,8 +2246,12 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "TumblebugBoss" => WId::TumblebugAtk2,
         "Plasmodia1" => WId::PlasmodiaAtk1,
         "Plasmodia2" => WId::PlasmodiaAtk2,
+        "Totem1" => WId::TotemAtk1,
+        "Totem2" => WId::TotemAtk2,
+        "TotemB" => WId::TotemAtkB,
         // Pinnacle bots
         "Snowtank1" => WId::SnowtankAtk1,
+        "Snowtank1_Player" => WId::SnowtankAtk1,
         "Snowtank2" => WId::SnowtankAtk2,
         "Snowlaser1" => WId::SnowlaserAtk1,
         "Snowlaser2" => WId::SnowlaserAtk2,
@@ -2002,10 +2316,12 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimePunchmech | WId::PrimePunchmechA | WId::PrimePunchmechB | WId::PrimePunchmechAB => "Titan Fist",
         WId::PrimeLightning | WId::PrimeLightningA | WId::PrimeLightningB | WId::PrimeLightningAB => "Chain Whip",
         WId::PrimeLasermech | WId::PrimeLasermechA | WId::PrimeLasermechB | WId::PrimeLasermechAB => "Burst Beam",
-        WId::PrimeShieldBash => "Shield Bash",
+        WId::PrimeShieldBash | WId::PrimeShieldBashB | WId::PrimeShieldBashAB => "Shield Bash",
         WId::PrimeShift => "Vice Fist",
         WId::PrimeFlamethrower | WId::PrimeFlamethrowerA
             | WId::PrimeFlamethrowerB | WId::PrimeFlamethrowerAB => "Flamethrower",
+        WId::PrimeFlamespreader | WId::PrimeFlamespreaderA
+            | WId::PrimeFlamespreaderB | WId::PrimeFlamespreaderAB => "Thermal Discharger",
         WId::PrimeTcPunt | WId::PrimeTcPuntA
             | WId::PrimeTcPuntB | WId::PrimeTcPuntAB => "Hydraulic Lifter",
         WId::PrimeAreablast => "Area Blast",
@@ -2019,7 +2335,10 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeSmash => "Ground Smash",
         WId::BruteTankmech => "Taurus Cannon",
         WId::BruteJetmech | WId::BruteJetmechA | WId::BruteJetmechB | WId::BruteJetmechAB => "Aerial Bombs",
-        WId::BruteMirrorshot => "Mirror Shot",
+        WId::BruteKickBack | WId::BruteKickBackA
+            | WId::BruteKickBackB | WId::BruteKickBackAB => "Reverse Thrusters",
+        WId::BruteMirrorshot | WId::BruteMirrorshotA
+            | WId::BruteMirrorshotB | WId::BruteMirrorshotAB => "Mirror Shot",
         WId::BruteBeetle => "Ramming Engines",
         WId::BruteGrapple => "Grappling Hook",
         WId::BruteUnstable | WId::BruteUnstableA
@@ -2032,8 +2351,11 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteSniper => "Sniper Rifle",
         WId::BruteSplitshot => "Split Shot",
         WId::BruteBombrun => "Bombing Run",
+        WId::BrutePierceShot => "AP Cannon",
         WId::BruteTcRicochet | WId::BruteTcRicochetA
             | WId::BruteTcRicochetB | WId::BruteTcRicochetAB => "Ricochet Rocket",
+        WId::BruteTcDoubleShot | WId::BruteTcDoubleShotA
+            | WId::BruteTcDoubleShotB | WId::BruteTcDoubleShotAB => "Quick-Fire Rockets",
         WId::ArchiveArtShot => "Old Earth Artillery",
         WId::RangedArtillerymech => "Artemis Artillery",
         WId::RangedArtillerymechA => "Artemis Artillery",
@@ -2056,12 +2378,16 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::RangedArachnoid | WId::RangedArachnoidA
             | WId::RangedArachnoidB | WId::RangedArachnoidAB => "Arachnoid Injector",
         WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB => "Arachnoid Bite",
+        WId::RangedDeployBomb => "Bomb Dispenser",
+        WId::DeployUnitSelfDamage => "Trigger",
         WId::SciencePullmech => "Attract Shot",
         WId::ScienceGravwell => "Grav Well",
         WId::ScienceRepulse => "Repulse",
         WId::ScienceRepulseA => "Repulse",
         WId::ScienceSwap | WId::ScienceSwapA
             | WId::ScienceSwapB | WId::ScienceSwapAB => "Teleporter",
+        WId::ScienceRainingFire | WId::ScienceRainingFireA
+            | WId::ScienceRainingFireB | WId::ScienceRainingFireAB => "Firestorm Generator",
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
@@ -2069,6 +2395,11 @@ pub fn weapon_name(id: WId) -> &'static str {
             | WId::ScienceKoCrackB | WId::ScienceKoCrackAB => "Seismic Capacitor",
         WId::ScienceMassShift | WId::ScienceMassShiftA
             | WId::ScienceMassShiftB | WId::ScienceMassShiftAB => "Area Shift",
+        WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
+            | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB => "Force Swap",
+        WId::ScienceTcControl => "Control Shot",
+        WId::RangedSmokeFire | WId::RangedSmokeFireA
+            | WId::RangedSmokeFireB | WId::RangedSmokeFireAB => "Smoldering Shells",
         WId::Repair => "Repair",
         WId::ScorpionAtk1 => "Scorpion Strike",
         WId::ScorpionAtk2 => "Alpha Scorpion Strike",
@@ -2129,6 +2460,9 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
         WId::FireflyAtkB => "Firefly Boss Shot",
         WId::ScorpionAtkB => "Massive Spinneret",
+        WId::TotemAtk1 => "Scarred Secretion",
+        WId::TotemAtk2 => "Hemorrhaged Secretion",
+        WId::TotemAtkB => "Extravasating Secretion",
         WId::BouncerAtkB => "Sweeping Horns",
         WId::ArmoredTrainMove => "Armored Charge",
         WId::VipTruckMove => "Floor It!",
@@ -2176,15 +2510,18 @@ mod tests {
     #[test]
     fn test_arachnophiles_weapon_defs_and_mappings() {
         let ricochet = weapon_def(WId::BruteTcRicochet);
-        assert_eq!(ricochet.weapon_type, WeaponType::Projectile);
+        assert_eq!(ricochet.weapon_type, WeaponType::TwoClick);
         assert_eq!(ricochet.damage, 1);
         assert_eq!(ricochet.push, PushDir::Forward);
         assert_eq!(weapon_def(WId::BruteTcRicochetA).damage, 2);
         assert!(weapon_def(WId::BruteTcRicochetB).friendly_immune());
+        assert!(is_ricochet_rocket(WId::BruteTcRicochetAB));
 
         let injector = weapon_def(WId::RangedArachnoid);
         assert_eq!(injector.weapon_type, WeaponType::Artillery);
         assert_eq!(injector.damage, 1);
+        assert_eq!(injector.range_min, 2);
+        assert_eq!(injector.range_max, 0);
         assert!(is_arachnoid_injector(WId::RangedArachnoidAB));
         assert!(arachnoid_injector_spawns_acid_attack(WId::RangedArachnoidB));
 
@@ -2203,8 +2540,12 @@ mod tests {
         assert_eq!(wid_from_str("Ranged_Arachnoid_B"), WId::RangedArachnoidB);
         assert_eq!(wid_from_str("DeployUnit_AracnoidAtk"), WId::DeployUnitAracnoidAtk);
         assert_eq!(wid_from_str("Science_MassShift_AB"), WId::ScienceMassShiftAB);
+        assert_eq!(wid_from_str("Science_TC_SwapOther"), WId::ScienceTcSwapOther);
+        assert_eq!(wid_from_str("Science_TC_SwapOther_AB"), WId::ScienceTcSwapOtherAB);
         assert_eq!(wid_to_str(WId::RangedArachnoidAB), "Ranged_Arachnoid_AB");
+        assert_eq!(wid_to_str(WId::ScienceTcSwapOther), "Science_TC_SwapOther");
         assert_eq!(weapon_name(WId::ScienceMassShift), "Area Shift");
+        assert_eq!(weapon_name(WId::ScienceTcSwapOther), "Force Swap");
     }
 
     #[test]
@@ -2234,6 +2575,40 @@ mod tests {
     }
 
     #[test]
+    fn test_heat_sinkers_weapon_defs_and_mappings() {
+        let quick = weapon_def(WId::BruteTcDoubleShot);
+        assert_eq!(quick.weapon_type, WeaponType::TwoClick);
+        assert_eq!(quick.damage, 1);
+        assert_eq!(quick.push, PushDir::None);
+        assert_eq!(weapon_def(WId::BruteTcDoubleShotA).push, PushDir::Forward);
+        assert_eq!(weapon_def(WId::BruteTcDoubleShotB).damage, 2);
+        assert_eq!(weapon_def(WId::BruteTcDoubleShotAB).damage, 2);
+        assert!(is_quick_fire_rockets(WId::BruteTcDoubleShotAB));
+
+        let thermal = weapon_def(WId::PrimeFlamespreader);
+        assert_eq!(thermal.weapon_type, WeaponType::Melee);
+        assert_eq!(thermal.range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamespreaderA).range_max, 4);
+        assert!(weapon_def(WId::PrimeFlamespreaderB).fire());
+        assert!(is_thermal_discharger(WId::PrimeFlamespreaderAB));
+
+        let firestorm = weapon_def(WId::ScienceRainingFire);
+        assert_eq!(firestorm.weapon_type, WeaponType::Artillery);
+        assert_eq!(firestorm.range_min, 2);
+        assert_eq!(firestorm.range_max, 2);
+        assert!(firestorm.fire());
+        assert_eq!(weapon_def(WId::ScienceRainingFireA).range_max, 3);
+        assert_eq!(weapon_def(WId::ScienceRainingFireB).range_max, 4);
+        assert_eq!(weapon_def(WId::ScienceRainingFireAB).range_max, 5);
+        assert!(is_firestorm_generator(WId::ScienceRainingFireAB));
+
+        assert_eq!(wid_from_str("Brute_TC_DoubleShot_AB"), WId::BruteTcDoubleShotAB);
+        assert_eq!(wid_to_str(WId::PrimeFlamespreaderB), "Prime_Flamespreader_B");
+        assert_eq!(wid_from_str("Science_RainingFire"), WId::ScienceRainingFire);
+        assert_eq!(weapon_name(WId::ScienceRainingFireAB), "Firestorm Generator");
+    }
+
+    #[test]
     fn test_cataclysm_weapon_defs_and_mappings() {
         let lifter = weapon_def(WId::PrimeTcPunt);
         assert_eq!(lifter.weapon_type, WeaponType::TwoClick);
@@ -2248,7 +2623,7 @@ mod tests {
 
         let tri = weapon_def(WId::RangedCrack);
         assert_eq!(tri.weapon_type, WeaponType::Artillery);
-        assert_eq!(tri.range_min, 1);
+        assert_eq!(tri.range_min, 2);
         assert_eq!(tri.push, PushDir::Forward);
         assert!(is_tri_rocket(WId::RangedCrackAB));
         assert!(weapon_def(WId::RangedCrackB).building_immune());
@@ -2308,6 +2683,8 @@ mod tests {
         assert_eq!(w.range_max, 0);
         assert!(w.fire());
         assert_eq!(weapon_name(WId::SnowtankAtk1), "Cannon 8R Mark I");
+        assert_eq!(wid_from_str("SnowtankAtk1_Player"), WId::SnowtankAtk1);
+        assert_eq!(enemy_weapon_for_type("Snowtank1_Player"), WId::SnowtankAtk1);
     }
 
     #[test]
@@ -2365,6 +2742,72 @@ mod tests {
         assert_eq!(wid_from_str("Brute_Jetmech_AB"), WId::BruteJetmechAB);
         assert_eq!(wid_to_str(WId::BruteJetmechB), "Brute_Jetmech_B");
         assert_eq!(weapon_name(WId::BruteJetmechAB), "Aerial Bombs");
+    }
+
+    #[test]
+    fn test_reverse_thrusters_upgrades() {
+        let base = weapon_def(WId::BruteKickBack);
+        assert_eq!(base.weapon_type, WeaponType::DashAway);
+        assert_eq!(base.range_min, 1);
+        assert_eq!(base.range_max, 2);
+        assert_eq!(base.self_damage, 1);
+        assert!(base.smoke());
+
+        let range_a = weapon_def(WId::BruteKickBackA);
+        assert_eq!(range_a.range_max, 3);
+
+        let range_b = weapon_def(WId::BruteKickBackB);
+        assert_eq!(range_b.range_max, 3);
+
+        let both = weapon_def(WId::BruteKickBackAB);
+        assert_eq!(both.range_max, 4);
+
+        assert_eq!(wid_from_str("Brute_KickBack"), WId::BruteKickBack);
+        assert_eq!(wid_from_str("Brute_KickBack_A"), WId::BruteKickBackA);
+        assert_eq!(wid_from_str("Brute_KickBack_B"), WId::BruteKickBackB);
+        assert_eq!(wid_from_str("Brute_KickBack_AB"), WId::BruteKickBackAB);
+        assert_eq!(wid_to_str(WId::BruteKickBackB), "Brute_KickBack_B");
+        assert_eq!(weapon_name(WId::BruteKickBackAB), "Reverse Thrusters");
+    }
+
+    #[test]
+    fn test_janus_cannon_damage_upgrades() {
+        let a = weapon_def(WId::BruteMirrorshotA);
+        assert_eq!(a.weapon_type, WeaponType::Projectile);
+        assert_eq!(a.damage, 2);
+        assert_eq!(a.push, PushDir::Forward);
+        assert!(a.aoe_behind());
+
+        let b = weapon_def(WId::BruteMirrorshotB);
+        assert_eq!(b.damage, 2);
+        assert!(b.aoe_behind());
+
+        let both = weapon_def(WId::BruteMirrorshotAB);
+        assert_eq!(both.damage, 3);
+        assert!(both.aoe_behind());
+
+        assert_eq!(wid_from_str("Brute_Mirrorshot_A"), WId::BruteMirrorshotA);
+        assert_eq!(wid_from_str("Brute_Mirrorshot_B"), WId::BruteMirrorshotB);
+        assert_eq!(wid_from_str("Brute_Mirrorshot_AB"), WId::BruteMirrorshotAB);
+        assert_eq!(wid_to_str(WId::BruteMirrorshotA), "Brute_Mirrorshot_A");
+        assert_eq!(weapon_name(WId::BruteMirrorshotAB), "Mirror Shot");
+    }
+
+    #[test]
+    fn test_spartan_shield_damage_upgrades() {
+        let damage = weapon_def(WId::PrimeShieldBashB);
+        assert_eq!(damage.weapon_type, WeaponType::Melee);
+        assert_eq!(damage.damage, 3);
+        assert_eq!(damage.push, PushDir::Flip);
+
+        let both = weapon_def(WId::PrimeShieldBashAB);
+        assert_eq!(both.damage, 3);
+        assert_eq!(both.push, PushDir::Flip);
+
+        assert_eq!(wid_from_str("Prime_ShieldBash_B"), WId::PrimeShieldBashB);
+        assert_eq!(wid_from_str("Prime_ShieldBash_AB"), WId::PrimeShieldBashAB);
+        assert_eq!(wid_to_str(WId::PrimeShieldBashAB), "Prime_ShieldBash_AB");
+        assert_eq!(weapon_name(WId::PrimeShieldBashB), "Shield Bash");
     }
 
     #[test]
@@ -2536,6 +2979,40 @@ mod tests {
     }
 
     #[test]
+    fn test_ap_cannon_mapping_and_def() {
+        let w = weapon_def(WId::BrutePierceShot);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 2);
+        assert_eq!(w.push, PushDir::Forward);
+        assert_eq!(wid_from_str("Brute_PierceShot"), WId::BrutePierceShot);
+        assert_eq!(wid_to_str(WId::BrutePierceShot), "Brute_PierceShot");
+        assert_eq!(weapon_name(WId::BrutePierceShot), "AP Cannon");
+    }
+
+    #[test]
+    fn test_bombermechs_bomb_dispenser_mapping_and_def() {
+        let dispenser = weapon_def(WId::RangedDeployBomb);
+        assert_eq!(dispenser.weapon_type, WeaponType::Deploy);
+        assert_eq!(dispenser.range_min, 2);
+        assert_eq!(dispenser.range_max, 0);
+
+        let trigger = weapon_def(WId::DeployUnitSelfDamage);
+        assert_eq!(trigger.weapon_type, WeaponType::SelfAoe);
+        assert_eq!(trigger.damage, 1);
+        assert_eq!(trigger.self_damage, 99);
+        assert!(trigger.aoe_adjacent());
+        assert!(!trigger.aoe_center());
+        assert!(is_walking_bomb_trigger(WId::DeployUnitSelfDamage));
+
+        assert_eq!(wid_from_str("Ranged_DeployBomb"), WId::RangedDeployBomb);
+        assert_eq!(wid_from_str("DeployUnit_SelfDamage"), WId::DeployUnitSelfDamage);
+        assert_eq!(wid_to_str(WId::RangedDeployBomb), "Ranged_DeployBomb");
+        assert_eq!(wid_to_str(WId::DeployUnitSelfDamage), "DeployUnit_SelfDamage");
+        assert_eq!(weapon_name(WId::RangedDeployBomb), "Bomb Dispenser");
+        assert_eq!(weapon_name(WId::DeployUnitSelfDamage), "Trigger");
+    }
+
+    #[test]
     fn test_chain_whip_upgrades() {
         let base = weapon_def(WId::PrimeLightning);
         assert_eq!(base.damage, 2);
@@ -2570,8 +3047,14 @@ mod tests {
         assert_eq!(wid_from_str("Deploy_TankShot2"), WId::DeployTankShot2);
         assert_eq!(wid_from_str("Trapped_Explode"), WId::TrappedExplode);
         assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
+        assert_eq!(wid_from_str("TotemAtk1"), WId::TotemAtk1);
+        assert_eq!(wid_from_str("TotemAtk2"), WId::TotemAtk2);
+        assert_eq!(wid_from_str("TotemAtkB"), WId::TotemAtkB);
         assert_eq!(wid_from_str("Armored_Train_Move"), WId::ArmoredTrainMove);
         assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
+        assert_eq!(wid_from_str("Brute_TC_DoubleShot"), WId::BruteTcDoubleShot);
+        assert_eq!(wid_from_str("Prime_Flamespreader"), WId::PrimeFlamespreader);
+        assert_eq!(wid_from_str("Science_RainingFire"), WId::ScienceRainingFire);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -2610,6 +3093,9 @@ mod tests {
             ("Missiles_Shield", WId::MissilesShield),
             ("Missiles_OneDmg", WId::MissilesOneDmg),
             ("BouncerAtkB", WId::BouncerAtkB),
+            ("TotemAtk1", WId::TotemAtk1),
+            ("TotemAtk2", WId::TotemAtk2),
+            ("TotemAtkB", WId::TotemAtkB),
             ("Armored_Train_Move", WId::ArmoredTrainMove),
             ("VIP_Truck_Move", WId::VipTruckMove),
             ("ScarabAtkB", WId::ScarabAtkB),
@@ -2619,6 +3105,19 @@ mod tests {
             ("Science_Swap_A", WId::ScienceSwapA),
             ("Science_Swap_B", WId::ScienceSwapB),
             ("Science_Swap_AB", WId::ScienceSwapAB),
+            ("Science_TC_SwapOther", WId::ScienceTcSwapOther),
+            ("Brute_TC_DoubleShot", WId::BruteTcDoubleShot),
+            ("Brute_TC_DoubleShot_A", WId::BruteTcDoubleShotA),
+            ("Brute_TC_DoubleShot_B", WId::BruteTcDoubleShotB),
+            ("Brute_TC_DoubleShot_AB", WId::BruteTcDoubleShotAB),
+            ("Prime_Flamespreader", WId::PrimeFlamespreader),
+            ("Prime_Flamespreader_A", WId::PrimeFlamespreaderA),
+            ("Prime_Flamespreader_B", WId::PrimeFlamespreaderB),
+            ("Prime_Flamespreader_AB", WId::PrimeFlamespreaderAB),
+            ("Science_RainingFire", WId::ScienceRainingFire),
+            ("Science_RainingFire_A", WId::ScienceRainingFireA),
+            ("Science_RainingFire_B", WId::ScienceRainingFireB),
+            ("Science_RainingFire_AB", WId::ScienceRainingFireAB),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),
         ];

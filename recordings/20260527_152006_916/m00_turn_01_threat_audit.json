@@ -1,0 +1,117 @@
+{
+  "timestamp": "2026-05-27T15:23:01.908845",
+  "run_id": "20260527_152006_916",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 3,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          4,
+          5
+        ],
+        "target_visual": "C4",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 222,
+          "type": "Bouncer2",
+          "pos": [
+            4,
+            6
+          ],
+          "visual": "B4",
+          "hp": 4,
+          "max_hp": 4,
+          "weapon_id": "BouncerAtk2",
+          "target": [
+            4,
+            5
+          ],
+          "target_visual": "C4",
+          "queued_target": [
+            4,
+            5
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_smoked",
+          "detail": "attacker is standing in smoke"
+        }
+      },
+      {
+        "target": [
+          4,
+          5
+        ],
+        "target_visual": "C4",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 223,
+          "type": "Bouncer1",
+          "pos": [
+            5,
+            5
+          ],
+          "visual": "C3",
+          "hp": 3,
+          "max_hp": 3,
+          "weapon_id": "BouncerAtk1",
+          "target": [
+            4,
+            5
+          ],
+          "target_visual": "C4",
+          "queued_target": [
+            4,
+            5
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      },
+      {
+        "target": [
+          1,
+          2
+        ],
+        "target_visual": "F7",
+        "target_hp": 1,
+        "attacker": {
+          "uid": 224,
+          "type": "Hornet1",
+          "pos": [
+            1,
+            3
+          ],
+          "visual": "E7",
+          "hp": 2,
+          "max_hp": 2,
+          "weapon_id": "HornetAtk1",
+          "target": [
+            1,
+            2
+          ],
+          "target_visual": "F7",
+          "queued_target": [
+            1,
+            2
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}

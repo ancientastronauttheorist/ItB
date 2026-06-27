@@ -155,6 +155,8 @@ class Unit:
     # Enemy attack details (from bridge piQueuedShot + weapon globals)
     queued_target_x: int = -1  # piQueuedShot direction point
     queued_target_y: int = -1
+    queued_origin_x: int = -1  # original firing tile for queued line attacks
+    queued_origin_y: int = -1
     weapon_damage: int = 0
     weapon_target_behind: bool = False
     weapon_push: int = 0
@@ -612,6 +614,19 @@ class Board:
             qt = ud.get("queued_target")
             qt_x = qt[0] if qt else -1
             qt_y = qt[1] if qt else -1
+            has_queued_attack = bool(ud.get("has_queued_attack", False))
+            if qt_x < 0 and bool(ud.get("queued_target_normalized", False)):
+                has_queued_attack = False
+            qo = ud.get("queued_origin")
+            if qo:
+                qo_x = qo[0]
+                qo_y = qo[1]
+            elif qt_x >= 0 and qt_y >= 0:
+                qo_x = x
+                qo_y = y
+            else:
+                qo_x = -1
+                qo_y = -1
 
             u = Unit(
                 uid=ud.get("uid", 0),
@@ -643,10 +658,12 @@ class Board:
                 target_y=qt_y,
                 queued_target_x=qt_x,
                 queued_target_y=qt_y,
+                queued_origin_x=qo_x,
+                queued_origin_y=qo_y,
                 weapon_damage=min(ud.get("weapon_damage", 0), 255),
                 weapon_target_behind=ud.get("weapon_target_behind", False),
                 weapon_push=ud.get("weapon_push", 0),
-                has_queued_attack=bool(ud.get("has_queued_attack", False)),
+                has_queued_attack=has_queued_attack,
                 is_extra_tile=ud.get("is_extra_tile", False),
                 pilot_id=ud.get("pilot_id", ""),
                 pilot_value=_compute_pilot_value(
@@ -833,14 +850,28 @@ class Board:
         )
 
         # Satellite rocket deadly threat: 4 adjacent tiles kill grounded units
-        # on launch, but live launch exhaust spares flying pawns. Detect by
-        # targeted adjacent tiles when old payloads lack environment_danger_v2.
+        # on launch, but live launch exhaust spares flying pawns. New bridge
+        # payloads expose queued_launch per rocket; old payloads only had
+        # targeted tiles, so keep that fallback when queued_launch is absent.
         targeted = set()
         for tt in data.get("targeted_tiles", []):
             if isinstance(tt, (list, tuple)) and len(tt) >= 2:
                 targeted.add((tt[0], tt[1]))
+        raw_satellites = [
+            ud for ud in data.get("units", []) or []
+            if isinstance(ud, dict) and "Satellite" in str(ud.get("type", ""))
+        ]
+        satellite_launch_field_present = any(
+            "queued_launch" in ud for ud in raw_satellites
+        )
+        queued_satellite_uids = {
+            ud.get("uid") for ud in raw_satellites
+            if ud.get("queued_launch")
+        }
         for u in board.units:
             if "Satellite" in u.type and u.hp > 0:
+                if satellite_launch_field_present and u.uid not in queued_satellite_uids:
+                    continue
                 adj = [(u.x-1, u.y), (u.x+1, u.y), (u.x, u.y-1), (u.x, u.y+1)]
                 adj_on_board = [(x, y) for x, y in adj if 0 <= x < 8 and 0 <= y < 8]
                 if any(t in targeted for t in adj_on_board):

@@ -19,11 +19,13 @@ itb-bot/
 │   │   └── commands.py    # All CLI subcommand bodies
 │   ├── bridge/            # Lua bridge — state extraction + action execution
 │   │   ├── modloader.lua  # Game-side Lua that dumps state & executes commands
-│   │   ├── protocol.py    # File-based IPC (/tmp/itb_state.json etc.)
+│   │   ├── protocol.py    # File-based IPC (platform bridge dir)
 │   │   ├── reader.py      # Bridge state → Board
 │   │   └── writer.py      # Python → bridge commands
 │   ├── capture/
-│   │   └── save_parser.py # Lua save file fallback when bridge unavailable
+│   │   ├── save_parser.py # Lua save file fallback when bridge unavailable
+│   │   ├── window.py      # macOS/Windows game-window screenshots
+│   │   └── detect_grid.py # macOS/Windows window and grid calibration
 │   ├── vision/            # Sprite matching for shop/reward screens
 │   ├── model/             # Board, Unit, WeaponDef dataclasses
 │   ├── solver/            # Thin Python wrapper, audit scoring, verification,
@@ -31,6 +33,7 @@ itb-bot/
 │   ├── control/
 │   │   └── executor.py    # grid_to_mcp + click planning (calibrated <2px)
 │   ├── strategy/          # Achievement planner, run-level decisions
+│   ├── itb_paths.py       # Platform save/profile/bridge directories
 │   └── main.py            # Legacy entry (kept for backward compat)
 ├── rust_solver/           # Primary solver — pyo3 extension, installed as itb_solver
 │   └── src/
@@ -47,10 +50,10 @@ itb-bot/
 ├── weights/               # EvalWeights JSON (active.json + versioned)
 ├── tests/                 # Unit + regression tests
 ├── scripts/
-│   ├── install_modloader.sh  # Deploy bridge Lua into Steam app bundle
+│   ├── install_modloader.sh  # Deploy bridge Lua into macOS Steam app bundle
 │   ├── regression.sh         # Full regression suite (used by pre-commit hook)
 │   └── hooks/pre-commit      # Runs regression when solver code changes
-├── docs/                  # Design notes, investigations, achievement retros
+├── docs/                  # Design notes, investigations, achievement retros, Windows support
 └── data/
     ├── achievements_detailed.json
     ├── board_state_test.json

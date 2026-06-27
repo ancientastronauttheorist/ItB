@@ -31,8 +31,12 @@ class DecisionLog:
             self._write(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
     def _write(self, text: str):
-        with open(self.log_file, "a") as f:
-            f.write(text)
+        try:
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(text)
+        except OSError:
+            # Logging must never block or fail a live run.
+            return
 
     @staticmethod
     def _ts() -> str:

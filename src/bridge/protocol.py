@@ -13,12 +13,16 @@ import os
 import time
 from pathlib import Path
 
-STATE_FILE = Path("/tmp/itb_state.json")
-CMD_FILE = Path("/tmp/itb_cmd.txt")
-CMD_TMP = Path("/tmp/itb_cmd.txt.tmp")
-ACK_FILE = Path("/tmp/itb_ack.txt")
-LOG_FILE = Path("/tmp/itb_bridge.log")
-HEARTBEAT_FILE = Path("/tmp/itb_bridge_heartbeat")
+from src.itb_paths import get_bridge_dir
+
+BRIDGE_DIR = get_bridge_dir()
+STATE_FILE = BRIDGE_DIR / "itb_state.json"
+STATE_TMP = BRIDGE_DIR / "itb_state.json.tmp"
+CMD_FILE = BRIDGE_DIR / "itb_cmd.txt"
+CMD_TMP = BRIDGE_DIR / "itb_cmd.txt.tmp"
+ACK_FILE = BRIDGE_DIR / "itb_ack.txt"
+LOG_FILE = BRIDGE_DIR / "itb_bridge.log"
+HEARTBEAT_FILE = BRIDGE_DIR / "itb_bridge_heartbeat"
 
 # State file must be newer than this many seconds
 STALENESS_THRESHOLD = 300.0  # 5 minutes
@@ -41,15 +45,59 @@ def is_bridge_active() -> bool:
     """
     if not LOG_FILE.exists():
         return False
-    if not STATE_FILE.exists():
+    state_mtime = _newest_state_mtime()
+    if state_mtime is None:
         return False
     # State file must not be ancient unless the heartbeat proves the Lua
     # bridge is still ticking. On island-map screens the bridge may not dump
     # combat JSON until prompted, but a fresh heartbeat means refresh can work.
-    age = time.time() - STATE_FILE.stat().st_mtime
+    age = time.time() - state_mtime
     if age < STALENESS_THRESHOLD:
         return True
     return is_bridge_alive(max_stale_sec=5.0)
+
+
+def _state_candidates() -> list[Path]:
+    return [p for p in (STATE_FILE, STATE_TMP) if p.exists()]
+
+
+def _state_candidates_newest_first() -> list[Path]:
+    candidates: list[tuple[float, Path]] = []
+    for path in _state_candidates():
+        try:
+            candidates.append((path.stat().st_mtime, path))
+        except OSError:
+            # The bridge writes the tmp file atomically and may rename/remove it
+            # between the exists() check and stat(); ignore that transient race.
+            continue
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return [path for _, path in candidates]
+
+
+def _newest_state_path() -> Path | None:
+    candidates = _state_candidates_newest_first()
+    if not candidates:
+        return None
+    return candidates[0]
+
+
+def _newest_state_mtime() -> float | None:
+    for path in _state_candidates_newest_first():
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            # The newest candidate can still disappear after sorting if the
+            # bridge renames/removes the tmp file between calls.
+            continue
+    return None
+
+
+def _read_json_file(path: Path) -> dict | None:
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError, OSError):
+        return None
 
 
 def is_bridge_alive(max_stale_sec: float = 5.0) -> bool:
@@ -83,13 +131,11 @@ def refresh_bridge_state() -> bool:
 
 def read_state() -> dict | None:
     """Read the current game state JSON. Returns None if unavailable."""
-    if not STATE_FILE.exists():
-        return None
-    try:
-        with open(STATE_FILE) as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return None
+    for path in _state_candidates_newest_first():
+        payload = _read_json_file(path)
+        if payload is not None:
+            return payload
+    return None
 
 
 def write_command(cmd: str) -> None:
@@ -100,6 +146,7 @@ def write_command(cmd: str) -> None:
     command's response as this command's ACK (race condition fix).
     """
     global _seq_counter
+    BRIDGE_DIR.mkdir(parents=True, exist_ok=True)
 
     # Clear stale ACK to prevent reading previous command's response
     try:
@@ -111,7 +158,7 @@ def write_command(cmd: str) -> None:
     _seq_counter += 1
     full_cmd = f"#{_seq_counter} {cmd}"
 
-    with open(CMD_TMP, "w") as f:
+    with open(CMD_TMP, "w", encoding="utf-8") as f:
         f.write(full_cmd)
         f.flush()
         os.fsync(f.fileno())
@@ -134,7 +181,7 @@ def wait_for_ack(timeout: float = 10.0) -> str:
     while time.time() < deadline:
         if ACK_FILE.exists():
             try:
-                content = ACK_FILE.read_text().strip()
+                content = ACK_FILE.read_text(encoding="utf-8").strip()
                 ACK_FILE.unlink()
 
                 # Strip sequence ID prefix (#NNN)
@@ -175,13 +222,14 @@ def wait_for_fresh_state(timeout: float = 10.0) -> dict | None:
     start = time.time()
     deadline = start + timeout
     while time.time() < deadline:
-        if STATE_FILE.exists():
-            mtime = STATE_FILE.stat().st_mtime
+        for path in _state_candidates_newest_first():
+            try:
+                mtime = path.stat().st_mtime
+            except OSError:
+                continue
             if mtime >= start:
-                try:
-                    with open(STATE_FILE) as f:
-                        return json.load(f)
-                except (json.JSONDecodeError, IOError):
-                    pass
+                payload = _read_json_file(path)
+                if payload is not None:
+                    return payload
         time.sleep(0.2)
     return None

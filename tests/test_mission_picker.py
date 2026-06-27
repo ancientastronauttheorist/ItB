@@ -85,6 +85,16 @@ def _safe_battle_mission() -> dict:
     }
 
 
+def _renfield_bombs_mission() -> dict:
+    """R.S.T. Renfield Bombs mission: fragile objective plus slow web drift."""
+    return {
+        "region_id": 24,
+        "mission_id": "Mission_Bomb",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
 def _tidal_mission() -> dict:
     """Tidal-environment mission — flying matters."""
     return {
@@ -155,6 +165,101 @@ def _mite_counter_mission() -> dict:
     }
 
 
+def _sandstorm_mission() -> dict:
+    """R.S.T. Sandstorm mission: fast 4-turn environment."""
+    return {
+        "region_id": 14,
+        "mission_id": "Mission_Sandstorm",
+        "bonus_objective_ids": [],
+        "environment": "Env_Sandstorm",
+    }
+
+
+def _satellite_mission() -> dict:
+    """Archive Satellite Launches: slow for Lightning War attempts."""
+    return {
+        "region_id": 15,
+        "mission_id": "Mission_Satellite",
+        "bonus_objective_ids": [BONUS_ASSET],
+        "environment": "Env_Null",
+    }
+
+
+def _repair_platform_mission() -> dict:
+    """Bad Repairs / Storage Vaults mission: repair platforms are slow."""
+    return {
+        "region_id": 16,
+        "mission_id": "Mission_Repair",
+        "bonus_objective_ids": [],
+        "environment": "Env_RepairMission",
+    }
+
+
+def _trapped_power_generator_mission() -> dict:
+    """R.S.T. Power Generator trap that can force Lightning mech damage."""
+    return {
+        "region_id": 23,
+        "mission_id": "Mission_Trapped",
+        "bonus_objective_ids": [BONUS_KILL_FIVE],
+        "environment": "Env_Null",
+    }
+
+
+def _mountain_force_mission() -> dict:
+    """R.S.T. Destroy Mountains objective; too slow/risky for Lightning War."""
+    return {
+        "region_id": 25,
+        "mission_id": "Mission_Force",
+        "bonus_objective_ids": [BONUS_BLOCK],
+        "environment": "Env_Null",
+    }
+
+
+def _generic_no_bonus_mission(region_id: int = 17) -> dict:
+    return {
+        "region_id": region_id,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
+def _asset_pod_mission() -> dict:
+    return {
+        "region_id": 18,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [BONUS_ASSET],
+        "environment": "Env_Null",
+    }
+
+
+def _barrels_mission() -> dict:
+    return {
+        "region_id": 19,
+        "mission_id": "Mission_Barrels",
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": "Env_Null",
+    }
+
+
+def _acid_tank_mission() -> dict:
+    return {
+        "region_id": 20,
+        "mission_id": "Mission_AcidTank",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
+def _acid_storm_mission() -> dict:
+    return {
+        "region_id": 24,
+        "mission_id": "Mission_AcidStorm",
+        "bonus_objective_ids": [],
+        "environment": "Env_NanoStorm",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Squad tag derivation
 # ---------------------------------------------------------------------------
@@ -203,6 +308,329 @@ def test_train_no_defender_loses_to_safe_battle():
     # Sanity check the rationale surfaces the actual penalty.
     train_rationale = " ".join(ranked[1]["rationale_lines"])
     assert "no train_defender" in train_rationale
+
+
+def test_lightning_war_routing_vetoes_train_speed_trap():
+    """Lightning War avoids Train because protected objective stalls runs."""
+    island = [_safe_battle_mission(), _train_high_threat()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_war",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    train = next(e for e in ranked if e["mission_id"] == "Mission_Train")
+    rationale = " ".join(train["rationale_lines"])
+    assert "Lightning War" in rationale
+    assert "protected train objective" in rationale
+
+
+def test_lightning_baseline_routing_vetoes_train_even_when_fast():
+    """Reliable baseline mode avoids train objective surprises."""
+    island = [_safe_battle_mission(), _train_high_threat()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_baseline",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    train = next(e for e in ranked if e["mission_id"] == "Mission_Train")
+    assert train["route_auto_start_veto_reason"] == "baseline_reliability_veto:train"
+    rationale = " ".join(train["rationale_lines"])
+    assert "Lightning baseline" in rationale
+    assert "train objective" in rationale
+
+
+def test_lightning_baseline_routing_vetoes_tides_for_reliability():
+    """Reliable baseline mode avoids Tides final-turn trap patterns."""
+    tides = {
+        "region_id": 4,
+        "mission_id": "Mission_Tides",
+        "bonus_objective_ids": [],
+        "environment": "Env_Tides",
+    }
+    island = [_safe_battle_mission(), tides]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_baseline",
+        mission_metadata={
+            "Mission_Tides": {
+                "turn_limit": 3,
+                "environment": "Env_Tides",
+            },
+        },
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    tides_scored = next(e for e in ranked if e["mission_id"] == "Mission_Tides")
+    assert tides_scored["route_auto_start_veto_reason"] == (
+        "baseline_reliability_veto:tides"
+    )
+    rationale = " ".join(tides_scored["rationale_lines"])
+    assert "Tidal Waves" in rationale
+    assert "final-turn" in rationale
+
+
+def test_lightning_war_routing_penalizes_satellite_over_sandstorm():
+    island = [_satellite_mission(), _sandstorm_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_war",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Sandstorm"
+    satellite = next(e for e in ranked if e["mission_id"] == "Mission_Satellite")
+    rationale = " ".join(satellite["rationale_lines"])
+    assert "avoid-unless-forced" in rationale
+    assert satellite["score"] < 0
+
+
+def test_lightning_war_routing_strongly_penalizes_bad_repairs():
+    """Bad Repairs looked fast because it has no reward UI, but platforms stall."""
+    island = [_repair_platform_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    repair = next(e for e in ranked if e["mission_id"] == "Mission_Repair")
+    assert repair["score"] <= -60
+    assert "bad_repairs" in repair["mission_tags"]
+    assert "repair_platforms" in repair["mission_tags"]
+    rationale = " ".join(repair["rationale_lines"])
+    assert "Bad Repairs" in rationale
+    assert "too slow" in rationale
+
+
+def test_lightning_war_bad_repairs_penalty_fires_from_environment_only():
+    """Env_RepairMission carries the same Lightning War veto as Mission_Repair."""
+    entry = {
+        "region_id": 17,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [],
+        "environment": "Env_RepairMission",
+    }
+    scored = score_mission(
+        entry,
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+    assert scored["score"] <= -60
+    assert "bad_repairs" in scored["mission_tags"]
+    assert any("Bad Repairs" in line for line in scored["rationale_lines"])
+
+
+def test_lightning_war_routing_vetoes_power_generator_trap():
+    """Mission_Trapped forced no-clean-candidate mech HP loss in live routing."""
+    island = [_trapped_power_generator_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    trapped = next(e for e in ranked if e["mission_id"] == "Mission_Trapped")
+    assert trapped["score"] < -60
+    rationale = " ".join(trapped["rationale_lines"])
+    assert "Power Generator trap" in rationale
+    assert "mech damage" in rationale
+
+
+def test_lightning_war_routing_vetoes_mountain_force_counter():
+    """Mission_Force burned first-mission time and forced mech HP loss."""
+    island = [_mountain_force_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    force = next(e for e in ranked if e["mission_id"] == "Mission_Force")
+    assert force["score"] < -60
+    rationale = " ".join(force["rationale_lines"])
+    assert "mountain counter" in rationale
+    assert "mech damage" in rationale
+
+
+def test_lightning_war_routing_vetoes_renfield_bombs_speed_trap():
+    """Renfield Bombs caused web/objective drift and missed the pace target."""
+    island = [_renfield_bombs_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    bombs = next(e for e in ranked if e["mission_id"] == "Mission_Bomb")
+    assert bombs["score"] < -60
+    rationale = " ".join(bombs["rationale_lines"])
+    assert "Renfield Bombs" in rationale
+    assert "slow final turns" in rationale
+
+
+def test_lightning_war_routing_prefers_metadata_four_turn_mission():
+    fast = {
+        "region_id": 21,
+        "mission_id": "Mission_MetadataFast",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+    ranked = score_island_map(
+        [_safe_battle_mission(), fast],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={
+            "Mission_MetadataFast": {
+                "turn_limit": 3,
+                "environment": "Env_Null",
+            },
+        },
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_MetadataFast"
+    assert "four_turn" in ranked[0]["mission_tags"]
+    assert any("metadata 4-turn" in line for line in ranked[0]["rationale_lines"])
+
+
+def test_metadata_environment_overlay_tags_tides():
+    scored = score_mission(
+        {
+            "region_id": 22,
+            "mission_id": "Mission_Tides",
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        },
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),
+        grid_power=7,
+        mission_metadata={
+            "Mission_Tides": {
+                "turn_limit": 3,
+                "environment": "Env_Tides",
+            },
+        },
+        routing="lightning_war",
+    )
+
+    assert "env_tidal" in scored["mission_tags"]
+    assert "four_turn" in scored["mission_tags"]
+    assert any("Tidal" in line for line in scored["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_barrels_even_with_grid_bonus():
+    ranked = score_island_map(
+        [_barrels_mission(), _safe_battle_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    barrels = next(e for e in ranked if e["mission_id"] == "Mission_Barrels")
+    assert barrels["score"] < 0
+    assert any("Detritus vats/barrels" in line for line in barrels["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_acid_tank_or_vats():
+    ranked = score_island_map(
+        [_acid_tank_mission(), _safe_battle_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    acid_tank = next(e for e in ranked if e["mission_id"] == "Mission_AcidTank")
+    assert acid_tank["score"] < 0
+    assert any("Detritus vats/barrels" in line for line in acid_tank["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_acid_storm_without_veto():
+    ranked = score_island_map(
+        [_acid_storm_mission(), _safe_battle_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    acid_storm = next(e for e in ranked if e["mission_id"] == "Mission_AcidStorm")
+    assert acid_storm["score"] < 0
+    rationale = " ".join(acid_storm["rationale_lines"])
+    assert "Acid Storm" in rationale
+    assert "hard veto" not in rationale
+
+
+def test_lightning_war_routing_penalizes_generic_asset_pod_reward():
+    ranked = score_island_map(
+        [_asset_pod_mission(), _generic_no_bonus_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert ranked[0]["region_id"] == _generic_no_bonus_mission()["region_id"]
+    pod = next(e for e in ranked if e["region_id"] == _asset_pod_mission()["region_id"])
+    assert pod["score"] < 0
+    assert any("asset/pod reward" in line for line in pod["rationale_lines"])
+
+
+def test_score_island_map_filters_stale_current_and_hover_entries():
+    """Bridge preview/pause leakage must not rank stale missions as choices."""
+    completed = dict(_sandstorm_mission(), completed=True)
+    current = dict(_train_high_threat(), current=True)
+    hover = dict(_satellite_mission(), state="hover_preview")
+    stale = dict(_repair_platform_mission(), stale=True)
+    available = _safe_no_threat_mission()
+
+    ranked = score_island_map(
+        [completed, current, hover, stale, available],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert [e["region_id"] for e in ranked] == [available["region_id"]]
+    assert ranked[0]["mission_id"] == available["mission_id"]
+
+
+def test_score_island_map_returns_empty_when_all_entries_are_unavailable():
+    ranked = score_island_map(
+        [
+            dict(_sandstorm_mission(), completed=True),
+            dict(_satellite_mission(), availability="preview"),
+            dict(_repair_platform_mission(), is_current=True),
+        ],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+    assert ranked == []
 
 
 def test_train_with_defender_outranks_safe_battle():

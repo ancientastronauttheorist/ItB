@@ -205,11 +205,233 @@ def test_final_bomb_turn_rejects_bomb_loss():
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
 
 
+def test_final_turn_objective_building_target_blocks_without_hp_loss():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Repair",
+            turn=3,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Repair",
+            turn=4,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 106,
+                "type": "Moth1",
+                "pos": [6, 2],
+                "target": [4, 2],
+            }],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "objective_building_targeted_final"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
+def test_final_turn_objective_target_is_clean_after_safe_enemy_phase_projection():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Artillery",
+            turn=4,
+            total_turns=4,
+            grid=6,
+            buildings=7,
+            hp=9,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+        ),
+        _summary(
+            mission_id="Mission_Artillery",
+            turn=5,
+            total_turns=4,
+            grid=6,
+            buildings=7,
+            hp=9,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 672,
+                "type": "Burnbug1",
+                "pos": [6, 4],
+                "target": [5, 5],
+            }],
+            buildings_destroyed_by_enemies=0,
+            enemies_killed_by_enemy_phase=0,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert not any(
+        v["kind"] == "objective_building_targeted_final"
+        for v in audit["violations"]
+    )
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
+
+
+def test_final_turn_objective_target_still_blocks_before_post_mission_projection():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Repair",
+            turn=3,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Repair",
+            turn=4,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 106,
+                "type": "Moth1",
+                "pos": [6, 2],
+                "target": [4, 2],
+            }],
+            buildings_destroyed_by_enemies=0,
+            enemies_killed_by_enemy_phase=0,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "objective_building_targeted_final"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
+def test_nonfinal_objective_building_target_is_not_terminal():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Repair",
+            turn=2,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Repair",
+            turn=3,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+
+
+def test_penultimate_infinite_spawn_objective_building_target_is_not_terminal():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Solar",
+            turn=3,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Solar",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 798,
+                "type": "Jelly_Explode1",
+                "pos": [6, 2],
+                "target": [4, 3],
+            }],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert not any(
+        v["kind"] == "objective_building_targeted_final"
+        for v in audit["violations"]
+    )
+
+
+def test_spawn_points_keep_objective_target_recoverable():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Barrels",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=0,
+            spawn_points=2,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Barrels",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+
+
+def test_final_infinite_spawn_objective_building_target_blocks():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Solar",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Solar",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            objective_buildings_alive=2,
+            objective_building_hp_total=2,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 798,
+                "type": "Jelly_Explode1",
+                "pos": [6, 2],
+                "target": [4, 3],
+            }],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "objective_building_targeted_final"
+
+
 def test_final_cave_resist_gamble_rejects_before_last_turn():
     audit = audit_plan_safety(
         _summary(
             mission_id="Mission_Final_Cave",
-            turn=3,
+            turn=2,
             total_turns=4,
             grid=4,
             buildings=6,
@@ -222,7 +444,7 @@ def test_final_cave_resist_gamble_rejects_before_last_turn():
         ),
         _summary(
             mission_id="Mission_Final_Cave",
-            turn=3,
+            turn=2,
             total_turns=4,
             grid=0,
             buildings=4,
@@ -381,6 +603,25 @@ def test_explicit_stress_flag_overrides_protected_objective_loss():
     ) is False
 
 
+def test_dirty_allowances_compose_for_pod_and_protected_objective_loss():
+    audit = audit_plan_safety(
+        _summary(protected_objective_units_alive=2, pods_present=1),
+        _summary(protected_objective_units_alive=1, pods_present=0),
+    )
+
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_pod_loss_dirty=True,
+    ) is True
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_pod_loss_dirty=True,
+        allow_protected_objective_loss_dirty=True,
+    ) is False
+
+
 def test_objective_loss_stress_flag_overrides_objective_building_loss():
     audit = audit_plan_safety(
         _summary(objective_buildings_alive=1, objective_building_hp_total=1),
@@ -411,6 +652,189 @@ def test_final_turn_destroy_objective_unit_alive_blocks():
             total_turns=4,
             destroy_objective_units_alive=1,
             destroy_objective_units=[{"type": "Storm_Generator", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
+def test_penultimate_infinite_spawn_destroy_objective_unit_alive_does_not_block():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=3,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert not any(
+        v["kind"] == "destroy_objective_unit_alive_final"
+        for v in audit["violations"]
+    )
+    assert audit["blocking"] is False
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_penultimate_turn_with_future_spawns_does_not_final_block_destroy_objective():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=1,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=1,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert audit["blocking"] is False
+
+
+def test_final_infinite_spawn_destroy_objective_unit_alive_blocks():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BlobberBoss",
+            turn=4,
+            total_turns=4,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BlobberBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
+def test_infinite_spawn_remaining_spawn_signal_does_not_relax_hq_objective_gate():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=1,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=5,
+            total_turns=4,
+            remaining_spawns=1,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
+def test_infinite_spawn_zero_remaining_spawns_still_blocks_destroy_objective_unit():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BurnbugBoss",
+            turn=5,
+            total_turns=4,
+            remaining_spawns=0,
+            is_infinite_spawn=True,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BurnbugBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
+def test_visible_victory_counter_overrides_spawn_clock_for_destroy_objective():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=0,
+            victory_turns=2,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            victory_turns=1,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert audit["blocking"] is False
+
+
+def test_penultimate_turn_without_future_spawns_final_blocks_destroy_objective():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=0,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_FireflyBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "FireflyBoss", "alive": True}],
         ),
     )
 
@@ -455,6 +879,12 @@ def test_predicted_mech_loss_blocks_plan():
 
     assert audit["status"] == "DIRTY"
     assert plan_requires_safety_block(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_mech_loss_dirty=True,
+    ) is False
     assert audit["violations"][0]["kind"] == "mech_lost"
 
 
@@ -719,13 +1149,13 @@ def test_terraform_grass_objective_allows_incomplete_nonfinal_progress():
     audit = audit_plan_safety(
         _summary(
             mission_id="Mission_Terraform",
-            turn=3,
+            turn=2,
             total_turns=4,
             terraform_grass_remaining=2,
         ),
         _summary(
             mission_id="Mission_Terraform",
-            turn=3,
+            turn=2,
             total_turns=4,
             terraform_grass_remaining=1,
         ),
@@ -988,6 +1418,27 @@ def test_uncollected_pod_loss_blocks_plan():
     assert audit["violations"][0]["kind"] == "pod_lost"
 
 
+def test_destroy_pod_allowance_only_covers_destroyed_pods():
+    destroyed = audit_plan_safety(
+        _summary(pods_present=1),
+        _summary(pods_present=0, pods_collected=0),
+    )
+    unrecovered = audit_plan_safety(
+        _summary(turn=4, total_turns=4, pods_present=1),
+        _summary(turn=4, total_turns=4, pods_present=1, pods_collected=0),
+    )
+
+    assert plan_requires_safety_block(
+        destroyed,
+        allow_pod_destroy_dirty=True,
+    ) is False
+    assert plan_requires_safety_block(
+        unrecovered,
+        allow_pod_destroy_dirty=True,
+    ) is True
+    assert unrecovered["violations"][0]["kind"] == "pod_unrecovered_final"
+
+
 def test_collected_pod_drop_is_clean():
     audit = audit_plan_safety(
         _summary(pods_present=1),
@@ -1022,8 +1473,33 @@ def test_final_turn_live_pod_blocks_until_recovered():
         allow_dirty_plan=True,
         allow_objective_loss_dirty=True,
     ) is False
+    assert plan_requires_safety_block(
+        audit,
+        allow_pod_loss_dirty=True,
+    ) is False
     assert audit["violations"][0]["kind"] == "pod_unrecovered_final"
     assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_victory_in_one_live_pod_blocks_until_recovered():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Satellite",
+            turn=3,
+            total_turns=4,
+            pods_present=1,
+        ),
+        _summary(
+            mission_id="Mission_Satellite",
+            turn=3,
+            total_turns=4,
+            pods_present=1,
+            pods_collected=0,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "pod_unrecovered_final"
 
 
 def test_nonfinal_live_pod_can_remain_on_board():

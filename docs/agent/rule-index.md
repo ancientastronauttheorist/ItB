@@ -399,3 +399,14 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 386 | 681 | Live UI-coordinate searches should stay out of bulky data folders. | `docs/agent/live-runbook.md` |
 | 387 | 683 | Hold the Line HQ and boss deployments use the same read-only wait. | `docs/agent/live-runbook.md` |
 | 388 | 685 | Hold the Line has an explicit manual-geometry override. | `docs/agent/achievement-playbook.md` |
+| 389 | 687 | HQ leader survival is an objective-loss tradeoff, not automatic timeline loss. | `docs/agent/safety-gates.md` |
+| 390 | 689 | Distant Friends beacon pickup is visual-authoritative. | `docs/agent/achievement-playbook.md` |
+| 391 | 691 | Resume before End Turn must re-read the bridge. | `docs/agent/safety-gates.md` |
+| 392 | 693 | Mech Specialist tolerates failed leader bonuses. | `docs/agent/achievement-playbook.md` |
+| 393 | 695 | Triple Ice can close Mech Specialist and Flight Specialist together. | `docs/agent/achievement-playbook.md` |
+| 394 | 697 | Computer Use fallback End Turn clicks need refocus and fresh reads. | `docs/agent/live-runbook.md` |
+| 395 | 699 | Change the Odds is post-island shop math, not a victory requirement. | `docs/agent/achievement-playbook.md` |
+| 396 | 701 | Class Specialist is proven with three Prime mechs. | `docs/agent/achievement-playbook.md` |
+| 397 | 703 | Rock Launcher empty rock spawns preserve Forest. | `docs/agent/solver-reference.md` |
+| 398 | 705 | Enemy-phase pre-attack deaths clear before later enemy-phase steps. | `docs/agent/solver-reference.md` |
+| 399 | 707 | Do not raw-click unsupported Control Shot recoveries. | `docs/agent/safety-gates.md` |

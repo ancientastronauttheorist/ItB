@@ -78,6 +78,35 @@ def test_threat_audit_attacker_killed():
     assert audit["entries"][0]["coverage"]["reason"] == "attacker_killed"
 
 
+def test_threat_audit_blocks_current_threat_missing_from_initial_set():
+    board = _board()
+
+    audit = audit_threat_coverage([], board)
+
+    assert audit["status"] == "WARN"
+    assert audit["initial_threat_count"] == 0
+    assert audit["current_threat_count"] == 1
+    assert audit["new_current_threat_count"] == 1
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened_current"
+
+
+def test_threat_audit_credits_new_current_threat_killed_by_environment():
+    board = _board()
+    board.environment_danger_v2[(4, 4)] = (1, True)
+
+    audit = audit_threat_coverage([], board)
+
+    assert audit["status"] == "OK"
+    assert audit["initial_threat_count"] == 0
+    assert audit["current_threat_count"] == 1
+    assert audit["new_current_threat_count"] == 1
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_environment"
+    )
+
+
 def test_threat_audit_attacker_smoked():
     initial = capture_building_threats(_board())
     after = _board()
@@ -172,6 +201,82 @@ def test_threat_audit_attacker_will_die_to_prior_projectile():
     )
 
 
+def test_threat_audit_attacker_will_die_to_prior_melee():
+    board = Board()
+    board.attack_order = [23716, 23719]
+    board.mission_id = "Mission_Tides"
+    board.tile(4, 3).terrain = "building"
+    board.tile(4, 3).building_hp = 2
+    board.units.append(_enemy(
+        uid=23716,
+        pawn_type="Scorpion1",
+        x=4,
+        y=5,
+        tx=4,
+        ty=4,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    board.units[-1].weapon_damage = 1
+    board.units.append(_enemy(
+        uid=23719,
+        pawn_type="Scorpion1",
+        x=4,
+        y=4,
+        tx=4,
+        ty=3,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    board.units[-1].weapon_damage = 1
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_melee"
+    )
+
+
+def test_threat_audit_attacker_will_die_to_prior_artillery():
+    board = Board()
+    board.attack_order = [10, 20]
+    board.tile(0, 6).terrain = "building"
+    board.tile(0, 6).building_hp = 1
+    board.units.append(_enemy(
+        uid=10,
+        pawn_type="Moth2",
+        x=5,
+        y=3,
+        tx=5,
+        ty=6,
+        hp=5,
+    ))
+    board.units[-1].weapon = "MothAtk2"
+    board.units[-1].max_hp = 5
+    board.units.append(_enemy(
+        uid=20,
+        pawn_type="Moth1",
+        x=5,
+        y=6,
+        tx=0,
+        ty=6,
+        hp=3,
+    ))
+    board.units[-1].weapon = "MothAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_artillery"
+    )
+
+
 def test_threat_audit_attacker_will_die_to_soldier_psion_fire_teardown():
     board = Board()
     board.tile(5, 6).terrain = "building"
@@ -235,6 +340,36 @@ def test_threat_audit_attacker_will_die_to_lethal_environment():
     assert audit["entries"][0]["coverage"]["reason"] == (
         "attacker_will_die_to_environment"
     )
+
+
+def test_threat_audit_satellite_launch_does_not_cover_pre_attack_threat():
+    board = _board()
+    board.mission_id = "Mission_Satellite"
+    board.environment_danger.add((4, 4))
+    board.environment_danger_v2[(4, 4)] = (1, True)
+    board.environment_danger_flying_immune.add((4, 4))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
+
+
+def test_threat_audit_tides_does_not_cover_pre_attack_threat():
+    board = _board()
+    board.mission_id = "Mission_Tides"
+    board.environment_danger.add((4, 4))
+    board.environment_danger_v2[(4, 4)] = (1, True)
+    board.environment_danger_flying_immune.add((4, 4))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
 
 
 def test_threat_audit_flying_attacker_survives_flying_immune_environment():
@@ -331,6 +466,212 @@ def test_threat_audit_prior_moth_blocked_push_still_warns():
 
     assert audit["status"] == "WARN"
     assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
+
+
+def test_threat_audit_attacker_will_be_moved_by_conveyor():
+    board = Board()
+    board.mission_id = "Mission_Belt"
+    board.tile(6, 3).terrain = "building"
+    board.tile(6, 3).building_hp = 2
+    board.tile(5, 3).conveyor = 0  # raw engine DIR_UP, solver direction y - 1
+    board.units.append(_enemy(
+        uid=136,
+        pawn_type="Scorpion1",
+        x=5,
+        y=3,
+        tx=6,
+        ty=3,
+        hp=3,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == "attacker_will_be_moved_by_conveyor"
+
+
+def test_threat_audit_beltrandom_conveyor_does_not_cover_attack():
+    board = Board()
+    board.mission_id = "Mission_BeltRandom"
+    board.tile(6, 3).terrain = "building"
+    board.tile(6, 3).building_hp = 2
+    board.tile(5, 3).conveyor = 0
+    board.units.append(_enemy(
+        uid=136,
+        pawn_type="Scorpion1",
+        x=5,
+        y=3,
+        tx=6,
+        ty=3,
+        hp=3,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
+
+
+def test_threat_audit_attacker_will_be_moved_by_wind():
+    board = Board()
+    board.mission_id = "Mission_Wind"
+    board.environment_wind_dir = 2  # raw engine DIR_DOWN -> solver direction y + 1
+    board.environment_danger.add((2, 1))
+    board.environment_danger_v2[(2, 1)] = (1, False)
+    board.tile(3, 1).terrain = "building"
+    board.tile(3, 1).building_hp = 2
+    board.units.append(_enemy(
+        uid=2476,
+        pawn_type="Scorpion1",
+        x=2,
+        y=1,
+        tx=3,
+        ty=1,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_be_moved_by_wind"
+    )
+
+
+def test_threat_audit_wind_shift_into_building_still_warns():
+    board = Board()
+    board.mission_id = "Mission_Wind"
+    board.environment_wind_dir = 2  # raw engine DIR_DOWN -> solver direction y + 1
+    board.environment_danger.add((2, 1))
+    board.environment_danger_v2[(2, 1)] = (1, False)
+    board.tile(3, 1).terrain = "building"
+    board.tile(3, 1).building_hp = 2
+    board.tile(3, 2).terrain = "building"
+    board.tile(3, 2).building_hp = 2
+    board.units.append(_enemy(
+        uid=2476,
+        pawn_type="Scorpion1",
+        x=2,
+        y=1,
+        tx=3,
+        ty=1,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "still_threatened_after_wind"
+    )
+
+
+def test_threat_audit_captures_wind_projected_threat_after_fire_clears_blocker():
+    board = Board()
+    board.mission_id = "Mission_Wind"
+    board.environment_wind_dir = 2  # raw engine DIR_DOWN -> solver direction y + 1
+    board.environment_danger.update({(5, 4), (5, 5)})
+    board.environment_danger_v2[(5, 4)] = (1, False)
+    board.environment_danger_v2[(5, 5)] = (1, False)
+    board.tile(3, 5).terrain = "building"
+    board.tile(3, 5).building_hp = 1
+    board.tile(5, 6).terrain = "building"
+    board.tile(5, 6).building_hp = 2
+    board.units.append(_enemy(
+        uid=931,
+        pawn_type="Scorpion1",
+        x=5,
+        y=5,
+        tx=5,
+        ty=6,
+        hp=1,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    board.units[-1].fire = True
+    board.units.append(_enemy(
+        uid=955,
+        pawn_type="Firefly1",
+        x=5,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=3,
+    ))
+    board.units[-1].weapon = "FireflyAtk1"
+
+    threats = capture_building_threats(board)
+    wind_threats = [
+        threat for threat in threats
+        if threat.get("threat_kind") == "wind_projected_building"
+    ]
+
+    assert wind_threats
+    assert wind_threats[0]["target"] == [3, 5]
+    assert wind_threats[0]["projected_attacker_pos"] == [5, 5]
+
+
+def test_threat_audit_conveyor_projected_building_still_warns():
+    board = Board()
+    board.mission_id = "Mission_Belt"
+    board.tile(6, 3).terrain = "building"
+    board.tile(6, 3).building_hp = 2
+    board.tile(6, 2).terrain = "building"
+    board.tile(6, 2).building_hp = 1
+    board.tile(5, 3).conveyor = 0
+    board.units.append(_enemy(
+        uid=136,
+        pawn_type="Scorpion1",
+        x=5,
+        y=3,
+        tx=6,
+        ty=3,
+        hp=3,
+    ))
+    board.units[-1].weapon = "ScorpionAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened_after_conveyor"
+
+
+def test_threat_audit_frozen_building_target_is_thaw_covered():
+    board = Board()
+    tile = board.tile(2, 3)
+    tile.terrain = "building"
+    tile.building_hp = 1
+    tile.frozen = True
+    board.units.append(_enemy(
+        uid=973,
+        pawn_type="Scarab1",
+        x=4,
+        y=3,
+        tx=2,
+        ty=3,
+        hp=2,
+    ))
+    board.units[-1].weapon = "ScarabAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == "target_frozen_building"
 
 
 def test_threat_audit_still_threatened_warns():

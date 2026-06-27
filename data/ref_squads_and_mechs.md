@@ -226,9 +226,9 @@
 **Squad Achievements:**
 - Hold the Door: Block 30 Emerging Vek by end of Island 2
 - No Survivors: 7 units (any team) die in a single turn
-- Powered Blast: Pierce a Walking Bomb with AP Cannon to kill an Enemy
+- Powered Blast: Pierce a Walking Bomb with AP Cannon to kill an Enemy (complete in run `20260611_202233_019`)
 
-**Strategy Notes:** Tactically diverse. Walking Bombs are key -- place in front of AP Cannon to deal damage, use as swap fodder, block spawns. Bombs block spawns because destruction happens after Vek emerge. Force Swap handles multiple threats by swapping Vek into each other's attacks. Cannot swap stable enemies (Burrowers). Key pilots: Silica (double bombs silences Vek for entire mission), Prospero (Exchange Mech can swap from ledges for drowning kills).
+**Strategy Notes:** Tactically diverse. Walking Bombs are key -- place in front of AP Cannon to deal damage, use as swap fodder, block spawns. Bombs block spawns because destruction happens after Vek emerge. Rust simulator v263+ models Bomb Dispenser / Walking Bomb deployment, and v264+ scores AP Cannon-through-bomb kills for Powered Blast. Force Swap handles multiple threats by swapping Vek into each other's attacks. Cannot swap stable enemies (Burrowers). Key pilots: Silica (double bombs silences Vek for entire mission), Prospero (Exchange Mech can swap from ledges for drowning kills).
 
 ---
 

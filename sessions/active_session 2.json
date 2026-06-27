@@ -1,0 +1,2453 @@
+{
+  "run_id": "20260522_193613_471",
+  "squad": "Hazardous",
+  "achievement_targets": [
+    "Healing"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "Mission_Dam",
+  "islands_completed": [],
+  "mission_index": 14,
+  "last_mission_turn": 3,
+  "current_turn": 3,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "UnstableTank",
+        "move_to": [
+          2,
+          4
+        ],
+        "weapon": "Brute_Unstable",
+        "target": [
+          3,
+          4
+        ],
+        "description": "UnstableTank, fire Unstable Cannon at D5"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "NanoMech",
+        "move_to": [
+          4,
+          4
+        ],
+        "weapon": "Science_AcidShot",
+        "target": [
+          4,
+          3
+        ],
+        "description": "NanoMech, move F5\u2192D4, fire Acid Projector at E4"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "LeapMech",
+        "move_to": [
+          4,
+          6
+        ],
+        "weapon": "Prime_Leap",
+        "target": [
+          4,
+          2
+        ],
+        "description": "LeapMech, move B2\u2192B4, fire Hydraulic Legs at F4"
+      }
+    ],
+    "score": 171980.00000000017,
+    "turn": 2,
+    "input_fingerprint": "0:6,6:5|1:2,4:5|2:3,2:3|754:4,0:2|754:5,0:2|756:5,2:3|757:4,1:3|758:4,4:4|785:6,2:3|786:4,5:3|834:1,4:1"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-22T19:42:53.289183",
+      "turn": 1,
+      "label": "solve",
+      "score": 163528.57142857142,
+      "actions": [
+        "LeapMech, move E6\u2192F6, fire Hydraulic Legs at F2",
+        "UnstableTank, move F5\u2192F4, fire Unstable Cannon at E4",
+        "NanoMech, move B5\u2192B1, fire Acid Projector at C1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:47:10.946338",
+      "turn": 2,
+      "label": "solve",
+      "score": 167341.90476190494,
+      "actions": [
+        "UnstableTank, move G4\u2192E3, fire Unstable Cannon at E2",
+        "LeapMech, move F2\u2192E3, repair",
+        "NanoMech, move B1\u2192C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:47:45.568581",
+      "turn": 3,
+      "label": "solve",
+      "score": 169488.57142857142,
+      "actions": [
+        "LeapMech, move E3\u2192E2, repair",
+        "UnstableTank, move E4\u2192G3, fire Unstable Cannon at F3",
+        "NanoMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:48:29.240312",
+      "turn": 4,
+      "label": "solve",
+      "score": 171168.57142857142,
+      "actions": [
+        "UnstableTank, move H3\u2192F4, fire Unstable Cannon at F3",
+        "NanoMech, move C5\u2192F4, fire Acid Projector at E4",
+        "LeapMech, move E2\u2192E4, fire Hydraulic Legs at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:50:57.175556",
+      "turn": 1,
+      "label": "solve",
+      "score": 168814.2857142857,
+      "actions": [
+        "NanoMech, move E6\u2192E3, fire Acid Projector at D3",
+        "LeapMech, move D5\u2192C2, fire Hydraulic Legs at B2",
+        "UnstableTank, move F5\u2192D4, fire Unstable Cannon at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:51:38.692442",
+      "turn": 2,
+      "label": "solve",
+      "score": 163347.6190476191,
+      "actions": [
+        "LeapMech, move B2\u2192D1",
+        "NanoMech, move E2\u2192H2, fire Acid Projector at G2",
+        "UnstableTank, move D2\u2192C2, fire Unstable Cannon at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:52:11.539989",
+      "turn": 3,
+      "label": "solve",
+      "score": 167634.2857142857,
+      "actions": [
+        "LeapMech, move D1\u2192B3, repair",
+        "NanoMech, fire Acid Projector at G2",
+        "UnstableTank, fire Unstable Cannon at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:52:57.266566",
+      "turn": 4,
+      "label": "solve",
+      "score": 168594.14285051823,
+      "actions": [
+        "LeapMech, move B3\u2192D5",
+        "UnstableTank, fire Unstable Cannon at B2",
+        "NanoMech, move H2\u2192F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:53:27.801406",
+      "turn": 4,
+      "label": "solve",
+      "score": 168594.14285051823,
+      "actions": [
+        "LeapMech, move B3\u2192D5",
+        "UnstableTank, fire Unstable Cannon at B2",
+        "NanoMech, move H2\u2192F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:56:08.120284",
+      "turn": 4,
+      "label": "solve",
+      "score": 168594.14285051823,
+      "actions": [
+        "LeapMech",
+        "UnstableTank, fire Unstable Cannon at B2",
+        "NanoMech, move H2\u2192F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:58:53.175704",
+      "turn": 4,
+      "label": "solve",
+      "score": 168594.14285051823,
+      "actions": [
+        "LeapMech",
+        "UnstableTank, fire Unstable Cannon at B2",
+        "NanoMech, move H2\u2192F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T19:59:55.565350",
+      "turn": 4,
+      "label": "solve",
+      "score": 168599.14285051823,
+      "actions": [
+        "NanoMech, fire Acid Projector at G2",
+        "UnstableTank, move A2\u2192B3, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:04:56.852451",
+      "turn": 4,
+      "label": "solve",
+      "score": 168599.14285051823,
+      "actions": [
+        "NanoMech, fire Acid Projector at G2",
+        "UnstableTank, move A2\u2192B3, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:05:36.754764",
+      "turn": 4,
+      "label": "solve",
+      "score": 168599.14285051823,
+      "actions": [
+        "UnstableTank, move A2\u2192B3, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:13:26.249278",
+      "turn": 4,
+      "label": "solve",
+      "score": 168599.14285051823,
+      "actions": [
+        "UnstableTank, move A2\u2192B3, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:14:03.685068",
+      "turn": 4,
+      "label": "solve",
+      "score": 168599.14285051823,
+      "actions": [
+        "UnstableTank, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:17:50.344149",
+      "turn": 4,
+      "label": "solve",
+      "score": 168599.14285051823,
+      "actions": [
+        "UnstableTank, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:21:31.164281",
+      "turn": 1,
+      "label": "solve",
+      "score": 119950.0,
+      "actions": [
+        "Acid_Tank",
+        "LeapMech",
+        "UnstableTank, move D5\u2192D6, fire Unstable Cannon at E6",
+        "NanoMech, move B5\u2192C3, fire Acid Projector at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:39:01.162880",
+      "turn": 1,
+      "label": "solve",
+      "score": 119100.0,
+      "actions": [
+        "NanoMech, move C3\u2192E3, fire Acid Projector at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:39:51.403259",
+      "turn": 2,
+      "label": "solve",
+      "score": 120333.33333333324,
+      "actions": [
+        "Acid_Tank",
+        "NanoMech, move E3\u2192E6, fire Acid Projector at E5",
+        "LeapMech, move F3\u2192E3, fire Hydraulic Legs at E2",
+        "UnstableTank, move C6\u2192F5, fire Unstable Cannon at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T20:50:12.394826",
+      "turn": 3,
+      "label": "solve",
+      "score": 130330.0,
+      "actions": [
+        "Acid_Tank, move G7\u2192F5",
+        "LeapMech, repair",
+        "UnstableTank, move F6\u2192F3, fire Unstable Cannon at F2",
+        "NanoMech, move E6\u2192D5, fire Acid Projector at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:03:24.195292",
+      "turn": 4,
+      "label": "solve",
+      "score": 128259.14285503115,
+      "actions": [
+        "Acid_Tank, move F5\u2192E5",
+        "NanoMech, move D7\u2192F6, repair",
+        "UnstableTank, move F4\u2192D6, fire Unstable Cannon at D7",
+        "LeapMech, move E2\u2192E4, fire Hydraulic Legs at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:04:38.883004",
+      "turn": 4,
+      "label": "solve",
+      "score": 128259.14285503115,
+      "actions": [
+        "Acid_Tank, move F5\u2192E5",
+        "NanoMech, move D7\u2192F6, repair",
+        "UnstableTank, move F4\u2192D6, fire Unstable Cannon at D7",
+        "LeapMech, move E2\u2192E4, fire Hydraulic Legs at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:05:50.192698",
+      "turn": 4,
+      "label": "note",
+      "message": "Accepted THREAT_AUDIT_BLOCKED dirty final turn in Mission_AcidTank turn 4: Firefly1 at G2 still targets non-objective G3 building, while generator remains safe; user authorized dirty continuation if no desync; predicted grid 7->6/building_hp_total 9->8."
+    },
+    {
+      "timestamp": "2026-05-22T21:09:03.030067",
+      "turn": 1,
+      "label": "solve",
+      "score": 170550.0,
+      "actions": [
+        "UnstableTank, fire Unstable Cannon at C4",
+        "NanoMech, move F6\u2192G4, fire Acid Projector at F4",
+        "LeapMech, move D6\u2192C6, fire Hydraulic Legs at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:12:47.557625",
+      "turn": 1,
+      "label": "solve",
+      "score": 157650.0,
+      "actions": [
+        "LeapMech, fire Hydraulic Legs at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:13:39.341609",
+      "turn": 2,
+      "label": "solve",
+      "score": 159093.3333333335,
+      "actions": [
+        "LeapMech, repair",
+        "NanoMech, move G4\u2192H2, fire Acid Projector at G2",
+        "UnstableTank, fire Unstable Cannon at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:14:28.299539",
+      "turn": 3,
+      "label": "solve",
+      "score": 163021.28569897584,
+      "actions": [
+        "LeapMech, move E3\u2192D3, fire Hydraulic Legs at D6",
+        "NanoMech, fire Acid Projector at G2",
+        "UnstableTank, fire Unstable Cannon at C6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:14:41.497292",
+      "turn": 3,
+      "label": "solve",
+      "score": 163021.28569897584,
+      "actions": [
+        "LeapMech, move E3\u2192D3, fire Hydraulic Legs at D6",
+        "NanoMech, fire Acid Projector at G2",
+        "UnstableTank, fire Unstable Cannon at C6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:15:40.194013",
+      "turn": 4,
+      "label": "solve",
+      "score": 156848.57142857142,
+      "actions": [
+        "LeapMech, move D6\u2192G6, fire Hydraulic Legs at G4",
+        "UnstableTank, move C8\u2192E6",
+        "NanoMech, fire Acid Projector at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:19:35.059711",
+      "turn": 1,
+      "label": "solve",
+      "score": 124700.0,
+      "actions": [
+        "NanoMech, move D5\u2192B3, fire Acid Projector at C3",
+        "LeapMech, move F5\u2192E5, fire Hydraulic Legs at E3",
+        "UnstableTank, move E6\u2192F5, fire Unstable Cannon at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:31:07.039594",
+      "turn": 2,
+      "label": "solve",
+      "score": 137646.66666666677,
+      "actions": [
+        "LeapMech, move E3\u2192F3, fire Hydraulic Legs at F1",
+        "NanoMech, move B3\u2192E3, fire Acid Projector at D3",
+        "UnstableTank, move F5\u2192C5, fire Unstable Cannon at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:37:51.668401",
+      "turn": 2,
+      "label": "solve",
+      "score": 127946.66666666679,
+      "actions": [
+        "NanoMech, move B3\u2192D5, fire Acid Projector at D4",
+        "UnstableTank, move F5\u2192E2, fire Unstable Cannon at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:38:24.333368",
+      "turn": 3,
+      "label": "solve",
+      "score": 131180.0,
+      "actions": [
+        "LeapMech, move F1\u2192E2, repair",
+        "UnstableTank, repair",
+        "NanoMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:39:00.697958",
+      "turn": 4,
+      "label": "solve",
+      "score": 131360.0,
+      "actions": [
+        "NanoMech, move D5\u2192B3, fire Acid Projector at B2",
+        "LeapMech, move E2\u2192F1, fire Hydraulic Legs at C1",
+        "UnstableTank, move F2\u2192E2, fire Unstable Cannon at E1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T21:45:01.118217",
+      "turn": 1,
+      "label": "solve",
+      "score": 121400.0,
+      "actions": [
+        "LeapMech, move F5\u2192D2",
+        "NanoMech, move C6\u2192B3, fire Acid Projector at C3",
+        "Terraformer, fire Terraformer at D4",
+        "UnstableTank, move B5\u2192E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T22:04:51.376781",
+      "turn": 2,
+      "label": "solve",
+      "score": 119196.6666666666,
+      "actions": [
+        "NanoMech, move B3\u2192F3, repair",
+        "Terraformer, fire Terraformer at B4",
+        "LeapMech, move D2\u2192B3",
+        "UnstableTank, move D4\u2192D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T22:06:04.690679",
+      "turn": 3,
+      "label": "solve",
+      "score": 124310.0,
+      "actions": [
+        "Terraformer, fire Terraformer at C5",
+        "UnstableTank, move D2\u2192F2, repair",
+        "NanoMech, move F3\u2192E5, fire Acid Projector at E4",
+        "LeapMech, fire Hydraulic Legs at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T22:06:58.479257",
+      "turn": 4,
+      "label": "solve",
+      "score": 134845.0,
+      "actions": [
+        "Terraformer, fire Terraformer at C3",
+        "LeapMech, move E3\u2192F4, fire Hydraulic Legs at F7",
+        "NanoMech, move E5\u2192D7, fire Acid Projector at D6",
+        "UnstableTank, move F2\u2192E5, fire Unstable Cannon at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T22:30:12.888660",
+      "turn": 1,
+      "label": "solve",
+      "score": 152000.0,
+      "actions": [
+        "UnstableTank, move E6\u2192E4, fire Unstable Cannon at E3",
+        "NanoMech, move C5\u2192E7",
+        "LeapMech, move F5\u2192C5, fire Hydraulic Legs at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T22:40:39.275629",
+      "turn": 2,
+      "label": "solve",
+      "score": 151680.00000000017,
+      "actions": [
+        "NanoMech, move C3\u2192C5, fire Acid Projector at C4",
+        "UnstableTank, move E4\u2192C2, fire Unstable Cannon at D2",
+        "LeapMech, move C1\u2192C3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T22:46:11.437037",
+      "turn": 3,
+      "label": "solve",
+      "score": 155280.0,
+      "actions": [
+        "LeapMech, move C3\u2192B3, repair",
+        "UnstableTank, repair",
+        "NanoMech, move C5\u2192C2, fire Acid Projector at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T22:46:59.481343",
+      "turn": 4,
+      "label": "solve",
+      "score": 152015.0,
+      "actions": [
+        "LeapMech, move B3\u2192B5, fire Hydraulic Legs at E5",
+        "UnstableTank, move B2\u2192E1, fire Unstable Cannon at E2",
+        "NanoMech, move C2\u2192D5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:00:01.736668",
+      "turn": 1,
+      "label": "solve",
+      "score": 160150.0,
+      "actions": [
+        "UnstableTank, move C6\u2192C2, fire Unstable Cannon at B2",
+        "LeapMech, move D5\u2192E5, fire Hydraulic Legs at E3",
+        "NanoMech, move B5\u2192E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:00:57.952436",
+      "turn": 2,
+      "label": "solve",
+      "score": 160286.6666666668,
+      "actions": [
+        "NanoMech, move E5\u2192F4, fire Acid Projector at F3",
+        "UnstableTank, move D2\u2192C2, fire Unstable Cannon at D2",
+        "LeapMech, move E3\u2192C3, fire Hydraulic Legs at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:02:52.566918",
+      "turn": 3,
+      "label": "solve",
+      "score": 172422.7142695529,
+      "actions": [
+        "LeapMech, fire Hydraulic Legs at B5",
+        "UnstableTank",
+        "NanoMech, fire Acid Projector at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:03:29.600608",
+      "turn": 3,
+      "label": "solve",
+      "score": 172422.7142695529,
+      "actions": [
+        "LeapMech, fire Hydraulic Legs at B5",
+        "UnstableTank",
+        "NanoMech, fire Acid Projector at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:05:43.166558",
+      "turn": 3,
+      "label": "solve",
+      "score": 172422.7142695529,
+      "actions": [
+        "LeapMech, fire Hydraulic Legs at B5",
+        "UnstableTank",
+        "NanoMech, fire Acid Projector at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:06:50.897213",
+      "turn": 4,
+      "label": "solve",
+      "score": 169250.0,
+      "actions": [
+        "NanoMech, move F4\u2192D5, fire Acid Projector at D4",
+        "LeapMech, move B5\u2192D4, fire Hydraulic Legs at D2",
+        "UnstableTank, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:09:42.558577",
+      "turn": 4,
+      "label": "solve",
+      "score": 164245.0,
+      "actions": [
+        "UnstableTank, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:45:48.875089",
+      "turn": 1,
+      "label": "solve",
+      "score": 158700.0,
+      "actions": [
+        "LeapMech, move E5\u2192D3, fire Hydraulic Legs at H3",
+        "NanoMech, move D6\u2192C8, fire Acid Projector at C7",
+        "UnstableTank, move C5\u2192D3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T13:46:30.182764",
+      "turn": 2,
+      "label": "solve",
+      "score": 155963.33333333352,
+      "actions": [
+        "LeapMech, fire Hydraulic Legs at F3",
+        "UnstableTank, move D3\u2192F5, fire Unstable Cannon at G5",
+        "NanoMech, move C8\u2192D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T14:05:39.684879",
+      "turn": 3,
+      "label": "solve",
+      "score": 150280.0,
+      "actions": [
+        "NanoMech, move D6\u2192D3, fire Acid Projector at C3",
+        "UnstableTank, move E5\u2192C4, fire Unstable Cannon at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T14:16:49.980687",
+      "turn": 3,
+      "label": "solve",
+      "score": 149492.71427551337,
+      "actions": [
+        "UnstableTank, move E5\u2192C4, fire Unstable Cannon at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T14:17:17.099901",
+      "turn": 3,
+      "label": "solve",
+      "score": 149492.71427551337,
+      "actions": [
+        "UnstableTank, move E5\u2192C4, fire Unstable Cannon at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T14:55:44.633759",
+      "turn": 4,
+      "label": "solve",
+      "score": 64966.42857142858,
+      "actions": [
+        "NanoMech, move D3\u2192B3, fire Acid Projector at C3",
+        "UnstableTank, move C4\u2192C2, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T14:56:18.872903",
+      "turn": 4,
+      "label": "solve",
+      "score": 64966.42857142858,
+      "actions": [
+        "NanoMech, move D3\u2192B3, fire Acid Projector at C3",
+        "UnstableTank, move C4\u2192C2, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:00:04.825939",
+      "turn": 4,
+      "label": "solve",
+      "score": 64966.42857142858,
+      "actions": [
+        "NanoMech, move D3\u2192B3, fire Acid Projector at C3",
+        "UnstableTank, move C4\u2192C2, fire Unstable Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:08:20.665253",
+      "turn": 1,
+      "label": "solve",
+      "score": 117050.0,
+      "actions": [
+        "UnstableTank, move D5\u2192C6, fire Unstable Cannon at C5",
+        "NanoMech, move G5\u2192H2, fire Acid Projector at G2",
+        "LeapMech, fire Hydraulic Legs at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:09:14.503324",
+      "turn": 2,
+      "label": "solve",
+      "score": 130666.66666666685,
+      "actions": [
+        "LeapMech, move E2\u2192C2, fire Hydraulic Legs at C3",
+        "UnstableTank, fire Unstable Cannon at C6",
+        "NanoMech, move H2\u2192G5, fire Acid Projector at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:10:02.235435",
+      "turn": 3,
+      "label": "solve",
+      "score": 140440.0,
+      "actions": [
+        "LeapMech, move C3\u2192C2, fire Hydraulic Legs at G2",
+        "UnstableTank",
+        "NanoMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:10:36.275531",
+      "turn": 4,
+      "label": "solve",
+      "score": 132810.0,
+      "actions": [
+        "LeapMech, move G2\u2192G1, repair",
+        "NanoMech, move G5\u2192C5, fire Acid Projector at C4",
+        "UnstableTank, move C8\u2192C4, fire Unstable Cannon at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:17:17.752927",
+      "turn": 1,
+      "label": "solve",
+      "score": 148700.0,
+      "actions": [
+        "LeapMech, move F5\u2192H6, fire Hydraulic Legs at H2",
+        "UnstableTank, move D6\u2192C5, fire Unstable Cannon at C4",
+        "NanoMech, move B7\u2192D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:18:09.486503",
+      "turn": 2,
+      "label": "solve",
+      "score": 139610.00000000012,
+      "actions": [
+        "LeapMech, fire Hydraulic Legs at C2",
+        "UnstableTank",
+        "NanoMech, move D6\u2192C3, fire Acid Projector at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:18:58.121367",
+      "turn": 3,
+      "label": "solve",
+      "score": 145110.0,
+      "actions": [
+        "UnstableTank, fire Unstable Cannon at D6",
+        "NanoMech, move C3\u2192D6",
+        "LeapMech, fire Hydraulic Legs at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:19:51.687947",
+      "turn": 4,
+      "label": "solve",
+      "score": 133320.0,
+      "actions": [
+        "LeapMech, move C3\u2192C2, fire Hydraulic Legs at F2",
+        "UnstableTank, move B6\u2192D4",
+        "NanoMech, move D6\u2192D2, fire Acid Projector at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:28:42.824346",
+      "turn": 1,
+      "label": "solve",
+      "score": 121600.0,
+      "actions": [
+        "ArchiveArtillery, fire Old Earth Artillery at B3",
+        "NanoMech, move C6\u2192E4, fire Acid Projector at D4",
+        "LeapMech, fire Hydraulic Legs at D4",
+        "UnstableTank, move E6\u2192B5, fire Unstable Cannon at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T15:32:36.549349",
+      "turn": 1,
+      "label": "solve",
+      "score": 108200.57142560824,
+      "actions": [
+        "UnstableTank"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:17:56.296791",
+      "turn": 1,
+      "label": "solve",
+      "score": 108200.57142560824,
+      "actions": [
+        "UnstableTank"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:22:27.407065",
+      "turn": 1,
+      "label": "solve",
+      "score": 121600.0,
+      "actions": [
+        "LeapMech, move D5\u2192F6, fire Hydraulic Legs at F3",
+        "UnstableTank, move E6\u2192D5, fire Unstable Cannon at D4",
+        "ArchiveArtillery, fire Old Earth Artillery at B3",
+        "NanoMech, move C6\u2192B5, fire Acid Projector at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:23:18.745038",
+      "turn": 2,
+      "label": "solve",
+      "score": 122943.33333333326,
+      "actions": [
+        "LeapMech, move F3\u2192D3, fire Hydraulic Legs at G3",
+        "UnstableTank, fire Unstable Cannon at E6",
+        "NanoMech, move B5\u2192D3, fire Acid Projector at C3",
+        "ArchiveArtillery, fire Old Earth Artillery at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:24:01.554590",
+      "turn": 3,
+      "label": "solve",
+      "score": 133380.0,
+      "actions": [
+        "ArchiveArtillery",
+        "UnstableTank, fire Unstable Cannon at D6",
+        "NanoMech, move D3\u2192C2, fire Acid Projector at D2",
+        "LeapMech, fire Hydraulic Legs at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:41:23.300464",
+      "turn": 4,
+      "label": "solve",
+      "score": 135650.57142560824,
+      "actions": [
+        "NanoMech, fire Acid Projector at D2",
+        "LeapMech, fire Hydraulic Legs at E1",
+        "UnstableTank, move C6\u2192D5, fire Unstable Cannon at D4",
+        "ArchiveArtillery, move B6\u2192C6, fire Old Earth Artillery at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:42:47.799789",
+      "turn": 4,
+      "label": "solve",
+      "score": 135650.57142560824,
+      "actions": [
+        "NanoMech, fire Acid Projector at D2",
+        "LeapMech, fire Hydraulic Legs at E1",
+        "UnstableTank, move C6\u2192D5, fire Unstable Cannon at D4",
+        "ArchiveArtillery, move B6\u2192C6, fire Old Earth Artillery at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:59:02.791234",
+      "turn": 4,
+      "label": "solve",
+      "score": 135210.57142560824,
+      "actions": [
+        "UnstableTank, move C6\u2192D5, fire Unstable Cannon at D4",
+        "ArchiveArtillery, move B6\u2192C6, fire Old Earth Artillery at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T16:59:30.539712",
+      "turn": 4,
+      "label": "solve",
+      "score": 135210.57142560824,
+      "actions": [
+        "UnstableTank, move C6\u2192D5, fire Unstable Cannon at D4",
+        "ArchiveArtillery, move B6\u2192C6, fire Old Earth Artillery at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T17:00:13.951035",
+      "turn": 4,
+      "label": "note",
+      "message": "Accepted dirty threat on Mission_Artillery turn 4: Hornet1 at B5 remains queued on non-objective C5; exact dirty line predicted grid 7->6 and building HP 10->9, with artillery/bar objectives and all mechs preserved."
+    },
+    {
+      "timestamp": "2026-05-23T17:03:26.458090",
+      "turn": 1,
+      "label": "solve",
+      "score": 126278.57142857142,
+      "actions": [
+        "LeapMech, move C5\u2192C2, fire Hydraulic Legs at E2",
+        "UnstableTank, fire Unstable Cannon at E4",
+        "NanoMech, move G5\u2192G3, fire Acid Projector at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T17:03:51.143330",
+      "turn": 1,
+      "label": "note",
+      "message": "Reviewed Threat Audit Block on Mission_Volatile turn 1: Hornet1 at F3 remains queued on F4, but Defensive Shields are active and plan safety predicts grid/building totals unchanged; proceeding with held End Turn."
+    },
+    {
+      "timestamp": "2026-05-23T17:04:19.246923",
+      "turn": 2,
+      "label": "solve",
+      "score": 130685.23809523824,
+      "actions": [
+        "UnstableTank, move E6\u2192C8, fire Unstable Cannon at C7",
+        "NanoMech, fire Acid Projector at F3",
+        "LeapMech, fire Hydraulic Legs at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T17:22:38.321595",
+      "turn": 3,
+      "label": "solve",
+      "score": 142018.57142857142,
+      "actions": [
+        "LeapMech, repair",
+        "UnstableTank, fire Unstable Cannon at C7",
+        "NanoMech, move G3\u2192F1, fire Acid Projector at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T17:23:37.700547",
+      "turn": 4,
+      "label": "solve",
+      "score": 126900.57143855095,
+      "actions": [
+        "LeapMech, repair",
+        "UnstableTank, move C8\u2192E8, fire Unstable Cannon at E7",
+        "NanoMech, move F1\u2192D3, fire Acid Projector at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T17:24:12.034570",
+      "turn": 4,
+      "label": "solve",
+      "score": 126900.57143855095,
+      "actions": [
+        "LeapMech, repair",
+        "UnstableTank, move C8\u2192E8, fire Unstable Cannon at E7",
+        "NanoMech, move F1\u2192D3, fire Acid Projector at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T17:24:35.596921",
+      "turn": 4,
+      "label": "note",
+      "message": "Reviewed exact dirty Turn 4 acceptance on Mission_Volatile: F4 remains threatened by GlowingScorpion uid 741 as the consented grid_power 6->5 / building_hp_total 10->9 loss; D6 Hornet threat is cleared; Volatile objective and all mechs remain preserved. Proceeding with held End Turn."
+    },
+    {
+      "timestamp": "2026-05-23T17:28:12.623657",
+      "turn": 1,
+      "label": "solve",
+      "score": 99100.0,
+      "actions": [
+        "UnstableTank, move C6\u2192D6, fire Unstable Cannon at C6",
+        "NanoMech, move E5\u2192F5, fire Acid Projector at F4",
+        "LeapMech, move F6\u2192F2, fire Hydraulic Legs at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T17:29:00.832554",
+      "turn": 2,
+      "label": "solve",
+      "score": 171980.00000000017,
+      "actions": [
+        "UnstableTank, fire Unstable Cannon at D5",
+        "NanoMech, move F5\u2192D4, fire Acid Projector at E4",
+        "LeapMech, move B2\u2192B4, fire Hydraulic Legs at F4"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      1,
+      3
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      1
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      4,
+      3
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      8,
+      1
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      8,
+      3
+    ],
+    [
+      9,
+      1
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      9,
+      3
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
+      3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      12,
+      2
+    ],
+    [
+      12,
+      3
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      14,
+      1
+    ]
+  ],
+  "post_enemy_block": null,
+  "dirty_consent_used": [
+    "e4313b8af843ef5b",
+    "d3d61de9090fe3e0",
+    "ba62c5b658a66703",
+    "177b887fc1c362b2",
+    "e922e52226848a7f",
+    "247da92f9cb1cde4",
+    "a837109f1f82c6ac",
+    "b42fb93cc29fd127",
+    "6caadb0610158110",
+    "d189c2ec20cb2238",
+    "dfc735c3f49a6aeb",
+    "8442f14a0da0db2e",
+    "22d427e0ae14d97b"
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Leap|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Leap",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "click_miss|Unknown|skip",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "skip",
+        "sub_action": "skip",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Science_AcidShot|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Science_AcidShot",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Prime_Leap|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Leap",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Unknown|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|skip",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "skip",
+        "sub_action": "skip",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_AcidShot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Science_AcidShot",
+        "target": [
+          6,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Unstable|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Unstable",
+        "target": [
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Unstable|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Unstable",
+        "target": [
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Unstable|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Brute_Unstable",
+        "target": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "mech_position_wrong",
+      "categories": [
+        "mech_position_wrong"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "mech_position_wrong|Science_AcidShot|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 3,
+        "turn": 1,
+        "weapon": "Science_AcidShot",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Leap|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Prime_Leap",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Science_AcidShot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 3,
+        "turn": 3,
+        "weapon": "Science_AcidShot",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "mech_position_wrong",
+      "categories": [
+        "mech_position_wrong",
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "mech_position_wrong|Prime_Leap|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Leap",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Prime_Leap|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Leap",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Leap|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Prime_Leap",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Prime_Leap|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Prime_Leap",
+        "target": [
+          7,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Terraformer_Attack|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 299,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Terraformer_Attack",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Brute_Unstable|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 3,
+        "turn": 4,
+        "weapon": "Brute_Unstable",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Brute_Unstable|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Unstable",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Leap|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "mech_died_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Leap",
+        "target": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Prime_Leap|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Leap",
+        "target": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Leap|attack",
+      "frequency": 2,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Prime_Leap",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Unstable|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "mech_died_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Unstable",
+        "target": [
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Leap|attack",
+      "frequency": 3,
+      "asymmetry": [
+        "mech_died_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Prime_Leap",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_AcidShot|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Science_AcidShot",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Brute_Unstable|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Brute_Unstable",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Prime_Leap|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Leap",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Leap|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 3,
+        "turn": 3,
+        "weapon": "Prime_Leap",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Leap|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Prime_Leap",
+        "target": [
+          7,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Brute_Unstable|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Unstable",
+        "target": [
+          1,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Prime_Leap|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Prime_Leap",
+        "target": [
+          4,
+          2
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "LeapMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Belt",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Leap Mech",
+            "hp": 3,
+            "move": 4,
+            "class_icons": [
+              "self_damage"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Bethany Jones",
+            "weapon_slot_count": 2,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Leap Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Leap+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Leap+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "eb625358e5f2",
+      "last_kind": "mech"
+    },
+    {
+      "type": "UnstableTank",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Belt",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Unstable Mech",
+            "hp": 3,
+            "move": 3,
+            "class_icons": [
+              "self_damage"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Stefan Berezin",
+            "weapon_slot_count": 2,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Unstable Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Unstable+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Unstable+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "069e78aec664",
+      "last_kind": "mech"
+    },
+    {
+      "type": "NanoMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Belt",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Nano Mech",
+            "hp": 2,
+            "move": 4,
+            "class_icons": [
+              "flying",
+              "passive"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Liam Volkov",
+            "weapon_slot_count": 2,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Nano Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Nano+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Nano+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "f7d1c5c63e25",
+      "last_kind": "mech"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Belt",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 1,
+        "diff_actual": 2
+      },
+      "diff_field": "hp",
+      "diff_predicted": 1,
+      "diff_actual": 2,
+      "severity": "low"
+    },
+    {
+      "type": "Mosquito1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_BeltRandom",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Mosquito",
+            "hp": 2,
+            "move": 4,
+            "class_icons": [
+              "flying"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Mosquito",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Mosquito",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Mosquito&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "status.acid",
+      "diff_predicted": true,
+      "diff_actual": false,
+      "severity": "medium",
+      "research_id": "0e4e87de325b",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "UnstableTank",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_AcidTank",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Unstable Mech",
+            "hp": 3,
+            "move": 3,
+            "class_icons": [
+              "self_damage"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Stefan Berezin",
+            "weapon_slot_count": 2,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Unstable Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Unstable+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Unstable+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        2,
+        3
+      ],
+      "diff_actual": [
+        2,
+        5
+      ],
+      "severity": "medium",
+      "research_id": "1b90746c0f1a",
+      "last_kind": "mech"
+    },
+    {
+      "type": "Terraformer",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Terraform",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "sim_v198_models_terraformer_web_source_death_and_acid_ground",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "status.web",
+        "diff_predicted": true,
+        "diff_actual": false
+      },
+      "diff_field": "status.web",
+      "diff_predicted": true,
+      "diff_actual": false,
+      "severity": "medium",
+      "research_id": "488db9aafebc",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Scorpion1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Crack",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Scorpion",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "webber"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Scorpion",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Scorpion",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Scorpion&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "e8c786038bba",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Bouncer1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Survive",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Bouncer",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Bouncer",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Bouncer",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Bouncer&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "9f9bae5b7b8e",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Jelly_Armor1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Artillery",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Shell Psion",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [
+              "flying",
+              "passive_bonus",
+              "armor"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Shell Psion",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Shell+Psion",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Shell+Psion&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "7a789a845f05",
+      "last_kind": "enemy"
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "af40196e59b36012",
+    "classes": "ggbbfgggggbbgbggmgggggggmggggbbgwwwwwwwwwwwwwwwwmffgwgggmggggfgg",
+    "mission_index": 14,
+    "turn": 3
+  },
+  "terrain_stage_change_pending": false
+}

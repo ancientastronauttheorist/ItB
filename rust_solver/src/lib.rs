@@ -59,10 +59,14 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
 #[pyfunction]
 fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
     use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
-    use crate::evaluate::{evaluate, PsionState};
+    use crate::evaluate::{consumed_spawn_block_bonus, evaluate, PsionState};
     use crate::movement::illegal_move_reason;
-    use crate::simulate::simulate_action;
-    use crate::solver::viscera_nanobots_heal_from_events;
+    use crate::simulate::simulate_action_with_target2;
+    use crate::solver::{
+        arachnoid_spawns_from_events,
+        reverse_thrusters_four_damage_from_events,
+        viscera_nanobots_heal_from_events,
+    };
     use crate::weapons::wid_from_str;
     use crate::types::{Terrain, xy_to_idx};
 
@@ -85,6 +89,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             move_to: [u8; 2],
             weapon_id: String,
             target: [u8; 2],
+            #[serde(default)]
+            target2: Option<[u8; 2]>,
         }
         let plan: Vec<PlanAction> = serde_json::from_str(plan_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("plan parse: {}", e)))?;
@@ -104,6 +110,9 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut mission_kills = 0i32;
         let mut bumps = 0i32;
         let mut nanobots_heal = 0i32;
+        let mut stay_with_me_heal = 0i32;
+        let mut reverse_thrusters_four_damage = 0i32;
+        let mut arachnoid_spawns = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
@@ -119,17 +128,22 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 ));
                 continue;
             }
-            let result = simulate_action(
+            let result = simulate_action_with_target2(
                 &mut board, mech_idx,
                 (act.move_to[0], act.move_to[1]),
                 wid,
                 (act.target[0], act.target[1]),
+                act.target2.map(|t| (t[0], t[1])),
                 weapons_table,
             );
             for event in result.events.iter().filter(|e| e.starts_with("illegal_")) {
                 illegal_events.push(event.clone());
             }
             nanobots_heal += viscera_nanobots_heal_from_events(&result.events);
+            stay_with_me_heal += result.mech_hp_repaired;
+            reverse_thrusters_four_damage +=
+                reverse_thrusters_four_damage_from_events(&result.events);
+            arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
             kills += result.enemies_killed as i32;
             mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -172,7 +186,12 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             }
         }
         let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats)
-            + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus;
+            + consumed_spawn_block_bonus(&board, &spawn_points, &weights, spawn_block_result.spawns_blocked)
+            + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus
+            + stay_with_me_heal as f64 * weights.stay_with_me_heal_bonus
+            + reverse_thrusters_four_damage as f64
+                * weights.reverse_thrusters_four_damage_bonus
+            + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus;
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -194,6 +213,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "judo_hp": judo_hp,
             "kills": kills,
             "mission_kills": mission_kills,
+            "arachnoid_spawns": arachnoid_spawns,
+            "stay_with_me_heal": stay_with_me_heal,
             "bldgs_alive": bldgs_alive,
             "bldg_hp_total": bldg_hp_total,
             "dead_mechs": dead_mechs,
@@ -204,6 +225,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "building_threats_bits": format!("{:b}", building_threats),
             "building_bumps": bumps,
             "viscera_nanobots_heal": nanobots_heal,
+            "spawns_blocked": spawn_block_result.spawns_blocked,
             "illegal_events": illegal_events,
         });
         Ok(out.to_string())
@@ -253,6 +275,8 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             move_to: [u8; 2],
             weapon_id: String,
             target: [u8; 2],
+            #[serde(default)]
+            target2: Option<[u8; 2]>,
         }
         let raw_plan: Vec<PlanAction> = serde_json::from_str(plan_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(
@@ -264,6 +288,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             move_to: (a.move_to[0], a.move_to[1]),
             weapon: wid_from_str(&a.weapon_id),
             target: (a.target[0], a.target[1]),
+            target2: a.target2.map(|t| (t[0], t[1])),
             description: String::new(),
         }).collect();
 
@@ -288,6 +313,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
                 "grid_damage": result.grid_damage,
                 "enemy_damage_dealt": result.enemy_damage_dealt,
                 "mech_damage_taken": result.mech_damage_taken,
+                "mech_hp_repaired": result.mech_hp_repaired,
                 "spawns_blocked": result.spawns_blocked,
                 "pods_collected": result.pods_collected,
                 "repair_platforms_used": result.repair_platforms_used,
@@ -337,6 +363,8 @@ fn project_plan_scenarios(
             move_to: [u8; 2],
             weapon_id: String,
             target: [u8; 2],
+            #[serde(default)]
+            target2: Option<[u8; 2]>,
         }
         let raw_plan: Vec<PlanAction> = serde_json::from_str(plan_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(
@@ -348,6 +376,7 @@ fn project_plan_scenarios(
             move_to: (a.move_to[0], a.move_to[1]),
             weapon: wid_from_str(&a.weapon_id),
             target: (a.target[0], a.target[1]),
+            target2: a.target2.map(|t| (t[0], t[1])),
             description: String::new(),
         }).collect();
 
@@ -376,6 +405,7 @@ fn project_plan_scenarios(
                     "grid_damage": s.action_result.grid_damage,
                     "enemy_damage_dealt": s.action_result.enemy_damage_dealt,
                     "mech_damage_taken": s.action_result.mech_damage_taken,
+                    "mech_hp_repaired": s.action_result.mech_hp_repaired,
                     "spawns_blocked": s.action_result.spawns_blocked,
                     "pods_collected": s.action_result.pods_collected,
                     "repair_platforms_used": s.action_result.repair_platforms_used,
@@ -1616,7 +1646,293 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Cave turn 3, where NanoMech pushed Hornet1 into dead Scarab1's tile and
 //   live left Hornet1 alive at 1 HP. Pre-v224 corpus archived as
 //   `failure_db_snapshot_sim_v223.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 224;
+// v225 - Spawn blocking now records every occupied emergence tile before
+//   resolving shield/frozen/damage, and terminal scoring credits blockers
+//   destroyed by emergence damage. This makes 1 HP RockThrown blockers count
+//   toward spawn-block achievements such as Blitzkrieg's Hold the Line.
+//   Pre-v225 corpus archived as `failure_db_snapshot_sim_v224.jsonl`.
+// v226 - Spider Psion death eggs use live-style adjacent fallback if a pushed
+//   corpse retargets the egg to water/chasm/lava or another unspawnable tile.
+//   Fixes Blitzkrieg run 20260524_112729_036 Mission_AcidStorm turn 3, where
+//   the live bridge spawned SpiderlingEgg1 uid 530 after Rock Accelerator
+//   pushed a killed Scorpion corpse onto water. Pre-v226 corpus archived as
+//   `failure_db_snapshot_sim_v225.jsonl`.
+// v227 - AE Totem/Spore attacks fire at the queued-time projectile endpoint
+//   and then self-destruct, instead of re-tracing through post-player blockers
+//   or falling back to generic unmapped Vek behavior. Fixes Blitzkrieg run
+//   20260524_112729_036 Mission_Barrels turn 3, where TotemAtk1 destroyed
+//   the G6 building after WallMech moved onto G5. Pre-v227 corpus archived as
+//   `failure_db_snapshot_sim_v226.jsonl`.
+// v228 - Killing a Blast Psion clears the explode-on-death aura before later
+//   Chain Whip hits in the same target-first chain resolve. Pre-v228 corpus
+//   archived as `failure_db_snapshot_sim_v227.jsonl`.
+// v229 - Destroyed objective building ruins (terrain=Building, HP 0) block
+//   Brute_Grapple/Pull target scans instead of letting Hook target a pawn
+//   behind the ruin. Pre-v229 corpus archived as
+//   `failure_db_snapshot_sim_v228.jsonl`.
+// v230 - Pull replay/execution also stops when an old/invalid target names a
+//   pawn behind a destroyed objective building ruin, so the simulator does not
+//   pull through the first projectile blocker. Pre-v230 corpus archived as
+//   `failure_db_snapshot_sim_v229.jsonl`.
+// v231 - Cryo-Launcher self-freeze now applies freeze tile cleanup at the
+//   shooter's tile, clearing carried fire and extinguishing burning ground.
+//   Pre-v231 corpus archived as `failure_db_snapshot_sim_v230.jsonl`.
+// v232 - Save-file upgraded overlays now model Janus Cannon damage upgrades
+//   and Spartan Shield damage upgrades, so powered Brute_Mirrorshot_A/B/AB and
+//   Prime_ShieldBash_B/AB solve with live damage. Pre-v232 corpus archived as
+//   `failure_db_snapshot_sim_v231.jsonl`.
+// v233 - Breaking one web source now reattaches a webbed unit to another live
+//   queued web source targeting the same tile instead of clearing WEB outright.
+//   Fixes Random Squad Change the Odds run 20260527_152006_916 Mission_Mines
+//   turn 4, where Combat Mech killed the F2 Scorpion but remained webbed by
+//   the E1 Scorpion. Pre-v233 corpus archived as
+//   `failure_db_snapshot_sim_v232.jsonl`.
+// v234 - Plain Titan Fist killed-target pushes can corpse-bump a live blocker,
+//   matching Dash Punch corpse-bump policy. Fixes Random Squad Change the Odds
+//   run 20260527_152006_916 Corporate HQ turn 1, where a killed Blob corpse
+//   bumped Boulder Mech at A6. Pre-v234 corpus archived as
+//   `failure_db_snapshot_sim_v233.jsonl`.
+// v235 - Add Brute_PierceShot / AP Cannon coverage for Pierce Mech.
+//   Pre-v235 corpus archived as `failure_db_snapshot_sim_v234.jsonl`.
+// v236 - AP Cannon resolves the second target damage/push before moving the
+//   first target, so adjacent targets do not take ordinary collision bump
+//   damage from each other. Fixes Loot Boxes run 20260530_124216_453 mission 1
+//   turn 1. Pre-v236 corpus archived as `failure_db_snapshot_sim_v235.jsonl`.
+// v237 - Repair platforms do not trigger for hostile units. Fixes Loot Boxes
+//   run 20260530_124216_453 Mission_Repair turn 2, where Vice Fist threw
+//   Firefly1 onto a repair platform and live left it unhealed. Pre-v237 corpus
+//   archived as `failure_db_snapshot_sim_v236.jsonl`.
+// v238 - Pushed projectile Vek whose bridge queued target equals queued origin
+//   infer direction from current position. Fixes Frozen Titans Trick Shot run
+//   20260601_105838_091 Mission_Power turn 2, where Firefly1 still shot
+//   MirrorMech after Mirror Shot displacement. Pre-v238 corpus archived as
+//   `failure_db_snapshot_sim_v237.jsonl`.
+// v239 - Mirror Shot backward arm with no blocker still damages adjacent empty
+//   sand, converting it to smoked ground. Fixes Frozen Titans Trick Shot run
+//   20260601_105838_091 Mission_Bomb turn 1, where Brute_Mirrorshot_A smoked
+//   H6 behind MirrorMech. Pre-v239 corpus archived as
+//   `failure_db_snapshot_sim_v238.jsonl`.
+// v240 - Freezing an enemy web source releases units webbed by that source.
+//   Fixes Frozen Titans Trick Shot run 20260601_105838_091 Mission_Bomb turn
+//   4, where Cryo-Launcher froze a Leaper but the sim left ProtoBomb webbed.
+//   Pre-v240 corpus archived as `failure_db_snapshot_sim_v239.jsonl`.
+// v241 - BombRock blast damage uses bump-class unit math while still
+//   converting adjacent occupied sand to smoked ground. Fixes Frozen Titans
+//   Trick Shot run 20260601_105838_091 Mission_Cataclysm turn 1, where
+//   Shield Bash destroyed a BombRock beside a Dung on sand. Pre-v241 corpus
+//   archived as `failure_db_snapshot_sim_v240.jsonl`.
+// v242 - Mirror Shot defers a killed forward BombRock blast until after its
+//   push/bump resolution. Fixes Frozen Titans Trick Shot run
+//   20260601_105838_091 Mission_Filler turn 2, where a frozen Ice Mech behind
+//   the rock thawed from the push before taking BombRock blast damage.
+//   Pre-v242 corpus archived as `failure_db_snapshot_sim_v241.jsonl`.
+// v243 - Mirror Shot backward arm affects only the adjacent rear tile; it does
+//   not skip an empty adjacent tile to hit a farther blocker. Fixes Frozen
+//   Titans Trick Shot run 20260601_105838_091 Corporate HQ turn 4, where E2->D2
+//   killed the forward Jelly at B2 but did not hit the Moth at G2 through
+//   empty F2. Pre-v243 corpus archived as `failure_db_snapshot_sim_v242.jsonl`.
+// v244 - Mirror Shot backward arm can still skip an empty adjacent tile to hit
+//   a farther terrain blocker, while preserving v243's non-adjacent-pawn miss.
+//   Fixes Frozen Titans Trick Shot run 20260601_154715_670 Disposal Site C turn
+//   3, where E7->D7 destroyed the G7 building through empty F7. Pre-v244 corpus
+//   archived as `failure_db_snapshot_sim_v243.jsonl`.
+// v245 - Mirror Shot backward arm can also skip empty rear tiles to a farther
+//   pawn when the forward arm hit was adjacent. Preserves v243's long-forward
+//   non-adjacent-pawn miss. Fixes Frozen Titans Trick Shot run
+//   20260601_154715_670 Chemical Field A turn 3, where D6->D7 hit D3 Mosquito
+//   and bumped frozen D2 Bouncer. Pre-v245 corpus archived as
+//   `failure_db_snapshot_sim_v244.jsonl`.
+// v246 - Frozen units absorb weapon terrain ignition on their occupied Forest
+//   tile. Fixes Frozen Titans Trick Shot run 20260601_174638_420
+//   Mission_Survive turn 4, where Mirror Shot thawed/pushed IceMech off E6
+//   but live left E6 as unburned Forest. Pre-v246 corpus archived as
+//   `failure_db_snapshot_sim_v245.jsonl`.
+// v247 - Mirror Shot backward arm skips adjacent rear sand to hit a farther
+//   pawn even when the forward hit was non-adjacent, and leaves the skipped
+//   sand unchanged. Fixes Frozen Titans Trick Shot run 20260601_174638_420
+//   Mission_Filler turn 3, where Brute_Mirrorshot_A killed IceMech at E8
+//   through empty sand E7. Pre-v247 corpus archived as
+//   `failure_db_snapshot_sim_v246.jsonl`.
+// v248 - Mirror Shot backward arm also skips adjacent rear conveyor tiles to a
+//   farther pawn. Fixes Frozen Titans Trick Shot run 20260601_221405_894
+//   Mission_BeltRandom turn 4, where Brute_Mirrorshot_A killed IceMech at D8
+//   through conveyor D7. Pre-v248 corpus archived as
+//   `failure_db_snapshot_sim_v247.jsonl`.
+// v249 - Mission_Tides applies queued Vek attacks before the tidal wave, and
+//   flying units on a tide tile take 1 damage instead of being fully spared.
+//   Pre-v249 corpus archived as failure_db_snapshot_sim_v248.jsonl.
+// v250 - Python verify loop matches Spider Psion death eggs by type+tile when
+//   the live engine allocates a different UID than the simulator. Fixes Frozen
+//   Titans Trick Shot run 20260601_221405_894 Mission_Solar turn 3, where
+//   Mirror Shot correctly produced a SpiderlingEgg1 at D5 but live used
+//   uid 1904 instead of predicted uid 1902. Pre-v250 corpus archived as
+//   failure_db_snapshot_sim_v249.jsonl.
+// v251 - Per-sub-action move verification tolerates the live bridge keeping a
+//   Time Pod visible under the moved mech until the action finishes. Full
+//   post-action verification still catches unrecovered or destroyed pods.
+//   Fixes Frozen Titans Trick Shot run 20260601_221405_894 Mission_Solar
+//   turn 3. Pre-v251 corpus archived as failure_db_snapshot_sim_v250.jsonl.
+// v252 - Mirror Shot direct projectile pushes at the off-board edge deal only
+//   Janus weapon damage, matching live Scarab2 survival on Mission_Final turn
+//   3. On-board live-blocker corpse bumps remain enabled. Pre-v252 corpus
+//   archived as failure_db_snapshot_sim_v251.jsonl.
+// v253 - Cryo-Launcher self-freeze is suppressed when the flying IceMech fires
+//   while over water; the target still freezes, but IceMech stays unfrozen and
+//   the water tile remains water. Fixes Mission_Final_Cave turn 1 in Trick
+//   Shot run 20260601_221405_894. Pre-v253 corpus archived as
+//   failure_db_snapshot_sim_v252.jsonl.
+// v254 - Direct non-shield hits refresh existing fire-tile pickup for the
+//   occupant. Fixes Frozen Titans Trick Shot run 20260602_095732_968
+//   Mission_Armored_Train turn 2, where Prime_ShieldBash hit a Moth standing
+//   on fire and live set status.fire. Pre-v254 corpus archived as
+//   failure_db_snapshot_sim_v253.jsonl.
+// v255 - Cryo-Launcher self-freeze suppression over water is limited to the
+//   observed Mission_Final_Cave case; Mission_Tides water still freezes the
+//   flying IceMech and turns its tile to ice. Fixes Frozen Titans Trick Shot
+//   run 20260602_095732_968 Mission_Tides turn 2. Pre-v255 corpus archived as
+//   failure_db_snapshot_sim_v254.jsonl.
+// v256 - Weapon damage that ignites an occupied Forest immediately applies
+//   fire status to the surviving occupant. Fixes Frozen Titans Trick Shot run
+//   20260602_095732_968 Corporate HQ turn 4, where Prime_ShieldBash hit a
+//   Firefly on Forest and live set status.fire. Pre-v256 corpus archived as
+//   failure_db_snapshot_sim_v255.jsonl.
+// v257 - Spartan Shield direct hits collapse occupied cracked Ground into a
+//   chasm, killing grounded targets and clearing webs when the hit kills a
+//   webber. Fixes Frozen Titans Trick Shot run 20260602_095732_968 R.S.T.
+//   Mission_Crack turn 3, where Prime_ShieldBash hit a Scorpion on cracked
+//   Ground. Pre-v257 corpus archived as failure_db_snapshot_sim_v256.jsonl.
+// v258 - Weapon damage to a live enemy web source clears/reassigns that web
+//   even if the webber survives. Fixes Frozen Titans Trick Shot run
+//   20260602_095732_968 Mission_Solar turn 3, where Prime_ShieldBash damaged
+//   a Scorpion web source for 2, live cleared Guard's web, and the Scorpion
+//   survived at 1 HP. Pre-v258 corpus archived as
+//   failure_db_snapshot_sim_v257.jsonl.
+// v259 - Mission_Tides turn projection/replay advances the tidal warning mask
+//   to the next player turn so plan safety blocks mechs parked on the next
+//   wave lane. Fixes Lightning War run 20260603 Mission_Tides turn 2, where
+//   Electric and Rockart ended on the next tide lane and Electric was webbed
+//   by a spawned Leaper. Pre-v259 corpus archived as
+//   failure_db_snapshot_sim_v258.jsonl.
+// v260 - Rock Launcher empty-target rock spawns do not apply center terrain
+//   damage. Live preserves Forest/no fire under the spawned RockThrown. Fixes
+//   Lightning War run 20260610_184414_692 Archive Mission_Mines turn 1, where
+//   Ranged_Rockthrow at E3 spawned a rock but left the forest intact. Pre-v260
+//   corpus archived as failure_db_snapshot_sim_v259.jsonl.
+// v261 - Brute_Grapple full-pull transit skips Old Earth / freeze mine
+//   triggers until the final resting tile. Fixes Lightning War run
+//   20260610_222220_354 Mission_Mines turn 1, where Hook pulled a flying
+//   Jelly_Regen1 across an intermediate Old Earth Mine and live left it alive.
+//   Pre-v261 corpus archived as failure_db_snapshot_sim_v260.jsonl.
+// v262 - Old Earth Artillery damage does not release a surviving enemy web
+//   source. Fixes Lightning War run 20260610_222220_354 Archive
+//   Mission_Artillery turn 4, where ArchiveArtillery damaged a Scorpion web
+//   source but ElectricMech stayed webbed. Pre-v262 corpus archived as
+//   failure_db_snapshot_sim_v261.jsonl.
+// v263 - Bomb Dispenser / Walking Bomb support for Bombermechs Powered Blast:
+//   line-artillery ground deploy target, spawned temporary Walking Bomb, and
+//   Trigger self-destruct AoE. Pre-v263 corpus archived as
+//   failure_db_snapshot_sim_v262.jsonl.
+// v264 - Powered Blast achievement event and scoring hook for AP Cannon kills
+//   through Walking Bomb. Pre-v264 corpus archived as
+//   failure_db_snapshot_sim_v263.jsonl.
+// v265 - Brute_Grapple full-pull stops before dead unit wrecks without bump
+//   damage. Fixes Lightning War run 20260613_002031_059 Mission_Survive turn 1,
+//   where Hook over-killed a Leaper against a wreck and the survivor destroyed
+//   ElectricMech after End Turn. Pre-v265 corpus archived as
+//   failure_db_snapshot_sim_v264.jsonl.
+// v266 - Brute_KickBack / Reverse Thrusters modeled as a dash-away weapon:
+//   clicked landing tile, distance-scaled damage and smoke on the reverse tile,
+//   fixed 1 self-damage, attack-phase landing effects, upgraded range IDs, and
+//   the On the Backburner 4+ effective-damage achievement event. Pre-v266
+//   corpus archived as failure_db_snapshot_sim_v265.jsonl.
+// v267 - Ranged_SmokeFire / Smoldering Shells adjacent smoke skips occupied
+//   adjacent tiles; live Backburner run showed an occupied adjacent Scarab was
+//   not smoke-cancelled. Pre-v267 corpus archived as
+//   failure_db_snapshot_sim_v266.jsonl.
+// v268 - Passive_HealingSmoke / Nanofilter Mending is parsed from bridge
+//   weapons and consumes smoke under player mechs to heal 1 HP. Reverse
+//   Thrusters now places source smoke instead of impact smoke, matching live
+//   Backburner damage_amount desyncs. Pre-v268 corpus archived as
+//   failure_db_snapshot_sim_v267.jsonl.
+// v269 - Heat Sinkers weapon coverage: Quick-Fire Rockets, Thermal
+//   Discharger, and Firestorm Generator IDs, line/fire simulation, and the
+//   Feed the Flame fresh-ignition achievement event. Pre-v269 corpus archived
+//   as failure_db_snapshot_sim_v268.jsonl.
+// v270 - Dam flood destroys Time Pods on flooded tiles without collection
+//   credit. Fixes Bombermechs Complete Victory run 20260619_234224_725
+//   Mission_Dam turn 1, where live washed away a pod at (4,5) but Rust kept
+//   has_pod=true. Pre-v270 corpus archived as failure_db_snapshot_sim_v269.jsonl.
+// v271 - Old Earth Mine mission metadata and replay safety track
+//   Mission_Mines' mech-damage objective so Complete Victory routing does not
+//   misclassify mine damage as harmless. Pre-v271 corpus archived as
+//   failure_db_snapshot_sim_v270.jsonl.
+// v272 - AP Cannon first-target push can move a friendly first target into a
+//   killed second target's tile instead of treating the dead Vek as a bumping
+//   wreck. Fixes Bombermechs Complete Victory run 20260623_014749_422
+//   Mission_Mines turn 4. Pre-v272 corpus archived as
+//   failure_db_snapshot_sim_v271.jsonl.
+// v273 - Enemy-phase replay honors bridge-provided attack order instead of
+//   blindly sorting by UID. Fixes Bombermechs Complete Victory run
+//   20260623_035936_734 Mission_Factory turn 2, where live Snowlaser fired
+//   before a lower-UID Burnbug killed it. Pre-v273 corpus archived as
+//   failure_db_snapshot_sim_v272.jsonl.
+// v274 - Mission_Repair platform healing caps at the unit's max HP instead
+//   of overhealing to max_hp+2. Fixes Bombermechs Complete Victory run
+//   20260623_105703_708 Bad Repairs turn 1, where BomlingMech healed from
+//   1/3 to live 3/3 but the sim projected 5/3. Pre-v274 corpus archived as
+//   failure_db_snapshot_sim_v273.jsonl.
+// v275 - Science_TC_SwapOther Force Swap is a first-class two-target action:
+//   solver/replay/bridge JSON carry target2, and the simulator swaps the
+//   adjacent first target with the second target plus A/B upgrade effects.
+//   Pre-v275 corpus archived as failure_db_snapshot_sim_v274.jsonl.
+// v276 - A queued shot normalized off-board by the bridge is a canceled attack,
+//   not an unknown phantom attack. This prevents conservative phantom damage
+//   after Force Swap moves artillery Vek so their preserved offset points off
+//   the board. Pre-v276 corpus archived as failure_db_snapshot_sim_v275.jsonl.
+// v277 - AP Cannon's second-target damage does not receive generic Boost and
+//   its direct edge push does not add off-board bump damage. Fixes
+//   Bombermechs Complete Victory run 20260623_105703_708 Mission_ScarabBoss
+//   turn 4, where upgraded AP left the Scarab Leader at 1 HP live but Rust
+//   predicted a kill. Pre-v277 corpus archived as
+//   failure_db_snapshot_sim_v276.jsonl.
+// v278 - Standard melee Vek can recover direction from their current tile
+//   when Force Swap relocates them and the bridge updates queued_target but
+//   leaves queued_origin stale. Fixes Bombermechs Complete Victory run
+//   20260624_083454_845 Mission_Lightning turn 1, where a swapped Bouncer
+//   killed ExchangeMech live but Rust dropped the diagonal stale-origin
+//   attack.
+// v280 - Mission_Shields generator shields absorb damage and push without
+//   being consumed while the Shield_Building is alive, then clear when the
+//   generator dies. Fixes Arachnophiles Spider Breeding run
+//   20260624_150610_500 Mission_Shields turn 1.
+// v281 - Ricochet Rocket is modeled and executed as a real two-click bounce
+//   instead of the old bridge one-click no-op path. Fixes Arachnophiles Spider
+//   Breeding run 20260624_150610_500 Mission_Shields turn 2.
+// v282 - Webbed Ricochet Rocket is treated as a no-op and omitted from solve
+//   enumeration, matching the same Mission_Shields turn 2 live bridge result.
+// v283 - Mission_Shields generator protection is implicit for non-generator
+//   enemies/buildings while Shield_Building is alive, even when the bridge
+//   snapshot lacks individual shield bits. Fixes the same turn 2 Arachnoid
+//   Injector hit on Scorpion1 at F2.
+// v284 - Arachnoid Injector is cardinal-line artillery. Off-axis bridge
+//   FireWeapon calls can ACK and spend the action while doing no damage.
+// v285 - Raw queued targets are preserved as a fallback when normalized enemy
+//   targets collapse to origin/current, fixing BurnbugBoss post-enemy grid
+//   prediction in Arachnophiles Spider Breeding run 20260624_184517_189.
+//   ACID Arachnoid self-destruct also leaves an ACID pool on its death tile.
+// v286 - Merged Heat Sinkers Feed the Flame parity onto the Complete
+//   Victory/Spider line: Heat Engines fire/lava Boost consumption, Firestorm
+//   endpoint/pod behavior, Thermal Discharger dam-flood ordering,
+//   Mission_BeltRandom late conveyor timing, and Mission_Satellite late launch
+//   threat timing. Pre-v286 corpus archived as failure_db_snapshot_sim_v285.jsonl.
+// v287 - Merged Lightning War / Stay With Me parity onto the Complete
+//   Victory/Spider/Feed line: Dam_Pawn fire-tick skip, Reverse Thrusters
+//   backblast smoke without same-action Nanofilter recoil healing,
+//   Smoldering Shells A/B/AB overlays, pre-attack enemy wreck clearing,
+//   RockThrown pod destruction, Chain Whip Shell Psion armor snapshotting,
+//   and Stay With Me heal scoring. Pre-v287 corpus archived as
+//   failure_db_snapshot_sim_v286.jsonl.
+pub const SIMULATOR_VERSION: u32 = 287;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -10,15 +10,40 @@
       "last_run_id": "20260423_131700_144",
       "weapon_id": "Brute_Jetmech"
     },
+    "damage_amount|Brute_KickBack|attack": {
+      "count": 1,
+      "last_run_id": "20260617_021222_131",
+      "weapon_id": "Brute_KickBack"
+    },
+    "damage_amount|Brute_Mirrorshot|attack": {
+      "count": 3,
+      "last_run_id": "20260525_145507_262",
+      "weapon_id": "Brute_Mirrorshot"
+    },
+    "damage_amount|Brute_PierceShot|attack": {
+      "count": 7,
+      "last_run_id": "20260624_045955_387",
+      "weapon_id": "Brute_PierceShot"
+    },
     "damage_amount|Brute_Tankmech|attack": {
       "count": 2,
       "last_run_id": "20260510_213059_819",
       "weapon_id": "Brute_Tankmech"
     },
+    "damage_amount|Brute_Unstable|attack": {
+      "count": 15,
+      "last_run_id": "20260531_181444_169",
+      "weapon_id": "Brute_Unstable"
+    },
     "damage_amount|Prime_Flamethrower|attack": {
       "count": 1,
       "last_run_id": "20260428_165811_685",
       "weapon_id": "Prime_Flamethrower"
+    },
+    "damage_amount|Prime_Leap|attack": {
+      "count": 3,
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Prime_Leap"
     },
     "damage_amount|Prime_Lightning|move": {
       "count": 1,
@@ -26,14 +51,19 @@
       "weapon_id": "Prime_Lightning"
     },
     "damage_amount|Prime_Punchmech|attack": {
-      "count": 2,
-      "last_run_id": "20260424_174047_323",
+      "count": 6,
+      "last_run_id": "20260526_180954_139",
       "weapon_id": "Prime_Punchmech"
     },
     "damage_amount|Prime_Shift|move": {
       "count": 1,
       "last_run_id": "20260424_193000_165",
       "weapon_id": "Prime_Shift"
+    },
+    "damage_amount|Prime_TC_Punt|attack": {
+      "count": 5,
+      "last_run_id": "20260530_225649_007",
+      "weapon_id": "Prime_TC_Punt"
     },
     "damage_amount|Ranged_Artillerymech|attack": {
       "count": 1,
@@ -65,6 +95,11 @@
       "last_run_id": "20260424_144237_364",
       "weapon_id": "Ranged_Rocket"
     },
+    "damage_amount|Ranged_SmokeFire_A|attack": {
+      "count": 1,
+      "last_run_id": "20260616_083357_196",
+      "weapon_id": "Ranged_SmokeFire_A"
+    },
     "damage_amount|Science_Gravwell|attack": {
       "count": 1,
       "last_run_id": "20260425_185532_218",
@@ -81,9 +116,14 @@
       "weapon_id": "ScorpionAtk1"
     },
     "damage_amount|Unknown|move": {
-      "count": 4,
-      "last_run_id": "20260518_192325_609",
+      "count": 17,
+      "last_run_id": "20260626_030252_365",
       "weapon_id": "Unknown"
+    },
+    "damage_amount|_REPAIR|repair": {
+      "count": 2,
+      "last_run_id": "20260601_105838_091",
+      "weapon_id": "_REPAIR"
     },
     "death|Brute_Beetle|attack": {
       "count": 1,
@@ -91,8 +131,8 @@
       "weapon_id": "Brute_Beetle"
     },
     "death|Brute_Grapple|attack": {
-      "count": 1,
-      "last_run_id": "20260422_171013_371",
+      "count": 29,
+      "last_run_id": "20260624_121547_472",
       "weapon_id": "Brute_Grapple"
     },
     "death|Brute_Jetmech|attack": {
@@ -100,10 +140,35 @@
       "last_run_id": "20260421_215501_106",
       "weapon_id": "Brute_Jetmech"
     },
-    "death|Brute_Mirrorshot|attack": {
+    "death|Brute_KickBack|attack": {
+      "count": 3,
+      "last_run_id": "20260617_021222_131",
+      "weapon_id": "Brute_KickBack"
+    },
+    "death|Brute_Mirrorshot_AB|attack": {
       "count": 1,
-      "last_run_id": "20260522_133722_695",
+      "last_run_id": "20260601_221405_894",
+      "weapon_id": "Brute_Mirrorshot_AB"
+    },
+    "death|Brute_Mirrorshot_A|attack": {
+      "count": 2,
+      "last_run_id": "20260601_221405_894",
+      "weapon_id": "Brute_Mirrorshot_A"
+    },
+    "death|Brute_Mirrorshot|attack": {
+      "count": 4,
+      "last_run_id": "20260619_132357_735",
       "weapon_id": "Brute_Mirrorshot"
+    },
+    "death|Brute_PierceShot|attack": {
+      "count": 14,
+      "last_run_id": "20260624_083454_845",
+      "weapon_id": "Brute_PierceShot"
+    },
+    "death|Brute_PierceShot|move": {
+      "count": 1,
+      "last_run_id": "20260530_225649_007",
+      "weapon_id": "Brute_PierceShot"
     },
     "death|Brute_TC_Ricochet|attack": {
       "count": 1,
@@ -111,13 +176,18 @@
       "weapon_id": "Brute_TC_Ricochet"
     },
     "death|Brute_Tankmech|attack": {
-      "count": 5,
-      "last_run_id": "20260510_213059_819",
+      "count": 6,
+      "last_run_id": "20260619_111350_246",
       "weapon_id": "Brute_Tankmech"
     },
-    "death|Deploy_TankShot|attack": {
+    "death|Brute_Unstable|attack": {
       "count": 1,
-      "last_run_id": "20260517_105759_344",
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Brute_Unstable"
+    },
+    "death|Deploy_TankShot|attack": {
+      "count": 2,
+      "last_run_id": "20260615_161747_078",
       "weapon_id": "Deploy_TankShot"
     },
     "death|Missiles_OneDmg|attack": {
@@ -125,10 +195,20 @@
       "last_run_id": "20260506_114649_974",
       "weapon_id": "Missiles_OneDmg"
     },
+    "death|Prime_Flamespreader|attack": {
+      "count": 1,
+      "last_run_id": "20260617_121029_596",
+      "weapon_id": "Prime_Flamespreader"
+    },
     "death|Prime_Flamethrower|attack": {
       "count": 1,
       "last_run_id": "20260518_103538_582",
       "weapon_id": "Prime_Flamethrower"
+    },
+    "death|Prime_Leap|attack": {
+      "count": 7,
+      "last_run_id": "20260616_015931_288",
+      "weapon_id": "Prime_Leap"
     },
     "death|Prime_Lightning_A|attack": {
       "count": 1,
@@ -136,8 +216,8 @@
       "weapon_id": "Prime_Lightning_A"
     },
     "death|Prime_Lightning|attack": {
-      "count": 3,
-      "last_run_id": "20260517_105759_344",
+      "count": 14,
+      "last_run_id": "20260625_064439_784",
       "weapon_id": "Prime_Lightning"
     },
     "death|Prime_Punchmech_A|attack": {
@@ -155,6 +235,11 @@
       "last_run_id": "20260421_015818_989",
       "weapon_id": "Prime_ShieldBash"
     },
+    "death|Prime_TC_Punt|attack": {
+      "count": 6,
+      "last_run_id": "20260530_225649_007",
+      "weapon_id": "Prime_TC_Punt"
+    },
     "death|Ranged_Arachnoid|attack": {
       "count": 1,
       "last_run_id": "20260517_170505_240",
@@ -171,8 +256,8 @@
       "weapon_id": "Ranged_Artillerymech"
     },
     "death|Ranged_Crack|attack": {
-      "count": 2,
-      "last_run_id": "20260521_120049_468",
+      "count": 7,
+      "last_run_id": "20260611_024631_648",
       "weapon_id": "Ranged_Crack"
     },
     "death|Ranged_Defensestrike|attack": {
@@ -191,14 +276,19 @@
       "weapon_id": "Ranged_Rocket_A"
     },
     "death|Ranged_Rocket|attack": {
-      "count": 5,
-      "last_run_id": "20260513_230944_542",
+      "count": 6,
+      "last_run_id": "20260531_114844_128",
       "weapon_id": "Ranged_Rocket"
     },
     "death|Ranged_Rockthrow|attack": {
-      "count": 1,
-      "last_run_id": "20260517_105759_344",
+      "count": 24,
+      "last_run_id": "20260625_083214_965",
       "weapon_id": "Ranged_Rockthrow"
+    },
+    "death|Science_AcidShot|attack": {
+      "count": 3,
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Science_AcidShot"
     },
     "death|Science_Gravwell|attack": {
       "count": 4,
@@ -215,6 +305,11 @@
       "last_run_id": "20260428_165811_685",
       "weapon_id": "Science_Pullmech"
     },
+    "death|Science_RainingFire|attack": {
+      "count": 2,
+      "last_run_id": "20260619_004557_388",
+      "weapon_id": "Science_RainingFire"
+    },
     "death|Science_Repulse_A|attack": {
       "count": 2,
       "last_run_id": "20260506_114649_974",
@@ -225,10 +320,20 @@
       "last_run_id": "20260508_134925_472",
       "weapon_id": "Science_Repulse"
     },
+    "death|Science_TC_SwapOther|attack": {
+      "count": 7,
+      "last_run_id": "20260624_083454_845",
+      "weapon_id": "Science_TC_SwapOther"
+    },
     "death|ScorpionAtk1|attack": {
       "count": 1,
       "last_run_id": "20260421_175627_753",
       "weapon_id": "ScorpionAtk1"
+    },
+    "death|Unknown|move": {
+      "count": 1,
+      "last_run_id": "20260624_083454_845",
+      "weapon_id": "Unknown"
     },
     "grid_power|Brute_Beetle|attack": {
       "count": 1,
@@ -264,6 +369,11 @@
       "count": 1,
       "last_run_id": "20260425_185532_218",
       "weapon_id": "Ranged_Artillerymech"
+    },
+    "push_dir|Ranged_Crack|attack": {
+      "count": 1,
+      "last_run_id": "20260611_024631_648",
+      "weapon_id": "Ranged_Crack"
     },
     "push_dir|Ranged_Defensestrike|attack": {
       "count": 1,

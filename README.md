@@ -1,18 +1,26 @@
 # Into the Breach Achievement Bot
 
-An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
+An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS and Windows, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **43 / 70 achievements Steam-cache confirmed** after the 2026-05-24 `Hold the Line` unlock and sync. Steam offline mode can delay achievement reconciliation: visible or in-game awards may not appear in `achievements --sync` until Steam goes online and Into the Breach restarts.
+Status: **60 / 70 achievements Steam-cache confirmed; 61 / 70 locally proven**. **Feed the Flame**, **Complete Victory**, and **Lightning War** reconciled in the Steam cache on 2026-06-26. **Spider Breeding** unlocked locally/offline on 2026-06-26 in Arachnophiles run `20260626_125732_442`: Into the Breach logged `Set Steam Achievement Ach_Squad_Spiders_1`, and both profile save files showed `Squad_Spiders_1 = 15`. Steam offline mode or missing sync credentials can delay reconciliation, so Spider remains a local proof until the Steam cache catches up.
 
-Recent unlocks: **Hold the Line** unlocked on 2026-05-24 in Blitzkrieg Normal run `20260524_195401_412` after a manual four-block spawn cluster on Detritus Corporate HQ; **Healing** and **Overkill** reconciled on 2026-05-24 after the Hazardous Mechs Easy 4-island victory run `20260522_193613_471` and a Steam online/game restart; **Untouchable** popped in-game on 2026-05-22 after Frozen Titans Easy Archive run `20260522_133722_695`; **Unstable Ground** was confirmed by the 2026-05-21 sync during the Cataclysm run `20260521_120049_468`; **This is Fine** also reconciled in that sync after its 2026-05-21 Flame Behemoths Easy toast in run `20260520_174936_811`; **Quantum Entanglement** was confirmed by the 2026-05-20 sync after a four-tile `Science_Swap_AB` Teleporter line in Flame Behemoths run `20260520_134643_900`; **Adaptable Victory** was confirmed by the 2026-05-19 sync after the Rusting Hulks Easy 2-island victory run `20260519_200933_351`; **There is No Try** was confirmed earlier on 2026-05-19 after the Rusting Hulks Easy no-failed-objectives run `20260519_154655_297`; **Perfect Strategy** was confirmed earlier on 2026-05-19 after a Rusting Hulks Easy Pinnacle Perfect Island reward in run `20260519_133059_179`; **Ramming Speed**, **Chain Attack**, and **Squads Victory** were confirmed by the 2026-05-18 sync after the 2026-05-17 Blitzkrieg victory push; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
+Recent highlight: the merged line now carries the Lightning War speed infrastructure from `codex`, the Feed the Flame / Heat Sinkers simulator work, the Bombermechs Complete Victory final-cave proof, and the Spider Breeding Arachnophiles proof. Lightning War was won by treating UI traversal as a timer-safe speedrun graph: pause before reasoning, read timer truth from screenshots, use deterministic deployment/reward/shop scripts, and keep combat boring and reliable through the Rust solver.
 
-Current milestone: **Blitzkrieg closed Hold the Line** with a direct bridge-controlled spawn-block line after the solver's top-K search missed the visible four-block geometry. The run proved the harness can combine solver sweeps, read-only phase waits, and carefully verified manual actions for achievement-specific tactical shapes; remaining cleanup can pivot to Blitzkrieg **Lightning War**, Hazardous **Immortal**, Cataclysm, Mist Eaters/Heat Sinkers/Arachnophiles, or Custom/Random targets.
+Recent unlocks: **Spider Breeding** is locally proven from Arachnoid Injector kill credit reaching 15 spawns on one Corporate Island. **Feed the Flame**, **Complete Victory**, and **Lightning War** are Steam-cache confirmed as of 2026-06-26. **Stay With Me!** unlocked and Steam-cache synced on 2026-06-17 in Mist Eaters Easy R.S.T. play; **Lucky Start** reconciled before that run. Earlier major milestones include **On the Backburner**, **Chronophobia**, **Powered Blast**, **Trick Shot**, **Immortal**, **Loot Boxes!**, **Engineering Dropout**, **Class Specialist**, **Change the Odds**, **Mech Specialist**, **Flight Specialist**, **Distant Friends**, **Hold the Line**, **Healing**, **Overkill**, **Untouchable**, **Unstable Ground**, **This is Fine**, **Quantum Entanglement**, **Adaptable Victory**, **There is No Try**, **Perfect Strategy**, **Ramming Speed**, **Chain Attack**, **Squads Victory**, **Stormy Weather**, and **Hard Victory**. See `TODO.md` for the checklist.
+
+Current milestone: the working tracker is 61/70 proven. Remaining cleanup can pivot to Cataclysm, Mist Eaters **Let's Walk**, Bombermechs **Hold the Door** / **No Survivors**, Arachnophiles **Working Together** / **Efficient Explosives**, or Heat Sinkers **Boosted** / **Maximum Firepower**.
+
+### Lightning War retrospective
+
+**Lightning War** took roughly three weeks because it attacked the weakest part of the original architecture: the bot was strong at solving turns, but the achievement measured every second spent outside pause. The winning direction was to treat UI navigation as part of the speedrun, not as a wrapper around combat. The loop evolved toward a strict primitive: capture a visible screenshot, immediately pause with `Esc`, verify the pause menu visually, and only then let the LLM reason.
+
+The turning point was a human calibration Q&A before the long successful run. The user's answers redirected the work toward a timer-first machine: the solver was already strong enough, mission shopping was usually wasted timer, the highlighted 8x8 preview board was the fastest route target, deployment should use the fast helper, shop policy should be deterministic, Advanced Edition could stay off, and screenshot/timing collection was worth it if bounded. The detailed sprint plan lives in [docs/agent/lightning-war-proof-gated-sprint.html](docs/agent/lightning-war-proof-gated-sprint.html).
 
 ---
 
 ## How it works
 
-The game runs natively. State flows out through a Lua mod hook that writes `/tmp/itb_state.json`; commands flow back through `/tmp/itb_cmd.txt`, ACKed via `/tmp/itb_ack.txt`, with a heartbeat file to detect a hung bridge. For UI screens the bridge can't drive (deployment, menus, shop, rewards, island map), the bot emits pixel-coordinate click plans and dispatches them via the `computer-use` MCP.
+The game runs natively. State flows out through a Lua mod hook that writes `itb_state.json`; commands flow back through `itb_cmd.txt`, ACKed via `itb_ack.txt`, with a heartbeat file to detect a hung bridge. The bridge directory is platform-specific: `/tmp` on macOS and `Documents/My Games/Into The Breach/itb_bridge` on Windows, unless `ITB_BRIDGE_DIR` overrides it. For UI screens the bridge can't drive (deployment, menus, shop, rewards, island map), the bot emits pixel-coordinate click plans and dispatches them via the `computer-use` MCP.
 
 ### Five-layer architecture
 
@@ -33,7 +41,7 @@ Solver 2.0 is built around a stricter goal than "highest score this turn": avoid
 - **Plan safety gates bad wins.** Every candidate is replayed and checked for irreversible losses: grid power, building HP, objective buildings, pods, mech deaths, and unsafe self-damage. The first clean candidate wins, even if it scored slightly lower.
 - **Execution is closed-loop.** `auto_turn` executes move -> verify -> attack/repair -> verify through the bridge, re-solves after desyncs, and withholds End Turn on unexplained predicted-vs-actual grid drops.
 - **Upgrades are first-class.** Achievement-critical variants such as `Science_Swap_AB` are represented in the save overlay, Rust weapon IDs, target enumeration, and bridge firing path, so the solver can see and execute upgraded weapon behavior rather than silently falling back to base loadouts.
-- **Unknowns stop the bot.** The research gate blocks solving past uncatalogued pawns, terrain, weapons, and screens. Recent live-loop catalog work includes Digger, Wall, Centipede, Wind Torrent, and AE psion/boss behavior.
+- **Unknowns stop the bot.** The research gate blocks solving past uncatalogued pawns, terrain, weapons, and screens. Recent live-loop catalog work includes Digger, Wall, Centipede, Wind Torrent, AE psion/boss behavior, and Bombermechs Walking Bomb deployables.
 - **Failures feed the next version.** `recordings/failure_db.jsonl`, the fuzzy detector, the diagnosis queue, weapon override staging, regression boards, and `EvalWeights` tuning turn live mistakes into repeatable fixes.
 
 ### Self-healing research loop
@@ -64,7 +72,7 @@ Tuned weights land in `weights/v{NNN}_{date}.json`; the deployed copy is `weight
 
 ### Prerequisites
 
-- macOS (Quartz used for window detection)
+- macOS or Windows. macOS uses Quartz and `/tmp`; Windows uses Win32 window detection, PIL `ImageGrab`, and the profile-local `itb_bridge` directory.
 - Python 3.9+
 - Rust toolchain
 - `maturin` (`pip install maturin`)
@@ -73,11 +81,11 @@ Tuned weights land in `weights/v{NNN}_{date}.json`; the deployed copy is `weight
 ### Install the Lua bridge
 
 ```bash
-bash scripts/install_modloader.sh   # copies src/bridge/modloader.lua into the Steam app bundle
+bash scripts/install_modloader.sh   # macOS: copies src/bridge/modloader.lua into the Steam app bundle
 # then restart Into the Breach
 ```
 
-Re-run after any edit to `src/bridge/modloader.lua`.
+Re-run after any edit to `src/bridge/modloader.lua`. On Windows, install the same Lua file into the ITB-ModLoader location used by the game, then restart Into the Breach. Set `ITB_SAVE_DIR` or `ITB_BRIDGE_DIR` only when using nonstandard save or bridge locations.
 
 ### Build the Rust solver
 
@@ -87,7 +95,9 @@ maturin build --release
 pip3 install --user --force-reinstall target/wheels/itb_solver-0.1.0-cp39-cp39-macosx_11_0_arm64.whl
 ```
 
-Re-run after any edit to `rust_solver/src/*.rs`.
+Re-run after any edit to `rust_solver/src/*.rs`. The wheel filename is
+platform- and Python-version-specific; use the wheel produced under
+`rust_solver/target/wheels/` on Windows.
 
 ### Git hooks
 
@@ -102,6 +112,9 @@ bash scripts/install-hooks.sh
 ---
 
 ## Quick start
+
+On Windows PowerShell, prefer `python -X utf8 game_loop.py ...` for the same
+commands shown below.
 
 ```bash
 # Start a new run
@@ -119,6 +132,9 @@ python3 game_loop.py auto_turn --time-limit 10
 # → returns an MCP click plan for End Turn
 python3 game_loop.py click_end_turn
 # → loop until mission_end
+
+# Chronophobia / pod-destruction combat turns
+python3 game_loop.py auto_turn --time-limit 10 --destroy-time-pods
 
 # Inspect the failure corpus
 python3 game_loop.py analyze --min-samples 30
@@ -210,7 +226,7 @@ prompts/       Vision prompt templates for the research loop
 ## Coordinate conventions
 
 - **Bridge `(x, y)` → visual:** `Row = 8 - x`, `Col = chr(72 - y)`. Example: bridge `(3, 5)` = `C5`. **All communication uses A1–H8 visual notation.**
-- **MCP pixel coords:** `grid_to_mcp(x, y)` in `src/control/executor.py` auto-detects the game window via Quartz and uses the shared grid calibration. Never hardcode pixel coords - the window moves.
+- **MCP pixel coords:** `grid_to_mcp(x, y)` in `src/control/executor.py` auto-detects the game window via Quartz on macOS or Win32 APIs on Windows, then uses the shared grid calibration. Never hardcode pixel coords - the window moves.
 - **UI anchors** (scaled to window size from a 1280×748 reference): End Turn `(95, 78)`, Repair `(105, 553)`, weapon slots `(181, 553)` / `(245, 553)`, Balanced Roll `(791, 530)`.
 
 ---

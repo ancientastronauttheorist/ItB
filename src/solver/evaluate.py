@@ -36,6 +36,7 @@ class EvalWeights:
     spawn_blocked: float = 1000
     pod_uncollected: float = -100
     pod_proximity: float = 50         # bonus for mech within 2 tiles of pod
+    pod_collected: float = 0          # action-history penalty; Rust search only
     enemy_on_danger: float = 800      # non-flying enemy on danger tile
 
     # Psion kill bonuses (scaled by future_factor)
@@ -82,6 +83,11 @@ class EvalWeights:
     smoke_placed: float = 0
     tiles_frozen: float = 0
     viscera_nanobots_heal_bonus: float = 0
+    stay_with_me_heal_bonus: float = 0
+    powered_blast_bonus: float = 0
+    reverse_thrusters_four_damage_bonus: float = 0
+    feed_the_flame_bonus: float = 0
+    arachnoid_spawn_bonus: float = 0
 
     # Mission-specific bonus objectives (default 0; set via active.json).
     # Old Earth Dam: +1 Rep + 14-tile flood. Turn-aware scaling in evaluate.

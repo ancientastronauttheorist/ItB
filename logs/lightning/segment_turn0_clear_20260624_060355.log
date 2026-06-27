@@ -1,0 +1,3182 @@
+
+--- Result ---
+{
+  "status": "LIGHTNING_SEGMENT_STOPPED",
+  "reason": "visible_panel_should_be_cleared_first",
+  "steps_attempted": 1,
+  "wall_seconds": 13.5,
+  "steps": [
+    {
+      "step": 0,
+      "status": "LIGHTNING_ATTEMPT_STOPPED",
+      "reason": "visible_panel_should_be_cleared_first",
+      "step_wall_seconds": 13.5,
+      "segment_elapsed_seconds": 13.5,
+      "action": "clear_turn_zero_enemy_intro_then_pause",
+      "quiet_output": {
+        "captured_stdout_lines": 3,
+        "captured_stdout_chars": 75
+      }
+    }
+  ],
+  "lightning_speed_loss_policy": true,
+  "route_auto_start": false,
+  "route_routing": "lightning_war",
+  "dirty_consent_still_pending": false,
+  "route_start_performed": false,
+  "route_visual_region_index_pending": null,
+  "next_step": "If this stopped at route_ready, choose/start the next mission. If it stopped on a hard gate, inspect last_attempt before continuing. Check pause_guard before the next timed burst.",
+  "last_attempt": {
+    "status": "LIGHTNING_ATTEMPT_STOPPED",
+    "reason": "visible_panel_should_be_cleared_first",
+    "action": {
+      "action": "clear_turn_zero_enemy_intro_then_pause",
+      "intro_dialogue_click": {
+        "status": "OK",
+        "x": 1035,
+        "y": 177,
+        "description": "Top advisor dialogue dismiss",
+        "backend": "pyautogui",
+        "hold_seconds": 0.08,
+        "pre_click_seconds": null,
+        "release_x": null,
+        "release_y": null,
+        "focus": null,
+        "window_x": 820,
+        "window_y": 145,
+        "window_bounds": {
+          "x": 215,
+          "y": 32,
+          "width": 1280,
+          "height": 748
+        },
+        "control": "top_advisor_dialogue"
+      },
+      "post_intro_wait": {
+        "status": "TIMEOUT",
+        "max_seconds": 2.0,
+        "poll_count": 3,
+        "polls": [
+          {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 9,
+            "bridge_heartbeat_alive": true
+          },
+          {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 9,
+            "bridge_heartbeat_alive": true
+          },
+          {
+            "status": "OK",
+            "phase": "combat_enemy",
+            "turn": 0,
+            "active_mechs": 0,
+            "mech_count": 3,
+            "deployment_zone_count": 9,
+            "bridge_heartbeat_alive": true
+          }
+        ],
+        "snapshot": {
+          "status": "OK",
+          "phase": "combat_enemy",
+          "turn": 0,
+          "mission_id": "Mission_Tides",
+          "active_mechs": 0,
+          "mech_count": 3,
+          "deployment_zone_count": 9,
+          "in_active_mission": true,
+          "bridge_heartbeat_alive": true
+        }
+      },
+      "post_intro_pause_guard": {
+        "status": "BLOCKED",
+        "reason": "visible_panel_should_be_cleared_first",
+        "visible_ui": {
+          "status": "OK",
+          "visible_ui": "pod_open_panel",
+          "recommended_control": "pod_open_door",
+          "confidence": 2.116,
+          "dark_overlay_fraction": 0.3658,
+          "scores": {
+            "title_continue": {
+              "score": 0.2399,
+              "bright": 629,
+              "border": 2793,
+              "pixels": 72800,
+              "crop": [
+                80,
+                432,
+                600,
+                572
+              ]
+            },
+            "title_new_game": {
+              "score": 0.2666,
+              "bright": 511,
+              "border": 3574,
+              "pixels": 72800,
+              "crop": [
+                80,
+                560,
+                600,
+                700
+              ]
+            },
+            "pause_menu": {
+              "score": 0.127,
+              "bright": 456,
+              "border": 2924,
+              "pixels": 128000,
+              "crop": [
+                662,
+                402,
+                1302,
+                602
+              ]
+            },
+            "reward_panel": {
+              "score": 0.0158,
+              "bright": 171,
+              "border": 0,
+              "pixels": 108000,
+              "crop": [
+                1702,
+                1216,
+                2302,
+                1396
+              ]
+            },
+            "bottom_continue_panel": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 120000,
+              "crop": [
+                1710,
+                1252,
+                2310,
+                1452
+              ]
+            },
+            "pod_open_panel": {
+              "score": 2.116,
+              "bright": 412,
+              "border": 46579,
+              "pixels": 90000,
+              "crop": [
+                1780,
+                706,
+                2280,
+                886
+              ]
+            },
+            "promotion_panel": {
+              "score": 0.2615,
+              "bright": 2003,
+              "border": 2838,
+              "pixels": 120000,
+              "crop": [
+                1032,
+                936,
+                1632,
+                1136
+              ]
+            },
+            "kia_panel": {
+              "score": 0.0799,
+              "bright": 709,
+              "border": 817,
+              "pixels": 129600,
+              "crop": [
+                972,
+                796,
+                1692,
+                976
+              ]
+            },
+            "perfect_reward_choice": {
+              "score": 0.0184,
+              "bright": 0,
+              "border": 344,
+              "pixels": 74800,
+              "crop": [
+                1464,
+                830,
+                1804,
+                1050
+              ]
+            },
+            "perfect_island_panel": {
+              "score": 0.1572,
+              "bright": 2598,
+              "border": 863,
+              "pixels": 187200,
+              "crop": [
+                1332,
+                970,
+                2052,
+                1230
+              ]
+            },
+            "island_complete_leave": {
+              "score": 0.3812,
+              "bright": 2775,
+              "border": 0,
+              "pixels": 72800,
+              "crop": [
+                1022,
+                1338,
+                1542,
+                1478
+              ]
+            },
+            "mission_preview_panel": {
+              "score": 0.0,
+              "yellow": 0,
+              "pixels": 540800,
+              "crop": [
+                1110,
+                676,
+                2150,
+                1196
+              ]
+            },
+            "mission_preview_dialogue": {
+              "score": 0.715,
+              "card": {
+                "red": 0,
+                "blue": 70715,
+                "bright": 10318,
+                "dark_fraction": 0.1492,
+                "pixels": 777600,
+                "crop": [
+                  500,
+                  700,
+                  2120,
+                  1180
+                ]
+              },
+              "dialogue": {
+                "red": 0,
+                "blue": 84640,
+                "bright": 5571,
+                "dark_fraction": 0.4314,
+                "pixels": 489600,
+                "crop": [
+                  260,
+                  330,
+                  2300,
+                  570
+                ]
+              }
+            },
+            "deployment_screen": {
+              "score": 0.004,
+              "yellow": 6452,
+              "pixels": 1628000,
+              "crop": [
+                480,
+                180,
+                1960,
+                1280
+              ]
+            },
+            "island_map": {
+              "score": 0.0159,
+              "red": 1453,
+              "green": 21630,
+              "colored": 23083,
+              "pixels": 1456000,
+              "crop": [
+                840,
+                340,
+                2240,
+                1380
+              ]
+            },
+            "new_game_setup_back": {
+              "score": 0.5901,
+              "bright": 2635,
+              "border": 3799,
+              "pixels": 70400,
+              "crop": [
+                362,
+                86,
+                802,
+                246
+              ]
+            },
+            "new_game_setup_start": {
+              "score": 0.682,
+              "bright": 3099,
+              "border": 4256,
+              "pixels": 70400,
+              "crop": [
+                1790,
+                86,
+                2230,
+                246
+              ]
+            },
+            "new_game_setup_back_windows": {
+              "score": 3.0308,
+              "bright": 0,
+              "border": 17336,
+              "pixels": 22880,
+              "crop": [
+                1380,
+                452,
+                1640,
+                540
+              ]
+            },
+            "new_game_setup_start_windows": {
+              "score": 2.0741,
+              "bright": 0,
+              "border": 11864,
+              "pixels": 22880,
+              "crop": [
+                1582,
+                452,
+                1842,
+                540
+              ]
+            },
+            "options_header": {
+              "score": 0.3828,
+              "bright": 1306,
+              "border": 3472,
+              "pixels": 70400,
+              "crop": [
+                280,
+                110,
+                720,
+                270
+              ]
+            },
+            "options_close": {
+              "score": 0.1622,
+              "bright": 1868,
+              "border": 0,
+              "pixels": 115200,
+              "crop": [
+                1420,
+                1280,
+                2140,
+                1440
+              ]
+            },
+            "system_privacy_prompt": {
+              "status": "OK",
+              "matched": false,
+              "score": 0.0,
+              "strict_score": 0.0,
+              "relaxed_score": 0.0,
+              "kind": "macos_screen_audio_privacy_prompt",
+              "checks": {
+                "card_mid_dark": 0.9433012329544845,
+                "inner_mid_dark": 1.027651583207139,
+                "button_gray": 1.1533843335313925,
+                "icon_blue": 0.0,
+                "icon_color": 0.0,
+                "text_bright": 0.08621888471700737
+              },
+              "regions": {
+                "card": {
+                  "box": [
+                    986,
+                    322,
+                    1510,
+                    995
+                  ],
+                  "pixels": 352652,
+                  "mid_dark_fraction": 0.613145801420415,
+                  "button_gray_fraction": 0.4160980364851692,
+                  "bright_text_fraction": 0.010360674000835539,
+                  "blue_icon_fraction": 0.000668430580699067,
+                  "red_icon_fraction": 0.0
+                },
+                "inner": {
+                  "box": [
+                    1037,
+                    367,
+                    1472,
+                    965
+                  ],
+                  "pixels": 260130,
+                  "mid_dark_fraction": 0.6679735290846402,
+                  "button_gray_fraction": 0.4496162829496163,
+                  "bright_text_fraction": 0.006450895339784228,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "text": {
+                  "box": [
+                    1037,
+                    524,
+                    1472,
+                    808
+                  ],
+                  "pixels": 123540,
+                  "mid_dark_fraction": 0.7648171325267695,
+                  "button_gray_fraction": 0.5132526769573077,
+                  "bright_text_fraction": 0.005173133083020442,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "buttons": {
+                  "box": [
+                    1024,
+                    823,
+                    1485,
+                    957
+                  ],
+                  "pixels": 61774,
+                  "mid_dark_fraction": 0.7561274509803921,
+                  "button_gray_fraction": 0.5190229500891266,
+                  "bright_text_fraction": 0.007102272727272727,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "icon": {
+                  "box": [
+                    1024,
+                    367,
+                    1165,
+                    501
+                  ],
+                  "pixels": 18894,
+                  "mid_dark_fraction": 0.7729967185349846,
+                  "button_gray_fraction": 0.47321901132634697,
+                  "bright_text_fraction": 0.017571715888641898,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                }
+              }
+            }
+          },
+          "bridge_refine_snapshot": {
+            "status": "SKIPPED",
+            "reason": "bridge_refine_disabled"
+          },
+          "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_39692.png",
+          "ocr": {
+            "status": "OK",
+            "texts": [
+              "Into the Breach",
+              "PObJER",
+              "GRID",
+              "s IIIINNN",
+              "GRID",
+              "DEFENSE",
+              "Game Time: 0.04.47",
+              "TIDES",
+              "ATTACK",
+              "ORDER",
+              ",LJARNING!",
+              "Region first, Pod recovery second.",
+              "Victory in",
+              "tums",
+              "ENEM-Y-. ACTIVITY",
+              "Bonus Objectives",
+              "Willow",
+              "Kill at least 5 Enemies",
+              "(Current. o)",
+              "Protect the Power",
+              "Generator"
+            ],
+            "observations": [
+              {
+                "text": "Into the Breach",
+                "bbox_normalized": {
+                  "x": 0.46171875,
+                  "y": 0.9752673796791443,
+                  "width": 0.07578124999999997,
+                  "height": 0.014037433155080214
+                },
+                "bbox_image": [
+                  1182.0,
+                  16.0,
+                  1376.0,
+                  37.0
+                ],
+                "center_image": [
+                  1279.0,
+                  26.5
+                ]
+              },
+              {
+                "text": "PObJER",
+                "bbox_normalized": {
+                  "x": 0.0625,
+                  "y": 0.9251336898395722,
+                  "width": 0.037500000000000006,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  160.0,
+                  90.0,
+                  256.0,
+                  112.0
+                ],
+                "center_image": [
+                  208.0,
+                  101.0
+                ]
+              },
+              {
+                "text": "GRID",
+                "bbox_normalized": {
+                  "x": 0.06875,
+                  "y": 0.9050802139037433,
+                  "width": 0.02578124999999999,
+                  "height": 0.014705882352941235
+                },
+                "bbox_image": [
+                  176.0,
+                  120.0,
+                  242.0,
+                  142.0
+                ],
+                "center_image": [
+                  209.0,
+                  131.0
+                ]
+              },
+              {
+                "text": "s IIIINNN",
+                "bbox_normalized": {
+                  "x": 0.1109375,
+                  "y": 0.9024064171122994,
+                  "width": 0.13359375,
+                  "height": 0.0401069518716578
+                },
+                "bbox_image": [
+                  284.0,
+                  86.0,
+                  626.0,
+                  146.0
+                ],
+                "center_image": [
+                  455.0,
+                  116.0
+                ]
+              },
+              {
+                "text": "GRID",
+                "bbox_normalized": {
+                  "x": 0.265625,
+                  "y": 0.9251336898395722,
+                  "width": 0.025781249999999978,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  680.0,
+                  90.0,
+                  746.0,
+                  112.0
+                ],
+                "center_image": [
+                  713.0,
+                  101.0
+                ]
+              },
+              {
+                "text": "DEFENSE",
+                "bbox_normalized": {
+                  "x": 0.253125,
+                  "y": 0.9050802139037433,
+                  "width": 0.04999999999999999,
+                  "height": 0.014705882352941235
+                },
+                "bbox_image": [
+                  648.0,
+                  120.0,
+                  776.0,
+                  142.0
+                ],
+                "center_image": [
+                  712.0,
+                  131.0
+                ]
+              },
+              {
+                "text": "Game Time: 0.04.47",
+                "bbox_normalized": {
+                  "x": 0.8328125,
+                  "y": 0.9211229946524064,
+                  "width": 0.1171875,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  2132.0,
+                  96.0,
+                  2432.0,
+                  118.0
+                ],
+                "center_image": [
+                  2282.0,
+                  107.0
+                ]
+              },
+              {
+                "text": "TIDES",
+                "bbox_normalized": {
+                  "x": 0.646875,
+                  "y": 0.9144385026737968,
+                  "width": 0.03281250000000002,
+                  "height": 0.014705882352941235
+                },
+                "bbox_image": [
+                  1656.0,
+                  106.0,
+                  1740.0,
+                  128.0
+                ],
+                "center_image": [
+                  1698.0,
+                  117.0
+                ]
+              },
+              {
+                "text": "ATTACK",
+                "bbox_normalized": {
+                  "x": 0.71484375,
+                  "y": 0.8903743315508021,
+                  "width": 0.04531249999999998,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  1830.0,
+                  142.0,
+                  1946.0,
+                  164.0
+                ],
+                "center_image": [
+                  1888.0,
+                  153.0
+                ]
+              },
+              {
+                "text": "ORDER",
+                "bbox_normalized": {
+                  "x": 0.71953125,
+                  "y": 0.8663101604278075,
+                  "width": 0.03671875000000002,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  1842.0,
+                  178.0,
+                  1936.0,
+                  200.0
+                ],
+                "center_image": [
+                  1889.0,
+                  189.0
+                ]
+              },
+              {
+                "text": ",LJARNING!",
+                "bbox_normalized": {
+                  "x": 0.13515625,
+                  "y": 0.8596256684491979,
+                  "width": 0.07343749999999999,
+                  "height": 0.025401069518716568
+                },
+                "bbox_image": [
+                  346.0,
+                  172.0,
+                  534.0,
+                  210.0
+                ],
+                "center_image": [
+                  440.0,
+                  191.0
+                ]
+              },
+              {
+                "text": "Region first, Pod recovery second.",
+                "bbox_normalized": {
+                  "x": 0.43828125,
+                  "y": 0.8368983957219251,
+                  "width": 0.21953125,
+                  "height": 0.021390374331550777
+                },
+                "bbox_image": [
+                  1122.0,
+                  212.0,
+                  1684.0,
+                  244.0
+                ],
+                "center_image": [
+                  1403.0,
+                  228.0
+                ]
+              },
+              {
+                "text": "Victory in",
+                "bbox_normalized": {
+                  "x": 0.83828125,
+                  "y": 0.8449197860962567,
+                  "width": 0.05078125,
+                  "height": 0.018716577540106916
+                },
+                "bbox_image": [
+                  2146.0,
+                  204.0,
+                  2276.0,
+                  232.0
+                ],
+                "center_image": [
+                  2211.0,
+                  218.0
+                ]
+              },
+              {
+                "text": "tums",
+                "bbox_normalized": {
+                  "x": 0.91640625,
+                  "y": 0.8489304812834224,
+                  "width": 0.026562500000000044,
+                  "height": 0.014705882352941235
+                },
+                "bbox_image": [
+                  2346.0,
+                  204.0,
+                  2414.0,
+                  226.0
+                ],
+                "center_image": [
+                  2380.0,
+                  215.0
+                ]
+              },
+              {
+                "text": "ENEM-Y-. ACTIVITY",
+                "bbox_normalized": {
+                  "x": 0.078125,
+                  "y": 0.8141711229946524,
+                  "width": 0.190625,
+                  "height": 0.03074866310160429
+                },
+                "bbox_image": [
+                  200.0,
+                  232.0,
+                  688.0,
+                  278.0
+                ],
+                "center_image": [
+                  444.0,
+                  255.0
+                ]
+              },
+              {
+                "text": "Bonus Objectives",
+                "bbox_normalized": {
+                  "x": 0.83359375,
+                  "y": 0.7740641711229946,
+                  "width": 0.11249999999999993,
+                  "height": 0.018716577540106916
+                },
+                "bbox_image": [
+                  2134.0,
+                  310.0,
+                  2422.0,
+                  338.0
+                ],
+                "center_image": [
+                  2278.0,
+                  324.0
+                ]
+              },
+              {
+                "text": "Willow",
+                "bbox_normalized": {
+                  "x": 0.35703125,
+                  "y": 0.7459893048128342,
+                  "width": 0.03749999999999998,
+                  "height": 0.014705882352941235
+                },
+                "bbox_image": [
+                  914.0,
+                  358.0,
+                  1010.0,
+                  380.0
+                ],
+                "center_image": [
+                  962.0,
+                  369.0
+                ]
+              },
+              {
+                "text": "Kill at least 5 Enemies",
+                "bbox_normalized": {
+                  "x": 0.8390625,
+                  "y": 0.7272727272727273,
+                  "width": 0.11874999999999991,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  2148.0,
+                  386.0,
+                  2452.0,
+                  408.0
+                ],
+                "center_image": [
+                  2300.0,
+                  397.0
+                ]
+              },
+              {
+                "text": "(Current. o)",
+                "bbox_normalized": {
+                  "x": 0.87109375,
+                  "y": 0.6978609625668449,
+                  "width": 0.059374999999999956,
+                  "height": 0.018716577540106916
+                },
+                "bbox_image": [
+                  2230.0,
+                  424.0,
+                  2382.0,
+                  452.0
+                ],
+                "center_image": [
+                  2306.0,
+                  438.0
+                ]
+              },
+              {
+                "text": "Protect the Power",
+                "bbox_normalized": {
+                  "x": 0.846875,
+                  "y": 0.6564171122994653,
+                  "width": 0.10390624999999998,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  2168.0,
+                  492.0,
+                  2434.0,
+                  514.0
+                ],
+                "center_image": [
+                  2301.0,
+                  503.0
+                ]
+              },
+              {
+                "text": "Generator",
+                "bbox_normalized": {
+                  "x": 0.87265625,
+                  "y": 0.6310160427807487,
+                  "width": 0.0546875,
+                  "height": 0.014705882352941124
+                },
+                "bbox_image": [
+                  2234.0,
+                  530.0,
+                  2374.0,
+                  552.0
+                ],
+                "center_image": [
+                  2304.0,
+                  541.0
+                ]
+              }
+            ]
+          },
+          "ocr_texts": [
+            "Into the Breach",
+            "PObJER",
+            "GRID",
+            "s IIIINNN",
+            "GRID",
+            "DEFENSE",
+            "Game Time: 0.04.47",
+            "TIDES",
+            "ATTACK",
+            "ORDER",
+            ",LJARNING!",
+            "Region first, Pod recovery second.",
+            "Victory in",
+            "tums",
+            "ENEM-Y-. ACTIVITY",
+            "Bonus Objectives",
+            "Willow",
+            "Kill at least 5 Enemies",
+            "(Current. o)",
+            "Protect the Power",
+            "Generator"
+          ],
+          "visible_text": "Into the Breach\nPObJER\nGRID\ns IIIINNN\nGRID\nDEFENSE\nGame Time: 0.04.47\nTIDES\nATTACK\nORDER\n,LJARNING!\nRegion first, Pod recovery second.\nVictory in\ntums\nENEM-Y-. ACTIVITY\nBonus Objectives\nWillow\nKill at least 5 Enemies\n(Current. o)\nProtect the Power\nGenerator"
+        },
+        "live_snapshot": {
+          "status": "SKIPPED",
+          "reason": "pre_pause_bridge_io_disabled"
+        },
+        "decision": {
+          "status": "BLOCKED",
+          "reason": "visible_panel_should_be_cleared_first",
+          "pause_allowed": false,
+          "next_step": "Clear the visible pod panel before trying to pause."
+        }
+      }
+    },
+    "snapshot": {
+      "status": "OK",
+      "phase": "combat_enemy",
+      "turn": 0,
+      "mission_id": "Mission_Tides",
+      "active_mechs": 0,
+      "mech_count": 3,
+      "deployment_zone_count": 9,
+      "island_map_count": 0,
+      "island_map_debug": "skipped: in active mission",
+      "in_active_mission": true,
+      "total_turns": 3,
+      "remaining_spawns": 1,
+      "is_infinite_spawn": true,
+      "bridge_heartbeat_alive": true,
+      "grid_power": "5/7"
+    },
+    "initial_snapshot": {
+      "status": "OK",
+      "phase": "combat_enemy",
+      "turn": 0,
+      "mission_id": "Mission_Tides",
+      "active_mechs": 0,
+      "mech_count": 3,
+      "deployment_zone_count": 9,
+      "island_map_count": 0,
+      "island_map_debug": "skipped: in active mission",
+      "in_active_mission": true,
+      "total_turns": 3,
+      "remaining_spawns": 1,
+      "is_infinite_spawn": true,
+      "bridge_heartbeat_alive": true,
+      "grid_power": "5/7"
+    },
+    "budget": {
+      "wall_seconds": 1757.2,
+      "max_wall_seconds": null,
+      "mission_index": 1,
+      "current_mission": "Mission_Tides",
+      "islands_completed": [],
+      "save_timer": {
+        "status": "OK",
+        "source": "saveData_current_time",
+        "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua",
+        "game_timer_ms": 199844.203,
+        "game_seconds": 199.844,
+        "game_timer": "0:03:20",
+        "candidates": [
+          {
+            "source": "saveData_current_time",
+            "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua",
+            "game_timer_ms": 199844.203,
+            "game_seconds": 199.844,
+            "game_timer": "0:03:20"
+          },
+          {
+            "source": "profile_current_time",
+            "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/profile.lua",
+            "game_timer_ms": 199844.203,
+            "game_seconds": 199.844,
+            "game_timer": "0:03:20"
+          },
+          {
+            "source": "undoSave_current_time",
+            "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/undoSave.lua",
+            "game_timer_ms": 162453.391,
+            "game_seconds": 162.453,
+            "game_timer": "0:02:42"
+          }
+        ],
+        "ignored_candidates": [],
+        "note": "current.time is stored in milliseconds; profile.timer is intentionally ignored; undoSave.current.time is ignored only when it is clearly stale from an abandoned timeline"
+      },
+      "game_seconds": 199.844,
+      "game_timer": "0:03:20",
+      "max_game_seconds": 1800,
+      "max_game_timer": "0:30:00",
+      "game_status": "OK",
+      "remaining_game_seconds": 1600.156,
+      "remaining_game_timer": "0:26:40",
+      "wall_status": "OK",
+      "status": "OK"
+    },
+    "preflight": {
+      "status": "WARN",
+      "issues": [],
+      "warnings": [
+        "visible pause-menu timer is newer than save/profile current.time; using the visible timer for the budget guard"
+      ],
+      "session": {
+        "run_id": "20260624_053445_308",
+        "squad": "Blitzkrieg",
+        "difficulty": 0,
+        "save_difficulty": 0,
+        "achievement_targets": [
+          "Lightning War"
+        ]
+      },
+      "settings": {
+        "timer_ui": 1,
+        "speed": 1000,
+        "speed_fast_threshold": 1000,
+        "speed_fast_ready": true,
+        "new_missions": 0,
+        "new_enemies": 0,
+        "new_equip": 0,
+        "new_abilities": 0,
+        "advanced_content_target": "any",
+        "advanced_content_state": {
+          "new_enemies": 0,
+          "new_missions": 0,
+          "new_equip": 0,
+          "new_abilities": 0
+        },
+        "advanced_content_source": "saveData",
+        "settings_advanced_content_state": {
+          "new_enemies": 0,
+          "new_missions": 0,
+          "new_equip": 0,
+          "new_abilities": 0
+        },
+        "save_advanced_content": {
+          "status": "OK",
+          "source": "saveData",
+          "state": {
+            "new_enemies": 0,
+            "new_missions": 0,
+            "new_equip": 0,
+            "new_abilities": 0
+          },
+          "candidates": [
+            {
+              "source": "saveData",
+              "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua",
+              "state": {
+                "new_enemies": 0,
+                "new_missions": 0,
+                "new_equip": 0,
+                "new_abilities": 0
+              }
+            }
+          ]
+        }
+      },
+      "save_timer": {
+        "status": "OK",
+        "source": "saveData_current_time",
+        "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua",
+        "game_timer_ms": 199844.203,
+        "game_seconds": 199.844,
+        "game_timer": "0:03:20",
+        "candidates": [
+          {
+            "source": "saveData_current_time",
+            "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua",
+            "game_timer_ms": 199844.203,
+            "game_seconds": 199.844,
+            "game_timer": "0:03:20"
+          },
+          {
+            "source": "profile_current_time",
+            "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/profile.lua",
+            "game_timer_ms": 199844.203,
+            "game_seconds": 199.844,
+            "game_timer": "0:03:20"
+          },
+          {
+            "source": "undoSave_current_time",
+            "path": "/Users/aircow/Library/Application Support/IntoTheBreach/profile_Alpha/undoSave.lua",
+            "game_timer_ms": 162453.391,
+            "game_seconds": 162.453,
+            "game_timer": "0:02:42"
+          }
+        ],
+        "ignored_candidates": [],
+        "note": "current.time is stored in milliseconds; profile.timer is intentionally ignored; undoSave.current.time is ignored only when it is clearly stale from an abandoned timeline"
+      },
+      "visible_timer": {
+        "status": "OK",
+        "source": "visible_game_timer",
+        "game_seconds": 280.0,
+        "game_timer": "0:04:40",
+        "ocr_text": "Game Time: 0.04.40",
+        "timer_matches": [
+          {
+            "text": "Game Time: 0.04.40",
+            "game_seconds": 280,
+            "game_timer": "0:04:40",
+            "pause_timer_like": false
+          }
+        ],
+        "classifier_visible_ui": "island_map_or_unknown",
+        "timeline_label_seen": false,
+        "game_time_label_seen": true,
+        "visible_ui": {
+          "status": "OK",
+          "visible_ui": "island_map_or_unknown",
+          "recommended_control": null,
+          "confidence": 1.8469,
+          "dark_overlay_fraction": 0.5657,
+          "scores": {
+            "title_continue": {
+              "score": 0.2399,
+              "bright": 629,
+              "border": 2793,
+              "pixels": 72800,
+              "crop": [
+                80,
+                432,
+                600,
+                572
+              ]
+            },
+            "title_new_game": {
+              "score": 0.3569,
+              "bright": 511,
+              "border": 5218,
+              "pixels": 72800,
+              "crop": [
+                80,
+                560,
+                600,
+                700
+              ]
+            },
+            "pause_menu": {
+              "score": 0.0356,
+              "bright": 456,
+              "border": 0,
+              "pixels": 128000,
+              "crop": [
+                662,
+                402,
+                1302,
+                602
+              ]
+            },
+            "reward_panel": {
+              "score": 0.0158,
+              "bright": 171,
+              "border": 0,
+              "pixels": 108000,
+              "crop": [
+                1702,
+                1216,
+                2302,
+                1396
+              ]
+            },
+            "bottom_continue_panel": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 120000,
+              "crop": [
+                1710,
+                1252,
+                2310,
+                1452
+              ]
+            },
+            "pod_open_panel": {
+              "score": 0.3115,
+              "bright": 177,
+              "border": 6566,
+              "pixels": 90000,
+              "crop": [
+                1780,
+                706,
+                2280,
+                886
+              ]
+            },
+            "promotion_panel": {
+              "score": 0.2599,
+              "bright": 1986,
+              "border": 2832,
+              "pixels": 120000,
+              "crop": [
+                1032,
+                936,
+                1632,
+                1136
+              ]
+            },
+            "kia_panel": {
+              "score": 0.4259,
+              "bright": 4132,
+              "border": 3470,
+              "pixels": 129600,
+              "crop": [
+                972,
+                796,
+                1692,
+                976
+              ]
+            },
+            "perfect_reward_choice": {
+              "score": 0.0523,
+              "bright": 0,
+              "border": 978,
+              "pixels": 74800,
+              "crop": [
+                1464,
+                830,
+                1804,
+                1050
+              ]
+            },
+            "perfect_island_panel": {
+              "score": 0.1674,
+              "bright": 2598,
+              "border": 1341,
+              "pixels": 187200,
+              "crop": [
+                1332,
+                970,
+                2052,
+                1230
+              ]
+            },
+            "island_complete_leave": {
+              "score": 0.3812,
+              "bright": 2775,
+              "border": 0,
+              "pixels": 72800,
+              "crop": [
+                1022,
+                1338,
+                1542,
+                1478
+              ]
+            },
+            "mission_preview_panel": {
+              "score": 0.0009,
+              "yellow": 497,
+              "pixels": 540800,
+              "crop": [
+                1110,
+                676,
+                2150,
+                1196
+              ]
+            },
+            "mission_preview_dialogue": {
+              "score": 0.7558,
+              "card": {
+                "red": 0,
+                "blue": 29181,
+                "bright": 28294,
+                "dark_fraction": 0.3825,
+                "pixels": 777600,
+                "crop": [
+                  500,
+                  700,
+                  2120,
+                  1180
+                ]
+              },
+              "dialogue": {
+                "red": 0,
+                "blue": 41843,
+                "bright": 4182,
+                "dark_fraction": 0.5844,
+                "pixels": 489600,
+                "crop": [
+                  260,
+                  330,
+                  2300,
+                  570
+                ]
+              }
+            },
+            "deployment_screen": {
+              "score": 0.0207,
+              "yellow": 33751,
+              "pixels": 1628000,
+              "crop": [
+                480,
+                180,
+                1960,
+                1280
+              ]
+            },
+            "island_map": {
+              "score": 0.0123,
+              "red": 1372,
+              "green": 16586,
+              "colored": 17958,
+              "pixels": 1456000,
+              "crop": [
+                840,
+                340,
+                2240,
+                1380
+              ]
+            },
+            "new_game_setup_back": {
+              "score": 0.7914,
+              "bright": 4052,
+              "border": 3799,
+              "pixels": 70400,
+              "crop": [
+                362,
+                86,
+                802,
+                246
+              ]
+            },
+            "new_game_setup_start": {
+              "score": 0.6819,
+              "bright": 3098,
+              "border": 4256,
+              "pixels": 70400,
+              "crop": [
+                1790,
+                86,
+                2230,
+                246
+              ]
+            },
+            "new_game_setup_back_windows": {
+              "score": 1.0517,
+              "bright": 0,
+              "border": 6016,
+              "pixels": 22880,
+              "crop": [
+                1380,
+                452,
+                1640,
+                540
+              ]
+            },
+            "new_game_setup_start_windows": {
+              "score": 1.8469,
+              "bright": 0,
+              "border": 10564,
+              "pixels": 22880,
+              "crop": [
+                1582,
+                452,
+                1842,
+                540
+              ]
+            },
+            "options_header": {
+              "score": 0.8213,
+              "bright": 4393,
+              "border": 3472,
+              "pixels": 70400,
+              "crop": [
+                280,
+                110,
+                720,
+                270
+              ]
+            },
+            "options_close": {
+              "score": 0.1622,
+              "bright": 1868,
+              "border": 0,
+              "pixels": 115200,
+              "crop": [
+                1420,
+                1280,
+                2140,
+                1440
+              ]
+            },
+            "system_privacy_prompt": {
+              "status": "OK",
+              "matched": false,
+              "score": 0.0,
+              "strict_score": 0.0,
+              "relaxed_score": 0.0,
+              "kind": "macos_screen_audio_privacy_prompt",
+              "checks": {
+                "card_mid_dark": 0.8986534980129186,
+                "inner_mid_dark": 0.9359787137564916,
+                "button_gray": 0.7690260447613388,
+                "icon_blue": 0.0,
+                "icon_color": 0.0,
+                "text_bright": 1.8880081583460808
+              },
+              "regions": {
+                "card": {
+                  "box": [
+                    986,
+                    322,
+                    1510,
+                    995
+                  ],
+                  "pixels": 352652,
+                  "mid_dark_fraction": 0.5841247737083971,
+                  "button_gray_fraction": 0.41542960590447015,
+                  "bright_text_fraction": 0.04938030914914358,
+                  "blue_icon_fraction": 0.0007241331290906559,
+                  "red_icon_fraction": 0.0
+                },
+                "inner": {
+                  "box": [
+                    1037,
+                    367,
+                    1472,
+                    965
+                  ],
+                  "pixels": 260130,
+                  "mid_dark_fraction": 0.6083861639417195,
+                  "button_gray_fraction": 0.4166666666666667,
+                  "bright_text_fraction": 0.057418529640751864,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "text": {
+                  "box": [
+                    1037,
+                    524,
+                    1472,
+                    808
+                  ],
+                  "pixels": 123540,
+                  "mid_dark_fraction": 0.5506049228201919,
+                  "button_gray_fraction": 0.3473230426922542,
+                  "bright_text_fraction": 0.11328048950076484,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "buttons": {
+                  "box": [
+                    1024,
+                    823,
+                    1485,
+                    957
+                  ],
+                  "pixels": 61774,
+                  "mid_dark_fraction": 0.6243594028520499,
+                  "button_gray_fraction": 0.3460617201426025,
+                  "bright_text_fraction": 0.007102272727272727,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "icon": {
+                  "box": [
+                    1024,
+                    367,
+                    1165,
+                    501
+                  ],
+                  "pixels": 18894,
+                  "mid_dark_fraction": 0.9941251190854239,
+                  "button_gray_fraction": 0.7582830528210014,
+                  "bright_text_fraction": 0.0,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                }
+              }
+            }
+          }
+        },
+        "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_39692.png"
+      },
+      "effective_timer": {
+        "status": "OK",
+        "source": "visible_game_timer",
+        "game_seconds": 280.0,
+        "game_timer": "0:04:40",
+        "candidates": [
+          {
+            "source": "saveData_current_time",
+            "game_seconds": 199.844,
+            "game_timer": "0:03:20"
+          },
+          {
+            "source": "visible_game_timer",
+            "game_seconds": 280.0,
+            "game_timer": "0:04:40"
+          }
+        ]
+      },
+      "game_budget": {
+        "game_seconds": 280.0,
+        "game_timer": "0:04:40",
+        "max_game_seconds": 1800,
+        "max_game_timer": "0:30:00",
+        "game_status": "OK",
+        "remaining_game_seconds": 1520.0,
+        "remaining_game_timer": "0:25:20"
+      },
+      "pending_research_count": 0,
+      "research_gate": {
+        "status": "PASS",
+        "pending_research_count": 0,
+        "pending_research": [],
+        "drained_stale_research": []
+      },
+      "pending_diagnosis_count": 0,
+      "bridge_speed": null,
+      "next_step": "Start/continue only after FAIL issues are cleared. During the attempt, use recommend_mission --routing lightning_war and lightning_loop from clean player-turn combat.",
+      "quiet_output": {
+        "captured_stdout_lines": 15,
+        "captured_stdout_chars": 552
+      }
+    },
+    "next_step": "Combat intro/turn-zero enemy transition was handled and the pause menu was verified. Rerun lightning_segment so combat starts only after a fresh paused snapshot.",
+    "safe_to_think": false,
+    "resume_guard": {
+      "status": "OK",
+      "reason": "resumed_from_pause",
+      "planned_control": "pause_menu_escape",
+      "visible_ui": {
+        "status": "OK",
+        "visible_ui": "mission_preview_panel",
+        "recommended_control": "dialogue_textbox",
+        "confidence": 0.8,
+        "dark_overlay_fraction": 0.9323,
+        "scores": {
+          "title_continue": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 72800,
+            "crop": [
+              80,
+              432,
+              600,
+              572
+            ]
+          },
+          "title_new_game": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 72800,
+            "crop": [
+              80,
+              560,
+              600,
+              700
+            ]
+          },
+          "pause_menu": {
+            "score": 0.4244,
+            "bright": 1443,
+            "border": 9974,
+            "pixels": 128000,
+            "crop": [
+              662,
+              402,
+              1302,
+              602
+            ]
+          },
+          "reward_panel": {
+            "score": 0.0765,
+            "bright": 0,
+            "border": 2065,
+            "pixels": 108000,
+            "crop": [
+              1702,
+              1216,
+              2302,
+              1396
+            ]
+          },
+          "bottom_continue_panel": {
+            "score": 0.0451,
+            "bright": 0,
+            "border": 1353,
+            "pixels": 120000,
+            "crop": [
+              1710,
+              1252,
+              2310,
+              1452
+            ]
+          },
+          "pod_open_panel": {
+            "score": 0.0713,
+            "bright": 0,
+            "border": 1604,
+            "pixels": 90000,
+            "crop": [
+              1780,
+              706,
+              2280,
+              886
+            ]
+          },
+          "promotion_panel": {
+            "score": 0.516,
+            "bright": 2706,
+            "border": 8714,
+            "pixels": 120000,
+            "crop": [
+              1032,
+              936,
+              1632,
+              1136
+            ]
+          },
+          "kia_panel": {
+            "score": 0.41,
+            "bright": 1217,
+            "border": 10241,
+            "pixels": 129600,
+            "crop": [
+              972,
+              796,
+              1692,
+              976
+            ]
+          },
+          "perfect_reward_choice": {
+            "score": 1.0587,
+            "bright": 5386,
+            "border": 6333,
+            "pixels": 74800,
+            "crop": [
+              1464,
+              830,
+              1804,
+              1050
+            ]
+          },
+          "perfect_island_panel": {
+            "score": 0.659,
+            "bright": 8683,
+            "border": 9136,
+            "pixels": 187200,
+            "crop": [
+              1332,
+              970,
+              2052,
+              1230
+            ]
+          },
+          "island_complete_leave": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 72800,
+            "crop": [
+              1022,
+              1338,
+              1542,
+              1478
+            ]
+          },
+          "mission_preview_panel": {
+            "score": 0.0,
+            "yellow": 0,
+            "pixels": 540800,
+            "crop": [
+              1110,
+              676,
+              2150,
+              1196
+            ]
+          },
+          "mission_preview_dialogue": {
+            "score": 0.8,
+            "card": {
+              "red": 0,
+              "blue": 48217,
+              "bright": 14645,
+              "dark_fraction": 0.9121,
+              "pixels": 777600,
+              "crop": [
+                500,
+                700,
+                2120,
+                1180
+              ]
+            },
+            "dialogue": {
+              "red": 0,
+              "blue": 24953,
+              "bright": 5544,
+              "dark_fraction": 0.8865,
+              "pixels": 489600,
+              "crop": [
+                260,
+                330,
+                2300,
+                570
+              ]
+            }
+          },
+          "deployment_screen": {
+            "score": 0.0001,
+            "yellow": 180,
+            "pixels": 1628000,
+            "crop": [
+              480,
+              180,
+              1960,
+              1280
+            ]
+          },
+          "island_map": {
+            "score": 0.0011,
+            "red": 686,
+            "green": 888,
+            "colored": 1574,
+            "pixels": 1456000,
+            "crop": [
+              840,
+              340,
+              2240,
+              1380
+            ]
+          },
+          "new_game_setup_back": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 70400,
+            "crop": [
+              362,
+              86,
+              802,
+              246
+            ]
+          },
+          "new_game_setup_start": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 70400,
+            "crop": [
+              1790,
+              86,
+              2230,
+              246
+            ]
+          },
+          "new_game_setup_back_windows": {
+            "score": 0.2853,
+            "bright": 392,
+            "border": 652,
+            "pixels": 22880,
+            "crop": [
+              1380,
+              452,
+              1640,
+              540
+            ]
+          },
+          "new_game_setup_start_windows": {
+            "score": 0.457,
+            "bright": 748,
+            "border": 744,
+            "pixels": 22880,
+            "crop": [
+              1582,
+              452,
+              1842,
+              540
+            ]
+          },
+          "options_header": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 70400,
+            "crop": [
+              280,
+              110,
+              720,
+              270
+            ]
+          },
+          "options_close": {
+            "score": 0.0,
+            "bright": 0,
+            "border": 0,
+            "pixels": 115200,
+            "crop": [
+              1420,
+              1280,
+              2140,
+              1440
+            ]
+          },
+          "system_privacy_prompt": {
+            "status": "OK",
+            "matched": false,
+            "score": 0.0,
+            "strict_score": 0.0,
+            "relaxed_score": 0.0,
+            "kind": "macos_screen_audio_privacy_prompt",
+            "checks": {
+              "card_mid_dark": 0.0356496309706169,
+              "inner_mid_dark": 0.028318917207806098,
+              "button_gray": 0.009160229748465042,
+              "icon_blue": 0.0,
+              "icon_color": 0.0,
+              "text_bright": 0.08853659667176564
+            },
+            "regions": {
+              "card": {
+                "box": [
+                  986,
+                  322,
+                  1510,
+                  995
+                ],
+                "pixels": 352652,
+                "mid_dark_fraction": 0.023172260130900988,
+                "button_gray_fraction": 0.012198858097757972,
+                "bright_text_fraction": 0.015763821194819665,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "inner": {
+                "box": [
+                  1037,
+                  367,
+                  1472,
+                  965
+                ],
+                "pixels": 260130,
+                "mid_dark_fraction": 0.018407296185073963,
+                "button_gray_fraction": 0.009370481592703815,
+                "bright_text_fraction": 0.005171838505171838,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "text": {
+                "box": [
+                  1037,
+                  524,
+                  1472,
+                  808
+                ],
+                "pixels": 123540,
+                "mid_dark_fraction": 0.015157836184119037,
+                "button_gray_fraction": 0.0010846891948268669,
+                "bright_text_fraction": 0.005312195800305938,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "buttons": {
+                "box": [
+                  1024,
+                  823,
+                  1485,
+                  957
+                ],
+                "pixels": 61774,
+                "mid_dark_fraction": 0.011864973262032086,
+                "button_gray_fraction": 0.004122103386809269,
+                "bright_text_fraction": 0.009358288770053475,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              },
+              "icon": {
+                "box": [
+                  1024,
+                  367,
+                  1165,
+                  501
+                ],
+                "pixels": 18894,
+                "mid_dark_fraction": 0.0,
+                "button_gray_fraction": 0.0,
+                "bright_text_fraction": 0.007727320842595533,
+                "blue_icon_fraction": 0.0,
+                "red_icon_fraction": 0.0
+              }
+            }
+          }
+        },
+        "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_39692.png"
+      },
+      "visible_timer": {
+        "status": "OK",
+        "source": "visible_pause_menu_timer",
+        "game_seconds": 278.0,
+        "game_timer": "0:04:38",
+        "ocr_text": "Oh 4m 385",
+        "timer_matches": [
+          {
+            "text": "Oh 4m 385",
+            "game_seconds": 278,
+            "game_timer": "0:04:38",
+            "pause_timer_like": true
+          }
+        ],
+        "classifier_visible_ui": "mission_preview_panel",
+        "timeline_label_seen": true,
+        "game_time_label_seen": false,
+        "visible_ui": {
+          "status": "OK",
+          "visible_ui": "mission_preview_panel",
+          "recommended_control": "dialogue_textbox",
+          "confidence": 0.8,
+          "dark_overlay_fraction": 0.9323,
+          "scores": {
+            "title_continue": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 72800,
+              "crop": [
+                80,
+                432,
+                600,
+                572
+              ]
+            },
+            "title_new_game": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 72800,
+              "crop": [
+                80,
+                560,
+                600,
+                700
+              ]
+            },
+            "pause_menu": {
+              "score": 0.4244,
+              "bright": 1443,
+              "border": 9974,
+              "pixels": 128000,
+              "crop": [
+                662,
+                402,
+                1302,
+                602
+              ]
+            },
+            "reward_panel": {
+              "score": 0.0765,
+              "bright": 0,
+              "border": 2065,
+              "pixels": 108000,
+              "crop": [
+                1702,
+                1216,
+                2302,
+                1396
+              ]
+            },
+            "bottom_continue_panel": {
+              "score": 0.0451,
+              "bright": 0,
+              "border": 1353,
+              "pixels": 120000,
+              "crop": [
+                1710,
+                1252,
+                2310,
+                1452
+              ]
+            },
+            "pod_open_panel": {
+              "score": 0.0713,
+              "bright": 0,
+              "border": 1604,
+              "pixels": 90000,
+              "crop": [
+                1780,
+                706,
+                2280,
+                886
+              ]
+            },
+            "promotion_panel": {
+              "score": 0.516,
+              "bright": 2706,
+              "border": 8714,
+              "pixels": 120000,
+              "crop": [
+                1032,
+                936,
+                1632,
+                1136
+              ]
+            },
+            "kia_panel": {
+              "score": 0.41,
+              "bright": 1217,
+              "border": 10241,
+              "pixels": 129600,
+              "crop": [
+                972,
+                796,
+                1692,
+                976
+              ]
+            },
+            "perfect_reward_choice": {
+              "score": 1.0587,
+              "bright": 5386,
+              "border": 6333,
+              "pixels": 74800,
+              "crop": [
+                1464,
+                830,
+                1804,
+                1050
+              ]
+            },
+            "perfect_island_panel": {
+              "score": 0.659,
+              "bright": 8683,
+              "border": 9136,
+              "pixels": 187200,
+              "crop": [
+                1332,
+                970,
+                2052,
+                1230
+              ]
+            },
+            "island_complete_leave": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 72800,
+              "crop": [
+                1022,
+                1338,
+                1542,
+                1478
+              ]
+            },
+            "mission_preview_panel": {
+              "score": 0.0,
+              "yellow": 0,
+              "pixels": 540800,
+              "crop": [
+                1110,
+                676,
+                2150,
+                1196
+              ]
+            },
+            "mission_preview_dialogue": {
+              "score": 0.8,
+              "card": {
+                "red": 0,
+                "blue": 48217,
+                "bright": 14645,
+                "dark_fraction": 0.9121,
+                "pixels": 777600,
+                "crop": [
+                  500,
+                  700,
+                  2120,
+                  1180
+                ]
+              },
+              "dialogue": {
+                "red": 0,
+                "blue": 24953,
+                "bright": 5544,
+                "dark_fraction": 0.8865,
+                "pixels": 489600,
+                "crop": [
+                  260,
+                  330,
+                  2300,
+                  570
+                ]
+              }
+            },
+            "deployment_screen": {
+              "score": 0.0001,
+              "yellow": 180,
+              "pixels": 1628000,
+              "crop": [
+                480,
+                180,
+                1960,
+                1280
+              ]
+            },
+            "island_map": {
+              "score": 0.0011,
+              "red": 686,
+              "green": 888,
+              "colored": 1574,
+              "pixels": 1456000,
+              "crop": [
+                840,
+                340,
+                2240,
+                1380
+              ]
+            },
+            "new_game_setup_back": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 70400,
+              "crop": [
+                362,
+                86,
+                802,
+                246
+              ]
+            },
+            "new_game_setup_start": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 70400,
+              "crop": [
+                1790,
+                86,
+                2230,
+                246
+              ]
+            },
+            "new_game_setup_back_windows": {
+              "score": 0.2853,
+              "bright": 392,
+              "border": 652,
+              "pixels": 22880,
+              "crop": [
+                1380,
+                452,
+                1640,
+                540
+              ]
+            },
+            "new_game_setup_start_windows": {
+              "score": 0.457,
+              "bright": 748,
+              "border": 744,
+              "pixels": 22880,
+              "crop": [
+                1582,
+                452,
+                1842,
+                540
+              ]
+            },
+            "options_header": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 70400,
+              "crop": [
+                280,
+                110,
+                720,
+                270
+              ]
+            },
+            "options_close": {
+              "score": 0.0,
+              "bright": 0,
+              "border": 0,
+              "pixels": 115200,
+              "crop": [
+                1420,
+                1280,
+                2140,
+                1440
+              ]
+            },
+            "system_privacy_prompt": {
+              "status": "OK",
+              "matched": false,
+              "score": 0.0,
+              "strict_score": 0.0,
+              "relaxed_score": 0.0,
+              "kind": "macos_screen_audio_privacy_prompt",
+              "checks": {
+                "card_mid_dark": 0.0356496309706169,
+                "inner_mid_dark": 0.028318917207806098,
+                "button_gray": 0.009160229748465042,
+                "icon_blue": 0.0,
+                "icon_color": 0.0,
+                "text_bright": 0.08853659667176564
+              },
+              "regions": {
+                "card": {
+                  "box": [
+                    986,
+                    322,
+                    1510,
+                    995
+                  ],
+                  "pixels": 352652,
+                  "mid_dark_fraction": 0.023172260130900988,
+                  "button_gray_fraction": 0.012198858097757972,
+                  "bright_text_fraction": 0.015763821194819665,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "inner": {
+                  "box": [
+                    1037,
+                    367,
+                    1472,
+                    965
+                  ],
+                  "pixels": 260130,
+                  "mid_dark_fraction": 0.018407296185073963,
+                  "button_gray_fraction": 0.009370481592703815,
+                  "bright_text_fraction": 0.005171838505171838,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "text": {
+                  "box": [
+                    1037,
+                    524,
+                    1472,
+                    808
+                  ],
+                  "pixels": 123540,
+                  "mid_dark_fraction": 0.015157836184119037,
+                  "button_gray_fraction": 0.0010846891948268669,
+                  "bright_text_fraction": 0.005312195800305938,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "buttons": {
+                  "box": [
+                    1024,
+                    823,
+                    1485,
+                    957
+                  ],
+                  "pixels": 61774,
+                  "mid_dark_fraction": 0.011864973262032086,
+                  "button_gray_fraction": 0.004122103386809269,
+                  "bright_text_fraction": 0.009358288770053475,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                },
+                "icon": {
+                  "box": [
+                    1024,
+                    367,
+                    1165,
+                    501
+                  ],
+                  "pixels": 18894,
+                  "mid_dark_fraction": 0.0,
+                  "button_gray_fraction": 0.0,
+                  "bright_text_fraction": 0.007727320842595533,
+                  "blue_icon_fraction": 0.0,
+                  "red_icon_fraction": 0.0
+                }
+              }
+            }
+          }
+        },
+        "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_39692.png"
+      },
+      "visible_timer_budget": {
+        "game_seconds": 278.0,
+        "game_timer": "0:04:38",
+        "max_game_seconds": 1800,
+        "max_game_timer": "0:30:00",
+        "game_status": "OK",
+        "remaining_game_seconds": 1522.0,
+        "remaining_game_timer": "0:25:22"
+      },
+      "stale_bridge_cleanup": {
+        "status": "OK",
+        "reason": "resume_from_pause",
+        "cleared": [
+          "cmd"
+        ],
+        "errors": []
+      },
+      "click_result": {
+        "status": "OK",
+        "key": "esc",
+        "description": "Pause menu Escape resume",
+        "backend": "pyautogui",
+        "control": "pause_menu_escape"
+      },
+      "post_click_visible_ui": {
+        "status": "OK",
+        "visible_ui": "combat_screen",
+        "recommended_control": null
+      }
+    }
+  },
+  "pause_guard": {
+    "status": "BLOCKED",
+    "reason": "visible_panel_should_be_cleared_first",
+    "visible_ui": {
+      "status": "OK",
+      "visible_ui": "pod_open_panel",
+      "recommended_control": "pod_open_door",
+      "confidence": 2.1084,
+      "dark_overlay_fraction": 0.3675,
+      "scores": {
+        "title_continue": {
+          "score": 0.2399,
+          "bright": 629,
+          "border": 2793,
+          "pixels": 72800,
+          "crop": [
+            80,
+            432,
+            600,
+            572
+          ]
+        },
+        "title_new_game": {
+          "score": 0.2666,
+          "bright": 511,
+          "border": 3574,
+          "pixels": 72800,
+          "crop": [
+            80,
+            560,
+            600,
+            700
+          ]
+        },
+        "pause_menu": {
+          "score": 0.1233,
+          "bright": 456,
+          "border": 2807,
+          "pixels": 128000,
+          "crop": [
+            662,
+            402,
+            1302,
+            602
+          ]
+        },
+        "reward_panel": {
+          "score": 0.0158,
+          "bright": 171,
+          "border": 0,
+          "pixels": 108000,
+          "crop": [
+            1702,
+            1216,
+            2302,
+            1396
+          ]
+        },
+        "bottom_continue_panel": {
+          "score": 0.0,
+          "bright": 0,
+          "border": 0,
+          "pixels": 120000,
+          "crop": [
+            1710,
+            1252,
+            2310,
+            1452
+          ]
+        },
+        "pod_open_panel": {
+          "score": 2.1084,
+          "bright": 412,
+          "border": 46409,
+          "pixels": 90000,
+          "crop": [
+            1780,
+            706,
+            2280,
+            886
+          ]
+        },
+        "promotion_panel": {
+          "score": 0.2599,
+          "bright": 1986,
+          "border": 2832,
+          "pixels": 120000,
+          "crop": [
+            1032,
+            936,
+            1632,
+            1136
+          ]
+        },
+        "kia_panel": {
+          "score": 0.0799,
+          "bright": 709,
+          "border": 817,
+          "pixels": 129600,
+          "crop": [
+            972,
+            796,
+            1692,
+            976
+          ]
+        },
+        "perfect_reward_choice": {
+          "score": 0.0201,
+          "bright": 0,
+          "border": 375,
+          "pixels": 74800,
+          "crop": [
+            1464,
+            830,
+            1804,
+            1050
+          ]
+        },
+        "perfect_island_panel": {
+          "score": 0.167,
+          "bright": 2598,
+          "border": 1320,
+          "pixels": 187200,
+          "crop": [
+            1332,
+            970,
+            2052,
+            1230
+          ]
+        },
+        "island_complete_leave": {
+          "score": 0.3812,
+          "bright": 2775,
+          "border": 0,
+          "pixels": 72800,
+          "crop": [
+            1022,
+            1338,
+            1542,
+            1478
+          ]
+        },
+        "mission_preview_panel": {
+          "score": 0.0,
+          "yellow": 0,
+          "pixels": 540800,
+          "crop": [
+            1110,
+            676,
+            2150,
+            1196
+          ]
+        },
+        "mission_preview_dialogue": {
+          "score": 0.7161,
+          "card": {
+            "red": 0,
+            "blue": 72164,
+            "bright": 9669,
+            "dark_fraction": 0.1455,
+            "pixels": 777600,
+            "crop": [
+              500,
+              700,
+              2120,
+              1180
+            ]
+          },
+          "dialogue": {
+            "red": 0,
+            "blue": 82242,
+            "bright": 5571,
+            "dark_fraction": 0.4355,
+            "pixels": 489600,
+            "crop": [
+              260,
+              330,
+              2300,
+              570
+            ]
+          }
+        },
+        "deployment_screen": {
+          "score": 0.0042,
+          "yellow": 6768,
+          "pixels": 1628000,
+          "crop": [
+            480,
+            180,
+            1960,
+            1280
+          ]
+        },
+        "island_map": {
+          "score": 0.0159,
+          "red": 1372,
+          "green": 21832,
+          "colored": 23204,
+          "pixels": 1456000,
+          "crop": [
+            840,
+            340,
+            2240,
+            1380
+          ]
+        },
+        "new_game_setup_back": {
+          "score": 0.5901,
+          "bright": 2635,
+          "border": 3799,
+          "pixels": 70400,
+          "crop": [
+            362,
+            86,
+            802,
+            246
+          ]
+        },
+        "new_game_setup_start": {
+          "score": 0.6819,
+          "bright": 3098,
+          "border": 4256,
+          "pixels": 70400,
+          "crop": [
+            1790,
+            86,
+            2230,
+            246
+          ]
+        },
+        "new_game_setup_back_windows": {
+          "score": 3.1427,
+          "bright": 0,
+          "border": 17976,
+          "pixels": 22880,
+          "crop": [
+            1380,
+            452,
+            1640,
+            540
+          ]
+        },
+        "new_game_setup_start_windows": {
+          "score": 1.8762,
+          "bright": 0,
+          "border": 10732,
+          "pixels": 22880,
+          "crop": [
+            1582,
+            452,
+            1842,
+            540
+          ]
+        },
+        "options_header": {
+          "score": 0.3828,
+          "bright": 1306,
+          "border": 3472,
+          "pixels": 70400,
+          "crop": [
+            280,
+            110,
+            720,
+            270
+          ]
+        },
+        "options_close": {
+          "score": 0.1622,
+          "bright": 1868,
+          "border": 0,
+          "pixels": 115200,
+          "crop": [
+            1420,
+            1280,
+            2140,
+            1440
+          ]
+        },
+        "system_privacy_prompt": {
+          "status": "OK",
+          "matched": false,
+          "score": 0.0,
+          "strict_score": 0.0,
+          "relaxed_score": 0.0,
+          "kind": "macos_screen_audio_privacy_prompt",
+          "checks": {
+            "card_mid_dark": 0.9318179383629877,
+            "inner_mid_dark": 1.0238871349982461,
+            "button_gray": 1.1848880966528026,
+            "icon_blue": 0.0,
+            "icon_color": 0.0,
+            "text_bright": 0.08621888471700737
+          },
+          "regions": {
+            "card": {
+              "box": [
+                986,
+                322,
+                1510,
+                995
+              ],
+              "pixels": 352652,
+              "mid_dark_fraction": 0.605681659935942,
+              "button_gray_fraction": 0.4227823422921599,
+              "bright_text_fraction": 0.010360674000835539,
+              "blue_icon_fraction": 0.0015596713549644895,
+              "red_icon_fraction": 0.0
+            },
+            "inner": {
+              "box": [
+                1037,
+                367,
+                1472,
+                965
+              ],
+              "pixels": 260130,
+              "mid_dark_fraction": 0.66552663774886,
+              "button_gray_fraction": 0.46388054721388056,
+              "bright_text_fraction": 0.006450895339784228,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "text": {
+              "box": [
+                1037,
+                524,
+                1472,
+                808
+              ],
+              "pixels": 123540,
+              "mid_dark_fraction": 0.7634543178973717,
+              "button_gray_fraction": 0.529022389097483,
+              "bright_text_fraction": 0.005173133083020442,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "buttons": {
+              "box": [
+                1024,
+                823,
+                1485,
+                957
+              ],
+              "pixels": 61774,
+              "mid_dark_fraction": 0.7561274509803921,
+              "button_gray_fraction": 0.5331996434937611,
+              "bright_text_fraction": 0.007102272727272727,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            },
+            "icon": {
+              "box": [
+                1024,
+                367,
+                1165,
+                501
+              ],
+              "pixels": 18894,
+              "mid_dark_fraction": 0.7729967185349846,
+              "button_gray_fraction": 0.47321901132634697,
+              "bright_text_fraction": 0.017571715888641898,
+              "blue_icon_fraction": 0.0,
+              "red_icon_fraction": 0.0
+            }
+          }
+        }
+      },
+      "bridge_refine_snapshot": {
+        "status": "SKIPPED",
+        "reason": "bridge_refine_disabled"
+      },
+      "screenshot_path": "/var/folders/pr/cvsvvtw50yl01vnrqb4jnxfr0000gn/T/itb_lightning_ui_39692.png",
+      "ocr": {
+        "status": "OK",
+        "texts": [
+          "Into the Breach",
+          "PObJER",
+          "GRID",
+          "s IIIINNN",
+          "GRID",
+          "DEFENSE",
+          "Game Time: 0.04.48",
+          "TIDES",
+          "ATTACK",
+          "ORDER",
+          ",LJARNING!",
+          "Victory in",
+          "tums",
+          "ENEM-Y-. ACTIVITY",
+          "Region first, Pod recovery second.",
+          "Bonus Objectives",
+          "Willow",
+          "Kill at least 5 Enemies",
+          "(Current. o)",
+          "Protect the Power",
+          "Generator",
+          "Cs Protect the Time Pod"
+        ],
+        "observations": [
+          {
+            "text": "Into the Breach",
+            "bbox_normalized": {
+              "x": 0.46171875,
+              "y": 0.9752673796791443,
+              "width": 0.07578124999999997,
+              "height": 0.014037433155080214
+            },
+            "bbox_image": [
+              1182.0,
+              16.0,
+              1376.0,
+              37.0
+            ],
+            "center_image": [
+              1279.0,
+              26.5
+            ]
+          },
+          {
+            "text": "PObJER",
+            "bbox_normalized": {
+              "x": 0.0625,
+              "y": 0.9251336898395722,
+              "width": 0.037500000000000006,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              160.0,
+              90.0,
+              256.0,
+              112.0
+            ],
+            "center_image": [
+              208.0,
+              101.0
+            ]
+          },
+          {
+            "text": "GRID",
+            "bbox_normalized": {
+              "x": 0.06875,
+              "y": 0.9050802139037433,
+              "width": 0.02578124999999999,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              176.0,
+              120.0,
+              242.0,
+              142.0
+            ],
+            "center_image": [
+              209.0,
+              131.0
+            ]
+          },
+          {
+            "text": "s IIIINNN",
+            "bbox_normalized": {
+              "x": 0.1109375,
+              "y": 0.9024064171122994,
+              "width": 0.13359375,
+              "height": 0.0401069518716578
+            },
+            "bbox_image": [
+              284.0,
+              86.0,
+              626.0,
+              146.0
+            ],
+            "center_image": [
+              455.0,
+              116.0
+            ]
+          },
+          {
+            "text": "GRID",
+            "bbox_normalized": {
+              "x": 0.265625,
+              "y": 0.9251336898395722,
+              "width": 0.025781249999999978,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              680.0,
+              90.0,
+              746.0,
+              112.0
+            ],
+            "center_image": [
+              713.0,
+              101.0
+            ]
+          },
+          {
+            "text": "DEFENSE",
+            "bbox_normalized": {
+              "x": 0.253125,
+              "y": 0.9050802139037433,
+              "width": 0.04999999999999999,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              648.0,
+              120.0,
+              776.0,
+              142.0
+            ],
+            "center_image": [
+              712.0,
+              131.0
+            ]
+          },
+          {
+            "text": "Game Time: 0.04.48",
+            "bbox_normalized": {
+              "x": 0.83203125,
+              "y": 0.9211229946524064,
+              "width": 0.11796874999999996,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              2130.0,
+              96.0,
+              2432.0,
+              118.0
+            ],
+            "center_image": [
+              2281.0,
+              107.0
+            ]
+          },
+          {
+            "text": "TIDES",
+            "bbox_normalized": {
+              "x": 0.646875,
+              "y": 0.9144385026737968,
+              "width": 0.03281250000000002,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              1656.0,
+              106.0,
+              1740.0,
+              128.0
+            ],
+            "center_image": [
+              1698.0,
+              117.0
+            ]
+          },
+          {
+            "text": "ATTACK",
+            "bbox_normalized": {
+              "x": 0.71484375,
+              "y": 0.8903743315508021,
+              "width": 0.04531249999999998,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              1830.0,
+              142.0,
+              1946.0,
+              164.0
+            ],
+            "center_image": [
+              1888.0,
+              153.0
+            ]
+          },
+          {
+            "text": "ORDER",
+            "bbox_normalized": {
+              "x": 0.71953125,
+              "y": 0.8663101604278075,
+              "width": 0.03671875000000002,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              1842.0,
+              178.0,
+              1936.0,
+              200.0
+            ],
+            "center_image": [
+              1889.0,
+              189.0
+            ]
+          },
+          {
+            "text": ",LJARNING!",
+            "bbox_normalized": {
+              "x": 0.13515625,
+              "y": 0.8596256684491979,
+              "width": 0.07343749999999999,
+              "height": 0.025401069518716568
+            },
+            "bbox_image": [
+              346.0,
+              172.0,
+              534.0,
+              210.0
+            ],
+            "center_image": [
+              440.0,
+              191.0
+            ]
+          },
+          {
+            "text": "Victory in",
+            "bbox_normalized": {
+              "x": 0.83828125,
+              "y": 0.8449197860962567,
+              "width": 0.05078125,
+              "height": 0.018716577540106916
+            },
+            "bbox_image": [
+              2146.0,
+              204.0,
+              2276.0,
+              232.0
+            ],
+            "center_image": [
+              2211.0,
+              218.0
+            ]
+          },
+          {
+            "text": "tums",
+            "bbox_normalized": {
+              "x": 0.91640625,
+              "y": 0.8489304812834224,
+              "width": 0.026562500000000044,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              2346.0,
+              204.0,
+              2414.0,
+              226.0
+            ],
+            "center_image": [
+              2380.0,
+              215.0
+            ]
+          },
+          {
+            "text": "ENEM-Y-. ACTIVITY",
+            "bbox_normalized": {
+              "x": 0.078125,
+              "y": 0.8141711229946524,
+              "width": 0.190625,
+              "height": 0.03074866310160429
+            },
+            "bbox_image": [
+              200.0,
+              232.0,
+              688.0,
+              278.0
+            ],
+            "center_image": [
+              444.0,
+              255.0
+            ]
+          },
+          {
+            "text": "Region first, Pod recovery second.",
+            "bbox_normalized": {
+              "x": 0.43828125,
+              "y": 0.8368983957219251,
+              "width": 0.21953125,
+              "height": 0.021390374331550777
+            },
+            "bbox_image": [
+              1122.0,
+              212.0,
+              1684.0,
+              244.0
+            ],
+            "center_image": [
+              1403.0,
+              228.0
+            ]
+          },
+          {
+            "text": "Bonus Objectives",
+            "bbox_normalized": {
+              "x": 0.83359375,
+              "y": 0.7740641711229946,
+              "width": 0.11249999999999993,
+              "height": 0.018716577540106916
+            },
+            "bbox_image": [
+              2134.0,
+              310.0,
+              2422.0,
+              338.0
+            ],
+            "center_image": [
+              2278.0,
+              324.0
+            ]
+          },
+          {
+            "text": "Willow",
+            "bbox_normalized": {
+              "x": 0.35703125,
+              "y": 0.7459893048128342,
+              "width": 0.03749999999999998,
+              "height": 0.014705882352941235
+            },
+            "bbox_image": [
+              914.0,
+              358.0,
+              1010.0,
+              380.0
+            ],
+            "center_image": [
+              962.0,
+              369.0
+            ]
+          },
+          {
+            "text": "Kill at least 5 Enemies",
+            "bbox_normalized": {
+              "x": 0.8390625,
+              "y": 0.7272727272727273,
+              "width": 0.11874999999999991,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              2148.0,
+              386.0,
+              2452.0,
+              408.0
+            ],
+            "center_image": [
+              2300.0,
+              397.0
+            ]
+          },
+          {
+            "text": "(Current. o)",
+            "bbox_normalized": {
+              "x": 0.87109375,
+              "y": 0.6978609625668449,
+              "width": 0.059374999999999956,
+              "height": 0.018716577540106916
+            },
+            "bbox_image": [
+              2230.0,
+              424.0,
+              2382.0,
+              452.0
+            ],
+            "center_image": [
+              2306.0,
+              438.0
+            ]
+          },
+          {
+            "text": "Protect the Power",
+            "bbox_normalized": {
+              "x": 0.846875,
+              "y": 0.6564171122994653,
+              "width": 0.10390624999999998,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              2168.0,
+              492.0,
+              2434.0,
+              514.0
+            ],
+            "center_image": [
+              2301.0,
+              503.0
+            ]
+          },
+          {
+            "text": "Generator",
+            "bbox_normalized": {
+              "x": 0.87265625,
+              "y": 0.6310160427807487,
+              "width": 0.0546875,
+              "height": 0.014705882352941124
+            },
+            "bbox_image": [
+              2234.0,
+              530.0,
+              2374.0,
+              552.0
+            ],
+            "center_image": [
+              2304.0,
+              541.0
+            ]
+          },
+          {
+            "text": "Cs Protect the Time Pod",
+            "bbox_normalized": {
+              "x": 0.81875,
+              "y": 0.5802139037433155,
+              "width": 0.14140625000000007,
+              "height": 0.024064171122994638
+            },
+            "bbox_image": [
+              2096.0,
+              592.0,
+              2458.0,
+              628.0
+            ],
+            "center_image": [
+              2277.0,
+              610.0
+            ]
+          }
+        ]
+      },
+      "ocr_texts": [
+        "Into the Breach",
+        "PObJER",
+        "GRID",
+        "s IIIINNN",
+        "GRID",
+        "DEFENSE",
+        "Game Time: 0.04.48",
+        "TIDES",
+        "ATTACK",
+        "ORDER",
+        ",LJARNING!",
+        "Victory in",
+        "tums",
+        "ENEM-Y-. ACTIVITY",
+        "Region first, Pod recovery second.",
+        "Bonus Objectives",
+        "Willow",
+        "Kill at least 5 Enemies",
+        "(Current. o)",
+        "Protect the Power",
+        "Generator",
+        "Cs Protect the Time Pod"
+      ],
+      "visible_text": "Into the Breach\nPObJER\nGRID\ns IIIINNN\nGRID\nDEFENSE\nGame Time: 0.04.48\nTIDES\nATTACK\nORDER\n,LJARNING!\nVictory in\ntums\nENEM-Y-. ACTIVITY\nRegion first, Pod recovery second.\nBonus Objectives\nWillow\nKill at least 5 Enemies\n(Current. o)\nProtect the Power\nGenerator\nCs Protect the Time Pod"
+    },
+    "live_snapshot": {
+      "status": "SKIPPED",
+      "reason": "pre_pause_bridge_io_disabled"
+    },
+    "decision": {
+      "status": "BLOCKED",
+      "reason": "visible_panel_should_be_cleared_first",
+      "pause_allowed": false,
+      "next_step": "Clear the visible pod panel before trying to pause."
+    }
+  }
+}

@@ -48,6 +48,9 @@ MECH_STATS = {
     "ScienceMech":   PawnStats(move_speed=4, massive=True, flying=True, class_type="Science", default_weapon="Science_Pullmech"),
     "GuardMech":     PawnStats(move_speed=4, massive=True, class_type="Prime", default_weapon="Prime_ShieldBash"),
     "MirrorMech":    PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_Mirrorshot"),
+    "NeedleMech":    PawnStats(move_speed=4, massive=True, flying=True, class_type="Brute", default_weapon="Brute_KickBack"),
+    "SmokeMech":     PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_SmokeFire"),
+    "SupermanMech":  PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_TC_Control"),
     "IceMech":       PawnStats(move_speed=3, massive=True, flying=True, class_type="Ranged", default_weapon="Ranged_Ice"),
     "ElectricMech":  PawnStats(move_speed=3, massive=True, class_type="Prime", default_weapon="Prime_Lightning"),
     "WallMech":      PawnStats(move_speed=3, massive=True, armor=True, class_type="Brute", default_weapon="Brute_Grapple"),
@@ -57,9 +60,12 @@ MECH_STATS = {
     "NanoMech":      PawnStats(move_speed=4, massive=True, flying=True, class_type="Science", default_weapon="Science_AcidShot"),
     # Advanced Edition mechs
     "BeetleMech":    PawnStats(move_speed=3, massive=True, class_type="Prime", default_weapon="Prime_Beetle"),
+    "PierceMech":    PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_PierceShot"),
+    "BomblingMech":  PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_DeployBomb"),
     "BulkMech":      PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_TC_Ricochet"),
     "ScorpioMech":   PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_Arachnoid"),
     "FourwayMech":   PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_MassShift"),
+    "ExchangeMech":  PawnStats(move_speed=3, massive=True, class_type="Science", default_weapon="Science_TC_SwapOther"),
     "HydroMech":     PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_Hydro"),
     "BottleMech":    PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_RocketShower"),
 }
@@ -127,6 +133,11 @@ VEK_STATS = {
     "ScorpionBoss":  PawnStats(move_speed=3, massive=True, ranged=0),
     # Pinnacle bots
     "Snowtank1":     PawnStats(move_speed=3, ranged=0),
+    # Mission_Hacking turns the Cannon Bot over to the player team after the
+    # hacking facility falls; the bridge appends _Player but the unit is the
+    # same 1 HP, move-3 cannon bot.
+    "Snowtank1_Player": PawnStats(move_speed=3, ranged=0,
+                                  default_weapon="SnowtankAtk1_Player"),
     "Snowtank2":     PawnStats(move_speed=3, ranged=0),
     "Snowart1":      PawnStats(move_speed=3, ranged=1),
     "Snowart2":      PawnStats(move_speed=3, ranged=1),

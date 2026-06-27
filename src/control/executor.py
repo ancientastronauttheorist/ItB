@@ -21,6 +21,8 @@ Coordinate systems:
 
 from __future__ import annotations
 
+import os
+
 from src.solver.solver import MechAction, Solution
 from src.solver.action_classification import action_has_attack, is_board_target
 from src.model.board import Board
@@ -160,6 +162,10 @@ def _ui_repair_button() -> tuple[int, int]:
 
 
 def _ui_end_turn() -> tuple[int, int]:
+    if os.name == "nt":
+        win = _get_window()
+        if win.width >= 2400 and win.height >= 1300:
+            return (int(round(win.x + 252)), int(round(win.y + 190)))
     return _ui_pos(_UI_END_TURN)
 
 
@@ -175,6 +181,7 @@ def classify_weapon(weapon_id: str) -> str:
     - "normal":  optional move click → arm weapon → click target
     - "dash":    arm weapon → click destination tile (no separate move)
     - "repair":  optional move click → click Repair button (no target)
+    - "two_click": optional move click → arm weapon → click target → click target2
     - "passive": no click flow at all
     """
     if not weapon_id:
@@ -202,6 +209,8 @@ def classify_weapon(weapon_id: str) -> str:
         return "normal"
     if wdef.weapon_type in ("global_unit_effect", "disposal"):
         return "normal"
+    if wdef.weapon_type == "two_click":
+        return "two_click"
     return "normal"
 
 
@@ -304,7 +313,8 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             })
         return annotate_click_plan(plan)
 
-    # Normal: optional move first, then arm weapon, then click target.
+    # Normal / two-click: optional move first, then arm weapon, then click
+    # the solver's target coordinates.
     plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
     if action.move_to and action.move_to != (mech.x, mech.y):
         mx, my = grid_to_mcp(action.move_to[0], action.move_to[1])
@@ -329,6 +339,15 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "x": tx, "y": ty,
             "description": f"Fire at ({action.target[0]},{action.target[1]})",
         })
+        target2 = getattr(action, "target2", None)
+        if weapon_type == "two_click" and is_board_target(target2):
+            plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for second target"))
+            tx2, ty2 = grid_to_mcp(target2[0], target2[1])
+            plan.append({
+                "type": "left_click",
+                "x": tx2, "y": ty2,
+                "description": f"Second target ({target2[0]},{target2[1]})",
+            })
 
     return annotate_click_plan(plan)
 

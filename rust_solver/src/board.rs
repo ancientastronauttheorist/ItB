@@ -159,6 +159,9 @@ bitflags! {
         /// player-phase retarget effects preserve the original attack vector
         /// after the attacker has been pushed.
         const QUEUED_ORIGIN_SET = 0b0100_0000_0000_0000_0000;
+        /// Bridge provided the raw, pre-normalization queued target. Used as
+        /// a direction fallback when normalized targets collapse to origin.
+        const QUEUED_RAW_TARGET_SET = 0b1000_0000_0000_0000_0000;
     }
 }
 
@@ -205,6 +208,8 @@ pub struct Unit {
     // Enemy intent
     pub queued_target_x: i8, // -1 = no target
     pub queued_target_y: i8,
+    pub queued_target_raw_x: i8,
+    pub queued_target_raw_y: i8,
     pub queued_origin_x: i8,
     pub queued_origin_y: i8,
     pub weapon_damage: u8,
@@ -338,6 +343,9 @@ pub struct Board {
     pub tiles: [Tile; 64],
     pub units: [Unit; 16],
     pub unit_count: u8,
+    /// Live enemy attack order from bridge JSON. Empty means legacy payloads
+    /// should fall back to UID order.
+    pub attack_order: Vec<u16>,
     pub grid_power: u8,
     pub grid_power_max: u8,
     // Grid Defense: % chance any building resists damage. Not exposed by
@@ -420,6 +428,12 @@ pub struct Board {
     pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
+    /// Passive_FireBoost / Heat Engines: player mechs standing on fire consume
+    /// the fire and gain Boost instead of catching fire.
+    pub heat_engines: bool,
+    /// Passive_HealingSmoke / Nanofilter Mending: player mechs standing on
+    /// smoke heal 1 HP and consume the smoke.
+    pub healing_smoke: bool,
     /// Passive_Leech / Viscera Nanobots heal amount for player mechs that
     /// deal killing blows. 0 means the passive is not currently available.
     pub viscera_nanobots_heal: u8,
@@ -513,6 +527,7 @@ impl Default for Board {
             tiles: [Tile::default(); 64],
             units: [Unit::default(); 16],
             unit_count: 0,
+            attack_order: Vec::new(),
             grid_power: 7,
             grid_power_max: 7,
             grid_defense_pct: 15,
@@ -541,6 +556,8 @@ impl Default for Board {
             boss_alive: false,
             storm_generator: false,
             flame_shielding: false,
+            heat_engines: false,
+            healing_smoke: false,
             viscera_nanobots_heal: 0,
             vek_hormones: false,
             force_amp: false,
@@ -819,6 +836,7 @@ pub struct ActionResult {
     pub leech_uncapped_kills: i32,
     pub enemy_damage_dealt: i32,
     pub mech_damage_taken: i32,
+    pub mech_hp_repaired: i32,
     pub mechs_killed: i32,
     pub pods_collected: i32,
     pub repair_platforms_used: i32,
@@ -856,6 +874,7 @@ impl ActionResult {
         self.leech_uncapped_kills += other.leech_uncapped_kills;
         self.enemy_damage_dealt += other.enemy_damage_dealt;
         self.mech_damage_taken += other.mech_damage_taken;
+        self.mech_hp_repaired += other.mech_hp_repaired;
         self.mechs_killed += other.mechs_killed;
         self.pods_collected += other.pods_collected;
         self.repair_platforms_used += other.repair_platforms_used;
@@ -889,11 +908,13 @@ mod tests {
         // is ~60GB/s, so 1.3kB copies are sub-nanosecond.
         // Sim v21: bonus_dont_kill_types: Vec<String> added 24 bytes
         // (Vec header). Empty Vec doesn't allocate, so Clone is still
-        // a memcpy on the common path; only missions with a populated
-        // protected-list pay the heap-clone cost (1× per solve).
+        // a memcpy on the common path; only missions with populated
+        // objective/projection lists pay heap-clone costs (1× per branch).
+        // Sim v32+ added grid-defense expectation, unit-objective Vecs, and
+        // the Spider Psion egg queue; 1.6kB is still comfortably cheap.
         let size = std::mem::size_of::<Board>();
         println!("Board size: {} bytes", size);
-        assert!(size <= 1320, "Board too large: {} bytes", size);
+        assert!(size <= 1700, "Board too large: {} bytes", size);
     }
 
     #[test]

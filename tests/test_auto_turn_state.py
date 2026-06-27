@@ -238,6 +238,39 @@ def test_dirty_consent_rejects_non_overridable_without_consuming_token():
     assert token not in s.dirty_consent_used
 
 
+def test_dirty_consent_rejects_mech_loss_without_consuming_token():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.achievement_targets = ["Lightning War"]
+    s.mission_index = 3
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "mech_lost",
+            "current": 3,
+            "predicted": 2,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=0)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "mech_lost" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
 def test_dirty_consent_accepts_protected_objective_loss_with_stress_flag():
     s = RunSession(run_id="r", difficulty=3, tags=["solver_eval"])
     s.mission_index = 3
@@ -367,6 +400,45 @@ def test_dirty_consent_validation_can_delay_token_consumption():
 
     assert accepted is None
     assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_progress_mark_consumes_delayed_token(monkeypatch):
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.mission_index = 4
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "grid_damage",
+            "current": 5,
+            "predicted": 4,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=3)
+    saves = []
+    monkeypatch.setattr(s, "save", lambda: saves.append(list(s.dirty_consent_used)))
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+        consume=False,
+    )
+
+    assert accepted is None
+    assert token not in s.dirty_consent_used
+    assert cmd_mod._dirty_consent_mark_used(s, token) is True
+    assert token in s.dirty_consent_used
+    assert saves == [[token]]
+    assert cmd_mod._dirty_consent_mark_used(s, token) is False
+    assert saves == [[token]]
 
 
 def test_dirty_consent_accepts_kill_limit_failure_for_non_perfect_targets():
@@ -795,6 +867,79 @@ def test_threat_audit_blocks_unresolved_building_threat_on_normal_grid():
     assert cmd_mod._threat_audit_requires_block(
         {"still_threatened_count": 1}, safety, s
     ) is True
+
+
+def test_enemy_survived_fuzzy_blocks_end_turn_even_when_audit_clean():
+    block = cmd_mod._fuzzy_detections_require_end_turn_block([{
+        "signature": "death|Brute_Grapple|attack",
+        "asymmetry": ["enemy_survived_unexpectedly"],
+        "confidence": 0.8,
+        "proposed_tier": 2,
+        "context": {
+            "weapon": "Brute_Grapple",
+            "action_index": 2,
+        },
+    }])
+
+    assert block == {
+        "reason": "enemy_survived_unexpectedly",
+        "signature": "death|Brute_Grapple|attack",
+        "weapon": "Brute_Grapple",
+        "action_index": 2,
+        "confidence": 0.8,
+        "proposed_tier": 2,
+    }
+
+
+def test_benign_fuzzy_does_not_block_end_turn():
+    assert cmd_mod._fuzzy_detections_require_end_turn_block([{
+        "signature": "status|Prime_Lightning|attack",
+        "asymmetry": [],
+        "context": {"weapon": "Prime_Lightning"},
+    }]) is None
+
+
+def test_burrower_missing_after_damage_drift_is_harmless_for_re_solve():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 30,
+        "type": "Burrower1",
+        "field": "missing_in_actual",
+        "predicted": "present",
+        "actual": "absent",
+    }])
+
+    assert cmd_mod._is_harmless_burrower_missing_drift(diff) is True
+
+
+def test_burrower_missing_drift_does_not_hide_mixed_losses():
+    diff = DiffResult(
+        unit_diffs=[{
+            "uid": 30,
+            "type": "Burrower1",
+            "field": "missing_in_actual",
+            "predicted": "present",
+            "actual": "absent",
+        }],
+        scalar_diffs=[{
+            "field": "grid_power",
+            "predicted": 5,
+            "actual": 4,
+        }],
+    )
+
+    assert cmd_mod._is_harmless_burrower_missing_drift(diff) is False
+
+
+def test_non_burrower_missing_still_requires_re_solve():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 8,
+        "type": "Bouncer1",
+        "field": "missing_in_actual",
+        "predicted": "present",
+        "actual": "absent",
+    }])
+
+    assert cmd_mod._is_harmless_burrower_missing_drift(diff) is False
 
 
 # ---------------------------------------------------------------------------

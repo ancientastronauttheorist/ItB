@@ -20,6 +20,7 @@ BLOCKING_KINDS = {
     "pylon_hp_loss",
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
     "pod_lost",
     "pod_unrecovered_final",
     "mech_lost",
@@ -48,7 +49,9 @@ NON_OVERRIDABLE_KINDS = {
     "bigbomb_lost",
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
     "pod_unrecovered_final",
+    "mech_lost",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
     "destroy_objective_unit_alive_final",
@@ -64,6 +67,7 @@ NON_OVERRIDABLE_KINDS = {
 OBJECTIVE_LOSS_DIRTY_KINDS = {
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
     "pod_unrecovered_final",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
@@ -75,6 +79,15 @@ OBJECTIVE_LOSS_DIRTY_KINDS = {
     "mite_objective_failed",
     "kill_objective_failed",
     "kill_limit_objective_failed",
+}
+
+POD_LOSS_DIRTY_KINDS = {
+    "pod_lost",
+    "pod_unrecovered_final",
+}
+
+POD_DESTROY_DIRTY_KINDS = {
+    "pod_lost",
 }
 
 FINAL_CAVE_EMERGENCY_PYLON_KINDS = {
@@ -105,6 +118,7 @@ FINAL_BOMB_DIRTY_ALLOWED_KINDS = {
     "building_hp_loss",
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
 }
 
 
@@ -116,6 +130,7 @@ LOSS_KINDS = {
     "pylon_hp_loss": "pylon_hp_total",
     "objective_building_destroyed": "objective_buildings_alive",
     "objective_building_hp_loss": "objective_building_hp_total",
+    "objective_building_targeted_final": "objective_buildings_targeted",
     "pod_lost": "pods_present",
     "pod_unrecovered_final": "pods_present",
     "mech_lost": "mechs_alive",
@@ -138,7 +153,6 @@ LOSS_KINDS = {
     "kill_limit_objective_failed": "mission_kills_done",
 }
 
-
 def _int_or_none(value: Any) -> int | None:
     if isinstance(value, bool):
         return None
@@ -151,6 +165,92 @@ def _list_or_empty(value: Any) -> list[Any]:
     if isinstance(value, list):
         return value
     return []
+
+
+def _final_objective_targets_resolved_without_damage(
+    current: dict[str, Any],
+    predicted: dict[str, Any],
+) -> bool:
+    """Return true when replayed enemy-phase data proves queued targets harmless."""
+    projection_keys = {
+        "buildings_destroyed_by_enemies",
+        "enemies_killed_by_enemy_phase",
+        "mission_kills_by_enemy_phase",
+    }
+    if not any(key in predicted for key in projection_keys):
+        return False
+
+    pred_turn = _int_or_none(predicted.get("turn"))
+    total_turns = (
+        _int_or_none(predicted.get("total_turns"))
+        or _int_or_none(current.get("total_turns"))
+    )
+    if pred_turn is None or total_turns is None or pred_turn <= total_turns:
+        return False
+
+    for key in (
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+    ):
+        cur_value = _int_or_none(current.get(key))
+        pred_value = _int_or_none(predicted.get(key))
+        if (
+            cur_value is not None
+            and pred_value is not None
+            and pred_value < cur_value
+        ):
+            return False
+
+    destroyed_by_enemies = _int_or_none(
+        predicted.get("buildings_destroyed_by_enemies")
+    )
+    if destroyed_by_enemies is not None and destroyed_by_enemies > 0:
+        return False
+    return True
+
+
+def _infinite_spawn_objective_final_turn(
+    current: dict[str, Any],
+    predicted: dict[str, Any],
+    default_final_turn: bool,
+) -> bool:
+    if not (
+        current.get("is_infinite_spawn") is True
+        or predicted.get("is_infinite_spawn") is True
+    ):
+        return default_final_turn
+
+    total_turns = (
+        _int_or_none(current.get("total_turns"))
+        or _int_or_none(predicted.get("total_turns"))
+    )
+    if total_turns is None:
+        return default_final_turn
+
+    cur_turn = _int_or_none(current.get("turn"))
+    if cur_turn is not None:
+        return cur_turn >= total_turns
+
+    pred_turn = _int_or_none(predicted.get("turn"))
+    if pred_turn is not None:
+        return pred_turn >= total_turns
+
+    return default_final_turn
+
+
+def _destroy_objective_final_turn(
+    current: dict[str, Any],
+    predicted: dict[str, Any],
+    default_final_turn: bool,
+) -> bool:
+    return _infinite_spawn_objective_final_turn(
+        current,
+        predicted,
+        default_final_turn,
+    )
 
 
 def _violation(kind: str, current: Any, predicted: Any,
@@ -168,6 +268,24 @@ def _violation(kind: str, current: Any, predicted: Any,
     if details is not None:
         out["details"] = details
     return out
+
+
+def _is_final_player_turn(turn: int | None,
+                          total_turns: int | None,
+                          remaining_spawns: int | None,
+                          victory_turns: int | None) -> bool:
+    if victory_turns is not None:
+        return victory_turns <= 1
+    if turn is None or total_turns is None:
+        return False
+    if turn >= total_turns:
+        return True
+    if turn >= max(0, total_turns - 1):
+        # Older summaries did not include the bridge's IsFinalTurn-derived
+        # spawn signal, so keep them conservative. When present, zero means
+        # the current player phase is the last chance to satisfy final checks.
+        return remaining_spawns is None or remaining_spawns == 0
+    return False
 
 
 def audit_plan_safety(current: dict[str, Any],
@@ -284,15 +402,90 @@ def audit_plan_safety(current: dict[str, Any],
     pred_turn = _int_or_none(predicted.get("turn"))
     cur_total_turns = _int_or_none(current.get("total_turns"))
     pred_total_turns = _int_or_none(predicted.get("total_turns"))
-    final_turn = (
-        cur_turn is not None
-        and cur_total_turns is not None
-        and cur_turn >= cur_total_turns
-    ) or (
-        pred_turn is not None
-        and pred_total_turns is not None
-        and pred_turn >= pred_total_turns
+    cur_remaining_spawns = _int_or_none(current.get("remaining_spawns"))
+    pred_remaining_spawns = _int_or_none(predicted.get("remaining_spawns"))
+    cur_spawn_points = _int_or_none(current.get("spawn_points"))
+    pred_spawn_points = _int_or_none(predicted.get("spawn_points"))
+    cur_victory_turns = _int_or_none(current.get("victory_turns"))
+    pred_victory_turns = _int_or_none(predicted.get("victory_turns"))
+    # Visible live spawn arrows mean the mission is not on the final player
+    # turn, even if Mission:IsFinalTurn()/remaining_spawns is unreliable for
+    # a specific mission. The visible victory counter is the next strongest
+    # signal for boss/timer routes, then the bridge's IsFinalTurn-derived
+    # remaining-spawns signal, then raw turn-limit math for older summaries.
+    if cur_spawn_points is not None and cur_spawn_points > 0:
+        final_turn = False
+    elif pred_spawn_points is not None and pred_spawn_points > 0:
+        final_turn = False
+    elif cur_victory_turns is not None:
+        final_turn = cur_victory_turns <= 1
+    elif pred_victory_turns is not None:
+        final_turn = pred_victory_turns <= 1
+    elif cur_turn is not None and cur_total_turns is not None:
+        final_turn = _is_final_player_turn(
+            cur_turn,
+            cur_total_turns,
+            cur_remaining_spawns,
+            cur_victory_turns,
+        )
+    elif pred_turn is not None and pred_total_turns is not None:
+        final_turn = _is_final_player_turn(
+            pred_turn,
+            pred_total_turns,
+            pred_remaining_spawns,
+            pred_victory_turns,
+        )
+    elif cur_remaining_spawns is not None:
+        final_turn = cur_remaining_spawns == 0
+    elif pred_remaining_spawns is not None:
+        final_turn = pred_remaining_spawns == 0
+    else:
+        final_turn = False
+    if (
+        final_turn
+        and cur_spawn_points is None
+        and pred_spawn_points is not None
+        and pred_spawn_points > 0
+    ):
+        final_turn = False
+    if (
+        final_turn
+        and cur_spawn_points is not None
+        and cur_spawn_points > 0
+    ):
+        final_turn = False
+
+    cur_obj_targeted = _int_or_none(current.get("objective_buildings_targeted"))
+    pred_obj_targeted = _int_or_none(predicted.get("objective_buildings_targeted"))
+    objective_target_final_turn = _infinite_spawn_objective_final_turn(
+        current,
+        predicted,
+        final_turn,
     )
+    if cur_obj_targeted is not None and pred_obj_targeted is not None:
+        compared.append("objective_buildings_targeted")
+        if (
+            objective_target_final_turn
+            and pred_obj_targeted > 0
+            and not _final_objective_targets_resolved_without_damage(
+                current,
+                predicted,
+            )
+        ):
+            violations.append(_violation(
+                "objective_building_targeted_final",
+                cur_obj_targeted,
+                pred_obj_targeted,
+                "Predicted final-turn outcome leaves an objective building under queued attack.",
+                {
+                    "current_targets": _list_or_empty(
+                        current.get("objective_building_targets")
+                    ),
+                    "predicted_targets": _list_or_empty(
+                        predicted.get("objective_building_targets")
+                    ),
+                },
+            ))
 
     cur_pods = _int_or_none(current.get("pods_present"))
     pred_pods = _int_or_none(predicted.get("pods_present"))
@@ -621,7 +814,12 @@ def audit_plan_safety(current: dict[str, Any],
     pred_destroy = _int_or_none(predicted.get("destroy_objective_units_alive"))
     if cur_destroy is not None and pred_destroy is not None:
         compared.append("destroy_objective_units_alive")
-        if final_turn and pred_destroy > 0:
+        destroy_final_turn = _destroy_objective_final_turn(
+            current,
+            predicted,
+            final_turn,
+        )
+        if destroy_final_turn and pred_destroy > 0:
             violations.append(_violation(
                 "destroy_objective_unit_alive_final",
                 cur_destroy,
@@ -704,6 +902,10 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": cur_turn,
             "total_turns": cur_total_turns,
+            "remaining_spawns": cur_remaining_spawns,
+            "is_infinite_spawn": current.get("is_infinite_spawn"),
+            "spawn_points": cur_spawn_points,
+            "victory_turns": cur_victory_turns,
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
             "building_hp_total": cur_hp,
@@ -711,6 +913,10 @@ def audit_plan_safety(current: dict[str, Any],
             "pylon_hp_total": cur_pylon_hp,
             "objective_buildings_alive": cur_obj_alive,
             "objective_building_hp_total": cur_obj_hp,
+            "objective_buildings_targeted": cur_obj_targeted,
+            "objective_building_targets": _list_or_empty(
+                current.get("objective_building_targets")
+            ),
             "pods_present": cur_pods,
             "mechs_alive": cur_mechs,
             "mech_hp_total": cur_mech_hp,
@@ -742,6 +948,10 @@ def audit_plan_safety(current: dict[str, Any],
             "mission_id": mission_id,
             "turn": pred_turn,
             "total_turns": pred_total_turns,
+            "remaining_spawns": pred_remaining_spawns,
+            "is_infinite_spawn": predicted.get("is_infinite_spawn"),
+            "spawn_points": pred_spawn_points,
+            "victory_turns": pred_victory_turns,
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,
             "building_hp_total": pred_hp,
@@ -749,6 +959,10 @@ def audit_plan_safety(current: dict[str, Any],
             "pylon_hp_total": pred_pylon_hp,
             "objective_buildings_alive": pred_obj_alive,
             "objective_building_hp_total": pred_obj_hp,
+            "objective_buildings_targeted": pred_obj_targeted,
+            "objective_building_targets": _list_or_empty(
+                predicted.get("objective_building_targets")
+            ),
             "pods_present": pred_pods,
             "mechs_alive": pred_mechs,
             "mech_hp_total": pred_mech_hp,
@@ -784,17 +998,44 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                                *,
                                allow_dirty_plan: bool = False,
                                allow_timeline_collapse_debug: bool = False,
+                               allow_timeline_collapse_dirty: bool = False,
                                allow_kill_limit_objective_dirty: bool = False,
                                allow_protected_objective_loss_dirty: bool = False,
-                               allow_objective_loss_dirty: bool = False) -> bool:
+                               allow_objective_loss_dirty: bool = False,
+                               allow_mech_loss_dirty: bool = False,
+                               allow_pod_loss_dirty: bool = False,
+                               allow_pod_destroy_dirty: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
     if not isinstance(audit, dict):
         return True
     if audit.get("status") == "UNKNOWN":
         return True
+    if allow_pod_destroy_dirty:
+        for v in audit.get("violations", []) or []:
+            if (
+                isinstance(v, dict)
+                and v.get("blocking")
+                and v.get("kind") == "pod_unrecovered_final"
+            ):
+                return True
+    if allow_pod_loss_dirty and not allow_dirty_plan:
+        return any(
+            isinstance(v, dict)
+            and v.get("blocking")
+            and v.get("kind") not in POD_LOSS_DIRTY_KINDS
+            for v in audit.get("violations", []) or []
+        )
+    if allow_pod_destroy_dirty and not allow_dirty_plan:
+        return any(
+            isinstance(v, dict)
+            and v.get("blocking")
+            and v.get("kind") not in POD_DESTROY_DIRTY_KINDS
+            for v in audit.get("violations", []) or []
+        )
     if allow_dirty_plan:
         debug_collapse = (
             allow_timeline_collapse_debug
+            or allow_timeline_collapse_dirty
             or os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
         )
         allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(audit)
@@ -834,6 +1075,18 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             and not (
                 allow_objective_loss_dirty
                 and v.get("kind") in OBJECTIVE_LOSS_DIRTY_KINDS
+            )
+            and not (
+                allow_mech_loss_dirty
+                and v.get("kind") == "mech_lost"
+            )
+            and not (
+                allow_pod_loss_dirty
+                and v.get("kind") in POD_LOSS_DIRTY_KINDS
+            )
+            and not (
+                allow_pod_destroy_dirty
+                and v.get("kind") in POD_DESTROY_DIRTY_KINDS
             )
             for v in audit.get("violations", []) or []
         )
@@ -1093,16 +1346,16 @@ def _profile_label(status: Any,
         return "timeline_collapse"
     if "pylon_destroyed" in kind_set or "pylon_hp_loss" in kind_set:
         return "pylon_loss"
-    if non_overridable:
-        return "objective_loss"
     if "grid_damage" in kind_set and "mech_lost" in kind_set:
         return "grid_and_mech_loss"
+    if "mech_lost" in kind_set:
+        return "mech_loss"
+    if non_overridable:
+        return "objective_loss"
     if "grid_damage" in kind_set:
         return "grid_loss"
     if "building_destroyed" in kind_set:
         return "building_loss"
-    if "mech_lost" in kind_set:
-        return "mech_loss"
     if "building_hp_loss" in kind_set:
         return "building_hp_loss"
     if (

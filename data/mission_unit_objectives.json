@@ -97,5 +97,41 @@
   "Mission_SpiderBoss": {
     "destroy": ["SpiderBoss"],
     "protect": []
+  },
+  "Mission_BlobberBoss": {
+    "destroy": ["BlobberBoss"],
+    "protect": []
+  },
+  "Mission_BouncerBoss": {
+    "destroy": ["BouncerBoss"],
+    "protect": []
+  },
+  "Mission_BurnbugBoss": {
+    "destroy": ["BurnbugBoss"],
+    "protect": []
+  },
+  "Mission_CrabBoss": {
+    "destroy": ["CrabBoss"],
+    "protect": []
+  },
+  "Mission_DungBoss": {
+    "destroy": ["DungBoss"],
+    "protect": []
+  },
+  "Mission_MosquitoBoss": {
+    "destroy": ["MosquitoBoss"],
+    "protect": []
+  },
+  "Mission_ScarabBoss": {
+    "destroy": ["ScarabBoss"],
+    "protect": []
+  },
+  "Mission_ShamanBoss": {
+    "destroy": ["ShamanBoss"],
+    "protect": []
+  },
+  "Mission_StarfishBoss": {
+    "destroy": ["StarfishBoss"],
+    "protect": []
   }
 }

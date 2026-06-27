@@ -9,9 +9,18 @@ import json
 import os
 import re
 
-from src.capture.save_parser import SAVE_DIR, Point, parse_save_file
+from src.capture.save_parser import Point, parse_save_file
 from src.model.board import Board
 from src.bridge.protocol import read_state
+from src.itb_paths import get_profile_dir, get_save_file
+
+
+def _read_save_text(filename: str, profile: str = "Alpha") -> str | None:
+    path = get_save_file(filename, profile)
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
 
 
 # data/mission_metadata.json — used to flag infinite-spawn missions so the
@@ -42,8 +51,9 @@ def _load_mission_metadata() -> dict:
 
 
 def _is_infinite_spawn_mission(mission_id: str) -> bool:
-    """Return True iff `mission_id` has `infinite_spawn: true` (or is a
-    boss mission with turn_limit=null) per data/mission_metadata.json.
+    """Return True iff `mission_id` has `infinite_spawn: true`, is a
+    boss mission with turn_limit=null per data/mission_metadata.json, or
+    is a missing-metadata Boss mission id.
 
     Boss missions and Mission_Infinite subclasses have no fixed turn
     limit; the bridge reports total_turns = current_turn so the solver
@@ -54,7 +64,7 @@ def _is_infinite_spawn_mission(mission_id: str) -> bool:
     md = _load_mission_metadata()
     rec = md.get(mission_id)
     if not isinstance(rec, dict):
-        return False
+        return mission_id.endswith("Boss")
     if rec.get("infinite_spawn"):
         return True
     # Boss missions also have turn_limit=null and grind for many turns.
@@ -155,13 +165,8 @@ def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
     Returns {(x, y): direction} where direction is 0-3.
     Direction: 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y).
     """
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return {}
     return _parse_conveyor_belts_from_save_text(content)
 
@@ -174,7 +179,7 @@ def _read_active_save_mission() -> dict | None:
     fought. SaveData does not update every sub-action, so callers should only
     use static mission metadata or fields where save staleness is acceptable.
     """
-    save_path = SAVE_DIR / "profile_Alpha" / "saveData.lua"
+    save_path = get_save_file("saveData.lua")
     if not save_path.exists():
         return None
     try:
@@ -226,6 +231,31 @@ def _read_active_bonus_objective_ids_from_save() -> list[int]:
         if isinstance(value, int):
             out.append(value)
     return out
+
+
+def _read_active_victory_turns_from_save() -> int | None:
+    """Return the active combat "Victory in N turns" counter from saveData."""
+    save_path = get_save_file("saveData.lua")
+    if not save_path.exists():
+        return None
+    try:
+        data = parse_save_file(save_path)
+    except Exception:
+        return None
+    region_data = data.get("RegionData", {})
+    if not isinstance(region_data, dict):
+        return None
+    battle_region = region_data.get("iBattleRegion", -1)
+    if not isinstance(battle_region, int) or battle_region < 0:
+        return None
+    region = region_data.get(f"region{battle_region}", {})
+    if not isinstance(region, dict):
+        return None
+    player = region.get("player", {})
+    if not isinstance(player, dict):
+        return None
+    victory = player.get("victory")
+    return victory if isinstance(victory, int) else None
 
 
 def _read_mission_force_progress_from_save() -> dict:
@@ -311,13 +341,8 @@ def _read_freeze_mines_from_save() -> set[tuple[int, int]]:
     Returns set of (x, y) bridge coordinates with freeze mines.
     """
     mines = set()
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return mines
 
     # Match: ["loc"] = Point( x, y ), ... ["item"] = "Freeze_Mine"
@@ -338,13 +363,8 @@ def _read_old_earth_mines_from_save() -> set[tuple[int, int]]:
     Returns set of (x, y) bridge coordinates with old earth mines.
     """
     mines = set()
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return mines
 
     # Match: ["loc"] = Point( x, y ), ... ["item"] = "Item_Mine"
@@ -448,19 +468,52 @@ def _parse_mech_stat_overlays_from_save_text(content: str) -> dict[int, dict]:
 
 
 def _read_mech_stat_overlays_from_save() -> dict[int, dict]:
-    profile_dir = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
-    )
     for filename in ("saveData.lua", "undoSave.lua"):
         try:
-            with open(os.path.join(profile_dir, filename)) as f:
-                content = f.read()
+            content = get_save_file(filename, "Alpha").read_text(
+                encoding="utf-8",
+                errors="replace",
+            )
         except OSError:
             continue
         records = _parse_mech_stat_overlays_from_save_text(content)
         if records:
             return records
     return {}
+
+
+def _active_pilot_skill_values(level: object, skill1: object, skill2: object) -> list[int]:
+    """Return level-gated pilot perk IDs from saveData.
+
+    The game uses zero as a real perk ID (``+2 Mech HP``), so slot presence
+    must be inferred from pilot level rather than by treating ``0`` as empty.
+    """
+    try:
+        lvl = int(level)
+    except (TypeError, ValueError):
+        lvl = 0
+    values: list[int] = []
+    for required_level, skill in ((1, skill1), (2, skill2)):
+        if lvl < required_level:
+            continue
+        try:
+            values.append(int(skill))
+        except (TypeError, ValueError):
+            continue
+    return values
+
+
+def _pilot_skill_max_hp_bonus(skills: list[int]) -> int:
+    """Return HP granted by leveled pilot skills visible in saveData.
+
+    Into the Breach stores pilot perks as numeric IDs. The base-game
+    ``+2 Mech HP`` perk is 0, and AE ``Skilled`` is 8 (+1 Move, +2 HP).
+    """
+    bonus = 0
+    for skill in skills:
+        if skill in {0, 8}:
+            bonus += 2
+    return bonus
 
 
 def _visual_coord(x: int, y: int) -> str:
@@ -512,12 +565,14 @@ def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
             unit["infected"] = rec["infected"]
 
         raw_skills = list(unit.get("pilot_skills", []) or [])
-        for save_key, label in (
-            ("pilot_skill1", "skill1"),
-            ("pilot_skill2", "skill2"),
-        ):
-            val = rec.get(save_key)
-            if isinstance(val, int) and val != 0:
+        active_skills = _active_pilot_skill_values(
+            rec.get("pilot_level"),
+            rec.get("pilot_skill1"),
+            rec.get("pilot_skill2"),
+        )
+        hp_skill_bonus = _pilot_skill_max_hp_bonus(active_skills)
+        for label, val in zip(("skill1", "skill2"), active_skills):
+            if isinstance(val, int):
                 token = f"{label}={val}"
                 if token not in raw_skills:
                     raw_skills.append(token)
@@ -528,6 +583,23 @@ def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
         if not isinstance(save_max, int) or save_max <= 0:
             continue
         old_max = unit.get("max_hp")
+        try:
+            bridge_max_for_repair = int(old_max or 0)
+        except (TypeError, ValueError):
+            bridge_max_for_repair = 0
+        if (
+            data.get("mission_id") == "Mission_Repair"
+            and bridge_max_for_repair > 0
+            and save_max > bridge_max_for_repair
+            and int(rec.get("health_power") or 0) <= 0
+        ):
+            continue
+        if hp_skill_bonus:
+            try:
+                bridge_max = int(unit.get("max_hp", 0) or 0)
+            except (TypeError, ValueError):
+                bridge_max = 0
+            save_max = max(save_max, bridge_max + hp_skill_bonus)
         if old_max == save_max:
             continue
         unit["bridge_reported_max_hp"] = old_max
@@ -620,14 +692,9 @@ def _read_terraform_grass_tiles_from_save(data: dict) -> set[tuple[int, int]]:
     if not region_keys:
         return set()
 
-    base = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
-    )
     for filename in ("saveData.lua", "undoSave.lua"):
-        try:
-            with open(os.path.join(base, filename)) as f:
-                content = f.read()
-        except OSError:
+        content = _read_save_text(filename)
+        if content is None:
             continue
         blocks = _region_blocks(content)
         tiles = _grass_tiles_from_region_blocks(blocks, region_keys)
@@ -683,15 +750,14 @@ def _read_teleporter_pads_from_save() -> list[tuple[int, int, int, int]]:
     found (saves on non-teleporter missions have no `["teleports"]` array).
     """
     pairs: list[tuple[int, int, int, int]] = []
-    profile_dir = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
-    )
+    profile_dir = get_profile_dir("Alpha")
     # saveData.lua first (live), undoSave.lua as fallback (post-restart
     # state where saveData.lua may be absent — observed 2026-04-25).
     for filename in ("saveData.lua", "undoSave.lua"):
         try:
-            with open(os.path.join(profile_dir, filename)) as f:
-                content = f.read()
+            content = (profile_dir / filename).read_text(
+                encoding="utf-8", errors="replace",
+            )
         except OSError:
             continue
 
@@ -723,13 +789,8 @@ def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
     Returns {uid: (piOrigin_x, piOrigin_y)}.
     """
     origins: dict[int, tuple[int, int]] = {}
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return origins
 
     # Match blocks that have iOwner + piOrigin + piQueuedShot. Filter to
@@ -788,6 +849,7 @@ def _normalize_queued_targets(bridge_units: list) -> None:
         if origin is None:
             continue
         ox, oy = origin
+        u["queued_origin"] = [ox, oy]
         # Offset from piOrigin to piQueuedShot. It may be a full same-axis
         # distance for artillery/projectiles; only diagonal offsets are not
         # valid queued line attacks here.
@@ -845,6 +907,7 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
         if 0 <= fx < 8 and 0 <= fy < 8 and (fx, fy) in targeted:
             u["queued_target_stale_save"] = [qx, qy]
             u["queued_target"] = [fx, fy]
+            u["queued_origin"] = [cx, cy]
             u["queued_target_reconciled_via_targeted_tiles"] = True
 
 
@@ -898,6 +961,19 @@ def _recover_grapple_probe_webs(bridge_units: list) -> None:
             unit["web_source_uid"] = candidates[0].get("uid", 0)
 
 
+def _derive_attack_order_from_units(data: dict) -> None:
+    """Prefer the bridge's live unit-list order for queued enemy attacks."""
+    order: list[int] = []
+    for unit in data.get("units", []) or []:
+        if unit.get("team") != 6 or not unit.get("has_queued_attack"):
+            continue
+        uid = unit.get("uid")
+        if isinstance(uid, int):
+            order.append(uid)
+    if order:
+        data["attack_order"] = order
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -924,6 +1000,10 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         bonus_ids = _read_active_bonus_objective_ids_from_save()
         if bonus_ids:
             data["bonus_objective_ids"] = bonus_ids
+    if "victory_turns" not in data:
+        victory_turns = _read_active_victory_turns_from_save()
+        if isinstance(victory_turns, int):
+            data["victory_turns"] = victory_turns
 
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a
@@ -933,6 +1013,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         _normalize_queued_targets(data["units"])
         _reconcile_flipped_queued_targets_with_targeted_tiles(data)
         _recover_grapple_probe_webs(data["units"])
+        _derive_attack_order_from_units(data)
         _mark_satellite_launch_danger_flying_immune(data)
 
     # Mission_Repair progress (Use 3 Repair Platforms). Old live modloader

@@ -13,12 +13,16 @@
 //! `snapshot_after_move` byte-for-byte: same field names, same types, same
 //! tile-sampling rule (touched tiles + 1-tile buffer).
 
-use crate::board::{ActionResult, Board};
+use crate::board::{ActionResult, Board, UnitFlags};
 use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
 use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
-use crate::simulate::{simulate_attack, simulate_move};
-use crate::turn_projection::board_to_json;
+use crate::simulate::{simulate_attack_with_target2, simulate_move};
+use crate::turn_projection::{
+    advance_mission_tides_warning,
+    board_to_json,
+    requeue_enemies_heuristic,
+};
 use crate::types::Terrain;
 use crate::weapons::{self, build_overlay_table, wid_from_str, WeaponTable, WId};
 
@@ -31,6 +35,8 @@ struct PlanAction {
     move_to: [u8; 2],
     weapon_id: String,
     target: [u8; 2],
+    #[serde(default)]
+    target2: Option<[u8; 2]>,
 }
 
 /// Top-level entrypoint. Returns the JSON string Python deserializes.
@@ -85,6 +91,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                     "buildings_lost": 0,
                     "buildings_damaged": 0,
                     "mech_damage_taken": 0,
+                    "mech_hp_repaired": 0,
                     "pods_collected": 0,
                     "repair_platforms_used": 0,
                     "spawns_blocked": 0,
@@ -123,8 +130,13 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         let attack_result = if illegal_move.is_some() {
             ActionResult::default()
         } else {
-            simulate_attack(
-                &mut board, mech_idx, wid, (act.target[0], act.target[1]), weapons_table,
+            simulate_attack_with_target2(
+                &mut board,
+                mech_idx,
+                wid,
+                (act.target[0], act.target[1]),
+                act.target2.map(|t| (t[0], t[1])),
+                weapons_table,
             )
         };
         if illegal_move.is_none() && wid == WId::None {
@@ -148,6 +160,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             "buildings_damaged":  attack_result.buildings_damaged,
             "grid_damage":        attack_result.grid_damage,
             "mech_damage_taken":  attack_result.mech_damage_taken,
+            "mech_hp_repaired":   move_result.mech_hp_repaired + attack_result.mech_hp_repaired,
             "mechs_killed":       attack_result.mechs_killed,
             "pods_collected":     move_result.pods_collected + attack_result.pods_collected,
             "repair_platforms_used": move_result.repair_platforms_used + attack_result.repair_platforms_used,
@@ -192,6 +205,24 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         + enemy_phase_result.mission_kills
         + spawn_block_result.mission_kills;
     board.add_mission_kills(total_projected_mission_kills);
+    for i in 0..board.unit_count as usize {
+        let u = &mut board.units[i];
+        if u.is_enemy() && u.hp > 0 {
+            u.queued_target_x = -1;
+            u.queued_target_y = -1;
+            u.flags.set(UnitFlags::HAS_QUEUED_ATTACK, false);
+        }
+    }
+    for i in 0..board.unit_count as usize {
+        let u = &mut board.units[i];
+        if u.is_player() && u.hp > 0 {
+            u.set_active(true);
+            u.flags.insert(UnitFlags::CAN_MOVE);
+        }
+    }
+    board.current_turn = board.current_turn.saturating_add(1);
+    advance_mission_tides_warning(&mut board);
+    requeue_enemies_heuristic(&mut board);
 
     // Build predicted_outcome (mirrors solver.py:744-756).
     let mut buildings_alive = 0i32;
@@ -328,6 +359,16 @@ fn capture_snapshot(
             crate::types::Team::Neutral => 2,
             crate::types::Team::Enemy   => 6,
         };
+        let queued_target = if u.queued_target_x >= 0 && u.queued_target_y >= 0 {
+            json!([u.queued_target_x, u.queued_target_y])
+        } else {
+            Value::Null
+        };
+        let queued_origin = if u.queued_origin_x >= 0 && u.queued_origin_y >= 0 {
+            json!([u.queued_origin_x, u.queued_origin_y])
+        } else {
+            Value::Null
+        };
         units.push(json!({
             "uid":     u.uid,
             "type":    u.type_name_str(),
@@ -338,6 +379,9 @@ fn capture_snapshot(
             "active":  u.active(),
             "is_mech": u.is_mech(),
             "team":    team_int,
+            "queued_target": queued_target,
+            "queued_origin": queued_origin,
+            "has_queued_attack": u.has_queued_attack(),
             "status": {
                 "fire":   u.fire(),
                 "acid":   u.acid(),
@@ -538,6 +582,153 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_snapshots_preserve_queued_attacks() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "PunchMech", "x": 4, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]},
+            {"uid": 99, "type": "BurnbugBoss", "x": 4, "y": 2,
+             "hp": 6, "max_hp": 6, "team": 6, "weapons": ["BurnbugAtkB"],
+             "has_queued_attack": true,
+             "queued_target": [3, 2],
+             "queued_origin": [4, 2]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [4, 4],
+          "weapon_id": "None",
+          "target": [255, 255]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        for phase in ["post_move", "post_attack"] {
+            let units = v["predicted_states"][0][phase]["units"].as_array().unwrap();
+            let boss = units.iter().find(|u| u["uid"] == 99).unwrap();
+            assert_eq!(boss["queued_target"], json!([3, 2]));
+            assert_eq!(boss["queued_origin"], json!([4, 2]));
+            assert_eq!(boss["has_queued_attack"], true);
+        }
+    }
+
+    #[test]
+    fn replay_solution_reverse_thrusters_backblast_smoke_does_not_same_action_heal() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 0, "type": "NeedleMech", "x": 3, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "flying": true, "move": 4, "active": true,
+             "weapons": ["Brute_KickBack", "Passive_HealingSmoke"]},
+            {"uid": 10, "type": "Spiderling1", "x": 3, "y": 2,
+             "hp": 1, "max_hp": 1, "team": 6}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 3],
+          "weapon_id": "Brute_KickBack",
+          "target": [3, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(v["action_results"][0]["mech_damage_taken"], 1);
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let mech = post_attack["units"].as_array().unwrap()
+            .iter()
+            .find(|u| u["uid"] == 0)
+            .unwrap();
+        assert_eq!(
+            mech["hp"], 2,
+            "Reverse Thrusters recoil should remain in replay snapshots until a later Nanofilter trigger"
+        );
+        let tiles = post_attack["tiles_changed"].as_array().unwrap();
+        let backblast = tiles.iter()
+            .find(|t| t["x"] == 3 && t["y"] == 2)
+            .expect("backblast tile should be serialized");
+        assert_eq!(
+            backblast["smoke"], true,
+            "Reverse Thrusters smokes the damaged backblast tile"
+        );
+        assert!(
+            tiles.iter().all(|t| !(t["x"] == 3 && t["y"] == 3 && t["smoke"] == true)),
+            "Reverse Thrusters should not leave smoke on the launch tile"
+        );
+    }
+
+    #[test]
+    fn replay_solution_smoldering_shells_adjacent_live_footprint() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 4, "y": 3, "terrain": "building", "building_hp": 1}
+          ],
+          "units": [
+            {"uid": 1, "type": "SmokeMech", "x": 4, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true,
+             "weapons": ["Ranged_SmokeFire"]},
+            {"uid": 653, "type": "Scorpion1", "x": 4, "y": 2,
+             "hp": 3, "max_hp": 3, "team": 6, "mech": false,
+             "move": 3, "active": false,
+             "weapons": ["ScorpionAtk1"]},
+            {"uid": 655, "type": "Spiderling1", "x": 3, "y": 2,
+             "hp": 1, "max_hp": 1, "team": 6, "mech": false,
+             "move": 3, "active": false, "fire": true,
+             "weapons": ["SpiderlingAtk1"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [4, 4],
+          "weapon_id": "Ranged_SmokeFire",
+          "target": [4, 2]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let units = post_attack["units"].as_array().unwrap();
+        let spiderling = units.iter().find(|u| u["uid"] == 655).unwrap();
+        assert_eq!(
+            spiderling["status"]["fire"], false,
+            "Smoldering Shells adjacent effect should extinguish occupied adjacent units"
+        );
+        let building_tile = post_attack["tiles_changed"].as_array().unwrap()
+            .iter()
+            .find(|t| t["x"] == 4 && t["y"] == 3)
+            .unwrap();
+        assert_eq!(
+            building_tile["smoke"], false,
+            "Smoldering Shells adjacent effect should skip building tiles"
+        );
+    }
+
+    #[test]
     fn replay_solution_counts_aerial_bombs_pod_collection() {
         let bridge = r#"{
           "tiles": [
@@ -607,6 +798,40 @@ mod tests {
         assert_eq!(v["predicted_outcome"]["mechs_alive"], 1);
         assert_eq!(v["predicted_outcome"]["enemies_alive"], 0);
         assert!(v["final_board"].is_object());
+    }
+
+    #[test]
+    fn replay_solution_mission_tides_advances_final_warning_lane() {
+        let bridge = r#"{
+          "mission_id": "Mission_Tides",
+          "turn": 2,
+          "total_turns": 3,
+          "tiles": [],
+          "environment_danger_v2": [[1, 3, 1, 1, 1]],
+          "spawning_tiles": [],
+          "remaining_spawns": 0,
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "units": [
+            {"uid": 0, "type": "PunchMech", "x": 1, "y": 5,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]}
+          ]
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [1, 4],
+          "weapon_id": "None",
+          "target": [255, 255]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let final_board = &v["final_board"];
+        assert_eq!(final_board["turn"], 3);
+        let danger = final_board["environment_danger_v2"].as_array().unwrap();
+        assert!(danger.iter().any(|entry| entry == &json!([1, 4, 1, 1, 1])));
+        assert!(!danger.iter().any(|entry| entry == &json!([1, 3, 1, 1, 1])));
     }
 
     #[test]

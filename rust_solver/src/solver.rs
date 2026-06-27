@@ -62,7 +62,35 @@ pub(crate) fn viscera_nanobots_heal_from_events(events: &[String]) -> i32 {
         .sum()
 }
 
+pub(crate) fn powered_blast_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_powered_blast:"))
+        .count() as i32
+}
+
+pub(crate) fn reverse_thrusters_four_damage_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_on_the_backburner:"))
+        .count() as i32
+}
+
 // ── MechAction ───────────────────────────────────────────────────────────────
+
+pub(crate) fn feed_the_flame_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_feed_the_flame:"))
+        .count() as i32
+}
+
+pub(crate) fn arachnoid_spawns_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_spider_breeding:"))
+        .count() as i32
+}
 
 #[derive(Clone, Debug)]
 pub struct MechAction {
@@ -71,6 +99,7 @@ pub struct MechAction {
     pub move_to: (u8, u8),
     pub weapon: WId,
     pub target: (u8, u8),
+    pub target2: Option<(u8, u8)>,
     pub description: String,
 }
 
@@ -199,6 +228,30 @@ impl BoundedTopK {
 
 // ── Weapon target enumeration ────────────────────────────────────────────────
 
+fn reverse_thrusters_landing_blocked(
+    board: &Board,
+    x: u8,
+    y: u8,
+    flying: bool,
+    vacated: (u8, u8),
+) -> bool {
+    let tile = board.tile(x, y);
+    if tile.terrain.blocks_all() {
+        return true;
+    }
+    if !flying && tile.terrain.is_deadly_ground() {
+        return true;
+    }
+    if tile.terrain == Terrain::Building {
+        return true;
+    }
+    if (x, y) != vacated {
+        board.unit_at(x, y).is_some() || board.wreck_at(x, y)
+    } else {
+        false
+    }
+}
+
 pub(crate) fn get_weapon_targets(
     board: &Board,
     mx: u8,
@@ -218,6 +271,33 @@ pub(crate) fn get_weapon_targets(
         for pos in reachable_tiles_with_speed(board, unit_idx, range) {
             if pos != (mx, my) {
                 targets.push(pos);
+            }
+        }
+        return targets;
+    }
+
+    if is_thermal_discharger(weapon_id) {
+        let max_r = wdef.range_max.max(1);
+        for &(dx, dy) in &DIRS {
+            for i in 1..=(max_r as i8) {
+                let nx = mx as i8 + dx * i;
+                let ny = my as i8 + dy * i;
+                if !in_bounds(nx, ny) { break; }
+                targets.push((nx as u8, ny as u8));
+            }
+        }
+        return targets;
+    }
+
+    if is_firestorm_generator(weapon_id) {
+        let min_r = wdef.range_min.max(1);
+        let max_r = wdef.range_max.max(min_r);
+        for &(dx, dy) in &DIRS {
+            for i in (min_r as i8)..=(max_r as i8) {
+                let nx = mx as i8 + dx * i;
+                let ny = my as i8 + dy * i;
+                if !in_bounds(nx, ny) { break; }
+                targets.push((nx as u8, ny as u8));
             }
         }
         return targets;
@@ -345,7 +425,11 @@ pub(crate) fn get_weapon_targets(
                     let tile = board.tile(ux, uy);
                     let has_unit = board.unit_at(ux, uy).is_some();
                     let is_mountain = tile.terrain == Terrain::Mountain;
-                    let is_building = tile.is_building();
+                    // Destroyed unique/objective buildings can remain encoded
+                    // as terrain=Building with HP 0. Live Grappling Hook still
+                    // treats that ruin as the first projectile blocker, so do
+                    // not enumerate units behind it.
+                    let is_building = tile.terrain == Terrain::Building;
                     if has_unit || is_mountain || is_building {
                         // First blocker — this is the sole valid target in
                         // this direction. Push it even if non-pushable
@@ -362,12 +446,11 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::Artillery => {
             let min_r = wdef.range_min;
-            let omnidirectional = is_arachnoid_injector(weapon_id);
             for x in 0..8u8 {
                 for y in 0..8u8 {
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r { continue; }
-                    if !omnidirectional && x != mx && y != my { continue; } // axis-aligned only
+                    if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     let zero_damage_building_center_ok = matches!(
                         weapon_id,
@@ -383,6 +466,32 @@ pub(crate) fn get_weapon_targets(
                     }
                     targets.push((x, y));
                 }
+            }
+        }
+        WeaponType::Deploy => {
+            let min_r = wdef.range_min.max(1);
+            let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
+            for &(dx, dy) in &DIRS {
+                for i in (min_r as i8)..=(max_r as i8) {
+                    let nx = mx as i8 + dx * i;
+                    let ny = my as i8 + dy * i;
+                    if !in_bounds(nx, ny) { break; }
+                    let ux = nx as u8;
+                    let uy = ny as u8;
+                    if !board.is_blocked(ux, uy, false) {
+                        targets.push((ux, uy));
+                    }
+                }
+            }
+        }
+        WeaponType::TwoClick if is_force_swap(weapon_id) => {
+            for (first, _second) in enumerate_force_swap_targets(board, mx, my) {
+                targets.push(first);
+            }
+        }
+        WeaponType::TwoClick if is_ricochet_rocket(weapon_id) => {
+            for (first, _second) in enumerate_ricochet_targets(board, mx, my) {
+                targets.push(first);
             }
         }
         WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
@@ -428,6 +537,33 @@ pub(crate) fn get_weapon_targets(
                 let ny = my as i8 + dy;
                 if in_bounds(nx, ny) {
                     targets.push((nx as u8, ny as u8));
+                }
+            }
+        }
+        WeaponType::DashAway => {
+            let attacker_flying = board
+                .unit_at(mx, my)
+                .or_else(|| board.unit_at(mech_from.0, mech_from.1))
+                .map(|idx| board.units[idx].flying())
+                .unwrap_or(false);
+            let min_r = wdef.range_min.max(1);
+            let max_r = if wdef.range_max == 0 { 7 } else { wdef.range_max };
+            for &(dx, dy) in &DIRS {
+                for i in (min_r as i8)..=(max_r as i8) {
+                    let nx = mx as i8 + dx * i;
+                    let ny = my as i8 + dy * i;
+                    if !in_bounds(nx, ny) { break; }
+                    let ux = nx as u8;
+                    let uy = ny as u8;
+                    if !reverse_thrusters_landing_blocked(
+                        board,
+                        ux,
+                        uy,
+                        attacker_flying,
+                        mech_from,
+                    ) {
+                        targets.push((ux, uy));
+                    }
                 }
             }
         }
@@ -549,7 +685,7 @@ fn prime_leap_blocked_by_web(board: &Board, mx: u8, my: u8, weapon_id: WId) -> b
 
 // ── Action enumeration ───────────────────────────────────────────────────────
 
-type Action = ((u8, u8), WId, (u8, u8)); // (move_to, weapon, target)
+type Action = ((u8, u8), WId, (u8, u8), Option<(u8, u8)>); // (move_to, weapon, target, target2)
 
 fn post_move_board_for_attack(board: &Board, mech_idx: usize, move_to: (u8, u8)) -> Option<Board> {
     let unit = &board.units[mech_idx];
@@ -570,6 +706,142 @@ fn attack_origin_after_move(board: &Board, mech_idx: usize, move_to: (u8, u8)) -
         }
     }
     move_to
+}
+
+fn force_swap_eligible(board: &Board, unit_idx: usize) -> bool {
+    let unit = &board.units[unit_idx];
+    unit.alive() && (unit.pushable() || unit.is_mech())
+}
+
+fn enumerate_force_swap_targets(board: &Board, sx: u8, sy: u8) -> Vec<((u8, u8), (u8, u8))> {
+    let mut out = Vec::new();
+    for &(dx, dy) in &DIRS {
+        let fx = sx as i8 + dx;
+        let fy = sy as i8 + dy;
+        if !in_bounds(fx, fy) {
+            continue;
+        }
+        let first = (fx as u8, fy as u8);
+        let Some(first_idx) = board.unit_at(first.0, first.1) else {
+            continue;
+        };
+        if !force_swap_eligible(board, first_idx) {
+            continue;
+        }
+        for i in 0..board.unit_count as usize {
+            if i == first_idx || !force_swap_eligible(board, i) {
+                continue;
+            }
+            let u = &board.units[i];
+            if (u.x, u.y) == (sx, sy) {
+                continue;
+            }
+            out.push((first, (u.x, u.y)));
+        }
+    }
+    out
+}
+
+fn solver_projectile_blocker_at(board: &Board, x: u8, y: u8) -> bool {
+    let tile = board.tile(x, y);
+    tile.terrain == Terrain::Mountain || tile.is_building() || board.unit_at(x, y).is_some()
+}
+
+fn first_projectile_blocker_from(
+    board: &Board,
+    sx: i8,
+    sy: i8,
+    dx: i8,
+    dy: i8,
+) -> Option<(u8, u8)> {
+    for i in 1..8i8 {
+        let nx = sx + dx * i;
+        let ny = sy + dy * i;
+        if !in_bounds(nx, ny) {
+            break;
+        }
+        let x = nx as u8;
+        let y = ny as u8;
+        if solver_projectile_blocker_at(board, x, y) {
+            return Some((x, y));
+        }
+    }
+    None
+}
+
+fn enumerate_ricochet_targets(board: &Board, sx: u8, sy: u8) -> Vec<((u8, u8), (u8, u8))> {
+    let mut out = Vec::new();
+    for (dir, &(dx, dy)) in DIRS.iter().enumerate() {
+        let Some(first) = first_projectile_blocker_from(
+            board,
+            sx as i8,
+            sy as i8,
+            dx,
+            dy,
+        ) else {
+            continue;
+        };
+        if board.tile(first.0, first.1).is_building()
+            && board.unit_at(first.0, first.1).is_none()
+        {
+            continue;
+        }
+        for side in [(dir + 1) % 4, (dir + 3) % 4] {
+            let (sdx, sdy) = DIRS[side];
+            let mut fallback = None;
+            for i in 1..8i8 {
+                let tx = first.0 as i8 + sdx * i;
+                let ty = first.1 as i8 + sdy * i;
+                if !in_bounds(tx, ty) {
+                    break;
+                }
+                let second = (tx as u8, ty as u8);
+                if fallback.is_none() {
+                    fallback = Some(second);
+                }
+                if solver_projectile_blocker_at(board, second.0, second.1) {
+                    out.push((first, second));
+                    fallback = None;
+                    break;
+                }
+            }
+            if let Some(second) = fallback {
+                out.push((first, second));
+            }
+        }
+    }
+    out
+}
+
+fn weapon_can_damage_terrain(weapon_id: WId, wdef: &WeaponDef) -> bool {
+    if weapon_id == WId::None || weapon_id == WId::Repair {
+        return false;
+    }
+    wdef.damage > 0 || wdef.damage_outer > 0 || wdef.fire()
+}
+
+fn tile_weapon_terrain_effect(tile: &Tile, weapon_id: WId, wdef: &WeaponDef) -> bool {
+    if !weapon_can_damage_terrain(weapon_id, wdef) {
+        return false;
+    }
+    match tile.terrain {
+        Terrain::Mountain => tile.building_hp > 0,
+        Terrain::Ice => true,
+        Terrain::Ground => tile.cracked(),
+        Terrain::Forest | Terrain::Sand => wdef.fire(),
+        _ => false,
+    }
+}
+
+fn tile_fire_weapon_status_effect(tile: &Tile) -> bool {
+    if !matches!(
+        tile.terrain,
+        Terrain::Ground | Terrain::Sand | Terrain::Forest | Terrain::Rubble
+            | Terrain::Building | Terrain::Ice | Terrain::Fire | Terrain::Mountain
+    ) {
+        return false;
+    }
+    !tile.on_fire() || tile.smoke() || matches!(tile.terrain, Terrain::Sand | Terrain::Forest)
 }
 
 /// Check if a weapon action would have any effect on the board.
@@ -610,6 +882,61 @@ fn weapon_action_has_effect(
         tile.is_building() && !tile.shield()
     };
 
+    if is_thermal_discharger(weapon_id) {
+        let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+            return false;
+        };
+        let (dx, dy) = DIRS[dir];
+        let distance = (target.0 as i8 - mx as i8).unsigned_abs()
+            + (target.1 as i8 - my as i8).unsigned_abs();
+        if distance == 0 || distance > wdef.range_max.max(1) {
+            return false;
+        }
+        for i in 1..=(distance as i8) {
+            let px = mx as i8 + dx * i;
+            let py = my as i8 + dy * i;
+            if !in_bounds(px, py) { break; }
+            let ux = px as u8;
+            let uy = py as u8;
+            if unit_at(ux, uy)
+                || tile_weapon_terrain_effect(board.tile(ux, uy), weapon_id, wdef)
+                || (wdef.fire() && tile_fire_weapon_status_effect(board.tile(ux, uy)))
+            {
+                return true;
+            }
+            for &side in &[(dir + 1) % 4, (dir + 3) % 4] {
+                let (sdx, sdy) = DIRS[side];
+                let sx = px + sdx;
+                let sy = py + sdy;
+                if in_bounds(sx, sy) && unit_at(sx as u8, sy as u8) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    if is_firestorm_generator(weapon_id) {
+        let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+            return false;
+        };
+        let distance = (target.0 as i8 - mx as i8).unsigned_abs()
+            + (target.1 as i8 - my as i8).unsigned_abs();
+        if distance < wdef.range_min || distance > wdef.range_max {
+            return false;
+        }
+        let (dx, dy) = DIRS[dir];
+        for i in 1..=(distance as i8) {
+            let px = mx as i8 + dx * i;
+            let py = my as i8 + dy * i;
+            if !in_bounds(px, py) { break; }
+            if tile_fire_weapon_status_effect(board.tile(px as u8, py as u8)) {
+                return true;
+            }
+        }
+        return unit_at(target.0, target.1);
+    }
+
     match wdef.weapon_type {
         WeaponType::Melee => {
             // For path_size>1 melee (Prime_Spear) any unit in the cardinal
@@ -617,6 +944,9 @@ fn weapon_action_has_effect(
             // damages every tile it passes through.
             if unit_at(target.0, target.1) { return true; }
             let target_tile = board.tile(target.0, target.1);
+            if tile_weapon_terrain_effect(target_tile, weapon_id, wdef) {
+                return true;
+            }
             if wdef.chain() && wdef.building_immune() && target_tile.is_building() {
                 return true;
             }
@@ -632,6 +962,11 @@ fn weapon_action_has_effect(
                     let py = my as i8 + dy * i;
                     if !in_bounds(px, py) { break; }
                     if unit_at(px as u8, py as u8) { return true; }
+                    if tile_weapon_terrain_effect(
+                        board.tile(px as u8, py as u8), weapon_id, wdef
+                    ) {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -648,6 +983,9 @@ fn weapon_action_has_effect(
                 if !in_bounds(px, py) { break; }
                 if unit_at(px as u8, py as u8) { return true; }
                 let tile = board.tile(px as u8, py as u8);
+                if tile_weapon_terrain_effect(tile, weapon_id, wdef) {
+                    return true;
+                }
                 if tile.terrain == Terrain::Mountain || tile.is_building() { break; }
             }
             false
@@ -677,26 +1015,35 @@ fn weapon_action_has_effect(
                 }
                 return false;
             }
+            let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+                return false;
+            };
+            let distance = (target.0 as i8 - mx as i8).unsigned_abs()
+                + (target.1 as i8 - my as i8).unsigned_abs();
+            if distance < wdef.range_min.max(1) {
+                return false;
+            }
+            if tile_weapon_terrain_effect(board.tile(target.0, target.1), weapon_id, wdef) {
+                return true;
+            }
             if wdef.shield() {
                 if shieldable_at(target.0, target.1) {
                     return true;
                 }
-                if let Some(dir) = cardinal_direction(mx, my, target.0, target.1) {
-                    if wdef.aoe_behind() {
-                        let (dx, dy) = DIRS[dir];
-                        let bx = target.0 as i8 + dx;
-                        let by = target.1 as i8 + dy;
-                        if in_bounds(bx, by) && shieldable_at(bx as u8, by as u8) {
-                            return true;
-                        }
+                if wdef.aoe_behind() {
+                    let (dx, dy) = DIRS[dir];
+                    let bx = target.0 as i8 + dx;
+                    let by = target.1 as i8 + dy;
+                    if in_bounds(bx, by) && shieldable_at(bx as u8, by as u8) {
+                        return true;
                     }
-                    if wdef.aoe_adjacent() {
-                        for &(dx, dy) in &DIRS {
-                            let ax = target.0 as i8 + dx;
-                            let ay = target.1 as i8 + dy;
-                            if in_bounds(ax, ay) && shieldable_at(ax as u8, ay as u8) {
-                                return true;
-                            }
+                }
+                if wdef.aoe_adjacent() {
+                    for &(dx, dy) in &DIRS {
+                        let ax = target.0 as i8 + dx;
+                        let ay = target.1 as i8 + dy;
+                        if in_bounds(ax, ay) && shieldable_at(ax as u8, ay as u8) {
+                            return true;
                         }
                     }
                 }
@@ -724,7 +1071,14 @@ fn weapon_action_has_effect(
             let target_unit = &board.units[unit_idx];
             target_unit.pushable() || target_unit.is_mech()
         }
-        WeaponType::SelfAoe => unit_at(mx, my) || adj_has_unit(mx, my),
+        WeaponType::Deploy => !board.is_blocked(target.0, target.1, false),
+        WeaponType::SelfAoe => {
+            if is_walking_bomb_trigger(weapon_id) {
+                adj_has_unit(mx, my)
+            } else {
+                unit_at(mx, my) || adj_has_unit(mx, my)
+            }
+        },
         WeaponType::Charge => {
             // Charges forward until it hits something
             let dx = (target.0 as i8 - mx as i8).signum();
@@ -794,7 +1148,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         let pos = (unit.x, unit.y);
         let tile = board.tile(pos.0, pos.1);
         if !tile.smoke() {
-            actions.push((pos, WId::Repair, pos));
+            actions.push((pos, WId::Repair, pos, None));
         }
         return actions;
     }
@@ -812,7 +1166,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
     for &pos in &positions {
         // Move-only / skip — always available so search can stay put.
         // (For MID_ACTION mechs, this is the "skip attack" option.)
-        actions.push((pos, WId::None, (255, 255)));
+        actions.push((pos, WId::None, (255, 255), None));
 
         // Teleporter pads fire during the move phase. Attack targeting,
         // smoke checks, and effect filtering must therefore use the post-swap
@@ -841,9 +1195,19 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
             let w1_id = WId::from_raw(action_unit.weapon.0);
             if w1_id != WId::None {
                 let mech_from = (unit.x, unit.y);
-                for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w1_id, mech_from, weapons) {
-                    if weapon_action_has_effect(action_board, attack_pos, w1_id, target, weapons) {
-                        actions.push((pos, w1_id, target));
+                if is_force_swap(w1_id) {
+                    for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w1_id, first, Some(second)));
+                    }
+                } else if is_ricochet_rocket(w1_id) && !action_unit.web() {
+                    for (first, second) in enumerate_ricochet_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w1_id, first, Some(second)));
+                    }
+                } else {
+                    for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w1_id, mech_from, weapons) {
+                        if weapon_action_has_effect(action_board, attack_pos, w1_id, target, weapons) {
+                            actions.push((pos, w1_id, target, None));
+                        }
                     }
                 }
             }
@@ -851,9 +1215,19 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
             // Secondary weapon
             let w2_id = WId::from_raw(action_unit.weapon2.0);
             if w2_id != WId::None {
-                for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w2_id, (unit.x, unit.y), weapons) {
-                    if weapon_action_has_effect(action_board, attack_pos, w2_id, target, weapons) {
-                        actions.push((pos, w2_id, target));
+                if is_force_swap(w2_id) {
+                    for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w2_id, first, Some(second)));
+                    }
+                } else if is_ricochet_rocket(w2_id) && !action_unit.web() {
+                    for (first, second) in enumerate_ricochet_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w2_id, first, Some(second)));
+                    }
+                } else {
+                    for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w2_id, (unit.x, unit.y), weapons) {
+                        if weapon_action_has_effect(action_board, attack_pos, w2_id, target, weapons) {
+                            actions.push((pos, w2_id, target, None));
+                        }
                     }
                 }
             }
@@ -865,7 +1239,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                 || action_unit.frozen()
                 || action_unit.infected()
             {
-                actions.push((pos, WId::Repair, attack_pos));
+                actions.push((pos, WId::Repair, attack_pos, None));
             }
         }
     }
@@ -993,6 +1367,107 @@ fn direct_weapon_damage_would_kill(unit: &Unit, wdef: &WeaponDef) -> bool {
     damage >= unit.hp
 }
 
+fn mission_mountain_tile_score(board: &Board, x: u8, y: u8) -> i32 {
+    if board.mission_mountain_target == 0 {
+        return 0;
+    }
+    let tile = board.tile(x, y);
+    if tile.terrain != Terrain::Mountain || tile.building_hp == 0 {
+        return 0;
+    }
+    if tile.building_hp == 1 { 900 } else { 220 }
+}
+
+fn first_projectile_terrain_effect_score(
+    board: &Board,
+    origin: (u8, u8),
+    target: (u8, u8),
+    weapon_id: WId,
+    wdef: &WeaponDef,
+) -> i32 {
+    let dx = (target.0 as i8 - origin.0 as i8).signum();
+    let dy = (target.1 as i8 - origin.1 as i8).signum();
+    if dx == 0 && dy == 0 {
+        return 0;
+    }
+    for i in 1..8i8 {
+        let px = origin.0 as i8 + dx * i;
+        let py = origin.1 as i8 + dy * i;
+        if !in_bounds(px, py) { break; }
+        let ux = px as u8;
+        let uy = py as u8;
+        if board.unit_at(ux, uy).is_some() {
+            return 0;
+        }
+        let tile = board.tile(ux, uy);
+        if tile_weapon_terrain_effect(tile, weapon_id, wdef) {
+            return mission_mountain_tile_score(board, ux, uy);
+        }
+        if tile.terrain == Terrain::Mountain || tile.is_building() {
+            break;
+        }
+    }
+    0
+}
+
+fn mission_mountain_action_score(
+    board: &Board,
+    origin: (u8, u8),
+    weapon_id: WId,
+    target: (u8, u8),
+    weapons: &WeaponTable,
+) -> i32 {
+    if board.mission_mountain_target == 0
+        || weapon_id == WId::None
+        || weapon_id == WId::Repair
+        || target.0 >= 8
+    {
+        return 0;
+    }
+    let wdef = &weapons[weapon_id as usize];
+    match wdef.weapon_type {
+        WeaponType::Projectile | WeaponType::Laser | WeaponType::Pull => {
+            first_projectile_terrain_effect_score(board, origin, target, weapon_id, wdef)
+        }
+        WeaponType::Melee | WeaponType::Artillery => {
+            if tile_weapon_terrain_effect(board.tile(target.0, target.1), weapon_id, wdef) {
+                mission_mountain_tile_score(board, target.0, target.1)
+            } else {
+                0
+            }
+        }
+        WeaponType::SelfAoe => {
+            if target != origin {
+                return 0;
+            }
+            DIRS.iter().map(|&(dx, dy)| {
+                let x = origin.0 as i8 + dx;
+                let y = origin.1 as i8 + dy;
+                if in_bounds(x, y) {
+                    mission_mountain_tile_score(board, x as u8, y as u8)
+                } else {
+                    0
+                }
+            }).sum()
+        }
+        WeaponType::Leap => {
+            if !wdef.aoe_adjacent() {
+                return 0;
+            }
+            DIRS.iter().map(|&(dx, dy)| {
+                let x = target.0 as i8 + dx;
+                let y = target.1 as i8 + dy;
+                if in_bounds(x, y) {
+                    mission_mountain_tile_score(board, x as u8, y as u8)
+                } else {
+                    0
+                }
+            }).sum()
+        }
+        _ => 0,
+    }
+}
+
 fn prune_actions(
     board: &Board,
     mech_idx: usize,
@@ -1006,7 +1481,7 @@ fn prune_actions(
     if actions.len() <= max_n { return; }
 
     // Score each action by heuristic
-    let mut scored: Vec<(i32, usize)> = actions.iter().enumerate().map(|(i, &(move_to, weapon_id, target))| {
+    let mut scored: Vec<(i32, usize)> = actions.iter().enumerate().map(|(i, &(move_to, weapon_id, target, target2))| {
         let mut s = 0i32;
         let attack_origin = attack_origin_after_move(board, mech_idx, move_to);
 
@@ -1019,10 +1494,13 @@ fn prune_actions(
         if weapon_id != WId::None && weapon_id != WId::Repair && target.0 < 8 {
             let target_bit = 1u64 << xy_to_idx(target.0, target.1);
             if threat_tiles & target_bit != 0 { s += 100; }
+            if let Some((tx2, ty2)) = target2 {
+                let target2_bit = 1u64 << xy_to_idx(tx2, ty2);
+                if threat_tiles & target2_bit != 0 { s += 100; }
+            }
 
             // Check if target has a unit (prefer attacking units over empty)
             if board.unit_at(target.0, target.1).is_some() { s += 10; }
-
             // Friendly fire penalty
             if let Some(idx) = board.unit_at(target.0, target.1) {
                 if board.units[idx].is_player() { s -= 300; }
@@ -1032,6 +1510,21 @@ fn prune_actions(
             // When a push is blocked by a building, both the unit and building take
             // 1 bump damage — losing grid power. Apply -300 per building at risk.
             let wdef = &weapons[weapon_id as usize];
+            if is_arachnoid_injector(weapon_id) {
+                if let Some(idx) = board.unit_at(target.0, target.1) {
+                    let target_unit = &board.units[idx];
+                    if target_unit.is_enemy() && direct_weapon_damage_would_kill(target_unit, wdef) {
+                        s += 2500;
+                    }
+                }
+            }
+            s += mission_mountain_action_score(
+                board,
+                attack_origin,
+                weapon_id,
+                target,
+                weapons,
+            );
             s += aerial_bombs_transit_smoke_score(
                 board,
                 attack_origin,
@@ -1039,6 +1532,35 @@ fn prune_actions(
                 weapon_id,
                 wdef,
             );
+            if is_reverse_thrusters(weapon_id) {
+                if let Some((hx, hy, distance, _dir)) = reverse_thrusters_hit_tile(
+                    attack_origin.0,
+                    attack_origin.1,
+                    target.0,
+                    target.1,
+                ) {
+                    let hit_bit = 1u64 << xy_to_idx(hx, hy);
+                    if threat_tiles & hit_bit != 0 { s += 100; }
+                    if let Some(idx) = board.unit_at(hx, hy) {
+                        if board.units[idx].is_enemy() {
+                            s += 40;
+                            let base = distance.saturating_add(wdef.damage);
+                            let effective = if board.units[idx].acid() {
+                                base.saturating_mul(2)
+                            } else if board.units[idx].armor() {
+                                base.saturating_sub(1)
+                            } else {
+                                base
+                            };
+                            if effective >= 4 {
+                                s += 2000;
+                            }
+                        } else if board.units[idx].is_player() {
+                            s -= 300;
+                        }
+                    }
+                }
+            }
             if wdef.push != PushDir::None {
                 match wdef.weapon_type {
                     // Melee / Projectile / Charge / Laser: Forward push on the hit target
@@ -1220,6 +1742,12 @@ fn search_recursive(
     mission_kills_so_far: i32,
     bumps_so_far: i32,
     nanobots_heal_so_far: i32,
+    powered_blast_so_far: i32,
+    reverse_thrusters_four_damage_so_far: i32,
+    feed_the_flame_so_far: i32,
+    arachnoid_spawns_so_far: i32,
+    stay_with_me_heal_so_far: i32,
+    pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
     building_threats: u64,
@@ -1258,7 +1786,7 @@ fn search_recursive(
             &b_eval, spawn_points, weights,
             projected_kills, projected_mission_kills,
             bumps_so_far, psion_before, building_threats,
-        );
+        ) + consumed_spawn_block_bonus(&b_eval, spawn_points, weights, spawn_block_result.spawns_blocked);
         // Tier 2 soft-disable bias: penalize any candidate plan that
         // relies on a weapon in the session's disabled_actions list.
         // Subtracted at terminal evaluation so the search retains its
@@ -1287,9 +1815,28 @@ fn search_recursive(
         let mission_action_bonus = mission_missiles_action_bonus(&b_eval, actions_so_far);
         let nanobots_heal_bonus =
             nanobots_heal_so_far as f64 * weights.viscera_nanobots_heal_bonus;
+        let powered_blast_bonus =
+            powered_blast_so_far as f64 * weights.powered_blast_bonus;
+        let reverse_thrusters_four_damage_bonus =
+            reverse_thrusters_four_damage_so_far as f64
+                * weights.reverse_thrusters_four_damage_bonus;
+        let feed_the_flame_bonus =
+            feed_the_flame_so_far as f64 * weights.feed_the_flame_bonus;
+        let arachnoid_spawn_bonus =
+            arachnoid_spawns_so_far as f64 * weights.arachnoid_spawn_bonus;
+        let stay_with_me_heal_bonus =
+            stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
+        let pod_collected_penalty =
+            pods_collected_so_far as f64 * weights.pod_collected;
         let score = raw
             + mission_action_bonus
             + nanobots_heal_bonus
+            + powered_blast_bonus
+            + reverse_thrusters_four_damage_bonus
+            + feed_the_flame_bonus
+            + arachnoid_spawn_bonus
+            + stay_with_me_heal_bonus
+            + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
 
 
@@ -1316,7 +1863,12 @@ fn search_recursive(
         search_recursive(
             board, mech_order, depth + 1,
             actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far,
-            nanobots_heal_so_far, soft_disable_penalty_so_far,
+            nanobots_heal_so_far, powered_blast_so_far,
+            reverse_thrusters_four_damage_so_far,
+            feed_the_flame_so_far,
+            arachnoid_spawns_so_far,
+            stay_with_me_heal_so_far,
+            pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
@@ -1334,7 +1886,7 @@ fn search_recursive(
     let mut actions = enumerate_actions(board, mech_idx, weapons);
     prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, spawn_bits, max_actions, weapons);
 
-    for &(move_to, weapon_id, target) in &actions {
+    for &(move_to, weapon_id, target, target2) in &actions {
         if Instant::now() > deadline { return; }
 
         // Soft-disable: a weapon in the session's disabled_actions mask has
@@ -1366,8 +1918,22 @@ fn search_recursive(
         }
 
         let mut b_next = board.clone(); // ~800 byte memcpy
-        let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target, weapons);
+        let result = simulate_action_with_target2(
+            &mut b_next,
+            mech_idx,
+            move_to,
+            weapon_id,
+            target,
+            target2,
+            weapons,
+        );
         let nanobots_heal_add = viscera_nanobots_heal_from_events(&result.events);
+        let powered_blast_add = powered_blast_from_events(&result.events);
+        let reverse_thrusters_four_damage_add =
+            reverse_thrusters_four_damage_from_events(&result.events);
+        let feed_the_flame_add = feed_the_flame_from_events(&result.events);
+        let arachnoid_spawns_add = arachnoid_spawns_from_events(&result.events);
+        let stay_with_me_heal_add = result.mech_hp_repaired;
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
         // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
@@ -1382,7 +1948,7 @@ fn search_recursive(
             0.0
         };
 
-        let action = make_action(&board.units[mech_idx], move_to, weapon_id, target);
+        let action = make_action(&board.units[mech_idx], move_to, weapon_id, target, target2);
         actions_so_far.push(action);
 
         search_recursive(
@@ -1392,6 +1958,12 @@ fn search_recursive(
             mission_kills_so_far + result.mission_kills,
             bumps_so_far + result.buildings_bump_damaged,
             nanobots_heal_so_far + nanobots_heal_add,
+            powered_blast_so_far + powered_blast_add,
+            reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
+            feed_the_flame_so_far + feed_the_flame_add,
+            arachnoid_spawns_so_far + arachnoid_spawns_add,
+            stay_with_me_heal_so_far + stay_with_me_heal_add,
+            pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
@@ -1409,7 +1981,13 @@ fn search_recursive(
     }
 }
 
-fn make_action(unit: &Unit, move_to: (u8, u8), weapon_id: WId, target: (u8, u8)) -> MechAction {
+fn make_action(
+    unit: &Unit,
+    move_to: (u8, u8),
+    weapon_id: WId,
+    target: (u8, u8),
+    target2: Option<(u8, u8)>,
+) -> MechAction {
     let name = unit.type_name_str();
     let mut desc = name.to_string();
     if move_to != (unit.x, unit.y) {
@@ -1427,6 +2005,9 @@ fn make_action(unit: &Unit, move_to: (u8, u8), weapon_id: WId, target: (u8, u8))
         desc += &format!(", fire {} at {}",
             weapon_name(weapon_id),
             bridge_to_visual(target.0, target.1));
+        if let Some((tx2, ty2)) = target2 {
+            desc += &format!(" and {}", bridge_to_visual(tx2, ty2));
+        }
     }
 
     MechAction {
@@ -1435,6 +2016,7 @@ fn make_action(unit: &Unit, move_to: (u8, u8), weapon_id: WId, target: (u8, u8))
         move_to,
         weapon: weapon_id,
         target,
+        target2,
         description: desc,
     }
 }
@@ -1566,7 +2148,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -1635,7 +2217,15 @@ pub fn solve_turn(
                 Some(i) => i,
                 None => continue,
             };
-            simulate_action(&mut b_check, mech_idx, action.move_to, action.weapon, action.target, weapons);
+            simulate_action_with_target2(
+                &mut b_check,
+                mech_idx,
+                action.move_to,
+                action.weapon,
+                action.target,
+                action.target2,
+                weapons,
+            );
         }
         let buildings_before_enemy = count_buildings(&b_check);
         simulate_enemy_attacks(&mut b_check, &original_positions, weapons);
@@ -1763,7 +2353,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -1848,6 +2438,17 @@ mod top_k_tests {
     }
 
     #[test]
+    fn feed_the_flame_events_count_exact_achievement_events() {
+        let events = vec![
+            "achievement_feed_the_flame:new_fire:3:weapon:Science_RainingFire_A:target:3:4".to_string(),
+            "other_event".to_string(),
+            "achievement_on_the_backburner:damage:4:target:3:2".to_string(),
+        ];
+
+        assert_eq!(feed_the_flame_from_events(&events), 1);
+    }
+
+    #[test]
     fn trapped_building_can_attack_from_smoke() {
         let mut board = Board::default();
         board.tile_mut(3, 3).set_smoke(true);
@@ -1889,6 +2490,106 @@ mod top_k_tests {
         assert!(
             actions.iter().any(|a| a.1 == WId::Repair),
             "Vek Mites must make Repair a legal action even at full HP"
+        );
+    }
+
+    #[test]
+    fn shield_bash_can_target_mountain_terrain() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 21,
+            x: 4,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::PrimeShieldBash as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.tile_mut(4, 3).terrain = Terrain::Mountain;
+        board.tile_mut(4, 3).building_hp = 1;
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (4, 4) && a.1 == WId::PrimeShieldBash && a.2 == (4, 3)
+            }),
+            "Spartan Shield should treat damaging a mountain as a real action"
+        );
+    }
+
+    #[test]
+    fn mirror_shot_can_target_direction_to_first_mountain() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 22,
+            x: 4,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteMirrorshot as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.tile_mut(4, 2).terrain = Terrain::Mountain;
+        board.tile_mut(4, 2).building_hp = 1;
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (4, 4) && a.1 == WId::BruteMirrorshot && a.2 == (4, 3)
+            }),
+            "Mirror Shot should keep a direction click when the first blocker is a mountain"
+        );
+    }
+
+    #[test]
+    fn mission_force_pruning_keeps_damaged_mountain_shot() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Force".to_string();
+        board.mission_mountain_target = 2;
+        let idx = board.add_unit(Unit {
+            uid: 23,
+            x: 4,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteMirrorshot as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.tile_mut(4, 2).terrain = Terrain::Mountain;
+        board.tile_mut(4, 2).building_hp = 1;
+
+        let mut actions = vec![
+            ((4, 4), WId::None, (255, 255), None),
+            ((4, 4), WId::BruteMirrorshot, (4, 3), None),
+            ((4, 4), WId::BruteMirrorshot, (5, 4), None),
+        ];
+
+        prune_actions(
+            &board,
+            idx,
+            &mut actions,
+            0,
+            0,
+            0,
+            1,
+            &WEAPONS,
+        );
+
+        assert_eq!(
+            actions,
+            vec![((4, 4), WId::BruteMirrorshot, (4, 3), None)],
+            "Mission_Force pruning should keep the damaged-mountain shot"
         );
     }
 
@@ -2004,6 +2705,44 @@ mod top_k_tests {
     }
 
     #[test]
+    fn reverse_thrusters_targets_include_vacated_start_tile() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE
+                | UnitFlags::IS_MECH
+                | UnitFlags::CAN_MOVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::FLYING,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::BruteKickBack as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("NeedleMech");
+
+        let targets = get_weapon_targets(
+            &board,
+            3,
+            5,
+            WId::BruteKickBack,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert!(
+            targets.contains(&(3, 3)),
+            "Reverse Thrusters should allow landing on the tile vacated by pre-attack movement; got {:?}",
+            targets
+        );
+    }
+
+    #[test]
     fn prime_leap_ground_mech_cannot_target_deadly_ground_landings() {
         let mut board = Board::default();
         let idx = board.add_unit(Unit {
@@ -2033,6 +2772,140 @@ mod top_k_tests {
             !targets.contains(&(3, 3)),
             "Hydraulic Legs should not enumerate lava landing E4 for a ground mech"
         );
+    }
+
+    #[test]
+    fn bomb_dispenser_targets_empty_cardinal_deploy_tiles() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::RangedDeployBomb as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("BomblingMech");
+        let occupied = board.add_unit(Unit {
+            uid: 21,
+            x: 3,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.units[occupied].set_type_name("Leaper1");
+        board.tile_mut(5, 3).terrain = Terrain::Mountain;
+
+        let targets = get_weapon_targets(
+            &board,
+            3,
+            3,
+            WId::RangedDeployBomb,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert!(targets.contains(&(3, 1)), "range-2 cardinal tile should be legal");
+        assert!(targets.contains(&(6, 3)), "LineArtillery continues behind blockers");
+        assert!(!targets.contains(&(4, 4)), "off-axis tile should not be legal");
+        assert!(!targets.contains(&(3, 5)), "occupied deploy tile should be rejected");
+        assert!(!targets.contains(&(5, 3)), "mountain deploy tile should be rejected");
+        assert!(weapon_action_has_effect(
+            &board,
+            (3, 3),
+            WId::RangedDeployBomb,
+            (3, 1),
+            &WEAPONS,
+        ));
+        assert!(!weapon_action_has_effect(
+            &board,
+            (3, 3),
+            WId::RangedDeployBomb,
+            (3, 5),
+            &WEAPONS,
+        ));
+    }
+
+    #[test]
+    fn arachnoid_injector_targets_are_cardinal_artillery() {
+        let mut board = Board::default();
+        let mech_idx = board.add_unit(Unit {
+            uid: 1,
+            x: 2,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::RangedArachnoid as u16),
+            ..Default::default()
+        });
+        let _scorpion = board.add_unit(Unit {
+            uid: 94,
+            x: 6,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let _leaper = board.add_unit(Unit {
+            uid: 95,
+            x: 2,
+            y: 6,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            2,
+            3,
+            WId::RangedArachnoid,
+            (2, 3),
+            &WEAPONS,
+        );
+
+        assert!(targets.contains(&(2, 6)), "same-column artillery tile should be legal");
+        assert!(!targets.contains(&(6, 2)), "off-axis E6->F2 live FireWeapon is a no-op");
+        assert!(weapon_action_has_effect(
+            &board,
+            (2, 3),
+            WId::RangedArachnoid,
+            (2, 6),
+            &WEAPONS,
+        ));
+        let actions = enumerate_actions(&board, mech_idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| a.1 == WId::RangedArachnoid && a.2 == (2, 6)),
+            "Arachnoid Injector should be emitted as a live solver action",
+        );
+        let mut pruned = actions.clone();
+        prune_actions(&board, mech_idx, &mut pruned, 0, 0, 0, 1, &WEAPONS);
+        assert!(
+            pruned.iter().any(|a| a.1 == WId::RangedArachnoid && a.2 == (2, 6)),
+            "Arachnoid Injector killing blows should survive tight pruning",
+        );
+        assert!(!weapon_action_has_effect(
+            &board,
+            (2, 3),
+            WId::RangedArachnoid,
+            (6, 2),
+            &WEAPONS,
+        ));
     }
 
     #[test]
@@ -2270,6 +3143,68 @@ mod top_k_tests {
     }
 
     #[test]
+    fn arachnoid_injector_rejects_off_axis_targets() {
+        // Live Arachnoid Injector no-ops when FireWeapon is pointed off-axis.
+        // Regression anchor: Lucky Start run 20260615_221604_970
+        // Mission_Airstrike turn 1 tried ScorpioMech D5 -> off-axis E1;
+        // live Firefly1 stayed at 3 HP while the simulator predicted 2 HP.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedArachnoid as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 102,
+            x: 7,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 103,
+            x: 7,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::RangedArachnoid,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(
+            !targets.contains(&(7, 3)),
+            "Arachnoid D5->E1 is off-axis and live FireWeapon spends an effectless shot"
+        );
+        assert!(
+            targets.contains(&(7, 4)),
+            "Arachnoid should still target cardinal D1 from D5"
+        );
+    }
+
+    #[test]
     fn hydraulic_lifter_enumerates_second_click_landings() {
         let mut board = Board::default();
         let idx = board.add_unit(Unit {
@@ -2356,13 +3291,13 @@ mod top_k_tests {
             ..Default::default()
         });
         {
-            let tile = board.tile_mut(4, 3);
+            let tile = board.tile_mut(5, 3);
             tile.terrain = Terrain::Building;
             tile.building_hp = 1;
         }
         board.add_unit(Unit {
             uid: 231,
-            x: 4,
+            x: 5,
             y: 2,
             hp: 3,
             max_hp: 3,
@@ -2375,7 +3310,7 @@ mod top_k_tests {
 
         assert!(
             actions.iter().any(|a| {
-                a.0 == (5, 1) && a.1 == WId::RangedIgnite && a.2 == (4, 3)
+                a.0 == (5, 1) && a.1 == WId::RangedIgnite && a.2 == (5, 3)
             }),
             "Vulcan Artillery should be able to target a live building when the zero-damage center shot pushes adjacent attackers"
         );
@@ -2903,6 +3838,7 @@ mod top_k_tests {
             move_to: (3, 4),
             weapon: WId::None,
             target: (3, 4),
+            target2: None,
             description: "test".to_string(),
         }];
         h.offer(5.0, &a);

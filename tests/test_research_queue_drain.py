@@ -67,6 +67,11 @@ def test_severity_position_is_low():
     assert orchestrator.derive_severity("position", [3, 2], [3, 3]) == "low"
 
 
+def test_severity_status_diff_is_low():
+    assert orchestrator.derive_severity("status.fire", True, False) == "low"
+    assert orchestrator.derive_severity("status.acid", False, True) == "low"
+
+
 def test_severity_unparseable_magnitude_is_medium():
     # Non-numeric predicted/actual on a magnitude field defaults to
     # medium — we can't rank the gap, and high would over-gate.
@@ -138,6 +143,41 @@ def test_drain_resolves_low_severity_known_type(monkeypatch):
     assert entry["result"]["diff_field"] == "hp"
     assert entry["result"]["diff_predicted"] == 2
     assert entry["result"]["diff_actual"] == 3
+
+
+def test_drain_resolves_known_type_status_diff(monkeypatch):
+    monkeypatch.setattr(RunSession, "save", lambda self, *a, **kw: None)
+    s = RunSession()
+    s.enqueue_research(
+        "Scorpion1", None, 1, kind="behavior_novelty",
+        diff_field="status.fire", diff_predicted=True, diff_actual=False,
+        severity=orchestrator.derive_severity("status.fire", True, False),
+    )
+
+    resolved = orchestrator.drain_stale_behavior_novelty(s)
+
+    assert resolved == ["Scorpion1"]
+    entry = s.research_queue[0]
+    assert entry["status"] == "done"
+    assert entry["result"]["diff_field"] == "status.fire"
+
+
+def test_drain_reclassifies_older_medium_status_diff(monkeypatch):
+    monkeypatch.setattr(RunSession, "save", lambda self, *a, **kw: None)
+    s = RunSession()
+    s.enqueue_research(
+        "Scorpion1", None, 1, kind="behavior_novelty",
+        diff_field="status.fire", diff_predicted=True, diff_actual=False,
+        severity="medium",
+    )
+
+    resolved = orchestrator.drain_stale_behavior_novelty(s)
+
+    assert resolved == ["Scorpion1"]
+    entry = s.research_queue[0]
+    assert entry["status"] == "done"
+    assert entry["severity"] == "low"
+    assert entry["result"]["diff_field"] == "status.fire"
 
 
 def test_drain_keeps_high_severity_known_type(monkeypatch):

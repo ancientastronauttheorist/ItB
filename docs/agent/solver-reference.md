@@ -57,7 +57,7 @@ The solver enforces these; use them when reviewing solver output or writing test
 - **Smoke:** prevents attack AND repair. Cancels Vek attacks when on smoke tile at execution.
 - **Shield:** blocks one instance of damage + negative effects. Removed by direct damage.
 - **Armor:** −1 weapon damage (floor 0). No effect on push/fire/bump.
-- **Webbed:** can't move, can still attack. Breaks only when the unit actually changes tiles, or when the webber moves/dies. A blocked push/bump leaves the unit webbed.
+- **Webbed:** can't move, can still attack. Breaks only when the unit actually changes tiles, or when the webber moves/dies. A blocked push/bump leaves the unit webbed. If multiple live queued web sources target the same unit, killing/pushing one source transfers ownership to another source rather than freeing the unit.
 
 **Terrain HP:**
 - **Mountain:** 2 HP (2=full, 1=damaged, 0=rubble/walkable). Any weapon damage reduces by 1.
@@ -65,13 +65,11 @@ The solver enforces these; use them when reviewing solver output or writing test
 - **Ice:** intact → cracked → water (non-flying drowns).
 
 **Repair platforms:** Mission_Repair places `Item_Repair_Mine` tiles. Any live
-unit that lands on one triggers the item, heals by the engine's `SpaceDamage(-10)`
-(live captures show damaged 3-max-HP mechs can become `5/3`; 2-max-HP mechs cap
-at `4/2`, so model this as `max_hp + 2`, not a flat 5 HP), consumes the platform,
-and increments `repair_platforms_used` toward the 3-platform objective. If the
-unit is already at or above max HP when it lands, the platform still consumes and
-counts but does not add overheal. Raw progress can exceed the objective target
-(for example `4/3`); clamp only in UI scoring/presentation. It is not the mech
+unit that lands on one triggers the item, heals up to max HP, consumes the
+platform, and increments `repair_platforms_used` toward the 3-platform objective.
+If the unit is already at or above max HP when it lands, the platform still
+consumes and counts but does not add HP. Raw progress can exceed the objective
+target (for example `4/3`); clamp only in UI scoring/presentation. It is not the mech
 Repair action; do not assume it clears Fire/ACID/Frozen unless a capture proves
 the engine does so.
 
@@ -91,7 +89,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 
 12. Use all mech actions every turn — even suboptimal moves beat skipping.
 
-13. The solver handles environment hazards via `environment_danger_v2`: each entry is `[x, y, damage, kill_int]`. `kill_int=1` = lethal (Air Strike, Lightning, Cataclysm→chasm, Seismic→chasm, Tidal→water; bypasses shield/frozen/armor/ACID). `kill_int=0` = non-lethal (Wind/Sand/Snow). Env ticks fire BEFORE Vek attacks in enemy phase.
+13. The solver handles environment hazards via `environment_danger_v2`: each entry is `[x, y, damage, kill_int]`. `kill_int=1` = lethal (Air Strike, Lightning, Cataclysm→chasm, Seismic→chasm, Tidal→water; bypasses shield/frozen/armor/ACID for grounded units). `kill_int=0` = non-lethal (Wind/Sand/Snow). Env ticks normally fire BEFORE Vek attacks in enemy phase. `Mission_Tides` is the exception: queued Vek attacks land before the wave advances, and flying units on the wave tile take 1 damage instead of being fully spared.
 
 14. On crash/timeout recovery, always start with `cmd_read` + `cmd_solve`. Never resume a previous solution — the board may have changed.
 
@@ -175,7 +173,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 
 113. **Conveyors are tile-driven, not mission-id-driven.** Detritus conveyor tiles can appear outside `Mission_Belt`, including `Mission_Acid`; if any live tile has `conveyor >= 0`, the enemy phase must apply the belt tick before Vek attacks. Do not gate conveyor simulation solely on `mission_id == "Mission_Belt"`. Regression anchor: Hard Rusting Hulks run `20260512_104120_903`, Chemical Field A turn 2 had live conveyors in `Mission_Acid`; generalized in simulator v107.
 
-114. **Repair platforms do not overheal full-health units.** `Item_Repair_Mine` still consumes and increments `repair_platforms_used` when a full or already-overcapped unit lands on it, but HP stays unchanged unless the unit was below max HP at trigger time. Damaged units can still overheal up to `max_hp + 2`. Regression anchor: Hard Rusting Hulks run `20260512_181719_119`, Forgotten Hills turn 2 PulseMech moved to `G4` at `3/3`; live consumed the platform and counted progress but left Pulse at `3/3` instead of predicted `5/3`; fixed in simulator v108.
+114. **Repair platforms heal only to max HP.** `Item_Repair_Mine` still consumes and increments `repair_platforms_used` when any live unit lands on it. Damaged units heal only up to max HP; full-health or already-overcapped units consume/count the platform with HP unchanged. Regression anchors: Hard Rusting Hulks run `20260512_181719_119`, Forgotten Hills turn 2 PulseMech moved to `G4` at `3/3`; live consumed the platform and counted progress but left Pulse at `3/3` instead of predicted `5/3`; fixed for full-health units in simulator v108. Bombermechs Complete Victory run `20260623_105703_708`, Bad Repairs turn 1 BomlingMech moved to `E4` at `1/3`; live healed to `3/3` instead of predicted `5/3`; damaged-unit cap fixed in simulator v274.
 
 118. **Leap attacks resolve landing effects and break web.** If Aerial Bombs, Bombing Run, Leap, or another Leap-style attack moves the firing unit to a new tile, that tile change breaks the unit's own web and then resolves landing effects: fire/ACID pickup, mines, repair platforms, teleporter pads, and WebbEgg adjacency. A webbed JetMech can still fire Aerial Bombs; if it lands on an already-burning tile at 1 HP, it will catch Fire and die at the next enemy-phase fire tick unless repaired or shielded. Burning Forest landing tiles are consumed to burning Ground. Regression anchor: Hard Rusting Hulks run `20260512_181719_119`, Archival Flats turn 3, Jet landed on burning `F2` after Rocket ignited the forest; fixed in simulator v109.
 
@@ -318,3 +316,11 @@ Extended rules: `data/ref_game_mechanics.md`.
 364. **Unstable Cannon Nanobots heals from zero and preserves carried statuses.** If `Brute_Unstable` or its powered variants self-damage the attacker below 0 HP while the same action earns Viscera Nanobots kill credit, live treats the mech's HP as 0 before applying the heal. Unlike the Hydraulic Legs revive path, Unstable Cannon Nanobots recovery preserves carried statuses such as Fire. Regression anchor: Hazardous Mechs Healing run `20260522_193613_471`, Volcanic Hive turn 4, where burning UnstableTank at C5 fired `Brute_Unstable_AB` into Jelly_Lava1 on D5 and live ended at `2/5` still burning while pre-v223 Rust predicted `1/5` and Fire cleared.
 
 365. **Acid Projector can push live enemies into dead enemy wrecks.** `Science_AcidShot` / Acid Projector applies ACID and pushes a live enemy into an existing dead enemy/wreck tile without applying the usual wreck bump damage. Keep this scoped to Acid Projector's live target push; disabled mech wrecks and other weapon pushes still use their documented blocker rules. Regression anchor: Hazardous Mechs Healing run `20260522_193613_471`, Final Cave turn 3, where NanoMech pushed Hornet1 into dead Scarab1's tile and live left Hornet1 alive at `1/1` while pre-v224 Rust predicted a bump kill.
+
+366. **Rock Launcher empty rock spawns preserve Forest.** `Ranged_Rockthrow` / Rock Launcher spawns a neutral `RockThrown` on an empty, unblocked target tile without applying center terrain damage first. If the empty target is Forest, live leaves the underlying tile as unburned Forest rather than converting it to burning Ground. Keep occupied and preblocked target behavior on the ordinary center-hit path. Regression anchor: Lightning War run `20260610_184414_692`, Archive `Mission_Mines` turn 1, where RockartMech fired at empty E3 Forest, spawned `RockThrown`, and live kept E3 as Forest with `fire=false`; fixed in simulator v260.
+
+367. **Bomb Dispenser is a line-artillery deploy, and Powered Blast credits the second AP hit.** `Ranged_DeployBomb` / Bomb Dispenser uses LineArtillery-style cardinal targeting with minimum range 2, empty ground destinations, and range_max `0` treated as board-range. It spawns `DeployUnit_Bomby`, whose modeled default weapon is `DeployUnit_SelfDamage`; unused Walking Bombs are temporary deployables that should not be counted as permanent mech deaths when they dismantle. `Brute_PierceShot` / AP Cannon pushes through the first target without damaging it, then damages/pushes the second target; for **Powered Blast**, the first target must be a live Walking Bomb and the second hit must kill an enemy. Simulator v263 added the deployable and trigger support; v264 added `achievement_powered_blast` event/scoring. Regression anchor: Bombermechs Easy run `20260611_202233_019`, Archive `Mission_Artillery` turn 4, where the bridge spawned a Walking Bomb at C2, a re-solve moved Pierce Mech to D2, and AP Cannon at C2 killed Scarab1 at B2 to unlock **Powered Blast**.
+
+368. **Enemy attacks use live bridge order, not UID sort.** `attack_order` must preserve the live unit-list order emitted by the bridge. Do not sort queued enemies by UID before enemy-phase replay: Pinnacle `Mission_Factory` can have a `Snowlaser1` fire before a lower-UID `Burnbug1` kills it, damaging a mech/building that UID order would incorrectly spare. Regression anchor: Bombermechs Complete Victory run `20260623_035936_734`, `Mission_Factory` turn 2; fixed in simulator v273.
+
+369. **Enemy-phase pre-attack deaths clear before later enemy-phase steps.** Vek killed by start-of-enemy-turn fire, smoke storm, environment, conveyor, or wind effects should not remain as wreck blockers for subsequent enemy-phase pushes or attacks. Keep this separate from player weapon resolution, where simultaneous killed-target corpse pushes and wreck blockers have many weapon-specific rules. Regression anchor: Stay With Me run `20260616_083357_196`, R.S.T. `Mission_Wind` turn 3, where a burning Scorpion at C3 died before attacks; live then let Wind Storm push Firefly1 into a line that destroyed C5, while pre-v276 Rust left the fire-killed Scorpion corpse blocking the gust.

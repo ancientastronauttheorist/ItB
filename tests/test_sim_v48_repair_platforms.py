@@ -52,7 +52,7 @@ def test_repair_platform_heals_consumes_and_counts_objective_progress():
     }])
 
     unit = next(u for u in post["units"] if u["uid"] == 1)
-    assert unit["hp"] == 5
+    assert unit["hp"] == 3
     assert post["repair_platforms_used"] == 3
     assert out["action_result"]["repair_platforms_used"] == 1
     tile = next((t for t in post["tiles"] if t["x"] == 3 and t["y"] == 3), {})
@@ -61,7 +61,7 @@ def test_repair_platform_heals_consumes_and_counts_objective_progress():
 
 
 @pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
-def test_repair_platform_caps_at_max_hp_plus_two_not_flat_five():
+def test_repair_platform_caps_healing_at_max_hp_without_overheal():
     board = {
         "grid_power": 5,
         "grid_power_max": 7,

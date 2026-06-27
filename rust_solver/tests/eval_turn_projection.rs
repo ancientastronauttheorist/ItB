@@ -43,7 +43,15 @@ fn extract_actions(solve_v: &Value) -> Vec<MechAction> {
         let wid_str = a.get("weapon_id").and_then(|v| v.as_str()).unwrap_or("None");
         let target_arr = a.get("target")?.as_array()?;
         let target = (target_arr.get(0)?.as_u64()? as u8, target_arr.get(1)?.as_u64()? as u8);
-        Some(MechAction { mech_uid, mech_type, move_to, weapon: wid_from_str(wid_str), target, description: String::new() })
+        Some(MechAction {
+            mech_uid,
+            mech_type,
+            move_to,
+            weapon: wid_from_str(wid_str),
+            target,
+            target2: None,
+            description: String::new(),
+        })
     }).collect()
 }
 

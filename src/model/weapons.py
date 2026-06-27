@@ -26,6 +26,7 @@ class WeaponType(str, Enum):
     GLOBAL_PUSH = "global_push"  # Pushes every unit in one chosen direction
     GLOBAL_UNIT_EFFECT = "global_unit_effect"  # Affects every live non-source unit on board
     DISPOSAL = "disposal"       # Mission_Disposal lethal A.C.I.D. Launcher cross
+    DASH_AWAY = "dash_away"     # Dash away from impact tile; damage scales by distance
     PASSIVE = "passive"       # Always-on effect
 
 
@@ -166,6 +167,18 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Prime_ShieldBash": WeaponDef(
         name="Spartan Shield", weapon_type="melee",
         damage=2, push="flip",
+        upgrade_a="gain shield when bashing",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_ShieldBash_B": WeaponDef(
+        name="Spartan Shield", weapon_type="melee",
+        damage=3, push="flip",
+        upgrade_a="gain shield when bashing",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_ShieldBash_AB": WeaponDef(
+        name="Spartan Shield", weapon_type="melee",
+        damage=3, push="flip",
         upgrade_a="gain shield when bashing",
         upgrade_b="+1 damage (total 3)",
     ),
@@ -317,9 +330,45 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=2, smoke=True, range_min=2, range_max=3,
         aoe_center=False,
     ),
+    "Brute_KickBack": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=2,
+        upgrade_a="+1 range (total 3)",
+        upgrade_b="+1 range (total 3)",
+    ),
+    "Brute_KickBack_A": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=3,
+    ),
+    "Brute_KickBack_B": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=3,
+    ),
+    "Brute_KickBack_AB": WeaponDef(
+        name="Reverse Thrusters", weapon_type="dash_away",
+        damage=0, smoke=True, self_damage=1, range_min=1, range_max=4,
+    ),
     "Brute_Mirrorshot": WeaponDef(
         name="Mirror Shot", weapon_type="projectile",
         damage=1, push="forward", range_max=0, aoe_behind=True,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Brute_Mirrorshot_A": WeaponDef(
+        name="Mirror Shot", weapon_type="projectile",
+        damage=2, push="forward", range_max=0, aoe_behind=True,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Brute_Mirrorshot_B": WeaponDef(
+        name="Mirror Shot", weapon_type="projectile",
+        damage=2, push="forward", range_max=0, aoe_behind=True,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Brute_Mirrorshot_AB": WeaponDef(
+        name="Mirror Shot", weapon_type="projectile",
+        damage=3, push="forward", range_max=0, aoe_behind=True,
         upgrade_a="+1 damage (total 2)",
         upgrade_b="+1 damage (total 2)",
     ),
@@ -353,6 +402,12 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Brute_Unstable_AB": WeaponDef(
         name="Unstable Cannon", weapon_type="projectile",
         damage=4, push="forward", self_damage=2, push_self=True, range_max=0,
+    ),
+    "Brute_PierceShot": WeaponDef(
+        name="AP Cannon", weapon_type="projectile",
+        damage=2, push="forward", range_max=0,
+        upgrade_a="+1 damage to second target (total 3)",
+        upgrade_b="+1 damage to second target (total 3)",
     ),
     "Brute_PhaseShot": WeaponDef(
         name="Phase Cannon", weapon_type="projectile",
@@ -508,6 +563,30 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage (total 3)",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Ranged_SmokeFire": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=1, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Ranged_SmokeFire_A": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=1, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Ranged_SmokeFire_B": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=3, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Ranged_SmokeFire_AB": WeaponDef(
+        name="Smoldering Shells", weapon_type="artillery",
+        damage=3, fire=True, range_min=2,
+        upgrade_a="more smoke",
+        upgrade_b="+2 damage (total 3)",
+    ),
     "Ranged_Crack": WeaponDef(
         name="Tri-Rocket", weapon_type="artillery",
         damage=1, push="forward", range_min=2, path_size=3,
@@ -575,6 +654,16 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Arachnoid Bite", weapon_type="melee",
         damage=1, push="forward", acid=True, self_damage=99,
     ),
+    "DeployUnit_SelfDamage": WeaponDef(
+        name="Trigger", weapon_type="self_aoe",
+        damage=1, self_damage=99, aoe_center=False, aoe_adjacent=True,
+    ),
+    "Ranged_DeployBomb": WeaponDef(
+        name="Bomb Dispenser", weapon_type="deploy",
+        damage=0, range_min=2, range_max=0, spawns="DeployUnit_Bomby",
+        upgrade_a="2 Bombs (two-click; unsupported by bridge)",
+        upgrade_b="Add Push",
+    ),
     "Ranged_Arachnoid": WeaponDef(
         name="Arachnoid Injector", weapon_type="artillery",
         damage=1, range_min=2, spawns="DeployUnit_Aracnoid",
@@ -615,6 +704,34 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=0, range_max=1,
         upgrade_a="+1 range (total 2)",
         upgrade_b="+2 range (total 3)",
+    ),
+    # Force Swap is a two-click Bombermechs weapon: first choose an adjacent
+    # unit, then choose a second unit to swap it with.
+    "Science_TC_SwapOther": WeaponDef(
+        name="Force Swap", weapon_type="two_click", damage=0,
+        upgrade_a="Heal Ally",
+        upgrade_b="Hurt Enemy",
+    ),
+    "Science_TC_SwapOther_A": WeaponDef(
+        name="Force Swap", weapon_type="two_click", damage=0,
+        upgrade_a="Heal Ally",
+    ),
+    "Science_TC_SwapOther_B": WeaponDef(
+        name="Force Swap", weapon_type="two_click", damage=1,
+        upgrade_b="Hurt Enemy",
+    ),
+    "Science_TC_SwapOther_AB": WeaponDef(
+        name="Force Swap", weapon_type="two_click", damage=1,
+        upgrade_a="Heal Ally",
+        upgrade_b="Hurt Enemy",
+    ),
+    # Control Shot needs a target unit and a destination tile. The live bridge
+    # action schema currently has only one target coordinate, so keep it
+    # catalogued but inert until a true second-click execution path exists.
+    "Science_TC_Control": WeaponDef(
+        name="Control Shot", weapon_type="passive", damage=0,
+        upgrade_a="+1 move",
+        upgrade_b="+1 move",
     ),
     "Science_AcidShot": WeaponDef(
         name="Acid Projector", weapon_type="projectile",
@@ -984,6 +1101,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
 
     # ── Pinnacle Bots ────────────────────────────────────────────────
     "SnowtankAtk1": WeaponDef(
+        name="Cannon 8R Mark I", weapon_type="projectile",
+        damage=1, range_max=0, fire=True,
+    ),
+    "SnowtankAtk1_Player": WeaponDef(
         name="Cannon 8R Mark I", weapon_type="projectile",
         damage=1, range_max=0, fire=True,
     ),

@@ -196,6 +196,7 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     "Mission_Holes":          ["mite_counter"],
     "Mission_Dam":            ["mite_counter"],
     "Mission_Teleporter":     ["mite_counter"],
+    "Mission_Repair":         ["bad_repairs", "repair_platforms"],
     # Custom Archive objective: "End with 8 spaces on fire". The tactical
     # solver does not hard-gate this counter yet, so it is unsafe for
     # Perfect Island farming even for Flame Behemoths.
@@ -214,6 +215,8 @@ ENVIRONMENT_TAGS: dict[str, list[str]] = {
     "Env_Lava":         ["env_lava"],
     "Env_Tidal":        ["env_tidal"],
     "Env_TidalWaves":   ["env_tidal"],
+    "Env_Tides":        ["env_tidal"],
+    "Env_Terratide":    ["env_tidal"],
     "Env_Conveyor":     ["conveyor"],
     "Env_ConveyorBelt": ["conveyor"],
     "Env_Sandstorm":    ["defensive_smoke"],
@@ -222,6 +225,7 @@ ENVIRONMENT_TAGS: dict[str, list[str]] = {
     "Env_LightningStorm": ["env_lightning"],
     "Env_Cataclysm":    ["env_cataclysm"],
     "Env_Seismic":      ["env_cataclysm"],
+    "Env_RepairMission": ["bad_repairs", "repair_platforms"],
     # Vanilla Ice Storm. The in-game class is Env_SnowStorm; the display
     # name "Ice Storm" comes from text_missions.lua:162 Env_SnowStorm_Name.
     # The "Env_IceStorm" alias here used to be dead code — it never
@@ -333,6 +337,11 @@ def _tags_from_metadata(
         return tags
     if rec.get("train_mission"):
         tags.add("train")
+    environment = rec.get("environment")
+    if isinstance(environment, str):
+        tags.update(ENVIRONMENT_TAGS.get(environment, []))
+    if rec.get("turn_limit") == 3:
+        tags.add("four_turn")
     if rec.get("boss_mission"):
         tags.add("boss")
         tags.add("high_threat")
@@ -443,11 +452,275 @@ def _bonus_value(bonus_id: int, grid_power: int) -> tuple[int, str]:
     return 1, f"bonus#{bonus_id}"
 
 
+def _apply_lightning_war_routing(
+    entry: dict[str, Any],
+    mission_tags: set[str],
+    score: int,
+    rationale: list[str],
+) -> int:
+    """Bias mission choice for Blitzkrieg's under-30-minute achievement.
+
+    Lightning War does not care about perfect islands or bonus objectives.
+    The route picker should therefore prefer short, low-friction missions
+    over reputation. These modifiers are deliberately large enough to beat
+    the normal Perfect-Island farming penalties when a mission is known fast.
+    """
+    mission_id = entry.get("mission_id", "")
+    bonus_ids = entry.get("bonus_objective_ids", []) or []
+    delta = 0
+
+    if "train" in mission_tags:
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: protected train objective can stall fast runs"
+        )
+    if "env_tidal" in mission_tags and mission_id != "Mission_Terratide":
+        delta += 25
+        rationale.append("+25 Lightning War: fast Tidal Waves mission")
+    if mission_id == "Mission_Terratide":
+        delta -= 45
+        rationale.append("-45 Lightning War: Terratide/Sandstorm animation drag")
+    if "env_cataclysm" in mission_tags:
+        delta -= 10
+        rationale.append(
+            "-10 Lightning War: Cataclysm/Seismic animations measured slow"
+        )
+    if "defensive_smoke" in mission_tags or mission_id == "Mission_Sandstorm":
+        delta -= 10
+        rationale.append("-10 Lightning War: Sandstorm animations measured slow")
+    if (
+        "four_turn" in mission_tags
+        and not (
+            {"train", "env_tidal", "env_cataclysm", "defensive_smoke"}
+            & mission_tags
+        )
+    ):
+        delta += 20
+        rationale.append("+20 Lightning War: metadata 4-turn mission")
+    if mission_id == "Mission_Battle":
+        delta += 8
+        rationale.append("+8  Lightning War: plain battle has low UI friction")
+
+    if mission_id == "Mission_Bomb":
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: Renfield Bombs causes web/objective drift and "
+            "slow final turns"
+        )
+
+    if mission_id == "Mission_Satellite":
+        delta -= 45
+        rationale.append(
+            "-45 Lightning War: Satellite Launches is avoid-unless-forced"
+        )
+    if "bad_repairs" in mission_tags or "repair_platforms" in mission_tags:
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: Bad Repairs / repair platforms are too slow"
+        )
+    if mission_id == "Mission_Trapped":
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: Power Generator trap can force mech damage"
+        )
+    if mission_id == "Mission_Force":
+        delta -= 70
+        rationale.append(
+            "-70 Lightning War: mountain counter is slow and can force mech damage"
+        )
+    if mission_id == "Mission_AcidStorm":
+        delta -= 12
+        rationale.append(
+            "-12 Lightning War: Acid Storm can add ACID cleanup friction"
+        )
+
+    detritus_speed_traps = {
+        "Mission_AcidTank",
+        "Mission_Barrels",
+        "Mission_Disposal",
+    }
+    if mission_id in detritus_speed_traps:
+        delta -= 45
+        rationale.append(
+            f"-45 Lightning War: Detritus vats/barrels UI-combat drag ({mission_id})"
+        )
+
+    slow_mission_ids = {
+        "Mission_Artillery",
+        "Mission_AcidStorm",
+        "Mission_Crack",
+        "Mission_Dam",
+        "Mission_ForestFire",
+        "Mission_FreezeBldg",
+        "Mission_Holes",
+        "Mission_Mines",
+        "Mission_Power",
+        "Mission_Solar",
+        "Mission_Survive",
+        "Mission_Tanks",
+        "Mission_Teleporter",
+        "Mission_Terraform",
+        "Mission_Volatile",
+        "Mission_Wind",
+    }
+    if mission_id in slow_mission_ids:
+        delta -= 28
+        rationale.append(f"-28 Lightning War: slow/fragile objective ({mission_id})")
+
+    very_slow_mission_ids = {
+        "Mission_Artillery",
+        "Mission_Mines",
+    }
+    if mission_id in very_slow_mission_ids:
+        delta -= 25
+        rationale.append(
+            f"-25 Lightning War: measured slow mission/template ({mission_id})"
+        )
+    if mission_id == "Mission_ForestFire":
+        delta -= 35
+        rationale.append(
+            "-35 Lightning War: Forest Fire post-enemy/classifier friction"
+        )
+
+    slow_tags = {
+        "fire_tile_counter",
+        "fragile_ally_objective",
+        "mite_counter",
+        "protect_specific_building",
+        "terraform_grass_counter",
+        "volatile_vek",
+    }
+    fired_slow_tags = sorted(mission_tags & slow_tags)
+    if fired_slow_tags:
+        delta -= 12
+        rationale.append(
+            "-12 Lightning War: objective/review friction "
+            f"({', '.join(fired_slow_tags)})"
+        )
+
+    if BONUS_ASSET in bonus_ids:
+        delta -= 20
+        rationale.append("-20 Lightning War: asset/pod reward adds UI time")
+    if BONUS_KILL_FIVE in bonus_ids:
+        delta -= 5
+        rationale.append("-5  Lightning War: kill-count bonus invites overplay")
+    if BONUS_PACIFIST in bonus_ids:
+        delta -= 5
+        rationale.append("-5  Lightning War: kill-limit bonus invites review")
+
+    return score + delta
+
+
+def _apply_lightning_baseline_routing(
+    entry: dict[str, Any],
+    mission_tags: set[str],
+    score: int,
+    rationale: list[str],
+) -> tuple[int, str | None]:
+    """Conservative Lightning route policy for no-surprise baseline proofs."""
+    mission_id = entry.get("mission_id", "")
+    delta = 0
+    veto_reason = None
+
+    if "train" in mission_tags:
+        delta -= 80
+        veto_reason = "baseline_reliability_veto:train"
+        rationale.append(
+            "-80 Lightning baseline: train objective can fail after clean turns"
+        )
+    if mission_id == "Mission_Battle":
+        delta += 8
+        rationale.append("+8  Lightning baseline: plain battle has low UI friction")
+    if "env_tidal" in mission_tags:
+        delta -= 70
+        veto_reason = "baseline_reliability_veto:tides"
+        rationale.append(
+            "-70 Lightning baseline: Tidal Waves can trap Blitzkrieg into "
+            "final-turn mech/objective losses"
+        )
+    if "four_turn" in mission_tags and "train" not in mission_tags:
+        delta += 6
+        rationale.append("+6  Lightning baseline: metadata 4-turn mission")
+
+    fragile_tags = {
+        "fire_tile_counter",
+        "fragile_ally_objective",
+        "mite_counter",
+        "protect_specific_building",
+        "terraform_grass_counter",
+        "volatile_vek",
+    }
+    fired_fragile_tags = sorted(mission_tags & fragile_tags)
+    if fired_fragile_tags:
+        delta -= 20
+        rationale.append(
+            "-20 Lightning baseline: fragile objective/review tags "
+            f"({', '.join(fired_fragile_tags)})"
+        )
+
+    return score + delta, veto_reason
+
+
+_UNAVAILABLE_BOOL_FIELDS = {
+    "active",
+    "completed",
+    "current",
+    "hover_preview",
+    "hovered",
+    "in_progress",
+    "is_active",
+    "is_completed",
+    "is_current",
+    "is_overrun",
+    "overrun",
+    "preview",
+    "stale",
+}
+_UNAVAILABLE_STATE_VALUES = {
+    "active",
+    "combat",
+    "completed",
+    "current",
+    "done",
+    "hover",
+    "hover_preview",
+    "in_progress",
+    "overrun",
+    "preview",
+    "running",
+    "stale",
+}
+
+
+def _unavailable_mission_reason(entry: dict[str, Any]) -> str | None:
+    """Return why a bridge island-map entry should not be rankable.
+
+    The Lua bridge normally emits only available island choices, but stale
+    reads from hover previews, completed regions, or pause-menu leakage can
+    carry the same mission-shaped payload. Prefer dropping explicitly marked
+    non-options over letting them outrank real island choices.
+    """
+    if entry.get("available") is False or entry.get("is_available") is False:
+        return "available=false"
+    for field in sorted(_UNAVAILABLE_BOOL_FIELDS):
+        if entry.get(field) is True:
+            return field
+    for field in ("state", "status", "mission_state", "availability"):
+        value = entry.get(field)
+        if value is None:
+            continue
+        normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+        if normalized in _UNAVAILABLE_STATE_VALUES:
+            return f"{field}={value}"
+    return None
+
+
 def score_mission(
     entry: dict[str, Any],
     squad_tags: set[str],
     grid_power: int,
     mission_metadata: dict[str, dict[str, Any]] | None = None,
+    routing: str = "default",
 ) -> dict[str, Any]:
     """Score one ``island_map`` entry against the squad.
 
@@ -612,10 +885,24 @@ def score_mission(
         score += 1
         rationale.append("+1  marked EASY by engine")
 
+    route_auto_start_veto_reason = None
+    if routing == "lightning_war":
+        score = _apply_lightning_war_routing(
+            entry, mission_tags, score, rationale
+        )
+    elif routing == "lightning_baseline":
+        score, route_auto_start_veto_reason = _apply_lightning_baseline_routing(
+            entry, mission_tags, score, rationale
+        )
+    elif routing != "default":
+        raise ValueError(f"unknown mission routing mode: {routing}")
+
     out = dict(entry)
     out["score"] = score
     out["mission_tags"] = sorted(mission_tags)
     out["rationale_lines"] = rationale
+    if route_auto_start_veto_reason is not None:
+        out["route_auto_start_veto_reason"] = route_auto_start_veto_reason
     return out
 
 
@@ -624,6 +911,7 @@ def score_island_map(
     squad_units: list[dict[str, Any]],
     grid_power: int,
     mission_metadata: dict[str, dict[str, Any]] | None = None,
+    routing: str = "default",
 ) -> list[dict[str, Any]]:
     """Score every entry of an island_map; return descending by score.
 
@@ -636,9 +924,12 @@ def score_island_map(
     if not island_map:
         return []
     squad_tags = derive_squad_tags(squad_units)
-    scored = [
-        score_mission(e, squad_tags, grid_power, mission_metadata)
-        for e in island_map
-    ]
+    scored = []
+    for e in island_map:
+        if _unavailable_mission_reason(e):
+            continue
+        scored.append(
+            score_mission(e, squad_tags, grid_power, mission_metadata, routing)
+        )
     scored.sort(key=lambda e: e["score"], reverse=True)
     return scored

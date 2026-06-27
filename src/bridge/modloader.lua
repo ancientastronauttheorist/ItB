@@ -1,19 +1,56 @@
 --------------------------------------------------------------------
 -- ITB Bot Bridge — Production
--- Runs inside Into the Breach on macOS via modloader.lua injection.
--- Communicates with external Python bot via file-based IPC in /tmp/.
+-- Runs inside Into the Breach via modloader.lua injection.
+-- Communicates with external Python bot via file-based IPC.
 --
--- State dump: /tmp/itb_state.json (Lua writes, Python reads)
--- Commands:   /tmp/itb_cmd.txt    (Python writes, Lua reads)
--- Ack:        /tmp/itb_ack.txt    (Lua writes, Python reads)
+-- macOS default: /tmp/itb_*
+-- Windows default: Documents/My Games/Into The Breach/itb_bridge/itb_*
 --------------------------------------------------------------------
 
-local STATE_FILE = "/tmp/itb_state.json"
-local STATE_TMP  = "/tmp/itb_state.json.tmp"
-local CMD_FILE   = "/tmp/itb_cmd.txt"
-local ACK_FILE   = "/tmp/itb_ack.txt"
-local ACK_TMP    = "/tmp/itb_ack.tmp"
-local LOG_FILE   = "/tmp/itb_bridge.log"
+local function normalize_path(path)
+    return (path:gsub("\\", "/"))
+end
+
+local function is_windows()
+    return package.config:sub(1, 1) == "\\"
+end
+
+local function default_save_root()
+    local override = os.getenv("ITB_SAVE_DIR")
+    if override and override ~= "" then return normalize_path(override) end
+    if is_windows() then
+        local user = os.getenv("USERPROFILE") or os.getenv("HOME") or "."
+        return normalize_path(user) .. "/Documents/My Games/Into The Breach"
+    end
+    local home = os.getenv("HOME") or "."
+    return normalize_path(home) .. "/Library/Application Support/IntoTheBreach"
+end
+
+local function default_bridge_dir()
+    local override = os.getenv("ITB_BRIDGE_DIR")
+    if override and override ~= "" then return normalize_path(override) end
+    if is_windows() then
+        return default_save_root() .. "/itb_bridge"
+    end
+    return "/tmp"
+end
+
+local BRIDGE_DIR = default_bridge_dir()
+local SAVE_ROOT = default_save_root()
+
+local STATE_FILE = BRIDGE_DIR .. "/itb_state.json"
+local STATE_TMP  = BRIDGE_DIR .. "/itb_state.json.tmp"
+local CMD_FILE   = BRIDGE_DIR .. "/itb_cmd.txt"
+local ACK_FILE   = BRIDGE_DIR .. "/itb_ack.txt"
+local ACK_TMP    = BRIDGE_DIR .. "/itb_ack.tmp"
+local LOG_FILE   = BRIDGE_DIR .. "/itb_bridge.log"
+local HEARTBEAT_FILE = BRIDGE_DIR .. "/itb_bridge_heartbeat"
+
+if is_windows() then
+    os.execute('mkdir "' .. BRIDGE_DIR .. '" >NUL 2>NUL')
+else
+    os.execute('mkdir -p "' .. BRIDGE_DIR .. '"')
+end
 
 local TERRAIN_NAMES = {}
 
@@ -76,7 +113,11 @@ local function write_atomic(path, tmp_path, content)
     if f then
         f:write(content)
         f:close()
-        os.rename(tmp_path, path)
+        local ok, _err = os.rename(tmp_path, path)
+        if not ok and is_windows() then
+            os.remove(path)
+            os.rename(tmp_path, path)
+        end
     end
 end
 
@@ -111,8 +152,7 @@ local function _read_save_data()
         current_weapons = {}, -- GameData.current.weapons, 1-indexed loadout slots
         pawn_offsets = {},    -- [pawn_id] = raw save offset (diagnostic only)
     }
-    local base = os.getenv("HOME") ..
-        "/Library/Application Support/IntoTheBreach/profile_Alpha/"
+    local base = SAVE_ROOT .. "/profile_Alpha/"
     local sf = io.open(base .. "saveData.lua", "r")
     if not sf then
         sf = io.open(base .. "undoSave.lua", "r")
@@ -251,21 +291,42 @@ local function _read_save_data()
 end
 
 local function get_pawn_max_health(pawn, uid, save_data)
+    local pawn_def = _G[pawn:GetType()]
+    local base = (pawn_def and pawn_def.Health) or pawn:GetHealth()
+    local max_hp = base
+
     local fn = pawn.GetMaxHealth
     if type(fn) == "function" then
         local ok, mh = pcall(function() return fn(pawn) end)
         if ok and type(mh) == "number" and mh > 0 then
-            return mh
+            max_hp = math.max(max_hp, mh)
         end
     end
 
     local saved = save_data and save_data.pawn_max_health and save_data.pawn_max_health[uid]
     if type(saved) == "number" and saved > 0 then
-        return saved
+        max_hp = math.max(max_hp, saved)
     end
 
-    local pawn_def = _G[pawn:GetType()]
-    return (pawn_def and pawn_def.Health) or pawn:GetHealth()
+    local bonus = 0
+    local pilot = save_data and save_data.pilots and save_data.pilots[uid]
+    if pilot then
+        local level = pilot.level or 0
+        -- Pilot perk ID 0 is a real active skill (+2 HP) once the slot is
+        -- unlocked, so gate by level instead of treating zero as empty.
+        local active_skills = {}
+        if level >= 1 then active_skills[#active_skills + 1] = pilot.skill1 end
+        if level >= 2 then active_skills[#active_skills + 1] = pilot.skill2 end
+        for _, skill in ipairs(active_skills) do
+            if skill == 0 or skill == 8 then
+                bonus = bonus + 2
+            end
+        end
+    end
+    if bonus > 0 and max_hp < base + bonus then
+        return max_hp + bonus
+    end
+    return max_hp
 end
 
 local function normalize_queued_target(raw, origin, current_x, current_y)
@@ -808,14 +869,15 @@ local function dump_state()
         end
     end
 
-    -- Attack order: enemies with queued attacks sorted by UID (ascending)
+    -- Attack order: enemies with queued attacks in live unit-list order.
+    -- Do not sort by UID; Mission_Factory captures showed Pinnacle bots can
+    -- resolve Snowlaser before a lower-UID Burnbug kills it.
     state.attack_order = {}
     for _, u in ipairs(state.units) do
         if u.team == 6 and u.has_queued_attack then
             state.attack_order[#state.attack_order + 1] = u.uid
         end
     end
-    table.sort(state.attack_order)
 
     -- Webber fallback: for any webbed unit without a known web_source_uid
     -- (Lua API didn't expose it), pick the closest alive enemy whose primary
@@ -1365,6 +1427,10 @@ local _bridge_speed = "fast"  -- "fast" or "visual"
 
 local _running_coroutine = nil
 
+local function bridge_fast_mode()
+    return _bridge_speed == "fast"
+end
+
 -- NOTE: os.time() (wall clock, second precision) rather than os.clock()
 -- (process CPU time). When the coroutine yields back to the engine, CPU
 -- time barely advances relative to wall time, so an os.clock()-based
@@ -1383,9 +1449,23 @@ local function wait_until_coro(predicate, max_wait)
 end
 
 local function wait_for_board_coro(max_wait)
+    if bridge_fast_mode() then
+        max_wait = math.min(max_wait or 15, 2)
+    end
     return wait_until_coro(function()
         return not Board:IsBusy()
     end, max_wait)
+end
+
+local function move_pawn_for_bridge(pawn, point)
+    if bridge_fast_mode() then
+        local ok, err = pcall(function() pawn:SetSpace(point) end)
+        if ok then return true, "SetSpace" end
+        return false, err
+    end
+    local ok, err = pcall(function() pawn:Move(point) end)
+    if ok then return true, "Move" end
+    return false, err
 end
 
 --------------------------------------------------------------------
@@ -1676,13 +1756,7 @@ local function execute_prime_tc_punt(pawn, wname, tx, ty)
            first.x .. "," .. first.y .. " landing=" .. tx .. "," .. ty
 end
 
--- execute_weapon_by_slot: fire weapon using a 0-based slot index from
--- the Python side (maps to 1-indexed Lua SkillList).
--- This avoids name-matching issues where the solver's weapon ID doesn't
--- match the pawn type's SkillList entry (e.g. purchased / upgraded weapons,
--- or names the Rust solver doesn't recognise → "Unknown").
-local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
-    -- weapon_slot is 0-based from Python; Lua SkillList is 1-indexed
+local function effective_weapon_name_by_slot(pawn, weapon_slot)
     local slot = weapon_slot + 1
     local ptype = pawn:GetType()
     local pawn_def = _G[ptype]
@@ -1691,10 +1765,11 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
         skill_count = #pawn_def.SkillList
     end
     if skill_count == 0 or slot > skill_count then
-        return false, "weapon slot " .. weapon_slot ..
+        return nil, nil, nil, "weapon slot " .. weapon_slot ..
                " out of range (pawn " .. ptype ..
                " has " .. skill_count .. " skills)"
     end
+
     local uid = nil
     local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
     if ok_uid then uid = uid_val end
@@ -1702,6 +1777,209 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     local save_data = _read_save_data()
     local wname, wsource =
         effective_weapon_from_save(save_data, uid, weapon_slot, base_wname)
+    return wname, base_wname, slot, nil, wsource, pawn_def, uid
+end
+
+local function pawn_is_guarding(pawn)
+    local ok_guard, guard_val = pcall(function() return pawn:IsGuarding() end)
+    return ok_guard and guard_val
+end
+
+local function pawn_is_boosted(pawn)
+    local ok_bo, boosted = pcall(function() return pawn:IsBoosted() end)
+    return ok_bo and boosted
+end
+
+local function set_pawn_boosted(pawn, desired)
+    for _, mname in ipairs({"SetBoosted", "SetBoost"}) do
+        local ok_set, did_set = pcall(function()
+            local fn = pawn[mname]
+            if type(fn) == "function" then
+                fn(pawn, desired)
+                return true
+            end
+            return false
+        end)
+        if ok_set and did_set then return true end
+    end
+    return false
+end
+
+local function pawn_is_enemy(pawn)
+    if pawn == nil then return false end
+    local ok_team, team = pcall(function() return pawn:GetTeam() end)
+    return ok_team and team == (_G.TEAM_ENEMY or 6)
+end
+
+local function pawn_is_dead_or_zero(pawn)
+    if pawn == nil then return false end
+    local ok_dead, dead = pcall(function() return pawn:IsDead() end)
+    if ok_dead and dead then return true end
+    local ok_hp, hp = pcall(function() return pawn:GetHealth() end)
+    return ok_hp and hp <= 0
+end
+
+local function get_projectile_end_safe(source, target)
+    local ok, final = pcall(function()
+        return GetProjectileEnd(source, target, PATH_PROJECTILE)
+    end)
+    if ok and final ~= nil then return final end
+    return target
+end
+
+local function execute_ricochet_direct(pawn, wname, skill, first, second)
+    local source = pawn:GetSpace()
+    local first_dir = GetDirection(first - source)
+    local first_tar = get_projectile_end_safe(source, first)
+    local second_dir = GetDirection(second - first)
+    local second_tar = get_projectile_end_safe(first, second)
+    local damage = tonumber(skill.Damage) or 1
+    local boosted = pawn_is_boosted(pawn)
+    if boosted and damage > 0 then
+        damage = damage + 1
+    end
+
+    local uid = nil
+    local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
+    if ok_uid then uid = uid_val end
+    local save_data = _read_save_data()
+    local save_pilot = uid and save_data.pilots[uid] or nil
+
+    local targets = {
+        {point = second_tar, dir = second_dir},
+        {point = first_tar, dir = first_dir},
+    }
+    local killed_enemy = false
+    for _, entry in ipairs(targets) do
+        local pt = entry.point
+        if Board:IsValid(pt) then
+            local target_pawn = Board:GetPawn(pt)
+            local target_was_enemy = pawn_is_enemy(target_pawn)
+            local dmg = damage
+            if not skill.AllyDamage and Board:IsPawnTeam(pt, TEAM_PLAYER) then
+                dmg = DAMAGE_ZERO
+            end
+            local sd = SpaceDamage(pt, dmg, entry.dir)
+            local ok_dmg, err_dmg = pcall(function() Board:DamageSpace(sd) end)
+            if not ok_dmg then
+                return false, "Ricochet DamageSpace failed at " ..
+                       pt.x .. "," .. pt.y .. ": " .. tostring(err_dmg)
+            end
+            if target_was_enemy and pawn_is_dead_or_zero(target_pawn) then
+                killed_enemy = true
+            end
+        end
+    end
+
+    if boosted or killed_enemy then
+        local desired_boosted = false
+        if save_pilot and save_pilot.id == "Pilot_Arrogant" then
+            local hp = pawn:GetHealth()
+            local max_hp = get_pawn_max_health(pawn, uid, save_data)
+            desired_boosted = hp >= max_hp
+        elseif save_pilot and save_pilot.id == "Pilot_Chemical" and killed_enemy then
+            desired_boosted = true
+        end
+        set_pawn_boosted(pawn, desired_boosted)
+    end
+
+    log_bridge("FIRE: " .. wname .. " direct_ricochet " ..
+               source.x .. "," .. source.y .. " -> " ..
+               first.x .. "," .. first.y .. " -> " ..
+               second.x .. "," .. second.y)
+    return true, "DamageSpace(" .. wname .. ") first=" ..
+           first_tar.x .. "," .. first_tar.y .. " second=" ..
+           second_tar.x .. "," .. second_tar.y
+end
+
+local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
+    local wname, _base_wname, slot, err =
+        effective_weapon_name_by_slot(pawn, weapon_slot)
+    if err ~= nil then
+        return false, err
+    end
+    local skill = _G[wname]
+    if not skill then
+        return false, "two-click skill missing: " .. tostring(wname)
+    end
+
+    local source = pawn:GetSpace()
+    local first = Point(tx1, ty1)
+    local second = Point(tx2, ty2)
+    if not Board:IsValid(first) or not Board:IsValid(second) then
+        return false, "two-click target off-board"
+    end
+
+    if string.find(wname, "^Brute_TC_Ricochet") ~= nil then
+        if first.x == source.x and first.y == source.y then
+            return false, "Ricochet first target is source"
+        end
+        if first.x ~= source.x and first.y ~= source.y then
+            return false, "Ricochet first target not cardinal " ..
+                   first.x .. "," .. first.y .. " from " ..
+                   source.x .. "," .. source.y
+        end
+        if second.x ~= first.x and second.y ~= first.y then
+            return false, "Ricochet second target not cardinal " ..
+                   second.x .. "," .. second.y .. " from " ..
+                   first.x .. "," .. first.y
+        end
+        return execute_ricochet_direct(pawn, wname, skill, first, second)
+    end
+
+    if string.find(wname, "^Science_TC_SwapOther") == nil then
+        return false, "unsupported two-click weapon " .. tostring(wname)
+    end
+    local dist = math.abs(first.x - source.x) + math.abs(first.y - source.y)
+    if dist ~= 1 then
+        return false, "Force Swap first target not adjacent " ..
+               first.x .. "," .. first.y .. " from " ..
+               source.x .. "," .. source.y
+    end
+    local first_pawn = Board:GetPawn(first)
+    local second_pawn = Board:GetPawn(second)
+    if not first_pawn then
+        return false, "Force Swap first click has no pawn at " ..
+               first.x .. "," .. first.y
+    end
+    if not second_pawn then
+        return false, "Force Swap second click has no pawn at " ..
+               second.x .. "," .. second.y
+    end
+    if first.x == second.x and first.y == second.y then
+        return false, "Force Swap targets must be different"
+    end
+    if pawn_is_guarding(first_pawn) or pawn_is_guarding(second_pawn) then
+        return false, "Force Swap target is guarding/stable"
+    end
+
+    local ok, fx_err = pcall(function()
+        Board:AddEffect(skill:GetFinalEffect(source, first, second))
+    end)
+    if not ok then
+        return false, "Force Swap GetFinalEffect failed: " .. tostring(fx_err)
+    end
+    log_bridge("FIRE: " .. wname .. " two_click slot=" .. slot .. " " ..
+               source.x .. "," .. source.y .. " -> " ..
+               first.x .. "," .. first.y .. " -> " ..
+               second.x .. "," .. second.y)
+    return true, "GetFinalEffect(" .. wname .. ") first=" ..
+           first.x .. "," .. first.y .. " second=" ..
+           second.x .. "," .. second.y
+end
+
+-- execute_weapon_by_slot: fire weapon using a 0-based slot index from
+-- the Python side (maps to 1-indexed Lua SkillList).
+-- This avoids name-matching issues where the solver's weapon ID doesn't
+-- match the pawn type's SkillList entry (e.g. purchased / upgraded weapons,
+-- or names the Rust solver doesn't recognise → "Unknown").
+local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
+    -- weapon_slot is 0-based from Python; Lua SkillList is 1-indexed
+    local wname, base_wname, slot, err, wsource, pawn_def, uid =
+        effective_weapon_name_by_slot(pawn, weapon_slot)
+    if err ~= nil then
+        return false, err
+    end
     local restore_wname = nil
     if wname ~= base_wname then
         restore_wname = base_wname
@@ -1882,6 +2160,123 @@ local function write_ack(msg)
     write_atomic(ACK_FILE, ACK_TMP, ack)
 end
 
+local function ui_probe_value(label, fn)
+    local ok, value = pcall(fn)
+    local out = {label = label, ok = ok and true or false}
+    if ok then
+        local vt = type(value)
+        out.type = vt
+        if vt == "boolean" or vt == "number" or vt == "string" then
+            out.value = value
+        elseif value == nil then
+            out.value = nil
+        else
+            out.value = tostring(value)
+        end
+    else
+        out.error = tostring(value)
+    end
+    return out
+end
+
+local function ui_probe_has_callable(obj, name)
+    if obj == nil then return false end
+    local ok, value = pcall(function() return obj[name] end)
+    return ok and type(value) == "function"
+end
+
+local function ui_probe_methods(label, obj, names)
+    local out = {}
+    for _, name in ipairs(names) do
+        out[#out + 1] = ui_probe_value(label .. "." .. name, function()
+            if obj == nil then error(label .. " unavailable") end
+            local fn = obj[name]
+            if type(fn) ~= "function" then error(name .. " not callable") end
+            return fn(obj)
+        end)
+    end
+    return out
+end
+
+local function ui_probe_globals()
+    local out = {}
+    local global_names = {
+        "Game", "Board", "Mission", "GameData", "sdlext", "modApi",
+        "UiRoot", "Ui", "UI", "PauseMenu", "Pause_Menu", "Menu",
+        "Screen", "ScreenManager", "GetGame", "GetCurrentMission",
+    }
+    for _, name in ipairs(global_names) do
+        out[#out + 1] = ui_probe_value("_G." .. name, function()
+            return _G[name]
+        end)
+    end
+    return out
+end
+
+local function ui_probe_menu_state()
+    local probes = {
+        bridge_speed = _bridge_speed,
+        timestamp = os.time(),
+        globals = ui_probe_globals(),
+        values = {},
+        callable = {},
+    }
+
+    local method_names = {
+        "IsPaused", "IsPause", "IsPauseMenu", "IsMenuOpen", "IsGamePaused",
+        "IsCombatPaused", "IsRunning", "IsBusy", "GetState", "GetCurrentState",
+        "GetTeamTurn", "GetTurnCount",
+    }
+    local objects = {
+        {"Game", Game},
+        {"Board", Board},
+        {"Mission", Mission},
+    }
+    if GetGame ~= nil then
+        local ok_game, game_ref = pcall(function() return GetGame() end)
+        probes.values[#probes.values + 1] = {
+            label = "GetGame()",
+            ok = ok_game and true or false,
+            type = ok_game and type(game_ref) or nil,
+            value = ok_game and tostring(game_ref) or nil,
+            error = ok_game and nil or tostring(game_ref),
+        }
+        if ok_game then
+            objects[#objects + 1] = {"GetGame()", game_ref}
+        end
+    end
+
+    for _, pair in ipairs(objects) do
+        local label = pair[1]
+        local obj = pair[2]
+        local callable = {}
+        for _, name in ipairs(method_names) do
+            if ui_probe_has_callable(obj, name) then
+                callable[#callable + 1] = name
+            end
+        end
+        probes.callable[label] = callable
+        local method_values = ui_probe_methods(label, obj, method_names)
+        for _, entry in ipairs(method_values) do
+            probes.values[#probes.values + 1] = entry
+        end
+    end
+
+    local globals_as_functions = {
+        "IsPaused", "IsPauseMenu", "IsMenuOpen", "IsGamePaused",
+        "GetCurrentScreen", "GetCurrentMenu", "GetUiState",
+    }
+    for _, name in ipairs(globals_as_functions) do
+        probes.values[#probes.values + 1] = ui_probe_value(name .. "()", function()
+            local fn = _G[name]
+            if type(fn) ~= "function" then error(name .. " not callable") end
+            return fn()
+        end)
+    end
+
+    return probes
+end
+
 local function execute_command(cmd_str)
     local parts = {}
     for word in cmd_str:gmatch("%S+") do
@@ -1915,13 +2310,13 @@ local function execute_command(cmd_str)
             write_ack("ERROR: pawn " .. uid .. " not found")
             return
         end
-        local ok, err = pcall(function() pawn:Move(Point(x, y)) end)
+        local ok, err = move_pawn_for_bridge(pawn, Point(x, y))
         if not ok then
             write_ack("ERROR: Move failed: " .. tostring(err))
             return
         end
         wait_for_board_coro()
-        write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y)
+        write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y .. " [" .. err .. "]")
 
     elseif cmd == "ATTACK" then
         -- ATTACK uid weapon_slot target_x target_y
@@ -1948,6 +2343,35 @@ local function execute_command(cmd_str)
         write_ack("OK ATTACK " .. uid .. " slot=" .. weapon_slot .. " at " ..
                   tx .. "," .. ty .. " [" .. method .. "]")
 
+    elseif cmd == "TWO_CLICK_ATTACK" then
+        -- TWO_CLICK_ATTACK uid weapon_slot target1_x target1_y target2_x target2_y
+        -- weapon_slot is 0-based index (0=primary, 1=secondary)
+        local uid = tonumber(parts[2])
+        local weapon_slot = tonumber(parts[3])
+        local tx1, ty1 = tonumber(parts[4]), tonumber(parts[5])
+        local tx2, ty2 = tonumber(parts[6]), tonumber(parts[7])
+        local pawn = Board:GetPawn(uid)
+        if not pawn then
+            write_ack("ERROR: pawn " .. uid .. " not found")
+            return
+        end
+        if weapon_slot == nil then
+            write_ack("ERROR: invalid weapon slot '" .. tostring(parts[3]) .. "'")
+            return
+        end
+        local ok, method = execute_two_click_by_slot(
+            pawn, weapon_slot, tx1, ty1, tx2, ty2
+        )
+        if not ok then
+            write_ack("ERROR: " .. method)
+            return
+        end
+        wait_for_board_coro()
+        pawn:SetActive(false)
+        write_ack("OK TWO_CLICK_ATTACK " .. uid .. " slot=" .. weapon_slot ..
+                  " at " .. tx1 .. "," .. ty1 .. " and " ..
+                  tx2 .. "," .. ty2 .. " [" .. method .. "]")
+
     elseif cmd == "MOVE_ATTACK" then
         -- MOVE_ATTACK uid mx my weapon_slot tx ty
         -- weapon_slot is 0-based index (0=primary, 1=secondary)
@@ -1964,7 +2388,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: invalid weapon slot '" .. tostring(parts[5]) .. "'")
             return
         end
-        local ok1, err1 = pcall(function() pawn:Move(Point(mx, my)) end)
+        local ok1, err1 = move_pawn_for_bridge(pawn, Point(mx, my))
         if not ok1 then
             write_ack("ERROR: Move failed: " .. tostring(err1))
             return
@@ -2172,6 +2596,17 @@ local function execute_command(cmd_str)
             return
         end
 
+    elseif cmd == "UI_PROBE" then
+        -- Read-only probe for pause/menu/UI state candidates. Intended for
+        -- before/after Esc comparisons; every candidate is protected by pcall.
+        local ok, result = pcall(ui_probe_menu_state)
+        if ok then
+            write_ack("OK UI_PROBE " .. json_encode(result))
+        else
+            write_ack("ERROR: UI_PROBE failed: " .. tostring(result))
+        end
+        return
+
     elseif cmd == "LUA" then
         -- Raw Lua execution (for debugging)
         local lua_code = cmd_str:match("LUA%s+(.*)")
@@ -2293,7 +2728,7 @@ Mission.BaseUpdate = function(self)
     clear_stale_teleporter_pairs_for(self)
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
-        local f = io.open("/tmp/itb_bridge_heartbeat", "w")
+        local f = io.open(HEARTBEAT_FILE, "w")
         if f then f:write(tostring(os.clock())); f:close() end
     end)
     if _running_coroutine then
@@ -2512,5 +2947,5 @@ _ITB_BRIDGE_LOAD_COUNT = _reload_count
 
 log_bridge("=== ITB Bot Bridge started (load #" .. _reload_count .. ") ===")
 if ConsolePrint then
-    ConsolePrint("ITB Bot Bridge loaded! IPC via /tmp/itb_*.json")
+    ConsolePrint("ITB Bot Bridge loaded! IPC via " .. BRIDGE_DIR)
 end

@@ -4,10 +4,12 @@ from src.loop.commands import (
     _annotate_pending_grid_debt,
     _capture_board_summary,
     _compute_deltas,
+    _evaluate_solution_safety,
     _summary_with_pending_grid_debt,
 )
 from src.loop.session import RunSession
 from src.model.board import Board
+from src.solver.solver import Solution
 
 
 def _bridge_with_mech(*, flying=False, danger=None):
@@ -31,6 +33,22 @@ def _bridge_with_mech(*, flying=False, danger=None):
             "flying": flying,
         }],
     }
+
+
+def test_summary_carries_bridge_remaining_spawns_signal():
+    data = _bridge_with_mech()
+    data.update({
+        "mission_id": "Mission_BurnbugBoss",
+        "turn": 4,
+        "total_turns": 4,
+        "remaining_spawns": 1,
+        "is_infinite_spawn": True,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["remaining_spawns"] == 1
 
 
 def test_summary_flags_mech_on_lethal_environment_danger():
@@ -79,6 +97,59 @@ def test_summary_honors_board_flying_immunity_when_bridge_payload_is_stale():
     summary = _capture_board_summary(board, data)
 
     assert (2, 5) in board.environment_danger_flying_immune
+    assert summary["mechs_on_danger"] == []
+
+
+def test_summary_satellite_fallback_ignores_non_queued_rockets():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Satellite"
+    data["targeted_tiles"] = [[6, 1], [4, 2], [5, 2], [6, 2], [6, 3]]
+    data["environment_danger"] = [[5, 2], [7, 2], [6, 1], [6, 3]]
+    data["environment_danger_v2"] = [
+        [5, 2, 1, 1, 1],
+        [7, 2, 1, 1, 1],
+        [6, 1, 1, 1, 1],
+        [6, 3, 1, 1, 1],
+    ]
+    data["units"][0]["type"] = "ElectricMech"
+    data["units"][0]["x"] = 4
+    data["units"][0]["y"] = 3
+    data["units"][0]["hp"] = 3
+    data["units"].extend([
+        {
+            "uid": 98,
+            "type": "SatelliteRocket",
+            "x": 6,
+            "y": 2,
+            "hp": 2,
+            "max_hp": 2,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": ["Rocket_Launch"],
+            "active": False,
+            "queued_launch": True,
+        },
+        {
+            "uid": 99,
+            "type": "SatelliteRocket",
+            "x": 4,
+            "y": 2,
+            "hp": 2,
+            "max_hp": 2,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": ["Rocket_Launch"],
+            "active": False,
+            "queued_launch": False,
+        },
+    ])
+
+    board = Board.from_bridge_data(data)
+    summary = _capture_board_summary(board, data)
+
+    assert (4, 3) not in board.environment_danger
     assert summary["mechs_on_danger"] == []
 
 
@@ -141,6 +212,104 @@ def test_summary_tracks_mech_damage_objective_from_bonus_ids():
 
     assert summary["mech_damage_taken_total"] == 1
     assert summary["mech_damage_objective_limit"] == 4
+
+
+def test_summary_ignores_save_overlay_gap_at_bridge_cap_for_mech_damage_objective():
+    data = _bridge_with_mech()
+    data["bonus_objective_ids"] = [4]
+    data["mech_stat_overlays"] = [
+        {"uid": 11, "bridge_max_hp": 2, "save_max_hp": 4},
+    ]
+    data["units"][0]["hp"] = 2
+    data["units"][0]["max_hp"] = 4
+    data["units"][0]["bridge_reported_max_hp"] = 2
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mech_damage_taken_total"] == 0
+    assert summary["mech_damage_objective_limit"] == 4
+    assert summary["mech_hp"] == [
+        {"uid": 11, "type": "TeleMech", "hp": 2, "max_hp": 4}
+    ]
+
+
+def test_summary_counts_bridge_cap_damage_below_cap_for_mech_damage_objective():
+    data = _bridge_with_mech()
+    data["bonus_objective_ids"] = [4]
+    data["mech_stat_overlays"] = [
+        {"uid": 11, "bridge_max_hp": 2, "save_max_hp": 4},
+    ]
+    data["units"][0]["hp"] = 1
+    data["units"][0]["max_hp"] = 4
+    data["units"][0]["bridge_reported_max_hp"] = 2
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mech_damage_taken_total"] == 1
+    assert summary["mech_damage_objective_limit"] == 4
+
+
+def test_solution_safety_prefers_projected_board_summary(monkeypatch):
+    data = _bridge_with_mech()
+    data["bonus_objective_ids"] = [4]
+    data["mech_stat_overlays"] = [
+        {"uid": 11, "bridge_max_hp": 2, "save_max_hp": 4},
+    ]
+    data["units"][0]["hp"] = 2
+    data["units"][0]["max_hp"] = 4
+    data["units"][0]["bridge_reported_max_hp"] = 2
+    board = Board.from_bridge_data(data)
+    final_board_data = json.loads(json.dumps(data))
+    final_board_data.pop("bonus_objective_ids", None)
+    final_board_data.pop("mech_stat_overlays", None)
+    final_board_data["environment_danger_v2"] = [[2, 5, 1, 1, 1]]
+    final_board_data["units"][0]["x"] = 2
+    final_board_data["units"][0]["y"] = 5
+    final_board_data["units"][0].pop("bridge_reported_max_hp", None)
+    stale_predicted = {
+        "mission_id": "Mission_Tides",
+        "turn": 1,
+        "total_turns": 3,
+        "grid_power": 7,
+        "mechs_on_danger": [],
+        "mech_damage_taken_total": 2,
+        "mech_damage_objective_limit": None,
+    }
+
+    monkeypatch.setattr(
+        "src.loop.commands.replay_solution",
+        lambda *args, **kwargs: {
+            "predicted_outcome": dict(stale_predicted),
+            "final_board": final_board_data,
+            "action_results": [],
+        },
+    )
+
+    result = _evaluate_solution_safety(
+        board,
+        data,
+        Solution(),
+        [],
+        current_turn=1,
+        total_turns=3,
+        remaining_spawns=0,
+    )
+
+    predicted = result["predicted_board_summary"]
+    assert predicted["mechs_on_danger"] == [{
+        "uid": 11,
+        "type": "TeleMech",
+        "pos": [2, 5],
+        "damage": 1,
+    }]
+    assert predicted["mech_damage_taken_total"] == 0
+    assert predicted["mech_damage_objective_limit"] == 4
+    assert result["plan_safety"]["blocking"] is True
+    assert [
+        item["kind"] for item in result["plan_safety"]["violations"]
+    ] == ["mech_on_danger"]
 
 
 def test_summary_tracks_mission_kill_objective_progress():
@@ -413,6 +582,48 @@ def test_summary_tracks_dam_pawn_destroy_objective_from_metadata():
     ]
 
 
+def test_summary_tracks_bonus_debris_objective_from_bonus_id():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Survive"
+    data["bonus_objective_ids"] = [7]
+    data["destroy_objective_unit_types"] = ["BonusDebris"]
+    data["units"].extend([
+        {
+            "uid": 701,
+            "type": "BonusDebris",
+            "x": 4,
+            "y": 3,
+            "hp": 1,
+            "max_hp": 1,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+        {
+            "uid": 702,
+            "type": "BonusDebris",
+            "x": 5,
+            "y": 3,
+            "hp": 0,
+            "max_hp": 1,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["destroy_objective_units_alive"] == 1
+    assert [u["type"] for u in summary["destroy_objective_units"]] == [
+        "BonusDebris",
+        "BonusDebris",
+    ]
+
+
 def test_summary_tracks_terraform_grass_counter_tiles():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_Terraform"
@@ -512,6 +723,43 @@ def test_summary_treats_missing_hp_unique_building_as_destroyed_projection():
     assert board.tile(4, 6).building_hp == 0
     assert summary["objective_buildings_alive"] == 0
     assert summary["objective_building_hp_total"] == 0
+
+
+def test_summary_counts_enemy_targets_on_objective_buildings():
+    data = _bridge_with_mech()
+    data["tiles"].append({
+        "x": 4,
+        "y": 2,
+        "terrain": "building",
+        "building_hp": 1,
+        "unique_building": True,
+        "objective_name": "Str_Power",
+    })
+    data["units"].append({
+        "uid": 106,
+        "type": "Moth1",
+        "x": 6,
+        "y": 2,
+        "hp": 3,
+        "max_hp": 3,
+        "team": 6,
+        "mech": False,
+        "move": 3,
+        "weapons": ["MothAtk1"],
+        "queued_target": [4, 2],
+        "has_queued_attack": True,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["objective_buildings_targeted"] == 1
+    assert summary["objective_building_targets"] == [{
+        "uid": 106,
+        "type": "Moth1",
+        "pos": [6, 2],
+        "target": [4, 2],
+    }]
 
 
 def test_bridge_terrain_id_overrides_stale_lava_name_for_ice():

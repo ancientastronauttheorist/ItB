@@ -1,0 +1,1582 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+from src.loop.lightning_conductor import (
+    AutonomousLightningConfig,
+    AutonomousLightningConductor,
+    cmd_lightning_autonomous,
+    _hard_stop,
+    _restartable_attempt_stop,
+    _restart_dead_timeline,
+    _safe_to_finalize,
+    _telemetry_run_id,
+    _timer_label,
+    _timer_seconds,
+)
+
+
+class FakeTelemetry:
+    def __init__(self, run_id: str = "lw_test") -> None:
+        self.run_id = run_id
+        self.run_dir = f"recordings/{run_id}"
+        self.telemetry_dir = f"{self.run_dir}/telemetry"
+        self.events: list[tuple[str, dict]] = []
+        self.manifests: list[dict] = []
+        self.summaries: list[dict] = []
+
+    def event(self, name: str, **payload):
+        self.events.append((name, payload))
+
+    def write_manifest(self, payload):
+        self.manifests.append(payload)
+
+    def summary(self, **payload):
+        self.summaries.append(payload)
+
+
+def make_conductor(**kwargs) -> AutonomousLightningConductor:
+    config = {
+        "screenshots": False,
+        "achievement_sync": False,
+        "max_attempts": 1,
+        "max_segments": 1,
+    }
+    config.update(kwargs)
+    conductor = AutonomousLightningConductor(
+        AutonomousLightningConfig(**config)
+    )
+    conductor.telemetry = FakeTelemetry()
+    return conductor
+
+
+def verified_pause_payload() -> dict:
+    return {
+        "status": "OK",
+        "pause_verified": True,
+        "visible_ui": {"visible_ui": "pause_menu"},
+    }
+
+
+def new_game_setup_payload() -> dict:
+    return {
+        "status": "OK",
+        "visible_ui": "new_game_setup",
+    }
+
+
+def test_telemetry_run_id_preserves_real_session_id():
+    session = SimpleNamespace(run_id="20260605_120000_123")
+
+    assert _telemetry_run_id(session) == "20260605_120000_123"
+
+
+def test_telemetry_run_id_replaces_generic_lw_session_id():
+    session = SimpleNamespace(run_id="lw")
+
+    run_id = _telemetry_run_id(session)
+
+    assert run_id.startswith("lightning_")
+    assert run_id != "lw"
+
+
+def test_autonomous_starts_when_initial_screen_is_setup():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "SKIPPED",
+                "reason": "visible_ui_not_pause_guard_eligible",
+                "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+            },
+        ),
+        cmd_verify_setup_screen=record("verify_setup", {"status": "PASS"}),
+        cmd_lightning_start_run=record("start_run", {"status": "OK"}),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "max_steps_reached",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert [name for name, _ in calls[:5]] == [
+        "pause_guard",
+        "lightning_ui",
+        "verify_setup",
+        "start_run",
+        "preflight",
+    ]
+    assert calls[1] == ("lightning_ui", {"args": (), "control": "setup_start"})
+
+
+def test_autonomous_starts_from_setup_despite_stale_live_bridge():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "BLOCKED",
+                "reason": "live_combat_phase",
+                "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+                "last_poll": {
+                    "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+                    "live_snapshot": {
+                        "phase": "combat_player",
+                        "mission_id": "Mission_Volatile",
+                    },
+                },
+            },
+        ),
+        cmd_verify_setup_screen=record("verify_setup", {"status": "PASS"}),
+        cmd_lightning_start_run=record("start_run", {"status": "OK"}),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "max_steps_reached",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert [name for name, _ in calls[:4]] == [
+        "pause_guard",
+        "lightning_ui",
+        "verify_setup",
+        "start_run",
+    ]
+
+
+def test_autonomous_rehomes_telemetry_after_fresh_start_run(monkeypatch):
+    calls: list[tuple[str, dict]] = []
+    created_recorders: list[FakeTelemetry] = []
+    session = SimpleNamespace(
+        run_id="20260605_141600_123",
+        squad="Blitzkrieg",
+        difficulty=0,
+        achievement_targets=["Lightning War"],
+        islands_completed=[],
+    )
+
+    def fake_recorder(run_id):
+        recorder = FakeTelemetry(run_id)
+        created_recorders.append(recorder)
+        return recorder
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            if name == "start_run":
+                session.run_id = "20260605_150536_840"
+            return payload
+
+        return fn
+
+    from src.loop import lightning_conductor as conductor_module
+
+    monkeypatch.setattr(conductor_module, "TelemetryRecorder", fake_recorder)
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_verify_setup_screen=record("verify_setup", {"status": "PASS"}),
+        cmd_lightning_start_run=record("start_run", {"status": "OK"}),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "max_steps_reached",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+    conductor = make_conductor(start_from_verified_setup=True)
+    conductor.telemetry = FakeTelemetry(session.run_id)
+
+    result = conductor._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert conductor.telemetry.run_id == "20260605_150536_840"
+    assert result["telemetry_dir"] == "recordings/20260605_150536_840/telemetry"
+    assert [recorder.run_id for recorder in created_recorders] == [
+        "20260605_150536_840"
+    ]
+    assert conductor.telemetry.events[0][0] == "telemetry_rehome"
+    assert conductor.telemetry.events[0][1]["previous_run_id"] == "20260605_141600_123"
+    assert [name for name, _ in calls[:4]] == [
+        "pause_guard",
+        "verify_setup",
+        "start_run",
+        "preflight",
+    ]
+
+
+def test_autonomous_restarts_on_bridge_snapshot_unavailable():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "bridge_snapshot_unavailable",
+                "pause_guard": {
+                    "status": "SKIPPED",
+                    "reason": "visible_ui_not_pause_guard_eligible",
+                    "visible_ui": {"status": "OK", "visible_ui": "new_game_setup"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "bridge_snapshot_unavailable_attempt_restart"
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_passes_segment_timeout_as_wall_cap():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "max_steps_reached",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor(segment_timeout=123.0)._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    segment_call = next(payload for name, payload in calls if name == "segment")
+    assert segment_call["max_wall_seconds"] == 123.0
+
+
+def test_autonomous_passes_mode_route_policy_to_segment():
+    def run_mode(mode: str) -> dict:
+        calls: list[tuple[str, dict]] = []
+
+        def record(name, payload):
+            def fn(*args, **kwargs):
+                calls.append((name, {"args": args, **kwargs}))
+                return payload
+
+            return fn
+
+        commands = SimpleNamespace(
+            cmd_lightning_pause_guard=record(
+                "pause_guard",
+                {
+                    "status": "OK",
+                    "reason": "already_paused",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            ),
+            cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+            cmd_lightning_segment=record(
+                "segment",
+                {
+                    "status": "LIGHTNING_SEGMENT_STOPPED",
+                    "reason": "max_steps_reached",
+                    "pause_guard": {
+                        "status": "OK",
+                        "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                    },
+                },
+            ),
+            cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+        )
+
+        result = make_conductor(mode=mode)._run_inner(commands)
+
+        assert result["status"] == "PARKED_SAFE"
+        return next(payload for name, payload in calls if name == "segment")
+
+    baseline_segment = run_mode("baseline")
+    speed_segment = run_mode("speed")
+    assert baseline_segment["route_routing"] == "lightning_baseline"
+    assert speed_segment["route_routing"] == "lightning_war"
+    assert speed_segment["pause_before_solve"] is False
+    assert speed_segment["pause_between_actions"] is False
+
+
+def test_autonomous_prefers_explicit_max_wall_seconds():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "max_steps_reached",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor(max_wall_seconds=77.0, segment_timeout=123.0)._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    segment_call = next(payload for name, payload in calls if name == "segment")
+    assert segment_call["max_wall_seconds"] == 77.0
+
+
+def test_autonomous_restarts_when_first_island_gate_is_missed():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 901.0}},
+        ),
+        cmd_lightning_segment=record("segment", {"status": "SHOULD_NOT_RUN"}),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(first_island_gate_seconds=900.0)._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "first_island_pace_gate"
+    assert result["game_timer"] == "0:15:01"
+    assert ("segment", {"args": ()}) not in calls
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_suppresses_first_island_gate_after_deployment_handoff():
+    calls: list[tuple[str, dict]] = []
+    session = SimpleNamespace(
+        islands_completed=[],
+        current_island="rst",
+        current_mission="",
+        mission_index=0,
+    )
+    segments = iter(
+        [
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "deployment_confirmed_paused",
+                "visible_timer": {
+                    "game_seconds": 18.0,
+                    "game_timer": "0:00:18",
+                },
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "deployment_confirmed_paused",
+                "visible_timer": {
+                    "game_seconds": 25.0,
+                    "game_timer": "0:00:25",
+                },
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ]
+    )
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    def segment(*args, **kwargs):
+        calls.append(("segment", {"args": args, **kwargs}))
+        return next(segments)
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=segment,
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor(
+        first_island_gate_seconds=24.0,
+        max_segments=2,
+    )._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert result["reason"] == "max_attempts_reached"
+    assert [name for name, _payload in calls].count("segment") == 2
+    assert not any(name == "abandon_to_setup" for name, _payload in calls)
+
+
+def test_autonomous_restarts_before_first_mission_when_segment_gate_is_missed():
+    calls: list[tuple[str, dict]] = []
+    session = SimpleNamespace(
+        islands_completed=[],
+        current_island="archive",
+        current_mission="",
+        mission_index=0,
+    )
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 181.0}},
+        ),
+        cmd_lightning_segment=record("segment", {"status": "SHOULD_NOT_RUN"}),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(mission_segment_gate_seconds=180.0)._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "first_mission_segment_pace_gate"
+    assert result["game_timer"] == "0:03:01"
+    assert result["gate_timer"] == "0:03:00"
+    assert result["current_island"] == "archive"
+    assert result["mission_index"] == 0
+    assert ("segment", {"args": ()}) not in calls
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_restarts_route_ready_segment_when_segment_gate_is_missed():
+    calls: list[tuple[str, dict]] = []
+    session = SimpleNamespace(
+        islands_completed=[],
+        current_island="archive",
+        current_mission="",
+        mission_index=0,
+    )
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 60.0}},
+        ),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "route_start_click_failed",
+                "primary_next_command": (
+                    "python3 game_loop.py lightning_segment "
+                    "--route-visual-region-index 0"
+                ),
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+                "effective_timer": {"game_seconds": 729.0},
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(mission_segment_gate_seconds=180.0)._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "first_mission_segment_pace_gate"
+    assert result["game_timer"] == "0:12:09"
+    assert [name for name, _ in calls].count("segment") == 1
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_restarts_route_ready_segment_with_stale_current_mission():
+    calls: list[tuple[str, dict]] = []
+    session = SimpleNamespace(
+        islands_completed=[],
+        current_island="archive",
+        current_mission="Mission_Tides",
+        mission_index=0,
+    )
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 729.0}},
+        ),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "route_start_click_failed",
+                "primary_next_command": (
+                    "python3 game_loop.py lightning_segment "
+                    "--route-visual-region-index 0"
+                ),
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(mission_segment_gate_seconds=180.0)._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "first_mission_segment_pace_gate"
+    assert result["game_timer"] == "0:12:09"
+    assert result["current_mission"] == "Mission_Tides"
+    assert result["route_context"] == "route_start_click_failed"
+    assert [name for name, _ in calls].count("segment") == 1
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_does_not_apply_first_mission_segment_gate_after_first_mission():
+    calls: list[tuple[str, dict]] = []
+    session = SimpleNamespace(
+        islands_completed=[],
+        current_island="archive",
+        current_mission="",
+        mission_index=1,
+    )
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: session,
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 181.0}},
+        ),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "route_ready",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(mission_segment_gate_seconds=180.0)._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert result["reason"] == "route_ready_requires_autostart_or_safe_policy"
+    assert [name for name, _ in calls].count("segment") == 1
+
+
+def test_autonomous_restarts_when_preflight_has_persistent_post_enemy_block():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {
+                "status": "FAIL",
+                "issues": ["persistent post-enemy block is active"],
+            },
+        ),
+        cmd_lightning_segment=record("segment", {"status": "SHOULD_NOT_RUN"}),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "persistent_post_enemy_block_attempt_restart"
+    assert ("segment", {"args": ()}) not in calls
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_restarts_on_stale_active_combat_visible_map():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "stale_active_combat_visible_island_map",
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "stale_active_combat_visible_island_map_attempt_restart"
+    assert [name for name, _ in calls].count("segment") == 1
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_restarts_when_second_island_start_gate_is_missed():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=["archive"]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record(
+            "preflight",
+            {"status": "PASS", "effective_timer": {"game_seconds": 1006.0}},
+        ),
+        cmd_lightning_segment=record("segment", {"status": "SHOULD_NOT_RUN"}),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor(second_island_start_gate_seconds=1005.0)._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "second_island_start_pace_gate"
+    assert result["gate_timer"] == "0:16:45"
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_restart_dead_timeline_abandons_to_setup():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
+            "abandon_pilot_slot",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+
+    result = _restart_dead_timeline(commands, verified_pause_payload())
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "abandoned_to_setup"
+    assert calls == [
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_available",
+        "abandon_pilot_slot_two_left",
+        "classify",
+    ]
+
+
+def test_restart_dead_timeline_clears_kia_panel_to_setup():
+    calls: list[str] = []
+    classify_count = 0
+
+    def lightning_ui(control):
+        nonlocal classify_count
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
+            "abandon_pilot_slot",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            classify_count += 1
+            if classify_count == 1:
+                return {
+                    "status": "OK",
+                    "visible_ui": "kia_panel",
+                    "recommended_control": "kia_understood",
+                }
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+
+    result = _restart_dead_timeline(commands, verified_pause_payload())
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "abandoned_to_setup_after_panel"
+    assert calls == [
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_available",
+        "abandon_pilot_slot_two_left",
+        "classify",
+        "abandon_pilot_slot",
+        "classify",
+    ]
+
+
+def test_restart_dead_timeline_closes_options_then_stops_on_pause_menu():
+    calls: list[str] = []
+    classify_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "options_menu",
+                "recommended_control": "options_close",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+        ]
+    )
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
+            "options_close",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return next(classify_states)
+        raise AssertionError(f"unexpected control: {control}")
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+
+    result = _restart_dead_timeline(commands, verified_pause_payload())
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "abandon_returned_to_pause_menu"
+    assert calls == [
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_available",
+        "abandon_pilot_slot_two_left",
+        "classify",
+        "options_close",
+        "classify",
+    ]
+
+
+def test_restart_dead_timeline_uses_pause_guard_before_abandon():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
+            "abandon_pilot_slot",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    def pause_guard(**kwargs):
+        calls.append("pause_guard")
+        return {
+            "status": "OK",
+            "last_poll": {
+                "status": "OK",
+                "timer_stop_verified": True,
+            },
+        }
+
+    commands = SimpleNamespace(
+        cmd_lightning_ui=lightning_ui,
+        cmd_lightning_pause_guard=pause_guard,
+    )
+    unsafe_previous = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "first_island_pace_gate",
+    }
+
+    result = _restart_dead_timeline(commands, unsafe_previous)
+
+    assert result["status"] == "OK"
+    assert calls == [
+        "pause_guard",
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_available",
+        "abandon_pilot_slot_two_left",
+        "classify",
+    ]
+
+
+def test_restart_dead_timeline_does_not_abandon_when_restart_evidence_is_setup():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+    restart_result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "deployment_visible_ui_not_deployment_attempt_restart",
+        "ensure_pause": new_game_setup_payload(),
+    }
+
+    result = _restart_dead_timeline(commands, restart_result)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "already_at_setup"
+    assert calls == []
+
+
+def test_restart_dead_timeline_blocks_false_setup_with_active_mission_clue():
+    calls: list[str] = []
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control == "ensure_pause":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    commands = SimpleNamespace(cmd_lightning_ui=lightning_ui)
+    restart_result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "deployment_visible_ui_not_deployment_attempt_restart",
+        "ensure_pause": new_game_setup_payload(),
+        "segment": {
+            "last_attempt": {
+                "snapshot": {
+                    "in_active_mission": True,
+                    "mission_id": "Mission_SnowStorm",
+                    "deployment_zone_count": 13,
+                }
+            }
+        },
+    }
+
+    result = _restart_dead_timeline(commands, restart_result)
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "restart_setup_visibility_conflicts_with_active_mission"
+    assert calls == ["ensure_pause"]
+
+
+def test_restart_dead_timeline_resumes_from_kia_panel_after_failed_recovery():
+    calls: list[str] = []
+    classify_count = 0
+
+    def lightning_ui(control):
+        nonlocal classify_count
+        calls.append(control)
+        if control == "abandon_pilot_slot":
+            return {"status": "OK"}
+        if control == "classify":
+            classify_count += 1
+            if classify_count == 1:
+                return {
+                    "status": "OK",
+                    "visible_ui": "kia_panel",
+                    "recommended_control": "kia_understood",
+                }
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    def pause_guard(**kwargs):
+        calls.append("pause_guard")
+        return {
+            "status": "BLOCKED",
+            "reason": "kia_panel_visible",
+            "last_poll": {
+                "status": "BLOCKED",
+                "visible_ui": {
+                    "status": "OK",
+                    "visible_ui": "kia_panel",
+                    "recommended_control": "kia_understood",
+                },
+            },
+        }
+
+    commands = SimpleNamespace(
+        cmd_lightning_ui=lightning_ui,
+        cmd_lightning_pause_guard=pause_guard,
+    )
+    unsafe_previous = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "persistent_post_enemy_block_attempt_restart",
+    }
+
+    result = _restart_dead_timeline(commands, unsafe_previous)
+
+    assert result["status"] == "OK"
+    assert result["reason"] == "abandoned_to_setup"
+    assert calls == [
+        "pause_guard",
+        "classify",
+        "abandon_pilot_slot",
+        "classify",
+    ]
+
+
+def test_cmd_lightning_autonomous_retries_recommended_timeline(monkeypatch):
+    calls: list[str] = []
+    printed: list[dict] = []
+    configs: list[AutonomousLightningConfig] = []
+    run_results = iter(
+        [
+            {
+                "status": "RESTART_RECOMMENDED",
+                "reason": "first_island_pace_gate",
+                "ensure_pause": verified_pause_payload(),
+            },
+            {"status": "SUCCESS", "reason": "achievement_confirmed_sync"},
+        ]
+    )
+
+    class FakeConductor:
+        def __init__(self, config):
+            configs.append(config)
+
+        def run(self):
+            return next(run_results)
+
+    def lightning_ui(control):
+        calls.append(control)
+        if control in {
+            "abandon_timeline",
+            "abandon_confirm_yes",
+            "abandon_pilot_available",
+            "abandon_pilot_slot_two_left",
+            "abandon_pilot_slot",
+        }:
+            return {"status": "OK"}
+        if control == "classify":
+            return new_game_setup_payload()
+        return {"status": "OK"}
+
+    from src.loop import commands as commands_module
+    from src.loop import lightning_conductor as conductor_module
+
+    monkeypatch.setattr(
+        conductor_module,
+        "AutonomousLightningConductor",
+        FakeConductor,
+    )
+    monkeypatch.setattr(commands_module, "cmd_lightning_ui", lightning_ui)
+    monkeypatch.setattr(commands_module, "_print_result", printed.append)
+
+    result = cmd_lightning_autonomous(max_attempts=2, screenshots=False)
+
+    assert result["status"] == "SUCCESS"
+    assert [config.max_attempts for config in configs] == [1, 1]
+    assert calls == [
+        "abandon_timeline",
+        "abandon_confirm_yes",
+        "abandon_pilot_available",
+        "abandon_pilot_slot_two_left",
+        "classify",
+    ]
+    assert printed == [result]
+    assert result["timeline_attempt_history"][0]["status"] == "RESTART_RECOMMENDED"
+
+
+def test_autonomous_restarts_on_nested_safety_blocked_attempt():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "combat_loop_returned",
+                "last_attempt": {
+                    "action": {
+                        "combat_loop": {
+                            "status": "LIGHTNING_LOOP_STOPPED",
+                            "reason": "SAFETY_BLOCKED",
+                        },
+                    },
+                },
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", {"status": "OK"}),
+    )
+
+    result = make_conductor()._run_inner(commands)
+
+    assert result["status"] == "RESTART_RECOMMENDED"
+    assert result["reason"] == "safety_blocked_attempt_restart"
+    assert calls[-1] == ("lightning_ui", {"args": ("ensure_pause",)})
+
+
+def test_autonomous_parks_when_route_auto_start_is_vetoed():
+    calls: list[tuple[str, dict]] = []
+
+    def record(name, payload):
+        def fn(*args, **kwargs):
+            calls.append((name, {"args": args, **kwargs}))
+            return payload
+
+        return fn
+
+    commands = SimpleNamespace(
+        _load_session=lambda: SimpleNamespace(islands_completed=[]),
+        cmd_lightning_pause_guard=record(
+            "pause_guard",
+            {
+                "status": "OK",
+                "reason": "already_paused",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        ),
+        cmd_lightning_preflight=record("preflight", {"status": "PASS"}),
+        cmd_lightning_segment=record(
+            "segment",
+            {
+                "status": "LIGHTNING_SEGMENT_STOPPED",
+                "reason": "route_auto_start_not_allowed",
+                "primary_route_candidate_index": 5,
+                "pause_guard": {
+                    "status": "OK",
+                    "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+                },
+            },
+        ),
+        cmd_lightning_ui=record("lightning_ui", verified_pause_payload()),
+    )
+
+    result = make_conductor(
+        route_auto_start=True,
+        route_start_mode="region-repeat-preview-board",
+    )._run_inner(commands)
+
+    assert result["status"] == "PARKED_SAFE"
+    assert result["reason"] == "route_auto_start_unavailable"
+    assert result["primary_route_candidate_index"] == 5
+    assert [name for name, _ in calls] == [
+        "pause_guard",
+        "preflight",
+        "segment",
+    ]
+    assert calls[2][1]["route_start_mode"] == "region-repeat-preview-board"
+
+
+def test_timer_helpers_read_real_segment_last_attempt_budget():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "route_auto_start_not_allowed",
+        "last_attempt": {
+            "budget": {
+                "game_seconds": 940.267,
+                "game_timer": "0:15:40",
+            },
+        },
+    }
+
+    assert _timer_seconds(segment) == 940.267
+    assert _timer_label(segment) == "0:15:40"
+
+
+def test_timer_helpers_read_nested_resume_guard_visible_budget():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "route_auto_start_not_allowed",
+        "last_attempt": {
+            "budget": {
+                "game_seconds": 786.395,
+                "game_timer": "0:13:06",
+            },
+            "resume_guard": {
+                "visible_timer_budget": {
+                    "game_seconds": 947.0,
+                    "game_timer": "0:15:47",
+                },
+            },
+        },
+    }
+
+    assert _timer_seconds(segment) == 947.0
+    assert _timer_label(segment) == "0:15:47"
+
+
+def test_timer_helpers_read_parsed_visible_timer_container():
+    result = {
+        "status": "WARN",
+        "visible_timer": {
+            "game_seconds": 729.0,
+            "game_timer": "0:12:09",
+        },
+    }
+
+    assert _timer_seconds(result) == 729.0
+    assert _timer_label(result) == "0:12:09"
+
+
+def test_timer_helpers_prefer_visible_timer_over_stale_budget():
+    result = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "deployment_confirmed_paused",
+        "game_budget": {
+            "game_seconds": 41.184,
+            "game_timer": "0:00:41",
+        },
+        "last_attempt": {
+            "resume": {
+                "visible_timer_budget": {
+                    "game_seconds": 19.0,
+                    "game_timer": "0:00:19",
+                },
+            },
+        },
+        "visible_timer": {
+            "game_seconds": 19.0,
+            "game_timer": "0:00:19",
+        },
+    }
+
+    assert _timer_seconds(result) == 19.0
+    assert _timer_label(result) == "0:00:19"
+
+
+def test_restartable_attempt_stop_detects_nested_post_enemy_missed_window():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "combat_loop_returned",
+        "last_attempt": {
+            "status": "POST_ENEMY_AUDIT_MISSED_WINDOW",
+            "blocking": True,
+        },
+    }
+
+    assert (
+        _restartable_attempt_stop(segment)
+        == "post_enemy_audit_missed_window_attempt_restart"
+    )
+    assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_ignores_nonblocking_post_enemy_record():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "repeated_progress_state",
+        "last_attempt": {
+            "action": {
+                "post_enemy_result": {
+                    "status": "POST_ENEMY_RECORDED",
+                    "blocking": False,
+                    "deltas": {"enemies_alive_diff": 1},
+                },
+            },
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) is None
+    assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_keeps_blocking_post_enemy_restart():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "combat_loop_returned",
+        "last_attempt": {
+            "action": {
+                "post_enemy_result": {
+                    "status": "INVESTIGATE_POST_ENEMY",
+                    "blocking": True,
+                },
+            },
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) == "investigate_attempt_restart"
+    assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_treats_lightning_hard_gates_as_dead_attempts():
+    examples = [
+        ("RESEARCH_REQUIRED", "research_required_attempt_restart"),
+        ("INVESTIGATE_POST_ENEMY", "investigate_attempt_restart"),
+        ("THREAT_AUDIT_BLOCKED", "threat_audit_attempt_restart"),
+        ("POST_ENEMY_BLOCKED", "post_enemy_attempt_restart"),
+        ("DESYNC_AFTER_ACTION", "desync_attempt_restart"),
+        (
+            "stale_active_combat_visible_island_map",
+            "stale_active_combat_visible_island_map_attempt_restart",
+        ),
+        (
+            "deployment_visible_ui_not_deployment",
+            "deployment_visible_ui_not_deployment_attempt_restart",
+        ),
+        (
+            "visual_region_index_not_found",
+            "visual_region_index_not_found_attempt_restart",
+        ),
+    ]
+
+    for reason, expected in examples:
+        segment = {
+            "status": "LIGHTNING_SEGMENT_STOPPED",
+            "reason": reason,
+            "pause_guard": {
+                "status": "OK",
+                "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+            },
+        }
+
+        assert _restartable_attempt_stop(segment) == expected
+        assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_ignores_visual_region_miss_with_pending_retry():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "segment_wall_seconds_exceeded",
+        "route_visual_region_index_pending": 0,
+        "steps": [
+            {
+                "status": "BLOCKED",
+                "reason": "visual_region_index_not_found",
+            },
+        ],
+        "pause_guard": {
+            "status": "OK",
+            "visible_ui": {"status": "OK", "visible_ui": "pause_menu"},
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) is None
+    assert not _hard_stop(segment)
+
+
+def test_hard_stop_ignores_playable_route_mismatch():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "segment_wall_seconds_exceeded",
+        "steps": [
+            {
+                "phase": "route_start",
+                "status": "OK",
+                "reason": "route_mission_mismatch_after_start_playable",
+                "route_mismatch_warning": {
+                    "expected_mission_id": "Mission_Airstrike",
+                    "actual_mission_id": "Mission_Dam",
+                    "policy": "continue_loaded_playable_mission",
+                },
+            }
+        ],
+    }
+
+    assert not _hard_stop(segment)
+
+
+def test_restartable_attempt_stop_detects_nested_safety_blocked_loop():
+    segment = {
+        "status": "LIGHTNING_SEGMENT_STOPPED",
+        "reason": "combat_loop_returned",
+        "last_attempt": {
+            "action": {
+                "combat_loop": {
+                    "status": "LIGHTNING_LOOP_STOPPED",
+                    "reason": "SAFETY_BLOCKED",
+                },
+            },
+        },
+    }
+
+    assert _restartable_attempt_stop(segment) == "safety_blocked_attempt_restart"
+    assert not _hard_stop(segment)
+
+
+def test_final_frame_report_requires_safe_evidence_for_parked_safe_status():
+    result = {
+        "status": "PARKED_SAFE",
+        "reason": "max_attempts_reached",
+    }
+
+    assert not _safe_to_finalize(result)
+
+
+def test_final_frame_report_allows_verified_ensure_pause():
+    result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "first_island_pace_gate",
+        "ensure_pause": {
+            "status": "OK",
+            "pause_verified": True,
+            "visible_ui": {"visible_ui": "pause_menu"},
+        },
+    }
+
+    assert _safe_to_finalize(result)
+
+
+def test_final_frame_report_skips_unverified_ensure_pause():
+    result = {
+        "status": "RESTART_RECOMMENDED",
+        "reason": "attempt_dead_unpausable",
+        "ensure_pause": {
+            "status": "BLOCKED",
+            "reason": "pause_not_verified",
+            "visible_ui": {"visible_ui": "combat_screen"},
+        },
+    }
+
+    assert not _safe_to_finalize(result)

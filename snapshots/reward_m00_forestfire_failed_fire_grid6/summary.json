@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-27T15:26:06.633878",
+  "label": "reward_m00_forestfire_failed_fire_grid6",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RockartMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    }
+  ]
+}

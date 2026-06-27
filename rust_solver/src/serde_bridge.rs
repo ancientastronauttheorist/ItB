@@ -16,6 +16,7 @@ use crate::solver::{Solution, MechAction};
 pub struct JsonInput {
     pub tiles: Option<Vec<JsonTile>>,
     pub units: Option<Vec<JsonUnit>>,
+    pub attack_order: Option<Vec<u16>>,
     pub grid_power: Option<u8>,
     pub grid_power_max: Option<u8>,
     pub turn: Option<u8>,
@@ -299,6 +300,9 @@ pub struct JsonUnit {
     pub base_move: Option<u8>,
     pub weapons: Option<Vec<String>>,
     pub queued_target: Option<Vec<i8>>,
+    pub queued_target_raw: Option<Vec<i8>>,
+    pub queued_origin: Option<Vec<i8>>,
+    pub queued_target_normalized: Option<bool>,
     pub weapon_damage: Option<u16>,
     pub weapon_target_behind: Option<bool>,
     pub weapon_push: Option<u8>,
@@ -352,6 +356,70 @@ fn known_minor_type(type_name: &str) -> bool {
     )
 }
 
+fn is_totem_attack(wid: WeaponId) -> bool {
+    wid == WeaponId(WId::TotemAtk1 as u16)
+        || wid == WeaponId(WId::TotemAtk2 as u16)
+        || wid == WeaponId(WId::TotemAtkB as u16)
+}
+
+fn fixed_projectile_end(board: &Board, ox: u8, oy: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
+    if qtx < 0 || qty < 0 {
+        return None;
+    }
+    let dx = (qtx - ox as i8).signum();
+    let dy = (qty - oy as i8).signum();
+    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) {
+        return None;
+    }
+
+    let mut last_valid = None;
+    for step in 1..8i8 {
+        let nx = ox as i8 + dx * step;
+        let ny = oy as i8 + dy * step;
+        if !in_bounds(nx, ny) {
+            break;
+        }
+        let nxu = nx as u8;
+        let nyu = ny as u8;
+        let tile = board.tile(nxu, nyu);
+        if tile.terrain == Terrain::Mountain {
+            return Some((nxu, nyu));
+        }
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            return Some((nxu, nyu));
+        }
+        if board.unit_at(nxu, nyu).is_some() {
+            return Some((nxu, nyu));
+        }
+        last_valid = Some((nxu, nyu));
+    }
+    last_valid
+}
+
+fn rewrite_totem_fixed_projectile_targets(board: &mut Board) {
+    for idx in 0..board.unit_count as usize {
+        let unit = board.units[idx];
+        if !is_totem_attack(unit.weapon) || unit.queued_target_x < 0 || unit.queued_target_y < 0 {
+            continue;
+        }
+        let (ox, oy) = if unit.queued_origin_x >= 0 && unit.queued_origin_y >= 0 {
+            (unit.queued_origin_x as u8, unit.queued_origin_y as u8)
+        } else {
+            (unit.x, unit.y)
+        };
+        if let Some((tx, ty)) = fixed_projectile_end(
+            board,
+            ox,
+            oy,
+            unit.queued_target_x,
+            unit.queued_target_y,
+        ) {
+            board.units[idx].queued_target_x = tx as i8;
+            board.units[idx].queued_target_y = ty as i8;
+        }
+    }
+}
+
 fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
     match dir {
         // Engine DIR_UP / DIR_DOWN are vertically opposite the solver's
@@ -387,6 +455,9 @@ pub fn board_from_json(json_str: &str)
     }
 
     let mut board = Board::default();
+    if let Some(order) = &input.attack_order {
+        board.attack_order = order.clone();
+    }
 
     // Grid power
     board.grid_power = input.grid_power.unwrap_or(7);
@@ -688,8 +759,26 @@ pub fn board_from_json(json_str: &str)
             } else {
                 (-1, -1)
             };
+            let (raw_qtx, raw_qty) = if let Some(qt) = &ju.queued_target_raw {
+                if qt.len() >= 2 { (qt[0], qt[1]) } else { (-1, -1) }
+            } else {
+                (-1, -1)
+            };
+            let (qox, qoy) = if let Some(qo) = &ju.queued_origin {
+                if qo.len() >= 2 { (qo[0], qo[1]) } else { (-1, -1) }
+            } else if qtx >= 0 && qty >= 0 {
+                (ju.x as i8, ju.y as i8)
+            } else {
+                (-1, -1)
+            };
             if qtx >= 0 && qty >= 0 {
                 flags |= UnitFlags::QUEUED_ORIGIN_SET;
+            }
+            if raw_qtx >= 0 && raw_qty >= 0 {
+                flags |= UnitFlags::QUEUED_RAW_TARGET_SET;
+            }
+            if qtx < 0 && ju.queued_target_normalized.unwrap_or(false) {
+                flags.remove(UnitFlags::HAS_QUEUED_ATTACK);
             }
 
             let move_speed = ju.move_speed.or(ju.base_move).unwrap_or(3);
@@ -709,8 +798,10 @@ pub fn board_from_json(json_str: &str)
                 weapon2,
                 queued_target_x: qtx,
                 queued_target_y: qty,
-                queued_origin_x: if qtx >= 0 && qty >= 0 { ju.x as i8 } else { -1 },
-                queued_origin_y: if qtx >= 0 && qty >= 0 { ju.y as i8 } else { -1 },
+                queued_target_raw_x: raw_qtx,
+                queued_target_raw_y: raw_qty,
+                queued_origin_x: if qtx >= 0 && qty >= 0 { qox } else { -1 },
+                queued_origin_y: if qtx >= 0 && qty >= 0 { qoy } else { -1 },
                 weapon_damage: ju.weapon_damage.unwrap_or(0).min(u8::MAX as u16) as u8,
                 weapon_push: ju.weapon_push.unwrap_or(0),
                 weapon_target_behind: ju.weapon_target_behind.unwrap_or(false),
@@ -727,6 +818,8 @@ pub fn board_from_json(json_str: &str)
             board.add_unit(unit);
         }
     }
+
+    rewrite_totem_fixed_projectile_targets(&mut board);
 
     // Fill missing/stale web ownership from alive queued web attacks. Older
     // bridge fallback code cleared Mosquito Leader grapples because
@@ -764,16 +857,21 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Apply tile-borne A.C.I.D. to units standing on ACID pools.
-    // Game rule: a unit on an A.C.I.D. tile carries the A.C.I.D. status,
-    // doubling weapon damage taken. The bridge reports tile.acid correctly
-    // but often does NOT propagate that to unit.acid — surfaced on
-    // Disposal Site boards where Scarab2 on D4 (ACID pool) should take
-    // 4-dmg Chain Whip hits but the sim predicted 2-dmg survival. Applied
-    // after unit population so late-join mechs (tanks) pick it up too.
+    // Apply tile-borne A.C.I.D. to grounded units standing on ACID pools.
+    // The bridge reports tile.acid correctly but sometimes does NOT propagate
+    // it to grounded unit.acid — surfaced on Disposal Site boards where Scarab2
+    // on D4 (ACID pool) should take 4-dmg Chain Whip hits but the sim predicted
+    // 2-dmg survival. Flying units can hover over acid pools without carrying
+    // A.C.I.D.; trusting the bridge status for them avoids phantom damage.
+    // Applied after unit population so late-join mechs (tanks) pick it up too.
     for i in 0..board.unit_count as usize {
         let (ux, uy) = (board.units[i].x, board.units[i].y);
-        if ux < 8 && uy < 8 && board.tile(ux, uy).acid() && !board.units[i].acid() {
+        if ux < 8
+            && uy < 8
+            && board.tile(ux, uy).acid()
+            && !board.units[i].acid()
+            && !board.units[i].effectively_flying()
+        {
             board.units[i].set_acid(true);
         }
     }
@@ -951,6 +1049,8 @@ pub fn board_from_json(json_str: &str)
                         match wname.as_str() {
                             "Passive_Electric" => board.storm_generator = true,
                             "Passive_FlameImmune" => board.flame_shielding = true,
+                            "Passive_FireBoost" => board.heat_engines = true,
+                            "Passive_HealingSmoke" => board.healing_smoke = true,
                             "Passive_Leech" => {
                                 board.viscera_nanobots_heal = board.viscera_nanobots_heal.max(1);
                             }
@@ -1013,6 +1113,8 @@ struct JsonAction {
     weapon: String,
     weapon_id: String,
     target: [u8; 2],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target2: Option<[u8; 2]>,
     description: String,
 }
 
@@ -1033,6 +1135,7 @@ pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry])
             weapon: weapon_name(a.weapon).to_string(),
             weapon_id: wid_to_str(a.weapon).to_string(),
             target: [a.target.0, a.target.1],
+            target2: a.target2.map(|(x, y)| [x, y]),
             description: a.description.clone(),
         }
     }).collect();
@@ -1131,6 +1234,34 @@ mod tests {
     }
 
     #[test]
+    fn test_smog_mech_enables_healing_smoke() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "SmokeMech",
+                    "x": 2,
+                    "y": 2,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "active": true,
+                    "weapons": ["Ranged_SmokeFire", "Passive_HealingSmoke"]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.healing_smoke);
+    }
+
+    #[test]
     fn test_conveyor_engine_dirs_normalized_to_solver_dirs() {
         let input = r#"{
             "mission_id": "Mission_BeltRandom",
@@ -1171,6 +1302,41 @@ mod tests {
 
         assert!(board.units[0].minor(), "Totem2 old recordings should infer Minor=true");
         assert!(!board.units[1].minor(), "ordinary Leaper1 is not a Minor Vek");
+    }
+
+    #[test]
+    fn test_totem_queued_target_rewritten_to_fixed_projectile_endpoint() {
+        let input = r#"{
+            "tiles": [
+                {"x": 2, "y": 1, "terrain": "building", "building_hp": 1}
+            ],
+            "units": [
+                {
+                    "uid": 711,
+                    "type": "Totem1",
+                    "x": 4,
+                    "y": 1,
+                    "hp": 1,
+                    "max_hp": 1,
+                    "team": 6,
+                    "ranged": 1,
+                    "weapons": ["TotemAtk1"],
+                    "has_queued_attack": true,
+                    "queued_origin": [4, 1],
+                    "queued_target": [3, 1],
+                    "weapon_damage": 1
+                }
+            ],
+            "grid_power": 2,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.units[0].weapon, WeaponId(WId::TotemAtk1 as u16));
+        assert_eq!((board.units[0].queued_origin_x, board.units[0].queued_origin_y), (4, 1));
+        assert_eq!((board.units[0].queued_target_x, board.units[0].queued_target_y), (2, 1));
     }
 
     #[test]
@@ -1461,6 +1627,41 @@ mod tests {
     }
 
     #[test]
+    fn test_normalized_offboard_queued_target_clears_attack() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 4766,
+                    "type": "Moth1",
+                    "x": 1,
+                    "y": 2,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 6,
+                    "weapons": ["MothAtk1"],
+                    "has_queued_attack": true,
+                    "queued_origin": [5, 5],
+                    "queued_target": null,
+                    "queued_target_normalized": true
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(
+            !board.units[0].has_queued_attack(),
+            "a normalized off-board queued shot is canceled, not unknown"
+        );
+        assert_eq!(board.units[0].queued_target_x, -1);
+        assert_eq!(board.units[0].queued_origin_x, -1);
+    }
+
+    #[test]
     fn test_disabled_mask_covers_high_weapon_ids() {
         let input = r#"{
             "tiles": [],
@@ -1518,5 +1719,50 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.teleporter_pairs, vec![(2, 3, 2, 5)]);
+    }
+
+    #[test]
+    fn test_acid_pool_import_respects_flying_units() {
+        let input = r#"{
+            "mission_id": "Mission_Acid",
+            "tiles": [
+                {"x": 1, "y": 3, "terrain": "ground", "acid": true},
+                {"x": 2, "y": 2, "terrain": "ground", "acid": true}
+            ],
+            "units": [
+                {
+                    "uid": 660,
+                    "type": "Hornet1",
+                    "x": 1,
+                    "y": 3,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 6,
+                    "flying": true,
+                    "acid": false
+                },
+                {
+                    "uid": 661,
+                    "type": "Scarab1",
+                    "x": 2,
+                    "y": 2,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 6,
+                    "acid": false
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        let hornet = board.units.iter().find(|u| u.uid == 660).expect("hornet");
+        let scarab = board.units.iter().find(|u| u.uid == 661).expect("scarab");
+
+        assert!(!hornet.acid(), "flying unit hovering over acid pool stays clean");
+        assert!(scarab.acid(), "grounded unit on acid pool inherits A.C.I.D.");
     }
 }

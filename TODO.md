@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-43 of 70 Steam-cache confirmed. **Hold the Line** unlocked in Blitzkrieg Normal run `20260524_195401_412` after a manual four-block spawn cluster on Detritus Corporate HQ. 27 remaining; sorted by global unlock % (easiest first).
+60 of 70 achievements are Steam-cache confirmed. **Feed the Flame**, **Complete Victory**, and **Lightning War** reconciled on 2026-06-26. **Spider Breeding** is also locally proven from offline Into the Breach logs/profile state, so the working tracker is 61/70 proven with 9 tactical targets remaining.
 
-Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line** by blocking D3, C3, C2, and C1 in one enemy emergence phase. Hazardous Mechs Easy run `20260522_193613_471` previously closed **Healing** and **Overkill** and reached a 4-island victory.
+Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, and locally proven **Spider Breeding** are complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat. Spider Breeding closed offline in Arachnophiles run `20260626_125732_442` when the profile tracker reached `Squad_Spiders_1 = 15`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -45,29 +45,29 @@ Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line**
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire [Steel Judoka]
 - [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg] — completed in run `20260524_195401_412` on Detritus Corporate HQ
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
-- [ ] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod)
-- [ ] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad
-- [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
-- [ ] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad]
+- [x] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod) — completed in Frozen Titans run `20260525_203546_657`
+- [x] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad — completed with 3x Ice Mech in run `20260526_204256_831`
+- [x] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg] — Steam-cache confirmed on 2026-06-26 after reopening Into the Breach
+- [x] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad] — completed in run `20260527_152006_916` after Archive HQ shop overpowers reached 30%
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle [Steel Judoka]
 
 ### Tier 4: Red Zone (<10% — hardest achievements, endgame goals)
-- [ ] Class Specialist (9.8%) — Beat game with 3 Mechs from same class in Custom
+- [x] Class Specialist (9.8%) — Beat game with 3 Mechs from same class in Custom — completed with Combat Mech + Laser Mech + Aegis Mech in run `20260529_164303_219`
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
-- [ ] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs]
-- [ ] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random]
-- [ ] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
-- [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
+- [x] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs] — Steam-cache confirmed on 2026-06-01 in run `20260531_181444_169`
+- [x] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random] — in-game popup observed in Random Squad run `20260531_114844_128` after Pinnacle `Mission_BoomBots`
+- [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification — in-game popup observed during Random Squad run `20260531_114844_128`
+- [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans] — Steam-cache confirmed on 2026-06-02 after offline-to-online reconciliation
 - [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
-- [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
-- [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
-- [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
-- [ ] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom
-- [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
-- [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
-- [ ] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters]
-- [ ] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
-- [ ] Spider Breeding (6.7%) — Spawn 15 Arachnoids in one Island [Arachnophile]
+- [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs] — completed in Bombermechs run `20260611_202233_019` on Archive `Mission_Artillery`
+- [x] On the Backburner (8.2%) - 4 damage with Reverse Thrusters [Mist Eaters] - completed in Mist Eaters run `20260615_172629_338` on Detritus `Mission_Acid`
+- [x] Unstable Ground (7.9%) - Crack 10 tiles in one mission [Cataclysm] - Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
+- [x] Flight Specialist (7.8%) - Beat game with 3 flying Mechs in Custom - completed alongside Mech Specialist with 3x Ice Mech in run `20260526_204256_831`
+- [x] Lucky Start (7.3%) - Beat game without spending Reputation [Random] - Steam-cache confirmed before the Stay With Me run
+- [x] Complete Victory (7.2%) - Beat game with all 10 primary Squads [cumulative] - Steam-cache confirmed on 2026-06-26
+- [x] Stay With Me! (7.2%) - Heal 12 damage over single Island [Mist Eaters] - Steam-cache confirmed on 2026-06-17 after R.S.T. Blast Bunker / `Mission_Trapped`
+- [x] Chronophobia (6.7%) - 3 islands, destroy every Time Pod - completed in Zenith Guard run `20260613_234901_918`
+- [x] Spider Breeding (6.7%) - Spawn 15 Arachnoids in one Island [Arachnophile] - locally proven offline on 2026-06-26; awaiting Steam-cache reconciliation
 - [ ] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters]
 - [ ] Hold the Door (5.4%) — Block 30 Emerging Vek by end of Island 2 [Bombermechs]
 - [ ] Core of the Earth (5.2%) — Drop 10 Enemies into pits on one Island [Cataclysm]
@@ -75,11 +75,11 @@ Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line**
 - [ ] Working Together (5.0%) — Area Shift 4 units at once [Arachnophile]
 - [ ] Efficient Explosives (4.8%) — Kill 3 Enemies with 1 Ricochet Rocket [Arachnophile]
 - [ ] Boosted (4.6%) — Boost 8 Mechs in one mission [Heat Sinkers]
-- [ ] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack [Heat Sinkers]
+- [x] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack [Heat Sinkers] — Steam-cache confirmed on 2026-06-26
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (43, from Steam sync)
+### Already Completed (60 Steam-cache confirmed, 61 locally proven)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -118,17 +118,34 @@ Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line**
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
 - [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn  [Blitzkrieg]
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
+- [x] Distant Friends (11.3%) — Encounter a familiar face  [Frozen Titans]
+- [x] Mech Specialist (11.1%) — Beat game with 3 of the same Mech  [Custom Squad]
+- [x] Lightning War (10.5%) — First 2 islands in under 30 min  [Blitzkrieg]
+- [x] Change the Odds (10.4%) — Grid Defense to 30%+  [Random Squad]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
+- [x] Class Specialist (9.8%) — Beat game with 3 different Mechs from the same class  [Custom Squad]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
+- [x] Immortal (9.6%) — 4 islands without Mech destroyed  [Hazardous Mechs]
+- [x] Loot Boxes! (9.4%) — Open 5 Time Pods in single game  [Random Squad]
+- [x] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
+- [x] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon  [Frozen Titans]
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
+- [x] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy  [Bombermechs]
+- [x] On the Backburner (8.2%) — 4 damage with Reverse Thrusters  [Mist Eaters]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
+- [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]
+- [x] Lucky Start (7.3%) — Beat game without spending Reputation  [Random Squad]
+- [x] Complete Victory (7.2%) — Beat game with all 10 primary Squads
+- [x] Stay With Me! (7.2%) — Heal 12 damage over single Island  [Mist Eaters]
+- [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
+- [x] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack  [Heat Sinkers]
 - [x] Squads Victory — Beat game with 4 different Squads
 
 
 ## Development Phases
 
 ### Phase 1: Screen Capture -- DONE
-- [x] Window detection on macOS (`src/capture/window.py`)
+- [x] Window detection on macOS and Windows (`src/capture/window.py`, `src/capture/detect_grid.py`)
 - [x] Grid detection and pixel offsets (`src/capture/detect_grid.py`, `src/capture/grid.py`)
 - [x] Consistent windowed-mode screenshots
 

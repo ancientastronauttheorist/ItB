@@ -108,7 +108,6 @@ def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
     Re-entrant: if this process already holds the lock, returns immediately.
     """
     global _lock_handle, _lock_path
-    import fcntl
 
     # Already locked by this process — re-entrant
     if _lock_handle is not None and _lock_path == str(path):
@@ -122,7 +121,7 @@ def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
     while True:
         try:
             handle.seek(0)
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _lock_file(handle)
             break
         except OSError:
             if time.time() >= deadline:
@@ -138,14 +137,38 @@ def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
     return handle
 
 
+def _lock_file(handle):
+    """Take an exclusive, non-blocking lock on handle across platforms."""
+    try:
+        import fcntl
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except ModuleNotFoundError:
+        import msvcrt
+        if os.fstat(handle.fileno()).st_size == 0:
+            handle.write(b"\0")
+            handle.flush()
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+
+
+def _unlock_file(handle):
+    """Release a lock taken by _lock_file."""
+    try:
+        import fcntl
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    except ModuleNotFoundError:
+        import msvcrt
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+
+
 def _release_lock():
     """Release the session file lock."""
     global _lock_handle, _lock_path
     if _lock_handle is None:
         return
     try:
-        import fcntl
-        fcntl.flock(_lock_handle.fileno(), fcntl.LOCK_UN)
+        _unlock_file(_lock_handle)
     finally:
         _lock_handle.close()
         _lock_handle = None
@@ -163,10 +186,11 @@ class SolverAction:
     move_to: tuple[int, int] | None  # (x, y) or None if no move
     weapon: str                       # weapon ID or "" if no attack
     target: tuple[int, int]           # (x, y) or (-1, -1) if no attack
-    description: str
+    description: str = ""
+    target2: tuple[int, int] | None = None
 
     def to_dict(self) -> dict:
-        return {
+        data = {
             "mech_uid": self.mech_uid,
             "mech_type": self.mech_type,
             "move_to": list(self.move_to) if self.move_to else None,
@@ -174,6 +198,9 @@ class SolverAction:
             "target": list(self.target),
             "description": self.description,
         }
+        if self.target2 is not None:
+            data["target2"] = list(self.target2)
+        return data
 
     @classmethod
     def from_dict(cls, d: dict) -> SolverAction:
@@ -184,6 +211,7 @@ class SolverAction:
             weapon=d.get("weapon", ""),
             target=tuple(d.get("target", (-1, -1))),
             description=d.get("description", ""),
+            target2=tuple(d["target2"]) if d.get("target2") else None,
         )
 
 
@@ -267,6 +295,11 @@ class RunSession:
 
     # Decision history (append-only within a run)
     decisions: list[dict] = field(default_factory=list)
+
+    # Lightning War route-preview probe memory. Entries record failed preview
+    # probes so automation can choose a different preview candidate without
+    # treating the cached evidence as Start Mission authority.
+    lightning_route_probe_cache: list[dict] = field(default_factory=list)
 
     # Per-mission post-enemy recording dedup set. Each int is the
     # ``solved_turn`` that already had ``_record_post_enemy`` fire, scoped
@@ -623,6 +656,7 @@ class RunSession:
             "enemies_killed": self.enemies_killed,
             "turns_played": self.turns_played,
             "decisions": self.decisions,
+            "lightning_route_probe_cache": self.lightning_route_probe_cache,
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
             "post_enemy_block": self.post_enemy_block,
             "dirty_consent_used": self.dirty_consent_used,
@@ -675,6 +709,7 @@ class RunSession:
             enemies_killed=d.get("enemies_killed", 0),
             turns_played=d.get("turns_played", 0),
             decisions=d.get("decisions", []),
+            lightning_route_probe_cache=d.get("lightning_route_probe_cache") or [],
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             post_enemy_block=d.get("post_enemy_block"),
             dirty_consent_used=d.get("dirty_consent_used") or [],

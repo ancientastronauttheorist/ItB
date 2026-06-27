@@ -346,18 +346,20 @@ evaluation weights when targeting that achievement.
 ### Distant Friends (11.3%)
 - **Requirement:** Encounter a familiar face (find an FTL pilot in a time pod).
 - **Squad:** Any
-- **Strategy:** FTL pilots (Kazaaakpleth, Ariadne, Mafan) appear randomly in Time Pods. The FTL game must be owned on Steam. Keep opening time pods across runs and eventually an FTL pilot appears.
-- **Bot approach:** Prioritize collecting time pods in every mission. This is RNG-dependent. No special solver changes beyond time pod collection priority.
-- **Ideal setup:** Any, collect time pods every run. Requires FTL to be owned on the same Steam account. [needs-verification: confirm FTL ownership]
-- **Estimated difficulty for bot:** Medium (RNG-dependent)
+- **Status:** Complete. Frozen Titans Easy run `20260525_203546_657` collected the hidden H2 beacon on R.S.T. `Mission_Force` and protected the Strange Pod.
+- **Strategy:** FTL pilots (Kazaaakpleth, Ariadne, Mafan) appear through the Strange Pod event. Break marked mountain/ice tiles with a small glint, then move onto the revealed beacon before mission end.
+- **Bot approach:** The bridge can report the glint tile as ordinary rubble/ice, so screenshot/visual authority matters. If the user or screenshot sees the beacon, interrupt the solver line for the pickup and accept optional bonus loss if needed.
+- **Ideal setup:** Any squad with enough terrain-breaking and pickup mobility; Frozen Titans worked because Cryo control bought time.
+- **Estimated difficulty for bot:** Complete; retain as a regression guard for visual secret-object pickup.
 
 ### Mech Specialist (11.1%)
 - **Requirement:** Beat the game with 3 of the same Mech in a Custom squad.
 - **Squad:** Custom (required -- 3x same mech)
-- **Strategy:** Choose 3 copies of the same mech. The easiest choice is 3x Combat Mech (Titan Fist is versatile), 3x Judo Mech (armor + throw), or 3x Leap Mech (high damage + movement). Having 3 identical weapons simplifies the solver.
-- **Bot approach:** Build a custom squad of 3x the same mech. The solver only needs to handle one weapon type. Recommended: 3x Combat Mech (good damage, Dash upgrade gives mobility) or 3x Judo Mech (armor, repositioning).
-- **Ideal setup:** Normal difficulty, 2-island run. 3x Combat Mech recommended for simplicity.
-- **Estimated difficulty for bot:** Medium-Hard
+- **Status:** Complete. Custom Squad Easy run `20260526_204256_831` used 3x Ice Mech and unlocked Mech Specialist on 2026-05-27.
+- **Strategy:** 3x Ice Mech is proven and can also unlock Flight Specialist because Ice Mechs fly. Bethany or Mafan on one Ice Mech improves early action economy by preventing self-freeze, but the route can still win if that pilot is disabled before final-cave completion.
+- **Bot approach:** Build a custom squad of 3x Ice Mech, play Easy, clear two islands, then go final. Preserve timeline/grid and the Renfield Bomb; optional bonuses and leader kills are expendable. Resolve Cryo status desyncs and research gates rather than hand-waving them, because repeated self-freeze changes action economy.
+- **Ideal setup:** Easy, Advanced Edition ON, 2-island run, 3x Ice Mech. Upgrade movement/HP when available, buy grid first, and avoid mission choices that require high damage output.
+- **Estimated difficulty for bot:** Complete; retain as a regression guard for Custom Squad setup, Cryo status handling, and final-cave dirty-policy triage.
 
 ### Lightning War (10.5%)
 - **Requirement:** Finish the first 2 Corporate Islands in under 30 minutes with the Blitzkrieg squad.
@@ -371,10 +373,10 @@ evaluation weights when targeting that achievement.
 ### Change the Odds (10.4%)
 - **Requirement:** Raise Grid Defense to 30% or more with a Random squad.
 - **Squad:** Random (required)
-- **Strategy:** Grid Defense starts at 15% and increases by spending reputation on Grid Defense upgrades in shops. Each upgrade adds 5% or so. Need to accumulate enough upgrades across an island to reach 30%.
-- **Bot approach:** Run-level planner should always buy Grid Defense upgrades in shops when using Random squad. Track Grid Defense percentage and prioritize reaching 30%.
-- **Ideal setup:** Normal difficulty, 3-4 island run with Random squad to have enough shop visits.
-- **Estimated difficulty for bot:** Medium
+- **Strategy:** On Easy/Normal/Hard, Grid Defense starts at 15%. Keep the grid full, then earn or buy extra Grid Power while full. The first five overpowered grid buys add +2% each (15 -> 25), then later buys add +1% each, so a no-bonus pilot setup needs 10 total overpowered Grid Power to reach 30%. Unfair starts at 0%, so avoid it unless pilot perks already provide Grid Defense.
+- **Bot approach:** In Random Squad runs, buy Grid Power to full before weapons/cores, then spend saved reputation on Overpower Grid in the post-island store. Selling spare weapons or pilots is acceptable once the achievement is the target; buy after each sale until the visible Grid Defense reaches 30%.
+- **Ideal setup:** Easy, Advanced Edition ON, Balanced Roll with a competent combat kit. One high-reputation island can be enough if the grid is full and extra rewards/store sales fund the overpowers.
+- **Estimated difficulty for bot:** Complete; retain as a shop-routing and Random Squad setup regression guard.
 
 ### Unbreakable (10.2%)
 - **Requirement:** Have Mech Armor absorb 5 damage in a single battle with the Steel Judoka squad.
@@ -392,10 +394,11 @@ evaluation weights when targeting that achievement.
 ### Class Specialist (9.8%)
 - **Requirement:** Beat the game with 3 different Mechs from the same class in a Custom squad.
 - **Squad:** Custom (required -- 3 mechs of one class: Prime, Brute, Ranged, or Science)
-- **Strategy:** Choose 3 different mechs of the same class. Recommended: 3 Brute mechs (varied push/damage options) or 3 Ranged mechs (artillery coverage). The challenge is that no Science class provides direct damage, and 3 Primes may lack range.
-- **Bot approach:** Build custom squad with 3 mechs from the same class. Recommended: 3 Brute mechs (Cannon Mech + Hook Mech + Mirror Mech or Unstable Mech for damage variety and push options). [needs-verification: which specific combination is strongest]
-- **Ideal setup:** Normal difficulty, 2-island run.
-- **Estimated difficulty for bot:** Hard
+- **Status:** Complete. Custom Squad Easy run `20260529_164303_219` used Combat Mech + Laser Mech + Aegis Mech, all different Prime-class mechs, and unlocked Class Specialist on 2026-05-30. The same run proved the live bot can complete an achievement victory on Windows.
+- **Strategy:** Prime class is now proven. Combat Mech supplies displacement and single-target damage, Laser Mech supplies range and multi-tile damage, and Aegis Mech supplies armor plus Shield Bash control. Buy Grid Power before cores, then prioritize cores and Prime-class weapons that the solver can model.
+- **Bot approach:** Use Custom Squad on Easy with Advanced Edition ON: Combat Mech, Laser Mech, Aegis Mech. Optional island bonuses and leader kills are expendable; timeline survival, pilots, and the final-cave Renfield Bomb stay mandatory. If no clean line exists, reviewed one-grid/building dirty losses can be accepted under the ordinary non-perfect achievement policy.
+- **Ideal setup:** Easy difficulty, 2-island run.
+- **Estimated difficulty for bot:** Complete; keep as a regression guard for Custom Squad setup, Prime-class loadouts, final-cave hazard triage, and Windows live-control support.
 
 ### Trusted Equipment (9.7%)
 - **Requirement:** Finish 3 Corporate Islands without equipping any new Pilots or weapons.
@@ -418,18 +421,18 @@ evaluation weights when targeting that achievement.
 ### Loot Boxes! (9.4%)
 - **Requirement:** Open 5 Time Pods in a single game with a Random squad.
 - **Squad:** Random (required)
-- **Strategy:** Time Pods appear in missions occasionally. Prioritize collecting every time pod across a 4-island run. Some missions have time pods as bonus objectives.
-- **Bot approach:** Heavily weight time pod collection. The solver should always move a mech to collect time pods even at some risk. Run-level planner should pick missions that display time pods. Play a 4-island run to maximize pod opportunities.
-- **Ideal setup:** Normal difficulty, 4-island run with Random squad. Collect every pod.
-- **Estimated difficulty for bot:** Medium (RNG-dependent on pod spawns)
+- **Strategy:** Time Pods appear in missions occasionally. Prioritize collecting every time pod across a 4-island run; three islands may be insufficient when pod RNG is thin.
+- **Bot approach:** Heavily weight time pod collection and treat visible Time Pod missions as route priorities. The solver should move a mech to collect pods when timeline, objective units, and board certainty remain acceptable; exact dirty consent can spend ordinary grid/objective value for the target, but pod loss usually means the run must keep going for replacement pod RNG.
+- **Ideal setup:** Easy or Normal 4-island Random/Balanced Roll route. Collect every pod, buy Grid Power to full before cores, and avoid weapon-mod upgrades if Engineering Dropout can be co-cleared.
+- **Estimated difficulty for bot:** Complete on 2026-05-31 in Random Squad Easy run `20260531_114844_128`; fifth pod recovered on Pinnacle `Mission_BoomBots` after earlier pod recoveries on Detritus `Mission_AcidStorm`, R.S.T. `Mission_Volatile`, Archive `Mission_Mines`, and Pinnacle `Mission_Reactivation`.
 
 ### Engineering Dropout (9.3%)
 - **Requirement:** Finish 3 Corporate Islands without powering a Weapon Modification.
 - **Squad:** Any
 - **Strategy:** Never spend reactor cores on weapon upgrades for 3 islands. You can still power HP and movement upgrades for mechs. Use only base-level weapons.
-- **Bot approach:** Run-level planner must never allocate reactor cores to weapon modifications. Only use cores for mech HP and move speed. The solver works with unmodified weapons only.
-- **Ideal setup:** Normal difficulty, squad with strong base weapons (Rusting Hulks -- Storm Generator is a passive that works without powering; Aerial Bombs are effective unpowered). [needs-verification: does passive Storm Generator count as a weapon modification?]
-- **Estimated difficulty for bot:** Medium-Hard
+- **Bot approach:** Run-level planner must never allocate reactor cores to weapon modifications until the achievement pops. Only use cores for mech HP and move speed; if Loot Boxes or another pod-heavy route is active, grid and survivability are more valuable than damage upgrades.
+- **Ideal setup:** Easy/Normal route with a squad whose base weapons already solve threats. Random/Balanced Roll can co-clear this while chasing Loot Boxes if shop routing stays grid-first and leaves weapon modifications unpowered.
+- **Estimated difficulty for bot:** Complete on 2026-05-31 in Random Squad Easy run `20260531_114844_128`, co-cleared with Loot Boxes after three Corporate Islands without powered weapon modifications.
 
 ### Trick Shot (9.2%)
 - **Requirement:** Kill 3 enemies with a single attack of the Janus Cannon with the Frozen Titans squad.
@@ -450,13 +453,14 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Hard
 
 ### Powered Blast (8.8%)
+- **Status:** Completed on 2026-06-11 in Bombermechs Easy run `20260611_202233_019`; Steam/client sync raised the tracker to 53/70.
 - **Requirement:** Pierce a Walking Bomb with the AP Cannon to kill an Enemy with the Bombermechs squad.
 - **Squad:** Bombermechs (required)
 - **Strategy:** The Pierce Mech's AP Cannon pierces the first target and damages the second. Place a Walking Bomb (from Bombling Mech) in front of an enemy, then fire AP Cannon. The shot pierces through the bomb (pushing it) and damages the enemy behind it. The enemy must die from this shot.
-- **Bot approach:** The solver should set up a Walking Bomb adjacent to an enemy in a straight line from the Pierce Mech. Fire AP Cannon to pierce bomb and kill the enemy. The enemy needs low enough HP to die from 2 base damage (or more with upgrades).
+- **Bot approach:** Rust simulator v263+ models Bomb Dispenser / `Ranged_DeployBomb` as a line-artillery deploy that spawns `DeployUnit_Bomby`, and v264+ rewards `achievement_powered_blast` when `Brute_PierceShot` pierces that bomb and kills the second target enemy. Keep the achievement weight overlay active, then trust `auto_turn` unless a research/safety gate fires; a post-spawn re-solve can be the path that finds the actual AP lane.
 - **Key weapons:** AP Cannon (Pierce Mech), Bomb Dispenser (Bombling Mech -- places Walking Bomb), Force Swap (Exchange Mech -- positioning)
-- **Ideal setup:** Normal difficulty, first or second island. Weaken an enemy to 2 HP or less, place bomb in front, fire AP Cannon.
-- **Estimated difficulty for bot:** Medium
+- **Ideal setup:** Easy/Normal, first or second island. A clean proven geometry is Pierce Mech -> Walking Bomb -> 2 HP enemy in a straight line. The successful run used Archive `Mission_Artillery` turn 4: Walking Bomb at C2, Pierce Mech at D2, Scarab at B2.
+- **Estimated difficulty for bot:** Complete.
 
 ### On the Backburner (8.2%)
 - **Requirement:** Do 4 damage with the Reverse Thrusters with the Mist Eaters squad.
@@ -480,10 +484,11 @@ evaluation weights when targeting that achievement.
 ### Flight Specialist (7.8%)
 - **Requirement:** Beat the game with 3 flying Mechs in a Custom squad.
 - **Squad:** Custom (required -- 3 flying mechs)
-- **Strategy:** Flying mechs include: Jet Mech (Rusting Hulks), Defense Mech (Zenith Guard), Swap Mech (Flame Behemoths), Ice Mech (Frozen Titans), Nano Mech (Hazardous Mechs), Thruster Mech (Mist Eaters), Control Mech (Mist Eaters), Napalm Mech (Heat Sinkers). Choose 3 that have complementary abilities.
-- **Bot approach:** Recommended: Jet Mech (damage + smoke) + Swap Mech (repositioning) + Nano Mech (A.C.I.D. + healing passive). Or Control Mech + Ice Mech + Jet Mech for crowd control. [needs-verification: confirm all flying mechs available]
-- **Ideal setup:** Normal difficulty, 2-island run with Custom squad of 3 flyers.
-- **Estimated difficulty for bot:** Hard
+- **Status:** Complete. The same 3x Ice Mech Custom Squad run `20260526_204256_831` unlocked Flight Specialist on 2026-05-27.
+- **Strategy:** 3x Ice Mech is the shortest proven route because it is both three identical mechs and three flying mechs. Mixed flyers remain viable for future Custom Squad experiments, but no longer need achievement targeting.
+- **Bot approach:** For regression, ensure Custom Squad setup preserves three flying chassis and that Steam sync marks both Custom achievements after a final victory.
+- **Ideal setup:** Completed with Easy, Advanced Edition ON, 2-island 3x Ice Mech.
+- **Estimated difficulty for bot:** Complete.
 
 ### Lucky Start (7.3%)
 - **Requirement:** Beat the game (any length) without spending any Reputation with a Random squad.
@@ -511,12 +516,13 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium-Hard
 
 ### Chronophobia (6.7%)
+- **Status:** Completed on 2026-06-14 in Zenith Guard Easy run `20260613_234901_918`; Steam sync raised the tracker to 54/70 after confirming `Leave Island` from R.S.T.
 - **Requirement:** Finish 3 Corporate Islands and destroy every Time Pod discovered.
 - **Squad:** Any
-- **Strategy:** When a Time Pod appears in a mission, it must be destroyed (let enemies or your attacks hit it) rather than collected. This means intentionally ignoring or destroying pods for 3 full islands.
-- **Bot approach:** The solver should target time pods for destruction. When a pod appears, fire a weapon at it or allow enemy attacks to destroy it. Penalize collecting pods. Do NOT walk mechs onto pod tiles.
-- **Ideal setup:** Normal difficulty, any squad. 3-island run.
-- **Estimated difficulty for bot:** Medium (counterintuitive for the bot which normally collects pods)
+- **Strategy:** When a Time Pod appears in a mission, it must be destroyed (let enemies or your attacks hit it) rather than collected. Leaving an intact pod at mission end recovers it and invalidates the attempt.
+- **Bot approach:** Pass `--destroy-time-pods` to `solve` / `auto_turn`, or set `Chronophobia` as the active target. The overlay penalizes pod collection, rewards removing live pods, and allows `pod_lost` only when no other blocking safety loss is present. Do NOT walk mechs onto pod tiles.
+- **Ideal setup:** Easy difficulty, Zenith Guard or another squad with direct/collateral pod damage. 3-island run; the achievement fires after leaving the third Corporate Island, not necessarily on the HQ result panel.
+- **Estimated difficulty for bot:** Completed; medium before the dedicated pod-destruction policy.
 
 ### Spider Breeding (6.7%)
 - **Requirement:** Spawn 15 Arachnoids in one Island with the Arachnophiles squad.
@@ -663,6 +669,7 @@ Quick reference for the bot's evaluation function weight modifications:
 | Overkill | 10000 | 500 | -100 | single_hit_damage: +3000 (if >=8) |
 | Chain Attack | 10000 | 200 | -100 | chain_length: +500 per tile |
 | Hold the Line | 10000 | 500 | -100 | spawns_blocked: +2000 |
+| Chronophobia | 10000 | 500 | -100 | pod_uncollected: -12000, pod_collected: -120000 |
 | Glittering C-Beam | 10000 | 500 | -100 | laser_targets: +2000 per enemy |
 | Mass Displacement | 10000 | 500 | -100 | enemies_pushed_single: +3000 |
 | Boosted | 10000 | 500 | -100 | boost_count: +1500 |
