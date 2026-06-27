@@ -1945,7 +1945,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Fixes Mission_Tides preserving a pod and missing next-wave mech danger in
 //   Mist Eaters Let's Walk run 20260627_104252_085. Pre-v289 corpus archived
 //   as failure_db_snapshot_sim_v288.jsonl.
-pub const SIMULATOR_VERSION: u32 = 289;
+// v290 - Control Shot powered variants A/B/AB are modeled with 3/3/4 tile
+//   controlled-move budgets for Let's Walk farming. Pre-v290 corpus archived
+//   as failure_db_pre_v290_lets_walk_control_shot_upgrades.jsonl.
+pub const SIMULATOR_VERSION: u32 = 290;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
