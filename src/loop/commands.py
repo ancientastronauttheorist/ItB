@@ -292,6 +292,24 @@ def _achievement_weight_overlay(
         )
         applied.append("spider_breeding")
 
+    if "let's walk" in normalized_targets or "lets walk" in normalized_targets:
+        # Mist Eaters: reward real enemy Control Shot movement, while leaving
+        # grid/building/objective survival dominant. Lower routine cleanup
+        # pressure so safe long-distance control lines beat equivalent kills.
+        weights["lets_walk_control_distance_bonus"] = max(
+            float(weights.get("lets_walk_control_distance_bonus", 0) or 0),
+            6000.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 900) or 900),
+            250.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("lets_walk")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove

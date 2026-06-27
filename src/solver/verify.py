@@ -1402,7 +1402,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Shells A/B/AB overlays, pre-attack enemy wreck clearing, RockThrown pod
 # destruction, Chain Whip Shell Psion armor snapshotting, and Stay With Me
 # heal scoring. Pre-v287 corpus archived as failure_db_snapshot_sim_v286.jsonl.
-SIMULATOR_VERSION = 287
+# v288 - Control Shot is modeled as a two-click target-unit/destination
+# forced movement, including webbed controlled movement and Let's Walk enemy
+# movement-distance events. Pre-v288 corpus archived as
+# failure_db_snapshot_sim_v287.jsonl.
+SIMULATOR_VERSION = 288
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

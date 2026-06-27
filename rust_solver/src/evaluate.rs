@@ -167,6 +167,7 @@ pub struct EvalWeights {
     pub reverse_thrusters_four_damage_bonus: f64,
     pub feed_the_flame_bonus: f64,
     pub arachnoid_spawn_bonus: f64,
+    pub lets_walk_control_distance_bonus: f64,
 
     // Mission-specific bonus objectives (0 default; turn-aware via `scaled`).
     // Old Earth Dam: +1 Rep + 14-tile flood that drowns grounded Vek for rest
@@ -343,6 +344,7 @@ impl Default for EvalWeights {
             reverse_thrusters_four_damage_bonus: 0.0,
             feed_the_flame_bonus: 0.0,
             arachnoid_spawn_bonus: 0.0,
+            lets_walk_control_distance_bonus: 0.0,
             // Mission-specific bonuses (zero by default; set via active.json)
             dam_destroyed: 0.0,
             dam_damage_dealt: 0.0,

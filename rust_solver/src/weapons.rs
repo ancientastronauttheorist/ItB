@@ -986,9 +986,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[233] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     // 212: Science_TC_Control — Control Shot.
-    // This needs target-unit plus destination targeting. Keep it catalogued but
-    // inert until the action schema/bridge can carry that second click safely.
-    w[212] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    // Two-click Mist Eaters weapon: first choose a movable unit, then choose a
+    // legal destination within the target unit's controlled move budget.
+    w[212] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, range_max: 2, flags: C, ..DEF };
     // 213: Ranged_DeployBomb — Bomb Dispenser.
     // Deployable extends LineArtillery in Lua: cardinal lines, min range 2,
     // empty ground target only. The Walking Bomb spawn itself is in simulate.rs.
@@ -1517,6 +1517,11 @@ pub fn is_force_swap(id: WId) -> bool {
         WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
             | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB
     )
+}
+
+#[inline]
+pub fn is_control_shot(id: WId) -> bool {
+    matches!(id, WId::ScienceTcControl)
 }
 
 #[inline]
@@ -2987,6 +2992,18 @@ mod tests {
         assert_eq!(wid_from_str("Brute_PierceShot"), WId::BrutePierceShot);
         assert_eq!(wid_to_str(WId::BrutePierceShot), "Brute_PierceShot");
         assert_eq!(weapon_name(WId::BrutePierceShot), "AP Cannon");
+    }
+
+    #[test]
+    fn test_control_shot_mapping_and_def() {
+        let w = weapon_def(WId::ScienceTcControl);
+        assert_eq!(w.weapon_type, WeaponType::TwoClick);
+        assert_eq!(w.damage, 0);
+        assert_eq!(w.range_max, 2);
+        assert!(is_control_shot(WId::ScienceTcControl));
+        assert_eq!(wid_from_str("Science_TC_Control"), WId::ScienceTcControl);
+        assert_eq!(wid_to_str(WId::ScienceTcControl), "Science_TC_Control");
+        assert_eq!(weapon_name(WId::ScienceTcControl), "Control Shot");
     }
 
     #[test]

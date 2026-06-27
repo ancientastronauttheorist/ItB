@@ -6,7 +6,11 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::movement::{direction_between, cardinal_direction};
+use crate::movement::{
+    cardinal_direction,
+    controlled_reachable_tiles_with_cost,
+    direction_between,
+};
 
 fn refresh_arrogant_boost(unit: &mut Unit) {
     if unit.pilot_arrogant() {
@@ -4990,6 +4994,70 @@ fn sim_force_swap(
     apply_force_swap_upgrade_effects(board, weapon_id, second_idx, result);
 }
 
+fn control_shot_range(wdef: &WeaponDef) -> u8 {
+    wdef.range_max.max(2)
+}
+
+fn control_shot_eligible_unit(unit: &Unit) -> bool {
+    unit.alive() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
+}
+
+fn sim_control_shot(
+    board: &mut Board,
+    attacker_idx: usize,
+    wdef: &WeaponDef,
+    first: (u8, u8),
+    second: Option<(u8, u8)>,
+    result: &mut ActionResult,
+) {
+    let Some(second) = second else {
+        result.events.push("invalid_control_shot_missing_destination".to_string());
+        return;
+    };
+    let Some(target_idx) = board.unit_at(first.0, first.1) else {
+        result.events.push(format!("invalid_control_shot_empty_target:{}:{}", first.0, first.1));
+        return;
+    };
+    if target_idx == attacker_idx || !control_shot_eligible_unit(&board.units[target_idx]) {
+        result.events.push(format!(
+            "invalid_control_shot_target:{}:{}",
+            first.0, first.1
+        ));
+        return;
+    }
+
+    let range = control_shot_range(wdef);
+    let Some(distance) = controlled_reachable_tiles_with_cost(board, target_idx, range)
+        .into_iter()
+        .find_map(|(pos, cost)| if pos == second { Some(cost) } else { None })
+    else {
+        result.events.push(format!(
+            "invalid_control_shot_destination:{}:{}:{}:{}",
+            first.0, first.1, second.0, second.1
+        ));
+        return;
+    };
+    if distance == 0 {
+        return;
+    }
+
+    let was_enemy = board.units[target_idx].is_enemy();
+    let old = (board.units[target_idx].x, board.units[target_idx].y);
+    board.units[target_idx].x = second.0;
+    board.units[target_idx].y = second.1;
+    result.events.push(format!(
+        "control_shot:{}:{}:{}:{}:distance:{}",
+        old.0, old.1, second.0, second.1, distance
+    ));
+    if was_enemy {
+        result.events.push(format!(
+            "achievement_lets_walk:distance:{}:target:{}:{}:dest:{}:{}",
+            distance, old.0, old.1, second.0, second.1
+        ));
+    }
+    apply_landing_effects(board, target_idx, result);
+}
+
 fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     if wdef.weapon_type == WeaponType::Swap {
         if tx >= 8 || ty >= 8 {
@@ -6008,7 +6076,11 @@ pub fn simulate_attack_with_target2(
     // Diagnostic callers can hand us targets the UI would not offer. Treat
     // them as no-ops with an explicit event instead of simulating impossible
     // effects (for example player artillery off-axis targets).
-    if weapon_id != WId::None && weapon_id != WId::Repair && !is_force_swap(weapon_id) {
+    if weapon_id != WId::None
+        && weapon_id != WId::Repair
+        && !is_force_swap(weapon_id)
+        && !is_control_shot(weapon_id)
+    {
         let (sx, sy) = (board.units[mech_idx].x, board.units[mech_idx].y);
         let legal_targets = crate::solver::get_weapon_targets(
             board,
@@ -6084,6 +6156,9 @@ pub fn simulate_attack_with_target2(
     if weapon_id != WId::None {
         if is_force_swap(weapon_id) {
             sim_force_swap(board, mech_idx, weapon_id, target, target2, &mut result);
+        } else if is_control_shot(weapon_id) {
+            let wdef = &weapons[weapon_id as usize];
+            sim_control_shot(board, mech_idx, wdef, target, target2, &mut result);
         } else if is_ricochet_rocket(weapon_id) {
             if board.units[mech_idx].web() {
                 result.events.push(format!(
@@ -6261,6 +6336,78 @@ mod tests {
         assert_eq!((board.units[first].x, board.units[first].y), (6, 6));
         assert_eq!((board.units[second].x, board.units[second].y), (3, 4));
         assert!(!board.units[exchange].active());
+    }
+
+    #[test]
+    fn test_control_shot_moves_enemy_and_emits_lets_walk_distance() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 5, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 5),
+            Some((5, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 5));
+        assert!(result.events.iter().any(|e| e == "control_shot:3:5:5:5:distance:2"));
+        assert!(result.events.iter().any(|e| {
+            e == "achievement_lets_walk:distance:2:target:3:5:dest:5:5"
+        }));
+        assert!(!board.units[control].active());
+    }
+
+    #[test]
+    fn test_control_shot_can_move_webbed_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 5, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+        board.units[enemy].set_web(true);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 5),
+            Some((4, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 5));
+        assert!(result.events.iter().any(|e| {
+            e == "achievement_lets_walk:distance:1:target:3:5:dest:4:5"
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_out_of_range_destination() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 5, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 5),
+            Some((7, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 5));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_destination:3:5:7:5"
+        }));
     }
 
     #[test]

@@ -145,6 +145,136 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
     result
 }
 
+/// Reachable tiles for Control Shot-style forced movement.
+///
+/// Control Shot uses the target unit's movement constraints, but it can move a
+/// webbed unit. Frozen and zero-move units still cannot be controlled. The
+/// returned cost is the number of movement spaces used.
+pub fn controlled_reachable_tiles_with_cost(
+    board: &Board,
+    unit_idx: usize,
+    speed: u8,
+) -> Vec<((u8, u8), u8)> {
+    let unit = &board.units[unit_idx];
+    let ux = unit.x;
+    let uy = unit.y;
+
+    if unit.frozen() || unit.move_speed == 0 || speed == 0 {
+        return vec![((ux, uy), 0)];
+    }
+
+    let uid = unit.uid;
+    let flying = unit.flying();
+    let massive = unit.massive();
+
+    let mut result = Vec::with_capacity(20);
+    result.push(((ux, uy), 0));
+
+    if flying {
+        for x in 0..8u8 {
+            for y in 0..8u8 {
+                if (x, y) == (ux, uy) {
+                    continue;
+                }
+                let dist = (x as i8 - ux as i8).unsigned_abs()
+                    + (y as i8 - uy as i8).unsigned_abs();
+                if dist > speed {
+                    continue;
+                }
+                if !board.is_blocked(x, y, true) {
+                    if unit.is_player() && board.tile(x, y).acid() {
+                        continue;
+                    }
+                    result.push(((x, y), dist));
+                }
+            }
+        }
+        return result;
+    }
+
+    let mut visited = [255u8; 64];
+    visited[xy_to_idx(ux, uy)] = 0;
+
+    let mut queue = [(0u8, 0u8, 0u8); 64];
+    let mut head = 0usize;
+    let mut tail = 0usize;
+    queue[tail] = (ux, uy, 0);
+    tail += 1;
+
+    while head < tail {
+        let (x, y, cost) = queue[head];
+        head += 1;
+
+        for &(dx, dy) in &DIRS {
+            let nx = x as i8 + dx;
+            let ny = y as i8 + dy;
+
+            if !in_bounds(nx, ny) {
+                continue;
+            }
+            let nx = nx as u8;
+            let ny = ny as u8;
+            let idx = xy_to_idx(nx, ny);
+
+            if visited[idx] != 255 {
+                continue;
+            }
+
+            let new_cost = cost + 1;
+            if new_cost > speed {
+                continue;
+            }
+
+            let tile = board.tile(nx, ny);
+            if tile.terrain == Terrain::Mountain || tile.is_building() {
+                continue;
+            }
+            let deadly_blocks = match tile.terrain {
+                Terrain::Chasm => true,
+                Terrain::Water | Terrain::Lava => !massive,
+                _ => false,
+            };
+            if deadly_blocks {
+                continue;
+            }
+            if unit.is_player() && tile.acid() {
+                continue;
+            }
+
+            if let Some(blocker_idx) = board.unit_at(nx, ny) {
+                if board.units[blocker_idx].uid != uid {
+                    if board.units[blocker_idx].team == unit.team {
+                        visited[idx] = new_cost;
+                        if new_cost < speed {
+                            queue[tail] = (nx, ny, new_cost);
+                            tail += 1;
+                        }
+                    }
+                    continue;
+                }
+            }
+
+            if board.wreck_at(nx, ny) {
+                continue;
+            }
+
+            visited[idx] = new_cost;
+            result.push(((nx, ny), new_cost));
+            queue[tail] = (nx, ny, new_cost);
+            tail += 1;
+        }
+    }
+
+    result
+}
+
+pub fn controlled_reachable_tiles(board: &Board, unit_idx: usize, speed: u8) -> Vec<(u8, u8)> {
+    controlled_reachable_tiles_with_cost(board, unit_idx, speed)
+        .into_iter()
+        .map(|(pos, _cost)| pos)
+        .collect()
+}
+
 /// Explain why a requested move destination is not valid under the same
 /// movement rules used by action enumeration. Returns None for legal stops.
 pub fn illegal_move_reason(board: &Board, unit_idx: usize, move_to: (u8, u8)) -> Option<&'static str> {
