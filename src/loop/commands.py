@@ -496,6 +496,42 @@ def _hard_stop_result(status: str, **extra) -> dict:
     return result
 
 
+def _partial_re_solve_threat_block_result(
+    *,
+    threat_audit: dict | None,
+    plan_safety: dict | None,
+    session: RunSession,
+    turn: int,
+    actions_completed: int,
+    re_solve_count: int,
+    actions: list,
+    desync: dict,
+    lightning_speed_loss_allowed: bool = False,
+) -> dict | None:
+    if not _threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        lightning_speed_loss_allowed=lightning_speed_loss_allowed,
+    ):
+        return None
+    return {
+        "status": "THREAT_AUDIT_BLOCKED_RE_SOLVE",
+        "turn": turn,
+        "actions_completed": actions_completed,
+        "re_solves": re_solve_count,
+        "plan_safety": plan_safety,
+        "threat_audit": threat_audit,
+        "actions": [a.description for a in actions],
+        "desync": desync,
+        "next_step": (
+            "Partial re-solve still predicts an unresolved building/pylon "
+            "threat. Do not spend remaining actions or click End Turn until "
+            "the line is reviewed or a safer plan is found."
+        ),
+    }
+
+
 def _is_hard_stop_status(status: object) -> bool:
     return isinstance(status, str) and (
         status in _HARD_STOP_STATUSES
@@ -43419,6 +43455,10 @@ def _re_solve_partial(
                                weights=breakdown_weights)
             current_outcome = _capture_board_summary(board, bridge_data)
             predicted_board_summary = dict(enriched.get("predicted_outcome") or {})
+            initial_building_threats = rust_result.get(
+                "initial_building_threats", []
+            )
+            partial_threat_audit = None
             final_board_data = _projected_final_board_data(enriched)
             if final_board_data:
                 final_board_data = _carry_projected_summary_metadata(
@@ -43429,6 +43469,20 @@ def _re_solve_partial(
                 predicted_board_summary.update(_capture_board_summary(
                     final_board, final_board_data
                 ))
+                try:
+                    from src.solver.threat_audit import (
+                        audit_threat_coverage as _audit_threat_coverage,
+                    )
+                    partial_threat_audit = _audit_threat_coverage(
+                        initial_building_threats or [],
+                        final_board,
+                    )
+                    partial_threat_audit["phase"] = "predicted_partial_re_solve"
+                except Exception as exc:
+                    partial_threat_audit = {
+                        "status": "ERROR",
+                        "error": str(exc),
+                    }
             predicted_board_summary["pods_collected"] = sum(
                 int(r.get("pods_collected", 0) or 0)
                 for r in enriched.get("action_results", [])
@@ -43536,6 +43590,7 @@ def _re_solve_partial(
                 "predicted_outcome": enriched.get("predicted_outcome", {}),
                 "predicted_board_summary": predicted_board_summary,
                 "plan_safety": plan_safety,
+                "threat_audit": partial_threat_audit,
                 "score_breakdown": enriched.get("score_breakdown", {}),
                 "partial_re_solve": {
                     "done_uids": sorted(done_uids),
@@ -45178,6 +45233,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 }
                                 _print_result(result)
                                 return result
+                            threat_block = _partial_re_solve_threat_block_result(
+                                threat_audit=(
+                                    new_solve_data.get("threat_audit")
+                                    if isinstance(new_solve_data, dict)
+                                    else None
+                                ),
+                                plan_safety=new_safety,
+                                session=session,
+                                turn=turn,
+                                actions_completed=actions_completed,
+                                re_solve_count=re_solve_count,
+                                actions=new_actions,
+                                desync={
+                                    "phase": "move",
+                                    "action_index": actions_completed,
+                                    "mech_uid": mech_uid,
+                                    "classification": classification,
+                                    "fuzzy_signal": fuzzy_signal,
+                                },
+                                lightning_speed_loss_allowed=re_solve_speed_loss,
+                            )
+                            if threat_block is not None:
+                                _print_result(threat_block)
+                                return threat_block
                             if new_actions:
                                 print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
                                 # First action should be attack-only for mid_action mech
@@ -45477,6 +45556,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             }
                             _print_result(result)
                             return result
+                        threat_block = _partial_re_solve_threat_block_result(
+                            threat_audit=(
+                                new_solve_data.get("threat_audit")
+                                if isinstance(new_solve_data, dict)
+                                else None
+                            ),
+                            plan_safety=new_safety,
+                            session=session,
+                            turn=turn,
+                            actions_completed=actions_completed,
+                            re_solve_count=re_solve_count,
+                            actions=new_actions,
+                            desync={
+                                "phase": final_phase,
+                                "action_index": actions_completed,
+                                "mech_uid": mech_uid,
+                                "classification": classification,
+                                "fuzzy_signal": fuzzy_signal,
+                            },
+                            lightning_speed_loss_allowed=re_solve_speed_loss,
+                        )
+                        if threat_block is not None:
+                            _print_result(threat_block)
+                            return threat_block
                         if new_actions:
                             print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
                             solver_actions = []

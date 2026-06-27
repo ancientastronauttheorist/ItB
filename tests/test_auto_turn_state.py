@@ -869,6 +869,47 @@ def test_threat_audit_blocks_unresolved_building_threat_on_normal_grid():
     ) is True
 
 
+def test_partial_re_solve_blocks_before_spending_uncovered_threat_plan():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    safety = {
+        "status": "CLEAN",
+        "blocking": False,
+        "current": {"grid_power": 5},
+        "predicted": {"grid_power": 5},
+    }
+    action = SolverAction(
+        mech_uid=0,
+        mech_type="NeedleMech",
+        move_to=(6, 5),
+        weapon="Brute_KickBack",
+        target=(4, 5),
+        description="NeedleMech, move C4->C2, fire Reverse Thrusters at C4",
+    )
+
+    result = cmd_mod._partial_re_solve_threat_block_result(
+        threat_audit={
+            "status": "WARN",
+            "still_threatened_count": 1,
+            "entries": [{
+                "target_visual": "A6",
+                "coverage": {"reason": "still_threatened_current"},
+            }],
+        },
+        plan_safety=safety,
+        session=s,
+        turn=4,
+        actions_completed=2,
+        re_solve_count=1,
+        actions=[action],
+        desync={"phase": "attack", "action_index": 1, "mech_uid": 1},
+    )
+
+    assert result is not None
+    assert result["status"] == "THREAT_AUDIT_BLOCKED_RE_SOLVE"
+    assert result["actions"] == [action.description]
+    assert "Do not spend remaining actions" in result["next_step"]
+
+
 def test_enemy_survived_fuzzy_blocks_end_turn_even_when_audit_clean():
     block = cmd_mod._fuzzy_detections_require_end_turn_block([{
         "signature": "death|Brute_Grapple|attack",
