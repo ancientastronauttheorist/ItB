@@ -2352,6 +2352,8 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         if isinstance(bridge_data, dict) else None
     )
     if isinstance(remaining_spawns, bool) or not isinstance(remaining_spawns, int):
+        remaining_spawns = getattr(board, "remaining_spawns", None)
+    if isinstance(remaining_spawns, bool) or not isinstance(remaining_spawns, int):
         remaining_spawns = None
     is_infinite_spawn = (
         bridge_data.get("is_infinite_spawn")
@@ -2359,6 +2361,11 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     )
     if not isinstance(is_infinite_spawn, bool):
         is_infinite_spawn = None
+    spawn_points = None
+    if isinstance(bridge_data, dict):
+        spawning_tiles = bridge_data.get("spawning_tiles")
+        if isinstance(spawning_tiles, list):
+            spawn_points = len(spawning_tiles)
     is_final_cave = mission_id == "Mission_Final_Cave"
     buildings_alive = 0
     building_hp_total = 0
@@ -2678,6 +2685,8 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "turn": turn if isinstance(turn, int) else None,
         "total_turns": total_turns if isinstance(total_turns, int) else None,
         "remaining_spawns": remaining_spawns,
+        "is_infinite_spawn": is_infinite_spawn,
+        "spawn_points": spawn_points if isinstance(spawn_points, int) else None,
         "destroy_objective_units": destroy_objective_units,
         "destroy_objective_units_alive": sum(
             1 for u in destroy_objective_units if u["alive"]
@@ -3626,6 +3635,24 @@ def _is_harmless_player_hp_gain_diff(diff) -> bool:
     return True
 
 
+def _is_harmless_burrower_missing_drift(diff) -> bool:
+    """Return true for Burrowers that temporarily leave the bridge board."""
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    for ud in unit_diffs:
+        if ud.get("field") != "missing_in_actual":
+            return False
+        utype = str(ud.get("type") or "")
+        if not utype.startswith("Burrower"):
+            return False
+        if ud.get("predicted") != "present" or ud.get("actual") != "absent":
+            return False
+    return True
+
+
 def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
     """Return true for the harmless active-flag drift after a no-attack skip."""
     return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
@@ -3796,6 +3823,10 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         # (new spawns inflate actual count — that's expected, not a solver failure)
         "enemies_alive_diff": actual["enemies_alive"] - predicted["enemies_alive"],
     }
+    if "pods_present" in predicted and "pods_present" in actual:
+        deltas["pods_present_diff"] = (
+            actual["pods_present"] - predicted["pods_present"]
+        )
     if (
         "protected_objective_units_alive" in predicted
         and "protected_objective_units_alive" in actual
@@ -3916,6 +3947,9 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     if deltas.get("protected_objective_units_frozen_diff", 0) < 0:
         unexpected.append(
             "Protected objective unit(s) unexpectedly unfroze")
+    if deltas.get("pods_present_diff", 0) < 0:
+        unexpected.append(
+            f"Lost {-deltas['pods_present_diff']} unexpected pod(s)")
     for md in mech_deltas:
         if md["diff"] < 0:
             unexpected.append(
@@ -3992,6 +4026,7 @@ def _post_enemy_needs_investigation(
             "grid_power_diff",
             "buildings_alive_diff",
             "building_hp_diff",
+            "pods_present_diff",
             "protected_objective_units_alive_diff",
             "protected_objective_units_frozen_diff",
         )
@@ -27533,6 +27568,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         print("  MOVE VERIFIED: PASS (prior active-state drift ignored)")
                     elif _is_harmless_player_hp_gain_diff(diff):
                         print("  MOVE VERIFIED: PASS (player HP gain drift ignored)")
+                    elif _is_harmless_burrower_missing_drift(diff):
+                        print("  MOVE VERIFIED: PASS "
+                              "(Burrower missing-after-damage drift ignored)")
                     else:
                         classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
                         fuzzy_signal = fuzzy_detector.evaluate(
@@ -27808,6 +27846,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 elif _is_harmless_player_hp_gain_diff(diff):
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(player HP gain drift ignored)")
+                elif _is_harmless_burrower_missing_drift(diff):
+                    print(f"  {final_phase.upper()} VERIFIED: PASS "
+                          "(Burrower missing-after-damage drift ignored)")
                 else:
                     classification = classify_diff(diff, mech_uid=mech_uid,
                                                    phase=final_phase)

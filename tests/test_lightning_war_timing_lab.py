@@ -468,6 +468,12 @@ def test_click_start_mission_from_preview_clicks_highlighted_thumbnail(monkeypat
 
     monkeypatch.setattr(lab.fast, "_lightning_visible_ui_snapshot", fake_visible)
     monkeypatch.setattr(lab.fast, "visible_route_dialogue", lambda visible: visible_calls["count"] == 1)
+    monkeypatch.setattr(
+        lab.fast,
+        "visible_startable_mission_preview",
+        lambda visible: visible.get("visible_ui") == "mission_preview_panel",
+    )
+    monkeypatch.setattr(lab.fast, "visible_text_lower", lambda visible: "")
     monkeypatch.setattr(lab.fast, "visible_deployment_screen", lambda visible: visible.get("visible_ui") == "deployment_screen")
     monkeypatch.setattr(
         lab.fast,
@@ -529,20 +535,16 @@ def test_click_start_mission_from_preview_clicks_highlighted_thumbnail(monkeypat
     assert clicks[0]["name"] == "mission_preview_board"
     assert clicks[0]["hover_seconds"] == 0.05
     assert result["pause"]["reason"] == "timing_lab_start_mission_deployment_probe"
-    assert screenshots.calls == [
-        ("deployment_probe", "after_start_mission_click"),
-        ("deployment_probe", "after_start_mission_click"),
-    ]
+    assert screenshots.calls == [("deployment_probe", "after_start_mission_click")]
     assert [event_type for event_type, _payload in events] == [
         "mission_preview_pre_start_probe_skipped",
+        "mission_preview_startable_probe",
         "start_mission_click",
-        "deployment_probe",
         "deployment_probe",
         "deployment_pause",
     ]
     assert visible_calls["count"] == 2
-    assert events[2][1]["bridge_deployment_ready"] is True
-    assert events[2][1]["deployment_visible"] is False
+    assert events[3][1]["bridge_deployment_ready"] is True
     assert events[3][1]["deployment_visible"] is True
     assert result["first_bridge_deployment_sample"]["bridge_deployment_ready"] is True
 
@@ -615,13 +617,19 @@ def test_click_start_mission_can_trigger_on_screenshot_yellow(monkeypatch):
         clicks.append({"name": name, "x": x, "y": y})
         return {"status": "OK", "window_x": x, "window_y": y}
 
+    visible_calls = {"count": 0}
+
+    def fake_startable_visible(include_ocr=False):
+        visible_calls["count"] += 1
+        return {"status": "OK", "visible_ui": "mission_preview_panel"}
+
+    monkeypatch.setattr(lab.fast, "_lightning_visible_ui_snapshot", fake_startable_visible)
     monkeypatch.setattr(
         lab.fast,
-        "_lightning_visible_ui_snapshot",
-        lambda include_ocr=False: (_ for _ in ()).throw(
-            AssertionError("slow visible classifier should be skipped")
-        ),
+        "visible_startable_mission_preview",
+        lambda visible: visible.get("visible_ui") == "mission_preview_panel",
     )
+    monkeypatch.setattr(lab.fast, "visible_text_lower", lambda visible: "")
     monkeypatch.setattr(lab, "_deployment_yellow_signal_from_frame", fake_yellow)
     monkeypatch.setattr(lab.fast, "_lightning_live_snapshot", fake_live_snapshot)
     monkeypatch.setattr(lab.fast, "deployment_snapshot_ready", lambda snapshot: bool(snapshot))
@@ -663,12 +671,124 @@ def test_click_start_mission_can_trigger_on_screenshot_yellow(monkeypatch):
 
     assert result["status"] == "PASS"
     assert result["reason"] == "deployment_yellow_screenshot"
+    assert visible_calls["count"] == 1
     assert yellow_calls["count"] == 2
     assert live_snapshot_calls["count"] == 0
-    assert events[2][1]["deployment_yellow_signal"]["yellow"] == 300
-    assert events[2][1]["visible_ui"] is None
-    assert events[3][1]["deployment_yellow_signal"]["yellow"] == 6500
+    assert events[3][1]["deployment_yellow_signal"]["yellow"] == 300
+    assert events[3][1]["visible_ui"] is None
+    assert events[4][1]["deployment_yellow_signal"]["yellow"] == 6500
     assert result["first_bridge_deployment_sample"] is None
+
+
+def test_click_start_mission_refuses_non_startable_preview(monkeypatch):
+    events = []
+    clicks = []
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+            return payload
+
+    class FakeScreenshots:
+        def capture_once(self, *, clock_state, note):
+            raise AssertionError("deployment screenshots should not run")
+
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_visible_ui_snapshot",
+        lambda include_ocr=False: {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "ocr_text": "The Pasture No Vek Detected",
+        },
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "visible_startable_mission_preview",
+        lambda visible: False,
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "visible_text_lower",
+        lambda visible: str(visible.get("ocr_text") or "").lower(),
+    )
+    monkeypatch.setattr(lab.fast, "compact_visible_ui", lambda visible: visible)
+    monkeypatch.setattr(lab.fast, "click_hovered_point", lambda *a, **k: clicks.append((a, k)))
+    monkeypatch.setattr(lab, "_elapsed", lambda start: 12.0 + len(events))
+
+    result = lab.click_start_mission_from_preview(
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        profile="Alpha",
+        use_memory_timer=True,
+        memory_timer_address=None,
+        memory_live_timer_address=0x122E5DBC,
+        memory_live_timer_kind="f32_seconds",
+        settle_seconds=0.25,
+        hover_seconds=0.05,
+        hold_seconds=0.12,
+        max_seconds=2.0,
+        interval_seconds=0.01,
+        pause_after_click=True,
+        pre_start_visible_probe=False,
+        deployment_trigger_source="screenshot_yellow",
+    )
+
+    assert result["status"] == "FAIL"
+    assert result["reason"] == "mission_preview_not_startable"
+    assert clicks == []
+    assert [event_type for event_type, _payload in events] == [
+        "mission_preview_pre_start_probe_skipped",
+        "mission_preview_startable_probe",
+    ]
+
+
+def test_fast_followup_region_click_requires_startable_preview(monkeypatch):
+    probes = [
+        {"index": 0, "window_x": 100, "window_y": 200},
+        {"index": 1, "window_x": 300, "window_y": 400},
+    ]
+    clicked = []
+
+    def fake_click_stable(*, tried_keys=None):
+        clicked.append(set(tried_keys or set()))
+        return probes[len(clicked) - 1]
+
+    visible_results = [
+        {"status": "OK", "visible_ui": "island_map", "ocr_text": "No Vek Detected"},
+        {
+            "status": "OK",
+            "visible_ui": "mission_preview_panel",
+            "ocr_text": "Bonus Objectives Start Mission",
+        },
+    ]
+
+    monkeypatch.setattr(
+        lab.fast,
+        "click_stable_red_mission_after_result",
+        fake_click_stable,
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "_lightning_visible_ui_snapshot",
+        lambda include_ocr=False: visible_results[len(clicked) - 1],
+    )
+    monkeypatch.setattr(
+        lab.fast,
+        "visible_startable_mission_preview",
+        lambda visible: visible.get("visible_ui") == "mission_preview_panel",
+    )
+    monkeypatch.setattr(lab.fast, "compact_visible_ui", lambda visible: visible)
+    monkeypatch.setattr(lab.fast.time, "sleep", lambda _seconds: None)
+
+    result = lab.fast.click_startable_red_mission_after_result(max_attempts=2)
+
+    assert result["status"] == "MISSION_PREVIEW_OPENED"
+    assert result["red_region"]["index"] == 1
+    assert clicked == [set(), {"index:0"}]
+    assert result["attempts"][0]["startable_preview_visible"] is False
+    assert result["attempts"][1]["startable_preview_visible"] is True
 
 
 def test_deploy_recommended_after_visible_deployment_runs_helper_and_pauses(monkeypatch):
@@ -2846,6 +2966,8 @@ def test_build_parser_defaults_match_first_milestone():
     assert args.memory_timer_probe is True
     assert args.memory_timer_address is None
     assert args.memory_live_timer_proof is None
+    assert args.auto_memory_live_timer_proof is True
+    assert args.require_memory_live_timer_proof is False
     assert args.click_red_mission is False
     assert args.click_start_mission is False
     assert args.start_mission_click_hover_seconds == 0.05
@@ -3032,6 +3154,108 @@ def test_resolve_live_timer_config_uses_validated_proof(monkeypatch, tmp_path):
     assert address == 0x10E144FC
     assert kind == "f32_seconds"
     assert validation["proof_path"] == str(proof_path)
+
+
+def test_resolve_live_timer_config_auto_uses_default_proof(monkeypatch, tmp_path):
+    default_proof = tmp_path / "recordings" / "lightning_session_clock_proof.json"
+    default_proof.parent.mkdir(parents=True)
+    default_proof.write_text('{"status": "OK"}\n', encoding="utf-8")
+    monkeypatch.setattr(lab, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        lab.memory_probe,
+        "validate_session_clock_proof",
+        lambda proof, **_kwargs: {
+            "status": "OK",
+            "address": "0x0000000010e144fc",
+            "kind": "f32_seconds",
+        },
+    )
+    args = lab.build_parser().parse_args([])
+
+    address, kind, validation = lab._resolve_live_timer_config(args)
+
+    assert address == 0x10E144FC
+    assert kind == "f32_seconds"
+    assert validation["proof_path"] == str(default_proof)
+    assert validation["proof_selection"] == "auto_default"
+
+
+def test_resolve_live_timer_config_requires_proof_when_missing(monkeypatch, tmp_path):
+    monkeypatch.setattr(lab, "ROOT", tmp_path)
+    args = lab.build_parser().parse_args(["--require-memory-live-timer-proof"])
+
+    try:
+        lab._resolve_live_timer_config(args)
+    except RuntimeError as exc:
+        assert "memory live timer proof required but missing" in str(exc)
+    else:
+        raise AssertionError("expected missing proof to fail")
+
+
+def test_followup_preview_transition_reads_live_timer(monkeypatch):
+    events = []
+    timer_calls = []
+
+    class FakeTelemetry:
+        def event(self, event_type, **payload):
+            events.append((event_type, payload))
+
+    class FakeScreenshots:
+        pass
+
+    def fake_read_timer(profile, **kwargs):
+        timer_calls.append((profile, kwargs))
+        return {
+            "status": "OK",
+            "label": kwargs["label"],
+            "clock_source": "memory_live_numeric_candidate",
+            "game_timer": "0:02:03",
+            "game_seconds": 123.0,
+        }
+
+    monkeypatch.setattr(lab, "_elapsed", lambda start: 12.5)
+    monkeypatch.setattr(lab, "read_in_game_timer", fake_read_timer)
+    monkeypatch.setattr(
+        lab,
+        "click_start_mission_from_preview",
+        lambda **_kwargs: {"status": "FAIL", "reason": "stubbed_start"},
+    )
+    args = lab.build_parser().parse_args(["--profile", "Beta"])
+
+    result = lab.run_followup_mission_from_island_map(
+        mission_index=2,
+        timer_start=0.0,
+        telemetry=FakeTelemetry(),
+        screenshots=FakeScreenshots(),
+        args=args,
+        memory_timer_address=0x138A5900,
+        memory_live_timer_address=0x122E5DBC,
+        memory_live_timer_kind="f32_seconds",
+        deployment_trigger_source="screenshot_yellow",
+        preview_transition={
+            "status": "MISSION_PREVIEW_OPENED",
+            "red_region": {"index": 0, "window_x": 100, "window_y": 200},
+        },
+    )
+
+    assert result["status"] == "FAIL"
+    assert result["mission_preview"]["after_preview_timer"]["game_seconds"] == 123.0
+    assert timer_calls == [
+        (
+            "Beta",
+            {
+                "label": "mission_preview_after_result_clear",
+                "use_memory": True,
+                "timer_address": 0x138A5900,
+                "live_timer_address": 0x122E5DBC,
+                "live_timer_kind": "f32_seconds",
+            },
+        )
+    ]
+    assert any(
+        event_type == "followup_mission_preview_opened_by_result_clear"
+        for event_type, _payload in events
+    )
 
 
 def test_update_profile_keeps_faster_existing_pass(monkeypatch, tmp_path):

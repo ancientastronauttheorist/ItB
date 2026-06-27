@@ -1529,7 +1529,9 @@ def wait_for_red_mission_regions_stable(
         time.sleep(max(0.05, interval_seconds))
 
 
-def click_stable_red_mission_after_result() -> dict[str, Any]:
+def click_stable_red_mission_after_result(
+    *, tried_keys: set[str] | None = None
+) -> dict[str, Any]:
     visible = _lightning_visible_ui_snapshot(include_ocr=False)
     visible_name = visible.get("visible_ui")
     if visible_name in {"title_screen", "new_game_setup"}:
@@ -1547,7 +1549,7 @@ def click_stable_red_mission_after_result() -> dict[str, Any]:
     candidates = regions.get("regions") or []
     if not candidates:
         raise FastRunError(f"no red mission regions detected: {regions}")
-    region, annotated = select_red_region_candidate(regions)
+    region, annotated = select_red_region_candidate(regions, tried_keys=tried_keys)
     region["settle"] = {
         "status": settled.get("status"),
         "stable_signature": settled.get("stable_signature"),
@@ -1564,6 +1566,37 @@ def click_stable_red_mission_after_result() -> dict[str, Any]:
         f"{regions.get('region_count')} status={settled.get('status')}"
     )
     return click_red_region_from_extracted(region)
+
+
+def click_startable_red_mission_after_result(
+    *, max_attempts: int = 4
+) -> dict[str, Any]:
+    tried_keys: set[str] = set()
+    attempts: list[dict[str, Any]] = []
+    for _attempt_index in range(max_attempts):
+        probe = click_stable_red_mission_after_result(tried_keys=tried_keys)
+        visible = _lightning_visible_ui_snapshot(include_ocr=True)
+        startable = visible_startable_mission_preview(visible)
+        attempt = {
+            "red_probe_clicked": probe,
+            "visible_ui": compact_visible_ui(visible),
+            "startable_preview_visible": startable,
+        }
+        attempts.append(attempt)
+        if startable:
+            return {
+                "status": "MISSION_PREVIEW_OPENED",
+                "red_region": probe,
+                "visible_ui": compact_visible_ui(visible),
+                "attempts": attempts,
+            }
+        tried_keys.add(red_region_key(probe))
+        time.sleep(0.1)
+    return {
+        "status": "MISSION_REGION_SELECTED_NOT_PREVIEW_OPENED",
+        "red_region": attempts[-1].get("red_probe_clicked") if attempts else None,
+        "attempts": attempts,
+    }
 
 
 def deploy_and_confirm(*, confirm_retries: int) -> dict[str, Any]:
@@ -3124,19 +3157,29 @@ def clear_mission_result_to_island_map(
         }
         if visible_name == "island_map":
             try:
-                probe = click_stable_red_mission_after_result()
+                probe = click_startable_red_mission_after_result()
             except Exception as exc:
                 step["red_probe_error"] = str(exc)
                 steps.append(step)
                 time.sleep(0.2)
                 continue
-            step["red_probe_clicked"] = probe
+            step["red_probe_clicked"] = probe.get("red_region")
+            step["red_probe_result"] = probe
             steps.append(step)
+            if probe.get("status") != "MISSION_PREVIEW_OPENED":
+                return {
+                    "status": probe.get("status")
+                    or "MISSION_REGION_SELECTED_NOT_PREVIEW_OPENED",
+                    "mission_index": mission_index + 1,
+                    "steps": steps,
+                    "red_region": probe.get("red_region"),
+                }
             return {
                 "status": "MISSION_PREVIEW_OPENED",
                 "mission_index": mission_index + 1,
                 "steps": steps,
-                "red_region": probe,
+                "red_region": probe.get("red_region"),
+                "preview_visible_ui": probe.get("visible_ui"),
             }
         if visible_name == "island_complete_leave" and not continue_after_island:
             return {
@@ -3179,16 +3222,26 @@ def clear_mission_result_to_island_map(
         }:
             continue
         try:
-            probe = click_stable_red_mission_after_result()
+            probe = click_startable_red_mission_after_result()
         except Exception as exc:
             steps[-1]["red_probe_error"] = str(exc)
             continue
-        steps[-1]["red_probe_clicked"] = probe
+        steps[-1]["red_probe_clicked"] = probe.get("red_region")
+        steps[-1]["red_probe_result"] = probe
+        if probe.get("status") != "MISSION_PREVIEW_OPENED":
+            return {
+                "status": probe.get("status")
+                or "MISSION_REGION_SELECTED_NOT_PREVIEW_OPENED",
+                "mission_index": mission_index + 1,
+                "steps": steps,
+                "red_region": probe.get("red_region"),
+            }
         return {
             "status": "MISSION_PREVIEW_OPENED",
             "mission_index": mission_index + 1,
             "steps": steps,
-            "red_region": probe,
+            "red_region": probe.get("red_region"),
+            "preview_visible_ui": probe.get("visible_ui"),
         }
     return {
         "status": "RESULT_CLEAR_INCOMPLETE",

@@ -1,9 +1,11 @@
 import textwrap
 
+from src.bridge import reader as bridge_reader
 from src.bridge.reader import (
     _active_region_keys,
     _grass_tiles_from_region_blocks,
     _region_blocks,
+    _read_terraform_grass_tiles_from_save,
     _safe_to_overlay_save_grass,
 )
 from src.model.board import Board
@@ -51,6 +53,40 @@ def test_active_region_grass_tiles_are_parsed_from_custom_sprite():
         _region_blocks(content),
         {"region6"},
     ) == {(3, 3), (4, 4)}
+
+
+def test_read_terraform_grass_tiles_uses_platform_save_reader(monkeypatch):
+    content = textwrap.dedent(
+        r'''
+        ["region4"] = {["player"] = {["iState"] = 4, ["iCurrentTurn"] = 0, },
+        ["map_data"] = {
+        {["loc"] = Point( 1, 1 ), ["terrain"] = 0, ["custom"] = "ground_grass.png", },
+        }, },
+        ["region5"] = {["player"] = {["iState"] = 0, ["iCurrentTurn"] = 3, },
+        ["map_data"] = {
+        {["loc"] = Point( 3, 2 ), ["terrain"] = 0, ["custom"] = "ground_grass.png", },
+        {["loc"] = Point( 4, 3 ), ["terrain"] = 0, ["custom"] = "ground_grass.png", },
+        }, },
+        '''
+    )
+    calls = []
+
+    def fake_read_save_text(filename, profile="Alpha"):
+        calls.append((filename, profile))
+        return content if filename == "saveData.lua" else None
+
+    monkeypatch.setattr(bridge_reader, "_read_save_text", fake_read_save_text)
+    data = {
+        "mission_id": "Mission_Terraform",
+        "turn": 3,
+        "mission_seeds": {
+            "region4": {"state": 4, "turn": 0},
+            "region5": {"state": 0, "turn": 3},
+        },
+    }
+
+    assert _read_terraform_grass_tiles_from_save(data) == {(3, 2), (4, 3)}
+    assert calls == [("saveData.lua", "Alpha")]
 
 
 def test_save_grass_overlay_is_blocked_mid_turn():

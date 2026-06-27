@@ -1391,7 +1391,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # targets collapse to origin/current, fixing BurnbugBoss post-enemy grid
 # prediction in Arachnophiles Spider Breeding run 20260624_184517_189.
 # ACID Arachnoid self-destruct also leaves an ACID pool on its death tile.
-SIMULATOR_VERSION = 285
+# v286 - Merged Heat Sinkers Feed the Flame parity onto the Complete
+# Victory/Spider line: Heat Engines fire/lava Boost consumption, Firestorm
+# endpoint/pod behavior, Thermal Discharger dam-flood ordering,
+# Mission_BeltRandom late conveyor timing, and Mission_Satellite late launch
+# threat timing. Pre-v286 corpus archived as failure_db_snapshot_sim_v285.jsonl.
+SIMULATOR_VERSION = 286
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

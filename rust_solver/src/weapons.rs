@@ -618,9 +618,9 @@ pub enum WId {
     BruteKickBackB = 217,
     /// Reverse Thrusters with both +1 Range upgrades powered.
     BruteKickBackAB = 218,
-    /// Heat Sinkers - Quick-Fire Mech's Quick-Fire Rockets. The live bridge
-    /// currently fires two-click weapons through Pawn:FireWeapon(target, slot),
-    /// which executes the first-click projectile effect only.
+    /// Heat Sinkers - Quick-Fire Mech's Quick-Fire Rockets. This is a true
+    /// two-click weapon; keep it non-enumerated until the bridge can supply
+    /// both target directions.
     BruteTcDoubleShot = 219,
     BruteTcDoubleShotA = 220,
     BruteTcDoubleShotB = 221,
@@ -996,13 +996,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[218] = WeaponDef { weapon_type: WeaponType::DashAway, damage: 0, self_damage: 1,
         range_min: 1, range_max: 4, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
 
-    // 219-222: Brute_TC_DoubleShot - Quick-Fire Rockets. Two-click live
-    // protocol is not modeled yet; the bridge-executable first projectile is
-    // a standard line shot. A adds push, B adds +1 damage, AB has both.
-    w[219] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0, flags: C, ..DEF };
-    w[220] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
-    w[221] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, range_max: 0, flags: C, ..DEF };
-    w[222] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    // 219-222: Brute_TC_DoubleShot - Quick-Fire Rockets. Live requires two
+    // chosen directions; the current bridge has no two-target protocol for
+    // this weapon, so do not let the solver plan one-projectile stand-ins. A
+    // adds push, B adds +1 damage, AB has both for future bridge support.
+    w[219] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, range_max: 0, flags: C, ..DEF };
+    w[220] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[221] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, range_max: 0, flags: C, ..DEF };
+    w[222] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
 
     // 223-226: Prime_Flamespreader - Thermal Discharger. Bespoke line damage
     // plus perpendicular side pushes live in simulate.rs; range and Add Fire
@@ -2550,7 +2551,7 @@ mod tests {
     #[test]
     fn test_heat_sinkers_weapon_defs_and_mappings() {
         let quick = weapon_def(WId::BruteTcDoubleShot);
-        assert_eq!(quick.weapon_type, WeaponType::Projectile);
+        assert_eq!(quick.weapon_type, WeaponType::TwoClick);
         assert_eq!(quick.damage, 1);
         assert_eq!(quick.push, PushDir::None);
         assert_eq!(weapon_def(WId::BruteTcDoubleShotA).push, PushDir::Forward);

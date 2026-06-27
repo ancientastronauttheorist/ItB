@@ -150,6 +150,44 @@ def test_swap_mech_full_range_overlay_from_save(monkeypatch):
     assert bridge_data["units"][0]["weapons"] == ["Science_Swap_AB"]
 
 
+def test_firestorm_range_overlay_from_save(monkeypatch):
+    bridge_data = {
+        "units": [
+            {
+                "uid": 2,
+                "type": "NapalmMech",
+                "mech": True,
+                "weapons": ["Science_RainingFire"],
+            }
+        ]
+    }
+
+    class FakeState:
+        weapons = [
+            "Prime_Flamethrower",
+            "",
+            "Brute_TC_DoubleShot",
+            "",
+            "Science_RainingFire_A",
+            "",
+        ]
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+    assert updates == [{
+        "uid": 2,
+        "slot": 0,
+        "base": "Science_RainingFire",
+        "upgraded": "Science_RainingFire_A",
+    }]
+    assert bridge_data["units"][0]["weapons"] == ["Science_RainingFire_A"]
+
+
 def test_artemis_buildings_immune_overlay_from_save(monkeypatch):
     bridge_data = {
         "units": [

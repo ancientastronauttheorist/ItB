@@ -1914,7 +1914,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   targets collapse to origin/current, fixing BurnbugBoss post-enemy grid
 //   prediction in Arachnophiles Spider Breeding run 20260624_184517_189.
 //   ACID Arachnoid self-destruct also leaves an ACID pool on its death tile.
-pub const SIMULATOR_VERSION: u32 = 285;
+// v286 - Merged Heat Sinkers Feed the Flame parity onto the Complete
+//   Victory/Spider line: Heat Engines fire/lava Boost consumption, Firestorm
+//   endpoint/pod behavior, Thermal Discharger dam-flood ordering,
+//   Mission_BeltRandom late conveyor timing, and Mission_Satellite late launch
+//   threat timing. Pre-v286 corpus archived as failure_db_snapshot_sim_v285.jsonl.
+pub const SIMULATOR_VERSION: u32 = 286;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -296,6 +296,43 @@ def test_record_post_enemy_returns_investigation_gate(tmp_path, monkeypatch):
     assert (run_dir / "m11_turn_01_post_enemy.json").exists()
 
 
+def test_record_post_enemy_blocks_unexpected_pod_loss(tmp_path, monkeypatch):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    solve_file = run_dir / "m11_turn_01_solve.json"
+    solve_file.write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 6,
+                "enemies_alive": 0,
+                "pods_present": 1,
+                "mech_hp": [],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(6)
+    result = commands._record_post_enemy(
+        session,
+        actual,
+        1,
+        bridge_data={"phase": "combat_player", "turn": 2},
+    )
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
+    assert result["deltas"]["pods_present_diff"] == -1
+    assert "Lost 1 unexpected pod(s)" in result["deltas"]["unexpected_events"]
+    assert session.post_enemy_block is not None
+    assert session.post_enemy_block["deltas"]["pods_present_diff"] == -1
+
+
 def test_record_post_enemy_records_nonlethal_mech_damage_for_lightning_war(
     tmp_path,
     monkeypatch,

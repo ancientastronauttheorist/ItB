@@ -667,14 +667,9 @@ def _read_terraform_grass_tiles_from_save(data: dict) -> set[tuple[int, int]]:
     if not region_keys:
         return set()
 
-    base = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
-    )
     for filename in ("saveData.lua", "undoSave.lua"):
-        try:
-            with open(os.path.join(base, filename)) as f:
-                content = f.read()
-        except OSError:
+        content = _read_save_text(filename)
+        if content is None:
             continue
         blocks = _region_blocks(content)
         tiles = _grass_tiles_from_region_blocks(blocks, region_keys)

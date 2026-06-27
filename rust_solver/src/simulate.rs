@@ -309,7 +309,26 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
 }
 
 fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
-    if !board.tile(x, y).on_fire() {
+    let standing_on_fire = board.tile(x, y).on_fire();
+    let standing_in_lava = board.tile(x, y).terrain == Terrain::Lava;
+    if board.heat_engines
+        && board.units[unit_idx].is_player()
+        && board.units[unit_idx].is_mech()
+        && board.units[unit_idx].hp > 0
+        && (standing_on_fire || standing_in_lava)
+    {
+        if standing_on_fire {
+            if board.tile(x, y).terrain == Terrain::Forest {
+                board.tile_mut(x, y).terrain = Terrain::Ground;
+            }
+            board.tile_mut(x, y).set_on_fire(false);
+        }
+        board.units[unit_idx].set_fire(false);
+        board.units[unit_idx].set_boosted(true);
+        return;
+    }
+
+    if !standing_on_fire {
         return;
     }
     if board.tile(x, y).terrain == Terrain::Forest {
@@ -1698,11 +1717,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     // uid-independent detection — works regardless of which tile took the
     // fatal hit. Idempotent via dam_alive gate.
     if board.dam_alive {
-        let dam_dead = (0..board.unit_count as usize).all(|i| {
-            let u = &board.units[i];
-            u.type_name_str() != "Dam_Pawn" || u.hp <= 0
-        });
-        if dam_dead {
+        if dam_dead(board) {
             trigger_dam_flood(board, result);
             board.dam_alive = false;
         }
@@ -1743,7 +1758,12 @@ pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     if x >= 8 || y >= 8 { return; }
     let t = board.tile(x, y);
     if t.terrain == Terrain::Water {
-        board.tile_mut(x, y).set_on_fire(false);
+        let tile = board.tile_mut(x, y);
+        tile.set_on_fire(false);
+        if tile.has_pod() {
+            tile.set_has_pod(false);
+            result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
+        }
         return;
     }
     if matches!(t.terrain, Terrain::Mountain | Terrain::Building) { return; }
@@ -1772,6 +1792,13 @@ fn flood_ice_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     if board.tile(x, y).terrain == Terrain::Ice {
         flood_tile(board, x, y, result);
     }
+}
+
+fn dam_dead(board: &Board) -> bool {
+    (0..board.unit_count as usize).all(|i| {
+        let u = &board.units[i];
+        u.type_name_str() != "Dam_Pawn" || u.hp <= 0
+    })
 }
 
 /// Trigger the Dam_Pawn death flood. Fires exactly once when the dam
@@ -3434,6 +3461,13 @@ fn sim_thermal_discharger(
     let (dx, dy) = DIRS[dir];
     let mut newly_burning = 0;
     let mut side_pushes: Vec<(u8, u8, usize)> = Vec::with_capacity((distance as usize) * 2);
+    let dam_was_alive = board.dam_alive;
+    if dam_was_alive {
+        // Thermal Discharger queues perpendicular pushes and applies them
+        // after line damage. Mission_Dam resolves its flood after those pushes,
+        // not at the instant the dam pawn takes lethal damage.
+        board.dam_alive = false;
+    }
 
     for i in 1..=(distance as i8) {
         let px = ax as i8 + dx * i;
@@ -3481,6 +3515,14 @@ fn sim_thermal_discharger(
         apply_push(board, sx, sy, push_dir, result);
     }
 
+    if dam_was_alive {
+        if dam_dead(board) {
+            trigger_dam_flood(board, result);
+        } else {
+            board.dam_alive = true;
+        }
+    }
+
     record_feed_the_flame_event(result, newly_burning, weapon_id, tx, ty);
 }
 
@@ -3508,12 +3550,13 @@ fn sim_firestorm_generator(
         let px = ax as i8 + dx * i;
         let py = ay as i8 + dy * i;
         if !in_bounds(px, py) { break; }
-        newly_burning += apply_weapon_fire_and_count_new_enemy(
-            board,
-            px as u8,
-            py as u8,
-            wdef,
-        );
+        let x = px as u8;
+        let y = py as u8;
+        newly_burning += apply_weapon_fire_and_count_new_enemy(board, x, y, wdef);
+        if board.tile(x, y).has_pod() && board.tile(x, y).on_fire() {
+            board.tile_mut(x, y).set_has_pod(false);
+            result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
+        }
     }
 
     if matches!(wdef.push, PushDir::Forward) {
@@ -6046,6 +6089,35 @@ mod tests {
         })
     }
 
+    fn add_dam(board: &mut Board, uid: u16, primary: (u8, u8), extra: (u8, u8), hp: i8) {
+        let primary_idx = board.add_unit(Unit {
+            uid,
+            x: primary.0,
+            y: primary.1,
+            hp,
+            max_hp: hp,
+            team: Team::Neutral,
+            ..Default::default()
+        });
+        board.units[primary_idx].set_type_name("Dam_Pawn");
+
+        let extra_idx = board.add_unit(Unit {
+            uid,
+            x: extra.0,
+            y: extra.1,
+            hp,
+            max_hp: hp,
+            team: Team::Neutral,
+            flags: UnitFlags::EXTRA_TILE,
+            ..Default::default()
+        });
+        board.units[extra_idx].set_type_name("Dam_Pawn");
+
+        board.mission_id = "Mission_Dam".to_string();
+        board.dam_alive = true;
+        board.dam_primary = Some(primary);
+    }
+
     #[test]
     fn test_force_swap_swaps_adjacent_unit_with_second_target() {
         let mut board = make_test_board();
@@ -6164,6 +6236,20 @@ mod tests {
     }
 
     #[test]
+    fn test_firestorm_generator_destroys_time_pod_on_fire_line() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 4, 3, 2, WId::ScienceRainingFireA);
+        board.tile_mut(4, 2).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::ScienceRainingFireA, 4, 1);
+
+        assert!(board.tile(4, 2).on_fire());
+        assert!(!board.tile(4, 2).has_pod());
+        assert_eq!(result.pods_collected, 0);
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_damage:4:2"));
+    }
+
+    #[test]
     fn test_firestorm_generator_does_not_count_already_burning_enemy() {
         let mut board = make_test_board();
         let mech = add_mech(&mut board, 0, 3, 1, 2, WId::ScienceRainingFireA);
@@ -6180,6 +6266,56 @@ mod tests {
         assert!(!result.events.iter().any(|e| {
             e.starts_with("achievement_feed_the_flame:")
         }), "already-burning enemy should not count: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_firestorm_generator_stops_at_clicked_endpoint() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 4, 7, 2, WId::ScienceRainingFire);
+        let beyond = add_enemy(&mut board, 1, 4, 4, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::ScienceRainingFire, 4, 5);
+
+        assert!(!board.units[beyond].fire());
+        assert_eq!((board.units[beyond].x, board.units[beyond].y), (4, 4));
+        assert!(board.tile(4, 6).on_fire());
+        assert!(board.tile(4, 5).on_fire());
+        assert!(!board.tile(4, 4).on_fire());
+        assert!(result.events.iter().all(|e| {
+            !e.starts_with("achievement_feed_the_flame:")
+        }), "one fresh enemy must not pop Feed the Flame: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_heat_engines_consumes_fire_tile_and_boosts_mech_on_move() {
+        let mut board = make_test_board();
+        board.heat_engines = true;
+        let mech = add_mech(&mut board, 0, 6, 4, 2, WId::ScienceRainingFire);
+        board.tile_mut(6, 5).set_on_fire(true);
+
+        let _result = simulate_move(&mut board, mech, (6, 5));
+
+        assert!(!board.tile(6, 5).on_fire());
+        assert!(!board.units[mech].fire());
+        assert!(board.units[mech].boosted());
+    }
+
+    #[test]
+    fn test_quick_fire_rockets_do_not_enumerate_without_two_click_bridge() {
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShot);
+        let _enemy = add_enemy(&mut board, 1, 3, 5, 3);
+
+        let targets = crate::solver::get_weapon_targets(
+            &board,
+            3,
+            3,
+            WId::BruteTcDoubleShot,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert!(targets.is_empty(), "unsupported Quick-Fire targets: {:?}", targets);
     }
 
     #[test]
@@ -6203,6 +6339,28 @@ mod tests {
         assert!(result.events.iter().any(|e| {
             e.starts_with("achievement_feed_the_flame:new_fire:3:weapon:Prime_Flamespreader_AB")
         }), "missing Feed the Flame event: {:?}", result.events);
+    }
+
+    #[test]
+    fn test_thermal_discharger_side_pushes_before_dam_flood_and_flood_destroys_pod() {
+        let mut board = make_test_board();
+        add_dam(&mut board, 900, (4, 0), (5, 0), 1);
+        let mech = add_mech(&mut board, 0, 4, 2, 3, WId::PrimeFlamespreader);
+        let bouncer = add_enemy_type(&mut board, 1301, 5, 1, 3, "Bouncer1");
+        board.tile_mut(5, 2).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeFlamespreader, 4, 0);
+
+        assert!(!board.dam_alive, "dam should be destroyed");
+        assert_eq!(
+            (board.units[bouncer].x, board.units[bouncer].y),
+            (6, 1),
+            "Thermal side-push should move Bouncer out of the flood strip before flood"
+        );
+        assert_eq!(board.units[bouncer].hp, 3, "Bouncer should survive outside the flood strip");
+        assert_eq!(board.tile(5, 2).terrain, Terrain::Water);
+        assert!(!board.tile(5, 2).has_pod(), "dam flood should destroy pod on flooded tile");
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_flood:5:2"));
     }
 
     #[test]
@@ -12734,6 +12892,39 @@ mod tests {
 
         assert_eq!(board.units[enemy].hp, 0);
         assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_mission_satellite_vek_attack_before_launch() {
+        // Heat Sinkers Feed the Flame run 20260619_004557_388,
+        // Mission_Satellite turn 2: a Scarab on a satellite launch tile still
+        // fired at G7 before the launch removed it.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Satellite".to_string();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(2, 1).terrain = Terrain::Building;
+        board.tile_mut(2, 1).building_hp = 1;
+        let enemy = add_enemy_type(&mut board, 1090, 5, 1, 2, "Scarab1");
+        board.units[enemy].queued_target_x = 2;
+        board.units[enemy].queued_target_y = 1;
+        board.units[enemy].weapon_damage = 1;
+        board.units[enemy].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let bit = 1u64 << xy_to_idx(5, 1);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+        let mut original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        original_positions[enemy] = (5, 1);
+
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[enemy].hp, 2, "satellite marker must not be reliable enemy kill coverage");
+        assert_eq!(board.tile(2, 1).building_hp, 0);
         assert_eq!(board.grid_power, 6);
         assert_eq!(result.grid_damage, 1);
     }

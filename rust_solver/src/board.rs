@@ -428,6 +428,9 @@ pub struct Board {
     pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
+    /// Passive_FireBoost / Heat Engines: player mechs standing on fire consume
+    /// the fire and gain Boost instead of catching fire.
+    pub heat_engines: bool,
     /// Passive_HealingSmoke / Nanofilter Mending: player mechs standing on
     /// smoke heal 1 HP and consume the smoke.
     pub healing_smoke: bool,
@@ -553,6 +556,7 @@ impl Default for Board {
             boss_alive: false,
             storm_generator: false,
             flame_shielding: false,
+            heat_engines: false,
             healing_smoke: false,
             viscera_nanobots_heal: 0,
             vek_hormones: false,

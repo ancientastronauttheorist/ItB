@@ -1020,9 +1020,7 @@ fn weapon_action_has_effect(
             };
             let distance = (target.0 as i8 - mx as i8).unsigned_abs()
                 + (target.1 as i8 - my as i8).unsigned_abs();
-            if distance < wdef.range_min.max(1)
-                || (wdef.range_max != 0 && distance > wdef.range_max)
-            {
+            if distance < wdef.range_min.max(1) {
                 return false;
             }
             if tile_weapon_terrain_effect(board.tile(target.0, target.1), weapon_id, wdef) {

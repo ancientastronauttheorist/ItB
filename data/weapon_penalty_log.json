@@ -171,14 +171,19 @@
       "weapon_id": "Brute_Unstable"
     },
     "death|Deploy_TankShot|attack": {
-      "count": 1,
-      "last_run_id": "20260517_105759_344",
+      "count": 2,
+      "last_run_id": "20260615_161747_078",
       "weapon_id": "Deploy_TankShot"
     },
     "death|Missiles_OneDmg|attack": {
       "count": 1,
       "last_run_id": "20260506_114649_974",
       "weapon_id": "Missiles_OneDmg"
+    },
+    "death|Prime_Flamespreader|attack": {
+      "count": 1,
+      "last_run_id": "20260617_121029_596",
+      "weapon_id": "Prime_Flamespreader"
     },
     "death|Prime_Flamethrower|attack": {
       "count": 1,
@@ -284,6 +289,11 @@
       "count": 2,
       "last_run_id": "20260428_165811_685",
       "weapon_id": "Science_Pullmech"
+    },
+    "death|Science_RainingFire|attack": {
+      "count": 2,
+      "last_run_id": "20260619_004557_388",
+      "weapon_id": "Science_RainingFire"
     },
     "death|Science_Repulse_A|attack": {
       "count": 2,

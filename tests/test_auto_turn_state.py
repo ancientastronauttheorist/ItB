@@ -899,6 +899,49 @@ def test_benign_fuzzy_does_not_block_end_turn():
     }]) is None
 
 
+def test_burrower_missing_after_damage_drift_is_harmless_for_re_solve():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 30,
+        "type": "Burrower1",
+        "field": "missing_in_actual",
+        "predicted": "present",
+        "actual": "absent",
+    }])
+
+    assert cmd_mod._is_harmless_burrower_missing_drift(diff) is True
+
+
+def test_burrower_missing_drift_does_not_hide_mixed_losses():
+    diff = DiffResult(
+        unit_diffs=[{
+            "uid": 30,
+            "type": "Burrower1",
+            "field": "missing_in_actual",
+            "predicted": "present",
+            "actual": "absent",
+        }],
+        scalar_diffs=[{
+            "field": "grid_power",
+            "predicted": 5,
+            "actual": 4,
+        }],
+    )
+
+    assert cmd_mod._is_harmless_burrower_missing_drift(diff) is False
+
+
+def test_non_burrower_missing_still_requires_re_solve():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 8,
+        "type": "Bouncer1",
+        "field": "missing_in_actual",
+        "predicted": "present",
+        "actual": "absent",
+    }])
+
+    assert cmd_mod._is_harmless_burrower_missing_drift(diff) is False
+
+
 # ---------------------------------------------------------------------------
 # cmd_auto_turn entry-point invalidation logic.
 #

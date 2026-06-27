@@ -369,6 +369,32 @@ def test_penultimate_infinite_spawn_objective_building_target_is_not_terminal():
     )
 
 
+def test_spawn_points_keep_objective_target_recoverable():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Barrels",
+            turn=3,
+            total_turns=4,
+            remaining_spawns=0,
+            spawn_points=2,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Barrels",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=0,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+
+
 def test_final_infinite_spawn_objective_building_target_blocks():
     audit = audit_plan_safety(
         _summary(
