@@ -1406,7 +1406,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # forced movement, including webbed controlled movement and Let's Walk enemy
 # movement-distance events. Pre-v288 corpus archived as
 # failure_db_snapshot_sim_v287.jsonl.
-SIMULATOR_VERSION = 288
+# v289 - Projected board safety now sees Rust project_plan board_json in the
+# Python loop, and environment hazards destroy Time Pods on affected tiles.
+# Fixes Mission_Tides preserving a pod and missing next-wave mech danger in
+# Mist Eaters Let's Walk run 20260627_104252_085. Pre-v289 corpus archived as
+# failure_db_snapshot_sim_v288.jsonl.
+SIMULATOR_VERSION = 289
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

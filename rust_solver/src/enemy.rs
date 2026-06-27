@@ -380,6 +380,11 @@ fn apply_env_danger(
         result.grid_damage += (grid_loss as i32) - (lost as i32);
         board.grid_power = board.grid_power.saturating_sub(grid_loss);
     }
+
+    if board.tile(x, y).has_pod() {
+        board.tile_mut(x, y).set_has_pod(false);
+        result.events.push(format!("pod_destroyed_env:{}:{}", x, y));
+    }
 }
 
 fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {

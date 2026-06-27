@@ -1940,7 +1940,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   forced movement, including webbed controlled movement and Let's Walk enemy
 //   movement-distance events. Pre-v288 corpus archived as
 //   failure_db_snapshot_sim_v287.jsonl.
-pub const SIMULATOR_VERSION: u32 = 288;
+// v289 - Projected board safety now sees Rust project_plan board_json in the
+//   Python loop, and environment hazards destroy Time Pods on affected tiles.
+//   Fixes Mission_Tides preserving a pod and missing next-wave mech danger in
+//   Mist Eaters Let's Walk run 20260627_104252_085. Pre-v289 corpus archived
+//   as failure_db_snapshot_sim_v288.jsonl.
+pub const SIMULATOR_VERSION: u32 = 289;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

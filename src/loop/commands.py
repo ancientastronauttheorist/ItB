@@ -3039,6 +3039,21 @@ def _summary_with_pending_grid_debt(summary: dict, debt: int) -> dict:
     return out
 
 
+def _projected_final_board_data(enriched: dict) -> dict:
+    final_board_data = enriched.get("final_board") or {}
+    if final_board_data:
+        return final_board_data
+    board_json = enriched.get("board_json")
+    if isinstance(board_json, str) and board_json.strip():
+        try:
+            parsed = json.loads(board_json)
+        except Exception:
+            return {}
+        if isinstance(parsed, dict):
+            return parsed
+    return {}
+
+
 def _rust_result_to_solution(rust_result: dict | None,
                              elapsed_seconds: float,
                              active_mech_count: int) -> Solution | None:
@@ -3183,7 +3198,7 @@ def _evaluate_solution_safety(board: Board,
     current_outcome = _capture_board_summary(board, bridge_data)
     predicted_outcome = enriched["predicted_outcome"]
     predicted_board_summary = dict(predicted_outcome)
-    final_board_data = enriched.get("final_board") or {}
+    final_board_data = _projected_final_board_data(enriched)
     if final_board_data:
         final_board_data = _carry_projected_summary_metadata(
             final_board_data,
@@ -43315,7 +43330,7 @@ def _re_solve_partial(
                                weights=breakdown_weights)
             current_outcome = _capture_board_summary(board, bridge_data)
             predicted_board_summary = dict(enriched.get("predicted_outcome") or {})
-            final_board_data = enriched.get("final_board") or {}
+            final_board_data = _projected_final_board_data(enriched)
             if final_board_data:
                 final_board_data = _carry_projected_summary_metadata(
                     final_board_data,
