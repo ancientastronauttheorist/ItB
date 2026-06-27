@@ -89,6 +89,69 @@ from src.loop.lightning_conductor import (
 from src.strategy.run_planner import recommend_squad_for_run
 from src.strategy.setup_verifier import capture_and_check_setup
 
+_CONTROL_SHOT_PREFIX = "Science_TC_Control"
+
+
+def _is_control_shot_weapon(weapon_id: str | None) -> bool:
+    return str(weapon_id or "").startswith(_CONTROL_SHOT_PREFIX)
+
+
+def _execute_visible_click_plan(
+    batch: list[dict],
+    *,
+    app_name: str = "Into the Breach",
+) -> dict:
+    """Execute a trusted combat click plan with the local OS click helper."""
+    from src.control.mac_click import click_screen_point
+
+    steps: list[dict] = []
+    for idx, op in enumerate(batch):
+        typ = op.get("type")
+        if typ == "wait":
+            duration = max(0.0, float(op.get("duration") or 0.0))
+            time.sleep(duration)
+            steps.append({
+                "index": idx,
+                "type": "wait",
+                "duration": duration,
+                "description": op.get("description", ""),
+            })
+            continue
+        if typ != "left_click":
+            return {
+                "status": "ERROR",
+                "reason": "unsupported_click_plan_op",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+            }
+        click = click_screen_point(
+            int(op["x"]),
+            int(op["y"]),
+            description=str(op.get("description") or ""),
+            app_name=app_name,
+            settle_seconds=0.05,
+            hold_seconds=0.12,
+        )
+        steps.append({
+            "index": idx,
+            "type": "left_click",
+            "description": op.get("description", ""),
+            "x": int(op["x"]),
+            "y": int(op["y"]),
+            "result": click,
+        })
+        if click.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "click_failed",
+                "index": idx,
+                "click": click,
+                "steps": steps,
+            }
+    return {"status": "OK", "steps": steps}
+
+
 BONUS_MECH_DAMAGE_ID = 4
 MECH_DAMAGE_OBJECTIVE_LIMIT = 4
 
@@ -45327,7 +45390,21 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 _print_result(pause_error)
                 return pause_error
             try:
-                if action.target2 is not None:
+                if _is_control_shot_weapon(action.weapon) and action.target2 is not None:
+                    if current_board is None:
+                        raise BridgeError("Control Shot UI execution needs live board state")
+                    recalibrate()
+                    click_batch = plan_single_mech(mech_action, current_board)
+                    if not click_batch:
+                        raise BridgeError("Control Shot UI execution produced an empty click plan")
+                    ui_result = _execute_visible_click_plan(click_batch)
+                    if ui_result.get("status") != "OK":
+                        raise BridgeError(
+                            "Control Shot UI click failed: "
+                            + json.dumps(ui_result, sort_keys=True)
+                        )
+                    ack = f"UI_CONTROL_SHOT clicks={len(click_batch)}"
+                elif action.target2 is not None:
                     ack = attack_mech_two(
                         mech_uid,
                         weapon_slot,

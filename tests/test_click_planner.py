@@ -195,6 +195,22 @@ check("Force Swap: final click is second target",
       and clicks[-1]["y"] == grid_to_mcp(6, 2)[1],
       clicks[-1])
 
+# Test 9c: Control Shot uses the visible two-click flow for achievement credit.
+mech = mk_unit(0, "ControlMech", 3, 3, weapon="Science_TC_Control")
+b = mk_board([mech])
+a = mk_action(0, "ControlMech", (3, 3), "Science_TC_Control", (4, 3))
+a.target2 = (6, 3)
+plan = plan_single_mech(a, b)
+clicks = clicks_only(plan)
+check("Control Shot: classify two_click",
+      classify_weapon("Science_TC_Control") == "two_click")
+check("Control Shot: 4 clicks (select+arm+target+target2)",
+      len(clicks) == 4, len(clicks), plan)
+check("Control Shot: final click is destination",
+      clicks[-1]["x"] == grid_to_mcp(6, 3)[0]
+      and clicks[-1]["y"] == grid_to_mcp(6, 3)[1],
+      clicks[-1])
+
 # Test 10: end turn always emits exactly one click at the end-turn pos
 plan = plan_end_turn()
 check("end_turn: 1 click", len(plan) == 1, plan)
