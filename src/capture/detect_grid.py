@@ -126,22 +126,24 @@ def _find_game_window_windows() -> WindowInfo | None:
 #
 # Tile step sizes scale proportionally with window size.
 
-# Reference calibration: window 1280x748
+# Reference calibration: window 1280x748.
 _REF_W = 1280
 _REF_H = 748
-# Tile (1,A) relative to window top-left (including title bar)
-# Calibrated from multiple window positions via hover verification
-# Solved from 3 reference points: Point(0,0) at (850,626),
-# Point(4,5)/rubble at (805,423), Point(6,3)/forest at (650,370).
-# The isometric axes are NOT standard 2:1 ratio.
-_REF_ORIGIN_X = 464   # 850 - window_x (386)
-_REF_ORIGIN_Y = 570   # 626 - window_y (56)
-# Tile step per save_x increment: screen (-48.06, -37.28)
-_REF_AX = -48.06
-_REF_AY = -37.28
-# Tile step per save_y increment: screen (29.44, -10.78)
-_REF_BX = 29.44
-_REF_BY = -10.78
+# Refit on Windows during a live Mist Eaters run (2026-06-27) after Control
+# Shot visible-click execution missed by a full board row/column. The hover-
+# verified points were bridge (1,4) D7 at window-local (511,326), bridge
+# (1,3) E7 at (568,285), and bridge (6,4) D2 at (725,530).
+#
+# These constants are bridge-coordinate direct: row step is save_x, col step is
+# save_y. Do not convert bridge coords to visual row/letter before using them.
+_REF_ORIGIN_X = 687.60
+_REF_ORIGIN_Y = 119.45
+# Tile step per save_x increment: screen down-right.
+_REF_AX = 42.27
+_REF_AY = 40.21
+# Tile step per save_y increment: screen down-left.
+_REF_BX = -56.30
+_REF_BY = 40.41
 
 
 def grid_from_window(win: WindowInfo) -> GridConfig:

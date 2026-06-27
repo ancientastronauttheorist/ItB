@@ -1,9 +1,9 @@
 """Pin grid_to_mcp to the shared live grid calibration.
 
-The live Detritus deployment on 2026-04-30 exposed a stale hardcoded
-isometric formula: ``read`` printed D5 as roughly (661, 362), but the visible
-tile center and ``cmd_calibrate`` both landed near (653, 447). These tests keep
-``grid_to_mcp`` on the same ``GridConfig`` path used by calibration.
+The live Mist Eaters run on 2026-06-27 exposed a stale Windows board
+calibration: Control Shot tried to click D2 on a mountain/forest tile instead
+of the enemy. These tests keep ``grid_to_mcp`` on the same bridge-coordinate
+``GridConfig`` path used by calibration and visible click planning.
 """
 
 from __future__ import annotations
@@ -37,11 +37,14 @@ def _pin_grid(monkeypatch):
 
 
 @pytest.mark.parametrize("name,save_x,save_y,expected_x,expected_y", [
-    ("H8_top", 0, 0, 679, 602),
-    ("D5_live_deploy_regression", 3, 4, 653, 447),
-    ("C5_live_deploy_neighbor", 3, 5, 682, 436),
-    ("D7_live_deploy_zone", 1, 4, 749, 522),
-    ("A1_bottom", 7, 7, 549, 266),
+    ("H8_top", 0, 0, 903, 151),
+    ("D5_live_deploy_regression", 3, 4, 804, 434),
+    ("C5_live_deploy_neighbor", 3, 5, 748, 474),
+    ("D7_live_deploy_zone", 1, 4, 720, 353),
+    ("A1_bottom", 7, 7, 804, 716),
+    ("E7_control_shot_select", 1, 3, 776, 313),
+    ("D2_control_shot_enemy_target", 6, 4, 931, 554),
+    ("E3_control_shot_destination", 5, 3, 945, 474),
 ])
 def test_tile_center_matches_shared_calibration(name, save_x, save_y,
                                                 expected_x, expected_y):
@@ -52,7 +55,16 @@ def test_tile_center_matches_shared_calibration(name, save_x, save_y,
 def test_grid_to_mcp_delegates_to_grid_config():
     """The executor output matches GridConfig for representative board points."""
     grid = grid_from_window(_LiveWindow())
-    for save_x, save_y in [(0, 0), (3, 4), (3, 5), (1, 4), (7, 7)]:
+    for save_x, save_y in [
+        (0, 0),
+        (3, 4),
+        (3, 5),
+        (1, 4),
+        (7, 7),
+        (1, 3),
+        (6, 4),
+        (5, 3),
+    ]:
         raw_x, raw_y = grid.tile_to_pixel(save_x + 1, save_y + 1)
         assert executor.grid_to_mcp(save_x, save_y) == (
             int(round(raw_x)),
@@ -62,7 +74,10 @@ def test_grid_to_mcp_delegates_to_grid_config():
 
 def test_window_offset_shifts_all_tiles(monkeypatch):
     """Moving the window shifts every tile coordinate by the window delta."""
-    ref = {t: executor.grid_to_mcp(*t) for t in [(0, 0), (7, 7), (3, 4)]}
+    ref = {
+        t: executor.grid_to_mcp(*t)
+        for t in [(0, 0), (7, 7), (3, 4), (1, 3), (6, 4), (5, 3)]
+    }
     win = _ShiftedWindow()
     monkeypatch.setattr(executor, "_cached_window", win)
     monkeypatch.setattr(executor, "_cached_grid", grid_from_window(win))
