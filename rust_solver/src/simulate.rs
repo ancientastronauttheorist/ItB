@@ -4405,10 +4405,10 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             let ny = ty as i8 + dy;
             if let Some(dir) = attack_dir {
                 let (sdx, sdy) = DIRS[dir];
-                let range_two_origin =
-                    ax as i8 == tx as i8 - (2 * sdx)
-                        && ay as i8 == ty as i8 - (2 * sdy);
-                if range_two_origin && nx == tx as i8 - sdx && ny == ty as i8 - sdy {
+                let shot_distance = (tx as i8 - ax as i8).unsigned_abs()
+                    + (ty as i8 - ay as i8).unsigned_abs();
+                let even_range_shot = shot_distance % 2 == 0;
+                if even_range_shot && nx == tx as i8 - sdx && ny == ty as i8 - sdy {
                     continue;
                 }
             }
@@ -12977,6 +12977,23 @@ mod tests {
         assert!(board.tile(2, 3).smoke(), "perpendicular adjacent tile should smoke");
         assert!(board.tile(4, 3).smoke(), "perpendicular adjacent tile should smoke");
         assert!(board.tile(3, 2).smoke(), "far adjacent tile should smoke");
+
+        // Same even-range rule at longer range. Live Mist Eaters Let's Walk
+        // run 20260628_101633_260, Mission_Disposal turn 3: H5->D5 left E5 clear.
+        let mut long_board = make_test_board();
+        let long_smog = add_mech(&mut long_board, 1, 3, 0, 3, WId::RangedSmokeFire);
+        let long_center = add_enemy_type(&mut long_board, 92, 3, 4, 3, "Jelly_Armor1");
+
+        let _ = simulate_weapon(&mut long_board, long_smog, WId::RangedSmokeFire, 3, 4);
+
+        assert_eq!(long_board.units[long_center].hp, 2);
+        assert!(
+            !long_board.tile(3, 3).smoke(),
+            "range-4 inbound projectile tile E5 must not receive Smoldering Shells smoke"
+        );
+        assert!(long_board.tile(2, 4).smoke(), "perpendicular adjacent tile should smoke");
+        assert!(long_board.tile(4, 4).smoke(), "perpendicular adjacent tile should smoke");
+        assert!(long_board.tile(3, 5).smoke(), "far adjacent tile should smoke");
     }
 
     #[test]

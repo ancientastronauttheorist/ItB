@@ -1972,7 +1972,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v299 - Boosted Reverse Thrusters adds +1 distance damage and boosted recoil,
 //   matching Mist Eaters Let's Walk run 20260628_101633_260 Mission_Disposal
 //   turn 1. Pre-v299 corpus archived as failure_db_snapshot_sim_v298.jsonl.
-pub const SIMULATOR_VERSION: u32 = 299;
+// v300 - Smoldering Shells skips the inbound projectile tile on even-range
+//   shots, not only range 2. Pre-v300 corpus archived as
+//   failure_db_snapshot_sim_v299.jsonl.
+pub const SIMULATOR_VERSION: u32 = 300;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

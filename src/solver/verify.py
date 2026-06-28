@@ -1437,7 +1437,9 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Pre-v298 corpus archived as failure_db_snapshot_sim_v297.jsonl.
 # v299 - Boosted Reverse Thrusters adds +1 distance damage and boosted recoil.
 # Pre-v299 corpus archived as failure_db_snapshot_sim_v298.jsonl.
-SIMULATOR_VERSION = 299
+# v300 - Smoldering Shells skips the inbound projectile tile on even-range shots.
+# Pre-v300 corpus archived as failure_db_snapshot_sim_v299.jsonl.
+SIMULATOR_VERSION = 300
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
