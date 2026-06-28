@@ -1423,7 +1423,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v293 - Control Shot first-click target units must be in a straight firing
 # line from the Control Mech; diagonal in-range targets are visible UI misses.
 # Pre-v293 corpus archived as failure_db_pre_v293_control_shot_line_targets.jsonl.
-SIMULATOR_VERSION = 293
+# v294 - Control Shot first-click target units must be the first projectile
+# blocker in that line; buildings/mountains/units can obstruct the visible UI.
+# Pre-v294 corpus archived as failure_db_pre_v294_control_shot_projectile_blockers.jsonl.
+SIMULATOR_VERSION = 294
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

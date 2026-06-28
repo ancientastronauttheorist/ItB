@@ -5006,6 +5006,19 @@ fn control_shot_target_in_line(source: (u8, u8), first: (u8, u8)) -> bool {
     source.0 == first.0 || source.1 == first.1
 }
 
+fn control_shot_has_clear_projectile_line(
+    board: &Board,
+    source: (u8, u8),
+    first: (u8, u8),
+) -> bool {
+    let dx = (first.0 as i8 - source.0 as i8).signum();
+    let dy = (first.1 as i8 - source.1 as i8).signum();
+    matches!(
+        find_projectile_blocker_from(board, source.0 as i8, source.1 as i8, dx, dy, false),
+        Some(blocker) if blocker == first
+    )
+}
+
 fn sim_control_shot(
     board: &mut Board,
     attacker_idx: usize,
@@ -5035,6 +5048,13 @@ fn sim_control_shot(
     if !control_shot_target_in_line((attacker.x, attacker.y), first) {
         result.events.push(format!(
             "invalid_control_shot_line:{}:{}:{}:{}",
+            attacker.x, attacker.y, first.0, first.1
+        ));
+        return;
+    }
+    if !control_shot_has_clear_projectile_line(board, (attacker.x, attacker.y), first) {
+        result.events.push(format!(
+            "invalid_control_shot_blocked_line:{}:{}:{}:{}",
             attacker.x, attacker.y, first.0, first.1
         ));
         return;
@@ -6503,6 +6523,37 @@ mod tests {
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 4));
         assert!(result.events.iter().any(|e| {
             e == "invalid_control_shot_line:3:3:4:4"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_blocked_projectile_line() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 5, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+        {
+            let tile = board.tile_mut(3, 4);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 5),
+            Some((4, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 5));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_blocked_line:3:3:3:5"
         }));
         assert!(!result.events.iter().any(|e| {
             e.starts_with("achievement_lets_walk:")

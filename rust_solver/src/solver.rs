@@ -716,6 +716,19 @@ fn control_shot_target_in_line(source: (u8, u8), first: (u8, u8)) -> bool {
     source.0 == first.0 || source.1 == first.1
 }
 
+fn control_shot_has_clear_projectile_line(
+    board: &Board,
+    source: (u8, u8),
+    first: (u8, u8),
+) -> bool {
+    let dx = (first.0 as i8 - source.0 as i8).signum();
+    let dy = (first.1 as i8 - source.1 as i8).signum();
+    matches!(
+        first_projectile_blocker_from(board, source.0 as i8, source.1 as i8, dx, dy),
+        Some(blocker) if blocker == first
+    )
+}
+
 fn enumerate_control_shot_targets(
     board: &Board,
     source: (u8, u8),
@@ -732,6 +745,9 @@ fn enumerate_control_shot_targets(
             continue;
         }
         if !control_shot_target_in_line(source, first) {
+            continue;
+        }
+        if !control_shot_has_clear_projectile_line(board, source, first) {
             continue;
         }
         let target_distance = (first.0 as i8 - source.0 as i8).unsigned_abs()
@@ -2649,6 +2665,77 @@ mod top_k_tests {
         assert!(
             actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (3, 2))),
             "action enumeration should reject diagonal Control Shot targets"
+        );
+    }
+
+    #[test]
+    fn control_shot_target_enumeration_respects_projectile_blockers() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 2,
+            y: 1,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceTcControl as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 101,
+            x: 2,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 102,
+            x: 4,
+            y: 1,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        {
+            let tile = board.tile_mut(2, 2);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        let targets = get_weapon_targets(
+            &board,
+            2,
+            1,
+            WId::ScienceTcControl,
+            (2, 1),
+            &WEAPONS,
+        );
+        assert!(
+            targets.contains(&(4, 1)),
+            "Control Shot should offer unobstructed first-click targets"
+        );
+        assert!(
+            !targets.contains(&(2, 3)),
+            "Control Shot should not offer targets behind projectile blockers"
+        );
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| a.1 == WId::ScienceTcControl && a.2 == (4, 1)),
+            "action enumeration should keep unobstructed Control Shot targets"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (2, 3))),
+            "action enumeration should reject obstructed Control Shot targets"
         );
     }
 
