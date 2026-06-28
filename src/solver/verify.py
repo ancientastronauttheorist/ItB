@@ -1439,7 +1439,9 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Pre-v299 corpus archived as failure_db_snapshot_sim_v298.jsonl.
 # v300 - Smoldering Shells skips the inbound projectile tile on even-range shots.
 # Pre-v300 corpus archived as failure_db_snapshot_sim_v299.jsonl.
-SIMULATOR_VERSION = 300
+# v301 - Smoldering Shells skipped occupied adjacent tiles no longer clear fire.
+# Pre-v301 corpus archived as failure_db_snapshot_sim_v300.jsonl.
+SIMULATOR_VERSION = 301
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

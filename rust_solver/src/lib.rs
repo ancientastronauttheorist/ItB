@@ -1975,7 +1975,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v300 - Smoldering Shells skips the inbound projectile tile on even-range
 //   shots, not only range 2. Pre-v300 corpus archived as
 //   failure_db_snapshot_sim_v299.jsonl.
-pub const SIMULATOR_VERSION: u32 = 300;
+// v301 - Ranged_SmokeFire skipped occupied adjacent tiles no longer clear
+//   carried fire. Live Let's Walk Mission_Belt turn 3 left burning Control
+//   Mech on an occupied adjacent tile after Smoldering Shells. Pre-v301 corpus
+//   archived as failure_db_snapshot_sim_v300.jsonl.
+pub const SIMULATOR_VERSION: u32 = 301;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

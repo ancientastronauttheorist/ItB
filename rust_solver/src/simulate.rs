@@ -4378,7 +4378,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     // Smoldering Shells: fire and damage the center tile, then affect nearby
     // tiles. Base/+Damage use the four cardinal neighbors; More Smoke variants
     // add the four diagonals. Empty non-building tiles receive smoke; occupied
-    // neighboring units only have carried fire extinguished.
+    // neighboring units are skipped entirely.
     if matches!(
         weapon_id,
         WId::RangedSmokeFire
@@ -4415,9 +4415,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             if in_bounds(nx, ny) {
                 let nx_u = nx as u8;
                 let ny_u = ny as u8;
-                if let Some(idx) = board.unit_at(nx_u, ny_u) {
-                    board.units[idx].set_fire(false);
-                    board.tile_mut(nx_u, ny_u).set_on_fire(false);
+                if board.unit_at(nx_u, ny_u).is_some() {
                     continue;
                 }
                 if board.tile(nx_u, ny_u).terrain == Terrain::Building {
@@ -12946,8 +12944,8 @@ mod tests {
         );
         assert_eq!(board.units[adjacent].hp, 2);
         assert!(
-            !board.units[adjacent].fire(),
-            "occupied adjacent units have carried fire extinguished without receiving smoke"
+            board.units[adjacent].fire(),
+            "occupied adjacent units should not receive smoke or free fire extinguish"
         );
         assert!(board.tile(4, 2).smoke(), "empty north adjacent tile should smoke");
         assert!(board.tile(5, 1).smoke(), "empty west adjacent tile should smoke");
@@ -13031,12 +13029,36 @@ mod tests {
             "occupied diagonal tile must not receive More Smoke"
         );
         assert!(
-            !board.units[occupied_diag].fire(),
-            "occupied diagonal units have carried fire extinguished"
+            board.units[occupied_diag].fire(),
+            "occupied diagonal units should keep carried fire when More Smoke skips them"
         );
         assert!(
             !board.tile(5, 5).smoke(),
             "diagonal building tile must not receive More Smoke"
+        );
+    }
+
+    #[test]
+    fn test_smoldering_shells_skipped_occupied_mech_keeps_fire() {
+        // Live evidence: Mist Eaters Let's Walk run 20260628_101633_260,
+        // Mission_Belt turn 3. Smog fired at a Leaper on G6 with burning
+        // Control Mech adjacent on F6; live did not extinguish Control's fire.
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 4, 3, WId::RangedSmokeFire);
+        let control = add_mech(&mut board, 2, 2, 2, 2, WId::ScienceTcControl);
+        board.units[control].set_fire(true);
+        let leaper = add_enemy_type(&mut board, 2186, 2, 1, 1, "Leaper1");
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 2, 1);
+
+        assert_eq!(board.units[leaper].hp, 0);
+        assert!(
+            !board.tile(2, 2).smoke(),
+            "occupied adjacent mech tile must not receive Smoldering Shells smoke"
+        );
+        assert!(
+            board.units[control].fire(),
+            "skipped occupied mech should keep carried fire"
         );
     }
 

@@ -715,8 +715,8 @@ mod tests {
         let units = post_attack["units"].as_array().unwrap();
         let spiderling = units.iter().find(|u| u["uid"] == 655).unwrap();
         assert_eq!(
-            spiderling["status"]["fire"], false,
-            "Smoldering Shells adjacent effect should extinguish occupied adjacent units"
+            spiderling["status"]["fire"], true,
+            "Smoldering Shells adjacent effect should skip occupied adjacent units entirely"
         );
         let building_tile = post_attack["tiles_changed"].as_array().unwrap()
             .iter()
