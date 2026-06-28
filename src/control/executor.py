@@ -180,7 +180,7 @@ def classify_weapon(weapon_id: str) -> str:
 
     - "normal":  optional move click → arm weapon → click target
     - "dash":    arm weapon → click destination tile (no separate move)
-    - "repair":  optional move click → click Repair button (no target)
+    - "repair":  optional move click → click Repair button → self tile
     - "two_click": optional move click → arm weapon → click target → click target2
     - "passive": no click flow at all
     """
@@ -275,7 +275,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     if weapon_type == "passive":
         return annotate_click_plan(plan)
 
-    # Repair: optional move, then click the Repair button.
+    # Repair: optional move, then click the Repair button and self-target.
     if weapon_type == "repair":
         plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
         if action.move_to and action.move_to != (mech.x, mech.y):
@@ -291,6 +291,14 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "type": "left_click",
             "x": rx, "y": ry,
             "description": "Click Repair button",
+        })
+        repair_x, repair_y = action.move_to if action.move_to else (mech.x, mech.y)
+        sx, sy = grid_to_mcp(repair_x, repair_y)
+        plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for repair targeting"))
+        plan.append({
+            "type": "left_click",
+            "x": sx, "y": sy,
+            "description": f"Repair self at ({repair_x},{repair_y})",
         })
         return annotate_click_plan(plan)
 
