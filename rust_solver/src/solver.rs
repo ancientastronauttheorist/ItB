@@ -506,8 +506,11 @@ pub(crate) fn get_weapon_targets(
             }
         }
         WeaponType::TwoClick if is_control_shot(weapon_id) => {
-            let range = control_shot_range(wdef);
-            for (first, _second) in enumerate_control_shot_targets(board, (mx, my), range) {
+            let target_range = control_shot_target_range(wdef);
+            let move_budget = control_shot_move_budget(wdef);
+            for (first, _second) in
+                enumerate_control_shot_targets(board, (mx, my), target_range, move_budget)
+            {
                 targets.push(first);
             }
         }
@@ -704,7 +707,11 @@ fn prime_leap_blocked_by_web(board: &Board, mx: u8, my: u8, weapon_id: WId) -> b
 
 type Action = ((u8, u8), WId, (u8, u8), Option<(u8, u8)>); // (move_to, weapon, target, target2)
 
-fn control_shot_range(wdef: &WeaponDef) -> u8 {
+fn control_shot_target_range(_wdef: &WeaponDef) -> u8 {
+    1
+}
+
+fn control_shot_move_budget(wdef: &WeaponDef) -> u8 {
     wdef.range_max.max(2)
 }
 
@@ -732,7 +739,8 @@ fn control_shot_has_clear_projectile_line(
 fn enumerate_control_shot_targets(
     board: &Board,
     source: (u8, u8),
-    range: u8,
+    target_range: u8,
+    move_budget: u8,
 ) -> Vec<((u8, u8), (u8, u8))> {
     let mut out = Vec::with_capacity(96);
     for idx in 0..board.unit_count as usize {
@@ -752,10 +760,10 @@ fn enumerate_control_shot_targets(
         }
         let target_distance = (first.0 as i8 - source.0 as i8).unsigned_abs()
             + (first.1 as i8 - source.1 as i8).unsigned_abs();
-        if target_distance > range {
+        if target_distance > target_range {
             continue;
         }
-        for dest in controlled_reachable_tiles(board, idx, range) {
+        for dest in controlled_reachable_tiles(board, idx, move_budget) {
             if dest != first {
                 out.push((first, dest));
             }
@@ -1277,8 +1285,12 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                         actions.push((pos, w1_id, first, Some(second)));
                     }
                 } else if is_control_shot(w1_id) {
-                    let range = control_shot_range(&weapons[w1_id as usize]);
-                    for (first, second) in enumerate_control_shot_targets(action_board, attack_pos, range) {
+                    let wdef = &weapons[w1_id as usize];
+                    let target_range = control_shot_target_range(wdef);
+                    let move_budget = control_shot_move_budget(wdef);
+                    for (first, second) in
+                        enumerate_control_shot_targets(action_board, attack_pos, target_range, move_budget)
+                    {
                         actions.push((pos, w1_id, first, Some(second)));
                     }
                 } else if is_ricochet_rocket(w1_id) && !action_unit.web() {
@@ -1302,8 +1314,12 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                         actions.push((pos, w2_id, first, Some(second)));
                     }
                 } else if is_control_shot(w2_id) {
-                    let range = control_shot_range(&weapons[w2_id as usize]);
-                    for (first, second) in enumerate_control_shot_targets(action_board, attack_pos, range) {
+                    let wdef = &weapons[w2_id as usize];
+                    let target_range = control_shot_target_range(wdef);
+                    let move_budget = control_shot_move_budget(wdef);
+                    for (first, second) in
+                        enumerate_control_shot_targets(action_board, attack_pos, target_range, move_budget)
+                    {
                         actions.push((pos, w2_id, first, Some(second)));
                     }
                 } else if is_ricochet_rocket(w2_id) && !action_unit.web() {
@@ -2582,7 +2598,7 @@ mod top_k_tests {
         board.add_unit(Unit {
             uid: 100,
             x: 1,
-            y: 2,
+            y: 1,
             hp: 2,
             max_hp: 2,
             team: Team::Player,
@@ -2593,7 +2609,7 @@ mod top_k_tests {
         board.add_unit(Unit {
             uid: 101,
             x: 2,
-            y: 3,
+            y: 2,
             hp: 3,
             max_hp: 3,
             team: Team::Enemy,
@@ -2603,8 +2619,8 @@ mod top_k_tests {
         });
         board.add_unit(Unit {
             uid: 102,
-            x: 6,
-            y: 4,
+            x: 2,
+            y: 3,
             hp: 3,
             max_hp: 3,
             team: Team::Enemy,
@@ -2633,15 +2649,15 @@ mod top_k_tests {
             &WEAPONS,
         );
         assert!(
-            targets.contains(&(2, 3)),
-            "Control Shot should offer enemies within the first-click range"
+            targets.contains(&(2, 2)),
+            "Control Shot should offer adjacent enemy first-click targets"
         );
         assert!(
-            !targets.contains(&(6, 4)),
-            "Control Shot must not offer distant target units"
+            !targets.contains(&(2, 3)),
+            "Control Shot must not offer non-adjacent target units"
         );
         assert!(
-            !targets.contains(&(1, 2)),
+            !targets.contains(&(1, 1)),
             "Control Shot should not offer allied targets while farming Let's Walk"
         );
         assert!(
@@ -2651,15 +2667,17 @@ mod top_k_tests {
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(
-            actions.iter().any(|a| a.1 == WId::ScienceTcControl && a.2 == (2, 3)),
-            "action enumeration should keep legal in-range Control Shot targets"
+            actions.iter().any(|a| {
+                a.1 == WId::ScienceTcControl && a.2 == (2, 2) && a.3 == Some((0, 2))
+            }),
+            "action enumeration should keep adjacent Control Shot targets and two-space destinations"
         );
         assert!(
-            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (6, 4))),
-            "action enumeration should reject out-of-range Control Shot targets"
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (2, 3))),
+            "action enumeration should reject non-adjacent Control Shot targets"
         );
         assert!(
-            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (1, 2))),
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (1, 1))),
             "action enumeration should reject allied Control Shot targets"
         );
         assert!(
@@ -2696,7 +2714,7 @@ mod top_k_tests {
         });
         board.add_unit(Unit {
             uid: 102,
-            x: 4,
+            x: 3,
             y: 1,
             hp: 3,
             max_hp: 3,
@@ -2720,7 +2738,7 @@ mod top_k_tests {
             &WEAPONS,
         );
         assert!(
-            targets.contains(&(4, 1)),
+            targets.contains(&(3, 1)),
             "Control Shot should offer unobstructed first-click targets"
         );
         assert!(
@@ -2730,7 +2748,7 @@ mod top_k_tests {
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(
-            actions.iter().any(|a| a.1 == WId::ScienceTcControl && a.2 == (4, 1)),
+            actions.iter().any(|a| a.1 == WId::ScienceTcControl && a.2 == (3, 1)),
             "action enumeration should keep unobstructed Control Shot targets"
         );
         assert!(

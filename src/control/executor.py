@@ -231,6 +231,7 @@ def _weapon_icon_pos(weapon_id: str, mech) -> tuple[int, int]:
 _WAIT_AFTER_SELECT = 0.6
 _WAIT_AFTER_MOVE = 0.5
 _WAIT_AFTER_ARM = 0.7
+_WAIT_AFTER_CONTROL_TARGET = 2.5
 
 
 def _wait_op(duration: float, note: str) -> dict:
@@ -341,7 +342,12 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
         })
         target2 = getattr(action, "target2", None)
         if weapon_type == "two_click" and is_board_target(target2):
-            plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for second target"))
+            wait = (
+                _WAIT_AFTER_CONTROL_TARGET
+                if str(action.weapon).startswith("Science_TC_Control")
+                else _WAIT_AFTER_ARM
+            )
+            plan.append(_wait_op(wait, "wait for second target"))
             tx2, ty2 = grid_to_mcp(target2[0], target2[1])
             plan.append({
                 "type": "left_click",

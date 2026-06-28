@@ -989,8 +989,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[233] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     // 212: Science_TC_Control — Control Shot.
-    // Two-click Mist Eaters weapon: first choose a movable unit, then choose a
-    // legal destination within the target unit's controlled move budget.
+    // Two-click Mist Eaters weapon: first choose an adjacent movable enemy,
+    // then choose a legal destination within the target unit's controlled move
+    // budget.
     w[212] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, range_max: 2, flags: C, ..DEF };
     // 234-236: Control Shot upgrades.
     // Each powered +1 Move upgrade increases the controlled move budget.

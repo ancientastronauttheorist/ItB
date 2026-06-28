@@ -1426,7 +1426,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v294 - Control Shot first-click target units must be the first projectile
 # blocker in that line; buildings/mountains/units can obstruct the visible UI.
 # Pre-v294 corpus archived as failure_db_pre_v294_control_shot_projectile_blockers.jsonl.
-SIMULATOR_VERSION = 294
+# v295 - Control Shot first-click target units are adjacent-only; weapon
+# upgrades still increase only the controlled enemy move budget.
+# Pre-v295 corpus archived as failure_db_pre_v295_control_shot_adjacent_target.jsonl.
+# v296 - Smoldering Shells skips the inbound projectile tile for range-2 shots.
+# Pre-v296 corpus archived as failure_db_pre_v296_smoldering_shells_inbound_smoke.jsonl.
+SIMULATOR_VERSION = 296
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
