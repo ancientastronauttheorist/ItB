@@ -271,6 +271,16 @@ def main():
                                 help="Exact reviewed candidate rank for dirty consent")
     p_click_action.add_argument("--dirty-consent-id",
                                 help="Exact one-use token emitted by solve")
+    p_click_action.add_argument(
+        "--allow-protected-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow protected objective unit loss",
+    )
+    p_click_action.add_argument(
+        "--allow-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow objective loss/failure kinds",
+    )
 
     # dispatch_click_action
     p_dispatch_click_action = sub.add_parser(
@@ -288,6 +298,16 @@ def main():
                                          help="Exact reviewed candidate rank for dirty consent")
     p_dispatch_click_action.add_argument("--dirty-consent-id",
                                          help="Exact one-use token emitted by solve")
+    p_dispatch_click_action.add_argument(
+        "--allow-protected-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow protected objective unit loss",
+    )
+    p_dispatch_click_action.add_argument(
+        "--allow-objective-loss",
+        action="store_true",
+        help="With exact dirty consent, allow objective loss/failure kinds",
+    )
     p_dispatch_click_action.add_argument(
         "--execute",
         action="store_true",
@@ -2090,6 +2110,8 @@ def main():
             allow_dirty_plan=args.allow_dirty_plan,
             candidate_rank=args.candidate_rank,
             dirty_consent_id=args.dirty_consent_id,
+            allow_protected_objective_loss=args.allow_protected_objective_loss,
+            allow_objective_loss=args.allow_objective_loss,
         )
     elif args.command == "dispatch_click_action":
         cmd_dispatch_click_action(
@@ -2097,6 +2119,8 @@ def main():
             allow_dirty_plan=args.allow_dirty_plan,
             candidate_rank=args.candidate_rank,
             dirty_consent_id=args.dirty_consent_id,
+            allow_protected_objective_loss=args.allow_protected_objective_loss,
+            allow_objective_loss=args.allow_objective_loss,
             execute=args.execute,
             post_wait=args.post_wait,
         )

@@ -7405,6 +7405,8 @@ def cmd_click_action(
     allow_dirty_plan: bool = False,
     candidate_rank: int | None = None,
     dirty_consent_id: str | None = None,
+    allow_protected_objective_loss: bool = False,
+    allow_objective_loss: bool = False,
 ) -> dict:
     """Plan clicks for ONE mech action and emit a computer_batch-ready batch.
 
@@ -7457,6 +7459,8 @@ def cmd_click_action(
                 candidate_rank=selected_rank,
                 provided_id=dirty_consent_id,
                 consume=False,
+                allow_protected_objective_loss=allow_protected_objective_loss,
+                allow_objective_loss=allow_objective_loss,
                 allow_previously_consumed=True,
             )
             if consent_error is not None:
@@ -7466,6 +7470,12 @@ def cmd_click_action(
         if plan_requires_safety_block(
             plan_safety,
             allow_dirty_plan=dirty_consent_validated,
+            allow_protected_objective_loss_dirty=(
+                dirty_consent_validated and allow_protected_objective_loss
+            ),
+            allow_objective_loss_dirty=(
+                dirty_consent_validated and allow_objective_loss
+            ),
         ):
             consent_id = _dirty_consent_id(
                 session,
@@ -7866,6 +7876,8 @@ def cmd_dispatch_click_action(
     allow_dirty_plan: bool = False,
     candidate_rank: int | None = None,
     dirty_consent_id: str | None = None,
+    allow_protected_objective_loss: bool = False,
+    allow_objective_loss: bool = False,
     execute: bool = False,
     post_wait: float = 1.25,
 ) -> dict:
@@ -7880,6 +7892,8 @@ def cmd_dispatch_click_action(
         allow_dirty_plan=allow_dirty_plan,
         candidate_rank=candidate_rank,
         dirty_consent_id=dirty_consent_id,
+        allow_protected_objective_loss=allow_protected_objective_loss,
+        allow_objective_loss=allow_objective_loss,
     )
     if plan.get("status") != "PLAN":
         result = {
@@ -16892,6 +16906,10 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             and windows_bottom_continue.get("score", 0.0) >= 0.70
             and windows_bottom_continue.get("bright", 0) >= 800
             and windows_bottom_continue.get("border", 0) >= 900
+            and float(
+                scores.get("perfect_reward_choice", {}).get("score") or 0.0
+            )
+            < 0.80
         ):
             return {
                 "status": "OK",
@@ -17032,9 +17050,19 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     pause_bright_fraction = (
         pause_score.get("bright", 0) / pause_pixels
     )
+    windows_pause_menu_visible = (
+        os.name == "nt"
+        and dark_overlay >= 0.85
+        and pause_score.get("score", 0.0) >= 0.55
+        and pause_score.get("bright", 0) >= 1000
+        and pause_score.get("border", 0) >= 700
+        and pause_bright_fraction <= 0.08
+    )
     if (
         dark_overlay >= 0.70
         and (
+            windows_pause_menu_visible
+            or
             (
                 pause_score.get("score", 0.0) >= 0.34
                 and pause_score.get("bright", 0) >= 120
@@ -24641,8 +24669,18 @@ def _lightning_execute_guarded_route_preview_sequence(
                             "click another route region."
                         ),
                     }
-            if visible_name == "mission_preview_panel":
-                if allow_existing_preview:
+            preview_commit_context = (
+                visible_name == "mission_preview_panel"
+                or _lightning_visible_ui_has_preview_commit_context(visible_ui)
+            )
+            existing_preview_proven = _lightning_visible_ui_has_existing_mission_preview(
+                visible_ui,
+            )
+            if preview_commit_context:
+                if allow_existing_preview and (
+                    visible_name == "mission_preview_panel"
+                    or existing_preview_proven
+                ):
                     return {
                         "status": "OK",
                         "reason": "existing_mission_preview_accepted",
@@ -24665,7 +24703,12 @@ def _lightning_execute_guarded_route_preview_sequence(
                         ) | {"existing_preview_close": existing_preview_close}
                     visible_ui = _lightning_visible_ui_snapshot()
                     visible_name = str(visible_ui.get("visible_ui") or "")
-                    if visible_name == "mission_preview_panel":
+                    if (
+                        visible_name == "mission_preview_panel"
+                        or _lightning_visible_ui_has_preview_commit_context(
+                            visible_ui,
+                        )
+                    ):
                         return _lightning_guarded_route_preview_block(
                             reason=(
                                 "route_preview_existing_mission_preview_"
@@ -25033,7 +25076,23 @@ def _lightning_visible_ui_has_preview_commit_context(visible_ui: dict | None) ->
     dialogue_score = scores.get("mission_preview_dialogue")
     if isinstance(dialogue_score, dict):
         try:
-            if float(dialogue_score.get("score") or 0.0) >= 0.6:
+            score = float(dialogue_score.get("score") or 0.0)
+            card = dialogue_score.get("card")
+            card_red = int(card.get("red") or 0) if isinstance(card, dict) else 0
+            card_blue = int(card.get("blue") or 0) if isinstance(card, dict) else 0
+            card_bright = (
+                int(card.get("bright") or 0) if isinstance(card, dict) else 0
+            )
+            if score >= 0.6:
+                return True
+            if (
+                score >= 0.5
+                and (
+                    card_red >= 1000
+                    or card_blue >= 1500
+                    or card_bright >= 2500
+                )
+            ):
                 return True
         except (TypeError, ValueError):
             pass
@@ -27045,8 +27104,7 @@ def cmd_lightning_route_start(
                         and start_window_y is None
                     )
                     or (
-                        visual_region_index is not None
-                        and not expected_preview_mission
+                        manual_visible_region_start
                         and start_window_x is None
                         and start_window_y is None
                     )
@@ -27054,6 +27112,7 @@ def cmd_lightning_route_start(
                 allow_existing_preview=(
                     bool(expected_preview_mission) or allow_unverified_preview_start
                 )
+                and not manual_visible_region_start
                 and _lightning_route_start_mode_can_commit_existing_preview(
                     effective_start_mode,
                     start_window_x=start_window_x,

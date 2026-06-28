@@ -4053,8 +4053,8 @@ def test_lightning_ui_clicks_known_control_dry_run():
 
     assert result["status"] == "DRY_RUN"
     assert result["control"] == "deploy_confirm"
-    assert result["window_x"] == 106
-    assert result["window_y"] == 164
+    assert result["window_x"] == 114
+    assert result["window_y"] == 166
 
 
 def test_lightning_ui_clicks_deploy_slot_alias_dry_run():
@@ -4071,8 +4071,8 @@ def test_lightning_ui_clicks_understood_alias_dry_run():
 
     assert result["status"] == "DRY_RUN"
     assert result["control"] == "modal_understood"
-    assert result["window_x"] == 666
-    assert result["window_y"] == 520
+    assert result["window_x"] == 675
+    assert result["window_y"] == 556
 
 
 def test_lightning_ui_clicks_panel_continue_alias_dry_run():
@@ -4359,8 +4359,8 @@ def test_lightning_ui_clicks_leave_confirm_alias_dry_run():
 
     assert result["status"] == "DRY_RUN"
     assert result["control"] == "leave_confirm_yes"
-    assert result["window_x"] == 568
-    assert result["window_y"] == 444
+    assert result["window_x"] == 575
+    assert result["window_y"] == 508
 
 
 def test_lightning_ui_clicks_rst_island_alias_dry_run():
@@ -10420,6 +10420,94 @@ def test_lightning_ui_classifier_selects_perfect_reward_grid(tmp_path):
 
     assert result["visible_ui"] == "perfect_reward_choice"
     assert result["recommended_control"] == "perfect_reward_grid"
+
+
+def test_lightning_ui_classifier_prefers_windows_pause_menu_over_achievement_card(
+    monkeypatch,
+    tmp_path,
+):
+    from PIL import Image, ImageDraw
+
+    monkeypatch.setattr(commands.os, "name", "nt")
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (8, 10, 16))
+    draw = ImageDraw.Draw(image)
+
+    draw.rectangle(
+        [330 * scale, 140 * scale, 668 * scale, 640 * scale],
+        fill=(9, 13, 22),
+        outline=(55, 75, 115),
+        width=1 * scale,
+    )
+    x = 491 * scale
+    y = 251 * scale
+    draw.rectangle(
+        [
+            x - 93 * scale,
+            y - 24 * scale,
+            x + 93 * scale,
+            y + 24 * scale,
+        ],
+        fill=(18, 25, 38),
+        outline=(85, 110, 165),
+        width=1 * scale,
+    )
+    draw.rectangle(
+        [
+            x - 45 * scale,
+            y - 9 * scale,
+            x + 45 * scale,
+            y + 9 * scale,
+        ],
+        fill=(238, 238, 238),
+    )
+
+    # The right-side achievements panel can visually rhyme with the Perfect
+    # Island reward picker. Keep it strong enough to expose the classifier tie.
+    card_x = 817 * scale
+    card_y = 450 * scale
+    draw.rectangle(
+        [
+            694 * scale,
+            142 * scale,
+            968 * scale,
+            640 * scale,
+        ],
+        fill=(9, 13, 22),
+        outline=(85, 110, 165),
+        width=3 * scale,
+    )
+    draw.rectangle(
+        [
+            card_x - 70 * scale,
+            card_y - 35 * scale,
+            card_x + 70 * scale,
+            card_y + 35 * scale,
+        ],
+        fill=(18, 25, 38),
+        outline=(85, 110, 165),
+        width=3 * scale,
+    )
+    draw.rectangle(
+        [
+            card_x - 38 * scale,
+            card_y - 14 * scale,
+            card_x + 38 * scale,
+            card_y + 14 * scale,
+        ],
+        fill=(235, 240, 245),
+    )
+
+    path = tmp_path / "windows_pause_menu_achievement_card.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "pause_menu"
+    assert result["recommended_control"] == "menu_continue"
+    assert result["scores"]["pause_menu"]["border"] / result["scores"]["pause_menu"]["pixels"] < 0.045
+    assert result["scores"]["perfect_reward_choice"]["score"] > result["scores"]["pause_menu"]["score"]
 
 
 def test_lightning_ui_classifier_detects_island_complete_leave(tmp_path):
@@ -30175,6 +30263,79 @@ def test_lightning_guarded_route_preview_blocks_existing_preview_probe(
             },
         ],
         require_plain_map=True,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "route_preview_existing_mission_preview_before_region_click"
+    assert calls == [
+        [
+            {
+                "kind": "key",
+                "key": "esc",
+                "description": "Pause menu Escape resume",
+                "settle_seconds": 0.22,
+            }
+        ]
+    ]
+    assert pauses == [{"reason": "route_preview_existing_mission_preview_before_region_click"}]
+
+
+def test_lightning_guarded_route_preview_blocks_fuzzy_island_map_preview_probe(
+    monkeypatch,
+):
+    calls = []
+    pauses = []
+
+    def fake_execute(sequence, **kwargs):
+        calls.append(sequence)
+        return {
+            "status": "OK",
+            "steps": [{"count": len(sequence)}],
+            "window_bounds": {"x": 0, "y": 0, "width": 1, "height": 1},
+        }
+
+    monkeypatch.setattr(commands, "_lightning_execute_route_start_sequence", fake_execute)
+    monkeypatch.setattr(commands, "_lightning_live_snapshot", lambda: {"status": "NO_BRIDGE"})
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map",
+            "recommended_control": None,
+            "scores": {
+                "mission_preview_dialogue": {
+                    "score": 0.5257,
+                    "card": {"red": 4545, "blue": 1935, "bright": 3370},
+                },
+                "mission_preview_panel": {"score": 0.0006, "yellow": 77},
+                "island_map": {"score": 0.1802},
+            },
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_ensure_pause_state",
+        lambda **kwargs: pauses.append(kwargs) or {"status": "OK"},
+    )
+
+    result = commands._lightning_execute_guarded_route_preview_sequence(
+        [
+            {
+                "kind": "key",
+                "key": "esc",
+                "description": "Pause menu Escape resume",
+                "settle_seconds": 0.22,
+            },
+            {
+                "kind": "point",
+                "window_x": 859,
+                "window_y": 544,
+                "description": "Lightning route region",
+            },
+        ],
+        require_plain_map=True,
+        allow_existing_preview=True,
     )
 
     assert result["status"] == "BLOCKED"
