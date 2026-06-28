@@ -1948,7 +1948,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v290 - Control Shot powered variants A/B/AB are modeled with 3/3/4 tile
 //   controlled-move budgets for Let's Walk farming. Pre-v290 corpus archived
 //   as failure_db_pre_v290_lets_walk_control_shot_upgrades.jsonl.
-pub const SIMULATOR_VERSION: u32 = 290;
+// v291 - Control Shot first-click target units must be within the weapon range;
+//   raw bridge GetFinalEffect can otherwise move targets the live UI refuses.
+//   Pre-v291 corpus archived as failure_db_pre_v291_control_shot_target_range.jsonl.
+pub const SIMULATOR_VERSION: u32 = 291;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

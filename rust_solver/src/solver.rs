@@ -507,7 +507,7 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::TwoClick if is_control_shot(weapon_id) => {
             let range = control_shot_range(wdef);
-            for (first, _second) in enumerate_control_shot_targets(board, range) {
+            for (first, _second) in enumerate_control_shot_targets(board, (mx, my), range) {
                 targets.push(first);
             }
         }
@@ -712,7 +712,11 @@ fn control_shot_eligible_unit(unit: &Unit) -> bool {
     unit.alive() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
 }
 
-fn enumerate_control_shot_targets(board: &Board, range: u8) -> Vec<((u8, u8), (u8, u8))> {
+fn enumerate_control_shot_targets(
+    board: &Board,
+    source: (u8, u8),
+    range: u8,
+) -> Vec<((u8, u8), (u8, u8))> {
     let mut out = Vec::with_capacity(96);
     for idx in 0..board.unit_count as usize {
         let unit = &board.units[idx];
@@ -720,6 +724,14 @@ fn enumerate_control_shot_targets(board: &Board, range: u8) -> Vec<((u8, u8), (u
             continue;
         }
         let first = (unit.x, unit.y);
+        if first == source {
+            continue;
+        }
+        let target_distance = (first.0 as i8 - source.0 as i8).unsigned_abs()
+            + (first.1 as i8 - source.1 as i8).unsigned_abs();
+        if target_distance > range {
+            continue;
+        }
         for dest in controlled_reachable_tiles(board, idx, range) {
             if dest != first {
                 out.push((first, dest));
@@ -1243,7 +1255,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     }
                 } else if is_control_shot(w1_id) {
                     let range = control_shot_range(&weapons[w1_id as usize]);
-                    for (first, second) in enumerate_control_shot_targets(action_board, range) {
+                    for (first, second) in enumerate_control_shot_targets(action_board, attack_pos, range) {
                         actions.push((pos, w1_id, first, Some(second)));
                     }
                 } else if is_ricochet_rocket(w1_id) && !action_unit.web() {
@@ -1268,7 +1280,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     }
                 } else if is_control_shot(w2_id) {
                     let range = control_shot_range(&weapons[w2_id as usize]);
-                    for (first, second) in enumerate_control_shot_targets(action_board, range) {
+                    for (first, second) in enumerate_control_shot_targets(action_board, attack_pos, range) {
                         actions.push((pos, w2_id, first, Some(second)));
                     }
                 } else if is_ricochet_rocket(w2_id) && !action_unit.web() {
@@ -2527,6 +2539,72 @@ mod top_k_tests {
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(actions.iter().any(|a| a.1 == WId::TrappedExplode));
+    }
+
+    #[test]
+    fn control_shot_target_enumeration_respects_first_click_range() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 2,
+            y: 1,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceTcControl as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 101,
+            x: 2,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 102,
+            x: 6,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            2,
+            1,
+            WId::ScienceTcControl,
+            (2, 1),
+            &WEAPONS,
+        );
+        assert!(
+            targets.contains(&(2, 3)),
+            "Control Shot should offer enemies within the first-click range"
+        );
+        assert!(
+            !targets.contains(&(6, 4)),
+            "Control Shot must not offer distant target units"
+        );
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| a.1 == WId::ScienceTcControl && a.2 == (2, 3)),
+            "action enumeration should keep legal in-range Control Shot targets"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (6, 4))),
+            "action enumeration should reject out-of-range Control Shot targets"
+        );
     }
 
     #[test]

@@ -5027,6 +5027,16 @@ fn sim_control_shot(
     }
 
     let range = control_shot_range(wdef);
+    let attacker = &board.units[attacker_idx];
+    let target_distance = (first.0 as i8 - attacker.x as i8).unsigned_abs()
+        + (first.1 as i8 - attacker.y as i8).unsigned_abs();
+    if target_distance > range {
+        result.events.push(format!(
+            "invalid_control_shot_range:{}:{}:{}:{}",
+            attacker.x, attacker.y, first.0, first.1
+        ));
+        return;
+    }
     let Some(distance) = controlled_reachable_tiles_with_cost(board, target_idx, range)
         .into_iter()
         .find_map(|(pos, cost)| if pos == second { Some(cost) } else { None })
@@ -6407,6 +6417,32 @@ mod tests {
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 5));
         assert!(result.events.iter().any(|e| {
             e == "invalid_control_shot_destination:3:5:7:5"
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_out_of_range_target_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 2, 1, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 6, 4, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (6, 4),
+            Some((5, 4)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 4));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_range:2:1:6:4"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
         }));
     }
 

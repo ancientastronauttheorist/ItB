@@ -1414,7 +1414,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v290 - Control Shot powered variants A/B/AB are modeled with 3/3/4 tile
 # controlled-move budgets for Let's Walk farming. Pre-v290 corpus archived as
 # failure_db_pre_v290_lets_walk_control_shot_upgrades.jsonl.
-SIMULATOR_VERSION = 290
+# v291 - Control Shot first-click target units must be within the weapon range;
+# raw bridge GetFinalEffect can otherwise move targets the live UI refuses.
+# Pre-v291 corpus archived as failure_db_pre_v291_control_shot_target_range.jsonl.
+SIMULATOR_VERSION = 291
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
