@@ -228,9 +228,9 @@ def _weapon_icon_pos(weapon_id: str, mech) -> tuple[int, int]:
 
 # --- Per-Mech Click Planning ---
 
-_WAIT_AFTER_SELECT = 0.3
+_WAIT_AFTER_SELECT = 0.6
 _WAIT_AFTER_MOVE = 0.5
-_WAIT_AFTER_ARM = 0.3
+_WAIT_AFTER_ARM = 0.7
 
 
 def _wait_op(duration: float, note: str) -> dict:
