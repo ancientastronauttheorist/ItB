@@ -7603,6 +7603,351 @@ def cmd_click_end_turn() -> dict:
     return result
 
 
+def _safe_dispatch_label(label: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(label or "").strip())
+    return (cleaned.strip("._") or "click")[:80]
+
+
+def _inspect_dispatch_screenshot(path: Path) -> dict:
+    try:
+        from PIL import Image, ImageStat
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "pillow_unavailable",
+            "error": str(exc),
+        }
+
+    try:
+        with Image.open(path) as image:
+            rgb = image.convert("RGB")
+            width, height = rgb.size
+            gray = rgb.convert("L")
+            extrema = gray.getextrema()
+            sample = rgb.resize((max(1, min(96, width)), max(1, min(96, height))))
+            stat = ImageStat.Stat(sample)
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_unreadable",
+            "error": str(exc),
+            "screenshot_path": str(path),
+        }
+
+    brightness_range = int(extrema[1] - extrema[0])
+    if width < 600 or height < 400:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_too_small",
+            "width": width,
+            "height": height,
+            "screenshot_path": str(path),
+        }
+    if brightness_range < 4:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_blank_or_uniform",
+            "width": width,
+            "height": height,
+            "brightness_extrema": extrema,
+            "screenshot_path": str(path),
+        }
+    return {
+        "status": "OK",
+        "width": width,
+        "height": height,
+        "brightness_extrema": extrema,
+        "brightness_range": brightness_range,
+        "mean_rgb": [round(float(v), 2) for v in stat.mean],
+        "screenshot_path": str(path),
+    }
+
+
+def _prepare_local_dispatch_guard(label: str) -> dict:
+    from src.capture.window import (
+        get_window_bounds,
+        is_game_frontmost,
+        take_screenshot,
+    )
+
+    focus_result = None
+    if os.name == "nt":
+        try:
+            from src.control.mac_click import _windows_activate_app_window
+
+            focus_result = _windows_activate_app_window("Into the Breach")
+            time.sleep(0.10)
+        except Exception as exc:
+            return {
+                "status": "ERROR",
+                "reason": "window_activation_failed",
+                "error": str(exc),
+            }
+    else:
+        try:
+            from src.capture.window import activate_game_window
+
+            activate_game_window()
+            time.sleep(0.05)
+        except Exception:
+            pass
+
+    bounds = get_window_bounds()
+    if bounds is None:
+        return {
+            "status": "ERROR",
+            "reason": "window_bounds_unavailable",
+            "focus": focus_result,
+        }
+    frontmost = is_game_frontmost()
+    if not frontmost:
+        return {
+            "status": "ERROR",
+            "reason": "game_window_not_frontmost",
+            "bounds": bounds,
+            "focus": focus_result,
+        }
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    path = (
+        Path("run_notes")
+        / f"local_dispatch_pre_{_safe_dispatch_label(label)}_{timestamp}.png"
+    )
+    try:
+        take_screenshot(path, bounds=bounds)
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_capture_failed",
+            "error": str(exc),
+            "bounds": bounds,
+            "focus": focus_result,
+            "frontmost": frontmost,
+        }
+
+    inspection = _inspect_dispatch_screenshot(path)
+    if inspection.get("status") != "OK":
+        inspection.update({
+            "bounds": bounds,
+            "focus": focus_result,
+            "frontmost": frontmost,
+        })
+        return inspection
+    return {
+        "status": "OK",
+        "bounds": bounds,
+        "focus": focus_result,
+        "frontmost": frontmost,
+        "screenshot": inspection,
+    }
+
+
+def _window_point_from_click_op(op: dict) -> tuple[int, int] | None:
+    if "window_x" in op and "window_y" in op:
+        return int(op["window_x"]), int(op["window_y"])
+    codex_click = op.get("codex_computer_use")
+    if isinstance(codex_click, dict) and "x" in codex_click and "y" in codex_click:
+        return int(codex_click["x"]), int(codex_click["y"])
+    if "x" in op and "y" in op:
+        try:
+            return to_window_local(int(op["x"]), int(op["y"]))
+        except Exception:
+            return None
+    return None
+
+
+def _dispatch_click_batch_locally(
+    batch: list[dict],
+    *,
+    execute: bool,
+    label: str,
+    post_wait: float = 0.0,
+) -> dict:
+    guard = _prepare_local_dispatch_guard(label)
+    if guard.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "dispatch_guard_failed",
+            "guard": guard,
+            "executed": False,
+        }
+
+    from src.control.mac_click import click_window_point
+
+    steps: list[dict] = []
+    for idx, op in enumerate(batch):
+        if not isinstance(op, dict):
+            return {
+                "status": "ERROR",
+                "reason": "invalid_batch_op",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+        typ = op.get("type")
+        if typ == "wait":
+            duration = max(0.0, float(op.get("duration") or 0.0))
+            if execute:
+                time.sleep(duration)
+            steps.append({
+                "index": idx,
+                "type": "wait",
+                "duration": duration,
+                "description": op.get("description", ""),
+                "slept": bool(execute),
+            })
+            continue
+        if typ != "left_click":
+            return {
+                "status": "ERROR",
+                "reason": "unsupported_batch_op",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+        point = _window_point_from_click_op(op)
+        if point is None:
+            return {
+                "status": "ERROR",
+                "reason": "missing_window_coordinates",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+        wx, wy = point
+        click = click_window_point(
+            wx,
+            wy,
+            description=str(op.get("description") or ""),
+            dry_run=not execute,
+            settle_seconds=0.05,
+            hold_seconds=0.12,
+        )
+        step = {
+            "index": idx,
+            "type": "left_click",
+            "window_x": wx,
+            "window_y": wy,
+            "description": op.get("description", ""),
+            "result": click,
+        }
+        steps.append(step)
+        if click.get("status") not in {"OK", "DRY_RUN"}:
+            return {
+                "status": "ERROR",
+                "reason": "click_failed",
+                "index": idx,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+
+    if execute and post_wait > 0:
+        time.sleep(max(0.0, float(post_wait)))
+
+    return {
+        "status": "DISPATCHED" if execute else "DRY_RUN",
+        "executed": bool(execute),
+        "guard": guard,
+        "steps": steps,
+        "post_wait": max(0.0, float(post_wait)) if execute else 0.0,
+    }
+
+
+def cmd_dispatch_click_action(
+    action_index: int,
+    *,
+    allow_dirty_plan: bool = False,
+    candidate_rank: int | None = None,
+    dirty_consent_id: str | None = None,
+    execute: bool = False,
+    post_wait: float = 1.25,
+) -> dict:
+    """Plan and optionally dispatch one visible mech action locally.
+
+    This is a guarded fallback for when Codex Computer Use can plan but cannot
+    capture/dispatch screenshots. It still relies on ``click_action`` for all
+    bridge, dirty-consent, and click-plan validation.
+    """
+    plan = cmd_click_action(
+        action_index,
+        allow_dirty_plan=allow_dirty_plan,
+        candidate_rank=candidate_rank,
+        dirty_consent_id=dirty_consent_id,
+    )
+    if plan.get("status") != "PLAN":
+        result = {
+            "status": "ERROR",
+            "reason": "click_action_plan_failed",
+            "plan": plan,
+            "executed": False,
+        }
+        _print_result(result)
+        return result
+    dispatch = _dispatch_click_batch_locally(
+        list(plan.get("batch") or []),
+        execute=execute,
+        label=f"action_{action_index}",
+        post_wait=max(0.0, float(post_wait)),
+    )
+    result = {
+        "status": dispatch.get("status"),
+        "action_index": action_index,
+        "description": plan.get("description"),
+        "execute_requested": bool(execute),
+        "dispatch": dispatch,
+        "next_step": (
+            f"verify_action {action_index}"
+            if execute and dispatch.get("status") == "DISPATCHED"
+            else "rerun with --execute to perform the guarded local clicks"
+        ),
+    }
+    _print_result(result)
+    return result
+
+
+def cmd_dispatch_end_turn(
+    *,
+    execute: bool = False,
+    post_wait: float = 0.0,
+) -> dict:
+    """Plan and optionally dispatch the End Turn click locally."""
+    plan = cmd_click_end_turn()
+    if plan.get("status") != "PLAN":
+        result = {
+            "status": "ERROR",
+            "reason": "click_end_turn_plan_failed",
+            "plan": plan,
+            "executed": False,
+        }
+        _print_result(result)
+        return result
+    dispatch = _dispatch_click_batch_locally(
+        list(plan.get("batch") or []),
+        execute=execute,
+        label="end_turn",
+        post_wait=post_wait,
+    )
+    result = {
+        "status": dispatch.get("status"),
+        "execute_requested": bool(execute),
+        "dispatch": dispatch,
+        "next_step": (
+            "read"
+            if execute and dispatch.get("status") == "DISPATCHED"
+            else "rerun with --execute to perform the guarded local End Turn click"
+        ),
+    }
+    _print_result(result)
+    return result
+
+
 def _board_has_player_flame_shielding(board: Board) -> bool:
     return any(
         getattr(u, "is_player", False)

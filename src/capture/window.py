@@ -456,9 +456,43 @@ def _windows_breach_windows() -> list[dict]:
         return []
 
     user32 = ctypes.windll.user32
+    kernel32 = ctypes.windll.kernel32
     matches: list[dict] = []
 
     enum_proc_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    user32.GetWindowThreadProcessId.argtypes = [
+        wintypes.HWND,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.QueryFullProcessImageNameW.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.LPWSTR,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+
+    def process_path_for(hwnd) -> str:
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        if not pid.value:
+            return ""
+        handle = kernel32.OpenProcess(0x1000, False, pid.value)
+        if not handle:
+            return ""
+        try:
+            size = wintypes.DWORD(1024)
+            buffer = ctypes.create_unicode_buffer(size.value)
+            if kernel32.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(size)):
+                return buffer.value
+            return ""
+        finally:
+            kernel32.CloseHandle(handle)
 
     def enum_proc(hwnd, _lparam):
         if not user32.IsWindowVisible(hwnd):
@@ -470,12 +504,17 @@ def _windows_breach_windows() -> list[dict]:
         user32.GetWindowTextW(hwnd, title, length + 1)
         if "Into the Breach" not in title.value:
             return True
+        process_path = process_path_for(hwnd)
+        process_name = Path(process_path).name.lower()
+        if process_name != "breach.exe":
+            return True
         rect = wintypes.RECT()
         if not user32.GetWindowRect(hwnd, ctypes.byref(rect)):
             return True
         matches.append({
             "hwnd": int(hwnd),
             "title": title.value,
+            "process_path": process_path,
             "x": int(rect.left),
             "y": int(rect.top),
             "width": int(rect.right - rect.left),
@@ -513,12 +552,7 @@ def _windows_game_is_frontmost() -> bool:
     hwnd = user32.GetForegroundWindow()
     if not hwnd:
         return False
-    length = user32.GetWindowTextLengthW(hwnd)
-    if length <= 0:
-        return False
-    title = ctypes.create_unicode_buffer(length + 1)
-    user32.GetWindowTextW(hwnd, title, length + 1)
-    return "Into the Breach" in title.value
+    return any(win.get("hwnd") == int(hwnd) for win in _windows_breach_windows())
 
 
 if __name__ == "__main__":

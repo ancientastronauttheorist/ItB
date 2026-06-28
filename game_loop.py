@@ -62,6 +62,8 @@ from src.loop.commands import (
     cmd_reject_diagnosis,
     cmd_click_action,
     cmd_click_end_turn,
+    cmd_dispatch_click_action,
+    cmd_dispatch_end_turn,
     cmd_click_balanced_roll,
     cmd_deploy_recommended,
     cmd_recommend_squad,
@@ -270,6 +272,34 @@ def main():
     p_click_action.add_argument("--dirty-consent-id",
                                 help="Exact one-use token emitted by solve")
 
+    # dispatch_click_action
+    p_dispatch_click_action = sub.add_parser(
+        "dispatch_click_action",
+        help=(
+            "Guard with a fresh screenshot, then optionally dispatch ONE "
+            "visible mech action using local window-relative clicks"
+        ),
+    )
+    p_dispatch_click_action.add_argument("index", type=int,
+                                         help="Action index from solution")
+    p_dispatch_click_action.add_argument("--allow-dirty-plan", action="store_true",
+                                         help="Allow a reviewed dirty visible-click plan")
+    p_dispatch_click_action.add_argument("--candidate-rank", type=int,
+                                         help="Exact reviewed candidate rank for dirty consent")
+    p_dispatch_click_action.add_argument("--dirty-consent-id",
+                                         help="Exact one-use token emitted by solve")
+    p_dispatch_click_action.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually send the local clicks. Default is dry-run capture only.",
+    )
+    p_dispatch_click_action.add_argument(
+        "--post-wait",
+        type=float,
+        default=1.25,
+        help="Seconds to wait after an executed action before returning.",
+    )
+
     # research_next
     p_research_next = sub.add_parser(
         "research_next",
@@ -443,6 +473,26 @@ def main():
     sub.add_parser(
         "click_end_turn",
         help="Plan clicks for the End Turn button",
+    )
+
+    # dispatch_end_turn
+    p_dispatch_end_turn = sub.add_parser(
+        "dispatch_end_turn",
+        help=(
+            "Guard with a fresh screenshot, then optionally dispatch the "
+            "End Turn click using local window-relative clicks"
+        ),
+    )
+    p_dispatch_end_turn.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually send the local click. Default is dry-run capture only.",
+    )
+    p_dispatch_end_turn.add_argument(
+        "--post-wait",
+        type=float,
+        default=0.0,
+        help="Seconds to wait after an executed End Turn click before returning.",
     )
 
     # click_balanced_roll
@@ -2041,8 +2091,22 @@ def main():
             candidate_rank=args.candidate_rank,
             dirty_consent_id=args.dirty_consent_id,
         )
+    elif args.command == "dispatch_click_action":
+        cmd_dispatch_click_action(
+            args.index,
+            allow_dirty_plan=args.allow_dirty_plan,
+            candidate_rank=args.candidate_rank,
+            dirty_consent_id=args.dirty_consent_id,
+            execute=args.execute,
+            post_wait=args.post_wait,
+        )
     elif args.command == "click_end_turn":
         cmd_click_end_turn()
+    elif args.command == "dispatch_end_turn":
+        cmd_dispatch_end_turn(
+            execute=args.execute,
+            post_wait=args.post_wait,
+        )
     elif args.command == "click_balanced_roll":
         cmd_click_balanced_roll()
     elif args.command == "deploy_recommended":

@@ -643,6 +643,19 @@ def _platform_control(control: KnownWindowControl) -> KnownWindowControl:
     override = _WINDOWS_CONTROL_OVERRIDES.get(control.name)
     if override is None:
         return control
+    try:
+        bounds = _get_window_bounds("Into the Breach")
+    except Exception:
+        bounds = None
+    if not bounds:
+        return control
+    if (
+        override[0] < 0
+        or override[1] < 0
+        or override[0] >= int(bounds["width"])
+        or override[1] >= int(bounds["height"])
+    ):
+        return control
     return KnownWindowControl(
         name=control.name,
         window_x=override[0],
@@ -1337,6 +1350,7 @@ def _windows_activate_app_window(app_name: str) -> dict:
         from ctypes import wintypes
 
         user32 = ctypes.WinDLL("user32", use_last_error=True)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         enum_proc_type = ctypes.WINFUNCTYPE(
             wintypes.BOOL,
             wintypes.HWND,
@@ -1358,9 +1372,47 @@ def _windows_activate_app_window(app_name: str) -> dict:
         user32.ShowWindow.restype = wintypes.BOOL
         user32.SetForegroundWindow.argtypes = [wintypes.HWND]
         user32.SetForegroundWindow.restype = wintypes.BOOL
+        user32.GetWindowThreadProcessId.argtypes = [
+            wintypes.HWND,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+        kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.QueryFullProcessImageNameW.argtypes = [
+            wintypes.HANDLE,
+            wintypes.DWORD,
+            wintypes.LPWSTR,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
 
         needle = str(app_name or "").lower()
-        matches: list[tuple[int, str]] = []
+        matches: list[tuple[int, str, str]] = []
+
+        def process_path_for(hwnd) -> str:
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if not pid.value:
+                return ""
+            handle = kernel32.OpenProcess(0x1000, False, pid.value)
+            if not handle:
+                return ""
+            try:
+                size = wintypes.DWORD(1024)
+                buffer = ctypes.create_unicode_buffer(size.value)
+                if kernel32.QueryFullProcessImageNameW(
+                    handle,
+                    0,
+                    buffer,
+                    ctypes.byref(size),
+                ):
+                    return buffer.value
+                return ""
+            finally:
+                kernel32.CloseHandle(handle)
 
         def enum_proc(hwnd, _lparam):
             if not user32.IsWindowVisible(hwnd):
@@ -1372,7 +1424,10 @@ def _windows_activate_app_window(app_name: str) -> dict:
             user32.GetWindowTextW(hwnd, buffer, length + 1)
             title = buffer.value
             if needle in title.lower():
-                matches.append((int(hwnd), title))
+                process_path = process_path_for(hwnd)
+                if Path(process_path).name.lower() != "breach.exe":
+                    return True
+                matches.append((int(hwnd), title, process_path))
                 return False
             return True
 
@@ -1382,7 +1437,7 @@ def _windows_activate_app_window(app_name: str) -> dict:
                 "status": "ERROR",
                 "error": f"no visible window title matched {app_name!r}",
             }
-        hwnd, title = matches[0]
+        hwnd, title, process_path = matches[0]
         hwnd_obj = wintypes.HWND(hwnd)
         user32.ShowWindow(hwnd_obj, 9)  # SW_RESTORE
         foreground_ok = bool(user32.SetForegroundWindow(hwnd_obj))
@@ -1390,6 +1445,7 @@ def _windows_activate_app_window(app_name: str) -> dict:
             "status": "OK",
             "hwnd": hwnd,
             "title": title,
+            "process_path": process_path,
             "foreground_ok": foreground_ok,
             "win_error": ctypes.get_last_error() if not foreground_ok else 0,
         }

@@ -80,6 +80,22 @@ def find_game_window() -> WindowInfo | None:
 def _find_game_window_windows() -> WindowInfo | None:
     """Find the Into the Breach window via the Windows user32 API."""
     try:
+        from src.capture.window import _windows_breach_windows
+
+        windows = _windows_breach_windows()
+        if windows:
+            first = windows[0]
+            return WindowInfo(
+                x=int(first["x"]),
+                y=int(first["y"]),
+                width=int(first["width"]),
+                height=int(first["height"]),
+                window_id=int(first["hwnd"]),
+            )
+    except Exception:
+        pass
+
+    try:
         import ctypes
         from ctypes import wintypes
     except Exception:
