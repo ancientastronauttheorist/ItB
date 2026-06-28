@@ -1983,7 +1983,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   instead of walk-through tiles. Live Let's Walk Mission_Terraform turn 2
 //   refused SmokeMech pathing through the Terraformer. Pre-v302 corpus archived
 //   as failure_db_snapshot_sim_v301.jsonl.
-pub const SIMULATOR_VERSION: u32 = 302;
+// v303 - Smoke placed directly onto an occupied tile clears the occupant's
+//   carried fire without applying Nanofilter healing. Live Let's Walk
+//   Mission_Terraform turn 4 left the Reverse Thrusters backblast Firefly
+//   not-on-fire after the hit tile was smoked. Pre-v303 corpus archived as
+//   failure_db_snapshot_sim_v302.jsonl.
+pub const SIMULATOR_VERSION: u32 = 303;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

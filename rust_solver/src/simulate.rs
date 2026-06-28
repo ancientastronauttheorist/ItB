@@ -655,6 +655,7 @@ fn place_smoke_no_healing(board: &mut Board, x: u8, y: u8) {
     tile.set_smoke(true);
 
     if let Some(idx) = board.unit_at(x, y) {
+        board.units[idx].set_fire(false);
         if board.units[idx].is_enemy() {
             let uid = board.units[idx].uid;
             break_web_from(board, uid);
@@ -12870,6 +12871,21 @@ mod tests {
             "Reverse Thrusters backblast smoke remains on the damaged tile"
         );
         assert!(!board.tile(3, 3).smoke());
+    }
+
+    #[test]
+    fn test_reverse_thrusters_smoked_forest_backblast_extinguishes_survivor() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
+        let enemy = add_enemy_type(&mut board, 2529, 3, 2, 3, "Firefly1");
+        board.tile_mut(3, 2).terrain = Terrain::Forest;
+
+        let _ = simulate_weapon(&mut board, mech, WId::BruteKickBack, 3, 5);
+
+        assert_eq!(board.units[enemy].hp, 1);
+        assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the hit tile");
+        assert!(!board.tile(3, 2).on_fire(), "smoke replaces the ignited forest fire");
+        assert!(!board.units[enemy].fire(), "surviving occupant is extinguished by the smoke");
     }
 
     #[test]

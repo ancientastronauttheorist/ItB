@@ -1444,7 +1444,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v302 - Ground movement BFS treats other live friendly units as hard blockers
 # instead of walk-through tiles. Pre-v302 corpus archived as
 # failure_db_snapshot_sim_v301.jsonl.
-SIMULATOR_VERSION = 302
+# v303 - Smoke placed directly onto an occupied tile clears carried fire without
+# applying Nanofilter healing. Pre-v303 corpus archived as
+# failure_db_snapshot_sim_v302.jsonl.
+SIMULATOR_VERSION = 303
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
