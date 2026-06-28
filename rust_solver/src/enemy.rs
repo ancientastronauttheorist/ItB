@@ -52,6 +52,7 @@ pub(crate) fn spawn_enemy(
         | Terrain::Rubble | Terrain::Fire | Terrain::Ice => {}
         _ => return false,
     }
+    let spawn_on_fire = t.on_fire() || t.terrain == Terrain::Fire;
 
     // Pick the next live-style pawn id. Earlier simulator versions used a
     // 9000+ synthetic range, which kept search state collision-free but made
@@ -73,7 +74,10 @@ pub(crate) fn spawn_enemy(
         ..Unit::default()
     };
     u.set_type_name(type_name);
-    board.add_unit(u);
+    let idx = board.add_unit(u);
+    if spawn_on_fire {
+        board.units[idx].set_fire(true);
+    }
     true
 }
 
@@ -3804,6 +3808,17 @@ mod tests {
         simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
         assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling1",
             "SpiderlingEgg1 should hatch into Spiderling1");
+    }
+
+    #[test]
+    fn test_spider_psion_death_egg_spawns_on_fire() {
+        let mut board = Board::default();
+        board.tile_mut(3, 3).set_on_fire(true);
+
+        assert!(spawn_spider_psion_death_egg(&mut board, 3, 3));
+        let egg_idx = board.unit_at(3, 3).expect("death egg should spawn");
+        assert_eq!(board.units[egg_idx].type_name_str(), "SpiderlingEgg1");
+        assert!(board.units[egg_idx].fire(), "death egg should inherit burning tile fire");
     }
 
     #[test]

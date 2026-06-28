@@ -638,6 +638,14 @@ fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
     }
 }
 
+fn apply_acid_vat_death_terrain(board: &mut Board, x: u8, y: u8) {
+    let tile = board.tile_mut(x, y);
+    tile.terrain = Terrain::Water;
+    tile.flags |= TileFlags::ACID;
+    tile.set_on_fire(false);
+    tile.set_grass(false);
+}
+
 /// Place smoke on a tile without applying Nanofilter Mending.
 /// If the tile holds an enemy currently webbing a unit, the smoke-cancelled
 /// queued attack releases that grapple immediately.
@@ -694,6 +702,10 @@ pub(crate) fn on_enemy_death(
 
     if dying_tname_owned == "Shield_Building" && board.mission_id == "Mission_Shields" {
         clear_shield_generator_shields(board);
+    }
+
+    if dying_tname_owned == "AcidVat" && board.mission_id == "Mission_Barrels" {
+        apply_acid_vat_death_terrain(board, dx, dy);
     }
 
     if let Some((child_type, child_hp, child_weapon)) =
@@ -5394,7 +5406,14 @@ fn sim_reverse_thrusters(
     };
     let distance = (tx as i8 - ax as i8).unsigned_abs()
         + (ty as i8 - ay as i8).unsigned_abs();
-    let damage = distance.saturating_add(wdef.damage);
+    let boost_bonus = if board.units[attacker_idx].boosted() && wdef.damage == 0 {
+        1
+    } else {
+        0
+    };
+    let damage = distance
+        .saturating_add(wdef.damage)
+        .saturating_add(boost_bonus);
     let (dx, dy) = DIRS[dir];
     let hit_x = ax as i8 - dx;
     let hit_y = ay as i8 - dy;
@@ -5415,9 +5434,10 @@ fn sim_reverse_thrusters(
         smoke_target = Some((hx, hy));
     }
 
-    // Lua hardcodes the recoil SpaceDamage at 1. Boost raises the outgoing
-    // dash damage, not the self-damage.
-    apply_damage(board, ax, ay, 1, result, DamageSource::SelfDamage);
+    // Base recoil is 1. The generic Boost wrapper raises `self_damage` before
+    // this function, so use the weapon definition instead of hardcoding 1.
+    let recoil = wdef.self_damage.max(1);
+    apply_damage(board, ax, ay, recoil, result, DamageSource::SelfDamage);
     if wdef.smoke() {
         // Live Reverse Thrusters smokes the damaged backblast tile, not the
         // launch tile; Nanofilter Mending must not heal recoil in this action.
@@ -10782,6 +10802,20 @@ mod tests {
         assert!(board.tile(3, 3).acid(), "ACID unit death should create acid pool");
     }
 
+    #[test]
+    fn test_mission_barrels_acid_vat_death_creates_acid_water() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Barrels".to_string();
+        add_enemy_type(&mut board, 1, 3, 3, 1, "AcidVat");
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 2, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Water);
+        assert!(board.tile(3, 3).acid(), "destroyed Acid Vats leave ACID runoff");
+        assert!(!board.tile(3, 3).on_fire(), "ACID runoff clears tile fire");
+    }
+
     // ── Vice Fist (Prime_Shift) Throw mechanic ────────────────────────────────
 
     #[test]
@@ -12806,7 +12840,7 @@ mod tests {
         let result = simulate_weapon(&mut board, mech, WId::BruteKickBack, 3, 5);
 
         assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
-        assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters recoil is fixed at 1");
+        assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters base recoil is 1");
         assert_eq!(board.units[enemy].hp, 1, "2-tile dash should deal 2 base damage");
         assert!(!board.tile(3, 3).smoke(), "Reverse Thrusters does not smoke the start tile");
         assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the damaged tile");
@@ -12838,6 +12872,36 @@ mod tests {
             "Reverse Thrusters backblast smoke remains on the damaged tile"
         );
         assert!(!board.tile(3, 3).smoke());
+    }
+
+    #[test]
+    fn test_boosted_reverse_thrusters_adds_dash_and_recoil_damage() {
+        use crate::board::PilotFlags;
+
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 2, 3, WId::BruteKickBack);
+        board.units[mech].pilot_flags = PilotFlags::ARROGANT;
+        board.units[mech].set_boosted(true);
+        let enemy = add_enemy_type(&mut board, 2141, 5, 1, 3, "Moth1");
+
+        let result = simulate_action(
+            &mut board,
+            mech,
+            (5, 2),
+            WId::BruteKickBack,
+            (5, 3),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[mech].x, board.units[mech].y), (5, 3));
+        assert_eq!(board.units[mech].hp, 1, "boosted recoil should deal 2");
+        assert!(
+            !board.units[mech].boosted(),
+            "Kai loses Boost after boosted Reverse Thrusters drops below full HP"
+        );
+        assert_eq!(board.units[enemy].hp, 1, "boosted one-tile backblast should deal 2");
+        assert_eq!(result.enemy_damage_dealt, 2);
+        assert_eq!(result.mech_damage_taken, 2);
     }
 
     #[test]

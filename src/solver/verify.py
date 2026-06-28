@@ -1431,7 +1431,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Pre-v295 corpus archived as failure_db_pre_v295_control_shot_adjacent_target.jsonl.
 # v296 - Smoldering Shells skips the inbound projectile tile for range-2 shots.
 # Pre-v296 corpus archived as failure_db_pre_v296_smoldering_shells_inbound_smoke.jsonl.
-SIMULATOR_VERSION = 296
+# v297 - Mission_Barrels AcidVat deaths leave water+ACID runoff terrain.
+# Pre-v297 corpus archived as failure_db_snapshot_sim_v296.jsonl.
+# v298 - Spawned enemies, including Spider Psion death eggs, inherit tile Fire.
+# Pre-v298 corpus archived as failure_db_snapshot_sim_v297.jsonl.
+# v299 - Boosted Reverse Thrusters adds +1 distance damage and boosted recoil.
+# Pre-v299 corpus archived as failure_db_snapshot_sim_v298.jsonl.
+SIMULATOR_VERSION = 299
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
