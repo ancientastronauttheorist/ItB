@@ -7399,7 +7399,13 @@ def cmd_reject_diagnosis(failure_id: str, reason: str,
     return result
 
 
-def cmd_click_action(action_index: int) -> dict:
+def cmd_click_action(
+    action_index: int,
+    *,
+    allow_dirty_plan: bool = False,
+    candidate_rank: int | None = None,
+    dirty_consent_id: str | None = None,
+) -> dict:
     """Plan clicks for ONE mech action and emit a computer_batch-ready batch.
 
     Pure planner — does not execute any clicks itself. Claude (the parent
@@ -7432,6 +7438,56 @@ def cmd_click_action(action_index: int) -> dict:
         return result
 
     action = actions[action_index]
+    solved_turn = session.active_solution.turn
+    solve_data = _load_recorded_turn_state(session, "solve", turn=solved_turn)
+    plan_safety = solve_data.get("plan_safety") if isinstance(solve_data, dict) else None
+    selected_rank = candidate_rank
+    if selected_rank is None and isinstance(solve_data, dict):
+        recorded_rank = solve_data.get("selected_candidate_rank")
+        if isinstance(recorded_rank, int):
+            selected_rank = recorded_rank
+    dirty_consent_validated = False
+    if isinstance(plan_safety, dict) and plan_safety.get("blocking"):
+        if allow_dirty_plan:
+            consent_error = _dirty_consent_gate(
+                session,
+                turn=solved_turn,
+                plan_safety=plan_safety,
+                actions=actions,
+                candidate_rank=selected_rank,
+                provided_id=dirty_consent_id,
+                consume=False,
+                allow_previously_consumed=True,
+            )
+            if consent_error is not None:
+                _print_result(consent_error)
+                return consent_error
+            dirty_consent_validated = True
+        if plan_requires_safety_block(
+            plan_safety,
+            allow_dirty_plan=dirty_consent_validated,
+        ):
+            consent_id = _dirty_consent_id(
+                session,
+                solved_turn,
+                plan_safety,
+                actions,
+                candidate_rank=selected_rank,
+            )
+            result = {
+                "status": "SAFETY_BLOCKED",
+                "action_index": action_index,
+                "actions": [a.description for a in actions],
+                "plan_safety": plan_safety,
+                "dirty_consent_id": consent_id,
+                "next_step": (
+                    "Review the exact dirty line, then rerun click_action "
+                    "with --allow-dirty-plan and this dirty_consent_id only "
+                    "if this specific visible-click line is accepted."
+                ),
+            }
+            _print_result(result)
+            return result
 
     if not is_bridge_active():
         result = {"status": "ERROR", "error": "bridge not active — click_action requires bridge"}
@@ -7482,6 +7538,10 @@ def cmd_click_action(action_index: int) -> dict:
         "batch": batch,
         "next_step": f"verify_action {action_index}",
     }
+    if dirty_consent_validated:
+        result["dirty_consent_validated"] = True
+        result["dirty_consent_id"] = dirty_consent_id
+        result["selected_candidate_rank"] = selected_rank
 
     print(f"\n=== CLICK_ACTION {action_index}: {action.description} ===")
     for i, c in enumerate(batch):

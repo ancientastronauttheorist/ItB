@@ -263,6 +263,12 @@ def main():
     )
     p_click_action.add_argument("index", type=int,
                                 help="Action index from solution")
+    p_click_action.add_argument("--allow-dirty-plan", action="store_true",
+                                help="Allow a reviewed dirty visible-click plan")
+    p_click_action.add_argument("--candidate-rank", type=int,
+                                help="Exact reviewed candidate rank for dirty consent")
+    p_click_action.add_argument("--dirty-consent-id",
+                                help="Exact one-use token emitted by solve")
 
     # research_next
     p_research_next = sub.add_parser(
@@ -2029,7 +2035,12 @@ def main():
     elif args.command == "reject_diagnosis":
         cmd_reject_diagnosis(args.failure_id, args.reason, out_path=args.out)
     elif args.command == "click_action":
-        cmd_click_action(args.index)
+        cmd_click_action(
+            args.index,
+            allow_dirty_plan=args.allow_dirty_plan,
+            candidate_rank=args.candidate_rank,
+            dirty_consent_id=args.dirty_consent_id,
+        )
     elif args.command == "click_end_turn":
         cmd_click_end_turn()
     elif args.command == "click_balanced_roll":
