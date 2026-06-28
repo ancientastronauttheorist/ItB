@@ -5002,6 +5002,10 @@ fn control_shot_eligible_unit(unit: &Unit) -> bool {
     unit.alive() && unit.is_enemy() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
 }
 
+fn control_shot_target_in_line(source: (u8, u8), first: (u8, u8)) -> bool {
+    source.0 == first.0 || source.1 == first.1
+}
+
 fn sim_control_shot(
     board: &mut Board,
     attacker_idx: usize,
@@ -5028,6 +5032,13 @@ fn sim_control_shot(
 
     let range = control_shot_range(wdef);
     let attacker = &board.units[attacker_idx];
+    if !control_shot_target_in_line((attacker.x, attacker.y), first) {
+        result.events.push(format!(
+            "invalid_control_shot_line:{}:{}:{}:{}",
+            attacker.x, attacker.y, first.0, first.1
+        ));
+        return;
+    }
     let target_distance = (first.0 as i8 - attacker.x as i8).unsigned_abs()
         + (first.1 as i8 - attacker.y as i8).unsigned_abs();
     if target_distance > range {
@@ -6450,7 +6461,7 @@ mod tests {
     fn test_control_shot_rejects_out_of_range_target_unit() {
         let mut board = make_test_board();
         let control = add_mech(&mut board, 0, 2, 1, 2, WId::ScienceTcControl);
-        let enemy = add_enemy(&mut board, 1, 6, 4, 3);
+        let enemy = add_enemy(&mut board, 1, 6, 1, 3);
         board.units[enemy].move_speed = 3;
         board.units[enemy].base_move = 3;
 
@@ -6458,14 +6469,40 @@ mod tests {
             &mut board,
             control,
             WId::ScienceTcControl,
-            (6, 4),
-            Some((5, 4)),
+            (6, 1),
+            Some((5, 1)),
             &WEAPONS,
         );
 
-        assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 4));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 1));
         assert!(result.events.iter().any(|e| {
-            e == "invalid_control_shot_range:2:1:6:4"
+            e == "invalid_control_shot_range:2:1:6:1"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_diagonal_target_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 4, 4, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (4, 4),
+            Some((4, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 4));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_line:3:3:4:4"
         }));
         assert!(!result.events.iter().any(|e| {
             e.starts_with("achievement_lets_walk:")

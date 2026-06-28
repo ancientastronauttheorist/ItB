@@ -1420,7 +1420,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v292 - Control Shot target enumeration/replay is enemy-only for Let's Walk;
 # allied target attempts do not earn progress and can miss in the live UI path.
 # Pre-v292 corpus archived as failure_db_pre_v292_control_shot_enemy_targets.jsonl.
-SIMULATOR_VERSION = 292
+# v293 - Control Shot first-click target units must be in a straight firing
+# line from the Control Mech; diagonal in-range targets are visible UI misses.
+# Pre-v293 corpus archived as failure_db_pre_v293_control_shot_line_targets.jsonl.
+SIMULATOR_VERSION = 293
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

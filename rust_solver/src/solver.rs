@@ -712,6 +712,10 @@ fn control_shot_eligible_unit(unit: &Unit) -> bool {
     unit.alive() && unit.is_enemy() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
 }
 
+fn control_shot_target_in_line(source: (u8, u8), first: (u8, u8)) -> bool {
+    source.0 == first.0 || source.1 == first.1
+}
+
 fn enumerate_control_shot_targets(
     board: &Board,
     source: (u8, u8),
@@ -725,6 +729,9 @@ fn enumerate_control_shot_targets(
         }
         let first = (unit.x, unit.y);
         if first == source {
+            continue;
+        }
+        if !control_shot_target_in_line(source, first) {
             continue;
         }
         let target_distance = (first.0 as i8 - source.0 as i8).unsigned_abs()
@@ -2589,6 +2596,17 @@ mod top_k_tests {
             move_speed: 3,
             ..Default::default()
         });
+        board.add_unit(Unit {
+            uid: 103,
+            x: 3,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
 
         let targets = get_weapon_targets(
             &board,
@@ -2610,6 +2628,10 @@ mod top_k_tests {
             !targets.contains(&(1, 2)),
             "Control Shot should not offer allied targets while farming Let's Walk"
         );
+        assert!(
+            !targets.contains(&(3, 2)),
+            "Control Shot should not offer diagonal first-click targets"
+        );
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(
@@ -2623,6 +2645,10 @@ mod top_k_tests {
         assert!(
             actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (1, 2))),
             "action enumeration should reject allied Control Shot targets"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (3, 2))),
+            "action enumeration should reject diagonal Control Shot targets"
         );
     }
 

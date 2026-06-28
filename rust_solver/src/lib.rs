@@ -1954,7 +1954,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v292 - Control Shot target enumeration/replay is enemy-only for Let's Walk;
 //   allied target attempts do not earn progress and can miss in the live UI path.
 //   Pre-v292 corpus archived as failure_db_pre_v292_control_shot_enemy_targets.jsonl.
-pub const SIMULATOR_VERSION: u32 = 292;
+// v293 - Control Shot first-click target units must be in a straight firing
+//   line from the Control Mech; diagonal in-range targets are visible UI misses.
+//   Pre-v293 corpus archived as failure_db_pre_v293_control_shot_line_targets.jsonl.
+pub const SIMULATOR_VERSION: u32 = 293;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
