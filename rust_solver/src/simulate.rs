@@ -4999,7 +4999,7 @@ fn control_shot_range(wdef: &WeaponDef) -> u8 {
 }
 
 fn control_shot_eligible_unit(unit: &Unit) -> bool {
-    unit.alive() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
+    unit.alive() && unit.is_enemy() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
 }
 
 fn sim_control_shot(
@@ -6394,6 +6394,32 @@ mod tests {
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 5));
         assert!(result.events.iter().any(|e| {
             e == "achievement_lets_walk:distance:1:target:3:5:dest:4:5"
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_allied_target_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let ally = add_mech(&mut board, 1, 3, 5, 3, WId::None);
+        board.units[ally].move_speed = 3;
+        board.units[ally].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 5),
+            Some((4, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[ally].x, board.units[ally].y), (3, 5));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_target:3:5"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
         }));
     }
 

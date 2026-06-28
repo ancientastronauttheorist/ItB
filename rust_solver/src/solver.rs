@@ -709,7 +709,7 @@ fn control_shot_range(wdef: &WeaponDef) -> u8 {
 }
 
 fn control_shot_eligible_unit(unit: &Unit) -> bool {
-    unit.alive() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
+    unit.alive() && unit.is_enemy() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
 }
 
 fn enumerate_control_shot_targets(
@@ -2557,6 +2557,17 @@ mod top_k_tests {
             ..Default::default()
         });
         board.add_unit(Unit {
+            uid: 100,
+            x: 1,
+            y: 2,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE | UnitFlags::IS_MECH,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
             uid: 101,
             x: 2,
             y: 3,
@@ -2595,6 +2606,10 @@ mod top_k_tests {
             !targets.contains(&(6, 4)),
             "Control Shot must not offer distant target units"
         );
+        assert!(
+            !targets.contains(&(1, 2)),
+            "Control Shot should not offer allied targets while farming Let's Walk"
+        );
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(
@@ -2604,6 +2619,10 @@ mod top_k_tests {
         assert!(
             actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (6, 4))),
             "action enumeration should reject out-of-range Control Shot targets"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (1, 2))),
+            "action enumeration should reject allied Control Shot targets"
         );
     }
 

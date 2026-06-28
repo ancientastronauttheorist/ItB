@@ -1951,7 +1951,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v291 - Control Shot first-click target units must be within the weapon range;
 //   raw bridge GetFinalEffect can otherwise move targets the live UI refuses.
 //   Pre-v291 corpus archived as failure_db_pre_v291_control_shot_target_range.jsonl.
-pub const SIMULATOR_VERSION: u32 = 291;
+// v292 - Control Shot target enumeration/replay is enemy-only for Let's Walk;
+//   allied target attempts do not earn progress and can miss in the live UI path.
+//   Pre-v292 corpus archived as failure_db_pre_v292_control_shot_enemy_targets.jsonl.
+pub const SIMULATOR_VERSION: u32 = 292;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -1417,7 +1417,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v291 - Control Shot first-click target units must be within the weapon range;
 # raw bridge GetFinalEffect can otherwise move targets the live UI refuses.
 # Pre-v291 corpus archived as failure_db_pre_v291_control_shot_target_range.jsonl.
-SIMULATOR_VERSION = 291
+# v292 - Control Shot target enumeration/replay is enemy-only for Let's Walk;
+# allied target attempts do not earn progress and can miss in the live UI path.
+# Pre-v292 corpus archived as failure_db_pre_v292_control_shot_enemy_targets.jsonl.
+SIMULATOR_VERSION = 292
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
