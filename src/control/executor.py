@@ -258,6 +258,15 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     if mech is None:
         return []
 
+    weapon_type = classify_weapon(action.weapon)
+    has_move = bool(action.move_to and action.move_to != (mech.x, mech.y))
+    has_attack = action_has_attack(action)
+
+    if not has_move and not has_attack and weapon_type not in {"dash", "repair"}:
+        return annotate_click_plan([
+            _wait_op(0.1, f"No-op {action.mech_type}; leave UI selection unchanged")
+        ])
+
     # Step 1: select the mech by clicking its tile center. grid_to_mcp follows
     # the shared GridConfig calibration used by cmd_calibrate; the tile center
     # is reliable even though mech sprites render above it.
@@ -267,8 +276,6 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
         "x": tx, "y": ty,
         "description": f"Select {action.mech_type} at ({mech.x},{mech.y})",
     }]
-
-    weapon_type = classify_weapon(action.weapon)
 
     # Passive weapons have no clickable target — just selecting the mech
     # is enough to "consume" the action from the Claude perspective.

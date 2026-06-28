@@ -114,18 +114,11 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
                 continue;
             }
 
-            // Other alive units: friendly can walk through (not stop), enemies hard-block
+            // Other live units hard-block ground movement. Flying movement uses
+            // direct range enumeration above; same-uid multi-tile bodies do not
+            // block themselves.
             if let Some(blocker_idx) = board.unit_at(nx, ny) {
                 if board.units[blocker_idx].uid != uid {
-                    if board.units[blocker_idx].team == unit.team {
-                        // Friendly: can walk through but can't stop here
-                        visited[idx] = new_cost;
-                        if new_cost < speed {
-                            queue[tail] = (nx, ny, new_cost);
-                            tail += 1;
-                        }
-                    }
-                    // Enemy/neutral: hard block — don't add to queue
                     continue;
                 }
             }
@@ -243,13 +236,6 @@ pub fn controlled_reachable_tiles_with_cost(
 
             if let Some(blocker_idx) = board.unit_at(nx, ny) {
                 if board.units[blocker_idx].uid != uid {
-                    if board.units[blocker_idx].team == unit.team {
-                        visited[idx] = new_cost;
-                        if new_cost < speed {
-                            queue[tail] = (nx, ny, new_cost);
-                            tail += 1;
-                        }
-                    }
                     continue;
                 }
             }
@@ -527,7 +513,7 @@ mod tests {
     }
 
     #[test]
-    fn test_friendly_walk_through() {
+    fn test_friendly_hard_blocks_ground_movement() {
         let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
         // Place a friendly unit at (1, 0)
         let mut friendly = Unit::default();
@@ -539,9 +525,26 @@ mod tests {
         board.add_unit(friendly);
 
         let tiles = reachable_tiles(&board, idx);
-        // Friendly: can walk through but can't stop on their tile
+        // Friendly units block ground movement just like enemies.
         assert!(!tiles.contains(&(1, 0)));
-        assert!(tiles.contains(&(2, 0)));
+        assert!(!tiles.contains(&(2, 0)));
+    }
+
+    #[test]
+    fn test_friendly_objective_blocks_only_path_to_spawn() {
+        let (mut board, idx) = make_board_with_unit(4, 3, 3, false);
+        let mut terraformer = Unit::default();
+        terraformer.uid = 2;
+        terraformer.x = 5;
+        terraformer.y = 3;
+        terraformer.hp = 2;
+        terraformer.team = Team::Player;
+        board.add_unit(terraformer);
+        board.tile_mut(4, 4).terrain = Terrain::Mountain;
+
+        let tiles = reachable_tiles(&board, idx);
+
+        assert!(!tiles.contains(&(5, 4)));
     }
 
     #[test]

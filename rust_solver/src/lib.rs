@@ -1979,7 +1979,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   carried fire. Live Let's Walk Mission_Belt turn 3 left burning Control
 //   Mech on an occupied adjacent tile after Smoldering Shells. Pre-v301 corpus
 //   archived as failure_db_snapshot_sim_v300.jsonl.
-pub const SIMULATOR_VERSION: u32 = 301;
+// v302 - Ground movement BFS treats other live friendly units as hard blockers
+//   instead of walk-through tiles. Live Let's Walk Mission_Terraform turn 2
+//   refused SmokeMech pathing through the Terraformer. Pre-v302 corpus archived
+//   as failure_db_snapshot_sim_v301.jsonl.
+pub const SIMULATOR_VERSION: u32 = 302;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -1441,7 +1441,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Pre-v300 corpus archived as failure_db_snapshot_sim_v299.jsonl.
 # v301 - Smoldering Shells skipped occupied adjacent tiles no longer clear fire.
 # Pre-v301 corpus archived as failure_db_snapshot_sim_v300.jsonl.
-SIMULATOR_VERSION = 301
+# v302 - Ground movement BFS treats other live friendly units as hard blockers
+# instead of walk-through tiles. Pre-v302 corpus archived as
+# failure_db_snapshot_sim_v301.jsonl.
+SIMULATOR_VERSION = 302
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
