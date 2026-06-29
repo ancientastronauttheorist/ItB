@@ -6,32 +6,50 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_Barrels",
   "islands_completed": [],
-  "mission_index": 14,
-  "last_mission_turn": -1,
-  "current_turn": 4,
-  "phase": "unknown",
+  "mission_index": 16,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "SmokeMech",
+        "mech_uid": 0,
+        "mech_type": "NeedleMech",
         "move_to": [
-          2,
-          3
+          4,
+          2
         ],
-        "weapon": "Ranged_SmokeFire",
+        "weapon": "Brute_KickBack",
         "target": [
-          5,
+          4,
           3
         ],
-        "description": "SmokeMech, move E4\u2192E6, fire Smoldering Shells at E3"
+        "description": "NeedleMech, move D5\u2192F4, fire Reverse Thrusters at E4"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "SupermanMech",
+        "move_to": [
+          0,
+          4
+        ],
+        "weapon": "Science_TC_Control_A",
+        "target": [
+          1,
+          4
+        ],
+        "description": "SupermanMech, move B6\u2192D8, fire Control Shot at D7 and C6",
+        "target2": [
+          2,
+          5
+        ]
       }
     ],
-    "score": 116675.17857142857,
+    "score": -92823.57142857142,
     "turn": 4,
-    "input_fingerprint": "0:7,4:1|1:4,3:3|2:4,6:2|568:4,4:3|601:4,5:3|622:6,6:2|647:3,4:1|648:6,1:2|678:5,3:2"
+    "input_fingerprint": "0:3,4:2|1:4,4:0|2:2,6:2|682:4,5:1|685:3,5:2|699:4,1:5|700:6,5:3|757:1,4:4|802:2,1:1"
   },
   "actions_executed": 1,
   "buildings_lost": 0,
@@ -1026,6 +1044,74 @@
       "turn": 4,
       "label": "note",
       "message": "Let's Walk counter check after RST Corporate HQ / Mission_BlobberBoss: tooltip shows Current Spaces 95. Counter was 83 after Mission_Artillery; HQ added 12 spaces from four visible Control Shots. Need 25 more; continue to remaining islands."
+    },
+    {
+      "timestamp": "2026-06-29T06:56:28.523810",
+      "turn": 1,
+      "label": "solve",
+      "score": 143200.0,
+      "actions": [
+        "SmokeMech, move C5\u2192D5, fire Smoldering Shells at D3",
+        "SupermanMech, move D6\u2192C4, fire Control Shot at C3 and D1",
+        "NeedleMech, move E5\u2192C3, fire Reverse Thrusters at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:57:50.933218",
+      "turn": 1,
+      "label": "solve",
+      "score": 120075.0,
+      "actions": [
+        "NeedleMech, move E5\u2192E2, fire Reverse Thrusters at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:00:56.020214",
+      "turn": 2,
+      "label": "solve",
+      "score": 13218.833397348702,
+      "actions": [
+        "NeedleMech, move G2\u2192D1, repair",
+        "SupermanMech, move C4\u2192B2, fire Control Shot at C2 and E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:01:26.672167",
+      "turn": 2,
+      "label": "note",
+      "message": "Nanite Farms turn 2 dirty frontier reviewed after SmokeMech destruction: no clean candidate among 10000; taking rank 0 with consent e0d2a253a2102a5f because it preserves timeline at predicted grid 4/7, avoids further mech loss, and adds visible Control Shot C2->E3 for Lets Walk."
+    },
+    {
+      "timestamp": "2026-06-29T07:04:57.533110",
+      "turn": 3,
+      "label": "solve",
+      "score": 29535.143152850018,
+      "actions": [
+        "NeedleMech, move D1\u2192D5, repair",
+        "SupermanMech, move B2\u2192B6, fire Control Shot at B5 and C3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:05:25.798578",
+      "turn": 3,
+      "label": "note",
+      "message": "Nanite Farms turn 3 dirty frontier reviewed: no clean candidate among 10000; accepting rank 0 with consent 4ee3febf5842f04c despite Coal Plant objective loss and predicted grid 4->2 because it preserves both remaining mechs, avoids timeline collapse, and adds visible Control Shot B5->C3 for Lets Walk."
+    },
+    {
+      "timestamp": "2026-06-29T07:08:37.139798",
+      "turn": 4,
+      "label": "solve",
+      "score": -92823.57142857142,
+      "actions": [
+        "NeedleMech, move D5\u2192F4, fire Reverse Thrusters at E4",
+        "SupermanMech, move B6\u2192D8, fire Control Shot at D7 and C6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:13:33.884869",
+      "turn": 4,
+      "label": "note",
+      "message": "Lets Walk counter check after Detritus Nanite Farms: tooltip shows Current Spaces 106. Counter was 95 after RST HQ, so Nanite Farms added 11 spaces from four visible Control Shots. Need 14 more."
     }
   ],
   "lightning_route_probe_cache": [],
@@ -1141,6 +1227,18 @@
     [
       13,
       3
+    ],
+    [
+      15,
+      1
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      15,
+      3
     ]
   ],
   "post_enemy_block": null,
@@ -1189,10 +1287,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "47755707a738f746",
-    "classes": "wwmmgwwwwgbbggfwgggggbmgfggggbbggbmggggggmbggggggggggggggggggggg",
-    "mission_index": 13,
-    "turn": 4
+    "hash": "7800e126738e99a0",
+    "classes": "mmbgwwwwmmbgwbbggmbggggggggggggggggmggggggggggbgmgggggbgmmgggggg",
+    "mission_index": 16,
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }
