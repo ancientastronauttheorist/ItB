@@ -6,11 +6,11 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Artillery",
+  "current_mission": "Mission_Airstrike",
   "islands_completed": [],
-  "mission_index": 9,
-  "last_mission_turn": 1,
-  "current_turn": 1,
+  "mission_index": 13,
+  "last_mission_turn": 4,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -18,66 +18,20 @@
         "mech_uid": 1,
         "mech_type": "SmokeMech",
         "move_to": [
-          4,
-          2
+          1,
+          5
         ],
         "weapon": "Ranged_SmokeFire",
         "target": [
-          4,
-          5
-        ],
-        "description": "SmokeMech, move E6\u2192F4, fire Smoldering Shells at C4"
-      },
-      {
-        "mech_uid": 68,
-        "mech_type": "ArchiveArtillery",
-        "move_to": [
-          2,
-          3
-        ],
-        "weapon": "Archive_ArtShot",
-        "target": [
-          4,
-          3
-        ],
-        "description": "ArchiveArtillery, move D6\u2192E6, fire Old Earth Artillery at E4"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "SupermanMech",
-        "move_to": [
           2,
           4
         ],
-        "weapon": "Science_TC_Control_A",
-        "target": [
-          3,
-          4
-        ],
-        "description": "SupermanMech, move G5\u2192D6, fire Control Shot at D5 and D2",
-        "target2": [
-          6,
-          4
-        ]
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "NeedleMech",
-        "move_to": [
-          2,
-          2
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "NeedleMech, move C5\u2192F6"
+        "description": "Manual turn4: move Smoke to C7, Smoldering Shells D6 Totem"
       }
     ],
-    "score": 184907.1428571429,
-    "turn": 1,
-    "input_fingerprint": "0:3,5:3|1:2,3:3|2:3,1:2|68:2,4:2|69:3,4:4|70:4,3:3|71:4,5:3"
+    "score": 0.0,
+    "turn": 4,
+    "input_fingerprint": "manual-airstrike-t4-smoke-d6-totem"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -767,6 +721,209 @@
         "SupermanMech, move G5\u2192D6, fire Control Shot at D5 and D2",
         "NeedleMech, move C5\u2192F6"
       ]
+    },
+    {
+      "timestamp": "2026-06-28T23:59:06.102238",
+      "turn": 1,
+      "label": "solve",
+      "score": 166907.1428571429,
+      "actions": [
+        "NeedleMech, move C5\u2192F6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-28T23:59:42.910627",
+      "turn": 1,
+      "label": "solve",
+      "score": 166907.1428571429,
+      "actions": [
+        "NeedleMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:00:26.196003",
+      "turn": 1,
+      "label": "solve",
+      "score": 166907.1428571429,
+      "actions": [
+        "NeedleMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:02:11.623927",
+      "turn": 2,
+      "label": "solve",
+      "score": 184447.14285714307,
+      "actions": [
+        "ArchiveArtillery",
+        "SmokeMech, move F4\u2192G5, fire Smoldering Shells at C5",
+        "SupermanMech, move D6\u2192D5, fire Control Shot at C5 and D3",
+        "NeedleMech, move F6\u2192E3, fire Reverse Thrusters at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:02:58.536017",
+      "turn": 2,
+      "label": "solve",
+      "score": 184447.14285714307,
+      "actions": [
+        "ArchiveArtillery",
+        "SupermanMech, move D6\u2192D5, fire Control Shot at C5 and D3",
+        "NeedleMech, move F6\u2192E3, fire Reverse Thrusters at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:05:14.731392",
+      "turn": 3,
+      "label": "solve",
+      "score": 184252.1428571429,
+      "actions": [
+        "NeedleMech, move F3\u2192C2, repair",
+        "SmokeMech, move G5\u2192F5, fire Smoldering Shells at F2",
+        "SupermanMech, fire Control Shot at D4 and F3",
+        "ArchiveArtillery, move E6\u2192F6, fire Old Earth Artillery at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:07:16.420826",
+      "turn": 4,
+      "label": "solve",
+      "score": 160958.3928571429,
+      "actions": [
+        "ArchiveArtillery, move F6\u2192G6, fire Old Earth Artillery at E6",
+        "NeedleMech, repair",
+        "SmokeMech, move F5\u2192D4, fire Smoldering Shells at D6",
+        "SupermanMech, fire Control Shot at D6 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:13:12.294558",
+      "turn": 1,
+      "label": "solve",
+      "score": 156535.71428571432,
+      "actions": [
+        "SupermanMech, move E6\u2192F3, fire Control Shot at F2 and H3",
+        "NeedleMech, move C5\u2192B4, fire Reverse Thrusters at B5",
+        "SmokeMech, move F5\u2192G3, fire Smoldering Shells at B3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:49:29.602703",
+      "turn": 3,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260628_125814_705_m11_t02_post_enemy",
+        "status": "POST_ENEMY_AUDIT_MISSING",
+        "blocking": true,
+        "run_id": "20260628_125814_705",
+        "mission_index": 11,
+        "turn": 2,
+        "created_at": "2026-06-29T00:49:01.150811",
+        "source": "record_post_enemy",
+        "record_path": null,
+        "reason": "solve_record_missing",
+        "deltas": {},
+        "triggers": [],
+        "actual_outcome": null,
+        "predicted_outcome": null,
+        "next_step": "Investigate this enemy-phase prediction miss before solving, executing, or emitting another End Turn plan. Clear only after the simulator/process cause is understood.",
+        "resolved_at": "2026-06-29T00:49:29.602662",
+        "resolve_reason": "Turn 2 used reviewed manual visible clicks after solve hung and no solve record existed; post-enemy bridge state verified turn 3 grid 3/7, both Archive_Tanks alive, all actors ready, only expected grid loss occurred. No desync or board uncertainty remains."
+      }
+    },
+    {
+      "timestamp": "2026-06-29T00:50:09.094261",
+      "turn": 3,
+      "label": "solve",
+      "score": 150045.7142857143,
+      "actions": [
+        "Archive_Tank",
+        "Archive_Tank, move G2\u2192F1, fire Stock Cannon at F2",
+        "SupermanMech, fire Control Shot at E2 and G3",
+        "NeedleMech, move C2\u2192C6, repair",
+        "SmokeMech, move E3\u2192F2, fire Smoldering Shells at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:52:20.747626",
+      "turn": 3,
+      "label": "solve",
+      "score": 132045.7142857143,
+      "actions": [
+        "Archive_Tank"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T00:53:59.523643",
+      "turn": 4,
+      "label": "solve",
+      "score": 136948.2142857143,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, fire Smoldering Shells at C2",
+        "SupermanMech, fire Control Shot at E2 and C1",
+        "Archive_Tank, move B2\u2192C5, fire Stock Cannon at C4",
+        "Archive_Tank, fire Stock Cannon at E1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T01:06:41.497832",
+      "turn": 1,
+      "label": "solve",
+      "score": 179782.1428571429,
+      "actions": [
+        "NeedleMech, move F5\u2192E7, fire Reverse Thrusters at G7",
+        "SmokeMech, move E6\u2192F7, fire Smoldering Shells at F2",
+        "SupermanMech, move C5\u2192E4, fire Control Shot at F4 and C4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T01:31:47.389141",
+      "turn": 3,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260628_125814_705_m13_t02_post_enemy",
+        "status": "POST_ENEMY_AUDIT_MISSING",
+        "blocking": true,
+        "run_id": "20260628_125814_705",
+        "mission_index": 13,
+        "turn": 2,
+        "created_at": "2026-06-29T01:31:34.021145",
+        "source": "record_post_enemy",
+        "record_path": null,
+        "reason": "solve_record_missing",
+        "deltas": {},
+        "triggers": [],
+        "actual_outcome": null,
+        "predicted_outcome": null,
+        "next_step": "Investigate this enemy-phase prediction miss before solving, executing, or emitting another End Turn plan. Clear only after the simulator/process cause is understood.",
+        "resolved_at": "2026-06-29T01:31:47.389106",
+        "resolve_reason": "Mission_Airstrike turn 2 used reviewed manual visible-click actions after solve hung and no solve record existed. Fresh turn 3 bridge state verified phase combat_player, active_mechs 3, grid 2/7 after expected one grid damage from surviving Scorpion1, less-than-3-grid objective still viable, Scorpion2 removed by airstrike, no desync or board uncertainty remains."
+      }
+    },
+    {
+      "timestamp": "2026-06-29T01:47:25.985195",
+      "turn": 4,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260628_125814_705_m13_t03_post_enemy",
+        "status": "POST_ENEMY_AUDIT_MISSING",
+        "blocking": true,
+        "run_id": "20260628_125814_705",
+        "mission_index": 13,
+        "turn": 3,
+        "created_at": "2026-06-29T01:47:10.640017",
+        "source": "record_post_enemy",
+        "record_path": null,
+        "reason": "solve_record_missing",
+        "deltas": {},
+        "triggers": [],
+        "actual_outcome": null,
+        "predicted_outcome": null,
+        "next_step": "Investigate this enemy-phase prediction miss before solving, executing, or emitting another End Turn plan. Clear only after the simulator/process cause is understood.",
+        "resolved_at": "2026-06-29T01:47:25.985165",
+        "resolve_reason": "Mission_Airstrike turn 3 used reviewed manual visible-click actions after solve hung and no solve record existed. Fresh turn 4 bridge state verified phase combat_player, active_mechs 3, grid 1/7 after one additional expected grid damage, less-than-3-grid objective remains viable at 2 current damage, no visible desync or board uncertainty remains; continue from fresh read only."
+      }
     }
   ],
   "lightning_route_probe_cache": [],
@@ -834,6 +991,30 @@
     [
       7,
       3
+    ],
+    [
+      9,
+      1
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      9,
+      3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      13,
+      1
     ]
   ],
   "post_enemy_block": null,
@@ -904,10 +1085,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "7ccb6157d90532a3",
-    "classes": "mmgfgmmmmggbgmbmbgfggbbmbggbggggbggfgfggwwggggggmwwwggfmmmmwwgmm",
-    "mission_index": 9,
-    "turn": 1
+    "hash": "380c19789125a88f",
+    "classes": "gfbbbbwmmgggggwmmwfgggwggwgbbgwrggggggggmgbggbggmfggggggmmggggmm",
+    "mission_index": 13,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }
