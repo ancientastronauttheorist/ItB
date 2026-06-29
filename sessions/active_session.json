@@ -6,12 +6,12 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Belt",
+  "current_mission": "",
   "islands_completed": [],
-  "mission_index": 0,
-  "last_mission_turn": 4,
+  "mission_index": 1,
+  "last_mission_turn": -1,
   "current_turn": 4,
-  "phase": "combat_player",
+  "phase": "unknown",
   "active_solution": {
     "actions": [
       {
@@ -65,7 +65,7 @@
     "turn": 4,
     "input_fingerprint": "0:3,2:2|1:4,4:3|2:4,3:2|917:5,3:3|918:6,4:2"
   },
-  "actions_executed": 0,
+  "actions_executed": 1,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
   "enemies_killed": 0,
@@ -130,6 +130,23 @@
         "SupermanMech, move E4\u2192D1, fire Control Shot at D2 and D4",
         "NeedleMech, move F5\u2192E4, fire Reverse Thrusters at E6"
       ]
+    },
+    {
+      "timestamp": "2026-06-29T07:53:45.992537",
+      "turn": 4,
+      "label": "solve",
+      "score": 158750.35714285713,
+      "actions": [
+        "SmokeMech, move D4\u2192E5, fire Smoldering Shells at E3",
+        "SupermanMech, move E4\u2192D1, fire Control Shot at D2 and D4",
+        "NeedleMech, move F5\u2192E4, fire Reverse Thrusters at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T08:08:03.773490",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter check after Pumping Station: pause tooltip at window-local 820,242 shows Current Spaces 8; Control Shot +1 Move upgrade visually powered on Control Mech after pod core."
     }
   ],
   "lightning_route_probe_cache": [],
@@ -217,7 +234,7 @@
   "last_terrain_fingerprint": {
     "hash": "cce38d1a36a36cd7",
     "classes": "gggggggggbbggbmmgbbggbwmggggggmwgggggmmmwbgggggwwwggggggwwwggggg",
-    "mission_index": 0,
+    "mission_index": 1,
     "turn": 4
   },
   "terrain_stage_change_pending": false
