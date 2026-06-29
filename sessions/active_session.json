@@ -6,11 +6,11 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Satellite",
+  "current_mission": "Mission_Artillery",
   "islands_completed": [],
-  "mission_index": 11,
-  "last_mission_turn": 1,
-  "current_turn": 1,
+  "mission_index": 12,
+  "last_mission_turn": 3,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -21,51 +21,65 @@
           5,
           5
         ],
-        "weapon": "Brute_KickBack",
+        "weapon": "_REPAIR",
         "target": [
-          6,
+          5,
           5
         ],
-        "description": "NeedleMech, move F5\u2192C3, fire Reverse Thrusters at C2"
+        "description": "NeedleMech, repair"
       },
       {
         "mech_uid": 1,
         "mech_type": "SmokeMech",
         "move_to": [
-          2,
-          2
+          3,
+          6
         ],
         "weapon": "Ranged_SmokeFire",
         "target": [
-          4,
-          2
+          5,
+          6
         ],
-        "description": "SmokeMech, move D5\u2192F6, fire Smoldering Shells at F4"
+        "description": "SmokeMech, move A5\u2192B5, fire Smoldering Shells at B3"
       },
       {
         "mech_uid": 2,
         "mech_type": "SupermanMech",
         "move_to": [
-          2,
-          5
+          6,
+          7
         ],
         "weapon": "Science_TC_Control_A",
         "target": [
-          3,
-          5
+          6,
+          6
         ],
-        "description": "SupermanMech, fire Control Shot at C5 and E4",
+        "description": "SupermanMech, move C5\u2192A2, fire Control Shot at B2 and D1",
         "target2": [
-          4,
-          3
+          7,
+          4
         ]
+      },
+      {
+        "mech_uid": 557,
+        "mech_type": "ArchiveArtillery",
+        "move_to": [
+          1,
+          4
+        ],
+        "weapon": "Archive_ArtShot",
+        "target": [
+          6,
+          4
+        ],
+        "description": "ArchiveArtillery, move E7\u2192D7, fire Old Earth Artillery at D2"
       }
     ],
-    "score": 129150.0,
-    "turn": 1,
-    "input_fingerprint": "0:3,2:3|1:3,4:3|2:2,5:2|511:4,4:2|512:5,1:2|513:4,5:4|514:3,5:5|515:4,2:2|516:5,2:3"
+    "score": 163496.64285205092,
+    "turn": 3,
+    "input_fingerprint": "0:5,5:1|1:3,7:3|2:3,5:1|557:1,3:2|562:2,4:3|563:6,6:2|565:5,6:2"
   },
-  "actions_executed": 2,
+  "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
   "enemies_killed": 0,
@@ -739,6 +753,152 @@
         "SmokeMech, move D5\u2192F6, fire Smoldering Shells at F4",
         "SupermanMech, fire Control Shot at C5 and E4"
       ]
+    },
+    {
+      "timestamp": "2026-06-29T05:33:16.083622",
+      "turn": 2,
+      "label": "solve",
+      "score": 147542.50000000012,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move F6\u2192E7, fire Smoldering Shells at E5",
+        "SupermanMech, fire Control Shot at C5 and B3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:37:00.783503",
+      "turn": 2,
+      "label": "solve",
+      "score": 147542.50000000012,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move F6\u2192E7, fire Smoldering Shells at E5",
+        "SupermanMech, fire Control Shot at C5 and D7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:37:10.071320",
+      "turn": 2,
+      "label": "solve",
+      "score": 147542.50000000012,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move F6\u2192E7, fire Smoldering Shells at E5",
+        "SupermanMech, fire Control Shot at C5 and B3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:37:18.321465",
+      "turn": 2,
+      "label": "solve",
+      "score": 147542.50000000012,
+      "actions": [
+        "NeedleMech, repair",
+        "SupermanMech, fire Control Shot at C5 and B3",
+        "SmokeMech, move F6\u2192E7, fire Smoldering Shells at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:40:10.183961",
+      "turn": 2,
+      "label": "note",
+      "message": "Colonial Park turn 2 reset used after fresh read showed B5 threatened post-actions. Review of m11_turn_02_solve shows the line relies on Scarab2 dying during enemy-phase fire before attacks, leaving grid/buildings clean; replaying reviewed candidate with visible Control Shot."
+    },
+    {
+      "timestamp": "2026-06-29T05:41:17.215668",
+      "turn": 2,
+      "label": "note",
+      "message": "Colonial Park turn 2 pre-End-Turn audit: B5 still appears targeted by Scarab2 E5, but raw bridge confirms Scarab2 hp=1 fire=True, so it should die to fire before Vek attacks; proceeding with End Turn."
+    },
+    {
+      "timestamp": "2026-06-29T05:43:10.756714",
+      "turn": 3,
+      "label": "solve",
+      "score": 173780.21427551337,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move E7\u2192C7, fire Smoldering Shells at C4",
+        "SupermanMech, move C6\u2192C4, fire Control Shot at C3 and F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:43:24.493564",
+      "turn": 3,
+      "label": "solve",
+      "score": 173377.71427551337,
+      "actions": [
+        "SmokeMech, move E7\u2192D6, fire Smoldering Shells at D2",
+        "SupermanMech, move C6\u2192D3, fire Control Shot at C3 and E4",
+        "NeedleMech, move C2\u2192C6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:43:39.842017",
+      "turn": 3,
+      "label": "note",
+      "message": "Colonial Park turn 3 dirty frontier reviewed: no clean plan among 10000; choosing candidate rank 79 / consent b65b3e7ffea24835 because it predicts only 1 grid and 1 building HP loss, no mech HP/fire/status debt, objectives preserved, and adds a Control Shot C3->E4."
+    },
+    {
+      "timestamp": "2026-06-29T05:45:12.152960",
+      "turn": 4,
+      "label": "solve",
+      "score": 131693.92857142858,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at C7",
+        "SmokeMech, move D6\u2192C6, fire Smoldering Shells at C2",
+        "SupermanMech, fire Control Shot at C3 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:49:36.241541",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter check after Colonial Park: tooltip shows Current Spaces 72. Counter was 60 after Archival Flats; four visible Control Shots in Mission_Satellite added 12 spaces."
+    },
+    {
+      "timestamp": "2026-06-29T05:52:47.000368",
+      "turn": 1,
+      "label": "solve",
+      "score": 153250.0,
+      "actions": [
+        "ArchiveArtillery, move D7\u2192E7, fire Old Earth Artillery at E4",
+        "SmokeMech, move C5\u2192A5, fire Smoldering Shells at D5",
+        "SupermanMech, move E5\u2192D3, fire Control Shot at D4 and C2",
+        "NeedleMech, move D6\u2192C3, fire Reverse Thrusters at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:54:15.733502",
+      "turn": 1,
+      "label": "solve",
+      "score": 133200.0,
+      "actions": [
+        "NeedleMech, move D6\u2192C3, fire Reverse Thrusters at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:55:38.808952",
+      "turn": 2,
+      "label": "solve",
+      "score": 152483.3333333335,
+      "actions": [
+        "NeedleMech, move C5\u2192C3, repair",
+        "SupermanMech, move D3\u2192C5, fire Control Shot at C4 and E5",
+        "SmokeMech, fire Smoldering Shells at E5",
+        "ArchiveArtillery, fire Old Earth Artillery at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:59:32.038224",
+      "turn": 3,
+      "label": "solve",
+      "score": 163496.64285205092,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move A5\u2192B5, fire Smoldering Shells at B3",
+        "SupermanMech, move C5\u2192A2, fire Control Shot at B2 and D1",
+        "ArchiveArtillery, move E7\u2192D7, fire Old Earth Artillery at D2"
+      ]
     }
   ],
   "lightning_route_probe_cache": [],
@@ -818,6 +978,26 @@
     [
       10,
       3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      12,
+      2
     ]
   ],
   "post_enemy_block": null,
@@ -866,10 +1046,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "3d28af0dfd0385b1",
-    "classes": "ggggggmmfbgfggmmgbgbggbmgbggggbmggggggbmwggfggggwwgfggggwwwwfgfg",
-    "mission_index": 11,
-    "turn": 1
+    "hash": "0cbc178b58a18b50",
+    "classes": "wggggmmmwgbggbbmwibggbbmwwigggggwwwwggfgwwwiggfgwwigggggwwifgggg",
+    "mission_index": 12,
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }
