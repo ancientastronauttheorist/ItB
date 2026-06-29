@@ -6,9 +6,9 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Barrels",
+  "current_mission": "Mission_Survive",
   "islands_completed": [],
-  "mission_index": 2,
+  "mission_index": 10,
   "last_mission_turn": 1,
   "current_turn": 1,
   "phase": "combat_player",
@@ -18,54 +18,54 @@
         "mech_uid": 0,
         "mech_type": "NeedleMech",
         "move_to": [
-          4,
-          6
+          5,
+          3
         ],
         "weapon": "Brute_KickBack",
         "target": [
-          3,
-          6
+          5,
+          4
         ],
-        "description": "NeedleMech, move D6\u2192B4, fire Reverse Thrusters at B5"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "SmokeMech",
-        "move_to": [
-          2,
-          1
-        ],
-        "weapon": "Ranged_SmokeFire",
-        "target": [
-          2,
-          3
-        ],
-        "description": "SmokeMech, move F6\u2192G6, fire Smoldering Shells at E6"
+        "description": "NeedleMech, move E5\u2192E3, fire Reverse Thrusters at D3"
       },
       {
         "mech_uid": 2,
         "mech_type": "SupermanMech",
         "move_to": [
-          3,
+          5,
           3
         ],
-        "weapon": "Science_TC_Control_A",
+        "weapon": "Science_TC_Control_AB",
         "target": [
-          4,
+          6,
           3
         ],
-        "description": "SupermanMech, fire Control Shot at E4 and D6",
+        "description": "SupermanMech, move C5\u2192E3, fire Control Shot at E2 and H3",
         "target2": [
-          2,
-          4
+          5,
+          0
         ]
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "SmokeMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Ranged_SmokeFire",
+        "target": [
+          6,
+          4
+        ],
+        "description": "SmokeMech, move D6\u2192D5, fire Smoldering Shells at D2"
       }
     ],
-    "score": 178103.57142857142,
+    "score": 156450.0,
     "turn": 1,
-    "input_fingerprint": "0:2,4:3|1:2,2:3|2:3,3:2|900:2,3:2|901:5,6:2|902:4,3:2|903:6,4:3"
+    "input_fingerprint": "0:3,3:3|1527:6,3:2|1528:6,4:2|1529:5,2:2|1:2,4:3|2:3,5:2"
   },
-  "actions_executed": 1,
+  "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
   "enemies_killed": 0,
@@ -208,6 +208,896 @@
         "SmokeMech, move F6\u2192G6, fire Smoldering Shells at E6",
         "SupermanMech, fire Control Shot at E4 and D6"
       ]
+    },
+    {
+      "timestamp": "2026-06-29T09:02:34.985609",
+      "turn": 1,
+      "label": "note",
+      "message": "Resolved 20260629_073305_098_m02_t01_per_action_desync_a2 with simulator v305: live Lua Smoldering Shells base smokes only the two side tiles, not the far tile; D6 smoke mismatch fixed before End Turn."
+    },
+    {
+      "timestamp": "2026-06-29T09:03:35.594963",
+      "turn": 2,
+      "label": "solve",
+      "score": 144946.9047619049,
+      "actions": [
+        "NeedleMech, move B5\u2192C2, repair",
+        "SmokeMech, move G6\u2192F5, fire Smoldering Shells at D5",
+        "SupermanMech, move E5\u2192C5, fire Control Shot at D5 and B4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:05:34.403237",
+      "turn": 3,
+      "label": "solve",
+      "score": 158008.57142857142,
+      "actions": [
+        "NeedleMech, move C2\u2192D5, repair",
+        "SupermanMech, move C5\u2192D3, fire Control Shot at D2 and C4",
+        "SmokeMech, move F5\u2192E4, fire Smoldering Shells at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:07:23.039002",
+      "turn": 4,
+      "label": "solve",
+      "score": 155881.07142857142,
+      "actions": [
+        "NeedleMech, move D5\u2192C2, fire Reverse Thrusters at E2",
+        "SmokeMech, move E4\u2192E5, fire Smoldering Shells at E3",
+        "SupermanMech, move D3\u2192A4, fire Control Shot at B4 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:08:14.193956",
+      "turn": 4,
+      "label": "solve",
+      "score": 155881.07142857142,
+      "actions": [
+        "SupermanMech, move D3\u2192A4, fire Control Shot at B4 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:12:29.624782",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission_Barrels turn 4 threat audit after manual partial re-solve: reset visibly unavailable after failed reset attempt, all mechs spent, objectives complete, grid 6/7. Accepting ordinary F3 building threat from Firefly1 at E3 and will inspect post-enemy outcome immediately."
+    },
+    {
+      "timestamp": "2026-06-29T09:12:54.662654",
+      "turn": 4,
+      "label": "note",
+      "message": "Correction for Mission_Barrels turn 4: reset did eventually take effect after the pause/read delay. Board is back at turn 4 start with all three mechs READY; no accepted F3 grid loss was advanced."
+    },
+    {
+      "timestamp": "2026-06-29T09:13:13.962353",
+      "turn": 4,
+      "label": "solve",
+      "score": 155881.07142857142,
+      "actions": [
+        "NeedleMech, move D5\u2192C2, fire Reverse Thrusters at E2",
+        "SmokeMech, move E4\u2192E5, fire Smoldering Shells at E3",
+        "SupermanMech, move D3\u2192A4, fire Control Shot at B4 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:17:05.103675",
+      "turn": 4,
+      "label": "solve",
+      "score": 155881.07142857142,
+      "actions": [
+        "SupermanMech, move D3\u2192A4, fire Control Shot at B4 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:18:00.636417",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission_Barrels turn 4 reviewed threat audit: B6 covered by B4 Moth retargeted nonbuilding and B2 Moth in smoke. Only unresolved threat is ordinary F3 building from Firefly1 at E3. Reset is used, all mechs DONE, grid 6/7, objectives complete; accepting possible one-grid F3 hit to finish mission and continue Lets Walk run."
+    },
+    {
+      "timestamp": "2026-06-29T09:20:40.153217",
+      "turn": 4,
+      "label": "note",
+      "message": "Lets Walk counter after Disposal Vault / Mission_Barrels: Current Spaces 32, confirmed by hover screenshot 134_lets_walk_hover_after_disposal_vault.png. Mission added four visible 3-space Control Shots (+12) and finished with grid 6/7."
+    },
+    {
+      "timestamp": "2026-06-29T09:38:28.026588",
+      "turn": 1,
+      "label": "solve",
+      "score": 170078.57142857142,
+      "actions": [
+        "VIP_Truck",
+        "VIP_Truck",
+        "NeedleMech, move D5\u2192D2, fire Reverse Thrusters at B2",
+        "SmokeMech, move F5\u2192D6, fire Smoldering Shells at D3",
+        "SupermanMech, move B5\u2192D4, fire Control Shot at D3 and C1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:40:57.812044",
+      "turn": 2,
+      "label": "solve",
+      "score": 168676.07142857148,
+      "actions": [
+        "VIP_Truck",
+        "VIP_Truck, drive B3\u2192C4",
+        "NeedleMech, move B2\u2192C1, repair",
+        "SmokeMech, move D6\u2192C5, fire Smoldering Shells at C3",
+        "SupermanMech, move D4\u2192D1, fire Control Shot at D2 and B3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:42:48.186029",
+      "turn": 3,
+      "label": "solve",
+      "score": 174798.57142857142,
+      "actions": [
+        "VIP_Truck",
+        "VIP_Truck, drive C4\u2192E4",
+        "NeedleMech, move C1\u2192D4, repair",
+        "SupermanMech, move D1\u2192C4, fire Control Shot at B4 and C2",
+        "SmokeMech, fire Smoldering Shells at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:45:31.811129",
+      "turn": 4,
+      "label": "solve",
+      "score": 163684.82142857142,
+      "actions": [
+        "VIP_Truck",
+        "VIP_Truck",
+        "SmokeMech, move C5\u2192D6, fire Smoldering Shells at D1",
+        "SupermanMech, move C4\u2192B1, fire Control Shot at C1 and E2",
+        "NeedleMech, move D4\u2192C1, fire Reverse Thrusters at A1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:46:51.488602",
+      "turn": 4,
+      "label": "solve",
+      "score": 143542.32142857142,
+      "actions": [
+        "NeedleMech, move D4\u2192D8, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:55:14.441289",
+      "turn": 1,
+      "label": "solve",
+      "score": 172432.14285714284,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at A5",
+        "SmokeMech, move E5\u2192F5, fire Smoldering Shells at D5",
+        "SupermanMech, move F6\u2192C5, fire Control Shot at D5 and D2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T09:56:31.413112",
+      "turn": 1,
+      "label": "solve",
+      "score": 172432.14285714284,
+      "actions": [
+        "SupermanMech, move F6\u2192C5, fire Control Shot at D5 and D2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:00:53.661153",
+      "turn": 2,
+      "label": "solve",
+      "score": 156644.64285714304,
+      "actions": [
+        "NeedleMech, move A5\u2192E5, repair",
+        "SmokeMech, move F5\u2192F6, fire Smoldering Shells at F4",
+        "SupermanMech, move C5\u2192C4, fire Control Shot at C3 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:02:57.058956",
+      "turn": 2,
+      "label": "solve",
+      "score": 156644.64285714304,
+      "actions": [
+        "SupermanMech, move C5\u2192C4, fire Control Shot at C3 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:06:12.935799",
+      "turn": 3,
+      "label": "solve",
+      "score": 164849.64285714284,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at C5",
+        "SmokeMech, move F6\u2192E6, fire Smoldering Shells at E3",
+        "SupermanMech, move C4\u2192E5, fire Control Shot at F5 and G3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:09:53.114792",
+      "turn": 4,
+      "label": "solve",
+      "score": 164938.42857289314,
+      "actions": [
+        "NeedleMech, move C5\u2192E5, repair",
+        "SmokeMech, move E6\u2192G6, fire Smoldering Shells at G3",
+        "SupermanMech, move E4\u2192D2, fire Control Shot at C2 and D4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:10:13.098189",
+      "turn": 4,
+      "label": "note",
+      "message": "HQ turn 4 no clean candidate among 10000; accepting reviewed dirty rank 0 loss profile grid 6 to 5 and one ordinary building HP, no objective or mech loss, to finish HQ and keep farming Lets Walk."
+    },
+    {
+      "timestamp": "2026-06-29T10:40:26.043349",
+      "turn": 1,
+      "label": "solve",
+      "score": 149675.0,
+      "actions": [
+        "NeedleMech, move D5\u2192E3, fire Reverse Thrusters at E1",
+        "SupermanMech, move F5\u2192D3, fire Control Shot at D4 and D8",
+        "SmokeMech, move E6\u2192D4, fire Smoldering Shells at D8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:44:05.900933",
+      "turn": 2,
+      "label": "solve",
+      "score": 158120.83333333346,
+      "actions": [
+        "SupermanMech, fire Control Shot at D3 and F5",
+        "SmokeMech, move D4\u2192E2, fire Smoldering Shells at E5",
+        "NeedleMech, move E1\u2192D3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:45:43.306536",
+      "turn": 2,
+      "label": "solve",
+      "score": 158120.83333333346,
+      "actions": [
+        "SupermanMech, fire Control Shot at D3 and F5",
+        "SmokeMech, move D4\u2192E2, fire Smoldering Shells at E5",
+        "NeedleMech, move E1\u2192D3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:47:28.632633",
+      "turn": 3,
+      "label": "solve",
+      "score": 155200.0,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at D1",
+        "SmokeMech, move E2\u2192D2, fire Smoldering Shells at D7",
+        "SupermanMech, move E3\u2192C4, fire Control Shot at D4 and A3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T10:48:22.842227",
+      "turn": 3,
+      "label": "solve",
+      "score": 155200.0,
+      "actions": [
+        "SupermanMech, move E3\u2192C4, fire Control Shot at D4 and A3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:04:51.016610",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission_Wind turn 4 manual reviewed after solver hang: exact final line leaves Firefly/Moth listed as threats, but live score_plan([]) predicts one grid damage, zero buildings lost, zero mech damage, one enemy killed; objectives protected. Accepting this ordinary grid hit to finish Maglev and continue Let's Walk farming."
+    },
+    {
+      "timestamp": "2026-06-29T11:08:59.994021",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter after R.S.T. Maglev Bunkers: Current Spaces 72, confirmed by hover screenshot 185_lets_walk_hover_after_maglev.png. Maglev added four visible 4-space Control Shots (+16)."
+    },
+    {
+      "timestamp": "2026-06-29T11:16:52.961309",
+      "turn": 1,
+      "label": "solve",
+      "score": 237392.85714285716,
+      "actions": [
+        "NeedleMech, move F5\u2192G3, fire Reverse Thrusters at G5",
+        "SupermanMech, move E6\u2192D6, fire Control Shot at D5 and D1",
+        "SmokeMech, move C5\u2192D5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:17:39.730768",
+      "turn": 1,
+      "label": "solve",
+      "score": 231917.85714285716,
+      "actions": [
+        "SupermanMech, move E6\u2192D6, fire Control Shot at D5 and D1",
+        "SmokeMech, move C5\u2192D5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:22:54.102167",
+      "turn": 2,
+      "label": "solve",
+      "score": 281249.78564827726,
+      "actions": [
+        "NeedleMech, move G5\u2192E6, repair",
+        "SupermanMech, move D6\u2192E3, fire Control Shot at E4 and B3",
+        "SmokeMech, move D5\u2192D6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:23:55.249671",
+      "turn": 2,
+      "label": "solve",
+      "score": 281216.4523149439,
+      "actions": [
+        "NeedleMech, move G5\u2192E7, repair",
+        "SupermanMech, move D6\u2192E3, fire Control Shot at E4 and B3",
+        "SmokeMech, move D5\u2192E6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:24:23.486977",
+      "turn": 2,
+      "label": "note",
+      "message": "Storm Mill turn 2 reviewed dirty line: beam rank 0, dirty consent 7888e4a7743ce9a4, expected grid/building HP loss 2 with no building/objective/mech loss; accepted under standing consent to keep run alive and take a full-distance Let\u2019s Walk Control Shot."
+    },
+    {
+      "timestamp": "2026-06-29T11:28:27.389912",
+      "turn": 3,
+      "label": "solve",
+      "score": 248856.57159144536,
+      "actions": [
+        "SupermanMech, move E3\u2192A3, fire Control Shot at B3 and D1",
+        "SmokeMech, move E6\u2192C7, fire Smoldering Shells at C5",
+        "NeedleMech, move E7\u2192C5, fire Reverse Thrusters at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:29:34.929344",
+      "turn": 3,
+      "label": "note",
+      "message": "Storm Mill turn 3 reviewed dirty line: candidate rank 134, dirty consent 94b4908d994d10b7; expected grid 4->2, one non-objective building destroyed, no objective/mech loss; accepted under standing consent to keep timeline alive and take full-distance Let\u2019s Walk Control Shot."
+    },
+    {
+      "timestamp": "2026-06-29T11:34:21.019380",
+      "turn": 4,
+      "label": "solve",
+      "score": 38360.571641036484,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at D6",
+        "SmokeMech, move C7\u2192F7, fire Smoldering Shells at F4",
+        "SupermanMech, move A3\u2192B2, fire Control Shot at B3 and E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:34:53.997072",
+      "turn": 4,
+      "label": "note",
+      "message": "Storm Mill turn 4 reviewed dirty line: candidate rank 0, dirty consent 0cad7b07d0cd098b; expected grid 2->1, building HP -1, objective building targeted_final +1, mech HP -1, no immediate timeline collapse; accepted with objective-loss override because all alternatives are timeline collapse or worse."
+    },
+    {
+      "timestamp": "2026-06-29T11:36:35.089792",
+      "turn": 4,
+      "label": "solve",
+      "score": 36360.571641036484,
+      "actions": [
+        "SupermanMech, move A3\u2192B2, fire Control Shot at B3 and E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:36:48.996358",
+      "turn": 4,
+      "label": "note",
+      "message": "Storm Mill turn 4 post-smoke recovery dirty line: candidate rank 0, dirty consent b806ff3432f72cea; only Control ready, expected grid 2->1, building HP -1, objective building targeted_final +1, no timeline collapse; accepted with objective-loss override."
+    },
+    {
+      "timestamp": "2026-06-29T11:37:38.150968",
+      "turn": 4,
+      "label": "solve",
+      "score": 36360.571641036484,
+      "actions": [
+        "SupermanMech, move A3\u2192B2, fire Control Shot at B3 and E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:46:59.163179",
+      "turn": 1,
+      "label": "solve",
+      "score": 159900.00000000003,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at E7",
+        "SmokeMech, fire Smoldering Shells at D4",
+        "SupermanMech, move F5\u2192E6, fire Control Shot at E5 and D2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:47:52.060782",
+      "turn": 2,
+      "label": "solve",
+      "score": 151696.6666666669,
+      "actions": [
+        "NeedleMech, repair",
+        "SupermanMech, move E6\u2192F4, fire Control Shot at F3 and D2",
+        "SmokeMech, move D6\u2192D7, fire Smoldering Shells at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:49:04.313382",
+      "turn": 3,
+      "label": "solve",
+      "score": 160995.00000000003,
+      "actions": [
+        "SupermanMech, fire Control Shot at F3 and D5",
+        "SmokeMech, fire Smoldering Shells at D5",
+        "NeedleMech, move E7\u2192D6, fire Reverse Thrusters at D8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:49:30.727529",
+      "turn": 3,
+      "label": "solve",
+      "score": 160995.00000000003,
+      "actions": [
+        "SupermanMech, fire Control Shot at F3 and D5",
+        "SmokeMech, fire Smoldering Shells at D5",
+        "NeedleMech, move E7\u2192D6, fire Reverse Thrusters at D8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:52:09.237085",
+      "turn": 4,
+      "label": "solve",
+      "score": 95634.14297577311,
+      "actions": [
+        "NeedleMech, move D8\u2192E8, repair",
+        "SmokeMech, move D7\u2192C8, fire Smoldering Shells at C1",
+        "SupermanMech, fire Control Shot at F3 and C2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:52:23.234867",
+      "turn": 4,
+      "label": "note",
+      "message": "Dust Bowl turn 4 dirty frontier reviewed: accept candidate rank 0 consent 54b76c425c05c58d; expected grid 3->2 and building HP 12->11, no objective loss, no timeline collapse, robust lookahead clean."
+    },
+    {
+      "timestamp": "2026-06-29T11:52:39.621293",
+      "turn": 4,
+      "label": "solve",
+      "score": 95634.14297577311,
+      "actions": [
+        "NeedleMech, move D8\u2192E8, repair",
+        "SmokeMech, move D7\u2192C8, fire Smoldering Shells at C1",
+        "SupermanMech, fire Control Shot at F3 and C2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T11:59:53.192463",
+      "turn": 1,
+      "label": "solve",
+      "score": 188414.28571428574,
+      "actions": [
+        "NeedleMech, move D6\u2192D4, fire Reverse Thrusters at E4",
+        "SupermanMech, move F5\u2192F2, fire Control Shot at F3 and F1",
+        "SmokeMech, move C5\u2192F5, fire Smoldering Shells at F1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:00:59.180059",
+      "turn": 2,
+      "label": "solve",
+      "score": 191184.28571428574,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech",
+        "SupermanMech, move F2\u2192D3, fire Control Shot at D2 and D4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:01:57.368822",
+      "turn": 3,
+      "label": "solve",
+      "score": 182751.78571428574,
+      "actions": [
+        "NeedleMech, move E4\u2192E3, fire Reverse Thrusters at C3",
+        "SmokeMech, fire Smoldering Shells at F3",
+        "SupermanMech, move D3\u2192G2, fire Control Shot at F2 and C1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:10:47.296247",
+      "turn": 1,
+      "label": "solve",
+      "score": 137225.0,
+      "actions": [
+        "NeedleMech, move F6\u2192C4, fire Reverse Thrusters at D4",
+        "SmokeMech, move B5\u2192D5, fire Smoldering Shells at D3",
+        "SupermanMech, move G5\u2192E4, fire Control Shot at F4 and C3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:12:55.211162",
+      "turn": 1,
+      "label": "note",
+      "message": "HQ turn 1 Control Shot verifier click_miss reviewed as transient settle false positive; fresh reads show SupermanMech spent, Dung1 moved to C3, research gate resolved, boss threat covered by smoke, continuing to End Turn."
+    },
+    {
+      "timestamp": "2026-06-29T12:15:16.733835",
+      "turn": 2,
+      "label": "solve",
+      "score": 85003.83351119353,
+      "actions": [
+        "NeedleMech, move D4\u2192C2, repair",
+        "SmokeMech, move D5\u2192F6, fire Smoldering Shells at F4",
+        "SupermanMech, move E4\u2192D4, fire Control Shot at C4 and F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:16:17.253205",
+      "turn": 2,
+      "label": "solve",
+      "score": 69158.00039584293,
+      "actions": [
+        "NeedleMech, move D4\u2192C2, repair",
+        "SupermanMech, fire Control Shot at F4 and G5",
+        "SmokeMech, move D5\u2192F6, fire Smoldering Shells at B6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:16:52.648343",
+      "turn": 2,
+      "label": "note",
+      "message": "HQ turn 2 dirty frontier reviewed: rank 0 accepted under standing consent for non-perfect Lets Walk hunt. It predicts grid 5 to 3, one building destroyed, no mech loss, Corporate Tower alive, no timeline collapse, clean next-turn preview, and a longer Control Shot move than robust rank 87."
+    },
+    {
+      "timestamp": "2026-06-29T12:17:26.209760",
+      "turn": 2,
+      "label": "solve",
+      "score": 85003.83351119353,
+      "actions": [
+        "NeedleMech, move D4\u2192C2, repair",
+        "SmokeMech, move D5\u2192F6, fire Smoldering Shells at F4",
+        "SupermanMech, move E4\u2192D4, fire Control Shot at C4 and F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:18:32.932678",
+      "turn": 3,
+      "label": "solve",
+      "score": 113927.5,
+      "actions": [
+        "NeedleMech, move C2\u2192D5, repair",
+        "SmokeMech, move F6\u2192F7, fire Smoldering Shells at F5",
+        "SupermanMech, move D4\u2192C7, fire Control Shot at B7 and E8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:19:22.165502",
+      "turn": 3,
+      "label": "solve",
+      "score": 113927.5,
+      "actions": [
+        "SupermanMech, move D4\u2192C7, fire Control Shot at B7 and E8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:21:33.053687",
+      "turn": 4,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260629_073305_098_m09_t03_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "blocking": true,
+        "run_id": "20260629_073305_098",
+        "mission_index": 9,
+        "turn": 3,
+        "created_at": "2026-06-29T12:20:45.489912",
+        "source": "record_post_enemy",
+        "record_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\recordings\\20260629_073305_098\\m09_turn_03_post_enemy.json",
+        "reason": null,
+        "deltas": {
+          "buildings_alive_diff": -1,
+          "building_hp_diff": -1,
+          "grid_power_diff": -1,
+          "enemies_alive_diff": 2,
+          "pods_present_diff": 0,
+          "protected_objective_units_alive_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "mech_hp_diff": [
+            {
+              "uid": 0,
+              "type": "NeedleMech",
+              "predicted_hp": 2,
+              "actual_hp": 1,
+              "diff": -1
+            },
+            {
+              "uid": 1,
+              "type": "SmokeMech",
+              "predicted_hp": 3,
+              "actual_hp": 3,
+              "diff": 0
+            },
+            {
+              "uid": 2,
+              "type": "SupermanMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            }
+          ],
+          "mech_status_diff": [],
+          "unexpected_events": [
+            "Lost 1 unexpected building(s)",
+            "Grid power dropped by 1 unexpectedly",
+            "NeedleMech took 1 unexpected damage"
+          ]
+        },
+        "triggers": [
+          {
+            "trigger": "building_lost_unexpected",
+            "tier": 1,
+            "severity": "critical",
+            "details": "Predicted 6 buildings, actual 5 (-1)"
+          },
+          {
+            "trigger": "grid_power_drop_unexpected",
+            "tier": 1,
+            "severity": "critical",
+            "details": "Predicted grid 3, actual 2 (-1)"
+          },
+          {
+            "trigger": "mech_damage_unexpected",
+            "tier": 1,
+            "severity": "high",
+            "details": "NeedleMech: predicted HP 2, actual 1 (-1)"
+          },
+          {
+            "trigger": "grid_critical",
+            "tier": 6,
+            "severity": "high",
+            "details": "Grid power at 2 (critical)"
+          }
+        ],
+        "actual_outcome": {
+          "buildings_alive": 5,
+          "building_hp_total": 7,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 1,
+          "objective_building_hp_total": 1,
+          "objective_buildings_targeted": 0,
+          "objective_building_targets": [],
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "grid_power": 2,
+          "enemies_alive": 4,
+          "enemy_hp_total": 9,
+          "mechs_alive": 3,
+          "mech_hp_total": 6,
+          "mech_damage_taken_total": 2,
+          "mech_damage_objective_limit": null,
+          "bigbomb_alive": false,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "NeedleMech",
+              "hp": 1,
+              "max_hp": 3
+            },
+            {
+              "uid": 1,
+              "type": "SmokeMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 2,
+              "type": "SupermanMech",
+              "hp": 2,
+              "max_hp": 2
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mission_id": "Mission_DungBoss",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 0,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 4,
+          "total_turns": 4,
+          "remaining_spawns": 1,
+          "is_infinite_spawn": true,
+          "spawn_points": 0,
+          "victory_turns": 2,
+          "destroy_objective_units": [
+            {
+              "uid": 1208,
+              "type": "DungBoss",
+              "pos": [
+                3,
+                6
+              ],
+              "hp": 2,
+              "max_hp": 6,
+              "alive": true,
+              "team": 6
+            }
+          ],
+          "destroy_objective_units_alive": 1,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0
+        },
+        "predicted_outcome": {
+          "building_hp_total": 8,
+          "buildings_alive": 6,
+          "buildings_destroyed_by_enemies": 0,
+          "enemies_alive": 2,
+          "enemies_killed_by_enemy_phase": 0,
+          "enemies_killed_by_player": 0,
+          "enemies_killed_by_spawn_block": 0,
+          "enemies_killed_total_projected": 0,
+          "enemy_hp_total": 5,
+          "grid_power": 3,
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "NeedleMech",
+              "hp": 2,
+              "max_hp": 3
+            },
+            {
+              "uid": 1,
+              "type": "SmokeMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 2,
+              "type": "SupermanMech",
+              "hp": 2,
+              "max_hp": 2
+            }
+          ],
+          "mechs_alive": 3,
+          "mission_kills_by_enemy_phase": 0,
+          "mission_kills_by_player": 0,
+          "mission_kills_by_spawn_block": 0,
+          "mission_kills_done_projected": 0,
+          "mission_kills_total_projected": 0,
+          "mission_mountains_destroyed_projected": 0,
+          "bigbomb_alive": false,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 1,
+          "objective_building_hp_total": 1,
+          "objective_buildings_targeted": 0,
+          "objective_building_targets": [],
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "mech_hp_total": 7,
+          "mech_damage_taken_total": 1,
+          "mech_damage_objective_limit": null,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": false,
+          "mission_id": "Mission_DungBoss",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 0,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 4,
+          "total_turns": 4,
+          "remaining_spawns": 0,
+          "is_infinite_spawn": true,
+          "spawn_points": 2,
+          "victory_turns": 1,
+          "destroy_objective_units": [
+            {
+              "uid": 1208,
+              "type": "DungBoss",
+              "pos": [
+                0,
+                3
+              ],
+              "hp": 3,
+              "max_hp": 6,
+              "alive": true,
+              "team": 6
+            }
+          ],
+          "destroy_objective_units_alive": 1,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "pods_collected": 0
+        },
+        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
+        "resolved_at": "2026-06-29T12:21:33.053661",
+        "resolve_reason": "Turn 3 post-enemy mismatch came from a real Control Shot click_miss on DungBoss. The solver prediction assumed DungBoss moved to E8, but fresh reads showed the leader stayed on B7 and the enemy phase resolved from that actual board, causing the extra grid/building/mech damage. Current turn 4 board is fresh and known at grid 2 with all mechs alive; continue without relying on boss Control Shot."
+      }
+    },
+    {
+      "timestamp": "2026-06-29T12:21:51.150800",
+      "turn": 4,
+      "label": "solve",
+      "score": 35459.28571428571,
+      "actions": [
+        "NeedleMech, move D5\u2192C6, repair",
+        "SmokeMech, move F7\u2192F5, fire Smoldering Shells at B5",
+        "SupermanMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:29:46.591616",
+      "turn": 4,
+      "label": "solve",
+      "score": 35459.28571428571,
+      "actions": [
+        "NeedleMech, move D5\u2192C6, repair",
+        "SmokeMech, move F7\u2192F5, fire Smoldering Shells at B5",
+        "SupermanMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:29:57.408547",
+      "turn": 4,
+      "label": "solve",
+      "score": 35459.28571428571,
+      "actions": [
+        "NeedleMech, move D5\u2192C6, repair",
+        "SmokeMech, move F7\u2192F5, fire Smoldering Shells at B5",
+        "SupermanMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T12:30:48.990255",
+      "turn": 4,
+      "label": "note",
+      "message": "HQ turn 4 skip desync was a single extra smoke tile at visual B6 after Smoldering Shells; no unit, grid, building, or objective HP diffs and threat audit was clear, so continuing to End Turn."
+    },
+    {
+      "timestamp": "2026-06-29T12:45:55.002833",
+      "turn": 1,
+      "label": "solve",
+      "score": 156450.0,
+      "actions": [
+        "NeedleMech, move E5\u2192E3, fire Reverse Thrusters at D3",
+        "SupermanMech, move C5\u2192E3, fire Control Shot at E2 and H3",
+        "SmokeMech, move D6\u2192D5, fire Smoldering Shells at D2"
+      ]
     }
   ],
   "lightning_route_probe_cache": [],
@@ -235,14 +1125,218 @@
     [
       1,
       3
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      1
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      4,
+      3
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      6,
+      3
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      8,
+      1
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      9,
+      1
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      9,
+      3
     ]
   ],
   "post_enemy_block": null,
-  "dirty_consent_used": [],
+  "dirty_consent_used": [
+    "54b76c425c05c58d",
+    "d13682f2ad5607cf"
+  ],
   "tags": [
     "achievement"
   ],
-  "failure_events_this_run": [],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Science_TC_Control_AB|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Science_TC_Control_AB",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_SmokeFire|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Ranged_SmokeFire",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Science_TC_Control_AB|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Science_TC_Control_AB",
+        "target": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Unknown|skip",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "skip",
+        "sub_action": "skip",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    }
+  ],
   "disabled_actions": [],
   "research_queue": [
     {
@@ -301,13 +1395,85 @@
         "diff_predicted": null,
         "diff_actual": null
       }
+    },
+    {
+      "type": "Dung1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_DungBoss",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Dung1 is the known live Lua id for base Tumblebug; already present in known_types, pawn stats, weapons, and Rust mapping per agent rule 141.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "pos",
+        "diff_predicted": [
+          5,
+          5
+        ],
+        "diff_actual": [
+          4,
+          2
+        ]
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        5,
+        5
+      ],
+      "diff_actual": [
+        4,
+        2
+      ],
+      "severity": "medium",
+      "research_id": "74384fb45683",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "DungBoss",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_DungBoss",
+      "first_seen_turn": 3,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "DungBoss is the known live Lua id for Tumblebug Leader; already documented and modeled per agent rule 160 with DungAtkB mapping.",
+        "kind": "behavior_novelty",
+        "attempts": 0,
+        "diff_field": "pos",
+        "diff_predicted": [
+          0,
+          3
+        ],
+        "diff_actual": [
+          1,
+          6
+        ]
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        0,
+        3
+      ],
+      "diff_actual": [
+        1,
+        6
+      ],
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "93d6f95157a251b0",
-    "classes": "gggggmmmgbbggbmmgggggbbmggggggggmbbgggggmmbgggwmmmmgggggmmmmgggg",
-    "mission_index": 2,
+    "hash": "39394efe86725407",
+    "classes": "mmwwggggmwwbbgbgwmmgggggwgggggbggbbgfgbggggggfgggggggggmmgggggmm",
+    "mission_index": 10,
     "turn": 1
   },
   "terrain_stage_change_pending": false
