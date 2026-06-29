@@ -6,12 +6,12 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Survive",
+  "current_mission": "Mission_Satellite",
   "islands_completed": [],
-  "mission_index": 8,
-  "last_mission_turn": 2,
-  "current_turn": 2,
-  "phase": "combat_player",
+  "mission_index": 9,
+  "last_mission_turn": 0,
+  "current_turn": 0,
+  "phase": "unknown",
   "active_solution": {
     "actions": [
       {
@@ -29,29 +29,25 @@
         "description": "NeedleMech, repair"
       },
       {
-        "mech_uid": 2,
-        "mech_type": "SupermanMech",
+        "mech_uid": 1,
+        "mech_type": "SmokeMech",
         "move_to": [
-          5,
-          4
-        ],
-        "weapon": "Science_TC_Control_A",
-        "target": [
-          5,
-          5
-        ],
-        "description": "SupermanMech, fire Control Shot at C3 and E4",
-        "target2": [
-          4,
+          2,
           3
-        ]
+        ],
+        "weapon": "Ranged_SmokeFire",
+        "target": [
+          2,
+          6
+        ],
+        "description": "SmokeMech, fire Smoldering Shells at B6"
       }
     ],
-    "score": 134411.66666666663,
-    "turn": 2,
-    "input_fingerprint": "0:7,4:1|1:2,5:3|2:5,4:2|501:6,4:3|502:5,5:4"
+    "score": -139706.11070288927,
+    "turn": 4,
+    "input_fingerprint": "0:7,4:1|1:2,3:3|2:5,4:0|501:6,4:1|502:3,3:2|504:2,4:4|505:2,6:2|506:5,1:2"
   },
-  "actions_executed": 1,
+  "actions_executed": 2,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
   "enemies_killed": 0,
@@ -533,6 +529,128 @@
         "NeedleMech, repair",
         "SupermanMech, fire Control Shot at C3 and E4"
       ]
+    },
+    {
+      "timestamp": "2026-06-29T04:25:46.410576",
+      "turn": 3,
+      "label": "solve",
+      "score": 138970.1428733894,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move C6\u2192E6, fire Smoldering Shells at E3",
+        "SupermanMech, move D3\u2192E1, fire Control Shot at E2 and F4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:27:35.393363",
+      "turn": 3,
+      "label": "solve",
+      "score": 138970.1428733894,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move C6\u2192E6, fire Smoldering Shells at E3",
+        "SupermanMech, move D3\u2192E1, fire Control Shot at E2 and F4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:28:27.159133",
+      "turn": 3,
+      "label": "note",
+      "message": "Archive Central turn 3 dirty frontier reviewed: no clean plan found among 10000 candidates; accepting candidate rank 0 / consent b4e8fd8d30c28727 with predicted 2 grid and 1 building loss to preserve all mechs and continue Let\u2019s Walk farming."
+    },
+    {
+      "timestamp": "2026-06-29T04:29:10.024252",
+      "turn": 3,
+      "label": "solve",
+      "score": 86097.64108525006,
+      "actions": [
+        "SupermanMech, fire Control Shot at D2 and C4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:32:28.673677",
+      "turn": 3,
+      "label": "solve",
+      "score": 80097.64108525006,
+      "actions": [
+        "SupermanMech, fire Control Shot at D2 and C3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:32:48.292912",
+      "turn": 3,
+      "label": "solve",
+      "score": 12277.642873389399,
+      "actions": [
+        "SupermanMech, fire Control Shot at E3 and D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:32:54.748422",
+      "turn": 3,
+      "label": "solve",
+      "score": 80045.14108525006,
+      "actions": [
+        "SupermanMech, fire Control Shot at D2 and C1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:33:00.336958",
+      "turn": 3,
+      "label": "solve",
+      "score": 74045.14108525006,
+      "actions": [
+        "SupermanMech, fire Control Shot at D2 and C2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:33:07.028884",
+      "turn": 3,
+      "label": "solve",
+      "score": 11427.642873389399,
+      "actions": [
+        "SupermanMech, fire Control Shot at E3 and F1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:33:14.006112",
+      "turn": 3,
+      "label": "solve",
+      "score": 11025.142873389399,
+      "actions": [
+        "SupermanMech, fire Control Shot at E3 and G2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:36:02.677510",
+      "turn": 3,
+      "label": "solve",
+      "score": 86097.64108525006,
+      "actions": [
+        "SupermanMech, fire Control Shot at D2 and C4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:40:05.582586",
+      "turn": 4,
+      "label": "solve",
+      "score": -139706.11070288927,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, fire Smoldering Shells at B6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T04:40:20.548758",
+      "turn": 4,
+      "label": "note",
+      "message": "Archive Central turn 4 dirty frontier reviewed after Control disabled: no clean plan found among 92 candidates; accepting rank 0 / consent effd96a1e371421b with predicted 2 grid, 1 building, and 1 mech loss to finish the mission and preserve the timeline."
+    },
+    {
+      "timestamp": "2026-06-29T04:50:18.231649",
+      "turn": 0,
+      "label": "note",
+      "message": "Let's Walk counter check after Central Museums: tooltip shows Current Spaces 48. Central mission added visible Control Shot progress but cost Control/Smoke pilots; continuing with no-pilot replacements."
     }
   ],
   "lightning_route_probe_cache": [],
@@ -592,6 +710,14 @@
     [
       8,
       1
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      8,
+      3
     ]
   ],
   "post_enemy_block": null,
@@ -640,10 +766,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "096b831ae59b7234",
-    "classes": "wmmgmfggmbbgbffgmbbgggggggfggfbmmggfggmwmfggggwwwggfggwwwgggggww",
-    "mission_index": 8,
-    "turn": 2
+    "hash": "3d28af0dfd0385b1",
+    "classes": "ggggggmmfbgfggmmgbgbggbmgbggggbmggggggbmwggfggggwwgfggggwwwwfgfg",
+    "mission_index": 9,
+    "turn": 0
   },
   "terrain_stage_change_pending": false
 }

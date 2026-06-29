@@ -281,6 +281,11 @@ def main():
         action="store_true",
         help="With exact dirty consent, allow objective loss/failure kinds",
     )
+    p_click_action.add_argument(
+        "--allow-mech-loss",
+        action="store_true",
+        help="With exact dirty consent, allow mech loss",
+    )
 
     # dispatch_click_action
     p_dispatch_click_action = sub.add_parser(
@@ -307,6 +312,11 @@ def main():
         "--allow-objective-loss",
         action="store_true",
         help="With exact dirty consent, allow objective loss/failure kinds",
+    )
+    p_dispatch_click_action.add_argument(
+        "--allow-mech-loss",
+        action="store_true",
+        help="With exact dirty consent, allow mech loss",
     )
     p_dispatch_click_action.add_argument(
         "--execute",
@@ -2112,6 +2122,7 @@ def main():
             dirty_consent_id=args.dirty_consent_id,
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
+            allow_mech_loss=args.allow_mech_loss,
         )
     elif args.command == "dispatch_click_action":
         cmd_dispatch_click_action(
@@ -2121,6 +2132,7 @@ def main():
             dirty_consent_id=args.dirty_consent_id,
             allow_protected_objective_loss=args.allow_protected_objective_loss,
             allow_objective_loss=args.allow_objective_loss,
+            allow_mech_loss=args.allow_mech_loss,
             execute=args.execute,
             post_wait=args.post_wait,
         )

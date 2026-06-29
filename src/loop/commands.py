@@ -1030,6 +1030,7 @@ def _dirty_consent_gate(
     consume: bool = True,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    allow_mech_loss: bool = False,
     allow_timeline_collapse: bool = False,
     allow_previously_consumed: bool = False,
 ) -> dict | None:
@@ -1082,6 +1083,7 @@ def _dirty_consent_gate(
             allow_objective_loss
             and k in OBJECTIVE_LOSS_DIRTY_KINDS
         )
+        and not (allow_mech_loss and k == "mech_lost")
     )
     if non_overridable:
         return _hard_stop_result(
@@ -7407,6 +7409,7 @@ def cmd_click_action(
     dirty_consent_id: str | None = None,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    allow_mech_loss: bool = False,
 ) -> dict:
     """Plan clicks for ONE mech action and emit a computer_batch-ready batch.
 
@@ -7461,6 +7464,7 @@ def cmd_click_action(
                 consume=False,
                 allow_protected_objective_loss=allow_protected_objective_loss,
                 allow_objective_loss=allow_objective_loss,
+                allow_mech_loss=allow_mech_loss,
                 allow_previously_consumed=True,
             )
             if consent_error is not None:
@@ -7476,6 +7480,7 @@ def cmd_click_action(
             allow_objective_loss_dirty=(
                 dirty_consent_validated and allow_objective_loss
             ),
+            allow_mech_loss_dirty=(dirty_consent_validated and allow_mech_loss),
         ):
             consent_id = _dirty_consent_id(
                 session,
@@ -7878,6 +7883,7 @@ def cmd_dispatch_click_action(
     dirty_consent_id: str | None = None,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    allow_mech_loss: bool = False,
     execute: bool = False,
     post_wait: float = 1.25,
 ) -> dict:
@@ -7894,6 +7900,7 @@ def cmd_dispatch_click_action(
         dirty_consent_id=dirty_consent_id,
         allow_protected_objective_loss=allow_protected_objective_loss,
         allow_objective_loss=allow_objective_loss,
+        allow_mech_loss=allow_mech_loss,
     )
     if plan.get("status") != "PLAN":
         result = {
