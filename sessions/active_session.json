@@ -6,12 +6,12 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Satellite",
+  "current_mission": "Mission_Mines",
   "islands_completed": [],
-  "mission_index": 9,
+  "mission_index": 10,
   "last_mission_turn": 0,
   "current_turn": 0,
-  "phase": "unknown",
+  "phase": "combat_enemy",
   "active_solution": {
     "actions": [
       {
@@ -766,9 +766,9 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "3d28af0dfd0385b1",
-    "classes": "ggggggmmfbgfggmmgbgbggbmgbggggbmggggggbmwggfggggwwgfggggwwwwfgfg",
-    "mission_index": 9,
+    "hash": "dfc8271f966d453a",
+    "classes": "gwwwwwwgggbmmbgfgggmmggfbggbbfgbbggggggbmfggfggmmggfgggmmggfgggm",
+    "mission_index": 10,
     "turn": 0
   },
   "terrain_stage_change_pending": false
