@@ -6,36 +6,64 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Crack",
+  "current_mission": "Mission_BlobBoss",
   "islands_completed": [],
-  "mission_index": 5,
-  "last_mission_turn": 0,
-  "current_turn": 0,
-  "phase": "unknown",
+  "mission_index": 7,
+  "last_mission_turn": 3,
+  "current_turn": 3,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "NeedleMech",
+        "move_to": [
+          4,
+          2
+        ],
+        "weapon": "Brute_KickBack",
+        "target": [
+          4,
+          1
+        ],
+        "description": "NeedleMech, move H6\u2192F4, fire Reverse Thrusters at G4"
+      },
       {
         "mech_uid": 2,
         "mech_type": "SupermanMech",
         "move_to": [
-          2,
-          2
+          0,
+          4
         ],
-        "weapon": "Science_TC_Control",
+        "weapon": "Science_TC_Control_A",
         "target": [
-          3,
-          2
+          1,
+          4
         ],
-        "description": "SupermanMech, move G4\u2192F6, fire Control Shot at F5 and E4",
+        "description": "SupermanMech, move D5\u2192D8, fire Control Shot at D7 and F8",
         "target2": [
-          4,
-          3
+          0,
+          2
         ]
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "SmokeMech",
+        "move_to": [
+          1,
+          4
+        ],
+        "weapon": "Ranged_SmokeFire",
+        "target": [
+          5,
+          4
+        ],
+        "description": "SmokeMech, move E5\u2192D7, fire Smoldering Shells at D3"
       }
     ],
-    "score": 148462.14285714284,
+    "score": 155762.5,
     "turn": 3,
-    "input_fingerprint": "0:1,4:3|1:3,3:3|2:4,1:2|433:3,6:1|436:3,2:3|437:4,6:3|438:4,0:3"
+    "input_fingerprint": "0:2,0:2|1:3,3:3|2:3,4:2|467:1,4:3|470:4,3:4|471:3,5:3|473:6,4:2|475:5,4:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -279,6 +307,117 @@
       "actions": [
         "SupermanMech, move G4\u2192F6, fire Control Shot at F5 and E4"
       ]
+    },
+    {
+      "timestamp": "2026-06-29T03:09:39.014447",
+      "turn": 0,
+      "label": "note",
+      "message": "Let's Walk counter check after Turbine Cluster: pause tooltip at window-local 820,242 shows Current Spaces 18."
+    },
+    {
+      "timestamp": "2026-06-29T03:16:13.034699",
+      "turn": 1,
+      "label": "solve",
+      "score": 148900.0,
+      "actions": [
+        "SupermanMech, move F6\u2192C5, fire Control Shot at C4 and C1",
+        "SmokeMech, move C6\u2192F6, fire Smoldering Shells at F4",
+        "NeedleMech, move D5\u2192E3, fire Reverse Thrusters at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:18:50.103829",
+      "turn": 2,
+      "label": "solve",
+      "score": 136314.16666666657,
+      "actions": [
+        "NeedleMech, move F3\u2192E2, repair",
+        "SmokeMech, move F6\u2192E6, fire Smoldering Shells at E4",
+        "SupermanMech, move C5\u2192E4, fire Control Shot at E3 and D1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:21:29.646022",
+      "turn": 3,
+      "label": "solve",
+      "score": 123927.5,
+      "actions": [
+        "NeedleMech, move E2\u2192G3, repair",
+        "SmokeMech, move E6\u2192G6, fire Smoldering Shells at G2",
+        "SupermanMech, move E4\u2192B5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:23:46.320867",
+      "turn": 4,
+      "label": "solve",
+      "score": 127297.5,
+      "actions": [
+        "NeedleMech, move G3\u2192F6, repair",
+        "SmokeMech, move G6\u2192F7, fire Smoldering Shells at F3",
+        "SupermanMech, move B5\u2192B3, fire Control Shot at B2 and D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:29:05.312945",
+      "turn": 4,
+      "label": "solve",
+      "score": 135297.5,
+      "actions": [
+        "NeedleMech, move G3\u2192F6, repair",
+        "SmokeMech, move G6\u2192F7, fire Smoldering Shells at F3",
+        "SupermanMech, move B5\u2192B3, fire Control Shot at B2 and D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:33:42.417020",
+      "turn": 0,
+      "label": "note",
+      "message": "Let's Walk counter check after The Scar: pause tooltip at window-local 820,242 shows Current Spaces 27; Reset Turn did not double-count the replayed Control Shot."
+    },
+    {
+      "timestamp": "2026-06-29T03:36:52.618300",
+      "turn": 1,
+      "label": "solve",
+      "score": 134100.0,
+      "actions": [
+        "NeedleMech, move D5\u2192G5, fire Reverse Thrusters at H5",
+        "SupermanMech, move C6\u2192D3, fire Control Shot at D2 and F3",
+        "SmokeMech, fire Smoldering Shells at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:39:12.265338",
+      "turn": 2,
+      "label": "solve",
+      "score": 142241.6666666668,
+      "actions": [
+        "NeedleMech, move H5\u2192H6, repair",
+        "SupermanMech, move D3\u2192D5, fire Control Shot at E5 and F3",
+        "SmokeMech, move F6\u2192E5, fire Smoldering Shells at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:42:27.791660",
+      "turn": 3,
+      "label": "solve",
+      "score": 155762.5,
+      "actions": [
+        "NeedleMech, move H6\u2192F4, fire Reverse Thrusters at G4",
+        "SupermanMech, move D5\u2192D8, fire Control Shot at D7 and F8",
+        "SmokeMech, move E5\u2192D6, fire Smoldering Shells at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T03:43:03.634775",
+      "turn": 3,
+      "label": "solve",
+      "score": 155762.5,
+      "actions": [
+        "NeedleMech, move H6\u2192F4, fire Reverse Thrusters at G4",
+        "SupermanMech, move D5\u2192D8, fire Control Shot at D7 and F8",
+        "SmokeMech, move E5\u2192D7, fire Smoldering Shells at D3"
+      ]
     }
   ],
   "lightning_route_probe_cache": [],
@@ -309,6 +448,26 @@
     ],
     [
       4,
+      2
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      6,
+      3
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
       2
     ]
   ],
@@ -358,10 +517,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "368367e838829046",
-    "classes": "wgsgbwbgwggggwgswbgsbwbgwbgggwwgwggggbwwgwbggggsgsggsgggmmgmggmm",
-    "mission_index": 5,
-    "turn": 0
+    "hash": "ad4d36eca040040b",
+    "classes": "gsggggmmgbgbggmmgbgbgggmsgggggggmsggbsbgmggggsggmmggggsmmmggggmm",
+    "mission_index": 7,
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }
