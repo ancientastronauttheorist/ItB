@@ -22,6 +22,10 @@
     "destroy": [],
     "protect": ["ProtoBomb"]
   },
+  "Mission_Filler": {
+    "destroy": [],
+    "protect": ["Filler_Pawn"]
+  },
   "Mission_Train": {
     "destroy": [],
     "protect": ["Train"]

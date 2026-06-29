@@ -25,6 +25,13 @@ def test_mission_dam_destroys_dam_pawn():
     assert resolved["protect"] == []
 
 
+def test_mission_filler_protects_earth_mover():
+    resolved = resolve_unit_objectives("Mission_Filler")
+
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["Filler_Pawn"]
+
+
 def test_bonus_debris_injects_bonus_debris_destroy_objective():
     bridge_data = {
         "mission_id": "Mission_Survive",
