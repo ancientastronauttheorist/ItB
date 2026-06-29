@@ -6,46 +6,64 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Mines",
+  "current_mission": "Mission_Satellite",
   "islands_completed": [],
-  "mission_index": 10,
-  "last_mission_turn": 0,
-  "current_turn": 0,
-  "phase": "combat_enemy",
+  "mission_index": 11,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
         "mech_type": "NeedleMech",
         "move_to": [
-          7,
-          4
+          5,
+          5
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Brute_KickBack",
         "target": [
-          7,
-          4
+          6,
+          5
         ],
-        "description": "NeedleMech, repair"
+        "description": "NeedleMech, move F5\u2192C3, fire Reverse Thrusters at C2"
       },
       {
         "mech_uid": 1,
         "mech_type": "SmokeMech",
         "move_to": [
           2,
-          3
+          2
         ],
         "weapon": "Ranged_SmokeFire",
         "target": [
-          2,
-          6
+          4,
+          2
         ],
-        "description": "SmokeMech, fire Smoldering Shells at B6"
+        "description": "SmokeMech, move D5\u2192F6, fire Smoldering Shells at F4"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "SupermanMech",
+        "move_to": [
+          2,
+          5
+        ],
+        "weapon": "Science_TC_Control_A",
+        "target": [
+          3,
+          5
+        ],
+        "description": "SupermanMech, fire Control Shot at C5 and E4",
+        "target2": [
+          4,
+          3
+        ]
       }
     ],
-    "score": -139706.11070288927,
-    "turn": 4,
-    "input_fingerprint": "0:7,4:1|1:2,3:3|2:5,4:0|501:6,4:1|502:3,3:2|504:2,4:4|505:2,6:2|506:5,1:2"
+    "score": 129150.0,
+    "turn": 1,
+    "input_fingerprint": "0:3,2:3|1:3,4:3|2:2,5:2|511:4,4:2|512:5,1:2|513:4,5:4|514:3,5:5|515:4,2:2|516:5,2:3"
   },
   "actions_executed": 2,
   "buildings_lost": 0,
@@ -651,6 +669,76 @@
       "turn": 0,
       "label": "note",
       "message": "Let's Walk counter check after Central Museums: tooltip shows Current Spaces 48. Central mission added visible Control Shot progress but cost Control/Smoke pilots; continuing with no-pilot replacements."
+    },
+    {
+      "timestamp": "2026-06-29T05:02:30.863958",
+      "turn": 1,
+      "label": "solve",
+      "score": 159425.0,
+      "actions": [
+        "SmokeMech, fire Smoldering Shells at B2",
+        "SupermanMech, move G6\u2192E4, fire Control Shot at D4 and B3",
+        "NeedleMech, move C5\u2192D4, fire Reverse Thrusters at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:04:06.600107",
+      "turn": 2,
+      "label": "solve",
+      "score": 149403.3333333335,
+      "actions": [
+        "SupermanMech, move E4\u2192C3, fire Control Shot at B3 and D2",
+        "SmokeMech, move B6\u2192B3, fire Smoldering Shells at F3",
+        "NeedleMech, move F4\u2192D4, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:14:19.877786",
+      "turn": 2,
+      "label": "solve",
+      "score": 131410.57141964784,
+      "actions": [
+        "NeedleMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:16:00.270485",
+      "turn": 3,
+      "label": "solve",
+      "score": 164149.64285714284,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move B3\u2192B5, fire Smoldering Shells at B1",
+        "SupermanMech, move C3\u2192G2, fire Control Shot at G3 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:17:50.394171",
+      "turn": 4,
+      "label": "solve",
+      "score": 163347.14285714284,
+      "actions": [
+        "NeedleMech, move F4\u2192E3, fire Reverse Thrusters at G3",
+        "SmokeMech, fire Smoldering Shells at B3",
+        "SupermanMech, move G2\u2192G6, fire Control Shot at G5 and E4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T05:23:45.620366",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter check after Archival Flats: tooltip shows Current Spaces 60. Counter was 48 after Central Museums, so four visible Control Shots in Mission_Mines added 12 spaces."
+    },
+    {
+      "timestamp": "2026-06-29T05:27:58.794540",
+      "turn": 1,
+      "label": "solve",
+      "score": 129150.0,
+      "actions": [
+        "NeedleMech, move F5\u2192C3, fire Reverse Thrusters at C2",
+        "SmokeMech, move D5\u2192F6, fire Smoldering Shells at F4",
+        "SupermanMech, fire Control Shot at C5 and E4"
+      ]
     }
   ],
   "lightning_route_probe_cache": [],
@@ -718,6 +806,18 @@
     [
       8,
       3
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
+      3
     ]
   ],
   "post_enemy_block": null,
@@ -766,10 +866,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "dfc8271f966d453a",
-    "classes": "gwwwwwwgggbmmbgfgggmmggfbggbbfgbbggggggbmfggfggmmggfgggmmggfgggm",
-    "mission_index": 10,
-    "turn": 0
+    "hash": "3d28af0dfd0385b1",
+    "classes": "ggggggmmfbgfggmmgbgbggbmgbggggbmggggggbmwggfggggwwgfggggwwwwfgfg",
+    "mission_index": 11,
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }
