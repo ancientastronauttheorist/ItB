@@ -224,6 +224,9 @@ pub enum DamageSource {
     /// Old Earth Artillery damage uses ordinary weapon damage math, but live
     /// keeps a surviving Scorpion's existing grapple attached.
     MissionArtillery = 10,
+    /// Smoldering Shells uses ordinary weapon damage math, but live keeps a
+    /// surviving Scorpion's existing grapple attached.
+    SmolderingShells = 11,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────

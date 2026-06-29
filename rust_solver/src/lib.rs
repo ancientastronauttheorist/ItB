@@ -1988,7 +1988,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Terraform turn 4 left the Reverse Thrusters backblast Firefly
 //   not-on-fire after the hit tile was smoked. Pre-v303 corpus archived as
 //   failure_db_snapshot_sim_v302.jsonl.
-pub const SIMULATOR_VERSION: u32 = 303;
+// v304 - Smoldering Shells damage does not release a surviving enemy web
+//   source. Fixes Mist Eaters Let's Walk run 20260629_021050_272 Archive
+//   Mission_Mines turn 2, where Smoldering Shells damaged a Scorpion web
+//   source but Needle stayed webbed. Pre-v304 corpus archived as
+//   failure_db_snapshot_sim_v303.jsonl.
+pub const SIMULATOR_VERSION: u32 = 304;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -1514,6 +1514,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                             | DamageSource::WeaponCracksOccupied
                             | DamageSource::WeaponNoAcidPool
                             | DamageSource::MissionArtillery
+                            | DamageSource::SmolderingShells
                     )
                 {
                     damaged_enemy_web_source_uid = Some(unit.uid);
@@ -1531,6 +1532,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                                 | DamageSource::WeaponCracksOccupied
                                 | DamageSource::WeaponNoAcidPool
                                 | DamageSource::MissionArtillery
+                                | DamageSource::SmolderingShells
                         ),
                     );
                     on_enemy_death(board, idx, result);
@@ -1553,7 +1555,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     if let Some(uid) = damaged_enemy_web_source_uid {
-        if source != DamageSource::MissionArtillery {
+        if !matches!(source, DamageSource::MissionArtillery | DamageSource::SmolderingShells) {
             break_web_from(board, uid);
         }
     }
@@ -4305,8 +4307,17 @@ fn sim_projectile(
 fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     let center_occupied_at_impact = board.unit_at(tx, ty).is_some();
     let center_blocked_at_impact = board.is_blocked(tx, ty, false);
+    let smoldering_shells = matches!(
+        weapon_id,
+        WId::RangedSmokeFire
+            | WId::RangedSmokeFireA
+            | WId::RangedSmokeFireB
+            | WId::RangedSmokeFireAB
+    );
     let direct_damage_source = if weapon_id == WId::ArchiveArtShot {
         DamageSource::MissionArtillery
+    } else if smoldering_shells {
+        DamageSource::SmolderingShells
     } else {
         DamageSource::Weapon
     };
@@ -4380,13 +4391,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     // tiles. Base/+Damage use the four cardinal neighbors; More Smoke variants
     // add the four diagonals. Empty non-building tiles receive smoke; occupied
     // neighboring units are skipped entirely.
-    if matches!(
-        weapon_id,
-        WId::RangedSmokeFire
-            | WId::RangedSmokeFireA
-            | WId::RangedSmokeFireB
-            | WId::RangedSmokeFireAB
-    ) {
+    if smoldering_shells {
         const MORE_SMOKE_DIRS: [(i8, i8); 8] = [
             (0, 1),
             (1, 0),
@@ -12969,6 +12974,49 @@ mod tests {
             !board.tile(5, 3).smoke(),
             "adjacent building tiles should not receive Smoldering Shells smoke"
         );
+    }
+
+    #[test]
+    fn test_smoldering_shells_surviving_web_source_keeps_grapple() {
+        // Mist Eaters Let's Walk run 20260629_021050_272, Archive
+        // Mission_Mines turn 2: Smoldering Shells damaged and ignited a
+        // Scorpion that was webbing Needle, but live kept the grapple while
+        // the Scorpion survived.
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFire);
+        let needle = add_mech(&mut board, 0, 4, 2, 3, WId::BruteKickBack);
+        let scorpion = add_enemy_type(&mut board, 507, 5, 2, 3, "Scorpion1");
+        board.units[needle].base_move = 3;
+        board.units[needle].move_speed = 0;
+        board.units[needle].set_web(true);
+        board.units[needle].web_source_uid = board.units[scorpion].uid;
+        board.units[scorpion].queued_target_x = board.units[needle].x as i8;
+        board.units[scorpion].queued_target_y = board.units[needle].y as i8;
+        board.units[scorpion].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 5, 2);
+
+        assert_eq!(board.units[scorpion].hp, 2);
+        assert!(board.units[scorpion].fire(), "center target should be set on Fire");
+        assert!(board.units[needle].web(), "surviving Smoldering Shells web source should keep grapple");
+        assert_eq!(board.units[needle].web_source_uid, board.units[scorpion].uid);
+        assert_eq!(board.units[needle].move_speed, 0);
+
+        let mut kill_board = make_test_board();
+        let smog = add_mech(&mut kill_board, 1, 2, 2, 3, WId::RangedSmokeFireAB);
+        let needle = add_mech(&mut kill_board, 0, 4, 2, 3, WId::BruteKickBack);
+        let scorpion = add_enemy_type(&mut kill_board, 507, 5, 2, 3, "Scorpion1");
+        kill_board.units[needle].base_move = 3;
+        kill_board.units[needle].move_speed = 0;
+        kill_board.units[needle].set_web(true);
+        kill_board.units[needle].web_source_uid = kill_board.units[scorpion].uid;
+
+        let _ = simulate_weapon(&mut kill_board, smog, WId::RangedSmokeFireAB, 5, 2);
+
+        assert_eq!(kill_board.units[scorpion].hp, 0);
+        assert!(!kill_board.units[needle].web(), "killed web source should still release grapple");
+        assert_eq!(kill_board.units[needle].web_source_uid, 0);
+        assert_eq!(kill_board.units[needle].move_speed, kill_board.units[needle].base_move);
     }
 
     #[test]

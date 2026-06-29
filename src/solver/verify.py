@@ -1447,7 +1447,9 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v303 - Smoke placed directly onto an occupied tile clears carried fire without
 # applying Nanofilter healing. Pre-v303 corpus archived as
 # failure_db_snapshot_sim_v302.jsonl.
-SIMULATOR_VERSION = 303
+# v304 - Smoldering Shells damage does not release a surviving enemy web source.
+# Pre-v304 corpus archived as failure_db_snapshot_sim_v303.jsonl.
+SIMULATOR_VERSION = 304
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
