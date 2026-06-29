@@ -6,11 +6,11 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Holes",
+  "current_mission": "Mission_Terratide",
   "islands_completed": [],
-  "mission_index": 0,
-  "last_mission_turn": 1,
-  "current_turn": 1,
+  "mission_index": 2,
+  "last_mission_turn": 3,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -19,51 +19,51 @@
         "mech_type": "SmokeMech",
         "move_to": [
           3,
-          5
+          4
         ],
-        "weapon": "Ranged_SmokeFire",
+        "weapon": "Unknown",
         "target": [
-          3,
-          1
+          255,
+          255
         ],
-        "description": "SmokeMech, move E6\u2192C5, fire Smoldering Shells at G5"
+        "description": "SmokeMech, move E5\u2192D5"
       },
       {
         "mech_uid": 0,
         "mech_type": "NeedleMech",
         "move_to": [
-          2,
+          3,
           3
         ],
-        "weapon": "Brute_KickBack",
+        "weapon": "_REPAIR",
         "target": [
           3,
           3
         ],
-        "description": "NeedleMech, move F5\u2192E6, fire Reverse Thrusters at E5"
+        "description": "NeedleMech, move E8\u2192E5, repair"
       },
       {
         "mech_uid": 2,
         "mech_type": "SupermanMech",
         "move_to": [
-          3,
-          4
+          6,
+          1
         ],
         "weapon": "Science_TC_Control",
         "target": [
-          4,
-          4
+          6,
+          2
         ],
-        "description": "SupermanMech, fire Control Shot at D4 and E3",
+        "description": "SupermanMech, move F5\u2192G2, fire Control Shot at F2 and E1",
         "target2": [
-          5,
+          7,
           3
         ]
       }
     ],
-    "score": 168653.57142857142,
-    "turn": 1,
-    "input_fingerprint": "0:3,2:3|1:2,3:3|2:3,4:2|385:4,4:2|386:3,1:1|387:1,3:1|391:4,3:2|392:6,2:2"
+    "score": 142667.5,
+    "turn": 3,
+    "input_fingerprint": "0:0,3:1|1:3,3:3|2:3,2:2|388:6,3:4|426:6,2:4|427:5,3:4|428:7,5:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -81,10 +81,162 @@
         "NeedleMech, move F5\u2192E6, fire Reverse Thrusters at E5",
         "SupermanMech, fire Control Shot at D4 and E3"
       ]
+    },
+    {
+      "timestamp": "2026-06-29T02:15:39.792092",
+      "turn": 1,
+      "label": "solve",
+      "score": 164203.57142857142,
+      "actions": [
+        "NeedleMech, move F5\u2192E6, fire Reverse Thrusters at E5",
+        "SupermanMech, fire Control Shot at D4 and E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:18:29.864143",
+      "turn": 2,
+      "label": "note",
+      "message": "Let's Walk counter verified after first fresh-run visible Control Shot: pause tooltip at window-local 820,242 shows Current Spaces 2; continue only with visible Control Shot execution."
+    },
+    {
+      "timestamp": "2026-06-29T02:19:02.972562",
+      "turn": 2,
+      "label": "solve",
+      "score": 176448.57142857154,
+      "actions": [
+        "NeedleMech, move E5\u2192B6, fire Reverse Thrusters at A6",
+        "SmokeMech, move C5\u2192C2, fire Smoldering Shells at F2",
+        "SupermanMech, fire Control Shot at D4 and E5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:21:05.889249",
+      "turn": 3,
+      "label": "solve",
+      "score": 186998.57142857142,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move C2\u2192B2, fire Smoldering Shells at B6",
+        "SupermanMech, move D5\u2192D6, fire Control Shot at E6 and E8"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:23:39.981011",
+      "turn": 3,
+      "label": "solve",
+      "score": 186998.57142857142,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move C2\u2192B2, fire Smoldering Shells at B6",
+        "SupermanMech, move D5\u2192D6, fire Control Shot at E6 and C6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:24:50.897664",
+      "turn": 3,
+      "label": "note",
+      "message": "Turn 3 reset used after visible Control Shot destination E8 clicked as E7 and left F7 threatened; recovered with candidate rank 1 Control Shot E6 to C6, verified PASS and no building threats."
+    },
+    {
+      "timestamp": "2026-06-29T02:25:35.947328",
+      "turn": 4,
+      "label": "solve",
+      "score": 183078.57142857142,
+      "actions": [
+        "SmokeMech, fire Smoldering Shells at B7",
+        "SupermanMech, move D6\u2192E5, fire Control Shot at F5 and G4",
+        "NeedleMech, move A6\u2192D6, fire Reverse Thrusters at B6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:26:14.335736",
+      "turn": 4,
+      "label": "solve",
+      "score": 181958.57142857142,
+      "actions": [
+        "SupermanMech, move D6\u2192E5, fire Control Shot at F5 and G4",
+        "NeedleMech, move A6\u2192D6, fire Reverse Thrusters at B6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:31:43.246117",
+      "turn": 1,
+      "label": "solve",
+      "score": 139000.0,
+      "actions": [
+        "SupermanMech, fire Control Shot at C6 and B5",
+        "SmokeMech, move C5\u2192D4, fire Smoldering Shells at F4",
+        "NeedleMech, move F5\u2192C5, fire Reverse Thrusters at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:33:59.874755",
+      "turn": 2,
+      "label": "solve",
+      "score": 146520.0,
+      "actions": [
+        "NeedleMech, move D5\u2192E7, fire Reverse Thrusters at E8",
+        "SupermanMech, move D6\u2192F5, fire Control Shot at E5 and E7",
+        "SmokeMech, move D4\u2192E5, fire Smoldering Shells at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:34:51.606357",
+      "turn": 2,
+      "label": "solve",
+      "score": 146520.0,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at E8",
+        "SupermanMech, move D6\u2192F5, fire Control Shot at E5 and E7",
+        "SmokeMech, move D4\u2192E5, fire Smoldering Shells at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:35:00.314427",
+      "turn": 2,
+      "label": "solve",
+      "score": 146520.0,
+      "actions": [
+        "NeedleMech, fire Reverse Thrusters at E8",
+        "SupermanMech, move D6\u2192F5, fire Control Shot at E5 and G5",
+        "SmokeMech, move D4\u2192E5, fire Smoldering Shells at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T02:37:56.909351",
+      "turn": 3,
+      "label": "solve",
+      "score": 142667.5,
+      "actions": [
+        "SmokeMech, move E5\u2192D5",
+        "NeedleMech, move E8\u2192E5, repair",
+        "SupermanMech, move F5\u2192G2, fire Control Shot at F2 and E1"
+      ]
     }
   ],
   "lightning_route_probe_cache": [],
-  "recorded_post_enemy_turns": [],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ]
+  ],
   "post_enemy_block": null,
   "dirty_consent_used": [],
   "tags": [
@@ -129,10 +281,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "9cd4b729764bdaf4",
-    "classes": "mmmgbbggmmbgbbgsmbbgsggsmggggggsbgsccggsmgggggssmgcggsssmgssssss",
-    "mission_index": 0,
-    "turn": 1
+    "hash": "61d4f96c152a0c0c",
+    "classes": "mmbgwwwwmmbgwbbggmbgggggsggggggggggmggggsggggsbgmgggggbgmmgggggg",
+    "mission_index": 2,
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }
