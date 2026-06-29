@@ -6,80 +6,34 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Artillery",
+  "current_mission": "",
   "islands_completed": [],
-  "mission_index": 12,
-  "last_mission_turn": 3,
-  "current_turn": 3,
-  "phase": "combat_player",
+  "mission_index": 14,
+  "last_mission_turn": -1,
+  "current_turn": 4,
+  "phase": "unknown",
   "active_solution": {
     "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "NeedleMech",
-        "move_to": [
-          5,
-          5
-        ],
-        "weapon": "_REPAIR",
-        "target": [
-          5,
-          5
-        ],
-        "description": "NeedleMech, repair"
-      },
       {
         "mech_uid": 1,
         "mech_type": "SmokeMech",
         "move_to": [
-          3,
-          6
+          2,
+          3
         ],
         "weapon": "Ranged_SmokeFire",
         "target": [
           5,
-          6
+          3
         ],
-        "description": "SmokeMech, move A5\u2192B5, fire Smoldering Shells at B3"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "SupermanMech",
-        "move_to": [
-          6,
-          7
-        ],
-        "weapon": "Science_TC_Control_A",
-        "target": [
-          6,
-          6
-        ],
-        "description": "SupermanMech, move C5\u2192A2, fire Control Shot at B2 and D1",
-        "target2": [
-          7,
-          4
-        ]
-      },
-      {
-        "mech_uid": 557,
-        "mech_type": "ArchiveArtillery",
-        "move_to": [
-          1,
-          4
-        ],
-        "weapon": "Archive_ArtShot",
-        "target": [
-          6,
-          4
-        ],
-        "description": "ArchiveArtillery, move E7\u2192D7, fire Old Earth Artillery at D2"
+        "description": "SmokeMech, move E4\u2192E6, fire Smoldering Shells at E3"
       }
     ],
-    "score": 163496.64285205092,
-    "turn": 3,
-    "input_fingerprint": "0:5,5:1|1:3,7:3|2:3,5:1|557:1,3:2|562:2,4:3|563:6,6:2|565:5,6:2"
+    "score": 116675.17857142857,
+    "turn": 4,
+    "input_fingerprint": "0:7,4:1|1:4,3:3|2:4,6:2|568:4,4:3|601:4,5:3|622:6,6:2|647:3,4:1|648:6,1:2|678:5,3:2"
   },
-  "actions_executed": 0,
+  "actions_executed": 1,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
   "enemies_killed": 0,
@@ -899,6 +853,179 @@
         "SupermanMech, move C5\u2192A2, fire Control Shot at B2 and D1",
         "ArchiveArtillery, move E7\u2192D7, fire Old Earth Artillery at D2"
       ]
+    },
+    {
+      "timestamp": "2026-06-29T06:03:37.813131",
+      "turn": 3,
+      "label": "solve",
+      "score": 163496.64285205092,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, move A5\u2192B5, fire Smoldering Shells at B3",
+        "SupermanMech, move C5\u2192A2, fire Control Shot at B2 and D1",
+        "ArchiveArtillery, move E7\u2192D7, fire Old Earth Artillery at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:04:04.853309",
+      "turn": 3,
+      "label": "note",
+      "message": "Mission_Artillery turn 3 dirty frontier reviewed: no clean candidate among 10000; choosing candidate rank 0 / consent e74a441f54b51e0a because it predicts only 1 grid and 1 building HP loss, preserves Coal Plant and Artillery objectives, avoids mech HP/status debt, and adds Control Shot B2->D1."
+    },
+    {
+      "timestamp": "2026-06-29T06:05:47.916694",
+      "turn": 4,
+      "label": "solve",
+      "score": 142313.75,
+      "actions": [
+        "ArchiveArtillery",
+        "NeedleMech, fire Reverse Thrusters at A3",
+        "SmokeMech, move B5\u2192D6, fire Smoldering Shells at D3",
+        "SupermanMech, fire Control Shot at B2 and C3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:08:32.519177",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter check after Preserved Farms/Mission_Artillery: tooltip shows Current Spaces 83. Counter was 72 after Colonial Park; Mission_Artillery added 11 spaces from four visible Control Shots."
+    },
+    {
+      "timestamp": "2026-06-29T06:15:25.359119",
+      "turn": 1,
+      "label": "solve",
+      "score": 135875.0,
+      "actions": [
+        "NeedleMech, move D5\u2192D2",
+        "SmokeMech, move E6\u2192D6, fire Smoldering Shells at F6",
+        "SupermanMech, move F5\u2192D4, fire Control Shot at C4 and C1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:16:28.574200",
+      "turn": 1,
+      "label": "solve",
+      "score": 135875.0,
+      "actions": [
+        "SupermanMech, move F5\u2192D4, fire Control Shot at C4 and C1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:17:40.848116",
+      "turn": 2,
+      "label": "solve",
+      "score": 131379.9999999999,
+      "actions": [
+        "NeedleMech, move D2\u2192E3, repair",
+        "SmokeMech, move D6\u2192E4, fire Smoldering Shells at E6",
+        "SupermanMech, fire Control Shot at D3 and C1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:19:41.876468",
+      "turn": 3,
+      "label": "solve",
+      "score": 152050.0,
+      "actions": [
+        "SupermanMech, move D4\u2192D2, fire Control Shot at E2 and C1",
+        "SmokeMech, move E4\u2192C4, fire Smoldering Shells at C1",
+        "NeedleMech, move E3\u2192E5, fire Reverse Thrusters at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:21:28.184610",
+      "turn": 3,
+      "label": "note",
+      "message": "Corporate HQ turn 3 rejected after fresh pre-End-Turn audit: solver line left Scarab1 at C2 alive/not fire/not smoke with queued attack on C5 building despite predicted grid/buildings safe. Resetting turn for fresh solve/manual audit."
+    },
+    {
+      "timestamp": "2026-06-29T06:22:42.129246",
+      "turn": 3,
+      "label": "solve",
+      "score": 152050.0,
+      "actions": [
+        "SupermanMech, move D4\u2192D2, fire Control Shot at E2 and C1",
+        "SmokeMech, move E4\u2192C4, fire Smoldering Shells at C1",
+        "NeedleMech, move E3\u2192E5, fire Reverse Thrusters at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:22:56.146237",
+      "turn": 3,
+      "label": "solve",
+      "score": 152050.0,
+      "actions": [
+        "SupermanMech, move D4\u2192E1, fire Control Shot at E2 and C1",
+        "SmokeMech, move E4\u2192C4, fire Smoldering Shells at C1",
+        "NeedleMech, move E3\u2192E5, fire Reverse Thrusters at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:24:18.597698",
+      "turn": 3,
+      "label": "note",
+      "message": "Corporate HQ turn 3 manual recovery plan after reset: use solver Control Shot on Scorpion2 E2->C1 for Let's Walk/protect Needle, then manually fire SmokeMech Smoldering Shells at Scarab1 C2 to cancel C5 building threat, fresh-read, and re-solve remaining Needle action."
+    },
+    {
+      "timestamp": "2026-06-29T06:24:28.928006",
+      "turn": 3,
+      "label": "solve",
+      "score": 152050.0,
+      "actions": [
+        "SupermanMech, move D4\u2192D2, fire Control Shot at E2 and C1",
+        "SmokeMech, move E4\u2192C4, fire Smoldering Shells at C1",
+        "NeedleMech, move E3\u2192E5, fire Reverse Thrusters at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:25:58.756611",
+      "turn": 3,
+      "label": "solve",
+      "score": 105037.71429041454,
+      "actions": [
+        "NeedleMech"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:26:17.459693",
+      "turn": 3,
+      "label": "solve",
+      "score": 106272.71429041454,
+      "actions": [
+        "NeedleMech, move E3\u2192D1, fire Reverse Thrusters at F1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:26:46.413808",
+      "turn": 3,
+      "label": "note",
+      "message": "Corporate HQ turn 3 salvage after invalid Smoke manual: Needle-only solve has no clean line; accepting unavoidable Corporate Tower/objective loss (grid 7->6, all mechs alive, timeline not collapsing) and taking rank 0 / consent 1b8696cf6fd82a03 to kill one enemy before End Turn."
+    },
+    {
+      "timestamp": "2026-06-29T06:28:15.855571",
+      "turn": 4,
+      "label": "solve",
+      "score": 134675.17857142858,
+      "actions": [
+        "SupermanMech, move D2\u2192B4, fire Control Shot at B3 and D4",
+        "NeedleMech, move F1\u2192D3, fire Reverse Thrusters at D1",
+        "SmokeMech, move E4\u2192E6, fire Smoldering Shells at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:29:30.900417",
+      "turn": 4,
+      "label": "solve",
+      "score": 116675.17857142857,
+      "actions": [
+        "SmokeMech, move E4\u2192E6, fire Smoldering Shells at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T06:33:02.894571",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter check after RST Corporate HQ / Mission_BlobberBoss: tooltip shows Current Spaces 95. Counter was 83 after Mission_Artillery; HQ added 12 spaces from four visible Control Shots. Need 25 more; continue to remaining islands."
     }
   ],
   "lightning_route_probe_cache": [],
@@ -998,6 +1125,22 @@
     [
       12,
       2
+    ],
+    [
+      12,
+      3
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
     ]
   ],
   "post_enemy_block": null,
@@ -1046,10 +1189,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "0cbc178b58a18b50",
-    "classes": "wggggmmmwgbggbbmwibggbbmwwigggggwwwwggfgwwwiggfgwwigggggwwifgggg",
-    "mission_index": 12,
-    "turn": 3
+    "hash": "47755707a738f746",
+    "classes": "wwmmgwwwwgbbggfwgggggbmgfggggbbggbmggggggmbggggggggggggggggggggg",
+    "mission_index": 13,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }
