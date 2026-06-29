@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-26T11:32:50.375862",
+    "last_steam_sync": "2026-06-27T10:38:21.961360",
     "last_steam_total": 70,
-    "last_steam_unlocked": 60
+    "last_steam_unlocked": 61
   },
   "achievements": {
     "rift_walkers": [
@@ -369,7 +369,7 @@
         "description": "Spawn 15 Arachnoids in one Island with the Arachnophile squad",
         "type": "single_island",
         "global_unlock_pct": 6.7,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Arachnoid Mech damage and A.C.I.D. Kill as many enemies as possible with the Injector to spawn Arachnoids. Bulk Mech softens targets. Target Spider Leader and Leapers for easy kills.",
         "setup": "Upgraded Arachnoid Injector. 15 kills with Injector across island.",
         "pitfalls": "Only Arachnoid Injector kills spawn Arachnoids. Must get the killing blow."
