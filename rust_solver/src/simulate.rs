@@ -4388,36 +4388,20 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     );
 
     // Smoldering Shells: fire and damage the center tile, then affect nearby
-    // tiles. Base/+Damage use the four cardinal neighbors; More Smoke variants
-    // add the four diagonals. Empty non-building tiles receive smoke; occupied
-    // neighboring units are skipped entirely.
+    // tiles. The Lua skill smokes the two perpendicular side tiles by default;
+    // More Smoke variants smoke all four cardinal neighbors. Empty non-building
+    // tiles receive smoke; occupied neighboring units are skipped entirely.
     if smoldering_shells {
-        const MORE_SMOKE_DIRS: [(i8, i8); 8] = [
-            (0, 1),
-            (1, 0),
-            (0, -1),
-            (-1, 0),
-            (1, 1),
-            (1, -1),
-            (-1, 1),
-            (-1, -1),
-        ];
-        let smoke_dirs: &[(i8, i8)] = match weapon_id {
-            WId::RangedSmokeFireA | WId::RangedSmokeFireAB => &MORE_SMOKE_DIRS,
-            _ => &DIRS,
-        };
-        for &(dx, dy) in smoke_dirs.iter() {
-            let nx = tx as i8 + dx;
-            let ny = ty as i8 + dy;
-            if let Some(dir) = attack_dir {
-                let (sdx, sdy) = DIRS[dir];
-                let shot_distance = (tx as i8 - ax as i8).unsigned_abs()
-                    + (ty as i8 - ay as i8).unsigned_abs();
-                let even_range_shot = shot_distance % 2 == 0;
-                if even_range_shot && nx == tx as i8 - sdx && ny == ty as i8 - sdy {
+        let more_smoke = matches!(weapon_id, WId::RangedSmokeFireA | WId::RangedSmokeFireAB);
+        for (dir_idx, &(dx, dy)) in DIRS.iter().enumerate() {
+            if !more_smoke {
+                let Some(dir) = attack_dir else { continue; };
+                if dir_idx != (dir + 1) % 4 && dir_idx != (dir + 3) % 4 {
                     continue;
                 }
             }
+            let nx = tx as i8 + dx;
+            let ny = ty as i8 + dy;
             if in_bounds(nx, ny) {
                 let nx_u = nx as u8;
                 let ny_u = ny as u8;
@@ -12968,7 +12952,10 @@ mod tests {
             board.units[adjacent].fire(),
             "occupied adjacent units should not receive smoke or free fire extinguish"
         );
-        assert!(board.tile(4, 2).smoke(), "empty north adjacent tile should smoke");
+        assert!(
+            !board.tile(4, 2).smoke(),
+            "base Smoldering Shells should not smoke the inbound tile"
+        );
         assert!(board.tile(5, 1).smoke(), "empty west adjacent tile should smoke");
         assert!(
             !board.tile(5, 3).smoke(),
@@ -13038,7 +13025,10 @@ mod tests {
         );
         assert!(board.tile(2, 3).smoke(), "perpendicular adjacent tile should smoke");
         assert!(board.tile(4, 3).smoke(), "perpendicular adjacent tile should smoke");
-        assert!(board.tile(3, 2).smoke(), "far adjacent tile should smoke");
+        assert!(
+            !board.tile(3, 2).smoke(),
+            "base Smoldering Shells should not smoke the far adjacent tile"
+        );
 
         // Same even-range rule at longer range. Live Mist Eaters Let's Walk
         // run 20260628_101633_260, Mission_Disposal turn 3: H5->D5 left E5 clear.
@@ -13055,20 +13045,25 @@ mod tests {
         );
         assert!(long_board.tile(2, 4).smoke(), "perpendicular adjacent tile should smoke");
         assert!(long_board.tile(4, 4).smoke(), "perpendicular adjacent tile should smoke");
-        assert!(long_board.tile(3, 5).smoke(), "far adjacent tile should smoke");
+        assert!(
+            !long_board.tile(3, 5).smoke(),
+            "base Smoldering Shells should not smoke the far adjacent tile"
+        );
     }
 
     #[test]
-    fn test_smoldering_shells_more_smoke_adds_diagonal_footprint() {
+    fn test_smoldering_shells_more_smoke_adds_cardinal_footprint() {
         let mut base_board = make_test_board();
-        let base_smog = add_mech(&mut base_board, 1, 2, 2, 3, WId::RangedSmokeFire);
+        let base_smog = add_mech(&mut base_board, 1, 4, 2, 3, WId::RangedSmokeFire);
         let _ = add_enemy_type(&mut base_board, 92, 4, 4, 2, "Scarab1");
 
         let _ = simulate_weapon(&mut base_board, base_smog, WId::RangedSmokeFire, 4, 4);
 
+        assert!(base_board.tile(3, 4).smoke(), "base side neighbor should smoke");
+        assert!(base_board.tile(5, 4).smoke(), "base side neighbor should smoke");
         assert!(
-            base_board.tile(4, 5).smoke(),
-            "base Smoldering Shells still smokes cardinal neighbors"
+            !base_board.tile(4, 5).smoke(),
+            "base Smoldering Shells should not smoke the far neighbor"
         );
         assert!(
             !base_board.tile(3, 5).smoke(),
@@ -13076,29 +13071,32 @@ mod tests {
         );
 
         let mut board = make_test_board();
-        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFireA);
+        let smog = add_mech(&mut board, 1, 4, 2, 3, WId::RangedSmokeFireA);
         let _ = add_enemy_type(&mut board, 92, 4, 4, 2, "Scarab1");
-        let occupied_diag = add_enemy_type(&mut board, 93, 3, 3, 2, "Scarab1");
-        board.units[occupied_diag].set_fire(true);
-        board.tile_mut(5, 5).terrain = Terrain::Building;
-        board.tile_mut(5, 5).building_hp = 1;
+        let occupied_cardinal = add_enemy_type(&mut board, 93, 3, 4, 2, "Scarab1");
+        board.units[occupied_cardinal].set_fire(true);
+        board.tile_mut(5, 4).terrain = Terrain::Building;
+        board.tile_mut(5, 4).building_hp = 1;
 
         let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFireA, 4, 4);
 
-        assert!(board.tile(4, 5).smoke(), "cardinal neighbor should smoke");
-        assert!(board.tile(3, 5).smoke(), "diagonal neighbor should smoke");
-        assert!(board.tile(5, 3).smoke(), "diagonal neighbor should smoke");
+        assert!(board.tile(4, 3).smoke(), "inbound cardinal neighbor should smoke");
+        assert!(board.tile(4, 5).smoke(), "far cardinal neighbor should smoke");
         assert!(
-            !board.tile(3, 3).smoke(),
-            "occupied diagonal tile must not receive More Smoke"
+            !board.tile(3, 4).smoke(),
+            "occupied cardinal tile must not receive More Smoke"
         );
         assert!(
-            board.units[occupied_diag].fire(),
-            "occupied diagonal units should keep carried fire when More Smoke skips them"
+            board.units[occupied_cardinal].fire(),
+            "occupied cardinal units should keep carried fire when More Smoke skips them"
         );
         assert!(
-            !board.tile(5, 5).smoke(),
-            "diagonal building tile must not receive More Smoke"
+            !board.tile(5, 4).smoke(),
+            "cardinal building tile must not receive More Smoke"
+        );
+        assert!(
+            !board.tile(3, 5).smoke(),
+            "More Smoke should not add diagonal smoke"
         );
     }
 
@@ -13136,7 +13134,8 @@ mod tests {
 
         assert_eq!(board.units[center].hp, 1, "+2 Damage upgrade should deal 3");
         assert!(board.units[center].fire(), "center target should be set on Fire");
-        assert!(board.tile(3, 5).smoke(), "AB should keep More Smoke diagonals");
+        assert!(board.tile(4, 5).smoke(), "AB should smoke cardinal neighbors");
+        assert!(!board.tile(3, 5).smoke(), "AB should not smoke diagonals");
     }
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {

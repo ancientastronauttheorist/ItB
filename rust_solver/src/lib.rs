@@ -1993,7 +1993,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Mines turn 2, where Smoldering Shells damaged a Scorpion web
 //   source but Needle stayed webbed. Pre-v304 corpus archived as
 //   failure_db_snapshot_sim_v303.jsonl.
-pub const SIMULATOR_VERSION: u32 = 304;
+// v305 - Smoldering Shells smoke footprint matches live Lua: base smokes only
+//   the two side tiles, while More Smoke smokes all four cardinal neighbors
+//   without diagonals. Fixes Mist Eaters Let's Walk run 20260629_073305_098
+//   Mission_Barrels turn 1 D6 far-tile smoke drift. Pre-v305 corpus archived
+//   as failure_db_snapshot_sim_v304.jsonl.
+pub const SIMULATOR_VERSION: u32 = 305;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

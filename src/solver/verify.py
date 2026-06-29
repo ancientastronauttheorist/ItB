@@ -1449,7 +1449,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # failure_db_snapshot_sim_v302.jsonl.
 # v304 - Smoldering Shells damage does not release a surviving enemy web source.
 # Pre-v304 corpus archived as failure_db_snapshot_sim_v303.jsonl.
-SIMULATOR_VERSION = 304
+# v305 - Smoldering Shells smoke footprint matches live Lua: base smokes only
+# the two side tiles, while More Smoke smokes all four cardinal neighbors
+# without diagonals. Pre-v305 corpus archived as failure_db_snapshot_sim_v304.jsonl.
+SIMULATOR_VERSION = 305
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
