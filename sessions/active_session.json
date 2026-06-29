@@ -6,13 +6,79 @@
   ],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Dam",
+  "current_mission": "Mission_Artillery",
   "islands_completed": [],
-  "mission_index": 7,
-  "last_mission_turn": 3,
-  "current_turn": 3,
+  "mission_index": 9,
+  "last_mission_turn": 1,
+  "current_turn": 1,
   "phase": "combat_player",
-  "active_solution": null,
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "SmokeMech",
+        "move_to": [
+          4,
+          2
+        ],
+        "weapon": "Ranged_SmokeFire",
+        "target": [
+          4,
+          5
+        ],
+        "description": "SmokeMech, move E6\u2192F4, fire Smoldering Shells at C4"
+      },
+      {
+        "mech_uid": 68,
+        "mech_type": "ArchiveArtillery",
+        "move_to": [
+          2,
+          3
+        ],
+        "weapon": "Archive_ArtShot",
+        "target": [
+          4,
+          3
+        ],
+        "description": "ArchiveArtillery, move D6\u2192E6, fire Old Earth Artillery at E4"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "SupermanMech",
+        "move_to": [
+          2,
+          4
+        ],
+        "weapon": "Science_TC_Control_A",
+        "target": [
+          3,
+          4
+        ],
+        "description": "SupermanMech, move G5\u2192D6, fire Control Shot at D5 and D2",
+        "target2": [
+          6,
+          4
+        ]
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "NeedleMech",
+        "move_to": [
+          2,
+          2
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "NeedleMech, move C5\u2192F6"
+      }
+    ],
+    "score": 184907.1428571429,
+    "turn": 1,
+    "input_fingerprint": "0:3,5:3|1:2,3:3|2:3,1:2|68:2,4:2|69:3,4:4|70:4,3:3|71:4,5:3"
+  },
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -658,6 +724,49 @@
         "resolved_at": "2026-06-28T23:32:19.825374",
         "resolve_reason": "Mission_Dam turn 2 projection miss: live dam flood/enemy phase left Moth2 uid9 at B3 targeting B6 and it damaged B6 for -1 grid; solver predicted that Moth attack cleared and did not model the two spawn arrivals. Timeline remains viable for Let's Walk at 6/7 grid with dam destroyed and all mechs alive; continuing from fresh turn-3 read."
       }
+    },
+    {
+      "timestamp": "2026-06-28T23:39:08.581852",
+      "turn": 3,
+      "label": "solve",
+      "score": 125904.07149539675,
+      "actions": [
+        "NeedleMech, repair",
+        "SmokeMech, fire Smoldering Shells at F7",
+        "SupermanMech, move D5\u2192G4, fire Control Shot at G3 and E2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-28T23:44:45.011997",
+      "turn": 4,
+      "label": "solve",
+      "score": -180930.57060050964,
+      "actions": [
+        "SmokeMech, move D7\u2192E6, fire Smoldering Shells at E3",
+        "NeedleMech, move D6\u2192D4, fire Reverse Thrusters at E4",
+        "SupermanMech, fire Control Shot at G3 and E2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-28T23:46:19.201358",
+      "turn": 4,
+      "label": "solve",
+      "score": -176990.57060050964,
+      "actions": [
+        "SupermanMech, fire Control Shot at G3 and F2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-28T23:54:07.984267",
+      "turn": 1,
+      "label": "solve",
+      "score": 184907.1428571429,
+      "actions": [
+        "SmokeMech, move E6\u2192F4, fire Smoldering Shells at C4",
+        "ArchiveArtillery, move D6\u2192E6, fire Old Earth Artillery at E4",
+        "SupermanMech, move G5\u2192D6, fire Control Shot at D5 and D2",
+        "NeedleMech, move C5\u2192F6"
+      ]
     }
   ],
   "lightning_route_probe_cache": [],
@@ -721,6 +830,10 @@
     [
       7,
       2
+    ],
+    [
+      7,
+      3
     ]
   ],
   "post_enemy_block": null,
@@ -791,10 +904,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "720c005def7db55c",
-    "classes": "gfgggwwwmbgggbwwmbgggbbwwwwwwwwwwwwwwwwwmggggbgwgggggggwgfgggfgw",
-    "mission_index": 7,
-    "turn": 3
+    "hash": "7ccb6157d90532a3",
+    "classes": "mmgfgmmmmggbgmbmbgfggbbmbggbggggbggfgfggwwggggggmwwwggfmmmmwwgmm",
+    "mission_index": 9,
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }
