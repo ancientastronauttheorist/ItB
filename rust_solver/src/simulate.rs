@@ -6,7 +6,11 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::movement::{direction_between, cardinal_direction};
+use crate::movement::{
+    cardinal_direction,
+    controlled_reachable_tiles_with_cost,
+    direction_between,
+};
 
 fn refresh_arrogant_boost(unit: &mut Unit) {
     if unit.pilot_arrogant() {
@@ -634,6 +638,14 @@ fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
     }
 }
 
+fn apply_acid_vat_death_terrain(board: &mut Board, x: u8, y: u8) {
+    let tile = board.tile_mut(x, y);
+    tile.terrain = Terrain::Water;
+    tile.flags |= TileFlags::ACID;
+    tile.set_on_fire(false);
+    tile.set_grass(false);
+}
+
 /// Place smoke on a tile without applying Nanofilter Mending.
 /// If the tile holds an enemy currently webbing a unit, the smoke-cancelled
 /// queued attack releases that grapple immediately.
@@ -643,6 +655,7 @@ fn place_smoke_no_healing(board: &mut Board, x: u8, y: u8) {
     tile.set_smoke(true);
 
     if let Some(idx) = board.unit_at(x, y) {
+        board.units[idx].set_fire(false);
         if board.units[idx].is_enemy() {
             let uid = board.units[idx].uid;
             break_web_from(board, uid);
@@ -690,6 +703,10 @@ pub(crate) fn on_enemy_death(
 
     if dying_tname_owned == "Shield_Building" && board.mission_id == "Mission_Shields" {
         clear_shield_generator_shields(board);
+    }
+
+    if dying_tname_owned == "AcidVat" && board.mission_id == "Mission_Barrels" {
+        apply_acid_vat_death_terrain(board, dx, dy);
     }
 
     if let Some((child_type, child_hp, child_weapon)) =
@@ -1497,6 +1514,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                             | DamageSource::WeaponCracksOccupied
                             | DamageSource::WeaponNoAcidPool
                             | DamageSource::MissionArtillery
+                            | DamageSource::SmolderingShells
                     )
                 {
                     damaged_enemy_web_source_uid = Some(unit.uid);
@@ -1514,6 +1532,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                                 | DamageSource::WeaponCracksOccupied
                                 | DamageSource::WeaponNoAcidPool
                                 | DamageSource::MissionArtillery
+                                | DamageSource::SmolderingShells
                         ),
                     );
                     on_enemy_death(board, idx, result);
@@ -1536,7 +1555,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     if let Some(uid) = damaged_enemy_web_source_uid {
-        if source != DamageSource::MissionArtillery {
+        if !matches!(source, DamageSource::MissionArtillery | DamageSource::SmolderingShells) {
             break_web_from(board, uid);
         }
     }
@@ -4288,8 +4307,17 @@ fn sim_projectile(
 fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     let center_occupied_at_impact = board.unit_at(tx, ty).is_some();
     let center_blocked_at_impact = board.is_blocked(tx, ty, false);
+    let smoldering_shells = matches!(
+        weapon_id,
+        WId::RangedSmokeFire
+            | WId::RangedSmokeFireA
+            | WId::RangedSmokeFireB
+            | WId::RangedSmokeFireAB
+    );
     let direct_damage_source = if weapon_id == WId::ArchiveArtShot {
         DamageSource::MissionArtillery
+    } else if smoldering_shells {
+        DamageSource::SmolderingShells
     } else {
         DamageSource::Weapon
     };
@@ -4360,39 +4388,24 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     );
 
     // Smoldering Shells: fire and damage the center tile, then affect nearby
-    // tiles. Base/+Damage use the four cardinal neighbors; More Smoke variants
-    // add the four diagonals. Empty non-building tiles receive smoke; occupied
-    // neighboring units only have carried fire extinguished.
-    if matches!(
-        weapon_id,
-        WId::RangedSmokeFire
-            | WId::RangedSmokeFireA
-            | WId::RangedSmokeFireB
-            | WId::RangedSmokeFireAB
-    ) {
-        const MORE_SMOKE_DIRS: [(i8, i8); 8] = [
-            (0, 1),
-            (1, 0),
-            (0, -1),
-            (-1, 0),
-            (1, 1),
-            (1, -1),
-            (-1, 1),
-            (-1, -1),
-        ];
-        let smoke_dirs: &[(i8, i8)] = match weapon_id {
-            WId::RangedSmokeFireA | WId::RangedSmokeFireAB => &MORE_SMOKE_DIRS,
-            _ => &DIRS,
-        };
-        for &(dx, dy) in smoke_dirs.iter() {
+    // tiles. The Lua skill smokes the two perpendicular side tiles by default;
+    // More Smoke variants smoke all four cardinal neighbors. Empty non-building
+    // tiles receive smoke; occupied neighboring units are skipped entirely.
+    if smoldering_shells {
+        let more_smoke = matches!(weapon_id, WId::RangedSmokeFireA | WId::RangedSmokeFireAB);
+        for (dir_idx, &(dx, dy)) in DIRS.iter().enumerate() {
+            if !more_smoke {
+                let Some(dir) = attack_dir else { continue; };
+                if dir_idx != (dir + 1) % 4 && dir_idx != (dir + 3) % 4 {
+                    continue;
+                }
+            }
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if in_bounds(nx, ny) {
                 let nx_u = nx as u8;
                 let ny_u = ny as u8;
-                if let Some(idx) = board.unit_at(nx_u, ny_u) {
-                    board.units[idx].set_fire(false);
-                    board.tile_mut(nx_u, ny_u).set_on_fire(false);
+                if board.unit_at(nx_u, ny_u).is_some() {
                     continue;
                 }
                 if board.tile(nx_u, ny_u).terrain == Terrain::Building {
@@ -4990,6 +5003,116 @@ fn sim_force_swap(
     apply_force_swap_upgrade_effects(board, weapon_id, second_idx, result);
 }
 
+fn control_shot_target_range(_wdef: &WeaponDef) -> u8 {
+    1
+}
+
+fn control_shot_move_budget(wdef: &WeaponDef) -> u8 {
+    wdef.range_max.max(2)
+}
+
+fn control_shot_eligible_unit(unit: &Unit) -> bool {
+    unit.alive() && unit.is_enemy() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
+}
+
+fn control_shot_target_in_line(source: (u8, u8), first: (u8, u8)) -> bool {
+    source.0 == first.0 || source.1 == first.1
+}
+
+fn control_shot_has_clear_projectile_line(
+    board: &Board,
+    source: (u8, u8),
+    first: (u8, u8),
+) -> bool {
+    let dx = (first.0 as i8 - source.0 as i8).signum();
+    let dy = (first.1 as i8 - source.1 as i8).signum();
+    matches!(
+        find_projectile_blocker_from(board, source.0 as i8, source.1 as i8, dx, dy, false),
+        Some(blocker) if blocker == first
+    )
+}
+
+fn sim_control_shot(
+    board: &mut Board,
+    attacker_idx: usize,
+    wdef: &WeaponDef,
+    first: (u8, u8),
+    second: Option<(u8, u8)>,
+    result: &mut ActionResult,
+) {
+    let Some(second) = second else {
+        result.events.push("invalid_control_shot_missing_destination".to_string());
+        return;
+    };
+    let Some(target_idx) = board.unit_at(first.0, first.1) else {
+        result.events.push(format!("invalid_control_shot_empty_target:{}:{}", first.0, first.1));
+        return;
+    };
+    if target_idx == attacker_idx || !control_shot_eligible_unit(&board.units[target_idx]) {
+        result.events.push(format!(
+            "invalid_control_shot_target:{}:{}",
+            first.0, first.1
+        ));
+        return;
+    }
+
+    let target_range = control_shot_target_range(wdef);
+    let move_budget = control_shot_move_budget(wdef);
+    let attacker = &board.units[attacker_idx];
+    if !control_shot_target_in_line((attacker.x, attacker.y), first) {
+        result.events.push(format!(
+            "invalid_control_shot_line:{}:{}:{}:{}",
+            attacker.x, attacker.y, first.0, first.1
+        ));
+        return;
+    }
+    if !control_shot_has_clear_projectile_line(board, (attacker.x, attacker.y), first) {
+        result.events.push(format!(
+            "invalid_control_shot_blocked_line:{}:{}:{}:{}",
+            attacker.x, attacker.y, first.0, first.1
+        ));
+        return;
+    }
+    let target_distance = (first.0 as i8 - attacker.x as i8).unsigned_abs()
+        + (first.1 as i8 - attacker.y as i8).unsigned_abs();
+    if target_distance > target_range {
+        result.events.push(format!(
+            "invalid_control_shot_range:{}:{}:{}:{}",
+            attacker.x, attacker.y, first.0, first.1
+        ));
+        return;
+    }
+    let Some(distance) = controlled_reachable_tiles_with_cost(board, target_idx, move_budget)
+        .into_iter()
+        .find_map(|(pos, cost)| if pos == second { Some(cost) } else { None })
+    else {
+        result.events.push(format!(
+            "invalid_control_shot_destination:{}:{}:{}:{}",
+            first.0, first.1, second.0, second.1
+        ));
+        return;
+    };
+    if distance == 0 {
+        return;
+    }
+
+    let was_enemy = board.units[target_idx].is_enemy();
+    let old = (board.units[target_idx].x, board.units[target_idx].y);
+    board.units[target_idx].x = second.0;
+    board.units[target_idx].y = second.1;
+    result.events.push(format!(
+        "control_shot:{}:{}:{}:{}:distance:{}",
+        old.0, old.1, second.0, second.1, distance
+    ));
+    if was_enemy {
+        result.events.push(format!(
+            "achievement_lets_walk:distance:{}:target:{}:{}:dest:{}:{}",
+            distance, old.0, old.1, second.0, second.1
+        ));
+    }
+    apply_landing_effects(board, target_idx, result);
+}
+
 fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     if wdef.weapon_type == WeaponType::Swap {
         if tx >= 8 || ty >= 8 {
@@ -5271,7 +5394,14 @@ fn sim_reverse_thrusters(
     };
     let distance = (tx as i8 - ax as i8).unsigned_abs()
         + (ty as i8 - ay as i8).unsigned_abs();
-    let damage = distance.saturating_add(wdef.damage);
+    let boost_bonus = if board.units[attacker_idx].boosted() && wdef.damage == 0 {
+        1
+    } else {
+        0
+    };
+    let damage = distance
+        .saturating_add(wdef.damage)
+        .saturating_add(boost_bonus);
     let (dx, dy) = DIRS[dir];
     let hit_x = ax as i8 - dx;
     let hit_y = ay as i8 - dy;
@@ -5292,9 +5422,10 @@ fn sim_reverse_thrusters(
         smoke_target = Some((hx, hy));
     }
 
-    // Lua hardcodes the recoil SpaceDamage at 1. Boost raises the outgoing
-    // dash damage, not the self-damage.
-    apply_damage(board, ax, ay, 1, result, DamageSource::SelfDamage);
+    // Base recoil is 1. The generic Boost wrapper raises `self_damage` before
+    // this function, so use the weapon definition instead of hardcoding 1.
+    let recoil = wdef.self_damage.max(1);
+    apply_damage(board, ax, ay, recoil, result, DamageSource::SelfDamage);
     if wdef.smoke() {
         // Live Reverse Thrusters smokes the damaged backblast tile, not the
         // launch tile; Nanofilter Mending must not heal recoil in this action.
@@ -6008,7 +6139,11 @@ pub fn simulate_attack_with_target2(
     // Diagnostic callers can hand us targets the UI would not offer. Treat
     // them as no-ops with an explicit event instead of simulating impossible
     // effects (for example player artillery off-axis targets).
-    if weapon_id != WId::None && weapon_id != WId::Repair && !is_force_swap(weapon_id) {
+    if weapon_id != WId::None
+        && weapon_id != WId::Repair
+        && !is_force_swap(weapon_id)
+        && !is_control_shot(weapon_id)
+    {
         let (sx, sy) = (board.units[mech_idx].x, board.units[mech_idx].y);
         let legal_targets = crate::solver::get_weapon_targets(
             board,
@@ -6084,6 +6219,9 @@ pub fn simulate_attack_with_target2(
     if weapon_id != WId::None {
         if is_force_swap(weapon_id) {
             sim_force_swap(board, mech_idx, weapon_id, target, target2, &mut result);
+        } else if is_control_shot(weapon_id) {
+            let wdef = &weapons[weapon_id as usize];
+            sim_control_shot(board, mech_idx, wdef, target, target2, &mut result);
         } else if is_ricochet_rocket(weapon_id) {
             if board.units[mech_idx].web() {
                 result.events.push(format!(
@@ -6261,6 +6399,211 @@ mod tests {
         assert_eq!((board.units[first].x, board.units[first].y), (6, 6));
         assert_eq!((board.units[second].x, board.units[second].y), (3, 4));
         assert!(!board.units[exchange].active());
+    }
+
+    #[test]
+    fn test_control_shot_moves_enemy_and_emits_lets_walk_distance() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 4),
+            Some((5, 4)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 4));
+        assert!(result.events.iter().any(|e| e == "control_shot:3:4:5:4:distance:2"));
+        assert!(result.events.iter().any(|e| {
+            e == "achievement_lets_walk:distance:2:target:3:4:dest:5:4"
+        }));
+        assert!(!board.units[control].active());
+    }
+
+    #[test]
+    fn test_control_shot_ab_adjacent_target_can_move_four_spaces() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControlAB);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 3);
+        board.units[enemy].move_speed = 4;
+        board.units[enemy].base_move = 4;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControlAB,
+            (3, 4),
+            Some((7, 4)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (7, 4));
+        assert!(result.events.iter().any(|e| e == "control_shot:3:4:7:4:distance:4"));
+        assert!(result.events.iter().any(|e| {
+            e == "achievement_lets_walk:distance:4:target:3:4:dest:7:4"
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_can_move_webbed_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+        board.units[enemy].set_web(true);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 4),
+            Some((4, 4)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 4));
+        assert!(result.events.iter().any(|e| {
+            e == "achievement_lets_walk:distance:1:target:3:4:dest:4:4"
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_allied_target_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let ally = add_mech(&mut board, 1, 3, 4, 3, WId::None);
+        board.units[ally].move_speed = 3;
+        board.units[ally].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 4),
+            Some((4, 4)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[ally].x, board.units[ally].y), (3, 4));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_target:3:4"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_out_of_range_destination() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 4),
+            Some((7, 4)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 4));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_destination:3:4:7:4"
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_out_of_range_target_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 2, 1, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 6, 1, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (6, 1),
+            Some((5, 1)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 1));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_range:2:1:6:1"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_diagonal_target_unit() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 4, 4, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (4, 4),
+            Some((4, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 4));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_line:3:3:4:4"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
+        }));
+    }
+
+    #[test]
+    fn test_control_shot_rejects_blocked_projectile_line() {
+        let mut board = make_test_board();
+        let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+        let enemy = add_enemy(&mut board, 1, 3, 5, 3);
+        board.units[enemy].move_speed = 3;
+        board.units[enemy].base_move = 3;
+        {
+            let tile = board.tile_mut(3, 4);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            control,
+            WId::ScienceTcControl,
+            (3, 5),
+            Some((4, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 5));
+        assert!(result.events.iter().any(|e| {
+            e == "invalid_control_shot_blocked_line:3:3:3:5"
+        }));
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_lets_walk:")
+        }));
     }
 
     #[test]
@@ -10447,6 +10790,20 @@ mod tests {
         assert!(board.tile(3, 3).acid(), "ACID unit death should create acid pool");
     }
 
+    #[test]
+    fn test_mission_barrels_acid_vat_death_creates_acid_water() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Barrels".to_string();
+        add_enemy_type(&mut board, 1, 3, 3, 1, "AcidVat");
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 2, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Water);
+        assert!(board.tile(3, 3).acid(), "destroyed Acid Vats leave ACID runoff");
+        assert!(!board.tile(3, 3).on_fire(), "ACID runoff clears tile fire");
+    }
+
     // ── Vice Fist (Prime_Shift) Throw mechanic ────────────────────────────────
 
     #[test]
@@ -12471,7 +12828,7 @@ mod tests {
         let result = simulate_weapon(&mut board, mech, WId::BruteKickBack, 3, 5);
 
         assert_eq!((board.units[mech].x, board.units[mech].y), (3, 5));
-        assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters recoil is fixed at 1");
+        assert_eq!(board.units[mech].hp, 2, "Reverse Thrusters base recoil is 1");
         assert_eq!(board.units[enemy].hp, 1, "2-tile dash should deal 2 base damage");
         assert!(!board.tile(3, 3).smoke(), "Reverse Thrusters does not smoke the start tile");
         assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the damaged tile");
@@ -12503,6 +12860,51 @@ mod tests {
             "Reverse Thrusters backblast smoke remains on the damaged tile"
         );
         assert!(!board.tile(3, 3).smoke());
+    }
+
+    #[test]
+    fn test_reverse_thrusters_smoked_forest_backblast_extinguishes_survivor() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteKickBack);
+        let enemy = add_enemy_type(&mut board, 2529, 3, 2, 3, "Firefly1");
+        board.tile_mut(3, 2).terrain = Terrain::Forest;
+
+        let _ = simulate_weapon(&mut board, mech, WId::BruteKickBack, 3, 5);
+
+        assert_eq!(board.units[enemy].hp, 1);
+        assert!(board.tile(3, 2).smoke(), "Reverse Thrusters smokes the hit tile");
+        assert!(!board.tile(3, 2).on_fire(), "smoke replaces the ignited forest fire");
+        assert!(!board.units[enemy].fire(), "surviving occupant is extinguished by the smoke");
+    }
+
+    #[test]
+    fn test_boosted_reverse_thrusters_adds_dash_and_recoil_damage() {
+        use crate::board::PilotFlags;
+
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 2, 3, WId::BruteKickBack);
+        board.units[mech].pilot_flags = PilotFlags::ARROGANT;
+        board.units[mech].set_boosted(true);
+        let enemy = add_enemy_type(&mut board, 2141, 5, 1, 3, "Moth1");
+
+        let result = simulate_action(
+            &mut board,
+            mech,
+            (5, 2),
+            WId::BruteKickBack,
+            (5, 3),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[mech].x, board.units[mech].y), (5, 3));
+        assert_eq!(board.units[mech].hp, 1, "boosted recoil should deal 2");
+        assert!(
+            !board.units[mech].boosted(),
+            "Kai loses Boost after boosted Reverse Thrusters drops below full HP"
+        );
+        assert_eq!(board.units[enemy].hp, 1, "boosted one-tile backblast should deal 2");
+        assert_eq!(result.enemy_damage_dealt, 2);
+        assert_eq!(result.mech_damage_taken, 2);
     }
 
     #[test]
@@ -12547,10 +12949,13 @@ mod tests {
         );
         assert_eq!(board.units[adjacent].hp, 2);
         assert!(
-            !board.units[adjacent].fire(),
-            "occupied adjacent units have carried fire extinguished without receiving smoke"
+            board.units[adjacent].fire(),
+            "occupied adjacent units should not receive smoke or free fire extinguish"
         );
-        assert!(board.tile(4, 2).smoke(), "empty north adjacent tile should smoke");
+        assert!(
+            !board.tile(4, 2).smoke(),
+            "base Smoldering Shells should not smoke the inbound tile"
+        );
         assert!(board.tile(5, 1).smoke(), "empty west adjacent tile should smoke");
         assert!(
             !board.tile(5, 3).smoke(),
@@ -12559,16 +12964,106 @@ mod tests {
     }
 
     #[test]
-    fn test_smoldering_shells_more_smoke_adds_diagonal_footprint() {
+    fn test_smoldering_shells_surviving_web_source_keeps_grapple() {
+        // Mist Eaters Let's Walk run 20260629_021050_272, Archive
+        // Mission_Mines turn 2: Smoldering Shells damaged and ignited a
+        // Scorpion that was webbing Needle, but live kept the grapple while
+        // the Scorpion survived.
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFire);
+        let needle = add_mech(&mut board, 0, 4, 2, 3, WId::BruteKickBack);
+        let scorpion = add_enemy_type(&mut board, 507, 5, 2, 3, "Scorpion1");
+        board.units[needle].base_move = 3;
+        board.units[needle].move_speed = 0;
+        board.units[needle].set_web(true);
+        board.units[needle].web_source_uid = board.units[scorpion].uid;
+        board.units[scorpion].queued_target_x = board.units[needle].x as i8;
+        board.units[scorpion].queued_target_y = board.units[needle].y as i8;
+        board.units[scorpion].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 5, 2);
+
+        assert_eq!(board.units[scorpion].hp, 2);
+        assert!(board.units[scorpion].fire(), "center target should be set on Fire");
+        assert!(board.units[needle].web(), "surviving Smoldering Shells web source should keep grapple");
+        assert_eq!(board.units[needle].web_source_uid, board.units[scorpion].uid);
+        assert_eq!(board.units[needle].move_speed, 0);
+
+        let mut kill_board = make_test_board();
+        let smog = add_mech(&mut kill_board, 1, 2, 2, 3, WId::RangedSmokeFireAB);
+        let needle = add_mech(&mut kill_board, 0, 4, 2, 3, WId::BruteKickBack);
+        let scorpion = add_enemy_type(&mut kill_board, 507, 5, 2, 3, "Scorpion1");
+        kill_board.units[needle].base_move = 3;
+        kill_board.units[needle].move_speed = 0;
+        kill_board.units[needle].set_web(true);
+        kill_board.units[needle].web_source_uid = kill_board.units[scorpion].uid;
+
+        let _ = simulate_weapon(&mut kill_board, smog, WId::RangedSmokeFireAB, 5, 2);
+
+        assert_eq!(kill_board.units[scorpion].hp, 0);
+        assert!(!kill_board.units[needle].web(), "killed web source should still release grapple");
+        assert_eq!(kill_board.units[needle].web_source_uid, 0);
+        assert_eq!(kill_board.units[needle].move_speed, kill_board.units[needle].base_move);
+    }
+
+    #[test]
+    fn test_smoldering_shells_skips_inbound_projectile_tile() {
+        // Live evidence: Mist Eaters Let's Walk run 20260628_000535_258,
+        // Mission_AcidStorm turn 2. Smog fired C5->E5; D5, the tile between
+        // shooter and target, was not smoked.
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 3, 5, 3, WId::RangedSmokeFire);
+        let center = add_enemy_type(&mut board, 92, 3, 3, 3, "Scarab1");
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 3, 3);
+
+        assert_eq!(board.units[center].hp, 2);
+        assert!(board.units[center].fire(), "center target should be set on Fire");
+        assert!(
+            !board.tile(3, 4).smoke(),
+            "inbound projectile tile D5 must not receive Smoldering Shells smoke"
+        );
+        assert!(board.tile(2, 3).smoke(), "perpendicular adjacent tile should smoke");
+        assert!(board.tile(4, 3).smoke(), "perpendicular adjacent tile should smoke");
+        assert!(
+            !board.tile(3, 2).smoke(),
+            "base Smoldering Shells should not smoke the far adjacent tile"
+        );
+
+        // Same even-range rule at longer range. Live Mist Eaters Let's Walk
+        // run 20260628_101633_260, Mission_Disposal turn 3: H5->D5 left E5 clear.
+        let mut long_board = make_test_board();
+        let long_smog = add_mech(&mut long_board, 1, 3, 0, 3, WId::RangedSmokeFire);
+        let long_center = add_enemy_type(&mut long_board, 92, 3, 4, 3, "Jelly_Armor1");
+
+        let _ = simulate_weapon(&mut long_board, long_smog, WId::RangedSmokeFire, 3, 4);
+
+        assert_eq!(long_board.units[long_center].hp, 2);
+        assert!(
+            !long_board.tile(3, 3).smoke(),
+            "range-4 inbound projectile tile E5 must not receive Smoldering Shells smoke"
+        );
+        assert!(long_board.tile(2, 4).smoke(), "perpendicular adjacent tile should smoke");
+        assert!(long_board.tile(4, 4).smoke(), "perpendicular adjacent tile should smoke");
+        assert!(
+            !long_board.tile(3, 5).smoke(),
+            "base Smoldering Shells should not smoke the far adjacent tile"
+        );
+    }
+
+    #[test]
+    fn test_smoldering_shells_more_smoke_adds_cardinal_footprint() {
         let mut base_board = make_test_board();
-        let base_smog = add_mech(&mut base_board, 1, 2, 2, 3, WId::RangedSmokeFire);
+        let base_smog = add_mech(&mut base_board, 1, 4, 2, 3, WId::RangedSmokeFire);
         let _ = add_enemy_type(&mut base_board, 92, 4, 4, 2, "Scarab1");
 
         let _ = simulate_weapon(&mut base_board, base_smog, WId::RangedSmokeFire, 4, 4);
 
+        assert!(base_board.tile(3, 4).smoke(), "base side neighbor should smoke");
+        assert!(base_board.tile(5, 4).smoke(), "base side neighbor should smoke");
         assert!(
-            base_board.tile(4, 5).smoke(),
-            "base Smoldering Shells still smokes cardinal neighbors"
+            !base_board.tile(4, 5).smoke(),
+            "base Smoldering Shells should not smoke the far neighbor"
         );
         assert!(
             !base_board.tile(3, 5).smoke(),
@@ -12576,29 +13071,56 @@ mod tests {
         );
 
         let mut board = make_test_board();
-        let smog = add_mech(&mut board, 1, 2, 2, 3, WId::RangedSmokeFireA);
+        let smog = add_mech(&mut board, 1, 4, 2, 3, WId::RangedSmokeFireA);
         let _ = add_enemy_type(&mut board, 92, 4, 4, 2, "Scarab1");
-        let occupied_diag = add_enemy_type(&mut board, 93, 3, 3, 2, "Scarab1");
-        board.units[occupied_diag].set_fire(true);
-        board.tile_mut(5, 5).terrain = Terrain::Building;
-        board.tile_mut(5, 5).building_hp = 1;
+        let occupied_cardinal = add_enemy_type(&mut board, 93, 3, 4, 2, "Scarab1");
+        board.units[occupied_cardinal].set_fire(true);
+        board.tile_mut(5, 4).terrain = Terrain::Building;
+        board.tile_mut(5, 4).building_hp = 1;
 
         let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFireA, 4, 4);
 
-        assert!(board.tile(4, 5).smoke(), "cardinal neighbor should smoke");
-        assert!(board.tile(3, 5).smoke(), "diagonal neighbor should smoke");
-        assert!(board.tile(5, 3).smoke(), "diagonal neighbor should smoke");
+        assert!(board.tile(4, 3).smoke(), "inbound cardinal neighbor should smoke");
+        assert!(board.tile(4, 5).smoke(), "far cardinal neighbor should smoke");
         assert!(
-            !board.tile(3, 3).smoke(),
-            "occupied diagonal tile must not receive More Smoke"
+            !board.tile(3, 4).smoke(),
+            "occupied cardinal tile must not receive More Smoke"
         );
         assert!(
-            !board.units[occupied_diag].fire(),
-            "occupied diagonal units have carried fire extinguished"
+            board.units[occupied_cardinal].fire(),
+            "occupied cardinal units should keep carried fire when More Smoke skips them"
         );
         assert!(
-            !board.tile(5, 5).smoke(),
-            "diagonal building tile must not receive More Smoke"
+            !board.tile(5, 4).smoke(),
+            "cardinal building tile must not receive More Smoke"
+        );
+        assert!(
+            !board.tile(3, 5).smoke(),
+            "More Smoke should not add diagonal smoke"
+        );
+    }
+
+    #[test]
+    fn test_smoldering_shells_skipped_occupied_mech_keeps_fire() {
+        // Live evidence: Mist Eaters Let's Walk run 20260628_101633_260,
+        // Mission_Belt turn 3. Smog fired at a Leaper on G6 with burning
+        // Control Mech adjacent on F6; live did not extinguish Control's fire.
+        let mut board = make_test_board();
+        let smog = add_mech(&mut board, 1, 2, 4, 3, WId::RangedSmokeFire);
+        let control = add_mech(&mut board, 2, 2, 2, 2, WId::ScienceTcControl);
+        board.units[control].set_fire(true);
+        let leaper = add_enemy_type(&mut board, 2186, 2, 1, 1, "Leaper1");
+
+        let _ = simulate_weapon(&mut board, smog, WId::RangedSmokeFire, 2, 1);
+
+        assert_eq!(board.units[leaper].hp, 0);
+        assert!(
+            !board.tile(2, 2).smoke(),
+            "occupied adjacent mech tile must not receive Smoldering Shells smoke"
+        );
+        assert!(
+            board.units[control].fire(),
+            "skipped occupied mech should keep carried fire"
         );
     }
 
@@ -12612,7 +13134,8 @@ mod tests {
 
         assert_eq!(board.units[center].hp, 1, "+2 Damage upgrade should deal 3");
         assert!(board.units[center].fire(), "center target should be set on Fire");
-        assert!(board.tile(3, 5).smoke(), "AB should keep More Smoke diagonals");
+        assert!(board.tile(4, 5).smoke(), "AB should smoke cardinal neighbors");
+        assert!(!board.tile(3, 5).smoke(), "AB should not smoke diagonals");
     }
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {

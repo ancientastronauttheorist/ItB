@@ -715,8 +715,8 @@ mod tests {
         let units = post_attack["units"].as_array().unwrap();
         let spiderling = units.iter().find(|u| u["uid"] == 655).unwrap();
         assert_eq!(
-            spiderling["status"]["fire"], false,
-            "Smoldering Shells adjacent effect should extinguish occupied adjacent units"
+            spiderling["status"]["fire"], true,
+            "Smoldering Shells adjacent effect should skip occupied adjacent units entirely"
         );
         let building_tile = post_attack["tiles_changed"].as_array().unwrap()
             .iter()
@@ -832,6 +832,33 @@ mod tests {
         let danger = final_board["environment_danger_v2"].as_array().unwrap();
         assert!(danger.iter().any(|entry| entry == &json!([1, 4, 1, 1, 1])));
         assert!(!danger.iter().any(|entry| entry == &json!([1, 3, 1, 1, 1])));
+    }
+
+    #[test]
+    fn replay_solution_mission_tides_wave_destroys_pod() {
+        let bridge = r#"{
+          "mission_id": "Mission_Tides",
+          "turn": 2,
+          "total_turns": 3,
+          "tiles": [
+            {"x": 1, "y": 3, "terrain": "ground", "has_pod": true}
+          ],
+          "environment_danger_v2": [[1, 3, 1, 1, 1]],
+          "spawning_tiles": [],
+          "remaining_spawns": 0,
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "units": []
+        }"#;
+        let plan = "[]";
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let final_tiles = v["final_board"]["tiles"].as_array().unwrap();
+        let pod_tiles: Vec<_> = final_tiles.iter()
+            .filter(|tile| tile["has_pod"].as_bool() == Some(true))
+            .collect();
+        assert!(pod_tiles.is_empty(), "Tidal wave should destroy pods on flooded tiles");
     }
 
     #[test]

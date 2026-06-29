@@ -56,8 +56,8 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "menu_continue": KnownWindowControl(
         name="menu_continue",
-        window_x=491,
-        window_y=251,
+        window_x=498,
+        window_y=253,
         description="Pause menu Continue",
         settle_seconds=0.08,
         hold_seconds=0.08,
@@ -240,8 +240,8 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "deploy_confirm": KnownWindowControl(
         name="deploy_confirm",
-        window_x=106,
-        window_y=164,
+        window_x=114,
+        window_y=166,
         description="Deployment Confirm",
         settle_seconds=0.12,
         hold_seconds=0.08,
@@ -288,8 +288,8 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "modal_understood": KnownWindowControl(
         name="modal_understood",
-        window_x=666,
-        window_y=520,
+        window_x=675,
+        window_y=556,
         description="Modal / promotion Understood",
         settle_seconds=0.25,
     ),
@@ -358,8 +358,8 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     ),
     "leave_confirm_yes": KnownWindowControl(
         name="leave_confirm_yes",
-        window_x=568,
-        window_y=444,
+        window_x=575,
+        window_y=508,
         description="Leave Island confirmation Yes",
         settle_seconds=0.6,
     ),
@@ -608,21 +608,21 @@ _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
     "setup_change_squad": (1615, 1077),
     "squad_zenith_guard": (1040, 713),
     "setup_modal_start": (1704, 974),
-    "menu_continue": (1129, 582),
+    "menu_continue": (498, 253),
     "bottom_continue": (1633, 1009),
     "reward_continue": (1647, 985),
     "pod_open_door": (1605, 795),
     "dialogue_textbox": (1390, 555),
-    "modal_understood": (1305, 835),
+    "modal_understood": (675, 556),
     "panel_continue": (1500, 900),
     "perfect_reward_grid": (1460, 810),
     "spend_reputation": (1285, 1360),
     "leave_island": (1280, 1395),
-    "leave_confirm_yes": (1208, 795),
+    "leave_confirm_yes": (575, 508),
     "end_turn_confirm_yes": (1208, 742),
     "title_new_game_confirm_yes": (1208, 795),
     "mission_preview_board": (1460, 780),
-    "deploy_confirm": (240, 235),
+    "deploy_confirm": (114, 166),
     "abandon_timeline": (1131, 924),
     "abandon_confirm_yes": (1208, 795),
     "abandon_pilot_slot": (1205, 660),
@@ -632,7 +632,7 @@ _WINDOWS_CONTROL_OVERRIDES: dict[str, tuple[int, int]] = {
     "abandon_pilot_slot_right": (1385, 660),
     "island_archive": (600, 430),
     "island_rst": (850, 960),
-    "reset_turn": (641, 115),
+    "reset_turn": (520, 58),
     "end_turn": (252, 190),
 }
 
@@ -642,6 +642,19 @@ def _platform_control(control: KnownWindowControl) -> KnownWindowControl:
         return control
     override = _WINDOWS_CONTROL_OVERRIDES.get(control.name)
     if override is None:
+        return control
+    try:
+        bounds = _get_window_bounds("Into the Breach")
+    except Exception:
+        bounds = None
+    if not bounds:
+        return control
+    if (
+        override[0] < 0
+        or override[1] < 0
+        or override[0] >= int(bounds["width"])
+        or override[1] >= int(bounds["height"])
+    ):
         return control
     return KnownWindowControl(
         name=control.name,
@@ -1337,6 +1350,7 @@ def _windows_activate_app_window(app_name: str) -> dict:
         from ctypes import wintypes
 
         user32 = ctypes.WinDLL("user32", use_last_error=True)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         enum_proc_type = ctypes.WINFUNCTYPE(
             wintypes.BOOL,
             wintypes.HWND,
@@ -1358,9 +1372,47 @@ def _windows_activate_app_window(app_name: str) -> dict:
         user32.ShowWindow.restype = wintypes.BOOL
         user32.SetForegroundWindow.argtypes = [wintypes.HWND]
         user32.SetForegroundWindow.restype = wintypes.BOOL
+        user32.GetWindowThreadProcessId.argtypes = [
+            wintypes.HWND,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+        kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.QueryFullProcessImageNameW.argtypes = [
+            wintypes.HANDLE,
+            wintypes.DWORD,
+            wintypes.LPWSTR,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
 
         needle = str(app_name or "").lower()
-        matches: list[tuple[int, str]] = []
+        matches: list[tuple[int, str, str]] = []
+
+        def process_path_for(hwnd) -> str:
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if not pid.value:
+                return ""
+            handle = kernel32.OpenProcess(0x1000, False, pid.value)
+            if not handle:
+                return ""
+            try:
+                size = wintypes.DWORD(1024)
+                buffer = ctypes.create_unicode_buffer(size.value)
+                if kernel32.QueryFullProcessImageNameW(
+                    handle,
+                    0,
+                    buffer,
+                    ctypes.byref(size),
+                ):
+                    return buffer.value
+                return ""
+            finally:
+                kernel32.CloseHandle(handle)
 
         def enum_proc(hwnd, _lparam):
             if not user32.IsWindowVisible(hwnd):
@@ -1372,7 +1424,10 @@ def _windows_activate_app_window(app_name: str) -> dict:
             user32.GetWindowTextW(hwnd, buffer, length + 1)
             title = buffer.value
             if needle in title.lower():
-                matches.append((int(hwnd), title))
+                process_path = process_path_for(hwnd)
+                if Path(process_path).name.lower() != "breach.exe":
+                    return True
+                matches.append((int(hwnd), title, process_path))
                 return False
             return True
 
@@ -1382,7 +1437,7 @@ def _windows_activate_app_window(app_name: str) -> dict:
                 "status": "ERROR",
                 "error": f"no visible window title matched {app_name!r}",
             }
-        hwnd, title = matches[0]
+        hwnd, title, process_path = matches[0]
         hwnd_obj = wintypes.HWND(hwnd)
         user32.ShowWindow(hwnd_obj, 9)  # SW_RESTORE
         foreground_ok = bool(user32.SetForegroundWindow(hwnd_obj))
@@ -1390,6 +1445,7 @@ def _windows_activate_app_window(app_name: str) -> dict:
             "status": "OK",
             "hwnd": hwnd,
             "title": title,
+            "process_path": process_path,
             "foreground_ok": foreground_ok,
             "win_error": ctypes.get_last_error() if not foreground_ok else 0,
         }

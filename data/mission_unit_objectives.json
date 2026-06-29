@@ -22,6 +22,10 @@
     "destroy": [],
     "protect": ["ProtoBomb"]
   },
+  "Mission_Filler": {
+    "destroy": [],
+    "protect": ["Filler_Pawn"]
+  },
   "Mission_Train": {
     "destroy": [],
     "protect": ["Train"]
@@ -52,6 +56,10 @@
   },
   "Mission_AcidStorm": {
     "destroy": ["Storm_Generator"],
+    "protect": []
+  },
+  "Mission_Barrels": {
+    "destroy": ["AcidVat"],
     "protect": []
   },
   "Mission_Volatile": {

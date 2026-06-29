@@ -151,23 +151,24 @@ b = mk_board([mech])
 a = mk_action(0, "PunchMech", (2, 2), "_REPAIR", (-1, -1))
 plan = plan_single_mech(a, b)
 clicks = clicks_only(plan)
-check("repair w/ move: 3 clicks (select+move+repair)", len(clicks) == 3, plan)
-check("repair: last click is repair button",
-      (clicks[-1]["x"], clicks[-1]["y"]) == _ui_repair_button())
+check("repair w/ move: 4 clicks (select+move+repair+self-target)", len(clicks) == 4, plan)
+check("repair: button click before self-target",
+      (clicks[-2]["x"], clicks[-2]["y"]) == _ui_repair_button())
 
 # Test 7: repair without move
 mech = mk_unit(0, "PunchMech", 1, 1)
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (1, 1), "_REPAIR", (-1, -1))
 plan = plan_single_mech(a, b)
-check("repair no move: 2 clicks (select+repair)", len(clicks_only(plan)) == 2, plan)
+check("repair no move: 3 clicks (select+repair+self-target)", len(clicks_only(plan)) == 3, plan)
 
 # Test 8: passive → select only
 mech = mk_unit(0, "PunchMech", 1, 1)
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (1, 1), "Passive_Electric", (-1, -1))
 plan = plan_single_mech(a, b)
-check("passive: 1 click (select only)", len(clicks_only(plan)) == 1, plan)
+check("passive no-op: no clicks", len(clicks_only(plan)) == 0, plan)
+check("passive no-op: one wait", len(plan) == 1 and plan[0].get("type") == "wait", plan)
 
 # Test 9: secondary weapon → slot 2
 mech = mk_unit(0, "PunchMech", 3, 4,
@@ -193,6 +194,22 @@ check("Force Swap: 5 clicks (select+move+arm+target+target2)",
 check("Force Swap: final click is second target",
       clicks[-1]["x"] == grid_to_mcp(6, 2)[0]
       and clicks[-1]["y"] == grid_to_mcp(6, 2)[1],
+      clicks[-1])
+
+# Test 9c: Control Shot uses the visible two-click flow for achievement credit.
+mech = mk_unit(0, "ControlMech", 3, 3, weapon="Science_TC_Control")
+b = mk_board([mech])
+a = mk_action(0, "ControlMech", (3, 3), "Science_TC_Control", (4, 3))
+a.target2 = (6, 3)
+plan = plan_single_mech(a, b)
+clicks = clicks_only(plan)
+check("Control Shot: classify two_click",
+      classify_weapon("Science_TC_Control") == "two_click")
+check("Control Shot: 4 clicks (select+arm+target+target2)",
+      len(clicks) == 4, len(clicks), plan)
+check("Control Shot: final click is destination",
+      clicks[-1]["x"] == grid_to_mcp(6, 3)[0]
+      and clicks[-1]["y"] == grid_to_mcp(6, 3)[1],
       clicks[-1])
 
 # Test 10: end turn always emits exactly one click at the end-turn pos

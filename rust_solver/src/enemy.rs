@@ -52,6 +52,7 @@ pub(crate) fn spawn_enemy(
         | Terrain::Rubble | Terrain::Fire | Terrain::Ice => {}
         _ => return false,
     }
+    let spawn_on_fire = t.on_fire() || t.terrain == Terrain::Fire;
 
     // Pick the next live-style pawn id. Earlier simulator versions used a
     // 9000+ synthetic range, which kept search state collision-free but made
@@ -73,7 +74,10 @@ pub(crate) fn spawn_enemy(
         ..Unit::default()
     };
     u.set_type_name(type_name);
-    board.add_unit(u);
+    let idx = board.add_unit(u);
+    if spawn_on_fire {
+        board.units[idx].set_fire(true);
+    }
     true
 }
 
@@ -379,6 +383,11 @@ fn apply_env_danger(
         );
         result.grid_damage += (grid_loss as i32) - (lost as i32);
         board.grid_power = board.grid_power.saturating_sub(grid_loss);
+    }
+
+    if board.tile(x, y).has_pod() {
+        board.tile_mut(x, y).set_has_pod(false);
+        result.events.push(format!("pod_destroyed_env:{}:{}", x, y));
     }
 }
 
@@ -2311,6 +2320,33 @@ mod tests {
     }
 
     #[test]
+    fn test_bouncer_attack_damages_proto_bomb() {
+        let mut board = Board::default();
+        let bomb_idx = board.add_unit(Unit {
+            uid: 398,
+            x: 5,
+            y: 4,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[bomb_idx].set_type_name("ProtoBomb");
+
+        let bouncer_idx = add_enemy_with_type(&mut board, 402, 4, 4, 3, "Bouncer1", 5, 4);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(
+            board.units[bomb_idx].hp <= 0,
+            "Bouncer queued into a ProtoBomb should destroy the 1 HP protected unit"
+        );
+    }
+
+    #[test]
     fn test_displaced_standard_melee_reaims_from_current_position() {
         let mut board = Board::default();
         let tele_idx = board.add_unit(Unit {
@@ -3772,6 +3808,17 @@ mod tests {
         simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
         assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling1",
             "SpiderlingEgg1 should hatch into Spiderling1");
+    }
+
+    #[test]
+    fn test_spider_psion_death_egg_spawns_on_fire() {
+        let mut board = Board::default();
+        board.tile_mut(3, 3).set_on_fire(true);
+
+        assert!(spawn_spider_psion_death_egg(&mut board, 3, 3));
+        let egg_idx = board.unit_at(3, 3).expect("death egg should spawn");
+        assert_eq!(board.units[egg_idx].type_name_str(), "SpiderlingEgg1");
+        assert!(board.units[egg_idx].fire(), "death egg should inherit burning tile fire");
     }
 
     #[test]

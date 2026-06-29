@@ -114,18 +114,11 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
                 continue;
             }
 
-            // Other alive units: friendly can walk through (not stop), enemies hard-block
+            // Other live units hard-block ground movement. Flying movement uses
+            // direct range enumeration above; same-uid multi-tile bodies do not
+            // block themselves.
             if let Some(blocker_idx) = board.unit_at(nx, ny) {
                 if board.units[blocker_idx].uid != uid {
-                    if board.units[blocker_idx].team == unit.team {
-                        // Friendly: can walk through but can't stop here
-                        visited[idx] = new_cost;
-                        if new_cost < speed {
-                            queue[tail] = (nx, ny, new_cost);
-                            tail += 1;
-                        }
-                    }
-                    // Enemy/neutral: hard block — don't add to queue
                     continue;
                 }
             }
@@ -143,6 +136,129 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
     }
 
     result
+}
+
+/// Reachable tiles for Control Shot-style forced movement.
+///
+/// Control Shot uses the target unit's movement constraints, but it can move a
+/// webbed unit. Frozen and zero-move units still cannot be controlled. The
+/// returned cost is the number of movement spaces used.
+pub fn controlled_reachable_tiles_with_cost(
+    board: &Board,
+    unit_idx: usize,
+    speed: u8,
+) -> Vec<((u8, u8), u8)> {
+    let unit = &board.units[unit_idx];
+    let ux = unit.x;
+    let uy = unit.y;
+
+    if unit.frozen() || unit.move_speed == 0 || speed == 0 {
+        return vec![((ux, uy), 0)];
+    }
+
+    let uid = unit.uid;
+    let flying = unit.flying();
+    let massive = unit.massive();
+
+    let mut result = Vec::with_capacity(20);
+    result.push(((ux, uy), 0));
+
+    if flying {
+        for x in 0..8u8 {
+            for y in 0..8u8 {
+                if (x, y) == (ux, uy) {
+                    continue;
+                }
+                let dist = (x as i8 - ux as i8).unsigned_abs()
+                    + (y as i8 - uy as i8).unsigned_abs();
+                if dist > speed {
+                    continue;
+                }
+                if !board.is_blocked(x, y, true) {
+                    if unit.is_player() && board.tile(x, y).acid() {
+                        continue;
+                    }
+                    result.push(((x, y), dist));
+                }
+            }
+        }
+        return result;
+    }
+
+    let mut visited = [255u8; 64];
+    visited[xy_to_idx(ux, uy)] = 0;
+
+    let mut queue = [(0u8, 0u8, 0u8); 64];
+    let mut head = 0usize;
+    let mut tail = 0usize;
+    queue[tail] = (ux, uy, 0);
+    tail += 1;
+
+    while head < tail {
+        let (x, y, cost) = queue[head];
+        head += 1;
+
+        for &(dx, dy) in &DIRS {
+            let nx = x as i8 + dx;
+            let ny = y as i8 + dy;
+
+            if !in_bounds(nx, ny) {
+                continue;
+            }
+            let nx = nx as u8;
+            let ny = ny as u8;
+            let idx = xy_to_idx(nx, ny);
+
+            if visited[idx] != 255 {
+                continue;
+            }
+
+            let new_cost = cost + 1;
+            if new_cost > speed {
+                continue;
+            }
+
+            let tile = board.tile(nx, ny);
+            if tile.terrain == Terrain::Mountain || tile.is_building() {
+                continue;
+            }
+            let deadly_blocks = match tile.terrain {
+                Terrain::Chasm => true,
+                Terrain::Water | Terrain::Lava => !massive,
+                _ => false,
+            };
+            if deadly_blocks {
+                continue;
+            }
+            if unit.is_player() && tile.acid() {
+                continue;
+            }
+
+            if let Some(blocker_idx) = board.unit_at(nx, ny) {
+                if board.units[blocker_idx].uid != uid {
+                    continue;
+                }
+            }
+
+            if board.wreck_at(nx, ny) {
+                continue;
+            }
+
+            visited[idx] = new_cost;
+            result.push(((nx, ny), new_cost));
+            queue[tail] = (nx, ny, new_cost);
+            tail += 1;
+        }
+    }
+
+    result
+}
+
+pub fn controlled_reachable_tiles(board: &Board, unit_idx: usize, speed: u8) -> Vec<(u8, u8)> {
+    controlled_reachable_tiles_with_cost(board, unit_idx, speed)
+        .into_iter()
+        .map(|(pos, _cost)| pos)
+        .collect()
 }
 
 /// Explain why a requested move destination is not valid under the same
@@ -397,7 +513,7 @@ mod tests {
     }
 
     #[test]
-    fn test_friendly_walk_through() {
+    fn test_friendly_hard_blocks_ground_movement() {
         let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
         // Place a friendly unit at (1, 0)
         let mut friendly = Unit::default();
@@ -409,9 +525,26 @@ mod tests {
         board.add_unit(friendly);
 
         let tiles = reachable_tiles(&board, idx);
-        // Friendly: can walk through but can't stop on their tile
+        // Friendly units block ground movement just like enemies.
         assert!(!tiles.contains(&(1, 0)));
-        assert!(tiles.contains(&(2, 0)));
+        assert!(!tiles.contains(&(2, 0)));
+    }
+
+    #[test]
+    fn test_friendly_objective_blocks_only_path_to_spawn() {
+        let (mut board, idx) = make_board_with_unit(4, 3, 3, false);
+        let mut terraformer = Unit::default();
+        terraformer.uid = 2;
+        terraformer.x = 5;
+        terraformer.y = 3;
+        terraformer.hp = 2;
+        terraformer.team = Team::Player;
+        board.add_unit(terraformer);
+        board.tile_mut(4, 4).terrain = Terrain::Mountain;
+
+        let tiles = reachable_tiles(&board, idx);
+
+        assert!(!tiles.contains(&(5, 4)));
     }
 
     #[test]

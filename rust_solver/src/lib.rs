@@ -64,6 +64,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::simulate::simulate_action_with_target2;
     use crate::solver::{
         arachnoid_spawns_from_events,
+        lets_walk_control_distance_from_events,
         reverse_thrusters_four_damage_from_events,
         viscera_nanobots_heal_from_events,
     };
@@ -113,6 +114,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut stay_with_me_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
         let mut arachnoid_spawns = 0i32;
+        let mut lets_walk_control_distance = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
@@ -144,6 +146,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
             arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
+            lets_walk_control_distance += lets_walk_control_distance_from_events(&result.events);
             kills += result.enemies_killed as i32;
             mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -191,7 +194,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             + stay_with_me_heal as f64 * weights.stay_with_me_heal_bonus
             + reverse_thrusters_four_damage as f64
                 * weights.reverse_thrusters_four_damage_bonus
-            + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus;
+            + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus
+            + lets_walk_control_distance as f64 * weights.lets_walk_control_distance_bonus;
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -1932,7 +1936,69 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   RockThrown pod destruction, Chain Whip Shell Psion armor snapshotting,
 //   and Stay With Me heal scoring. Pre-v287 corpus archived as
 //   failure_db_snapshot_sim_v286.jsonl.
-pub const SIMULATOR_VERSION: u32 = 287;
+// v288 - Control Shot is modeled as a two-click target-unit/destination
+//   forced movement, including webbed controlled movement and Let's Walk enemy
+//   movement-distance events. Pre-v288 corpus archived as
+//   failure_db_snapshot_sim_v287.jsonl.
+// v289 - Projected board safety now sees Rust project_plan board_json in the
+//   Python loop, and environment hazards destroy Time Pods on affected tiles.
+//   Fixes Mission_Tides preserving a pod and missing next-wave mech danger in
+//   Mist Eaters Let's Walk run 20260627_104252_085. Pre-v289 corpus archived
+//   as failure_db_snapshot_sim_v288.jsonl.
+// v290 - Control Shot powered variants A/B/AB are modeled with 3/3/4 tile
+//   controlled-move budgets for Let's Walk farming. Pre-v290 corpus archived
+//   as failure_db_pre_v290_lets_walk_control_shot_upgrades.jsonl.
+// v291 - Control Shot first-click target units must be within the weapon range;
+//   raw bridge GetFinalEffect can otherwise move targets the live UI refuses.
+//   Pre-v291 corpus archived as failure_db_pre_v291_control_shot_target_range.jsonl.
+// v292 - Control Shot target enumeration/replay is enemy-only for Let's Walk;
+//   allied target attempts do not earn progress and can miss in the live UI path.
+//   Pre-v292 corpus archived as failure_db_pre_v292_control_shot_enemy_targets.jsonl.
+// v293 - Control Shot first-click target units must be in a straight firing
+//   line from the Control Mech; diagonal in-range targets are visible UI misses.
+//   Pre-v293 corpus archived as failure_db_pre_v293_control_shot_line_targets.jsonl.
+// v294 - Control Shot first-click target units must be the first projectile
+//   blocker in that line; buildings/mountains/units can obstruct the visible UI.
+//   Pre-v294 corpus archived as failure_db_pre_v294_control_shot_projectile_blockers.jsonl.
+// v295 - Control Shot first-click target units are adjacent-only; weapon
+//   upgrades still increase only the controlled enemy move budget.
+//   Pre-v295 corpus archived as failure_db_pre_v295_control_shot_adjacent_target.jsonl.
+// v296 - Smoldering Shells skips the inbound projectile tile for range-2 shots.
+//   Pre-v296 corpus archived as failure_db_pre_v296_smoldering_shells_inbound_smoke.jsonl.
+// v297 - Mission_Barrels AcidVat deaths leave water+ACID runoff terrain.
+//   Pre-v297 corpus archived as failure_db_snapshot_sim_v296.jsonl.
+// v298 - Spawned enemies, including Spider Psion death eggs, inherit tile Fire.
+//   Pre-v298 corpus archived as failure_db_snapshot_sim_v297.jsonl.
+// v299 - Boosted Reverse Thrusters adds +1 distance damage and boosted recoil,
+//   matching Mist Eaters Let's Walk run 20260628_101633_260 Mission_Disposal
+//   turn 1. Pre-v299 corpus archived as failure_db_snapshot_sim_v298.jsonl.
+// v300 - Smoldering Shells skips the inbound projectile tile on even-range
+//   shots, not only range 2. Pre-v300 corpus archived as
+//   failure_db_snapshot_sim_v299.jsonl.
+// v301 - Ranged_SmokeFire skipped occupied adjacent tiles no longer clear
+//   carried fire. Live Let's Walk Mission_Belt turn 3 left burning Control
+//   Mech on an occupied adjacent tile after Smoldering Shells. Pre-v301 corpus
+//   archived as failure_db_snapshot_sim_v300.jsonl.
+// v302 - Ground movement BFS treats other live friendly units as hard blockers
+//   instead of walk-through tiles. Live Let's Walk Mission_Terraform turn 2
+//   refused SmokeMech pathing through the Terraformer. Pre-v302 corpus archived
+//   as failure_db_snapshot_sim_v301.jsonl.
+// v303 - Smoke placed directly onto an occupied tile clears the occupant's
+//   carried fire without applying Nanofilter healing. Live Let's Walk
+//   Mission_Terraform turn 4 left the Reverse Thrusters backblast Firefly
+//   not-on-fire after the hit tile was smoked. Pre-v303 corpus archived as
+//   failure_db_snapshot_sim_v302.jsonl.
+// v304 - Smoldering Shells damage does not release a surviving enemy web
+//   source. Fixes Mist Eaters Let's Walk run 20260629_021050_272 Archive
+//   Mission_Mines turn 2, where Smoldering Shells damaged a Scorpion web
+//   source but Needle stayed webbed. Pre-v304 corpus archived as
+//   failure_db_snapshot_sim_v303.jsonl.
+// v305 - Smoldering Shells smoke footprint matches live Lua: base smokes only
+//   the two side tiles, while More Smoke smokes all four cardinal neighbors
+//   without diagonals. Fixes Mist Eaters Let's Walk run 20260629_073305_098
+//   Mission_Barrels turn 1 D6 far-tile smoke drift. Pre-v305 corpus archived
+//   as failure_db_snapshot_sim_v304.jsonl.
+pub const SIMULATOR_VERSION: u32 = 305;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

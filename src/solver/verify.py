@@ -1402,7 +1402,57 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Shells A/B/AB overlays, pre-attack enemy wreck clearing, RockThrown pod
 # destruction, Chain Whip Shell Psion armor snapshotting, and Stay With Me
 # heal scoring. Pre-v287 corpus archived as failure_db_snapshot_sim_v286.jsonl.
-SIMULATOR_VERSION = 287
+# v288 - Control Shot is modeled as a two-click target-unit/destination
+# forced movement, including webbed controlled movement and Let's Walk enemy
+# movement-distance events. Pre-v288 corpus archived as
+# failure_db_snapshot_sim_v287.jsonl.
+# v289 - Projected board safety now sees Rust project_plan board_json in the
+# Python loop, and environment hazards destroy Time Pods on affected tiles.
+# Fixes Mission_Tides preserving a pod and missing next-wave mech danger in
+# Mist Eaters Let's Walk run 20260627_104252_085. Pre-v289 corpus archived as
+# failure_db_snapshot_sim_v288.jsonl.
+# v290 - Control Shot powered variants A/B/AB are modeled with 3/3/4 tile
+# controlled-move budgets for Let's Walk farming. Pre-v290 corpus archived as
+# failure_db_pre_v290_lets_walk_control_shot_upgrades.jsonl.
+# v291 - Control Shot first-click target units must be within the weapon range;
+# raw bridge GetFinalEffect can otherwise move targets the live UI refuses.
+# Pre-v291 corpus archived as failure_db_pre_v291_control_shot_target_range.jsonl.
+# v292 - Control Shot target enumeration/replay is enemy-only for Let's Walk;
+# allied target attempts do not earn progress and can miss in the live UI path.
+# Pre-v292 corpus archived as failure_db_pre_v292_control_shot_enemy_targets.jsonl.
+# v293 - Control Shot first-click target units must be in a straight firing
+# line from the Control Mech; diagonal in-range targets are visible UI misses.
+# Pre-v293 corpus archived as failure_db_pre_v293_control_shot_line_targets.jsonl.
+# v294 - Control Shot first-click target units must be the first projectile
+# blocker in that line; buildings/mountains/units can obstruct the visible UI.
+# Pre-v294 corpus archived as failure_db_pre_v294_control_shot_projectile_blockers.jsonl.
+# v295 - Control Shot first-click target units are adjacent-only; weapon
+# upgrades still increase only the controlled enemy move budget.
+# Pre-v295 corpus archived as failure_db_pre_v295_control_shot_adjacent_target.jsonl.
+# v296 - Smoldering Shells skips the inbound projectile tile for range-2 shots.
+# Pre-v296 corpus archived as failure_db_pre_v296_smoldering_shells_inbound_smoke.jsonl.
+# v297 - Mission_Barrels AcidVat deaths leave water+ACID runoff terrain.
+# Pre-v297 corpus archived as failure_db_snapshot_sim_v296.jsonl.
+# v298 - Spawned enemies, including Spider Psion death eggs, inherit tile Fire.
+# Pre-v298 corpus archived as failure_db_snapshot_sim_v297.jsonl.
+# v299 - Boosted Reverse Thrusters adds +1 distance damage and boosted recoil.
+# Pre-v299 corpus archived as failure_db_snapshot_sim_v298.jsonl.
+# v300 - Smoldering Shells skips the inbound projectile tile on even-range shots.
+# Pre-v300 corpus archived as failure_db_snapshot_sim_v299.jsonl.
+# v301 - Smoldering Shells skipped occupied adjacent tiles no longer clear fire.
+# Pre-v301 corpus archived as failure_db_snapshot_sim_v300.jsonl.
+# v302 - Ground movement BFS treats other live friendly units as hard blockers
+# instead of walk-through tiles. Pre-v302 corpus archived as
+# failure_db_snapshot_sim_v301.jsonl.
+# v303 - Smoke placed directly onto an occupied tile clears carried fire without
+# applying Nanofilter healing. Pre-v303 corpus archived as
+# failure_db_snapshot_sim_v302.jsonl.
+# v304 - Smoldering Shells damage does not release a surviving enemy web source.
+# Pre-v304 corpus archived as failure_db_snapshot_sim_v303.jsonl.
+# v305 - Smoldering Shells smoke footprint matches live Lua: base smokes only
+# the two side tiles, while More Smoke smokes all four cardinal neighbors
+# without diagonals. Pre-v305 corpus archived as failure_db_snapshot_sim_v304.jsonl.
+SIMULATOR_VERSION = 305
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

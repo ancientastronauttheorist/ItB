@@ -606,6 +606,9 @@ pub enum WId {
     RangedSmokeFire = 211,
     /// Mist Eaters — Control Mech's Control Shot.
     ScienceTcControl = 212,
+    ScienceTcControlA = 234,
+    ScienceTcControlB = 235,
+    ScienceTcControlAB = 236,
     /// Bombermechs — Bombling Mech's Bomb Dispenser.
     RangedDeployBomb = 213,
     /// Bombermechs — Walking Bomb's Trigger.
@@ -643,7 +646,7 @@ pub enum WId {
     RangedSmokeFireAB = 233,
 }
 
-pub const WEAPON_COUNT: usize = 234;
+pub const WEAPON_COUNT: usize = 237;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -986,9 +989,15 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[233] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     // 212: Science_TC_Control — Control Shot.
-    // This needs target-unit plus destination targeting. Keep it catalogued but
-    // inert until the action schema/bridge can carry that second click safely.
-    w[212] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    // Two-click Mist Eaters weapon: first choose an adjacent movable enemy,
+    // then choose a legal destination within the target unit's controlled move
+    // budget.
+    w[212] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, range_max: 2, flags: C, ..DEF };
+    // 234-236: Control Shot upgrades.
+    // Each powered +1 Move upgrade increases the controlled move budget.
+    w[234] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, range_max: 3, flags: C, ..DEF };
+    w[235] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, range_max: 3, flags: C, ..DEF };
+    w[236] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 0, range_max: 4, flags: C, ..DEF };
     // 213: Ranged_DeployBomb — Bomb Dispenser.
     // Deployable extends LineArtillery in Lua: cardinal lines, min range 2,
     // empty ground target only. The Walking Bomb spawn itself is in simulate.rs.
@@ -1520,6 +1529,15 @@ pub fn is_force_swap(id: WId) -> bool {
 }
 
 #[inline]
+pub fn is_control_shot(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceTcControl | WId::ScienceTcControlA
+            | WId::ScienceTcControlB | WId::ScienceTcControlAB
+    )
+}
+
+#[inline]
 pub fn is_quick_fire_rockets(id: WId) -> bool {
     matches!(
         id,
@@ -1852,6 +1870,12 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_TC_SwapOther_B" => WId::ScienceTcSwapOtherB,
         "Science_TC_SwapOther_AB" => WId::ScienceTcSwapOtherAB,
         "Science_TC_Control" => WId::ScienceTcControl,
+        "Science_TC_Control_A" => WId::ScienceTcControlA,
+        "ScienceTcControlA" => WId::ScienceTcControlA,
+        "Science_TC_Control_B" => WId::ScienceTcControlB,
+        "ScienceTcControlB" => WId::ScienceTcControlB,
+        "Science_TC_Control_AB" => WId::ScienceTcControlAB,
+        "ScienceTcControlAB" => WId::ScienceTcControlAB,
         "Ranged_SmokeFire" => WId::RangedSmokeFire,
         "RangedSmokeFire" => WId::RangedSmokeFire,
         "Ranged_SmokeFire_A" => WId::RangedSmokeFireA,
@@ -2102,6 +2126,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceTcSwapOtherB => "Science_TC_SwapOther_B",
         WId::ScienceTcSwapOtherAB => "Science_TC_SwapOther_AB",
         WId::ScienceTcControl => "Science_TC_Control",
+        WId::ScienceTcControlA => "Science_TC_Control_A",
+        WId::ScienceTcControlB => "Science_TC_Control_B",
+        WId::ScienceTcControlAB => "Science_TC_Control_AB",
         WId::RangedSmokeFire => "Ranged_SmokeFire",
         WId::RangedSmokeFireA => "Ranged_SmokeFire_A",
         WId::RangedSmokeFireB => "Ranged_SmokeFire_B",
@@ -2397,7 +2424,8 @@ pub fn weapon_name(id: WId) -> &'static str {
             | WId::ScienceMassShiftB | WId::ScienceMassShiftAB => "Area Shift",
         WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
             | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB => "Force Swap",
-        WId::ScienceTcControl => "Control Shot",
+        WId::ScienceTcControl | WId::ScienceTcControlA
+            | WId::ScienceTcControlB | WId::ScienceTcControlAB => "Control Shot",
         WId::RangedSmokeFire | WId::RangedSmokeFireA
             | WId::RangedSmokeFireB | WId::RangedSmokeFireAB => "Smoldering Shells",
         WId::Repair => "Repair",
@@ -2987,6 +3015,38 @@ mod tests {
         assert_eq!(wid_from_str("Brute_PierceShot"), WId::BrutePierceShot);
         assert_eq!(wid_to_str(WId::BrutePierceShot), "Brute_PierceShot");
         assert_eq!(weapon_name(WId::BrutePierceShot), "AP Cannon");
+    }
+
+    #[test]
+    fn test_control_shot_mapping_and_def() {
+        let w = weapon_def(WId::ScienceTcControl);
+        assert_eq!(w.weapon_type, WeaponType::TwoClick);
+        assert_eq!(w.damage, 0);
+        assert_eq!(w.range_max, 2);
+        assert!(is_control_shot(WId::ScienceTcControl));
+        assert_eq!(wid_from_str("Science_TC_Control"), WId::ScienceTcControl);
+        assert_eq!(wid_to_str(WId::ScienceTcControl), "Science_TC_Control");
+        assert_eq!(weapon_name(WId::ScienceTcControl), "Control Shot");
+
+        let first = weapon_def(WId::ScienceTcControlA);
+        assert_eq!(first.weapon_type, WeaponType::TwoClick);
+        assert_eq!(first.range_max, 3);
+        assert!(is_control_shot(WId::ScienceTcControlA));
+        assert_eq!(wid_from_str("Science_TC_Control_A"), WId::ScienceTcControlA);
+        assert_eq!(wid_to_str(WId::ScienceTcControlA), "Science_TC_Control_A");
+
+        let second = weapon_def(WId::ScienceTcControlB);
+        assert_eq!(second.range_max, 3);
+        assert!(is_control_shot(WId::ScienceTcControlB));
+        assert_eq!(wid_from_str("Science_TC_Control_B"), WId::ScienceTcControlB);
+        assert_eq!(wid_to_str(WId::ScienceTcControlB), "Science_TC_Control_B");
+
+        let both = weapon_def(WId::ScienceTcControlAB);
+        assert_eq!(both.range_max, 4);
+        assert!(is_control_shot(WId::ScienceTcControlAB));
+        assert_eq!(wid_from_str("Science_TC_Control_AB"), WId::ScienceTcControlAB);
+        assert_eq!(wid_to_str(WId::ScienceTcControlAB), "Science_TC_Control_AB");
+        assert_eq!(weapon_name(WId::ScienceTcControlAB), "Control Shot");
     }
 
     #[test]

@@ -1927,6 +1927,27 @@ local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
         return execute_ricochet_direct(pawn, wname, skill, first, second)
     end
 
+    if string.find(wname, "^Science_TC_Control") ~= nil then
+        local target_pawn = Board:GetPawn(first)
+        if not target_pawn then
+            return false, "Control Shot first click has no pawn at " ..
+                   first.x .. "," .. first.y
+        end
+        local ok, ctrl_err = pcall(function()
+            Board:AddEffect(skill:GetFinalEffect(source, first, second))
+        end)
+        if not ok then
+            return false, "Control Shot GetFinalEffect failed: " .. tostring(ctrl_err)
+        end
+        log_bridge("FIRE: " .. wname .. " control_shot slot=" .. slot .. " " ..
+                   source.x .. "," .. source.y .. " -> " ..
+                   first.x .. "," .. first.y .. " -> " ..
+                   second.x .. "," .. second.y)
+        return true, "GetFinalEffect(" .. wname .. ") first=" ..
+               first.x .. "," .. first.y .. " second=" ..
+               second.x .. "," .. second.y
+    end
+
     if string.find(wname, "^Science_TC_SwapOther") == nil then
         return false, "unsupported two-click weapon " .. tostring(wname)
     end

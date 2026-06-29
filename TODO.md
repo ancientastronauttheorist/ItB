@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-60 of 70 achievements are Steam-cache confirmed. **Feed the Flame**, **Complete Victory**, and **Lightning War** reconciled on 2026-06-26. **Spider Breeding** is also locally proven from offline Into the Breach logs/profile state, so the working tracker is 61/70 proven with 9 tactical targets remaining.
+61 of 70 achievements are Steam/API confirmed. **Feed the Flame**, **Complete Victory**, **Lightning War**, and **Spider Breeding** have reconciled in the Steam/API checklist. **Let's Walk** is also locally proven from offline Into the Breach logs and the lit in-game squad achievement icon, so the working tracker is 62/70 proven with 8 tactical targets remaining.
 
-Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, and locally proven **Spider Breeding** are complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat. Spider Breeding closed offline in Arachnophiles run `20260626_125732_442` when the profile tracker reached `Squad_Spiders_1 = 15`.
+Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, **Spider Breeding**, and locally proven **Let's Walk** are complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat. Spider Breeding closed in Arachnophiles run `20260626_125732_442` when the profile tracker reached `Squad_Spiders_1 = 15`. Let's Walk closed in Mist Eaters run `20260629_073305_098` after visible Control Shot execution moved a Scarab from E2 to H3, the squad achievement icon lit up, and `log.txt` recorded `Set Steam Achievement Ach_Squad_Mist_2`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -67,8 +67,8 @@ Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, 
 - [x] Complete Victory (7.2%) - Beat game with all 10 primary Squads [cumulative] - Steam-cache confirmed on 2026-06-26
 - [x] Stay With Me! (7.2%) - Heal 12 damage over single Island [Mist Eaters] - Steam-cache confirmed on 2026-06-17 after R.S.T. Blast Bunker / `Mission_Trapped`
 - [x] Chronophobia (6.7%) - 3 islands, destroy every Time Pod - completed in Zenith Guard run `20260613_234901_918`
-- [x] Spider Breeding (6.7%) - Spawn 15 Arachnoids in one Island [Arachnophile] - locally proven offline on 2026-06-26; awaiting Steam-cache reconciliation
-- [ ] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters]
+- [x] Spider Breeding (6.7%) - Spawn 15 Arachnoids in one Island [Arachnophile] - locally proven offline on 2026-06-26; reconciled in the Steam/API checklist by 2026-06-29
+- [x] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters] — locally proven offline on 2026-06-29 in run `20260629_073305_098`; visible Control Shot moved Scarab E2->H3, the squad achievement icon lit up, and `log.txt` recorded `Set Steam Achievement Ach_Squad_Mist_2`
 - [ ] Hold the Door (5.4%) — Block 30 Emerging Vek by end of Island 2 [Bombermechs]
 - [ ] Core of the Earth (5.2%) — Drop 10 Enemies into pits on one Island [Cataclysm]
 - [ ] No Survivors (5.1%) — 7 units die in single turn [Bombermechs]
@@ -79,7 +79,7 @@ Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, 
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (60 Steam-cache confirmed, 61 locally proven)
+### Already Completed (61 Steam/API confirmed, 62 locally proven)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -138,6 +138,7 @@ Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, 
 - [x] Complete Victory (7.2%) — Beat game with all 10 primary Squads
 - [x] Stay With Me! (7.2%) — Heal 12 damage over single Island  [Mist Eaters]
 - [x] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
+- [x] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game  [Mist Eaters]
 - [x] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack  [Heat Sinkers]
 - [x] Squads Victory — Beat game with 4 different Squads
 

@@ -92,6 +92,17 @@ pub(crate) fn arachnoid_spawns_from_events(events: &[String]) -> i32 {
         .count() as i32
 }
 
+pub(crate) fn lets_walk_control_distance_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter_map(|event| {
+            let rest = event.strip_prefix("achievement_lets_walk:distance:")?;
+            let value = rest.split(':').next()?;
+            value.parse::<i32>().ok()
+        })
+        .sum()
+}
+
 #[derive(Clone, Debug)]
 pub struct MechAction {
     pub mech_uid: u16,
@@ -494,6 +505,15 @@ pub(crate) fn get_weapon_targets(
                 targets.push(first);
             }
         }
+        WeaponType::TwoClick if is_control_shot(weapon_id) => {
+            let target_range = control_shot_target_range(wdef);
+            let move_budget = control_shot_move_budget(wdef);
+            for (first, _second) in
+                enumerate_control_shot_targets(board, (mx, my), target_range, move_budget)
+            {
+                targets.push(first);
+            }
+        }
         WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
             let throw_range = wdef.range_max.max(1);
             for &(dx, dy) in &DIRS {
@@ -686,6 +706,71 @@ fn prime_leap_blocked_by_web(board: &Board, mx: u8, my: u8, weapon_id: WId) -> b
 // ── Action enumeration ───────────────────────────────────────────────────────
 
 type Action = ((u8, u8), WId, (u8, u8), Option<(u8, u8)>); // (move_to, weapon, target, target2)
+
+fn control_shot_target_range(_wdef: &WeaponDef) -> u8 {
+    1
+}
+
+fn control_shot_move_budget(wdef: &WeaponDef) -> u8 {
+    wdef.range_max.max(2)
+}
+
+fn control_shot_eligible_unit(unit: &Unit) -> bool {
+    unit.alive() && unit.is_enemy() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
+}
+
+fn control_shot_target_in_line(source: (u8, u8), first: (u8, u8)) -> bool {
+    source.0 == first.0 || source.1 == first.1
+}
+
+fn control_shot_has_clear_projectile_line(
+    board: &Board,
+    source: (u8, u8),
+    first: (u8, u8),
+) -> bool {
+    let dx = (first.0 as i8 - source.0 as i8).signum();
+    let dy = (first.1 as i8 - source.1 as i8).signum();
+    matches!(
+        first_projectile_blocker_from(board, source.0 as i8, source.1 as i8, dx, dy),
+        Some(blocker) if blocker == first
+    )
+}
+
+fn enumerate_control_shot_targets(
+    board: &Board,
+    source: (u8, u8),
+    target_range: u8,
+    move_budget: u8,
+) -> Vec<((u8, u8), (u8, u8))> {
+    let mut out = Vec::with_capacity(96);
+    for idx in 0..board.unit_count as usize {
+        let unit = &board.units[idx];
+        if !control_shot_eligible_unit(unit) {
+            continue;
+        }
+        let first = (unit.x, unit.y);
+        if first == source {
+            continue;
+        }
+        if !control_shot_target_in_line(source, first) {
+            continue;
+        }
+        if !control_shot_has_clear_projectile_line(board, source, first) {
+            continue;
+        }
+        let target_distance = (first.0 as i8 - source.0 as i8).unsigned_abs()
+            + (first.1 as i8 - source.1 as i8).unsigned_abs();
+        if target_distance > target_range {
+            continue;
+        }
+        for dest in controlled_reachable_tiles(board, idx, move_budget) {
+            if dest != first {
+                out.push((first, dest));
+            }
+        }
+    }
+    out
+}
 
 fn post_move_board_for_attack(board: &Board, mech_idx: usize, move_to: (u8, u8)) -> Option<Board> {
     let unit = &board.units[mech_idx];
@@ -1199,6 +1284,15 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
                         actions.push((pos, w1_id, first, Some(second)));
                     }
+                } else if is_control_shot(w1_id) {
+                    let wdef = &weapons[w1_id as usize];
+                    let target_range = control_shot_target_range(wdef);
+                    let move_budget = control_shot_move_budget(wdef);
+                    for (first, second) in
+                        enumerate_control_shot_targets(action_board, attack_pos, target_range, move_budget)
+                    {
+                        actions.push((pos, w1_id, first, Some(second)));
+                    }
                 } else if is_ricochet_rocket(w1_id) && !action_unit.web() {
                     for (first, second) in enumerate_ricochet_targets(action_board, attack_pos.0, attack_pos.1) {
                         actions.push((pos, w1_id, first, Some(second)));
@@ -1217,6 +1311,15 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
             if w2_id != WId::None {
                 if is_force_swap(w2_id) {
                     for (first, second) in enumerate_force_swap_targets(action_board, attack_pos.0, attack_pos.1) {
+                        actions.push((pos, w2_id, first, Some(second)));
+                    }
+                } else if is_control_shot(w2_id) {
+                    let wdef = &weapons[w2_id as usize];
+                    let target_range = control_shot_target_range(wdef);
+                    let move_budget = control_shot_move_budget(wdef);
+                    for (first, second) in
+                        enumerate_control_shot_targets(action_board, attack_pos, target_range, move_budget)
+                    {
                         actions.push((pos, w2_id, first, Some(second)));
                     }
                 } else if is_ricochet_rocket(w2_id) && !action_unit.web() {
@@ -1746,6 +1849,7 @@ fn search_recursive(
     reverse_thrusters_four_damage_so_far: i32,
     feed_the_flame_so_far: i32,
     arachnoid_spawns_so_far: i32,
+    lets_walk_control_distance_so_far: i32,
     stay_with_me_heal_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
@@ -1824,6 +1928,8 @@ fn search_recursive(
             feed_the_flame_so_far as f64 * weights.feed_the_flame_bonus;
         let arachnoid_spawn_bonus =
             arachnoid_spawns_so_far as f64 * weights.arachnoid_spawn_bonus;
+        let lets_walk_control_distance_bonus =
+            lets_walk_control_distance_so_far as f64 * weights.lets_walk_control_distance_bonus;
         let stay_with_me_heal_bonus =
             stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
         let pod_collected_penalty =
@@ -1835,6 +1941,7 @@ fn search_recursive(
             + reverse_thrusters_four_damage_bonus
             + feed_the_flame_bonus
             + arachnoid_spawn_bonus
+            + lets_walk_control_distance_bonus
             + stay_with_me_heal_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
@@ -1867,6 +1974,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far,
             feed_the_flame_so_far,
             arachnoid_spawns_so_far,
+            lets_walk_control_distance_so_far,
             stay_with_me_heal_so_far,
             pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
@@ -1933,6 +2041,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_from_events(&result.events);
         let feed_the_flame_add = feed_the_flame_from_events(&result.events);
         let arachnoid_spawns_add = arachnoid_spawns_from_events(&result.events);
+        let lets_walk_control_distance_add = lets_walk_control_distance_from_events(&result.events);
         let stay_with_me_heal_add = result.mech_hp_repaired;
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
@@ -1962,6 +2071,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
             feed_the_flame_so_far + feed_the_flame_add,
             arachnoid_spawns_so_far + arachnoid_spawns_add,
+            lets_walk_control_distance_so_far + lets_walk_control_distance_add,
             stay_with_me_heal_so_far + stay_with_me_heal_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
@@ -2148,7 +2258,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2353,7 +2463,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -2468,6 +2578,183 @@ mod top_k_tests {
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(actions.iter().any(|a| a.1 == WId::TrappedExplode));
+    }
+
+    #[test]
+    fn control_shot_target_enumeration_respects_first_click_range() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 2,
+            y: 1,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceTcControl as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 100,
+            x: 1,
+            y: 1,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE | UnitFlags::IS_MECH,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 101,
+            x: 2,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 102,
+            x: 2,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 103,
+            x: 3,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            2,
+            1,
+            WId::ScienceTcControl,
+            (2, 1),
+            &WEAPONS,
+        );
+        assert!(
+            targets.contains(&(2, 2)),
+            "Control Shot should offer adjacent enemy first-click targets"
+        );
+        assert!(
+            !targets.contains(&(2, 3)),
+            "Control Shot must not offer non-adjacent target units"
+        );
+        assert!(
+            !targets.contains(&(1, 1)),
+            "Control Shot should not offer allied targets while farming Let's Walk"
+        );
+        assert!(
+            !targets.contains(&(3, 2)),
+            "Control Shot should not offer diagonal first-click targets"
+        );
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                a.1 == WId::ScienceTcControl && a.2 == (2, 2) && a.3 == Some((0, 2))
+            }),
+            "action enumeration should keep adjacent Control Shot targets and two-space destinations"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (2, 3))),
+            "action enumeration should reject non-adjacent Control Shot targets"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (1, 1))),
+            "action enumeration should reject allied Control Shot targets"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (3, 2))),
+            "action enumeration should reject diagonal Control Shot targets"
+        );
+    }
+
+    #[test]
+    fn control_shot_target_enumeration_respects_projectile_blockers() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 2,
+            y: 1,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceTcControl as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 101,
+            x: 2,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 102,
+            x: 3,
+            y: 1,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        {
+            let tile = board.tile_mut(2, 2);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        let targets = get_weapon_targets(
+            &board,
+            2,
+            1,
+            WId::ScienceTcControl,
+            (2, 1),
+            &WEAPONS,
+        );
+        assert!(
+            targets.contains(&(3, 1)),
+            "Control Shot should offer unobstructed first-click targets"
+        );
+        assert!(
+            !targets.contains(&(2, 3)),
+            "Control Shot should not offer targets behind projectile blockers"
+        );
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| a.1 == WId::ScienceTcControl && a.2 == (3, 1)),
+            "action enumeration should keep unobstructed Control Shot targets"
+        );
+        assert!(
+            actions.iter().all(|a| !(a.1 == WId::ScienceTcControl && a.2 == (2, 3))),
+            "action enumeration should reject obstructed Control Shot targets"
+        );
     }
 
     #[test]

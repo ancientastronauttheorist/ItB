@@ -94,13 +94,13 @@ def recalibrate():
 # Recalibrated 2026-04-30 from Corporate HQ: the Codex Computer Use
 # window-local center of the visible End Turn button was (126, 120).
 _UI_END_TURN = (126, 120)
-# Weapon/repair slot offsets re-calibrated 2026-04-23. Old values (191/255/111, 528)
-# missed the icons by ~25 px in Y and ~10 px in X. Empirical hover-verify
-# on Pinnacle Frozen Plains placed the Aerial Bombs icon center at image
-# (396, 585) with window at (215, 32), giving window-relative (181, 553).
-_UI_WEAPON_SLOT_1 = (181, 553)
-_UI_WEAPON_SLOT_2 = (245, 553)
-_UI_REPAIR_BUTTON = (105, 553)
+# Weapon/repair slot offsets re-calibrated 2026-06-27 on Windows during a
+# live Mist Eaters Control Shot recovery. The old y=553 offsets clicked above
+# the selected mech panel. Hover proof put Repair near window-local (181,672)
+# and the Control Shot weapon card near (281,672) on a 1296x759 window.
+_UI_WEAPON_SLOT_1 = (277, 662)
+_UI_WEAPON_SLOT_2 = (341, 662)
+_UI_REPAIR_BUTTON = (181, 662)
 
 # Squad-select screen. Calibrated 2026-04-21 via hover-verify: cursor at
 # MCP (1006, 562) with window at Quartz (215, 32, 1280, 748) triggered
@@ -180,7 +180,7 @@ def classify_weapon(weapon_id: str) -> str:
 
     - "normal":  optional move click → arm weapon → click target
     - "dash":    arm weapon → click destination tile (no separate move)
-    - "repair":  optional move click → click Repair button (no target)
+    - "repair":  optional move click → click Repair button → self tile
     - "two_click": optional move click → arm weapon → click target → click target2
     - "passive": no click flow at all
     """
@@ -228,9 +228,10 @@ def _weapon_icon_pos(weapon_id: str, mech) -> tuple[int, int]:
 
 # --- Per-Mech Click Planning ---
 
-_WAIT_AFTER_SELECT = 0.3
+_WAIT_AFTER_SELECT = 0.6
 _WAIT_AFTER_MOVE = 0.5
-_WAIT_AFTER_ARM = 0.3
+_WAIT_AFTER_ARM = 0.7
+_WAIT_AFTER_CONTROL_TARGET = 2.5
 
 
 def _wait_op(duration: float, note: str) -> dict:
@@ -257,6 +258,15 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     if mech is None:
         return []
 
+    weapon_type = classify_weapon(action.weapon)
+    has_move = bool(action.move_to and action.move_to != (mech.x, mech.y))
+    has_attack = action_has_attack(action)
+
+    if not has_move and not has_attack and weapon_type not in {"dash", "repair"}:
+        return annotate_click_plan([
+            _wait_op(0.1, f"No-op {action.mech_type}; leave UI selection unchanged")
+        ])
+
     # Step 1: select the mech by clicking its tile center. grid_to_mcp follows
     # the shared GridConfig calibration used by cmd_calibrate; the tile center
     # is reliable even though mech sprites render above it.
@@ -267,14 +277,12 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
         "description": f"Select {action.mech_type} at ({mech.x},{mech.y})",
     }]
 
-    weapon_type = classify_weapon(action.weapon)
-
     # Passive weapons have no clickable target — just selecting the mech
     # is enough to "consume" the action from the Claude perspective.
     if weapon_type == "passive":
         return annotate_click_plan(plan)
 
-    # Repair: optional move, then click the Repair button.
+    # Repair: optional move, then click the Repair button and self-target.
     if weapon_type == "repair":
         plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
         if action.move_to and action.move_to != (mech.x, mech.y):
@@ -290,6 +298,14 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "type": "left_click",
             "x": rx, "y": ry,
             "description": "Click Repair button",
+        })
+        repair_x, repair_y = action.move_to if action.move_to else (mech.x, mech.y)
+        sx, sy = grid_to_mcp(repair_x, repair_y)
+        plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for repair targeting"))
+        plan.append({
+            "type": "left_click",
+            "x": sx, "y": sy,
+            "description": f"Repair self at ({repair_x},{repair_y})",
         })
         return annotate_click_plan(plan)
 
@@ -341,7 +357,12 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
         })
         target2 = getattr(action, "target2", None)
         if weapon_type == "two_click" and is_board_target(target2):
-            plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for second target"))
+            wait = (
+                _WAIT_AFTER_CONTROL_TARGET
+                if str(action.weapon).startswith("Science_TC_Control")
+                else _WAIT_AFTER_ARM
+            )
+            plan.append(_wait_op(wait, "wait for second target"))
             tx2, ty2 = grid_to_mcp(target2[0], target2[1])
             plan.append({
                 "type": "left_click",

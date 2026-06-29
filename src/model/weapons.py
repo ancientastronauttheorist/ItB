@@ -725,11 +725,21 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="Heal Ally",
         upgrade_b="Hurt Enemy",
     ),
-    # Control Shot needs a target unit and a destination tile. The live bridge
-    # action schema currently has only one target coordinate, so keep it
-    # catalogued but inert until a true second-click execution path exists.
     "Science_TC_Control": WeaponDef(
-        name="Control Shot", weapon_type="passive", damage=0,
+        name="Control Shot", weapon_type="two_click", damage=0, range_max=2,
+        upgrade_a="+1 move",
+        upgrade_b="+1 move",
+    ),
+    "Science_TC_Control_A": WeaponDef(
+        name="Control Shot", weapon_type="two_click", damage=0, range_max=3,
+        upgrade_a="+1 move",
+    ),
+    "Science_TC_Control_B": WeaponDef(
+        name="Control Shot", weapon_type="two_click", damage=0, range_max=3,
+        upgrade_b="+1 move",
+    ),
+    "Science_TC_Control_AB": WeaponDef(
+        name="Control Shot", weapon_type="two_click", damage=0, range_max=4,
         upgrade_a="+1 move",
         upgrade_b="+1 move",
     ),

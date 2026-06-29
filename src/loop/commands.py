@@ -34,6 +34,7 @@ from src.capture.save_parser import (
     SAVE_DIR,
 )
 from src.model.board import Board
+from src.model.pawn_stats import get_pawn_stats
 from src.model.weapons import get_weapon_name
 from src.solver.solver import MechAction, Solution, replay_solution
 from src.solver.action_classification import action_has_attack, is_repair_action
@@ -87,6 +88,69 @@ from src.loop.lightning_conductor import (
 )
 from src.strategy.run_planner import recommend_squad_for_run
 from src.strategy.setup_verifier import capture_and_check_setup
+
+_CONTROL_SHOT_PREFIX = "Science_TC_Control"
+
+
+def _is_control_shot_weapon(weapon_id: str | None) -> bool:
+    return str(weapon_id or "").startswith(_CONTROL_SHOT_PREFIX)
+
+
+def _execute_visible_click_plan(
+    batch: list[dict],
+    *,
+    app_name: str = "Into the Breach",
+) -> dict:
+    """Execute a trusted combat click plan with the local OS click helper."""
+    from src.control.mac_click import click_screen_point
+
+    steps: list[dict] = []
+    for idx, op in enumerate(batch):
+        typ = op.get("type")
+        if typ == "wait":
+            duration = max(0.0, float(op.get("duration") or 0.0))
+            time.sleep(duration)
+            steps.append({
+                "index": idx,
+                "type": "wait",
+                "duration": duration,
+                "description": op.get("description", ""),
+            })
+            continue
+        if typ != "left_click":
+            return {
+                "status": "ERROR",
+                "reason": "unsupported_click_plan_op",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+            }
+        click = click_screen_point(
+            int(op["x"]),
+            int(op["y"]),
+            description=str(op.get("description") or ""),
+            app_name=app_name,
+            settle_seconds=0.05,
+            hold_seconds=0.12,
+        )
+        steps.append({
+            "index": idx,
+            "type": "left_click",
+            "description": op.get("description", ""),
+            "x": int(op["x"]),
+            "y": int(op["y"]),
+            "result": click,
+        })
+        if click.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "reason": "click_failed",
+                "index": idx,
+                "click": click,
+                "steps": steps,
+            }
+    return {"status": "OK", "steps": steps}
+
 
 BONUS_MECH_DAMAGE_ID = 4
 MECH_DAMAGE_OBJECTIVE_LIMIT = 4
@@ -292,6 +356,24 @@ def _achievement_weight_overlay(
         )
         applied.append("spider_breeding")
 
+    if "let's walk" in normalized_targets or "lets walk" in normalized_targets:
+        # Mist Eaters: reward real enemy Control Shot movement, while leaving
+        # grid/building/objective survival dominant. Lower routine cleanup
+        # pressure so safe long-distance control lines beat equivalent kills.
+        weights["lets_walk_control_distance_bonus"] = max(
+            float(weights.get("lets_walk_control_distance_bonus", 0) or 0),
+            6000.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 900) or 900),
+            250.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("lets_walk")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove
@@ -475,6 +557,42 @@ def _hard_stop_result(status: str, **extra) -> dict:
     }
     result.update(extra)
     return result
+
+
+def _partial_re_solve_threat_block_result(
+    *,
+    threat_audit: dict | None,
+    plan_safety: dict | None,
+    session: RunSession,
+    turn: int,
+    actions_completed: int,
+    re_solve_count: int,
+    actions: list,
+    desync: dict,
+    lightning_speed_loss_allowed: bool = False,
+) -> dict | None:
+    if not _threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        lightning_speed_loss_allowed=lightning_speed_loss_allowed,
+    ):
+        return None
+    return {
+        "status": "THREAT_AUDIT_BLOCKED_RE_SOLVE",
+        "turn": turn,
+        "actions_completed": actions_completed,
+        "re_solves": re_solve_count,
+        "plan_safety": plan_safety,
+        "threat_audit": threat_audit,
+        "actions": [a.description for a in actions],
+        "desync": desync,
+        "next_step": (
+            "Partial re-solve still predicts an unresolved building/pylon "
+            "threat. Do not spend remaining actions or click End Turn until "
+            "the line is reviewed or a safer plan is found."
+        ),
+    }
 
 
 def _is_hard_stop_status(status: object) -> bool:
@@ -912,6 +1030,7 @@ def _dirty_consent_gate(
     consume: bool = True,
     allow_protected_objective_loss: bool = False,
     allow_objective_loss: bool = False,
+    allow_mech_loss: bool = False,
     allow_timeline_collapse: bool = False,
     allow_previously_consumed: bool = False,
 ) -> dict | None:
@@ -964,6 +1083,7 @@ def _dirty_consent_gate(
             allow_objective_loss
             and k in OBJECTIVE_LOSS_DIRTY_KINDS
         )
+        and not (allow_mech_loss and k == "mech_lost")
     )
     if non_overridable:
         return _hard_stop_result(
@@ -3021,6 +3141,21 @@ def _summary_with_pending_grid_debt(summary: dict, debt: int) -> dict:
     return out
 
 
+def _projected_final_board_data(enriched: dict) -> dict:
+    final_board_data = enriched.get("final_board") or {}
+    if final_board_data:
+        return final_board_data
+    board_json = enriched.get("board_json")
+    if isinstance(board_json, str) and board_json.strip():
+        try:
+            parsed = json.loads(board_json)
+        except Exception:
+            return {}
+        if isinstance(parsed, dict):
+            return parsed
+    return {}
+
+
 def _rust_result_to_solution(rust_result: dict | None,
                              elapsed_seconds: float,
                              active_mech_count: int) -> Solution | None:
@@ -3165,7 +3300,7 @@ def _evaluate_solution_safety(board: Board,
     current_outcome = _capture_board_summary(board, bridge_data)
     predicted_outcome = enriched["predicted_outcome"]
     predicted_board_summary = dict(predicted_outcome)
-    final_board_data = enriched.get("final_board") or {}
+    final_board_data = _projected_final_board_data(enriched)
     if final_board_data:
         final_board_data = _carry_projected_summary_metadata(
             final_board_data,
@@ -6145,6 +6280,31 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             block_mech_hp_loss=block_mech_hp_loss,
             block_mech_status_loss=block_mech_status_loss,
         )
+    elif not _projected_final_board_data(selected_candidate_eval.get("enriched") or {}):
+        rem_spawns = (
+            bridge_data.get("remaining_spawns", 2**31 - 1)
+            if bridge_data else 2**31 - 1
+        )
+        total_turns = board.total_turns if hasattr(board, "total_turns") else 5
+        replacement_eval = _evaluate_solution_safety(
+            board, bridge_data, selected_candidate_eval["solution"], spawns,
+            current_turn=current_turn,
+            total_turns=total_turns,
+            remaining_spawns=rem_spawns,
+            weights=breakdown_weights,
+            block_mech_hp_loss=block_mech_hp_loss,
+            block_mech_status_loss=block_mech_status_loss,
+        )
+        for key in (
+            "enriched",
+            "current_outcome",
+            "predicted_outcome",
+            "predicted_board_summary",
+            "plan_safety",
+        ):
+            selected_candidate_eval[key] = replacement_eval[key]
+        if replacement_eval.get("safety_widening"):
+            selected_candidate_eval["safety_widening"] = replacement_eval["safety_widening"]
     enriched = selected_candidate_eval["enriched"]
     current_outcome = selected_candidate_eval["current_outcome"]
     predicted_outcome = selected_candidate_eval["predicted_outcome"]
@@ -6227,6 +6387,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
+        "final_board": enriched.get("final_board", {}),
         "replay_annotations": enriched.get("replay_annotations", []),
         "current_outcome": current_outcome,
         "predicted_outcome": predicted_outcome,
@@ -7240,7 +7401,16 @@ def cmd_reject_diagnosis(failure_id: str, reason: str,
     return result
 
 
-def cmd_click_action(action_index: int) -> dict:
+def cmd_click_action(
+    action_index: int,
+    *,
+    allow_dirty_plan: bool = False,
+    candidate_rank: int | None = None,
+    dirty_consent_id: str | None = None,
+    allow_protected_objective_loss: bool = False,
+    allow_objective_loss: bool = False,
+    allow_mech_loss: bool = False,
+) -> dict:
     """Plan clicks for ONE mech action and emit a computer_batch-ready batch.
 
     Pure planner — does not execute any clicks itself. Claude (the parent
@@ -7273,6 +7443,66 @@ def cmd_click_action(action_index: int) -> dict:
         return result
 
     action = actions[action_index]
+    solved_turn = session.active_solution.turn
+    solve_data = _load_recorded_turn_state(session, "solve", turn=solved_turn)
+    plan_safety = solve_data.get("plan_safety") if isinstance(solve_data, dict) else None
+    selected_rank = candidate_rank
+    if selected_rank is None and isinstance(solve_data, dict):
+        recorded_rank = solve_data.get("selected_candidate_rank")
+        if isinstance(recorded_rank, int):
+            selected_rank = recorded_rank
+    dirty_consent_validated = False
+    if isinstance(plan_safety, dict) and plan_safety.get("blocking"):
+        if allow_dirty_plan:
+            consent_error = _dirty_consent_gate(
+                session,
+                turn=solved_turn,
+                plan_safety=plan_safety,
+                actions=actions,
+                candidate_rank=selected_rank,
+                provided_id=dirty_consent_id,
+                consume=False,
+                allow_protected_objective_loss=allow_protected_objective_loss,
+                allow_objective_loss=allow_objective_loss,
+                allow_mech_loss=allow_mech_loss,
+                allow_previously_consumed=True,
+            )
+            if consent_error is not None:
+                _print_result(consent_error)
+                return consent_error
+            dirty_consent_validated = True
+        if plan_requires_safety_block(
+            plan_safety,
+            allow_dirty_plan=dirty_consent_validated,
+            allow_protected_objective_loss_dirty=(
+                dirty_consent_validated and allow_protected_objective_loss
+            ),
+            allow_objective_loss_dirty=(
+                dirty_consent_validated and allow_objective_loss
+            ),
+            allow_mech_loss_dirty=(dirty_consent_validated and allow_mech_loss),
+        ):
+            consent_id = _dirty_consent_id(
+                session,
+                solved_turn,
+                plan_safety,
+                actions,
+                candidate_rank=selected_rank,
+            )
+            result = {
+                "status": "SAFETY_BLOCKED",
+                "action_index": action_index,
+                "actions": [a.description for a in actions],
+                "plan_safety": plan_safety,
+                "dirty_consent_id": consent_id,
+                "next_step": (
+                    "Review the exact dirty line, then rerun click_action "
+                    "with --allow-dirty-plan and this dirty_consent_id only "
+                    "if this specific visible-click line is accepted."
+                ),
+            }
+            _print_result(result)
+            return result
 
     if not is_bridge_active():
         result = {"status": "ERROR", "error": "bridge not active — click_action requires bridge"}
@@ -7323,6 +7553,10 @@ def cmd_click_action(action_index: int) -> dict:
         "batch": batch,
         "next_step": f"verify_action {action_index}",
     }
+    if dirty_consent_validated:
+        result["dirty_consent_validated"] = True
+        result["dirty_consent_id"] = dirty_consent_id
+        result["selected_candidate_rank"] = selected_rank
 
     print(f"\n=== CLICK_ACTION {action_index}: {action.description} ===")
     for i, c in enumerate(batch):
@@ -7350,6 +7584,10 @@ def cmd_click_end_turn() -> dict:
     if block is not None:
         _print_result(block)
         return block
+    fire_block = _current_end_turn_fire_block()
+    if fire_block is not None:
+        _print_result(fire_block)
+        return fire_block
     recalibrate()
     batch = plan_end_turn()
     codex_batch = [
@@ -7378,6 +7616,441 @@ def cmd_click_end_turn() -> dict:
           "(or legacy batch via computer_batch), wait ~6s, then `read`")
     _print_result(result)
     return result
+
+
+def _safe_dispatch_label(label: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(label or "").strip())
+    return (cleaned.strip("._") or "click")[:80]
+
+
+def _inspect_dispatch_screenshot(path: Path) -> dict:
+    try:
+        from PIL import Image, ImageStat
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "pillow_unavailable",
+            "error": str(exc),
+        }
+
+    try:
+        with Image.open(path) as image:
+            rgb = image.convert("RGB")
+            width, height = rgb.size
+            gray = rgb.convert("L")
+            extrema = gray.getextrema()
+            sample = rgb.resize((max(1, min(96, width)), max(1, min(96, height))))
+            stat = ImageStat.Stat(sample)
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_unreadable",
+            "error": str(exc),
+            "screenshot_path": str(path),
+        }
+
+    brightness_range = int(extrema[1] - extrema[0])
+    if width < 600 or height < 400:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_too_small",
+            "width": width,
+            "height": height,
+            "screenshot_path": str(path),
+        }
+    if brightness_range < 4:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_blank_or_uniform",
+            "width": width,
+            "height": height,
+            "brightness_extrema": extrema,
+            "screenshot_path": str(path),
+        }
+    return {
+        "status": "OK",
+        "width": width,
+        "height": height,
+        "brightness_extrema": extrema,
+        "brightness_range": brightness_range,
+        "mean_rgb": [round(float(v), 2) for v in stat.mean],
+        "screenshot_path": str(path),
+    }
+
+
+def _prepare_local_dispatch_guard(label: str) -> dict:
+    from src.capture.window import (
+        get_window_bounds,
+        is_game_frontmost,
+        take_screenshot,
+    )
+
+    focus_result = None
+    if os.name == "nt":
+        try:
+            from src.control.mac_click import _windows_activate_app_window
+
+            focus_result = _windows_activate_app_window("Into the Breach")
+            time.sleep(0.10)
+        except Exception as exc:
+            return {
+                "status": "ERROR",
+                "reason": "window_activation_failed",
+                "error": str(exc),
+            }
+    else:
+        try:
+            from src.capture.window import activate_game_window
+
+            activate_game_window()
+            time.sleep(0.05)
+        except Exception:
+            pass
+
+    bounds = get_window_bounds()
+    if bounds is None:
+        return {
+            "status": "ERROR",
+            "reason": "window_bounds_unavailable",
+            "focus": focus_result,
+        }
+    frontmost = is_game_frontmost()
+    if not frontmost:
+        return {
+            "status": "ERROR",
+            "reason": "game_window_not_frontmost",
+            "bounds": bounds,
+            "focus": focus_result,
+        }
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    path = (
+        Path("run_notes")
+        / f"local_dispatch_pre_{_safe_dispatch_label(label)}_{timestamp}.png"
+    )
+    try:
+        take_screenshot(path, bounds=bounds)
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "reason": "screenshot_capture_failed",
+            "error": str(exc),
+            "bounds": bounds,
+            "focus": focus_result,
+            "frontmost": frontmost,
+        }
+
+    inspection = _inspect_dispatch_screenshot(path)
+    if inspection.get("status") != "OK":
+        inspection.update({
+            "bounds": bounds,
+            "focus": focus_result,
+            "frontmost": frontmost,
+        })
+        return inspection
+    return {
+        "status": "OK",
+        "bounds": bounds,
+        "focus": focus_result,
+        "frontmost": frontmost,
+        "screenshot": inspection,
+    }
+
+
+def _window_point_from_click_op(op: dict) -> tuple[int, int] | None:
+    if "window_x" in op and "window_y" in op:
+        return int(op["window_x"]), int(op["window_y"])
+    codex_click = op.get("codex_computer_use")
+    if isinstance(codex_click, dict) and "x" in codex_click and "y" in codex_click:
+        return int(codex_click["x"]), int(codex_click["y"])
+    if "x" in op and "y" in op:
+        try:
+            return to_window_local(int(op["x"]), int(op["y"]))
+        except Exception:
+            return None
+    return None
+
+
+def _dispatch_click_batch_locally(
+    batch: list[dict],
+    *,
+    execute: bool,
+    label: str,
+    post_wait: float = 0.0,
+) -> dict:
+    guard = _prepare_local_dispatch_guard(label)
+    if guard.get("status") != "OK":
+        return {
+            "status": "ERROR",
+            "reason": "dispatch_guard_failed",
+            "guard": guard,
+            "executed": False,
+        }
+
+    from src.control.mac_click import click_window_point
+
+    steps: list[dict] = []
+    for idx, op in enumerate(batch):
+        if not isinstance(op, dict):
+            return {
+                "status": "ERROR",
+                "reason": "invalid_batch_op",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+        typ = op.get("type")
+        if typ == "wait":
+            duration = max(0.0, float(op.get("duration") or 0.0))
+            if execute:
+                time.sleep(duration)
+            steps.append({
+                "index": idx,
+                "type": "wait",
+                "duration": duration,
+                "description": op.get("description", ""),
+                "slept": bool(execute),
+            })
+            continue
+        if typ != "left_click":
+            return {
+                "status": "ERROR",
+                "reason": "unsupported_batch_op",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+        point = _window_point_from_click_op(op)
+        if point is None:
+            return {
+                "status": "ERROR",
+                "reason": "missing_window_coordinates",
+                "index": idx,
+                "op": op,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+        wx, wy = point
+        click = click_window_point(
+            wx,
+            wy,
+            description=str(op.get("description") or ""),
+            dry_run=not execute,
+            settle_seconds=0.05,
+            hold_seconds=0.12,
+        )
+        step = {
+            "index": idx,
+            "type": "left_click",
+            "window_x": wx,
+            "window_y": wy,
+            "description": op.get("description", ""),
+            "result": click,
+        }
+        steps.append(step)
+        if click.get("status") not in {"OK", "DRY_RUN"}:
+            return {
+                "status": "ERROR",
+                "reason": "click_failed",
+                "index": idx,
+                "steps": steps,
+                "guard": guard,
+                "executed": execute,
+            }
+
+    if execute and post_wait > 0:
+        time.sleep(max(0.0, float(post_wait)))
+
+    return {
+        "status": "DISPATCHED" if execute else "DRY_RUN",
+        "executed": bool(execute),
+        "guard": guard,
+        "steps": steps,
+        "post_wait": max(0.0, float(post_wait)) if execute else 0.0,
+    }
+
+
+def cmd_dispatch_click_action(
+    action_index: int,
+    *,
+    allow_dirty_plan: bool = False,
+    candidate_rank: int | None = None,
+    dirty_consent_id: str | None = None,
+    allow_protected_objective_loss: bool = False,
+    allow_objective_loss: bool = False,
+    allow_mech_loss: bool = False,
+    execute: bool = False,
+    post_wait: float = 1.25,
+) -> dict:
+    """Plan and optionally dispatch one visible mech action locally.
+
+    This is a guarded fallback for when Codex Computer Use can plan but cannot
+    capture/dispatch screenshots. It still relies on ``click_action`` for all
+    bridge, dirty-consent, and click-plan validation.
+    """
+    plan = cmd_click_action(
+        action_index,
+        allow_dirty_plan=allow_dirty_plan,
+        candidate_rank=candidate_rank,
+        dirty_consent_id=dirty_consent_id,
+        allow_protected_objective_loss=allow_protected_objective_loss,
+        allow_objective_loss=allow_objective_loss,
+        allow_mech_loss=allow_mech_loss,
+    )
+    if plan.get("status") != "PLAN":
+        result = {
+            "status": "ERROR",
+            "reason": "click_action_plan_failed",
+            "plan": plan,
+            "executed": False,
+        }
+        _print_result(result)
+        return result
+    dispatch = _dispatch_click_batch_locally(
+        list(plan.get("batch") or []),
+        execute=execute,
+        label=f"action_{action_index}",
+        post_wait=max(0.0, float(post_wait)),
+    )
+    result = {
+        "status": dispatch.get("status"),
+        "action_index": action_index,
+        "description": plan.get("description"),
+        "execute_requested": bool(execute),
+        "dispatch": dispatch,
+        "next_step": (
+            f"verify_action {action_index}"
+            if execute and dispatch.get("status") == "DISPATCHED"
+            else "rerun with --execute to perform the guarded local clicks"
+        ),
+    }
+    _print_result(result)
+    return result
+
+
+def cmd_dispatch_end_turn(
+    *,
+    execute: bool = False,
+    post_wait: float = 0.0,
+) -> dict:
+    """Plan and optionally dispatch the End Turn click locally."""
+    plan = cmd_click_end_turn()
+    if plan.get("status") != "PLAN":
+        result = {
+            "status": "ERROR",
+            "reason": "click_end_turn_plan_failed",
+            "plan": plan,
+            "executed": False,
+        }
+        _print_result(result)
+        return result
+    dispatch = _dispatch_click_batch_locally(
+        list(plan.get("batch") or []),
+        execute=execute,
+        label="end_turn",
+        post_wait=post_wait,
+    )
+    result = {
+        "status": dispatch.get("status"),
+        "execute_requested": bool(execute),
+        "dispatch": dispatch,
+        "next_step": (
+            "read"
+            if execute and dispatch.get("status") == "DISPATCHED"
+            else "rerun with --execute to perform the guarded local End Turn click"
+        ),
+    }
+    _print_result(result)
+    return result
+
+
+def _board_has_player_flame_shielding(board: Board) -> bool:
+    return any(
+        getattr(u, "is_player", False)
+        and getattr(u, "is_mech", False)
+        and getattr(u, "hp", 0) > 0
+        and (
+            getattr(u, "weapon", "") == "Passive_FlameImmune"
+            or getattr(u, "weapon2", "") == "Passive_FlameImmune"
+        )
+        for u in board.units
+    )
+
+
+def _unit_takes_end_turn_fire_tick(board: Board, unit) -> bool:
+    if not getattr(unit, "fire", False):
+        return False
+    if getattr(unit, "shield", False) or getattr(unit, "frozen", False):
+        return False
+    if get_pawn_stats(getattr(unit, "type", "")).ignore_fire:
+        return False
+    if (
+        getattr(unit, "is_player", False)
+        and getattr(unit, "is_mech", False)
+        and _board_has_player_flame_shielding(board)
+    ):
+        return False
+    return True
+
+
+def _lethal_end_turn_fire_mech_debts(board: Board) -> list[dict]:
+    debts = []
+    for unit in board.units:
+        if (
+            not getattr(unit, "is_player", False)
+            or not getattr(unit, "is_mech", False)
+            or getattr(unit, "is_extra_tile", False)
+            or getattr(unit, "hp", 0) <= 0
+        ):
+            continue
+        if _unit_takes_end_turn_fire_tick(board, unit) and unit.hp <= 1:
+            debts.append({
+                "uid": unit.uid,
+                "type": unit.type,
+                "pos": [unit.x, unit.y],
+                "hp": max(0, unit.hp),
+                "max_hp": unit.max_hp,
+            })
+    return debts
+
+
+def _current_end_turn_fire_block() -> dict | None:
+    try:
+        board, bridge_data = read_bridge_state()
+    except Exception as exc:
+        return {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_fire_audit_failed",
+            "blocking": True,
+            "error": str(exc),
+            "next_step": (
+                "Run a fresh `read`; do not click End Turn until the live "
+                "board can be audited."
+            ),
+        }
+    if board is None:
+        return None
+    phase = bridge_data.get("phase") if isinstance(bridge_data, dict) else None
+    if phase is not None and phase != "combat_player":
+        return None
+    debts = _lethal_end_turn_fire_mech_debts(board)
+    if not debts:
+        return None
+    return {
+        "status": "END_TURN_BLOCKED",
+        "reason": "lethal_mech_fire_before_enemy_phase",
+        "blocking": True,
+        "fire_debt": debts,
+        "next_step": (
+            "Repair, shield, freeze, extinguish, reset, or re-solve before "
+            "clicking End Turn; the enemy phase fire tick would destroy a mech."
+        ),
+    }
 
 
 def cmd_click_balanced_roll() -> dict:
@@ -16240,6 +16913,10 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             and windows_bottom_continue.get("score", 0.0) >= 0.70
             and windows_bottom_continue.get("bright", 0) >= 800
             and windows_bottom_continue.get("border", 0) >= 900
+            and float(
+                scores.get("perfect_reward_choice", {}).get("score") or 0.0
+            )
+            < 0.80
         ):
             return {
                 "status": "OK",
@@ -16380,9 +17057,19 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
     pause_bright_fraction = (
         pause_score.get("bright", 0) / pause_pixels
     )
+    windows_pause_menu_visible = (
+        os.name == "nt"
+        and dark_overlay >= 0.85
+        and pause_score.get("score", 0.0) >= 0.55
+        and pause_score.get("bright", 0) >= 1000
+        and pause_score.get("border", 0) >= 700
+        and pause_bright_fraction <= 0.08
+    )
     if (
         dark_overlay >= 0.70
         and (
+            windows_pause_menu_visible
+            or
             (
                 pause_score.get("score", 0.0) >= 0.34
                 and pause_score.get("bright", 0) >= 120
@@ -23989,8 +24676,18 @@ def _lightning_execute_guarded_route_preview_sequence(
                             "click another route region."
                         ),
                     }
-            if visible_name == "mission_preview_panel":
-                if allow_existing_preview:
+            preview_commit_context = (
+                visible_name == "mission_preview_panel"
+                or _lightning_visible_ui_has_preview_commit_context(visible_ui)
+            )
+            existing_preview_proven = _lightning_visible_ui_has_existing_mission_preview(
+                visible_ui,
+            )
+            if preview_commit_context:
+                if allow_existing_preview and (
+                    visible_name == "mission_preview_panel"
+                    or existing_preview_proven
+                ):
                     return {
                         "status": "OK",
                         "reason": "existing_mission_preview_accepted",
@@ -24013,7 +24710,12 @@ def _lightning_execute_guarded_route_preview_sequence(
                         ) | {"existing_preview_close": existing_preview_close}
                     visible_ui = _lightning_visible_ui_snapshot()
                     visible_name = str(visible_ui.get("visible_ui") or "")
-                    if visible_name == "mission_preview_panel":
+                    if (
+                        visible_name == "mission_preview_panel"
+                        or _lightning_visible_ui_has_preview_commit_context(
+                            visible_ui,
+                        )
+                    ):
                         return _lightning_guarded_route_preview_block(
                             reason=(
                                 "route_preview_existing_mission_preview_"
@@ -24381,7 +25083,23 @@ def _lightning_visible_ui_has_preview_commit_context(visible_ui: dict | None) ->
     dialogue_score = scores.get("mission_preview_dialogue")
     if isinstance(dialogue_score, dict):
         try:
-            if float(dialogue_score.get("score") or 0.0) >= 0.6:
+            score = float(dialogue_score.get("score") or 0.0)
+            card = dialogue_score.get("card")
+            card_red = int(card.get("red") or 0) if isinstance(card, dict) else 0
+            card_blue = int(card.get("blue") or 0) if isinstance(card, dict) else 0
+            card_bright = (
+                int(card.get("bright") or 0) if isinstance(card, dict) else 0
+            )
+            if score >= 0.6:
+                return True
+            if (
+                score >= 0.5
+                and (
+                    card_red >= 1000
+                    or card_blue >= 1500
+                    or card_bright >= 2500
+                )
+            ):
                 return True
         except (TypeError, ValueError):
             pass
@@ -26393,8 +27111,7 @@ def cmd_lightning_route_start(
                         and start_window_y is None
                     )
                     or (
-                        visual_region_index is not None
-                        and not expected_preview_mission
+                        manual_visible_region_start
                         and start_window_x is None
                         and start_window_y is None
                     )
@@ -26402,6 +27119,7 @@ def cmd_lightning_route_start(
                 allow_existing_preview=(
                     bool(expected_preview_mission) or allow_unverified_preview_start
                 )
+                and not manual_visible_region_start
                 and _lightning_route_start_mode_can_commit_existing_preview(
                     effective_start_mode,
                     start_window_x=start_window_x,
@@ -43297,7 +44015,11 @@ def _re_solve_partial(
                                weights=breakdown_weights)
             current_outcome = _capture_board_summary(board, bridge_data)
             predicted_board_summary = dict(enriched.get("predicted_outcome") or {})
-            final_board_data = enriched.get("final_board") or {}
+            initial_building_threats = rust_result.get(
+                "initial_building_threats", []
+            )
+            partial_threat_audit = None
+            final_board_data = _projected_final_board_data(enriched)
             if final_board_data:
                 final_board_data = _carry_projected_summary_metadata(
                     final_board_data,
@@ -43307,6 +44029,20 @@ def _re_solve_partial(
                 predicted_board_summary.update(_capture_board_summary(
                     final_board, final_board_data
                 ))
+                try:
+                    from src.solver.threat_audit import (
+                        audit_threat_coverage as _audit_threat_coverage,
+                    )
+                    partial_threat_audit = _audit_threat_coverage(
+                        initial_building_threats or [],
+                        final_board,
+                    )
+                    partial_threat_audit["phase"] = "predicted_partial_re_solve"
+                except Exception as exc:
+                    partial_threat_audit = {
+                        "status": "ERROR",
+                        "error": str(exc),
+                    }
             predicted_board_summary["pods_collected"] = sum(
                 int(r.get("pods_collected", 0) or 0)
                 for r in enriched.get("action_results", [])
@@ -43414,6 +44150,7 @@ def _re_solve_partial(
                 "predicted_outcome": enriched.get("predicted_outcome", {}),
                 "predicted_board_summary": predicted_board_summary,
                 "plan_safety": plan_safety,
+                "threat_audit": partial_threat_audit,
                 "score_breakdown": enriched.get("score_breakdown", {}),
                 "partial_re_solve": {
                     "done_uids": sorted(done_uids),
@@ -45056,6 +45793,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 }
                                 _print_result(result)
                                 return result
+                            threat_block = _partial_re_solve_threat_block_result(
+                                threat_audit=(
+                                    new_solve_data.get("threat_audit")
+                                    if isinstance(new_solve_data, dict)
+                                    else None
+                                ),
+                                plan_safety=new_safety,
+                                session=session,
+                                turn=turn,
+                                actions_completed=actions_completed,
+                                re_solve_count=re_solve_count,
+                                actions=new_actions,
+                                desync={
+                                    "phase": "move",
+                                    "action_index": actions_completed,
+                                    "mech_uid": mech_uid,
+                                    "classification": classification,
+                                    "fuzzy_signal": fuzzy_signal,
+                                },
+                                lightning_speed_loss_allowed=re_solve_speed_loss,
+                            )
+                            if threat_block is not None:
+                                _print_result(threat_block)
+                                return threat_block
                             if new_actions:
                                 print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
                                 # First action should be attack-only for mid_action mech
@@ -45100,7 +45861,21 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 _print_result(pause_error)
                 return pause_error
             try:
-                if action.target2 is not None:
+                if _is_control_shot_weapon(action.weapon) and action.target2 is not None:
+                    if current_board is None:
+                        raise BridgeError("Control Shot UI execution needs live board state")
+                    recalibrate()
+                    click_batch = plan_single_mech(mech_action, current_board)
+                    if not click_batch:
+                        raise BridgeError("Control Shot UI execution produced an empty click plan")
+                    ui_result = _execute_visible_click_plan(click_batch)
+                    if ui_result.get("status") != "OK":
+                        raise BridgeError(
+                            "Control Shot UI click failed: "
+                            + json.dumps(ui_result, sort_keys=True)
+                        )
+                    ack = f"UI_CONTROL_SHOT clicks={len(click_batch)}"
+                elif action.target2 is not None:
                     ack = attack_mech_two(
                         mech_uid,
                         weapon_slot,
@@ -45355,6 +46130,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             }
                             _print_result(result)
                             return result
+                        threat_block = _partial_re_solve_threat_block_result(
+                            threat_audit=(
+                                new_solve_data.get("threat_audit")
+                                if isinstance(new_solve_data, dict)
+                                else None
+                            ),
+                            plan_safety=new_safety,
+                            session=session,
+                            turn=turn,
+                            actions_completed=actions_completed,
+                            re_solve_count=re_solve_count,
+                            actions=new_actions,
+                            desync={
+                                "phase": final_phase,
+                                "action_index": actions_completed,
+                                "mech_uid": mech_uid,
+                                "classification": classification,
+                                "fuzzy_signal": fuzzy_signal,
+                            },
+                            lightning_speed_loss_allowed=re_solve_speed_loss,
+                        )
+                        if threat_block is not None:
+                            _print_result(threat_block)
+                            return threat_block
                         if new_actions:
                             print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
                             solver_actions = []

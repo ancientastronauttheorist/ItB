@@ -1,36 +1,314 @@
 {
-  "run_id": "20260626_094046_400",
-  "squad": "Blitzkrieg",
+  "run_id": "20260629_073305_098",
+  "squad": "Mist Eaters",
   "achievement_targets": [
-    "Lightning War"
+    "Let's Walk"
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_Barrels",
   "islands_completed": [],
-  "mission_index": 0,
-  "last_mission_turn": -1,
-  "current_turn": 0,
-  "phase": "unknown",
-  "active_solution": null,
-  "actions_executed": 0,
+  "mission_index": 2,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "NeedleMech",
+        "move_to": [
+          4,
+          6
+        ],
+        "weapon": "Brute_KickBack",
+        "target": [
+          3,
+          6
+        ],
+        "description": "NeedleMech, move D6\u2192B4, fire Reverse Thrusters at B5"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "SmokeMech",
+        "move_to": [
+          2,
+          1
+        ],
+        "weapon": "Ranged_SmokeFire",
+        "target": [
+          2,
+          3
+        ],
+        "description": "SmokeMech, move F6\u2192G6, fire Smoldering Shells at E6"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "SupermanMech",
+        "move_to": [
+          3,
+          3
+        ],
+        "weapon": "Science_TC_Control_A",
+        "target": [
+          4,
+          3
+        ],
+        "description": "SupermanMech, fire Control Shot at E4 and D6",
+        "target2": [
+          2,
+          4
+        ]
+      }
+    ],
+    "score": 178103.57142857142,
+    "turn": 1,
+    "input_fingerprint": "0:2,4:3|1:2,2:3|2:3,3:2|900:2,3:2|901:5,6:2|902:4,3:2|903:6,4:3"
+  },
+  "actions_executed": 1,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
   "enemies_killed": 0,
   "turns_played": 0,
-  "decisions": [],
+  "decisions": [
+    {
+      "timestamp": "2026-06-29T07:39:54.296907",
+      "turn": 1,
+      "label": "solve",
+      "score": 151942.85714285713,
+      "actions": [
+        "NeedleMech, move E6\u2192F2, fire Reverse Thrusters at H2",
+        "SupermanMech, move D6\u2192D3, fire Control Shot at D2 and D1",
+        "SmokeMech, move C5\u2192D6, fire Smoldering Shells at D1"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:43:03.046297",
+      "turn": 1,
+      "label": "note",
+      "message": "Mission Belt turn 1 Reverse Thrusters desync investigated: bridge MOVE_ATTACK ACKed Brute_KickBack but live state shows only the move applied and the attack effect no-oped. Treating Brute_KickBack like Control Shot for this run by using visible dispatch_click_action, and resetting the turn before continuing."
+    },
+    {
+      "timestamp": "2026-06-29T07:44:07.660289",
+      "turn": 1,
+      "label": "solve",
+      "score": 148317.85714285713,
+      "actions": [
+        "SupermanMech, move D6\u2192D3, fire Control Shot at D2 and E1",
+        "SmokeMech, move C5\u2192E4, fire Smoldering Shells at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:45:50.559185",
+      "turn": 2,
+      "label": "solve",
+      "score": 158066.19047619062,
+      "actions": [
+        "NeedleMech, move F2\u2192D4, fire Reverse Thrusters at D6",
+        "SmokeMech, move E4\u2192E6, fire Smoldering Shells at E3",
+        "SupermanMech, fire Control Shot at C2 and B3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:48:02.407839",
+      "turn": 3,
+      "label": "solve",
+      "score": 163182.85714285713,
+      "actions": [
+        "NeedleMech, move D6\u2192G5, repair",
+        "SupermanMech, move B3\u2192E4, fire Control Shot at E3 and D2",
+        "SmokeMech, move E6\u2192D5, fire Smoldering Shells at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:49:52.974520",
+      "turn": 4,
+      "label": "solve",
+      "score": 158750.35714285713,
+      "actions": [
+        "SmokeMech, move D4\u2192E5, fire Smoldering Shells at E3",
+        "SupermanMech, move E4\u2192D1, fire Control Shot at D2 and D4",
+        "NeedleMech, move F5\u2192E4, fire Reverse Thrusters at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T07:53:45.992537",
+      "turn": 4,
+      "label": "solve",
+      "score": 158750.35714285713,
+      "actions": [
+        "SmokeMech, move D4\u2192E5, fire Smoldering Shells at E3",
+        "SupermanMech, move E4\u2192D1, fire Control Shot at D2 and D4",
+        "NeedleMech, move F5\u2192E4, fire Reverse Thrusters at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T08:08:03.773490",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter check after Pumping Station: pause tooltip at window-local 820,242 shows Current Spaces 8; Control Shot +1 Move upgrade visually powered on Control Mech after pod core."
+    },
+    {
+      "timestamp": "2026-06-29T08:19:32.168699",
+      "turn": 1,
+      "label": "solve",
+      "score": 142846.42857142858,
+      "actions": [
+        "SmokeMech, move F5\u2192G5, fire Smoldering Shells at E5",
+        "NeedleMech, move E6\u2192C3, fire Reverse Thrusters at A3",
+        "SupermanMech, move D5\u2192E2, fire Control Shot at F2 and F5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T08:21:23.641217",
+      "turn": 2,
+      "label": "solve",
+      "score": 127668.09523809516,
+      "actions": [
+        "NeedleMech, move A3\u2192C3, repair",
+        "SmokeMech, move G5\u2192F7, fire Smoldering Shells at F3",
+        "SupermanMech, move E2\u2192F4, fire Control Shot at G4 and E5"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T08:23:17.837436",
+      "turn": 3,
+      "label": "solve",
+      "score": 130176.42857142857,
+      "actions": [
+        "NeedleMech, move C3\u2192C7, repair",
+        "SmokeMech, move F7\u2192F5, fire Smoldering Shells at C5",
+        "SupermanMech, fire Control Shot at F3 and D4"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T08:25:09.950564",
+      "turn": 4,
+      "label": "solve",
+      "score": 120533.92857142857,
+      "actions": [
+        "NeedleMech, repair",
+        "SupermanMech, move F4\u2192D5, fire Control Shot at C5 and E4",
+        "SmokeMech, move F5\u2192F3, fire Smoldering Shells at B3"
+      ]
+    },
+    {
+      "timestamp": "2026-06-29T08:29:57.738767",
+      "turn": 4,
+      "label": "note",
+      "message": "Let's Walk counter check after The Heap: pause tooltip at window-local 820,242 shows Current Spaces 20; The Heap added four visible Science_TC_Control_A shots for +12 spaces."
+    },
+    {
+      "timestamp": "2026-06-29T08:32:18.258025",
+      "turn": 1,
+      "label": "solve",
+      "score": 178103.57142857142,
+      "actions": [
+        "NeedleMech, move D6\u2192B4, fire Reverse Thrusters at B5",
+        "SmokeMech, move F6\u2192G6, fire Smoldering Shells at E6",
+        "SupermanMech, fire Control Shot at E4 and D6"
+      ]
+    }
+  ],
   "lightning_route_probe_cache": [],
-  "recorded_post_enemy_turns": [],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      1,
+      3
+    ]
+  ],
   "post_enemy_block": null,
   "dirty_consent_used": [],
   "tags": [
-    "achievement",
-    "lightning_war"
+    "achievement"
   ],
   "failure_events_this_run": [],
   "disabled_actions": [],
-  "research_queue": [],
+  "research_queue": [
+    {
+      "type": "NeedleMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Belt",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Mist Eaters mech and weapon mapping already present in data/known_types.json and src/model.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "SmokeMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Belt",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Mist Eaters mech and weapon mapping already present in data/known_types.json and src/model.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "SupermanMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Belt",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Mist Eaters mech and weapon mapping already present in data/known_types.json and src/model.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    }
+  ],
   "diagnosis_queue": [],
-  "last_terrain_fingerprint": null,
+  "last_terrain_fingerprint": {
+    "hash": "93d6f95157a251b0",
+    "classes": "gggggmmmgbbggbmmgggggbbmggggggggmbbgggggmmbgggwmmmmgggggmmmmgggg",
+    "mission_index": 2,
+    "turn": 1
+  },
   "terrain_stage_change_pending": false
 }
