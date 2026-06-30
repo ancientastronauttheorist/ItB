@@ -2799,6 +2799,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 "max_hp": u.max_hp,
                 "alive": u.hp > 0,
                 "frozen": bool(getattr(u, "frozen", False)),
+                "webbed": bool(getattr(u, "web", False)),
                 "team": u.team,
             })
     objective_building_targets = []
@@ -3022,6 +3023,10 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "protected_objective_units_frozen": sum(
             1 for u in protected_objective_units
             if u["alive"] and u["frozen"]
+        ),
+        "protected_objective_units_webbed": sum(
+            1 for u in protected_objective_units
+            if u["alive"] and u["webbed"]
         ),
     }
 

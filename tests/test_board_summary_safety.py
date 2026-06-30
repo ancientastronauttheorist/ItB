@@ -479,6 +479,43 @@ def test_summary_tracks_protected_objective_units_from_mission_metadata():
     ]
 
 
+def test_summary_tracks_filler_pawn_webbed_objective_state():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Filler"
+    data["units"].append({
+        "uid": 451,
+        "type": "Filler_Pawn",
+        "x": 3,
+        "y": 3,
+        "hp": 2,
+        "max_hp": 2,
+        "team": 1,
+        "mech": False,
+        "move": 3,
+        "weapons": ["Filler_Attack"],
+        "web": True,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["protected_objective_units_alive"] == 1
+    assert summary["protected_objective_units_webbed"] == 1
+    assert summary["protected_objective_units"] == [
+        {
+            "uid": 451,
+            "type": "Filler_Pawn",
+            "pos": [3, 3],
+            "hp": 2,
+            "max_hp": 2,
+            "alive": True,
+            "frozen": False,
+            "webbed": True,
+            "team": 1,
+        }
+    ]
+
+
 def test_summary_tracks_proto_bombs_from_mission_metadata():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_Bomb"

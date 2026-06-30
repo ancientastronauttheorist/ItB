@@ -862,6 +862,31 @@ def test_freezebots_protected_unit_unfreeze_blocks_plan():
     assert audit["violations"][0]["kind"] == "protected_objective_unit_unfrozen"
 
 
+def test_filler_protected_unit_webbed_blocks_plan():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Filler",
+            protected_objective_units_alive=1,
+            protected_objective_units_webbed=0,
+            protected_objective_units=[
+                {"type": "Filler_Pawn", "alive": True, "webbed": False},
+            ],
+        ),
+        _summary(
+            mission_id="Mission_Filler",
+            protected_objective_units_alive=1,
+            protected_objective_units_webbed=1,
+            protected_objective_units=[
+                {"type": "Filler_Pawn", "alive": True, "webbed": True},
+            ],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "protected_objective_unit_webbed"
+
+
 def test_missing_comparable_fields_is_unknown_and_blocks():
     audit = audit_plan_safety({}, {})
 

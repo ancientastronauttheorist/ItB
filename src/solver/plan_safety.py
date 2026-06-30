@@ -32,6 +32,7 @@ BLOCKING_KINDS = {
     "bigbomb_lost",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
+    "protected_objective_unit_webbed",
     "destroy_objective_unit_alive_final",
     "mech_damage_objective_failed",
     "freeze_building_objective_failed",
@@ -54,6 +55,7 @@ NON_OVERRIDABLE_KINDS = {
     "mech_lost",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
+    "protected_objective_unit_webbed",
     "destroy_objective_unit_alive_final",
     "mech_damage_objective_failed",
     "freeze_building_objective_failed",
@@ -71,6 +73,7 @@ OBJECTIVE_LOSS_DIRTY_KINDS = {
     "pod_unrecovered_final",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
+    "protected_objective_unit_webbed",
     "destroy_objective_unit_alive_final",
     "mech_damage_objective_failed",
     "freeze_building_objective_failed",
@@ -142,6 +145,7 @@ LOSS_KINDS = {
     "bigbomb_lost": "bigbomb_alive",
     "protected_objective_unit_lost": "protected_objective_units_alive",
     "protected_objective_unit_unfrozen": "protected_objective_units_frozen",
+    "protected_objective_unit_webbed": "protected_objective_units_webbed",
     "destroy_objective_unit_alive_final": "destroy_objective_units_alive",
     "mech_hp_loss": "mech_hp_total",
     "mech_damage_objective_failed": "mech_damage_taken_total",
@@ -851,6 +855,26 @@ def audit_plan_safety(current: dict[str, Any],
                 },
             ))
 
+    cur_webbed = _int_or_none(current.get("protected_objective_units_webbed"))
+    pred_webbed = _int_or_none(predicted.get("protected_objective_units_webbed"))
+    if (
+        mission_id == "Mission_Filler"
+        and cur_webbed is not None
+        and pred_webbed is not None
+    ):
+        compared.append("protected_objective_units_webbed")
+        if pred_webbed > 0:
+            violations.append(_violation(
+                "protected_objective_unit_webbed",
+                cur_webbed,
+                pred_webbed,
+                "Predicted outcome leaves the Earth Mover webbed, failing the protected objective.",
+                {
+                    "current_units": _list_or_empty(current.get("protected_objective_units")),
+                    "predicted_units": _list_or_empty(predicted.get("protected_objective_units")),
+                },
+            ))
+
     cur_freeze_target = _int_or_none(current.get("freeze_building_target"))
     pred_freeze_target = _int_or_none(predicted.get("freeze_building_target"))
     freeze_target = cur_freeze_target or pred_freeze_target
@@ -931,6 +955,7 @@ def audit_plan_safety(current: dict[str, Any],
             "destroy_objective_units_alive": cur_destroy,
             "protected_objective_units_alive": cur_protected,
             "protected_objective_units_frozen": cur_frozen,
+            "protected_objective_units_webbed": cur_webbed,
             "freeze_building_target": cur_freeze_target,
             "freeze_buildings_alive": cur_freeze_alive,
             "freeze_buildings_thawed": cur_freeze_thawed,
@@ -977,6 +1002,7 @@ def audit_plan_safety(current: dict[str, Any],
             "destroy_objective_units_alive": pred_destroy,
             "protected_objective_units_alive": pred_protected,
             "protected_objective_units_frozen": pred_frozen,
+            "protected_objective_units_webbed": pred_webbed,
             "freeze_building_target": pred_freeze_target,
             "freeze_buildings_alive": pred_freeze_alive,
             "freeze_buildings_thawed": pred_freeze_thawed,
