@@ -22,6 +22,19 @@ Existing design docs remain authoritative for their domains:
 `docs/self_healing_loop_design.md`, `docs/diagnosis_loop_design.md`,
 `docs/solver_goal_principles.md`, and `docs/env_hazards_by_island.md`.
 
+## Git Workflow
+
+Development alternates between this macOS laptop and a Windows desktop, so
+always sync from GitHub before starting project work. Check status, stay on
+`main`, and run `git pull --ff-only` before editing, testing, committing, or
+resuming live achievement play. If local dirty files block the pull, inspect
+and protect the dirty work before resolving the sync; never overwrite or revert
+user changes just to pull.
+
+Do not create feature branches for this project. Do all work, commits, and
+pushes directly on `main`, then push `main` back to GitHub when the requested
+change is complete.
+
 ## Project Goal
 
 Earn all 70 Into the Breach achievements autonomously on macOS and Windows while
