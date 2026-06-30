@@ -89,6 +89,7 @@ class EvalWeights:
     feed_the_flame_bonus: float = 0
     arachnoid_spawn_bonus: float = 0
     lets_walk_control_distance_bonus: float = 0
+    core_of_the_earth_bonus: float = 0
 
     # Mission-specific bonus objectives (default 0; set via active.json).
     # Old Earth Dam: +1 Rep + 14-tile flood. Turn-aware scaling in evaluate.

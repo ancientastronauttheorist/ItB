@@ -416,6 +416,28 @@ def test_chronophobia_weight_overlay_targets_pod_destruction():
     assert weights["pod_collected"] == -2_000_000.0
 
 
+def test_core_of_the_earth_weight_overlay_rewards_chasm_falls():
+    session = RunSession(
+        squad="Cataclysm",
+        difficulty=1,
+        achievement_targets=["Core of the Earth"],
+    )
+
+    weights, applied = commands._achievement_weight_overlay(
+        session,
+        {
+            "core_of_the_earth_bonus": 0.0,
+            "enemy_killed": 900.0,
+            "enemy_hp_remaining": -100.0,
+        },
+    )
+
+    assert "core_of_the_earth" in applied
+    assert weights["core_of_the_earth_bonus"] == 45_000.0
+    assert weights["enemy_killed"] == 250.0
+    assert weights["enemy_hp_remaining"] == -25.0
+
+
 def test_destroy_time_pods_selects_destroy_candidate_over_live_final_pod():
     live_final_pod = {
         "rank": 0,

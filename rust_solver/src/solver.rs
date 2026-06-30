@@ -103,6 +103,13 @@ pub(crate) fn lets_walk_control_distance_from_events(events: &[String]) -> i32 {
         .sum()
 }
 
+pub(crate) fn core_of_the_earth_chasm_falls_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_core_of_the_earth:chasm_fall:"))
+        .count() as i32
+}
+
 #[derive(Clone, Debug)]
 pub struct MechAction {
     pub mech_uid: u16,
@@ -1850,6 +1857,7 @@ fn search_recursive(
     feed_the_flame_so_far: i32,
     arachnoid_spawns_so_far: i32,
     lets_walk_control_distance_so_far: i32,
+    core_of_the_earth_so_far: i32,
     stay_with_me_heal_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
@@ -1930,6 +1938,8 @@ fn search_recursive(
             arachnoid_spawns_so_far as f64 * weights.arachnoid_spawn_bonus;
         let lets_walk_control_distance_bonus =
             lets_walk_control_distance_so_far as f64 * weights.lets_walk_control_distance_bonus;
+        let core_of_the_earth_bonus =
+            core_of_the_earth_so_far as f64 * weights.core_of_the_earth_bonus;
         let stay_with_me_heal_bonus =
             stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
         let pod_collected_penalty =
@@ -1942,6 +1952,7 @@ fn search_recursive(
             + feed_the_flame_bonus
             + arachnoid_spawn_bonus
             + lets_walk_control_distance_bonus
+            + core_of_the_earth_bonus
             + stay_with_me_heal_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
@@ -1975,6 +1986,7 @@ fn search_recursive(
             feed_the_flame_so_far,
             arachnoid_spawns_so_far,
             lets_walk_control_distance_so_far,
+            core_of_the_earth_so_far,
             stay_with_me_heal_so_far,
             pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
@@ -2042,6 +2054,7 @@ fn search_recursive(
         let feed_the_flame_add = feed_the_flame_from_events(&result.events);
         let arachnoid_spawns_add = arachnoid_spawns_from_events(&result.events);
         let lets_walk_control_distance_add = lets_walk_control_distance_from_events(&result.events);
+        let core_of_the_earth_add = core_of_the_earth_chasm_falls_from_events(&result.events);
         let stay_with_me_heal_add = result.mech_hp_repaired;
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
@@ -2072,6 +2085,7 @@ fn search_recursive(
             feed_the_flame_so_far + feed_the_flame_add,
             arachnoid_spawns_so_far + arachnoid_spawns_add,
             lets_walk_control_distance_so_far + lets_walk_control_distance_add,
+            core_of_the_earth_so_far + core_of_the_earth_add,
             stay_with_me_heal_so_far + stay_with_me_heal_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
@@ -2258,7 +2272,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2463,7 +2477,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,

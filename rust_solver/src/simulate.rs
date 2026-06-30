@@ -1270,6 +1270,12 @@ fn finish_instant_unit_death(
 
     if is_enemy {
         result.record_enemy_kill(mission_counted);
+        if mission_counted && death_terrain == Terrain::Chasm {
+            result.events.push(format!(
+                "achievement_core_of_the_earth:chasm_fall:{}:{}:{}",
+                dying_uid, death_x, death_y
+            ));
+        }
         on_enemy_death(board, unit_idx, result);
         break_web_from(board, dying_uid);
         if is_volatile {
@@ -1714,7 +1720,14 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     if unit.hp > 0 && !unit.effectively_flying() {
                         unit.hp = 0;
                         if unit.is_enemy() {
-                            result.record_enemy_kill(!unit.minor());
+                            let mission_counted = !unit.minor();
+                            result.record_enemy_kill(mission_counted);
+                            if mission_counted {
+                                result.events.push(format!(
+                                    "achievement_core_of_the_earth:chasm_fall:{}:{}:{}",
+                                    unit.uid, x, y
+                                ));
+                            }
                         } else if unit.is_player() {
                             result.mechs_killed += 1;
                         }
@@ -7978,6 +7991,13 @@ mod tests {
         apply_push(&mut board, 3, 3, 0, &mut result); // push N into water
         assert_eq!(board.units[idx].hp, 0);
         assert_eq!(result.enemies_killed, 1);
+        assert!(
+            !result
+                .events
+                .iter()
+                .any(|event| event.starts_with("achievement_core_of_the_earth:")),
+            "water kills must not count as Core of the Earth pit drops"
+        );
     }
 
     #[test]
@@ -13481,6 +13501,12 @@ mod tests {
         assert_eq!(board.units[idx].hp, 0,
             "Massive non-flying unit pushed into chasm must die");
         assert_eq!(result.enemies_killed, 1);
+        assert!(
+            result.events.iter().any(|event| {
+                event == "achievement_core_of_the_earth:chasm_fall:1:3:4"
+            }),
+            "mission-counted enemy chasm deaths should emit Core of the Earth progress"
+        );
     }
 
     #[test]

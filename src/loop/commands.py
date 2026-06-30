@@ -391,6 +391,25 @@ def _achievement_weight_overlay(
         )
         applied.append("lets_walk")
 
+    if "core of the earth" in normalized_targets:
+        # Cataclysm: count only enemy deaths on Chasm terrain. Water, lava,
+        # ACID pools, and generic kills do not advance this achievement, so
+        # reward the exact simulator event enough for safe pit drops to beat
+        # routine damage cleanup without outranking building/grid survival.
+        weights["core_of_the_earth_bonus"] = max(
+            float(weights.get("core_of_the_earth_bonus", 0) or 0),
+            45000.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 900) or 900),
+            250.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("core_of_the_earth")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove
