@@ -4008,6 +4008,12 @@ fn sim_pierce_projectile(
         .unwrap_or(false);
     let second_is_immediately_behind_first =
         sx as i16 == fx as i16 + dx as i16 && sy as i16 == fy as i16 + dy as i16;
+    let second_tile_before_damage = *board.tile(sx, sy);
+    let second_is_barrels_acid_vat = board.mission_id == "Mission_Barrels"
+        && board
+            .unit_at(sx, sy)
+            .map(|idx| board.units[idx].type_name_str() == "AcidVat")
+            .unwrap_or(false);
 
     let deferred_death_explosion = apply_damage_defer_death_explosion(
         board,
@@ -4021,6 +4027,11 @@ fn sim_pierce_projectile(
         .unit_at(sx, sy)
         .map(|idx| board.units[idx].hp > 0)
         .unwrap_or(false);
+    let second_barrels_vat_died = second_is_barrels_acid_vat
+        && board.unit_at(sx, sy).is_none();
+    if second_barrels_vat_died {
+        *board.tile_mut(sx, sy) = second_tile_before_damage;
+    }
     if first_is_player && second_is_immediately_behind_first && second_alive_after_damage {
         if board.unit_at(fx, fy).is_some() {
             apply_push_with_policy(board, fx, fy, dir, result, PIERCE_FIRST_TARGET_PUSH_POLICY);
@@ -4037,6 +4048,9 @@ fn sim_pierce_projectile(
         if board.unit_at(fx, fy).is_some() {
             apply_push_with_policy(board, fx, fy, dir, result, PIERCE_FIRST_TARGET_PUSH_POLICY);
         }
+    }
+    if second_barrels_vat_died {
+        apply_acid_vat_death_terrain(board, sx, sy);
     }
     if let Some(idx) = deferred_death_explosion {
         let ex = board.units[idx].x;
@@ -15545,6 +15559,28 @@ mod tests {
         assert!(board.units[bombling].acid(), "first target should pick up the corpse ACID pool");
         assert!(!board.tile(2, 3).acid(), "ACID pool should be consumed by the entering first target");
         assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_brute_pierce_shot_barrels_acid_vat_death_terrain_after_first_push() {
+        // Hold the Door live regression: run 20260629_205354_395,
+        // Mission_Barrels turn 1. AP Cannon killed an AcidVat immediately
+        // behind a Burnbug; live let the Burnbug enter the vat tile alive,
+        // then left the tile as ACID water.
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Barrels".to_string();
+        let pierce = add_mech(&mut board, 0, 4, 3, 3, WId::BrutePierceShot);
+        let burnbug = add_enemy_type(&mut board, 222, 4, 2, 3, "Burnbug1");
+        let vat = add_enemy_type(&mut board, 401, 4, 1, 2, "AcidVat");
+
+        let result = simulate_weapon(&mut board, pierce, WId::BrutePierceShot, 4, 2);
+
+        assert!(board.units[vat].hp <= 0, "AP Cannon should destroy the AcidVat");
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[burnbug].hp, 3, "first target should not drown or take bump damage");
+        assert_eq!((board.units[burnbug].x, board.units[burnbug].y), (4, 1));
+        assert_eq!(board.tile(4, 1).terrain, Terrain::Water);
+        assert!(board.tile(4, 1).acid());
     }
 
     #[test]

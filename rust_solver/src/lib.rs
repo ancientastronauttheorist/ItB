@@ -2005,7 +2005,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   survives AP damage. Fixes Hold the Door run 20260629_190949_968 Mission_Acid
 //   turn 4 and Mission_Survive turn 3. Pre-v306 corpus archived as
 //   failure_db_snapshot_sim_v305.jsonl.
-pub const SIMULATOR_VERSION: u32 = 306;
+// v307 - AP Cannon delays Mission_Barrels AcidVat death-terrain until after
+//   the first target push. Live lets an enemy first target enter the killed
+//   vat tile alive before the tile becomes ACID water. Fixes Hold the Door run
+//   20260629_205354_395 Mission_Barrels turn 1. Pre-v307 corpus archived as
+//   failure_db_snapshot_sim_v306.jsonl.
+pub const SIMULATOR_VERSION: u32 = 307;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

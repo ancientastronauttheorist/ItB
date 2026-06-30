@@ -1459,7 +1459,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # damage. Fixes Hold the Door run 20260629_190949_968 Mission_Acid turn 4 and
 # Mission_Survive turn 3. Pre-v306 corpus archived as
 # failure_db_snapshot_sim_v305.jsonl.
-SIMULATOR_VERSION = 306
+# v307 - AP Cannon delays Mission_Barrels AcidVat death-terrain until after the
+# first target push. Live lets an enemy first target enter the killed vat tile
+# alive before the tile becomes ACID water. Fixes Hold the Door run
+# 20260629_205354_395 Mission_Barrels turn 1. Pre-v307 corpus archived as
+# failure_db_snapshot_sim_v306.jsonl.
+SIMULATOR_VERSION = 307
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
