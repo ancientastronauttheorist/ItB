@@ -350,7 +350,7 @@
         "completed": true,
         "strategy": "Upgrade Bomb Dispenser (3 cores) for dual Bomblings. Silica pilot enables 4 Bomblings/turn. Place Bomblings and mechs on spawn points. Current AE localization awards this at 15 blocked Emerging Vek by the end of Island 2, while base/wiki text says 30.",
         "setup": "Silica pilot. Upgraded Bomb Dispenser. Prioritize blocking over killing.",
-        "pitfalls": "Steam offline mode can delay reconciliation. Local proof: run 20260630_084844_192, Ach_Squad_Bomber_1 / Squad_Bomber_1 = 1 present in profile.lua.backup by 2026-06-30 14:07:16 CDT."
+        "pitfalls": "Steam offline mode can delay local checklist reconciliation. Steam shows this unlocked in run 20260630_084844_192 at 2026-06-30 08:31 CDT; later profile evidence has Ach_Squad_Bomber_1 / Squad_Bomber_1 = 1."
       },
       {
         "name": "No Survivors",
