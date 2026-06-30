@@ -314,6 +314,23 @@ def _achievement_weight_overlay(
         )
         applied.append("hold_the_line")
 
+    if "hold the door" in targets:
+        # Bombermechs need 30 cumulative blocked Emerging Vek by the end of
+        # island 2, so safe spawn blocks should beat routine cleanup.
+        weights["spawn_blocked"] = max(
+            float(weights.get("spawn_blocked", 0) or 0),
+            9000.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 900) or 900),
+            250.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("hold_the_door")
+
     if "powered blast" in targets:
         # Bombermechs: reward the exact AP Cannon-through-Walking-Bomb kill
         # event enough that safe setup lines beat ordinary cleanup.

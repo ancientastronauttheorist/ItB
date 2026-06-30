@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-29T12:47:25.101266",
+    "last_steam_sync": "2026-06-30T07:04:13.540981",
     "last_steam_total": 70,
-    "last_steam_unlocked": 61
+    "last_steam_unlocked": 62
   },
   "achievements": {
     "rift_walkers": [
@@ -411,7 +411,7 @@
         "description": "Move Enemies with Control Shot 120 spaces in one game with Mist Eaters",
         "type": "single_run",
         "global_unlock_pct": 5.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Control Mech range twice for maximum forced movement distance. Prioritize using Control Shot every turn. 120 tiles across an entire game. Focus on long-distance pushes over kills.",
         "setup": "Fully upgraded Control Shot. Use every turn. 4-island run for more missions.",
         "pitfalls": "120 tiles is a lot. Must use Control Shot nearly every turn for maximum distance."
