@@ -2016,7 +2016,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   vat tile alive before the tile becomes ACID water. Fixes Hold the Door run
 //   20260629_205354_395 Mission_Barrels turn 1. Pre-v307 corpus archived as
 //   failure_db_snapshot_sim_v306.jsonl.
-pub const SIMULATOR_VERSION: u32 = 307;
+// v308 - Tri-Rocket direct pushes into the map edge do not add off-board edge
+//   bump damage, while later rockets can still bump another unit into that
+//   target. Fixes Cataclysm Core run 20260630_143648_199 Corporate HQ turn 1,
+//   where the Mosquito Leader survived at 1 HP. Pre-v308 corpus archived as
+//   failure_db_snapshot_sim_v307.jsonl.
+pub const SIMULATOR_VERSION: u32 = 308;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

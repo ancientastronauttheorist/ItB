@@ -2382,7 +2382,7 @@ const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
     dead_bombrock_bumps_live_blocker: false,
-    edge_bump_damage: true,
+    edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
     live_pusher_enters_wreck: false,
     trigger_mines: true,
@@ -7253,6 +7253,31 @@ mod tests {
         assert_eq!((board.units[front].x, board.units[front].y, board.units[front].hp), (3, 1, 1));
         assert_eq!((board.units[center].x, board.units[center].y, board.units[center].hp), (3, 2, 1));
         assert_eq!((board.units[back].x, board.units[back].y, board.units[back].hp), (3, 3, 1));
+    }
+
+    #[test]
+    fn test_tri_rocket_hq_edge_sequence_leaves_mosquito_leader_alive() {
+        let mut board = make_test_board();
+        let pitcher = add_mech(&mut board, 1, 5, 4, 4, WId::PrimeTcPuntA);
+        let seismic = add_mech(&mut board, 2, 1, 4, 3, WId::ScienceKoCrack);
+        let tri = add_mech(&mut board, 3, 2, 4, 2, WId::RangedCrack);
+        let boss = add_enemy_type(&mut board, 170, 4, 4, 5, "MosquitoBoss");
+        board.units[boss].flags.insert(UnitFlags::FLYING | UnitFlags::MASSIVE);
+
+        simulate_weapon(&mut board, pitcher, WId::PrimeTcPuntA, 0, 4);
+        assert_eq!((board.units[boss].x, board.units[boss].y, board.units[boss].hp), (0, 4, 4));
+
+        simulate_weapon(&mut board, seismic, WId::ScienceKoCrack, 0, 4);
+        assert_eq!((board.units[boss].x, board.units[boss].y, board.units[boss].hp), (0, 4, 3));
+
+        simulate_weapon(&mut board, tri, WId::RangedCrack, 0, 4);
+
+        assert_eq!(
+            (board.units[boss].x, board.units[boss].y, board.units[boss].hp),
+            (0, 4, 1),
+            "HQ live run 20260630_143648_199 m05 t01: Tri-Rocket skipped direct edge bump, then Hydrant collision bumped the leader",
+        );
+        assert_eq!(board.units[seismic].hp, 1, "back rocket still damages Hydrant and bumps it into the leader");
     }
 
     #[test]
