@@ -3447,14 +3447,73 @@ def _candidate_mech_hp_loss(candidate_eval: dict) -> int:
     return 0
 
 
+def _candidate_projected_spawns_blocked(candidate_eval: dict) -> int:
+    """Return projected spawn blocks from a replay-enriched candidate."""
+    enriched = candidate_eval.get("enriched") or {}
+    direct_total = 0
+    for result in enriched.get("action_results", []) or []:
+        if not isinstance(result, dict):
+            continue
+        try:
+            direct_total += int(result.get("spawns_blocked") or 0)
+        except (TypeError, ValueError):
+            pass
+
+    final_board = enriched.get("final_board") or {}
+    spawning_tiles = {
+        tuple(tile)
+        for tile in final_board.get("spawning_tiles", []) or []
+        if isinstance(tile, (list, tuple)) and len(tile) == 2
+    }
+    occupied_spawns = set()
+    if spawning_tiles:
+        for unit in final_board.get("units", []) or []:
+            if not isinstance(unit, dict):
+                continue
+            try:
+                hp = int(unit.get("hp") or 0)
+                xy = (int(unit.get("x")), int(unit.get("y")))
+            except (TypeError, ValueError):
+                continue
+            if hp > 0 and xy in spawning_tiles:
+                occupied_spawns.add(xy)
+
+    return max(direct_total, len(occupied_spawns))
+
+
 def _select_safe_plan_candidate(
     candidate_evals: list[dict],
     *,
     allow_pod_destroy_dirty: bool = False,
+    prefer_spawn_blocks: bool = False,
 ) -> dict | None:
     """Prefer clean candidates; when all are dirty, minimize same-class collateral."""
     if not candidate_evals:
         return None
+    if prefer_spawn_blocks:
+        clean_candidates = [
+            candidate for candidate in candidate_evals
+            if not plan_requires_safety_block(
+                candidate.get("plan_safety"),
+                allow_pod_destroy_dirty=allow_pod_destroy_dirty,
+            )
+        ]
+        if clean_candidates:
+            return max(
+                clean_candidates,
+                key=lambda candidate: (
+                    _candidate_projected_spawns_blocked(candidate),
+                    -_candidate_mech_hp_loss(candidate),
+                    candidate.get("solution").score
+                    if candidate.get("solution") is not None
+                    else float("-inf"),
+                    -(
+                        candidate.get("rank")
+                        if isinstance(candidate.get("rank"), int)
+                        else 2**31
+                    ),
+                ),
+            )
     for candidate in candidate_evals:
         if not plan_requires_safety_block(
             candidate.get("plan_safety"),
@@ -5844,6 +5903,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     if achievement_weight_overlays:
         weight_version = f"{weight_version}+{'+'.join(achievement_weight_overlays)}"
         print(f"  Achievement weight overlay: {', '.join(achievement_weight_overlays)}")
+    hold_the_door_candidate_sweep = (
+        "hold_the_door" in achievement_weight_overlays
+    )
     breakdown_weights = None
     if eval_weights_dict:
         from src.solver.evaluate import EvalWeights as _EW
@@ -5960,12 +6022,31 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         "rust_result": rust_result,
                     })
             elif beam == 0:
-                rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
-                candidate_specs.append({
-                    "rank": 0,
-                    "source": "top1",
-                    "rust_result": _json.loads(rust_json),
-                })
+                if hold_the_door_candidate_sweep and spawns:
+                    try:
+                        top_k = int(os.environ.get(
+                            "ITB_HOLD_THE_DOOR_TOP_K",
+                            str(_SAFETY_WIDENING_TOP_K),
+                        ))
+                    except ValueError:
+                        top_k = _SAFETY_WIDENING_TOP_K
+                    top_k = max(1, top_k)
+                    rust_json = _rust.solve_top_k(
+                        _json.dumps(bridge_data), time_limit, top_k,
+                    )
+                    for idx, rust_result in enumerate(_json.loads(rust_json) or []):
+                        candidate_specs.append({
+                            "rank": idx,
+                            "source": "hold_the_door_top_k",
+                            "rust_result": rust_result,
+                        })
+                else:
+                    rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
+                    candidate_specs.append({
+                        "rank": 0,
+                        "source": "top1",
+                        "rust_result": _json.loads(rust_json),
+                    })
             else:
                 # solve_beam returns chains sorted by chain_score. Solver 2.0
                 # audits the level-0 action plan from each chain before choosing.
@@ -6035,6 +6116,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 selected_candidate_eval = _select_safe_plan_candidate(
                     candidate_evals,
                     allow_pod_destroy_dirty=destroy_time_pods_active,
+                    prefer_spawn_blocks=(
+                        hold_the_door_candidate_sweep
+                        and candidate_rank is None
+                    ),
                 )
             if (candidate_rank is None
                     and beam == 0
@@ -6216,6 +6301,24 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 elif candidate_count > 1 and selected_candidate_blocked:
                     print(f"  No clean candidate found among {candidate_count}; "
                           "top candidate remains safety-blocked")
+                if hold_the_door_candidate_sweep and candidate_rank is None:
+                    clean_spawn_counts = [
+                        _candidate_projected_spawns_blocked(candidate)
+                        for candidate in candidate_evals
+                        if not plan_requires_safety_block(
+                            candidate.get("plan_safety"),
+                            allow_pod_destroy_dirty=destroy_time_pods_active,
+                        )
+                    ]
+                    selected_blocks = _candidate_projected_spawns_blocked(
+                        selected_candidate_eval,
+                    )
+                    max_blocks = max(clean_spawn_counts) if clean_spawn_counts else 0
+                    print(
+                        "  Hold the Door sweep: "
+                        f"selected_blocks={selected_blocks}, "
+                        f"max_clean_blocks={max_blocks}"
+                    )
         except ImportError:
             print("  ERROR: Rust solver not available (itb_solver module not found)")
             print("  Build with: cd rust_solver && maturin develop --release")
@@ -6337,6 +6440,13 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     result["candidate_count"] = candidate_count
     result["selected_candidate_rank"] = selected_candidate_rank
     result["selected_candidate_source"] = selected_candidate_source
+    if hold_the_door_candidate_sweep:
+        result["hold_the_door_selection"] = {
+            "candidate_sweep": bool(spawns and candidate_rank is None),
+            "selected_spawns_blocked": _candidate_projected_spawns_blocked(
+                selected_candidate_eval,
+            ),
+        }
     if frontier_diagnostics_suppressed:
         result["frontier_diagnostics_suppressed"] = True
     if final_cave_resist_gamble_allowed(plan_safety):

@@ -6,7 +6,7 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-30T07:04:13.540981",
+    "last_steam_sync": "2026-06-30T14:08:46.380052",
     "last_steam_total": 70,
     "last_steam_unlocked": 62
   },
@@ -344,13 +344,13 @@
       },
       {
         "name": "Hold the Door",
-        "description": "Block 30 Emerging Vek by the end of Island 2 with Bombermechs squad",
+        "description": "Block Emerging Vek by the end of Island 2 with Bombermechs squad",
         "type": "cumulative_2_islands",
         "global_unlock_pct": 5.4,
-        "completed": false,
-        "strategy": "Upgrade Bomb Dispenser (3 cores) for dual Bomblings. Silica pilot enables 4 Bomblings/turn. Place Bomblings and mechs on spawn points. 30 blocks across 8 missions.",
+        "completed": true,
+        "strategy": "Upgrade Bomb Dispenser (3 cores) for dual Bomblings. Silica pilot enables 4 Bomblings/turn. Place Bomblings and mechs on spawn points. Current AE localization awards this at 15 blocked Emerging Vek by the end of Island 2, while base/wiki text says 30.",
         "setup": "Silica pilot. Upgraded Bomb Dispenser. Prioritize blocking over killing.",
-        "pitfalls": "30 is a lot \u2014 average ~4 blocks per mission needed. Must consistently block spawns."
+        "pitfalls": "Steam offline mode can delay reconciliation. Local proof: run 20260630_084844_192, Ach_Squad_Bomber_1 / Squad_Bomber_1 = 1 present in profile.lua.backup by 2026-06-30 14:07:16 CDT."
       },
       {
         "name": "No Survivors",
