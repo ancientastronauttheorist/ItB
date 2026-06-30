@@ -46,6 +46,17 @@ island navigation use Codex Computer Use clicks.
 
 Steam App ID: `590380`.
 
+The user now runs Steam in offline mode during achievement play. Do not rely on
+live Steam/API sync as the first proof that an achievement unlocked. Use the
+Into the Breach log at `~/Library/Application Support/IntoTheBreach/log.txt`
+and local profile/cache evidence instead: look for `Set Steam Achievement
+<achievement_id>` lines, map the ID to the achievement name in the local
+metadata or Steam client cache, and record any profile flag corroboration. The
+log has no per-line timestamps and may replay already-earned achievements on
+restart, so report what it proves precisely: usually that the game/Steam client
+recognized the achievement during that launch, not necessarily the exact popup
+moment.
+
 After editing `src/bridge/modloader.lua` on macOS, run:
 
 ```bash
