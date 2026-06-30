@@ -1998,7 +1998,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   without diagonals. Fixes Mist Eaters Let's Walk run 20260629_073305_098
 //   Mission_Barrels turn 1 D6 far-tile smoke drift. Pre-v305 corpus archived
 //   as failure_db_snapshot_sim_v304.jsonl.
-pub const SIMULATOR_VERSION: u32 = 305;
+// v306 - AP Cannon killed ACID second targets still resolve corpse-bump damage
+//   into a live blocker and leave an ACID pool for a friendly first target
+//   entering the wreck tile. Friendly first targets also collide with adjacent
+//   live second targets before the second target vacates when the second target
+//   survives AP damage. Fixes Hold the Door run 20260629_190949_968 Mission_Acid
+//   turn 4 and Mission_Survive turn 3. Pre-v306 corpus archived as
+//   failure_db_snapshot_sim_v305.jsonl.
+pub const SIMULATOR_VERSION: u32 = 306;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

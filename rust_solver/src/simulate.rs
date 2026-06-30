@@ -2406,6 +2406,7 @@ const PIERCE_FIRST_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
 };
 
 const PIERCE_SECOND_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_bumps_live_blocker: true,
     edge_bump_damage: false,
     ..DEFAULT_PUSH_POLICY
 };
@@ -2622,6 +2623,12 @@ fn apply_push_with_policy(
             board.units[unit_idx].x = nx;
             board.units[unit_idx].y = ny;
             apply_pod_on_land(board, unit_idx, result);
+            if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
+                if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+                    board.units[unit_idx].set_acid(true);
+                }
+                board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
+            }
             return;
         }
         apply_damage(board, x, y, 1, result, DamageSource::Bump);
@@ -3995,6 +4002,13 @@ fn sim_pierce_projectile(
         unit.is_enemy() && unit.hp > 0
     });
     let kills_before = result.enemies_killed;
+    let first_idx_before_push = board.unit_at(fx, fy);
+    let first_is_player = first_idx_before_push
+        .map(|idx| board.units[idx].is_player())
+        .unwrap_or(false);
+    let second_is_immediately_behind_first =
+        sx as i16 == fx as i16 + dx as i16 && sy as i16 == fy as i16 + dy as i16;
+
     let deferred_death_explosion = apply_damage_defer_death_explosion(
         board,
         sx,
@@ -4003,9 +4017,26 @@ fn sim_pierce_projectile(
         result,
         DamageSource::Weapon,
     );
-    apply_push_with_policy(board, sx, sy, dir, result, PIERCE_SECOND_TARGET_PUSH_POLICY);
-    if board.unit_at(fx, fy).is_some() {
-        apply_push_with_policy(board, fx, fy, dir, result, PIERCE_FIRST_TARGET_PUSH_POLICY);
+    let second_alive_after_damage = board
+        .unit_at(sx, sy)
+        .map(|idx| board.units[idx].hp > 0)
+        .unwrap_or(false);
+    if first_is_player && second_is_immediately_behind_first && second_alive_after_damage {
+        if board.unit_at(fx, fy).is_some() {
+            apply_push_with_policy(board, fx, fy, dir, result, PIERCE_FIRST_TARGET_PUSH_POLICY);
+        }
+        if board
+            .unit_at(sx, sy)
+            .map(|idx| board.units[idx].hp > 0)
+            .unwrap_or(false)
+        {
+            apply_push_with_policy(board, sx, sy, dir, result, PIERCE_SECOND_TARGET_PUSH_POLICY);
+        }
+    } else {
+        apply_push_with_policy(board, sx, sy, dir, result, PIERCE_SECOND_TARGET_PUSH_POLICY);
+        if board.unit_at(fx, fy).is_some() {
+            apply_push_with_policy(board, fx, fy, dir, result, PIERCE_FIRST_TARGET_PUSH_POLICY);
+        }
     }
     if let Some(idx) = deferred_death_explosion {
         let ex = board.units[idx].x;
@@ -15428,6 +15459,27 @@ mod tests {
     }
 
     #[test]
+    fn test_brute_pierce_shot_friendly_first_adjacent_live_second_bumps() {
+        // Hold the Door live regression: Mission_Survive turn 3. Pierce fired
+        // through a 1 HP ExchangeMech at E5 into a 3 HP Burnbug at D5. Live
+        // dealt AP damage to the Burnbug, then the friendly first target
+        // collided with the still-live adjacent second target, killing both.
+        let mut board = make_test_board();
+        let pierce = add_mech(&mut board, 0, 3, 2, 3, WId::BrutePierceShot);
+        let exchange = add_mech(&mut board, 2, 3, 3, 2, WId::ScienceTcSwapOther);
+        board.units[exchange].hp = 1;
+        let burnbug = add_enemy_type(&mut board, 111, 3, 4, 3, "Burnbug1");
+
+        let result = simulate_weapon(&mut board, pierce, WId::BrutePierceShot, 3, 3);
+
+        assert_eq!(board.units[exchange].hp, 0, "friendly first target should die to collision bump");
+        assert_eq!((board.units[exchange].x, board.units[exchange].y), (3, 3));
+        assert_eq!(board.units[burnbug].hp, 0, "second target should take AP damage plus collision bump");
+        assert_eq!(result.mechs_killed, 1);
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
     fn test_boosted_brute_pierce_shot_second_edge_target_deals_upgrade_damage_only() {
         // Live regression: Bombermechs Complete Victory run
         // 20260623_105703_708, Mission_ScarabBoss turn 4. Upgraded AP Cannon
@@ -15468,6 +15520,30 @@ mod tests {
         assert_eq!(board.units[bombling].hp, 3);
         assert_eq!((board.units[bombling].x, board.units[bombling].y), (5, 1));
         assert!(board.units[scarab].hp <= 0);
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_brute_pierce_shot_acid_second_corpse_bumps_blocker_and_acids_first() {
+        // Hold the Door live regression: run 20260629_190949_968,
+        // Mission_Acid turn 4. AP Cannon killed an ACID Burnbug as the second
+        // target; the corpse bumped ExchangeMech behind it, and BomlingMech
+        // entered the killed target's tile and picked up the ACID pool.
+        let mut board = make_test_board();
+        let pierce = add_mech(&mut board, 0, 2, 1, 3, WId::BrutePierceShot);
+        let bombling = add_mech(&mut board, 1, 2, 2, 3, WId::RangedDeployBomb);
+        let burnbug = add_enemy_type(&mut board, 111, 2, 3, 3, "Burnbug1");
+        board.units[burnbug].set_acid(true);
+        let exchange = add_mech(&mut board, 2, 2, 4, 1, WId::ScienceTcSwapOther);
+
+        let result = simulate_weapon(&mut board, pierce, WId::BrutePierceShot, 2, 2);
+
+        assert!(board.units[burnbug].hp <= 0, "ACID second target should die");
+        assert_eq!(board.units[exchange].hp, 0, "killed second target should bump the live blocker");
+        assert_eq!(result.mechs_killed, 1);
+        assert_eq!((board.units[bombling].x, board.units[bombling].y), (2, 3));
+        assert!(board.units[bombling].acid(), "first target should pick up the corpse ACID pool");
+        assert!(!board.tile(2, 3).acid(), "ACID pool should be consumed by the entering first target");
         assert_eq!(result.enemies_killed, 1);
     }
 

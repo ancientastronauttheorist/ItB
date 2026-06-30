@@ -1452,7 +1452,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v305 - Smoldering Shells smoke footprint matches live Lua: base smokes only
 # the two side tiles, while More Smoke smokes all four cardinal neighbors
 # without diagonals. Pre-v305 corpus archived as failure_db_snapshot_sim_v304.jsonl.
-SIMULATOR_VERSION = 305
+# v306 - AP Cannon killed ACID second targets still resolve corpse-bump damage
+# into a live blocker and leave an ACID pool for a friendly first target entering
+# the wreck tile. Friendly first targets also collide with adjacent live second
+# targets before the second target vacates when the second target survives AP
+# damage. Fixes Hold the Door run 20260629_190949_968 Mission_Acid turn 4 and
+# Mission_Survive turn 3. Pre-v306 corpus archived as
+# failure_db_snapshot_sim_v305.jsonl.
+SIMULATOR_VERSION = 306
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
