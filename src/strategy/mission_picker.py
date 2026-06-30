@@ -105,6 +105,11 @@ WEAPON_TAGS: dict[str, list[str]] = {
     "Prime_SpinFist":    ["push_chain"],
     "Prime_Sword":       ["aoe", "burst"],
     "Prime_Smash":       ["train_defender", "aoe"],
+    # Cataclysm squad.
+    "Prime_TC_Punt":     ["cataclysm_chasm"],        # Hydraulic Lifter
+    "Prime_TC_Punt_A":   ["cataclysm_chasm"],
+    "Prime_TC_Punt_B":   ["cataclysm_chasm"],
+    "Prime_TC_Punt_AB":  ["cataclysm_chasm"],
     # BRUTE — ranged / dash
     "Brute_Tankmech":    ["train_defender"],          # Taurus Cannon (push)
     "Brute_Jetmech":     ["aoe", "burst", "flying"],  # Aerial Bombs
@@ -129,6 +134,10 @@ WEAPON_TAGS: dict[str, list[str]] = {
     "Ranged_ScatterShot": ["aoe", "burst"],
     "Ranged_BackShot":   ["aoe"],
     "Ranged_Wide":       ["aoe", "burst"],
+    "Ranged_Crack":      ["cataclysm_chasm", "aoe"], # Tri-Rocket
+    "Ranged_Crack_A":    ["cataclysm_chasm", "aoe"],
+    "Ranged_Crack_B":    ["cataclysm_chasm", "aoe"],
+    "Ranged_Crack_AB":   ["cataclysm_chasm", "aoe"],
     # SCIENCE — utility
     "Science_Pullmech":  ["crowd_control", "train_defender"],
     "Science_Gravwell":  ["crowd_control"],           # pull artillery
@@ -137,6 +146,10 @@ WEAPON_TAGS: dict[str, list[str]] = {
     "Science_AcidShot":  ["crowd_control"],           # ACID
     "Science_Shield":    ["repair"],                  # shield as defense
     "Science_Confuse":   ["crowd_control"],
+    "Science_KO_Crack":  ["cataclysm_chasm"],        # Seismic Capacitor
+    "Science_KO_Crack_A": ["cataclysm_chasm"],
+    "Science_KO_Crack_B": ["cataclysm_chasm"],
+    "Science_KO_Crack_AB": ["cataclysm_chasm"],
     # SUPPORT
     "Support_Repair":    ["repair"],
     "Support_Wind":      ["crowd_control", "push_chain"],
@@ -193,6 +206,7 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     "Mission_Battle":         ["high_threat"],
     "Mission_Tanks":          ["fragile_ally_objective"],
     "Mission_Terraform":      ["terraform_grass_counter"],
+    "Mission_Filler":         ["earth_mover_pit"],
     "Mission_Holes":          ["mite_counter"],
     "Mission_Dam":            ["mite_counter"],
     "Mission_Teleporter":     ["mite_counter"],
@@ -778,6 +792,23 @@ def score_mission(
         rationale.append(
             "-50 mite counter objective not fully solver-gated — hard veto"
         )
+    if "cataclysm_chasm" in squad_tags:
+        if mission_id == "Mission_Trapped":
+            score -= 35
+            rationale.append(
+                "-35 Cataclysm Core: Power Generator trap has poor pit payoff "
+                "and can force objective-loss gates"
+            )
+        if "earth_mover_pit" in mission_tags:
+            score += 12
+            rationale.append(
+                "+12 Cataclysm Core: Earth Mover pit creates throw/drop lines"
+            )
+        if "env_cataclysm" in mission_tags:
+            score += 8
+            rationale.append(
+                "+8  Cataclysm Core: falling terrain creates more chasms"
+            )
 
     # Penalties: squad/mission mismatch.
     if "train" in mission_tags and "train_defender" not in squad_tags:

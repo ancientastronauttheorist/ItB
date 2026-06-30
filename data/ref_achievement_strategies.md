@@ -557,9 +557,9 @@ evaluation weights when targeting that achievement.
 - **Requirement:** Drop 10 Enemies into pits on one Island with the Cataclysm squad.
 - **Squad:** Cataclysm (required)
 - **Strategy:** The Cataclysm squad cracks tiles; cracked tiles become chasms. Push enemies into chasms to kill them. Need 10 pit-kills across one island (3-4 missions). Crack tiles near enemies, then push them in.
-- **Bot approach:** The solver should create chasms near enemy positions and push enemies into them. Track pit kills per island. Crack tiles preemptively where enemies are likely to stand. [needs-verification: exact cracking mechanics]
-- **Key weapons:** Seismic Slam (crack tiles), Cluster Bombs (crack tiles), push weapons to knock enemies into pits
-- **Ideal setup:** Normal difficulty, 4-mission island for maximum opportunities. Crack aggressively and push enemies into pits.
+- **Bot approach:** The solver should create chasms near enemy positions and push enemies into them. Track pit kills per island. Crack tiles preemptively where enemies are likely to stand. Prefer Earth Mover / Cataclysm terrain maps and avoid Mission_Trapped unless forced; the Power Generator trap has poor pit payoff and can force final-turn objective-loss gates.
+- **Key weapons:** Seismic Capacitor (crack-on-kill), Tri-Rocket (crack/push line), Hydraulic Lifter (throw into chasms)
+- **Ideal setup:** Normal difficulty, 4-mission R.S.T. island for maximum opportunities. Crack aggressively and push enemies into pits.
 - **Estimated difficulty for bot:** Hard
 
 ### No Survivors (5.1%)

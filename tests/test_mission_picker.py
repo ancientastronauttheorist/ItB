@@ -50,6 +50,12 @@ FROZEN_TITANS_SQUAD = [
     {"mech": True, "hp": 3, "weapons": ["Science_Swap"]},
 ]
 
+CATACLYSM_SQUAD = [
+    {"mech": True, "hp": 4, "weapons": ["Prime_TC_Punt"]},
+    {"mech": True, "hp": 2, "weapons": ["Ranged_Crack"]},
+    {"mech": True, "hp": 3, "weapons": ["Science_KO_Crack"]},
+]
+
 
 # ---------------------------------------------------------------------------
 # Mission fixtures
@@ -215,6 +221,26 @@ def _mountain_force_mission() -> dict:
     }
 
 
+def _earth_mover_mission() -> dict:
+    """R.S.T. Earth Mover mission with a large pit for Cataclysm throws."""
+    return {
+        "region_id": 26,
+        "mission_id": "Mission_Filler",
+        "bonus_objective_ids": [BONUS_ASSET],
+        "environment": "Env_Null",
+    }
+
+
+def _cataclysm_env_mission() -> dict:
+    """R.S.T. Cataclysm environment creates recurring chasms."""
+    return {
+        "region_id": 27,
+        "mission_id": "Mission_Cataclysm",
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": "Env_Cataclysm",
+    }
+
+
 def _generic_no_bonus_mission(region_id: int = 17) -> dict:
     return {
         "region_id": region_id,
@@ -288,6 +314,13 @@ def test_derive_squad_tags_skips_dead_mechs():
     tags = derive_squad_tags(units)
     assert "train_defender" not in tags  # Punch ignored
     assert "crowd_control" in tags
+
+
+def test_derive_squad_tags_cataclysm_chasm_tools():
+    tags = derive_squad_tags(CATACLYSM_SQUAD)
+
+    assert "cataclysm_chasm" in tags
+    assert "aoe" in tags
 
 
 # ---------------------------------------------------------------------------
@@ -447,6 +480,51 @@ def test_lightning_war_routing_vetoes_power_generator_trap():
     rationale = " ".join(trapped["rationale_lines"])
     assert "Power Generator trap" in rationale
     assert "mech damage" in rationale
+
+
+def test_cataclysm_core_routing_avoids_power_generator_trap():
+    """Core of the Earth prefers safer pit routes over Mission_Trapped traps."""
+    island = [_trapped_power_generator_mission(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        CATACLYSM_SQUAD,
+        grid_power=6,
+        mission_metadata={},
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    trapped = next(e for e in ranked if e["mission_id"] == "Mission_Trapped")
+    assert trapped["score"] < 0
+    rationale = " ".join(trapped["rationale_lines"])
+    assert "Cataclysm Core" in rationale
+    assert "objective-loss gates" in rationale
+
+
+def test_cataclysm_core_routing_prefers_earth_mover_pit():
+    """Earth Mover and Cataclysm maps get Core-specific chasm value."""
+    ranked = score_island_map(
+        [_earth_mover_mission(), _safe_battle_mission()],
+        CATACLYSM_SQUAD,
+        grid_power=6,
+        mission_metadata={},
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Filler"
+    rationale = " ".join(ranked[0]["rationale_lines"])
+    assert "Earth Mover pit" in rationale
+
+
+def test_cataclysm_core_routing_prefers_cataclysm_environment():
+    ranked = score_island_map(
+        [_cataclysm_env_mission(), _safe_battle_mission()],
+        CATACLYSM_SQUAD,
+        grid_power=6,
+        mission_metadata={},
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Cataclysm"
+    rationale = " ".join(ranked[0]["rationale_lines"])
+    assert "falling terrain" in rationale
 
 
 def test_lightning_war_routing_vetoes_mountain_force_counter():
