@@ -106,6 +106,16 @@ Extended rules: `data/ref_game_mechanics.md`.
 
 46. **Detritus Contraption barrages must target a non-source unit.** `Missiles_Shield` / `Missiles_OneDmg` inherit `Support_Missiles:GetTargetArea`, which excludes the firing Contraption tile even though the effect is global. Clicking the Contraption's own tile can spend the action without emitting any missiles. The solver must pick a live non-source unit as the representative target, and the simulator must exclude the source from Shield/Missile Barrage effects. Regression anchor: Easy run `20260506_114649_974`, Mission_Missiles turn 2 source-click no-op, simulator v59.
 
+46a. **Detritus Contraption can act from smoke.** `Missile_Unit` has
+`IgnoreSmoke=true`; smoke on the Contraption tile must not prune
+`Missiles_Shield` / `Missiles_OneDmg` from action enumeration. If
+`Mission_Missiles` reaches a reward screen short of four Contraption uses after
+the unit sat in smoke, check the smoke legality gate before blaming target
+selection. Regression anchor: Bombermechs No Survivors run
+`20260630_181556_177`, Detritus `Mission_Missiles` turn 4, where a smoked
+Contraption was skipped and Region Secured showed `Use the Detritus Contraption
+four times (3/4)`; fixed in simulator v310.
+
 48. **Normal/Alpha Spiders are pushable.** `Spider1` / `Spider2` throw eggs but are still normal pushable Vek; do not mark them like Burrowers or Psions. If Repulse or another push leaves a Spider unmoved in prediction while the engine moves it, check `src/model/pawn_stats.py` and solve payload `pushable` enrichment before changing Repulse logic. Regression anchor: Easy run `20260506_114649_974`, Mission_Missiles turn 4 `Science_Repulse_A` pushed Spider1 from E5 to E6; fixed in simulator v60.
 
 49. **Teleporter move-then-attack targets use the post-swap tile.** `pawn:Move()` fires Mission_Teleporter pads before the bridge sends `ATTACK`; if the solver keeps a self-AoE target on the pre-swap pad, `pawn:FireWeapon()` can silently spend the action as an invalid target and produce no Repulse/shield effect. Enumerate attacks, smoke checks, and no-op filtering from the post-teleport board while keeping `move_to` as the pad tile. Invalid diagonal SelfAoe replay events are no-ops, not centered attacks. Regression anchor: Easy run `20260506_114649_974`, Mission_Teleporter turn 4 `Science_Repulse_A` stale target D4 after teleport to E3; fixed in simulator v61.

@@ -6186,7 +6186,10 @@ pub fn simulate_attack_with_target2(
     if weapon_id != WId::None {
         let (sx, sy, ignores_smoke) = {
             let unit = &board.units[mech_idx];
-            (unit.x, unit.y, unit.type_name_str() == "Trapped_Building")
+            let ignores_smoke = unit.type_name_str() == "Trapped_Building"
+                || unit.type_name_str() == "Disposal_Unit"
+                || unit.type_name_str() == "Missile_Unit";
+            (unit.x, unit.y, ignores_smoke)
         };
         if board.tile(sx, sy).smoke() && !ignores_smoke {
             result.events.push(format!("illegal_attack_smoke:{}:{}", sx, sy));
@@ -9243,6 +9246,44 @@ mod tests {
         let _ = simulate_weapon(&mut invalid, invalid_caster, WId::MissilesOneDmg, 3, 3);
         assert_eq!(invalid.units[invalid_caster].hp, 2, "source click should no-op");
         assert_eq!(invalid.units[invalid_enemy].hp, 3, "source click should emit no missiles");
+    }
+
+    #[test]
+    fn test_smoked_contraption_missile_barrage_ignores_smoke() {
+        let mut board = make_test_board();
+        let caster = board.add_unit(Unit {
+            uid: 0,
+            x: 3,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: crate::board::WeaponId(WId::MissilesOneDmg as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[caster].set_type_name("Missile_Unit");
+        board.tile_mut(3, 3).set_smoke(true);
+        let ally = add_mech(&mut board, 1, 4, 3, 3, WId::None);
+        let enemy = add_enemy(&mut board, 2, 5, 3, 3);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            caster,
+            WId::MissilesOneDmg,
+            (5, 3),
+            None,
+            &WEAPONS,
+        );
+
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_attack_smoke")),
+            "Missile_Unit has IgnoreSmoke=true and should not no-op in smoke"
+        );
+        assert_eq!(board.units[caster].hp, 2, "source tile is excluded by Support_Missiles");
+        assert_eq!(board.units[ally].hp, 2, "friendly non-source unit should be hit");
+        assert_eq!(board.units[enemy].hp, 2, "enemy unit should be hit");
     }
 
     #[test]

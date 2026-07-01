@@ -2026,7 +2026,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   later already-queued attack. Fixes Bombermechs No Survivors run
 //   20260630_181556_177 Mission_Missiles turn 3. Pre-v309 corpus archived as
 //   failure_db_snapshot_sim_v308.jsonl.
-pub const SIMULATOR_VERSION: u32 = 309;
+// v310 - Detritus Contraption action enumeration honors Missile_Unit
+//   IgnoreSmoke=true, so a smoked Contraption can still spend its global
+//   barrages. Fixes Bombermechs No Survivors run 20260630_181556_177
+//   Mission_Missiles turn 4 failed "Use the Detritus Contraption four times".
+//   Pre-v310 corpus archived as failure_db_snapshot_sim_v309.jsonl.
+pub const SIMULATOR_VERSION: u32 = 310;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

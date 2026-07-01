@@ -1276,12 +1276,12 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         // partner tile after the pad swap, represented by `action_board`.
         let attack_pos = attack_origin_after_move(board, mech_idx, pos);
 
-        // Smoke blocks most pawn actions (attack + repair). Mission_Trapped
-        // Decoy Buildings have IgnoreSmoke=true in the Lua mission script, so
-        // they can still self-destruct from a smoked tile.
+        // Smoke blocks most pawn actions (attack + repair). These mission
+        // pawns have IgnoreSmoke=true in their Lua definitions.
         let tile = action_board.tile(attack_pos.0, attack_pos.1);
         let ignores_smoke = action_unit.type_name_str() == "Trapped_Building"
-            || action_unit.type_name_str() == "Disposal_Unit";
+            || action_unit.type_name_str() == "Disposal_Unit"
+            || action_unit.type_name_str() == "Missile_Unit";
         if !tile.smoke() || ignores_smoke {
             // Primary weapon — filter out no-op fires (empty space, nothing affected)
             let w1_id = WId::from_raw(action_unit.weapon.0);
@@ -3353,6 +3353,46 @@ mod top_k_tests {
                     && matches!(a.weapon, WId::MissilesShield | WId::MissilesOneDmg)
             }),
             "Mission_Missiles should spend a Detritus Contraption shot instead of skipping"
+        );
+    }
+
+    #[test]
+    fn mission_missiles_smoked_contraption_can_still_fire() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Missiles".to_string();
+        let idx = board.add_unit(Unit {
+            uid: 20,
+            x: 1,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::MissilesShield as u16),
+            weapon2: WeaponId(WId::MissilesOneDmg as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Missile_Unit");
+        board.tile_mut(1, 3).set_smoke(true);
+        board.add_unit(Unit {
+            uid: 21,
+            x: 6,
+            y: 3,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                matches!(a.1, WId::MissilesShield | WId::MissilesOneDmg)
+                    && a.2 != (1, 3)
+            }),
+            "Missile_Unit has IgnoreSmoke=true and should still enumerate barrages while smoked"
         );
     }
 

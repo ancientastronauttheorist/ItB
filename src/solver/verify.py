@@ -1474,7 +1474,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # later already-queued attack. Fixes Bombermechs No Survivors run
 # 20260630_181556_177 Mission_Missiles turn 3. Pre-v309 corpus archived as
 # failure_db_snapshot_sim_v308.jsonl.
-SIMULATOR_VERSION = 309
+# v310 - Detritus Contraption action enumeration honors Missile_Unit
+# IgnoreSmoke=true, so a smoked Contraption can still spend its global barrages.
+# Fixes Bombermechs No Survivors run 20260630_181556_177 Mission_Missiles turn 4
+# failed "Use the Detritus Contraption four times". Pre-v310 corpus archived as
+# failure_db_snapshot_sim_v309.jsonl.
+SIMULATOR_VERSION = 310
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
