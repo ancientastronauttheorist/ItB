@@ -68,6 +68,7 @@ class RunSetupRecommendation:
     ui_setup: str = ""
     warnings: list[str] = field(default_factory=list)
     setup_priorities: list[str] = field(default_factory=list)
+    setup_requirements: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -80,6 +81,7 @@ class RunSetupRecommendation:
             "ui_setup": self.ui_setup,
             "warnings": self.warnings,
             "setup_priorities": self.setup_priorities,
+            "setup_requirements": self.setup_requirements,
         }
 
 
@@ -220,6 +222,50 @@ def _setup_priorities_for_targets(
         "Core goal: power Bomb Dispenser 2 Bombs on Bombling Mech (3 cores).",
         "Core goal: power Silica Double Shot (2 cores) before the attempt turn.",
         "Shop order: buy Grid Power to 7/7 first, then reactor cores for Bombling/Silica.",
+        "Gate: require `no_survivors_setup --require-ready --plan` before attempt deployment.",
+    ]
+
+
+def _setup_requirements_for_targets(
+    targets: list[str] | None,
+    remaining: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    names = {
+        _human_norm(value)
+        for value in list(targets or []) + list(remaining or [])
+        if str(value).strip()
+    }
+    if "no survivors" not in names:
+        return []
+    return [
+        {
+            "kind": "pilot_slot",
+            "pilot_id": "Pilot_Miner",
+            "pilot_name": "Silica",
+            "mech": "BomblingMech",
+            "reason": "Silica Double Shot lets upgraded Bomb Dispenser fire twice.",
+        },
+        {
+            "kind": "weapon_upgrade",
+            "mech": "BomblingMech",
+            "base_weapon_id": "Ranged_DeployBomb",
+            "required_weapon_id": "Ranged_DeployBomb_A",
+            "upgrade": "2 Bombs",
+            "required_cores": 3,
+        },
+        {
+            "kind": "pilot_power",
+            "pilot_id": "Pilot_Miner",
+            "pilot_name": "Silica",
+            "upgrade": "Double Shot",
+            "minimum_power_sum": 2,
+            "required_cores": 2,
+        },
+        {
+            "kind": "shop_priority",
+            "grid_power_before_cores": True,
+            "reason": "Restore Grid Power to 7/7 before buying No Survivors cores.",
+        },
     ]
 
 
@@ -272,6 +318,10 @@ def recommend_squad_for_run(
             remaining_achievements=_remaining_for_group(groups, key),
             ui_setup=_setup_text(key, name),
             setup_priorities=_setup_priorities_for_targets(
+                achievements,
+                _remaining_for_group(groups, key),
+            ),
+            setup_requirements=_setup_requirements_for_targets(
                 achievements,
                 _remaining_for_group(groups, key),
             ),
@@ -351,6 +401,10 @@ def recommend_squad_for_run(
                     achievements,
                     _remaining_for_group(groups, group_key),
                 ),
+                setup_requirements=_setup_requirements_for_targets(
+                    achievements,
+                    _remaining_for_group(groups, group_key),
+                ),
             )
 
     key, name, remaining = _pick_next_unfinished_squad(groups, squad_names)
@@ -363,4 +417,5 @@ def recommend_squad_for_run(
         remaining_achievements=remaining,
         ui_setup=_setup_text(key, name),
         setup_priorities=_setup_priorities_for_targets(achievements, remaining),
+        setup_requirements=_setup_requirements_for_targets(achievements, remaining),
     )

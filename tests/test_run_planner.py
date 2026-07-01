@@ -97,6 +97,21 @@ def test_no_survivors_recommends_bombermechs_setup_priorities(tmp_path):
     assert "Bomb Dispenser 2 Bombs" in priorities
     assert "Double Shot" in priorities
     assert "Grid Power to 7/7 first" in priorities
+    assert "no_survivors_setup --require-ready --plan" in priorities
+    requirements = {item["kind"]: item for item in rec.setup_requirements}
+    assert requirements["pilot_slot"] == {
+        "kind": "pilot_slot",
+        "pilot_id": "Pilot_Miner",
+        "pilot_name": "Silica",
+        "mech": "BomblingMech",
+        "reason": "Silica Double Shot lets upgraded Bomb Dispenser fire twice.",
+    }
+    assert requirements["weapon_upgrade"]["mech"] == "BomblingMech"
+    assert requirements["weapon_upgrade"]["required_weapon_id"] == "Ranged_DeployBomb_A"
+    assert requirements["weapon_upgrade"]["required_cores"] == 3
+    assert requirements["pilot_power"]["pilot_id"] == "Pilot_Miner"
+    assert requirements["pilot_power"]["minimum_power_sum"] == 2
+    assert requirements["shop_priority"]["grid_power_before_cores"] is True
 
 
 def test_random_achievement_uses_balanced_roll(tmp_path):
