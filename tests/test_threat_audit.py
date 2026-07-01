@@ -240,6 +240,45 @@ def test_threat_audit_attacker_will_die_to_prior_melee():
     )
 
 
+def test_threat_audit_dungboss_kills_bouncer_before_building_attack():
+    board = Board()
+    board.attack_order = [153, 202]
+    board.tile(4, 6).terrain = "building"
+    board.tile(4, 6).building_hp = 2
+    board.units.append(_enemy(
+        uid=153,
+        pawn_type="DungBoss",
+        x=6,
+        y=6,
+        tx=5,
+        ty=6,
+        hp=6,
+    ))
+    board.units[-1].weapon = "DungAtkB"
+    board.units[-1].weapon_damage = 3
+    board.units[-1].max_hp = 6
+    board.units.append(_enemy(
+        uid=202,
+        pawn_type="Bouncer1",
+        x=5,
+        y=6,
+        tx=4,
+        ty=6,
+        hp=3,
+    ))
+    board.units[-1].weapon = "BouncerAtk1"
+    board.units[-1].weapon_damage = 1
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_melee"
+    )
+
+
 def test_threat_audit_attacker_will_die_to_prior_artillery():
     board = Board()
     board.attack_order = [10, 20]
