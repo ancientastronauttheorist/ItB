@@ -61,6 +61,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
     use crate::evaluate::{consumed_spawn_block_bonus, evaluate, PsionState};
     use crate::movement::illegal_move_reason;
+    use crate::board::count_unit_deaths_between;
     use crate::simulate::simulate_action_with_target2;
     use crate::solver::{
         arachnoid_spawns_from_events,
@@ -110,6 +111,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 
         let mut kills = 0i32;
         let mut mission_kills = 0i32;
+        let mut unit_deaths = 0i32;
         let mut bumps = 0i32;
         let mut nanobots_heal = 0i32;
         let mut stay_with_me_heal = 0i32;
@@ -132,6 +134,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 ));
                 continue;
             }
+            let before_action = board.clone();
             let result = simulate_action_with_target2(
                 &mut board, mech_idx,
                 (act.move_to[0], act.move_to[1]),
@@ -140,6 +143,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 act.target2.map(|t| (t[0], t[1])),
                 weapons_table,
             );
+            unit_deaths += count_unit_deaths_between(&before_action, &board);
             for event in result.events.iter().filter(|e| e.starts_with("illegal_")) {
                 illegal_events.push(event.clone());
             }
@@ -160,8 +164,12 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
             .count() as i32;
 
+        let before_enemy_phase = board.clone();
         let enemy_phase_result = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+        unit_deaths += count_unit_deaths_between(&before_enemy_phase, &board);
+        let before_spawn_block = board.clone();
         let spawn_block_result = apply_spawn_blocking(&mut board, &spawn_points);
+        unit_deaths += count_unit_deaths_between(&before_spawn_block, &board);
         kills += enemy_phase_result.enemies_killed + spawn_block_result.enemies_killed;
         mission_kills += enemy_phase_result.mission_kills + spawn_block_result.mission_kills;
 
@@ -200,7 +208,12 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 * weights.reverse_thrusters_four_damage_bonus
             + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus
             + lets_walk_control_distance as f64 * weights.lets_walk_control_distance_bonus
-            + core_of_the_earth_chasm_falls as f64 * weights.core_of_the_earth_bonus;
+            + core_of_the_earth_chasm_falls as f64 * weights.core_of_the_earth_bonus
+            + if unit_deaths >= 7 {
+                unit_deaths as f64 * weights.no_survivors_death_bonus
+            } else {
+                0.0
+            };
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -222,6 +235,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "judo_hp": judo_hp,
             "kills": kills,
             "mission_kills": mission_kills,
+            "unit_deaths": unit_deaths,
             "arachnoid_spawns": arachnoid_spawns,
             "core_of_the_earth_chasm_falls": core_of_the_earth_chasm_falls,
             "stay_with_me_heal": stay_with_me_heal,
@@ -317,6 +331,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             "action_result": {
                 "enemies_killed": result.enemies_killed,
                 "mission_kills": result.mission_kills,
+                "unit_deaths": result.unit_deaths,
                 "mechs_killed": result.mechs_killed,
                 "buildings_lost": result.buildings_lost,
                 "buildings_damaged": result.buildings_damaged,
@@ -409,6 +424,7 @@ fn project_plan_scenarios(
                 "action_result": {
                     "enemies_killed": s.action_result.enemies_killed,
                     "mission_kills": s.action_result.mission_kills,
+                    "unit_deaths": s.action_result.unit_deaths,
                     "mechs_killed": s.action_result.mechs_killed,
                     "buildings_lost": s.action_result.buildings_lost,
                     "buildings_damaged": s.action_result.buildings_damaged,

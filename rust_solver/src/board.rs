@@ -5,6 +5,7 @@
 
 use bitflags::bitflags;
 use crate::types::*;
+use std::collections::{BTreeMap, BTreeSet};
 
 // ── Tile Flags ───────────────────────────────────────────────────────────────
 
@@ -832,6 +833,7 @@ pub struct ActionResult {
     pub grid_damage: i32,
     pub enemies_killed: i32,
     pub mission_kills: i32,
+    pub unit_deaths: i32,
     pub leech_credit_kills: i32,
     pub leech_uncapped_kills: i32,
     pub enemy_damage_dealt: i32,
@@ -870,6 +872,7 @@ impl ActionResult {
         self.grid_damage += other.grid_damage;
         self.enemies_killed += other.enemies_killed;
         self.mission_kills += other.mission_kills;
+        self.unit_deaths += other.unit_deaths;
         self.leech_credit_kills += other.leech_credit_kills;
         self.leech_uncapped_kills += other.leech_uncapped_kills;
         self.enemy_damage_dealt += other.enemy_damage_dealt;
@@ -881,6 +884,41 @@ impl ActionResult {
         self.spawns_blocked += other.spawns_blocked;
         self.events.extend_from_slice(&other.events);
     }
+}
+
+/// Count unique unit deaths across a board transition.
+///
+/// No Survivors counts deaths from any team. Several vanilla pawns serialize
+/// multiple board entries with the same uid (for example train/dam extra
+/// spaces), so this uses uid-level alive state rather than raw entry count.
+pub fn count_unit_deaths_between(before: &Board, after: &Board) -> i32 {
+    let mut before_alive: BTreeMap<u16, bool> = BTreeMap::new();
+    let mut before_present: BTreeSet<u16> = BTreeSet::new();
+    for i in 0..before.unit_count as usize {
+        let u = &before.units[i];
+        before_present.insert(u.uid);
+        let entry = before_alive.entry(u.uid).or_insert(false);
+        *entry |= u.hp > 0;
+    }
+
+    let mut after_alive: BTreeMap<u16, bool> = BTreeMap::new();
+    let mut new_dead_after: BTreeSet<u16> = BTreeSet::new();
+    for i in 0..after.unit_count as usize {
+        let u = &after.units[i];
+        let entry = after_alive.entry(u.uid).or_insert(false);
+        *entry |= u.hp > 0;
+        if !before_present.contains(&u.uid) && u.hp <= 0 {
+            new_dead_after.insert(u.uid);
+        }
+    }
+
+    let mut deaths = 0;
+    for (uid, was_alive) in before_alive {
+        if was_alive && !after_alive.get(&uid).copied().unwrap_or(false) {
+            deaths += 1;
+        }
+    }
+    deaths + new_dead_after.len() as i32
 }
 
 // ── Size assertions ──────────────────────────────────────────────────────────
@@ -898,6 +936,24 @@ mod tests {
     fn test_tile_default_has_no_conveyor() {
         assert_eq!(Tile::default().conveyor_dir, -1);
         assert_eq!(Board::default().tile(0, 0).conveyor_dir, -1);
+    }
+
+    #[test]
+    fn test_count_unit_deaths_between_counts_unique_uids() {
+        let mut before = Board::default();
+        before.unit_count = 4;
+        before.units[0] = Unit { uid: 10, hp: 1, max_hp: 1, ..Default::default() };
+        before.units[1] = Unit { uid: 20, hp: 1, max_hp: 1, ..Default::default() };
+        before.units[2] = Unit { uid: 30, hp: 1, max_hp: 1, ..Default::default() };
+        before.units[3] = Unit { uid: 30, hp: 1, max_hp: 1, ..Default::default() };
+
+        let mut after = before.clone();
+        after.units[0].hp = 0;
+        after.units[1].hp = 0;
+        after.units[2].hp = 0;
+        after.units[3].hp = 0;
+
+        assert_eq!(count_unit_deaths_between(&before, &after), 3);
     }
 
     #[test]

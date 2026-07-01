@@ -21,7 +21,7 @@
 /// obvious target" case with a specific tile; C picks up the leftover
 /// "enemy with no obvious target" case with a scalar penalty.
 
-use crate::board::{Board, ActionResult, UnitFlags};
+use crate::board::{count_unit_deaths_between, Board, ActionResult, UnitFlags};
 use crate::enemy::{simulate_enemy_attacks, apply_spawn_blocking};
 use crate::simulate::simulate_action_with_target2;
 use crate::solver::MechAction;
@@ -135,6 +135,7 @@ fn apply_plan_and_enemy_phase(
             Some(i) => i,
             None => continue,
         };
+        let before_action = b.clone();
         let result = simulate_action_with_target2(
             &mut b,
             mech_idx,
@@ -144,12 +145,20 @@ fn apply_plan_and_enemy_phase(
             action.target2,
             weapons,
         );
+        let mut result = result;
+        result.unit_deaths = count_unit_deaths_between(&before_action, &b);
         aggregate.merge(&result);
     }
+    let before_enemy_phase = b.clone();
     let enemy_phase_result = simulate_enemy_attacks(&mut b, &original_positions, weapons);
+    let mut enemy_phase_result = enemy_phase_result;
+    enemy_phase_result.unit_deaths = count_unit_deaths_between(&before_enemy_phase, &b);
     aggregate.merge(&enemy_phase_result);
     if !spawn_points.is_empty() {
+        let before_spawn_block = b.clone();
         let spawn_result = apply_spawn_blocking(&mut b, spawn_points);
+        let mut spawn_result = spawn_result;
+        spawn_result.unit_deaths = count_unit_deaths_between(&before_spawn_block, &b);
         aggregate.merge(&spawn_result);
     }
     b.add_mission_kills(aggregate.mission_kills);

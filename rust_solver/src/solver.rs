@@ -1925,6 +1925,7 @@ fn search_recursive(
     actions_so_far: &mut Vec<MechAction>,
     kills_so_far: i32,
     mission_kills_so_far: i32,
+    unit_deaths_so_far: i32,
     bumps_so_far: i32,
     nanobots_heal_so_far: i32,
     powered_blast_so_far: i32,
@@ -1961,14 +1962,21 @@ fn search_recursive(
         // All mechs acted — snapshot buildings before enemy phase
         let mut b_eval = board.clone();
         let buildings_before_enemy = count_buildings(&b_eval);
+        let before_enemy_phase = b_eval.clone();
         let enemy_phase_result = simulate_enemy_attacks(&mut b_eval, original_positions, weapons);
+        let enemy_phase_unit_deaths = count_unit_deaths_between(&before_enemy_phase, &b_eval);
+        let before_spawn_block = b_eval.clone();
         let spawn_block_result = apply_spawn_blocking(&mut b_eval, spawn_points);
+        let spawn_block_unit_deaths = count_unit_deaths_between(&before_spawn_block, &b_eval);
         let projected_kills = kills_so_far
             + enemy_phase_result.enemies_killed
             + spawn_block_result.enemies_killed;
         let projected_mission_kills = mission_kills_so_far
             + enemy_phase_result.mission_kills
             + spawn_block_result.mission_kills;
+        let projected_unit_deaths = unit_deaths_so_far
+            + enemy_phase_unit_deaths
+            + spawn_block_unit_deaths;
         let raw = evaluate(
             &b_eval, spawn_points, weights,
             projected_kills, projected_mission_kills,
@@ -2017,6 +2025,11 @@ fn search_recursive(
             core_of_the_earth_so_far as f64 * weights.core_of_the_earth_bonus;
         let stay_with_me_heal_bonus =
             stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
+        let no_survivors_bonus = if projected_unit_deaths >= 7 {
+            projected_unit_deaths as f64 * weights.no_survivors_death_bonus
+        } else {
+            0.0
+        };
         let pod_collected_penalty =
             pods_collected_so_far as f64 * weights.pod_collected;
         let score = raw
@@ -2029,6 +2042,7 @@ fn search_recursive(
             + lets_walk_control_distance_bonus
             + core_of_the_earth_bonus
             + stay_with_me_heal_bonus
+            + no_survivors_bonus
             + pod_collected_penalty
             - soft_disable_penalty_so_far * penalty_scale;
 
@@ -2055,7 +2069,8 @@ fn search_recursive(
         // Still recurse to the next depth so the remaining mechs can act
         search_recursive(
             board, mech_order, depth + 1,
-            actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far,
+            actions_so_far, kills_so_far, mission_kills_so_far,
+            unit_deaths_so_far, bumps_so_far,
             nanobots_heal_so_far, powered_blast_so_far,
             reverse_thrusters_four_damage_so_far,
             feed_the_flame_so_far,
@@ -2122,6 +2137,7 @@ fn search_recursive(
             target2,
             weapons,
         );
+        let unit_deaths_add = count_unit_deaths_between(board, &b_next);
         let nanobots_heal_add = viscera_nanobots_heal_from_events(&result.events);
         let powered_blast_add = powered_blast_from_events(&result.events);
         let reverse_thrusters_four_damage_add =
@@ -2153,6 +2169,7 @@ fn search_recursive(
             actions_so_far,
             kills_so_far + result.enemies_killed,
             mission_kills_so_far + result.mission_kills,
+            unit_deaths_so_far + unit_deaths_add,
             bumps_so_far + result.buildings_bump_damaged,
             nanobots_heal_so_far + nanobots_heal_add,
             powered_blast_so_far + powered_blast_add,
@@ -2347,7 +2364,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2552,7 +2569,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,

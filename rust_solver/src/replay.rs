@@ -13,7 +13,7 @@
 //! `snapshot_after_move` byte-for-byte: same field names, same types, same
 //! tile-sampling rule (touched tiles + 1-tile buffer).
 
-use crate::board::{ActionResult, Board, UnitFlags};
+use crate::board::{count_unit_deaths_between, ActionResult, Board, UnitFlags};
 use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
 use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
@@ -65,6 +65,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     let mut action_results: Vec<Value> = Vec::with_capacity(plan.len());
     let mut predicted_states: Vec<Value> = Vec::with_capacity(plan.len());
     let mut player_phase_result = ActionResult::default();
+    let mut player_phase_unit_deaths = 0i32;
 
     for (i, act) in plan.iter().enumerate() {
         let mech_uid = act.mech_uid;
@@ -87,6 +88,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                 action_results.push(json!({
                     "enemies_killed": 0,
                     "mission_kills": 0,
+                    "unit_deaths": 0,
                     "enemy_damage_dealt": 0,
                     "buildings_lost": 0,
                     "buildings_damaged": 0,
@@ -108,6 +110,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         // Phase 1: move. Diagnostic replay accepts hand-authored plans, so
         // validate moves before mutating; otherwise impossible plans can score
         // as clean by walking through buildings, units, or out-of-range tiles.
+        let before_move_board = board.clone();
         let move_to = (act.move_to[0], act.move_to[1]);
         let illegal_move = illegal_move_reason(&board, mech_idx, move_to);
         let move_result = match illegal_move {
@@ -121,12 +124,14 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             }
             None => simulate_move(&mut board, mech_idx, move_to),
         };
+        let move_unit_deaths = count_unit_deaths_between(&before_move_board, &board);
         let post_move_snap = capture_snapshot(
             &board, i, mech_uid, &move_result.events, "after_move",
         );
 
         // Phase 2: attack
         let wid = wid_from_str(&act.weapon_id);
+        let before_attack_board = board.clone();
         let attack_result = if illegal_move.is_some() {
             ActionResult::default()
         } else {
@@ -144,6 +149,8 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             // explicit skip after any move-only action, so the action is spent.
             board.units[mech_idx].set_active(false);
         }
+        let attack_unit_deaths = count_unit_deaths_between(&before_attack_board, &board);
+        let action_unit_deaths = move_unit_deaths + attack_unit_deaths;
         let mut all_events = move_result.events.clone();
         all_events.extend_from_slice(&attack_result.events);
         let post_attack_snap = capture_snapshot(
@@ -151,10 +158,12 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         );
         player_phase_result.merge(&move_result);
         player_phase_result.merge(&attack_result);
+        player_phase_unit_deaths += action_unit_deaths;
 
         action_results.push(json!({
             "enemies_killed":     attack_result.enemies_killed,
             "mission_kills":      attack_result.mission_kills,
+            "unit_deaths":        action_unit_deaths,
             "enemy_damage_dealt": attack_result.enemy_damage_dealt,
             "buildings_lost":     attack_result.buildings_lost,
             "buildings_damaged":  attack_result.buildings_damaged,
@@ -196,14 +205,21 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     // Env effects + Vek attacks. simulate_enemy_attacks handles env_danger
     // BEFORE Vek attacks (enemy.rs:287-297) — same ordering as Python's
     // _simulate_env_effects then _simulate_enemy_attacks.
+    let before_enemy_phase_board = board.clone();
     let enemy_phase_result = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+    let enemy_phase_unit_deaths = count_unit_deaths_between(&before_enemy_phase_board, &board);
+    let before_spawn_block_board = board.clone();
     let spawn_block_result = apply_spawn_blocking(&mut board, &spawn_points);
+    let spawn_block_unit_deaths = count_unit_deaths_between(&before_spawn_block_board, &board);
     let total_projected_kills = player_phase_result.enemies_killed
         + enemy_phase_result.enemies_killed
         + spawn_block_result.enemies_killed;
     let total_projected_mission_kills = player_phase_result.mission_kills
         + enemy_phase_result.mission_kills
         + spawn_block_result.mission_kills;
+    let total_projected_unit_deaths = player_phase_unit_deaths
+        + enemy_phase_unit_deaths
+        + spawn_block_unit_deaths;
     board.add_mission_kills(total_projected_mission_kills);
     for i in 0..board.unit_count as usize {
         let u = &mut board.units[i];
@@ -283,6 +299,10 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         "mission_kills_by_spawn_block":   spawn_block_result.mission_kills,
         "mission_kills_total_projected":  total_projected_mission_kills,
         "mission_kills_done_projected":   board.mission_kills_done,
+        "unit_deaths_by_player":          player_phase_unit_deaths,
+        "unit_deaths_by_enemy_phase":     enemy_phase_unit_deaths,
+        "unit_deaths_by_spawn_block":     spawn_block_unit_deaths,
+        "unit_deaths_total_projected":    total_projected_unit_deaths,
         "mission_mountains_destroyed_projected": board.projected_mountains_destroyed(),
     });
 
@@ -544,6 +564,40 @@ mod tests {
         assert_eq!(mech["active"], false,
             "Repair must clear active flag in predicted snapshot (was {} pre-fix)",
             mech["active"]);
+    }
+
+    #[test]
+    fn replay_solution_reports_total_unit_deaths() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "PunchMech", "x": 4, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]},
+            {"uid": 10, "type": "Spiderling1", "x": 4, "y": 3,
+             "hp": 1, "max_hp": 1, "team": 6, "mech": false,
+             "move": 3, "active": false, "weapons": ["SpiderlingAtk1"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [4, 4],
+          "weapon_id": "Prime_Punchmech",
+          "target": [4, 3]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(v["action_results"][0]["unit_deaths"], 1);
+        assert_eq!(v["predicted_outcome"]["unit_deaths_by_player"], 1);
+        assert_eq!(v["predicted_outcome"]["unit_deaths_total_projected"], 1);
     }
 
     #[test]

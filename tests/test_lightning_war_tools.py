@@ -438,6 +438,22 @@ def test_core_of_the_earth_weight_overlay_rewards_chasm_falls():
     assert weights["enemy_hp_remaining"] == -25.0
 
 
+def test_no_survivors_weight_overlay_rewards_seven_death_turns():
+    session = RunSession(
+        squad="Bombermechs",
+        difficulty=0,
+        achievement_targets=["No Survivors"],
+    )
+
+    weights, applied = commands._achievement_weight_overlay(
+        session,
+        {"no_survivors_death_bonus": 0.0},
+    )
+
+    assert "no_survivors" in applied
+    assert weights["no_survivors_death_bonus"] == 32_000.0
+
+
 def test_destroy_time_pods_selects_destroy_candidate_over_live_final_pod():
     live_final_pod = {
         "rank": 0,

@@ -340,6 +340,17 @@ def _achievement_weight_overlay(
         )
         applied.append("powered_blast")
 
+    if "no survivors" in normalized_targets:
+        # Bombermechs: the unlock is seven unit deaths in one turn from any
+        # team, including Walking Bombs. Rust only pays this bonus once a
+        # candidate projects at least seven total deaths, so setup turns keep
+        # normal survival/scoring behavior until a real shot exists.
+        weights["no_survivors_death_bonus"] = max(
+            float(weights.get("no_survivors_death_bonus", 0) or 0),
+            32000.0,
+        )
+        applied.append("no_survivors")
+
     if normalized_targets & {"on the backburner", "on the backbuner"}:
         # Mist Eaters: reward the exact 4+ effective-damage Reverse Thrusters
         # event, including the Detritus A.C.I.D. two-tile cheese.
