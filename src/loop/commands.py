@@ -43432,24 +43432,27 @@ def cmd_new_run(squad: str | None = None, achievements: list[str] = None,
             )
     session.disabled_actions = []
     session.save()
+    setup_payload = setup.to_dict()
 
     # Write run manifest
-    _write_manifest(session)
+    _write_manifest(session, extra={"setup": setup_payload})
 
     logger = DecisionLog(session.run_id)
+    setup_requirements = setup_payload.get("setup_requirements") or []
     logger.log_custom("New Run", (
         f"Squad: {setup.squad}\n"
         f"Setup mode: {setup.mode}\n"
         f"Setup reason: {setup.reason}\n"
         f"Achievements: {achievements or 'none'}\n"
         f"Difficulty: {session.difficulty}\n"
-        f"Tags: {tags or 'none'}"
+        f"Tags: {tags or 'none'}\n"
+        f"Setup requirements: {setup_requirements or 'none'}"
     ))
 
     result = {
         "run_id": session.run_id,
         "squad": setup.squad,
-        "setup": setup.to_dict(),
+        "setup": setup_payload,
         "difficulty": session.difficulty,
         "achievements": achievements,
         "tags": tags,

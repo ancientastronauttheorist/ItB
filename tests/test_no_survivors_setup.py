@@ -375,3 +375,76 @@ def test_recommend_mission_uses_attempt_routing_when_no_survivors_ready(
     assert result["routing"] == "no_survivors"
     assert result["no_survivors_setup"]["setup_stage"] == "ATTEMPT_READY"
     assert result["top3"][0]["mission_id"] == "Mission_Disposal"
+
+
+def test_new_run_persists_no_survivors_setup_requirements(monkeypatch):
+    requirement = {
+        "kind": "pilot_slot",
+        "pilot_id": "Pilot_Miner",
+        "pilot_name": "Silica",
+        "mech": "BomblingMech",
+    }
+    setup_payload = {
+        "squad": "Bombermechs",
+        "squad_key": "bombermechs",
+        "mode": "achievement_hunt",
+        "reason": "target 'No Survivors' requires Bombermechs",
+        "requested_achievements": ["No Survivors"],
+        "remaining_achievements": ["No Survivors"],
+        "ui_setup": "Select the Bombermechs squad card, then Start.",
+        "warnings": [],
+        "setup_priorities": ["Pilot: put Silica on Bombling Mech."],
+        "setup_requirements": [requirement],
+    }
+    fake_setup = SimpleNamespace(
+        squad="Bombermechs",
+        mode="achievement_hunt",
+        reason="target 'No Survivors' requires Bombermechs",
+        ui_setup="Select the Bombermechs squad card, then Start.",
+        setup_priorities=["Pilot: put Silica on Bombling Mech."],
+        setup_requirements=[requirement],
+        warnings=[],
+        to_dict=lambda: setup_payload,
+    )
+    manifests = []
+    logs = []
+
+    monkeypatch.setattr(
+        commands,
+        "recommend_squad_for_run",
+        lambda **kwargs: fake_setup,
+    )
+    monkeypatch.setattr(
+        commands,
+        "detect_game_phase",
+        lambda *args, **kwargs: "no_save",
+    )
+    monkeypatch.setattr(commands.RunSession, "save", lambda self, path=None: None)
+    monkeypatch.setattr(
+        commands,
+        "_write_manifest",
+        lambda session, extra=None: manifests.append((session, extra)),
+    )
+
+    class StubDecisionLog:
+        def __init__(self, run_id):
+            self.run_id = run_id
+
+        def log_custom(self, label, message):
+            logs.append((label, message))
+
+    monkeypatch.setattr(commands, "DecisionLog", StubDecisionLog)
+
+    result = commands.cmd_new_run(
+        achievements=["No Survivors"],
+        difficulty=0,
+        tags=["achievement"],
+    )
+
+    assert result["setup"] == setup_payload
+    assert manifests
+    assert manifests[0][1]["setup"] == setup_payload
+    assert logs
+    assert logs[0][0] == "New Run"
+    assert "Pilot_Miner" in logs[0][1]
+    assert "BomblingMech" in logs[0][1]
