@@ -201,6 +201,18 @@ def _destroy_time_pods_policy_active(
     return bool(_normalized_target_labels(session) & _DESTROY_TIME_PODS_TARGETS)
 
 
+def _achievement_mission_routing(
+    session: RunSession | None,
+    routing: str | None,
+) -> str:
+    requested = str(routing or "default").strip() or "default"
+    if requested != "default":
+        return requested
+    if "no survivors" in _normalized_target_labels(session):
+        return "no_survivors"
+    return requested
+
+
 _DESTROY_TIME_PODS_SURVIVAL_PENALTY = -1_000_000.0
 _DESTROY_TIME_PODS_PICKUP_PENALTY = -2_000_000.0
 
@@ -8654,6 +8666,12 @@ def cmd_recommend_mission(
     installed yet.
     """
     from src.strategy.mission_picker import score_island_map
+
+    if str(routing or "default").strip() in {"", "default"}:
+        try:
+            routing = _achievement_mission_routing(_load_session(), routing)
+        except Exception:
+            routing = str(routing or "default").strip() or "default"
 
     bridge_data: dict = {}
     units: list = []

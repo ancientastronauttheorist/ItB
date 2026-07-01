@@ -56,6 +56,12 @@ CATACLYSM_SQUAD = [
     {"mech": True, "hp": 3, "weapons": ["Science_KO_Crack"]},
 ]
 
+BOMBERMECHS_SQUAD = [
+    {"mech": True, "hp": 3, "weapons": ["Ranged_DeployBomb_A"]},
+    {"mech": True, "hp": 3, "weapons": ["Brute_PierceShot"]},
+    {"mech": True, "hp": 3, "weapons": ["Science_TC_SwapOther"]},
+]
+
 
 # ---------------------------------------------------------------------------
 # Mission fixtures
@@ -108,6 +114,16 @@ def _tidal_mission() -> dict:
         "mission_id": "Mission_Battle",
         "bonus_objective_ids": [BONUS_GRID],
         "environment": "Env_TidalWaves",
+    }
+
+
+def _lightning_battle_mission() -> dict:
+    """Air-strike/lightning environment can add death-count opportunities."""
+    return {
+        "region_id": 7,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [],
+        "environment": "Env_AirStrike",
     }
 
 
@@ -323,6 +339,15 @@ def test_derive_squad_tags_cataclysm_chasm_tools():
     assert "aoe" in tags
 
 
+def test_derive_squad_tags_bombermechs_no_survivors_setup():
+    tags = derive_squad_tags(BOMBERMECHS_SQUAD)
+
+    assert "walking_bomb_deploy" in tags
+    assert "no_survivors_setup" in tags
+    assert "armor_pierce" in tags
+    assert "crowd_control" in tags
+
+
 # ---------------------------------------------------------------------------
 # Core scoring scenarios
 # ---------------------------------------------------------------------------
@@ -406,6 +431,54 @@ def test_lightning_baseline_routing_vetoes_tides_for_reliability():
     rationale = " ".join(tides_scored["rationale_lines"])
     assert "Tidal Waves" in rationale
     assert "final-turn" in rationale
+
+
+def test_no_survivors_routing_prefers_kill_count_battle_over_train():
+    island = [_train_high_threat(), _safe_battle_mission()]
+    ranked = score_island_map(
+        island,
+        BOMBERMECHS_SQUAD,
+        grid_power=7,
+        routing="no_survivors",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    train = next(e for e in ranked if e["mission_id"] == "Mission_Train")
+    rationale = " ".join(train["rationale_lines"])
+    assert "No Survivors" in rationale
+    assert "train objective" in rationale
+
+
+def test_no_survivors_routing_prefers_death_environment():
+    island = [_generic_no_bonus_mission(), _lightning_battle_mission()]
+    ranked = score_island_map(
+        island,
+        BOMBERMECHS_SQUAD,
+        grid_power=7,
+        routing="no_survivors",
+    )
+
+    assert ranked[0]["environment"] == "Env_AirStrike"
+    rationale = " ".join(ranked[0]["rationale_lines"])
+    assert "environment can contribute unit deaths" in rationale
+
+
+def test_no_survivors_routing_penalizes_kill_limit_objective():
+    island = [_safe_battle_mission(), _kill_limit_mission()]
+    ranked = score_island_map(
+        island,
+        BOMBERMECHS_SQUAD,
+        grid_power=7,
+        routing="no_survivors",
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    pacifist = next(
+        e for e in ranked
+        if BONUS_PACIFIST in (e.get("bonus_objective_ids") or [])
+    )
+    rationale = " ".join(pacifist["rationale_lines"])
+    assert "kill-limit objective fights the target" in rationale
 
 
 def test_lightning_war_routing_penalizes_satellite_over_sandstorm():

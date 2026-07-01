@@ -88,6 +88,8 @@ BONUS_SYMBOL = {
 #   repair        — heals adjacent / self (Mass Repair, etc.)
 #   push_chain    — multi-target push (Repulse, Vulcan adjacent,
 #                   Cluster, Gravity Well)
+#   walking_bomb_deploy — creates Walking Bomb bodies for Bombermechs
+#                         death-count achievements
 # ----------------------------------------------------------------------
 WEAPON_TAGS: dict[str, list[str]] = {
     # PRIME — single-target melee w/ push (good train defenders)
@@ -123,6 +125,10 @@ WEAPON_TAGS: dict[str, list[str]] = {
     "Brute_Splitshot":   ["burst"],
     "Brute_Bombrun":     ["aoe", "burst"],
     "Brute_PhaseShot":   ["armor_pierce"],
+    "Brute_PierceShot":  ["aoe", "armor_pierce", "burst"],
+    "Brute_PierceShot_A": ["aoe", "armor_pierce", "burst"],
+    "Brute_PierceShot_B": ["aoe", "armor_pierce", "burst"],
+    "Brute_PierceShot_AB": ["aoe", "armor_pierce", "burst"],
     "Brute_Shrapnel":    ["aoe"],
     # RANGED — artillery
     "Ranged_Artillerymech": ["aoe", "push_chain"],    # Artemis Artillery
@@ -138,6 +144,10 @@ WEAPON_TAGS: dict[str, list[str]] = {
     "Ranged_Crack_A":    ["cataclysm_chasm", "aoe"],
     "Ranged_Crack_B":    ["cataclysm_chasm", "aoe"],
     "Ranged_Crack_AB":   ["cataclysm_chasm", "aoe"],
+    "Ranged_DeployBomb": ["walking_bomb_deploy", "no_survivors_setup"],
+    "Ranged_DeployBomb_A": ["walking_bomb_deploy", "no_survivors_setup"],
+    "Ranged_DeployBomb_B": ["walking_bomb_deploy", "no_survivors_setup"],
+    "Ranged_DeployBomb_AB": ["walking_bomb_deploy", "no_survivors_setup"],
     # SCIENCE — utility
     "Science_Pullmech":  ["crowd_control", "train_defender"],
     "Science_Gravwell":  ["crowd_control"],           # pull artillery
@@ -150,6 +160,10 @@ WEAPON_TAGS: dict[str, list[str]] = {
     "Science_KO_Crack_A": ["cataclysm_chasm"],
     "Science_KO_Crack_B": ["cataclysm_chasm"],
     "Science_KO_Crack_AB": ["cataclysm_chasm"],
+    "Science_TC_SwapOther": ["crowd_control"],
+    "Science_TC_SwapOther_A": ["crowd_control"],
+    "Science_TC_SwapOther_B": ["crowd_control"],
+    "Science_TC_SwapOther_AB": ["crowd_control"],
     # SUPPORT
     "Support_Repair":    ["repair"],
     "Support_Wind":      ["crowd_control", "push_chain"],
@@ -675,6 +689,112 @@ def _apply_lightning_baseline_routing(
     return score + delta, veto_reason
 
 
+def _apply_no_survivors_routing(
+    entry: dict[str, Any],
+    mission_tags: set[str],
+    squad_tags: set[str],
+    grid_power: int,
+    score: int,
+    rationale: list[str],
+) -> int:
+    """Route toward dense, low-friction seven-death setups."""
+    mission_id = entry.get("mission_id", "")
+    bonus_ids = entry.get("bonus_objective_ids", []) or []
+    delta = 0
+
+    if "walking_bomb_deploy" in squad_tags:
+        delta += 6
+        rationale.append("+6  No Survivors: Walking Bomb setup weapon online")
+    if mission_id == "Mission_Battle":
+        delta += 10
+        rationale.append("+10 No Survivors: plain battle has low objective friction")
+    if BONUS_KILL_FIVE in bonus_ids:
+        delta += 35
+        rationale.append(
+            "+35 No Survivors: kill-count objective implies dense enemy board"
+        )
+
+    death_env_tags = {
+        "env_acid",
+        "env_cataclysm",
+        "env_lava",
+        "env_lightning",
+    }
+    fired_death_env_tags = sorted(mission_tags & death_env_tags)
+    if fired_death_env_tags:
+        delta += 14
+        rationale.append(
+            "+14 No Survivors: environment can contribute unit deaths "
+            f"({', '.join(fired_death_env_tags)})"
+        )
+    if "high_threat" in mission_tags and grid_power >= 5:
+        delta += 8
+        rationale.append("+8  No Survivors: high-threat board can add enemy bodies")
+    if "boss" in mission_tags and grid_power >= 5:
+        delta += 6
+        rationale.append("+6  No Survivors: boss mission likely increases density")
+    if "infinite_spawn" in mission_tags and grid_power >= 5:
+        delta += 5
+        rationale.append("+5  No Survivors: infinite spawns can refill bodies")
+
+    if "train" in mission_tags:
+        delta -= 70
+        rationale.append(
+            "-70 No Survivors: train objective is protected-objective friction"
+        )
+
+    fragile_tags = {
+        "bad_repairs",
+        "fire_tile_counter",
+        "fragile_ally_objective",
+        "mite_counter",
+        "protect_specific_building",
+        "repair_platforms",
+        "terraform_grass_counter",
+        "volatile_vek",
+    }
+    fired_fragile_tags = sorted(mission_tags & fragile_tags)
+    if fired_fragile_tags:
+        delta -= 35
+        rationale.append(
+            "-35 No Survivors: fragile/protected objective friction "
+            f"({', '.join(fired_fragile_tags)})"
+        )
+
+    slow_or_protected_mission_ids = {
+        "Mission_Bomb",
+        "Mission_Dam",
+        "Mission_ForestFire",
+        "Mission_Holes",
+        "Mission_Power",
+        "Mission_Repair",
+        "Mission_Satellite",
+        "Mission_Solar",
+        "Mission_Tanks",
+        "Mission_Teleporter",
+        "Mission_Terraform",
+        "Mission_Trapped",
+        "Mission_Wind",
+    }
+    if mission_id in slow_or_protected_mission_ids:
+        delta -= 20
+        rationale.append(
+            f"-20 No Survivors: route avoids protected/slow mission ({mission_id})"
+        )
+
+    if BONUS_PACIFIST in bonus_ids:
+        delta -= 35
+        rationale.append("-35 No Survivors: kill-limit objective fights the target")
+    if BONUS_BLOCK in bonus_ids:
+        delta -= 12
+        rationale.append("-12 No Survivors: spawn-block bonus can reduce body count")
+    if BONUS_ASSET in bonus_ids:
+        delta -= 10
+        rationale.append("-10 No Survivors: asset objective adds protection burden")
+
+    return score + delta
+
+
 _UNAVAILABLE_BOOL_FIELDS = {
     "active",
     "completed",
@@ -924,6 +1044,10 @@ def score_mission(
     elif routing == "lightning_baseline":
         score, route_auto_start_veto_reason = _apply_lightning_baseline_routing(
             entry, mission_tags, score, rationale
+        )
+    elif routing == "no_survivors":
+        score = _apply_no_survivors_routing(
+            entry, mission_tags, squad_tags, grid_power, score, rationale
         )
     elif routing != "default":
         raise ValueError(f"unknown mission routing mode: {routing}")

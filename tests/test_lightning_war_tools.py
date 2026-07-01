@@ -454,6 +454,20 @@ def test_no_survivors_weight_overlay_rewards_seven_death_turns():
     assert weights["no_survivors_death_bonus"] == 32_000.0
 
 
+def test_no_survivors_target_autoselects_mission_routing():
+    session = RunSession(
+        squad="Bombermechs",
+        difficulty=0,
+        achievement_targets=["No Survivors"],
+    )
+
+    assert commands._achievement_mission_routing(session, "default") == "no_survivors"
+    assert (
+        commands._achievement_mission_routing(session, "lightning_baseline")
+        == "lightning_baseline"
+    )
+
+
 def test_destroy_time_pods_selects_destroy_candidate_over_live_final_pod():
     live_final_pod = {
         "rank": 0,
