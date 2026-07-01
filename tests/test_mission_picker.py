@@ -463,6 +463,42 @@ def test_no_survivors_routing_prefers_death_environment():
     assert "environment can contribute unit deaths" in rationale
 
 
+def test_no_survivors_routing_prefers_death_engine_missions():
+    squad_tags = derive_squad_tags(BOMBERMECHS_SQUAD)
+    baseline = score_mission(
+        _generic_no_bonus_mission(),
+        squad_tags,
+        grid_power=7,
+        routing="no_survivors",
+    )
+    death_engine_missions = [
+        _terraform_counter_mission(),
+        {
+            "region_id": 28,
+            "mission_id": "Mission_Disposal",
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        },
+        {
+            "region_id": 29,
+            "mission_id": "Mission_Dam",
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        },
+    ]
+
+    for mission in death_engine_missions:
+        scored = score_mission(
+            mission,
+            squad_tags,
+            grid_power=7,
+            routing="no_survivors",
+        )
+        rationale = " ".join(scored["rationale_lines"])
+        assert scored["score"] > baseline["score"]
+        assert "can create chained unit deaths" in rationale
+
+
 def test_no_survivors_routing_penalizes_kill_limit_objective():
     island = [_safe_battle_mission(), _kill_limit_mission()]
     ranked = score_island_map(

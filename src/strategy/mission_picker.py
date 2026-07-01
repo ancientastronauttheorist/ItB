@@ -219,10 +219,11 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     "Mission_Survive":        ["protect_buildings"],
     "Mission_Battle":         ["high_threat"],
     "Mission_Tanks":          ["fragile_ally_objective"],
-    "Mission_Terraform":      ["terraform_grass_counter"],
+    "Mission_Terraform":      ["terraform_grass_counter", "death_engine_objective"],
     "Mission_Filler":         ["earth_mover_pit"],
     "Mission_Holes":          ["mite_counter"],
-    "Mission_Dam":            ["mite_counter"],
+    "Mission_Dam":            ["mite_counter", "death_engine_objective"],
+    "Mission_Disposal":       ["death_engine_objective"],
     "Mission_Teleporter":     ["mite_counter"],
     "Mission_Repair":         ["bad_repairs", "repair_platforms"],
     # Custom Archive objective: "End with 8 spaces on fire". The tactical
@@ -714,6 +715,22 @@ def _apply_no_survivors_routing(
             "+35 No Survivors: kill-count objective implies dense enemy board"
         )
 
+    death_engine_names = {
+        "Mission_Dam": "Old Earth Dam",
+        "Mission_Disposal": "Disposal Unit",
+        "Mission_Terraform": "Terraformer",
+    }
+    death_engine_active = (
+        mission_id in death_engine_names
+        or "death_engine_objective" in mission_tags
+    )
+    if death_engine_active:
+        tool_name = death_engine_names.get(mission_id, "mission tool")
+        delta += 75
+        rationale.append(
+            f"+75 No Survivors: {tool_name} can create chained unit deaths"
+        )
+
     death_env_tags = {
         "env_acid",
         "env_cataclysm",
@@ -755,9 +772,10 @@ def _apply_no_survivors_routing(
     }
     fired_fragile_tags = sorted(mission_tags & fragile_tags)
     if fired_fragile_tags:
-        delta -= 35
+        penalty = 10 if death_engine_active else 35
+        delta -= penalty
         rationale.append(
-            "-35 No Survivors: fragile/protected objective friction "
+            f"-{penalty} No Survivors: fragile/protected objective friction "
             f"({', '.join(fired_fragile_tags)})"
         )
 
@@ -777,9 +795,11 @@ def _apply_no_survivors_routing(
         "Mission_Wind",
     }
     if mission_id in slow_or_protected_mission_ids:
-        delta -= 20
+        penalty = 8 if death_engine_active else 20
+        delta -= penalty
         rationale.append(
-            f"-20 No Survivors: route avoids protected/slow mission ({mission_id})"
+            f"-{penalty} No Survivors: protected/slow mission friction "
+            f"({mission_id})"
         )
 
     if BONUS_PACIFIST in bonus_ids:
