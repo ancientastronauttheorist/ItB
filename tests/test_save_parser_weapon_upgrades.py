@@ -81,6 +81,29 @@ def test_extract_mission_state_overlays_modeled_weapon_mods():
     assert mission.pawns[0].primary_weapon == "Ranged_Rocket_A"
 
 
+def test_bomb_dispenser_two_bombs_upgrade_overlays():
+    mission = extract_mission_state(
+        {"sMission": "Mission_Test"},
+        {
+            "pawn_count": 1,
+            "pawn1": {
+                "id": 1,
+                "type": "BomblingMech",
+                "location": Point(2, 2),
+                "health": 3,
+                "max_health": 3,
+                "iTeamId": 1,
+                "mech": True,
+                "primary": "Ranged_DeployBomb",
+                "primary_mod1": [1, 1, 1],
+                "primary_mod2": [0],
+            },
+        },
+    )
+
+    assert mission.pawns[0].primary_weapon == "Ranged_DeployBomb_A"
+
+
 def test_titan_fist_powered_mods_overlay():
     mission = extract_mission_state(
         {"sMission": "Mission_Test"},

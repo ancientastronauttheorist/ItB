@@ -566,7 +566,7 @@ evaluation weights when targeting that achievement.
 - **Requirement:** Have 7 units (any team) die in a single turn with the Bombermechs squad.
 - **Squad:** Bombermechs (required)
 - **Strategy:** Any units count -- enemies, mechs, Walking Bombs, Arachnoids, etc. A "turn" includes player actions and enemy actions. In a single turn: kill multiple enemies, let enemies kill your bombs, and possibly sacrifice a mech. With 4+ enemies + 3 Walking Bombs + possible Arachnoids, reaching 7 deaths is achievable.
-- **Bot approach:** Set up a massive kill turn. Place bombs near enemies, position mechs to kill, and let enemy attacks destroy bombs. The solver needs to find turns where 7+ units can die simultaneously. This likely requires a later-game mission with many enemies.
+- **Bot approach:** Set up a massive kill turn. Place bombs near enemies, position mechs to kill, and let enemy attacks destroy bombs. Rust v311+ models `Ranged_DeployBomb_A` / 2 Bombs as a true two-click weapon that spawns two Walking Bombs, so a powered Bombling can supply two bomb deaths per action and Silica Double Shot can supply four if the mech stays still. The solver needs to find turns where 7+ units can die simultaneously. This likely requires a later-game mission with many enemies.
 - **Key weapons:** Bomb Dispenser (Walking Bombs die easily and count), AP Cannon (multi-target), Force Swap (positioning)
 - **Ideal setup:** Normal difficulty, 3rd or 4th island with 5+ enemies. Set up bombs + enemy cluster for a mass kill turn.
 - **Estimated difficulty for bot:** Hard

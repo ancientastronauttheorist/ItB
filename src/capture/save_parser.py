@@ -69,6 +69,7 @@ _MODELED_UPGRADED_WEAPONS = {
     "Brute_Unstable_AB",
     "Ranged_Ignite_A",
     "Ranged_Artillerymech_A",
+    "Ranged_DeployBomb_A",
     "Ranged_Rocket_A",
     "Ranged_Rocket_B",
     "Ranged_Rocket_AB",

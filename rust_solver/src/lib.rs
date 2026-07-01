@@ -2031,7 +2031,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   barrages. Fixes Bombermechs No Survivors run 20260630_181556_177
 //   Mission_Missiles turn 4 failed "Use the Detritus Contraption four times".
 //   Pre-v310 corpus archived as failure_db_snapshot_sim_v309.jsonl.
-pub const SIMULATOR_VERSION: u32 = 310;
+// v311 - Bomb Dispenser's 2 Bombs upgrade (`Ranged_DeployBomb_A`) overlays
+//   from save power state, enumerates true two-click deploy targets in
+//   different directions, and spawns two Walking Bombs. Fixes Bombermechs
+//   No Survivors run 20260630_181556_177 after powering the upgrade on R.S.T.
+//   Pre-v311 corpus archived as failure_db_snapshot_sim_v310.jsonl.
+pub const SIMULATOR_VERSION: u32 = 311;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

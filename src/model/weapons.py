@@ -661,8 +661,12 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Ranged_DeployBomb": WeaponDef(
         name="Bomb Dispenser", weapon_type="deploy",
         damage=0, range_min=2, range_max=0, spawns="DeployUnit_Bomby",
-        upgrade_a="2 Bombs (two-click; unsupported by bridge)",
+        upgrade_a="2 Bombs",
         upgrade_b="Add Push",
+    ),
+    "Ranged_DeployBomb_A": WeaponDef(
+        name="Bomb Dispenser", weapon_type="two_click",
+        damage=0, range_min=2, range_max=0, spawns="DeployUnit_Bomby",
     ),
     "Ranged_Arachnoid": WeaponDef(
         name="Arachnoid Injector", weapon_type="artillery",

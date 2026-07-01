@@ -521,6 +521,11 @@ pub(crate) fn get_weapon_targets(
                 targets.push(first);
             }
         }
+        WeaponType::TwoClick if is_deploy_bomb_two_click(weapon_id) => {
+            for (dir, _vec) in DIRS.iter().enumerate() {
+                targets.extend(enumerate_deploy_bomb_line_targets(board, mx, my, dir, wdef));
+            }
+        }
         WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
             let throw_range = wdef.range_max.max(1);
             for &(dx, dy) in &DIRS {
@@ -905,6 +910,59 @@ fn enumerate_ricochet_targets(board: &Board, sx: u8, sy: u8) -> Vec<((u8, u8), (
     out
 }
 
+fn enumerate_deploy_bomb_line_targets(
+    board: &Board,
+    sx: u8,
+    sy: u8,
+    dir: usize,
+    wdef: &WeaponDef,
+) -> Vec<(u8, u8)> {
+    let mut out = Vec::new();
+    let min_r = wdef.range_min.max(1);
+    let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
+    let (dx, dy) = DIRS[dir];
+    for dist in (min_r as i8)..=(max_r as i8) {
+        let nx = sx as i8 + dx * dist;
+        let ny = sy as i8 + dy * dist;
+        if !in_bounds(nx, ny) {
+            break;
+        }
+        let target = (nx as u8, ny as u8);
+        if !board.is_blocked(target.0, target.1, false) {
+            out.push(target);
+        }
+    }
+    out
+}
+
+fn enumerate_deploy_bomb_two_click_targets(
+    board: &Board,
+    sx: u8,
+    sy: u8,
+    wdef: &WeaponDef,
+) -> Vec<((u8, u8), (u8, u8))> {
+    let mut out = Vec::new();
+    for (first_dir, _vec) in DIRS.iter().enumerate() {
+        let first_targets = enumerate_deploy_bomb_line_targets(board, sx, sy, first_dir, wdef);
+        if first_targets.is_empty() {
+            continue;
+        }
+        let mut second_targets = Vec::new();
+        for offset in 1..=3 {
+            let second_dir = (first_dir + offset) % DIRS.len();
+            second_targets.extend(enumerate_deploy_bomb_line_targets(
+                board, sx, sy, second_dir, wdef,
+            ));
+        }
+        for first in &first_targets {
+            for second in &second_targets {
+                out.push((*first, *second));
+            }
+        }
+    }
+    out
+}
+
 fn weapon_can_damage_terrain(weapon_id: WId, wdef: &WeaponDef) -> bool {
     if weapon_id == WId::None || weapon_id == WId::Repair {
         return false;
@@ -1163,6 +1221,9 @@ fn weapon_action_has_effect(
             let target_unit = &board.units[unit_idx];
             target_unit.pushable() || target_unit.is_mech()
         }
+        WeaponType::TwoClick if is_deploy_bomb_two_click(weapon_id) => {
+            !board.is_blocked(target.0, target.1, false)
+        }
         WeaponType::Deploy => !board.is_blocked(target.0, target.1, false),
         WeaponType::SelfAoe => {
             if is_walking_bomb_trigger(weapon_id) {
@@ -1300,6 +1361,13 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     {
                         actions.push((pos, w1_id, first, Some(second)));
                     }
+                } else if is_deploy_bomb_two_click(w1_id) {
+                    let wdef = &weapons[w1_id as usize];
+                    for (first, second) in
+                        enumerate_deploy_bomb_two_click_targets(action_board, attack_pos.0, attack_pos.1, wdef)
+                    {
+                        actions.push((pos, w1_id, first, Some(second)));
+                    }
                 } else if is_ricochet_rocket(w1_id) && !action_unit.web() {
                     for (first, second) in enumerate_ricochet_targets(action_board, attack_pos.0, attack_pos.1) {
                         actions.push((pos, w1_id, first, Some(second)));
@@ -1326,6 +1394,13 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     let move_budget = control_shot_move_budget(wdef);
                     for (first, second) in
                         enumerate_control_shot_targets(action_board, attack_pos, target_range, move_budget)
+                    {
+                        actions.push((pos, w2_id, first, Some(second)));
+                    }
+                } else if is_deploy_bomb_two_click(w2_id) {
+                    let wdef = &weapons[w2_id as usize];
+                    for (first, second) in
+                        enumerate_deploy_bomb_two_click_targets(action_board, attack_pos.0, attack_pos.1, wdef)
                     {
                         actions.push((pos, w2_id, first, Some(second)));
                     }
@@ -3134,6 +3209,68 @@ mod top_k_tests {
             (3, 5),
             &WEAPONS,
         ));
+    }
+
+    #[test]
+    fn upgraded_bomb_dispenser_enumerates_two_deploy_clicks() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::RangedDeployBombA as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("BomblingMech");
+        let occupied = board.add_unit(Unit {
+            uid: 21,
+            x: 3,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.units[occupied].set_type_name("Leaper1");
+        board.tile_mut(5, 3).terrain = Terrain::Mountain;
+
+        let targets = get_weapon_targets(
+            &board,
+            3,
+            3,
+            WId::RangedDeployBombA,
+            (3, 3),
+            &WEAPONS,
+        );
+        assert!(targets.contains(&(3, 1)), "first click can use a range-2 deploy tile");
+        assert!(!targets.contains(&(3, 5)), "occupied first click should be rejected");
+        assert!(!targets.contains(&(5, 3)), "blocked first click should be rejected");
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                a.1 == WId::RangedDeployBombA
+                    && a.2 == (3, 1)
+                    && a.3 == Some((1, 3))
+            }),
+            "2 Bombs should emit first and second deploy targets in different directions"
+        );
+        assert!(
+            !actions.iter().any(|a| {
+                a.1 == WId::RangedDeployBombA
+                    && a.2 == (3, 1)
+                    && a.3 == Some((3, 0))
+            }),
+            "second deploy target must not reuse the first target direction"
+        );
     }
 
     #[test]

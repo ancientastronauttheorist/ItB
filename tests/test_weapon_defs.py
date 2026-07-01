@@ -109,6 +109,13 @@ def test_arachnophiles_catalog_entries_match_observed_lua_ids():
     assert force_swap.name == "Force Swap"
     assert force_swap.weapon_type == "two_click"
 
+    bomb_two = get_weapon_def("Ranged_DeployBomb_A")
+    assert bomb_two is not None
+    assert "Ranged_DeployBomb_A" in known["observed_weapons"]
+    assert bomb_two.name == "Bomb Dispenser"
+    assert bomb_two.weapon_type == "two_click"
+    assert bomb_two.spawns == "DeployUnit_Bomby"
+
     assert get_pawn_stats("BulkMech").default_weapon == "Brute_TC_Ricochet"
     assert get_pawn_stats("BulkMech").class_type == "Brute"
     assert get_pawn_stats("ScorpioMech").default_weapon == "Ranged_Arachnoid"

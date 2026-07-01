@@ -1948,6 +1948,67 @@ local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
                second.x .. "," .. second.y
     end
 
+    if wname == "Ranged_DeployBomb_A" then
+        local function deploy_dir(point)
+            local dx = point.x - source.x
+            local dy = point.y - source.y
+            if dx == 0 and dy > 0 then return 0 end
+            if dx > 0 and dy == 0 then return 1 end
+            if dx == 0 and dy < 0 then return 2 end
+            if dx < 0 and dy == 0 then return 3 end
+            return nil
+        end
+        local function deploy_dist(point)
+            return math.abs(point.x - source.x) + math.abs(point.y - source.y)
+        end
+
+        local first_dir = deploy_dir(first)
+        local second_dir = deploy_dir(second)
+        if first_dir == nil then
+            return false, "2 Bombs first target not cardinal " ..
+                   first.x .. "," .. first.y .. " from " ..
+                   source.x .. "," .. source.y
+        end
+        if second_dir == nil then
+            return false, "2 Bombs second target not cardinal " ..
+                   second.x .. "," .. second.y .. " from " ..
+                   source.x .. "," .. source.y
+        end
+        if deploy_dist(first) < 2 then
+            return false, "2 Bombs first target below min range " ..
+                   first.x .. "," .. first.y
+        end
+        if deploy_dist(second) < 2 then
+            return false, "2 Bombs second target below min range " ..
+                   second.x .. "," .. second.y
+        end
+        if first_dir == second_dir then
+            return false, "2 Bombs targets must be in different directions"
+        end
+        if Board:IsBlocked(first, PATH_GROUND) then
+            return false, "2 Bombs first target blocked " ..
+                   first.x .. "," .. first.y
+        end
+        if Board:IsBlocked(second, PATH_GROUND) then
+            return false, "2 Bombs second target blocked " ..
+                   second.x .. "," .. second.y
+        end
+
+        local ok, bomb_err = pcall(function()
+            Board:AddEffect(skill:GetFinalEffect(source, first, second))
+        end)
+        if not ok then
+            return false, "2 Bombs GetFinalEffect failed: " .. tostring(bomb_err)
+        end
+        log_bridge("FIRE: " .. wname .. " two_bombs slot=" .. slot .. " " ..
+                   source.x .. "," .. source.y .. " -> " ..
+                   first.x .. "," .. first.y .. " -> " ..
+                   second.x .. "," .. second.y)
+        return true, "GetFinalEffect(" .. wname .. ") first=" ..
+               first.x .. "," .. first.y .. " second=" ..
+               second.x .. "," .. second.y
+    end
+
     if string.find(wname, "^Science_TC_SwapOther") == nil then
         return false, "unsupported two-click weapon " .. tostring(wname)
     end

@@ -196,6 +196,18 @@ check("Force Swap: final click is second target",
       and clicks[-1]["y"] == grid_to_mcp(6, 2)[1],
       clicks[-1])
 
+# Test 9b.1: upgraded Bomb Dispenser is also a supported two-click flow.
+mech = mk_unit(0, "BomblingMech", 3, 3, weapon="Ranged_DeployBomb_A")
+b = mk_board([mech])
+a = mk_action(0, "BomblingMech", (3, 3), "Ranged_DeployBomb_A", (3, 5))
+a.target2 = (5, 3)
+plan = plan_single_mech(a, b)
+clicks = clicks_only(plan)
+check("2 Bombs: classify two_click",
+      classify_weapon("Ranged_DeployBomb_A") == "two_click")
+check("2 Bombs: 4 clicks (select+arm+target+target2)",
+      len(clicks) == 4, len(clicks), plan)
+
 # Test 9c: Control Shot uses the visible two-click flow for achievement credit.
 mech = mk_unit(0, "ControlMech", 3, 3, weapon="Science_TC_Control")
 b = mk_board([mech])

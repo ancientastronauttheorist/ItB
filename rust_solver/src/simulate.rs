@@ -4171,6 +4171,66 @@ fn sim_ricochet_rocket(
     apply_ricochet_hit(board, first.0, first.1, first_dir, wdef, result);
 }
 
+fn deploy_bomb_click_legal(
+    board: &Board,
+    ax: u8,
+    ay: u8,
+    target: (u8, u8),
+    wdef: &WeaponDef,
+) -> Option<usize> {
+    let dir = cardinal_direction(ax, ay, target.0, target.1)?;
+    let dist = (target.0 as i8 - ax as i8).unsigned_abs()
+        + (target.1 as i8 - ay as i8).unsigned_abs();
+    let min_r = wdef.range_min.max(1);
+    let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
+    if dist < min_r || dist > max_r || board.is_blocked(target.0, target.1, false) {
+        return None;
+    }
+    Some(dir)
+}
+
+fn sim_deploy_bomb_two_click(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    wdef: &WeaponDef,
+    first: (u8, u8),
+    target2: Option<(u8, u8)>,
+    result: &mut ActionResult,
+) {
+    let Some(first_dir) = deploy_bomb_click_legal(board, ax, ay, first, wdef) else {
+        result.events.push(format!(
+            "invalid_deploy_bomb_first_target:{}:{}:from:{}:{}",
+            first.0, first.1, ax, ay
+        ));
+        return;
+    };
+    let Some(second) = target2 else {
+        result.events.push(format!(
+            "invalid_deploy_bomb_missing_second_target:{}:{}",
+            first.0, first.1
+        ));
+        return;
+    };
+    let Some(second_dir) = deploy_bomb_click_legal(board, ax, ay, second, wdef) else {
+        result.events.push(format!(
+            "invalid_deploy_bomb_second_target:{}:{}:from:{}:{}",
+            second.0, second.1, ax, ay
+        ));
+        return;
+    };
+    if second_dir == first_dir {
+        result.events.push(format!(
+            "invalid_deploy_bomb_same_direction:{}:{}:{}:{}",
+            first.0, first.1, second.0, second.1
+        ));
+        return;
+    }
+
+    spawn_walking_bomb(board, first.0, first.1, result);
+    spawn_walking_bomb(board, second.0, second.1, result);
+}
+
 fn sim_projectile(
     board: &mut Board,
     ax: u8,
@@ -6305,6 +6365,11 @@ pub fn simulate_attack_with_target2(
                     &mut result,
                 );
             }
+        } else if is_deploy_bomb_two_click(weapon_id) {
+            let ax = board.units[mech_idx].x;
+            let ay = board.units[mech_idx].y;
+            let wdef = &weapons[weapon_id as usize];
+            sim_deploy_bomb_two_click(board, ax, ay, wdef, target, target2, &mut result);
         } else {
             let attack_result = simulate_weapon_with(board, mech_idx, weapon_id, target.0, target.1, weapons);
             result.merge(&attack_result);
@@ -7552,6 +7617,33 @@ mod tests {
         assert_eq!(board.units[spawned].weapon, WeaponId(WId::DeployUnitSelfDamage as u16));
         assert!(board.units[spawned].active());
         assert!(board.units[spawned].pushable());
+    }
+
+    #[test]
+    fn test_upgraded_bomb_dispenser_spawns_two_active_walking_bombs() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 10, 3, 1, 3, WId::RangedDeployBombA);
+
+        simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::RangedDeployBombA,
+            (3, 3),
+            Some((5, 1)),
+            &WEAPONS,
+        );
+
+        let first = board.unit_at(3, 3).expect("first Walking Bomb should spawn");
+        let second = board.unit_at(5, 1).expect("second Walking Bomb should spawn");
+        for idx in [first, second] {
+            assert_eq!(board.units[idx].team, Team::Player);
+            assert_eq!(board.units[idx].type_name_str(), "DeployUnit_Bomby");
+            assert_eq!(board.units[idx].hp, 1);
+            assert_eq!(board.units[idx].weapon, WeaponId(WId::DeployUnitSelfDamage as u16));
+            assert!(board.units[idx].active());
+            assert!(board.units[idx].pushable());
+        }
+        assert!(!board.units[mech].active());
     }
 
     #[test]
