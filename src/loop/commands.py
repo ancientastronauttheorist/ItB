@@ -28,8 +28,10 @@ from src.capture.save_parser import (
     load_active_mission,
     detect_game_phase,
     _MODELED_UPGRADED_WEAPONS,
+    _overlay_modeled_upgrade,
     _modeled_upgrade_from_save_mods,
     _strip_upgrade_suffix,
+    parse_save_file,
     parse_lua_table,
     SAVE_DIR,
 )
@@ -43787,6 +43789,147 @@ def _profile_current_run_loadout_from_text(
     return result
 
 
+def _as_int_or_none(value: object) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str)]
+
+
+def _as_int_list(value: object) -> list[int]:
+    if not isinstance(value, list):
+        return []
+    values: list[int] = []
+    for item in value:
+        as_int = _as_int_or_none(item)
+        if as_int is not None:
+            values.append(as_int)
+    return values
+
+
+def _pilot_loadout_from_dict(slot: int, pilot_data: object) -> dict:
+    pilot: dict[str, Any] = {"slot": slot, "id": None, "name": None, "power": []}
+    if not isinstance(pilot_data, dict):
+        return pilot
+    pilot.update({
+        "id": pilot_data.get("id") if isinstance(pilot_data.get("id"), str) else None,
+        "name": (
+            pilot_data.get("name") if isinstance(pilot_data.get("name"), str) else None
+        ),
+        "skill1": _as_int_or_none(pilot_data.get("skill1")),
+        "skill2": _as_int_or_none(pilot_data.get("skill2")),
+        "power": _as_int_list(pilot_data.get("power")),
+    })
+    return pilot
+
+
+def _save_current_run_loadout_from_data(
+    data: dict,
+    *,
+    source: str,
+    path: str | None = None,
+) -> dict:
+    game_data = data.get("GameData", {}) if isinstance(data, dict) else {}
+    if not isinstance(game_data, dict):
+        game_data = {}
+    current = game_data.get("current", {})
+    if not isinstance(current, dict):
+        return {
+            "status": "MISSING",
+            "source": source,
+            "path": path,
+            "reason": "game_data_current_missing",
+        }
+
+    weapons = _as_string_list(current.get("weapons"))
+    squad_data = data.get("SquadData", {}) if isinstance(data, dict) else {}
+    if isinstance(squad_data, dict):
+        for key, pawn_data in squad_data.items():
+            if not isinstance(key, str) or not key.startswith("pawn"):
+                continue
+            if not isinstance(pawn_data, dict):
+                continue
+            uid = _as_int_or_none(key[4:])
+            if uid is None:
+                continue
+            _overlay_modeled_upgrade(
+                weapons,
+                uid,
+                0,
+                str(pawn_data.get("primary", "") or ""),
+                pawn_data.get("primary_mod1", []),
+                pawn_data.get("primary_mod2", []),
+            )
+            _overlay_modeled_upgrade(
+                weapons,
+                uid,
+                1,
+                str(pawn_data.get("secondary", "") or ""),
+                pawn_data.get("secondary_mod1", []),
+                pawn_data.get("secondary_mod2", []),
+            )
+    else:
+        squad_data = {}
+
+    pilots = [
+        _pilot_loadout_from_dict(slot, current.get(f"pilot{slot}"))
+        for slot in range(3)
+    ]
+    return {
+        "status": "OK",
+        "source": source,
+        "path": path,
+        "reason": "game_data_current_found",
+        "squad_index": _as_int_or_none(current.get("squad")),
+        "difficulty": _as_int_or_none(current.get("difficulty")),
+        "islands": _as_int_or_none(current.get("islands")),
+        "grid_power": _as_int_or_none(game_data.get("network")),
+        "grid_power_max": _as_int_or_none(game_data.get("networkMax")),
+        "money": _as_int_or_none(squad_data.get("money")),
+        "cores": _as_int_or_none(squad_data.get("cores")),
+        "mechs": _as_string_list(current.get("mechs")),
+        "weapons": weapons,
+        "pilots": pilots,
+    }
+
+
+def _read_save_current_run_loadout(
+    profile: str = "Alpha",
+    *,
+    filename: str = "saveData.lua",
+    path: Path | None = None,
+) -> dict:
+    path = path or (SAVE_DIR / f"profile_{profile}" / filename)
+    source = Path(path).name if path else filename
+    if not path.exists():
+        return {
+            "status": "MISSING",
+            "source": source,
+            "path": str(path),
+            "reason": f"{source}_missing",
+        }
+    try:
+        data = parse_save_file(path)
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "source": source,
+            "path": str(path),
+            "reason": f"{source}_read_error",
+            "exception_type": type(exc).__name__,
+            "error": str(exc),
+        }
+    return _save_current_run_loadout_from_data(data, source=source, path=str(path))
+
+
 def _read_profile_current_run_loadout(
     profile: str = "Alpha",
     *,
@@ -43812,6 +43955,72 @@ def _read_profile_current_run_loadout(
             "error": str(exc),
         }
     return _profile_current_run_loadout_from_text(text, path=str(path))
+
+
+def _loadout_attempt_summary(loadout: dict) -> dict:
+    return {
+        key: loadout.get(key)
+        for key in ("source", "status", "path", "reason", "error")
+        if loadout.get(key) is not None
+    }
+
+
+def _read_no_survivors_run_loadout(
+    profile: str = "Alpha",
+    *,
+    profile_path: Path | None = None,
+    save_paths: list[Path] | None = None,
+) -> dict:
+    attempts: list[dict] = []
+    if save_paths is None:
+        base = SAVE_DIR / f"profile_{profile}"
+        save_paths = [base / "saveData.lua", base / "undoSave.lua"]
+
+    profile_loadout = _read_profile_current_run_loadout(
+        profile,
+        path=profile_path,
+    )
+    attempts.append(_loadout_attempt_summary(profile_loadout))
+    if profile_loadout.get("status") == "OK":
+        result = dict(profile_loadout)
+        for path in save_paths:
+            resource_loadout = _read_save_current_run_loadout(
+                profile,
+                filename=path.name,
+                path=path,
+            )
+            attempts.append(_loadout_attempt_summary(resource_loadout))
+            if resource_loadout.get("status") != "OK":
+                continue
+            for key in ("grid_power", "grid_power_max", "money", "cores"):
+                if result.get(key) is None and resource_loadout.get(key) is not None:
+                    result[key] = resource_loadout.get(key)
+            result["resource_source"] = resource_loadout.get("source")
+            result["resource_path"] = resource_loadout.get("path")
+            break
+        result["source_attempts"] = attempts
+        return result
+
+    for path in save_paths:
+        loadout = _read_save_current_run_loadout(
+            profile,
+            filename=path.name,
+            path=path,
+        )
+        attempts.append(_loadout_attempt_summary(loadout))
+        if loadout.get("status") == "OK":
+            result = dict(loadout)
+            result["source_attempts"] = attempts
+            return result
+
+    result = {
+        "status": "MISSING",
+        "source": "no_survivors_setup",
+        "path": None,
+        "reason": "no_current_run_loadout_found",
+        "source_attempts": attempts,
+    }
+    return result
 
 
 def _bomb_dispenser_has_two_bombs(weapon_id: str | None) -> bool:
@@ -43893,11 +44102,17 @@ def _no_survivors_setup_status_from_loadout(loadout: dict) -> dict:
     }
     gaps = [gap_text[c["name"]] for c in checks if not c["ok"]]
     attempt_ready = not gaps
+    resources = {
+        key: loadout.get(key)
+        for key in ("grid_power", "grid_power_max", "money", "cores")
+        if loadout.get(key) is not None
+    }
     return {
         "status": "READY" if attempt_ready else "NOT_READY",
         "attempt_ready": attempt_ready,
         "source": loadout.get("source"),
         "path": loadout.get("path"),
+        "resources": resources,
         "loadout": loadout,
         "checks": checks,
         "gaps": gaps,
@@ -43911,7 +44126,7 @@ def _no_survivors_setup_status_from_loadout(loadout: dict) -> dict:
 
 def cmd_no_survivors_setup(profile: str = "Alpha") -> dict:
     """Report whether the current run has the ideal No Survivors setup online."""
-    loadout = _read_profile_current_run_loadout(profile)
+    loadout = _read_no_survivors_run_loadout(profile)
     result = _no_survivors_setup_status_from_loadout(loadout)
     print(
         "\n=== NO SURVIVORS SETUP: "
@@ -43924,6 +44139,19 @@ def cmd_no_survivors_setup(profile: str = "Alpha") -> dict:
         print("  Gaps:")
         for gap in result["gaps"]:
             print(f"    - {gap}")
+    resources = result.get("resources") or {}
+    resource_parts = []
+    if "grid_power" in resources or "grid_power_max" in resources:
+        resource_parts.append(
+            f"grid={resources.get('grid_power', '?')}/"
+            f"{resources.get('grid_power_max', '?')}"
+        )
+    if "cores" in resources:
+        resource_parts.append(f"cores={resources.get('cores')}")
+    if "money" in resources:
+        resource_parts.append(f"money={resources.get('money')}")
+    if resource_parts:
+        print("  Resources: " + ", ".join(resource_parts))
     print(f"  Next: {result.get('next_step')}")
     _print_result(result)
     return result

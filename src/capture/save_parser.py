@@ -128,6 +128,7 @@ class Pawn:
     pilot_id: str = ""
     pilot_skill1: int = 0
     pilot_skill2: int = 0
+    pilot_power: list = field(default_factory=list)
     is_corpse: bool = False
     active: bool = True          # bActive — has NOT yet acted this turn
     # Reactor / upgrades (mechs only)
@@ -271,6 +272,8 @@ class GameState:
     grid_power: int = 0
     grid_power_max: int = 0
     difficulty: int = 0
+    money: int = 0
+    cores: int = 0
     squad_name: str = ""
     mechs: list[str] = field(default_factory=list)
     weapons: list[str] = field(default_factory=list)
@@ -668,6 +671,7 @@ def extract_mission_state(
             pilot_id=pilot.get('id', ''),
             pilot_skill1=pilot.get('skill1', 0),
             pilot_skill2=pilot.get('skill2', 0),
+            pilot_power=_get_list(pilot, 'power'),
             is_corpse=bool(pd.get('is_corpse', False)),
             active=bool(pd.get('bActive', True)),
             # Reactor / upgrades
@@ -812,6 +816,8 @@ def load_game_state(profile: str = "Alpha") -> GameState | None:
 
         squad_data = data.get('SquadData', {})
         if isinstance(squad_data, dict):
+            state.money = squad_data.get('money', 0)
+            state.cores = squad_data.get('cores', 0)
             for key, pawn_data in squad_data.items():
                 if not isinstance(key, str) or not key.startswith('pawn'):
                     continue
