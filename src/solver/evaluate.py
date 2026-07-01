@@ -89,6 +89,7 @@ class EvalWeights:
     feed_the_flame_bonus: float = 0
     arachnoid_spawn_bonus: float = 0
     working_together_bonus: float = 0
+    working_together_setup_bonus: float = 0
     lets_walk_control_distance_bonus: float = 0
     core_of_the_earth_bonus: float = 0
     no_survivors_death_bonus: float = 0

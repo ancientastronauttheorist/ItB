@@ -664,6 +664,10 @@ def _achievement_weight_overlay(
             float(weights.get("working_together_bonus", 0) or 0),
             180000.0,
         )
+        weights["working_together_setup_bonus"] = max(
+            float(weights.get("working_together_setup_bonus", 0) or 0),
+            35000.0,
+        )
         applied.append("working_together")
 
     if "let's walk" in normalized_targets or "lets walk" in normalized_targets:

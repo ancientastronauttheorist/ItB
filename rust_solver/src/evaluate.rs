@@ -168,6 +168,7 @@ pub struct EvalWeights {
     pub feed_the_flame_bonus: f64,
     pub arachnoid_spawn_bonus: f64,
     pub working_together_bonus: f64,
+    pub working_together_setup_bonus: f64,
     pub lets_walk_control_distance_bonus: f64,
     pub core_of_the_earth_bonus: f64,
     pub no_survivors_death_bonus: f64,
@@ -348,6 +349,7 @@ impl Default for EvalWeights {
             feed_the_flame_bonus: 0.0,
             arachnoid_spawn_bonus: 0.0,
             working_together_bonus: 0.0,
+            working_together_setup_bonus: 0.0,
             lets_walk_control_distance_bonus: 0.0,
             core_of_the_earth_bonus: 0.0,
             no_survivors_death_bonus: 0.0,
@@ -454,6 +456,31 @@ fn is_expendable_friendly_pawn(name: &str) -> bool {
     // Mission_Trapped decoy buildings are player-controlled bombs. Their
     // self-destruction is the intended mission mechanic, not an NPC casualty.
     name == "Trapped_Building"
+}
+
+fn working_together_setup_count(board: &Board) -> i32 {
+    let mut best = 0;
+    for slide_idx in 0..board.unit_count as usize {
+        let slide = &board.units[slide_idx];
+        if !slide.alive() || slide.type_name_str() != "FourwayMech" {
+            continue;
+        }
+        let mut count = 0;
+        for &(dx, dy) in &DIRS {
+            let tx = slide.x as i8 + dx;
+            let ty = slide.y as i8 + dy;
+            if tx < 0 || tx >= 8 || ty < 0 || ty >= 8 {
+                continue;
+            }
+            if let Some(idx) = board.unit_at(tx as u8, ty as u8) {
+                if idx != slide_idx {
+                    count += 1;
+                }
+            }
+        }
+        best = best.max(count);
+    }
+    best
 }
 
 /// `kills` is passed explicitly because dead enemies are filtered from iteration.
@@ -1111,6 +1138,7 @@ pub fn evaluate(
 
     // ── Spawns blocked: SCALED (zero on final turn — no next-turn spawns) ─
     score += occupied_spawn_count(board, spawn_points) as f64 * weights.spawn_blocked * ff;
+    score += working_together_setup_count(board) as f64 * weights.working_together_setup_bonus;
 
     // ── Remaining spawn danger: flat penalty per queued Vek ─────────────
     // `apply_spawn_blocking` charges damage to mechs sitting on spawn tiles,
