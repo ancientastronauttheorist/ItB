@@ -88,6 +88,7 @@ class EvalWeights:
     reverse_thrusters_four_damage_bonus: float = 0
     feed_the_flame_bonus: float = 0
     arachnoid_spawn_bonus: float = 0
+    efficient_explosives_bonus: float = 0
     working_together_bonus: float = 0
     working_together_setup_bonus: float = 0
     lets_walk_control_distance_bonus: float = 0

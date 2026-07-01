@@ -66,6 +66,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::solver::{
         arachnoid_spawns_from_events,
         core_of_the_earth_chasm_falls_from_events,
+        efficient_explosives_from_events,
         lets_walk_control_distance_from_events,
         reverse_thrusters_four_damage_from_events,
         viscera_nanobots_heal_from_events,
@@ -118,6 +119,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut stay_with_me_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
         let mut arachnoid_spawns = 0i32;
+        let mut efficient_explosives = 0i32;
         let mut working_together = 0i32;
         let mut lets_walk_control_distance = 0i32;
         let mut core_of_the_earth_chasm_falls = 0i32;
@@ -154,6 +156,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
             arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
+            efficient_explosives += efficient_explosives_from_events(&result.events);
             working_together += working_together_from_events(&result.events);
             lets_walk_control_distance += lets_walk_control_distance_from_events(&result.events);
             core_of_the_earth_chasm_falls +=
@@ -210,6 +213,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             + reverse_thrusters_four_damage as f64
                 * weights.reverse_thrusters_four_damage_bonus
             + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus
+            + efficient_explosives as f64 * weights.efficient_explosives_bonus
             + working_together as f64 * weights.working_together_bonus
             + lets_walk_control_distance as f64 * weights.lets_walk_control_distance_bonus
             + core_of_the_earth_chasm_falls as f64 * weights.core_of_the_earth_bonus
@@ -241,6 +245,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "mission_kills": mission_kills,
             "unit_deaths": unit_deaths,
             "arachnoid_spawns": arachnoid_spawns,
+            "efficient_explosives": efficient_explosives,
             "working_together": working_together,
             "core_of_the_earth_chasm_falls": core_of_the_earth_chasm_falls,
             "stay_with_me_heal": stay_with_me_heal,
@@ -2061,7 +2066,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   adjacent non-Slide units actually change tiles, and the achievement
 //   overlay scores that event. Pre-v312 corpus archived as
 //   failure_db_snapshot_sim_v311.jsonl.
-pub const SIMULATOR_VERSION: u32 = 312;
+// v313 - Ricochet Rocket emits an Efficient Explosives achievement event when
+//   one action kills at least three enemies, and the achievement overlay scores
+//   that event. Pre-v313 corpus archived as failure_db_snapshot_sim_v312.jsonl.
+pub const SIMULATOR_VERSION: u32 = 313;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

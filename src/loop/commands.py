@@ -656,6 +656,16 @@ def _achievement_weight_overlay(
         )
         applied.append("spider_breeding")
 
+    if "efficient explosives" in normalized_targets:
+        # Arachnophiles: Efficient Explosives requires three enemy deaths from
+        # a single Ricochet Rocket action. Reward only the exact Rust event so
+        # ordinary Ricochet pokes and non-Ricochet multi-kills do not qualify.
+        weights["efficient_explosives_bonus"] = max(
+            float(weights.get("efficient_explosives_bonus", 0) or 0),
+            180000.0,
+        )
+        applied.append("efficient_explosives")
+
     if "working together" in normalized_targets:
         # Arachnophiles: Area Shift must move four adjacent non-Slide units.
         # The Rust event counts only adjacent units that actually changed

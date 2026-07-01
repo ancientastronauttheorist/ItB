@@ -4124,6 +4124,7 @@ fn sim_ricochet_rocket(
     target2: Option<(u8, u8)>,
     result: &mut ActionResult,
 ) {
+    let kills_before = result.enemies_killed;
     let Some(first_dir) = cardinal_direction(ax, ay, target_x, target_y) else {
         result.events.push(format!(
             "invalid_ricochet_first_target:{}:{}:from:{}:{}",
@@ -4169,6 +4170,13 @@ fn sim_ricochet_rocket(
         ));
     }
     apply_ricochet_hit(board, first.0, first.1, first_dir, wdef, result);
+    let kills = result.enemies_killed - kills_before;
+    if kills >= 3 {
+        result.events.push(format!(
+            "achievement_efficient_explosives:kills:{}",
+            kills
+        ));
+    }
 }
 
 fn deploy_bomb_click_legal(
@@ -7732,6 +7740,40 @@ mod tests {
                 .iter()
                 .any(|event| event == "achievement_working_together:shifted:4"),
             "expected Working Together event, got {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_ricochet_three_kills_emits_efficient_explosives_event() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 30, 3, 1, 3, WId::BruteTcRicochetA);
+        let first = add_enemy(&mut board, 31, 3, 3, 2);
+        let second = add_enemy(&mut board, 32, 5, 3, 2);
+        let third = add_enemy(&mut board, 33, 6, 4, 1);
+        add_enemy_type(&mut board, 34, 7, 7, 2, "Jelly_Explode1");
+        board.blast_psion = true;
+
+        let result = simulate_action_with_target2(
+            &mut board,
+            bulk,
+            (3, 1),
+            WId::BruteTcRicochetA,
+            (3, 3),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 0);
+        assert_eq!(board.units[second].hp, 0);
+        assert_eq!(board.units[third].hp, 0);
+        assert_eq!(result.enemies_killed, 3);
+        assert!(
+            result
+                .events
+                .iter()
+                .any(|event| event == "achievement_efficient_explosives:kills:3"),
+            "expected Efficient Explosives event, got {:?}",
             result.events
         );
     }

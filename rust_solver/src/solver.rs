@@ -92,6 +92,13 @@ pub(crate) fn arachnoid_spawns_from_events(events: &[String]) -> i32 {
         .count() as i32
 }
 
+pub(crate) fn efficient_explosives_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_efficient_explosives:"))
+        .count() as i32
+}
+
 pub(crate) fn working_together_from_events(events: &[String]) -> i32 {
     events
         .iter()
@@ -1939,6 +1946,7 @@ fn search_recursive(
     reverse_thrusters_four_damage_so_far: i32,
     feed_the_flame_so_far: i32,
     arachnoid_spawns_so_far: i32,
+    efficient_explosives_so_far: i32,
     working_together_so_far: i32,
     lets_walk_control_distance_so_far: i32,
     core_of_the_earth_so_far: i32,
@@ -2027,6 +2035,8 @@ fn search_recursive(
             feed_the_flame_so_far as f64 * weights.feed_the_flame_bonus;
         let arachnoid_spawn_bonus =
             arachnoid_spawns_so_far as f64 * weights.arachnoid_spawn_bonus;
+        let efficient_explosives_bonus =
+            efficient_explosives_so_far as f64 * weights.efficient_explosives_bonus;
         let working_together_bonus =
             working_together_so_far as f64 * weights.working_together_bonus;
         let lets_walk_control_distance_bonus =
@@ -2049,6 +2059,7 @@ fn search_recursive(
             + reverse_thrusters_four_damage_bonus
             + feed_the_flame_bonus
             + arachnoid_spawn_bonus
+            + efficient_explosives_bonus
             + working_together_bonus
             + lets_walk_control_distance_bonus
             + core_of_the_earth_bonus
@@ -2086,6 +2097,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far,
             feed_the_flame_so_far,
             arachnoid_spawns_so_far,
+            efficient_explosives_so_far,
             working_together_so_far,
             lets_walk_control_distance_so_far,
             core_of_the_earth_so_far,
@@ -2156,6 +2168,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_from_events(&result.events);
         let feed_the_flame_add = feed_the_flame_from_events(&result.events);
         let arachnoid_spawns_add = arachnoid_spawns_from_events(&result.events);
+        let efficient_explosives_add = efficient_explosives_from_events(&result.events);
         let working_together_add = working_together_from_events(&result.events);
         let lets_walk_control_distance_add = lets_walk_control_distance_from_events(&result.events);
         let core_of_the_earth_add = core_of_the_earth_chasm_falls_from_events(&result.events);
@@ -2189,6 +2202,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
             feed_the_flame_so_far + feed_the_flame_add,
             arachnoid_spawns_so_far + arachnoid_spawns_add,
+            efficient_explosives_so_far + efficient_explosives_add,
             working_together_so_far + working_together_add,
             lets_walk_control_distance_so_far + lets_walk_control_distance_add,
             core_of_the_earth_so_far + core_of_the_earth_add,
@@ -2378,7 +2392,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2583,7 +2597,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -2676,6 +2690,16 @@ mod top_k_tests {
         ];
 
         assert_eq!(feed_the_flame_from_events(&events), 1);
+    }
+
+    #[test]
+    fn efficient_explosives_events_count_exact_achievement_events() {
+        let events = vec![
+            "achievement_efficient_explosives:kills:3".to_string(),
+            "achievement_spider_breeding:spawn:4:5".to_string(),
+        ];
+
+        assert_eq!(efficient_explosives_from_events(&events), 1);
     }
 
     #[test]

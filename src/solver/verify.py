@@ -1487,7 +1487,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v312 - Area Shift emits a Working Together achievement event when four
 # adjacent non-Slide units actually change tiles, and the achievement overlay
 # scores that event. Pre-v312 corpus archived as failure_db_snapshot_sim_v311.jsonl.
-SIMULATOR_VERSION = 312
+# v313 - Ricochet Rocket emits an Efficient Explosives achievement event when
+# one action kills at least three enemies, and the achievement overlay scores
+# that event. Pre-v313 corpus archived as failure_db_snapshot_sim_v312.jsonl.
+SIMULATOR_VERSION = 313
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
