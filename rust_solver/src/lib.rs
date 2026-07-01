@@ -2021,7 +2021,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   target. Fixes Cataclysm Core run 20260630_143648_199 Corporate HQ turn 1,
 //   where the Mosquito Leader survived at 1 HP. Pre-v308 corpus archived as
 //   failure_db_snapshot_sim_v307.jsonl.
-pub const SIMULATOR_VERSION: u32 = 308;
+// v309 - Enemy-attack smoke cancellation uses smoke present before the queued
+//   attack loop, so smoke created by an earlier enemy attack does not cancel a
+//   later already-queued attack. Fixes Bombermechs No Survivors run
+//   20260630_181556_177 Mission_Missiles turn 3. Pre-v309 corpus archived as
+//   failure_db_snapshot_sim_v308.jsonl.
+pub const SIMULATOR_VERSION: u32 = 309;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -1006,6 +1006,17 @@ pub fn simulate_enemy_attacks(
         }
     }
 
+    // Smoke created by an earlier enemy attack does not retroactively cancel
+    // a later enemy's already-queued attack. Latch which attackers are already
+    // standing in smoke after all pre-attack enemy-phase effects have resolved.
+    let mut smoke_cancelled_at_attack_start = [false; 16];
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.hp > 0 && u.is_enemy() {
+            smoke_cancelled_at_attack_start[i] = board.tile(u.x, u.y).smoke();
+        }
+    }
+
     // Collect enemy indices. Prefer the bridge's live attack_order when it is
     // available; UID order is only a legacy fallback. Mission_Factory captures
     // showed Pinnacle bots resolving in unit-list order, where sorting by UID
@@ -1130,8 +1141,7 @@ pub fn simulate_enemy_attacks(
 
         // Smoke cancels attacks
         // (Eggs have Smoke Immunity, but they're skipped above anyway.)
-        let tile = board.tile(enemy.x, enemy.y);
-        if tile.smoke() { continue; }
+        if smoke_cancelled_at_attack_start[ei] { continue; }
 
         // Frozen enemies can't attack
         if enemy.frozen() { continue; }
@@ -2317,6 +2327,58 @@ mod tests {
             pos[i] = (board.units[i].x, board.units[i].y);
         }
         pos
+    }
+
+    #[test]
+    fn test_pre_attack_smoke_still_cancels_enemy_attack() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(5, 1).terrain = Terrain::Building;
+        board.tile_mut(5, 1).building_hp = 2;
+        board.tile_mut(5, 2).set_smoke(true);
+
+        let mosquito = add_enemy_with_type(&mut board, 130, 5, 2, 2, "Mosquito1", 5, 1);
+        board.units[mosquito].weapon_damage = 1;
+        board.units[mosquito].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(5, 1).building_hp, 2);
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_enemy_attack_smoke_does_not_cancel_later_queued_attack() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.boost_psion = true;
+        board.tile_mut(5, 1).terrain = Terrain::Building;
+        board.tile_mut(5, 1).building_hp = 2;
+
+        add_enemy_with_type(&mut board, 126, 0, 0, 1, "Jelly_Boost1", -1, -1);
+        let smoker = add_enemy_with_type(&mut board, 129, 5, 3, 2, "Mosquito1", 5, 2);
+        board.units[smoker].weapon_damage = 1;
+        board.units[smoker].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let later = add_enemy_with_type(&mut board, 130, 5, 2, 2, "Mosquito1", 5, 1);
+        board.units[later].weapon_damage = 1;
+        board.units[later].set_shield(true);
+        board.units[later].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.attack_order = vec![129, 130];
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.tile(5, 2).smoke(), "first Mosquito should smoke F3");
+        assert_eq!(board.units[later].hp, 2, "shield should absorb the first hit");
+        assert!(!board.units[later].shield(), "shield should be consumed");
+        assert_eq!(board.tile(5, 1).building_hp, 0);
+        assert_eq!(board.tile(5, 1).terrain, Terrain::Rubble);
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 2);
     }
 
     #[test]

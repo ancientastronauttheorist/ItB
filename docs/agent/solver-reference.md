@@ -54,7 +54,10 @@ The solver enforces these; use them when reviewing solver output or writing test
 - **Fire:** 1 dmg/turn start. Removed by repair, water, or freezing.
 - **Frozen:** invincible + immobilized. Any damage unfreezes (0 dmg dealt).
 - **ACID:** doubles weapon damage. Persists until unit dies.
-- **Smoke:** prevents attack AND repair. Cancels Vek attacks when on smoke tile at execution.
+- **Smoke:** prevents attack AND repair. Cancels Vek attacks that are already
+  on smoke when the queued enemy attack loop begins; smoke created by an
+  earlier enemy attack in the same loop does not retroactively cancel later
+  queued attacks.
 - **Shield:** blocks one instance of damage + negative effects. Removed by direct damage.
 - **Armor:** −1 weapon damage (floor 0). No effect on push/fire/bump.
 - **Webbed:** can't move, can still attack. Breaks only when the unit actually changes tiles, or when the webber moves/dies. A blocked push/bump leaves the unit webbed. If multiple live queued web sources target the same unit, killing/pushing one source transfers ownership to another source rather than freeing the unit.
@@ -112,6 +115,16 @@ Extended rules: `data/ref_game_mechanics.md`.
 53. **ACID pools are non-stoppable for player movement.** The operational "never move onto ACID voluntarily" rule is enforced in Rust movement enumeration, not merely by scoring penalties. If a plan moves a mech onto a tile with `tile.acid=true`, treat it as a movement enumeration bug before considering weapon logic; ACID-pool status reporting can be bridge-ambiguous after the move, so the safest policy is to keep those destinations out of search for player-controlled units. Regression anchor: Easy run `20260506_114649_974`, Corporate HQ turn 2 moved RocketMech D3→C5 onto an ACID pool and produced `status|Ranged_Rocket|move`; fixed in simulator v64.
 
 54. **Smoke on a queued web source releases the web immediately.** Scorpion/Leaper-style current-turn webs are tied to the queued attack; when a player action places smoke on that enemy, the engine cancels the queued attack and `IsGrappled()` clears before the next mech acts. The simulator must break `web_source_uid` links when smoke is placed on a live enemy tile, including Rocket Artillery's behind-shooter smoke. Regression anchor: Easy run `20260506_114649_974`, Corporate HQ turn 3 RocketMech E3→B3 smoked ScorpionBoss at F3 and freed PulseMech at F4; fixed in simulator v65.
+
+54a. **Enemy-created smoke does not cancel later queued enemy attacks.** The
+enemy attack loop latches smoke cancellation after pre-attack enemy-phase
+effects and before the first queued Vek attack resolves. A Mosquito, Smoldering
+Shell, or other enemy attack that smokes another queued attacker during that
+loop still leaves the later already-queued attack alive; only smoke present on
+that attacker's tile at loop start cancels it. Regression anchor: Bombermechs
+No Survivors run `20260630_181556_177`, Detritus `Mission_Missiles` turn 3,
+where a Mosquito at E3 smoked the shielded F3 Mosquito, but F3 still destroyed
+the G3 building; fixed in simulator v309.
 
 55. **Rocket Artillery damage upgrades need save overlays and Rocket semantics.** `Ranged_Rocket_A` / `Ranged_Rocket_B` are 3-damage Rocket Artillery, and `Ranged_Rocket_AB` is 4-damage Rocket Artillery. They must preserve the base weapon's smoke-behind-shooter and center corpse-push behavior. If live Rocket kills a target that sim leaves at 1 HP after a blocked push/bump, inspect save-file `state.weapons` and add the upgraded ID to both `_MODELED_UPGRADED_WEAPONS` and Rust `WId` support before advancing. Regression anchor: Easy run `20260506_114649_974`, Volcanic Hive final turn 2 `Ranged_Rocket_A` killed Scorpion2 at C6 with 3 damage plus blocked bump; fixed in simulator v66.
 
