@@ -241,6 +241,130 @@ def _compact_no_survivors_setup_for_route(setup: dict | None) -> dict | None:
     }
 
 
+def _no_survivors_check_map(setup: dict | None) -> dict[str, dict]:
+    if not isinstance(setup, dict):
+        return {}
+    return {
+        str(check.get("name")): check
+        for check in setup.get("checks") or []
+        if isinstance(check, dict) and check.get("name")
+    }
+
+
+def _no_survivors_requirement_check_names(requirement: dict) -> list[str]:
+    kind = requirement.get("kind")
+    if kind == "pilot_slot":
+        if (
+            requirement.get("pilot_id") == "Pilot_Miner"
+            and requirement.get("mech") == "BomblingMech"
+        ):
+            return ["silica_on_bombling"]
+    if kind == "weapon_upgrade":
+        if (
+            requirement.get("base_weapon_id") == "Ranged_DeployBomb"
+            and requirement.get("mech") == "BomblingMech"
+        ):
+            return ["bomb_dispenser_two_bombs", "bomb_dispenser_on_bombling"]
+    if kind == "pilot_power":
+        if requirement.get("pilot_id") == "Pilot_Miner":
+            return ["silica_double_shot_powered"]
+    return []
+
+
+def _no_survivors_shop_requirement_status(
+    setup: dict,
+    requirement: dict,
+) -> dict:
+    resources = setup.get("resources") or {}
+    grid = resources.get("grid_power")
+    grid_max = resources.get("grid_power_max")
+    if not isinstance(grid, int) or not isinstance(grid_max, int):
+        return {
+            "kind": requirement.get("kind"),
+            "ok": None,
+            "blocking_precombat": False,
+            "severity": "info",
+            "requirement": requirement,
+            "message": "Grid Power is unknown; verify shop priority manually.",
+        }
+    ok = grid >= grid_max
+    return {
+        "kind": requirement.get("kind"),
+        "ok": ok,
+        "blocking_precombat": False,
+        "severity": "ok" if ok else "warning",
+        "requirement": requirement,
+        "message": (
+            "Grid Power is full."
+            if ok
+            else "Grid Power is below max; buy Grid Power before cores."
+        ),
+    }
+
+
+def _no_survivors_setup_requirements_status(
+    setup: dict,
+    manifest: dict | None,
+) -> dict | None:
+    manifest_setup = (manifest or {}).get("setup")
+    if not isinstance(manifest_setup, dict):
+        return None
+    requirements = manifest_setup.get("setup_requirements")
+    if not isinstance(requirements, list) or not requirements:
+        return None
+
+    checks = _no_survivors_check_map(setup)
+    rows: list[dict] = []
+    blocking_precombat = False
+    for requirement in requirements:
+        if not isinstance(requirement, dict):
+            continue
+        if requirement.get("kind") == "shop_priority":
+            row = _no_survivors_shop_requirement_status(setup, requirement)
+            rows.append(row)
+            continue
+
+        check_names = _no_survivors_requirement_check_names(requirement)
+        if not check_names:
+            rows.append({
+                "kind": requirement.get("kind"),
+                "ok": None,
+                "blocking_precombat": False,
+                "severity": "info",
+                "requirement": requirement,
+                "check_names": [],
+                "failed_checks": [],
+                "message": "No No Survivors checker maps this requirement yet.",
+            })
+            continue
+
+        failed = [
+            name for name in check_names
+            if not checks.get(name, {}).get("ok")
+        ]
+        row_blocking = any(
+            name in _NO_SURVIVORS_STRUCTURAL_CHECKS
+            for name in failed
+        )
+        blocking_precombat = blocking_precombat or row_blocking
+        rows.append({
+            "kind": requirement.get("kind"),
+            "ok": not failed,
+            "blocking_precombat": row_blocking,
+            "severity": "error" if row_blocking else "warning" if failed else "ok",
+            "requirement": requirement,
+            "check_names": check_names,
+            "failed_checks": failed,
+        })
+
+    return {
+        "source": "manifest",
+        "available": True,
+        "blocking_precombat": blocking_precombat,
+        "requirements": rows,
+    }
+
+
 _DESTROY_TIME_PODS_SURVIVAL_PENALTY = -1_000_000.0
 _DESTROY_TIME_PODS_PICKUP_PENALTY = -2_000_000.0
 
@@ -2321,6 +2445,18 @@ def _write_manifest(session: RunSession, extra: dict = None) -> None:
         manifest.update(extra)
 
     _atomic_json_write(filepath, manifest)
+
+
+def _read_run_manifest(session: RunSession) -> dict:
+    """Read the current run manifest without creating recording directories."""
+    run_id = session.run_id or "default"
+    filepath = RECORDING_DIR / run_id / "manifest.json"
+    try:
+        with open(filepath) as f:
+            manifest = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return manifest if isinstance(manifest, dict) else {}
 
 
 def _capture_action_snapshot() -> dict:
@@ -43321,6 +43457,12 @@ def cmd_status(profile: str = "Alpha") -> dict:
             _read_no_survivors_run_loadout(profile)
         )
         result["no_survivors_setup"] = _compact_no_survivors_setup_for_route(setup)
+        requirements = _no_survivors_setup_requirements_status(
+            setup,
+            _read_run_manifest(session),
+        )
+        if requirements is not None:
+            result["no_survivors_setup_requirements"] = requirements
 
     _attach_post_enemy_block(result, session)
     _print_result(result)

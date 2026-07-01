@@ -331,6 +331,7 @@ def test_status_includes_no_survivors_setup_for_target(monkeypatch):
         "_read_no_survivors_run_loadout",
         lambda profile="Alpha": _not_ready_loadout(),
     )
+    monkeypatch.setattr(commands, "_read_run_manifest", lambda session: {})
 
     result = commands.cmd_status()
 
@@ -340,6 +341,70 @@ def test_status_includes_no_survivors_setup_for_target(monkeypatch):
     assert setup["structural_ready"] is False
     assert "Move Silica/Pilot_Miner onto Bombling Mech." in setup["structural_gaps"]
     assert setup["resource_plan"]["core_shortfall"] == 2
+
+
+def test_status_evaluates_manifest_no_survivors_requirements(monkeypatch):
+    manifest = {
+        "setup": {
+            "setup_requirements": [
+                {
+                    "kind": "pilot_slot",
+                    "pilot_id": "Pilot_Miner",
+                    "pilot_name": "Silica",
+                    "mech": "BomblingMech",
+                },
+                {
+                    "kind": "weapon_upgrade",
+                    "mech": "BomblingMech",
+                    "base_weapon_id": "Ranged_DeployBomb",
+                    "required_weapon_id": "Ranged_DeployBomb_A",
+                    "upgrade": "2 Bombs",
+                    "required_cores": 3,
+                },
+                {
+                    "kind": "pilot_power",
+                    "pilot_id": "Pilot_Miner",
+                    "pilot_name": "Silica",
+                    "upgrade": "Double Shot",
+                    "minimum_power_sum": 2,
+                    "required_cores": 2,
+                },
+                {
+                    "kind": "shop_priority",
+                    "grid_power_before_cores": True,
+                },
+            ],
+        },
+    }
+    monkeypatch.setattr(
+        commands,
+        "_load_session",
+        lambda: _status_session(["No Survivors"]),
+    )
+    monkeypatch.setattr(commands, "load_game_state", lambda profile="Alpha": None)
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _not_ready_loadout(),
+    )
+    monkeypatch.setattr(commands, "_read_run_manifest", lambda session: manifest)
+
+    result = commands.cmd_status()
+
+    checklist = result["no_survivors_setup_requirements"]
+    rows = {item["kind"]: item for item in checklist["requirements"]}
+    assert checklist["source"] == "manifest"
+    assert checklist["blocking_precombat"] is True
+    assert rows["pilot_slot"]["ok"] is False
+    assert rows["pilot_slot"]["blocking_precombat"] is True
+    assert rows["pilot_slot"]["failed_checks"] == ["silica_on_bombling"]
+    assert rows["weapon_upgrade"]["ok"] is True
+    assert rows["weapon_upgrade"]["blocking_precombat"] is False
+    assert rows["pilot_power"]["ok"] is False
+    assert rows["pilot_power"]["blocking_precombat"] is False
+    assert rows["pilot_power"]["failed_checks"] == ["silica_double_shot_powered"]
+    assert rows["shop_priority"]["ok"] is False
+    assert rows["shop_priority"]["severity"] == "warning"
 
 
 def test_status_skips_no_survivors_setup_for_other_targets(monkeypatch):
