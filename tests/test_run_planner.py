@@ -14,6 +14,7 @@ def _fixtures(tmp_path):
   "squads": [
     {"id": "rusting_hulks", "name": "Rusting Hulks"},
     {"id": "zenith_guard", "name": "Zenith Guard"},
+    {"id": "bombermechs", "name": "Bombermechs"},
     {"id": "blitzkrieg", "name": "Blitzkrieg"}
   ]
 }
@@ -32,6 +33,9 @@ def _fixtures(tmp_path):
     ],
     "blitzkrieg": [
       {"name": "Chain Attack", "completed": false}
+    ],
+    "bombermechs": [
+      {"name": "No Survivors", "completed": false}
     ],
     "random_squad": [
       {"name": "Lucky Start", "completed": false}
@@ -81,6 +85,18 @@ def test_named_achievement_targets_required_squad(tmp_path):
     assert rec.squad == "Zenith Guard"
     assert rec.squad_key == "zenith_guard"
     assert "Shield Mastery" in rec.remaining_achievements
+
+
+def test_no_survivors_recommends_bombermechs_setup_priorities(tmp_path):
+    rec = _recommend(tmp_path, achievements=["No Survivors"])
+
+    assert rec.squad == "Bombermechs"
+    assert rec.squad_key == "bombermechs"
+    priorities = " ".join(rec.setup_priorities)
+    assert "Silica" in priorities
+    assert "Bomb Dispenser 2 Bombs" in priorities
+    assert "Double Shot" in priorities
+    assert "Grid Power to 7/7 first" in priorities
 
 
 def test_random_achievement_uses_balanced_roll(tmp_path):

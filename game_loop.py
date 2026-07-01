@@ -107,6 +107,7 @@ from src.loop.commands import (
     cmd_log,
     cmd_calibrate,
     cmd_achievements,
+    cmd_achievement_proof,
     cmd_lightning_proof,
     cmd_replay,
     cmd_auto_turn,
@@ -1096,6 +1097,34 @@ def main():
         "--sync",
         action="store_true",
         help="Update data/achievements_detailed.json from Steam results",
+    )
+
+    # achievement_proof
+    p_achievement_proof = sub.add_parser(
+        "achievement_proof",
+        help="Check durable local proof for an achievement unlock",
+    )
+    p_achievement_proof.add_argument(
+        "achievement",
+        nargs="?",
+        default=None,
+        help="Achievement name or known key, e.g. 'No Survivors'",
+    )
+    p_achievement_proof.add_argument("--profile", default="Alpha")
+    p_achievement_proof.add_argument(
+        "--steam-key",
+        default=None,
+        help="Steam/log key, e.g. Ach_Squad_Bomber_2",
+    )
+    p_achievement_proof.add_argument(
+        "--profile-key",
+        default=None,
+        help="Into the Breach profile key, e.g. Squad_Bomber_2",
+    )
+    p_achievement_proof.add_argument(
+        "--sync-steam-api",
+        action="store_true",
+        help="Also query the Steam Web API before deciding proof status",
     )
 
     # lightning_proof
@@ -2356,6 +2385,14 @@ def main():
         cmd_calibrate()
     elif args.command == "achievements":
         cmd_achievements(sync_local=args.sync)
+    elif args.command == "achievement_proof":
+        cmd_achievement_proof(
+            args.achievement,
+            profile=args.profile,
+            steam_key=args.steam_key,
+            profile_key=args.profile_key,
+            sync_steam_api=args.sync_steam_api,
+        )
     elif args.command == "lightning_proof":
         cmd_lightning_proof(
             profile=args.profile,

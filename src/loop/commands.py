@@ -84,7 +84,6 @@ from src.loop.lightning_conductor import (
     LIGHTNING_WAR,
     LIGHTNING_WAR_PROFILE_KEY,
     LIGHTNING_WAR_STEAM_KEY,
-    _achievement_unlocked,
 )
 from src.strategy.run_planner import recommend_squad_for_run
 from src.strategy.setup_verifier import capture_and_check_setup
@@ -215,6 +214,114 @@ def _achievement_mission_routing(
 
 _DESTROY_TIME_PODS_SURVIVAL_PENALTY = -1_000_000.0
 _DESTROY_TIME_PODS_PICKUP_PENALTY = -2_000_000.0
+
+
+_ACHIEVEMENT_PROOF_ALIASES = {
+    "lightning war": {
+        "achievement": LIGHTNING_WAR,
+        "steam_key": LIGHTNING_WAR_STEAM_KEY,
+        "profile_key": LIGHTNING_WAR_PROFILE_KEY,
+    },
+    LIGHTNING_WAR_STEAM_KEY.lower(): {
+        "achievement": LIGHTNING_WAR,
+        "steam_key": LIGHTNING_WAR_STEAM_KEY,
+        "profile_key": LIGHTNING_WAR_PROFILE_KEY,
+    },
+    "ach detritus a 2": {
+        "achievement": LIGHTNING_WAR,
+        "steam_key": LIGHTNING_WAR_STEAM_KEY,
+        "profile_key": LIGHTNING_WAR_PROFILE_KEY,
+    },
+    LIGHTNING_WAR_PROFILE_KEY.lower(): {
+        "achievement": LIGHTNING_WAR,
+        "steam_key": LIGHTNING_WAR_STEAM_KEY,
+        "profile_key": LIGHTNING_WAR_PROFILE_KEY,
+    },
+    "detritus a 2": {
+        "achievement": LIGHTNING_WAR,
+        "steam_key": LIGHTNING_WAR_STEAM_KEY,
+        "profile_key": LIGHTNING_WAR_PROFILE_KEY,
+    },
+    "no survivors": {
+        "achievement": "No Survivors",
+        "steam_key": "Ach_Squad_Bomber_2",
+        "profile_key": "Squad_Bomber_2",
+    },
+    "ach squad bomber 2": {
+        "achievement": "No Survivors",
+        "steam_key": "Ach_Squad_Bomber_2",
+        "profile_key": "Squad_Bomber_2",
+    },
+    "squad bomber 2": {
+        "achievement": "No Survivors",
+        "steam_key": "Ach_Squad_Bomber_2",
+        "profile_key": "Squad_Bomber_2",
+    },
+}
+
+
+def _achievement_proof_norm(value: str | None) -> str:
+    return str(value or "").strip().lower().replace("_", " ").replace("-", " ")
+
+
+def _infer_profile_key_from_steam_key(steam_key: str | None) -> str | None:
+    key = str(steam_key or "").strip()
+    if key.startswith("Ach_") and len(key) > 4:
+        return key[4:]
+    return None
+
+
+def _infer_steam_key_from_profile_key(profile_key: str | None) -> str | None:
+    key = str(profile_key or "").strip()
+    if key and not key.startswith("Ach_"):
+        return f"Ach_{key}"
+    return key or None
+
+
+def _resolve_achievement_proof_keys(
+    achievement: str | None,
+    *,
+    steam_key: str | None = None,
+    profile_key: str | None = None,
+) -> dict:
+    explicit_steam_key = str(steam_key or "").strip()
+    explicit_profile_key = str(profile_key or "").strip()
+    label = str(achievement or "").strip()
+
+    alias = _ACHIEVEMENT_PROOF_ALIASES.get(_achievement_proof_norm(label))
+    if alias is None and explicit_steam_key:
+        alias = _ACHIEVEMENT_PROOF_ALIASES.get(
+            _achievement_proof_norm(explicit_steam_key)
+        )
+    if alias is None and explicit_profile_key:
+        alias = _ACHIEVEMENT_PROOF_ALIASES.get(
+            _achievement_proof_norm(explicit_profile_key)
+        )
+
+    resolved_steam_key = explicit_steam_key or (alias or {}).get("steam_key")
+    resolved_profile_key = explicit_profile_key or (alias or {}).get("profile_key")
+    if not resolved_profile_key:
+        resolved_profile_key = _infer_profile_key_from_steam_key(resolved_steam_key)
+    if not resolved_steam_key:
+        resolved_steam_key = _infer_steam_key_from_profile_key(resolved_profile_key)
+
+    resolved_achievement = (
+        (alias or {}).get("achievement")
+        or label
+        or resolved_steam_key
+        or resolved_profile_key
+        or ""
+    )
+    if not resolved_steam_key and not resolved_profile_key:
+        raise ValueError(
+            "achievement_proof needs a known achievement alias, --steam-key, "
+            "or --profile-key"
+        )
+    return {
+        "achievement": resolved_achievement,
+        "steam_key": resolved_steam_key,
+        "profile_key": resolved_profile_key,
+    }
 
 
 def _destroy_time_pods_weight_overlay(
@@ -8273,6 +8380,8 @@ def cmd_recommend_squad(
     if rec.remaining_achievements:
         print(f"  remaining in bucket: {', '.join(rec.remaining_achievements)}")
     print(f"  setup:  {rec.ui_setup}")
+    for priority in rec.setup_priorities:
+        print(f"  priority: {priority}")
     for warning in rec.warnings:
         print(f"  warning: {warning}")
 
@@ -43306,6 +43415,8 @@ def cmd_new_run(squad: str | None = None, achievements: list[str] = None,
     print(f"  Squad: {setup.squad}")
     print(f"  Setup: {setup.ui_setup}")
     print(f"  Reason: {setup.reason}")
+    for priority in setup.setup_priorities:
+        print(f"  Priority: {priority}")
     if achievements:
         print(f"  Targeting: {', '.join(achievements)}")
     if tags:
@@ -43383,16 +43494,24 @@ def cmd_log(message: str) -> dict:
 # --- Helpers ---
 
 
-def _lightning_profile_achievement_proof(profile: str) -> dict:
-    path = SAVE_DIR / f"profile_{profile}" / "profile.lua"
+def _profile_achievement_proof(
+    profile: str,
+    profile_key: str | None,
+    *,
+    path: Path | None = None,
+) -> dict:
+    path = path or (SAVE_DIR / f"profile_{profile}" / "profile.lua")
     result = {
         "source": "profile",
         "path": str(path),
-        "key": LIGHTNING_WAR_PROFILE_KEY,
+        "key": profile_key,
         "status": "MISSING",
         "achieved": False,
         "value": None,
     }
+    if not profile_key:
+        result["reason"] = "profile_key_unavailable"
+        return result
     if not path.exists():
         result["reason"] = "profile_lua_missing"
         return result
@@ -43407,7 +43526,7 @@ def _lightning_profile_achievement_proof(profile: str) -> dict:
         })
         return result
     match = re.search(
-        rf'\["{re.escape(LIGHTNING_WAR_PROFILE_KEY)}"\]\s*=\s*(-?\d+)',
+        rf'\["{re.escape(profile_key)}"\]\s*=\s*(-?\d+)',
         text,
     )
     if match is None:
@@ -43423,17 +43542,24 @@ def _lightning_profile_achievement_proof(profile: str) -> dict:
     return result
 
 
-def _lightning_log_achievement_proof() -> dict:
-    path = SAVE_DIR / "log.txt"
+def _log_achievement_proof(
+    steam_or_log_key: str | None,
+    *,
+    path: Path | None = None,
+) -> dict:
+    path = path or (SAVE_DIR / "log.txt")
     result = {
         "source": "log",
         "path": str(path),
-        "key": LIGHTNING_WAR_STEAM_KEY,
+        "key": steam_or_log_key,
         "status": "MISSING",
         "achieved": False,
         "matching_lines": [],
         "steam_api_init_failed": False,
     }
+    if not steam_or_log_key:
+        result["reason"] = "steam_or_log_key_unavailable"
+        return result
     if not path.exists():
         result["reason"] = "log_missing"
         return result
@@ -43450,7 +43576,7 @@ def _lightning_log_achievement_proof() -> dict:
     matching = [
         line[-240:]
         for line in lines
-        if LIGHTNING_WAR_STEAM_KEY in line
+        if steam_or_log_key in line
         and (
             "Set Steam Achievement" in line
             or "achievement" in line.lower()
@@ -43466,16 +43592,27 @@ def _lightning_log_achievement_proof() -> dict:
     return result
 
 
-def _lightning_steam_cache_achievement_proof() -> dict:
+def _steam_cache_achievement_proof(
+    steam_key: str | None,
+    achievement_name: str | None = None,
+    *,
+    cache_root: str | Path | None = None,
+) -> dict:
     result = {
         "source": "steam_client_cache",
-        "key": LIGHTNING_WAR_STEAM_KEY,
+        "key": steam_key,
         "status": "MISSING",
         "achieved": False,
         "row": None,
     }
+    if not steam_key:
+        result["reason"] = "steam_key_unavailable"
+        return result
     try:
-        cache = load_steam_client_achievement_cache("590380")
+        if cache_root is None:
+            cache = load_steam_client_achievement_cache("590380")
+        else:
+            cache = load_steam_client_achievement_cache("590380", root=cache_root)
     except Exception as exc:
         result.update({
             "status": "ERROR",
@@ -43485,8 +43622,13 @@ def _lightning_steam_cache_achievement_proof() -> dict:
         })
         return result
     result["path"] = cache.get("path")
+    expected_name = str(achievement_name or "").strip().lower()
     for row in cache.get("achievements") or []:
-        if str(row.get("apiname") or "").strip() != LIGHTNING_WAR_STEAM_KEY:
+        row_key = str(row.get("apiname") or "").strip()
+        row_name = str(row.get("name") or "").strip()
+        if row_key != steam_key and (
+            not expected_name or row_name.lower() != expected_name
+        ):
             continue
         compact_row = {
             "apiname": row.get("apiname"),
@@ -43511,36 +43653,99 @@ def _lightning_steam_cache_achievement_proof() -> dict:
     return result
 
 
-def cmd_lightning_proof(
-    profile: str = "Alpha",
+def _achievement_api_proven(
+    api_proof: dict | None,
     *,
+    achievement: str | None,
+    steam_key: str | None,
+    profile_key: str | None,
+) -> bool:
+    if not isinstance(api_proof, dict):
+        return False
+    proof = api_proof.get("proof")
+    if isinstance(proof, dict) and proof.get("proven") is True:
+        return True
+    tokens = {
+        str(token).strip().lower()
+        for token in (achievement, steam_key, profile_key)
+        if str(token).strip()
+    }
+    unlocked = {
+        str(value).strip().lower()
+        for value in (api_proof.get("unlocked_list") or [])
+        if str(value).strip()
+    }
+    return bool(tokens & unlocked)
+
+
+def _achievement_proof_sources(
+    *,
+    achievement: str | None,
+    steam_key: str | None,
+    profile_key: str | None,
+    profile: str,
+) -> list[dict]:
+    return [
+        _profile_achievement_proof(profile, profile_key),
+        _log_achievement_proof(steam_key),
+        _steam_cache_achievement_proof(steam_key, achievement),
+    ]
+
+
+def cmd_achievement_proof(
+    achievement: str | None = None,
+    *,
+    profile: str = "Alpha",
+    steam_key: str | None = None,
+    profile_key: str | None = None,
     sync_steam_api: bool = False,
 ) -> dict:
-    """Prove whether the Lightning War achievement is durably unlocked."""
-    profile_proof = _lightning_profile_achievement_proof(profile)
-    log_proof = _lightning_log_achievement_proof()
-    steam_cache_proof = _lightning_steam_cache_achievement_proof()
+    """Check durable local proof for an achievement in offline play."""
+    try:
+        resolved = _resolve_achievement_proof_keys(
+            achievement,
+            steam_key=steam_key,
+            profile_key=profile_key,
+        )
+    except ValueError as exc:
+        result = {"status": "ERROR", "error": str(exc)}
+        _print_result(result)
+        return result
+
+    achievement_name = resolved.get("achievement")
+    steam_key = resolved.get("steam_key")
+    profile_key = resolved.get("profile_key")
+    sources = _achievement_proof_sources(
+        achievement=achievement_name,
+        steam_key=steam_key,
+        profile_key=profile_key,
+        profile=profile,
+    )
     api_proof = None
     if sync_steam_api:
         api_proof = cmd_achievements(sync_local=True)
 
-    sources = [profile_proof, log_proof, steam_cache_proof]
     proven = any(source.get("achieved") is True for source in sources)
-    if api_proof is not None:
-        proven = proven or _achievement_unlocked(api_proof)
+    proven = proven or _achievement_api_proven(
+        api_proof,
+        achievement=achievement_name,
+        steam_key=steam_key,
+        profile_key=profile_key,
+    )
 
     result = {
         "status": "PROVEN" if proven else "LOCKED",
         "proven": proven,
-        "achievement": LIGHTNING_WAR,
-        "steam_or_log_key": LIGHTNING_WAR_STEAM_KEY,
-        "profile_key": LIGHTNING_WAR_PROFILE_KEY,
+        "achievement": achievement_name,
+        "steam_or_log_key": steam_key,
+        "profile_key": profile_key,
         "sources": sources,
     }
     if api_proof is not None:
         result["steam_api"] = api_proof
     print(
-        "\n=== LIGHTNING WAR PROOF: "
+        "\n=== ACHIEVEMENT PROOF: "
+        f"{achievement_name or steam_key or profile_key} "
         + ("PROVEN" if proven else "LOCKED/UNPROVEN")
         + " ==="
     )
@@ -43553,6 +43758,33 @@ def cmd_lightning_proof(
         )
     _print_result(result)
     return result
+
+
+def _lightning_profile_achievement_proof(profile: str) -> dict:
+    return _profile_achievement_proof(profile, LIGHTNING_WAR_PROFILE_KEY)
+
+
+def _lightning_log_achievement_proof() -> dict:
+    return _log_achievement_proof(LIGHTNING_WAR_STEAM_KEY)
+
+
+def _lightning_steam_cache_achievement_proof() -> dict:
+    return _steam_cache_achievement_proof(LIGHTNING_WAR_STEAM_KEY, LIGHTNING_WAR)
+
+
+def cmd_lightning_proof(
+    profile: str = "Alpha",
+    *,
+    sync_steam_api: bool = False,
+) -> dict:
+    """Prove whether the Lightning War achievement is durably unlocked."""
+    return cmd_achievement_proof(
+        LIGHTNING_WAR,
+        profile=profile,
+        steam_key=LIGHTNING_WAR_STEAM_KEY,
+        profile_key=LIGHTNING_WAR_PROFILE_KEY,
+        sync_steam_api=sync_steam_api,
+    )
 
 
 def cmd_achievements(sync_local: bool = False) -> dict:

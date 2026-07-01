@@ -468,6 +468,69 @@ def test_no_survivors_target_autoselects_mission_routing():
     )
 
 
+def test_no_survivors_achievement_proof_resolves_local_keys():
+    resolved = commands._resolve_achievement_proof_keys("No Survivors")
+    by_steam_key = commands._resolve_achievement_proof_keys("Ach_Squad_Bomber_2")
+
+    assert resolved["achievement"] == "No Survivors"
+    assert resolved["steam_key"] == "Ach_Squad_Bomber_2"
+    assert resolved["profile_key"] == "Squad_Bomber_2"
+    assert by_steam_key["achievement"] == "No Survivors"
+    assert by_steam_key["profile_key"] == "Squad_Bomber_2"
+
+
+def test_no_survivors_local_proof_sources(tmp_path):
+    profile_path = tmp_path / "profile.lua"
+    profile_path.write_text('["Squad_Bomber_2"] = 1,\n')
+    log_path = tmp_path / "log.txt"
+    log_path.write_text("Set Steam Achievement Ach_Squad_Bomber_2\n")
+    cache_dir = tmp_path / "userdata" / "56414609" / "config" / "librarycache"
+    cache_dir.mkdir(parents=True)
+    (cache_dir / "590380.json").write_text(
+        json.dumps([
+            [
+                "achievements",
+                {
+                    "data": {
+                        "nTotal": 70,
+                        "nAchieved": 1,
+                        "vecHighlight": [
+                            {
+                                "strID": "Ach_Squad_Bomber_2",
+                                "strName": "No Survivors",
+                                "bAchieved": True,
+                                "rtUnlocked": 123,
+                            }
+                        ],
+                        "vecUnachieved": [],
+                        "vecAchievedHidden": [],
+                    }
+                },
+            ]
+        ])
+    )
+
+    profile = commands._profile_achievement_proof(
+        "Alpha",
+        "Squad_Bomber_2",
+        path=profile_path,
+    )
+    log = commands._log_achievement_proof(
+        "Ach_Squad_Bomber_2",
+        path=log_path,
+    )
+    cache = commands._steam_cache_achievement_proof(
+        "Ach_Squad_Bomber_2",
+        "No Survivors",
+        cache_root=tmp_path / "userdata",
+    )
+
+    assert profile["achieved"] is True
+    assert log["achieved"] is True
+    assert cache["achieved"] is True
+    assert cache["row"]["name"] == "No Survivors"
+
+
 def test_destroy_time_pods_selects_destroy_candidate_over_live_final_pod():
     live_final_pod = {
         "rank": 0,

@@ -67,6 +67,7 @@ class RunSetupRecommendation:
     remaining_achievements: list[str] = field(default_factory=list)
     ui_setup: str = ""
     warnings: list[str] = field(default_factory=list)
+    setup_priorities: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -78,6 +79,7 @@ class RunSetupRecommendation:
             "remaining_achievements": self.remaining_achievements,
             "ui_setup": self.ui_setup,
             "warnings": self.warnings,
+            "setup_priorities": self.setup_priorities,
         }
 
 
@@ -202,6 +204,25 @@ def _setup_text(squad_key: str, squad_name: str) -> str:
     return f"Select the {squad_name} squad card, then Start."
 
 
+def _setup_priorities_for_targets(
+    targets: list[str] | None,
+    remaining: list[str] | None = None,
+) -> list[str]:
+    names = {
+        _human_norm(value)
+        for value in list(targets or []) + list(remaining or [])
+        if str(value).strip()
+    }
+    if "no survivors" not in names:
+        return []
+    return [
+        "Pilot: put Silica on Bombling Mech for Double Shot.",
+        "Core goal: power Bomb Dispenser 2 Bombs on Bombling Mech (3 cores).",
+        "Core goal: power Silica Double Shot (2 cores) before the attempt turn.",
+        "Shop order: buy Grid Power to 7/7 first, then reactor cores for Bombling/Silica.",
+    ]
+
+
 def _pick_next_unfinished_squad(
     groups: dict[str, list[dict]],
     squad_names: dict[str, str],
@@ -250,6 +271,10 @@ def recommend_squad_for_run(
             requested_achievements=achievements,
             remaining_achievements=_remaining_for_group(groups, key),
             ui_setup=_setup_text(key, name),
+            setup_priorities=_setup_priorities_for_targets(
+                achievements,
+                _remaining_for_group(groups, key),
+            ),
         )
 
     if resolved_mode == "solver_eval":
@@ -322,6 +347,10 @@ def recommend_squad_for_run(
                 requested_achievements=achievements,
                 remaining_achievements=_remaining_for_group(groups, group_key),
                 ui_setup=_setup_text(group_key, squad_name),
+                setup_priorities=_setup_priorities_for_targets(
+                    achievements,
+                    _remaining_for_group(groups, group_key),
+                ),
             )
 
     key, name, remaining = _pick_next_unfinished_squad(groups, squad_names)
@@ -333,4 +362,5 @@ def recommend_squad_for_run(
         requested_achievements=achievements,
         remaining_achievements=remaining,
         ui_setup=_setup_text(key, name),
+        setup_priorities=_setup_priorities_for_targets(achievements, remaining),
     )
