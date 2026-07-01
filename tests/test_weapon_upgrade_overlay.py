@@ -306,6 +306,44 @@ def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
         ]
 
 
+def test_ricochet_rocket_damage_upgrade_overlay_from_save(monkeypatch):
+    bridge_data = {
+        "units": [
+            {
+                "uid": 0,
+                "type": "BulkMech",
+                "mech": True,
+                "weapons": ["Brute_TC_Ricochet"],
+            }
+        ]
+    }
+
+    class FakeState:
+        weapons = [
+            "Brute_TC_Ricochet_A",
+            "",
+            "Ranged_Arachnoid",
+            "",
+            "Science_MassShift",
+            "",
+        ]
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+    assert updates == [{
+        "uid": 0,
+        "slot": 0,
+        "base": "Brute_TC_Ricochet",
+        "upgraded": "Brute_TC_Ricochet_A",
+    }]
+    assert bridge_data["units"][0]["weapons"] == ["Brute_TC_Ricochet_A"]
+
+
 def test_force_amp_passive_overlay_from_save(monkeypatch):
     bridge_data = {
         "units": [

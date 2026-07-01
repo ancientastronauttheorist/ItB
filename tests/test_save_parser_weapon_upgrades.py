@@ -251,3 +251,26 @@ SquadData = {
         "Science_Repulse_A",
         "",
     ]
+
+
+def test_ricochet_rocket_damage_upgrade_overlays():
+    mission = extract_mission_state(
+        {"sMission": "Mission_Test"},
+        {
+            "pawn_count": 1,
+            "pawn1": {
+                "id": 0,
+                "type": "BulkMech",
+                "location": Point(2, 2),
+                "health": 3,
+                "max_health": 3,
+                "iTeamId": 1,
+                "mech": True,
+                "primary": "Brute_TC_Ricochet",
+                "primary_mod1": [3, 3, 3],
+                "primary_mod2": [0],
+            },
+        },
+    )
+
+    assert mission.pawns[0].primary_weapon == "Brute_TC_Ricochet_A"
