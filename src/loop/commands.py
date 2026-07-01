@@ -44561,6 +44561,13 @@ def cmd_no_survivors_setup(
     """Report whether the current run has the ideal No Survivors setup online."""
     loadout = _read_no_survivors_run_loadout(profile)
     result = _no_survivors_setup_status_from_loadout(loadout)
+    try:
+        manifest = _read_run_manifest(_load_session())
+    except Exception:
+        manifest = {}
+    requirements = _no_survivors_setup_requirements_status(result, manifest)
+    if requirements is not None:
+        result["setup_requirements_status"] = requirements
     if plan:
         result["setup_plan"] = _no_survivors_setup_plan(result)
     if require_ready:
@@ -44599,6 +44606,17 @@ def cmd_no_survivors_setup(
             f"need={resource_plan.get('missing_cores_for_attempt', 0)}, "
             f"shortfall={shortfall if shortfall is not None else '?'}"
         )
+    requirements_status = result.get("setup_requirements_status") or {}
+    if requirements_status.get("requirements"):
+        print("  Requirements:")
+        for item in requirements_status["requirements"]:
+            state = (
+                "OK" if item.get("ok") is True
+                else "NO" if item.get("ok") is False
+                else "??"
+            )
+            suffix = " BLOCKS_PRECOMBAT" if item.get("blocking_precombat") else ""
+            print(f"    - {state} {item.get('kind')}{suffix}")
     if result.get("setup_plan"):
         print("  Plan:")
         for item in result["setup_plan"]:

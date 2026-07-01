@@ -407,6 +407,52 @@ def test_status_evaluates_manifest_no_survivors_requirements(monkeypatch):
     assert rows["shop_priority"]["severity"] == "warning"
 
 
+def test_no_survivors_setup_command_reports_manifest_requirements(monkeypatch):
+    manifest = {
+        "setup": {
+            "setup_requirements": [
+                {
+                    "kind": "pilot_slot",
+                    "pilot_id": "Pilot_Miner",
+                    "pilot_name": "Silica",
+                    "mech": "BomblingMech",
+                },
+                {
+                    "kind": "pilot_power",
+                    "pilot_id": "Pilot_Miner",
+                    "pilot_name": "Silica",
+                    "upgrade": "Double Shot",
+                    "minimum_power_sum": 2,
+                    "required_cores": 2,
+                },
+            ],
+        },
+    }
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _not_ready_loadout(),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_load_session",
+        lambda: _status_session(["No Survivors"]),
+    )
+    monkeypatch.setattr(commands, "_read_run_manifest", lambda session: manifest)
+
+    result = commands.cmd_no_survivors_setup(require_ready=True, plan=True)
+
+    checklist = result["setup_requirements_status"]
+    rows = {item["kind"]: item for item in checklist["requirements"]}
+    assert result["status"] == "BLOCKED"
+    assert result["blocking"] is True
+    assert checklist["blocking_precombat"] is True
+    assert rows["pilot_slot"]["ok"] is False
+    assert rows["pilot_slot"]["blocking_precombat"] is True
+    assert rows["pilot_power"]["ok"] is False
+    assert rows["pilot_power"]["blocking_precombat"] is False
+
+
 def test_status_skips_no_survivors_setup_for_other_targets(monkeypatch):
     monkeypatch.setattr(
         commands,
