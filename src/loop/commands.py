@@ -44032,11 +44032,16 @@ def _no_survivors_setup_status_from_loadout(loadout: dict) -> dict:
     if loadout.get("status") != "OK":
         return {
             "status": "UNKNOWN",
+            "setup_stage": "UNKNOWN",
             "attempt_ready": False,
+            "structural_ready": False,
+            "upgrade_ready": False,
             "reason": loadout.get("reason", "loadout_unavailable"),
             "loadout": loadout,
             "checks": [],
             "gaps": ["Read current profile/save loadout before checking setup."],
+            "structural_gaps": ["Read current profile/save loadout before checking setup."],
+            "upgrade_gaps": [],
         }
 
     mechs = list(loadout.get("mechs") or [])
@@ -44107,7 +44112,7 @@ def _no_survivors_setup_status_from_loadout(loadout: dict) -> dict:
         for key in ("grid_power", "grid_power_max", "money", "cores")
         if loadout.get(key) is not None
     }
-    return {
+    result = {
         "status": "READY" if attempt_ready else "NOT_READY",
         "attempt_ready": attempt_ready,
         "source": loadout.get("source"),
@@ -44122,6 +44127,24 @@ def _no_survivors_setup_status_from_loadout(loadout: dict) -> dict:
             else gaps[0] if gaps else "Review setup."
         ),
     }
+    structural_gaps = _no_survivors_structural_setup_gaps(result)
+    upgrade_gaps = _no_survivors_upgrade_setup_gaps(result)
+    resource_plan = _no_survivors_resource_plan(result)
+    result.update({
+        "structural_ready": not structural_gaps,
+        "upgrade_ready": not upgrade_gaps,
+        "structural_gaps": structural_gaps,
+        "upgrade_gaps": upgrade_gaps,
+        "resource_plan": resource_plan,
+        "setup_stage": _no_survivors_setup_stage(
+            result,
+            structural_gaps=structural_gaps,
+            upgrade_gaps=upgrade_gaps,
+            resource_plan=resource_plan,
+        ),
+    })
+    result["next_step"] = _no_survivors_stage_next_step(result)
+    return result
 
 
 def _no_survivors_setup_plan(result: dict) -> list[str]:
@@ -44139,25 +44162,15 @@ def _no_survivors_setup_plan(result: dict) -> list[str]:
         ]
     gaps = list(result.get("gaps") or [])
     plan = list(gaps)
-    resources = result.get("resources") or {}
-    cores = resources.get("cores")
-    if (
-        isinstance(cores, int)
-        and cores < 2
-        and "Power Silica's Double Shot with 2 cores." in gaps
-    ):
+    resource_plan = result.get("resource_plan") or {}
+    shortfall = resource_plan.get("core_shortfall")
+    if isinstance(shortfall, int) and shortfall > 0:
         plan.append(
-            "Collect or buy at least 2 reactor cores for Silica's Double Shot."
+            f"Collect or buy {shortfall} more reactor core"
+            f"{'' if shortfall == 1 else 's'} for the attempt setup."
         )
-    if (
-        isinstance(cores, int)
-        and cores < 3
-        and "Power Bomb Dispenser's 2 Bombs upgrade." in gaps
-    ):
-        plan.append(
-            "Collect or buy 3 reactor cores before powering Bomb Dispenser's "
-            "2 Bombs upgrade."
-        )
+    elif result.get("upgrade_gaps"):
+        plan.append("Spend available cores on the listed No Survivors upgrades.")
     structural_gaps = _no_survivors_structural_setup_gaps(result)
     if structural_gaps:
         plan.append(
@@ -44179,15 +44192,22 @@ _NO_SURVIVORS_STRUCTURAL_CHECKS = {
 }
 
 
-def _no_survivors_structural_setup_gaps(result: dict) -> list[str]:
+def _no_survivors_failed_check_names(result: dict) -> set[str]:
     checks = result.get("checks")
-    if not isinstance(checks, list) or not checks:
-        return list(result.get("gaps") or [])
-    failed_check_names = {
+    if not isinstance(checks, list):
+        return set()
+    return {
         str(check.get("name"))
         for check in checks
         if isinstance(check, dict) and not check.get("ok")
     }
+
+
+def _no_survivors_structural_setup_gaps(result: dict) -> list[str]:
+    checks = result.get("checks")
+    if not isinstance(checks, list) or not checks:
+        return list(result.get("gaps") or [])
+    failed_check_names = _no_survivors_failed_check_names(result)
     gap_by_check = {
         "bombermechs_squad": "Start or continue a Bombermechs run.",
         "bomb_dispenser_on_bombling": "Keep Bomb Dispenser on Bombling Mech.",
@@ -44198,6 +44218,102 @@ def _no_survivors_structural_setup_gaps(result: dict) -> list[str]:
         for name, gap in gap_by_check.items()
         if name in failed_check_names and name in _NO_SURVIVORS_STRUCTURAL_CHECKS
     ]
+
+
+def _no_survivors_upgrade_setup_gaps(result: dict) -> list[str]:
+    failed_check_names = _no_survivors_failed_check_names(result)
+    gap_by_check = {
+        "bomb_dispenser_two_bombs": "Power Bomb Dispenser's 2 Bombs upgrade.",
+        "silica_double_shot_powered": "Power Silica's Double Shot with 2 cores.",
+    }
+    return [
+        gap
+        for name, gap in gap_by_check.items()
+        if name in failed_check_names
+    ]
+
+
+def _no_survivors_check_detail(result: dict, name: str) -> dict:
+    for check in result.get("checks") or []:
+        if isinstance(check, dict) and check.get("name") == name:
+            detail = check.get("detail")
+            return detail if isinstance(detail, dict) else {}
+    return {}
+
+
+def _no_survivors_resource_plan(result: dict) -> dict:
+    failed = _no_survivors_failed_check_names(result)
+    needs: list[dict] = []
+    if "bomb_dispenser_two_bombs" in failed:
+        needs.append({
+            "name": "bomb_dispenser_two_bombs",
+            "missing_cores": 3,
+            "detail": "Bomb Dispenser 2 Bombs upgrade",
+        })
+    if "silica_double_shot_powered" in failed:
+        detail = _no_survivors_check_detail(result, "silica_double_shot_powered")
+        required = detail.get("required", 2)
+        current = detail.get("silica_power", 0)
+        try:
+            missing = max(0, int(required) - int(current))
+        except (TypeError, ValueError):
+            missing = 2
+        needs.append({
+            "name": "silica_double_shot_powered",
+            "missing_cores": missing,
+            "detail": "Silica Double Shot",
+        })
+    missing_total = sum(int(item.get("missing_cores", 0) or 0) for item in needs)
+    available = (result.get("resources") or {}).get("cores")
+    shortfall = None
+    if isinstance(available, int):
+        shortfall = max(0, missing_total - available)
+    return {
+        "available_cores": available,
+        "missing_cores_for_attempt": missing_total,
+        "core_shortfall": shortfall,
+        "needs": needs,
+    }
+
+
+def _no_survivors_setup_stage(
+    result: dict,
+    *,
+    structural_gaps: list[str],
+    upgrade_gaps: list[str],
+    resource_plan: dict,
+) -> str:
+    if result.get("status") == "UNKNOWN":
+        return "UNKNOWN"
+    if result.get("attempt_ready"):
+        return "ATTEMPT_READY"
+    if structural_gaps:
+        return "STRUCTURAL_BLOCKED"
+    if upgrade_gaps:
+        shortfall = resource_plan.get("core_shortfall")
+        if isinstance(shortfall, int) and shortfall > 0:
+            return "NEEDS_CORES"
+        return "NEEDS_UPGRADES"
+    return "REVIEW"
+
+
+def _no_survivors_stage_next_step(result: dict) -> str:
+    stage = result.get("setup_stage")
+    if stage == "ATTEMPT_READY":
+        return "Fish for a dense No Survivors turn."
+    if stage == "STRUCTURAL_BLOCKED":
+        gaps = result.get("structural_gaps") or result.get("gaps") or []
+        return gaps[0] if gaps else "Fix structural setup gaps."
+    if stage == "NEEDS_CORES":
+        plan = result.get("resource_plan") or {}
+        shortfall = plan.get("core_shortfall")
+        if isinstance(shortfall, int) and shortfall > 0:
+            return f"Gather {shortfall} more reactor core{'' if shortfall == 1 else 's'}."
+        return "Gather reactor cores for No Survivors upgrades."
+    if stage == "NEEDS_UPGRADES":
+        gaps = result.get("upgrade_gaps") or []
+        return gaps[0] if gaps else "Spend available cores on No Survivors upgrades."
+    return "Review setup."
 
 
 def _require_no_survivors_setup_ready(result: dict) -> dict:
@@ -44280,6 +44396,16 @@ def cmd_no_survivors_setup(
         resource_parts.append(f"money={resources.get('money')}")
     if resource_parts:
         print("  Resources: " + ", ".join(resource_parts))
+    if result.get("setup_stage"):
+        print(f"  Stage: {result.get('setup_stage')}")
+    resource_plan = result.get("resource_plan") or {}
+    if resource_plan.get("needs"):
+        shortfall = resource_plan.get("core_shortfall")
+        print(
+            "  Core plan: "
+            f"need={resource_plan.get('missing_cores_for_attempt', 0)}, "
+            f"shortfall={shortfall if shortfall is not None else '?'}"
+        )
     if result.get("setup_plan"):
         print("  Plan:")
         for item in result["setup_plan"]:

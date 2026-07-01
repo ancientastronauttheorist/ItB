@@ -81,6 +81,12 @@ def _needs_cores_loadout() -> dict:
     }
 
 
+def _needs_upgrades_loadout() -> dict:
+    loadout = _needs_cores_loadout()
+    loadout["cores"] = 5
+    return loadout
+
+
 def test_no_survivors_setup_falls_back_to_undo_save(tmp_path):
     undo_path = tmp_path / "undoSave.lua"
     undo_path.write_text(NO_SURVIVORS_SAVE)
@@ -98,6 +104,8 @@ def test_no_survivors_setup_falls_back_to_undo_save(tmp_path):
         "undoSave.lua",
     ]
     assert status["attempt_ready"] is True
+    assert status["setup_stage"] == "ATTEMPT_READY"
+    assert status["resource_plan"]["missing_cores_for_attempt"] == 0
 
 
 def test_no_survivors_setup_reports_resources_without_blocking(tmp_path):
@@ -114,6 +122,8 @@ def test_no_survivors_setup_reports_resources_without_blocking(tmp_path):
         "money": 2,
         "cores": 3,
     }
+    assert status["structural_ready"] is True
+    assert status["upgrade_ready"] is True
 
 
 def test_save_parser_load_game_state_reports_squad_resources(tmp_path, monkeypatch):
@@ -157,6 +167,11 @@ def test_no_survivors_require_ready_blocks_with_plan():
     status = commands._no_survivors_setup_status_from_loadout(_not_ready_loadout())
     blocked = commands._require_no_survivors_setup_ready(status)
 
+    assert status["setup_stage"] == "STRUCTURAL_BLOCKED"
+    assert status["structural_ready"] is False
+    assert status["upgrade_ready"] is False
+    assert status["resource_plan"]["missing_cores_for_attempt"] == 2
+    assert status["resource_plan"]["core_shortfall"] == 2
     assert blocked["status"] == "BLOCKED"
     assert blocked["blocking"] is True
     assert blocked["precombat_block"] is True
@@ -179,9 +194,26 @@ def test_no_survivors_precombat_guard_allows_core_gathering(monkeypatch):
     plan = commands._no_survivors_setup_plan(setup)
 
     assert setup["attempt_ready"] is False
+    assert setup["setup_stage"] == "NEEDS_CORES"
+    assert setup["structural_ready"] is True
+    assert setup["upgrade_ready"] is False
+    assert setup["resource_plan"]["missing_cores_for_attempt"] == 5
+    assert setup["resource_plan"]["core_shortfall"] == 5
     assert commands._no_survivors_structural_setup_gaps(setup) == []
     assert commands._no_survivors_precombat_guard(session) is None
     assert any("resource-gathering missions may continue" in item for item in plan)
+
+
+def test_no_survivors_setup_stage_needs_upgrades_when_cores_available():
+    setup = commands._no_survivors_setup_status_from_loadout(
+        _needs_upgrades_loadout()
+    )
+    plan = commands._no_survivors_setup_plan(setup)
+
+    assert setup["setup_stage"] == "NEEDS_UPGRADES"
+    assert setup["resource_plan"]["missing_cores_for_attempt"] == 5
+    assert setup["resource_plan"]["core_shortfall"] == 0
+    assert any("Spend available cores" in item for item in plan)
 
 
 def test_no_survivors_precombat_guard_only_for_target(monkeypatch):
