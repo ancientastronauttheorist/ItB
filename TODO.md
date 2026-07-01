@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-62 of 70 achievements are Steam-confirmed. **Feed the Flame**, **Complete Victory**, **Lightning War**, and **Spider Breeding** have reconciled in the Steam/API checklist. **Hold the Door** is Steam-confirmed at 2026-06-30 08:31 CDT. **Let's Walk** is also locally proven from offline Into the Breach logs and the lit in-game squad achievement icon, so the working tracker is 63/70 proven with 7 tactical targets remaining.
+65 of 70 achievements are Steam/client-cache confirmed and locally proven. **Feed the Flame**, **Complete Victory**, **Lightning War**, and **Spider Breeding** have reconciled in the Steam/API checklist. **Hold the Door** is Steam-confirmed at 2026-06-30 08:31 CDT. **Let's Walk** is locally proven from offline Into the Breach logs and the lit in-game squad achievement icon. **Core of the Earth** and **No Survivors** reconciled in the 2026-07-01 sync, with No Survivors proof from `Set Steam Achievement Ach_Squad_Bomber_2` in `log.txt` and the Steam client cache unlock time of 2026-07-01 10:20:44 CDT. The working tracker now has 5 tactical targets remaining.
 
-Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, **Spider Breeding**, locally proven **Let's Walk**, and Steam-confirmed **Hold the Door** are complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat. Spider Breeding closed in Arachnophiles run `20260626_125732_442` when the profile tracker reached `Squad_Spiders_1 = 15`. Let's Walk closed in Mist Eaters run `20260629_073305_098` after visible Control Shot execution moved a Scarab from E2 to H3, the squad achievement icon lit up, and `log.txt` recorded `Set Steam Achievement Ach_Squad_Mist_2`. Hold the Door closed in Bombermechs run `20260630_084844_192`; Steam shows the unlock at 2026-06-30 08:31 CDT, and later local profile evidence corroborates `Squad_Bomber_1 = 1`.
+Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, **Spider Breeding**, locally proven **Let's Walk**, Steam-confirmed **Hold the Door**, **Core of the Earth**, and **No Survivors** are complete. The Blitzkrieg speed route closed after roughly three weeks of pause-safe UI automation, screenshot-only timer tracking, deterministic mission/reward/shop clicks, and reliable solver-led combat. Spider Breeding closed in Arachnophiles run `20260626_125732_442` when the profile tracker reached `Squad_Spiders_1 = 15`. Let's Walk closed in Mist Eaters run `20260629_073305_098` after visible Control Shot execution moved a Scarab from E2 to H3, the squad achievement icon lit up, and `log.txt` recorded `Set Steam Achievement Ach_Squad_Mist_2`. Hold the Door closed in Bombermechs run `20260630_084844_192`; Steam shows the unlock at 2026-06-30 08:31 CDT, and later local profile evidence corroborates `Squad_Bomber_1 = 1`. Core of the Earth closed from Cataclysm pit-kill routing after a 2026-06-30 restart popup. No Survivors closed on the 2026-07-01 restart path; the proof command found `Ach_Squad_Bomber_2` in both the game log and Steam client cache, though the profile flag still lagged during proof.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -70,8 +70,8 @@ Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, 
 - [x] Spider Breeding (6.7%) - Spawn 15 Arachnoids in one Island [Arachnophile] - locally proven offline on 2026-06-26; reconciled in the Steam/API checklist by 2026-06-29
 - [x] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters] — locally proven offline on 2026-06-29 in run `20260629_073305_098`; visible Control Shot moved Scarab E2->H3, the squad achievement icon lit up, and `log.txt` recorded `Set Steam Achievement Ach_Squad_Mist_2`
 - [x] Hold the Door (5.4%) — Block Emerging Vek by end of Island 2 [Bombermechs] — Steam-confirmed in run `20260630_084844_192` at 2026-06-30 08:31 CDT; current AE localization uses 15 blocks
-- [ ] Core of the Earth (5.2%) — Drop 10 Enemies into pits on one Island [Cataclysm]
-- [ ] No Survivors (5.1%) — 7 units die in single turn [Bombermechs]
+- [x] Core of the Earth (5.2%) — Drop 10 Enemies into pits on one Island [Cataclysm] — locally proven from the 2026-06-30 restart popup after Cataclysm run `20260630_143648_199`; synced complete on 2026-07-01
+- [x] No Survivors (5.1%) — 7 units die in single turn [Bombermechs] — proven on 2026-07-01 from `Set Steam Achievement Ach_Squad_Bomber_2` in `log.txt` and Steam client cache unlock time 2026-07-01 10:20:44 CDT
 - [ ] Working Together (5.0%) — Area Shift 4 units at once [Arachnophile]
 - [ ] Efficient Explosives (4.8%) — Kill 3 Enemies with 1 Ricochet Rocket [Arachnophile]
 - [ ] Boosted (4.6%) — Boost 8 Mechs in one mission [Heat Sinkers]
@@ -79,7 +79,7 @@ Current milestone: **Lightning War**, **Feed the Flame**, **Complete Victory**, 
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (62 Steam-confirmed, 63 locally proven)
+### Already Completed (65 Steam/client-cache confirmed and locally proven)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level

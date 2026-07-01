@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-06-30T14:08:46.380052",
+    "last_steam_sync": "2026-07-01T10:24:06.597810",
     "last_steam_total": 70,
-    "last_steam_unlocked": 62
+    "last_steam_unlocked": 65
   },
   "achievements": {
     "rift_walkers": [
@@ -357,7 +357,7 @@
         "description": "Have 7 units (any team) die in a single turn with the Bombermechs squad",
         "type": "single_turn",
         "global_unlock_pct": 5.1,
-        "completed": false,
+        "completed": true,
         "strategy": "Dual upgraded Bomblings (4 with Silica pilot). Combine with environmental kills and Boom Bot missions. Environmental deaths count. Late turn with many enemies.",
         "setup": "Silica pilot. Upgraded Bomblings. Missions with many enemies + environmental hazards.",
         "pitfalls": "7 deaths in ONE turn is very difficult. Need to set up the entire board."
@@ -475,7 +475,7 @@
         "description": "Drop 10 Enemies into pits on one Island with the Cataclysm squad",
         "type": "single_island",
         "global_unlock_pct": 5.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Triptych Mech to create pits, then Pitcher Mech to throw enemies in. 'Protect Earth Mover' missions create natural pits. 10 pit-kills across island.",
         "setup": "Triptych + Pitcher combo. Earth Mover missions.",
         "pitfalls": "Flying enemies don't die in pits. Ground enemies only."
