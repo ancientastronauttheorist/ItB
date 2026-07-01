@@ -50,6 +50,37 @@ def _not_ready_loadout() -> dict:
     }
 
 
+def _needs_cores_loadout() -> dict:
+    return {
+        "status": "OK",
+        "source": "test",
+        "squad_index": 11,
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "money": 1,
+        "cores": 0,
+        "mechs": ["PierceMech", "BomblingMech", "ExchangeMech"],
+        "weapons": [
+            "Brute_PierceShot",
+            "",
+            "Ranged_DeployBomb",
+            "",
+            "Science_TC_SwapOther",
+            "",
+        ],
+        "pilots": [
+            {"slot": 0, "id": "Pilot_Archive", "name": "Esther", "power": []},
+            {
+                "slot": 1,
+                "id": "Pilot_Miner",
+                "name": "Silica",
+                "power": [0, 0],
+            },
+            {"slot": 2, "id": "Pilot_Detritus", "name": "Steve", "power": []},
+        ],
+    }
+
+
 def test_no_survivors_setup_falls_back_to_undo_save(tmp_path):
     undo_path = tmp_path / "undoSave.lua"
     undo_path.write_text(NO_SURVIVORS_SAVE)
@@ -131,6 +162,26 @@ def test_no_survivors_require_ready_blocks_with_plan():
     assert blocked["precombat_block"] is True
     assert "Move Silica/Pilot_Miner onto Bombling Mech." in blocked["setup_plan"]
     assert any("Double Shot" in item for item in blocked["setup_plan"])
+
+
+def test_no_survivors_precombat_guard_allows_core_gathering(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _needs_cores_loadout(),
+    )
+    session = SimpleNamespace(
+        achievement_targets=["No Survivors"],
+        tags=[],
+    )
+
+    setup = commands._no_survivors_setup_status_from_loadout(_needs_cores_loadout())
+    plan = commands._no_survivors_setup_plan(setup)
+
+    assert setup["attempt_ready"] is False
+    assert commands._no_survivors_structural_setup_gaps(setup) == []
+    assert commands._no_survivors_precombat_guard(session) is None
+    assert any("resource-gathering missions may continue" in item for item in plan)
 
 
 def test_no_survivors_precombat_guard_only_for_target(monkeypatch):

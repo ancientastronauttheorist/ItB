@@ -44158,11 +44158,46 @@ def _no_survivors_setup_plan(result: dict) -> list[str]:
             "Collect or buy 3 reactor cores before powering Bomb Dispenser's "
             "2 Bombs upgrade."
         )
-    plan.append(
-        "Do not deploy/start another No Survivors mission until this checker "
-        "reports READY."
-    )
+    structural_gaps = _no_survivors_structural_setup_gaps(result)
+    if structural_gaps:
+        plan.append(
+            "Fix structural setup gaps before deploying another No "
+            "Survivors-targeted mission."
+        )
+    else:
+        plan.append(
+            "Safe resource-gathering missions may continue, but do not fish "
+            "for the seven-death turn until this checker reports READY."
+        )
     return plan
+
+
+_NO_SURVIVORS_STRUCTURAL_CHECKS = {
+    "bombermechs_squad",
+    "bomb_dispenser_on_bombling",
+    "silica_on_bombling",
+}
+
+
+def _no_survivors_structural_setup_gaps(result: dict) -> list[str]:
+    checks = result.get("checks")
+    if not isinstance(checks, list) or not checks:
+        return list(result.get("gaps") or [])
+    failed_check_names = {
+        str(check.get("name"))
+        for check in checks
+        if isinstance(check, dict) and not check.get("ok")
+    }
+    gap_by_check = {
+        "bombermechs_squad": "Start or continue a Bombermechs run.",
+        "bomb_dispenser_on_bombling": "Keep Bomb Dispenser on Bombling Mech.",
+        "silica_on_bombling": "Move Silica/Pilot_Miner onto Bombling Mech.",
+    }
+    return [
+        gap
+        for name, gap in gap_by_check.items()
+        if name in failed_check_names and name in _NO_SURVIVORS_STRUCTURAL_CHECKS
+    ]
 
 
 def _require_no_survivors_setup_ready(result: dict) -> dict:
@@ -44194,12 +44229,16 @@ def _no_survivors_precombat_guard(
     )
     if setup.get("attempt_ready"):
         return None
+    structural_gaps = _no_survivors_structural_setup_gaps(setup)
+    if not structural_gaps:
+        return None
     blocked = _require_no_survivors_setup_ready(setup)
     blocked["status"] = "NO_SURVIVORS_SETUP_BLOCKED"
     blocked["reason"] = "no_survivors_setup_not_ready"
+    blocked["precombat_blocking_gaps"] = structural_gaps
     blocked["next_step"] = (
         "Do not deploy or confirm this No Survivors mission until the setup "
-        "gaps are fixed."
+        "structural gaps are fixed."
     )
     return blocked
 
