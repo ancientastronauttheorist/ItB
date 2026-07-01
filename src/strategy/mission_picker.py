@@ -815,6 +815,99 @@ def _apply_no_survivors_routing(
     return score + delta
 
 
+def _apply_no_survivors_setup_routing(
+    entry: dict[str, Any],
+    mission_tags: set[str],
+    grid_power: int,
+    score: int,
+    rationale: list[str],
+) -> int:
+    """Route safely while Bombermechs is still gathering No Survivors cores."""
+    mission_id = entry.get("mission_id", "")
+    bonus_ids = entry.get("bonus_objective_ids", []) or []
+    delta = 0
+
+    if mission_id == "Mission_Battle":
+        delta += 8
+        rationale.append("+8  No Survivors setup: plain battle is low friction")
+    if BONUS_ASSET in bonus_ids:
+        delta += 8
+        rationale.append("+8  No Survivors setup: asset/pod rewards can supply cores")
+    if BONUS_GRID in bonus_ids and grid_power < 7:
+        delta += 4
+        rationale.append("+4  No Survivors setup: grid reward protects core route")
+
+    death_engine_missions = {
+        "Mission_Dam",
+        "Mission_Disposal",
+        "Mission_Terraform",
+    }
+    if mission_id in death_engine_missions or "death_engine_objective" in mission_tags:
+        delta -= 30
+        rationale.append(
+            "-30 No Survivors setup: save death-engine fishing for attempt-ready"
+        )
+    if BONUS_KILL_FIVE in bonus_ids:
+        delta -= 10
+        rationale.append(
+            "-10 No Survivors setup: kill-count bonus invites premature fishing"
+        )
+
+    if "train" in mission_tags:
+        delta -= 70
+        rationale.append(
+            "-70 No Survivors setup: protected train objective risks the route"
+        )
+
+    fragile_tags = {
+        "bad_repairs",
+        "fire_tile_counter",
+        "fragile_ally_objective",
+        "mite_counter",
+        "protect_specific_building",
+        "repair_platforms",
+        "terraform_grass_counter",
+        "volatile_vek",
+    }
+    fired_fragile_tags = sorted(mission_tags & fragile_tags)
+    if fired_fragile_tags:
+        delta -= 30
+        rationale.append(
+            "-30 No Survivors setup: avoid fragile/resource-draining objective "
+            f"({', '.join(fired_fragile_tags)})"
+        )
+
+    slow_or_protected_mission_ids = {
+        "Mission_Bomb",
+        "Mission_Dam",
+        "Mission_ForestFire",
+        "Mission_Holes",
+        "Mission_Power",
+        "Mission_Repair",
+        "Mission_Satellite",
+        "Mission_Solar",
+        "Mission_Tanks",
+        "Mission_Teleporter",
+        "Mission_Terraform",
+        "Mission_Trapped",
+        "Mission_Wind",
+    }
+    if mission_id in slow_or_protected_mission_ids:
+        delta -= 20
+        rationale.append(
+            f"-20 No Survivors setup: protected/slow mission friction ({mission_id})"
+        )
+
+    if BONUS_PACIFIST in bonus_ids:
+        delta -= 20
+        rationale.append("-20 No Survivors setup: kill-limit bonus constrains route")
+    if BONUS_BLOCK in bonus_ids:
+        delta -= 10
+        rationale.append("-10 No Survivors setup: spawn-block bonus slows core route")
+
+    return score + delta
+
+
 _UNAVAILABLE_BOOL_FIELDS = {
     "active",
     "completed",
@@ -1068,6 +1161,10 @@ def score_mission(
     elif routing == "no_survivors":
         score = _apply_no_survivors_routing(
             entry, mission_tags, squad_tags, grid_power, score, rationale
+        )
+    elif routing == "no_survivors_setup":
+        score = _apply_no_survivors_setup_routing(
+            entry, mission_tags, grid_power, score, rationale
         )
     elif routing != "default":
         raise ValueError(f"unknown mission routing mode: {routing}")

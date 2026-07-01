@@ -499,6 +499,32 @@ def test_no_survivors_routing_prefers_death_engine_missions():
         assert "can create chained unit deaths" in rationale
 
 
+def test_no_survivors_setup_routing_prefers_resource_over_death_engine():
+    island = [
+        _asset_pod_mission(),
+        {
+            "region_id": 28,
+            "mission_id": "Mission_Disposal",
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        },
+        _safe_battle_mission(),
+    ]
+    ranked = score_island_map(
+        island,
+        BOMBERMECHS_SQUAD,
+        grid_power=6,
+        routing="no_survivors_setup",
+    )
+
+    assert ranked[0]["bonus_objective_ids"] == [BONUS_ASSET]
+    disposal = next(e for e in ranked if e["mission_id"] == "Mission_Disposal")
+    battle = next(e for e in ranked if e["mission_id"] == "Mission_Battle")
+    assert disposal["score"] < battle["score"]
+    rationale = " ".join(disposal["rationale_lines"])
+    assert "save death-engine fishing for attempt-ready" in rationale
+
+
 def test_no_survivors_routing_penalizes_kill_limit_objective():
     island = [_safe_battle_mission(), _kill_limit_mission()]
     ranked = score_island_map(

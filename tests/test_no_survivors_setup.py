@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 from src.capture import save_parser
@@ -85,6 +86,35 @@ def _needs_upgrades_loadout() -> dict:
     loadout = _needs_cores_loadout()
     loadout["cores"] = 5
     return loadout
+
+
+def _ready_loadout() -> dict:
+    loadout = _needs_cores_loadout()
+    loadout["cores"] = 0
+    loadout["weapons"] = [
+        "Brute_PierceShot",
+        "",
+        "Ranged_DeployBomb_A",
+        "",
+        "Science_TC_SwapOther",
+        "",
+    ]
+    loadout["pilots"][1]["power"] = [1, 1]
+    return loadout
+
+
+def _mission_json(tmp_path, island_map: list[dict]) -> str:
+    path = tmp_path / "island_map.json"
+    path.write_text(json.dumps({
+        "grid_power": 6,
+        "units": [
+            {"mech": True, "hp": 3, "weapons": ["Brute_PierceShot"]},
+            {"mech": True, "hp": 3, "weapons": ["Ranged_DeployBomb_A"]},
+            {"mech": True, "hp": 3, "weapons": ["Science_TC_SwapOther"]},
+        ],
+        "island_map": island_map,
+    }))
+    return str(path)
 
 
 def test_no_survivors_setup_falls_back_to_undo_save(tmp_path):
@@ -273,3 +303,75 @@ def test_deploy_recommended_blocks_no_survivors_before_deploy(monkeypatch):
 
     assert result["status"] == "NO_SURVIVORS_SETUP_BLOCKED"
     assert result["blocking"] is True
+
+
+def test_recommend_mission_uses_setup_routing_before_attempt_ready(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        commands,
+        "_load_session",
+        lambda: SimpleNamespace(achievement_targets=["No Survivors"], tags=[]),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _needs_cores_loadout(),
+    )
+    island_json = _mission_json(tmp_path, [
+        {
+            "region_id": 1,
+            "mission_id": "Mission_Generic",
+            "bonus_objective_ids": [1],
+            "environment": "Env_Null",
+        },
+        {
+            "region_id": 2,
+            "mission_id": "Mission_Disposal",
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        },
+    ])
+
+    result = commands.cmd_recommend_mission(island_map_json=island_json)
+
+    assert result["routing"] == "no_survivors_setup"
+    assert result["no_survivors_setup"]["setup_stage"] == "NEEDS_CORES"
+    assert result["top3"][0]["bonus_objective_ids"] == [1]
+
+
+def test_recommend_mission_uses_attempt_routing_when_no_survivors_ready(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        commands,
+        "_load_session",
+        lambda: SimpleNamespace(achievement_targets=["No Survivors"], tags=[]),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _ready_loadout(),
+    )
+    island_json = _mission_json(tmp_path, [
+        {
+            "region_id": 1,
+            "mission_id": "Mission_Generic",
+            "bonus_objective_ids": [1],
+            "environment": "Env_Null",
+        },
+        {
+            "region_id": 2,
+            "mission_id": "Mission_Disposal",
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        },
+    ])
+
+    result = commands.cmd_recommend_mission(island_map_json=island_json)
+
+    assert result["routing"] == "no_survivors"
+    assert result["no_survivors_setup"]["setup_stage"] == "ATTEMPT_READY"
+    assert result["top3"][0]["mission_id"] == "Mission_Disposal"

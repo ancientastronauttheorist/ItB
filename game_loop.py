@@ -586,11 +586,18 @@ def main():
     )
     p_rec_mission.add_argument(
         "--routing",
-        choices=["default", "lightning_war", "lightning_baseline", "no_survivors"],
+        choices=[
+            "default",
+            "lightning_war",
+            "lightning_baseline",
+            "no_survivors",
+            "no_survivors_setup",
+        ],
         default="default",
         help="Mission routing profile. lightning_war favors speed; "
              "lightning_baseline favors reliable two-island automation; "
-             "no_survivors favors dense seven-death setups.",
+             "no_survivors favors dense seven-death setups; "
+             "no_survivors_setup favors safe core/resource gathering.",
     )
     p_rec_mission.add_argument(
         "--no-save-region-filter",

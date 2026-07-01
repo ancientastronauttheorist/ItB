@@ -214,6 +214,33 @@ def _achievement_mission_routing(
     return requested
 
 
+def _no_survivors_setup_route_for_stage(setup: dict | None) -> str:
+    if isinstance(setup, dict) and setup.get("setup_stage") == "ATTEMPT_READY":
+        return "no_survivors"
+    return "no_survivors_setup"
+
+
+def _compact_no_survivors_setup_for_route(setup: dict | None) -> dict | None:
+    if not isinstance(setup, dict):
+        return None
+    return {
+        key: setup.get(key)
+        for key in (
+            "status",
+            "setup_stage",
+            "attempt_ready",
+            "structural_ready",
+            "upgrade_ready",
+            "structural_gaps",
+            "upgrade_gaps",
+            "resources",
+            "resource_plan",
+            "next_step",
+        )
+        if key in setup
+    }
+
+
 _DESTROY_TIME_PODS_SURVIVAL_PENALTY = -1_000_000.0
 _DESTROY_TIME_PODS_PICKUP_PENALTY = -2_000_000.0
 
@@ -8778,9 +8805,16 @@ def cmd_recommend_mission(
     """
     from src.strategy.mission_picker import score_island_map
 
+    no_survivors_setup: dict | None = None
     if str(routing or "default").strip() in {"", "default"}:
         try:
-            routing = _achievement_mission_routing(_load_session(), routing)
+            session = _load_session()
+            routing = _achievement_mission_routing(session, routing)
+            if "no survivors" in _normalized_target_labels(session):
+                no_survivors_setup = _no_survivors_setup_status_from_loadout(
+                    _read_no_survivors_run_loadout(profile)
+                )
+                routing = _no_survivors_setup_route_for_stage(no_survivors_setup)
         except Exception:
             routing = str(routing or "default").strip() or "default"
 
@@ -8971,6 +9005,11 @@ def cmd_recommend_mission(
           f"{[w for u in units if u.get('mech') for w in u.get('weapons', [])]}")
     print(f"Grid power:      {grid_power}")
     print(f"Routing:         {routing}")
+    if no_survivors_setup is not None:
+        print(
+            "No Survivors:   "
+            f"{no_survivors_setup.get('setup_stage', 'UNKNOWN')}"
+        )
     print(f"Source:          {island_map_source}")
     print(f"Available:       {len(island_map)} mission(s)")
     if save_region_filter:
@@ -8992,6 +9031,9 @@ def cmd_recommend_mission(
         "status": "OK",
         "grid_power": grid_power,
         "routing": routing,
+        "no_survivors_setup": _compact_no_survivors_setup_for_route(
+            no_survivors_setup
+        ),
         "source": island_map_source,
         "ranked": ranked,
         "top3": top3,
