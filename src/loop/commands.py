@@ -43692,6 +43692,243 @@ def _achievement_proof_sources(
     ]
 
 
+_NO_SURVIVORS_MECHS = ["PierceMech", "BomblingMech", "ExchangeMech"]
+
+
+def _lua_string_field(block: str, field: str) -> str | None:
+    match = re.search(rf'\["{re.escape(field)}"\]\s*=\s*"([^"]*)"', block)
+    return match.group(1) if match else None
+
+
+def _lua_int_field(block: str, field: str) -> int | None:
+    match = re.search(rf'\["{re.escape(field)}"\]\s*=\s*(-?\d+)', block)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
+def _lua_list_block(block: str, field: str) -> str | None:
+    match = re.search(rf'\["{re.escape(field)}"\]\s*=\s*{{', block)
+    if not match:
+        return None
+    start = block.find("{", match.start())
+    return _lua_table_block_at(block, start)
+
+
+def _lua_string_list(block: str, field: str) -> list[str]:
+    list_block = _lua_list_block(block, field)
+    if not list_block:
+        return []
+    return re.findall(r'"([^"]*)"', list_block)
+
+
+def _lua_int_list(block: str, field: str) -> list[int]:
+    list_block = _lua_list_block(block, field)
+    if not list_block:
+        return []
+    values: list[int] = []
+    for raw in re.findall(r'-?\d+', list_block):
+        try:
+            values.append(int(raw))
+        except ValueError:
+            pass
+    return values
+
+
+def _profile_current_run_loadout_from_text(
+    text: str,
+    *,
+    path: str | None = None,
+) -> dict:
+    match = re.search(r'\["current"\]\s*=\s*{', text)
+    result = {
+        "status": "MISSING",
+        "source": "profile",
+        "path": path,
+        "reason": "current_block_missing",
+    }
+    if not match:
+        return result
+    start = text.find("{", match.start())
+    current_block = _lua_table_block_at(text, start)
+    if not current_block:
+        result["reason"] = "current_block_unbalanced"
+        return result
+
+    pilots: list[dict] = []
+    for slot in range(3):
+        pilot_match = re.search(rf'\["pilot{slot}"\]\s*=\s*{{', current_block)
+        pilot: dict[str, Any] = {"slot": slot, "id": None, "name": None, "power": []}
+        if pilot_match:
+            pilot_start = current_block.find("{", pilot_match.start())
+            pilot_block = _lua_table_block_at(current_block, pilot_start) or ""
+            pilot.update({
+                "id": _lua_string_field(pilot_block, "id"),
+                "name": _lua_string_field(pilot_block, "name"),
+                "skill1": _lua_int_field(pilot_block, "skill1"),
+                "skill2": _lua_int_field(pilot_block, "skill2"),
+                "power": _lua_int_list(pilot_block, "power"),
+            })
+        pilots.append(pilot)
+
+    result.update({
+        "status": "OK",
+        "reason": "current_block_found",
+        "squad_index": _lua_int_field(current_block, "squad"),
+        "difficulty": _lua_int_field(current_block, "difficulty"),
+        "islands": _lua_int_field(current_block, "islands"),
+        "mechs": _lua_string_list(current_block, "mechs"),
+        "weapons": _lua_string_list(current_block, "weapons"),
+        "pilots": pilots,
+    })
+    return result
+
+
+def _read_profile_current_run_loadout(
+    profile: str = "Alpha",
+    *,
+    path: Path | None = None,
+) -> dict:
+    path = path or (SAVE_DIR / f"profile_{profile}" / "profile.lua")
+    if not path.exists():
+        return {
+            "status": "MISSING",
+            "source": "profile",
+            "path": str(path),
+            "reason": "profile_lua_missing",
+        }
+    try:
+        text = path.read_text(errors="replace")
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "source": "profile",
+            "path": str(path),
+            "reason": "profile_lua_read_error",
+            "exception_type": type(exc).__name__,
+            "error": str(exc),
+        }
+    return _profile_current_run_loadout_from_text(text, path=str(path))
+
+
+def _bomb_dispenser_has_two_bombs(weapon_id: str | None) -> bool:
+    weapon = str(weapon_id or "")
+    return weapon == "Ranged_DeployBomb_A" or weapon == "Ranged_DeployBomb_AB"
+
+
+def _no_survivors_setup_status_from_loadout(loadout: dict) -> dict:
+    if loadout.get("status") != "OK":
+        return {
+            "status": "UNKNOWN",
+            "attempt_ready": False,
+            "reason": loadout.get("reason", "loadout_unavailable"),
+            "loadout": loadout,
+            "checks": [],
+            "gaps": ["Read current profile/save loadout before checking setup."],
+        }
+
+    mechs = list(loadout.get("mechs") or [])
+    weapons = list(loadout.get("weapons") or [])
+    pilots = list(loadout.get("pilots") or [])
+    bombling_slot = mechs.index("BomblingMech") if "BomblingMech" in mechs else 1
+    bomb_slots = [
+        {
+            "slot": index // 2,
+            "weapon": weapon,
+            "two_bombs": _bomb_dispenser_has_two_bombs(weapon),
+        }
+        for index, weapon in enumerate(weapons)
+        if str(weapon or "").startswith("Ranged_DeployBomb")
+    ]
+    silica_slots = [
+        pilot
+        for pilot in pilots
+        if pilot.get("id") == "Pilot_Miner"
+    ]
+    silica = silica_slots[0] if silica_slots else None
+    silica_slot = silica.get("slot") if silica else None
+    silica_power = sum(int(v) for v in (silica or {}).get("power", []) or [])
+
+    checks = [
+        {
+            "name": "bombermechs_squad",
+            "ok": mechs[:3] == _NO_SURVIVORS_MECHS or loadout.get("squad_index") == 11,
+            "detail": {"squad_index": loadout.get("squad_index"), "mechs": mechs},
+        },
+        {
+            "name": "bomb_dispenser_two_bombs",
+            "ok": any(item["two_bombs"] for item in bomb_slots),
+            "detail": {"bomb_dispenser_weapons": bomb_slots},
+        },
+        {
+            "name": "bomb_dispenser_on_bombling",
+            "ok": any(item["slot"] == bombling_slot for item in bomb_slots),
+            "detail": {"bombling_slot": bombling_slot},
+        },
+        {
+            "name": "silica_on_bombling",
+            "ok": silica_slot == bombling_slot,
+            "detail": {
+                "silica_slot": silica_slot,
+                "bombling_slot": bombling_slot,
+                "silica_name": (silica or {}).get("name"),
+            },
+        },
+        {
+            "name": "silica_double_shot_powered",
+            "ok": silica_power >= 2,
+            "detail": {"silica_power": silica_power, "required": 2},
+        },
+    ]
+
+    gap_text = {
+        "bombermechs_squad": "Start or continue a Bombermechs run.",
+        "bomb_dispenser_two_bombs": "Power Bomb Dispenser's 2 Bombs upgrade.",
+        "bomb_dispenser_on_bombling": "Keep Bomb Dispenser on Bombling Mech.",
+        "silica_on_bombling": "Move Silica/Pilot_Miner onto Bombling Mech.",
+        "silica_double_shot_powered": "Power Silica's Double Shot with 2 cores.",
+    }
+    gaps = [gap_text[c["name"]] for c in checks if not c["ok"]]
+    attempt_ready = not gaps
+    return {
+        "status": "READY" if attempt_ready else "NOT_READY",
+        "attempt_ready": attempt_ready,
+        "source": loadout.get("source"),
+        "path": loadout.get("path"),
+        "loadout": loadout,
+        "checks": checks,
+        "gaps": gaps,
+        "next_step": (
+            "Fish for a dense No Survivors turn."
+            if attempt_ready
+            else gaps[0] if gaps else "Review setup."
+        ),
+    }
+
+
+def cmd_no_survivors_setup(profile: str = "Alpha") -> dict:
+    """Report whether the current run has the ideal No Survivors setup online."""
+    loadout = _read_profile_current_run_loadout(profile)
+    result = _no_survivors_setup_status_from_loadout(loadout)
+    print(
+        "\n=== NO SURVIVORS SETUP: "
+        + ("READY" if result.get("attempt_ready") else "NOT READY")
+        + " ==="
+    )
+    for check in result.get("checks", []):
+        print(f"  {'OK' if check.get('ok') else 'NO'}  {check.get('name')}")
+    if result.get("gaps"):
+        print("  Gaps:")
+        for gap in result["gaps"]:
+            print(f"    - {gap}")
+    print(f"  Next: {result.get('next_step')}")
+    _print_result(result)
+    return result
+
+
 def cmd_achievement_proof(
     achievement: str | None = None,
     *,

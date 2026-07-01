@@ -531,6 +531,47 @@ def test_no_survivors_local_proof_sources(tmp_path):
     assert cache["row"]["name"] == "No Survivors"
 
 
+def test_no_survivors_setup_ready_from_profile_current():
+    text = """
+Profile = {
+["current"] = {["difficulty"] = 0, ["islands"] = 2, ["squad"] = 11,
+["mechs"] = {"PierceMech", "BomblingMech", "ExchangeMech", },
+["weapons"] = {"Brute_PierceShot", "", "Ranged_DeployBomb_A", "", "Science_TC_SwapOther", "", },
+["pilot0"] = {["id"] = "Pilot_Archive", ["name"] = "Esther", },
+["pilot1"] = {["id"] = "Pilot_Miner", ["name"] = "Silica", ["power"] = {1, 1, }, },
+["pilot2"] = {["id"] = "Pilot_Detritus", ["name"] = "Steve", },
+},
+}
+"""
+
+    loadout = commands._profile_current_run_loadout_from_text(text)
+    status = commands._no_survivors_setup_status_from_loadout(loadout)
+
+    assert status["attempt_ready"] is True
+    assert status["gaps"] == []
+
+
+def test_no_survivors_setup_reports_silica_power_and_slot_gaps():
+    text = """
+Profile = {
+["current"] = {["difficulty"] = 0, ["islands"] = 2, ["squad"] = 11,
+["mechs"] = {"PierceMech", "BomblingMech", "ExchangeMech", },
+["weapons"] = {"Brute_PierceShot", "", "Ranged_DeployBomb_A", "", "Science_TC_SwapOther", "", },
+["pilot0"] = {["id"] = "Pilot_Miner", ["name"] = "Silica", ["power"] = {0, 0, }, },
+["pilot1"] = {["id"] = "Pilot_Detritus", ["name"] = "Steve", },
+["pilot2"] = {["id"] = "Pilot_Archive", ["name"] = "Esther", },
+},
+}
+"""
+
+    loadout = commands._profile_current_run_loadout_from_text(text)
+    status = commands._no_survivors_setup_status_from_loadout(loadout)
+
+    assert status["attempt_ready"] is False
+    assert "Move Silica/Pilot_Miner onto Bombling Mech." in status["gaps"]
+    assert "Power Silica's Double Shot with 2 cores." in status["gaps"]
+
+
 def test_destroy_time_pods_selects_destroy_candidate_over_live_final_pod():
     live_final_pod = {
         "rank": 0,

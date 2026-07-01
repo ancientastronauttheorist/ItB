@@ -108,6 +108,7 @@ from src.loop.commands import (
     cmd_calibrate,
     cmd_achievements,
     cmd_achievement_proof,
+    cmd_no_survivors_setup,
     cmd_lightning_proof,
     cmd_replay,
     cmd_auto_turn,
@@ -1126,6 +1127,13 @@ def main():
         action="store_true",
         help="Also query the Steam Web API before deciding proof status",
     )
+
+    # no_survivors_setup
+    p_no_survivors_setup = sub.add_parser(
+        "no_survivors_setup",
+        help="Check whether the current run has the ideal No Survivors setup",
+    )
+    p_no_survivors_setup.add_argument("--profile", default="Alpha")
 
     # lightning_proof
     p_lightning_proof = sub.add_parser(
@@ -2393,6 +2401,8 @@ def main():
             profile_key=args.profile_key,
             sync_steam_api=args.sync_steam_api,
         )
+    elif args.command == "no_survivors_setup":
+        cmd_no_survivors_setup(profile=args.profile)
     elif args.command == "lightning_proof":
         cmd_lightning_proof(
             profile=args.profile,
