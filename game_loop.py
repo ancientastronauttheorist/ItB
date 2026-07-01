@@ -1134,6 +1134,16 @@ def main():
         help="Check whether the current run has the ideal No Survivors setup",
     )
     p_no_survivors_setup.add_argument("--profile", default="Alpha")
+    p_no_survivors_setup.add_argument(
+        "--require-ready",
+        action="store_true",
+        help="Return a blocking result when the ideal setup is not ready",
+    )
+    p_no_survivors_setup.add_argument(
+        "--plan",
+        action="store_true",
+        help="Include setup/attempt guidance in the result",
+    )
 
     # lightning_proof
     p_lightning_proof = sub.add_parser(
@@ -2402,7 +2412,11 @@ def main():
             sync_steam_api=args.sync_steam_api,
         )
     elif args.command == "no_survivors_setup":
-        cmd_no_survivors_setup(profile=args.profile)
+        cmd_no_survivors_setup(
+            profile=args.profile,
+            require_ready=args.require_ready,
+            plan=args.plan,
+        )
     elif args.command == "lightning_proof":
         cmd_lightning_proof(
             profile=args.profile,

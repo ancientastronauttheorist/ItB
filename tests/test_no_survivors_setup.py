@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from src.capture import save_parser
 from src.loop import commands
 
@@ -15,6 +17,37 @@ SquadData = {["money"] = 2, ["cores"] = 3,
 ["pawn1"] = {["primary"] = "Ranged_DeployBomb", ["primary_mod1"] = {1, }, ["primary_mod2"] = {}, },
 }
 """
+
+
+def _not_ready_loadout() -> dict:
+    return {
+        "status": "OK",
+        "source": "test",
+        "squad_index": 11,
+        "grid_power": 6,
+        "grid_power_max": 7,
+        "money": 0,
+        "cores": 0,
+        "mechs": ["PierceMech", "BomblingMech", "ExchangeMech"],
+        "weapons": [
+            "Brute_PierceShot",
+            "",
+            "Ranged_DeployBomb_A",
+            "",
+            "Science_TC_SwapOther",
+            "",
+        ],
+        "pilots": [
+            {
+                "slot": 0,
+                "id": "Pilot_Miner",
+                "name": "Silica",
+                "power": [0, 0],
+            },
+            {"slot": 1, "id": "Pilot_Detritus", "name": "Steve", "power": []},
+            {"slot": 2, "id": "Pilot_Archive", "name": "Esther", "power": []},
+        ],
+    }
 
 
 def test_no_survivors_setup_falls_back_to_undo_save(tmp_path):
@@ -87,3 +120,73 @@ RegionData = {["iBattleRegion"] = 0,
 
     assert mission.pawns[0].pilot_id == "Pilot_Miner"
     assert mission.pawns[0].pilot_power == [1, 1]
+
+
+def test_no_survivors_require_ready_blocks_with_plan():
+    status = commands._no_survivors_setup_status_from_loadout(_not_ready_loadout())
+    blocked = commands._require_no_survivors_setup_ready(status)
+
+    assert blocked["status"] == "BLOCKED"
+    assert blocked["blocking"] is True
+    assert blocked["precombat_block"] is True
+    assert "Move Silica/Pilot_Miner onto Bombling Mech." in blocked["setup_plan"]
+    assert any("Double Shot" in item for item in blocked["setup_plan"])
+
+
+def test_no_survivors_precombat_guard_only_for_target(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _not_ready_loadout(),
+    )
+    target_session = SimpleNamespace(
+        achievement_targets=["No Survivors"],
+        tags=[],
+    )
+    other_session = SimpleNamespace(
+        achievement_targets=["Powered Blast"],
+        tags=[],
+    )
+
+    blocked = commands._no_survivors_precombat_guard(target_session)
+
+    assert blocked is not None
+    assert blocked["status"] == "NO_SURVIVORS_SETUP_BLOCKED"
+    assert commands._no_survivors_precombat_guard(other_session) is None
+
+
+def test_deploy_recommended_blocks_no_survivors_before_deploy(monkeypatch):
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: (
+            object(),
+            {
+                "deployment_zone": [(0, 0), (0, 1), (0, 2)],
+                "turn": 0,
+                "phase": "deployment",
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_load_session",
+        lambda: SimpleNamespace(achievement_targets=["No Survivors"], tags=[]),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _not_ready_loadout(),
+    )
+
+    def unexpected_rank(*args, **kwargs):
+        raise AssertionError("deploy ranking should not run when setup is blocked")
+
+    monkeypatch.setattr(commands, "recommend_deploy_tiles", unexpected_rank)
+
+    result = commands.cmd_deploy_recommended(skip_initial_refresh=True)
+
+    assert result["status"] == "NO_SURVIVORS_SETUP_BLOCKED"
+    assert result["blocking"] is True

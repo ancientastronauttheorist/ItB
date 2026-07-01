@@ -44124,10 +44124,99 @@ def _no_survivors_setup_status_from_loadout(loadout: dict) -> dict:
     }
 
 
-def cmd_no_survivors_setup(profile: str = "Alpha") -> dict:
+def _no_survivors_setup_plan(result: dict) -> list[str]:
+    if result.get("attempt_ready"):
+        return [
+            "Keep Bombling Mech stationary on the attempt turn.",
+            (
+                "Fire upgraded Bomb Dispenser twice with Silica to create four "
+                "Walking Bomb deaths."
+            ),
+            (
+                "Route to a dense board or death-engine mission and let the "
+                "solver find 3+ additional unit deaths."
+            ),
+        ]
+    gaps = list(result.get("gaps") or [])
+    plan = list(gaps)
+    resources = result.get("resources") or {}
+    cores = resources.get("cores")
+    if (
+        isinstance(cores, int)
+        and cores < 2
+        and "Power Silica's Double Shot with 2 cores." in gaps
+    ):
+        plan.append(
+            "Collect or buy at least 2 reactor cores for Silica's Double Shot."
+        )
+    if (
+        isinstance(cores, int)
+        and cores < 3
+        and "Power Bomb Dispenser's 2 Bombs upgrade." in gaps
+    ):
+        plan.append(
+            "Collect or buy 3 reactor cores before powering Bomb Dispenser's "
+            "2 Bombs upgrade."
+        )
+    plan.append(
+        "Do not deploy/start another No Survivors mission until this checker "
+        "reports READY."
+    )
+    return plan
+
+
+def _require_no_survivors_setup_ready(result: dict) -> dict:
+    if result.get("attempt_ready"):
+        result["blocking"] = False
+        result["required_ready"] = True
+        return result
+    result = dict(result)
+    result["status"] = "BLOCKED"
+    result["blocking"] = True
+    result["required_ready"] = True
+    result["precombat_block"] = True
+    result["next_step"] = (
+        "Fix the No Survivors setup gaps before deploying or starting combat."
+    )
+    result["setup_plan"] = _no_survivors_setup_plan(result)
+    return result
+
+
+def _no_survivors_precombat_guard(
+    session: RunSession | None,
+    *,
+    profile: str = "Alpha",
+) -> dict | None:
+    if "no survivors" not in _normalized_target_labels(session):
+        return None
+    setup = _no_survivors_setup_status_from_loadout(
+        _read_no_survivors_run_loadout(profile)
+    )
+    if setup.get("attempt_ready"):
+        return None
+    blocked = _require_no_survivors_setup_ready(setup)
+    blocked["status"] = "NO_SURVIVORS_SETUP_BLOCKED"
+    blocked["reason"] = "no_survivors_setup_not_ready"
+    blocked["next_step"] = (
+        "Do not deploy or confirm this No Survivors mission until the setup "
+        "gaps are fixed."
+    )
+    return blocked
+
+
+def cmd_no_survivors_setup(
+    profile: str = "Alpha",
+    *,
+    require_ready: bool = False,
+    plan: bool = False,
+) -> dict:
     """Report whether the current run has the ideal No Survivors setup online."""
     loadout = _read_no_survivors_run_loadout(profile)
     result = _no_survivors_setup_status_from_loadout(loadout)
+    if plan:
+        result["setup_plan"] = _no_survivors_setup_plan(result)
+    if require_ready:
+        result = _require_no_survivors_setup_ready(result)
     print(
         "\n=== NO SURVIVORS SETUP: "
         + ("READY" if result.get("attempt_ready") else "NOT READY")
@@ -44152,6 +44241,10 @@ def cmd_no_survivors_setup(profile: str = "Alpha") -> dict:
         resource_parts.append(f"money={resources.get('money')}")
     if resource_parts:
         print("  Resources: " + ", ".join(resource_parts))
+    if result.get("setup_plan"):
+        print("  Plan:")
+        for item in result["setup_plan"]:
+            print(f"    - {item}")
     print(f"  Next: {result.get('next_step')}")
     _print_result(result)
     return result
@@ -47811,6 +47904,12 @@ def cmd_deploy_recommended(
         _print_result(result)
         return result
 
+    session = _load_session()
+    setup_block = _no_survivors_precombat_guard(session, profile=profile)
+    if setup_block is not None:
+        _print_result(setup_block)
+        return setup_block
+
     ranked = recommend_deploy_tiles(board, deploy_zone)
     if not ranked:
         ranked = [
@@ -47819,7 +47918,6 @@ def cmd_deploy_recommended(
             for t in deploy_zone[:3]
         ]
 
-    session = _load_session()
     mechs = _deployable_mechs(board, session, profile=profile)
     placed_by_uid = {
         int(u.uid): (int(u.x), int(u.y))
