@@ -43316,6 +43316,12 @@ def cmd_status(profile: str = "Alpha") -> dict:
             threats = board.get_threatened_buildings()
             result["threatened_buildings"] = len(threats)
 
+    if "no survivors" in _normalized_target_labels(session):
+        setup = _no_survivors_setup_status_from_loadout(
+            _read_no_survivors_run_loadout(profile)
+        )
+        result["no_survivors_setup"] = _compact_no_survivors_setup_for_route(setup)
+
     _attach_post_enemy_block(result, session)
     _print_result(result)
     return result

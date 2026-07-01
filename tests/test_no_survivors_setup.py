@@ -305,6 +305,65 @@ def test_deploy_recommended_blocks_no_survivors_before_deploy(monkeypatch):
     assert result["blocking"] is True
 
 
+def _status_session(targets: list[str]) -> SimpleNamespace:
+    return SimpleNamespace(
+        run_id="status_test",
+        phase="combat_player",
+        current_turn=2,
+        squad="Bombermechs",
+        achievement_targets=targets,
+        tags=[],
+        actions_executed=0,
+        actions_remaining=lambda: 3,
+        post_enemy_block=None,
+    )
+
+
+def test_status_includes_no_survivors_setup_for_target(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_load_session",
+        lambda: _status_session(["No Survivors"]),
+    )
+    monkeypatch.setattr(commands, "load_game_state", lambda profile="Alpha": None)
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        lambda profile="Alpha": _not_ready_loadout(),
+    )
+
+    result = commands.cmd_status()
+
+    setup = result["no_survivors_setup"]
+    assert setup["setup_stage"] == "STRUCTURAL_BLOCKED"
+    assert setup["attempt_ready"] is False
+    assert setup["structural_ready"] is False
+    assert "Move Silica/Pilot_Miner onto Bombling Mech." in setup["structural_gaps"]
+    assert setup["resource_plan"]["core_shortfall"] == 2
+
+
+def test_status_skips_no_survivors_setup_for_other_targets(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_load_session",
+        lambda: _status_session(["Powered Blast"]),
+    )
+    monkeypatch.setattr(commands, "load_game_state", lambda profile="Alpha": None)
+
+    def unexpected_loadout(profile="Alpha"):
+        raise AssertionError("No Survivors setup should not be read")
+
+    monkeypatch.setattr(
+        commands,
+        "_read_no_survivors_run_loadout",
+        unexpected_loadout,
+    )
+
+    result = commands.cmd_status()
+
+    assert "no_survivors_setup" not in result
+
+
 def test_recommend_mission_uses_setup_routing_before_attempt_ready(
     tmp_path,
     monkeypatch,
