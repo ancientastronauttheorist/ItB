@@ -4802,6 +4802,17 @@ fn sim_mass_shift(
     let (bdx, bdy) = DIRS[side_b];
     let (rdx, rdy) = DIRS[back];
 
+    let mut adjacent_units_before: Vec<(usize, u8, u8)> = Vec::new();
+    for &(dx, dy) in &[(fdx, fdy), (adx, ady), (bdx, bdy), (rdx, rdy)] {
+        let tx = ax as i8 + dx;
+        let ty = ay as i8 + dy;
+        if in_bounds(tx, ty) {
+            if let Some(idx) = board.unit_at(tx as u8, ty as u8) {
+                adjacent_units_before.push((idx, tx as u8, ty as u8));
+            }
+        }
+    }
+
     let front = (ax as i8 + fdx, ay as i8 + fdy);
     if in_bounds(front.0, front.1) {
         apply_mass_shift_tile(board, front.0 as u8, front.1 as u8, dir, false, wdef, result);
@@ -4838,6 +4849,20 @@ fn sim_mass_shift(
     let rear = (ax as i8 + rdx, ay as i8 + rdy);
     if in_bounds(rear.0, rear.1) {
         apply_mass_shift_tile(board, rear.0 as u8, rear.1 as u8, dir, false, wdef, result);
+    }
+
+    let moved_adjacent_units = adjacent_units_before
+        .iter()
+        .filter(|&&(idx, old_x, old_y)| {
+            let unit = &board.units[idx];
+            unit.x != old_x || unit.y != old_y
+        })
+        .count();
+    if moved_adjacent_units >= 4 {
+        result.events.push(format!(
+            "achievement_working_together:shifted:{}",
+            moved_adjacent_units
+        ));
     }
 }
 
@@ -7688,6 +7713,27 @@ mod tests {
         assert_eq!((board.units[right].x, board.units[right].y), (4, 4));
         assert_eq!((board.units[left].x, board.units[left].y), (2, 4));
         assert_eq!((board.units[rear].x, board.units[rear].y), (3, 3));
+    }
+
+    #[test]
+    fn test_area_shift_four_adjacent_units_emits_working_together_event() {
+        let mut board = make_test_board();
+        let slide = add_mech(&mut board, 30, 3, 3, 2, WId::ScienceMassShift);
+        add_enemy(&mut board, 31, 3, 4, 2);
+        add_enemy(&mut board, 32, 4, 3, 2);
+        add_enemy(&mut board, 33, 2, 3, 2);
+        add_enemy(&mut board, 34, 3, 2, 2);
+
+        let result = simulate_weapon(&mut board, slide, WId::ScienceMassShift, 3, 4);
+
+        assert!(
+            result
+                .events
+                .iter()
+                .any(|event| event == "achievement_working_together:shifted:4"),
+            "expected Working Together event, got {:?}",
+            result.events
+        );
     }
 
     #[test]

@@ -656,6 +656,16 @@ def _achievement_weight_overlay(
         )
         applied.append("spider_breeding")
 
+    if "working together" in normalized_targets:
+        # Arachnophiles: Area Shift must move four adjacent non-Slide units.
+        # The Rust event counts only adjacent units that actually changed
+        # tiles, so blocked shifts do not receive achievement credit.
+        weights["working_together_bonus"] = max(
+            float(weights.get("working_together_bonus", 0) or 0),
+            180000.0,
+        )
+        applied.append("working_together")
+
     if "let's walk" in normalized_targets or "lets walk" in normalized_targets:
         # Mist Eaters: reward real enemy Control Shot movement, while leaving
         # grid/building/objective survival dominant. Lower routine cleanup

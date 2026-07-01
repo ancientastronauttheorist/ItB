@@ -69,6 +69,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         lets_walk_control_distance_from_events,
         reverse_thrusters_four_damage_from_events,
         viscera_nanobots_heal_from_events,
+        working_together_from_events,
     };
     use crate::weapons::wid_from_str;
     use crate::types::{Terrain, xy_to_idx};
@@ -117,6 +118,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut stay_with_me_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
         let mut arachnoid_spawns = 0i32;
+        let mut working_together = 0i32;
         let mut lets_walk_control_distance = 0i32;
         let mut core_of_the_earth_chasm_falls = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
@@ -152,6 +154,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
             arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
+            working_together += working_together_from_events(&result.events);
             lets_walk_control_distance += lets_walk_control_distance_from_events(&result.events);
             core_of_the_earth_chasm_falls +=
                 core_of_the_earth_chasm_falls_from_events(&result.events);
@@ -207,6 +210,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             + reverse_thrusters_four_damage as f64
                 * weights.reverse_thrusters_four_damage_bonus
             + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus
+            + working_together as f64 * weights.working_together_bonus
             + lets_walk_control_distance as f64 * weights.lets_walk_control_distance_bonus
             + core_of_the_earth_chasm_falls as f64 * weights.core_of_the_earth_bonus
             + if unit_deaths >= 7 {
@@ -237,6 +241,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "mission_kills": mission_kills,
             "unit_deaths": unit_deaths,
             "arachnoid_spawns": arachnoid_spawns,
+            "working_together": working_together,
             "core_of_the_earth_chasm_falls": core_of_the_earth_chasm_falls,
             "stay_with_me_heal": stay_with_me_heal,
             "bldgs_alive": bldgs_alive,
@@ -2052,7 +2057,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   different directions, and spawns two Walking Bombs. Fixes Bombermechs
 //   No Survivors run 20260630_181556_177 after powering the upgrade on R.S.T.
 //   Pre-v311 corpus archived as failure_db_snapshot_sim_v310.jsonl.
-pub const SIMULATOR_VERSION: u32 = 311;
+// v312 - Area Shift emits a Working Together achievement event when four
+//   adjacent non-Slide units actually change tiles, and the achievement
+//   overlay scores that event. Pre-v312 corpus archived as
+//   failure_db_snapshot_sim_v311.jsonl.
+pub const SIMULATOR_VERSION: u32 = 312;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -1484,7 +1484,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # directions, and spawns two Walking Bombs. Fixes Bombermechs No Survivors run
 # 20260630_181556_177 after powering the upgrade on R.S.T. Pre-v311 corpus
 # archived as failure_db_snapshot_sim_v310.jsonl.
-SIMULATOR_VERSION = 311
+# v312 - Area Shift emits a Working Together achievement event when four
+# adjacent non-Slide units actually change tiles, and the achievement overlay
+# scores that event. Pre-v312 corpus archived as failure_db_snapshot_sim_v311.jsonl.
+SIMULATOR_VERSION = 312
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
