@@ -1493,7 +1493,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v314 - Arachnoid Injector damage to a surviving Scorpion web source keeps
 # the grapple attached, matching live Arachnophiles Mission_Repair evidence.
 # Pre-v314 corpus archived as failure_db_snapshot_sim_v313.jsonl.
-SIMULATOR_VERSION = 314
+# v315 - Arachnoid Injector kills on intrinsic explosive targets such as
+# Mission_BoomBots `*_Boom` pawns do not leave a persistent Arachnoid.
+# Pre-v315 corpus archived as failure_db_snapshot_sim_v314.jsonl.
+SIMULATOR_VERSION = 315
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

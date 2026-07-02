@@ -2072,7 +2072,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v314 - Arachnoid Injector damage to a surviving Scorpion web source keeps
 //   the grapple attached, matching live Arachnophiles Mission_Repair evidence.
 //   Pre-v314 corpus archived as failure_db_snapshot_sim_v313.jsonl.
-pub const SIMULATOR_VERSION: u32 = 314;
+// v315 - Arachnoid Injector kills on intrinsic explosive targets such as
+//   Mission_BoomBots `*_Boom` pawns do not leave a persistent Arachnoid.
+//   Pre-v315 corpus archived as failure_db_snapshot_sim_v314.jsonl.
+pub const SIMULATOR_VERSION: u32 = 315;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

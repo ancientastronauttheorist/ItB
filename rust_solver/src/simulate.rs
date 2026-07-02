@@ -4761,6 +4761,9 @@ fn sim_arachnoid_injector(
     let spawn_allowed = target_before
         .map(|idx| !board.units[idx].is_mech())
         .unwrap_or(false);
+    let suppress_spawn_for_explosive_target = target_before
+        .map(|idx| board.units[idx].is_enemy() && board.units[idx].is_volatile_vek())
+        .unwrap_or(false);
 
     sim_artillery(board, weapon_id, wdef, ax, ay, tx, ty, attack_dir, result);
 
@@ -4771,6 +4774,9 @@ fn sim_arachnoid_injector(
         return;
     };
     if board.units[idx].hp > 0 {
+        return;
+    }
+    if suppress_spawn_for_explosive_target {
         return;
     }
 
@@ -7525,6 +7531,25 @@ mod tests {
         assert_eq!(board.units[spawned].weapon, WeaponId(WId::DeployUnitAracnoidAtk as u16));
         assert!(board.units[spawned].active());
         assert!(!board.wreck_at(3, 3));
+    }
+
+    #[test]
+    fn test_arachnoid_injector_kill_on_boom_bot_does_not_leave_arachnoid() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 10, 3, 1, 3, WId::RangedArachnoid);
+        let target = add_boom_bot(&mut board, 11, 3, 3, 1);
+
+        let result = simulate_weapon(&mut board, mech, WId::RangedArachnoid, 3, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[target].hp, 0);
+        assert!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .all(|u| !u.alive() || !u.type_name_str().starts_with("DeployUnit_Aracnoid"))
+        );
+        assert_eq!(board.unit_at(3, 3), None);
+        assert_eq!(result.mechs_killed, 0);
     }
 
     #[test]
