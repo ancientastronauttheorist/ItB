@@ -1499,7 +1499,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v316 - Mission_BoomBots `Snow*1_Boom` pawns map to their base Pinnacle bot
 # attacks, and Snowart artillery hits the target plus perpendicular tiles.
 # Pre-v316 corpus archived as failure_db_snapshot_sim_v315.jsonl.
-SIMULATOR_VERSION = 317
+# v317 - Ricochet Rocket killed targets still corpse-bump live blockers,
+# matching live friendly KIA evidence from Arachnophiles Mission_SnowBattle.
+# Pre-v317 corpus archived as failure_db_snapshot_sim_v316.jsonl.
+# v318 - Displaced enemy artillery prefers bridge raw queued target offsets
+# when present, matching live Scarab shots after target normalization.
+# Pre-v318 corpus archived as failure_db_snapshot_sim_v317.jsonl.
+SIMULATOR_VERSION = 318
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1482,8 +1482,17 @@ pub fn simulate_enemy_attacks(
                 //
                 // range_min guard: if the PUSHED distance is below the weapon's
                 // minimum range, attack cancels (e.g. pushed adjacent to target).
-                let offset_x = qtx - queued_origin.0 as i8;
-                let offset_y = qty - queued_origin.1 as i8;
+                let (offset_x, offset_y) = if let Some((raw_x, raw_y)) = raw_queued_target {
+                    let raw_offset_x = raw_x - queued_origin.0 as i8;
+                    let raw_offset_y = raw_y - queued_origin.1 as i8;
+                    if (raw_offset_x != 0) != (raw_offset_y != 0) {
+                        (raw_offset_x, raw_offset_y)
+                    } else {
+                        (qtx - queued_origin.0 as i8, qty - queued_origin.1 as i8)
+                    }
+                } else {
+                    (qtx - queued_origin.0 as i8, qty - queued_origin.1 as i8)
+                };
                 let new_tx = ex as i8 + offset_x;
                 let new_ty = ey as i8 + offset_y;
                 if !in_bounds(new_tx, new_ty) { continue; }
@@ -2482,6 +2491,62 @@ mod tests {
 
         assert_eq!(board.tile(2, 1).building_hp, 1, "old G6 target should survive");
         assert_eq!(board.tile(3, 1).building_hp, 0, "shifted G5 target should be hit");
+    }
+
+    #[test]
+    fn test_displaced_scarab_artillery_prefers_raw_offset_for_acid_bulk() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        let bulk_idx = board.add_unit(Unit {
+            uid: 0,
+            x: 2,
+            y: 6,
+            hp: 1,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACID,
+            weapon: WeaponId(WId::BruteTcRicochet as u16),
+            ..Default::default()
+        });
+        board.units[bulk_idx].set_type_name("BulkMech");
+        let blocker_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 4,
+            y: 6,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[blocker_idx].set_type_name("FourwayMech");
+
+        // Arachnophiles run 20260702_104642_726, Mission_Acid turn 3:
+        // Scarab's normalized queued target pointed one tile short, but the
+        // raw queued target preserved the live attacker-relative artillery
+        // offset. Live hit ACID Bulk at B6 for doubled damage.
+        let scarab_idx = add_enemy_with_type(&mut board, 2787, 6, 6, 2, "Scarab1", 2, 6);
+        board.units[scarab_idx].queued_origin_x = 5;
+        board.units[scarab_idx].queued_origin_y = 6;
+        board.units[scarab_idx].queued_target_raw_x = 1;
+        board.units[scarab_idx].queued_target_raw_y = 6;
+        board.units[scarab_idx].weapon_damage = 1;
+        board.units[scarab_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let mut orig = default_orig_pos(&board);
+        orig[scarab_idx] = (5, 6);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[bulk_idx].hp <= 0, "raw-offset Scarab shot should kill ACID Bulk");
+        assert_eq!(board.units[blocker_idx].hp, 2, "artillery should ignore the intervening mech");
     }
 
     #[test]

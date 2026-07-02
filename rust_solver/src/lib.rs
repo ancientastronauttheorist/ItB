@@ -2081,7 +2081,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v317 - Ricochet Rocket killed targets still corpse-bump live blockers,
 //   matching live friendly KIA evidence from Arachnophiles Mission_SnowBattle.
 //   Pre-v317 corpus archived as failure_db_snapshot_sim_v316.jsonl.
-pub const SIMULATOR_VERSION: u32 = 317;
+// v318 - Displaced enemy artillery prefers bridge raw queued target offsets
+//   when present, matching live Scarab shots after target normalization.
+//   Pre-v318 corpus archived as failure_db_snapshot_sim_v317.jsonl.
+pub const SIMULATOR_VERSION: u32 = 318;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
