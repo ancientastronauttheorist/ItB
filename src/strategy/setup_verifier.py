@@ -60,6 +60,7 @@ DIFFICULTIES: dict[int, dict[str, Any]] = {
 YELLOW_BORDER_THRESHOLD = 0.025
 CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD = 0.08
 CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD = 0.25
+CHECKBOX_DIM_ENABLED_BRIGHTNESS_THRESHOLD = 0.06
 FALLBACK_YELLOW_BORDER_MIN_PIXELS = 500
 
 
@@ -340,9 +341,13 @@ def _analyze_advanced(
         checkbox_present = (
             checkbox["bright_ratio"] >= CHECKBOX_PRESENT_BRIGHTNESS_THRESHOLD
         )
+        icon_enabled = icon_score >= threshold
         enabled = (
-            checkbox_present
-            and checkbox["bright_ratio"] >= CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD
+            icon_enabled
+            and (
+                checkbox["bright_ratio"] >= CHECKBOX_ENABLED_BRIGHTNESS_THRESHOLD
+                or checkbox["bright_ratio"] >= CHECKBOX_DIM_ENABLED_BRIGHTNESS_THRESHOLD
+            )
         )
         cx, cy = _transform_point(item["click"], click_sx, click_sy, click_ox, click_oy)
         row = {

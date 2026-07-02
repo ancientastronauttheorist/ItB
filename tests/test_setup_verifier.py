@@ -32,6 +32,12 @@ def _paint_checkbox(img: Image.Image, center, checked: bool):
         draw.rectangle((cx - 12, cy - 12, cx + 12, cy + 12), fill=(235, 235, 245))
 
 
+def _paint_dim_checked_checkbox(img: Image.Image, center):
+    draw = ImageDraw.Draw(img)
+    cx, cy = center
+    draw.rectangle((cx - 4, cy - 4, cx + 4, cy + 4), fill=(190, 190, 200))
+
+
 def test_setup_verifier_passes_when_all_advanced_and_easy_selected():
     img = _blank_setup()
     for box, color in [
@@ -50,6 +56,29 @@ def test_setup_verifier_passes_when_all_advanced_and_easy_selected():
     assert check.status == "PASS"
     assert check.setup_screen_detected is True
     assert check.actual_difficulty == 0
+    assert check.missing_advanced == []
+    assert check.click_plan == []
+
+
+def test_setup_verifier_accepts_dim_checked_enemy_units_when_icon_is_colored():
+    img = _blank_setup()
+    for box, color in [
+        ((558, 274, 616, 344), (84, 184, 92)),
+        ((558, 350, 616, 418), (78, 118, 210)),
+        ((558, 426, 616, 493), (210, 125, 72)),
+        ((558, 503, 616, 570), (62, 198, 212)),
+    ]:
+        _paint_icon(img, box, color)
+    _paint_dim_checked_checkbox(img, (646, 304))
+    for center in [(646, 379), (646, 454), (646, 529)]:
+        _paint_checkbox(img, center, checked=True)
+    _paint_difficulty_border(img, (909, 250, 1122, 317))
+
+    check = analyze_setup_image(img, expected_difficulty=0)
+
+    assert check.status == "PASS"
+    assert check.advanced[0]["enabled"] is True
+    assert check.advanced[0]["checkbox_present"] is False
     assert check.missing_advanced == []
     assert check.click_plan == []
 
