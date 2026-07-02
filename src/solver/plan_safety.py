@@ -227,6 +227,14 @@ def _infinite_spawn_objective_final_turn(
     ):
         return default_final_turn
 
+    cur_victory_turns = _int_or_none(current.get("victory_turns"))
+    if cur_victory_turns is not None:
+        return cur_victory_turns <= 1
+
+    pred_victory_turns = _int_or_none(predicted.get("victory_turns"))
+    if pred_victory_turns is not None:
+        return pred_victory_turns <= 1
+
     total_turns = (
         _int_or_none(current.get("total_turns"))
         or _int_or_none(predicted.get("total_turns"))

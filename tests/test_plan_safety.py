@@ -818,6 +818,38 @@ def test_visible_victory_counter_overrides_spawn_clock_for_destroy_objective():
     assert audit["blocking"] is False
 
 
+def test_infinite_spawn_current_victory_counter_overrides_turn_limit_for_destroy_objective():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_BouncerBoss",
+            turn=4,
+            total_turns=4,
+            remaining_spawns=1,
+            is_infinite_spawn=True,
+            victory_turns=2,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BouncerBoss", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_BouncerBoss",
+            turn=5,
+            total_turns=4,
+            remaining_spawns=1,
+            is_infinite_spawn=True,
+            victory_turns=1,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "BouncerBoss", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert audit["blocking"] is False
+    assert not any(
+        v["kind"] == "destroy_objective_unit_alive_final"
+        for v in audit["violations"]
+    )
+
+
 def test_penultimate_turn_without_future_spawns_final_blocks_destroy_objective():
     audit = audit_plan_safety(
         _summary(
