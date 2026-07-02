@@ -2403,6 +2403,11 @@ const MIRRORSHOT_PUSH_POLICY: PushPolicy = PushPolicy {
     trigger_mines: true,
 };
 
+const RICOCHET_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_bumps_live_blocker: true,
+    ..DEFAULT_PUSH_POLICY
+};
+
 const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
@@ -4111,7 +4116,7 @@ fn apply_ricochet_hit(
             DamageSource::Weapon,
         )
     };
-    apply_push_with_policy(board, x, y, dir, result, DEFAULT_PUSH_POLICY);
+    apply_push_with_policy(board, x, y, dir, result, RICOCHET_ROCKET_PUSH_POLICY);
     if let Some(idx) = deferred_death_explosion {
         let ex = board.units[idx].x;
         let ey = board.units[idx].y;
@@ -6805,6 +6810,30 @@ mod tests {
         assert_eq!((board.units[first].x, board.units[first].y), (4, 3));
         assert_eq!(board.units[second].hp, 2);
         assert_eq!((board.units[second].x, board.units[second].y), (5, 0));
+    }
+
+    #[test]
+    fn test_ricochet_killed_first_target_bumps_friendly_blocker() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 0, 6, 3, 3, WId::BruteTcRicochetAB);
+        let first = add_enemy(&mut board, 1, 6, 4, 2);
+        let blocker = add_mech(&mut board, 2, 6, 5, 1, WId::None);
+        let second = add_enemy(&mut board, 3, 1, 4, 2);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            bulk,
+            WId::BruteTcRicochetAB,
+            (6, 4),
+            Some((1, 4)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 0);
+        assert_eq!(board.units[blocker].hp, 0);
+        assert_eq!(board.units[second].hp, 0);
+        assert_eq!(result.mechs_killed, 1);
+        assert_eq!(result.mech_damage_taken, 1);
     }
 
     #[test]

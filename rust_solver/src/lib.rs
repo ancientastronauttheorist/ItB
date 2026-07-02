@@ -2078,7 +2078,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v316 - Mission_BoomBots `Snow*1_Boom` pawns map to their base Pinnacle bot
 //   attacks, and Snowart artillery hits the target plus perpendicular tiles.
 //   Pre-v316 corpus archived as failure_db_snapshot_sim_v315.jsonl.
-pub const SIMULATOR_VERSION: u32 = 316;
+// v317 - Ricochet Rocket killed targets still corpse-bump live blockers,
+//   matching live friendly KIA evidence from Arachnophiles Mission_SnowBattle.
+//   Pre-v317 corpus archived as failure_db_snapshot_sim_v316.jsonl.
+pub const SIMULATOR_VERSION: u32 = 317;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

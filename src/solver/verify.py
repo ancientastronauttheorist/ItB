@@ -1499,7 +1499,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v316 - Mission_BoomBots `Snow*1_Boom` pawns map to their base Pinnacle bot
 # attacks, and Snowart artillery hits the target plus perpendicular tiles.
 # Pre-v316 corpus archived as failure_db_snapshot_sim_v315.jsonl.
-SIMULATOR_VERSION = 316
+SIMULATOR_VERSION = 317
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
