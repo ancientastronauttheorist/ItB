@@ -1561,7 +1561,12 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     if let Some(uid) = damaged_enemy_web_source_uid {
-        if !matches!(source, DamageSource::MissionArtillery | DamageSource::SmolderingShells) {
+        if !matches!(
+            source,
+            DamageSource::MissionArtillery
+                | DamageSource::SmolderingShells
+                | DamageSource::ArachnoidInjector
+        ) {
             break_web_from(board, uid);
         }
     }
@@ -4440,10 +4445,19 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             | WId::RangedSmokeFireB
             | WId::RangedSmokeFireAB
     );
+    let arachnoid_injector = matches!(
+        weapon_id,
+        WId::RangedArachnoid
+            | WId::RangedArachnoidA
+            | WId::RangedArachnoidB
+            | WId::RangedArachnoidAB
+    );
     let direct_damage_source = if weapon_id == WId::ArchiveArtShot {
         DamageSource::MissionArtillery
     } else if smoldering_shells {
         DamageSource::SmolderingShells
+    } else if arachnoid_injector {
+        DamageSource::ArachnoidInjector
     } else {
         DamageSource::Weapon
     };
@@ -13315,6 +13329,50 @@ mod tests {
         assert!(!kill_board.units[needle].web(), "killed web source should still release grapple");
         assert_eq!(kill_board.units[needle].web_source_uid, 0);
         assert_eq!(kill_board.units[needle].move_speed, kill_board.units[needle].base_move);
+    }
+
+    #[test]
+    fn test_arachnoid_injector_surviving_web_source_keeps_grapple() {
+        // Arachnophiles Efficient Explosives run 20260701_222632_678,
+        // Mission_Repair turns 3-4: Arachnoid Injector damaged a Scorpion web
+        // source, but live kept the grapple while the Scorpion survived.
+        let mut board = make_test_board();
+        let scorpio = add_mech(&mut board, 1, 1, 4, 3, WId::RangedArachnoid);
+        let slide = add_mech(&mut board, 2, 4, 4, 2, WId::ScienceMassShift);
+        let scorpion = add_enemy_type(&mut board, 2336, 5, 4, 3, "Scorpion1");
+        board.units[slide].base_move = 4;
+        board.units[slide].move_speed = 0;
+        board.units[slide].set_web(true);
+        board.units[slide].web_source_uid = board.units[scorpion].uid;
+        board.units[scorpion].queued_target_x = board.units[slide].x as i8;
+        board.units[scorpion].queued_target_y = board.units[slide].y as i8;
+        board.units[scorpion].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let result = simulate_weapon(&mut board, scorpio, WId::RangedArachnoid, 5, 4);
+
+        assert_eq!(board.units[scorpion].hp, 2);
+        assert!(board.units[slide].web(), "surviving Arachnoid hit web source should keep grapple");
+        assert_eq!(board.units[slide].web_source_uid, board.units[scorpion].uid);
+        assert_eq!(board.units[slide].move_speed, 0);
+        assert_eq!(result.enemy_damage_dealt, 1);
+        assert_eq!(result.enemies_killed, 0);
+
+        let mut kill_board = make_test_board();
+        let scorpio = add_mech(&mut kill_board, 1, 1, 4, 3, WId::RangedArachnoidA);
+        let slide = add_mech(&mut kill_board, 2, 4, 4, 2, WId::ScienceMassShift);
+        let scorpion = add_enemy_type(&mut kill_board, 2336, 5, 4, 2, "Scorpion1");
+        kill_board.units[slide].base_move = 4;
+        kill_board.units[slide].move_speed = 0;
+        kill_board.units[slide].set_web(true);
+        kill_board.units[slide].web_source_uid = kill_board.units[scorpion].uid;
+
+        let result = simulate_weapon(&mut kill_board, scorpio, WId::RangedArachnoidA, 5, 4);
+
+        assert_eq!(kill_board.units[scorpion].hp, 0);
+        assert!(!kill_board.units[slide].web(), "killed web source should still release grapple");
+        assert_eq!(kill_board.units[slide].web_source_uid, 0);
+        assert_eq!(kill_board.units[slide].move_speed, kill_board.units[slide].base_move);
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]

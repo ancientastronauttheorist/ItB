@@ -2069,7 +2069,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v313 - Ricochet Rocket emits an Efficient Explosives achievement event when
 //   one action kills at least three enemies, and the achievement overlay scores
 //   that event. Pre-v313 corpus archived as failure_db_snapshot_sim_v312.jsonl.
-pub const SIMULATOR_VERSION: u32 = 313;
+// v314 - Arachnoid Injector damage to a surviving Scorpion web source keeps
+//   the grapple attached, matching live Arachnophiles Mission_Repair evidence.
+//   Pre-v314 corpus archived as failure_db_snapshot_sim_v313.jsonl.
+pub const SIMULATOR_VERSION: u32 = 314;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

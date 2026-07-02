@@ -1490,7 +1490,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v313 - Ricochet Rocket emits an Efficient Explosives achievement event when
 # one action kills at least three enemies, and the achievement overlay scores
 # that event. Pre-v313 corpus archived as failure_db_snapshot_sim_v312.jsonl.
-SIMULATOR_VERSION = 313
+# v314 - Arachnoid Injector damage to a surviving Scorpion web source keeps
+# the grapple attached, matching live Arachnophiles Mission_Repair evidence.
+# Pre-v314 corpus archived as failure_db_snapshot_sim_v313.jsonl.
+SIMULATOR_VERSION = 314
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

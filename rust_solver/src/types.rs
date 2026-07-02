@@ -227,6 +227,9 @@ pub enum DamageSource {
     /// Smoldering Shells uses ordinary weapon damage math, but live keeps a
     /// surviving Scorpion's existing grapple attached.
     SmolderingShells = 11,
+    /// Arachnoid Injector uses ordinary artillery damage math, but live keeps
+    /// a surviving Scorpion's existing grapple attached.
+    ArachnoidInjector = 12,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
