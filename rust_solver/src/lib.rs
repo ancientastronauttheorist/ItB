@@ -2084,7 +2084,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v318 - Displaced enemy artillery prefers bridge raw queued target offsets
 //   when present, matching live Scarab shots after target normalization.
 //   Pre-v318 corpus archived as failure_db_snapshot_sim_v317.jsonl.
-pub const SIMULATOR_VERSION: u32 = 318;
+// v319 - Boosted Ricochet Rocket special two-click simulation applies the
+//   same +1 damage adjustment as ordinary weapons, matching live Fenrir
+//   Opener evidence on Arachnophiles Mission_Armored_Train.
+//   Pre-v319 corpus archived as failure_db_snapshot_sim_v318.jsonl.
+pub const SIMULATOR_VERSION: u32 = 319;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

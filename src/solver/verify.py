@@ -1505,7 +1505,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v318 - Displaced enemy artillery prefers bridge raw queued target offsets
 # when present, matching live Scarab shots after target normalization.
 # Pre-v318 corpus archived as failure_db_snapshot_sim_v317.jsonl.
-SIMULATOR_VERSION = 318
+# v319 - Boosted Ricochet Rocket special two-click simulation applies the
+# same +1 damage adjustment as ordinary weapons, matching live Fenrir
+# Opener evidence on Arachnophiles Mission_Armored_Train.
+# Pre-v319 corpus archived as failure_db_snapshot_sim_v318.jsonl.
+SIMULATOR_VERSION = 319
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

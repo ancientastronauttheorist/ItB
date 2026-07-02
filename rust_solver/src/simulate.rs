@@ -2990,25 +2990,8 @@ pub fn simulate_weapon_with(
 ) -> ActionResult {
     let mut result = ActionResult::default();
     let base_wdef = &weapons[weapon_id as usize];
-    let mut boosted_wdef;
-    let wdef = if board.units[attacker_idx].boosted() {
-        boosted_wdef = *base_wdef;
-        if boosted_wdef.damage > 0 && weapon_id != WId::BrutePierceShot {
-            boosted_wdef.damage = boosted_wdef.damage.saturating_add(1);
-        }
-        if boosted_wdef.damage_outer > 0 {
-            boosted_wdef.damage_outer = boosted_wdef.damage_outer.saturating_add(1);
-        }
-        if boosted_wdef.self_damage > 0 {
-            boosted_wdef.self_damage = boosted_wdef.self_damage.saturating_add(1);
-        }
-        if boosted_wdef.burns_fire_targets() {
-            boosted_wdef.boost_bonus = 1;
-        }
-        &boosted_wdef
-    } else {
-        base_wdef
-    };
+    let boosted_wdef = boosted_weapon_def(base_wdef, weapon_id, board.units[attacker_idx].boosted());
+    let wdef = &boosted_wdef;
 
     let ax = board.units[attacker_idx].x;
     let ay = board.units[attacker_idx].y;
@@ -6411,12 +6394,13 @@ pub fn simulate_attack_with_target2(
             } else {
                 let ax = board.units[mech_idx].x;
                 let ay = board.units[mech_idx].y;
-                let wdef = &weapons[weapon_id as usize];
+                let base_wdef = &weapons[weapon_id as usize];
+                let wdef = boosted_weapon_def(base_wdef, weapon_id, board.units[mech_idx].boosted());
                 sim_ricochet_rocket(
                     board,
                     ax,
                     ay,
-                    wdef,
+                    &wdef,
                     target.0,
                     target.1,
                     target2,
@@ -6447,6 +6431,25 @@ pub fn simulate_attack_with_target2(
     }
     drain_pending_spider_eggs(board);
     result
+}
+
+fn boosted_weapon_def(base_wdef: &WeaponDef, weapon_id: WId, boosted: bool) -> WeaponDef {
+    let mut wdef = *base_wdef;
+    if boosted {
+        if wdef.damage > 0 && weapon_id != WId::BrutePierceShot {
+            wdef.damage = wdef.damage.saturating_add(1);
+        }
+        if wdef.damage_outer > 0 {
+            wdef.damage_outer = wdef.damage_outer.saturating_add(1);
+        }
+        if wdef.self_damage > 0 {
+            wdef.self_damage = wdef.self_damage.saturating_add(1);
+        }
+        if wdef.burns_fire_targets() {
+            wdef.boost_bonus = 1;
+        }
+    }
+    wdef
 }
 
 pub fn simulate_attack(
@@ -6810,6 +6813,28 @@ mod tests {
         assert_eq!((board.units[first].x, board.units[first].y), (4, 3));
         assert_eq!(board.units[second].hp, 2);
         assert_eq!((board.units[second].x, board.units[second].y), (5, 0));
+    }
+
+    #[test]
+    fn test_boosted_ricochet_rocket_adds_damage_to_both_targets() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 0, 5, 4, 3, WId::BruteTcRicochetAB);
+        board.units[bulk].set_boosted(true);
+        let first = add_enemy(&mut board, 1, 3, 4, 4);
+        let second = add_enemy(&mut board, 2, 3, 6, 4);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            bulk,
+            WId::BruteTcRicochetAB,
+            (3, 4),
+            Some((3, 6)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 1);
+        assert_eq!(board.units[second].hp, 1);
+        assert_eq!(result.enemy_damage_dealt, 6);
     }
 
     #[test]
