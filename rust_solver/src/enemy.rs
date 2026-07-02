@@ -2959,6 +2959,27 @@ mod tests {
     }
 
     #[test]
+    fn test_snowart_boom_uses_snowart_t_pattern() {
+        let mut board = Board::default();
+        board.grid_power = 4;
+        board.grid_power_max = 7;
+        for (bx, by) in [(1, 5), (2, 5), (0, 5)] {
+            board.tile_mut(bx, by).terrain = Terrain::Building;
+            board.tile_mut(bx, by).building_hp = 1;
+        }
+        add_enemy_with_type(&mut board, 2624, 1, 2, 1, "Snowart1_Boom", 1, 5);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(enemy_weapon_for_type("Snowart1_Boom"), WId::SnowartAtk1);
+        assert_eq!(board.tile(1, 5).building_hp, 0, "target tile should be damaged");
+        assert_eq!(board.tile(2, 5).building_hp, 0, "perpendicular lower tile should be damaged");
+        assert_eq!(board.tile(0, 5).building_hp, 0, "perpendicular upper tile should be damaged");
+        assert_eq!(board.grid_power, 1, "three 1-HP buildings should drop grid by 3");
+    }
+
+    #[test]
     fn test_bridge_attack_order_lets_snowlaser_fire_before_burnbug() {
         let mut board = Board::default();
         board.grid_power = 4;
@@ -3344,6 +3365,9 @@ mod tests {
         assert_eq!(enemy_weapon_for_type("Totem1"), WId::TotemAtk1);
         assert_eq!(enemy_weapon_for_type("Totem2"), WId::TotemAtk2);
         assert_eq!(enemy_weapon_for_type("TotemB"), WId::TotemAtkB);
+        assert_eq!(enemy_weapon_for_type("Snowtank1_Boom"), WId::SnowtankAtk1);
+        assert_eq!(enemy_weapon_for_type("Snowlaser1_Boom"), WId::SnowlaserAtk1);
+        assert_eq!(enemy_weapon_for_type("Snowart1_Boom"), WId::SnowartAtk1);
         assert_eq!(enemy_weapon_for_type("Unknown"), WId::None);
     }
 

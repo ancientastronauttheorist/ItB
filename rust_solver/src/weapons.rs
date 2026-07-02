@@ -1129,10 +1129,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // SkillEffect and sets Fire=1.
     w[74] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
         flags: f(WeaponFlags::FIRE.bits()), ..DEF };
-    // 75: SnowartAtk1 — Pinnacle bot, artillery, 1 dmg
-    w[75] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
-    // 76: SnowartAtk2 — Pinnacle bot, alpha artillery, 3 dmg
-    w[76] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, flags: C, ..DEF };
+    // 75: SnowartAtk1 — Pinnacle bot, artillery, 1 dmg.
+    // Lua SnowartAtk1 hits the target plus both perpendicular side tiles.
+    w[75] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1,
+        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+    // 76: SnowartAtk2 — Pinnacle bot, alpha artillery, 3 dmg.
+    w[76] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3,
+        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 77: LeaperAtk2 — alpha leaper, 5 dmg, web
     w[77] = WeaponDef { weapon_type: WeaponType::Melee, damage: 5, flags: f(WeaponFlags::WEB.bits()), ..DEF };
     // 78: CentipedeAtk2 — alpha centipede, 2 dmg, acid + aoe_perp
@@ -2291,11 +2294,14 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "TotemB" => WId::TotemAtkB,
         // Pinnacle bots
         "Snowtank1" => WId::SnowtankAtk1,
+        "Snowtank1_Boom" => WId::SnowtankAtk1,
         "Snowtank1_Player" => WId::SnowtankAtk1,
         "Snowtank2" => WId::SnowtankAtk2,
         "Snowlaser1" => WId::SnowlaserAtk1,
+        "Snowlaser1_Boom" => WId::SnowlaserAtk1,
         "Snowlaser2" => WId::SnowlaserAtk2,
         "Snowart1" => WId::SnowartAtk1,
+        "Snowart1_Boom" => WId::SnowartAtk1,
         "Snowart2" => WId::SnowartAtk2,
         "Burnbug1" => WId::BurnbugAtk1,
         "Burnbug2" => WId::BurnbugAtk2,
