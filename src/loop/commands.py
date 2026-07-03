@@ -410,6 +410,21 @@ _ACHIEVEMENT_PROOF_ALIASES = {
         "steam_key": "Ach_Squad_Bomber_2",
         "profile_key": "Squad_Bomber_2",
     },
+    "boosted": {
+        "achievement": "Boosted",
+        "steam_key": "Ach_Squad_Heat_1",
+        "profile_key": "Squad_Heat_1",
+    },
+    "ach squad heat 1": {
+        "achievement": "Boosted",
+        "steam_key": "Ach_Squad_Heat_1",
+        "profile_key": "Squad_Heat_1",
+    },
+    "squad heat 1": {
+        "achievement": "Boosted",
+        "steam_key": "Ach_Squad_Heat_1",
+        "profile_key": "Squad_Heat_1",
+    },
 }
 
 
@@ -429,6 +444,21 @@ def _infer_steam_key_from_profile_key(profile_key: str | None) -> str | None:
     if key and not key.startswith("Ach_"):
         return f"Ach_{key}"
     return key or None
+
+
+def _achievement_profile_min_value(
+    achievement: str | None,
+    steam_key: str | None,
+    profile_key: str | None,
+) -> int:
+    tokens = {
+        _achievement_proof_norm(token)
+        for token in (achievement, steam_key, profile_key)
+        if str(token or "").strip()
+    }
+    if tokens & {"boosted", "ach squad heat 1", "squad heat 1"}:
+        return 8
+    return 1
 
 
 def _resolve_achievement_proof_keys(
@@ -474,6 +504,11 @@ def _resolve_achievement_proof_keys(
         "achievement": resolved_achievement,
         "steam_key": resolved_steam_key,
         "profile_key": resolved_profile_key,
+        "profile_min_value": _achievement_profile_min_value(
+            resolved_achievement,
+            resolved_steam_key,
+            resolved_profile_key,
+        ),
     }
 
 
@@ -43735,8 +43770,10 @@ def _profile_achievement_proof(
     profile: str,
     profile_key: str | None,
     *,
+    min_value: int = 1,
     path: Path | None = None,
 ) -> dict:
+    min_value = max(1, int(min_value or 1))
     path = path or (SAVE_DIR / f"profile_{profile}" / "profile.lua")
     result = {
         "source": "profile",
@@ -43745,6 +43782,7 @@ def _profile_achievement_proof(
         "status": "MISSING",
         "achieved": False,
         "value": None,
+        "min_value": min_value,
     }
     if not profile_key:
         result["reason"] = "profile_key_unavailable"
@@ -43774,7 +43812,7 @@ def _profile_achievement_proof(
         "status": "OK",
         "reason": "profile_key_found",
         "value": value,
-        "achieved": value > 0,
+        "achieved": value >= min_value,
     })
     return result
 
@@ -43920,10 +43958,15 @@ def _achievement_proof_sources(
     achievement: str | None,
     steam_key: str | None,
     profile_key: str | None,
+    profile_min_value: int = 1,
     profile: str,
 ) -> list[dict]:
     return [
-        _profile_achievement_proof(profile, profile_key),
+        _profile_achievement_proof(
+            profile,
+            profile_key,
+            min_value=profile_min_value,
+        ),
         _log_achievement_proof(steam_key),
         _steam_cache_achievement_proof(steam_key, achievement),
     ]
@@ -44691,10 +44734,12 @@ def cmd_achievement_proof(
     achievement_name = resolved.get("achievement")
     steam_key = resolved.get("steam_key")
     profile_key = resolved.get("profile_key")
+    profile_min_value = int(resolved.get("profile_min_value") or 1)
     sources = _achievement_proof_sources(
         achievement=achievement_name,
         steam_key=steam_key,
         profile_key=profile_key,
+        profile_min_value=profile_min_value,
         profile=profile,
     )
     api_proof = None
@@ -44715,6 +44760,7 @@ def cmd_achievement_proof(
         "achievement": achievement_name,
         "steam_or_log_key": steam_key,
         "profile_key": profile_key,
+        "profile_min_value": profile_min_value,
         "sources": sources,
     }
     if api_proof is not None:
