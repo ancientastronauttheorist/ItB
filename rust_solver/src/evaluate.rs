@@ -167,6 +167,7 @@ pub struct EvalWeights {
     pub reverse_thrusters_four_damage_bonus: f64,
     pub feed_the_flame_bonus: f64,
     pub boosted_bonus: f64,
+    pub boosted_setup_bonus: f64,
     pub arachnoid_spawn_bonus: f64,
     pub efficient_explosives_bonus: f64,
     pub working_together_bonus: f64,
@@ -350,6 +351,7 @@ impl Default for EvalWeights {
             reverse_thrusters_four_damage_bonus: 0.0,
             feed_the_flame_bonus: 0.0,
             boosted_bonus: 0.0,
+            boosted_setup_bonus: 0.0,
             arachnoid_spawn_bonus: 0.0,
             efficient_explosives_bonus: 0.0,
             working_together_bonus: 0.0,
@@ -485,6 +487,33 @@ fn working_together_setup_count(board: &Board) -> i32 {
         best = best.max(count);
     }
     best
+}
+
+fn boosted_setup_count(board: &Board) -> i32 {
+    if !board.heat_engines {
+        return 0;
+    }
+
+    let mut count = 0;
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if !u.is_player() || !u.is_mech() || !u.alive() || u.boosted() {
+            continue;
+        }
+
+        let move_range = u.move_speed as i32;
+        let has_reachable_fire = board.tiles.iter().enumerate().any(|(idx, tile)| {
+            let (tx, ty) = idx_to_xy(idx);
+            let fuel = tile.on_fire() || (tile.terrain == Terrain::Lava && u.flying());
+            fuel && (u.x as i32 - tx as i32).abs()
+                + (u.y as i32 - ty as i32).abs()
+                <= move_range
+        });
+        if has_reachable_fire {
+            count += 1;
+        }
+    }
+    count
 }
 
 /// `kills` is passed explicitly because dead enemies are filtered from iteration.
@@ -1143,6 +1172,7 @@ pub fn evaluate(
     // ── Spawns blocked: SCALED (zero on final turn — no next-turn spawns) ─
     score += occupied_spawn_count(board, spawn_points) as f64 * weights.spawn_blocked * ff;
     score += working_together_setup_count(board) as f64 * weights.working_together_setup_bonus;
+    score += boosted_setup_count(board) as f64 * weights.boosted_setup_bonus * ff;
 
     // ── Remaining spawn danger: flat penalty per queued Vek ─────────────
     // `apply_spawn_blocking` charges damage to mechs sitting on spawn tiles,

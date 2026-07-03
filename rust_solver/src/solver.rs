@@ -1693,6 +1693,21 @@ fn prune_actions(
 
         let move_bit = 1u64 << xy_to_idx(attack_origin.0, attack_origin.1);
 
+        // Heat Sinkers Boosted hunt: keep fresh fire-pickup moves in the
+        // candidate pool so exact achievement scoring can evaluate them.
+        let mover = &board.units[mech_idx];
+        if board.heat_engines
+            && mover.is_player()
+            && mover.is_mech()
+            && mover.alive()
+            && !mover.boosted()
+        {
+            let tile = board.tile(attack_origin.0, attack_origin.1);
+            if tile.on_fire() || (tile.terrain == Terrain::Lava && mover.flying()) {
+                s += 5000;
+            }
+        }
+
         // Body-blocking a building threat
         if building_threats & move_bit != 0 { s += 200; }
 

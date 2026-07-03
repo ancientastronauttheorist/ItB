@@ -686,15 +686,22 @@ def _achievement_weight_overlay(
         # emits this event only for fresh Boost applications.
         weights["boosted_bonus"] = max(
             float(weights.get("boosted_bonus", 0) or 0),
-            60000.0,
+            180000.0,
+        )
+        # This achievement needs eight pickups in one mission. Reward ending
+        # non-final turns with unboosted mechs near fire/lava so Napalm fire
+        # becomes next-turn fuel instead of just incidental damage.
+        weights["boosted_setup_bonus"] = max(
+            float(weights.get("boosted_setup_bonus", 0) or 0),
+            45000.0,
         )
         weights["enemy_killed"] = min(
             float(weights.get("enemy_killed", 900) or 900),
-            300.0,
+            100.0,
         )
         weights["enemy_hp_remaining"] = max(
             float(weights.get("enemy_hp_remaining", -100) or -100),
-            -25.0,
+            -10.0,
         )
         applied.append("boosted")
 
