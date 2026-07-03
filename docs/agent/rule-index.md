@@ -410,3 +410,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 397 | 703 | Rock Launcher empty rock spawns preserve Forest. | `docs/agent/solver-reference.md` |
 | 398 | 705 | Enemy-phase pre-attack deaths clear before later enemy-phase steps. | `docs/agent/solver-reference.md` |
 | 399 | 707 | Do not raw-click unsupported Control Shot recoveries. | `docs/agent/safety-gates.md` |
+| 400 | 709 | Spawned Arachnoid Bite killed targets can corpse-bump live blockers. | `docs/agent/solver-reference.md` |

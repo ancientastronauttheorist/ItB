@@ -2408,6 +2408,11 @@ const RICOCHET_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     ..DEFAULT_PUSH_POLICY
 };
 
+const ARACHNOID_BITE_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_bumps_live_blocker: true,
+    ..DEFAULT_PUSH_POLICY
+};
+
 const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
@@ -3833,6 +3838,11 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
             PushDir::Forward => {
                 if matches!(weapon_id, WId::PrimePunchmech) {
                     apply_push_with_policy(board, tx, ty, dir, result, DASH_PUNCH_PUSH_POLICY);
+                } else if matches!(
+                    weapon_id,
+                    WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB
+                ) {
+                    apply_push_with_policy(board, tx, ty, dir, result, ARACHNOID_BITE_PUSH_POLICY);
                 } else if wdef.burns_fire_targets() {
                     apply_push_with_policy(board, tx, ty, dir, result, FLAMETHROWER_PUSH_POLICY);
                 } else {
@@ -7695,6 +7705,50 @@ mod tests {
         assert_eq!(board.units[target].hp, 1);
         assert_eq!((board.units[target].x, board.units[target].y), (3, 5));
         assert_eq!(board.units[arachnoid].hp, 0);
+        assert_eq!(result.mechs_killed, 0);
+    }
+
+    #[test]
+    fn test_spawned_arachnoid_killed_target_corpse_bumps_bombrock() {
+        let mut board = make_test_board();
+        let arachnoid = board.add_unit(Unit {
+            uid: 3549,
+            x: 5,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            move_speed: 3,
+            base_move: 3,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::DeployUnitAracnoidAtk as u16),
+            ..Default::default()
+        });
+        board.units[arachnoid].set_type_name("DeployUnit_Aracnoid");
+        let debris = add_enemy_type(&mut board, 3522, 5, 4, 1, "BonusDebris");
+        let dung = add_enemy_type(&mut board, 3523, 6, 5, 5, "Dung2");
+        let rock = add_enemy_type(&mut board, 3546, 5, 5, 1, "BombRock");
+        board.units[rock].team = Team::Neutral;
+        board.tile_mut(4, 5).terrain = Terrain::Building;
+        board.tile_mut(4, 5).building_hp = 2;
+
+        let result = simulate_weapon(
+            &mut board,
+            arachnoid,
+            WId::DeployUnitAracnoidAtk,
+            5,
+            4,
+        );
+
+        assert_eq!(board.units[debris].hp, 0, "Arachnoid bite kills the egg sack");
+        assert_eq!(board.units[rock].hp, 0, "killed egg sack corpse bumps BombRock");
+        assert_eq!(board.units[dung].hp, 4, "BombRock blast damages adjacent Dung2");
+        assert_eq!(
+            board.tile(4, 5).building_hp,
+            1,
+            "BombRock blast damages adjacent C4 building"
+        );
+        assert_eq!(board.units[arachnoid].hp, 0, "Arachnoid self-destructs after bite");
         assert_eq!(result.mechs_killed, 0);
     }
 

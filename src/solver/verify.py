@@ -1509,7 +1509,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # same +1 damage adjustment as ordinary weapons, matching live Fenrir
 # Opener evidence on Arachnophiles Mission_Armored_Train.
 # Pre-v319 corpus archived as failure_db_snapshot_sim_v318.jsonl.
-SIMULATOR_VERSION = 319
+# v320 - Spawned Arachnoid Bite killed targets corpse-bump live blockers,
+# matching Mission_SnowStorm evidence where a killed egg sack bumped and
+# detonated a BombRock. Pre-v320 corpus archived as
+# failure_db_snapshot_sim_v319.jsonl.
+SIMULATOR_VERSION = 320
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

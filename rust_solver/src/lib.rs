@@ -2088,7 +2088,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   same +1 damage adjustment as ordinary weapons, matching live Fenrir
 //   Opener evidence on Arachnophiles Mission_Armored_Train.
 //   Pre-v319 corpus archived as failure_db_snapshot_sim_v318.jsonl.
-pub const SIMULATOR_VERSION: u32 = 319;
+// v320 - Spawned Arachnoid Bite killed targets corpse-bump live blockers,
+//   matching Mission_SnowStorm evidence where a killed egg sack bumped and
+//   detonated a BombRock. Pre-v320 corpus archived as
+//   failure_db_snapshot_sim_v319.jsonl.
+pub const SIMULATOR_VERSION: u32 = 320;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

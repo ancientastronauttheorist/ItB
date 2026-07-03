@@ -68,6 +68,24 @@
       "scope": "python",
       "reason": "Hard Rusting Hulks Mission_ScarabBoss turn 3 corpus board recorded this Pulse Repulse building-HP collateral under simulator v115 before the smoke-landing fix. Current top-k audit finds no safety-clean candidate in the first 1000 plans; the first non-self-damage plan is still non-overridable objective loss, and live auto_turn would block/consent-gate the dirty line. Value-tuning/safety-wrapper case, not a landing-on-smoke simulator regression.",
       "acknowledged": "2026-05-15"
+    },
+    {
+      "run_id": "20260702_113151_062",
+      "mission": 17,
+      "turn": 3,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Arachnophiles Efficient Explosives corpus board surfaced during the v320 Arachnoid Bite regression run. The 2s replay times out after all 24 permutations and chooses BulkMech C3 Ricochet Rocket at E3/E4 with one building-HP collateral; live auto_turn safety would keep this behind dirty-plan consent. Value-tuning/safety-wrapper case, unrelated to the spawned Arachnoid corpse-bump simulator fix.",
+      "acknowledged": "2026-07-03"
+    },
+    {
+      "run_id": "20260701_103831_478",
+      "mission": 12,
+      "turn": 3,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Arachnophiles Efficient Explosives corpus board surfaced during the v320 Arachnoid Bite regression run. The 2s replay times out after all 120 permutations and chooses a dirty Ricochet/Area Shift line with one building-HP collateral; live auto_turn safety would block this before execution. Value-tuning/safety-wrapper case, unrelated to the spawned Arachnoid corpse-bump simulator fix.",
+      "acknowledged": "2026-07-03"
     }
   ]
 }
