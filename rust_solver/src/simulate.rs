@@ -4117,6 +4117,39 @@ fn apply_ricochet_hit(
     }
 }
 
+fn efficient_explosives_counting_enemy(unit: &Unit) -> bool {
+    if !unit.is_enemy() || unit.hp <= 0 || unit.is_extra_tile() {
+        return false;
+    }
+    // Live achievement credit excludes egg pawns even though they use the
+    // enemy team and generic kill bookkeeping.
+    !unit.type_name_str().contains("Egg")
+}
+
+fn efficient_explosives_alive_enemy_uids(board: &Board) -> Vec<u16> {
+    let mut uids = Vec::new();
+    for unit in board.units.iter().filter(|unit| efficient_explosives_counting_enemy(unit)) {
+        if !uids.contains(&unit.uid) {
+            uids.push(unit.uid);
+        }
+    }
+    uids
+}
+
+fn efficient_explosives_kills_since(board: &Board, alive_before: &[u16]) -> i32 {
+    alive_before
+        .iter()
+        .filter(|uid| {
+            board
+                .units
+                .iter()
+                .find(|unit| unit.uid == **uid)
+                .map(|unit| unit.hp <= 0)
+                .unwrap_or(true)
+        })
+        .count() as i32
+}
+
 fn sim_ricochet_rocket(
     board: &mut Board,
     ax: u8,
@@ -4127,7 +4160,7 @@ fn sim_ricochet_rocket(
     target2: Option<(u8, u8)>,
     result: &mut ActionResult,
 ) {
-    let kills_before = result.enemies_killed;
+    let efficient_alive_before = efficient_explosives_alive_enemy_uids(board);
     let Some(first_dir) = cardinal_direction(ax, ay, target_x, target_y) else {
         result.events.push(format!(
             "invalid_ricochet_first_target:{}:{}:from:{}:{}",
@@ -4173,7 +4206,7 @@ fn sim_ricochet_rocket(
         ));
     }
     apply_ricochet_hit(board, first.0, first.1, first_dir, wdef, result);
-    let kills = result.enemies_killed - kills_before;
+    let kills = efficient_explosives_kills_since(board, &efficient_alive_before);
     if kills >= 3 {
         result.events.push(format!(
             "achievement_efficient_explosives:kills:{}",
@@ -7921,6 +7954,74 @@ mod tests {
                 .iter()
                 .any(|event| event == "achievement_efficient_explosives:kills:3"),
             "expected Efficient Explosives event, got {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_ricochet_egg_kills_do_not_emit_efficient_explosives_event() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 30, 3, 1, 3, WId::BruteTcRicochetA);
+        let first_egg = add_enemy_type(&mut board, 31, 3, 3, 1, "SpiderlingEgg1");
+        let second = add_enemy_type(&mut board, 32, 5, 3, 1, "Scarab1");
+        let third_egg = add_enemy_type(&mut board, 33, 6, 3, 1, "SpiderlingEgg1");
+
+        let result = simulate_action_with_target2(
+            &mut board,
+            bulk,
+            (3, 1),
+            WId::BruteTcRicochetA,
+            (3, 3),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert!(board.units[first_egg].hp <= 0);
+        assert!(board.units[second].hp <= 0);
+        assert!(board.units[third_egg].hp <= 0);
+        assert_eq!(result.enemies_killed, 3);
+        assert!(
+            !result
+                .events
+                .iter()
+                .any(|event| event.starts_with("achievement_efficient_explosives:")),
+            "egg-heavy Ricochet should not receive Efficient Explosives credit: {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_ricochet_three_real_kills_with_egg_still_emits_efficient_explosives_event() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 30, 3, 1, 3, WId::BruteTcRicochetA);
+        let first = add_enemy(&mut board, 31, 3, 3, 2);
+        let second = add_enemy(&mut board, 32, 5, 3, 2);
+        let third = add_enemy(&mut board, 33, 6, 4, 1);
+        let egg = add_enemy_type(&mut board, 34, 5, 4, 1, "SpiderlingEgg1");
+        add_enemy_type(&mut board, 35, 7, 7, 2, "Jelly_Explode1");
+        board.blast_psion = true;
+
+        let result = simulate_action_with_target2(
+            &mut board,
+            bulk,
+            (3, 1),
+            WId::BruteTcRicochetA,
+            (3, 3),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 0);
+        assert_eq!(board.units[second].hp, 0);
+        assert_eq!(board.units[third].hp, 0);
+        assert!(board.units[egg].hp <= 0);
+        assert!(result.enemies_killed >= 4);
+        assert!(
+            result
+                .events
+                .iter()
+                .any(|event| event == "achievement_efficient_explosives:kills:3"),
+            "expected Efficient Explosives credit for three non-egg kills, got {:?}",
             result.events
         );
     }

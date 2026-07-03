@@ -1513,7 +1513,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # matching Mission_SnowStorm evidence where a killed egg sack bumped and
 # detonated a BombRock. Pre-v320 corpus archived as
 # failure_db_snapshot_sim_v319.jsonl.
-SIMULATOR_VERSION = 320
+# v321 - Efficient Explosives achievement credit excludes killed egg pawns,
+# matching live Arachnophiles Spider Leader evidence where Ricochet killed
+# SpiderlingEgg units but Ach_Squad_Spiders_3 stayed locked. Pre-v321 corpus
+# archived as failure_db_snapshot_sim_v320.jsonl.
+SIMULATOR_VERSION = 321
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

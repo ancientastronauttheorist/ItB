@@ -2092,7 +2092,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   matching Mission_SnowStorm evidence where a killed egg sack bumped and
 //   detonated a BombRock. Pre-v320 corpus archived as
 //   failure_db_snapshot_sim_v319.jsonl.
-pub const SIMULATOR_VERSION: u32 = 320;
+// v321 - Efficient Explosives achievement credit excludes killed egg pawns,
+//   matching live Arachnophiles Spider Leader evidence where Ricochet killed
+//   SpiderlingEgg units but Ach_Squad_Spiders_3 stayed locked. Pre-v321 corpus
+//   archived as failure_db_snapshot_sim_v320.jsonl.
+pub const SIMULATOR_VERSION: u32 = 321;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
