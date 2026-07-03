@@ -1534,7 +1534,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # pawn but does not melt the tile before its queued attack. This keeps burning
 # Bouncers from being drowned before their live horn resolves. Pre-v325 corpus
 # archived as failure_db_snapshot_sim_v324.jsonl.
-SIMULATOR_VERSION = 325
+# v326 - Shell Psion armor persists across both Quick-Fire Rockets in one
+# activation even if the first rocket kills the Psion. Pre-v326 corpus
+# archived as failure_db_snapshot_sim_v325.jsonl.
+SIMULATOR_VERSION = 326
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

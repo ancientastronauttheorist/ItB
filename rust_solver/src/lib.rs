@@ -2123,7 +2123,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   pawn but does not melt the tile before its queued attack. This keeps
 //   burning Bouncers from being drowned before their live horn resolves.
 //   Pre-v325 corpus archived as failure_db_snapshot_sim_v324.jsonl.
-pub const SIMULATOR_VERSION: u32 = 325;
+// v326 - Shell Psion armor persists across both Quick-Fire Rockets in one
+//   activation even if the first rocket kills the Psion, matching live
+//   Mission_ShamanBoss evidence. Pre-v326 corpus archived as
+//   failure_db_snapshot_sim_v325.jsonl.
+pub const SIMULATOR_VERSION: u32 = 326;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

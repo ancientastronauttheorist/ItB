@@ -1028,7 +1028,7 @@ fn spawn_blob_boss_child(
     true
 }
 
-fn chain_whip_armor_aura_snapshot(board: &Board) -> Vec<u16> {
+fn multi_hit_armor_aura_snapshot(board: &Board) -> Vec<u16> {
     if !board.armor_psion {
         return Vec::new();
     }
@@ -1042,7 +1042,7 @@ fn chain_whip_armor_aura_snapshot(board: &Board) -> Vec<u16> {
     armored
 }
 
-fn restore_chain_whip_armor_aura(board: &mut Board, armored_uids: &[u16]) {
+fn restore_multi_hit_armor_aura(board: &mut Board, armored_uids: &[u16]) {
     if armored_uids.is_empty() {
         return;
     }
@@ -1055,7 +1055,7 @@ fn restore_chain_whip_armor_aura(board: &mut Board, armored_uids: &[u16]) {
     }
 }
 
-fn settle_chain_whip_armor_aura(board: &mut Board) {
+fn settle_multi_hit_armor_aura(board: &mut Board) {
     let armor_alive = (0..board.unit_count as usize)
         .any(|j| board.units[j].type_name_str() == "Jelly_Armor1" && board.units[j].hp > 0);
     board.armor_psion = armor_alive;
@@ -3779,7 +3779,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
     // Live captures show it still ignites Forest under a hit pawn.
     // The shooter's own tile is excluded from the graph.
     if wdef.chain() {
-        let chain_armored_uids = chain_whip_armor_aura_snapshot(board);
+        let chain_armored_uids = multi_hit_armor_aura_snapshot(board);
         let mut visited = 0u64;
         visited |= 1u64 << xy_to_idx(ax, ay);
         let mut queue: Vec<(u8, u8)> = vec![(tx, ty)];
@@ -3798,7 +3798,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
             }
 
             if has_pawn {
-                restore_chain_whip_armor_aura(board, &chain_armored_uids);
+                restore_multi_hit_armor_aura(board, &chain_armored_uids);
                 apply_damage(board, cx, cy, wdef.damage, result, DamageSource::ChainWhip);
             }
 
@@ -3813,7 +3813,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
             }
         }
         if !chain_armored_uids.is_empty() {
-            settle_chain_whip_armor_aura(board);
+            settle_multi_hit_armor_aura(board);
         }
     }
 
@@ -4330,8 +4330,15 @@ fn sim_quick_fire_rockets(
     }
 
     let before = board.clone();
+    let quick_fire_armored_uids = multi_hit_armor_aura_snapshot(board);
     sim_projectile(board, ax, ay, weapon_id, wdef, Some(first_dir), result);
+    if !quick_fire_armored_uids.is_empty() {
+        restore_multi_hit_armor_aura(board, &quick_fire_armored_uids);
+    }
     sim_projectile(board, ax, ay, weapon_id, wdef, Some(second_dir), result);
+    if !quick_fire_armored_uids.is_empty() {
+        settle_multi_hit_armor_aura(board);
+    }
 
     let damage = enemy_hp_lost_between(&before, board);
     if damage >= 8 {
@@ -7258,6 +7265,34 @@ mod tests {
         assert!(result.events.iter().any(|e| {
             e.starts_with("achievement_maximum_firepower:damage:8:")
         }));
+    }
+
+    #[test]
+    fn test_quick_fire_shell_psion_armor_lasts_until_second_rocket() {
+        let mut board = make_test_board();
+        board.armor_psion = true;
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShotB);
+        let psion = add_enemy_type(&mut board, 11, 3, 5, 2, "Jelly_Armor1");
+        let centipede = add_enemy_type(&mut board, 12, 5, 3, 5, "Centipede2");
+        board.units[centipede].flags.insert(UnitFlags::ARMOR);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::BruteTcDoubleShotB,
+            (3, 5),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[psion].hp, 0);
+        assert_eq!(
+            board.units[centipede].hp, 4,
+            "Shell Psion armor should still reduce the second rocket"
+        );
+        assert!(!board.armor_psion);
+        assert!(!board.units[centipede].armor());
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]
