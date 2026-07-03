@@ -1530,7 +1530,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # weapon, with Maximum Firepower credit based on actual enemy HP removed by
 # one activation. Pre-v324 corpus archived as
 # failure_db_snapshot_sim_v323.jsonl.
-SIMULATOR_VERSION = 324
+# v325 - Start-of-enemy-turn Fire damage to an occupied Ice tile damages the
+# pawn but does not melt the tile before its queued attack. This keeps burning
+# Bouncers from being drowned before their live horn resolves. Pre-v325 corpus
+# archived as failure_db_snapshot_sim_v324.jsonl.
+SIMULATOR_VERSION = 325
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

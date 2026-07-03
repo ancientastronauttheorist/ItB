@@ -1677,6 +1677,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     source,
                     DamageSource::Weapon
                         | DamageSource::Bump
+                        | DamageSource::Fire
                         | DamageSource::BombRockBlast
                         | DamageSource::WeaponCracksOccupied
                         | DamageSource::WeaponNoAcidPool

@@ -3117,6 +3117,38 @@ mod tests {
     }
 
     #[test]
+    fn test_burning_bouncer_on_ice_still_attacks_before_recoil_drowning() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(5, 6).terrain = Terrain::Ice; // B3
+        board.tile_mut(6, 6).terrain = Terrain::Water; // B2 recoil landing
+        board.tile_mut(4, 6).terrain = Terrain::Building; // B4 Defense Lab
+        board.tile_mut(4, 6).building_hp = 1;
+
+        let bouncer_idx = add_enemy_with_type(&mut board, 541, 5, 6, 2, "Bouncer2", 4, 6);
+        board.units[bouncer_idx].set_fire(true);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.tile(5, 6).terrain,
+            Terrain::Ice,
+            "fire tick damage to an occupied ice tile should not melt the attacker's tile"
+        );
+        assert_eq!(
+            board.tile(4, 6).building_hp,
+            0,
+            "burning Bouncer must still resolve its queued horn before recoil drowning"
+        );
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 1);
+        assert!(board.units[bouncer_idx].hp <= 0, "Bouncer drowns after recoil into water");
+    }
+
+    #[test]
     fn test_swapped_bouncer_uses_current_cardinal_target_when_origin_stale() {
         let mut board = Board::default();
         board.grid_power = 7;

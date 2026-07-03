@@ -2119,7 +2119,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   weapon, with Maximum Firepower credit based on actual enemy HP removed by
 //   one activation. Pre-v324 corpus archived as
 //   failure_db_snapshot_sim_v323.jsonl.
-pub const SIMULATOR_VERSION: u32 = 324;
+// v325 - Start-of-enemy-turn Fire damage to an occupied Ice tile damages the
+//   pawn but does not melt the tile before its queued attack. This keeps
+//   burning Bouncers from being drowned before their live horn resolves.
+//   Pre-v325 corpus archived as failure_db_snapshot_sim_v324.jsonl.
+pub const SIMULATOR_VERSION: u32 = 325;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
