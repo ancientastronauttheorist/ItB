@@ -1526,7 +1526,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # executes Ricochet with the native two-click SkillEffect instead of synthetic
 # DamageSpace so the game achievement hook can observe the shot.
 # Pre-v323 corpus archived as failure_db_snapshot_sim_v322.jsonl.
-SIMULATOR_VERSION = 323
+# v324 - Quick-Fire Rockets are modeled and executed as a true two-click
+# weapon, with Maximum Firepower credit based on actual enemy HP removed by
+# one activation. Pre-v324 corpus archived as
+# failure_db_snapshot_sim_v323.jsonl.
+SIMULATOR_VERSION = 324
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

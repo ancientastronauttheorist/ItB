@@ -454,6 +454,22 @@ def test_no_survivors_weight_overlay_rewards_seven_death_turns():
     assert weights["no_survivors_death_bonus"] == 32_000.0
 
 
+def test_maximum_firepower_weight_overlay_rewards_exact_event():
+    session = RunSession(
+        squad="Heat Sinkers",
+        difficulty=0,
+        achievement_targets=["Maximum Firepower"],
+    )
+
+    weights, applied = commands._achievement_weight_overlay(
+        session,
+        {"maximum_firepower_bonus": 0.0},
+    )
+
+    assert "maximum_firepower" in applied
+    assert weights["maximum_firepower_bonus"] == 220_000.0
+
+
 def test_no_survivors_target_autoselects_mission_routing():
     session = RunSession(
         squad="Bombermechs",

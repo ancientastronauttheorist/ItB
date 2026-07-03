@@ -1892,6 +1892,70 @@ local function execute_ricochet_native(pawn, wname, skill, first, second)
            second_tar.x .. "," .. second_tar.y
 end
 
+local function execute_quick_fire_native(pawn, wname, skill, first, second)
+    local source = pawn:GetSpace()
+    local first_dir = GetDirection(first - source)
+    local second_dir = GetDirection(second - source)
+    local first_tar = get_projectile_end_safe(source, first)
+    local second_tar = get_projectile_end_safe(source, second)
+    local damage = tonumber(skill.Damage) or 1
+    local boosted = pawn_is_boosted(pawn)
+    if boosted and damage > 0 then
+        damage = damage + 1
+    end
+
+    local uid = nil
+    local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
+    if ok_uid then uid = uid_val end
+    local save_data = _read_save_data()
+    local save_pilot = uid and save_data.pilots[uid] or nil
+
+    local killed_enemy = false
+    local targets = {
+        {point = first_tar, dir = first_dir},
+        {point = second_tar, dir = second_dir},
+    }
+    for _, entry in ipairs(targets) do
+        local pt = entry.point
+        if Board:IsValid(pt) then
+            local target_pawn = Board:GetPawn(pt)
+            local target_was_enemy = pawn_is_enemy(target_pawn)
+            local sd = SpaceDamage(pt, damage)
+            if tonumber(skill.Push) == 1 then
+                sd.iPush = entry.dir
+            end
+            local ok_dmg, err_dmg = pcall(function() Board:DamageSpace(sd) end)
+            if not ok_dmg then
+                return false, "Quick-Fire DamageSpace failed at " ..
+                       pt.x .. "," .. pt.y .. ": " .. tostring(err_dmg)
+            end
+            if target_was_enemy and pawn_is_dead_or_zero(target_pawn) then
+                killed_enemy = true
+            end
+        end
+    end
+
+    if boosted or killed_enemy then
+        local desired_boosted = false
+        if save_pilot and save_pilot.id == "Pilot_Arrogant" then
+            local hp = pawn:GetHealth()
+            local max_hp = get_pawn_max_health(pawn, uid, save_data)
+            desired_boosted = hp >= max_hp
+        elseif save_pilot and save_pilot.id == "Pilot_Chemical" and killed_enemy then
+            desired_boosted = true
+        end
+        set_pawn_boosted(pawn, desired_boosted)
+    end
+
+    log_bridge("FIRE: " .. wname .. " direct_quick_fire " ..
+               source.x .. "," .. source.y .. " -> " ..
+               first.x .. "," .. first.y .. " -> " ..
+               second.x .. "," .. second.y)
+    return true, "DamageSpace(" .. wname .. ") first=" ..
+           first_tar.x .. "," .. first_tar.y .. " second=" ..
+           second_tar.x .. "," .. second_tar.y
+end
+
 local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
     local wname, _base_wname, slot, err =
         effective_weapon_name_by_slot(pawn, weapon_slot)
@@ -1908,6 +1972,34 @@ local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
     local second = Point(tx2, ty2)
     if not Board:IsValid(first) or not Board:IsValid(second) then
         return false, "two-click target off-board"
+    end
+
+    if string.find(wname, "^Brute_TC_DoubleShot") ~= nil then
+        local function shot_dir(point)
+            local dx = point.x - source.x
+            local dy = point.y - source.y
+            if dx == 0 and dy > 0 then return 0 end
+            if dx > 0 and dy == 0 then return 1 end
+            if dx == 0 and dy < 0 then return 2 end
+            if dx < 0 and dy == 0 then return 3 end
+            return nil
+        end
+        local first_dir = shot_dir(first)
+        local second_dir = shot_dir(second)
+        if first_dir == nil then
+            return false, "Quick-Fire first target not cardinal " ..
+                   first.x .. "," .. first.y .. " from " ..
+                   source.x .. "," .. source.y
+        end
+        if second_dir == nil then
+            return false, "Quick-Fire second target not cardinal " ..
+                   second.x .. "," .. second.y .. " from " ..
+                   source.x .. "," .. source.y
+        end
+        if first_dir == second_dir then
+            return false, "Quick-Fire targets must be in different directions"
+        end
+        return execute_quick_fire_native(pawn, wname, skill, first, second)
     end
 
     if string.find(wname, "^Brute_TC_Ricochet") ~= nil then

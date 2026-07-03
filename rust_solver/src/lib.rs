@@ -69,6 +69,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         core_of_the_earth_chasm_falls_from_events,
         efficient_explosives_from_events,
         lets_walk_control_distance_from_events,
+        maximum_firepower_from_events,
         reverse_thrusters_four_damage_from_events,
         viscera_nanobots_heal_from_events,
         working_together_from_events,
@@ -120,6 +121,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut stay_with_me_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
         let mut boosted = 0i32;
+        let mut maximum_firepower = 0i32;
         let mut arachnoid_spawns = 0i32;
         let mut efficient_explosives = 0i32;
         let mut working_together = 0i32;
@@ -158,6 +160,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
             boosted += boosted_from_events(&result.events);
+            maximum_firepower += maximum_firepower_from_events(&result.events);
             arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
             efficient_explosives += efficient_explosives_from_events(&result.events);
             working_together += working_together_from_events(&result.events);
@@ -216,6 +219,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             + reverse_thrusters_four_damage as f64
                 * weights.reverse_thrusters_four_damage_bonus
             + boosted as f64 * weights.boosted_bonus
+            + maximum_firepower as f64 * weights.maximum_firepower_bonus
             + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus
             + efficient_explosives as f64 * weights.efficient_explosives_bonus
             + working_together as f64 * weights.working_together_bonus
@@ -249,6 +253,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "mission_kills": mission_kills,
             "unit_deaths": unit_deaths,
             "boosted": boosted,
+            "maximum_firepower": maximum_firepower,
             "arachnoid_spawns": arachnoid_spawns,
             "efficient_explosives": efficient_explosives,
             "working_together": working_together,
@@ -2110,7 +2115,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   also executes Ricochet with the native two-click SkillEffect instead of
 //   synthetic DamageSpace so the game achievement hook can observe the shot.
 //   Pre-v323 corpus archived as failure_db_snapshot_sim_v322.jsonl.
-pub const SIMULATOR_VERSION: u32 = 323;
+// v324 - Quick-Fire Rockets are modeled and executed as a true two-click
+//   weapon, with Maximum Firepower credit based on actual enemy HP removed by
+//   one activation. Pre-v324 corpus archived as
+//   failure_db_snapshot_sim_v323.jsonl.
+pub const SIMULATOR_VERSION: u32 = 324;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

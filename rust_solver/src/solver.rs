@@ -92,6 +92,13 @@ pub(crate) fn boosted_from_events(events: &[String]) -> i32 {
         .count() as i32
 }
 
+pub(crate) fn maximum_firepower_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| event.starts_with("achievement_maximum_firepower:"))
+        .count() as i32
+}
+
 pub(crate) fn arachnoid_spawns_from_events(events: &[String]) -> i32 {
     events
         .iter()
@@ -289,6 +296,61 @@ fn reverse_thrusters_landing_blocked(
     } else {
         false
     }
+}
+
+fn quick_fire_direction_candidate(
+    board: &Board,
+    mx: u8,
+    my: u8,
+    dir: usize,
+    wdef: &WeaponDef,
+) -> Option<((u8, u8), bool)> {
+    let (dx, dy) = DIRS[dir];
+    let mut empty_line_target: Option<(u8, u8)> = None;
+    for i in 1..8i8 {
+        let nx = mx as i8 + dx * i;
+        let ny = my as i8 + dy * i;
+        if !in_bounds(nx, ny) {
+            break;
+        }
+        let target = (nx as u8, ny as u8);
+        if empty_line_target.is_none() {
+            empty_line_target = Some(target);
+        }
+        let tile = board.tile(target.0, target.1);
+        if tile.terrain == Terrain::Mountain
+            || (tile.is_building() && !wdef.phase())
+            || board.unit_at(target.0, target.1).is_some()
+        {
+            return Some((target, true));
+        }
+    }
+    empty_line_target.map(|target| (target, false))
+}
+
+fn enumerate_quick_fire_targets(
+    board: &Board,
+    mx: u8,
+    my: u8,
+    wdef: &WeaponDef,
+) -> Vec<((u8, u8), (u8, u8))> {
+    let candidates: Vec<(usize, (u8, u8), bool)> = (0..DIRS.len())
+        .filter_map(|dir| {
+            quick_fire_direction_candidate(board, mx, my, dir, wdef)
+                .map(|(target, has_effect)| (dir, target, has_effect))
+        })
+        .collect();
+
+    let mut pairs = Vec::new();
+    for &(first_dir, first, first_has_effect) in &candidates {
+        for &(second_dir, second, second_has_effect) in &candidates {
+            if first_dir == second_dir || (!first_has_effect && !second_has_effect) {
+                continue;
+            }
+            pairs.push((first, second));
+        }
+    }
+    pairs
 }
 
 pub(crate) fn get_weapon_targets(
@@ -525,6 +587,11 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::TwoClick if is_force_swap(weapon_id) => {
             for (first, _second) in enumerate_force_swap_targets(board, mx, my) {
+                targets.push(first);
+            }
+        }
+        WeaponType::TwoClick if is_quick_fire_rockets(weapon_id) => {
+            for (first, _second) in enumerate_quick_fire_targets(board, mx, my, wdef) {
                 targets.push(first);
             }
         }
@@ -1242,6 +1309,14 @@ fn weapon_action_has_effect(
             let target_unit = &board.units[unit_idx];
             target_unit.pushable() || target_unit.is_mech()
         }
+        WeaponType::TwoClick if is_quick_fire_rockets(weapon_id) => {
+            let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+                return false;
+            };
+            quick_fire_direction_candidate(board, mx, my, dir, wdef)
+                .map(|(_target, has_effect)| has_effect)
+                .unwrap_or(false)
+        }
         WeaponType::TwoClick if is_deploy_bomb_two_click(weapon_id) => {
             !board.is_blocked(target.0, target.1, false)
         }
@@ -1389,6 +1464,13 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     {
                         actions.push((pos, w1_id, first, Some(second)));
                     }
+                } else if is_quick_fire_rockets(w1_id) {
+                    let wdef = &weapons[w1_id as usize];
+                    for (first, second) in
+                        enumerate_quick_fire_targets(action_board, attack_pos.0, attack_pos.1, wdef)
+                    {
+                        actions.push((pos, w1_id, first, Some(second)));
+                    }
                 } else if is_ricochet_rocket(w1_id) && !action_unit.web() {
                     for (first, second) in enumerate_ricochet_targets(action_board, attack_pos.0, attack_pos.1) {
                         actions.push((pos, w1_id, first, Some(second)));
@@ -1422,6 +1504,13 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     let wdef = &weapons[w2_id as usize];
                     for (first, second) in
                         enumerate_deploy_bomb_two_click_targets(action_board, attack_pos.0, attack_pos.1, wdef)
+                    {
+                        actions.push((pos, w2_id, first, Some(second)));
+                    }
+                } else if is_quick_fire_rockets(w2_id) {
+                    let wdef = &weapons[w2_id as usize];
+                    for (first, second) in
+                        enumerate_quick_fire_targets(action_board, attack_pos.0, attack_pos.1, wdef)
                     {
                         actions.push((pos, w2_id, first, Some(second)));
                     }
@@ -1968,6 +2057,7 @@ fn search_recursive(
     reverse_thrusters_four_damage_so_far: i32,
     feed_the_flame_so_far: i32,
     boosted_so_far: i32,
+    maximum_firepower_so_far: i32,
     arachnoid_spawns_so_far: i32,
     efficient_explosives_so_far: i32,
     working_together_so_far: i32,
@@ -2058,6 +2148,8 @@ fn search_recursive(
             feed_the_flame_so_far as f64 * weights.feed_the_flame_bonus;
         let boosted_bonus =
             boosted_so_far as f64 * weights.boosted_bonus;
+        let maximum_firepower_bonus =
+            maximum_firepower_so_far as f64 * weights.maximum_firepower_bonus;
         let arachnoid_spawn_bonus =
             arachnoid_spawns_so_far as f64 * weights.arachnoid_spawn_bonus;
         let efficient_explosives_bonus =
@@ -2084,6 +2176,7 @@ fn search_recursive(
             + reverse_thrusters_four_damage_bonus
             + feed_the_flame_bonus
             + boosted_bonus
+            + maximum_firepower_bonus
             + arachnoid_spawn_bonus
             + efficient_explosives_bonus
             + working_together_bonus
@@ -2123,6 +2216,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far,
             feed_the_flame_so_far,
             boosted_so_far,
+            maximum_firepower_so_far,
             arachnoid_spawns_so_far,
             efficient_explosives_so_far,
             working_together_so_far,
@@ -2195,6 +2289,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_from_events(&result.events);
         let feed_the_flame_add = feed_the_flame_from_events(&result.events);
         let boosted_add = boosted_from_events(&result.events);
+        let maximum_firepower_add = maximum_firepower_from_events(&result.events);
         let arachnoid_spawns_add = arachnoid_spawns_from_events(&result.events);
         let efficient_explosives_add = efficient_explosives_from_events(&result.events);
         let working_together_add = working_together_from_events(&result.events);
@@ -2230,6 +2325,7 @@ fn search_recursive(
             reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
             feed_the_flame_so_far + feed_the_flame_add,
             boosted_so_far + boosted_add,
+            maximum_firepower_so_far + maximum_firepower_add,
             arachnoid_spawns_so_far + arachnoid_spawns_add,
             efficient_explosives_so_far + efficient_explosives_add,
             working_together_so_far + working_together_add,
@@ -2421,7 +2517,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2626,7 +2722,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -2731,6 +2827,17 @@ mod top_k_tests {
         ];
 
         assert_eq!(boosted_from_events(&events), 2);
+    }
+
+    #[test]
+    fn maximum_firepower_events_count_exact_achievement_events() {
+        let events = vec![
+            "achievement_maximum_firepower:damage:8:targets:3:5:5:3".to_string(),
+            "invalid_quick_fire_same_direction:3:5:3:6".to_string(),
+            "achievement_boosted:unit:2:source:fire:tile:5:6".to_string(),
+        ];
+
+        assert_eq!(maximum_firepower_from_events(&events), 1);
     }
 
     #[test]

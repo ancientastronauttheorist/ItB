@@ -1027,9 +1027,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         range_min: 1, range_max: 4, flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
 
     // 219-222: Brute_TC_DoubleShot - Quick-Fire Rockets. Live requires two
-    // chosen directions; the current bridge has no two-target protocol for
-    // this weapon, so do not let the solver plan one-projectile stand-ins. A
-    // adds push, B adds +1 damage, AB has both for future bridge support.
+    // chosen directions. A adds push, B adds +1 damage, AB has both.
     w[219] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, range_max: 0, flags: C, ..DEF };
     w[220] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     w[221] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 2, range_max: 0, flags: C, ..DEF };

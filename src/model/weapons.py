@@ -475,6 +475,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Ricochet Rocket", weapon_type="two_click",
         damage=2, push="forward", range_max=0, targets_allies=True,
     ),
+    "Brute_TC_DoubleShot": WeaponDef(
+        name="Quick-Fire Rockets", weapon_type="two_click",
+        damage=1, push="none", range_max=0, targets_allies=True,
+        upgrade_a="add push",
+        upgrade_b="+1 damage to both shots (total 2)",
+    ),
+    "Brute_TC_DoubleShot_A": WeaponDef(
+        name="Quick-Fire Rockets", weapon_type="two_click",
+        damage=1, push="forward", range_max=0, targets_allies=True,
+    ),
+    "Brute_TC_DoubleShot_B": WeaponDef(
+        name="Quick-Fire Rockets", weapon_type="two_click",
+        damage=2, push="none", range_max=0, targets_allies=True,
+    ),
+    "Brute_TC_DoubleShot_AB": WeaponDef(
+        name="Quick-Fire Rockets", weapon_type="two_click",
+        damage=2, push="forward", range_max=0, targets_allies=True,
+    ),
 
     # --- MISSION-SPECIFIC ---
 

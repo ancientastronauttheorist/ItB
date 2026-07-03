@@ -425,6 +425,21 @@ _ACHIEVEMENT_PROOF_ALIASES = {
         "steam_key": "Ach_Squad_Heat_1",
         "profile_key": "Squad_Heat_1",
     },
+    "maximum firepower": {
+        "achievement": "Maximum Firepower",
+        "steam_key": "Ach_Squad_Heat_3",
+        "profile_key": "Squad_Heat_3",
+    },
+    "ach squad heat 3": {
+        "achievement": "Maximum Firepower",
+        "steam_key": "Ach_Squad_Heat_3",
+        "profile_key": "Squad_Heat_3",
+    },
+    "squad heat 3": {
+        "achievement": "Maximum Firepower",
+        "steam_key": "Ach_Squad_Heat_3",
+        "profile_key": "Squad_Heat_3",
+    },
 }
 
 
@@ -704,6 +719,16 @@ def _achievement_weight_overlay(
             -10.0,
         )
         applied.append("boosted")
+
+    if "maximum firepower" in normalized_targets:
+        # Heat Sinkers: reward only the exact Quick-Fire Rockets event where
+        # one activation removes at least 8 real enemy HP. Overkill beyond
+        # current HP does not count toward the simulator event.
+        weights["maximum_firepower_bonus"] = max(
+            float(weights.get("maximum_firepower_bonus", 0) or 0),
+            220000.0,
+        )
+        applied.append("maximum_firepower")
 
     if "spider breeding" in normalized_targets:
         # Arachnophiles: the achievement counter advances only when the

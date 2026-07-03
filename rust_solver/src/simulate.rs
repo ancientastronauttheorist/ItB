@@ -4270,6 +4270,77 @@ fn sim_ricochet_rocket(
     }
 }
 
+fn enemy_hp_lost_between(before: &Board, after: &Board) -> i32 {
+    let mut lost = 0;
+    for before_unit in before.units.iter().take(before.unit_count as usize) {
+        if !before_unit.is_enemy() || before_unit.hp <= 0 || before_unit.is_extra_tile() {
+            continue;
+        }
+        let before_hp = before_unit.hp.max(0) as i32;
+        let after_hp = after
+            .units
+            .iter()
+            .take(after.unit_count as usize)
+            .find(|unit| unit.uid == before_unit.uid && !unit.is_extra_tile())
+            .map(|unit| unit.hp.max(0) as i32)
+            .unwrap_or(0);
+        lost += (before_hp - after_hp).max(0);
+    }
+    lost
+}
+
+fn sim_quick_fire_rockets(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    target: (u8, u8),
+    target2: Option<(u8, u8)>,
+    result: &mut ActionResult,
+) {
+    let Some(first_dir) = cardinal_direction(ax, ay, target.0, target.1) else {
+        result.events.push(format!(
+            "invalid_quick_fire_first_target:{}:{}:from:{}:{}",
+            target.0, target.1, ax, ay
+        ));
+        return;
+    };
+    let Some(second) = target2 else {
+        result.events.push(format!(
+            "invalid_quick_fire_missing_second_target:{}:{}",
+            target.0, target.1
+        ));
+        return;
+    };
+    let Some(second_dir) = cardinal_direction(ax, ay, second.0, second.1) else {
+        result.events.push(format!(
+            "invalid_quick_fire_second_target:{}:{}:from:{}:{}",
+            second.0, second.1, ax, ay
+        ));
+        return;
+    };
+    if first_dir == second_dir {
+        result.events.push(format!(
+            "invalid_quick_fire_same_direction:{}:{}:{}:{}",
+            target.0, target.1, second.0, second.1
+        ));
+        return;
+    }
+
+    let before = board.clone();
+    sim_projectile(board, ax, ay, weapon_id, wdef, Some(first_dir), result);
+    sim_projectile(board, ax, ay, weapon_id, wdef, Some(second_dir), result);
+
+    let damage = enemy_hp_lost_between(&before, board);
+    if damage >= 8 {
+        result.events.push(format!(
+            "achievement_maximum_firepower:damage:{}:targets:{}:{}:{}:{}",
+            damage, target.0, target.1, second.0, second.1
+        ));
+    }
+}
+
 fn deploy_bomb_click_legal(
     board: &Board,
     ax: u8,
@@ -6505,6 +6576,21 @@ pub fn simulate_attack_with_target2(
                     &mut result,
                 );
             }
+        } else if is_quick_fire_rockets(weapon_id) {
+            let ax = board.units[mech_idx].x;
+            let ay = board.units[mech_idx].y;
+            let base_wdef = &weapons[weapon_id as usize];
+            let wdef = boosted_weapon_def(base_wdef, weapon_id, board.units[mech_idx].boosted());
+            sim_quick_fire_rockets(
+                board,
+                ax,
+                ay,
+                weapon_id,
+                &wdef,
+                target,
+                target2,
+                &mut result,
+            );
         } else if is_deploy_bomb_two_click(weapon_id) {
             let ax = board.units[mech_idx].x;
             let ay = board.units[mech_idx].y;
@@ -7126,7 +7212,7 @@ mod tests {
     }
 
     #[test]
-    fn test_quick_fire_rockets_do_not_enumerate_without_two_click_bridge() {
+    fn test_quick_fire_rockets_enumerate_two_click_targets() {
         let mut board = make_test_board();
         let _mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShot);
         let _enemy = add_enemy(&mut board, 1, 3, 5, 3);
@@ -7140,7 +7226,82 @@ mod tests {
             &WEAPONS,
         );
 
-        assert!(targets.is_empty(), "unsupported Quick-Fire targets: {:?}", targets);
+        assert!(
+            targets.contains(&(3, 5)),
+            "Quick-Fire should expose the first projectile blocker: {:?}",
+            targets
+        );
+    }
+
+    #[test]
+    fn test_quick_fire_rockets_acid_damage_emits_maximum_firepower() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShotB);
+        let east = add_enemy(&mut board, 1, 3, 5, 4);
+        let south = add_enemy(&mut board, 2, 5, 3, 4);
+        board.units[east].set_acid(true);
+        board.units[south].set_acid(true);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::BruteTcDoubleShotB,
+            (3, 5),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert!(board.units[east].hp <= 0);
+        assert!(board.units[south].hp <= 0);
+        assert_eq!(result.enemies_killed, 2);
+        assert!(result.events.iter().any(|e| {
+            e.starts_with("achievement_maximum_firepower:damage:8:")
+        }));
+    }
+
+    #[test]
+    fn test_quick_fire_rockets_overkill_does_not_emit_maximum_firepower() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShotB);
+        let east = add_enemy(&mut board, 1, 3, 5, 3);
+        let south = add_enemy(&mut board, 2, 5, 3, 3);
+        board.units[east].set_acid(true);
+        board.units[south].set_acid(true);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::BruteTcDoubleShotB,
+            (3, 5),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert!(board.units[east].hp <= 0);
+        assert!(board.units[south].hp <= 0);
+        assert!(!result.events.iter().any(|e| {
+            e.starts_with("achievement_maximum_firepower:")
+        }));
+    }
+
+    #[test]
+    fn test_quick_fire_rockets_reject_same_direction_targets() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShot);
+        let _enemy = add_enemy(&mut board, 1, 3, 5, 3);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::BruteTcDoubleShot,
+            (3, 5),
+            Some((3, 6)),
+            &WEAPONS,
+        );
+
+        assert!(result.events.iter().any(|e| {
+            e.starts_with("invalid_quick_fire_same_direction:")
+        }));
     }
 
     #[test]
