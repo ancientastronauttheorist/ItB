@@ -1045,12 +1045,20 @@ def _threat_audit_requires_block(
         )
         cur_pylons = current.get("pylons_alive")
         pred_pylons = predicted.get("pylons_alive")
-        pylon_losses = (
+        pylon_destroyed_losses = (
             cur_pylons - pred_pylons
             if isinstance(cur_pylons, int) and isinstance(pred_pylons, int)
             else 0
         )
-        if int(threat_audit.get("still_threatened_count") or 0) <= pylon_losses:
+        cur_pylon_hp = current.get("pylon_hp_total")
+        pred_pylon_hp = predicted.get("pylon_hp_total")
+        pylon_hp_losses = (
+            cur_pylon_hp - pred_pylon_hp
+            if isinstance(cur_pylon_hp, int) and isinstance(pred_pylon_hp, int)
+            else 0
+        )
+        covered_pylon_losses = max(pylon_destroyed_losses, pylon_hp_losses)
+        if int(threat_audit.get("still_threatened_count") or 0) <= covered_pylon_losses:
             return False
     return True
 
