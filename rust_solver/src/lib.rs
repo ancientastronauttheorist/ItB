@@ -2096,7 +2096,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   matching live Arachnophiles Spider Leader evidence where Ricochet killed
 //   SpiderlingEgg units but Ach_Squad_Spiders_3 stayed locked. Pre-v321 corpus
 //   archived as failure_db_snapshot_sim_v320.jsonl.
-pub const SIMULATOR_VERSION: u32 = 321;
+// v322 - Area Shift lets live shifted units enter dead enemy wreck tiles
+//   without bump damage, matching Arachnophiles Mission_Tanks evidence.
+//   Pre-v322 corpus archived as failure_db_snapshot_sim_v321.jsonl.
+pub const SIMULATOR_VERSION: u32 = 322;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

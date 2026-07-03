@@ -2469,6 +2469,11 @@ const ACID_PROJECTOR_PUSH_POLICY: PushPolicy = PushPolicy {
     trigger_mines: true,
 };
 
+const MASS_SHIFT_PUSH_POLICY: PushPolicy = PushPolicy {
+    live_pusher_enters_wreck: true,
+    ..DEFAULT_PUSH_POLICY
+};
+
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
@@ -4842,7 +4847,7 @@ fn apply_mass_shift_tile(
         }
     }
     apply_damage(board, x, y, wdef.damage, result, DamageSource::Weapon);
-    apply_push(board, x, y, dir, result);
+    apply_push_with_policy(board, x, y, dir, result, MASS_SHIFT_PUSH_POLICY);
 }
 
 fn sim_mass_shift(
@@ -7922,6 +7927,28 @@ mod tests {
             "expected Working Together event, got {:?}",
             result.events
         );
+    }
+
+    #[test]
+    fn test_area_shift_live_enemy_enters_dead_enemy_wreck_without_bump() {
+        // Live evidence: Arachnophiles Efficient Explosives run
+        // 20260703_004111_094, Mission_Tanks turn 1. Area Shift moved a
+        // wounded Scarab into a dead Mosquito's tile without dealing bump
+        // damage; the Scarab survived at 1 HP.
+        let mut board = make_test_board();
+        let slide = add_mech(&mut board, 2, 5, 5, 2, WId::ScienceMassShift);
+        let scarab = add_enemy_type(&mut board, 4196, 5, 4, 1, "Scarab1");
+        let mosquito = add_enemy_type(&mut board, 4195, 4, 4, 2, "Mosquito1");
+        board.units[mosquito].hp = 0;
+        board.units[mosquito].set_active(false);
+
+        let result = simulate_weapon(&mut board, slide, WId::ScienceMassShift, 4, 5);
+
+        assert_eq!((board.units[scarab].x, board.units[scarab].y), (4, 4));
+        assert_eq!(board.units[scarab].hp, 1);
+        assert_eq!(board.units[mosquito].hp, 0);
+        assert_eq!(result.enemies_killed, 0);
+        assert_eq!(result.enemy_damage_dealt, 0);
     }
 
     #[test]

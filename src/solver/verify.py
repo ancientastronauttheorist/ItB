@@ -1517,7 +1517,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # matching live Arachnophiles Spider Leader evidence where Ricochet killed
 # SpiderlingEgg units but Ach_Squad_Spiders_3 stayed locked. Pre-v321 corpus
 # archived as failure_db_snapshot_sim_v320.jsonl.
-SIMULATOR_VERSION = 321
+# v322 - Area Shift lets live shifted units enter dead enemy wreck tiles
+# without bump damage, matching Arachnophiles Mission_Tanks evidence.
+# Pre-v322 corpus archived as failure_db_snapshot_sim_v321.jsonl.
+SIMULATOR_VERSION = 322
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
