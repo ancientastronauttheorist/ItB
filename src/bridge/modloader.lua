@@ -1827,17 +1827,22 @@ local function get_projectile_end_safe(source, target)
     return target
 end
 
-local function execute_ricochet_direct(pawn, wname, skill, first, second)
+local function execute_ricochet_native(pawn, wname, skill, first, second)
     local source = pawn:GetSpace()
-    local first_dir = GetDirection(first - source)
-    local first_tar = get_projectile_end_safe(source, first)
-    local second_dir = GetDirection(second - first)
-    local second_tar = get_projectile_end_safe(first, second)
-    local damage = tonumber(skill.Damage) or 1
-    local boosted = pawn_is_boosted(pawn)
-    if boosted and damage > 0 then
-        damage = damage + 1
+    local first_effect = first
+    local ok_translate, translated = pcall(function()
+        if type(skill.TranslateFirstClick) == "function" then
+            return skill:TranslateFirstClick(source, first)
+        end
+        return nil
+    end)
+    if ok_translate and translated ~= nil then
+        first_effect = translated
     end
+
+    local first_tar = get_projectile_end_safe(source, first_effect)
+    local second_tar = get_projectile_end_safe(first_effect, second)
+    local boosted = pawn_is_boosted(pawn)
 
     local uid = nil
     local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
@@ -1845,29 +1850,29 @@ local function execute_ricochet_direct(pawn, wname, skill, first, second)
     local save_data = _read_save_data()
     local save_pilot = uid and save_data.pilots[uid] or nil
 
-    local targets = {
-        {point = second_tar, dir = second_dir},
-        {point = first_tar, dir = first_dir},
-    }
+    local target_pawns = {}
+    target_pawns[1] = Board:GetPawn(first_tar)
+    target_pawns[2] = Board:GetPawn(second_tar)
+    local old_damage = nil
+    if boosted and type(skill.Damage) == "number" and skill.Damage > 0 then
+        old_damage = skill.Damage
+        skill.Damage = old_damage + 1
+    end
+    local ok, err = pcall(function()
+        Board:AddEffect(skill:GetFinalEffect(source, first_effect, second))
+    end)
+    if old_damage ~= nil then
+        pcall(function() skill.Damage = old_damage end)
+    end
+    if not ok then
+        return false, "Ricochet GetFinalEffect failed: " .. tostring(err)
+    end
+
     local killed_enemy = false
-    for _, entry in ipairs(targets) do
-        local pt = entry.point
-        if Board:IsValid(pt) then
-            local target_pawn = Board:GetPawn(pt)
-            local target_was_enemy = pawn_is_enemy(target_pawn)
-            local dmg = damage
-            if not skill.AllyDamage and Board:IsPawnTeam(pt, TEAM_PLAYER) then
-                dmg = DAMAGE_ZERO
-            end
-            local sd = SpaceDamage(pt, dmg, entry.dir)
-            local ok_dmg, err_dmg = pcall(function() Board:DamageSpace(sd) end)
-            if not ok_dmg then
-                return false, "Ricochet DamageSpace failed at " ..
-                       pt.x .. "," .. pt.y .. ": " .. tostring(err_dmg)
-            end
-            if target_was_enemy and pawn_is_dead_or_zero(target_pawn) then
-                killed_enemy = true
-            end
+    for i = 1, 2 do
+        local target_pawn = target_pawns[i]
+        if pawn_is_enemy(target_pawn) and pawn_is_dead_or_zero(target_pawn) then
+            killed_enemy = true
         end
     end
 
@@ -1885,9 +1890,9 @@ local function execute_ricochet_direct(pawn, wname, skill, first, second)
 
     log_bridge("FIRE: " .. wname .. " direct_ricochet " ..
                source.x .. "," .. source.y .. " -> " ..
-               first.x .. "," .. first.y .. " -> " ..
+               first_effect.x .. "," .. first_effect.y .. " -> " ..
                second.x .. "," .. second.y)
-    return true, "DamageSpace(" .. wname .. ") first=" ..
+    return true, "GetFinalEffect(" .. wname .. ") first=" ..
            first_tar.x .. "," .. first_tar.y .. " second=" ..
            second_tar.x .. "," .. second_tar.y
 end
@@ -1919,12 +1924,22 @@ local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
                    first.x .. "," .. first.y .. " from " ..
                    source.x .. "," .. source.y
         end
-        if second.x ~= first.x and second.y ~= first.y then
+        local first_effect = first
+        local ok_translate, translated = pcall(function()
+            if type(skill.TranslateFirstClick) == "function" then
+                return skill:TranslateFirstClick(source, first)
+            end
+            return nil
+        end)
+        if ok_translate and translated ~= nil then
+            first_effect = translated
+        end
+        if second.x ~= first_effect.x and second.y ~= first_effect.y then
             return false, "Ricochet second target not cardinal " ..
                    second.x .. "," .. second.y .. " from " ..
-                   first.x .. "," .. first.y
+                   first_effect.x .. "," .. first_effect.y
         end
-        return execute_ricochet_direct(pawn, wname, skill, first, second)
+        return execute_ricochet_native(pawn, wname, skill, first, second)
     end
 
     if string.find(wname, "^Science_TC_Control") ~= nil then

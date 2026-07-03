@@ -4131,18 +4131,46 @@ fn efficient_explosives_counting_enemy(unit: &Unit) -> bool {
     !unit.type_name_str().contains("Egg")
 }
 
-fn efficient_explosives_alive_enemy_uids(board: &Board) -> Vec<u16> {
-    let mut uids = Vec::new();
-    for unit in board.units.iter().filter(|unit| efficient_explosives_counting_enemy(unit)) {
-        if !uids.contains(&unit.uid) {
-            uids.push(unit.uid);
-        }
+fn efficient_explosives_track_unit(candidates: &mut Vec<u16>, unit: &Unit) {
+    if efficient_explosives_counting_enemy(unit) && !candidates.contains(&unit.uid) {
+        candidates.push(unit.uid);
     }
-    uids
 }
 
-fn efficient_explosives_kills_since(board: &Board, alive_before: &[u16]) -> i32 {
-    alive_before
+fn efficient_explosives_track_unit_at(
+    board: &Board,
+    x: u8,
+    y: u8,
+    candidates: &mut Vec<u16>,
+) {
+    if let Some(idx) = board.unit_at(x, y) {
+        efficient_explosives_track_unit(candidates, &board.units[idx]);
+    }
+}
+
+fn efficient_explosives_track_ricochet_hit(
+    board: &Board,
+    x: u8,
+    y: u8,
+    dir: usize,
+    candidates: &mut Vec<u16>,
+) {
+    // The in-game achievement is tied to Ricochet Rocket's own shot. Be
+    // conservative: count only enemies directly struck by either projectile
+    // or live blockers in that hit's push lane, not board-wide aura collapse
+    // or unrelated delayed environmental deaths.
+    efficient_explosives_track_unit_at(board, x, y, candidates);
+
+    let (dx, dy) = DIRS[dir];
+    let nx = x as i8 + dx;
+    let ny = y as i8 + dy;
+    if in_bounds(nx, ny) {
+        efficient_explosives_track_unit_at(board, nx as u8, ny as u8, candidates);
+    }
+}
+
+fn efficient_explosives_kills_from_candidates(board: &Board, candidates: &[u16]) -> i32 {
+    candidates
         .iter()
         .filter(|uid| {
             board
@@ -4165,7 +4193,7 @@ fn sim_ricochet_rocket(
     target2: Option<(u8, u8)>,
     result: &mut ActionResult,
 ) {
-    let efficient_alive_before = efficient_explosives_alive_enemy_uids(board);
+    let mut efficient_candidates = Vec::new();
     let Some(first_dir) = cardinal_direction(ax, ay, target_x, target_y) else {
         result.events.push(format!(
             "invalid_ricochet_first_target:{}:{}:from:{}:{}",
@@ -4202,6 +4230,13 @@ fn sim_ricochet_rocket(
             sdy,
             wdef.phase(),
         ) {
+            efficient_explosives_track_ricochet_hit(
+                board,
+                second.0,
+                second.1,
+                second_dir,
+                &mut efficient_candidates,
+            );
             apply_ricochet_hit(board, second.0, second.1, second_dir, wdef, result);
         }
     } else {
@@ -4210,8 +4245,15 @@ fn sim_ricochet_rocket(
             tx2, ty2, first.0, first.1
         ));
     }
+    efficient_explosives_track_ricochet_hit(
+        board,
+        first.0,
+        first.1,
+        first_dir,
+        &mut efficient_candidates,
+    );
     apply_ricochet_hit(board, first.0, first.1, first_dir, wdef, result);
-    let kills = efficient_explosives_kills_since(board, &efficient_alive_before);
+    let kills = efficient_explosives_kills_from_candidates(board, &efficient_candidates);
     if kills >= 3 {
         result.events.push(format!(
             "achievement_efficient_explosives:kills:{}",
@@ -7957,9 +7999,7 @@ mod tests {
         let bulk = add_mech(&mut board, 30, 3, 1, 3, WId::BruteTcRicochetA);
         let first = add_enemy(&mut board, 31, 3, 3, 2);
         let second = add_enemy(&mut board, 32, 5, 3, 2);
-        let third = add_enemy(&mut board, 33, 6, 4, 1);
-        add_enemy_type(&mut board, 34, 7, 7, 2, "Jelly_Explode1");
-        board.blast_psion = true;
+        let third = add_enemy(&mut board, 33, 6, 3, 1);
 
         let result = simulate_action_with_target2(
             &mut board,
@@ -8023,7 +8063,7 @@ mod tests {
         let bulk = add_mech(&mut board, 30, 3, 1, 3, WId::BruteTcRicochetA);
         let first = add_enemy(&mut board, 31, 3, 3, 2);
         let second = add_enemy(&mut board, 32, 5, 3, 2);
-        let third = add_enemy(&mut board, 33, 6, 4, 1);
+        let third = add_enemy(&mut board, 33, 6, 3, 1);
         let egg = add_enemy_type(&mut board, 34, 5, 4, 1, "SpiderlingEgg1");
         add_enemy_type(&mut board, 35, 7, 7, 2, "Jelly_Explode1");
         board.blast_psion = true;
@@ -8049,6 +8089,39 @@ mod tests {
                 .iter()
                 .any(|event| event == "achievement_efficient_explosives:kills:3"),
             "expected Efficient Explosives credit for three non-egg kills, got {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_ricochet_health_psion_aura_collapse_does_not_emit_efficient_explosives_event() {
+        let mut board = make_test_board();
+        let bulk = add_mech(&mut board, 30, 3, 1, 3, WId::BruteTcRicochetA);
+        let first = add_enemy(&mut board, 31, 3, 3, 2);
+        let psion = add_enemy_type(&mut board, 32, 5, 3, 2, "Jelly_Health1");
+        let aura_only = add_enemy(&mut board, 33, 7, 7, 1);
+        board.soldier_psion = true;
+
+        let result = simulate_action_with_target2(
+            &mut board,
+            bulk,
+            (3, 1),
+            WId::BruteTcRicochetA,
+            (3, 3),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert!(board.units[first].hp <= 0);
+        assert!(board.units[psion].hp <= 0);
+        assert!(board.units[aura_only].hp <= 0);
+        assert_eq!(result.enemies_killed, 3);
+        assert!(
+            !result
+                .events
+                .iter()
+                .any(|event| event.starts_with("achievement_efficient_explosives:")),
+            "Health Psion aura collapse should not receive Efficient Explosives credit: {:?}",
             result.events
         );
     }

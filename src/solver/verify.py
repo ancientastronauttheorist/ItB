@@ -1520,7 +1520,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v322 - Area Shift lets live shifted units enter dead enemy wreck tiles
 # without bump damage, matching Arachnophiles Mission_Tanks evidence.
 # Pre-v322 corpus archived as failure_db_snapshot_sim_v321.jsonl.
-SIMULATOR_VERSION = 322
+# v323 - Efficient Explosives event credit is limited to Ricochet Rocket's
+# direct hit and push-lane kills, excluding Health Psion aura-collapse deaths
+# observed in Arachnophiles run 20260703_004111_094. The live bridge also
+# executes Ricochet with the native two-click SkillEffect instead of synthetic
+# DamageSpace so the game achievement hook can observe the shot.
+# Pre-v323 corpus archived as failure_db_snapshot_sim_v322.jsonl.
+SIMULATOR_VERSION = 323
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
