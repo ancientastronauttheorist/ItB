@@ -65,6 +65,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::simulate::simulate_action_with_target2;
     use crate::solver::{
         arachnoid_spawns_from_events,
+        boosted_from_events,
         core_of_the_earth_chasm_falls_from_events,
         efficient_explosives_from_events,
         lets_walk_control_distance_from_events,
@@ -118,6 +119,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut nanobots_heal = 0i32;
         let mut stay_with_me_heal = 0i32;
         let mut reverse_thrusters_four_damage = 0i32;
+        let mut boosted = 0i32;
         let mut arachnoid_spawns = 0i32;
         let mut efficient_explosives = 0i32;
         let mut working_together = 0i32;
@@ -155,6 +157,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             stay_with_me_heal += result.mech_hp_repaired;
             reverse_thrusters_four_damage +=
                 reverse_thrusters_four_damage_from_events(&result.events);
+            boosted += boosted_from_events(&result.events);
             arachnoid_spawns += arachnoid_spawns_from_events(&result.events);
             efficient_explosives += efficient_explosives_from_events(&result.events);
             working_together += working_together_from_events(&result.events);
@@ -212,6 +215,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             + stay_with_me_heal as f64 * weights.stay_with_me_heal_bonus
             + reverse_thrusters_four_damage as f64
                 * weights.reverse_thrusters_four_damage_bonus
+            + boosted as f64 * weights.boosted_bonus
             + arachnoid_spawns as f64 * weights.arachnoid_spawn_bonus
             + efficient_explosives as f64 * weights.efficient_explosives_bonus
             + working_together as f64 * weights.working_together_bonus
@@ -244,6 +248,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "kills": kills,
             "mission_kills": mission_kills,
             "unit_deaths": unit_deaths,
+            "boosted": boosted,
             "arachnoid_spawns": arachnoid_spawns,
             "efficient_explosives": efficient_explosives,
             "working_together": working_together,

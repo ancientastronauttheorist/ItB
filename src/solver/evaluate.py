@@ -87,6 +87,7 @@ class EvalWeights:
     powered_blast_bonus: float = 0
     reverse_thrusters_four_damage_bonus: float = 0
     feed_the_flame_bonus: float = 0
+    boosted_bonus: float = 0
     arachnoid_spawn_bonus: float = 0
     efficient_explosives_bonus: float = 0
     working_together_bonus: float = 0

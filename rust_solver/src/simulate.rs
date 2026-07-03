@@ -320,7 +320,7 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
     ));
 }
 
-fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8, result: &mut ActionResult) {
     let standing_on_fire = board.tile(x, y).on_fire();
     let standing_in_lava = board.tile(x, y).terrain == Terrain::Lava;
     if board.heat_engines
@@ -329,6 +329,7 @@ fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
         && board.units[unit_idx].hp > 0
         && (standing_on_fire || standing_in_lava)
     {
+        let was_boosted = board.units[unit_idx].boosted();
         if standing_on_fire {
             if board.tile(x, y).terrain == Terrain::Forest {
                 board.tile_mut(x, y).terrain = Terrain::Ground;
@@ -337,6 +338,13 @@ fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
         }
         board.units[unit_idx].set_fire(false);
         board.units[unit_idx].set_boosted(true);
+        if !was_boosted {
+            let source = if standing_in_lava { "lava" } else { "fire" };
+            result.events.push(format!(
+                "achievement_boosted:unit:{}:source:{}:tile:{}:{}",
+                board.units[unit_idx].uid, source, x, y
+            ));
+        }
         return;
     }
 
@@ -465,7 +473,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
     // 5. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
     //    to burning Ground when a unit lands on it.
-    apply_fire_tile_pickup(board, unit_idx, nx, ny);
+    apply_fire_tile_pickup(board, unit_idx, nx, ny, result);
 
     // 6. ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
@@ -1556,7 +1564,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     // an occupant already standing on a burning tile.
     if unit_received_nonshield_hit {
         if let Some(idx) = board.unit_at(x, y) {
-            apply_fire_tile_pickup(board, idx, x, y);
+            apply_fire_tile_pickup(board, idx, x, y, result);
         }
     }
 
@@ -1749,7 +1757,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             tile.set_on_fire(true);
             if unit_received_nonshield_hit {
                 if let Some(idx) = board.unit_at(x, y) {
-                    apply_fire_tile_pickup(board, idx, x, y);
+                    apply_fire_tile_pickup(board, idx, x, y, result);
                 }
             }
             // Live consumes occupied Forest immediately and the surviving
@@ -2723,7 +2731,7 @@ fn apply_push_with_policy(
     }
 
     // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity).
-    apply_fire_tile_pickup(board, unit_idx, nx, ny);
+    apply_fire_tile_pickup(board, unit_idx, nx, ny, result);
 
     // ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
@@ -3414,7 +3422,7 @@ fn sim_hydraulic_lifter(
     apply_landing_effects(board, unit_idx, result);
     apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
     if landing_was_forest {
-        apply_fire_tile_pickup(board, unit_idx, tx, ty);
+        apply_fire_tile_pickup(board, unit_idx, tx, ty, result);
     }
 }
 
@@ -3871,7 +3879,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
                 {
                     apply_fire_weapon_unit_status(board, idx);
                 }
-                apply_fire_tile_pickup(board, idx, tx, ty);
+                apply_fire_tile_pickup(board, idx, tx, ty, result);
             }
         }
 
@@ -6335,7 +6343,7 @@ pub fn simulate_move(
     // Fire tile: mech catches fire on arrival (if not shielded).
     // Mirrors apply_push's fire-catch logic so move and push paths agree.
     if move_to != old_pos {
-        apply_fire_tile_pickup(board, mech_idx, move_to.0, move_to.1);
+        apply_fire_tile_pickup(board, mech_idx, move_to.0, move_to.1, &mut result);
     }
 
     // Repair platform: generic Item_Repair_Mine tile. It heals by negative
@@ -7082,11 +7090,39 @@ mod tests {
         let mech = add_mech(&mut board, 0, 6, 4, 2, WId::ScienceRainingFire);
         board.tile_mut(6, 5).set_on_fire(true);
 
-        let _result = simulate_move(&mut board, mech, (6, 5));
+        let result = simulate_move(&mut board, mech, (6, 5));
 
         assert!(!board.tile(6, 5).on_fire());
         assert!(!board.units[mech].fire());
         assert!(board.units[mech].boosted());
+        assert!(
+            result
+                .events
+                .iter()
+                .any(|e| e.starts_with("achievement_boosted:")),
+            "fresh Heat Engines pickup should emit a Boosted achievement event"
+        );
+    }
+
+    #[test]
+    fn test_heat_engines_already_boosted_pickup_does_not_count_boosted_event() {
+        let mut board = make_test_board();
+        board.heat_engines = true;
+        let mech = add_mech(&mut board, 0, 6, 4, 2, WId::ScienceRainingFire);
+        board.units[mech].set_boosted(true);
+        board.tile_mut(6, 5).set_on_fire(true);
+
+        let result = simulate_move(&mut board, mech, (6, 5));
+
+        assert!(!board.tile(6, 5).on_fire());
+        assert!(board.units[mech].boosted());
+        assert!(
+            !result
+                .events
+                .iter()
+                .any(|e| e.starts_with("achievement_boosted:")),
+            "consuming fire while already Boosted should not count"
+        );
     }
 
     #[test]

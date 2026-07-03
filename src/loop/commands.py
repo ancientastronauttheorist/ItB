@@ -645,6 +645,24 @@ def _achievement_weight_overlay(
         )
         applied.append("feed_the_flame")
 
+    if "boosted" in normalized_targets:
+        # Heat Sinkers: Boosted counts Heat Engines pickups, and stepping on
+        # fire while already Boosted does not advance the achievement. Rust
+        # emits this event only for fresh Boost applications.
+        weights["boosted_bonus"] = max(
+            float(weights.get("boosted_bonus", 0) or 0),
+            60000.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 900) or 900),
+            300.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("boosted")
+
     if "spider breeding" in normalized_targets:
         # Arachnophiles: the achievement counter advances only when the
         # Arachnoid Injector lands the killing blow and spawns a friendly
