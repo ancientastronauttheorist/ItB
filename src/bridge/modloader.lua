@@ -1265,8 +1265,14 @@ local function dump_state()
     --   mission.KilledVek is cumulative this-mission kills
     --   mission:GetKillBonus() is difficulty-scaled (5 easy / 7 normal/hard)
     --   mission:GetPacifistCount() is difficulty-scaled (4 easy / 5 normal/hard / 6 unfair)
+    -- Mission_AcidTank is a built-in Detritus objective rather than a
+    -- BONUS_KILL_FIVE entry: kill 4 acid-inflicted Vek. It still advances
+    -- mission.KilledVek, so expose it through the same solver fields.
     pcall(function()
         local mission = _ITB_CURRENT_MISSION
+        if mission and mission.ID == "Mission_AcidTank" then
+            state.mission_kill_target = 4
+        end
         if mission and mission.BonusObjs then
             local has_kill_five = false
             local has_pacifist = false
@@ -1286,9 +1292,9 @@ local function dump_state()
                     state.mission_kill_limit = limit
                 end
             end
-            if mission.KilledVek ~= nil then
-                state.mission_kills_done = mission.KilledVek
-            end
+        end
+        if mission and mission.KilledVek ~= nil then
+            state.mission_kills_done = mission.KilledVek
         end
     end)
 

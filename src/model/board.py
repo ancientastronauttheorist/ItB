@@ -676,14 +676,18 @@ class Board:
 
         # Mission metadata — may be empty string if bridge couldn't resolve.
         board.mission_id = data.get("mission_id", "") or ""
-        # Kill-count bonus objective fields. All default 0, which makes the
-        # evaluator/safety checks no-op for missions without those bonuses.
+        # Kill-count objective fields. All default 0, which makes the
+        # evaluator/safety checks no-op for missions without those objectives.
         # Emitted by the Lua bridge from mission.BonusObjs + mission.KilledVek
-        # + mission:GetKillBonus()/GetPacifistCount().
+        # + mission:GetKillBonus()/GetPacifistCount(). Mission_AcidTank is a
+        # fixed target-4 acid-kill objective, so keep older bridge installs
+        # safe when they can at least identify the mission.
         try:
             board.mission_kill_target = int(data.get("mission_kill_target", 0) or 0)
         except (TypeError, ValueError):
             board.mission_kill_target = 0
+        if board.mission_id == "Mission_AcidTank" and board.mission_kill_target == 0:
+            board.mission_kill_target = 4
         try:
             board.mission_kill_limit = int(data.get("mission_kill_limit", 0) or 0)
         except (TypeError, ValueError):

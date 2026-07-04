@@ -173,3 +173,19 @@ def test_bridge_data_missing_fields_defaults_to_zero():
     assert b.mission_kill_target == 0
     assert b.mission_kill_limit == 0
     assert b.mission_kills_done == 0
+
+
+def test_acid_tank_defaults_to_fixed_kill_target_for_older_bridge():
+    """Mission_AcidTank has a built-in 4 acid-kill objective, not BonusObjs."""
+    data = {
+        "tiles": [{"x": x, "y": y, "terrain": "ground"} for x in range(8) for y in range(8)],
+        "units": [],
+        "grid_power": 5,
+        "turn": 4,
+        "mission_id": "Mission_AcidTank",
+        "mission_kills_done": 3,
+    }
+    b = Board.from_bridge_data(data)
+    assert b.mission_kill_target == 4
+    assert b.mission_kill_limit == 0
+    assert b.mission_kills_done == 3
