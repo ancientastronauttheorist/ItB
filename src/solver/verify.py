@@ -1546,7 +1546,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v329 - Quick-Fire Rockets killed-target pushes can still bump a live blocker,
 # matching Heat Sinkers live bridge evidence.
 # Pre-v329 corpus archived as failure_db_snapshot_sim_v328.jsonl.
-SIMULATOR_VERSION = 329
+# v330 - Projectile blockers treat 0-HP Building terrain as blocking, matching
+# native GetProjectileEnd on destroyed unique objective buildings.
+# Pre-v330 corpus archived as failure_db_snapshot_sim_v329.jsonl.
+SIMULATOR_VERSION = 330
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -2136,7 +2136,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v329 - Quick-Fire Rockets killed-target pushes can still bump a live blocker,
 //   matching Heat Sinkers live bridge evidence.
 //   Pre-v329 corpus archived as failure_db_snapshot_sim_v328.jsonl.
-pub const SIMULATOR_VERSION: u32 = 329;
+// v330 - Projectile blockers treat 0-HP Building terrain as blocking, matching
+//   native GetProjectileEnd on destroyed unique objective buildings.
+//   Pre-v330 corpus archived as failure_db_snapshot_sim_v329.jsonl.
+pub const SIMULATOR_VERSION: u32 = 330;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

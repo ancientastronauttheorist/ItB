@@ -319,7 +319,7 @@ fn quick_fire_direction_candidate(
         }
         let tile = board.tile(target.0, target.1);
         if tile.terrain == Terrain::Mountain
-            || (tile.is_building() && !wdef.phase())
+            || (tile.terrain == Terrain::Building && !wdef.phase())
             || board.unit_at(target.0, target.1).is_some()
         {
             return Some((target, true));

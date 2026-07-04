@@ -4084,7 +4084,7 @@ fn is_brute_mirrorshot_weapon(weapon_id: WId) -> bool {
 fn projectile_blocker_at(board: &Board, x: u8, y: u8, phase: bool) -> bool {
     let tile = board.tile(x, y);
     tile.terrain == Terrain::Mountain
-        || (tile.is_building() && !phase)
+        || (tile.terrain == Terrain::Building && !phase)
         || board.unit_at(x, y).is_some()
 }
 
@@ -4580,7 +4580,7 @@ fn sim_projectile(
             mountain_hit = Some((nxu, nyu));
             break;
         }
-        if tile.is_building() && !wdef.phase() {
+        if tile.terrain == Terrain::Building && !wdef.phase() {
             hit_x = nx; hit_y = ny; break;
         }
         if board.unit_at(nxu, nyu).is_some() {
@@ -7486,6 +7486,42 @@ mod tests {
             "Quick-Fire's killed target should still bump the live blocker"
         );
         assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_quick_fire_zero_hp_building_blocks_projectile() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShotAB);
+        board.units[mech].set_boosted(true);
+        let first = add_enemy(&mut board, 1, 3, 1, 4);
+        let target = add_enemy(&mut board, 2, 5, 3, 3);
+        let blocker = add_enemy(&mut board, 3, 6, 3, 3);
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 0;
+
+        let targets = crate::solver::get_weapon_targets(
+            &board,
+            3,
+            3,
+            WId::BruteTcDoubleShotAB,
+            (3, 3),
+            &WEAPONS,
+        );
+        assert!(targets.contains(&(4, 3)));
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::BruteTcDoubleShotAB,
+            (3, 1),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 1);
+        assert_eq!(board.units[target].hp, 3);
+        assert_eq!(board.units[blocker].hp, 3);
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]
