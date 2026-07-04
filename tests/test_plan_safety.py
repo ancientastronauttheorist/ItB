@@ -1412,6 +1412,30 @@ def test_final_turn_kill_objective_blocks_when_short():
     assert safety_loss_profile(audit)["label"] == "objective_loss"
 
 
+def test_final_turn_acid_tank_kill_objective_blocks_when_short():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_AcidTank",
+            turn=4,
+            total_turns=4,
+            mission_kill_target=4,
+            mission_kills_done=3,
+        ),
+        _summary(
+            mission_id="Mission_AcidTank",
+            turn=4,
+            total_turns=4,
+            mission_kill_target=4,
+            mission_kills_done=3,
+            mission_kills_planned=0,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "kill_objective_failed"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
 def test_final_turn_kill_objective_allows_threshold():
     audit = audit_plan_safety(
         _summary(

@@ -115,7 +115,8 @@ fn apply_mosquito_boss_attack(board: &mut Board, x: u8, y: u8, result: &mut Acti
         let old_hp = board.units[idx].hp.max(0) as i32;
         let was_enemy = board.units[idx].is_enemy();
         let was_player = board.units[idx].is_player();
-        let mission_counted = was_enemy && !board.units[idx].minor();
+        let mission_counted =
+            unit_counts_for_mission_kill(board.mission_id.as_str(), &board.units[idx]);
         board.units[idx].set_shield(false);
         board.units[idx].set_frozen(false);
         board.units[idx].hp = 0;
@@ -281,7 +282,9 @@ fn apply_env_danger(
                     result.mechs_killed += 1;
                     result.mech_damage_taken += prev_hp as i32;
                 } else if unit.is_enemy() {
-                    result.record_enemy_kill(!unit.minor());
+                    result.record_enemy_kill(
+                        unit_counts_for_mission_kill(board.mission_id.as_str(), unit)
+                    );
                     result.enemy_damage_dealt += prev_hp as i32;
                     enemy_died_idx = Some(uidx);
                 }
@@ -305,7 +308,9 @@ fn apply_env_danger(
                         } else if unit.is_enemy() {
                             result.enemy_damage_dealt += damage as i32;
                             if unit.hp <= 0 {
-                                result.record_enemy_kill(!unit.minor());
+                                result.record_enemy_kill(
+                                    unit_counts_for_mission_kill(board.mission_id.as_str(), unit)
+                                );
                                 enemy_died_idx = Some(uidx);
                             }
                         }
@@ -325,7 +330,9 @@ fn apply_env_danger(
                     } else if unit.is_enemy() {
                         result.enemy_damage_dealt += 1;
                         if unit.hp <= 0 {
-                            result.record_enemy_kill(!unit.minor());
+                            result.record_enemy_kill(
+                                unit_counts_for_mission_kill(board.mission_id.as_str(), unit)
+                            );
                             enemy_died_idx = Some(uidx);
                         }
                     }
@@ -2103,7 +2110,12 @@ fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
             if board.units[idx].hp > 0 {
                 board.units[idx].hp = 0;
                 if board.units[idx].is_enemy() {
-                    result.record_enemy_kill(!board.units[idx].minor());
+                    result.record_enemy_kill(
+                        unit_counts_for_mission_kill(
+                            board.mission_id.as_str(),
+                            &board.units[idx],
+                        )
+                    );
                     on_enemy_death(board, idx, &mut result);
                 }
             }

@@ -802,7 +802,12 @@ pub(crate) fn on_enemy_death(
                     board.units[j].max_hp -= 1;
                     board.units[j].hp -= 1;
                     if board.units[j].hp <= 0 {
-                        result.record_enemy_kill(!board.units[j].minor());
+                        result.record_enemy_kill(
+                            unit_counts_for_mission_kill(
+                                board.mission_id.as_str(),
+                                &board.units[j],
+                            )
+                        );
                     }
                 }
             }
@@ -824,7 +829,12 @@ pub(crate) fn on_enemy_death(
                     board.units[j].max_hp -= 1;
                     board.units[j].hp -= 1;
                     if board.units[j].hp <= 0 {
-                        result.record_enemy_kill(!board.units[j].minor());
+                        result.record_enemy_kill(
+                            unit_counts_for_mission_kill(
+                                board.mission_id.as_str(),
+                                &board.units[j],
+                            )
+                        );
                     }
                 }
             }
@@ -1144,6 +1154,7 @@ fn settle_multi_hit_health_aura(
         return;
     }
 
+    let mission_id_for_kill_credit = board.mission_id.clone();
     for saved in buffed_units {
         if let Some(unit) = board
             .units
@@ -1161,7 +1172,12 @@ fn settle_multi_hit_health_aura(
                 unit.max_hp -= 1;
                 unit.hp -= 1;
                 if unit.hp <= 0 {
-                    result.record_enemy_kill(!unit.minor());
+                    result.record_enemy_kill(
+                        unit_counts_for_mission_kill(
+                            mission_id_for_kill_credit.as_str(),
+                            unit,
+                        )
+                    );
                 }
             }
         }
@@ -1360,7 +1376,8 @@ fn finish_instant_unit_death(
 
     let is_enemy = board.units[unit_idx].is_enemy();
     let is_player = board.units[unit_idx].is_player();
-    let mission_counted = is_enemy && !board.units[unit_idx].minor();
+    let mission_counted =
+        unit_counts_for_mission_kill(board.mission_id.as_str(), &board.units[unit_idx]);
     let has_acid = board.units[unit_idx].acid();
     let dying_uid = board.units[unit_idx].uid;
     let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
@@ -1637,7 +1654,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                 result.enemy_damage_dealt += actual as i32;
                 if unit.hp <= 0 {
                     result.record_enemy_kill_with_leech_credit(
-                        !unit.minor(),
+                        unit_counts_for_mission_kill(board.mission_id.as_str(), unit),
                         matches!(
                             source,
                             DamageSource::Weapon
@@ -1796,7 +1813,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
                         unit.hp = 0;
                         if unit.is_enemy() {
-                            result.record_enemy_kill(!unit.minor());
+                            result.record_enemy_kill(
+                                unit_counts_for_mission_kill(board.mission_id.as_str(), unit)
+                            );
                         }
                     }
                 }
@@ -1832,7 +1851,8 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     if unit.hp > 0 && !unit.effectively_flying() {
                         unit.hp = 0;
                         if unit.is_enemy() {
-                            let mission_counted = !unit.minor();
+                            let mission_counted =
+                                unit_counts_for_mission_kill(board.mission_id.as_str(), unit);
                             result.record_enemy_kill(mission_counted);
                             if mission_counted {
                                 result.events.push(format!(
@@ -5228,7 +5248,8 @@ fn apply_trapped_death_damage(
                 && unit.receives_psion_aura()
                 && tname != "Jelly_Explode1"
                 && tname != "Jelly_Boss";
-            let mission_counted = is_enemy && !unit.minor();
+            let mission_counted =
+                unit_counts_for_mission_kill(board.mission_id.as_str(), unit);
             killed_enemy_uid = unit.uid;
 
             unit.hp = 0;
@@ -9367,6 +9388,33 @@ mod tests {
 
         assert_eq!(result.enemies_killed, 1);
         assert_eq!(result.mission_kills, 0);
+    }
+
+    #[test]
+    fn test_acid_tank_clean_kill_does_not_advance_mission_kill_counter() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_AcidTank".to_string();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimePunchmech);
+        add_enemy(&mut board, 91, 3, 4, 2);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mission_kills, 0);
+    }
+
+    #[test]
+    fn test_acid_tank_acid_kill_advances_mission_kill_counter() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_AcidTank".to_string();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimePunchmech);
+        let enemy_idx = add_enemy(&mut board, 91, 3, 4, 4);
+        board.units[enemy_idx].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mission_kills, 1);
     }
 
     // ── Prime_Spear path_size=2 stab (Lua weapons_prime.lua:792-846) ──────────

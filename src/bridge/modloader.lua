@@ -1262,15 +1262,16 @@ local function dump_state()
     --   BONUS_KILL_FIVE = 6 in the enum
     --   BONUS_PACIFIST = 9 in the enum
     --   mission.BonusObjs is the chosen bonus list (random from BonusPool)
-    --   mission.KilledVek is cumulative this-mission kills
+    --   mission.KilledVek is cumulative generic kill-count progress
     --   mission:GetKillBonus() is difficulty-scaled (5 easy / 7 normal/hard)
     --   mission:GetPacifistCount() is difficulty-scaled (4 easy / 5 normal/hard / 6 unfair)
     -- Mission_AcidTank is a built-in Detritus objective rather than a
-    -- BONUS_KILL_FIVE entry: kill 4 acid-inflicted Vek. It still advances
-    -- mission.KilledVek, so expose it through the same solver fields.
+    -- BONUS_KILL_FIVE entry: kill 4 acid-inflicted Vek. It tracks mission.AcidKills,
+    -- so expose that through the same solver fields.
     pcall(function()
         local mission = _ITB_CURRENT_MISSION
-        if mission and mission.ID == "Mission_AcidTank" then
+        local is_acid_tank = mission and mission.ID == "Mission_AcidTank"
+        if is_acid_tank then
             state.mission_kill_target = 4
         end
         if mission and mission.BonusObjs then
@@ -1293,7 +1294,9 @@ local function dump_state()
                 end
             end
         end
-        if mission and mission.KilledVek ~= nil then
+        if is_acid_tank and mission.AcidKills ~= nil then
+            state.mission_kills_done = mission.AcidKills
+        elseif mission and mission.KilledVek ~= nil then
             state.mission_kills_done = mission.KilledVek
         end
     end)

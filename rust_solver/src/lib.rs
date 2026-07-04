@@ -2130,7 +2130,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v327 - Soldier/Boss Psion health aura persists across both Quick-Fire
 //   Rockets in one activation, then tears down after the second rocket if the
 //   Psion died. Pre-v327 corpus archived as failure_db_snapshot_sim_v326.jsonl.
-pub const SIMULATOR_VERSION: u32 = 327;
+// v328 - Mission_AcidTank mission-kill projection counts only acid-inflicted
+//   non-minor enemy deaths and imports live mission.AcidKills progress.
+//   Pre-v328 corpus archived as failure_db_snapshot_sim_v327.jsonl.
+pub const SIMULATOR_VERSION: u32 = 328;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

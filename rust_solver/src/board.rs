@@ -461,15 +461,16 @@ pub struct Board {
                                 // 2026-04-28.
     pub mission_id: String,     // Mission class name from bridge (e.g. "Mission_Dam").
                                 // Empty when the bridge couldn't resolve it.
-    pub mission_kill_target: u8,   // "Kill at least N enemies" bonus target from mission:GetKillBonus()
-                                // (7 on Normal/Hard, 5 on Easy). 0 when the mission
-                                // doesn't have BONUS_KILL_FIVE in its BonusObjs.
+    pub mission_kill_target: u8,   // "Kill at least N enemies" target. Generic
+                                // BONUS_KILL_FIVE comes from mission:GetKillBonus();
+                                // Mission_AcidTank is fixed at 4 acid kills.
     pub mission_kill_limit: u8,    // "Kill N or fewer enemies" bonus cap from
                                 // mission:GetPacifistCount(). 0 when the mission
                                 // doesn't have BONUS_PACIFIST in its BonusObjs.
-    pub mission_kills_done: u8,    // Cumulative this-mission kills (mission.KilledVek).
-                                // Combined with the simulated turn's kills to decide
-                                // whether a plan crosses a target or exceeds a cap.
+    pub mission_kills_done: u8,    // Cumulative this-mission kill counter
+                                // (mission.KilledVek, or mission.AcidKills for
+                                // Mission_AcidTank). Combined with simulated turn
+                                // kills to decide target/cap outcomes.
     pub mission_mountain_target: u8, // Mission_Force "Destroy 2 mountains" target.
     pub mission_mountains_destroyed: u8, // Cumulative EVENT_MOUNTAIN_DESTROYED count.
     pub mission_mountain_tiles: u64, // bitset: current mountain tiles at solve input.
@@ -820,6 +821,16 @@ impl Board {
         }
         destroyed
     }
+}
+
+pub fn unit_counts_for_mission_kill(mission_id: &str, unit: &Unit) -> bool {
+    if !unit.is_enemy() || unit.minor() {
+        return false;
+    }
+    if mission_id == "Mission_AcidTank" {
+        return unit.acid();
+    }
+    true
 }
 
 // ── Action Result ────────────────────────────────────────────────────────────

@@ -52,16 +52,17 @@ pub struct JsonInput {
     pub environment_wind_dir: Option<i8>,
     pub eval_weights: Option<EvalWeights>,
     pub mission_id: Option<String>,
-    /// "Kill at least N enemies" bonus target (mission:GetKillBonus(), difficulty-scaled).
-    /// Missing / 0 → no bonus on this mission; evaluator's step-function
+    /// "Kill at least N enemies" target. Generic kill bonuses come from
+    /// mission:GetKillBonus(); Mission_AcidTank is fixed at 4 acid kills.
+    /// Missing / 0 -> no kill target on this mission; evaluator's step-function
     /// scoring is a no-op in that case.
     pub mission_kill_target: Option<u8>,
     /// "Kill N or fewer enemies" bonus cap (mission:GetPacifistCount(),
     /// difficulty-scaled). Missing / 0 → no cap on this mission.
     pub mission_kill_limit: Option<u8>,
-    /// Cumulative this-mission kills (mission.KilledVek). Combined with the
-    /// simulated turn's kills to decide whether a plan crosses or exceeds a
-    /// kill-count objective.
+    /// Cumulative this-mission kill counter (mission.KilledVek, or
+    /// mission.AcidKills for Mission_AcidTank). Combined with simulated turn
+    /// kills to decide whether a plan crosses or exceeds a kill-count objective.
     pub mission_kills_done: Option<u8>,
     /// Mission_Force "Destroy 2 mountains" objective progress.
     pub mission_mountain_target: Option<u8>,

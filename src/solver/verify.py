@@ -1540,7 +1540,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v327 - Soldier/Boss Psion health aura persists across both Quick-Fire Rockets
 # in one activation, then tears down after the second rocket if the Psion died.
 # Pre-v327 corpus archived as failure_db_snapshot_sim_v326.jsonl.
-SIMULATOR_VERSION = 327
+# v328 - Mission_AcidTank mission-kill projection counts only acid-inflicted
+# non-minor enemy deaths and imports live mission.AcidKills progress.
+# Pre-v328 corpus archived as failure_db_snapshot_sim_v327.jsonl.
+SIMULATOR_VERSION = 328
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
