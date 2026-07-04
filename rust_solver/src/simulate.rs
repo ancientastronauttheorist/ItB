@@ -2535,6 +2535,11 @@ const RICOCHET_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     ..DEFAULT_PUSH_POLICY
 };
 
+const QUICK_FIRE_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_bumps_live_blocker: true,
+    ..DEFAULT_PUSH_POLICY
+};
+
 const ARACHNOID_BITE_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     ..DEFAULT_PUSH_POLICY
@@ -4637,6 +4642,8 @@ fn sim_projectile(
             ACID_PROJECTOR_PUSH_POLICY
         } else if is_brute_mirrorshot_weapon(weapon_id) {
             MIRRORSHOT_PUSH_POLICY
+        } else if is_quick_fire_rockets(weapon_id) {
+            QUICK_FIRE_PUSH_POLICY
         } else {
             DEFAULT_PUSH_POLICY
         };
@@ -7452,6 +7459,33 @@ mod tests {
         );
         assert!(!board.soldier_psion);
         assert_eq!(result.enemies_killed, 2);
+    }
+
+    #[test]
+    fn test_quick_fire_boosted_killed_target_bumps_live_blocker() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShotAB);
+        board.units[mech].set_boosted(true);
+        let first = add_enemy(&mut board, 3, 1, 3, 4);
+        let target = add_enemy(&mut board, 1, 3, 5, 3);
+        let blocker = add_mech(&mut board, 2, 3, 6, 3, WId::ScienceRainingFire);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::BruteTcDoubleShotAB,
+            (1, 3),
+            Some((3, 5)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[first].hp, 1);
+        assert_eq!(board.units[target].hp, 0);
+        assert_eq!(
+            board.units[blocker].hp, 2,
+            "Quick-Fire's killed target should still bump the live blocker"
+        );
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]

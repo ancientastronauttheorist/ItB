@@ -2133,7 +2133,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v328 - Mission_AcidTank mission-kill projection counts only acid-inflicted
 //   non-minor enemy deaths and imports live mission.AcidKills progress.
 //   Pre-v328 corpus archived as failure_db_snapshot_sim_v327.jsonl.
-pub const SIMULATOR_VERSION: u32 = 328;
+// v329 - Quick-Fire Rockets killed-target pushes can still bump a live blocker,
+//   matching Heat Sinkers live bridge evidence.
+//   Pre-v329 corpus archived as failure_db_snapshot_sim_v328.jsonl.
+pub const SIMULATOR_VERSION: u32 = 329;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
