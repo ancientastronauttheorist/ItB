@@ -439,7 +439,8 @@ def _overlay_modeled_upgrade(
         weapons.append("")
     expected_base, _suffix = _strip_upgrade_suffix(upgraded)
     current = weapons[idx]
-    if current in ("", expected_base, upgraded):
+    current_base, _current_suffix = _strip_upgrade_suffix(current)
+    if current in ("", expected_base, upgraded) or current_base == expected_base:
         weapons[idx] = upgraded
 
 
@@ -465,7 +466,8 @@ def _overlay_mission_pawn_weapons_from_loadout(
                 continue
             expected_base, _suffix = _strip_upgrade_suffix(upgraded)
             current = getattr(pawn, attr, "")
-            if current in ("", expected_base, upgraded):
+            current_base, _current_suffix = _strip_upgrade_suffix(current)
+            if current in ("", expected_base, upgraded) or current_base == expected_base:
                 setattr(pawn, attr, upgraded)
 
 

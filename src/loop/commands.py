@@ -1803,7 +1803,13 @@ def _enrich_bridge_mech_weapons_from_save(
             while len(weapons) <= slot:
                 weapons.append("")
             current = weapons[slot]
-            if current and current != base and current != upgraded:
+            current_base, _current_suffix = _strip_upgrade_suffix(current)
+            if (
+                current
+                and current != base
+                and current != upgraded
+                and current_base != base
+            ):
                 continue
             if current == upgraded:
                 continue

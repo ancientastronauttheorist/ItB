@@ -253,6 +253,45 @@ SquadData = {
     ]
 
 
+def test_load_game_state_replaces_stale_current_weapon_suffix(tmp_path, monkeypatch):
+    profile_dir = tmp_path / "profile_Test"
+    profile_dir.mkdir()
+    (profile_dir / "saveData.lua").write_text(
+        """
+GameData = {
+["network"] = 5,
+["networkMax"] = 7,
+["difficulty"] = 0,
+["current"] = {
+["mechs"] = {"InfernoMech", "DoubletankMech", "NapalmMech", },
+["weapons"] = {"Prime_Flamespreader", "", "Brute_TC_DoubleShot_A", "", "Science_RainingFire", "Passive_FireBoost", },
+},
+}
+
+SquadData = {
+["pawn1"] = {
+["primary"] = "Brute_TC_DoubleShot",
+["primary_mod1"] = {1, },
+["primary_mod2"] = {3, 3, 3, },
+},
+}
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(save_parser, "SAVE_DIR", Path(tmp_path))
+
+    state = save_parser.load_game_state("Test")
+
+    assert state.weapons == [
+        "Prime_Flamespreader",
+        "",
+        "Brute_TC_DoubleShot_AB",
+        "",
+        "Science_RainingFire",
+        "Passive_FireBoost",
+    ]
+
+
 def test_ricochet_rocket_damage_upgrade_overlays():
     mission = extract_mission_state(
         {"sMission": "Mission_Test"},

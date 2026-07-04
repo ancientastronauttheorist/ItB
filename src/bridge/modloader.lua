@@ -129,11 +129,59 @@ local function log_bridge(msg)
     end
 end
 
---------------------------------------------------------------------
 -- Read all save-file-derived data in a single I/O pass:
 -- grid power, queued shots, and conveyor belts.
 -- Reads saveData.lua (preferred) or undoSave.lua (fallback).
 --------------------------------------------------------------------
+local function strip_upgrade_suffix_lua(weapon_id)
+    if type(weapon_id) ~= "string" then return "", "" end
+    for _, suffix in ipairs({"_AB", "_A", "_B"}) do
+        local n = string.len(suffix)
+        if string.sub(weapon_id, -n) == suffix then
+            return string.sub(weapon_id, 1, string.len(weapon_id) - n), suffix
+        end
+    end
+    return weapon_id, ""
+end
+
+local function save_mod_group_fully_powered(block, key)
+    local blob = block:match('%["' .. key .. '"%]%s*=%s*{(.-)}')
+    if not blob then return false end
+    local saw_value = false
+    for value in blob:gmatch("%-?%d+") do
+        saw_value = true
+        if (tonumber(value) or 0) <= 0 then
+            return false
+        end
+    end
+    return saw_value
+end
+
+local function overlay_current_weapon_from_pawn_mods(result, uid, slot, base_weapon, mod1_key, mod2_key, block)
+    if type(uid) ~= "number" or uid < 0 or uid > 2 then return end
+    if type(base_weapon) ~= "string" or base_weapon == "" then return end
+
+    local powered_a = save_mod_group_fully_powered(block, mod1_key)
+    local powered_b = save_mod_group_fully_powered(block, mod2_key)
+    local candidates = {}
+    if powered_a and powered_b then candidates[#candidates + 1] = base_weapon .. "_AB" end
+    if powered_a then candidates[#candidates + 1] = base_weapon .. "_A" end
+    if powered_b then candidates[#candidates + 1] = base_weapon .. "_B" end
+
+    local idx = uid * 2 + slot + 1
+    local current = result.current_weapons[idx] or ""
+    local current_base = strip_upgrade_suffix_lua(current)
+    for _, upgraded in ipairs(candidates) do
+        if _G[upgraded] ~= nil then
+            local expected_base = strip_upgrade_suffix_lua(upgraded)
+            if current == "" or current == expected_base or current == upgraded or current_base == expected_base then
+                result.current_weapons[idx] = upgraded
+                return
+            end
+        end
+    end
+end
+
 local function _read_save_data()
     local result = {
         network = nil,
@@ -211,6 +259,20 @@ local function _read_save_data()
         local pid = block:match('%["id"%]%s*=%s*(%d+)')
         if pid then
             local pid_n = tonumber(pid)
+            if pid_n and pid_n >= 0 and pid_n <= 2 then
+                local primary = block:match('%["primary"%]%s*=%s*"([^"]+)"')
+                if primary then
+                    overlay_current_weapon_from_pawn_mods(
+                        result, pid_n, 0, primary,
+                        "primary_mod1", "primary_mod2", block)
+                end
+                local secondary = block:match('%["secondary"%]%s*=%s*"([^"]+)"')
+                if secondary then
+                    overlay_current_weapon_from_pawn_mods(
+                        result, pid_n, 1, secondary,
+                        "secondary_mod1", "secondary_mod2", block)
+                end
+            end
             local off = block:match('%["offset"%]%s*=%s*(%d+)')
             if off then
                 result.pawn_offsets[pid_n] = tonumber(off)
