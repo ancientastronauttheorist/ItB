@@ -2127,7 +2127,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   activation even if the first rocket kills the Psion, matching live
 //   Mission_ShamanBoss evidence. Pre-v326 corpus archived as
 //   failure_db_snapshot_sim_v325.jsonl.
-pub const SIMULATOR_VERSION: u32 = 326;
+// v327 - Soldier/Boss Psion health aura persists across both Quick-Fire
+//   Rockets in one activation, then tears down after the second rocket if the
+//   Psion died. Pre-v327 corpus archived as failure_db_snapshot_sim_v326.jsonl.
+pub const SIMULATOR_VERSION: u32 = 327;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

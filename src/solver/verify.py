@@ -1537,7 +1537,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v326 - Shell Psion armor persists across both Quick-Fire Rockets in one
 # activation even if the first rocket kills the Psion. Pre-v326 corpus
 # archived as failure_db_snapshot_sim_v325.jsonl.
-SIMULATOR_VERSION = 326
+# v327 - Soldier/Boss Psion health aura persists across both Quick-Fire Rockets
+# in one activation, then tears down after the second rocket if the Psion died.
+# Pre-v327 corpus archived as failure_db_snapshot_sim_v326.jsonl.
+SIMULATOR_VERSION = 327
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

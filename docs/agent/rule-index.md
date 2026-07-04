@@ -411,3 +411,6 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 398 | 705 | Enemy-phase pre-attack deaths clear before later enemy-phase steps. | `docs/agent/solver-reference.md` |
 | 399 | 707 | Do not raw-click unsupported Control Shot recoveries. | `docs/agent/safety-gates.md` |
 | 400 | 709 | Spawned Arachnoid Bite killed targets can corpse-bump live blockers. | `docs/agent/solver-reference.md` |
+| 401 | 711 | Do not re-activate a same-turn no-active End Turn fallback and then continue combat. | `docs/agent/safety-gates.md` |
+| 402 | 713 | Raw queued building targets beat compact threat summaries after manual recovery. | `docs/agent/safety-gates.md` |
+| 403 | 715 | Health Psion HP persists through both Quick-Fire Rockets. | `docs/agent/solver-reference.md` |

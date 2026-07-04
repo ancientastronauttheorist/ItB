@@ -1070,6 +1070,104 @@ fn settle_multi_hit_armor_aura(board: &mut Board) {
     }
 }
 
+#[derive(Clone, Copy)]
+struct MultiHitHealthAuraUnit {
+    uid: u16,
+    max_hp: i8,
+}
+
+fn multi_hit_health_aura_snapshot(board: &Board) -> Vec<MultiHitHealthAuraUnit> {
+    if !board.soldier_psion && !board.boss_psion {
+        return Vec::new();
+    }
+    let mut buffed = Vec::new();
+    for i in 0..board.unit_count as usize {
+        let unit = &board.units[i];
+        let tname = unit.type_name_str();
+        if unit.hp > 0
+            && unit.receives_psion_aura()
+            && tname != "Jelly_Health1"
+            && tname != "Jelly_Boss"
+        {
+            buffed.push(MultiHitHealthAuraUnit {
+                uid: unit.uid,
+                max_hp: unit.max_hp,
+            });
+        }
+    }
+    buffed
+}
+
+fn restore_multi_hit_health_aura(board: &mut Board, buffed_units: &[MultiHitHealthAuraUnit]) {
+    if buffed_units.is_empty() {
+        return;
+    }
+    let health_alive = (0..board.unit_count as usize).any(|j| {
+        matches!(board.units[j].type_name_str(), "Jelly_Health1" | "Jelly_Boss")
+            && board.units[j].hp > 0
+    });
+    if health_alive {
+        return;
+    }
+    for saved in buffed_units {
+        if let Some(unit) = board
+            .units
+            .iter_mut()
+            .take(board.unit_count as usize)
+            .find(|unit| unit.uid == saved.uid)
+        {
+            if unit.hp > 0 && unit.is_enemy() && unit.max_hp < saved.max_hp {
+                let delta = saved.max_hp - unit.max_hp;
+                unit.max_hp += delta;
+                unit.hp += delta;
+            }
+        }
+    }
+}
+
+fn settle_multi_hit_health_aura(
+    board: &mut Board,
+    buffed_units: &[MultiHitHealthAuraUnit],
+    result: &mut ActionResult,
+) {
+    if buffed_units.is_empty() {
+        return;
+    }
+
+    let soldier_alive = (0..board.unit_count as usize)
+        .any(|j| board.units[j].type_name_str() == "Jelly_Health1" && board.units[j].hp > 0);
+    let boss_alive = (0..board.unit_count as usize)
+        .any(|j| board.units[j].type_name_str() == "Jelly_Boss" && board.units[j].hp > 0);
+    board.soldier_psion = soldier_alive;
+    board.boss_psion = boss_alive;
+    if soldier_alive || boss_alive {
+        return;
+    }
+
+    for saved in buffed_units {
+        if let Some(unit) = board
+            .units
+            .iter_mut()
+            .take(board.unit_count as usize)
+            .find(|unit| unit.uid == saved.uid)
+        {
+            let tname = unit.type_name_str();
+            if unit.hp > 0
+                && unit.receives_psion_aura()
+                && tname != "Jelly_Health1"
+                && tname != "Jelly_Boss"
+                && unit.max_hp >= saved.max_hp
+            {
+                unit.max_hp -= 1;
+                unit.hp -= 1;
+                if unit.hp <= 0 {
+                    result.record_enemy_kill(!unit.minor());
+                }
+            }
+        }
+    }
+}
+
 fn next_spawn_uid(board: &Board) -> u16 {
     let mut new_uid: u16 = 1;
     for i in 0..board.unit_count as usize {
@@ -4331,13 +4429,20 @@ fn sim_quick_fire_rockets(
 
     let before = board.clone();
     let quick_fire_armored_uids = multi_hit_armor_aura_snapshot(board);
+    let quick_fire_health_uids = multi_hit_health_aura_snapshot(board);
     sim_projectile(board, ax, ay, weapon_id, wdef, Some(first_dir), result);
     if !quick_fire_armored_uids.is_empty() {
         restore_multi_hit_armor_aura(board, &quick_fire_armored_uids);
     }
+    if !quick_fire_health_uids.is_empty() {
+        restore_multi_hit_health_aura(board, &quick_fire_health_uids);
+    }
     sim_projectile(board, ax, ay, weapon_id, wdef, Some(second_dir), result);
     if !quick_fire_armored_uids.is_empty() {
         settle_multi_hit_armor_aura(board);
+    }
+    if !quick_fire_health_uids.is_empty() {
+        settle_multi_hit_health_aura(board, &quick_fire_health_uids, result);
     }
 
     let damage = enemy_hp_lost_between(&before, board);
@@ -7293,6 +7398,39 @@ mod tests {
         assert!(!board.armor_psion);
         assert!(!board.units[centipede].armor());
         assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_quick_fire_health_psion_aura_lasts_until_second_rocket() {
+        let mut board = make_test_board();
+        board.soldier_psion = true;
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::BruteTcDoubleShotA);
+        board.units[mech].set_boosted(true);
+        let psion = add_enemy_type(&mut board, 11, 3, 5, 2, "Jelly_Health1");
+        let mosquito = add_enemy_type(&mut board, 12, 5, 3, 3, "Mosquito1");
+        let napalm = add_mech(&mut board, 13, 6, 3, 2, WId::ScienceRainingFire);
+        board.units[mosquito].max_hp = 3;
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::BruteTcDoubleShotA,
+            (3, 5),
+            Some((5, 3)),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[psion].hp, 0);
+        assert_eq!(
+            board.units[napalm].hp, 1,
+            "Health aura should persist through the second rocket so Mosquito bumps Napalm"
+        );
+        assert_eq!(
+            board.units[mosquito].hp, 0,
+            "Mosquito dies only after the post-activation Health Psion aura teardown"
+        );
+        assert!(!board.soldier_psion);
+        assert_eq!(result.enemies_killed, 2);
     }
 
     #[test]
