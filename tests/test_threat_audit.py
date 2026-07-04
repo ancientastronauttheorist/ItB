@@ -353,6 +353,87 @@ def test_threat_audit_attacker_will_die_to_soldier_psion_fire_teardown():
     )
 
 
+def test_threat_audit_attacker_will_die_to_boss_psion_fire_teardown():
+    board = Board()
+    board.tile(5, 6).terrain = "building"
+    board.tile(5, 6).building_hp = 2
+    board.units.append(_enemy(
+        uid=10,
+        pawn_type="Bouncer1",
+        x=4,
+        y=6,
+        tx=5,
+        ty=6,
+        hp=2,
+    ))
+    board.units[-1].weapon = "BouncerAtk1"
+    board.units[-1].fire = True
+    board.units.append(_enemy(
+        uid=20,
+        pawn_type="Jelly_Boss",
+        x=5,
+        y=5,
+        tx=-1,
+        ty=-1,
+        hp=1,
+    ))
+    board.units[-1].weapon = ""
+    board.units[-1].fire = True
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_soldier_psion_teardown"
+    )
+
+
+def test_threat_audit_boss_fire_teardown_blocked_by_surviving_soldier_psion():
+    board = Board()
+    board.tile(5, 6).terrain = "building"
+    board.tile(5, 6).building_hp = 2
+    board.units.append(_enemy(
+        uid=10,
+        pawn_type="Bouncer1",
+        x=4,
+        y=6,
+        tx=5,
+        ty=6,
+        hp=2,
+    ))
+    board.units[-1].weapon = "BouncerAtk1"
+    board.units[-1].fire = True
+    board.units.append(_enemy(
+        uid=20,
+        pawn_type="Jelly_Boss",
+        x=5,
+        y=5,
+        tx=-1,
+        ty=-1,
+        hp=1,
+    ))
+    board.units[-1].weapon = ""
+    board.units[-1].fire = True
+    board.units.append(_enemy(
+        uid=30,
+        pawn_type="Jelly_Health1",
+        x=5,
+        y=4,
+        tx=-1,
+        ty=-1,
+        hp=2,
+    ))
+    board.units[-1].weapon = ""
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+
+
 def test_threat_audit_attacker_will_be_frozen_by_environment():
     board = _board()
     board.environment_freeze.add((4, 4))

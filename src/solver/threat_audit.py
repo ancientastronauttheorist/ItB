@@ -195,20 +195,31 @@ def _fire_tick_kills_unit(board: Board, unit: Unit) -> bool:
     return _unit_takes_fire_tick(board, unit) and unit.hp <= 1
 
 
-def _soldier_psion_will_die_to_fire(board: Board) -> bool:
-    return any(
-        u.type == "Jelly_Health1" and u.hp > 0 and _fire_tick_kills_unit(board, u)
-        for u in board.units
-    )
+_HEALTH_AURA_SOURCE_TYPES = {"Jelly_Health1", "Jelly_Boss"}
+
+
+def _health_psion_aura_will_drop_to_fire(board: Board) -> bool:
+    live_sources = [
+        u for u in board.units
+        if u.type in _HEALTH_AURA_SOURCE_TYPES and u.hp > 0
+    ]
+    if not live_sources:
+        return False
+
+    any_source_dies = False
+    for source in live_sources:
+        if _fire_tick_kills_unit(board, source):
+            any_source_dies = True
+            continue
+        return False
+    return any_source_dies
 
 
 def _will_die_to_soldier_psion_fire_teardown(board: Board, attacker: Unit) -> bool:
-    """True when fire kills Soldier Psion and HP-aura teardown kills attacker."""
-    if not _soldier_psion_will_die_to_fire(board):
+    """True when fire drops the health aura and teardown kills attacker."""
+    if not _health_psion_aura_will_drop_to_fire(board):
         return False
-    if any(u.type == "Jelly_Boss" and u.hp > 0 for u in board.units):
-        return False
-    if not attacker.receives_psion_aura or attacker.type in {"Jelly_Health1", "Jelly_Boss"}:
+    if not attacker.receives_psion_aura or attacker.type in _HEALTH_AURA_SOURCE_TYPES:
         return False
 
     hp_after_fire = attacker.hp - 1 if _unit_takes_fire_tick(board, attacker) else attacker.hp
