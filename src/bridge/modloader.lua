@@ -2244,6 +2244,29 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                    " -> " .. tostring(wname) .. " source=" .. tostring(wsource))
     end
     local source = pawn:GetSpace()
+    -- pawn:FireWeapon() applies Seismic Capacitor's damage through the file
+    -- bridge, but some engine builds omit its DIR_FLIP retarget side effect.
+    -- Snapshot a live queued enemy now so we can add only the missing flip
+    -- after FireWeapon returns.  GetQueuedShot is the same C++ live probe used
+    -- by state extraction to override save-stale piQueuedShot values.
+    local seismic_flip_before = nil
+    if string.find(wname, "^Science_KO_Crack") ~= nil then
+        local target = Board:GetPawn(Point(tx, ty))
+        if target ~= nil and not target:IsDead() and target:GetTeam() == TEAM_ENEMY then
+            local ok_id, target_id = pcall(function() return target:GetId() end)
+            local ok_qs, queued = pcall(function() return target:GetQueuedShot() end)
+            if ok_id and ok_qs and queued ~= nil
+                    and type(queued.x) == "number" and type(queued.y) == "number"
+                    and queued.x >= 0 and queued.y >= 0
+                    and queued.x <= 7 and queued.y <= 7 then
+                seismic_flip_before = {
+                    id = target_id,
+                    x = queued.x,
+                    y = queued.y,
+                }
+            end
+        end
+    end
     if string.find(wname, "^Prime_TC_Punt") ~= nil then
         local ok_punt, method = execute_prime_tc_punt(pawn, wname, tx, ty)
         if restore_wname ~= nil then
@@ -2289,6 +2312,41 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     end
     log_bridge("FIRE: " .. wname .. " slot=" .. slot .. " " ..
                source.x .. "," .. source.y .. " -> " .. tx .. "," .. ty)
+
+    if seismic_flip_before ~= nil then
+        local target = Board:GetPawn(Point(tx, ty))
+        local same_target = false
+        if target ~= nil and not target:IsDead() and target:GetTeam() == TEAM_ENEMY then
+            local ok_id, target_id = pcall(function() return target:GetId() end)
+            same_target = ok_id and target_id == seismic_flip_before.id
+        end
+        if same_target then
+            local ok_qs, queued = pcall(function() return target:GetQueuedShot() end)
+            local unchanged = ok_qs and queued ~= nil
+                and queued.x == seismic_flip_before.x
+                and queued.y == seismic_flip_before.y
+            if unchanged then
+                local flip = SpaceDamage(Point(tx, ty), 0)
+                flip.iPush = DIR_FLIP
+                local ok_flip, flip_err = pcall(function()
+                    Board:DamageSpace(flip)
+                end)
+                if ok_flip then
+                    log_bridge(string.format(
+                        "SEISMIC_FLIP_FALLBACK: uid=%s queued=(%d,%d)",
+                        tostring(seismic_flip_before.id),
+                        seismic_flip_before.x, seismic_flip_before.y))
+                else
+                    log_bridge("WARN: Seismic DIR_FLIP fallback failed for uid=" ..
+                               tostring(seismic_flip_before.id) .. ": " ..
+                               tostring(flip_err))
+                end
+            else
+                log_bridge("SEISMIC_FLIP_ENGINE: uid=" ..
+                           tostring(seismic_flip_before.id))
+            end
+        end
+    end
 
     -- Transit-damage workaround for Brute_Jetmech (Aerial Bombs) and
     -- Brute_Bombrun (Bombing Run). The game's weapons_brute.lua
