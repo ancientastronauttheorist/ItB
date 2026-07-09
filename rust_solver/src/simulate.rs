@@ -288,7 +288,6 @@ fn apply_pod_on_land(board: &mut Board, unit_idx: usize, result: &mut ActionResu
 ///  13. WebbEgg1 adjacency refresh → newly adjacent units become webbed
 fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     if board.units[unit_idx].hp <= 0 { return; }
-    if !board.units[unit_idx].is_player() { return; }
     let x = board.units[unit_idx].x;
     let y = board.units[unit_idx].y;
     if !board.tile(x, y).repair_platform() { return; }
@@ -304,7 +303,9 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
             .min(board.units[unit_idx].max_hp);
     }
     let healed = (board.units[unit_idx].hp - before).max(0) as i32;
-    if healed > 0 && board.units[unit_idx].is_player() && board.units[unit_idx].is_mech() {
+    let counts_for_objective = board.units[unit_idx].is_player()
+        && board.units[unit_idx].is_mech();
+    if healed > 0 && counts_for_objective {
         result.mech_hp_repaired += healed;
         result.events.push(format!(
             "mech_hp_repaired:repair_platform:{}:{}",
@@ -312,8 +313,10 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
         ));
     }
     refresh_arrogant_boost(&mut board.units[unit_idx]);
-    board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
-    result.repair_platforms_used += 1;
+    if counts_for_objective {
+        board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
+        result.repair_platforms_used += 1;
+    }
     result.events.push(format!(
         "repair_platform:{}:{}:{}->{}",
         x, y, before, board.units[unit_idx].hp
@@ -3560,10 +3563,19 @@ fn sim_hydraulic_lifter(
     }
 
     let landing_was_forest = board.tile(tx, ty).terrain == Terrain::Forest;
+    let landing_was_repair_platform = board.tile(tx, ty).repair_platform();
     board.units[unit_idx].x = tx;
     board.units[unit_idx].y = ty;
-    apply_landing_effects(board, unit_idx, result);
-    apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+    if landing_was_repair_platform {
+        // Live Mission_Repair resolves the Lifter's landing damage before the
+        // item heal. The item applies to enemies too, but only player mechs
+        // advance the mission's Use 3 Repair Platforms counter.
+        apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+        apply_landing_effects(board, unit_idx, result);
+    } else {
+        apply_landing_effects(board, unit_idx, result);
+        apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+    }
     if landing_was_forest {
         apply_fire_tile_pickup(board, unit_idx, tx, ty, result);
     }
@@ -7998,6 +8010,26 @@ mod tests {
         assert!(board.units[enemy].fire(), "thrown forest-landing target should catch fire");
         assert_eq!(board.tile(5, 3).terrain, Terrain::Ground);
         assert!(board.tile(5, 3).on_fire(), "landing Forest should become burning Ground");
+    }
+
+    #[test]
+    fn test_hydraulic_lifter_enemy_landing_damage_precedes_repair_platform_heal() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 2, 4, WId::PrimeTcPunt);
+        let enemy = add_enemy_type(&mut board, 104, 4, 2, 3, "Scorpion1");
+        board.tile_mut(5, 2).set_repair_platform(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeTcPunt, 5, 2);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 2));
+        assert_eq!(
+            board.units[enemy].hp,
+            3,
+            "Lifter damage should land before the platform heals the enemy to full"
+        );
+        assert!(!board.tile(5, 2).repair_platform(), "enemy consumes the platform");
+        assert_eq!(result.repair_platforms_used, 0, "enemy use does not advance the objective");
+        assert_eq!(board.repair_platforms_used, 0);
     }
 
     #[test]

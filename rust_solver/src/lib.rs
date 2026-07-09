@@ -2153,7 +2153,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v332 - Miner Inconvenience targeting emits and scores one event per point of
 //   mountain HP removed, including first cracks and destroying hits.
 //   Pre-v332 corpus archived as failure_db_snapshot_sim_v331.jsonl.
-pub const SIMULATOR_VERSION: u32 = 332;
+// v333 - Repair platforms heal/consume for enemy landings too, but only player
+//   mechs advance Mission_Repair progress; Hydraulic Lifter landing damage
+//   resolves before that item heal. Pre-v333 corpus archived as
+//   failure_db_snapshot_sim_v332.jsonl.
+pub const SIMULATOR_VERSION: u32 = 333;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
