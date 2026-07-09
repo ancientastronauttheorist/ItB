@@ -414,3 +414,5 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 401 | 711 | Do not re-activate a same-turn no-active End Turn fallback and then continue combat. | `docs/agent/safety-gates.md` |
 | 402 | 713 | Raw queued building targets beat compact threat summaries after manual recovery. | `docs/agent/safety-gates.md` |
 | 403 | 715 | Health Psion HP persists through both Quick-Fire Rockets. | `docs/agent/solver-reference.md` |
+| 404 | 717 | Let's Walk needs visible Control Shot execution proof. | `docs/agent/achievement-playbook.md` |
+| 405 | 719 | Maximum Firepower needs one native visible Quick-Fire activation. | `docs/agent/achievement-playbook.md` |
