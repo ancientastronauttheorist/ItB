@@ -4541,6 +4541,55 @@ def _is_transient_delayed_multihit_damage_diff(
     return True
 
 
+def _is_transient_delayed_repair_platform_diff(diff, phase: str) -> bool:
+    """Return true when a mech landing has not consumed its platform yet.
+
+    Mission_Repair applies the platform heal and objective increment after the
+    move command ACK.  Retry only the exact pre-consumption shape: one player
+    mech still below its predicted HP, one platform still present, and the
+    platform counter exactly one behind.  Any mixed board change remains a
+    normal desync.
+    """
+    if phase != "move":
+        return False
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    tile_diffs = getattr(diff, "tile_diffs", []) or []
+    scalar_diffs = getattr(diff, "scalar_diffs", []) or []
+    if len(unit_diffs) != 1 or len(tile_diffs) != 1 or len(scalar_diffs) != 1:
+        return False
+
+    unit_diff = unit_diffs[0]
+    unit_type = str(unit_diff.get("type") or "")
+    predicted_hp = unit_diff.get("predicted")
+    actual_hp = unit_diff.get("actual")
+    if (
+        unit_diff.get("field") != "hp"
+        or not (unit_type.endswith("Mech") or unit_type == "Disposal_Unit")
+        or not isinstance(predicted_hp, (int, float))
+        or not isinstance(actual_hp, (int, float))
+        or actual_hp >= predicted_hp
+    ):
+        return False
+
+    tile_diff = tile_diffs[0]
+    if (
+        tile_diff.get("field") != "repair_platform"
+        or tile_diff.get("predicted") is not False
+        or tile_diff.get("actual") is not True
+    ):
+        return False
+
+    scalar_diff = scalar_diffs[0]
+    predicted_used = scalar_diff.get("predicted")
+    actual_used = scalar_diff.get("actual")
+    return (
+        scalar_diff.get("field") == "repair_platforms_used"
+        and isinstance(predicted_used, (int, float))
+        and isinstance(actual_used, (int, float))
+        and predicted_used == actual_used + 1
+    )
+
+
 def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
     """Return true for the harmless active-flag drift after a no-attack skip."""
     return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
@@ -7525,8 +7574,11 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
 
     diff = diff_states(predicted, actual_board)
     action_weapon = getattr(actions[action_index], "weapon", None)
-    if _is_transient_delayed_multihit_damage_diff(
-        diff, action_weapon, "attack"
+    if (
+        _is_transient_delayed_multihit_damage_diff(
+            diff, action_weapon, "attack"
+        )
+        or _is_transient_delayed_repair_platform_diff(diff, "move")
     ):
         for attempt in range(5):
             time.sleep(0.35)
@@ -46463,6 +46515,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             or _is_transient_delayed_multihit_damage_diff(
                 diff, weapon_name, phase
             )
+            or _is_transient_delayed_repair_platform_diff(diff, phase)
         )
 
     def _settle_transient_verify_diff(
@@ -46482,8 +46535,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         best_board, best_data, best_diff = actual_board, actual_data, diff
         attempts = (
             5
-            if _is_transient_delayed_multihit_damage_diff(
-                diff, weapon_name, phase
+            if (
+                _is_transient_delayed_multihit_damage_diff(
+                    diff, weapon_name, phase
+                )
+                or _is_transient_delayed_repair_platform_diff(diff, phase)
             )
             else 3
         )

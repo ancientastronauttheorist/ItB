@@ -1027,6 +1027,69 @@ def test_tri_rocket_settle_retry_rejects_mixed_grid_loss():
     ) is False
 
 
+def test_repair_platform_move_diff_gets_settle_retry():
+    diff = DiffResult(
+        unit_diffs=[{
+            "uid": 2,
+            "type": "PitcherMech",
+            "field": "hp",
+            "predicted": 3,
+            "actual": 1,
+        }],
+        tile_diffs=[{
+            "x": 6,
+            "y": 3,
+            "field": "repair_platform",
+            "predicted": False,
+            "actual": True,
+        }],
+        scalar_diffs=[{
+            "field": "repair_platforms_used",
+            "predicted": 2,
+            "actual": 1,
+        }],
+    )
+
+    assert cmd_mod._is_transient_delayed_repair_platform_diff(
+        diff, "move"
+    ) is True
+
+
+def test_repair_platform_settle_retry_rejects_mixed_grid_loss():
+    diff = DiffResult(
+        unit_diffs=[{
+            "uid": 2,
+            "type": "PitcherMech",
+            "field": "hp",
+            "predicted": 3,
+            "actual": 1,
+        }],
+        tile_diffs=[{
+            "x": 6,
+            "y": 3,
+            "field": "repair_platform",
+            "predicted": False,
+            "actual": True,
+        }],
+        scalar_diffs=[
+            {
+                "field": "repair_platforms_used",
+                "predicted": 2,
+                "actual": 1,
+            },
+            {
+                "field": "grid_power",
+                "predicted": 6,
+                "actual": 5,
+            },
+        ],
+    )
+
+    assert cmd_mod._is_transient_delayed_repair_platform_diff(
+        diff, "move"
+    ) is False
+
+
 # ---------------------------------------------------------------------------
 # cmd_auto_turn entry-point invalidation logic.
 #
