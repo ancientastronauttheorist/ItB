@@ -4478,6 +4478,52 @@ def _is_harmless_burrower_missing_drift(diff) -> bool:
     return True
 
 
+def _is_transient_delayed_multihit_damage_diff(
+    diff,
+    weapon_name: str | None,
+    phase: str,
+) -> bool:
+    """Return true when a multi-impact weapon may still be animating.
+
+    Tri-Rocket's three impacts can land after the bridge command ACK and the
+    first state refresh.  Limit this retry classification to enemy damage that
+    is strictly behind the prediction; mixed tile/scalar/status/position diffs
+    still go straight through the ordinary desync gate.
+    """
+    if phase != "attack":
+        return False
+    weapon = str(weapon_name or "")
+    if weapon != "Tri-Rocket" and not weapon.startswith("Ranged_Crack"):
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    for ud in unit_diffs:
+        utype = str(ud.get("type") or "")
+        if utype.endswith("Mech") or utype in {
+            "Archive_Tank", "Disposal_Unit", "Terraformer", "Filler_Pawn",
+        }:
+            return False
+        field = ud.get("field")
+        predicted = ud.get("predicted")
+        actual = ud.get("actual")
+        if field == "hp":
+            if not (
+                isinstance(predicted, (int, float))
+                and isinstance(actual, (int, float))
+                and actual > predicted
+            ):
+                return False
+        elif field == "alive":
+            if predicted is not False or actual is not True:
+                return False
+        else:
+            return False
+    return True
+
+
 def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
     """Return true for the harmless active-flag drift after a no-attack skip."""
     return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
@@ -7461,6 +7507,27 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
         return result
 
     diff = diff_states(predicted, actual_board)
+    action_weapon = getattr(actions[action_index], "weapon", None)
+    if _is_transient_delayed_multihit_damage_diff(
+        diff, action_weapon, "attack"
+    ):
+        for attempt in range(5):
+            time.sleep(0.35)
+            try:
+                refresh_bridge_state()
+            except (TimeoutError, BridgeError):
+                continue
+            reread_board, _ = read_bridge_state()
+            if reread_board is None:
+                continue
+            reread_diff = diff_states(predicted, reread_board)
+            actual_board, diff = reread_board, reread_diff
+            if diff.is_empty():
+                print(
+                    f"VERIFY {action_index}: PASS "
+                    f"(multi-impact weapon settled after {attempt + 1} reread)"
+                )
+                break
 
     if diff.is_empty():
         result = {"status": "PASS", "action_index": action_index}
@@ -46367,20 +46434,43 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 return False
         return True
 
-    def _is_transient_verify_diff(diff, actual_data) -> bool:
+    def _is_transient_verify_diff(
+        diff,
+        actual_data,
+        weapon_name: str | None,
+        phase: str,
+    ) -> bool:
         return (
             _is_transient_predicted_status_gain(diff)
             or _is_transient_teleporter_position_diff(diff, actual_data)
+            or _is_transient_delayed_multihit_damage_diff(
+                diff, weapon_name, phase
+            )
         )
 
-    def _settle_transient_verify_diff(predicted: dict, actual_board, actual_data, phase: str):
+    def _settle_transient_verify_diff(
+        predicted: dict,
+        actual_board,
+        actual_data,
+        phase: str,
+        weapon_name: str | None,
+    ):
         """Re-read briefly for bridge effects that apply after command ACK."""
         diff = diff_states(predicted, actual_board)
-        if diff.is_empty() or not _is_transient_verify_diff(diff, actual_data):
+        if diff.is_empty() or not _is_transient_verify_diff(
+            diff, actual_data, weapon_name, phase
+        ):
             return actual_board, actual_data, diff
 
         best_board, best_data, best_diff = actual_board, actual_data, diff
-        for attempt in range(3):
+        attempts = (
+            5
+            if _is_transient_delayed_multihit_damage_diff(
+                diff, weapon_name, phase
+            )
+            else 3
+        )
+        for attempt in range(attempts):
             time.sleep(0.35)
             refresh_bridge_state()
             reread_board, reread_data = read_bridge_state()
@@ -46408,10 +46498,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 return str(current["mission_id"])
         return None
 
-    def _settle_verify_diff(predicted: dict, actual_board, actual_data, phase: str):
+    def _settle_verify_diff(
+        predicted: dict,
+        actual_board,
+        actual_data,
+        phase: str,
+        weapon_name: str | None = None,
+    ):
         """Re-read transient or implausibly stale verify snapshots."""
         actual_board, actual_data, diff = _settle_transient_verify_diff(
-            predicted, actual_board, actual_data, phase
+            predicted, actual_board, actual_data, phase, weapon_name
         )
         expected_mission_id = _expected_verify_mission_id()
         if (
@@ -47131,7 +47227,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
             if actual_board and pred_post_move:
                 actual_board, actual_data, diff, stale_verify_blocked = _settle_verify_diff(
-                    pred_post_move, actual_board, actual_data, "move"
+                    pred_post_move, actual_board, actual_data, "move", action.weapon
                 )
                 if not diff.is_empty():
                     if stale_verify_blocked:
@@ -47447,7 +47543,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
         if actual_board and pred_post_attack:
             actual_board, actual_data, diff, stale_verify_blocked = _settle_verify_diff(
-                pred_post_attack, actual_board, actual_data, final_phase
+                pred_post_attack, actual_board, actual_data, final_phase, action.weapon
             )
             if not diff.is_empty():
                 if stale_verify_blocked:

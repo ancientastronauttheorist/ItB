@@ -983,6 +983,50 @@ def test_non_burrower_missing_still_requires_re_solve():
     assert cmd_mod._is_harmless_burrower_missing_drift(diff) is False
 
 
+def test_tri_rocket_enemy_damage_only_diff_gets_settle_retry():
+    diff = DiffResult(unit_diffs=[
+        {
+            "uid": 96,
+            "type": "Scorpion1",
+            "field": "hp",
+            "predicted": 3,
+            "actual": 4,
+        },
+        {
+            "uid": 95,
+            "type": "Jelly_Health1",
+            "field": "alive",
+            "predicted": False,
+            "actual": True,
+        },
+    ])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Tri-Rocket", "attack"
+    ) is True
+
+
+def test_tri_rocket_settle_retry_rejects_mixed_grid_loss():
+    diff = DiffResult(
+        unit_diffs=[{
+            "uid": 96,
+            "type": "Scorpion1",
+            "field": "hp",
+            "predicted": 3,
+            "actual": 4,
+        }],
+        scalar_diffs=[{
+            "field": "grid_power",
+            "predicted": 5,
+            "actual": 4,
+        }],
+    )
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Ranged_Crack", "attack"
+    ) is False
+
+
 # ---------------------------------------------------------------------------
 # cmd_auto_turn entry-point invalidation logic.
 #
