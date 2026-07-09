@@ -70,6 +70,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         efficient_explosives_from_events,
         lets_walk_control_distance_from_events,
         maximum_firepower_from_events,
+        miner_inconvenience_mountain_damage_from_events,
         reverse_thrusters_four_damage_from_events,
         viscera_nanobots_heal_from_events,
         working_together_from_events,
@@ -127,6 +128,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut working_together = 0i32;
         let mut lets_walk_control_distance = 0i32;
         let mut core_of_the_earth_chasm_falls = 0i32;
+        let mut miner_inconvenience_mountain_damage = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
@@ -167,6 +169,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             lets_walk_control_distance += lets_walk_control_distance_from_events(&result.events);
             core_of_the_earth_chasm_falls +=
                 core_of_the_earth_chasm_falls_from_events(&result.events);
+            miner_inconvenience_mountain_damage +=
+                miner_inconvenience_mountain_damage_from_events(&result.events);
             kills += result.enemies_killed as i32;
             mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -225,6 +229,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             + working_together as f64 * weights.working_together_bonus
             + lets_walk_control_distance as f64 * weights.lets_walk_control_distance_bonus
             + core_of_the_earth_chasm_falls as f64 * weights.core_of_the_earth_bonus
+            + miner_inconvenience_mountain_damage as f64
+                * weights.miner_inconvenience_mountain_damage_bonus
             + if unit_deaths >= 7 {
                 unit_deaths as f64 * weights.no_survivors_death_bonus
             } else {
@@ -258,6 +264,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "efficient_explosives": efficient_explosives,
             "working_together": working_together,
             "core_of_the_earth_chasm_falls": core_of_the_earth_chasm_falls,
+            "miner_inconvenience_mountain_damage": miner_inconvenience_mountain_damage,
             "stay_with_me_heal": stay_with_me_heal,
             "bldgs_alive": bldgs_alive,
             "bldg_hp_total": bldg_hp_total,
@@ -2143,7 +2150,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   when it agrees with the retained raw piQueuedShot vector. This prevents a
 //   stale piOrigin from reversing adjacent Scorpion melee attacks.
 //   Pre-v331 corpus archived as failure_db_snapshot_sim_v330.jsonl.
-pub const SIMULATOR_VERSION: u32 = 331;
+// v332 - Miner Inconvenience targeting emits and scores one event per point of
+//   mountain HP removed, including first cracks and destroying hits.
+//   Pre-v332 corpus archived as failure_db_snapshot_sim_v331.jsonl.
+pub const SIMULATOR_VERSION: u32 = 332;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

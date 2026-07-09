@@ -1553,7 +1553,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # when it agrees with the retained raw piQueuedShot vector, preventing stale
 # piOrigin from reversing adjacent Scorpion melee attacks.
 # Pre-v331 corpus archived as failure_db_snapshot_sim_v330.jsonl.
-SIMULATOR_VERSION = 331
+# v332 - Miner Inconvenience targeting emits and scores one event per point of
+# mountain HP removed, including first cracks and destroying hits.
+# Pre-v332 corpus archived as failure_db_snapshot_sim_v331.jsonl.
+SIMULATOR_VERSION = 332
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

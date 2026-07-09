@@ -138,6 +138,15 @@ pub(crate) fn core_of_the_earth_chasm_falls_from_events(events: &[String]) -> i3
         .count() as i32
 }
 
+pub(crate) fn miner_inconvenience_mountain_damage_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter(|event| {
+            event.starts_with("achievement_miner_inconvenience:mountain_damage:")
+        })
+        .count() as i32
+}
+
 #[derive(Clone, Debug)]
 pub struct MechAction {
     pub mech_uid: u16,
@@ -2063,6 +2072,7 @@ fn search_recursive(
     working_together_so_far: i32,
     lets_walk_control_distance_so_far: i32,
     core_of_the_earth_so_far: i32,
+    miner_inconvenience_mountain_damage_so_far: i32,
     stay_with_me_heal_so_far: i32,
     pods_collected_so_far: i32,
     soft_disable_penalty_so_far: f64,
@@ -2160,6 +2170,9 @@ fn search_recursive(
             lets_walk_control_distance_so_far as f64 * weights.lets_walk_control_distance_bonus;
         let core_of_the_earth_bonus =
             core_of_the_earth_so_far as f64 * weights.core_of_the_earth_bonus;
+        let miner_inconvenience_bonus =
+            miner_inconvenience_mountain_damage_so_far as f64
+                * weights.miner_inconvenience_mountain_damage_bonus;
         let stay_with_me_heal_bonus =
             stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
         let no_survivors_bonus = if projected_unit_deaths >= 7 {
@@ -2182,6 +2195,7 @@ fn search_recursive(
             + working_together_bonus
             + lets_walk_control_distance_bonus
             + core_of_the_earth_bonus
+            + miner_inconvenience_bonus
             + stay_with_me_heal_bonus
             + no_survivors_bonus
             + pod_collected_penalty
@@ -2222,6 +2236,7 @@ fn search_recursive(
             working_together_so_far,
             lets_walk_control_distance_so_far,
             core_of_the_earth_so_far,
+            miner_inconvenience_mountain_damage_so_far,
             stay_with_me_heal_so_far,
             pods_collected_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
@@ -2295,6 +2310,8 @@ fn search_recursive(
         let working_together_add = working_together_from_events(&result.events);
         let lets_walk_control_distance_add = lets_walk_control_distance_from_events(&result.events);
         let core_of_the_earth_add = core_of_the_earth_chasm_falls_from_events(&result.events);
+        let miner_inconvenience_mountain_damage_add =
+            miner_inconvenience_mountain_damage_from_events(&result.events);
         let stay_with_me_heal_add = result.mech_hp_repaired;
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
@@ -2331,6 +2348,8 @@ fn search_recursive(
             working_together_so_far + working_together_add,
             lets_walk_control_distance_so_far + lets_walk_control_distance_add,
             core_of_the_earth_so_far + core_of_the_earth_add,
+            miner_inconvenience_mountain_damage_so_far
+                + miner_inconvenience_mountain_damage_add,
             stay_with_me_heal_so_far + stay_with_me_heal_add,
             pods_collected_so_far + result.pods_collected,
             soft_disable_penalty_so_far + penalty_add,
@@ -2517,7 +2536,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2722,7 +2741,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -3951,6 +3970,54 @@ mod top_k_tests {
         assert!(!targets.contains(&(3, 2)));
         assert!(targets.contains(&(3, 1)));
         assert!(!targets.contains(&(2, 2)), "Tri-Rocket target area is still cardinal-only");
+    }
+
+    #[test]
+    fn miner_inconvenience_bonus_makes_tri_rocket_target_three_mountains() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.current_turn = 1;
+        board.total_turns = 4;
+        let idx = board.add_unit(Unit {
+            uid: 1,
+            x: 3,
+            y: 6,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedCrack as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("TrimissileMech");
+        for y in [2u8, 3, 4] {
+            let tile = board.tile_mut(3, y);
+            tile.terrain = Terrain::Mountain;
+            tile.building_hp = 2;
+        }
+
+        let mut weights = EvalWeights::default();
+        weights.miner_inconvenience_mountain_damage_bonus = 20_000.0;
+        let solution = solve_turn(
+            &board,
+            &[],
+            1.0,
+            25,
+            &weights,
+            [0; 2],
+            &WEAPONS,
+        );
+
+        assert!(solution.actions.iter().any(|action| {
+            action.mech_uid == 1
+                && action.weapon == WId::RangedCrack
+                && action.target == (3, 3)
+        }), "Miner overlay should choose the three-mountain Tri-Rocket line; got {:?}", solution.actions);
     }
 
     #[test]

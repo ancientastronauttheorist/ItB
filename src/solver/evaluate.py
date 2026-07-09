@@ -96,6 +96,7 @@ class EvalWeights:
     working_together_setup_bonus: float = 0
     lets_walk_control_distance_bonus: float = 0
     core_of_the_earth_bonus: float = 0
+    miner_inconvenience_mountain_damage_bonus: float = 0
     no_survivors_death_bonus: float = 0
 
     # Mission-specific bonus objectives (default 0; set via active.json).

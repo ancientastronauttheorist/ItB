@@ -438,6 +438,22 @@ def test_core_of_the_earth_weight_overlay_rewards_chasm_falls():
     assert weights["enemy_hp_remaining"] == -25.0
 
 
+def test_miner_inconvenience_weight_overlay_rewards_mountain_damage():
+    session = RunSession(
+        squad="Cataclysm",
+        difficulty=0,
+        achievement_targets=["Miner Inconvenience"],
+    )
+
+    weights, applied = commands._achievement_weight_overlay(
+        session,
+        {"miner_inconvenience_mountain_damage_bonus": 0.0},
+    )
+
+    assert "miner_inconvenience" in applied
+    assert weights["miner_inconvenience_mountain_damage_bonus"] == 20_000.0
+
+
 def test_no_survivors_weight_overlay_rewards_seven_death_turns():
     session = RunSession(
         squad="Bombermechs",

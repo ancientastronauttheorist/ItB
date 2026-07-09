@@ -1773,14 +1773,26 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
 
         // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
+        let mut mountain_damage = false;
+        let mut mountain_destroyed = false;
         {
             let tile = board.tile_mut(x, y);
             if tile.terrain == Terrain::Mountain && tile.building_hp > 0 {
+                mountain_damage = true;
                 tile.building_hp = tile.building_hp.saturating_sub(1);
                 if tile.building_hp == 0 {
                     tile.terrain = Terrain::Rubble;
+                    mountain_destroyed = true;
                 }
             }
+        }
+        if mountain_damage {
+            result.events.push(format!(
+                "achievement_miner_inconvenience:mountain_damage:{}:{}:{}",
+                x,
+                y,
+                mountain_destroyed as u8,
+            ));
         }
 
         // Ice: intact → cracked → water
@@ -3488,6 +3500,7 @@ fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResul
         }
     }
 
+    let was_mountain = board.tile(x, y).terrain == Terrain::Mountain;
     let tile = board.tile_mut(x, y);
     tile.set_acid(true);
     tile.set_cracked(false);
@@ -3496,6 +3509,12 @@ fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResul
     if tile.terrain == Terrain::Mountain {
         tile.terrain = Terrain::Ground;
         tile.building_hp = 0;
+    }
+    if was_mountain {
+        result.events.push(format!(
+            "achievement_miner_inconvenience:mountain_damage:{}:{}:1",
+            x, y,
+        ));
     }
 }
 
@@ -3660,20 +3679,34 @@ fn sim_tri_rocket(
 }
 
 fn create_crack(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
-    let tile = board.tile_mut(x, y);
-    match tile.terrain {
-        Terrain::Ground | Terrain::Ice if !tile.cracked() => {
-            tile.set_cracked(true);
-            result.events.push(format!("crack_created:{}:{}", x, y));
-        }
-        Terrain::Mountain if tile.building_hp > 0 => {
-            tile.building_hp -= 1;
-            result.events.push(format!("mountain_cracked:{}:{}", x, y));
-            if tile.building_hp == 0 {
-                tile.terrain = Terrain::Rubble;
+    let mut mountain_destroyed = None;
+    {
+        let tile = board.tile_mut(x, y);
+        match tile.terrain {
+            Terrain::Ground | Terrain::Ice if !tile.cracked() => {
+                tile.set_cracked(true);
+                result.events.push(format!("crack_created:{}:{}", x, y));
             }
+            Terrain::Mountain if tile.building_hp > 0 => {
+                tile.building_hp -= 1;
+                result.events.push(format!("mountain_cracked:{}:{}", x, y));
+                if tile.building_hp == 0 {
+                    tile.terrain = Terrain::Rubble;
+                    mountain_destroyed = Some(true);
+                } else {
+                    mountain_destroyed = Some(false);
+                }
+            }
+            _ => {}
         }
-        _ => {}
+    }
+    if let Some(destroyed) = mountain_destroyed {
+        result.events.push(format!(
+            "achievement_miner_inconvenience:mountain_damage:{}:{}:{}",
+            x,
+            y,
+            destroyed as u8,
+        ));
     }
 }
 
@@ -7980,6 +8013,48 @@ mod tests {
         assert_eq!((board.units[front].x, board.units[front].y, board.units[front].hp), (3, 1, 1));
         assert_eq!((board.units[center].x, board.units[center].y, board.units[center].hp), (3, 2, 1));
         assert_eq!((board.units[back].x, board.units[back].y, board.units[back].hp), (3, 3, 1));
+    }
+
+    #[test]
+    fn test_tri_rocket_reports_three_miner_inconvenience_mountain_hits() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 6, 3, WId::RangedCrack);
+        for y in [2u8, 3, 4] {
+            let tile = board.tile_mut(3, y);
+            tile.terrain = Terrain::Mountain;
+            tile.building_hp = 2;
+        }
+
+        let first = simulate_weapon(&mut board, mech, WId::RangedCrack, 3, 3);
+
+        assert_eq!(
+            first
+                .events
+                .iter()
+                .filter(|event| event.starts_with(
+                    "achievement_miner_inconvenience:mountain_damage:"
+                ))
+                .count(),
+            3,
+        );
+        for y in [2u8, 3, 4] {
+            assert_eq!(board.tile(3, y).terrain, Terrain::Mountain);
+            assert_eq!(board.tile(3, y).building_hp, 1);
+        }
+
+        let second = simulate_weapon(&mut board, mech, WId::RangedCrack, 3, 3);
+
+        assert_eq!(
+            second
+                .events
+                .iter()
+                .filter(|event| event.ends_with(":1"))
+                .count(),
+            3,
+        );
+        for y in [2u8, 3, 4] {
+            assert_eq!(board.tile(3, y).terrain, Terrain::Rubble);
+        }
     }
 
     #[test]

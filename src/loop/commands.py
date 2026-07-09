@@ -802,6 +802,23 @@ def _achievement_weight_overlay(
         )
         applied.append("core_of_the_earth")
 
+    if "miner inconvenience" in normalized_targets:
+        # Cataclysm: the achievement needs 20 mountains destroyed over the
+        # whole run. Reward each real point of mountain HP removed so the
+        # one-turn solver values both the first crack and the destroying hit.
+        # Grid/building survival remains dominant through its existing safety
+        # weights and post-solve loss audit.
+        weights["miner_inconvenience_mountain_damage_bonus"] = max(
+            float(
+                weights.get(
+                    "miner_inconvenience_mountain_damage_bonus", 0
+                )
+                or 0
+            ),
+            20000.0,
+        )
+        applied.append("miner_inconvenience")
+
     if "lightning war" in targets:
         # Lightning War is pure real-time throughput: pods add reward UI and
         # do not help the achievement. Keep safety weights intact, but remove

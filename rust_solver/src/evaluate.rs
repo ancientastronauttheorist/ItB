@@ -175,6 +175,7 @@ pub struct EvalWeights {
     pub working_together_setup_bonus: f64,
     pub lets_walk_control_distance_bonus: f64,
     pub core_of_the_earth_bonus: f64,
+    pub miner_inconvenience_mountain_damage_bonus: f64,
     pub no_survivors_death_bonus: f64,
 
     // Mission-specific bonus objectives (0 default; turn-aware via `scaled`).
@@ -360,6 +361,7 @@ impl Default for EvalWeights {
             working_together_setup_bonus: 0.0,
             lets_walk_control_distance_bonus: 0.0,
             core_of_the_earth_bonus: 0.0,
+            miner_inconvenience_mountain_damage_bonus: 0.0,
             no_survivors_death_bonus: 0.0,
             // Mission-specific bonuses (zero by default; set via active.json)
             dam_destroyed: 0.0,
