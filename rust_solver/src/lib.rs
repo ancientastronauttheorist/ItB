@@ -2139,7 +2139,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v330 - Projectile blockers treat 0-HP Building terrain as blocking, matching
 //   native GetProjectileEnd on destroyed unique objective buildings.
 //   Pre-v330 corpus archived as failure_db_snapshot_sim_v329.jsonl.
-pub const SIMULATOR_VERSION: u32 = 330;
+// v331 - Displaced queued enemies prefer the current normalized target vector
+//   when it agrees with the retained raw piQueuedShot vector. This prevents a
+//   stale piOrigin from reversing adjacent Scorpion melee attacks.
+//   Pre-v331 corpus archived as failure_db_snapshot_sim_v330.jsonl.
+pub const SIMULATOR_VERSION: u32 = 331;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

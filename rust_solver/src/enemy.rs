@@ -2195,6 +2195,22 @@ fn projectile_delta_from_queued_or_current(
     qty: i8,
     raw_target: Option<(i8, i8)>,
 ) -> Option<(i8, i8)> {
+    // A normalized bridge target is expressed from the attacker's CURRENT
+    // tile, while the retained raw piQueuedShot is expressed from piOrigin.
+    // When those two independent vectors agree, trust that direction before
+    // interpreting the normalized target against the stale origin. Otherwise
+    // a displaced adjacent attacker can reverse its melee (live regression:
+    // Scorpion G1 -> tank G2, with piOrigin G3 and raw shot G4).
+    if let Some((raw_qtx, raw_qty)) = raw_target {
+        if let (Some(current_delta), Some(raw_delta)) = (
+            cardinal_delta(ex, ey, qtx, qty),
+            projectile_delta_from_queued(orig_x, orig_y, raw_qtx, raw_qty),
+        ) {
+            if current_delta == raw_delta {
+                return Some(current_delta);
+            }
+        }
+    }
     if let Some(delta) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty) {
         return Some(delta);
     }
@@ -2455,6 +2471,48 @@ mod tests {
         assert!(
             board.units[tele_idx].hp <= 0,
             "Scorpion2 should preserve original melee direction and hit E4"
+        );
+    }
+
+    #[test]
+    fn test_displaced_scorpion_prefers_normalized_current_target_over_stale_origin() {
+        let mut board = Board::default();
+        let tank_idx = board.add_unit(Unit {
+            uid: 92,
+            x: 6,
+            y: 1,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[tank_idx].set_type_name("Archive_Tank");
+
+        // Miner Inconvenience run 20260709_134054_884, Mission_Tanks turn 4:
+        // Scorpion was displaced from G3 to G1. The bridge normalized the
+        // live target to G2 (6,1), while retaining piOrigin G3 (5,1) and raw
+        // piQueuedShot G4 (4,1). Live struck the adjacent tank at G2. Reading
+        // direction from queued_origin -> normalized target reverses the hit.
+        let scorpion_idx = add_enemy_with_type(&mut board, 102, 7, 1, 1, "Scorpion1", 6, 1);
+        board.units[scorpion_idx].queued_origin_x = 5;
+        board.units[scorpion_idx].queued_origin_y = 1;
+        board.units[scorpion_idx].queued_target_raw_x = 4;
+        board.units[scorpion_idx].queued_target_raw_y = 1;
+        board.units[scorpion_idx].weapon_damage = 1;
+        board.units[scorpion_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let mut orig = default_orig_pos(&board);
+        orig[scorpion_idx] = (5, 1);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(
+            board.units[tank_idx].hp <= 0,
+            "normalized current target should make the displaced Scorpion hit G2"
         );
     }
 
