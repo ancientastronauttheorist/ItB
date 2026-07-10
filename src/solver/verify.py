@@ -1560,7 +1560,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # mechs advance Mission_Repair progress; Hydraulic Lifter landing damage
 # resolves before that item heal. Pre-v333 corpus archived as
 # failure_db_snapshot_sim_v332.jsonl.
-SIMULATOR_VERSION = 333
+# v334 - Hydraulic Lifter landing damage cracks occupied Ground, so a grounded
+# thrown target falls when the landing tile collapses to Chasm. Pre-v334
+# corpus archived as failure_db_snapshot_sim_v333.jsonl.
+SIMULATOR_VERSION = 334
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

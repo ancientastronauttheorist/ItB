@@ -2157,7 +2157,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   mechs advance Mission_Repair progress; Hydraulic Lifter landing damage
 //   resolves before that item heal. Pre-v333 corpus archived as
 //   failure_db_snapshot_sim_v332.jsonl.
-pub const SIMULATOR_VERSION: u32 = 333;
+// v334 - Hydraulic Lifter landing damage cracks occupied Ground, so a grounded
+//   thrown target falls when the landing tile collapses to Chasm. Pre-v334
+//   corpus archived as failure_db_snapshot_sim_v333.jsonl.
+pub const SIMULATOR_VERSION: u32 = 334;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
