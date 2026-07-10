@@ -1607,7 +1607,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v345 - Generic damage that ignites a previously smoked Forest clears Smoke
 # when it becomes Ground + Fire. Pre-v345 corpus archived as
 # failure_db_snapshot_sim_v344.jsonl.
-SIMULATOR_VERSION = 345
+# v346 - Force Swap reattaches a stationary queued grapple to the replacement
+# occupant after both swapped pawns land. Pre-v346 corpus archived as
+# failure_db_snapshot_sim_v345.jsonl.
+SIMULATOR_VERSION = 346
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

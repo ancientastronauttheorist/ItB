@@ -577,7 +577,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
 
 // ── Web break ────────────────────────────────────────────────────────────────
 
-fn queued_web_source_for_unit(board: &Board, unit_idx: usize, excluded_uid: u16) -> u16 {
+fn queued_web_source_for_unit(board: &Board, unit_idx: usize, excluded_uids: &[u16]) -> u16 {
     let (ux, uy, current_uid) = {
         let unit = &board.units[unit_idx];
         (unit.x, unit.y, unit.web_source_uid)
@@ -585,7 +585,7 @@ fn queued_web_source_for_unit(board: &Board, unit_idx: usize, excluded_uid: u16)
     let mut fallback_uid = 0;
     for src_idx in 0..board.unit_count as usize {
         let src = &board.units[src_idx];
-        if src.uid == excluded_uid || src.team != Team::Enemy || src.hp <= 0 {
+        if excluded_uids.contains(&src.uid) || src.team != Team::Enemy || src.hp <= 0 {
             continue;
         }
         if src.queued_target_x != ux as i8 || src.queued_target_y != uy as i8 {
@@ -609,7 +609,7 @@ fn queued_web_source_for_unit(board: &Board, unit_idx: usize, excluded_uid: u16)
 }
 
 fn reattach_or_clear_unit_web(board: &mut Board, unit_idx: usize, broken_src_uid: u16) {
-    let replacement_uid = queued_web_source_for_unit(board, unit_idx, broken_src_uid);
+    let replacement_uid = queued_web_source_for_unit(board, unit_idx, &[broken_src_uid]);
     if replacement_uid == 0 {
         clear_unit_web(board, unit_idx);
         return;
@@ -624,6 +624,31 @@ fn reattach_or_clear_unit_web(board: &mut Board, unit_idx: usize, broken_src_uid
         board.units[i].web_source_uid = replacement_uid;
         board.units[i].move_speed = 0;
     }
+}
+
+/// Reapply a stationary enemy's queued web to a unit Force Swapped onto its
+/// target tile. Both swapped pawns are excluded as sources because moving a
+/// webber breaks its grapple, even when its stale queued target still matches
+/// one of the post-swap occupants.
+fn refresh_force_swap_queued_web(
+    board: &mut Board,
+    unit_idx: usize,
+    moved_uids: &[u16; 2],
+) {
+    let unit = &board.units[unit_idx];
+    if !unit.alive() || unit.shield() || unit.pilot_soldier() {
+        return;
+    }
+
+    let source_uid = queued_web_source_for_unit(board, unit_idx, moved_uids);
+    if source_uid == 0 {
+        return;
+    }
+
+    let unit = &mut board.units[unit_idx];
+    unit.set_web(true);
+    unit.web_source_uid = source_uid;
+    unit.move_speed = 0;
 }
 
 /// Clear or reassign WEB on any unit whose web_source_uid matches `src_uid`.
@@ -5577,6 +5602,7 @@ fn sim_force_swap(
 
     let first_old = (board.units[first_idx].x, board.units[first_idx].y);
     let second_old = (board.units[second_idx].x, board.units[second_idx].y);
+    let moved_uids = [board.units[first_idx].uid, board.units[second_idx].uid];
     board.units[first_idx].x = second_old.0;
     board.units[first_idx].y = second_old.1;
     board.units[second_idx].x = first_old.0;
@@ -5590,6 +5616,8 @@ fn sim_force_swap(
     apply_landing_effects(board, second_idx, result);
     apply_force_swap_upgrade_effects(board, weapon_id, first_idx, result);
     apply_force_swap_upgrade_effects(board, weapon_id, second_idx, result);
+    refresh_force_swap_queued_web(board, first_idx, &moved_uids);
+    refresh_force_swap_queued_web(board, second_idx, &moved_uids);
 }
 
 fn control_shot_target_range(_wdef: &WeaponDef) -> u8 {
@@ -7062,6 +7090,65 @@ mod tests {
         assert_eq!((board.units[first].x, board.units[first].y), (6, 6));
         assert_eq!((board.units[second].x, board.units[second].y), (3, 4));
         assert!(!board.units[exchange].active());
+    }
+
+    #[test]
+    fn test_force_swap_transfers_stationary_queued_web_to_replacement_occupant() {
+        // Chaos/Unfair run 20260710_104223_770, Archive m00 turn 2:
+        // Force Swap moved the webbed Hydrant off (5,3) and put Scarab 484
+        // there. Scorpion 488 stayed put with its web queued at (5,3), so
+        // live transferred the grapple to the Scarab. Hydrant's subsequent
+        // ordinary move did not release that replacement grapple.
+        let mut board = make_test_board();
+        let exchange = add_mech(&mut board, 1, 4, 3, 2, WId::ScienceTcSwapOther);
+        board.units[exchange].set_type_name("ExchangeMech");
+
+        let hydrant = add_mech(&mut board, 2, 5, 3, 3, WId::ScienceKoCrack);
+        board.units[hydrant].set_type_name("HydrantMech");
+        board.units[hydrant].base_move = 4;
+        board.units[hydrant].move_speed = 0;
+        board.units[hydrant].set_web(true);
+        board.units[hydrant].web_source_uid = 488;
+
+        let scarab = add_enemy_type(&mut board, 484, 6, 6, 4, "Scarab2");
+        board.units[scarab].base_move = 3;
+        board.units[scarab].move_speed = 3;
+        board.units[scarab].weapon = WeaponId(WId::ScarabAtk2 as u16);
+        board.units[scarab].queued_target_x = 4;
+        board.units[scarab].queued_target_y = 6;
+
+        let scorpion = add_enemy_type(&mut board, 488, 6, 3, 2, "Scorpion1");
+        board.units[scorpion].max_hp = 3;
+        board.units[scorpion].base_move = 3;
+        board.units[scorpion].move_speed = 3;
+        board.units[scorpion].weapon = WeaponId(WId::ScorpionAtk1 as u16);
+        board.units[scorpion].queued_target_x = 5;
+        board.units[scorpion].queued_target_y = 3;
+
+        let _ = simulate_attack_with_target2(
+            &mut board,
+            exchange,
+            WId::ScienceTcSwapOther,
+            (5, 3),
+            Some((6, 6)),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[hydrant].x, board.units[hydrant].y), (6, 6));
+        assert!(!board.units[hydrant].web());
+        assert_eq!(board.units[hydrant].web_source_uid, 0);
+        assert_eq!(board.units[hydrant].move_speed, 4);
+        assert_eq!((board.units[scarab].x, board.units[scarab].y), (5, 3));
+        assert!(board.units[scarab].web());
+        assert_eq!(board.units[scarab].web_source_uid, 488);
+        assert_eq!(board.units[scarab].move_speed, 0);
+
+        let _ = simulate_move(&mut board, hydrant, (3, 5));
+
+        assert_eq!((board.units[hydrant].x, board.units[hydrant].y), (3, 5));
+        assert!(board.units[scarab].web());
+        assert_eq!(board.units[scarab].web_source_uid, 488);
+        assert_eq!(board.units[scarab].move_speed, 0);
     }
 
     #[test]

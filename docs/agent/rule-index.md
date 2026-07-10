@@ -441,3 +441,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 440 | 777 | Mission_Repair deployment reserves safe Repair Platforms before ordinary spread. | `docs/agent/solver-reference.md` |
 | 441 | 779 | Two-click actions preserve `target2` across every Python serialization boundary. | `docs/agent/solver-reference.md` |
 | 442 | 781 | Force Swap powered variants survive save-overlay enrichment. | `docs/agent/solver-reference.md` |
+| 443 | 783 | Force Swap reattaches a stationary queued grapple to the replacement occupant. | `docs/agent/solver-reference.md` |

@@ -2207,7 +2207,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v345 - Generic damage that ignites a previously smoked Forest clears Smoke
 //   when it becomes Ground + Fire. Pre-v345 corpus archived as
 //   failure_db_snapshot_sim_v344.jsonl.
-pub const SIMULATOR_VERSION: u32 = 345;
+// v346 - Force Swap re-evaluates stationary queued web sources after both
+//   pawns land: the moved pawn breaks free, while a replacement pawn entering
+//   a still-targeted grapple tile becomes webbed. Pre-v346 corpus archived as
+//   failure_db_snapshot_sim_v345.jsonl.
+pub const SIMULATOR_VERSION: u32 = 346;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
