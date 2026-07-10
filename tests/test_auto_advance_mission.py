@@ -43,6 +43,56 @@ def test_missing_mission_id_key_is_noop():
     assert s.mission_index == 2
 
 
+def test_unknown_phase_stale_mission_does_not_seed_fresh_run():
+    """Island/menu bridge reads can retain the previous timeline's mission.
+
+    A fresh session must wait for a live mission phase before adopting that
+    identity, or the actual first mission will be mis-indexed as m01.
+    """
+    s = _fresh_session(current_mission="", mission_index=0)
+    changed = _auto_advance_mission(
+        s,
+        {
+            "mission_id": "Mission_Train",
+            "phase": "unknown",
+            "turn": 0,
+            "in_active_mission": True,
+        },
+    )
+    assert changed is False
+    assert s.current_mission == ""
+    assert s.mission_index == 0
+    assert s.last_mission_turn == -1
+
+
+def test_unknown_phase_different_mission_does_not_bump_existing_slot():
+    s = _fresh_session(
+        current_mission="Mission_Train",
+        mission_index=0,
+        last_mission_turn=4,
+    )
+    changed = _auto_advance_mission(
+        s,
+        {"mission_id": "Mission_Survive", "phase": "unknown", "turn": 0},
+    )
+    assert changed is False
+    assert s.current_mission == "Mission_Train"
+    assert s.mission_index == 0
+    assert s.last_mission_turn == 4
+
+
+def test_live_enemy_phase_confirms_first_mission_after_stale_unknown_read():
+    s = _fresh_session(current_mission="", mission_index=0)
+    changed = _auto_advance_mission(
+        s,
+        {"mission_id": "Mission_Survive", "phase": "combat_enemy", "turn": 0},
+    )
+    assert changed is True
+    assert s.current_mission == "Mission_Survive"
+    assert s.mission_index == 0
+    assert s.last_mission_turn == 0
+
+
 def test_first_mission_adopts_name_without_bumping():
     """Fresh run, mission_index=0, current_mission empty.
 

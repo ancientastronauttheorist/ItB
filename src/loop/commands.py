@@ -2239,6 +2239,11 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
 
     Bump rules:
       - bridge mission_id empty       → no-op (between missions / loading)
+      - bridge phase unknown and the
+        mission id would change       → no-op until a live mission phase
+                                        confirms the identity. Menu/island
+                                        reads can retain the prior timeline's
+                                        mission payload after a fresh run.
       - session.current_mission empty → first time we see a mission this run
                                         (or post-cmd_mission_end re-entry).
                                         Adopt the name; do NOT bump index —
@@ -2262,6 +2267,13 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
     """
     mission_id = (bridge_data.get("mission_id") or "").strip()
     if not mission_id:
+        return False
+    bridge_phase = str(bridge_data.get("phase") or "").strip().lower()
+    if bridge_phase == "unknown" and session.current_mission != mission_id:
+        print(
+            "[auto_advance_mission] deferring unknown-phase mission identity: "
+            f"{session.current_mission!r} -> {mission_id!r}"
+        )
         return False
     bridge_turn = bridge_data.get("turn", 0)
     if not isinstance(bridge_turn, int):
