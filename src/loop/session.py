@@ -296,14 +296,6 @@ class RunSession:
     # Decision history (append-only within a run)
     decisions: list[dict] = field(default_factory=list)
 
-    # Confirmed Grid Defense saves observed during player-action verification.
-    # Each entry is scoped to one mission/turn/sub-action and carries the
-    # number of grid points the live board retained above the simulation.
-    # `_pending_grid_debt_from_turn_start` subtracts these proven resists from
-    # visible building-HP loss so a fresh mid-turn solve does not invent a
-    # delayed grid-power debt after the resistance animation has settled.
-    confirmed_grid_resists: list[dict] = field(default_factory=list)
-
     # Lightning War route-preview probe memory. Entries record failed preview
     # probes so automation can choose a different preview candidate without
     # treating the cached evidence as Start Mission authority.
@@ -452,7 +444,6 @@ class RunSession:
             self.mission_index += 1
             self.last_mission_turn = -1
             self.disabled_actions = []
-            self.confirmed_grid_resists = []
 
     # --- Decision tracking ---
 
@@ -665,7 +656,6 @@ class RunSession:
             "enemies_killed": self.enemies_killed,
             "turns_played": self.turns_played,
             "decisions": self.decisions,
-            "confirmed_grid_resists": self.confirmed_grid_resists,
             "lightning_route_probe_cache": self.lightning_route_probe_cache,
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
             "post_enemy_block": self.post_enemy_block,
@@ -719,7 +709,6 @@ class RunSession:
             enemies_killed=d.get("enemies_killed", 0),
             turns_played=d.get("turns_played", 0),
             decisions=d.get("decisions", []),
-            confirmed_grid_resists=d.get("confirmed_grid_resists") or [],
             lightning_route_probe_cache=d.get("lightning_route_probe_cache") or [],
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             post_enemy_block=d.get("post_enemy_block"),

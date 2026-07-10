@@ -6,15 +6,12 @@ from src.loop.commands import (
     _capture_board_summary,
     _compute_deltas,
     _evaluate_solution_safety,
-    _favorable_grid_resist_amount,
     _lethal_end_turn_fire_mech_debts,
-    _record_confirmed_grid_resist,
     _summary_with_pending_grid_debt,
 )
 from src.loop.session import RunSession
 from src.model.board import Board
 from src.solver.solver import Solution
-from src.solver.verify import DiffResult
 
 
 def _bridge_with_mech(*, flying=False, danger=None):
@@ -1050,87 +1047,6 @@ def test_pending_grid_debt_detects_delayed_grid_scalar(tmp_path, monkeypatch):
     )
     assert summary["visible_grid_power"] == 5
     assert summary["grid_power"] == 4
-
-
-def test_pure_favorable_grid_scalar_is_confirmed_resist():
-    diff = DiffResult(scalar_diffs=[{
-        "field": "grid_power",
-        "predicted": 2,
-        "actual": 3,
-    }])
-
-    assert _favorable_grid_resist_amount(diff) == 1
-
-    diff.tile_diffs.append({
-        "x": 1,
-        "y": 2,
-        "field": "building_hp",
-        "predicted": 1,
-        "actual": 0,
-    })
-    assert _favorable_grid_resist_amount(diff) == 0
-
-
-def test_confirmed_grid_resist_is_idempotent_and_clears_pending_debt(
-    tmp_path,
-    monkeypatch,
-):
-    board = Board()
-    board.grid_power = 5
-    board.grid_power_max = 7
-    board.tile(3, 4).terrain = "building"
-    board.tile(3, 4).building_hp = 1
-    bridge_data = {
-        "turn": 2,
-        "mission_id": "Mission_Train",
-        "mission_seeds": {
-            "region6": {"state": 0, "mission": "Mission4"}
-        },
-    }
-    (tmp_path / "resist_probe.jsonl").write_text(json.dumps({
-        "run_id": "run",
-        "region": "region6",
-        "mission_id": "Mission_Train",
-        "mission_slot": "Mission4",
-        "turn": 2,
-        "grid_power": 5,
-        "building_hp_map": {"D5": 2},
-    }) + "\n")
-    monkeypatch.setattr(
-        "src.loop.commands._recording_dir",
-        lambda session: tmp_path,
-    )
-    session = RunSession(run_id="run", mission_index=3)
-
-    assert _record_confirmed_grid_resist(
-        session,
-        turn=2,
-        action_index=1,
-        phase="attack",
-        count=1,
-    ) is True
-    assert _record_confirmed_grid_resist(
-        session,
-        turn=2,
-        action_index=1,
-        phase="attack",
-        count=1,
-    ) is False
-
-    debt = _annotate_pending_grid_debt(session, board, bridge_data)
-
-    assert debt == 0
-    assert "_pending_grid_debt" not in bridge_data
-    assert session.confirmed_grid_resists == [{
-        "mission_index": 3,
-        "turn": 2,
-        "action_index": 1,
-        "phase": "attack",
-        "count": 1,
-    }]
-    assert RunSession.from_dict(
-        session.to_dict()
-    ).confirmed_grid_resists == session.confirmed_grid_resists
 
 
 def test_pending_grid_debt_ignores_stale_same_region_turn(tmp_path, monkeypatch):
