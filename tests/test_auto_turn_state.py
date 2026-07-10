@@ -942,6 +942,99 @@ def test_partial_re_solve_blocks_before_spending_uncovered_threat_plan():
     assert "Do not spend remaining actions" in result["next_step"]
 
 
+def _projected_threat_board(*, queued: bool) -> dict:
+    enemy = {
+        "uid": 10,
+        "type": "Firefly1",
+        "x": 4,
+        "y": 4,
+        "hp": 3,
+        "max_hp": 3,
+        "team": 6,
+        "weapons": ["FireflyAtk1"],
+        "active": False,
+        "has_queued_attack": queued,
+    }
+    if queued:
+        enemy["queued_target"] = [4, 2]
+        enemy["queued_origin"] = [4, 4]
+    return {
+        "turn": 1,
+        "grid_power": 5,
+        "grid_power_max": 7,
+        "tiles": [{
+            "x": 4,
+            "y": 2,
+            "terrain": "building",
+            "building_hp": 1,
+        }],
+        "units": [enemy],
+    }
+
+
+def test_partial_re_solve_threat_audit_ignores_next_turn_requeues():
+    post_player = _projected_threat_board(queued=False)
+    post_enemy = _projected_threat_board(queued=True)
+    post_enemy["turn"] = 2
+
+    audit = cmd_mod._audit_projected_post_player_threats(
+        {
+            "post_player_board": post_player,
+            "final_board": post_enemy,
+        },
+        {},
+        [],
+    )
+
+    assert audit["status"] == "OK"
+    assert audit["current_threat_count"] == 0
+    assert audit["phase"] == "predicted_partial_re_solve_post_player"
+    assert cmd_mod._partial_re_solve_threat_block_result(
+        threat_audit=audit,
+        plan_safety={
+            "status": "CLEAN",
+            "blocking": False,
+            "current": {"grid_power": 5},
+            "predicted": {"grid_power": 5},
+        },
+        session=RunSession(run_id="r"),
+        turn=1,
+        actions_completed=1,
+        re_solve_count=1,
+        actions=[],
+        desync={},
+    ) is None
+
+
+def test_partial_re_solve_threat_audit_keeps_real_post_player_threats():
+    post_player = _projected_threat_board(queued=True)
+    audit = cmd_mod._audit_projected_post_player_threats(
+        {"post_player_board": post_player},
+        {},
+        [],
+    )
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    result = cmd_mod._partial_re_solve_threat_block_result(
+        threat_audit=audit,
+        plan_safety={
+            "status": "CLEAN",
+            "blocking": False,
+            "current": {"grid_power": 5},
+            "predicted": {"grid_power": 5},
+        },
+        session=RunSession(run_id="r"),
+        turn=1,
+        actions_completed=1,
+        re_solve_count=1,
+        actions=[],
+        desync={},
+    )
+    assert result is not None
+    assert result["status"] == "THREAT_AUDIT_BLOCKED_RE_SOLVE"
+
+
 def test_enemy_survived_fuzzy_blocks_end_turn_even_when_audit_clean():
     block = cmd_mod._fuzzy_detections_require_end_turn_block([{
         "signature": "death|Brute_Grapple|attack",
@@ -1057,6 +1150,84 @@ def test_tri_rocket_settle_retry_rejects_mixed_grid_loss():
     assert cmd_mod._is_transient_delayed_multihit_damage_diff(
         diff, "Ranged_Crack", "attack"
     ) is False
+
+
+def test_prime_leap_delayed_blast_building_damage_gets_settle_retry():
+    diff = DiffResult(tile_diffs=[{
+        "x": 5,
+        "y": 2,
+        "field": "building_hp",
+        "predicted": 1,
+        "actual": 2,
+    }])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Prime_Leap", "attack"
+    ) is True
+
+
+def test_prime_leap_settle_retry_rejects_mixed_or_worse_live_diff():
+    mixed = DiffResult(
+        tile_diffs=[{
+            "x": 5,
+            "y": 2,
+            "field": "building_hp",
+            "predicted": 1,
+            "actual": 2,
+        }],
+        scalar_diffs=[{
+            "field": "grid_power",
+            "predicted": 5,
+            "actual": 4,
+        }],
+    )
+    worse_live = DiffResult(tile_diffs=[{
+        "x": 5,
+        "y": 2,
+        "field": "building_hp",
+        "predicted": 2,
+        "actual": 1,
+    }])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        mixed, "Prime_Leap_AB", "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        worse_live, "Prime_Leap", "attack"
+    ) is False
+
+
+def test_prime_leap_settle_uses_newer_nontransient_reread():
+    initial = DiffResult(tile_diffs=[{
+        "x": 4,
+        "y": 2,
+        "field": "building_hp",
+        "predicted": 1,
+        "actual": 2,
+    }])
+    reread = DiffResult(tile_diffs=[
+        {
+            "x": 4,
+            "y": 2,
+            "field": "building_hp",
+            "predicted": 1,
+            "actual": 2,
+        },
+        {
+            "x": 5,
+            "y": 2,
+            "field": "building_hp",
+            "predicted": 2,
+            "actual": 1,
+        },
+    ])
+
+    assert cmd_mod._delayed_multihit_reread_became_nontransient(
+        initial,
+        reread,
+        "Prime_Leap",
+        "attack",
+    ) is True
 
 
 def test_repair_platform_move_diff_gets_settle_retry():

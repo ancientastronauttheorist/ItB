@@ -1434,7 +1434,24 @@ fn apply_damage_defer_death_explosion(
     source: DamageSource,
 ) -> Option<usize> {
     apply_damage_defer_death_explosion_impl(
-        board, x, y, damage, result, source, false,
+        board, x, y, damage, result, source, false, None,
+    ).0
+}
+
+/// Prime Leap needs the normal BombRock exclusion around its landing mech,
+/// while still delaying a Blast Psion death burst until after the killed pawn
+/// has been pushed to its final corpse tile.
+fn apply_damage_defer_death_explosion_with_bombrock_exclusion(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+    bombrock_exclude: Option<(u8, u8)>,
+) -> Option<usize> {
+    apply_damage_defer_death_explosion_impl(
+        board, x, y, damage, result, source, false, bombrock_exclude,
     ).0
 }
 
@@ -1446,6 +1463,7 @@ fn apply_damage_defer_death_explosion_impl(
     result: &mut ActionResult,
     source: DamageSource,
     defer_bombrock: bool,
+    bombrock_exclude: Option<(u8, u8)>,
 ) -> (Option<usize>, Option<(u8, u8)>) {
     if damage == 0 { return (None, None); }
     let mut deferred_bombrock = None;
@@ -1487,7 +1505,7 @@ fn apply_damage_defer_death_explosion_impl(
             if defer_bombrock {
                 deferred_bombrock = Some((x, y));
             } else {
-                apply_bombrock_explosion(board, x, y, result, None, 0);
+                apply_bombrock_explosion(board, x, y, result, bombrock_exclude, 0);
             }
         }
     }
@@ -4702,6 +4720,7 @@ fn sim_projectile(
                     result,
                     damage_source,
                     defer_bombrock_explosion,
+                    None,
                 );
             deferred_bombrock_explosion = bombrock_explosion;
             death_explosion
@@ -6323,8 +6342,8 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
             } else {
                 DamageSource::Weapon
             };
-            if is_prime_leap_weapon(weapon_id) {
-                apply_damage_with_bombrock_exclusion(
+            let deferred_death_explosion = if is_prime_leap_weapon(weapon_id) {
+                apply_damage_defer_death_explosion_with_bombrock_exclusion(
                     board,
                     hx,
                     hy,
@@ -6332,10 +6351,11 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                     result,
                     damage_source,
                     Some((tx, ty)),
-                );
+                )
             } else {
                 apply_damage(board, hx, hy, wdef.damage, result, damage_source);
-            }
+                None
+            };
             let killed_by_hit = pre_hit_unit
                 .map(|(idx, pre_hp, _, _, _, _, _, _)| {
                     pre_hp > 0 && board.units[idx].hp <= 0
@@ -6343,6 +6363,11 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                 .unwrap_or(false);
             if wdef.push == PushDir::Outward {
                 apply_push_with_policy(board, hx, hy, i, result, push_policy);
+            }
+            if let Some(idx) = deferred_death_explosion {
+                let ex = board.units[idx].x;
+                let ey = board.units[idx].y;
+                apply_death_explosion(board, ex, ey, result, 0);
             }
             if let Some((
                 idx,
@@ -11574,6 +11599,44 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_killed_target_explodes_from_post_push_tile() {
+        // Live Unfair run 20260710_062120_403, Archival Flats turn 1:
+        // Hydraulic Legs landed at (3,1), killed the Leaper at (4,1), and
+        // pushed its corpse to (5,1). With a Blast Psion alive, the death
+        // burst resolved from (5,1): the old-tile-adjacent building at (4,2)
+        // stayed at 2 HP while the final-tile-adjacent building at (5,2) was
+        // damaged. Simulator v340 burst before applying the outward push.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 2, 3, WId::PrimeLeap);
+        let leaper_idx = add_enemy_type(&mut board, 362, 4, 1, 1, "Leaper1");
+        add_enemy_type(&mut board, 360, 7, 7, 2, "Jelly_Explode1");
+        board.blast_psion = true;
+        board.tile_mut(4, 2).terrain = Terrain::Building;
+        board.tile_mut(4, 2).building_hp = 2;
+        board.tile_mut(5, 2).terrain = Terrain::Building;
+        board.tile_mut(5, 2).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 3, 1);
+
+        assert_eq!(board.units[leaper_idx].hp, 0);
+        assert_eq!(
+            (board.units[leaper_idx].x, board.units[leaper_idx].y),
+            (5, 1),
+            "Hydraulic Legs pushes the killed target before its death burst"
+        );
+        assert_eq!(
+            board.tile(4, 2).building_hp,
+            2,
+            "the death burst must not use the killed target's pre-push tile"
+        );
+        assert_eq!(
+            board.tile(5, 2).building_hp,
+            1,
+            "the death burst must use the killed target's final corpse tile"
+        );
     }
 
     #[test]

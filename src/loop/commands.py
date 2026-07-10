@@ -1017,7 +1017,11 @@ def _partial_re_solve_threat_block_result(
     desync: dict,
     lightning_speed_loss_allowed: bool = False,
 ) -> dict | None:
-    if not _threat_audit_requires_block(
+    audit_error = (
+        isinstance(threat_audit, dict)
+        and threat_audit.get("status") == "ERROR"
+    )
+    if not audit_error and not _threat_audit_requires_block(
         threat_audit,
         plan_safety,
         session,
@@ -3668,6 +3672,68 @@ def _projected_final_board_data(enriched: dict) -> dict:
     return {}
 
 
+def _projected_post_player_board_data(
+    enriched: dict,
+    bridge_data: dict | None = None,
+) -> dict:
+    """Return the full replay board before environment/enemy resolution.
+
+    Unlike ``final_board``, this checkpoint is still on the current turn and
+    retains the queued attacks that the remaining player actions must cover.
+    Copy bridge-only threat metadata that Rust's board serializer does not
+    currently retain.
+    """
+    projected = enriched.get("post_player_board") or {}
+    if not isinstance(projected, dict) or not projected:
+        return {}
+    projected = _carry_projected_summary_metadata(projected, bridge_data)
+    if isinstance(bridge_data, dict):
+        for key in (
+            "attack_order",
+            "env_type",
+            "environment_wind_dir",
+            "environment_freeze",
+            "environment_danger_v2",
+            "environment_danger",
+        ):
+            if key in bridge_data:
+                projected[key] = bridge_data[key]
+    return projected
+
+
+def _audit_projected_post_player_threats(
+    enriched: dict,
+    bridge_data: dict,
+    initial_building_threats: list,
+) -> dict:
+    """Audit current-turn threats after the replayed player actions."""
+    post_player_data = _projected_post_player_board_data(
+        enriched,
+        bridge_data,
+    )
+    if not post_player_data:
+        return {
+            "status": "ERROR",
+            "error": "replay_missing_post_player_board",
+            "phase": "predicted_partial_re_solve_post_player",
+        }
+    try:
+        from src.solver.threat_audit import audit_threat_coverage
+
+        audit = audit_threat_coverage(
+            initial_building_threats or [],
+            Board.from_bridge_data(post_player_data),
+        )
+        audit["phase"] = "predicted_partial_re_solve_post_player"
+        return audit
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "error": str(exc),
+            "phase": "predicted_partial_re_solve_post_player",
+        }
+
+
 def _rust_result_to_solution(rust_result: dict | None,
                              elapsed_seconds: float,
                              active_mech_count: int) -> Solution | None:
@@ -4572,14 +4638,27 @@ def _is_transient_delayed_multihit_damage_diff(
 ) -> bool:
     """Return true when a multi-impact weapon may still be animating.
 
-    Tri-Rocket's three impacts can land after the bridge command ACK and the
-    first state refresh.  Limit this retry classification to enemy damage that
-    is strictly behind the prediction; mixed tile/scalar/status/position diffs
-    still go straight through the ordinary desync gate.
+    Tri-Rocket's three impacts and Hydraulic Legs' Blast Psion follow-up can
+    land after the bridge command ACK and the first state refresh. Limit this
+    retry classification to damage that is strictly behind the prediction;
+    mixed scalar/status/position diffs still go through the desync gate.
     """
     if phase != "attack":
         return False
     weapon = str(weapon_name or "")
+    if weapon.startswith("Prime_Leap"):
+        if getattr(diff, "unit_diffs", []) or getattr(diff, "scalar_diffs", []):
+            return False
+        tile_diffs = getattr(diff, "tile_diffs", []) or []
+        if not tile_diffs:
+            return False
+        return all(
+            td.get("field") == "building_hp"
+            and isinstance(td.get("predicted"), (int, float))
+            and isinstance(td.get("actual"), (int, float))
+            and td["actual"] > td["predicted"]
+            for td in tile_diffs
+        )
     if weapon != "Tri-Rocket" and not weapon.startswith("Ranged_Crack"):
         return False
     if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
@@ -4609,6 +4688,27 @@ def _is_transient_delayed_multihit_damage_diff(
         else:
             return False
     return True
+
+
+def _delayed_multihit_reread_became_nontransient(
+    initial_diff,
+    reread_diff,
+    weapon_name: str | None,
+    phase: str,
+) -> bool:
+    """Return true when a settle retry reveals a real, newer mismatch."""
+    return (
+        _is_transient_delayed_multihit_damage_diff(
+            initial_diff,
+            weapon_name,
+            phase,
+        )
+        and not _is_transient_delayed_multihit_damage_diff(
+            reread_diff,
+            weapon_name,
+            phase,
+        )
+    )
 
 
 def _is_transient_delayed_repair_platform_diff(diff, phase: str) -> bool:
@@ -7153,6 +7253,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
+        "post_player_board": enriched.get("post_player_board", {}),
         "final_board": enriched.get("final_board", {}),
         "replay_annotations": enriched.get("replay_annotations", []),
         "current_outcome": current_outcome,
@@ -45753,20 +45854,11 @@ def _re_solve_partial(
                 predicted_board_summary.update(_capture_board_summary(
                     final_board, final_board_data
                 ))
-                try:
-                    from src.solver.threat_audit import (
-                        audit_threat_coverage as _audit_threat_coverage,
-                    )
-                    partial_threat_audit = _audit_threat_coverage(
-                        initial_building_threats or [],
-                        final_board,
-                    )
-                    partial_threat_audit["phase"] = "predicted_partial_re_solve"
-                except Exception as exc:
-                    partial_threat_audit = {
-                        "status": "ERROR",
-                        "error": str(exc),
-                    }
+            partial_threat_audit = _audit_projected_post_player_threats(
+                enriched,
+                bridge_data,
+                initial_building_threats or [],
+            )
             predicted_board_summary["pods_collected"] = sum(
                 int(r.get("pods_collected", 0) or 0)
                 for r in enriched.get("action_results", [])
@@ -45869,6 +45961,7 @@ def _re_solve_partial(
                 "safety_widening": [],
                 "action_results": enriched.get("action_results", []),
                 "predicted_states": enriched.get("predicted_states", []),
+                "post_player_board": enriched.get("post_player_board", {}),
                 "replay_annotations": enriched.get("replay_annotations", []),
                 "current_outcome": current_outcome,
                 "predicted_outcome": enriched.get("predicted_outcome", {}),
@@ -46661,6 +46754,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             reread_diff = diff_states(predicted, reread_board)
             if reread_diff.is_empty():
                 print(f"  {phase.upper()} VERIFIED: PASS (bridge settled after {attempt + 1} reread)")
+                return reread_board, reread_data, reread_diff
+            if _delayed_multihit_reread_became_nontransient(
+                diff,
+                reread_diff,
+                weapon_name,
+                phase,
+            ):
+                print(
+                    f"  {phase.upper()} verify: delayed effect settled into "
+                    "a non-transient mismatch"
+                )
                 return reread_board, reread_data, reread_diff
             if reread_diff.total_count() < best_diff.total_count():
                 best_board, best_data, best_diff = reread_board, reread_data, reread_diff

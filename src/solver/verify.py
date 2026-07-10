@@ -1589,7 +1589,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # so a new blocker intercepts and a vacated target lane continues to the next
 # blocker. Pre-v340 corpus archived as
 # failure_db_snapshot_sim_v339.jsonl.
-SIMULATOR_VERSION = 340
+# v341 - Hydraulic Legs defers Blast Psion death bursts until after its outward
+# push, so a killed target explodes from the final corpse tile. Pre-v341 corpus
+# archived as failure_db_snapshot_sim_v340.jsonl.
+SIMULATOR_VERSION = 341
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

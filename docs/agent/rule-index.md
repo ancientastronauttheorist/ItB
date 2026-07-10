@@ -424,3 +424,7 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 417 | 731 | `auto_turn` must carry exact mech-loss consent end to end. | `docs/agent/safety-gates.md` |
 | 418 | 733 | Shared old markers must not hide a live `DIR_FLIP`. | `docs/agent/safety-gates.md` |
 | 419 | 735 | Mission_Terratide warnings are a zero-damage smoke wave. | `docs/agent/solver-reference.md` |
+| 426 | 749 | Unknown-phase bridge mission IDs cannot establish a mission boundary. | `docs/agent/live-runbook.md` |
+| 427 | 751 | Hydraulic Legs death bursts resolve from the pushed corpse tile. | `docs/agent/solver-reference.md` |
+| 428 | 753 | Delayed player-attack follow-ups need authoritative settle rereads. | `docs/agent/safety-gates.md` |
+| 429 | 755 | Partial re-solve threat audits use the post-player board. | `docs/agent/safety-gates.md` |

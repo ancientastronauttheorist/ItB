@@ -92,7 +92,13 @@ def _load_bridge_and_plan(solve_path: Path) -> tuple[dict, list[dict]] | None:
 # ── Shape contract ─────────────────────────────────────────────────────────
 
 # Required top-level keys in Rust replay_solution output.
-EXPECTED_TOP_KEYS = {"action_results", "predicted_states", "predicted_outcome", "final_board"}
+EXPECTED_TOP_KEYS = {
+    "action_results",
+    "predicted_states",
+    "predicted_outcome",
+    "post_player_board",
+    "final_board",
+}
 
 # Required keys in each action_results[i].
 EXPECTED_AR_KEYS = {
@@ -296,8 +302,10 @@ def test_replay_shape_against_recording(solve_path):
     miss = EXPECTED_OUTCOME_KEYS - set(data["predicted_outcome"].keys())
     assert not miss, f"predicted_outcome missing keys: {miss}"
 
-    # final_board must be a dict (bridge JSON) for the post-PR-B
-    # round-trip to evaluate_breakdown.
+    # Both full-board checkpoints must be bridge JSON dictionaries. The first
+    # feeds current-turn threat audits; the second feeds post-enemy scoring.
+    assert isinstance(data["post_player_board"], dict)
+    assert "tiles" in data["post_player_board"] or "units" in data["post_player_board"]
     assert isinstance(data["final_board"], dict)
     assert "tiles" in data["final_board"] or "units" in data["final_board"]
 

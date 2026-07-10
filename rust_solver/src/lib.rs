@@ -2189,7 +2189,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   so a new blocker intercepts and a vacated target lane continues to the
 //   next blocker. Pre-v340 corpus archived as
 //   failure_db_snapshot_sim_v339.jsonl.
-pub const SIMULATOR_VERSION: u32 = 340;
+// v341 - Hydraulic Legs defers Blast Psion death bursts until after its
+//   outward push, so a killed target explodes from the final corpse tile.
+//   Pre-v341 corpus archived as failure_db_snapshot_sim_v340.jsonl.
+pub const SIMULATOR_VERSION: u32 = 341;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
@@ -2208,6 +2211,7 @@ fn simulator_version() -> u32 {
 ///     "action_results":   [<one per action>],
 ///     "predicted_states": [{"post_move": <snap>, "post_attack": <snap>}, ...],
 ///     "predicted_outcome": {<post-enemy summary>},
+///     "post_player_board": <bridge JSON after player actions>,
 ///     "final_board":       <bridge JSON of post-enemy board>
 ///   }
 ///

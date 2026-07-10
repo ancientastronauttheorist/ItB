@@ -4,10 +4,9 @@
 //! call site can be swapped to the Rust backend without consumer changes.
 //! For each action in the plan: run `simulate_move`, snapshot, run
 //! `simulate_attack`, snapshot. After all actions: run env effects + Vek
-//! attacks (`simulate_enemy_attacks`) then `apply_spawn_blocking`. Build
-//! `predicted_outcome` summary and serialize the post-enemy board via
-//! `turn_projection::board_to_json` for Python's `evaluate_breakdown` to
-//! consume.
+//! attacks (`simulate_enemy_attacks`) then `apply_spawn_blocking`. Serialize
+//! both the post-player board used by current-turn threat audits and the
+//! post-enemy board used by Python's `evaluate_breakdown`.
 //!
 //! Snapshot shape matches `src/solver/verify.py::snapshot_after_action` /
 //! `snapshot_after_move` byte-for-byte: same field names, same types, same
@@ -183,6 +182,15 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         }));
     }
 
+    // Preserve the complete board after every planned player action but
+    // before environment/enemy resolution. Partial re-solve threat audits
+    // must inspect this state; the final board below is advanced to the next
+    // turn and heuristically re-queues enemies, so auditing it as the current
+    // turn creates false building threats.
+    let post_player_board_json: Value = serde_json::from_str(
+        &board_to_json(&board, &spawn_points)
+    ).map_err(|e| format!("post_player_board reparse: {}", e))?;
+
     // Snapshot building coords BEFORE the enemy phase so we can attribute
     // the post-enemy delta to enemies (mirrors solver.py:718's
     // buildings_destroyed return). Using a coord set rather than a scalar
@@ -317,6 +325,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         "action_results":   action_results,
         "predicted_states": predicted_states,
         "predicted_outcome": predicted_outcome,
+        "post_player_board": post_player_board_json,
         "final_board":       final_board_json,
     });
     Ok(out.to_string())
@@ -828,13 +837,20 @@ mod tests {
 
     #[test]
     fn replay_solution_empty_plan_returns_baseline_outcome() {
-        // Minimal bridge JSON: a single mech, no enemies, no buildings.
+        // The current-turn enemy has no queued attack. The final board advances
+        // one turn and heuristically queues it against the only building.
         let bridge = r#"{
-          "tiles": [],
+          "tiles": [
+            {"x": 4, "y": 2, "terrain": "building", "building_hp": 2}
+          ],
           "units": [
             {"uid": 1, "type": "PunchMech", "x": 4, "y": 4,
              "hp": 3, "max_hp": 3, "team": 1, "mech": true,
-             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]}
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]},
+            {"uid": 10, "type": "Firefly1", "x": 6, "y": 2,
+             "hp": 3, "max_hp": 3, "team": 6, "mech": false,
+             "move": 3, "active": false, "weapons": ["FireflyAtk1"],
+             "has_queued_attack": false}
           ],
           "grid_power": 7,
           "grid_power_max": 7,
@@ -850,8 +866,19 @@ mod tests {
         assert_eq!(v["action_results"].as_array().unwrap().len(), 0);
         assert_eq!(v["predicted_states"].as_array().unwrap().len(), 0);
         assert_eq!(v["predicted_outcome"]["mechs_alive"], 1);
-        assert_eq!(v["predicted_outcome"]["enemies_alive"], 0);
+        assert_eq!(v["predicted_outcome"]["enemies_alive"], 1);
+        assert!(v["post_player_board"].is_object());
+        assert_eq!(v["post_player_board"]["turn"], 1);
+        let post_enemy = v["post_player_board"]["units"].as_array().unwrap()
+            .iter().find(|u| u["uid"] == 10).unwrap();
+        assert_eq!(post_enemy["queued_target"], json!([-1, -1]));
+        assert_ne!(post_enemy["has_queued_attack"], true);
         assert!(v["final_board"].is_object());
+        assert_eq!(v["final_board"]["turn"], 2);
+        let next_turn_enemy = v["final_board"]["units"].as_array().unwrap()
+            .iter().find(|u| u["uid"] == 10).unwrap();
+        assert_eq!(next_turn_enemy["queued_target"], json!([4, 2]));
+        assert_eq!(next_turn_enemy["has_queued_attack"], true);
     }
 
     #[test]
