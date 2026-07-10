@@ -540,6 +540,39 @@ def test_explained_emergent_pod_loss_does_not_hide_grid_loss():
     assert commands._post_enemy_needs_investigation(result)
 
 
+def test_unfair_post_enemy_gate_accepts_predicted_mech_status():
+    session = RunSession(run_id="run", difficulty=3)
+    deltas = {
+        "mech_status_diff": [{
+            "key": "mechs_acid",
+            "status": "ACID",
+            "predicted_count": 1,
+            "actual_count": 1,
+            "unexpected": [],
+            "cleared": [],
+        }],
+    }
+
+    assert not commands._post_enemy_needs_investigation(deltas, session)
+
+
+def test_unfair_post_enemy_gate_blocks_unexpected_mech_status():
+    session = RunSession(run_id="run", difficulty=3)
+    acid_mech = {"uid": 1, "type": "JetMech", "pos": [6, 7]}
+    deltas = {
+        "mech_status_diff": [{
+            "key": "mechs_acid",
+            "status": "ACID",
+            "predicted_count": 0,
+            "actual_count": 1,
+            "unexpected": [acid_mech],
+            "cleared": [],
+        }],
+    }
+
+    assert commands._post_enemy_needs_investigation(deltas, session)
+
+
 def test_record_post_enemy_records_nonlethal_mech_damage_for_lightning_war(
     tmp_path,
     monkeypatch,

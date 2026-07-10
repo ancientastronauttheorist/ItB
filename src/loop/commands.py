@@ -5333,7 +5333,15 @@ def _post_enemy_needs_investigation(
 
     if _blocks_mech_status_loss_for_run(session):
         for delta in deltas.get("mech_status_diff", []) or []:
-            if isinstance(delta, dict) and int(delta.get("actual_count", 0) or 0) > 0:
+            if not isinstance(delta, dict):
+                continue
+            unexpected = delta.get("unexpected")
+            if isinstance(unexpected, list):
+                if unexpected:
+                    return True
+            elif int(delta.get("actual_count", 0) or 0) > int(
+                delta.get("predicted_count", 0) or 0
+            ):
                 return True
 
     return False
