@@ -2177,7 +2177,7 @@ pub fn simulate_train_advance(board: &mut Board) -> ActionResult {
 /// Mission_Train:StopTrain's RemovePawn + AddPawn transition and allowing
 /// uid-level death accounting to observe the original train's death exactly
 /// once. The fresh pawn clears statuses/intent and remains non-pushable.
-fn transition_destroyed_supply_train(board: &mut Board) -> bool {
+pub(crate) fn transition_destroyed_supply_train(board: &mut Board) -> bool {
     let mut pair: Option<(usize, usize, &'static str, bool)> = None;
 
     for p in 0..board.unit_count as usize {

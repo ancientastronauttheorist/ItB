@@ -179,6 +179,8 @@ def build_unit_capture_plan(
     crops: tuple[str, ...] = ("name_tag", "unit_status"),
     dismiss_wait_s: float = 0.4,
     post_click_wait_s: float = 0.8,
+    *,
+    click_target: bool = True,
 ) -> dict:
     """Return a plan dict to select a unit and capture its panels.
 
@@ -197,16 +199,20 @@ def build_unit_capture_plan(
             ``build_weapon_hover_plan`` first.
         dismiss_wait_s: Dwell time after the neutral-hover move so any
             residual tooltip fades before the click fires.
-        post_click_wait_s: Dwell time after the click so the panel
-            animation settles before the screenshot.
+        post_click_wait_s: Dwell time after the target interaction so the
+            panel animation settles before the screenshot.
+        click_target: Select the target with a left click when true. When
+            false, hover the target instead; this is the safe capture mode
+            while a player combat actor may still be selected.
 
     Returns:
         ``{"batch": [...], "crops": [{"name": str, "region": (x0,y0,x1,y1)}]}``.
     """
+    target_action = "left_click" if click_target else "mouse_move"
     batch = [
         {"action": "mouse_move", "coordinate": list(ui.neutral_hover)},
         {"action": "wait", "duration": dismiss_wait_s},
-        {"action": "left_click", "coordinate": list(target_mcp)},
+        {"action": target_action, "coordinate": list(target_mcp)},
         {"action": "wait", "duration": post_click_wait_s},
         {"action": "screenshot"},
     ]
@@ -215,7 +221,11 @@ def build_unit_capture_plan(
         for name in crops
         if name in ui.regions
     ]
-    return {"batch": batch, "crops": crop_rects}
+    return {
+        "batch": batch,
+        "crops": crop_rects,
+        "capture_mode": "select" if click_target else "hover_only",
+    }
 
 
 def build_weapon_hover_plan(

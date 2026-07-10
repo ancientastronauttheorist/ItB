@@ -117,6 +117,7 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 - `click_balanced_roll` — Pure planner. Emits a single click on the Balanced Roll button on the squad-select screen. Dispatch before clicking Start only when the setup recommendation says Balanced Roll.
 - `deploy_recommended` — Bridge deployment helper. Sends `DEPLOY uid x y` for the ranked recommended tiles, verifies placed mech coordinates, and leaves only the visible CONFIRM click for Computer Use.
 - `execute <index>` / `end_turn` — Bridge-mode action commands. Used internally by `auto_turn`. In manual play, use `click_action` / `click_end_turn` instead. These refuse to run while a persistent post-enemy block exists.
+- `research_next [--profile Alpha]` — Picks the next pending research target and emits its capture plan. Unit research during `combat_player` must be hover-only and click-free; never dispatch a returned batch containing `left_click` while any active player actor remains. After a partial action or desync, visible modal, dialogue, reward, or terminal UI outranks a stale `combat_player` bridge phase, so resolve that UI state deliberately instead of using the research plan to dismiss it.
 - `research_peek [--limit N]` — Read-only view of the pending research queue. Use this instead of the nonexistent `research_queue_peek` command.
 - `resolve_post_enemy_block --reason "<specific cause/fix>"` — Clears a persistent post-enemy investigation block after the miss has been understood and recorded.
 

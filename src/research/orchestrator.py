@@ -406,6 +406,7 @@ def begin_research(
     board: Board,
     *,
     ui: capture.UiRegions | None = None,
+    allow_unit_click: bool = True,
 ) -> dict | None:
     """Pick the next researchable entry and build its capture plan.
 
@@ -460,7 +461,10 @@ def begin_research(
         kind = "mech" if chosen_unit.is_mech else "enemy"
         crops = _crops_for_kind(kind)
         plan = capture.build_unit_capture_plan(
-            target_mcp=target_mcp, ui=ui, crops=crops,
+            target_mcp=target_mcp,
+            ui=ui,
+            crops=crops,
+            click_target=allow_unit_click,
         )
         prompts = {
             name: vision.PROMPTS[name]
@@ -468,6 +472,12 @@ def begin_research(
         }
         position_bridge = [chosen_unit.x, chosen_unit.y]
         next_step = (
+            "dispatch the click-free plan.batch via computer_batch, zoom each "
+            "plan.crops[i].region, apply prompts[crop_name] to produce "
+            "JSON per crop, then call cmd_research_submit with the "
+            "research_id and {crop_name: json_string} dict"
+            if not allow_unit_click
+            else
             "dispatch plan.batch via computer_batch, zoom each "
             "plan.crops[i].region, apply prompts[crop_name] to produce "
             "JSON per crop, then call cmd_research_submit with the "

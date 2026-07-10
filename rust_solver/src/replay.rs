@@ -995,4 +995,101 @@ mod tests {
         let burnbug = post_attack_units.iter().find(|u| u["uid"] == 899).unwrap();
         assert_eq!(burnbug["hp"], 3, "illegal off-axis rocket target must not damage Burnbug1");
     }
+
+    #[test]
+    fn replay_solution_train_stop_is_visible_to_next_player_action() {
+        // Chaos Roll Unfair run 20260710_013601_568, Mission_Train turn 3.
+        // Hydrant killed Train_Pawn uid 164, Mission_Train immediately
+        // replaced it with Train_Damaged uid 198, then the already-planned
+        // Mirror Shot at that same tile killed the replacement. Before the
+        // player-action mission hook, replay left a dead Train_Pawn in place,
+        // so Mirror Shot passed through and falsely preserved the objective.
+        let bridge = r#"{
+          "mission_id": "Mission_Train",
+          "protect_objective_unit_types": ["Train"],
+          "tiles": [
+            {"x": 0, "y": 4, "terrain": "building", "building_hp": 1}
+          ],
+          "units": [
+            {"uid": 0, "type": "NeedleMech", "x": 5, "y": 5,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "flying": true, "move": 4, "active": true,
+             "weapons": ["Brute_KickBack"]},
+            {"uid": 1, "type": "MirrorMech", "x": 2, "y": 2,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true, "weapons": ["Brute_Mirrorshot"]},
+            {"uid": 2, "type": "HydrantMech", "x": 5, "y": 1,
+             "hp": 2, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true, "weapons": ["Science_KO_Crack"]},
+            {"uid": 164, "type": "Train_Pawn", "x": 4, "y": 2,
+             "hp": 1, "max_hp": 1, "team": 1, "mech": false,
+             "move": 0, "active": false, "pushable": false,
+             "weapons": ["Train_Move"]},
+            {"uid": 164, "type": "Train_Pawn", "x": 4, "y": 3,
+             "hp": 1, "max_hp": 1, "team": 1, "mech": false,
+             "move": 0, "active": false, "pushable": false,
+             "is_extra_tile": true, "weapons": []},
+            {"uid": 196, "type": "Moth2", "x": 4, "y": 6,
+             "hp": 3, "max_hp": 6, "team": 6, "mech": false,
+             "move": 3, "active": false, "weapons": ["MothAtk2"],
+             "has_queued_attack": true, "queued_origin": [4, 6],
+             "queued_target": [4, 3]},
+            {"uid": 197, "type": "Moth1", "x": 4, "y": 4,
+             "hp": 4, "max_hp": 4, "team": 6, "mech": false,
+             "move": 3, "active": false, "weapons": ["MothAtk1"],
+             "has_queued_attack": true, "queued_origin": [4, 4],
+             "queued_target": [0, 4]}
+          ],
+          "attack_order": [196, 197],
+          "grid_power": 2,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 3,
+          "total_turns": 3
+        }"#;
+        let plan = r#"[
+          {"mech_uid": 0, "move_to": [5, 5],
+           "weapon_id": "_REPAIR", "target": [5, 5]},
+          {"mech_uid": 2, "move_to": [3, 2],
+           "weapon_id": "Science_KO_Crack", "target": [4, 2]},
+          {"mech_uid": 1, "move_to": [4, 1],
+           "weapon_id": "Brute_Mirrorshot", "target": [4, 2]}
+        ]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+
+        let post_seismic = v["predicted_states"][1]["post_attack"]["units"]
+            .as_array()
+            .unwrap();
+        let stopped: Vec<_> = post_seismic
+            .iter()
+            .filter(|u| u["uid"] == 198 && u["type"] == "Train_Damaged")
+            .collect();
+        assert_eq!(stopped.len(), 2, "replacement keeps both train tiles");
+        assert!(stopped.iter().all(|u| u["alive"] == true));
+        assert!(stopped.iter().any(|u| u["pos"] == json!([4, 2])));
+        assert!(stopped.iter().any(|u| u["pos"] == json!([4, 3])));
+
+        let post_mirror = v["predicted_states"][2]["post_attack"]["units"]
+            .as_array()
+            .unwrap();
+        let destroyed: Vec<_> = post_mirror
+            .iter()
+            .filter(|u| u["uid"] == 198 && u["type"] == "Train_Damaged")
+            .collect();
+        assert_eq!(destroyed.len(), 2);
+        assert!(
+            destroyed.iter().all(|u| u["alive"] == false),
+            "the next player action must hit and destroy the fresh stopped train",
+        );
+        assert_eq!(v["action_results"][1]["unit_deaths"], 1);
+        assert_eq!(v["action_results"][2]["unit_deaths"], 1);
+        assert_eq!(
+            v["predicted_outcome"]["grid_power"], 1,
+            "queued Moth building damage, not the train transition, spends the final grid",
+        );
+    }
 }

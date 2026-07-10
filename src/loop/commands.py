@@ -42939,11 +42939,19 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
         _print_result(result)
         return result
 
-    board, _bridge = read_bridge_state()
+    board, bridge_data = read_bridge_state()
     if board is None:
         result = {"error": "Failed to read bridge state for research target"}
         _print_result(result)
         return result
+
+    phase = bridge_data.get("phase") if isinstance(bridge_data, dict) else None
+    active_player_actors = _active_player_action_count(board)
+    # A research unit selection is still a combat tile click. If a mech or
+    # controllable ally is selected, that click can fire its armed weapon;
+    # even with every actor spent, held-End-Turn policy forbids board clicks.
+    # Hover-only capture keeps the gate usable without changing live state.
+    combat_hover_only = phase == "combat_player" or active_player_actors > 0
 
     try:
         ui = capture.resolve_ui_regions(capture.load_ui_regions())
@@ -42953,7 +42961,12 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
         return result
 
     auto_resolved = orchestrator.drain_stale_behavior_novelty(session)
-    plan = orchestrator.begin_research(session, board, ui=ui)
+    plan = orchestrator.begin_research(
+        session,
+        board,
+        ui=ui,
+        allow_unit_click=not combat_hover_only,
+    )
     if plan is None:
         session.save()
         result = {
@@ -42977,6 +42990,9 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
     result = {
         "status": "PLAN",
         **plan,
+        "phase": phase,
+        "active_player_actors": active_player_actors,
+        "unit_click_allowed": not combat_hover_only,
     }
     if auto_resolved:
         result["auto_resolved"] = auto_resolved
@@ -42986,6 +43002,8 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
           f"bridge {tuple(target['position_bridge'])} -> "
           f"MCP {tuple(target['target_mcp'])}")
     print(f"  crops: {[c['name'] for c in plan['plan']['crops']]}")
+    if combat_hover_only:
+        print("  capture guard: hover-only; no combat tile click emitted")
     print(f"  next: dispatch plan.batch → zoom each crop → Vision → "
           f"cmd_research_submit {plan['research_id']}")
     _print_result(result)

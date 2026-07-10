@@ -117,6 +117,22 @@ def test_unit_capture_plan_shape_for_enemy():
     assert plan["crops"][0]["region"] == (178, 558, 410, 603)
 
 
+def test_unit_capture_plan_can_hover_without_clicking_target():
+    ui = capture.resolve_ui_regions(_raw_regions(), current_window=REF_WINDOW)
+    plan = capture.build_unit_capture_plan(
+        target_mcp=(740, 366),
+        ui=ui,
+        click_target=False,
+    )
+
+    actions = [a["action"] for a in plan["batch"]]
+    assert actions == ["mouse_move", "wait", "mouse_move", "wait", "screenshot"]
+    assert plan["batch"][2]["coordinate"] == [740, 366]
+    assert "left_click" not in actions
+    assert plan["capture_mode"] == "hover_only"
+    assert [c["name"] for c in plan["crops"]] == ["name_tag", "unit_status"]
+
+
 def test_unit_capture_plan_respects_custom_crop_list():
     ui = capture.resolve_ui_regions(_raw_regions(), current_window=REF_WINDOW)
     plan = capture.build_unit_capture_plan(

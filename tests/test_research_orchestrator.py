@@ -81,6 +81,26 @@ def test_begin_research_finds_unit_and_builds_plan(monkeypatch):
     assert entry["research_id"] == out["research_id"]
 
 
+def test_begin_research_hover_only_never_clicks_unit(monkeypatch):
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (740, 366))
+    s = RunSession()
+    s.enqueue_research("FireflyBoss", None, current_turn=1)
+    board = _fake_board([_fake_unit("FireflyBoss", 3, 2)])
+
+    out = orchestrator.begin_research(
+        s,
+        board,
+        ui=_ui_regions(),
+        allow_unit_click=False,
+    )
+
+    actions = [a["action"] for a in out["plan"]["batch"]]
+    assert "left_click" not in actions
+    assert actions == ["mouse_move", "wait", "mouse_move", "wait", "screenshot"]
+    assert out["plan"]["capture_mode"] == "hover_only"
+    assert s.research_queue[0]["status"] == "in_progress"
+
+
 def test_begin_research_returns_none_when_no_target_on_board(monkeypatch):
     monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (0, 0))
     s = RunSession()

@@ -2179,7 +2179,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   queued shot when the bridge-normalized target collapses onto its stale
 //   origin, then clears that obsolete raw intent after rewriting the attack.
 //   Pre-v338 corpus archived as failure_db_snapshot_sim_v337.jsonl.
-pub const SIMULATOR_VERSION: u32 = 338;
+// v339 - A player attack that destroys Mission_Train's moving train
+//   immediately materializes the live damaged replacement before replay
+//   captures the action or applies the next player action. Pre-v339 corpus
+//   archived as failure_db_snapshot_sim_v338.jsonl.
+pub const SIMULATOR_VERSION: u32 = 339;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

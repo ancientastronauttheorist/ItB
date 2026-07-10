@@ -6833,6 +6833,14 @@ pub fn simulate_attack_with_target2(
         board.units[mech_idx].set_boosted(finisher_boost);
         refresh_arrogant_boost(&mut board.units[mech_idx]);
     }
+
+    // Mission_Train's StopTrain mission update runs as soon as a player
+    // attack destroys the moving train. Materialize the stopped body before
+    // replay captures its post-attack snapshot or the solver applies the next
+    // mech action; waiting for the enemy-phase train hook leaves a dead
+    // Train_Pawn where the live board already has a fresh Train_Damaged pawn.
+    crate::enemy::transition_destroyed_supply_train(board);
+
     drain_pending_spider_eggs(board);
     result
 }
@@ -8274,6 +8282,58 @@ mod tests {
 
         assert_eq!(board.tile(6, 2).terrain, Terrain::Mountain);
         assert_eq!(board.tile(6, 2).building_hp, 1);
+    }
+
+    #[test]
+    fn test_player_seismic_kill_immediately_replaces_supply_train() {
+        // Chaos Roll Unfair run 20260710_013601_568, Mission_Train turn 3:
+        // Seismic Capacitor killed the locomotive at (4,2). The mission's
+        // StopTrain hook removed uid 164 and spawned a fresh Train_Damaged
+        // body on the same two tiles before the attack verification read.
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Train".to_string();
+        let hydrant = add_mech(&mut board, 2, 3, 2, 2, WId::ScienceKoCrack);
+
+        let mut primary = Unit {
+            uid: 164,
+            x: 4,
+            y: 2,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            ..Default::default()
+        };
+        primary.set_type_name("Train_Pawn");
+        let primary_idx = board.add_unit(primary);
+        let mut extra = Unit {
+            uid: 164,
+            x: 4,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::EXTRA_TILE,
+            ..Default::default()
+        };
+        extra.set_type_name("Train_Pawn");
+        let extra_idx = board.add_unit(extra);
+
+        simulate_attack(
+            &mut board,
+            hydrant,
+            WId::ScienceKoCrack,
+            (4, 2),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[primary_idx].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[extra_idx].type_name_str(), "Train_Damaged");
+        assert_eq!((board.units[primary_idx].x, board.units[primary_idx].y), (4, 2));
+        assert_eq!((board.units[extra_idx].x, board.units[extra_idx].y), (4, 3));
+        assert_eq!(board.units[primary_idx].hp, 1);
+        assert_eq!(board.units[extra_idx].hp, 1);
+        assert_ne!(board.units[primary_idx].uid, 164);
+        assert_eq!(board.units[primary_idx].uid, board.units[extra_idx].uid);
     }
 
     #[test]

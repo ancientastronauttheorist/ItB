@@ -1582,7 +1582,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # queued shot when the bridge-normalized target collapses onto its stale
 # origin, then clears that obsolete raw intent after rewriting the attack.
 # Pre-v338 corpus archived as failure_db_snapshot_sim_v337.jsonl.
-SIMULATOR_VERSION = 338
+# v339 - A player attack that destroys Mission_Train's moving train
+# immediately materializes the live damaged replacement before replay captures
+# the action or applies the next player action. Pre-v339 corpus archived as
+# failure_db_snapshot_sim_v338.jsonl.
+SIMULATOR_VERSION = 339
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
