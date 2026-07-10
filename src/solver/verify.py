@@ -1604,7 +1604,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Fire newly acquired from its burning origin onto a clean destination.
 # Pre-existing Fire, blocked pushes, and burning/Lava destinations preserve
 # Fire.
-SIMULATOR_VERSION = 344
+# v345 - Generic damage that ignites a previously smoked Forest clears Smoke
+# when it becomes Ground + Fire. Pre-v345 corpus archived as
+# failure_db_snapshot_sim_v344.jsonl.
+SIMULATOR_VERSION = 345
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

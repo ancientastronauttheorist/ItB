@@ -2204,7 +2204,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Fire newly acquired from its burning origin onto a clean destination.
 //   Pre-existing Fire, blocked pushes, and burning/Lava destinations preserve
 //   Fire.
-pub const SIMULATOR_VERSION: u32 = 344;
+// v345 - Generic damage that ignites a previously smoked Forest clears Smoke
+//   when it becomes Ground + Fire. Pre-v345 corpus archived as
+//   failure_db_snapshot_sim_v344.jsonl.
+pub const SIMULATOR_VERSION: u32 = 345;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -1927,6 +1927,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             && source != DamageSource::Bump
             && !frozen_unit_absorbed_damage {
             tile.terrain = Terrain::Ground;
+            tile.set_smoke(false);
             tile.set_on_fire(true);
             if unit_received_nonshield_hit {
                 if let Some(idx) = board.unit_at(x, y) {
@@ -11637,6 +11638,24 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_ignites_smoked_forest_without_retaining_smoke() {
+        // Live run 20260710_062120_403, Mission_Train turn 2: Hydraulic Legs
+        // landed at E5 and hit the previously smoked Forest at F5. Live
+        // settled the tile as Ground + Fire with Smoke cleared; v344 retained
+        // the impossible Fire + Smoke combination.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeLeap);
+        board.tile_mut(3, 2).terrain = Terrain::Forest;
+        board.tile_mut(3, 2).set_smoke(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 3, 3);
+
+        assert_eq!(board.tile(3, 2).terrain, Terrain::Ground);
+        assert!(board.tile(3, 2).on_fire());
+        assert!(!board.tile(3, 2).smoke(), "Fire replaces pre-existing Smoke");
     }
 
     #[test]
