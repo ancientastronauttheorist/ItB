@@ -1081,6 +1081,12 @@ pub fn simulate_enemy_attacks(
     }
 
     for &ei in &enemy_indices {
+        // Mission_Train replaces a destroyed moving train with a fresh,
+        // stationary damaged train. Mission updates run between queued unit
+        // actions, so materialize that replacement before the next enemy can
+        // act on the same tiles.
+        transition_destroyed_supply_train(board);
+
         let enemy = &board.units[ei];
         if enemy.hp <= 0 { continue; }
         // Spider/Arachnid eggs don't attack — they hatch into Spiderlings on
@@ -2011,14 +2017,18 @@ pub fn simulate_enemy_attacks(
         }
     }
 
+    // A final queued attack can destroy the moving train without another enemy
+    // iteration to trigger the action-boundary transition above.
+    transition_destroyed_supply_train(board);
+
     // Train_Pawn end-of-enemy-phase advance: moves 2 tiles forward along its
     // rail (direction = primary_tile - extra_tile). If either destination
     // tile is blocked (mountain, building, any non-train unit, or a wreck),
-    // the train is destroyed (both tiles hp = 0 → friendly_npc_killed fires
-    // twice in evaluate). If destinations are off-board, treat as surviving
-    // (train has reached the far edge). Skip if train was already killed by
-    // enemy attacks above.
-    simulate_train_advance(board);
+    // the moving train destroys that blocker, stops before it, and is replaced
+    // by a live Train_Damaged body. If destinations are off-board, treat as
+    // surviving (train has reached the far edge).
+    let train_result = simulate_train_advance(board);
+    result.merge(&train_result);
 
     // Player-phase bump debt is flushed at enemy-turn start above. Enemy-phase
     // bumps can create the same deferred debt (for example Tumblebug BombRock
@@ -2053,13 +2063,19 @@ pub fn simulate_enemy_attacks(
 ///
 /// Direction is inferred from the two tile entries sharing uid: forward =
 /// primary - extra (extra_tile is the caboose, primary is the locomotive).
-/// Normal Train_Pawn is destroyed if either entered tile is blocked by a
-/// mountain, building, or a non-train unit. Armored Train instead destroys
-/// everything in its two entered tiles and keeps moving (Lua
+/// Normal Train_Pawn stops if either entered tile is blocked by a mountain,
+/// building, or non-train unit: it advances through any preceding clear step,
+/// destroys the blocker, then becomes a live Train_Damaged body. Armored Train
+/// instead destroys everything in its two entered tiles and keeps moving (Lua
 /// Armored_Train_Move queues DAMAGE_DEATH on both tiles before charge).
 /// Off-board destinations count as reaching the exit — train stays alive at
 /// its current position (not advanced off the board). Called once per turn.
-pub fn simulate_train_advance(board: &mut Board) {
+pub fn simulate_train_advance(board: &mut Board) -> ActionResult {
+    let mut result = ActionResult::default();
+    if transition_destroyed_supply_train(board) {
+        return result;
+    }
+
     let mut primary: Option<usize> = None;
     let mut extra: Option<usize> = None;
     let mut armored_train = false;
@@ -2073,15 +2089,21 @@ pub fn simulate_train_advance(board: &mut Board) {
     }
     let (p, e) = match (primary, extra) {
         (Some(p), Some(e)) => (p, e),
-        _ => return,
+        _ => return result,
     };
+
+    // Frozen pawns do not activate. Train movement is an enemy-phase skill,
+    // so an intact frozen train neither advances nor damages itself.
+    if board.units[p].frozen() || board.units[e].frozen() {
+        return result;
+    }
 
     let (px, py) = (board.units[p].x as i8, board.units[p].y as i8);
     let (ex, ey) = (board.units[e].x as i8, board.units[e].y as i8);
     let dx = px - ex;
     let dy = py - ey;
     // Must be unit-length cardinal (sanity check).
-    if dx.abs() + dy.abs() != 1 { return; }
+    if dx.abs() + dy.abs() != 1 { return result; }
 
     // The extra tile moves into (px+dx, py+dy) — that space is already train
     // body (primary's old position). The primary tile passes through
@@ -2090,32 +2112,54 @@ pub fn simulate_train_advance(board: &mut Board) {
     //   - (px+dx, py+dy): primary's intermediate step (extra's final pos)
     //   - (px+2dx, py+2dy): primary's final pos
     let steps = [(px + dx, py + dy), (px + 2 * dx, py + 2 * dy)];
-    for (nx, ny) in steps.iter() {
+    for (step_idx, (nx, ny)) in steps.iter().enumerate() {
         if *nx < 0 || *nx >= 8 || *ny < 0 || *ny >= 8 {
             // Off-board: train has reached the exit. Leave hp alive, don't
             // advance — subsequent turns won't find the train to re-advance
             // because its position is still valid on-board this turn.
-            return;
+            return result;
         }
         let (nxu, nyu) = (*nx as u8, *ny as u8);
         if armored_train {
-            destroy_armored_train_path_tile(board, nxu, nyu);
+            destroy_train_path_tile(board, nxu, nyu, &mut result);
             continue;
         }
-        let t = board.tile(nxu, nyu);
-        if t.terrain == Terrain::Mountain || t.terrain == Terrain::Building {
-            board.units[p].hp = 0;
-            board.units[e].hp = 0;
-            return;
-        }
-        if let Some(idx) = board.any_unit_at(nxu, nyu) {
-            // Allow only the train itself (shouldn't happen for new tiles
-            // but guard defensively). Any other unit or wreck blocks.
-            if board.units[idx].type_name_str() != "Train_Pawn" {
-                board.units[p].hp = 0;
-                board.units[e].hp = 0;
-                return;
+        if board.is_blocked(nxu, nyu, false) {
+            // Train_Move queues its partial charge before killing the blocker
+            // and damaging itself. A second-step blocker therefore leaves the
+            // stopped train one tile farther forward; a first-step blocker
+            // leaves it at the original position.
+            let cleared = step_idx as i8;
+            board.units[p].x = (px + cleared * dx) as u8;
+            board.units[p].y = (py + cleared * dy) as u8;
+            board.units[e].x = (ex + cleared * dx) as u8;
+            board.units[e].y = (ey + cleared * dy) as u8;
+
+            destroy_train_path_tile(board, nxu, nyu, &mut result);
+
+            // Train_Move applies ordinary one-point weapon damage to the
+            // locomotive after the partial charge. Preserve shield/frozen/
+            // armor/ACID semantics and mirror the logical pawn state across
+            // its extra-space entry.
+            if board.units[p].shield() {
+                board.units[p].set_shield(false);
+                board.units[e].set_shield(false);
+            } else if board.units[p].frozen() {
+                board.units[p].set_frozen(false);
+                board.units[e].set_frozen(false);
+            } else {
+                let actual: i8 = if board.units[p].acid() {
+                    2
+                } else if board.units[p].armor() {
+                    0
+                } else {
+                    1
+                };
+                board.units[p].hp -= actual;
+                board.units[e].hp = board.units[p].hp;
             }
+            transition_destroyed_supply_train(board);
+            return result;
         }
     }
 
@@ -2124,24 +2168,129 @@ pub fn simulate_train_advance(board: &mut Board) {
     board.units[p].y = (py + 2 * dy) as u8;
     board.units[e].x = (ex + 2 * dx) as u8;
     board.units[e].y = (ey + 2 * dy) as u8;
+    result
 }
 
-fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
-    let mut result = ActionResult::default();
+/// Replace a destroyed moving train with the mission's live stopped variant.
+///
+/// Reuse the two fixed board slots but assign a fresh logical uid, matching
+/// Mission_Train:StopTrain's RemovePawn + AddPawn transition and allowing
+/// uid-level death accounting to observe the original train's death exactly
+/// once. The fresh pawn clears statuses/intent and remains non-pushable.
+fn transition_destroyed_supply_train(board: &mut Board) -> bool {
+    let mut pair: Option<(usize, usize, &'static str, bool)> = None;
 
+    for p in 0..board.unit_count as usize {
+        let primary = &board.units[p];
+        if primary.is_extra_tile() || primary.hp > 0 {
+            continue;
+        }
+        let (damaged_type, armored) = match primary.type_name_str() {
+            "Train_Pawn" => ("Train_Damaged", false),
+            "Train_Armored" => ("Train_Armored_Damaged", true),
+            _ => continue,
+        };
+        if let Some(e) = (0..board.unit_count as usize).find(|&e| {
+            e != p
+                && board.units[e].uid == primary.uid
+                && board.units[e].is_extra_tile()
+        }) {
+            pair = Some((p, e, damaged_type, armored));
+            break;
+        }
+    }
+
+    let Some((p, e, damaged_type, armored)) = pair else {
+        return false;
+    };
+
+    let old_primary = board.units[p];
+    let old_extra = board.units[e];
+    let offset_x = old_extra.x as i8 - old_primary.x as i8;
+    let offset_y = old_extra.y as i8 - old_primary.y as i8;
+    let mut new_uid: u16 = 1;
+    for i in 0..board.unit_count as usize {
+        new_uid = new_uid.max(board.units[i].uid.saturating_add(1));
+    }
+
+    let mut shared_flags = UnitFlags::empty();
+    if old_primary.massive() {
+        shared_flags |= UnitFlags::MASSIVE;
+    }
+    if armored {
+        shared_flags |= UnitFlags::ARMOR;
+    }
+
+    let mut primary = Unit {
+        uid: new_uid,
+        x: old_primary.x,
+        y: old_primary.y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Player,
+        flags: shared_flags,
+        queued_target_x: -1,
+        queued_target_y: -1,
+        queued_target_raw_x: -1,
+        queued_target_raw_y: -1,
+        queued_origin_x: -1,
+        queued_origin_y: -1,
+        ..Unit::default()
+    };
+    primary.set_type_name(damaged_type);
+
+    let extra_x = (old_primary.x as i8 + offset_x) as u8;
+    let extra_y = (old_primary.y as i8 + offset_y) as u8;
+    let mut extra = Unit {
+        uid: new_uid,
+        x: extra_x,
+        y: extra_y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Player,
+        flags: shared_flags | UnitFlags::EXTRA_TILE,
+        queued_target_x: -1,
+        queued_target_y: -1,
+        queued_target_raw_x: -1,
+        queued_target_raw_y: -1,
+        queued_origin_x: -1,
+        queued_origin_y: -1,
+        ..Unit::default()
+    };
+    extra.set_type_name(damaged_type);
+
+    board.units[p] = primary;
+    board.units[e] = extra;
+    true
+}
+
+fn destroy_train_path_tile(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+) {
     if let Some(idx) = board.any_unit_at(x, y) {
         let tname = board.units[idx].type_name_str();
         if tname != "Train_Pawn" && tname != "Train_Armored" && tname != "Train_Armored_Damaged" {
             if board.units[idx].hp > 0 {
+                let hp_removed = board.units[idx].hp.max(0) as i32;
+                let was_enemy = board.units[idx].is_enemy();
+                let was_player_mech =
+                    board.units[idx].is_player() && board.units[idx].is_mech();
                 board.units[idx].hp = 0;
-                if board.units[idx].is_enemy() {
+                if was_enemy {
+                    result.enemy_damage_dealt += hp_removed;
                     result.record_enemy_kill(
                         unit_counts_for_mission_kill(
                             board.mission_id.as_str(),
                             &board.units[idx],
                         )
                     );
-                    on_enemy_death(board, idx, &mut result);
+                    on_enemy_death(board, idx, result);
+                } else if was_player_mech {
+                    result.mech_damage_taken += hp_removed;
+                    result.mechs_killed += 1;
                 }
             }
         }
@@ -2173,6 +2322,9 @@ fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
             DamageSource::Weapon,
         );
         board.grid_power = board.grid_power.saturating_sub(grid_loss);
+        result.buildings_damaged += lost as i32;
+        result.buildings_lost += 1;
+        result.grid_damage += grid_loss as i32;
     }
 }
 
@@ -3708,26 +3860,106 @@ mod tests {
     }
 
     #[test]
-    fn test_train_dies_when_blocked_by_mountain() {
-        // Train at (4,6)+(4,7) facing y-1. Mountain at (4,5) blocks first step.
+    fn test_frozen_train_does_not_activate() {
         let mut board = Board::default();
         let (p, e) = add_train(&mut board, 4, 6, 4, 7);
-        board.tile_mut(4, 5).terrain = Terrain::Mountain;
-        simulate_train_advance(&mut board);
-        assert_eq!(board.units[p].hp, 0, "primary dies");
-        assert_eq!(board.units[e].hp, 0, "extra dies");
-        assert_eq!((board.units[p].x, board.units[p].y), (4, 6), "positions not advanced on death");
+        board.units[p].set_frozen(true);
+        board.units[e].set_frozen(true);
+
+        let result = simulate_train_advance(&mut board);
+
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 6));
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 7));
+        assert!(board.units[p].frozen());
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]
-    fn test_train_dies_when_blocked_by_vek() {
+    fn test_shielded_train_absorbs_blocked_charge_self_damage() {
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        board.units[p].set_shield(true);
+        board.units[e].set_shield(true);
+        board.tile_mut(4, 5).terrain = Terrain::Mountain;
+        board.tile_mut(4, 5).building_hp = 2;
+
+        simulate_train_advance(&mut board);
+
+        assert_eq!(board.units[p].type_name_str(), "Train_Pawn");
+        assert_eq!(board.units[e].type_name_str(), "Train_Pawn");
+        assert_eq!(board.units[p].hp, 1);
+        assert_eq!(board.units[e].hp, 1);
+        assert!(!board.units[p].shield());
+        assert!(!board.units[e].shield());
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 6));
+        assert_eq!(board.tile(4, 5).terrain, Terrain::Rubble);
+    }
+
+    #[test]
+    fn test_train_stops_and_becomes_damaged_when_first_step_is_blocked() {
+        // Train at (4,6)+(4,7) facing y-1. Mountain at (4,5) blocks first step.
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        let old_uid = board.units[p].uid;
+        board.tile_mut(4, 5).terrain = Terrain::Mountain;
+        board.tile_mut(4, 5).building_hp = 2;
+        simulate_train_advance(&mut board);
+        assert_eq!(board.units[p].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[e].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[p].hp, 1, "stopped primary survives as damaged train");
+        assert_eq!(board.units[e].hp, 1, "stopped extra survives as damaged train");
+        assert_ne!(board.units[p].uid, old_uid, "replacement is a fresh logical pawn");
+        assert_eq!(board.units[p].uid, board.units[e].uid);
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 6), "first-step block prevents movement");
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 7));
+        assert_eq!(board.tile(4, 5).terrain, Terrain::Rubble, "blocking mountain is destroyed");
+    }
+
+    #[test]
+    fn test_train_advances_one_step_kills_second_step_blocker_and_stops() {
         // Vek at (4,4) blocks second step.
         let mut board = Board::default();
         let (p, e) = add_train(&mut board, 4, 6, 4, 7);
-        add_enemy_with_type(&mut board, 100, 4, 4, 2, "Scarab1", -1, -1);
-        simulate_train_advance(&mut board);
-        assert_eq!(board.units[p].hp, 0);
-        assert_eq!(board.units[e].hp, 0);
+        let vek = add_enemy_with_type(&mut board, 100, 4, 4, 2, "Scarab1", -1, -1);
+        let result = simulate_train_advance(&mut board);
+        assert_eq!(board.units[p].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[e].type_name_str(), "Train_Damaged");
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 5));
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 6));
+        assert_eq!(board.units[p].hp, 1);
+        assert_eq!(board.units[e].hp, 1);
+        assert_eq!(board.units[vek].hp, 0, "Train_Move DAMAGE_DEATH destroys the blocker");
+        assert_eq!(result.enemies_killed, 1, "train kill reaches turn counters");
+        assert_eq!(result.mission_kills, 1, "train kill reaches mission progress");
+    }
+
+    #[test]
+    fn test_moth_kill_replaces_moving_train_before_advance() {
+        // Exact Mission_Train shape from run 20260710_013601_568 m03 t1:
+        // Moth artillery targets the rear train segment after recoiling into a
+        // blocking mech. The moving train dies, then Mission_Train:StopTrain
+        // creates a live damaged body at TrainLoc instead of losing it outright.
+        let mut board = Board::default();
+        board.mission_id = "Mission_Train".to_string();
+        let blocker = add_mech_unit(&mut board, 2, 4, 4, 3);
+        let moth = add_enemy_with_type(&mut board, 169, 4, 5, 2, "Moth1", 4, 7);
+        board.units[moth].weapon_damage = 1;
+        board.units[moth].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        let old_uid = board.units[p].uid;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[blocker].hp, 2, "blocked Moth recoil bumps the mech");
+        assert_eq!(board.units[moth].hp, 1, "blocked recoil also bumps the Moth");
+        assert_eq!(board.units[p].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[e].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[p].hp, 1);
+        assert_eq!(board.units[e].hp, 1);
+        assert_ne!(board.units[p].uid, old_uid);
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 6));
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 7));
     }
 
     #[test]
@@ -3761,14 +3993,19 @@ mod tests {
     }
 
     #[test]
-    fn test_train_skipped_when_already_dead() {
+    fn test_destroyed_train_is_replaced_by_damaged_body() {
         // Train pre-killed by Vek attack earlier in enemy phase.
         let mut board = Board::default();
         let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        let old_uid = board.units[p].uid;
         board.units[p].hp = 0;
         board.units[e].hp = 0;
         simulate_train_advance(&mut board);
-        // No crash, no state mutation beyond what we set up.
+        assert_eq!(board.units[p].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[e].type_name_str(), "Train_Damaged");
+        assert_eq!(board.units[p].hp, 1);
+        assert_eq!(board.units[e].hp, 1);
+        assert_ne!(board.units[p].uid, old_uid);
         assert_eq!((board.units[p].x, board.units[p].y), (4, 6));
     }
 

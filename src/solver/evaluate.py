@@ -139,6 +139,7 @@ class EvalWeights:
     mission_destroy_unit_shield_penalty: float = -3000
     mission_protect_unit_alive_bonus: float = 8000
     mission_protect_unit_dead_penalty: float = -15000
+    mission_protect_unit_degraded_penalty: float = -10000
     bld_grid_floor: float = 0.6
     bld_grid_scale: float = 0.4
     bld_phase_floor: float = 1.0
@@ -246,6 +247,10 @@ def _scaled(base: float, ff: float, floor: float, scale: float) -> float:
 
 def _type_matches_any(name: str, patterns: list[str]) -> bool:
     return any(p and p in name for p in patterns)
+
+
+def _is_degraded_train_type(name: str) -> bool:
+    return name == "Train_Damaged" or name.startswith("Train_Armored_Damage")
 
 
 def _is_expendable_friendly_pawn(name: str) -> bool:
@@ -392,6 +397,8 @@ def evaluate(
     destroy_types = getattr(board, 'destroy_objective_unit_types', []) or []
     protect_types = getattr(board, 'protect_objective_unit_types', []) or []
     for u in board.units:
+        if getattr(u, 'is_extra_tile', False):
+            continue
         if destroy_types and _type_matches_any(u.type, destroy_types):
             if u.hp > 0:
                 score += w.mission_destroy_unit_alive_penalty
@@ -405,6 +412,8 @@ def evaluate(
                 if u.hp > 0
                 else w.mission_protect_unit_dead_penalty
             )
+            if u.hp > 0 and _is_degraded_train_type(u.type):
+                score += w.mission_protect_unit_degraded_penalty
 
     # --- BLAST PSION KILL BONUS: SCALED by future_factor ---
     if blast_psion_was_active and not board.blast_psion_active:
@@ -695,7 +704,10 @@ def evaluate_breakdown(
     destroy_shielded = 0
     protect_alive = 0
     protect_dead = 0
+    protect_degraded = 0
     for u in board.units:
+        if getattr(u, 'is_extra_tile', False):
+            continue
         if destroy_types and _type_matches_any(u.type, destroy_types):
             if u.hp > 0:
                 destroy_alive += 1
@@ -706,6 +718,8 @@ def evaluate_breakdown(
         if protect_types and _type_matches_any(u.type, protect_types):
             if u.hp > 0:
                 protect_alive += 1
+                if _is_degraded_train_type(u.type):
+                    protect_degraded += 1
             else:
                 protect_dead += 1
     mission_unit_score = (
@@ -714,6 +728,7 @@ def evaluate_breakdown(
         + destroy_shielded * w.mission_destroy_unit_shield_penalty
         + protect_alive * w.mission_protect_unit_alive_bonus
         + protect_dead * w.mission_protect_unit_dead_penalty
+        + protect_degraded * w.mission_protect_unit_degraded_penalty
     )
 
     # --- ENVIRONMENT DANGER ---
@@ -926,6 +941,7 @@ def evaluate_breakdown(
             "destroy_shielded": destroy_shielded,
             "protect_alive": protect_alive,
             "protect_dead": protect_dead,
+            "protect_degraded": protect_degraded,
             "score": mission_unit_score,
         },
         "environment_danger": {

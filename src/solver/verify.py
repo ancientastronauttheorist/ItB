@@ -1571,7 +1571,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # building damage, applies smoke before queued Vek attacks, and therefore
 # cancels attackers caught in the warned lane. Pre-v336 corpus archived as
 # failure_db_snapshot_sim_v335.jsonl.
-SIMULATOR_VERSION = 336
+# v337 - A blocked normal Supply Train destroys the blocker, advances through
+# any clear rail tile, and becomes a live Train_Damaged body worth partial
+# objective credit instead of disappearing. Frozen trains do not activate,
+# shields absorb the blocked-charge self-hit, and train kills reach turn and
+# mission counters. Multi-tile objective scoring is de-duplicated by logical
+# uid. Pre-v337 corpus archived as
+# failure_db_snapshot_sim_v336.jsonl.
+SIMULATOR_VERSION = 337
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

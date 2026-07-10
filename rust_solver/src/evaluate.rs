@@ -215,6 +215,9 @@ pub struct EvalWeights {
     pub mission_destroy_unit_shield_penalty: f64,
     pub mission_protect_unit_alive_bonus: f64,
     pub mission_protect_unit_dead_penalty: f64,
+    /// One-reputation downgrade when a Mission_Train objective survives only
+    /// as Train_Damaged / Train_Armored_Damaged.
+    pub mission_protect_unit_degraded_penalty: f64,
 
     // "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Step function that fires
     // exactly once per mission — on the plan whose cumulative kills cross
@@ -376,6 +379,7 @@ impl Default for EvalWeights {
             mission_destroy_unit_shield_penalty: -3000.0,
             mission_protect_unit_alive_bonus: 8000.0,
             mission_protect_unit_dead_penalty: -15000.0,
+            mission_protect_unit_degraded_penalty: -10000.0,
             mission_kill_bonus: 15000.0,
             mission_repair_bonus: 15000.0,
             mission_terraform_grass_remaining: -2500.0,
@@ -669,6 +673,7 @@ pub fn evaluate(
     let mut destroy_unit_shielded = 0i32;
     let mut protect_unit_alive = 0i32;
     let mut protect_unit_dead = 0i32;
+    let mut protect_unit_degraded = 0i32;
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         let name = u.type_name_str();
@@ -704,7 +709,10 @@ pub fn evaluate(
                 }
             }
         }
-        if destroy_unit_active && type_matches_any(name, &board.destroy_objective_unit_types) {
+        if !u.is_extra_tile()
+            && destroy_unit_active
+            && type_matches_any(name, &board.destroy_objective_unit_types)
+        {
             if u.alive() {
                 destroy_unit_alive += 1;
                 if u.shield() {
@@ -714,9 +722,18 @@ pub fn evaluate(
                 destroy_unit_dead += 1;
             }
         }
-        if protect_unit_active && type_matches_any(name, &board.protect_objective_unit_types) {
+        if !u.is_extra_tile()
+            && protect_unit_active
+            && type_matches_any(name, &board.protect_objective_unit_types)
+        {
             if u.alive() {
                 protect_unit_alive += 1;
+                // Unit type names are stored in a 20-byte inline buffer, so
+                // Train_Armored_Damaged is serialized internally as the stable
+                // prefix Train_Armored_Damage.
+                if name == "Train_Damaged" || name.starts_with("Train_Armored_Damage") {
+                    protect_unit_degraded += 1;
+                }
             } else {
                 protect_unit_dead += 1;
             }
@@ -728,6 +745,7 @@ pub fn evaluate(
     score += destroy_unit_shielded as f64 * weights.mission_destroy_unit_shield_penalty;
     score += protect_unit_alive as f64 * weights.mission_protect_unit_alive_bonus;
     score += protect_unit_dead as f64 * weights.mission_protect_unit_dead_penalty;
+    score += protect_unit_degraded as f64 * weights.mission_protect_unit_degraded_penalty;
 
     // ── Threats cleared: reward neutralizing building threats ─────────
     // Compare initial building_threats bitset against post-attack survival.
@@ -1067,6 +1085,7 @@ pub fn evaluate(
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if !u.is_player() { continue; }
+        if u.is_extra_tile() { continue; }
 
         if !u.is_mech() {
             // Non-mech player units (ArchiveArtillery, Filler_Pawn, etc.)
@@ -1697,6 +1716,79 @@ mod tests {
         bot_dead.units[1].hp = 0;
         let bot_dead_score = evaluate(&bot_dead, &[], &w, 0, 0, 0, &p, 0);
         assert!((destroyed_score - bot_dead_score - 22900.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_damaged_train_scores_one_rep_degradation_once_per_uid() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut intact = Board::default();
+        intact.protect_objective_unit_types.push("Train".to_string());
+        let mut primary = Unit {
+            uid: 164,
+            x: 4,
+            y: 6,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            ..Unit::default()
+        };
+        primary.set_type_name("Train_Pawn");
+        intact.add_unit(primary);
+
+        let intact_score = evaluate(&intact, &[], &w, 0, 0, 0, &p, 0);
+
+        let mut damaged = intact.clone();
+        damaged.units[0].set_type_name("Train_Damaged");
+        let damaged_score = evaluate(&damaged, &[], &w, 0, 0, 0, &p, 0);
+        assert!(
+            (damaged_score - intact_score - w.mission_protect_unit_degraded_penalty).abs() < 1.0,
+            "stopped train should lose exactly the dedicated one-rep weight",
+        );
+
+        let mut extra = damaged.units[0];
+        extra.y = 7;
+        extra.flags.insert(UnitFlags::EXTRA_TILE);
+        damaged.add_unit(extra);
+        let duplicated_score = evaluate(&damaged, &[], &w, 0, 0, 0, &p, 0);
+        assert!(
+            (duplicated_score - damaged_score).abs() < 1.0,
+            "extra train segment must not duplicate objective scoring",
+        );
+    }
+
+    #[test]
+    fn test_dead_train_extra_segment_does_not_duplicate_friendly_penalties() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut single = Board::default();
+        single.protect_objective_unit_types.push("Train".to_string());
+        let mut primary = Unit {
+            uid: 164,
+            x: 4,
+            y: 6,
+            hp: 0,
+            max_hp: 1,
+            team: Team::Player,
+            ..Unit::default()
+        };
+        primary.set_type_name("Train_Damaged");
+        single.add_unit(primary);
+        let single_score = evaluate(&single, &[], &w, 0, 0, 0, &p, 0);
+
+        let mut duplicated = single.clone();
+        let mut extra = duplicated.units[0];
+        extra.y = 7;
+        extra.flags.insert(UnitFlags::EXTRA_TILE);
+        duplicated.add_unit(extra);
+        let duplicated_score = evaluate(&duplicated, &[], &w, 0, 0, 0, &p, 0);
+
+        assert!(
+            (duplicated_score - single_score).abs() < 1.0,
+            "extra segment must not duplicate protect-death or friendly-NPC penalties",
+        );
     }
 
     #[test]

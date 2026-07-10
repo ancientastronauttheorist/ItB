@@ -2168,7 +2168,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   building damage, applies smoke before queued Vek attacks, and therefore
 //   cancels attackers caught in the warned lane. Pre-v336 corpus archived as
 //   failure_db_snapshot_sim_v335.jsonl.
-pub const SIMULATOR_VERSION: u32 = 336;
+// v337 - A blocked normal Supply Train destroys the blocker, advances through
+//   any clear rail tile, and becomes a live Train_Damaged body worth partial
+//   objective credit instead of disappearing. Frozen trains do not activate,
+//   shields absorb the blocked-charge self-hit, and train kills reach turn and
+//   mission counters. Multi-tile objective scoring is de-duplicated by logical
+//   uid. Pre-v337 corpus archived as
+//   failure_db_snapshot_sim_v336.jsonl.
+pub const SIMULATOR_VERSION: u32 = 337;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

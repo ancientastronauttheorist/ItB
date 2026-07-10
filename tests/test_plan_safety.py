@@ -40,6 +40,54 @@ def test_predicted_grid_loss_blocks_plan():
     assert audit["violations"][0]["kind"] == "grid_damage"
 
 
+def test_damaged_train_is_blocking_partial_objective_loss():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Train",
+            protected_objective_units_alive=1,
+            train_objective_value=2,
+        ),
+        _summary(
+            mission_id="Mission_Train",
+            protected_objective_units_alive=1,
+            train_objective_value=1,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert [v["kind"] for v in audit["violations"]] == [
+        "protected_objective_unit_degraded"
+    ]
+    assert safety_loss_profile(audit)["losses"] == {
+        "train_objective_value": 1
+    }
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_protected_objective_loss_dirty=True,
+    ) is False
+
+
+def test_destroyed_damaged_train_is_total_unit_loss_not_second_degradation():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Train",
+            protected_objective_units_alive=1,
+            train_objective_value=1,
+        ),
+        _summary(
+            mission_id="Mission_Train",
+            protected_objective_units_alive=0,
+            train_objective_value=0,
+        ),
+    )
+
+    assert [v["kind"] for v in audit["violations"]] == [
+        "protected_objective_unit_lost"
+    ]
+
+
 def test_partial_building_hp_loss_blocks_even_without_grid_drop():
     audit = audit_plan_safety(
         _summary(grid=7, buildings=8, hp=14),

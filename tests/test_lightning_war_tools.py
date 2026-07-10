@@ -23318,6 +23318,54 @@ def test_cmd_solve_still_widens_for_forbidden_lightning_loss(monkeypatch):
     ]
 
 
+def test_cmd_solve_deep_widens_for_protected_objective_loss(monkeypatch):
+    session = RunSession(run_id="train", squad="Random", difficulty=3)
+    objective_loss = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "protected_objective_unit_lost",
+                "blocking": True,
+            }
+        ],
+        "current": {
+            "grid_power": 4,
+            "mechs_alive": 3,
+            "protected_objective_units_alive": 1,
+        },
+        "predicted": {
+            "grid_power": 4,
+            "mechs_alive": 3,
+            "protected_objective_units_alive": 0,
+        },
+    }
+    clean_wide = {
+        "status": "SAFE",
+        "blocking": False,
+        "violations": [],
+        "current": objective_loss["current"],
+        "predicted": objective_loss["current"],
+    }
+    rust_calls = _patch_cmd_solve_harness(
+        monkeypatch,
+        session,
+        [objective_loss, clean_wide],
+    )
+
+    result = commands.cmd_solve(
+        profile="Alpha",
+        time_limit=2,
+        frontier_diagnostics=False,
+    )
+
+    assert rust_calls["solve_top_k"] == [
+        commands._PROTECTED_OBJECTIVE_SAFETY_WIDENING_TOP_K
+    ]
+    assert result["selected_candidate_source"] == "top_k_safety"
+    assert result["plan_safety"]["blocking"] is False
+
+
 def test_auto_turn_forwards_lightning_speed_policy_to_solve(monkeypatch):
     session = RunSession(
         run_id="lw",

@@ -31,6 +31,7 @@ BLOCKING_KINDS = {
     "mech_disabled",
     "bigbomb_lost",
     "protected_objective_unit_lost",
+    "protected_objective_unit_degraded",
     "protected_objective_unit_unfrozen",
     "protected_objective_unit_webbed",
     "destroy_objective_unit_alive_final",
@@ -54,6 +55,7 @@ NON_OVERRIDABLE_KINDS = {
     "pod_unrecovered_final",
     "mech_lost",
     "protected_objective_unit_lost",
+    "protected_objective_unit_degraded",
     "protected_objective_unit_unfrozen",
     "protected_objective_unit_webbed",
     "destroy_objective_unit_alive_final",
@@ -72,6 +74,7 @@ OBJECTIVE_LOSS_DIRTY_KINDS = {
     "objective_building_targeted_final",
     "pod_unrecovered_final",
     "protected_objective_unit_lost",
+    "protected_objective_unit_degraded",
     "protected_objective_unit_unfrozen",
     "protected_objective_unit_webbed",
     "destroy_objective_unit_alive_final",
@@ -144,6 +147,7 @@ LOSS_KINDS = {
     "mech_disabled": "mechs_disabled",
     "bigbomb_lost": "bigbomb_alive",
     "protected_objective_unit_lost": "protected_objective_units_alive",
+    "protected_objective_unit_degraded": "train_objective_value",
     "protected_objective_unit_unfrozen": "protected_objective_units_frozen",
     "protected_objective_unit_webbed": "protected_objective_units_webbed",
     "destroy_objective_unit_alive_final": "destroy_objective_units_alive",
@@ -822,6 +826,29 @@ def audit_plan_safety(current: dict[str, Any],
                 },
             ))
 
+    cur_train_value = _int_or_none(current.get("train_objective_value"))
+    pred_train_value = _int_or_none(predicted.get("train_objective_value"))
+    if cur_train_value is not None and pred_train_value is not None:
+        compared.append("train_objective_value")
+        if 0 < pred_train_value < cur_train_value:
+            violations.append(_violation(
+                "protected_objective_unit_degraded",
+                cur_train_value,
+                pred_train_value,
+                (
+                    "Predicted outcome stops the Supply Train damaged, "
+                    "reducing its objective reward."
+                ),
+                {
+                    "current_units": _list_or_empty(
+                        current.get("protected_objective_units")
+                    ),
+                    "predicted_units": _list_or_empty(
+                        predicted.get("protected_objective_units")
+                    ),
+                },
+            ))
+
     cur_destroy = _int_or_none(current.get("destroy_objective_units_alive"))
     pred_destroy = _int_or_none(predicted.get("destroy_objective_units_alive"))
     if cur_destroy is not None and pred_destroy is not None:
@@ -962,6 +989,7 @@ def audit_plan_safety(current: dict[str, Any],
             "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
             "destroy_objective_units_alive": cur_destroy,
             "protected_objective_units_alive": cur_protected,
+            "train_objective_value": cur_train_value,
             "protected_objective_units_frozen": cur_frozen,
             "protected_objective_units_webbed": cur_webbed,
             "freeze_building_target": cur_freeze_target,
@@ -1009,6 +1037,7 @@ def audit_plan_safety(current: dict[str, Any],
             "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
             "destroy_objective_units_alive": pred_destroy,
             "protected_objective_units_alive": pred_protected,
+            "train_objective_value": pred_train_value,
             "protected_objective_units_frozen": pred_frozen,
             "protected_objective_units_webbed": pred_webbed,
             "freeze_building_target": pred_freeze_target,
@@ -1104,7 +1133,10 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             )
             and not (
                 allow_protected_objective_loss_dirty
-                and v.get("kind") == "protected_objective_unit_lost"
+                and v.get("kind") in {
+                    "protected_objective_unit_lost",
+                    "protected_objective_unit_degraded",
+                }
             )
             and not (
                 allow_objective_loss_dirty

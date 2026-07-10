@@ -479,6 +479,68 @@ def test_summary_tracks_protected_objective_units_from_mission_metadata():
     ]
 
 
+def test_summary_distinguishes_intact_and_damaged_train_value():
+    def summary_for(train_type):
+        data = _bridge_with_mech()
+        data["mission_id"] = "Mission_Train"
+        data["units"].extend([
+            {
+                "uid": 164,
+                "type": train_type,
+                "x": 4,
+                "y": 6,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "move": 0,
+                "weapons": [],
+            },
+            {
+                "uid": 164,
+                "type": train_type,
+                "x": 4,
+                "y": 7,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "move": 0,
+                "weapons": [],
+                "is_extra_tile": True,
+            },
+        ])
+        board = Board.from_bridge_data(data)
+        return _capture_board_summary(board, data)
+
+    intact = summary_for("Train_Pawn")
+    damaged = summary_for("Train_Damaged")
+
+    assert intact["protected_objective_units_alive"] == 1
+    assert damaged["protected_objective_units_alive"] == 1
+    assert intact["train_objective_value"] == 2
+    assert damaged["train_objective_value"] == 1
+
+
+def test_post_enemy_delta_catches_unexpected_train_degradation():
+    predicted = {
+        "grid_power": 4,
+        "buildings_alive": 6,
+        "building_hp_total": 9,
+        "enemies_alive": 4,
+        "train_objective_value": 2,
+    }
+    actual = {
+        **predicted,
+        "train_objective_value": 1,
+    }
+
+    deltas = _compute_deltas(predicted, actual)
+
+    assert deltas["train_objective_value_diff"] == -1
+    assert "Supply Train objective degraded unexpectedly" in deltas["unexpected_events"]
+
+
 def test_summary_tracks_filler_pawn_webbed_objective_state():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_Filler"

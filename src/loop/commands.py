@@ -847,6 +847,7 @@ def _achievement_weight_overlay(
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
 _SAFETY_WIDENING_TOP_K = 1000
+_PROTECTED_OBJECTIVE_SAFETY_WIDENING_TOP_K = 5000
 _LIGHTNING_MIN_FAST_SETTINGS_SPEED = 1000
 _LIGHTNING_ACHIEVEMENT_SECONDS = 30 * 60
 _LIGHTNING_MISSION_SEGMENT_SECONDS = 3 * 60
@@ -1123,6 +1124,7 @@ def _lightning_speed_plan_covers_threat_audit_loss(
         _safety_int_loss(plan_safety, "objective_buildings_alive"),
         _safety_int_loss(plan_safety, "objective_building_hp_total"),
         _safety_int_loss(plan_safety, "protected_objective_units_alive"),
+        _safety_int_loss(plan_safety, "train_objective_value"),
     )
     return covered_losses >= still_threatened
 
@@ -1459,6 +1461,10 @@ def _lightning_speed_loss_summary(plan_safety: dict | None) -> dict | None:
                     plan_safety,
                     "protected_objective_units_alive",
                 ),
+                "train_objective_value": _safety_int_loss(
+                    plan_safety,
+                    "train_objective_value",
+                ),
                 "destroy_objective_units_alive": _safety_int_loss(
                     plan_safety,
                     "destroy_objective_units_alive",
@@ -1530,7 +1536,10 @@ def _dirty_consent_gate(
         )
         and not (
             allow_protected_objective_loss
-            and k == "protected_objective_unit_lost"
+            and k in {
+                "protected_objective_unit_lost",
+                "protected_objective_unit_degraded",
+            }
         )
         and not (
             allow_objective_loss
@@ -3237,6 +3246,20 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 "webbed": bool(getattr(u, "web", False)),
                 "team": u.team,
             })
+    train_objective_value = None
+    if mission_id in {"Mission_Train", "Mission_Armored_Train"}:
+        train_objective_value = 0
+        for unit in protected_objective_units:
+            if not unit["alive"] or "Train" not in str(unit["type"]):
+                continue
+            train_type = str(unit["type"])
+            if (
+                train_type == "Train_Damaged"
+                or train_type.startswith("Train_Armored_Damage")
+            ):
+                train_objective_value = max(train_objective_value, 1)
+            else:
+                train_objective_value = max(train_objective_value, 2)
     objective_building_targets = []
     if objective_building_positions:
         for u in board.units:
@@ -3455,6 +3478,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "protected_objective_units_alive": sum(
             1 for u in protected_objective_units if u["alive"]
         ),
+        "train_objective_value": train_objective_value,
         "protected_objective_units_frozen": sum(
             1 for u in protected_objective_units
             if u["alive"] and u["frozen"]
@@ -3980,13 +4004,28 @@ def _select_safe_plan_candidate(
         ):
             return candidate
 
-    top_signature = _dirty_candidate_blocking_signature(candidate_evals[0])
+    # If every candidate is dirty, prefer a loss class that exact reviewed
+    # consent can authorize over any non-overridable mission/run loss. Raw
+    # score can rank a protected objective sacrifice above an ordinary grid
+    # trade; retaining the top loss class in that case defeats safety
+    # widening even after it finds the recoverable line.
+    overridable_dirty = [
+        candidate
+        for candidate in candidate_evals
+        if not bool(
+            safety_loss_profile(candidate.get("plan_safety")).get(
+                "non_overridable"
+            )
+        )
+    ]
+    dirty_pool = overridable_dirty or candidate_evals
+    top_signature = _dirty_candidate_blocking_signature(dirty_pool[0])
     same_blocking_class = [
-        candidate for candidate in candidate_evals
+        candidate for candidate in dirty_pool
         if _dirty_candidate_blocking_signature(candidate) == top_signature
     ]
     return min(
-        same_blocking_class or candidate_evals,
+        same_blocking_class or dirty_pool,
         key=lambda candidate: (
             _candidate_mech_hp_loss(candidate),
             candidate.get("rank")
@@ -3994,6 +4033,25 @@ def _select_safe_plan_candidate(
             else 2**31,
         ),
     )
+
+
+def _safety_widening_top_k(plan_safety: dict | None) -> int:
+    """Search deeper when the raw scorer hides protected-unit survival."""
+    violations = (plan_safety or {}).get("violations") or []
+    if any(
+        violation.get("kind") in {
+            "protected_objective_unit_lost",
+            "protected_objective_unit_degraded",
+        }
+        and bool(violation.get("blocking"))
+        for violation in violations
+        if isinstance(violation, dict)
+    ):
+        return max(
+            _SAFETY_WIDENING_TOP_K,
+            _PROTECTED_OBJECTIVE_SAFETY_WIDENING_TOP_K,
+        )
+    return _SAFETY_WIDENING_TOP_K
 
 
 def _select_candidate_by_rank(
@@ -4773,6 +4831,14 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
             - predicted["protected_objective_units_alive"]
         )
     if (
+        isinstance(predicted.get("train_objective_value"), int)
+        and isinstance(actual.get("train_objective_value"), int)
+    ):
+        deltas["train_objective_value_diff"] = (
+            actual["train_objective_value"]
+            - predicted["train_objective_value"]
+        )
+    if (
         "protected_objective_units_frozen" in predicted
         and "protected_objective_units_frozen" in actual
     ):
@@ -4881,6 +4947,9 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     if deltas.get("protected_objective_units_alive_diff", 0) < 0:
         unexpected.append(
             "Lost protected objective unit(s) unexpectedly")
+    if deltas.get("train_objective_value_diff", 0) < 0:
+        unexpected.append(
+            "Supply Train objective degraded unexpectedly")
     if deltas.get("protected_objective_units_frozen_diff", 0) < 0:
         unexpected.append(
             "Protected objective unit(s) unexpectedly unfroze")
@@ -4965,6 +5034,7 @@ def _post_enemy_needs_investigation(
             "building_hp_diff",
             "pods_present_diff",
             "protected_objective_units_alive_diff",
+            "train_objective_value_diff",
             "protected_objective_units_frozen_diff",
         )
     ):
@@ -6705,6 +6775,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     # weight bundle and the current soft-disable mask intact so
                     # widened candidates are ranked under the same tactical
                     # assumptions as the live solve.
+                    widening_top_k = _safety_widening_top_k(
+                        selected_candidate_eval.get("plan_safety"),
+                    )
                     widening_attempts: list[dict] = []
                     widening_sources = [("top_k_safety", False)]
                     if session.disabled_actions:
@@ -6723,7 +6796,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         wide_raw = _rust.solve_top_k(
                             _json.dumps(wide_bridge_data),
                             time_limit,
-                            _SAFETY_WIDENING_TOP_K,
+                            widening_top_k,
                         )
                         wide_specs = []
                         for idx, rust_result in enumerate(_json.loads(wide_raw) or []):

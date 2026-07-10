@@ -10,6 +10,7 @@ from src.loop.commands import (
     _lookahead_robust_frontier,
     _lookahead_robust_summary,
     _prepare_projected_bridge,
+    _safety_widening_top_k,
     _select_candidate_by_rank,
     _select_safe_plan_candidate,
 )
@@ -49,6 +50,43 @@ def test_safe_candidate_selection_preserves_top_when_all_dirty():
     selected = _select_safe_plan_candidate(candidates)
 
     assert selected["rank"] == 0
+
+
+def test_dirty_candidate_prefers_overridable_loss_to_objective_loss():
+    objective_loss = {
+        "rank": 0,
+        "plan_safety": {
+            "status": "DIRTY",
+            "blocking": True,
+            "violations": [
+                {
+                    "kind": "protected_objective_unit_lost",
+                    "blocking": True,
+                    "current": 1,
+                    "predicted": 0,
+                }
+            ],
+        },
+    }
+    grid_loss = {
+        "rank": 3694,
+        "plan_safety": {
+            "status": "DIRTY",
+            "blocking": True,
+            "violations": [
+                {
+                    "kind": "grid_damage",
+                    "blocking": True,
+                    "current": 4,
+                    "predicted": 3,
+                }
+            ],
+        },
+    }
+
+    selected = _select_safe_plan_candidate([objective_loss, grid_loss])
+
+    assert selected["rank"] == 3694
 
 
 def test_dirty_candidate_selection_minimizes_mech_hp_with_same_blocking_loss():
@@ -103,6 +141,43 @@ def test_safe_candidate_selection_accepts_warn_candidate():
     selected = _select_safe_plan_candidate(candidates)
 
     assert selected["rank"] == 1
+
+
+def test_protected_objective_loss_uses_deeper_safety_widening():
+    plan_safety = {
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "protected_objective_unit_lost",
+                "blocking": True,
+            }
+        ],
+    }
+
+    assert _safety_widening_top_k(plan_safety) > 1000
+
+
+def test_protected_objective_degradation_uses_deeper_safety_widening():
+    plan_safety = {
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "protected_objective_unit_degraded",
+                "blocking": True,
+            }
+        ],
+    }
+
+    assert _safety_widening_top_k(plan_safety) > 1000
+
+
+def test_ordinary_safety_loss_keeps_default_widening():
+    plan_safety = {
+        "blocking": True,
+        "violations": [{"kind": "grid_damage", "blocking": True}],
+    }
+
+    assert _safety_widening_top_k(plan_safety) == 1000
 
 
 def test_requested_candidate_selection_uses_exact_rank():
