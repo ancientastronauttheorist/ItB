@@ -69,12 +69,12 @@ The solver enforces these; use them when reviewing solver output or writing test
 
 **Repair platforms:** Mission_Repair places `Item_Repair_Mine` tiles. Any live
 unit that lands on one triggers the item, heals up to max HP, consumes the
-platform, and increments `repair_platforms_used` toward the 3-platform objective.
-If the unit is already at or above max HP when it lands, the platform still
-consumes and counts but does not add HP. Raw progress can exceed the objective
-target (for example `4/3`); clamp only in UI scoring/presentation. It is not the mech
-Repair action; do not assume it clears Fire/ACID/Frozen unless a capture proves
-the engine does so.
+platform, but only a player mech increments `repair_platforms_used` toward the
+3-platform objective. If the unit is already at or above max HP when it lands,
+the platform still consumes without adding HP; it counts only when that unit is
+a player mech. Raw progress can exceed the objective target (for example `4/3`);
+clamp only in UI scoring/presentation. It is not the mech Repair action; do not
+assume it clears Fire/ACID/Frozen unless a capture proves the engine does so.
 
 **Repair:** any mech can repair instead of attacking. +1 HP, clears Fire and ACID. Can't repair on smoke.
 
@@ -406,3 +406,5 @@ the G3 building; fixed in simulator v309.
 437. **A flying Hydraulic Legs target does not carry newly acquired origin Fire through a successful push.** When `Prime_Leap*` damages a non-burning flying pawn above burning ground and the same SpaceDamage pushes it onto a clean non-Lava tile, the pawn leaves without Fire. Preserve Fire that existed before the hit, Fire from a burning/Lava destination, and ambient Fire pickup when the push is blocked and the pawn remains on the burning origin. Regression anchor: Chaos Roll Unfair solver-evaluation run `20260710_062120_403`, Archive `Mission_Train` turn 1, where Leap Mech jumped E6->E3, damaged Blast Psion uid 364 above burning E2, and pushed it to clean E1; the settled live pawn was at E1 with `fire=false`, while simulator v343 predicted `fire=true`. Simulator v344 corrects the ordering without changing the outward push.
 
 439. **Igniting a smoked Forest clears Smoke.** When ordinary weapon damage converts a Forest tile to Ground + Fire, clear any pre-existing Smoke in the same transition; Fire and Smoke cannot remain together. Regression anchor: Chaos Roll Unfair solver-evaluation run `20260710_062120_403`, Archive `Mission_Train` turn 2, where Hydraulic Legs landed at E5 and hit the smoked Forest at F5; live settled F5 as Ground + Fire with no Smoke, while simulator v344 retained both statuses. Simulator v345 enforces the Fire-replaces-Smoke ordering for generic Forest damage.
+
+440. **Mission_Repair deployment reserves safe Repair Platforms before ordinary spread.** During deployment, preselect safe `Item_Repair_Mine` tiles up to the remaining `repair_platform_target - repair_platforms_used` need before applying adjacency diversity. A player mech consumes/heals on the pad and advances the objective; a Vek can consume the same scarce pad without credit, so two adjacent safe pads are not redundant. Fill any remaining deployment slots with the normal hazard-aware tactical ranking. Regression anchor: Chaos Roll Unfair solver-evaluation run `20260710_062120_403`, Archive `Mission_Repair` turn 0, where the old B5/G5/G7 spread skipped adjacent B6, let a Leaper consume B6 and threaten C6, and produced a turn-1 board for which exhaustive solving proved grid `3→0` unavoidable. Reserving B5 and B6 yields B5/B6/G5 and denies that opening trap.

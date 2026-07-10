@@ -59,6 +59,55 @@ def _mech(uid: int, mech_type: str) -> Unit:
     )
 
 
+def _enemy(uid: int, enemy_type: str, x: int, y: int, hp: int) -> Unit:
+    return Unit(
+        uid=uid,
+        type=enemy_type,
+        x=x,
+        y=y,
+        hp=hp,
+        max_hp=hp,
+        team=6,
+        is_mech=False,
+        move_speed=3,
+        flying=False,
+        massive=False,
+        armor=False,
+        pushable=True,
+        weapon="",
+    )
+
+
+def _repair_mission_deployment_board() -> tuple[Board, list[list[int]]]:
+    """Deployment snapshot from run 20260710_062120_403 m02."""
+    board = _empty_board()
+    board.mission_id = "Mission_Repair"
+    board.repair_platform_target = 3
+    board.repair_platforms_used = 0
+
+    for x, y, hp in [
+        (1, 2, 1), (2, 2, 1), (1, 3, 1),
+        (3, 4, 1), (2, 5, 2), (3, 5, 2),
+    ]:
+        board.tile(x, y).terrain = "building"
+        board.tile(x, y).building_hp = hp
+
+    for uid, enemy_type, x, y, hp in [
+        (380, "Mosquito2", 7, 2, 4),
+        (381, "Burnbug2", 5, 4, 4),
+        (382, "Jelly_Explode1", 7, 5, 2),
+        (383, "Leaper1", 6, 2, 1),
+        (384, "Leaper1", 5, 5, 1),
+        (385, "Mosquito2", 5, 2, 4),
+    ]:
+        board.units.append(_enemy(uid, enemy_type, x, y, hp))
+
+    board.tile(2, 6).repair_platform = True  # B6
+    board.tile(3, 6).repair_platform = True  # B5
+    deploy_zone = [[1, 1], [1, 6], [2, 1], [2, 6], [3, 1], [3, 6]]
+    return board, deploy_zone
+
+
 # ---------------------------------------------------------------------------
 # classify_deploy_hazard
 # ---------------------------------------------------------------------------
@@ -312,6 +361,28 @@ def test_safe_picks_have_no_hazard_warning():
     assert len(recs) == 3
     assert all(r["hazard"] is None for r in recs)
     assert all(r["hazard_warning"] is False for r in recs)
+
+
+def test_repair_mission_reserves_adjacent_safe_deployment_platforms():
+    board, deploy_zone = _repair_mission_deployment_board()
+
+    recs = recommend_deploy_tiles(board, deploy_zone)
+    coords = {(r["x"], r["y"]) for r in recs}
+
+    assert coords == {(3, 6), (2, 6), (3, 1)}  # B5, B6, G5
+    assert (1, 1) not in coords  # rear G7 caused the live opening-turn trap
+    assert all(r["hazard"] is None for r in recs)
+
+
+def test_repair_platforms_do_not_override_generic_deployment_elsewhere():
+    board, deploy_zone = _repair_mission_deployment_board()
+    board.mission_id = "Mission_Survive"
+
+    recs = recommend_deploy_tiles(board, deploy_zone)
+    coords = {(r["x"], r["y"]) for r in recs}
+
+    assert coords == {(3, 6), (3, 1), (1, 1)}  # legacy B5, G5, G7 spread
+    assert (2, 6) not in coords
 
 
 def test_two_freeze_mines_one_ground_one_old_earth_one_forest_acceptance():

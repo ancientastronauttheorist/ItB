@@ -48881,6 +48881,8 @@ def recommend_deploy_tiles(board, deploy_zone: list) -> list[dict]:
     Strategy:
       * Score every non-occupied tile (proximity to enemies, building cover,
         forward-row bonus, cracked-ground penalty).
+      * On Mission_Repair, reserve safe Repair Platform tiles up to the
+        remaining objective need before applying ordinary adjacency diversity.
       * Pick up to 3 SAFE (hazard=None) tiles first, with spatial diversity
         and a forward-row guarantee.
       * If fewer than 3 safe tiles exist, fall back to hazard tiles in
@@ -48963,6 +48965,30 @@ def recommend_deploy_tiles(board, deploy_zone: list) -> list[dict]:
             "hazard_warning": warning,
         })
         return True
+
+    # Mission_Repair's deployment pads are both immediate healing and scarce
+    # objective progress. Enemies consume a pad without advancing the player
+    # objective, so leaving two safe deployment pads vacant can strand damaged
+    # mechs and hand the opening threat pocket to the Vek. Reserve only the
+    # remaining number needed for the objective, and do this before the generic
+    # adjacency filter so adjacent safe pads are not incorrectly treated as
+    # redundant positioning.
+    if getattr(board, "mission_id", "") == "Mission_Repair":
+        try:
+            repair_target = max(0, int(getattr(board, "repair_platform_target", 0) or 0))
+            repair_used = max(0, int(getattr(board, "repair_platforms_used", 0) or 0))
+        except (TypeError, ValueError):
+            repair_target = 0
+            repair_used = 0
+        repair_needed = min(3, max(0, repair_target - repair_used))
+        reserved = 0
+        for score, tx, ty in safe_pool:
+            if len(selected) >= 3 or reserved >= repair_needed:
+                break
+            if not getattr(board.tiles[tx][ty], "repair_platform", False):
+                continue
+            if _try_add(tx, ty, None, False):
+                reserved += 1
 
     # Pass 1: safe tiles, with diversity.
     for score, tx, ty in safe_pool:

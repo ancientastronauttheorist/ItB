@@ -438,3 +438,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 437 | 771 | Flying Hydraulic Legs targets do not carry newly acquired origin Fire through a successful push. | `docs/agent/solver-reference.md` |
 | 438 | 773 | Hydraulic Legs outward pushes can lag one bridge read behind their damage. | `docs/agent/safety-gates.md` |
 | 439 | 775 | Igniting a smoked Forest clears Smoke. | `docs/agent/solver-reference.md` |
+| 440 | 777 | Mission_Repair deployment reserves safe Repair Platforms before ordinary spread. | `docs/agent/solver-reference.md` |
