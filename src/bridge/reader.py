@@ -1005,6 +1005,75 @@ def _derive_attack_order_from_units(data: dict) -> None:
         data["attack_order"] = order
 
 
+def _reconcile_remaining_spawns_with_markers(data: dict) -> None:
+    """Keep already-marked Vek emergence visible on the final turn.
+
+    The Lua bridge uses ``Mission:IsFinalTurn()`` to emit zero future spawns,
+    but spawn markers placed on the preceding enemy phase still emerge after
+    the current player turn.  ``remaining_spawns`` represents queued emergence
+    to the solver, so it must cover every live marker even when no later wave
+    will be scheduled.
+    """
+    raw_markers = data.get("spawning_tiles")
+    if not isinstance(raw_markers, list):
+        return
+    markers: set[tuple[int, int]] = set()
+    for marker in raw_markers:
+        if not isinstance(marker, (list, tuple)) or len(marker) < 2:
+            return
+        x, y = marker[0], marker[1]
+        if not isinstance(x, int) or not isinstance(y, int):
+            return
+        if not (0 <= x < 8 and 0 <= y < 8):
+            return
+        markers.add((x, y))
+    marker_count = len(markers)
+    if marker_count <= 0:
+        return
+
+    raw_remaining = data.get("remaining_spawns")
+    if isinstance(raw_remaining, bool):
+        return
+    if isinstance(raw_remaining, int) and raw_remaining >= marker_count:
+        return
+    data["remaining_spawns_bridge_raw"] = raw_remaining
+    data["remaining_spawns"] = marker_count
+    data["remaining_spawns_reconciled_from_markers"] = True
+
+
+def _reconcile_victory_turns_with_live_turn(data: dict) -> None:
+    """Derive the visible countdown from live turn metadata.
+
+    ``region.player.victory`` comes from the save overlay and can remain frozen
+    for the entire mission.  The bridge's live ``Game:GetTurnCount()`` and
+    mission ``TurnLimit`` are authoritative in combat: turn 3 of a four-turn
+    mission displays "Victory in 2 turns", and turn 4 displays 1.
+    """
+    if data.get("phase") not in {"combat_player", "combat_enemy"}:
+        return
+    turn = data.get("turn")
+    total_turns = data.get("total_turns")
+    if (
+        isinstance(turn, bool)
+        or not isinstance(turn, int)
+        or isinstance(total_turns, bool)
+        or not isinstance(total_turns, int)
+        or turn < 1
+    ):
+        return
+    if total_turns < turn:
+        data["victory_turns_save_raw"] = data.pop("victory_turns", None)
+        data["victory_turns_invalid_live_window"] = True
+        return
+    derived = max(1, total_turns - turn + 1)
+    raw_victory = data.get("victory_turns")
+    if raw_victory == derived:
+        return
+    data["victory_turns_save_raw"] = raw_victory
+    data["victory_turns"] = derived
+    data["victory_turns_reconciled_from_live_turn"] = True
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -1035,6 +1104,9 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         victory_turns = _read_active_victory_turns_from_save()
         if isinstance(victory_turns, int):
             data["victory_turns"] = victory_turns
+
+    _reconcile_remaining_spawns_with_markers(data)
+    _reconcile_victory_turns_with_live_turn(data)
 
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a

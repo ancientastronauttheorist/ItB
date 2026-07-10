@@ -66,7 +66,7 @@ from src.bridge.protocol import (
     is_bridge_active, is_bridge_alive, refresh_bridge_state, read_state,
     BridgeError, ACK_FILE, CMD_FILE, STATE_FILE, STATE_TMP,
 )
-from src.bridge.reader import read_bridge_state
+from src.bridge.reader import WEB_SOURCE_WEAPONS, read_bridge_state
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
     deploy_mech, set_bridge_speed, bridge_ui_probe,
@@ -5241,6 +5241,171 @@ def _classify_emergent_enemy_pod_losses(
     return deltas
 
 
+def _classify_next_turn_web_grapples(
+    deltas: dict,
+    solve_data: dict,
+    board: Board,
+    *,
+    actual_turn: int | None,
+    expected_turn: int,
+) -> dict:
+    """Separate newly telegraphed grapples from enemy-phase status misses.
+
+    Scorpions and Leapers apply Web when they choose their *next* queued
+    attack, after the simulated enemy phase has ended.  That AI move/retarget
+    horizon is intentionally outside the deterministic replay.  Explain only
+    an exact Web identity whose live source now queues at the same stationary
+    mech but targeted a different tile in the complete post-player checkpoint.
+    Everything incomplete, stale, or mixed remains fail-closed.
+    """
+    deltas["next_turn_web_grapples"] = []
+    if actual_turn != expected_turn or not isinstance(solve_data, dict):
+        return deltas
+    post_player = solve_data.get("post_player_board")
+    if not isinstance(post_player, dict):
+        return deltas
+    checkpoint_units = post_player.get("units")
+    if not isinstance(checkpoint_units, list):
+        return deltas
+
+    def plain_int(value) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool)
+
+    previous_by_uid: dict[int, dict] = {}
+    for raw in checkpoint_units:
+        if not isinstance(raw, dict) or not plain_int(raw.get("uid")):
+            return deltas
+        previous_by_uid[int(raw["uid"])] = raw
+    actual_by_uid = {
+        int(unit.uid): unit
+        for unit in board.units
+        if not getattr(unit, "is_extra_tile", False)
+    }
+
+    explained_all: list[dict] = []
+    for status_delta in deltas.get("mech_status_diff", []) or []:
+        if not isinstance(status_delta, dict):
+            continue
+        if status_delta.get("key") != "mechs_webbed":
+            continue
+        raw_unexpected = status_delta.get("unexpected")
+        if not isinstance(raw_unexpected, list) or not raw_unexpected:
+            continue
+        unexplained: list[dict] = []
+        explained: list[dict] = []
+        for item in raw_unexpected:
+            if not isinstance(item, dict) or not plain_int(item.get("uid")):
+                unexplained.append(item)
+                continue
+            uid = int(item["uid"])
+            mech = actual_by_uid.get(uid)
+            previous_mech = previous_by_uid.get(uid)
+            item_pos = item.get("pos")
+            if (
+                mech is None
+                or previous_mech is None
+                or not getattr(mech, "is_player", False)
+                or int(getattr(mech, "hp", 0) or 0) <= 0
+                or not getattr(mech, "web", False)
+                or not isinstance(item_pos, (list, tuple))
+                or len(item_pos) != 2
+                or not all(plain_int(value) for value in item_pos)
+                or tuple(item_pos) != (int(mech.x), int(mech.y))
+                or previous_mech.get("team") != 1
+                or not plain_int(previous_mech.get("hp"))
+                or previous_mech.get("hp") <= 0
+                or not plain_int(previous_mech.get("x"))
+                or not plain_int(previous_mech.get("y"))
+                or (previous_mech.get("x"), previous_mech.get("y"))
+                != (int(mech.x), int(mech.y))
+            ):
+                unexplained.append(item)
+                continue
+
+            source_uid = int(getattr(mech, "web_source_uid", -1) or -1)
+            source = actual_by_uid.get(source_uid)
+            previous_source = previous_by_uid.get(source_uid)
+            previous_target = (
+                previous_source.get("queued_target")
+                if isinstance(previous_source, dict)
+                else None
+            )
+            current_target = (
+                int(getattr(source, "queued_target_x", -1)),
+                int(getattr(source, "queued_target_y", -1)),
+            ) if source is not None else (-1, -1)
+            previous_weapons = (
+                previous_source.get("weapons")
+                if isinstance(previous_source, dict)
+                else None
+            )
+            if (
+                source is None
+                or previous_source is None
+                or not getattr(source, "is_enemy", False)
+                or int(getattr(source, "hp", 0) or 0) <= 0
+                or not getattr(source, "has_queued_attack", False)
+                or str(getattr(source, "weapon", ""))
+                not in WEB_SOURCE_WEAPONS
+                or current_target != (int(mech.x), int(mech.y))
+                or abs(int(source.x) - int(mech.x))
+                + abs(int(source.y) - int(mech.y)) != 1
+                or previous_source.get("team") != 6
+                or not plain_int(previous_source.get("hp"))
+                or previous_source.get("hp") <= 0
+                or previous_source.get("type") != str(source.type)
+                or previous_source.get("has_queued_attack") is not True
+                or not isinstance(previous_weapons, list)
+                or not previous_weapons
+                or previous_weapons[0] != str(source.weapon)
+                or not isinstance(previous_target, (list, tuple))
+                or len(previous_target) != 2
+                or not all(plain_int(value) for value in previous_target)
+                or not all(0 <= value < 8 for value in previous_target)
+                or (previous_target[0], previous_target[1])
+                == (int(mech.x), int(mech.y))
+            ):
+                unexplained.append(item)
+                continue
+
+            explained.append({
+                "uid": uid,
+                "type": str(mech.type),
+                "pos": [int(mech.x), int(mech.y)],
+                "source_uid": source_uid,
+                "source_type": str(source.type),
+                "previous_target": [previous_target[0], previous_target[1]],
+                "current_target": [current_target[0], current_target[1]],
+                "reason": "next_turn_web_source_retargeted_stationary_mech",
+            })
+
+        status_delta["unexplained_unexpected"] = unexplained
+        status_delta["next_turn_web_grapples"] = explained
+        explained_all.extend(explained)
+
+    deltas["next_turn_web_grapples"] = explained_all
+    if explained_all:
+        unexpected_events = [
+            event for event in deltas.get("unexpected_events", [])
+            if not (
+                isinstance(event, str)
+                and event.endswith(" gained unexpected Web status")
+            )
+        ]
+        for status_delta in deltas.get("mech_status_diff", []) or []:
+            if not isinstance(status_delta, dict):
+                continue
+            if status_delta.get("key") != "mechs_webbed":
+                continue
+            for item in status_delta.get("unexplained_unexpected", []) or []:
+                if isinstance(item, dict):
+                    unexpected_events.append(
+                        f"{item.get('type', 'Mech')} gained unexpected Web status"
+                    )
+        deltas["unexpected_events"] = unexpected_events
+    return deltas
+
+
 def _post_enemy_record_path(session: RunSession, solved_turn: int) -> Path:
     run_dir = _recording_dir(session)
     return run_dir / (
@@ -5335,7 +5500,10 @@ def _post_enemy_needs_investigation(
         for delta in deltas.get("mech_status_diff", []) or []:
             if not isinstance(delta, dict):
                 continue
-            unexpected = delta.get("unexpected")
+            unexpected = delta.get(
+                "unexplained_unexpected",
+                delta.get("unexpected"),
+            )
             if isinstance(unexpected, list):
                 if unexpected:
                     return True
@@ -5435,6 +5603,13 @@ def _record_post_enemy(session: RunSession, board: Board,
     # Compute deltas
     deltas = _compute_deltas(predicted, actual)
     deltas = _classify_emergent_enemy_pod_losses(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=actual_turn,
+        expected_turn=expected_turn,
+    )
+    deltas = _classify_next_turn_web_grapples(
         deltas,
         solve_data,
         board,

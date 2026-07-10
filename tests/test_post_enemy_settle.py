@@ -573,6 +573,194 @@ def test_unfair_post_enemy_gate_blocks_unexpected_mech_status():
     assert commands._post_enemy_needs_investigation(deltas, session)
 
 
+def _next_turn_web_case(*, previous_target=(5, 2), current_target=(6, 2)):
+    board = _board(5)
+    mech = board.units[0]
+    mech.web = True
+    mech.web_source_uid = 371
+    source = _enemy(371, 5, 2)
+    source.has_queued_attack = True
+    source.queued_target_x, source.queued_target_y = current_target
+    source.target_x, source.target_y = current_target
+    board.units.append(source)
+    solve_data = {
+        "post_player_board": {
+            "units": [
+                {
+                    "uid": mech.uid,
+                    "type": mech.type,
+                    "team": 1,
+                    "hp": mech.hp,
+                    "x": mech.x,
+                    "y": mech.y,
+                },
+                {
+                    "uid": source.uid,
+                    "type": source.type,
+                    "team": 6,
+                    "hp": 2,
+                    "x": 6,
+                    "y": 1,
+                    "weapons": ["LeaperAtk2"],
+                    "has_queued_attack": True,
+                    "queued_target": list(previous_target),
+                },
+            ],
+        },
+    }
+    web_item = {
+        "uid": mech.uid,
+        "type": mech.type,
+        "pos": [mech.x, mech.y],
+    }
+    deltas = {
+        "mech_status_diff": [{
+            "key": "mechs_webbed",
+            "status": "Web",
+            "predicted_count": 0,
+            "actual_count": 1,
+            "unexpected": [web_item],
+            "cleared": [],
+        }],
+        "unexpected_events": [
+            f"{mech.type} gained unexpected Web status"
+        ],
+    }
+    return board, solve_data, deltas, web_item
+
+
+def test_next_turn_retarget_web_is_explained_for_unfair_gate():
+    board, solve_data, deltas, web_item = _next_turn_web_case()
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    web_delta = result["mech_status_diff"][0]
+    assert web_delta["unexpected"] == [web_item]
+    assert web_delta["unexplained_unexpected"] == []
+    assert web_delta["next_turn_web_grapples"] == [{
+        "uid": 0,
+        "type": "JetMech",
+        "pos": [6, 2],
+        "source_uid": 371,
+        "source_type": "Leaper2",
+        "previous_target": [5, 2],
+        "current_target": [6, 2],
+        "reason": "next_turn_web_source_retargeted_stationary_mech",
+    }]
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_next_turn_web_classifier_fails_closed_without_changed_queue():
+    board, solve_data, deltas, web_item = _next_turn_web_case(
+        previous_target=(6, 2),
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    web_delta = result["mech_status_diff"][0]
+    assert web_delta["unexplained_unexpected"] == [web_item]
+    assert web_delta["next_turn_web_grapples"] == []
+    assert commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_next_turn_web_classifier_fails_closed_on_wrong_live_target():
+    board, solve_data, deltas, web_item = _next_turn_web_case(
+        current_target=(5, 2),
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == [web_item]
+    assert result["next_turn_web_grapples"] == []
+
+
+def test_next_turn_web_classifier_fails_closed_outside_exact_turn_window():
+    board, solve_data, deltas, web_item = _next_turn_web_case()
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=3,
+        expected_turn=2,
+    )
+
+    assert result["next_turn_web_grapples"] == []
+    assert result["mech_status_diff"][0]["unexpected"] == [web_item]
+    assert commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_next_turn_web_classifier_rejects_non_web_source():
+    board, solve_data, deltas, web_item = _next_turn_web_case()
+    source = next(unit for unit in board.units if unit.uid == 371)
+    source.weapon = "FireflyAtk1"
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == [web_item]
+    assert result["next_turn_web_grapples"] == []
+
+
+def test_explained_next_turn_web_does_not_hide_independent_grid_loss():
+    board, solve_data, deltas, _web_item = _next_turn_web_case()
+    deltas["grid_power_diff"] = -1
+    deltas["unexpected_events"].insert(
+        0,
+        "Grid power dropped by 1 unexpectedly",
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert len(result["next_turn_web_grapples"]) == 1
+    assert result["unexpected_events"] == [
+        "Grid power dropped by 1 unexpectedly"
+    ]
+    assert commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
 def test_record_post_enemy_records_nonlethal_mech_damage_for_lightning_war(
     tmp_path,
     monkeypatch,
