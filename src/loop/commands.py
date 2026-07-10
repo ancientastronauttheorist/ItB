@@ -3612,7 +3612,14 @@ def _pending_grid_debt_from_turn_start(
     current_hp = _current_building_hp_total(board)
     hp_lost = max(0, start_hp - current_hp)
     grid_lost = max(0, start_grid - int(board.grid_power))
-    return max(0, hp_lost - grid_lost)
+    confirmed_resists = sum(
+        max(0, int(item.get("count") or 0))
+        for item in session.confirmed_grid_resists
+        if isinstance(item, dict)
+        and item.get("mission_index") == session.mission_index
+        and item.get("turn") == turn
+    )
+    return max(0, hp_lost - grid_lost - confirmed_resists)
 
 
 def _annotate_pending_grid_debt(
@@ -4532,6 +4539,73 @@ def _is_harmless_player_hp_gain_diff(diff) -> bool:
             return False
         if actual <= predicted:
             return False
+    return True
+
+
+def _favorable_grid_resist_amount(diff) -> int:
+    """Return proven Grid Defense savings for a pure favorable scalar diff.
+
+    A building hit is already represented in both the predicted and actual
+    tile state.  When the only remaining mismatch is a higher live
+    ``grid_power`` scalar, the game's Grid Defense roll succeeded and the
+    original plan is still valid.  Mixed unit/tile/scalar differences remain
+    ordinary desyncs because they could hide an unrelated simulation error.
+    """
+    if getattr(diff, "unit_diffs", []) or getattr(diff, "tile_diffs", []):
+        return 0
+    scalar_diffs = getattr(diff, "scalar_diffs", []) or []
+    if not scalar_diffs:
+        return 0
+    amount = 0
+    for scalar in scalar_diffs:
+        if scalar.get("field") != "grid_power":
+            return 0
+        predicted = scalar.get("predicted")
+        actual = scalar.get("actual")
+        if not isinstance(predicted, (int, float)) or not isinstance(
+            actual, (int, float)
+        ):
+            return 0
+        saved = int(actual - predicted)
+        if saved <= 0:
+            return 0
+        amount += saved
+    return amount
+
+
+def _record_confirmed_grid_resist(
+    session: RunSession,
+    *,
+    turn: int,
+    action_index: int,
+    phase: str,
+    count: int,
+) -> bool:
+    """Persist one idempotent player-phase Grid Defense confirmation."""
+    if count <= 0:
+        return False
+    key = (session.mission_index, int(turn), int(action_index), str(phase))
+    for item in session.confirmed_grid_resists:
+        if not isinstance(item, dict):
+            continue
+        item_key = (
+            item.get("mission_index"),
+            item.get("turn"),
+            item.get("action_index"),
+            item.get("phase"),
+        )
+        if item_key == key:
+            # A later settled read may expose a larger multi-point save.  Keep
+            # the maximum without double-counting repeated verification.
+            item["count"] = max(int(item.get("count") or 0), int(count))
+            return False
+    session.confirmed_grid_resists.append({
+        "mission_index": session.mission_index,
+        "turn": int(turn),
+        "action_index": int(action_index),
+        "phase": str(phase),
+        "count": int(count),
+    })
     return True
 
 
@@ -47397,6 +47471,19 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     elif _is_harmless_burrower_missing_drift(diff):
                         print("  MOVE VERIFIED: PASS "
                               "(Burrower missing-after-damage drift ignored)")
+                    elif (grid_resist := _favorable_grid_resist_amount(diff)) > 0:
+                        _record_confirmed_grid_resist(
+                            session,
+                            turn=turn,
+                            action_index=actions_completed,
+                            phase="move",
+                            count=grid_resist,
+                        )
+                        session.save(DEFAULT_SESSION_FILE)
+                        print(
+                            "  MOVE VERIFIED: PASS "
+                            f"(Grid Defense resisted {grid_resist} grid damage)"
+                        )
                     else:
                         classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
                         fuzzy_signal = fuzzy_detector.evaluate(
@@ -47720,6 +47807,19 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 elif _is_harmless_burrower_missing_drift(diff):
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(Burrower missing-after-damage drift ignored)")
+                elif (grid_resist := _favorable_grid_resist_amount(diff)) > 0:
+                    _record_confirmed_grid_resist(
+                        session,
+                        turn=turn,
+                        action_index=actions_completed,
+                        phase=final_phase,
+                        count=grid_resist,
+                    )
+                    session.save(DEFAULT_SESSION_FILE)
+                    print(
+                        f"  {final_phase.upper()} VERIFIED: PASS "
+                        f"(Grid Defense resisted {grid_resist} grid damage)"
+                    )
                 else:
                     classification = classify_diff(diff, mech_uid=mech_uid,
                                                    phase=final_phase)

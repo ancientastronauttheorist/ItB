@@ -1578,7 +1578,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # mission counters. Multi-tile objective scoring is de-duplicated by logical
 # uid. Pre-v337 corpus archived as
 # failure_db_snapshot_sim_v336.jsonl.
-SIMULATOR_VERSION = 337
+# v338 - DIR_FLIP recovers a displaced queued attack's direction from the raw
+# queued shot when the bridge-normalized target collapses onto its stale
+# origin, then clears that obsolete raw intent after rewriting the attack.
+# Pre-v338 corpus archived as failure_db_snapshot_sim_v337.jsonl.
+SIMULATOR_VERSION = 338
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

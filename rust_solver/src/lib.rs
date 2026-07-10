@@ -2175,7 +2175,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   mission counters. Multi-tile objective scoring is de-duplicated by logical
 //   uid. Pre-v337 corpus archived as
 //   failure_db_snapshot_sim_v336.jsonl.
-pub const SIMULATOR_VERSION: u32 = 337;
+// v338 - DIR_FLIP recovers a displaced queued attack's direction from the raw
+//   queued shot when the bridge-normalized target collapses onto its stale
+//   origin, then clears that obsolete raw intent after rewriting the attack.
+//   Pre-v338 corpus archived as failure_db_snapshot_sim_v337.jsonl.
+pub const SIMULATOR_VERSION: u32 = 338;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

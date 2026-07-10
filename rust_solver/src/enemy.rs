@@ -2521,6 +2521,7 @@ fn apply_projectile_grapple(
 mod tests {
     use super::*;
     use crate::serde_bridge::board_from_json;
+    use crate::simulate::simulate_weapon;
 
     fn add_enemy_with_type(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, type_name: &str, qtx: i8, qty: i8) -> usize {
         let mut unit = Unit {
@@ -2908,6 +2909,76 @@ mod tests {
         assert_eq!(
             board.units[mirror_idx].hp, 2,
             "Firefly projectile should infer direction from current position when target equals queued origin"
+        );
+    }
+
+    #[test]
+    fn test_seismic_flips_displaced_firefly_with_collapsed_normalized_target() {
+        let mut board = Board::default();
+        let mirror_idx = board.add_unit(Unit {
+            uid: 1,
+            x: 2,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[mirror_idx].set_type_name("MirrorMech");
+        let hydrant_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 5,
+            y: 1,
+            hp: 2,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceKoCrack as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            ..Default::default()
+        });
+        board.units[hydrant_idx].set_type_name("HydrantMech");
+
+        // Chaos Roll Unfair run 20260710_013601_568, Mission_Train turn 2:
+        // Mirror Shot displaced Firefly2 from (4,2) to (5,2).  The bridge's
+        // normalized target became the stale queued origin (4,2), while raw
+        // piQueuedShot=(3,2) retained the live -x projectile vector toward
+        // Mirror.  Seismic at (5,2) must flip the projectile to +x.
+        let firefly_idx = add_enemy_with_type(&mut board, 166, 5, 2, 5, "Firefly2", 4, 2);
+        board.units[firefly_idx].max_hp = 6;
+        board.units[firefly_idx].weapon_damage = 3;
+        board.units[firefly_idx].queued_origin_x = 4;
+        board.units[firefly_idx].queued_origin_y = 2;
+        board.units[firefly_idx].queued_target_raw_x = 3;
+        board.units[firefly_idx].queued_target_raw_y = 2;
+        board.units[firefly_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        simulate_weapon(
+            &mut board,
+            hydrant_idx,
+            WId::ScienceKoCrack,
+            5,
+            2,
+        );
+        assert_eq!(board.units[firefly_idx].hp, 4);
+        assert_eq!(
+            (board.units[firefly_idx].queued_target_x, board.units[firefly_idx].queued_target_y),
+            (6, 2),
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.units[mirror_idx].hp, 3,
+            "Seismic-flipped Firefly projectile should fire away from MirrorMech"
         );
     }
 

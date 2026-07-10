@@ -2448,8 +2448,24 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
     } else {
         (ux, uy)
     };
-    let offset_x = qtx - origin_x;
-    let offset_y = qty - origin_y;
+    let mut offset_x = qtx - origin_x;
+    let mut offset_y = qty - origin_y;
+    // A fresh mid-turn bridge read normalizes a displaced queued attack to
+    // the attacker's current tile while retaining the original `piOrigin`.
+    // If the normalized target happens to be that stale origin, the simple
+    // target-origin subtraction collapses to zero even though the raw queued
+    // shot still carries a real attack vector.  Recover that vector before
+    // deciding this is a self-targeted attack.
+    if offset_x == 0
+        && offset_y == 0
+        && (ux, uy) != (origin_x, origin_y)
+        && unit.flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET)
+        && unit.queued_target_raw_x >= 0
+        && unit.queued_target_raw_y >= 0
+    {
+        offset_x = unit.queued_target_raw_x as i32 - origin_x;
+        offset_y = unit.queued_target_raw_y as i32 - origin_y;
+    }
     if offset_x == 0 && offset_y == 0 {
         // Self-targeted (suicide bomber / egg spawner) — no vector to flip.
         return;
@@ -2470,6 +2486,12 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
         unit.queued_origin_y = unit.y as i8;
         unit.flags.insert(UnitFlags::QUEUED_ORIGIN_SET);
     }
+    // DIR_FLIP replaces the queued vector.  The retained bridge raw target
+    // describes the pre-flip intent and must not compete with the rewritten
+    // target during enemy projectile direction recovery.
+    unit.queued_target_raw_x = -1;
+    unit.queued_target_raw_y = -1;
+    unit.flags.remove(UnitFlags::QUEUED_RAW_TARGET_SET);
 }
 
 // ── apply_push ───────────────────────────────────────────────────────────────
@@ -13448,6 +13470,43 @@ mod tests {
         assert_eq!(board.units[idx].queued_target_y, 5);
         assert_eq!(board.units[idx].queued_origin_x, 2);
         assert_eq!(board.units[idx].queued_origin_y, 4);
+    }
+
+    #[test]
+    fn test_flip_queued_attack_recovers_raw_vector_when_target_collapses_to_origin() {
+        // Chaos Roll Unfair run 20260710_013601_568, Mission_Train turn 2:
+        // Mirror Shot pushed an Alpha Firefly from (4,2) to (5,2).  A fresh
+        // bridge read normalized its queued target to (4,2), equal to the
+        // retained queued origin, while raw piQueuedShot=(3,2) still proved
+        // the live shot pointed in -x.  Seismic Capacitor must flip that
+        // attack to +x rather than misclassifying it as self-targeted.
+        let mut board = make_test_board();
+        let idx = add_enemy_type(&mut board, 166, 5, 2, 5, "Firefly2");
+        board.units[idx].queued_target_x = 4;
+        board.units[idx].queued_target_y = 2;
+        board.units[idx].queued_origin_x = 4;
+        board.units[idx].queued_origin_y = 2;
+        board.units[idx].queued_target_raw_x = 3;
+        board.units[idx].queued_target_raw_y = 2;
+        board.units[idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        flip_queued_attack(&mut board, 5, 2);
+
+        assert_eq!(
+            (board.units[idx].queued_target_x, board.units[idx].queued_target_y),
+            (6, 2),
+        );
+        assert_eq!(
+            (board.units[idx].queued_origin_x, board.units[idx].queued_origin_y),
+            (5, 2),
+        );
+        assert!(!board.units[idx].flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET));
+        assert_eq!(board.units[idx].queued_target_raw_x, -1);
+        assert_eq!(board.units[idx].queued_target_raw_y, -1);
     }
 
     #[test]
