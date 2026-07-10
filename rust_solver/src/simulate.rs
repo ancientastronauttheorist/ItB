@@ -5381,12 +5381,8 @@ fn apply_trapped_death_damage(
     match terrain {
         Terrain::Mountain => {
             let tile = board.tile_mut(x, y);
-            if tile.building_hp > 0 {
-                tile.building_hp = tile.building_hp.saturating_sub(1);
-                if tile.building_hp == 0 {
-                    tile.terrain = Terrain::Rubble;
-                }
-            }
+            tile.building_hp = 0;
+            tile.terrain = Terrain::Rubble;
         }
         Terrain::Ice => {
             if board.tile(x, y).cracked() {
@@ -9121,7 +9117,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trapped_explode_skips_adjacent_buildings() {
+    fn test_trapped_explode_skips_adjacent_buildings_and_destroys_mountains() {
         let mut board = make_test_board();
         let decoy = add_decoy_building(&mut board, 10, 3, 3);
         board.tile_mut(3, 4).terrain = Terrain::Building;
@@ -9135,7 +9131,8 @@ mod tests {
         assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
         assert_eq!(board.grid_power, 7);
         assert_eq!(result.grid_damage, 0);
-        assert_eq!(board.tile(4, 3).building_hp, 1);
+        assert_eq!(board.tile(4, 3).building_hp, 0);
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Rubble);
     }
 
     #[test]

@@ -2160,7 +2160,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v334 - Hydraulic Lifter landing damage cracks occupied Ground, so a grounded
 //   thrown target falls when the landing tile collapses to Chasm. Pre-v334
 //   corpus archived as failure_db_snapshot_sim_v333.jsonl.
-pub const SIMULATOR_VERSION: u32 = 334;
+// v335 - Mission_Trapped Area Blast uses DAMAGE_DEATH on adjacent non-building
+//   tiles, destroying a full-health Mountain outright instead of cracking it.
+//   Pre-v335 corpus archived as failure_db_snapshot_sim_v334.jsonl.
+pub const SIMULATOR_VERSION: u32 = 335;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

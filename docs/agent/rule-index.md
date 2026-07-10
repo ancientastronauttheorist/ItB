@@ -417,3 +417,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 404 | 717 | Let's Walk needs visible Control Shot execution proof. | `docs/agent/achievement-playbook.md` |
 | 405 | 719 | Maximum Firepower needs one native visible Quick-Fire activation. | `docs/agent/achievement-playbook.md` |
 | 412 | 721 | Hydraulic Lifter landing damage cracks occupied Ground. | `docs/agent/solver-reference.md` |
+| 413 | 723 | Mission_Trapped Area Blast destroys adjacent Mountains outright. | `docs/agent/solver-reference.md` |

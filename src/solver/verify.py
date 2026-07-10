@@ -1563,7 +1563,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v334 - Hydraulic Lifter landing damage cracks occupied Ground, so a grounded
 # thrown target falls when the landing tile collapses to Chasm. Pre-v334
 # corpus archived as failure_db_snapshot_sim_v333.jsonl.
-SIMULATOR_VERSION = 334
+# v335 - Mission_Trapped Area Blast uses DAMAGE_DEATH on adjacent non-building
+# tiles, destroying a full-health Mountain outright instead of cracking it.
+# Pre-v335 corpus archived as failure_db_snapshot_sim_v334.jsonl.
+SIMULATOR_VERSION = 335
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
