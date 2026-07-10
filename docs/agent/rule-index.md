@@ -422,3 +422,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 415 | 727 | A held End Turn state is a click-free inspection zone. | `docs/agent/safety-gates.md` |
 | 416 | 729 | Diagnosis transport and fix snippets must preserve exact content. | `docs/diagnosis_loop_design.md` |
 | 417 | 731 | `auto_turn` must carry exact mech-loss consent end to end. | `docs/agent/safety-gates.md` |
+| 418 | 733 | Shared old markers must not hide a live `DIR_FLIP`. | `docs/agent/safety-gates.md` |

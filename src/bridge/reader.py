@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections import Counter
 
 from src.capture.save_parser import Point, parse_save_file
 from src.model.board import Board
@@ -880,6 +881,12 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
     already flipped. The bridge also reports Board:IsTargeted() tiles, which are
     live marker data. If a unit's old target is gone from those markers and the
     exact 180-degree mirror is present, rewrite the unit target to that mirror.
+
+    Board:IsTargeted() exposes a set, not per-attacker ownership. The old tile
+    can therefore remain present when a second Vek still targets it. When two
+    queued attackers claim that old tile, the mirrored marker is otherwise
+    unclaimed, and the exact mirror is live, assign that mirror to the only
+    compatible attacker while leaving one claim on the old tile.
     """
     targeted = {
         (int(t[0]), int(t[1]))
@@ -889,26 +896,50 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
     if not targeted:
         return
 
-    for u in data.get("units", []) or []:
-        if u.get("team") != 6 or int(u.get("hp") or 0) <= 0:
-            continue
-        if not u.get("has_queued_attack"):
-            continue
-        qt = u.get("queued_target")
-        if not isinstance(qt, list) or len(qt) < 2:
-            continue
+    queued_enemies = [
+        u
+        for u in data.get("units", []) or []
+        if u.get("team") == 6
+        and int(u.get("hp") or 0) > 0
+        and u.get("has_queued_attack")
+        and isinstance(u.get("queued_target"), list)
+        and len(u["queued_target"]) >= 2
+    ]
+    target_claims = Counter(
+        (int(u["queued_target"][0]), int(u["queued_target"][1]))
+        for u in queued_enemies
+    )
+
+    for u in queued_enemies:
+        qt = u["queued_target"]
         qx, qy = int(qt[0]), int(qt[1])
-        if (qx, qy) in targeted:
-            continue
         cx, cy = int(u.get("x", -1)), int(u.get("y", -1))
         if not (0 <= cx < 8 and 0 <= cy < 8):
             continue
         fx, fy = 2 * cx - qx, 2 * cy - qy
-        if 0 <= fx < 8 and 0 <= fy < 8 and (fx, fy) in targeted:
-            u["queued_target_stale_save"] = [qx, qy]
-            u["queued_target"] = [fx, fy]
-            u["queued_origin"] = [cx, cy]
-            u["queued_target_reconciled_via_targeted_tiles"] = True
+        if not (0 <= fx < 8 and 0 <= fy < 8):
+            continue
+        old_target = (qx, qy)
+        flipped_target = (fx, fy)
+        if flipped_target not in targeted:
+            continue
+        old_target_is_shared = (
+            old_target in targeted
+            and target_claims[old_target] > 1
+            and target_claims[flipped_target] == 0
+        )
+        if old_target in targeted and not old_target_is_shared:
+            continue
+        u["queued_target_stale_save"] = [qx, qy]
+        u["queued_target"] = [fx, fy]
+        u["queued_origin"] = [cx, cy]
+        u["queued_target_reconciled_via_targeted_tiles"] = True
+        if old_target_is_shared:
+            u["queued_target_reconcile_reason"] = (
+                "mirror_marker_with_shared_old_target"
+            )
+        target_claims[old_target] -= 1
+        target_claims[flipped_target] += 1
 
 
 WEB_SOURCE_WEAPONS = {

@@ -216,6 +216,49 @@ def test_reconcile_flipped_queued_target_keeps_live_original_marker():
     assert "queued_target_stale_save" not in data["units"][0]
 
 
+def test_reconcile_flipped_target_when_another_attacker_owns_old_marker():
+    """A shared old marker must not hide an otherwise unclaimed live flip."""
+    from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles
+
+    data = {
+        "targeted_tiles": [[5, 2], [7, 2]],
+        "units": [
+            {
+                "uid": 170,
+                "type": "Firefly2",
+                "team": 6,
+                "hp": 3,
+                "x": 6,
+                "y": 2,
+                "has_queued_attack": True,
+                "queued_target": [5, 2],
+                "queued_target_normalized": True,
+            },
+            {
+                "uid": 171,
+                "type": "Scorpion1",
+                "team": 6,
+                "hp": 4,
+                "x": 5,
+                "y": 3,
+                "has_queued_attack": True,
+                "queued_target": [5, 2],
+                "queued_target_normalized": True,
+            },
+        ],
+    }
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    firefly, scorpion = data["units"]
+    assert firefly["queued_target"] == [7, 2], firefly
+    assert firefly["queued_target_stale_save"] == [5, 2], firefly
+    assert firefly["queued_target_reconcile_reason"] == (
+        "mirror_marker_with_shared_old_target"
+    )
+    assert scorpion["queued_target"] == [5, 2], scorpion
+
+
 if __name__ == "__main__":
     test_rust_solve_does_not_panic_on_oob_queued_target()
     print("PASS: rust solve no panic on OOB queued_target")
@@ -231,3 +274,5 @@ if __name__ == "__main__":
     print("PASS: flipped queued target reconciles with live markers")
     test_reconcile_flipped_queued_target_keeps_live_original_marker()
     print("PASS: live original marker preserves queued target")
+    test_reconcile_flipped_target_when_another_attacker_owns_old_marker()
+    print("PASS: shared old marker preserves the unclaimed live flip")
