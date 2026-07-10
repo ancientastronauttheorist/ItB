@@ -1148,11 +1148,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # spawned SpiderlingEgg1 uid 530 after Rock Accelerator pushed a killed Scorpion
 # corpse onto water.
 # Pre-v226 corpus archived as failure_db_snapshot_sim_v225.jsonl.
-# v227: AE Totem/Spore attacks fire at the queued-time projectile endpoint and
-# then self-destruct, instead of re-tracing through post-player blockers or
-# falling back to generic unmapped Vek behavior. Fixes Blitzkrieg run
-# 20260524_112729_036 Mission_Barrels turn 3, where TotemAtk1 destroyed the G6
-# building after WallMech moved onto G5.
+# v227: First Totem/Spore model: queued-time endpoint plus self-destruction.
+# The Mission_Barrels evidence also contained WallMech bump damage, so the
+# fixed-endpoint diagnosis was incomplete and is superseded by v340's live
+# GetProjectileEnd trace.
 # Pre-v227 corpus archived as failure_db_snapshot_sim_v226.jsonl.
 # v228 - Killing a Blast Psion clears the explode-on-death aura before later
 # Chain Whip hits in the same target-first chain resolve.
@@ -1586,7 +1585,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # immediately materializes the live damaged replacement before replay captures
 # the action or applies the next player action. Pre-v339 corpus archived as
 # failure_db_snapshot_sim_v338.jsonl.
-SIMULATOR_VERSION = 339
+# v340 - AE Totem projectiles re-trace GetProjectileEnd at enemy resolution,
+# so a new blocker intercepts and a vacated target lane continues to the next
+# blocker. Pre-v340 corpus archived as
+# failure_db_snapshot_sim_v339.jsonl.
+SIMULATOR_VERSION = 340
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

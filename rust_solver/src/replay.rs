@@ -1092,4 +1092,115 @@ mod tests {
             "queued Moth building damage, not the train transition, spends the final grid",
         );
     }
+
+    #[test]
+    fn replay_solution_shaman_hq_totem_retraces_after_needle_vacates() {
+        // Chaos Roll Unfair run 20260710_013601_568, Mission_ShamanBoss
+        // turn 1. This is the live board and exact three-action line that
+        // v339 scored as grid-safe. Reverse Thrusters vacates visual E5 and
+        // smokes Firefly2 at F4. TotemB must then re-run GetProjectileEnd in
+        // its original direction, pass through empty E5, and destroy the
+        // 2-HP E6 building for the final grid power.
+        let bridge = r#"{
+          "mission_id": "Mission_ShamanBoss",
+          "destroy_objective_unit_types": ["ShamanBoss"],
+          "tiles": [
+            {"x": 1, "y": 2, "terrain": "building", "building_hp": 1, "unique_building": true},
+            {"x": 2, "y": 2, "terrain": "building", "building_hp": 1},
+            {"x": 1, "y": 3, "terrain": "building", "building_hp": 1},
+            {"x": 2, "y": 3, "terrain": "building", "building_hp": 2},
+            {"x": 1, "y": 6, "terrain": "building", "building_hp": 1},
+            {"x": 5, "y": 6, "terrain": "building", "building_hp": 2},
+            {"x": 6, "y": 6, "terrain": "building", "building_hp": 2}
+          ],
+          "units": [
+            {"uid": 0, "type": "NeedleMech", "x": 3, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "flying": true, "massive": true, "pushable": true,
+             "shield": true, "move": 4, "active": true,
+             "weapons": ["Brute_KickBack"]},
+            {"uid": 1, "type": "MirrorMech", "x": 2, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "massive": true, "pushable": true, "move": 3, "active": true,
+             "weapons": ["Brute_Mirrorshot"]},
+            {"uid": 2, "type": "HydrantMech", "x": 3, "y": 5,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "flying": true, "massive": true, "pushable": true,
+             "move": 4, "active": true, "weapons": ["Science_KO_Crack"]},
+            {"uid": 204, "type": "ShamanBoss", "x": 5, "y": 5,
+             "hp": 6, "max_hp": 5, "team": 6, "mech": false,
+             "massive": true, "pushable": true, "move": 2, "active": false,
+             "weapons": ["ShamanAtkB"], "has_queued_attack": false},
+            {"uid": 205, "type": "Jelly_Health1", "x": 6, "y": 5,
+             "hp": 2, "max_hp": 2, "team": 6, "mech": false,
+             "flying": true, "pushable": true, "move": 2, "active": false,
+             "weapons": [], "has_queued_attack": false},
+            {"uid": 206, "type": "Firefly1", "x": 6, "y": 4,
+             "hp": 4, "max_hp": 3, "team": 6, "mech": false,
+             "pushable": true, "move": 2, "active": false,
+             "weapons": ["FireflyAtk1"], "weapon_damage": 1,
+             "has_queued_attack": true, "queued_origin": [6, 4],
+             "queued_target": [5, 4], "queued_target_raw": [5, 4],
+             "queued_target_normalized": true},
+            {"uid": 207, "type": "Firefly2", "x": 4, "y": 2,
+             "hp": 6, "max_hp": 5, "team": 6, "mech": false,
+             "pushable": true, "move": 2, "active": false,
+             "weapons": ["FireflyAtk2"], "weapon_damage": 3,
+             "has_queued_attack": true, "queued_origin": [4, 2],
+             "queued_target": [3, 2], "queued_target_raw": [3, 2],
+             "queued_target_normalized": true},
+            {"uid": 252, "type": "TotemB", "x": 5, "y": 3,
+             "hp": 2, "max_hp": 2, "team": 6, "mech": false,
+             "minor": true, "pushable": true, "move": 0, "active": false,
+             "weapons": ["TotemAtkB"], "weapon_damage": 2,
+             "has_queued_attack": true, "queued_origin": [5, 3],
+             "queued_target": [4, 3], "queued_target_raw": [4, 3],
+             "queued_target_normalized": true}
+          ],
+          "attack_order": [206, 207, 252],
+          "grid_power": 1,
+          "grid_power_max": 7,
+          "spawning_tiles": [[6, 2], [6, 3]],
+          "environment_danger": [],
+          "remaining_spawns": 1,
+          "is_infinite_spawn": true,
+          "turn": 1,
+          "total_turns": 4,
+          "victory_turns": 2
+        }"#;
+        let plan = r#"[
+          {"mech_uid": 0, "move_to": [5, 2],
+           "weapon_id": "Brute_KickBack", "target": [6, 2]},
+          {"mech_uid": 2, "move_to": [7, 5],
+           "weapon_id": "Science_KO_Crack", "target": [6, 5]},
+          {"mech_uid": 1, "move_to": [2, 5],
+           "weapon_id": "Brute_Mirrorshot", "target": [3, 5]}
+        ]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+
+        assert_eq!(v["predicted_outcome"]["grid_power"], 0);
+        assert_eq!(v["predicted_outcome"]["buildings_destroyed_by_enemies"], 1);
+
+        let final_units = v["final_board"]["units"].as_array().unwrap();
+        for uid in [0, 1, 2] {
+            let mech = final_units.iter().find(|u| u["uid"] == uid).unwrap();
+            assert!(mech["hp"].as_i64().unwrap() > 0, "mech {uid} should survive");
+        }
+        let firefly2 = final_units.iter().find(|u| u["uid"] == 207).unwrap();
+        assert!(firefly2["hp"].as_i64().unwrap() > 0,
+            "smoked Firefly2 should survive without resolving its queued shot");
+
+        let final_tiles = v["final_board"]["tiles"].as_array().unwrap();
+        let firefly_tile = final_tiles.iter()
+            .find(|t| t["x"] == 4 && t["y"] == 2)
+            .unwrap();
+        assert_eq!(firefly_tile["smoke"], true,
+            "Reverse Thrusters should leave Firefly2 smoked at attack start");
+        let e6_building = final_tiles.iter()
+            .find(|t| t["x"] == 2 && t["y"] == 3)
+            .unwrap();
+        assert_eq!(e6_building["terrain"], "rubble");
+    }
 }

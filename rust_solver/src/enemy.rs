@@ -1303,33 +1303,41 @@ pub fn simulate_enemy_attacks(
         }
 
         if matches!(enemy_wid, WId::TotemAtk1 | WId::TotemAtk2 | WId::TotemAtkB) {
-            if in_bounds(qtx, qty) {
-                let tx = qtx as u8;
-                let ty = qty as u8;
+            // Totem/Spore attacks use the same live GetProjectileEnd line
+            // trace as Firefly projectiles, then self-destruct.  Recompute
+            // the impact from the current board so a pawn that moves into the
+            // line can absorb the shot (and its push), while a vacated pawn
+            // endpoint exposes the next blocker farther down the line.
+            if let Some((tx, ty)) = find_projectile_target(
+                board,
+                ex,
+                ey,
+                queued_origin.0,
+                queued_origin.1,
+                qtx,
+                qty,
+                raw_queued_target,
+            ) {
                 let occupied_at_impact = board.unit_at(tx, ty).is_some();
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                 apply_weapon_status_with_impact_occupancy(
                     board, tx, ty, wdef, occupied_at_impact,
                 );
-                if let Some(dir) = projectile_dir_from_queued(
+                if let Some(dir) = projectile_dir_from_queued_or_current(
+                    ex,
+                    ey,
                     queued_origin.0,
                     queued_origin.1,
                     qtx,
                     qty,
+                    raw_queued_target,
                 ) {
                     apply_push(board, tx, ty, dir, &mut result);
                 }
             }
 
-            let sx = queued_origin.0 as i8;
-            let sy = queued_origin.1 as i8;
-            let (sx, sy) = if in_bounds(sx, sy) {
-                (queued_origin.0, queued_origin.1)
-            } else {
-                (ex, ey)
-            };
-            apply_damage(board, sx, sy, 100, &mut result, DamageSource::Weapon);
+            apply_damage(board, ex, ey, 100, &mut result, DamageSource::Weapon);
             continue;
         }
 
@@ -2346,6 +2354,42 @@ fn find_projectile_target(
     find_projectile_target_in_direction(board, ex, ey, dx, dy)
 }
 
+/// Return the tile that an enemy's queued intent threatens on the current
+/// board. Most bridge intents already name their impact tile. Totem intents
+/// instead retain the adjacent cardinal direction tile so their projectile
+/// can re-run GetProjectileEnd when it resolves.
+pub(crate) fn queued_enemy_threat_target(board: &Board, enemy: &Unit) -> Option<(u8, u8)> {
+    if enemy.queued_target_x < 0 || enemy.queued_target_y < 0 {
+        return None;
+    }
+
+    let enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
+    if matches!(enemy_wid, WId::TotemAtk1 | WId::TotemAtk2 | WId::TotemAtkB) {
+        let queued_origin = queued_origin_for_attack(enemy, (enemy.x, enemy.y));
+        let raw_queued_target = if enemy.flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET) {
+            Some((enemy.queued_target_raw_x, enemy.queued_target_raw_y))
+        } else {
+            None
+        };
+        return find_projectile_target(
+            board,
+            enemy.x,
+            enemy.y,
+            queued_origin.0,
+            queued_origin.1,
+            enemy.queued_target_x,
+            enemy.queued_target_y,
+            raw_queued_target,
+        );
+    }
+
+    if in_bounds(enemy.queued_target_x, enemy.queued_target_y) {
+        Some((enemy.queued_target_x as u8, enemy.queued_target_y as u8))
+    } else {
+        None
+    }
+}
+
 fn cardinal_delta(from_x: u8, from_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
     if qtx < 0 { return None; }
     let dx = (qtx - from_x as i8).signum();
@@ -2440,11 +2484,6 @@ fn find_projectile_target_in_direction(board: &Board, ex: u8, ey: u8, dx: i8, dy
         last_valid = Some((nxu, nyu));
     }
     last_valid
-}
-
-fn projectile_dir_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<usize> {
-    let (dx, dy) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty)?;
-    DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy)
 }
 
 fn projectile_dir_from_queued_or_current(
@@ -3369,14 +3408,14 @@ mod tests {
     }
 
     #[test]
-    fn test_totem_projectile_hits_fixed_endpoint_after_blocker_moves_in() {
+    fn test_totem_projectile_retraces_into_new_blocker_and_bumps_building() {
         let mut board = Board::default();
         board.grid_power = 2;
         board.grid_power_max = 2;
         board.tile_mut(2, 1).terrain = Terrain::Building;
         board.tile_mut(2, 1).building_hp = 1;
 
-        let totem_idx = add_enemy_with_type(&mut board, 711, 4, 1, 1, "Totem1", 2, 1);
+        let totem_idx = add_enemy_with_type(&mut board, 711, 4, 1, 1, "Totem1", 3, 1);
         board.units[totem_idx].weapon = WeaponId(WId::TotemAtk1 as u16);
         board.units[totem_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
         board.units[totem_idx].flags.insert(UnitFlags::QUEUED_ORIGIN_SET);
@@ -3390,18 +3429,55 @@ mod tests {
             hp: 3,
             max_hp: 3,
             team: Team::Player,
-            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::MASSIVE,
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::PUSHABLE
+                | UnitFlags::MASSIVE
+                | UnitFlags::ARMOR,
             ..Default::default()
         });
 
         let orig = default_orig_pos(&board);
         simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
-        assert_eq!(board.tile(2, 1).building_hp, 0, "Totem projectile should hit the queued endpoint");
-        assert_eq!(board.grid_power, 1, "fixed endpoint building loss should drop grid");
-        assert_eq!(board.units[wall_idx].hp, 3, "new blocker on the adjacent tile should not be hit");
+        assert_eq!(board.tile(2, 1).building_hp, 0,
+            "pushed WallMech should bump and destroy the building behind it");
+        assert_eq!(board.grid_power, 1, "building bump loss should drop grid");
+        assert_eq!(board.units[wall_idx].hp, 2,
+            "armor blocks Totem weapon damage, but not the blocked-push bump");
         assert_eq!((board.units[wall_idx].x, board.units[wall_idx].y), (3, 1));
         assert!(board.units[totem_idx].hp <= 0, "Totem should self-destruct after firing");
+    }
+
+    #[test]
+    fn test_totem_projectile_retraces_past_vacated_target_to_building() {
+        // Chaos Roll Unfair run 20260710_013601_568, Mission_ShamanBoss
+        // turn 1: TotemB at visual E3 queued west through Needle at E5.
+        // Needle vacated before the enemy phase, exposing the 2-HP E6
+        // building. Live re-ran GetProjectileEnd, destroyed E6, and spent the
+        // final grid power.
+        let mut board = Board::default();
+        board.grid_power = 1;
+        board.grid_power_max = 7;
+        board.tile_mut(2, 3).terrain = Terrain::Building;
+        board.tile_mut(2, 3).building_hp = 2;
+
+        let totem_idx = add_enemy_with_type(&mut board, 252, 5, 3, 2, "TotemB", 4, 3);
+        board.units[totem_idx].weapon = WeaponId(WId::TotemAtkB as u16);
+        board.units[totem_idx].weapon_damage = 2;
+        board.units[totem_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::QUEUED_ORIGIN_SET,
+        );
+        board.units[totem_idx].queued_origin_x = 5;
+        board.units[totem_idx].queued_origin_y = 3;
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(2, 3).building_hp, 0,
+            "TotemB projectile should continue through vacated E5 to E6");
+        assert_eq!(board.grid_power, 0, "the 2-damage hit should spend the final grid");
+        assert_eq!(result.buildings_lost, 1);
+        assert!(board.units[totem_idx].hp <= 0, "TotemB should self-destruct after firing");
     }
 
     #[test]

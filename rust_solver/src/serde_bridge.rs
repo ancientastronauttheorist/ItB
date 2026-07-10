@@ -357,70 +357,6 @@ fn known_minor_type(type_name: &str) -> bool {
     )
 }
 
-fn is_totem_attack(wid: WeaponId) -> bool {
-    wid == WeaponId(WId::TotemAtk1 as u16)
-        || wid == WeaponId(WId::TotemAtk2 as u16)
-        || wid == WeaponId(WId::TotemAtkB as u16)
-}
-
-fn fixed_projectile_end(board: &Board, ox: u8, oy: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
-    if qtx < 0 || qty < 0 {
-        return None;
-    }
-    let dx = (qtx - ox as i8).signum();
-    let dy = (qty - oy as i8).signum();
-    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) {
-        return None;
-    }
-
-    let mut last_valid = None;
-    for step in 1..8i8 {
-        let nx = ox as i8 + dx * step;
-        let ny = oy as i8 + dy * step;
-        if !in_bounds(nx, ny) {
-            break;
-        }
-        let nxu = nx as u8;
-        let nyu = ny as u8;
-        let tile = board.tile(nxu, nyu);
-        if tile.terrain == Terrain::Mountain {
-            return Some((nxu, nyu));
-        }
-        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            return Some((nxu, nyu));
-        }
-        if board.unit_at(nxu, nyu).is_some() {
-            return Some((nxu, nyu));
-        }
-        last_valid = Some((nxu, nyu));
-    }
-    last_valid
-}
-
-fn rewrite_totem_fixed_projectile_targets(board: &mut Board) {
-    for idx in 0..board.unit_count as usize {
-        let unit = board.units[idx];
-        if !is_totem_attack(unit.weapon) || unit.queued_target_x < 0 || unit.queued_target_y < 0 {
-            continue;
-        }
-        let (ox, oy) = if unit.queued_origin_x >= 0 && unit.queued_origin_y >= 0 {
-            (unit.queued_origin_x as u8, unit.queued_origin_y as u8)
-        } else {
-            (unit.x, unit.y)
-        };
-        if let Some((tx, ty)) = fixed_projectile_end(
-            board,
-            ox,
-            oy,
-            unit.queued_target_x,
-            unit.queued_target_y,
-        ) {
-            board.units[idx].queued_target_x = tx as i8;
-            board.units[idx].queued_target_y = ty as i8;
-        }
-    }
-}
-
 fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
     match dir {
         // Engine DIR_UP / DIR_DOWN are vertically opposite the solver's
@@ -833,8 +769,6 @@ pub fn board_from_json(json_str: &str)
             board.add_unit(unit);
         }
     }
-
-    rewrite_totem_fixed_projectile_targets(&mut board);
 
     // Fill missing/stale web ownership from alive queued web attacks. Older
     // bridge fallback code cleared Mosquito Leader grapples because
@@ -1341,7 +1275,7 @@ mod tests {
     }
 
     #[test]
-    fn test_totem_queued_target_rewritten_to_fixed_projectile_endpoint() {
+    fn test_totem_queued_target_preserves_bridge_attack_direction() {
         let input = r#"{
             "tiles": [
                 {"x": 2, "y": 1, "terrain": "building", "building_hp": 1}
@@ -1372,7 +1306,7 @@ mod tests {
 
         assert_eq!(board.units[0].weapon, WeaponId(WId::TotemAtk1 as u16));
         assert_eq!((board.units[0].queued_origin_x, board.units[0].queued_origin_y), (4, 1));
-        assert_eq!((board.units[0].queued_target_x, board.units[0].queued_target_y), (2, 1));
+        assert_eq!((board.units[0].queued_target_x, board.units[0].queued_target_y), (3, 1));
     }
 
     #[test]

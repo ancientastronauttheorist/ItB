@@ -577,11 +577,11 @@ pub enum WId {
     BruteUnstableB = 196,
     /// Unstable Cannon with both damage upgrades powered.
     BruteUnstableAB = 197,
-    /// AE Shaman Totem / Spore secretion: fixed-impact projectile, then self-death.
+    /// AE Shaman Totem / Spore secretion: live-line projectile, then self-death.
     TotemAtk1 = 198,
-    /// Alpha Totem secretion: fixed-impact projectile, then self-death.
+    /// Alpha Totem secretion: live-line projectile, then self-death.
     TotemAtk2 = 199,
-    /// Leader-spawned Totem secretion: fixed-impact projectile, then self-death.
+    /// Leader-spawned Totem secretion: live-line projectile, then self-death.
     TotemAtkB = 200,
     /// Janus Cannon with one +1 Damage upgrade powered.
     BruteMirrorshotA = 201,
@@ -802,10 +802,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     w[197] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, push: PushDir::Forward, self_damage: 2, range_max: 0,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
-    // 198-200: AE Shaman Totem / Spore secretion. Lua queues a projectile at
-    // GetProjectileEnd(p1,p2), then queues DAMAGE_DEATH at p1. The fixed
-    // impact + self-death semantics are handled in enemy.rs; keep the def as
-    // a projectile for targeting/scoring metadata.
+    // 198-200: AE Shaman Totem / Spore secretion. Lua resolves the current
+    // GetProjectileEnd(p1,p2), then queues DAMAGE_DEATH at p1. The live line
+    // trace + self-death semantics are handled in enemy.rs; keep the def as a
+    // projectile for targeting/scoring metadata.
     w[198] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     w[199] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     w[200] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };

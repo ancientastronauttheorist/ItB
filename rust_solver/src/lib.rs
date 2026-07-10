@@ -58,7 +58,11 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
 /// Diagnostic only — not used in the normal solve path.
 #[pyfunction]
 fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
-    use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
+    use crate::enemy::{
+        apply_spawn_blocking,
+        queued_enemy_threat_target,
+        simulate_enemy_attacks,
+    };
     use crate::evaluate::{consumed_spawn_block_bonus, evaluate, PsionState};
     use crate::movement::illegal_move_reason;
     use crate::board::count_unit_deaths_between;
@@ -209,8 +213,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         for i in 0..board_orig.unit_count as usize {
             let u = &board_orig.units[i];
             if !u.is_enemy() || !u.alive() || u.queued_target_x < 0 { continue; }
-            let tx = u.queued_target_x as u8;
-            let ty = u.queued_target_y as u8;
+            let Some((tx, ty)) = queued_enemy_threat_target(&board_orig, u) else { continue; };
             let tile = board_orig.tile(tx, ty);
             if tile.terrain == Terrain::Building && tile.building_hp > 0 {
                 building_threats |= 1u64 << xy_to_idx(tx, ty);
@@ -1710,11 +1713,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   the live bridge spawned SpiderlingEgg1 uid 530 after Rock Accelerator
 //   pushed a killed Scorpion corpse onto water. Pre-v226 corpus archived as
 //   `failure_db_snapshot_sim_v225.jsonl`.
-// v227 - AE Totem/Spore attacks fire at the queued-time projectile endpoint
-//   and then self-destruct, instead of re-tracing through post-player blockers
-//   or falling back to generic unmapped Vek behavior. Fixes Blitzkrieg run
-//   20260524_112729_036 Mission_Barrels turn 3, where TotemAtk1 destroyed
-//   the G6 building after WallMech moved onto G5. Pre-v227 corpus archived as
+// v227 - First Totem/Spore model: queued-time endpoint plus self-destruction.
+//   The Mission_Barrels evidence also contained WallMech bump damage, so the
+//   fixed-endpoint diagnosis was incomplete and is superseded by v340's live
+//   GetProjectileEnd trace. Pre-v227 corpus archived as
 //   `failure_db_snapshot_sim_v226.jsonl`.
 // v228 - Killing a Blast Psion clears the explode-on-death aura before later
 //   Chain Whip hits in the same target-first chain resolve. Pre-v228 corpus
@@ -2183,7 +2185,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   immediately materializes the live damaged replacement before replay
 //   captures the action or applies the next player action. Pre-v339 corpus
 //   archived as failure_db_snapshot_sim_v338.jsonl.
-pub const SIMULATOR_VERSION: u32 = 339;
+// v340 - AE Totem projectiles re-trace GetProjectileEnd at enemy resolution,
+//   so a new blocker intercepts and a vacated target lane continues to the
+//   next blocker. Pre-v340 corpus archived as
+//   failure_db_snapshot_sim_v339.jsonl.
+pub const SIMULATOR_VERSION: u32 = 340;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

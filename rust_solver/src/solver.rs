@@ -1604,8 +1604,8 @@ fn aerial_bombs_transit_smoke_score(
                 && !u.frozen()
                 && !board.tile(ux, uy).smoke()
             {
-                score += if u.queued_target_x < 8 && u.queued_target_y >= 0 && u.queued_target_y < 8 {
-                    let target_tile = board.tile(u.queued_target_x as u8, u.queued_target_y as u8);
+                score += if let Some((tx, ty)) = queued_enemy_threat_target(board, u) {
+                    let target_tile = board.tile(tx, ty);
                     if target_tile.is_building() { 420 } else { 180 }
                 } else if u.has_queued_attack() {
                     180
@@ -2439,14 +2439,10 @@ fn precompute_threats(board: &Board) -> (u64, u64) {
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if !u.is_enemy() || !u.alive() || u.queued_target_x < 0 { continue; }
-        // OOB guard: bridge can deliver off-board queued_target after direction
-        // normalization (M04 2026-04-28 — cx=7,ddx=+1 → x=8). board.tile() and
-        // xy_to_idx panic on x>=8 / y>=8. Upstream `reader.py` nulls these,
-        // but defense-in-depth here ensures direct-JSON solve calls (tests,
-        // future bridge bugs) don't crash. See sim v27 changelog.
-        if u.queued_target_x >= 8 || u.queued_target_y < 0 || u.queued_target_y >= 8 { continue; }
-        let tx = u.queued_target_x as u8;
-        let ty = u.queued_target_y as u8;
+        // OOB intents are ignored defensively. Totem intents retain only a
+        // direction tile, so resolve their live projectile endpoint before
+        // deriving the threat and building-threat bitsets.
+        let Some((tx, ty)) = queued_enemy_threat_target(board, u) else { continue; };
         let bit = 1u64 << xy_to_idx(tx, ty);
         threat_tiles |= bit;
 
@@ -4467,6 +4463,39 @@ mod top_k_tests {
             }),
             "transit smoke over the B4 attacker must survive the four-unit pruning cap"
         );
+    }
+
+    #[test]
+    fn totem_direction_intent_marks_live_line_building_threat() {
+        let mut board = Board::default();
+        let totem_idx = board.add_unit(Unit {
+            uid: 711,
+            x: 4,
+            y: 1,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE
+                | UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET,
+            queued_origin_x: 4,
+            queued_origin_y: 1,
+            queued_target_x: 3,
+            queued_target_y: 1,
+            ..Default::default()
+        });
+        board.units[totem_idx].set_type_name("Totem1");
+        board.tile_mut(2, 1).terrain = Terrain::Building;
+        board.tile_mut(2, 1).building_hp = 1;
+
+        let (threat_tiles, building_threats) = precompute_threats(&board);
+        let impact_bit = 1u64 << xy_to_idx(2, 1);
+        let adjacent_bit = 1u64 << xy_to_idx(3, 1);
+
+        assert_ne!(threat_tiles & impact_bit, 0);
+        assert_ne!(building_threats & impact_bit, 0);
+        assert_eq!(threat_tiles & adjacent_bit, 0,
+            "the adjacent direction tile is not the projectile impact");
     }
 
     #[test]

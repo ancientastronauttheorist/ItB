@@ -1,0 +1,980 @@
+{
+  "run_id": "20260710_013601_568",
+  "squad": "Random Squad (Chaos Roll)",
+  "achievement_targets": [],
+  "difficulty": 3,
+  "current_island": "",
+  "current_mission": "Mission_ShamanBoss",
+  "islands_completed": [],
+  "mission_index": 4,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "NeedleMech",
+        "move_to": [
+          5,
+          2
+        ],
+        "weapon": "Brute_KickBack",
+        "target": [
+          6,
+          2
+        ],
+        "description": "NeedleMech, move E5\u2192F3, fire Reverse Thrusters at F2"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "HydrantMech",
+        "move_to": [
+          7,
+          5
+        ],
+        "weapon": "Science_KO_Crack",
+        "target": [
+          6,
+          5
+        ],
+        "description": "HydrantMech, move C5\u2192C1, fire Seismic Capacitor at C2"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "MirrorMech",
+        "move_to": [
+          2,
+          5
+        ],
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          3,
+          5
+        ],
+        "description": "MirrorMech, move D6\u2192C6, fire Mirror Shot at C5"
+      }
+    ],
+    "score": -137950.0,
+    "turn": 1,
+    "input_fingerprint": "0:3,3:3|1:2,4:3|204:5,5:6|205:6,5:2|206:6,4:4|207:4,2:6|252:5,3:2|2:3,5:3"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-07-10T01:37:19.754535",
+      "turn": 0,
+      "label": "note",
+      "message": "Pre-Start setup correction: visual verifier confirmed Unfair and all Advanced Content ON; corrected stale prior-save difficulty metadata from Easy to Unfair for the Chaos Roll solver evaluation run."
+    },
+    {
+      "timestamp": "2026-07-10T01:57:33.635936",
+      "turn": 1,
+      "label": "solve",
+      "score": 129441.28571294036,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "NeedleMech, move D5\u2192E4, fire Reverse Thrusters at G4",
+        "MirrorMech, move G5\u2192F7, repair",
+        "HydrantMech, move C6\u2192E4, fire Seismic Capacitor at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T01:58:55.647383",
+      "turn": 1,
+      "label": "solve",
+      "score": 129441.28571294036,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "NeedleMech, move D5\u2192E4, fire Reverse Thrusters at G4",
+        "MirrorMech, move G5\u2192F7, repair",
+        "HydrantMech, move C6\u2192E4, fire Seismic Capacitor at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:01:42.317902",
+      "turn": 2,
+      "label": "solve",
+      "score": 26588.666750215336,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "NeedleMech, move G4\u2192G3, fire Reverse Thrusters at G5",
+        "MirrorMech, move F7\u2192C7",
+        "HydrantMech, move E4\u2192E1"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:02:18.094520",
+      "turn": 2,
+      "label": "solve",
+      "score": 26588.666750215336,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "NeedleMech, move G4\u2192G3, fire Reverse Thrusters at G5",
+        "MirrorMech, move F7\u2192C7",
+        "HydrantMech, move E4\u2192E1"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:03:11.991126",
+      "turn": 3,
+      "label": "solve",
+      "score": 113031.42857142858,
+      "actions": [
+        "NeedleMech, move G5\u2192H8, repair",
+        "MirrorMech, move C7\u2192B6, fire Mirror Shot at C6",
+        "Trapped_Building, fire Area Blast at E6",
+        "HydrantMech, move E1\u2192F2, fire Seismic Capacitor at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:16:09.994527",
+      "turn": 3,
+      "label": "solve",
+      "score": 112731.42857142858,
+      "actions": [
+        "HydrantMech, move E1\u2192F2, fire Seismic Capacitor at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:16:20.127512",
+      "turn": 3,
+      "label": "solve",
+      "score": 112731.42857142858,
+      "actions": [
+        "HydrantMech, move E1\u2192F2, fire Seismic Capacitor at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:17:06.259283",
+      "turn": 4,
+      "label": "solve",
+      "score": -101744.42751564298,
+      "actions": [
+        "NeedleMech, repair",
+        "MirrorMech, move B6\u2192B4, fire Mirror Shot at C4",
+        "HydrantMech, move F2\u2192C2, fire Seismic Capacitor at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:17:31.428521",
+      "turn": 4,
+      "label": "solve",
+      "score": -101744.42751564298,
+      "actions": [
+        "NeedleMech, repair",
+        "MirrorMech, move B6\u2192B4, fire Mirror Shot at C4",
+        "HydrantMech, move F2\u2192C2, fire Seismic Capacitor at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:23:38.123397",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission_Trapped terminal proof: visible Region Secured at grid 3/7; Knock Mites and Protect Coal Plant succeeded; Protect Time Pod failed. Solver v335 had predicted grid 1/7 and pods_present 0 after the reviewed turn-4 line. Treat screen as authoritative and diagnose final-turn grid overprediction plus false pod collection before the next mission."
+    },
+    {
+      "timestamp": "2026-07-10T02:25:06.983542",
+      "turn": 4,
+      "label": "note",
+      "message": "Correction to prior terminal note: Protect the Time Pod succeeded (log.txt records PodCollected; the orange triangle is the pod reward icon and no Failed text is present). Enemy phase reached the predicted critical grid 1/7 (PowerCritical and Mission_ExtremeDamage), then the successful Coal Plant objective restored +2 power, so Region Secured displayed network 3/7. The v335 turn-4 projection matched the terminal outcome."
+    },
+    {
+      "timestamp": "2026-07-10T02:41:54.730179",
+      "turn": 1,
+      "label": "solve",
+      "score": 107478.57142857145,
+      "actions": [
+        "NeedleMech, move F5\u2192C6, fire Reverse Thrusters at C8",
+        "HydrantMech, move D5\u2192E4",
+        "MirrorMech, move E6\u2192F4, fire Mirror Shot at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:42:42.910390",
+      "turn": 2,
+      "label": "solve",
+      "score": 151948.57142857145,
+      "actions": [
+        "NeedleMech, move C8\u2192F7, fire Reverse Thrusters at F8",
+        "MirrorMech, move F4\u2192E4, fire Mirror Shot at E3",
+        "HydrantMech, move D4\u2192E5, fire Seismic Capacitor at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:43:31.893184",
+      "turn": 3,
+      "label": "solve",
+      "score": -80263.71595437187,
+      "actions": [
+        "NeedleMech, move F8\u2192E8, repair",
+        "HydrantMech, move E5\u2192E2, fire Seismic Capacitor at F2",
+        "MirrorMech, move E4\u2192E7, fire Mirror Shot at F7"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:43:50.731444",
+      "turn": 3,
+      "label": "solve",
+      "score": -80273.71595437187,
+      "actions": [
+        "HydrantMech, move E5\u2192E2, fire Seismic Capacitor at F2",
+        "MirrorMech, move E4\u2192E7, fire Mirror Shot at F7",
+        "NeedleMech, move F8\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:49:49.671034",
+      "turn": 3,
+      "label": "solve",
+      "score": -80273.71595437187,
+      "actions": [
+        "HydrantMech, move E5\u2192E2, fire Seismic Capacitor at F2",
+        "MirrorMech, move E4\u2192E7, fire Mirror Shot at F7",
+        "NeedleMech, move F8\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T02:50:02.739445",
+      "turn": 3,
+      "label": "solve",
+      "score": -80273.71595437187,
+      "actions": [
+        "HydrantMech, move E5\u2192E2, fire Seismic Capacitor at F2",
+        "MirrorMech, move E4\u2192E7, fire Mirror Shot at F7",
+        "NeedleMech, move F8\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T03:32:22.492228",
+      "turn": 1,
+      "label": "solve",
+      "score": -39373.7138334683,
+      "actions": [
+        "NeedleMech, move D5\u2192E6, fire Reverse Thrusters at E7",
+        "MirrorMech, fire Mirror Shot at E5",
+        "HydrantMech, move C6\u2192C2, fire Seismic Capacitor at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T03:32:58.933139",
+      "turn": 1,
+      "label": "solve",
+      "score": -8173.713833468297,
+      "actions": [
+        "NeedleMech, move D5\u2192E4, fire Reverse Thrusters at E3",
+        "MirrorMech, move F5\u2192E6, fire Mirror Shot at E5",
+        "HydrantMech, move C6\u2192C2, fire Seismic Capacitor at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T03:33:23.646254",
+      "turn": 1,
+      "label": "solve",
+      "score": -8173.713833468297,
+      "actions": [
+        "NeedleMech, move D5\u2192E4, fire Reverse Thrusters at E3",
+        "MirrorMech, move F5\u2192E6, fire Mirror Shot at E5",
+        "HydrantMech, move C6\u2192C2, fire Seismic Capacitor at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T03:36:13.124960",
+      "turn": 2,
+      "label": "solve",
+      "score": 9930.476190476242,
+      "actions": [
+        "NeedleMech, move E3\u2192D2, fire Reverse Thrusters at D1",
+        "MirrorMech, fire Mirror Shot at E6",
+        "HydrantMech, move C2\u2192D5, fire Seismic Capacitor at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T03:37:08.572708",
+      "turn": 3,
+      "label": "solve",
+      "score": 105842.14285714287,
+      "actions": [
+        "NeedleMech, move D1\u2192D4, repair",
+        "MirrorMech, move D6\u2192C6, repair",
+        "HydrantMech, move E5\u2192F4, fire Seismic Capacitor at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T03:38:08.255252",
+      "turn": 4,
+      "label": "solve",
+      "score": 70462.14285714287,
+      "actions": [
+        "MirrorMech, move C6\u2192E6, fire Mirror Shot at E5",
+        "HydrantMech, move F4\u2192H6, fire Seismic Capacitor at G6",
+        "NeedleMech, fire Reverse Thrusters at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T03:49:05.576063",
+      "turn": 1,
+      "label": "solve",
+      "score": -17235.714285714275,
+      "actions": [
+        "NeedleMech, move D6\u2192G6",
+        "HydrantMech, move C5\u2192D4, fire Seismic Capacitor at D3",
+        "MirrorMech, move E5\u2192C6, fire Mirror Shot at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T04:36:16.032556",
+      "turn": 1,
+      "label": "solve",
+      "score": -37207.99990197591,
+      "actions": [
+        "HydrantMech, move C5\u2192D2, fire Seismic Capacitor at D3",
+        "MirrorMech, move E5\u2192C6, fire Mirror Shot at C5",
+        "NeedleMech, move D6\u2192C5, fire Reverse Thrusters at C7"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T04:37:05.631923",
+      "turn": 1,
+      "label": "solve",
+      "score": -37207.99990197591,
+      "actions": [
+        "HydrantMech, move C5\u2192D2, fire Seismic Capacitor at D3",
+        "MirrorMech, move E5\u2192C6, fire Mirror Shot at C5",
+        "NeedleMech, move D6\u2192C5, fire Reverse Thrusters at C7"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T04:39:48.638846",
+      "turn": 2,
+      "label": "solve",
+      "score": 42013.42870964322,
+      "actions": [
+        "NeedleMech, move C7\u2192C3",
+        "MirrorMech, move C6\u2192F6, fire Mirror Shot at F5",
+        "HydrantMech, move D2\u2192G3, fire Seismic Capacitor at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T04:40:25.929085",
+      "turn": 2,
+      "label": "solve",
+      "score": 42013.42870964322,
+      "actions": [
+        "NeedleMech, move C7\u2192C3",
+        "MirrorMech, move C6\u2192F6, fire Mirror Shot at F5",
+        "HydrantMech, move D2\u2192G3, fire Seismic Capacitor at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T04:40:55.122099",
+      "turn": 2,
+      "label": "solve",
+      "score": 17720.712497574947,
+      "actions": [
+        "HydrantMech, move D2\u2192D6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T04:57:58.786949",
+      "turn": 2,
+      "label": "solve",
+      "score": 70315.71428571429,
+      "actions": [
+        "HydrantMech, move D2\u2192G3, fire Seismic Capacitor at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T04:58:09.689690",
+      "turn": 2,
+      "label": "solve",
+      "score": 70315.71428571429,
+      "actions": [
+        "HydrantMech, move D2\u2192G3, fire Seismic Capacitor at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T05:02:45.464160",
+      "turn": 3,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260710_013601_568_m03_t02_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "blocking": true,
+        "run_id": "20260710_013601_568",
+        "mission_index": 3,
+        "turn": 2,
+        "created_at": "2026-07-10T04:59:25.526769",
+        "source": "record_post_enemy",
+        "record_path": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260710_013601_568/m03_turn_02_post_enemy.json",
+        "reason": null,
+        "deltas": {
+          "buildings_alive_diff": 0,
+          "building_hp_diff": 0,
+          "grid_power_diff": -1,
+          "enemies_alive_diff": 1,
+          "pods_present_diff": 0,
+          "protected_objective_units_alive_diff": 0,
+          "train_objective_value_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "mech_hp_diff": [
+            {
+              "uid": 0,
+              "type": "NeedleMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            },
+            {
+              "uid": 1,
+              "type": "MirrorMech",
+              "predicted_hp": 3,
+              "actual_hp": 3,
+              "diff": 0
+            },
+            {
+              "uid": 2,
+              "type": "HydrantMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            }
+          ],
+          "mech_status_diff": [],
+          "unexpected_events": [
+            "Grid power dropped by 1 unexpectedly"
+          ]
+        },
+        "triggers": [
+          {
+            "trigger": "grid_power_drop_unexpected",
+            "tier": 1,
+            "severity": "critical",
+            "details": "Predicted grid 3, actual 2 (-1)"
+          },
+          {
+            "trigger": "grid_critical",
+            "tier": 6,
+            "severity": "high",
+            "details": "Grid power at 2 (critical)"
+          }
+        ],
+        "actual_outcome": {
+          "buildings_alive": 5,
+          "building_hp_total": 7,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "objective_buildings_targeted": 0,
+          "objective_building_targets": [],
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "grid_power": 2,
+          "enemies_alive": 6,
+          "enemy_hp_total": 21,
+          "mechs_alive": 3,
+          "mech_hp_total": 7,
+          "mech_damage_taken_total": 2,
+          "mech_damage_objective_limit": null,
+          "bigbomb_alive": false,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "NeedleMech",
+              "hp": 2,
+              "max_hp": 3
+            },
+            {
+              "uid": 1,
+              "type": "MirrorMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 2,
+              "type": "HydrantMech",
+              "hp": 2,
+              "max_hp": 3
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mission_id": "Mission_Train",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 0,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 3,
+          "total_turns": 3,
+          "remaining_spawns": 1,
+          "is_infinite_spawn": true,
+          "spawn_points": 0,
+          "victory_turns": 2,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units": [
+            {
+              "uid": 164,
+              "type": "Train_Pawn",
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 1,
+              "max_hp": 1,
+              "alive": true,
+              "frozen": false,
+              "webbed": false,
+              "team": 1
+            }
+          ],
+          "protected_objective_units_alive": 1,
+          "train_objective_value": 2,
+          "protected_objective_units_frozen": 0,
+          "protected_objective_units_webbed": 0
+        },
+        "predicted_outcome": {
+          "building_hp_total": 7,
+          "buildings_alive": 5,
+          "buildings_destroyed_by_enemies": 0,
+          "enemies_alive": 5,
+          "enemies_killed_by_enemy_phase": 0,
+          "enemies_killed_by_player": 0,
+          "enemies_killed_by_spawn_block": 0,
+          "enemies_killed_total_projected": 0,
+          "enemy_hp_total": 17,
+          "grid_power": 3,
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "NeedleMech",
+              "hp": 2,
+              "max_hp": 3
+            },
+            {
+              "uid": 1,
+              "type": "MirrorMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 2,
+              "type": "HydrantMech",
+              "hp": 2,
+              "max_hp": 3
+            }
+          ],
+          "mechs_alive": 3,
+          "mission_kills_by_enemy_phase": 0,
+          "mission_kills_by_player": 0,
+          "mission_kills_by_spawn_block": 0,
+          "mission_kills_done_projected": 0,
+          "mission_kills_total_projected": 0,
+          "mission_mountains_destroyed_projected": 0,
+          "unit_deaths_by_enemy_phase": 0,
+          "unit_deaths_by_player": 0,
+          "unit_deaths_by_spawn_block": 0,
+          "unit_deaths_total_projected": 0,
+          "bigbomb_alive": false,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "objective_buildings_targeted": 0,
+          "objective_building_targets": [],
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "mech_hp_total": 7,
+          "mech_damage_taken_total": 2,
+          "mech_damage_objective_limit": null,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": false,
+          "mission_id": "Mission_Train",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 0,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 3,
+          "total_turns": 3,
+          "remaining_spawns": 0,
+          "is_infinite_spawn": true,
+          "spawn_points": 1,
+          "victory_turns": 1,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units": [
+            {
+              "uid": 164,
+              "type": "Train_Pawn",
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 1,
+              "max_hp": 1,
+              "alive": true,
+              "frozen": false,
+              "webbed": false,
+              "team": 1
+            }
+          ],
+          "protected_objective_units_alive": 1,
+          "train_objective_value": 2,
+          "protected_objective_units_frozen": 0,
+          "protected_objective_units_webbed": 0,
+          "pods_collected": 0
+        },
+        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
+        "resolved_at": "2026-07-10T05:02:45.464147",
+        "resolve_reason": "Player-phase bridge grid_power stayed stale at 3 after Mirror Shot damaged F7, while the pre-End-Turn UI already showed 2; turn-3 grid 2 is delayed scalar catch-up, not new enemy-phase damage. Retained pending-grid-debt behavior and removed the false confirmed-resist shortcut in commit 58420adc."
+      }
+    },
+    {
+      "timestamp": "2026-07-10T05:03:33.130055",
+      "turn": 3,
+      "label": "solve",
+      "score": -93687.85714285714,
+      "actions": [
+        "NeedleMech, repair",
+        "HydrantMech, move G3\u2192F5, fire Seismic Capacitor at F4",
+        "MirrorMech, move F6\u2192G4, fire Mirror Shot at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T05:09:46.252239",
+      "turn": 3,
+      "label": "solve",
+      "score": -197224.4282993589,
+      "actions": [
+        "NeedleMech, move C3\u2192B5, fire Reverse Thrusters at B7",
+        "MirrorMech, move F6\u2192F5, fire Mirror Shot at E5",
+        "HydrantMech, move G3\u2192C3, fire Seismic Capacitor at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T05:10:35.312106",
+      "turn": 3,
+      "label": "solve",
+      "score": -93687.85714285714,
+      "actions": [
+        "NeedleMech, repair",
+        "HydrantMech, move G3\u2192F5, fire Seismic Capacitor at F4",
+        "MirrorMech, move F6\u2192G4, fire Mirror Shot at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T05:11:20.859325",
+      "turn": 3,
+      "label": "solve",
+      "score": -93687.85714285714,
+      "actions": [
+        "NeedleMech, repair",
+        "HydrantMech, move G3\u2192F5, fire Seismic Capacitor at F4",
+        "MirrorMech, move F6\u2192G4, fire Mirror Shot at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-07-10T05:33:20.715746",
+      "turn": 1,
+      "label": "solve",
+      "score": -137950.0,
+      "actions": [
+        "NeedleMech, move E5\u2192F3, fire Reverse Thrusters at F2",
+        "HydrantMech, move C5\u2192C1, fire Seismic Capacitor at C2",
+        "MirrorMech, move D6\u2192C6, fire Mirror Shot at C5"
+      ]
+    }
+  ],
+  "lightning_route_probe_cache": [],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ]
+  ],
+  "post_enemy_block": null,
+  "dirty_consent_used": [
+    "33037ad14bf28241",
+    "80f489d18bab2d4a",
+    "d070f319cb851f97",
+    "72c32a1241e17717",
+    "f5b79a94485a7413",
+    "9eb30d9c683502a1",
+    "454b35d050ff90c9",
+    "59ddd29747c3fef7"
+  ],
+  "tags": [
+    "solver_eval",
+    "random_squad",
+    "chaos_roll",
+    "unfair"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Trapped_Explode|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 151,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Trapped_Explode",
+        "target": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Mirrorshot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Science_KO_Crack|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Science_KO_Crack",
+        "target": [
+          4,
+          2
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "NeedleMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Trapped",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known random-squad chassis and Reverse Thrusters action verified through the bridge; held End Turn forbids board selection.",
+        "kind": "mech_weapon",
+        "attempts": 1,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      },
+      "research_id": "2dba55965ca4",
+      "last_kind": "mech"
+    },
+    {
+      "type": "MirrorMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Trapped",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known random-squad chassis and Mirror Shot action verified through the bridge; held End Turn forbids board selection.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "HydrantMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Trapped",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known random-squad chassis and Seismic Capacitor action verified through the bridge; held End Turn forbids board selection.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "Train_Damaged",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Train",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Damaged Train",
+            "hp": 1,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.9
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Damaged Train",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Damaged+Train",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Damaged+Train&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "missing_in_predicted",
+      "diff_predicted": "absent",
+      "diff_actual": "present",
+      "severity": "medium",
+      "research_id": "ee4aa7fe6994",
+      "last_kind": "enemy"
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "c3df5c9285c7aeb0",
+    "classes": "sgggggmmwgbbsgbmwgbbgsgmwgsgggsmwsggsggmwggsggbmwwggggbmwwwgggmm",
+    "mission_index": 4,
+    "turn": 1
+  },
+  "terrain_stage_change_pending": false
+}
