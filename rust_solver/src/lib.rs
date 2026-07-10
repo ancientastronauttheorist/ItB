@@ -2196,7 +2196,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   before deferred Blast Psion death effects resolve; ACID pools follow the
 //   corpse, and Blast death bursts ignite adjacent Forest. Pre-v342 corpus
 //   archived as failure_db_snapshot_sim_v341.jsonl.
-pub const SIMULATOR_VERSION: u32 = 342;
+// v343 - Webbed Hydraulic Legs target pruning covers every powered
+//   Prime_Leap variant. Recursive search still re-enumerates the weapon after
+//   a prior action kills the web source and releases the grapple. Pre-v343
+//   corpus archive is failure_db_snapshot_sim_v342.jsonl.
+pub const SIMULATOR_VERSION: u32 = 343;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

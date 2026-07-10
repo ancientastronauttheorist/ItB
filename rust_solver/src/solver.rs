@@ -803,7 +803,10 @@ pub(crate) fn get_weapon_targets(
 }
 
 fn prime_leap_blocked_by_web(board: &Board, mx: u8, my: u8, weapon_id: WId) -> bool {
-    if weapon_id != WId::PrimeLeap {
+    if !matches!(
+        weapon_id,
+        WId::PrimeLeap | WId::PrimeLeapA | WId::PrimeLeapB | WId::PrimeLeapAB
+    ) {
         return false;
     }
     match board.unit_at(mx, my) {
@@ -3228,45 +3231,145 @@ mod top_k_tests {
     }
 
     #[test]
-    fn webbed_leap_mech_cannot_use_hydraulic_legs() {
+    fn webbed_leap_mech_cannot_use_any_hydraulic_legs_variant() {
+        for weapon_id in [
+            WId::PrimeLeap,
+            WId::PrimeLeapA,
+            WId::PrimeLeapB,
+            WId::PrimeLeapAB,
+        ] {
+            let mut board = Board::default();
+            let idx = board.add_unit(Unit {
+                uid: 12,
+                x: 4,
+                y: 4,
+                hp: 2,
+                max_hp: 3,
+                team: Team::Player,
+                flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE | UnitFlags::WEB,
+                move_speed: 4,
+                base_move: 4,
+                weapon: WeaponId(weapon_id as u16),
+                ..Default::default()
+            });
+            board.units[idx].set_type_name("LeapMech");
+            let enemy_idx = board.add_unit(Unit {
+                uid: 212,
+                x: 5,
+                y: 5,
+                hp: 1,
+                max_hp: 1,
+                team: Team::Enemy,
+                flags: UnitFlags::PUSHABLE,
+                move_speed: 3,
+                ..Default::default()
+            });
+            board.units[enemy_idx].set_type_name("Leaper1");
+
+            let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+            assert!(
+                actions.iter().any(|a| a.1 == WId::Repair),
+                "damaged webbed Leap Mech should still be able to repair with {weapon_id:?}"
+            );
+            assert!(
+                !actions.iter().any(|a| a.1 == weapon_id),
+                "webbed Leap Mech must not enumerate {weapon_id:?}; got {:?}",
+                actions
+            );
+        }
+    }
+
+    #[test]
+    fn hydraulic_legs_becomes_legal_after_acid_projector_bump_kills_web_source() {
+        // Chaos Roll Unfair run 20260710_062120_403, Mission_Survive turn 4:
+        // Nano's Acid Projector hit Mosquito1 at F5 and bumped it into the
+        // 1-HP Leaper2 at G5. Both died, releasing Leap at G4 before its turn.
         let mut board = Board::default();
-        let idx = board.add_unit(Unit {
-            uid: 12,
+        let leap_idx = board.add_unit(Unit {
+            uid: 0,
             x: 4,
-            y: 4,
+            y: 1,
             hp: 2,
             max_hp: 3,
             team: Team::Player,
             flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE | UnitFlags::WEB,
-            move_speed: 4,
+            move_speed: 0,
             base_move: 4,
             weapon: WeaponId(WId::PrimeLeap as u16),
+            web_source_uid: 371,
             ..Default::default()
         });
-        board.units[idx].set_type_name("LeapMech");
-        let enemy_idx = board.add_unit(Unit {
-            uid: 212,
-            x: 5,
-            y: 5,
+        board.units[leap_idx].set_type_name("LeapMech");
+
+        let nano_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::ScienceAcidShot as u16),
+            ..Default::default()
+        });
+        board.units[nano_idx].set_type_name("NanoMech");
+
+        let mosquito_idx = board.add_unit(Unit {
+            uid: 370,
+            x: 3,
+            y: 2,
             hp: 1,
-            max_hp: 1,
+            max_hp: 2,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 4,
+            base_move: 4,
+            ..Default::default()
+        });
+        board.units[mosquito_idx].set_type_name("Mosquito1");
+
+        let webber_idx = board.add_unit(Unit {
+            uid: 371,
+            x: 3,
+            y: 1,
+            hp: 1,
+            max_hp: 3,
             team: Team::Enemy,
             flags: UnitFlags::PUSHABLE,
             move_speed: 3,
+            base_move: 3,
             ..Default::default()
         });
-        board.units[enemy_idx].set_type_name("Leaper1");
+        board.units[webber_idx].set_type_name("Leaper2");
 
-        let actions = enumerate_actions(&board, idx, &WEAPONS);
-
+        let blocked_actions = enumerate_actions(&board, leap_idx, &WEAPONS);
         assert!(
-            actions.iter().any(|a| a.1 == WId::Repair),
-            "damaged webbed Leap Mech should still be able to repair"
+            !blocked_actions.iter().any(|a| a.1 == WId::PrimeLeap),
+            "Hydraulic Legs must be unavailable while the Leaper grapple is attached"
         );
+
+        let result = simulate_weapon(
+            &mut board,
+            nano_idx,
+            WId::ScienceAcidShot,
+            3,
+            3,
+        );
+
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(board.units[mosquito_idx].hp, 0);
+        assert_eq!(board.units[webber_idx].hp, 0);
+        assert!(!board.units[leap_idx].web());
+        assert_eq!(board.units[leap_idx].web_source_uid, 0);
+        assert_eq!(board.units[leap_idx].move_speed, board.units[leap_idx].base_move);
+
+        let freed_actions = enumerate_actions(&board, leap_idx, &WEAPONS);
         assert!(
-            !actions.iter().any(|a| a.1 == WId::PrimeLeap),
-            "webbed Leap Mech must not enumerate Hydraulic Legs; got {:?}",
-            actions
+            freed_actions.iter().any(|a| a.1 == WId::PrimeLeap),
+            "Hydraulic Legs should be re-enumerated after the prior action kills the web source"
         );
     }
 

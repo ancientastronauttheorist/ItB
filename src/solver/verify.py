@@ -1596,7 +1596,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # before deferred Blast Psion death effects resolve; ACID pools follow the
 # corpse, and Blast death bursts ignite adjacent Forest. Pre-v342 corpus
 # archived as failure_db_snapshot_sim_v341.jsonl.
-SIMULATOR_VERSION = 342
+# v343 - Webbed Hydraulic Legs target pruning covers every powered
+# Prime_Leap variant. Recursive search still re-enumerates the weapon after a
+# prior action kills the web source and releases the grapple. Pre-v343 corpus
+# archive is failure_db_snapshot_sim_v342.jsonl.
+SIMULATOR_VERSION = 343
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -434,3 +434,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 433 | 763 | New next-turn grapples are explained retarget state, not prior enemy-phase misses. | `docs/agent/safety-gates.md` |
 | 434 | 765 | Existing spawn markers outrank the bridge's final-turn zero sentinel. | `docs/agent/solver-reference.md` |
 | 435 | 767 | Live turn metadata outranks the stale save victory counter. | `docs/agent/solver-reference.md` |
+| 436 | 769 | Webbed Hydraulic Legs legality covers every powered variant and updates between actions. | `docs/agent/solver-reference.md` |
