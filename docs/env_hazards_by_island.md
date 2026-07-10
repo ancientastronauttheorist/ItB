@@ -12,7 +12,7 @@ Reference table for the M5 env-hazard sweep. Each Into the Breach corporate isla
 | **Cataclysm** | R.S.T. Corporation | Desert | One row of tiles converts to Chasm each turn; non-flying ground units in that row die. |
 | **Sandstorm** | R.S.T. Corporation | Desert | Smoke gradually covers the level, preventing attacks and repair. |
 | **Conveyor Belts** | Detritus Disposal | Industrial | Tiles push units 1 step per turn along the belt direction. |
-| Ice Storm | Pinnacle Robotics | Ice | 3×3 freeze per turn. Not in the original M5 6-list but populates `environment_danger_v2`. |
+| Ice Storm | Pinnacle Robotics | Ice | 3×3 freeze per turn. Not in the original M5 6-list; bridge warnings populate `environment_freeze`. |
 
 ## Sources
 
@@ -23,22 +23,21 @@ Both sources agree on all 6 main mappings.
 
 ## M5 Sweep Plan
 
-Tracked in `memory/project_m5_env_sweep.md`. Status 2026-04-11: 4/6 confirmed (Tidal Waves on Archive Inc / Forgotten Hills, Cataclysm on R.S.T. / Scrapyard, Lightning Storm on R.S.T. / Geothermal Station, Conveyor Belts on Detritus / Reprocessing).
+Tracked in `memory/project_m5_env_sweep.md`. Status 2026-07-10: 5/6 confirmed, including live Terratide/Sandstorm evidence on R.S.T. / Beautiful Corner. Air Strike remains outstanding.
 
-**Architectural note surfaced by the sweep:** Env hazards come in two flavors from the bridge's perspective:
-- **Per-turn damage hazards** (Tidal Waves, Cataclysm, Lightning Storm, probably Air Strike): queue entries in `environment_danger_v2` each turn with `[x, y, damage, kills]` shape.
-- **Persistent tile effects** (Conveyor Belts, probably Sandstorm): encoded as fields on each affected tile in the raw `tiles` array (e.g. `conveyor: N` direction code). `environment_danger_v2` stays empty.
+**Architectural note surfaced by the sweep:** Environment warnings need effect-specific routing:
+- **Per-turn damage hazards** (Tidal Waves, Cataclysm, Lightning Storm, probably Air Strike): queue entries in `environment_danger_v2` each turn with `[x, y, damage, kills, flying_immune]` shape.
+- **Status and movement hazards:** Conveyor Belts are tile metadata (`conveyor: N`); Ice Storm uses `environment_freeze`; Terratide's warned row is exposed by `Board:IsEnvironmentDanger` but must be routed to pending smoke, not damage. The resulting smoke is then visible on the raw `tiles` array.
 
-Optimal order for the remaining 2:
+Remaining sweep target:
 
-1. **R.S.T. Corporation** — still need Sandstorm. May require another run re-roll. Expect smoke tiles to populate via tile metadata, not `environment_danger_v2`.
-2. **Archive Inc** (return trip) — Air Strike. Avoid the "Defend the Artillery Support" mission type: that uses a friendly NPC artillery unit, not the Air Strike env hazard, and `environment_danger_v2` stays empty.
+1. **Archive Inc** (return trip) — Air Strike. Avoid the "Defend the Artillery Support" mission type: that uses a friendly NPC artillery unit, not the Air Strike env hazard, and `environment_danger_v2` stays empty.
 
 Optionally, add **Pinnacle Robotics** for Ice Storm to extend the sweep to 7 types.
 
 ## Verifying a hazard works end-to-end
 
 1. Start the mission and run `python3 game_loop.py read` on the first combat turn.
-2. Look for the `ENVIRONMENT DANGER (N tiles)` section in stdout and the `environment_danger_v2` array in the JSON payload.
-3. Confirm the solver acknowledges it: the `solve` output should print `Environment danger: N tiles` and retreat/avoid plans.
-4. Play the turn out — the hazard fires at end of player turn, `env_danger_v2` should re-populate with the next step's targets.
+2. Inspect the raw warning channel appropriate to the effect: `environment_danger_v2`, `environment_freeze`, conveyor tile metadata, or Terratide pending smoke.
+3. Confirm the solver routes the warning to the correct damage, terrain, movement, freeze, or smoke behavior—not merely that it notices the tiles.
+4. Play the turn out, compare the projected effect with the live board, and verify that the appropriate warning channel repopulates for the next turn.

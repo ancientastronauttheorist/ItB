@@ -386,6 +386,15 @@ pub struct Board {
     /// Subset of `env_danger_kill`. When a kill tile is NOT in this set,
     /// flying offers no protection.
     pub env_danger_flying_immune: u64,
+    /// Bitset: bit i = tile i is the next Mission_Terratide Sandstorm lane.
+    /// The bridge reports these warning tiles through
+    /// `environment_danger_v2`, but the live effect is smoke only: no damage,
+    /// terrain death, or building loss. Applied before queued Vek attacks so
+    /// an attacker caught by the wave is smoke-cancelled.
+    ///
+    /// Disjoint from `env_danger`; keeping a separate channel prevents the
+    /// evaluator from assigning phantom damage/death to Terratide tiles.
+    pub env_smoke: u64,
     /// Bitset: bit i = tile i is affected by Mission_Wind. Wind is a push
     /// effect, not direct 1 HP environment damage.
     pub env_wind: u64,
@@ -538,6 +547,7 @@ impl Default for Board {
             env_danger: 0,
             env_danger_kill: 0,
             env_danger_flying_immune: 0,
+            env_smoke: 0,
             env_wind: 0,
             env_wind_dir: -1,
             env_freeze: 0,
@@ -761,6 +771,13 @@ impl Board {
     pub fn is_env_danger_flying_immune(&self, x: u8, y: u8) -> bool {
         let bit = 1u64 << xy_to_idx(x, y);
         self.env_danger_flying_immune & bit != 0
+    }
+
+    /// Is this tile in the next Terratide/Sandstorm smoke lane?
+    #[inline]
+    pub fn is_env_smoke(&self, x: u8, y: u8) -> bool {
+        let bit = 1u64 << xy_to_idx(x, y);
+        self.env_smoke & bit != 0
     }
 
     /// Iterate alive player units (mechs + friendly controllable).

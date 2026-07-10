@@ -615,19 +615,33 @@ pub fn board_from_json(json_str: &str)
             env_danger_flying_immune = env_danger;
         }
     }
-    let env_wind = if input.env_type.as_deref() == Some("wind") {
+    // Mission_Terratide reuses Env_Tides' warning machinery, so its smoke
+    // wave arrives in the same `environment_danger(_v2)` fields as lethal
+    // water. The live Env_Terratide effect is `SpaceDamage.iSmoke = 1`, not
+    // HP damage or terrain death. Mission id is authoritative because the
+    // bridge may classify the inherited class as `tidal_or_cataclysm`.
+    // Do not route generic Env_Sandstorm here: that separate mission also
+    // removes old smoke and converts ROAD/WATER/SAND terrain.
+    let env_smoke = if mission_id == Some("Mission_Terratide") {
         env_danger
     } else {
         0
     };
-    if env_wind != 0 {
-        env_danger &= !env_wind;
-        env_danger_kill &= !env_wind;
-        env_danger_flying_immune &= !env_wind;
+    let env_wind = if env_smoke == 0 && input.env_type.as_deref() == Some("wind") {
+        env_danger
+    } else {
+        0
+    };
+    let non_damage_env = env_smoke | env_wind;
+    if non_damage_env != 0 {
+        env_danger &= !non_damage_env;
+        env_danger_kill &= !non_damage_env;
+        env_danger_flying_immune &= !non_damage_env;
     }
     board.env_danger = env_danger;
     board.env_danger_kill = env_danger_kill;
     board.env_danger_flying_immune = env_danger_flying_immune;
+    board.env_smoke = env_smoke;
     board.env_wind = env_wind;
     board.env_wind_dir = if env_wind != 0 {
         input.environment_wind_dir
@@ -1184,6 +1198,27 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.tile(5, 5).terrain, Terrain::Ice);
+    }
+
+    #[test]
+    fn test_terratide_danger_routes_to_smoke_not_damage() {
+        let input = r#"{
+            "mission_id": "Mission_Terratide",
+            "env_type": "tidal_or_cataclysm",
+            "tiles": [],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": [],
+            "environment_danger_v2": [[5, 3, 1, 1, 1]]
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.is_env_smoke(5, 3));
+        assert_eq!(board.env_danger, 0);
+        assert_eq!(board.env_danger_kill, 0);
+        assert_eq!(board.env_danger_flying_immune, 0);
     }
 
     #[test]

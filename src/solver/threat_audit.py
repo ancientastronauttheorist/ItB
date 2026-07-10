@@ -235,6 +235,13 @@ def _will_be_frozen_by_environment_before_attack(board: Board, attacker: Unit) -
     return True
 
 
+def _will_be_smoked_by_environment_before_attack(board: Board, attacker: Unit) -> bool:
+    """True when Terratide's pending smoke row cancels this queued attack."""
+    return (int(attacker.x), int(attacker.y)) in (
+        getattr(board, "environment_smoke", set()) or set()
+    )
+
+
 def _lethal_environment_resolves_after_attacks(board: Board) -> bool:
     return getattr(board, "mission_id", "") in {"Mission_Tides", "Mission_Satellite"}
 
@@ -718,6 +725,11 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
         return (
             "attacker_will_be_frozen_by_environment",
             "Ice Storm freezes attacker before enemy attacks",
+        )
+    if _will_be_smoked_by_environment_before_attack(board, attacker):
+        return (
+            "attacker_will_be_smoked_by_environment",
+            "Terratide smoke reaches attacker before enemy attacks",
         )
     if _will_die_to_lethal_environment_before_attack(board, attacker):
         return (

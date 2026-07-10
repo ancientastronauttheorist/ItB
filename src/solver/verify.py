@@ -1566,7 +1566,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v335 - Mission_Trapped Area Blast uses DAMAGE_DEATH on adjacent non-building
 # tiles, destroying a full-health Mountain outright instead of cracking it.
 # Pre-v335 corpus archived as failure_db_snapshot_sim_v334.jsonl.
-SIMULATOR_VERSION = 335
+# v336 - Mission_Terratide danger tiles route to a dedicated smoke-wave
+# channel instead of lethal environment damage. The wave deals no HP or
+# building damage, applies smoke before queued Vek attacks, and therefore
+# cancels attackers caught in the warned lane. Pre-v336 corpus archived as
+# failure_db_snapshot_sim_v335.jsonl.
+SIMULATOR_VERSION = 336
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

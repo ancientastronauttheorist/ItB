@@ -676,7 +676,7 @@ fn place_smoke_no_healing(board: &mut Board, x: u8, y: u8) {
 
 /// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
 /// the smoke-cancelled queued attack releases that grapple immediately.
-fn place_smoke(board: &mut Board, x: u8, y: u8) {
+pub(crate) fn place_smoke(board: &mut Board, x: u8, y: u8) {
     place_smoke_no_healing(board, x, y);
     apply_healing_smoke_unit_on_tile(board, x, y);
 }
@@ -9004,19 +9004,19 @@ mod tests {
     }
 
     #[test]
-    fn test_repair_platform_does_not_trigger_for_enemy() {
+    fn test_repair_platform_enemy_consumes_without_objective_credit() {
         let mut board = make_test_board();
         board.tile_mut(3, 3).set_repair_platform(true);
         let enemy_idx = add_enemy(&mut board, 42, 3, 2, 1);
 
         let result = simulate_move(&mut board, enemy_idx, (3, 3));
 
-        assert_eq!(board.units[enemy_idx].hp, 1, "enemy does not heal");
+        assert_eq!(board.units[enemy_idx].hp, 1, "full-health enemy stays full");
         assert_eq!(board.repair_platforms_used, 0);
         assert_eq!(result.repair_platforms_used, 0);
         assert!(
-            board.tile(3, 3).repair_platform(),
-            "enemy does not consume the platform"
+            !board.tile(3, 3).repair_platform(),
+            "enemy consumes the platform without objective credit"
         );
     }
 

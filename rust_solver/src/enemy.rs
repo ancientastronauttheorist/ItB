@@ -18,6 +18,7 @@ use crate::simulate::{
     apply_weapon_status_with_impact_occupancy,
     flush_deferred_bump_grid_debt,
     on_enemy_death,
+    place_smoke,
     settle_building_grid_loss,
     thaw_frozen_building,
 };
@@ -421,6 +422,23 @@ fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
             skip_enemy_units,
             result,
         );
+    }
+}
+
+/// Apply Mission_Terratide's warned Sandstorm lane as smoke only.
+///
+/// The live `Env_Terratide` subclasses `Env_Tides`, but its `ApplyEffect`
+/// writes `SpaceDamage.iSmoke = 1` instead of damage or terrain conversion.
+/// Run this before the queued-attack smoke latch so Vek caught by the wave
+/// lose their attacks for this enemy phase. `place_smoke` also mirrors normal
+/// smoke behavior for fire removal, healing-smoke passives, and web release.
+fn apply_env_smoke_board(board: &mut Board) {
+    let mut smoke_bits = board.env_smoke;
+    while smoke_bits != 0 {
+        let tile_idx = smoke_bits.trailing_zeros() as usize;
+        smoke_bits &= smoke_bits - 1;
+        let (x, y) = idx_to_xy(tile_idx);
+        place_smoke(board, x, y);
     }
 }
 
@@ -853,6 +871,13 @@ pub fn simulate_enemy_attacks(
     if board.env_danger != 0 && !env_after_attacks {
         apply_env_danger_board(board, &mut result);
         clear_pre_attack_dead_enemy_wrecks(board);
+    }
+
+    // Terratide is a smoke wave, not a damaging tide. It resolves before
+    // queued Vek attacks; the smoke-cancellation latch below therefore sees
+    // newly smoked attackers and suppresses their current attack.
+    if board.env_smoke != 0 {
+        apply_env_smoke_board(board);
     }
 
     // Ice Storm freeze (sim v25). Fires at start of enemy turn — same step as
@@ -2343,6 +2368,7 @@ fn apply_projectile_grapple(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::serde_bridge::board_from_json;
 
     fn add_enemy_with_type(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, type_name: &str, qtx: i8, qty: i8) -> usize {
         let mut unit = Unit {
@@ -2385,6 +2411,83 @@ mod tests {
         assert_eq!(board.tile(5, 1).building_hp, 2);
         assert_eq!(board.grid_power, 6);
         assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_terratide_wave_smokes_without_damage_and_cancels_queued_attack() {
+        let input = r#"{
+            "mission_id": "Mission_Terratide",
+            "env_type": "tidal_or_cataclysm",
+            "tiles": [
+                {"x": 5, "y": 1, "terrain": "building", "building_hp": 2},
+                {"x": 2, "y": 3, "terrain": "building", "building_hp": 2}
+            ],
+            "units": [
+                {
+                    "uid": 171,
+                    "type": "Scorpion1",
+                    "x": 5,
+                    "y": 2,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 6,
+                    "weapons": ["ScorpionAtk1"],
+                    "queued_target": [5, 1],
+                    "has_queued_attack": true,
+                    "weapon_damage": 1
+                },
+                {
+                    "uid": 2,
+                    "type": "MirrorMech",
+                    "x": 4,
+                    "y": 4,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "active": false,
+                    "weapons": ["Brute_Mirrorshot"]
+                }
+            ],
+            "grid_power": 4,
+            "grid_power_max": 7,
+            "spawning_tiles": [],
+            "environment_danger_v2": [
+                [5, 2, 1, 1, 1],
+                [5, 1, 1, 1, 1],
+                [2, 3, 1, 1, 1],
+                [4, 4, 1, 1, 1]
+            ]
+        }"#;
+
+        let (mut board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("Terratide bridge JSON parses");
+        assert_eq!(board.env_danger, 0, "smoke lane must not be damage danger");
+        assert!(board.is_env_smoke(5, 2));
+
+        // Prove the queued attack is armed: without the smoke wave the same
+        // parsed Scorpion line damages its adjacent target building.
+        let mut no_wave = board.clone();
+        no_wave.env_smoke = 0;
+        let no_wave_orig = default_orig_pos(&no_wave);
+        simulate_enemy_attacks(&mut no_wave, &no_wave_orig, &WEAPONS);
+        assert_eq!(no_wave.tile(5, 1).building_hp, 1);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(5, 1).building_hp, 2, "queued attack is smoke-cancelled");
+        assert_eq!(board.tile(2, 3).building_hp, 2, "wave does not damage buildings");
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 0);
+
+        let scorpion = board.units.iter().find(|u| u.uid == 171).unwrap();
+        let mirror = board.units.iter().find(|u| u.uid == 2).unwrap();
+        assert_eq!(scorpion.hp, 3, "wave does not damage enemies");
+        assert_eq!(mirror.hp, 3, "wave does not damage mechs");
+        for &(x, y) in &[(5, 2), (5, 1), (2, 3), (4, 4)] {
+            assert!(board.tile(x, y).smoke(), "Terratide should smoke ({x},{y})");
+        }
     }
 
     #[test]

@@ -504,9 +504,15 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
     let mut env_danger_v2: Vec<Vec<u8>> = Vec::new();
     for idx in 0..64usize {
         let bit = 1u64 << idx;
-        if board.env_danger & bit != 0 {
+        if (board.env_danger | board.env_smoke) & bit != 0 {
             let (x, y) = idx_to_xy(idx);
-            let kill_int: u8 = if board.env_danger_kill & bit != 0 { 1 } else { 0 };
+            let kill_int: u8 = if board.env_smoke & bit != 0 {
+                0
+            } else if board.env_danger_kill & bit != 0 {
+                1
+            } else {
+                0
+            };
             // 5th field: flying_immune (sim v19+). 1 = Tidal/Cataclysm/Seismic
             // (effectively-flying spared); 0 = Air Strike / Lightning / non-
             // lethal hazard. Always 0 unless the lethal bit is set.
@@ -530,6 +536,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "remaining_spawns":      board.remaining_spawns,
         "spawning_tiles":        spawning_tiles,
         "environment_danger_v2": env_danger_v2,
+        "env_type":              if board.env_smoke != 0 { "sandstorm" } else { "unknown" },
         "mission_id":            board.mission_id,
         "mission_kill_target":   board.mission_kill_target,
         "mission_kill_limit":    board.mission_kill_limit,

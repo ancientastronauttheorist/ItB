@@ -243,6 +243,10 @@ class Board:
         self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
         # Maps (x,y) -> (damage, is_lethal)
         self.environment_danger_flying_immune: set[tuple[int, int]] = set()
+        # Mission_Terratide warned tiles become smoke before queued Vek
+        # attacks.  Keep them separate from environment_danger: they deal no
+        # damage and are consumed by the Rust simulator as a status wave.
+        self.environment_smoke: set[tuple[int, int]] = set()
         # Ice Storm freeze tiles (Env_SnowStorm Acid=false). At start of enemy
         # turn, units on these tiles get Frozen=true. Buildings/mountains are
         # unaffected — frozen is a unit status. Separate from environment_danger
@@ -343,6 +347,7 @@ class Board:
         b.environment_danger = set(self.environment_danger)
         b.environment_danger_v2 = dict(self.environment_danger_v2)
         b.environment_danger_flying_immune = set(self.environment_danger_flying_immune)
+        b.environment_smoke = set(self.environment_smoke)
         b.environment_freeze = set(self.environment_freeze)
         b.env_type = self.env_type
         b.environment_wind_dir = self.environment_wind_dir
@@ -575,9 +580,13 @@ class Board:
         wind_dir = data.get("environment_wind_dir")
         if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
             board.environment_wind_dir = wind_dir
+        terratide_smoke = data.get("mission_id") == "Mission_Terratide"
         for dt in data.get("environment_danger_v2", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 4:
                 pos = (dt[0], dt[1])
+                if terratide_smoke:
+                    board.environment_smoke.add(pos)
+                    continue
                 board.environment_danger.add(pos)
                 board.environment_danger_v2[pos] = (dt[2], dt[3] != 0)
                 if len(dt) >= 5 and dt[4] != 0:
@@ -586,6 +595,9 @@ class Board:
         for dt in data.get("environment_danger", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 2:
                 pos = (dt[0], dt[1])
+                if terratide_smoke:
+                    board.environment_smoke.add(pos)
+                    continue
                 board.environment_danger.add(pos)
                 if pos not in board.environment_danger_v2:
                     board.environment_danger_v2[pos] = (1, True)

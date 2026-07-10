@@ -1053,6 +1053,20 @@ local function dump_state()
             return
         end
 
+        -- Mission_Terratide subclasses Env_Tides but replaces the lethal
+        -- water wave with a smoke wave (NewTerrain=TERRAIN_SAND).  Its live
+        -- environment still exposes `Index`, so without this authoritative
+        -- mission override it falls through as lethal tidal/cataclysm danger.
+        -- Keep the warned row on the v2 channel with kill=0; the Rust bridge
+        -- decoder routes this mission's row to pending smoke rather than the
+        -- generic non-lethal 1-damage path.
+        if mission_id == "Mission_Terratide" then
+            env_type = "sandstorm"
+            env_kill_default = false
+            env_flying_immune_default = false
+            return
+        end
+
         -- Walk metatable chain. For each link, check membership in our
         -- known-env table. Stops at first match. `_G` lookup is safe — class
         -- globals are always set before any LiveEnvironment instance exists.
