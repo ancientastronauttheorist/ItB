@@ -36,6 +36,8 @@ from src.solver.diagnosis import (
     validate_agent_response,
     write_markdown,
 )
+from src.solver.diagnosis_apply import ApplyPlan, build_apply_plan
+from src.loop.commands import cmd_diagnose_apply_agent
 
 
 @pytest.fixture(autouse=True)
@@ -363,6 +365,82 @@ def test_apply_agent_response_writes_agent_proposed_markdown(tmp_path):
     assert "rust_solver/src/lib.rs" in text
     assert "// post-fix: clear frozen here" in text
     assert "reject_diagnosis" in text  # cleanup hint
+
+
+@pytest.mark.regression
+def test_agent_markdown_round_trips_indented_rust_fix(tmp_path):
+    failure, action = _frozen_status_failure()
+    before = (
+        "        Terrain::Mountain => {\n"
+        "            let tile = board.tile_mut(x, y);\n"
+        "        }"
+    )
+    after = (
+        "        Terrain::Mountain => {\n"
+        "            board.tile_mut(x, y).building_hp = 0;\n"
+        "        }"
+    )
+    payload = json.dumps(
+        {
+            "target_language": "rust",
+            "root_cause": "DAMAGE_DEATH must destroy the Mountain outright.",
+            "suspect_files": [
+                {"path": "rust_solver/src/simulate.rs", "lines": [1, 1]}
+            ],
+            "fix_snippet": {"before": before, "after": after},
+            "confidence": "high",
+            "verification_plan": ["Run focused tests"],
+            "open_questions": [],
+        }
+    )
+
+    result = apply_agent_response(
+        failure["id"],
+        payload,
+        out_dir=tmp_path,
+        failure=failure,
+        action=action,
+    )
+    plan = build_apply_plan(
+        failure["id"],
+        diagnosis_path=Path(result["markdown"]),
+    )
+
+    assert isinstance(plan, ApplyPlan)
+    assert plan.fix_snippet == {"before": before, "after": after}
+
+
+@pytest.mark.regression
+def test_diagnose_apply_agent_accepts_raw_json_longer_than_path_max(monkeypatch):
+    raw_payload = '{"root_cause":"' + ("x" * 5000) + '"}'
+    captured = {}
+
+    def fake_apply_agent_response(failure_id, payload, out_dir=None):
+        captured.update(
+            failure_id=failure_id,
+            payload=payload,
+            out_dir=out_dir,
+        )
+        return {
+            "status": "agent_proposed",
+            "confidence": "high",
+            "markdown": "/tmp/fake-diagnosis.md",
+            "fix_signature": "fake",
+        }
+
+    monkeypatch.setattr(
+        "src.solver.diagnosis.apply_agent_response",
+        fake_apply_agent_response,
+    )
+
+    result = cmd_diagnose_apply_agent("failure-id", raw_payload)
+
+    assert result["status"] == "agent_proposed"
+    assert captured == {
+        "failure_id": "failure-id",
+        "payload": raw_payload,
+        "out_dir": None,
+    }
 
 
 @pytest.mark.regression

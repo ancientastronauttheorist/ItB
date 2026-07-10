@@ -7951,9 +7951,14 @@ def cmd_diagnose_apply_agent(failure_id: str, payload: str,
     from src.solver.diagnosis import apply_agent_response
 
     payload_text = payload
-    p = _Path(payload)
-    if p.exists() and p.is_file():
-        payload_text = p.read_text()
+    try:
+        p = _Path(payload)
+        if p.is_file():
+            payload_text = p.read_text(encoding="utf-8")
+    except (OSError, ValueError):
+        # Raw agent JSON can be much longer than PATH_MAX. Treat path-probe
+        # failures as proof that the payload is content, not a filename.
+        pass
 
     out_dir = _Path(out_path) if out_path else None
     result = apply_agent_response(failure_id, payload_text, out_dir=out_dir)

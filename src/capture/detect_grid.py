@@ -37,17 +37,31 @@ def find_game_window() -> WindowInfo | None:
             Quartz.kCGWindowListOptionOnScreenOnly,
             Quartz.kCGNullWindowID
         )
+        matches: list[tuple[bool, WindowInfo]] = []
         for w in windows:
             name = w.get('kCGWindowOwnerName', '')
             if 'Breach' in name:
                 bounds = w.get('kCGWindowBounds', {})
-                return WindowInfo(
+                candidate = WindowInfo(
                     x=int(bounds.get('X', 0)),
                     y=int(bounds.get('Y', 0)),
                     width=int(bounds.get('Width', 0)),
                     height=int(bounds.get('Height', 0)),
                     window_id=int(w.get('kCGWindowNumber', 0)),
                 )
+                if candidate.width > 0 and candidate.height > 0:
+                    matches.append((
+                        w.get('kCGWindowName', '') == 'Into the Breach',
+                        candidate,
+                    ))
+        if matches:
+            return max(
+                matches,
+                key=lambda match: (
+                    match[0],
+                    match[1].width * match[1].height,
+                ),
+            )[1]
     except ImportError:
         pass
 
@@ -55,9 +69,14 @@ def find_game_window() -> WindowInfo | None:
     script = '''
     tell application "System Events"
         tell process "Into the Breach"
-            set winPos to position of window 1
-            set winSize to size of window 1
-            return (item 1 of winPos) & "," & (item 2 of winPos) & "," & (item 1 of winSize) & "," & (item 2 of winSize)
+            if exists window "Into the Breach" then
+                set targetWindow to window "Into the Breach"
+            else
+                set targetWindow to window 1
+            end if
+            set winPos to position of targetWindow
+            set winSize to size of targetWindow
+            return ((item 1 of winPos) as text) & "," & ((item 2 of winPos) as text) & "," & ((item 1 of winSize) as text) & "," & ((item 2 of winSize) as text)
         end tell
     end tell
     '''
@@ -67,10 +86,11 @@ def find_game_window() -> WindowInfo | None:
             capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0:
-            parts = result.stdout.strip().split(", ")
+            parts = [part.strip() for part in result.stdout.strip().split(",")]
             if len(parts) == 4:
                 x, y, w, h = [int(p) for p in parts]
-                return WindowInfo(x=x, y=y, width=w, height=h)
+                if w > 0 and h > 0:
+                    return WindowInfo(x=x, y=y, width=w, height=h)
     except (subprocess.TimeoutExpired, ValueError):
         pass
 

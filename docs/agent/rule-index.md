@@ -418,3 +418,6 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 405 | 719 | Maximum Firepower needs one native visible Quick-Fire activation. | `docs/agent/achievement-playbook.md` |
 | 412 | 721 | Hydraulic Lifter landing damage cracks occupied Ground. | `docs/agent/solver-reference.md` |
 | 413 | 723 | Mission_Trapped Area Blast destroys adjacent Mountains outright. | `docs/agent/solver-reference.md` |
+| 414 | 725 | Combat-window discovery must reject helper surfaces. | `docs/agent/live-runbook.md` |
+| 415 | 727 | A held End Turn state is a click-free inspection zone. | `docs/agent/safety-gates.md` |
+| 416 | 729 | Diagnosis transport and fix snippets must preserve exact content. | `docs/diagnosis_loop_design.md` |

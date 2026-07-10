@@ -643,6 +643,18 @@ documented.
    Regressions: `test_validate_extracts_last_json_from_prose_wrapped_response`,
    `test_validate_skips_braces_inside_strings`.
 
+3. **Diagnosis transport and fix snippets must preserve exact content.**
+   `diagnose_apply_agent` accepts either a file path or raw JSON. A path probe
+   on raw agent output can raise `OSError` or `ValueError`, especially when the
+   response exceeds `PATH_MAX`; catch that failure and pass the original
+   string to JSON validation. When serializing `fix_snippet.before` and
+   `.after`, use YAML literal scalars with an explicit indentation indicator
+   (`|2`) and a fixed writer prefix so leading Rust indentation round-trips
+   unchanged. Plain `|` can strip semantic indentation and make Layer 4 unable
+   to locate the `before` snippet. Regressions:
+   `test_diagnose_apply_agent_accepts_raw_json_longer_than_path_max` and
+   `test_agent_markdown_round_trips_indented_rust_fix`.
+
 ### Known limitation — multi-location fixes
 
 `fix_snippet` is a single `{before, after}` pair. Real Rust fixes often

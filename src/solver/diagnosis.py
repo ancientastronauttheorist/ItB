@@ -1275,9 +1275,9 @@ def write_agent_proposed_markdown(
         return ["    " + line for line in text.split("\n")]
 
     fix_yaml_lines: list[str] = ["fix_snippet:"]
-    fix_yaml_lines.append("  before: |")
+    fix_yaml_lines.append("  before: |2")
     fix_yaml_lines.extend(_yaml_block(response.fix_snippet.get("before", "")))
-    fix_yaml_lines.append("  after: |")
+    fix_yaml_lines.append("  after: |2")
     fix_yaml_lines.extend(_yaml_block(response.fix_snippet.get("after", "")))
 
     frontmatter = "\n".join(
