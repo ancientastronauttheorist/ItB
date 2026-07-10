@@ -23142,9 +23142,14 @@ def _solve_eval(plan_safety: dict) -> dict:
     }
 
 
-def _patch_cmd_solve_harness(monkeypatch, session, safeties: list[dict]):
+def _patch_cmd_solve_harness(
+    monkeypatch,
+    session,
+    safeties: list[dict],
+    rust_action: dict | None = None,
+):
     rust_calls = {"solve": 0, "solve_top_k": []}
-    rust_action = _lightning_rust_action()
+    rust_action = rust_action or _lightning_rust_action()
 
     def fake_solve(_payload, _time_limit):
         rust_calls["solve"] += 1
@@ -23205,6 +23210,47 @@ def _patch_cmd_solve_harness(monkeypatch, session, safeties: list[dict]):
     )
     monkeypatch.setattr(session, "save", lambda: None)
     return rust_calls
+
+
+def test_cmd_solve_record_preserves_force_swap_second_target(monkeypatch):
+    session = RunSession(run_id="force-swap", squad="Random", difficulty=3)
+    rust_action = _lightning_rust_action()
+    rust_action["actions"][0].update({
+        "mech_type": "ExchangeMech",
+        "weapon_id": "Science_TC_SwapOther",
+        "target": [1, 2],
+        "target2": [4, 5],
+        "description": "ExchangeMech uses Force Swap",
+    })
+    clean = {
+        "status": "SAFE",
+        "blocking": False,
+        "violations": [],
+        "current": {"grid_power": 5, "mechs_alive": 1},
+        "predicted": {"grid_power": 5, "mechs_alive": 1},
+    }
+    _patch_cmd_solve_harness(
+        monkeypatch,
+        session,
+        [clean],
+        rust_action=rust_action,
+    )
+    recorded = {}
+
+    def capture_solve_record(_session, kind, data, **_kwargs):
+        if kind == "solve":
+            recorded.update(kind=kind, data=data)
+
+    monkeypatch.setattr(
+        commands,
+        "_record_turn_state",
+        capture_solve_record,
+    )
+
+    commands.cmd_solve(profile="Alpha", time_limit=2, frontier_diagnostics=False)
+
+    assert recorded["kind"] == "solve"
+    assert recorded["data"]["actions"][0]["target2"] == [4, 5]
 
 
 def test_cmd_solve_skips_safety_widening_when_lightning_speed_accepts_top(

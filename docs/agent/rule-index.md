@@ -439,3 +439,5 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 438 | 773 | Hydraulic Legs outward pushes can lag one bridge read behind their damage. | `docs/agent/safety-gates.md` |
 | 439 | 775 | Igniting a smoked Forest clears Smoke. | `docs/agent/solver-reference.md` |
 | 440 | 777 | Mission_Repair deployment reserves safe Repair Platforms before ordinary spread. | `docs/agent/solver-reference.md` |
+| 441 | 779 | Two-click actions preserve `target2` across every Python serialization boundary. | `docs/agent/solver-reference.md` |
+| 442 | 781 | Force Swap powered variants survive save-overlay enrichment. | `docs/agent/solver-reference.md` |

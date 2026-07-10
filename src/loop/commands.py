@@ -4273,13 +4273,19 @@ def _candidate_frontier_representatives(
 
 def _solution_plan_payload(solution: Solution) -> list[dict]:
     """Serialize a Solution for Rust project_plan / score_plan calls."""
-    return [{
-        "mech_uid": a.mech_uid,
-        "mech_type": a.mech_type,
-        "move_to": list(a.move_to),
-        "weapon_id": a.weapon,
-        "target": list(a.target),
-    } for a in solution.actions]
+    payloads = []
+    for action in solution.actions:
+        payload = {
+            "mech_uid": action.mech_uid,
+            "mech_type": action.mech_type,
+            "move_to": list(action.move_to),
+            "weapon_id": action.weapon,
+            "target": list(action.target),
+        }
+        if action.target2 is not None:
+            payload["target2"] = list(action.target2)
+        payloads.append(payload)
+    return payloads
 
 
 def _prepare_projected_bridge(
@@ -7597,6 +7603,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             "weapon": get_weapon_name(a.weapon) if a.weapon and a.weapon != "_REPAIR" else a.weapon,
             "weapon_id": a.weapon,
             "target": list(a.target),
+            **({"target2": list(a.target2)} if a.target2 is not None else {}),
             "description": a.description,
         } for a in solution.actions],
         "threats": len(threats),
@@ -8240,6 +8247,9 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
             "mech_type": getattr(a, "mech_type", None),
             "weapon": getattr(a, "weapon", None),
             "target": list(a.target) if getattr(a, "target", None) else None,
+            "target2": (
+                list(a.target2) if getattr(a, "target2", None) else None
+            ),
             "description": getattr(a, "description", None),
         }
     from src.solver.verify import format_diff_for_log
@@ -49871,6 +49881,7 @@ def _cmd_validate_failures_only(old_version, new_version, old_weights,
                     "mech_uid": a.mech_uid, "mech_type": a.mech_type,
                     "move_to": list(a.move_to) if a.move_to else None,
                     "weapon": a.weapon, "target": list(a.target),
+                    **({"target2": list(a.target2)} if a.target2 is not None else {}),
                     "description": a.description,
                 } for a in sol_old.actions],
                 "action_results": enriched_old.get("action_results", []),
@@ -49884,6 +49895,7 @@ def _cmd_validate_failures_only(old_version, new_version, old_weights,
                     "mech_uid": a.mech_uid, "mech_type": a.mech_type,
                     "move_to": list(a.move_to) if a.move_to else None,
                     "weapon": a.weapon, "target": list(a.target),
+                    **({"target2": list(a.target2)} if a.target2 is not None else {}),
                     "description": a.description,
                 } for a in sol_new.actions],
                 "action_results": enriched_new.get("action_results", []),

@@ -150,6 +150,49 @@ def test_swap_mech_full_range_overlay_from_save(monkeypatch):
     assert bridge_data["units"][0]["weapons"] == ["Science_Swap_AB"]
 
 
+def test_force_swap_upgrades_overlay_from_save(monkeypatch):
+    for upgraded in (
+        "Science_TC_SwapOther_A",
+        "Science_TC_SwapOther_B",
+        "Science_TC_SwapOther_AB",
+    ):
+        bridge_data = {
+            "units": [
+                {
+                    "uid": 2,
+                    "type": "ExchangeMech",
+                    "mech": True,
+                    "weapons": ["Science_TC_SwapOther"],
+                }
+            ]
+        }
+
+        class FakeState:
+            weapons = [
+                "Prime_Leap",
+                "",
+                "Science_KO_Crack",
+                "",
+                upgraded,
+                "",
+            ]
+
+        monkeypatch.setattr(
+            "src.loop.commands.load_game_state",
+            lambda profile="Alpha", state=FakeState(): state,
+        )
+
+        updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+        assert updates == [{
+            "uid": 2,
+            "slot": 0,
+            "base": "Science_TC_SwapOther",
+            "upgraded": upgraded,
+        }]
+        assert bridge_data["units"][0]["weapons"] == [upgraded]
+
+
 def test_firestorm_range_overlay_from_save(monkeypatch):
     bridge_data = {
         "units": [
