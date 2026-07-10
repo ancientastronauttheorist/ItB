@@ -46416,6 +46416,43 @@ def _fuzzy_detections_require_end_turn_block(
     return None
 
 
+def _debt_covered_grid_settlement_delta(
+    diff,
+    pending_grid_debt: int,
+) -> int:
+    """Return a favorable grid delta fully explained by pending debt.
+
+    This is deliberately narrower than a generic favorable verification
+    result: unit/tile mismatches and additional scalar differences remain
+    ordinary desyncs.  A positive return value suppresses failure telemetry,
+    but the caller must still re-solve from the fresh board.
+    """
+    if getattr(diff, "unit_diffs", []) or getattr(diff, "tile_diffs", []):
+        return 0
+    scalar_diffs = getattr(diff, "scalar_diffs", []) or []
+    if len(scalar_diffs) != 1:
+        return 0
+    scalar = scalar_diffs[0]
+    if scalar.get("field") != "grid_power":
+        return 0
+    try:
+        delta = int(scalar.get("actual")) - int(scalar.get("predicted"))
+    except (TypeError, ValueError):
+        return 0
+    if delta <= 0 or pending_grid_debt < delta:
+        return 0
+    return delta
+
+
+def _print_debt_covered_grid_settlement(delta: int) -> None:
+    print(
+        "  [grid-settlement] bridge grid exceeded prediction; "
+        f"the {delta}-point delta is covered by pending grid debt, so the "
+        "normal re-solve continues without failure telemetry or a redundant "
+        "investigation gate"
+    )
+
+
 def _maybe_flag_grid_drop(
     investigations: list,
     diff,
@@ -46426,6 +46463,8 @@ def _maybe_flag_grid_drop(
     run_id: str,
     turn: int,
     failure_db_id: str,
+    *,
+    pending_grid_debt: int = 0,
 ) -> None:
     """Snapshot + queue an investigation when grid_power dropped unexpectedly.
 
@@ -46448,19 +46487,11 @@ def _maybe_flag_grid_drop(
         td for td in getattr(diff, "tile_diffs", []) or []
         if td.get("field") == "building_hp"
     ]
-    actual_building_losses = [
-        td for td in building_tile_diffs
-        if int(td.get("actual") or 0) < int(td.get("predicted") or 0)
-    ]
-    favorable_grid_resist = bool(
-        grid_scalar
-        and int(grid_scalar.get("actual") or 0) > int(grid_scalar.get("predicted") or 0)
+    debt_covered_delta = _debt_covered_grid_settlement_delta(
+        diff, pending_grid_debt
     )
-    if favorable_grid_resist and not actual_building_losses:
-        print(
-            "  [grid-defense] actual grid exceeded prediction; "
-            "treating as benign Grid Defense resist, no investigation gate"
-        )
+    if debt_covered_delta:
+        _print_debt_covered_grid_settlement(debt_covered_delta)
         return
 
     # Write a minimal snapshot: predicted state + actual state + context.
@@ -47712,67 +47743,93 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         print("  MOVE VERIFIED: PASS "
                               "(Burrower missing-after-damage drift ignored)")
                     else:
-                        classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
-                        fuzzy_signal = fuzzy_detector.evaluate(
-                            diff, classification,
-                            context={
-                                "mech_uid": mech_uid,
-                                "phase": "move",
-                                "sub_action": "move",
-                                "action_index": actions_completed,
-                                "turn": turn,
-                                "weapon": action.weapon,
-                                "target": list(action.target),
-                            },
-                            prior_events=(
-                                weapon_penalty_log.synthetic_prior_events()
-                                + session.failure_events_this_run
-                            ),
+                        pending_grid_debt = _annotate_pending_grid_debt(
+                            session, actual_board, actual_data
                         )
-                        session.failure_events_this_run.append(fuzzy_signal)
-                        _maybe_soft_disable(session, fuzzy_signal, turn,
-                                            fired=soft_disables_fired_this_turn,
-                                            run_id=session.run_id)
-                        _enqueue_behavior_novelty(session, diff, turn)
-                        _log_sub_action_desync(
-                            session, "move", actions_completed, mech_uid,
-                            pred_post_move, actual_board, diff, classification, turn,
-                            fuzzy_signal=fuzzy_signal,
+                        settlement_delta = _debt_covered_grid_settlement_delta(
+                            diff, pending_grid_debt
                         )
-                        _maybe_flag_grid_drop(
-                            grid_drop_investigations, diff, classification,
-                            pred_post_move, actual_board,
-                            context={
-                                "mech_uid": mech_uid, "sub_action": "move",
-                                "action_index": actions_completed,
-                                "weapon": action.weapon,
-                                "target": list(action.target),
-                            },
-                            run_id=session.run_id or "default",
-                            turn=turn,
-                            failure_db_id=(
-                                f"{session.run_id or 'default'}_"
-                                f"m{session.mission_index:02d}_t{turn:02d}_"
-                                f"per_sub_action_desync_move_a{actions_completed}"
-                            ),
-                        )
-                        _maybe_flag_pod_state_diff(
-                            grid_drop_investigations, diff, classification,
-                            pred_post_move, actual_board,
-                            context={
-                                "mech_uid": mech_uid, "sub_action": "move",
-                                "action_index": actions_completed,
-                                "weapon": action.weapon,
-                                "target": list(action.target),
-                            },
-                            run_id=session.run_id or "default",
-                            turn=turn,
-                            failure_db_id=(
-                                f"{session.run_id or 'default'}_"
-                                f"m{session.mission_index:02d}_t{turn:02d}_"
-                                f"per_sub_action_desync_move_a{actions_completed}"
-                            ),
-                        )
+                        fuzzy_signal = None
+                        if settlement_delta:
+                            classification = {
+                                "top_category": "grid_settlement",
+                                "categories": ["grid_settlement"],
+                                "subcategory": "pending_grid_debt",
+                                "model_gap": False,
+                            }
+                            _print_debt_covered_grid_settlement(settlement_delta)
+                        else:
+                            classification = classify_diff(
+                                diff, mech_uid=mech_uid, phase="move"
+                            )
+                            fuzzy_signal = fuzzy_detector.evaluate(
+                                diff, classification,
+                                context={
+                                    "mech_uid": mech_uid,
+                                    "phase": "move",
+                                    "sub_action": "move",
+                                    "action_index": actions_completed,
+                                    "turn": turn,
+                                    "weapon": action.weapon,
+                                    "target": list(action.target),
+                                },
+                                prior_events=(
+                                    weapon_penalty_log.synthetic_prior_events()
+                                    + session.failure_events_this_run
+                                ),
+                            )
+                            session.failure_events_this_run.append(fuzzy_signal)
+                            _maybe_soft_disable(
+                                session, fuzzy_signal, turn,
+                                fired=soft_disables_fired_this_turn,
+                                run_id=session.run_id,
+                            )
+                            _enqueue_behavior_novelty(session, diff, turn)
+                            _log_sub_action_desync(
+                                session, "move", actions_completed, mech_uid,
+                                pred_post_move, actual_board, diff,
+                                classification, turn,
+                                fuzzy_signal=fuzzy_signal,
+                            )
+                            _maybe_flag_grid_drop(
+                                grid_drop_investigations, diff, classification,
+                                pred_post_move, actual_board,
+                                context={
+                                    "mech_uid": mech_uid,
+                                    "sub_action": "move",
+                                    "action_index": actions_completed,
+                                    "weapon": action.weapon,
+                                    "target": list(action.target),
+                                },
+                                run_id=session.run_id or "default",
+                                turn=turn,
+                                failure_db_id=(
+                                    f"{session.run_id or 'default'}_"
+                                    f"m{session.mission_index:02d}_t{turn:02d}_"
+                                    "per_sub_action_desync_move_"
+                                    f"a{actions_completed}"
+                                ),
+                                pending_grid_debt=pending_grid_debt,
+                            )
+                            _maybe_flag_pod_state_diff(
+                                grid_drop_investigations, diff, classification,
+                                pred_post_move, actual_board,
+                                context={
+                                    "mech_uid": mech_uid,
+                                    "sub_action": "move",
+                                    "action_index": actions_completed,
+                                    "weapon": action.weapon,
+                                    "target": list(action.target),
+                                },
+                                run_id=session.run_id or "default",
+                                turn=turn,
+                                failure_db_id=(
+                                    f"{session.run_id or 'default'}_"
+                                    f"m{session.mission_index:02d}_t{turn:02d}_"
+                                    "per_sub_action_desync_move_"
+                                    f"a{actions_completed}"
+                                ),
+                            )
                         re_solve_count += 1
                         # Re-solve: this mech has moved but not attacked
                         if actual_data:
@@ -48035,66 +48092,91 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(Burrower missing-after-damage drift ignored)")
                 else:
-                    classification = classify_diff(diff, mech_uid=mech_uid,
-                                                   phase=final_phase)
-                    fuzzy_signal = fuzzy_detector.evaluate(
-                        diff, classification,
-                        context={
-                            "mech_uid": mech_uid,
-                            "phase": final_phase,
-                            "sub_action": final_phase,
-                            "action_index": actions_completed,
-                            "turn": turn,
-                            "weapon": action.weapon,
-                            "target": list(action.target),
-                        },
-                        prior_events=session.failure_events_this_run,
+                    pending_grid_debt = _annotate_pending_grid_debt(
+                        session, actual_board, actual_data
                     )
-                    session.failure_events_this_run.append(fuzzy_signal)
-                    if final_phase != "skip":
-                        _maybe_soft_disable(session, fuzzy_signal, turn,
-                                            fired=soft_disables_fired_this_turn,
-                                            run_id=session.run_id)
-                    _enqueue_behavior_novelty(session, diff, turn)
-                    _log_sub_action_desync(
-                        session, final_phase, actions_completed, mech_uid,
-                        pred_post_attack, actual_board, diff, classification, turn,
-                        fuzzy_signal=fuzzy_signal,
+                    settlement_delta = _debt_covered_grid_settlement_delta(
+                        diff, pending_grid_debt
                     )
-                    _maybe_flag_grid_drop(
-                        grid_drop_investigations, diff, classification,
-                        pred_post_attack, actual_board,
-                        context={
-                            "mech_uid": mech_uid, "sub_action": final_phase,
-                            "action_index": actions_completed,
-                            "weapon": action.weapon,
-                            "target": list(action.target),
-                        },
-                        run_id=session.run_id or "default",
-                        turn=turn,
-                        failure_db_id=(
-                            f"{session.run_id or 'default'}_"
-                            f"m{session.mission_index:02d}_t{turn:02d}_"
-                            f"per_sub_action_desync_{final_phase}_a{actions_completed}"
-                        ),
-                    )
-                    _maybe_flag_pod_state_diff(
-                        grid_drop_investigations, diff, classification,
-                        pred_post_attack, actual_board,
-                        context={
-                            "mech_uid": mech_uid, "sub_action": final_phase,
-                            "action_index": actions_completed,
-                            "weapon": action.weapon,
-                            "target": list(action.target),
-                        },
-                        run_id=session.run_id or "default",
-                        turn=turn,
-                        failure_db_id=(
-                            f"{session.run_id or 'default'}_"
-                            f"m{session.mission_index:02d}_t{turn:02d}_"
-                            f"per_sub_action_desync_{final_phase}_a{actions_completed}"
-                        ),
-                    )
+                    fuzzy_signal = None
+                    if settlement_delta:
+                        classification = {
+                            "top_category": "grid_settlement",
+                            "categories": ["grid_settlement"],
+                            "subcategory": "pending_grid_debt",
+                            "model_gap": False,
+                        }
+                        _print_debt_covered_grid_settlement(settlement_delta)
+                    else:
+                        classification = classify_diff(
+                            diff, mech_uid=mech_uid, phase=final_phase
+                        )
+                        fuzzy_signal = fuzzy_detector.evaluate(
+                            diff, classification,
+                            context={
+                                "mech_uid": mech_uid,
+                                "phase": final_phase,
+                                "sub_action": final_phase,
+                                "action_index": actions_completed,
+                                "turn": turn,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            prior_events=session.failure_events_this_run,
+                        )
+                        session.failure_events_this_run.append(fuzzy_signal)
+                        if final_phase != "skip":
+                            _maybe_soft_disable(
+                                session, fuzzy_signal, turn,
+                                fired=soft_disables_fired_this_turn,
+                                run_id=session.run_id,
+                            )
+                        _enqueue_behavior_novelty(session, diff, turn)
+                        _log_sub_action_desync(
+                            session, final_phase, actions_completed, mech_uid,
+                            pred_post_attack, actual_board, diff,
+                            classification, turn,
+                            fuzzy_signal=fuzzy_signal,
+                        )
+                        _maybe_flag_grid_drop(
+                            grid_drop_investigations, diff, classification,
+                            pred_post_attack, actual_board,
+                            context={
+                                "mech_uid": mech_uid,
+                                "sub_action": final_phase,
+                                "action_index": actions_completed,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            run_id=session.run_id or "default",
+                            turn=turn,
+                            failure_db_id=(
+                                f"{session.run_id or 'default'}_"
+                                f"m{session.mission_index:02d}_t{turn:02d}_"
+                                f"per_sub_action_desync_{final_phase}_"
+                                f"a{actions_completed}"
+                            ),
+                            pending_grid_debt=pending_grid_debt,
+                        )
+                        _maybe_flag_pod_state_diff(
+                            grid_drop_investigations, diff, classification,
+                            pred_post_attack, actual_board,
+                            context={
+                                "mech_uid": mech_uid,
+                                "sub_action": final_phase,
+                                "action_index": actions_completed,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            run_id=session.run_id or "default",
+                            turn=turn,
+                            failure_db_id=(
+                                f"{session.run_id or 'default'}_"
+                                f"m{session.mission_index:02d}_t{turn:02d}_"
+                                f"per_sub_action_desync_{final_phase}_"
+                                f"a{actions_completed}"
+                            ),
+                        )
                     # Skip re-solve if spawn-only on last action (new Vek emerged)
                     is_last_action = (action_idx >= len(actions) - 1)
                     spawn_new_only = (

@@ -5,13 +5,16 @@ from src.loop.commands import (
     _annotate_pending_grid_debt,
     _capture_board_summary,
     _compute_deltas,
+    _debt_covered_grid_settlement_delta,
     _evaluate_solution_safety,
     _lethal_end_turn_fire_mech_debts,
+    _maybe_flag_grid_drop,
     _summary_with_pending_grid_debt,
 )
 from src.loop.session import RunSession
 from src.model.board import Board
 from src.solver.solver import Solution
+from src.solver.verify import DiffResult
 
 
 def _bridge_with_mech(*, flying=False, danger=None):
@@ -1047,6 +1050,126 @@ def test_pending_grid_debt_detects_delayed_grid_scalar(tmp_path, monkeypatch):
     )
     assert summary["visible_grid_power"] == 5
     assert summary["grid_power"] == 4
+
+
+def test_debt_covered_favorable_player_grid_scalar_is_unresolved_lag(capsys):
+    investigations = []
+    board = Board()
+    board.grid_power = 3
+    diff = DiffResult(scalar_diffs=[{
+        "field": "grid_power",
+        "predicted": 2,
+        "actual": 3,
+    }])
+
+    _maybe_flag_grid_drop(
+        investigations,
+        diff,
+        {"categories": ["grid_power"]},
+        {"grid_power": 2},
+        board,
+        {"action_index": 0, "sub_action": "attack"},
+        "run",
+        3,
+        "failure",
+        pending_grid_debt=1,
+    )
+
+    output = capsys.readouterr().out
+    assert investigations == []
+    assert "covered by pending grid debt" in output
+    assert "Grid Defense resist" not in output
+
+
+def test_debt_covered_grid_settlement_predicate_is_exact():
+    pure_grid_lag = DiffResult(scalar_diffs=[{
+        "field": "grid_power",
+        "predicted": 2,
+        "actual": 3,
+    }])
+
+    assert _debt_covered_grid_settlement_delta(pure_grid_lag, 1) == 1
+    assert _debt_covered_grid_settlement_delta(pure_grid_lag, 0) == 0
+
+    pure_grid_lag.tile_diffs.append({
+        "x": 2,
+        "y": 3,
+        "field": "building_hp",
+        "predicted": 0,
+        "actual": 1,
+    })
+    assert _debt_covered_grid_settlement_delta(pure_grid_lag, 1) == 0
+
+
+def test_unproven_favorable_player_grid_scalar_queues_investigation(
+    tmp_path,
+    monkeypatch,
+):
+    investigations = []
+    board = Board()
+    board.grid_power = 3
+    diff = DiffResult(scalar_diffs=[{
+        "field": "grid_power",
+        "predicted": 2,
+        "actual": 3,
+    }])
+    monkeypatch.setattr(commands, "SNAPSHOT_DIR", tmp_path)
+
+    _maybe_flag_grid_drop(
+        investigations,
+        diff,
+        {"categories": ["grid_power"]},
+        {"grid_power": 2},
+        board,
+        {"action_index": 0, "sub_action": "attack"},
+        "run",
+        3,
+        "failure",
+        pending_grid_debt=0,
+    )
+
+    assert len(investigations) == 1
+    assert investigations[0]["failure_db_id"] == "failure"
+
+
+def test_mixed_favorable_grid_diff_still_queues_investigation(
+    tmp_path,
+    monkeypatch,
+):
+    investigations = []
+    board = Board()
+    board.grid_power = 3
+    diff = DiffResult(
+        tile_diffs=[{
+            "x": 2,
+            "y": 3,
+            "field": "building_hp",
+            "predicted": 0,
+            "actual": 1,
+        }],
+        scalar_diffs=[{
+            "field": "grid_power",
+            "predicted": 2,
+            "actual": 3,
+        }],
+    )
+    monkeypatch.setattr(commands, "SNAPSHOT_DIR", tmp_path)
+
+    _maybe_flag_grid_drop(
+        investigations,
+        diff,
+        {"categories": ["grid_power", "building"]},
+        {"grid_power": 2},
+        board,
+        {"action_index": 0, "sub_action": "attack"},
+        "run",
+        3,
+        "failure",
+    )
+
+    assert len(investigations) == 1
+    assert investigations[0]["failure_db_id"] == "failure"
+    assert "1 building hp diff(s)" in investigations[0]["reason"]
 
 
 def test_pending_grid_debt_ignores_stale_same_region_turn(tmp_path, monkeypatch):
