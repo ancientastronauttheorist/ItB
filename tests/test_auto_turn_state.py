@@ -271,6 +271,38 @@ def test_dirty_consent_rejects_mech_loss_without_consuming_token():
     assert token not in s.dirty_consent_used
 
 
+def test_dirty_consent_accepts_mech_loss_with_stress_flag():
+    s = RunSession(run_id="r", difficulty=3, tags=["solver_eval"])
+    s.mission_index = 1
+    s.set_solution([_make_action()], 7.0, 3, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "mech_lost",
+            "current": 3,
+            "predicted": 2,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 3, safety, actions, candidate_rank=3)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=3,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+        allow_mech_loss=True,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
 def test_dirty_consent_accepts_protected_objective_loss_with_stress_flag():
     s = RunSession(run_id="r", difficulty=3, tags=["solver_eval"])
     s.mission_index = 3

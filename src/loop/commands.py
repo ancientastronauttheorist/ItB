@@ -46417,6 +46417,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   allow_protected_objective_loss: bool = False,
                   allow_objective_loss: bool = False,
                   allow_timeline_collapse: bool = False,
+                  allow_mech_loss: bool = False,
                   destroy_time_pods: bool = False,
                   lightning_speed_loss_policy: bool = False,
                   resume_before_execute: bool = False,
@@ -47025,6 +47026,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             allow_protected_objective_loss=allow_protected_objective_loss,
             allow_objective_loss=allow_objective_loss,
             allow_timeline_collapse=allow_timeline_collapse,
+            allow_mech_loss=allow_mech_loss,
         )
         if consent_error is not None:
             _print_result(consent_error)
@@ -47055,7 +47057,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                   allow_timeline_collapse_dirty=(
                                       allow_timeline_collapse
                                   ),
-                                  allow_mech_loss_dirty=allow_lightning_speed_loss,
+                                  allow_mech_loss_dirty=(
+                                      (dirty_consent_validated and allow_mech_loss)
+                                      or allow_lightning_speed_loss
+                                  ),
                                   allow_pod_loss_dirty=allow_lightning_pod_loss,
                                   allow_pod_destroy_dirty=(
                                       destroy_time_pods_active

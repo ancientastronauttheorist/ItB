@@ -1210,6 +1210,14 @@ def main():
         ),
     )
     p_auto_turn.add_argument(
+        "--allow-mech-loss",
+        action="store_true",
+        help=(
+            "Stress-test escape hatch: with exact dirty consent, allow "
+            "predicted mech loss"
+        ),
+    )
+    p_auto_turn.add_argument(
         "--destroy-time-pods",
         action="store_true",
         help="Bias combat solving toward destroying Time Pods instead of collecting them",
@@ -2441,6 +2449,7 @@ def main():
                       allow_protected_objective_loss=args.allow_protected_objective_loss,
                       allow_objective_loss=args.allow_objective_loss,
                       allow_timeline_collapse=args.allow_timeline_collapse,
+                      allow_mech_loss=args.allow_mech_loss,
                       destroy_time_pods=args.destroy_time_pods,
                       pause_between_actions=args.pause_between_actions,
                       frontier_diagnostics=args.frontier_diagnostics)
