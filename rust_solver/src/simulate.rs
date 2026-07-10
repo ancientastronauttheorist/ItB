@@ -71,7 +71,7 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
         });
 
         apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
-        apply_explosive_decay_tile_effects(board, nx, ny, status_blocked);
+        apply_death_burst_tile_effects(board, nx, ny, status_blocked, false);
 
         if let Some(idx) = chain_idx {
             if board.units[idx].hp <= 0 {
@@ -81,8 +81,14 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
     }
 }
 
-fn apply_explosive_decay_tile_effects(board: &mut Board, x: u8, y: u8, status_blocked: bool) {
-    if board.tile(x, y).terrain != Terrain::Forest {
+fn apply_death_burst_tile_effects(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    status_blocked: bool,
+    frozen_absorbed_damage: bool,
+) {
+    if frozen_absorbed_damage || board.tile(x, y).terrain != Terrain::Forest {
         return;
     }
 
@@ -122,9 +128,24 @@ pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mu
         let nx = nx as u8;
         let ny = ny as u8;
 
+        let (status_blocked, frozen_absorbed_damage) = board.unit_at(nx, ny)
+            .map(|idx| {
+                (
+                    board.units[idx].shield() || board.units[idx].frozen(),
+                    board.units[idx].frozen(),
+                )
+            })
+            .unwrap_or((false, false));
         let chain_idx = blast_explosion_chain_candidate(board, nx, ny);
         // Apply 1 bump damage (ignores armor/acid)
         apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
+        apply_death_burst_tile_effects(
+            board,
+            nx,
+            ny,
+            status_blocked,
+            frozen_absorbed_damage,
+        );
         if let Some(idx) = chain_idx {
             if board.units[idx].hp <= 0 {
                 apply_death_explosion(board, nx, ny, result, depth + 1);
@@ -636,7 +657,7 @@ fn clear_unit_web(board: &mut Board, unit_idx: usize) {
     }
 }
 
-fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
+pub(crate) fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
     let terrain = board.tile(x, y).terrain;
     if !terrain.is_deadly_ground() || terrain == Terrain::Water {
         let tile = board.tile_mut(x, y);
@@ -1425,7 +1446,7 @@ fn finish_instant_unit_death(
 /// caller has resolved a simultaneous push. Used for single SpaceDamage-style
 /// damage+push hits where live game death effects occur from the final corpse
 /// tile rather than the pre-push damage tile.
-fn apply_damage_defer_death_explosion(
+pub(crate) fn apply_damage_defer_death_explosion(
     board: &mut Board,
     x: u8,
     y: u8,
@@ -12774,6 +12795,26 @@ mod tests {
         );
         assert_eq!(result.enemies_killed, 2);
         assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_blast_psion_burst_frozen_unit_preserves_forest() {
+        let mut board = make_test_board();
+        let frozen = add_mech(&mut board, 0, 4, 3, 2, WId::None);
+        board.units[frozen].set_frozen(true);
+        board.tile_mut(4, 3).terrain = Terrain::Forest;
+
+        let mut result = ActionResult::default();
+        apply_death_explosion(&mut board, 3, 3, &mut result, 0);
+
+        assert_eq!(board.units[frozen].hp, 2, "Frozen absorbs the burst damage");
+        assert!(!board.units[frozen].frozen(), "burst thaws the unit");
+        assert_eq!(
+            board.tile(4, 3).terrain,
+            Terrain::Forest,
+            "Frozen absorption must also prevent Forest ignition",
+        );
+        assert!(!board.tile(4, 3).on_fire());
     }
 
     #[test]

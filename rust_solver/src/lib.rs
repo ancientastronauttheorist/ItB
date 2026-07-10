@@ -2192,7 +2192,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v341 - Hydraulic Legs defers Blast Psion death bursts until after its
 //   outward push, so a killed target explodes from the final corpse tile.
 //   Pre-v341 corpus archived as failure_db_snapshot_sim_v340.jsonl.
-pub const SIMULATOR_VERSION: u32 = 341;
+// v342 - Lethal Burnbug/Gastropod hooks finish dragging the captured corpse
+//   before deferred Blast Psion death effects resolve; ACID pools follow the
+//   corpse, and Blast death bursts ignite adjacent Forest. Pre-v342 corpus
+//   archived as failure_db_snapshot_sim_v341.jsonl.
+pub const SIMULATOR_VERSION: u32 = 342;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

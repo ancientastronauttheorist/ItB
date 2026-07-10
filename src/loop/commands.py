@@ -4934,6 +4934,10 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         deltas["pods_present_diff"] = (
             actual["pods_present"] - predicted["pods_present"]
         )
+        # Start fail-closed. A later positional classifier may explain some
+        # losses as contact from an emergent Vek that the one-turn projection
+        # intentionally cannot instantiate or route.
+        deltas["pods_present_unexplained_diff"] = deltas["pods_present_diff"]
     if (
         "protected_objective_units_alive" in predicted
         and "protected_objective_units_alive" in actual
@@ -5083,6 +5087,160 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     return deltas
 
 
+def _checkpoint_pod_positions(checkpoint: dict) -> set[tuple[int, int]] | None:
+    if not isinstance(checkpoint, dict) or not isinstance(checkpoint.get("tiles"), list):
+        return None
+    positions: set[tuple[int, int]] = set()
+    for tile in checkpoint["tiles"]:
+        if not isinstance(tile, dict) or tile.get("has_pod") is not True:
+            continue
+        x = tile.get("x")
+        y = tile.get("y")
+        if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+            positions.add((x, y))
+    return positions
+
+
+def _checkpoint_enemy_uids(checkpoint: dict) -> set[int] | None:
+    if not isinstance(checkpoint, dict) or not isinstance(checkpoint.get("units"), list):
+        return None
+    uids: set[int] = set()
+    for unit in checkpoint["units"]:
+        if not isinstance(unit, dict):
+            return None
+        uid = unit.get("uid")
+        if not isinstance(uid, int) or isinstance(uid, bool):
+            return None
+        team = unit.get("team")
+        is_enemy = unit.get("is_enemy")
+        if isinstance(team, int) and not isinstance(team, bool):
+            enemy = team == 6
+        elif isinstance(is_enemy, bool):
+            enemy = is_enemy
+        else:
+            return None
+        if enemy:
+            uids.add(uid)
+    return uids
+
+
+def _checkpoint_spawn_positions(checkpoint: dict) -> set[tuple[int, int]] | None:
+    if (
+        not isinstance(checkpoint, dict)
+        or not isinstance(checkpoint.get("spawning_tiles"), list)
+    ):
+        return None
+    positions: set[tuple[int, int]] = set()
+    for item in checkpoint["spawning_tiles"]:
+        if not isinstance(item, (list, tuple)) or len(item) < 2:
+            return None
+        x, y = item[0], item[1]
+        if not isinstance(x, int) or not isinstance(y, int) or not (0 <= x < 8 and 0 <= y < 8):
+            return None
+        positions.add((x, y))
+    return positions
+
+
+def _classify_emergent_enemy_pod_losses(
+    deltas: dict,
+    solve_data: dict,
+    board: Board,
+    *,
+    actual_turn: int | None,
+    expected_turn: int,
+) -> dict:
+    """Explain only pod losses caused by a newly materialized Vek landing.
+
+    The turn projection resolves spawn blocking but does not know which Vek
+    emerges or where it moves. Preserve the raw count delta, but do not gate on
+    a lost pod when complete checkpoint evidence shows a living, previously
+    absent enemy occupying that exact predicted pod tile in the exact next-turn
+    window. Missing or partial positional evidence remains fail-closed.
+    """
+    raw_diff = int(deltas.get("pods_present_diff", 0) or 0)
+    deltas["pods_present_unexplained_diff"] = raw_diff
+    deltas["emergent_enemy_pod_losses"] = []
+    if raw_diff >= 0 or actual_turn != expected_turn or not isinstance(solve_data, dict):
+        return deltas
+
+    post_player = solve_data.get("post_player_board")
+    final_board = solve_data.get("final_board")
+    post_pods = _checkpoint_pod_positions(post_player)
+    final_pods = _checkpoint_pod_positions(final_board)
+    post_enemy_uids = _checkpoint_enemy_uids(post_player)
+    final_enemy_uids = _checkpoint_enemy_uids(final_board)
+    spawn_positions = _checkpoint_spawn_positions(post_player)
+    if None in (
+        post_pods,
+        final_pods,
+        post_enemy_uids,
+        final_enemy_uids,
+        spawn_positions,
+    ):
+        return deltas
+
+    # A real pod does not move. Requiring it in both checkpoints prevents a
+    # stale/partial board from manufacturing an explanation.
+    predicted_pods = post_pods & final_pods
+    if not predicted_pods:
+        return deltas
+    known_enemy_uids = post_enemy_uids | final_enemy_uids
+
+    new_enemies_by_pos: dict[tuple[int, int], Unit] = {}
+    for unit in board.units:
+        if (
+            not getattr(unit, "is_enemy", False)
+            or int(getattr(unit, "hp", 0) or 0) <= 0
+            or getattr(unit, "is_extra_tile", False)
+            or getattr(unit, "minor", False)
+            or int(getattr(unit, "uid", -1)) in known_enemy_uids
+        ):
+            continue
+        move_speed = max(0, int(getattr(unit, "move_speed", 0) or 0))
+        if not any(
+            abs(int(unit.x) - sx) + abs(int(unit.y) - sy) <= move_speed
+            for sx, sy in spawn_positions
+        ):
+            continue
+        new_enemies_by_pos[(int(unit.x), int(unit.y))] = unit
+
+    max_explanations = -raw_diff
+    explained: list[dict] = []
+    for x, y in sorted(predicted_pods):
+        if len(explained) >= max_explanations:
+            break
+        if board.tile(x, y).has_pod:
+            continue
+        enemy = new_enemies_by_pos.get((x, y))
+        if enemy is None:
+            continue
+        explained.append({
+            "pos": [x, y],
+            "uid": int(enemy.uid),
+            "type": str(enemy.type),
+            "reason": "emergent_enemy_reachable_from_spawn_occupied_predicted_pod_tile",
+        })
+
+    unexplained_diff = min(0, raw_diff + len(explained))
+    deltas["pods_present_unexplained_diff"] = unexplained_diff
+    deltas["emergent_enemy_pod_losses"] = explained
+    if explained:
+        unexpected = [
+            event for event in deltas.get("unexpected_events", [])
+            if not (
+                isinstance(event, str)
+                and event.startswith("Lost ")
+                and event.endswith(" unexpected pod(s)")
+            )
+        ]
+        if unexplained_diff < 0:
+            unexpected.append(
+                f"Lost {-unexplained_diff} unexpected pod(s)"
+            )
+        deltas["unexpected_events"] = unexpected
+    return deltas
+
+
 def _post_enemy_record_path(session: RunSession, solved_turn: int) -> Path:
     run_dir = _recording_dir(session)
     return run_dir / (
@@ -5144,12 +5302,19 @@ def _post_enemy_needs_investigation(
             "grid_power_diff",
             "buildings_alive_diff",
             "building_hp_diff",
-            "pods_present_diff",
             "protected_objective_units_alive_diff",
             "train_objective_value_diff",
             "protected_objective_units_frozen_diff",
         )
     ):
+        return True
+    if int(
+        deltas.get(
+            "pods_present_unexplained_diff",
+            deltas.get("pods_present_diff", 0),
+        )
+        or 0
+    ) < 0:
         return True
 
     if _blocks_mech_hp_loss_for_perfect_battle(session):
@@ -5261,6 +5426,13 @@ def _record_post_enemy(session: RunSession, board: Board,
 
     # Compute deltas
     deltas = _compute_deltas(predicted, actual)
+    deltas = _classify_emergent_enemy_pod_losses(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=actual_turn,
+        expected_turn=expected_turn,
+    )
 
     # Record post-enemy state
     _record_turn_state(session, "post_enemy", {

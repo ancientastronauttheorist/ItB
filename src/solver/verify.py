@@ -1592,7 +1592,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v341 - Hydraulic Legs defers Blast Psion death bursts until after its outward
 # push, so a killed target explodes from the final corpse tile. Pre-v341 corpus
 # archived as failure_db_snapshot_sim_v340.jsonl.
-SIMULATOR_VERSION = 341
+# v342 - Lethal Burnbug/Gastropod hooks finish dragging the captured corpse
+# before deferred Blast Psion death effects resolve; ACID pools follow the
+# corpse, and Blast death bursts ignite adjacent Forest. Pre-v342 corpus
+# archived as failure_db_snapshot_sim_v341.jsonl.
+SIMULATOR_VERSION = 342
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

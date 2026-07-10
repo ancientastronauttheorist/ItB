@@ -10,13 +10,16 @@ use crate::board::*;
 use crate::weapons::*;
 use crate::simulate::{
     apply_damage,
+    apply_damage_defer_death_explosion,
     apply_damage_with_bombrock_exclusion,
+    apply_death_explosion,
     apply_push,
     apply_push_no_edge_bump,
     apply_teleport_on_land,
     apply_weapon_status,
     apply_weapon_status_with_impact_occupancy,
     flush_deferred_bump_grid_debt,
+    leave_acid_pool_on_death,
     on_enemy_death,
     place_smoke,
     settle_building_grid_loss,
@@ -1383,9 +1386,44 @@ pub fn simulate_enemy_attacks(
                         tile.terrain == Terrain::Mountain
                             || (tile.terrain == Terrain::Building && tile.building_hp > 0)
                     };
+                    // Burnbug/Gastropod hooks queue damage before their
+                    // charge. Capture the pawn now because a lethal hit makes
+                    // `unit_at` skip the corpse even though the queued charge
+                    // still drags it toward the attacker.
+                    let grapple_target = if wdef.projectile_grapple() {
+                        board.unit_at(tx, ty).map(|idx| {
+                            (
+                                idx,
+                                board.units[idx].hp,
+                                board.units[idx].acid(),
+                                board.tile(tx, ty).acid(),
+                                board.units[idx].x,
+                                board.units[idx].y,
+                            )
+                        })
+                    } else {
+                        None
+                    };
                     let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
-                    apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    let deferred_death_explosion = if wdef.projectile_grapple() {
+                        apply_damage_defer_death_explosion(
+                            board,
+                            tx,
+                            ty,
+                            d,
+                            &mut result,
+                            DamageSource::Weapon,
+                        )
+                    } else {
+                        apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                        None
+                    };
+                    let grapple_killed_by_hit = grapple_target
+                        .map(|(idx, pre_hp, _, _, _, _)| {
+                            pre_hp > 0 && board.units[idx].hp <= 0
+                        })
+                        .unwrap_or(false);
                     if wdef.fire() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             let target_is_immune_vek = board.fire_psion
@@ -1423,7 +1461,34 @@ pub fn simulate_enemy_attacks(
                         if let Some(dir) = projectile_dir_from_queued_or_current(
                             ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                         ) {
-                            apply_projectile_grapple(board, ei, tx, ty, dir, hit_was_object, &mut result);
+                            apply_projectile_grapple(
+                                board,
+                                ei,
+                                grapple_target.map(|(idx, _, _, _, _, _)| idx),
+                                tx,
+                                ty,
+                                dir,
+                                hit_was_object,
+                                grapple_killed_by_hit,
+                                &mut result,
+                            );
+                        }
+
+                        if let Some((idx, _, was_acid, tile_had_acid, ox, oy)) = grapple_target {
+                            let fx = board.units[idx].x;
+                            let fy = board.units[idx].y;
+                            if grapple_killed_by_hit && was_acid && (fx, fy) != (ox, oy) {
+                                if !tile_had_acid {
+                                    board.tile_mut(ox, oy).flags.remove(TileFlags::ACID);
+                                }
+                                leave_acid_pool_on_death(board, fx, fy);
+                            }
+                        }
+
+                        if let Some(idx) = deferred_death_explosion {
+                            let ex = board.units[idx].x;
+                            let ey = board.units[idx].y;
+                            apply_death_explosion(board, ex, ey, &mut result, 0);
                         }
                     }
 
@@ -2504,15 +2569,17 @@ fn projectile_dir_from_queued_or_current(
 fn apply_projectile_grapple(
     board: &mut Board,
     attacker_idx: usize,
+    target_idx: Option<usize>,
     hit_x: u8,
     hit_y: u8,
     dir: usize,
     hit_was_object: bool,
+    direct_hit_killed_target: bool,
     result: &mut ActionResult,
 ) {
-    if let Some(target_idx) = board.unit_at(hit_x, hit_y) {
+    if let Some(target_idx) = target_idx {
         if target_idx == attacker_idx
-            || board.units[target_idx].hp <= 0
+            || (board.units[target_idx].hp <= 0 && !direct_hit_killed_target)
             || !board.units[target_idx].pushable()
         {
             return;
@@ -2526,7 +2593,7 @@ fn apply_projectile_grapple(
                 break;
             }
             apply_push(board, cx, cy, pull_dir, result);
-            if board.units[target_idx].hp <= 0 {
+            if board.units[target_idx].hp <= 0 && !direct_hit_killed_target {
                 break;
             }
             let (nx, ny) = (board.units[target_idx].x, board.units[target_idx].y);
@@ -3379,6 +3446,61 @@ mod tests {
         assert_eq!(board.units[target_idx].hp, 2, "Hook deals 1 damage");
         assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (3, 2),
             "Hook pulls the hit pawn until adjacent to the Gastropod");
+    }
+
+    #[test]
+    fn test_lethal_gastropod_grapple_moves_corpse_before_blast_psion_burst() {
+        let mut board = Board::default();
+        board.grid_power = 5;
+        board.grid_power_max = 7;
+        board.blast_psion = true;
+        board.tile_mut(3, 6).terrain = Terrain::Building;
+        board.tile_mut(3, 6).building_hp = 2;
+        board.tile_mut(5, 6).terrain = Terrain::Building;
+        board.tile_mut(5, 6).building_hp = 2;
+        board.tile_mut(5, 4).terrain = Terrain::Forest;
+        board.tile_mut(5, 5).set_has_pod(true);
+
+        let attacker_idx = add_enemy_with_type(
+            &mut board, 359, 6, 5, 4, "Burnbug2", 5, 5,
+        );
+        add_enemy_with_type(&mut board, 360, 1, 1, 2, "Jelly_Explode1", -1, -1);
+        let target_idx = add_enemy_with_type(
+            &mut board, 361, 3, 5, 4, "Burnbug2", 3, 5,
+        );
+        board.units[target_idx].set_acid(true);
+        board.attack_order = vec![359, 360, 361];
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[target_idx].hp <= 0);
+        assert_eq!(
+            (board.units[target_idx].x, board.units[target_idx].y),
+            (5, 5),
+            "lethally hooked corpse should finish adjacent to the Gastropod",
+        );
+        assert_eq!(
+            board.units[attacker_idx].hp, 3,
+            "Blast burst must damage the attacker beside the final corpse tile",
+        );
+        assert_eq!(
+            board.tile(3, 6).building_hp, 2,
+            "old death-tile neighbor must not receive the deferred burst",
+        );
+        assert_eq!(
+            board.tile(5, 6).building_hp, 1,
+            "final death-tile neighbor must receive the deferred burst",
+        );
+        assert_eq!(board.grid_power, 4);
+        assert!(!board.tile(3, 5).acid(), "new ACID pool must leave the old tile");
+        assert!(board.tile(5, 5).acid(), "ACID pool must follow the corpse");
+        assert_eq!(board.tile(5, 4).terrain, Terrain::Ground);
+        assert!(board.tile(5, 4).on_fire(), "Blast burst should ignite Forest");
+        assert!(
+            board.tile(5, 5).has_pod(),
+            "dead corpse movement does not destroy a pod; the live emergent Vek does",
+        );
     }
 
     #[test]

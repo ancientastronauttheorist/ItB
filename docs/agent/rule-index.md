@@ -428,3 +428,5 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 427 | 751 | Hydraulic Legs death bursts resolve from the pushed corpse tile. | `docs/agent/solver-reference.md` |
 | 428 | 753 | Delayed player-attack follow-ups need authoritative settle rereads. | `docs/agent/safety-gates.md` |
 | 429 | 755 | Partial re-solve threat audits use the post-player board. | `docs/agent/safety-gates.md` |
+| 430 | 757 | Lethal Gastropod hooks drag the corpse before queued death effects. | `docs/agent/solver-reference.md` |
+| 431 | 759 | Exact emergent-Vek pod contact is an explained projection gap. | `docs/agent/safety-gates.md` |

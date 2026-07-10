@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 
 from src.loop import commands
@@ -49,6 +51,49 @@ def _bridge(turn: int = 3) -> dict:
         "active_mechs": 3,
         "units": [],
         "tiles": [],
+    }
+
+
+def _enemy(uid: int, x: int, y: int, *, minor: bool = False) -> Unit:
+    return Unit(
+        uid=uid,
+        type="Leaper2",
+        x=x,
+        y=y,
+        hp=3,
+        max_hp=3,
+        team=6,
+        is_mech=False,
+        move_speed=4,
+        flying=False,
+        massive=False,
+        armor=False,
+        pushable=True,
+        weapon="LeaperAtk2",
+        active=False,
+        minor=minor,
+    )
+
+
+def _pod_checkpoints(
+    positions: list[tuple[int, int]],
+    enemy_uids: list[int] | None = None,
+) -> dict:
+    units = [
+        {"uid": uid, "team": 6, "hp": 1, "x": 0, "y": 0}
+        for uid in (enemy_uids or [])
+    ]
+    checkpoint = {
+        "tiles": [
+            {"x": x, "y": y, "terrain": "ground", "has_pod": True}
+            for x, y in positions
+        ],
+        "units": units,
+        "spawning_tiles": [[7, 4]],
+    }
+    return {
+        "post_player_board": checkpoint,
+        "final_board": json.loads(json.dumps(checkpoint)),
     }
 
 
@@ -331,6 +376,168 @@ def test_record_post_enemy_blocks_unexpected_pod_loss(tmp_path, monkeypatch):
     assert "Lost 1 unexpected pod(s)" in result["deltas"]["unexpected_events"]
     assert session.post_enemy_block is not None
     assert session.post_enemy_block["deltas"]["pods_present_diff"] == -1
+
+
+def test_record_post_enemy_explains_pod_lost_to_emergent_enemy(
+    tmp_path,
+    monkeypatch,
+):
+    from src.solver import analysis
+
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    monkeypatch.setattr(analysis, "append_to_failure_db", lambda *args, **kwargs: None)
+    session = RunSession(run_id="run")
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    solve_data = {
+        "predicted_board_summary": {
+            "buildings_alive": 6,
+            "building_hp_total": 7,
+            "grid_power": 6,
+            "enemies_alive": 0,
+            "pods_present": 1,
+            "mech_hp": [],
+        },
+        "search_stats": {},
+        "actions": [{"mech_uid": 0}],
+        **_pod_checkpoints([(5, 5)]),
+    }
+    (run_dir / "m11_turn_01_solve.json").write_text(json.dumps({"data": solve_data}))
+
+    actual = _board(6)
+    actual.units.append(_enemy(369, 5, 5))
+    result = commands._record_post_enemy(
+        session,
+        actual,
+        1,
+        bridge_data={"phase": "combat_player", "turn": 2},
+    )
+
+    assert result["status"] == "POST_ENEMY_RECORDED"
+    assert result["blocking"] is False
+    assert result["deltas"]["pods_present_diff"] == -1
+    assert result["deltas"]["pods_present_unexplained_diff"] == 0
+    assert result["deltas"]["emergent_enemy_pod_losses"] == [{
+        "pos": [5, 5],
+        "uid": 369,
+        "type": "Leaper2",
+        "reason": "emergent_enemy_reachable_from_spawn_occupied_predicted_pod_tile",
+    }]
+    assert not any(
+        "unexpected pod" in event
+        for event in result["deltas"]["unexpected_events"]
+    )
+    assert session.post_enemy_block is None
+
+
+def test_emergent_pod_classifier_fails_closed_for_known_or_wrong_tile_enemy():
+    base = {
+        "pods_present_diff": -1,
+        "pods_present_unexplained_diff": -1,
+        "unexpected_events": ["Lost 1 unexpected pod(s)"],
+    }
+    for enemy, known_uids in ((_enemy(100, 5, 5), [100]), (_enemy(369, 4, 5), [])):
+        board = _board(6)
+        board.units.append(enemy)
+        result = commands._classify_emergent_enemy_pod_losses(
+            dict(base),
+            _pod_checkpoints([(5, 5)], known_uids),
+            board,
+            actual_turn=2,
+            expected_turn=2,
+        )
+        assert result["pods_present_unexplained_diff"] == -1
+        assert result["emergent_enemy_pod_losses"] == []
+        assert commands._post_enemy_needs_investigation(result)
+
+
+def test_emergent_pod_classifier_fails_closed_for_partial_checkpoint_identity():
+    board = _board(6)
+    board.units.append(_enemy(369, 5, 5))
+    checkpoints = _pod_checkpoints([(5, 5)])
+    checkpoints["post_player_board"]["units"] = [{"team": 6}]
+    result = commands._classify_emergent_enemy_pod_losses(
+        {
+            "pods_present_diff": -1,
+            "pods_present_unexplained_diff": -1,
+            "unexpected_events": ["Lost 1 unexpected pod(s)"],
+        },
+        checkpoints,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["pods_present_unexplained_diff"] == -1
+    assert result["emergent_enemy_pod_losses"] == []
+    assert commands._post_enemy_needs_investigation(result)
+
+
+def test_emergent_pod_classifier_does_not_explain_new_minor_or_unreachable_enemy():
+    base = {
+        "pods_present_diff": -1,
+        "pods_present_unexplained_diff": -1,
+        "unexpected_events": ["Lost 1 unexpected pod(s)"],
+    }
+    for enemy in (_enemy(369, 5, 5, minor=True), _enemy(370, 0, 0)):
+        board = _board(6)
+        board.units.append(enemy)
+        result = commands._classify_emergent_enemy_pod_losses(
+            dict(base),
+            _pod_checkpoints([(enemy.x, enemy.y)]),
+            board,
+            actual_turn=2,
+            expected_turn=2,
+        )
+        assert result["pods_present_unexplained_diff"] == -1
+        assert result["emergent_enemy_pod_losses"] == []
+        assert commands._post_enemy_needs_investigation(result)
+
+
+def test_emergent_pod_classifier_only_suppresses_matched_loss():
+    board = _board(6)
+    board.units.append(_enemy(369, 5, 5))
+    result = commands._classify_emergent_enemy_pod_losses(
+        {
+            "pods_present_diff": -2,
+            "pods_present_unexplained_diff": -2,
+            "unexpected_events": ["Lost 2 unexpected pod(s)"],
+        },
+        _pod_checkpoints([(5, 5), (4, 4)]),
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["pods_present_diff"] == -2
+    assert result["pods_present_unexplained_diff"] == -1
+    assert len(result["emergent_enemy_pod_losses"]) == 1
+    assert "Lost 1 unexpected pod(s)" in result["unexpected_events"]
+    assert commands._post_enemy_needs_investigation(result)
+
+
+def test_explained_emergent_pod_loss_does_not_hide_grid_loss():
+    board = _board(5)
+    board.units.append(_enemy(369, 5, 5))
+    result = commands._classify_emergent_enemy_pod_losses(
+        {
+            "grid_power_diff": -1,
+            "pods_present_diff": -1,
+            "pods_present_unexplained_diff": -1,
+            "unexpected_events": [
+                "Grid power dropped by 1 unexpectedly",
+                "Lost 1 unexpected pod(s)",
+            ],
+        },
+        _pod_checkpoints([(5, 5)]),
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["pods_present_unexplained_diff"] == 0
+    assert commands._post_enemy_needs_investigation(result)
 
 
 def test_record_post_enemy_records_nonlethal_mech_damage_for_lightning_war(
