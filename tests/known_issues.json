@@ -86,6 +86,24 @@
       "scope": "python",
       "reason": "Arachnophiles Efficient Explosives corpus board surfaced during the v320 Arachnoid Bite regression run. The 2s replay times out after all 120 permutations and chooses a dirty Ricochet/Area Shift line with one building-HP collateral; live auto_turn safety would block this before execution. Value-tuning/safety-wrapper case, unrelated to the spawned Arachnoid corpse-bump simulator fix.",
       "acknowledged": "2026-07-03"
+    },
+    {
+      "run_id": "20260703_004111_094",
+      "mission": 9,
+      "turn": 2,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Arachnophiles Mission_BouncerBoss turn 2: Arachnoid Bite spends one HP on the already doubly-targeted E5 building to kill BouncerBoss. No-self-damage alternatives leave the boss alive, forfeit the destroy-boss objective, and preserve no additional final grid or building HP. Predicted and live final infrastructure agree, so this is trigger/value semantics rather than a simulator regression and is unrelated to v340 Totem projectile tracing.",
+      "acknowledged": "2026-07-10"
+    },
+    {
+      "run_id": "20260705_021942_077",
+      "mission": 36,
+      "turn": 2,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Heat Sinkers Mission_ScorpionBoss turn 2: the Maximum Firepower achievement bonus saturates the 1,000-candidate frontier with infrastructure-loss lines, including Inferno's knowingly dirty Thermal Discharger shot. Every exposed candidate loses grid or building HP; live safety marks and dirty-blocks the selected line. This is achievement value-tuning/frontier coverage, not a simulator semantic regression, and the board contains no Totem affected by v340.",
+      "acknowledged": "2026-07-10"
     }
   ]
 }
