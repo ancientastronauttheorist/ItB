@@ -1166,6 +1166,46 @@ def test_prime_leap_delayed_blast_building_damage_gets_settle_retry():
     ) is True
 
 
+def test_prime_leap_delayed_push_position_gets_settle_retry():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 364,
+        "type": "Jelly_Explode1",
+        "field": "pos",
+        "predicted": [7, 3],
+        "actual": [6, 3],
+    }])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Prime_Leap", "attack"
+    ) is True
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Prime_Leap_AB", "attack"
+    ) is True
+
+
+def test_prime_leap_push_settle_retry_rejects_mixed_status_diff():
+    diff = DiffResult(unit_diffs=[
+        {
+            "uid": 364,
+            "type": "Jelly_Explode1",
+            "field": "pos",
+            "predicted": [7, 3],
+            "actual": [6, 3],
+        },
+        {
+            "uid": 364,
+            "type": "Jelly_Explode1",
+            "field": "status.fire",
+            "predicted": True,
+            "actual": False,
+        },
+    ])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Prime_Leap", "attack"
+    ) is False
+
+
 def test_prime_leap_settle_retry_rejects_mixed_or_worse_live_diff():
     mixed = DiffResult(
         tile_diffs=[{

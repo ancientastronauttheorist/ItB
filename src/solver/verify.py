@@ -1600,7 +1600,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Prime_Leap variant. Recursive search still re-enumerates the weapon after a
 # prior action kills the web source and releases the grapple. Pre-v343 corpus
 # archive is failure_db_snapshot_sim_v342.jsonl.
-SIMULATOR_VERSION = 343
+# v344 - A successfully pushed flying Hydraulic Legs target no longer carries
+# Fire newly acquired from its burning origin onto a clean destination.
+# Pre-existing Fire, blocked pushes, and burning/Lava destinations preserve
+# Fire.
+SIMULATOR_VERSION = 344
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

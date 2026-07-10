@@ -4640,16 +4640,34 @@ def _is_transient_delayed_multihit_damage_diff(
 
     Tri-Rocket's three impacts and Hydraulic Legs' Blast Psion follow-up can
     land after the bridge command ACK and the first state refresh. Limit this
-    retry classification to damage that is strictly behind the prediction;
-    mixed scalar/status/position diffs still go through the desync gate.
+    retry classification to damage that is strictly behind the prediction.
+    Hydraulic Legs can also expose the pre-push position for one bridge read;
+    retry that exact one-tile, position-only lag. Mixed scalar/status diffs
+    still go through the desync gate.
     """
     if phase != "attack":
         return False
     weapon = str(weapon_name or "")
     if weapon.startswith("Prime_Leap"):
-        if getattr(diff, "unit_diffs", []) or getattr(diff, "scalar_diffs", []):
+        if getattr(diff, "scalar_diffs", []):
             return False
+        unit_diffs = getattr(diff, "unit_diffs", []) or []
         tile_diffs = getattr(diff, "tile_diffs", []) or []
+        if unit_diffs:
+            if tile_diffs:
+                return False
+            return all(
+                ud.get("field") == "pos"
+                and isinstance(ud.get("predicted"), (list, tuple))
+                and isinstance(ud.get("actual"), (list, tuple))
+                and len(ud["predicted"]) == 2
+                and len(ud["actual"]) == 2
+                and sum(
+                    abs(int(ud["predicted"][i]) - int(ud["actual"][i]))
+                    for i in (0, 1)
+                ) == 1
+                for ud in unit_diffs
+            )
         if not tile_diffs:
             return False
         return all(

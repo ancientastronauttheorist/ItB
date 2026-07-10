@@ -2200,7 +2200,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Prime_Leap variant. Recursive search still re-enumerates the weapon after
 //   a prior action kills the web source and releases the grapple. Pre-v343
 //   corpus archive is failure_db_snapshot_sim_v342.jsonl.
-pub const SIMULATOR_VERSION: u32 = 343;
+// v344 - A successfully pushed flying Hydraulic Legs target no longer carries
+//   Fire newly acquired from its burning origin onto a clean destination.
+//   Pre-existing Fire, blocked pushes, and burning/Lava destinations preserve
+//   Fire.
+pub const SIMULATOR_VERSION: u32 = 344;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

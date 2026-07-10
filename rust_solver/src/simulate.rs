@@ -6344,6 +6344,8 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
             if !in_bounds(nx, ny) { continue; }
             let hx = nx as u8;
             let hy = ny as u8;
+            let pre_hit_was_fire = board.unit_at(hx, hy).map(|idx| board.units[idx].fire());
+            let pre_hit_origin_was_fire = board.tile(hx, hy).on_fire();
             let pre_hit_unit = board.unit_at(hx, hy).map(|idx| {
                 (
                     idx,
@@ -6403,6 +6405,21 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                 let fx = board.units[idx].x;
                 let fy = board.units[idx].y;
                 let moved = (fx, fy) != (ox, oy);
+                let destination_is_fire = board.tile(fx, fy).on_fire()
+                    || board.tile(fx, fy).terrain == Terrain::Lava;
+                if is_prime_leap_weapon(weapon_id)
+                    && moved
+                    && was_flying
+                    && board.units[idx].hp > 0
+                    && pre_hit_was_fire == Some(false)
+                    && pre_hit_origin_was_fire
+                    && !destination_is_fire
+                {
+                    // Hydraulic Legs' damage and outward push are one live
+                    // SpaceDamage. A flying pawn displaced off burning ground
+                    // does not carry the origin tile's newly refreshed Fire.
+                    board.units[idx].set_fire(false);
+                }
                 let died_after_push = pre_hp > 0 && board.units[idx].hp <= 0 && !killed_by_hit;
                 let dest_terrain = board.tile(fx, fy).terrain;
                 let deadly_terrain_kill = died_after_push
@@ -11620,6 +11637,57 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_pushed_flying_target_does_not_carry_new_origin_fire() {
+        // Live run 20260710_062120_403, Mission_Train turn 1: Leap E6->E3
+        // damaged the non-burning Blast Psion above burning E2 and pushed it
+        // to clean E1. The settled pawn was at E1 with Fire still false.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 3, 3, WId::PrimeLeap);
+        let jelly_idx = add_enemy_type(&mut board, 364, 6, 3, 2, "Jelly_Explode1");
+        board.units[jelly_idx].flags.insert(UnitFlags::FLYING);
+        board.tile_mut(6, 3).set_on_fire(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!(board.units[jelly_idx].hp, 1);
+        assert_eq!((board.units[jelly_idx].x, board.units[jelly_idx].y), (7, 3));
+        assert!(!board.units[jelly_idx].fire());
+        assert!(board.tile(6, 3).on_fire(), "origin ground remains burning");
+    }
+
+    #[test]
+    fn test_prime_leap_blocked_flying_target_still_picks_up_origin_fire() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 3, 3, WId::PrimeLeap);
+        let jelly_idx = add_enemy_type(&mut board, 364, 6, 3, 3, "Jelly_Explode1");
+        board.units[jelly_idx].flags.insert(UnitFlags::FLYING);
+        board.tile_mut(6, 3).set_on_fire(true);
+        board.tile_mut(7, 3).terrain = Terrain::Mountain;
+        board.tile_mut(7, 3).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!(board.units[jelly_idx].hp, 1, "damage plus blocked-push bump");
+        assert_eq!((board.units[jelly_idx].x, board.units[jelly_idx].y), (6, 3));
+        assert!(board.units[jelly_idx].fire(), "blocked flyer remains over burning ground");
+    }
+
+    #[test]
+    fn test_prime_leap_pushed_flying_target_preserves_preexisting_fire() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 3, 3, WId::PrimeLeap);
+        let jelly_idx = add_enemy_type(&mut board, 364, 6, 3, 2, "Jelly_Explode1");
+        board.units[jelly_idx].flags.insert(UnitFlags::FLYING);
+        board.units[jelly_idx].set_fire(true);
+        board.tile_mut(6, 3).set_on_fire(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!((board.units[jelly_idx].x, board.units[jelly_idx].y), (7, 3));
+        assert!(board.units[jelly_idx].fire(), "pre-existing Fire follows the pushed flyer");
     }
 
     #[test]
