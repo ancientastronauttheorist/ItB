@@ -5295,6 +5295,40 @@ def _classify_next_turn_web_grapples(
     def plain_int(value) -> bool:
         return isinstance(value, int) and not isinstance(value, bool)
 
+    def checkpoint_queued_target(raw_source: dict) -> tuple[int, int] | None:
+        """Return the source's effective target at the post-player checkpoint."""
+        target = raw_source.get("queued_target")
+        if (
+            not isinstance(target, (list, tuple))
+            or len(target) != 2
+            or not all(plain_int(value) for value in target)
+            or not all(0 <= value < 8 for value in target)
+        ):
+            return None
+        origin = raw_source.get("queued_origin")
+        if origin is None:
+            return int(target[0]), int(target[1])
+        if (
+            not isinstance(origin, (list, tuple))
+            or len(origin) != 2
+            or not all(plain_int(value) for value in origin)
+            or not all(0 <= value < 8 for value in origin)
+            or not plain_int(raw_source.get("x"))
+            or not plain_int(raw_source.get("y"))
+        ):
+            return None
+        dx = int(target[0]) - int(origin[0])
+        dy = int(target[1]) - int(origin[1])
+        if dx != 0 and dy != 0:
+            return None
+        effective = (
+            int(raw_source["x"]) + dx,
+            int(raw_source["y"]) + dy,
+        )
+        if not all(0 <= value < 8 for value in effective):
+            return None
+        return effective
+
     previous_by_uid: dict[int, dict] = {}
     for raw in checkpoint_units:
         if not isinstance(raw, dict) or not plain_int(raw.get("uid")):
@@ -5350,7 +5384,7 @@ def _classify_next_turn_web_grapples(
             source = actual_by_uid.get(source_uid)
             previous_source = previous_by_uid.get(source_uid)
             previous_target = (
-                previous_source.get("queued_target")
+                checkpoint_queued_target(previous_source)
                 if isinstance(previous_source, dict)
                 else None
             )
@@ -5382,10 +5416,7 @@ def _classify_next_turn_web_grapples(
                 or not isinstance(previous_weapons, list)
                 or not previous_weapons
                 or previous_weapons[0] != str(source.weapon)
-                or not isinstance(previous_target, (list, tuple))
-                or len(previous_target) != 2
-                or not all(plain_int(value) for value in previous_target)
-                or not all(0 <= value < 8 for value in previous_target)
+                or previous_target is None
                 or (previous_target[0], previous_target[1])
                 == (int(mech.x), int(mech.y))
             ):

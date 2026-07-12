@@ -573,7 +573,13 @@ def test_unfair_post_enemy_gate_blocks_unexpected_mech_status():
     assert commands._post_enemy_needs_investigation(deltas, session)
 
 
-def _next_turn_web_case(*, previous_target=(5, 2), current_target=(6, 2)):
+def _next_turn_web_case(
+    *,
+    previous_target=(5, 2),
+    current_target=(6, 2),
+    previous_source_pos=(6, 1),
+    previous_origin=None,
+):
     board = _board(5)
     mech = board.units[0]
     mech.web = True
@@ -594,17 +600,18 @@ def _next_turn_web_case(*, previous_target=(5, 2), current_target=(6, 2)):
                     "x": mech.x,
                     "y": mech.y,
                 },
-                {
+                ({
                     "uid": source.uid,
                     "type": source.type,
                     "team": 6,
                     "hp": 2,
-                    "x": 6,
-                    "y": 1,
+                    "x": previous_source_pos[0],
+                    "y": previous_source_pos[1],
                     "weapons": ["LeaperAtk2"],
                     "has_queued_attack": True,
                     "queued_target": list(previous_target),
-                },
+                } | ({"queued_origin": list(previous_origin)}
+                     if previous_origin is not None else {})),
             ],
         },
     }
@@ -677,6 +684,41 @@ def test_next_turn_web_classifier_fails_closed_without_changed_queue():
     assert web_delta["unexplained_unexpected"] == [web_item]
     assert web_delta["next_turn_web_grapples"] == []
     assert commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_next_turn_web_classifier_normalizes_displaced_source_target():
+    board, solve_data, deltas, web_item = _next_turn_web_case(
+        previous_target=(6, 2),
+        previous_source_pos=(4, 2),
+        previous_origin=(5, 2),
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    web_delta = result["mech_status_diff"][0]
+    assert web_delta["unexpected"] == [web_item]
+    assert web_delta["unexplained_unexpected"] == []
+    assert web_delta["next_turn_web_grapples"] == [{
+        "uid": 0,
+        "type": "JetMech",
+        "pos": [6, 2],
+        "source_uid": 371,
+        "source_type": "Leaper2",
+        "previous_target": [5, 2],
+        "current_target": [6, 2],
+        "reason": "next_turn_web_source_retargeted_stationary_mech",
+    }]
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
         result,
         RunSession(run_id="run", difficulty=3),
     )
