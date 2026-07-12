@@ -1441,7 +1441,7 @@ def test_solve_execute_end_turn_accepts_direct_next_player_turn(monkeypatch):
     assert key_presses
 
 
-def test_solve_execute_end_turn_retries_spent_turn_quickly(monkeypatch):
+def test_solve_execute_end_turn_does_not_retry_ambiguous_spent_turn(monkeypatch):
     clicks = []
     key_presses = []
     capture_calls = []
@@ -1560,22 +1560,21 @@ def test_solve_execute_end_turn_retries_spent_turn_quickly(monkeypatch):
         fuzzy_block_min_actions=3,
     )
 
-    assert result["status"] == "PASS"
-    assert result["reason"] == "combat_post_end_turn_player_ready"
-    assert result["first_non_player_bridge"]["snapshot"]["phase"] == "combat_enemy"
-    assert result["first_player_ready_bridge"]["snapshot"]["turn"] == 3
-    assert clicks == [("end_turn", 0.0), ("end_turn", 0.0)]
-    assert key_presses
-    assert result["end_turn_retry_click"]["status"] == "OK"
-    assert result["end_turn_retry_elapsed_after_end_turn_seconds"] < 0.3
-    assert result["end_turn_retry_bridge_sample_count"] >= 1
+    assert result["status"] == "FAIL"
+    assert result["reason"] == "combat_post_end_turn_not_detected"
+    assert result["first_non_player_bridge"] is None
+    assert result["first_player_ready_bridge"] is None
+    assert clicks == [("end_turn", 0.0)]
+    assert key_presses == []
+    assert result["end_turn_retry_click"] is None
+    assert result["end_turn_retry_elapsed_after_end_turn_seconds"] is None
+    assert result["end_turn_retry_bridge_sample_count"] is None
     retry_events = [
         payload
         for event_type, payload in telemetry.events
         if event_type == "combat_end_turn_retry_click"
     ]
-    assert retry_events
-    assert retry_events[0]["elapsed_after_end_turn_seconds"] < 0.3
+    assert retry_events == []
 
 
 def test_solve_execute_end_turn_suppresses_retry_on_visual_transition(monkeypatch):

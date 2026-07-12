@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from src.loop import commands
-from src.loop.session import RunSession
+from src.loop.session import ActiveSolution, RunSession
 from src.model.board import Board, Unit
 
 
@@ -138,6 +138,156 @@ def test_post_enemy_settle_waits_for_ready_player_actors(monkeypatch):
     assert commands._active_player_action_count(settled) == 1
     assert data["phase"] == "combat_player"
     assert info["samples"] == 4
+
+
+def test_terminal_post_enemy_ready_accepts_exact_ordinary_mission_snapshot():
+    board = _board(3)
+    bridge = {
+        "phase": "unknown",
+        "turn": 4,
+        "in_active_mission": False,
+        "tiles": [{} for _ in range(64)],
+        "units": [],
+    }
+
+    assert commands._terminal_post_enemy_ready_for_audit(
+        board, bridge, solved_turn=3
+    )
+    assert not commands._terminal_post_enemy_ready_for_audit(
+        board, {**bridge, "in_active_mission": True}, solved_turn=3
+    )
+    assert not commands._terminal_post_enemy_ready_for_audit(
+        board, {**bridge, "turn": 5}, solved_turn=3
+    )
+    assert not commands._terminal_post_enemy_ready_for_audit(
+        board, {**bridge, "tiles": []}, solved_turn=3
+    )
+
+
+def test_same_turn_done_bridge_is_ambiguous_around_external_end_turn_click():
+    session = RunSession(run_id="run")
+    session.active_solution = ActiveSolution(actions=[], score=1.0, turn=3)
+    bridge = {
+        "phase": "combat_player",
+        "turn": 3,
+        "in_active_mission": True,
+    }
+
+    assert commands._same_turn_all_player_actors_done(session, bridge, 0)
+    assert not commands._same_turn_all_player_actors_done(session, bridge, 3)
+    assert not commands._same_turn_all_player_actors_done(
+        session, {**bridge, "turn": 4}, 0
+    )
+    assert not commands._same_turn_all_player_actors_done(
+        session, {**bridge, "phase": "combat_enemy"}, 0
+    )
+
+
+def test_terminal_post_enemy_audit_accounts_for_stale_grid_scalar(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "m11_turn_03_solve.json").write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 3,
+                "enemies_alive": 0,
+                "mech_hp": [],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(3)
+    actual.tiles[1][6].terrain = "rubble"
+    actual.tiles[1][6].building_hp = 0
+    actual.tiles[5][6].building_hp = 1
+    bridge = {
+        "phase": "unknown",
+        "turn": 4,
+        "in_active_mission": False,
+        "tiles": [{} for _ in range(64)],
+        "units": [],
+    }
+
+    result = commands._record_post_enemy(
+        session,
+        actual,
+        solved_turn=3,
+        bridge_data=bridge,
+    )
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
+    assert result["actual_outcome"]["visible_grid_power"] == 3
+    assert result["actual_outcome"]["pending_grid_debt"] == 2
+    assert result["actual_outcome"]["grid_power"] == 1
+    assert result["deltas"]["grid_power_diff"] == -2
+    assert result["deltas"]["buildings_alive_diff"] == -1
+    assert result["deltas"]["building_hp_diff"] == -2
+
+
+def test_terminal_grid_debt_uses_preplan_board_for_predicted_loss(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "m11_turn_03_solve.json").write_text(json.dumps({
+        "data": {
+            "current_outcome": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 3,
+            },
+            "predicted_board_summary": {
+                "buildings_alive": 5,
+                "building_hp_total": 5,
+                "grid_power": 1,
+                "enemies_alive": 0,
+                "mech_hp": [],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(3)
+    actual.tiles[1][6].terrain = "rubble"
+    actual.tiles[1][6].building_hp = 0
+    actual.tiles[5][6].building_hp = 1
+    bridge = {
+        "phase": "unknown",
+        "turn": 4,
+        "in_active_mission": False,
+        "tiles": [{} for _ in range(64)],
+        "units": [],
+    }
+
+    result = commands._record_post_enemy(
+        session,
+        actual,
+        solved_turn=3,
+        bridge_data=bridge,
+    )
+
+    assert result["status"] == "POST_ENEMY_RECORDED"
+    assert result["blocking"] is False
+    assert result["actual_outcome"]["visible_grid_power"] == 3
+    assert result["actual_outcome"]["pending_grid_debt"] == 2
+    assert result["actual_outcome"]["grid_power"] == 1
+    assert result["deltas"]["grid_power_diff"] == 0
+    assert result["deltas"]["buildings_alive_diff"] == 0
+    assert result["deltas"]["building_hp_diff"] == 0
 
 
 def test_post_enemy_settle_waits_when_buildings_worse_but_grid_not_yet(monkeypatch):

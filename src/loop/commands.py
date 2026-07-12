@@ -2286,6 +2286,54 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
         except (TypeError, ValueError):
             bridge_turn = 0
 
+    same_template_boundary = (
+        session.current_mission == mission_id
+        and session.last_mission_turn >= 1
+        and bridge_turn < session.last_mission_turn
+    )
+    different_template_boundary = bool(
+        session.current_mission
+        and session.current_mission != mission_id
+    )
+    if (
+        session.active_solution is not None
+        and (same_template_boundary or different_template_boundary)
+    ):
+        solved_turn = session.active_solution.turn
+        old_mission_index = session.mission_index
+        post_path = _post_enemy_record_path(session, solved_turn)
+        if not post_path.exists():
+            result = {
+                "status": "POST_ENEMY_AUDIT_MISSING",
+                "mission_index": old_mission_index,
+                "turn": solved_turn,
+                "blocking": True,
+                "source": "post_enemy_mission_boundary_guard",
+                "reason": "mission_boundary_before_post_enemy_audit",
+                "next_step": (
+                    "A new mission appeared before the prior solved turn's "
+                    "post-enemy audit was recorded. Stop before deployment or "
+                    "combat, inspect the terminal/reward evidence, and resolve "
+                    "the process or prediction miss explicitly."
+                ),
+            }
+            block = _install_post_enemy_block(session, result)
+            block["previous_mission"] = session.current_mission
+            block["next_mission"] = mission_id
+            session.post_enemy_block = block
+            print("\n" + "!" * 60)
+            print("! POST-ENEMY AUDIT MISSING AT MISSION BOUNDARY")
+            print(
+                f"!   {session.current_mission} m{old_mission_index:02d} "
+                f"turn {solved_turn} -> {mission_id}"
+            )
+            print("!   Stop before deployment or combat in the new mission.")
+            print("!" * 60)
+        # Whether an audit exists or the boundary guard had to fail closed,
+        # the old solution can never be executed against the new mission.
+        session.active_solution = None
+        session.actions_executed = 0
+
     if session.current_mission == mission_id:
         # Same template id. Detect a fresh instance via turn regression — the
         # bridge re-zeroes Game:GetTurnCount() at every mission start, so a
@@ -2293,8 +2341,7 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
         # the harness missed cmd_mission_end AND the next mission happens to
         # share the template name. Without this branch, the new mission's
         # recordings collide with the prior one's m## prefix.
-        if (session.last_mission_turn >= 1
-                and bridge_turn < session.last_mission_turn):
+        if same_template_boundary:
             print(
                 f"[auto_advance_mission] same-template boundary detected: "
                 f"{mission_id!r} turn {session.last_mission_turn} -> "
@@ -3657,6 +3704,29 @@ def _summary_with_pending_grid_debt(summary: dict, debt: int) -> dict:
     return out
 
 
+def _terminal_pending_grid_debt(baseline: dict, actual: dict) -> int:
+    """Infer a terminal snapshot's grid debt from visible building damage.
+
+    The bridge can preserve the pre-hit grid scalar after an ordinary mission
+    has already switched out of active combat, while its tile payload contains
+    the final rubble/building HP.  There is no following player-turn settle in
+    which the scalar can catch up, so compare against the saved pre-plan board
+    (falling back to the projection only for legacy solve records).
+    """
+    baseline_hp = baseline.get("building_hp_total")
+    actual_hp = actual.get("building_hp_total")
+    baseline_grid = baseline.get("grid_power")
+    actual_grid = actual.get("grid_power")
+    if not all(
+        isinstance(value, int)
+        for value in (baseline_hp, actual_hp, baseline_grid, actual_grid)
+    ):
+        return 0
+    hp_lost = max(0, baseline_hp - actual_hp)
+    grid_lost = max(0, baseline_grid - actual_grid)
+    return max(0, hp_lost - grid_lost)
+
+
 def _projected_final_board_data(enriched: dict) -> dict:
     final_board_data = enriched.get("final_board") or {}
     if final_board_data:
@@ -4326,6 +4396,31 @@ def _active_player_action_count(board: Board) -> int:
     )
 
 
+def _same_turn_all_player_actors_done(
+    session: RunSession,
+    bridge_data: dict | None,
+    active_player_actors: int,
+) -> bool:
+    """Flag the held same-turn/DONE state around an external End Turn click.
+
+    Before the first click this is the expected held plan.  After any external
+    click, the identical bridge payload can be stale while enemy animations
+    advance.  Callers must carry whether that one click was already sent.
+    """
+    active = session.active_solution
+    if active is None or not isinstance(bridge_data, dict):
+        return False
+    if bridge_data.get("phase") != "combat_player":
+        return False
+    if bridge_data.get("in_active_mission") is False:
+        return False
+    try:
+        current_turn = int(bridge_data.get("turn"))
+    except (TypeError, ValueError):
+        return False
+    return current_turn == active.turn and active_player_actors == 0
+
+
 def _post_enemy_ready_for_audit(board: Board, bridge_data: dict | None) -> bool:
     """True once the next player turn has fully activated controllable actors."""
     if not isinstance(bridge_data, dict):
@@ -4333,6 +4428,49 @@ def _post_enemy_ready_for_audit(board: Board, bridge_data: dict | None) -> bool:
     if bridge_data.get("phase") != "combat_player":
         return False
     return _active_player_action_count(board) > 0
+
+
+def _terminal_post_enemy_ready_for_audit(
+    board: Board,
+    bridge_data: dict | None,
+    solved_turn: int,
+) -> bool:
+    """Accept an exact-turn terminal combat snapshot for the final audit.
+
+    Ordinary missions can clear ``in_active_mission`` and switch to an
+    ``unknown`` phase before the next player-turn readiness predicate can ever
+    pass.  The bridge still carries the just-finished board in that window.
+    Failing to consume it leaves the previous solution unaudited and lets a
+    skipped final player turn surface only after the next mission starts.
+
+    Fail closed unless this is exactly the solved turn's next board and the
+    payload still has full combat tiles plus units.  Deployment/loading
+    snapshots keep ``in_active_mission=true`` and are deliberately rejected.
+    """
+    if not isinstance(bridge_data, dict):
+        return False
+    if bridge_data.get("in_active_mission") is not False:
+        return False
+    if bridge_data.get("phase") not in {
+        "unknown",
+        "between_missions",
+        "mission_ending",
+        "mission_end",
+    }:
+        return False
+    try:
+        actual_turn = int(bridge_data.get("turn"))
+    except (TypeError, ValueError):
+        return False
+    if actual_turn != _post_enemy_expected_actual_turn(solved_turn):
+        return False
+    tiles = bridge_data.get("tiles")
+    units = bridge_data.get("units")
+    if not isinstance(tiles, list) or len(tiles) < 64:
+        return False
+    if not isinstance(units, list):
+        return False
+    return bool(board.tiles)
 
 
 def _projected_scenarios(
@@ -5654,6 +5792,16 @@ def _record_post_enemy(session: RunSession, board: Board,
 
     # Capture actual board state
     actual = _capture_board_summary(board, bridge_data)
+    if _terminal_post_enemy_ready_for_audit(
+        board, bridge_data, solved_turn
+    ):
+        terminal_grid_baseline = solve_data.get("current_outcome")
+        if not isinstance(terminal_grid_baseline, dict):
+            terminal_grid_baseline = predicted
+        terminal_grid_debt = _terminal_pending_grid_debt(
+            terminal_grid_baseline, actual
+        )
+        actual = _summary_with_pending_grid_debt(actual, terminal_grid_debt)
 
     # Compute deltas
     deltas = _compute_deltas(predicted, actual)
@@ -6295,6 +6443,19 @@ def cmd_read(profile: str = "Alpha") -> dict:
                         entry["conditions"] = conditions
                     result["mechs"].append(entry)
                 result["active_mechs"] = len(active_mechs)
+                if _same_turn_all_player_actors_done(
+                    session, bridge_data, len(active_mechs)
+                ):
+                    result["held_end_turn_same_turn"] = True
+                    result.setdefault("next_step", (
+                        "Every actor is DONE on the solved turn. If its emitted "
+                        "End Turn plan has not been clicked, dispatch it exactly "
+                        "once. If any click was already sent, wait at least the "
+                        "emitted ~6 seconds and keep polling; never retry from "
+                        "this same-turn bridge payload. ACTION AVAILABLE or "
+                        "READY actors on a fresh screenshot mean the next turn "
+                        "already started."
+                    ))
 
                 enemies = board.enemies()
                 result["enemies"] = [
@@ -6552,7 +6713,14 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # to verify, not cmd_verify, so the counter stays at 0).
             if (session.active_solution is not None
                     and bridge_data.get("turn", 0) > session.active_solution.turn
-                    and _post_enemy_ready_for_audit(board, bridge_data)):
+                    and (
+                        _post_enemy_ready_for_audit(board, bridge_data)
+                        or _terminal_post_enemy_ready_for_audit(
+                            board,
+                            bridge_data,
+                            session.active_solution.turn,
+                        )
+                    )):
                 post_enemy_result = _record_post_enemy(
                     session, board, session.active_solution.turn,
                     bridge_data=bridge_data,
@@ -42409,27 +42577,15 @@ def _observe_end_turn_after_click(
 
 
 def _lightning_end_turn_retryable(observed: dict, turn_result: dict) -> bool:
-    """True when a missed End Turn observation is safe to click once more."""
-    if not isinstance(observed, dict):
-        return False
-    if observed.get("status") != "END_TURN_CLICK_NOT_OBSERVED":
-        return False
-    if observed.get("reason") != "bridge_still_player_turn":
-        return False
-    samples = observed.get("samples")
-    if not isinstance(samples, list) or not samples:
-        return False
-    expected_turn = turn_result.get("turn")
-    for sample in samples:
-        if not isinstance(sample, dict):
-            return False
-        if sample.get("phase") != "combat_player":
-            return False
-        if int(sample.get("active_mechs") or 0) != 0:
-            return False
-        if expected_turn is not None and sample.get("turn") != expected_turn:
-            return False
-    return True
+    """End Turn is single-shot; bridge ambiguity never authorizes a retry.
+
+    The same-turn/DONE payload this observer used to accept can remain stale
+    until the next player turn is already visible.  A second click can then
+    skip that entire turn.  Keep the helper for timing-lab compatibility, but
+    fail closed so callers stop and inspect instead of clicking twice.
+    """
+    del observed, turn_result
+    return False
 
 
 def _lightning_observed_terminal_transition(observed: dict) -> bool:

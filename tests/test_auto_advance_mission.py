@@ -16,8 +16,9 @@ Test the four behavior cases:
    ``disabled_actions``.
 """
 
+from src.loop import commands
 from src.loop.commands import _auto_advance_mission
-from src.loop.session import RunSession
+from src.loop.session import ActiveSolution, RunSession
 
 
 def _fresh_session(**overrides) -> RunSession:
@@ -146,6 +147,70 @@ def test_mission_boundary_bumps_and_clears_blocklist():
     assert s.current_mission == "Mission_FreezeBots"
     assert s.mission_index == 1
     assert s.disabled_actions == []
+
+
+def test_mission_boundary_blocks_unresolved_prior_post_enemy_audit(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    s = _fresh_session(
+        current_mission="Mission_Volatile",
+        mission_index=1,
+        last_mission_turn=4,
+    )
+    s.active_solution = ActiveSolution(actions=[], score=1.0, turn=3)
+
+    changed = _auto_advance_mission(
+        s,
+        {
+            "mission_id": "Mission_Airstrike",
+            "phase": "combat_enemy",
+            "turn": 0,
+        },
+    )
+
+    assert changed is True
+    assert s.current_mission == "Mission_Airstrike"
+    assert s.mission_index == 2
+    assert s.active_solution is None
+    assert s.post_enemy_block is not None
+    assert s.post_enemy_block["status"] == "POST_ENEMY_AUDIT_MISSING"
+    assert s.post_enemy_block["mission_index"] == 1
+    assert s.post_enemy_block["turn"] == 3
+    assert s.post_enemy_block["source"] == "post_enemy_mission_boundary_guard"
+    assert s.post_enemy_block["previous_mission"] == "Mission_Volatile"
+    assert s.post_enemy_block["next_mission"] == "Mission_Airstrike"
+
+
+def test_mission_boundary_consumes_stale_solution_when_audit_exists(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    run_dir = tmp_path / "test_run"
+    run_dir.mkdir()
+    (run_dir / "m01_turn_03_post_enemy.json").write_text("{}")
+    s = _fresh_session(
+        current_mission="Mission_Volatile",
+        mission_index=1,
+        last_mission_turn=4,
+    )
+    s.active_solution = ActiveSolution(actions=[], score=1.0, turn=3)
+
+    changed = _auto_advance_mission(
+        s,
+        {
+            "mission_id": "Mission_Airstrike",
+            "phase": "combat_enemy",
+            "turn": 0,
+        },
+    )
+
+    assert changed is True
+    assert s.mission_index == 2
+    assert s.active_solution is None
+    assert s.post_enemy_block is None
 
 
 def test_repeated_boundary_each_bumps_once():
