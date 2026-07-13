@@ -259,6 +259,127 @@ def test_reconcile_flipped_target_when_another_attacker_owns_old_marker():
     assert scorpion["queued_target"] == [5, 2], scorpion
 
 
+def test_reconcile_shared_target_ignores_mirror_occupied_by_cotargeter():
+    """A co-targeter's occupied tile is not owned DIR_FLIP evidence."""
+    from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles
+
+    # Chaos Roll Unfair run 20260713_052159_731, Mission_Wind turn 1:
+    # Scorpion2 and Moth1 both targeted the D5 Power Generator.  The Moth
+    # occupied the Scorpion's D3 mirror tile, and the set-valued live markers
+    # included both tiles.  Reassigning D3 to the Scorpion hid the objective
+    # loss that the Wind Storm would otherwise expose.
+    data = {
+        "targeted_tiles": [
+            [3, 1], [5, 1], [6, 1],
+            [3, 4], [5, 4], [6, 4],
+        ],
+        "units": [
+            {
+                "uid": 808,
+                "type": "Scorpion2",
+                "team": 6,
+                "hp": 5,
+                "x": 4,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [3, 4],
+                "queued_target_raw": [3, 4],
+                "queued_target_normalized": True,
+                "weapons": ["ScorpionAtk2"],
+            },
+            {
+                "uid": 809,
+                "type": "Moth1",
+                "team": 6,
+                "hp": 3,
+                "x": 5,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [3, 4],
+                "queued_target_raw": [3, 4],
+                "queued_target_normalized": True,
+                "weapons": ["MothAtk1"],
+            },
+            {
+                "uid": 811,
+                "type": "Moth2",
+                "team": 6,
+                "hp": 5,
+                "x": 5,
+                "y": 1,
+                "has_queued_attack": True,
+                "queued_target": [3, 1],
+                "queued_target_raw": [3, 1],
+                "queued_target_normalized": True,
+                "weapons": ["MothAtk2"],
+            },
+            {
+                "uid": 812,
+                "type": "Scorpion1",
+                "team": 6,
+                "hp": 3,
+                "x": 4,
+                "y": 1,
+                "has_queued_attack": True,
+                "queued_target": [3, 1],
+                "queued_target_raw": [3, 1],
+                "queued_target_normalized": True,
+                "weapons": ["ScorpionAtk1"],
+            },
+        ],
+    }
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    alpha_scorpion, alpha_moth, moth, scorpion = data["units"]
+    assert alpha_scorpion["queued_target"] == [3, 4], alpha_scorpion
+    assert "queued_target_stale_save" not in alpha_scorpion
+    assert alpha_moth["queued_target"] == [3, 4], alpha_moth
+    assert moth["queued_target"] == [3, 1], moth
+    assert scorpion["queued_target"] == [3, 1], scorpion
+    assert "queued_target_stale_save" not in scorpion
+
+
+def test_reconcile_shared_target_still_flips_through_nonrecoil_cotargeter():
+    """An occupied mirror alone must not suppress live flip evidence."""
+    from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles
+
+    data = {
+        "targeted_tiles": [[3, 4], [5, 4]],
+        "units": [
+            {
+                "uid": 900,
+                "type": "Scorpion2",
+                "team": 6,
+                "hp": 5,
+                "x": 4,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [3, 4],
+                "weapons": ["ScorpionAtk2"],
+            },
+            {
+                "uid": 901,
+                "type": "Firefly1",
+                "team": 6,
+                "hp": 3,
+                "x": 5,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [3, 4],
+                "weapons": ["FireflyAtk1"],
+            },
+        ],
+    }
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    assert data["units"][0]["queued_target"] == [5, 4], data["units"][0]
+    assert data["units"][0]["queued_target_reconcile_reason"] == (
+        "mirror_marker_with_shared_old_target"
+    )
+
+
 def test_reconcile_shared_bouncer_target_ignores_own_recoil_marker():
     """Bouncer self-recoil is not evidence that its shared horn target flipped."""
     from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles

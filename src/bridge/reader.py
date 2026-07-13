@@ -1197,6 +1197,10 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
         (int(u["queued_target"][0]), int(u["queued_target"][1]))
         for u in queued_enemies
     )
+    original_targets = {
+        id(u): (int(u["queued_target"][0]), int(u["queued_target"][1]))
+        for u in queued_enemies
+    }
 
     for u in queued_enemies:
         qt = u["queued_target"]
@@ -1229,6 +1233,22 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
             # shared-target DIR_FLIP inference. Preserve the raw queued horn
             # target unless the stronger signal above says the old marker is
             # completely absent.
+            continue
+        if old_target_is_shared and any(
+            other is not u
+            and (int(other.get("x", -1)), int(other.get("y", -1)))
+            == flipped_target
+            and original_targets[id(other)] == old_target
+            and (other.get("weapons") or [""])[0] in {
+                "MothAtk1",
+                "MothAtk2",
+            }
+            for other in queued_enemies
+        ):
+            # Board:IsTargeted() has no attacker ownership.  When the mirror
+            # tile is occupied by a co-targeting Moth, that marker can belong
+            # to the Moth's recoil footprint.  The geometry is ambiguous, so
+            # preserve the raw queued target rather than inventing a DIR_FLIP.
             continue
         if old_target in targeted and not old_target_is_shared:
             continue
