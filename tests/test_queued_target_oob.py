@@ -259,6 +259,54 @@ def test_reconcile_flipped_target_when_another_attacker_owns_old_marker():
     assert scorpion["queued_target"] == [5, 2], scorpion
 
 
+def test_reconcile_shared_bouncer_target_ignores_own_recoil_marker():
+    """Bouncer self-recoil is not evidence that its shared horn target flipped."""
+    from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles
+
+    # Chaos Unfair run 20260712_193021_862, Mission_Missiles turn 1:
+    # Alpha Bouncer uid611 at C4 targeted Rocket at C5. Its C3 backwards
+    # recoil marker was unclaimed, while a smoked Bouncer also targeted C5.
+    # The generic shared-target heuristic falsely rewrote the horn to C3.
+    data = {
+        "targeted_tiles": [[3, 5], [5, 5]],
+        "units": [
+            {
+                "uid": 611,
+                "type": "Bouncer2",
+                "team": 6,
+                "hp": 3,
+                "x": 4,
+                "y": 5,
+                "has_queued_attack": True,
+                "queued_target": [3, 5],
+                "queued_target_raw": [3, 5],
+                "queued_target_normalized": True,
+                "weapons": ["BouncerAtk2"],
+            },
+            {
+                "uid": 612,
+                "type": "Bouncer1",
+                "team": 6,
+                "hp": 2,
+                "x": 3,
+                "y": 6,
+                "has_queued_attack": True,
+                "queued_target": [3, 5],
+                "queued_target_raw": [3, 5],
+                "queued_target_normalized": True,
+                "weapons": ["BouncerAtk1"],
+            },
+        ],
+    }
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    alpha, regular = data["units"]
+    assert alpha["queued_target"] == [3, 5], alpha
+    assert "queued_target_stale_save" not in alpha
+    assert regular["queued_target"] == [3, 5], regular
+
+
 if __name__ == "__main__":
     test_rust_solve_does_not_panic_on_oob_queued_target()
     print("PASS: rust solve no panic on OOB queued_target")
@@ -276,3 +324,5 @@ if __name__ == "__main__":
     print("PASS: live original marker preserves queued target")
     test_reconcile_flipped_target_when_another_attacker_owns_old_marker()
     print("PASS: shared old marker preserves the unclaimed live flip")
+    test_reconcile_shared_bouncer_target_ignores_own_recoil_marker()
+    print("PASS: shared Bouncer target ignores its own recoil marker")

@@ -928,6 +928,20 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
             and target_claims[old_target] > 1
             and target_claims[flipped_target] == 0
         )
+        weapons = u.get("weapons") or []
+        primary_weapon = weapons[0] if weapons else ""
+        if old_target_is_shared and primary_weapon in {
+            "BouncerAtk1",
+            "BouncerAtk2",
+            "BouncerAtkB",
+        }:
+            # Bouncers mark their backwards self-recoil tile as targeted.
+            # When another attacker shares the real forward target, that
+            # recoil marker has exactly the same shape as the ambiguous
+            # shared-target DIR_FLIP inference. Preserve the raw queued horn
+            # target unless the stronger signal above says the old marker is
+            # completely absent.
+            continue
         if old_target in targeted and not old_target_is_shared:
             continue
         u["queued_target_stale_save"] = [qx, qy]
