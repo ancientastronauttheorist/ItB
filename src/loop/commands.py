@@ -4841,6 +4841,24 @@ def _is_harmless_burrower_missing_drift(diff) -> bool:
     return True
 
 
+def _is_transient_delayed_spider_psion_egg_diff(diff, phase: str) -> bool:
+    """Return true while a predicted Arachnid Psion egg is still spawning."""
+    if phase != "attack":
+        return False
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    return all(
+        str(ud.get("type") or "") == "SpiderlingEgg1"
+        and ud.get("field") == "missing_in_actual"
+        and ud.get("predicted") == "present"
+        and ud.get("actual") == "absent"
+        for ud in unit_diffs
+    )
+
+
 def _is_transient_delayed_multihit_damage_diff(
     diff,
     weapon_name: str | None,
@@ -8454,6 +8472,7 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
         _is_transient_delayed_multihit_damage_diff(
             diff, action_weapon, "attack"
         )
+        or _is_transient_delayed_spider_psion_egg_diff(diff, "attack")
         or _is_transient_delayed_repair_platform_diff(diff, "move")
     ):
         for attempt in range(5):
@@ -47430,6 +47449,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             or _is_transient_delayed_multihit_damage_diff(
                 diff, weapon_name, phase
             )
+            or _is_transient_delayed_spider_psion_egg_diff(diff, phase)
             or _is_transient_delayed_repair_platform_diff(diff, phase)
         )
 
@@ -47454,6 +47474,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 _is_transient_delayed_multihit_damage_diff(
                     diff, weapon_name, phase
                 )
+                or _is_transient_delayed_spider_psion_egg_diff(diff, phase)
                 or _is_transient_delayed_repair_platform_diff(diff, phase)
             )
             else 3

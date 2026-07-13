@@ -1108,6 +1108,64 @@ def test_non_burrower_missing_still_requires_re_solve():
     assert cmd_mod._is_harmless_burrower_missing_drift(diff) is False
 
 
+def test_predicted_spider_psion_egg_missing_during_attack_gets_settle_retry():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 628,
+        "type": "SpiderlingEgg1",
+        "field": "missing_in_actual",
+        "predicted": "present",
+        "actual": "absent",
+    }])
+
+    assert cmd_mod._is_transient_delayed_spider_psion_egg_diff(
+        diff, "attack"
+    ) is True
+
+
+def test_unexpected_spider_psion_egg_or_mixed_loss_does_not_retry():
+    unexpected = DiffResult(unit_diffs=[{
+        "uid": 628,
+        "type": "SpiderlingEgg1",
+        "field": "missing_in_predicted",
+        "predicted": "absent",
+        "actual": "present",
+    }])
+    mixed = DiffResult(
+        unit_diffs=[{
+            "uid": 628,
+            "type": "SpiderlingEgg1",
+            "field": "missing_in_actual",
+            "predicted": "present",
+            "actual": "absent",
+        }],
+        scalar_diffs=[{
+            "field": "grid_power",
+            "predicted": 4,
+            "actual": 3,
+        }],
+    )
+    other_egg = DiffResult(unit_diffs=[{
+        "uid": 629,
+        "type": "SpiderlingEgg2",
+        "field": "missing_in_actual",
+        "predicted": "present",
+        "actual": "absent",
+    }])
+
+    assert cmd_mod._is_transient_delayed_spider_psion_egg_diff(
+        unexpected, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_spider_psion_egg_diff(
+        mixed, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_spider_psion_egg_diff(
+        other_egg, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_spider_psion_egg_diff(
+        other_egg, "move"
+    ) is False
+
+
 def test_tri_rocket_enemy_damage_only_diff_gets_settle_retry():
     diff = DiffResult(unit_diffs=[
         {
