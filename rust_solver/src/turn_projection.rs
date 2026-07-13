@@ -373,6 +373,42 @@ fn apply_plan_and_enemy_phase(
 }
 
 pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
+    if board.mission_id == "Mission_Terratide" {
+        if board.env_smoke == 0 {
+            return;
+        }
+
+        // Env_Terratide inherits Env_Tides::Plan(), which increments Index,
+        // but its sand branch maps the warned lane to y = 7 - Index. Thus its
+        // next warning moves toward y=0, opposite Mission_Tides. Rebuild every
+        // represented next row so columns omitted by a building in the old
+        // lane can reappear; MarkBoard omits only buildings in the new lane.
+        let mut warned = board.env_smoke;
+        let mut next_rows = 0u16;
+        while warned != 0 {
+            let tile_idx = warned.trailing_zeros() as usize;
+            warned &= warned - 1;
+            let (_, y) = idx_to_xy(tile_idx);
+            if y > 0 {
+                next_rows |= 1u16 << (y - 1);
+            }
+        }
+
+        let mut next_smoke = 0u64;
+        for y in 0u8..8 {
+            if next_rows & (1u16 << y) == 0 {
+                continue;
+            }
+            for x in 0u8..8 {
+                if !board.tile(x, y).is_building() {
+                    next_smoke |= 1u64 << xy_to_idx(x, y);
+                }
+            }
+        }
+        board.env_smoke = next_smoke;
+        return;
+    }
+
     if board.mission_id != "Mission_Tides" || board.env_danger == 0 {
         return;
     }
@@ -948,6 +984,50 @@ mod tests {
         assert!(projected.is_env_danger(6, 4));
         assert!(projected.is_env_danger_kill(1, 4));
         assert!(projected.is_env_danger_flying_immune(6, 4));
+    }
+
+    #[test]
+    fn test_mission_terratide_projection_smokes_full_row_and_advances_warning_backwards() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Terratide".to_string();
+        b.total_turns = 3;
+        b.current_turn = 2;
+        b.remaining_spawns = 0;
+
+        // Live MarkBoard omits buildings from its warning markers, while
+        // ApplyEffect still smokes the complete current row. The next warned
+        // row also contains a building at x=0, matching run
+        // 20260713_052159_731 turn 2 -> 3.
+        b.tile_mut(0, 4).terrain = Terrain::Building;
+        b.tile_mut(0, 4).building_hp = 1;
+        b.tile_mut(0, 3).terrain = Terrain::Building;
+        b.tile_mut(0, 3).building_hp = 1;
+        for x in 1u8..8 {
+            b.env_smoke |= 1u64 << xy_to_idx(x, 4);
+        }
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.current_turn, 3);
+        for x in 0u8..8 {
+            assert!(
+                projected.tile(x, 4).smoke(),
+                "current Terratide lane should smoke ({x},4), including buildings",
+            );
+            assert!(
+                !projected.is_env_smoke(x, 4),
+                "old y=4 warning must not persist at ({x},4)",
+            );
+        }
+        assert!(!projected.is_env_smoke(0, 3));
+        for x in 1u8..8 {
+            assert!(
+                projected.is_env_smoke(x, 3),
+                "next Terratide warning should advance to ({x},3)",
+            );
+        }
+        assert_eq!(projected.env_danger, 0);
+        assert_eq!(projected.env_danger_kill, 0);
     }
 
     #[test]

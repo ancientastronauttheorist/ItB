@@ -1642,7 +1642,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Vek_Hornet base/A/B/AB IDs. Its Prime_Spear-derived line damages every tile
 # through range 1/2/2/3 for 1/2/2/3, while only the selected far tile is
 # pushed. Pre-v352 corpus archived as failure_db_snapshot_sim_v351.jsonl.
-SIMULATOR_VERSION = 352
+# v353 - Mission_Terratide applies its current smoke effect to the complete
+# lane, including building tiles omitted by the live warning markers, then
+# advances the next warning toward y=0 (y = 7 - Index). Mission_Tides keeps
+# its opposite y+1 direction. Pre-v353 corpus archived as
+# failure_db_snapshot_sim_v352.jsonl.
+SIMULATOR_VERSION = 353
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

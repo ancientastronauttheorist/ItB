@@ -846,6 +846,78 @@ def _next_turn_web_case(
     return board, solve_data, deltas, web_item
 
 
+def _emergent_next_turn_web_case():
+    """Reproduce run 20260713_052159_731 turn 2 -> 3."""
+    board = _board(5)
+    mech = board.units[0]
+    mech.type = "HornetMech"
+    mech.x, mech.y = 5, 3
+    mech.web = True
+    mech.web_source_uid = 792
+
+    source = _enemy(792, 6, 3)
+    source.type = "Scorpion2"
+    source.hp = source.max_hp = 5
+    source.move_speed = 3
+    source.weapon = "ScorpionAtk2"
+    source.has_queued_attack = True
+    source.queued_target_x, source.queued_target_y = mech.x, mech.y
+    source.target_x, source.target_y = mech.x, mech.y
+    board.units.append(source)
+
+    mech_checkpoint = {
+        "uid": mech.uid,
+        "type": mech.type,
+        "team": 1,
+        "hp": mech.hp,
+        "x": mech.x,
+        "y": mech.y,
+    }
+    old_enemy_checkpoint = {
+        "uid": 773,
+        "type": "Bouncer1",
+        "team": 6,
+        "hp": 2,
+        "x": 3,
+        "y": 4,
+    }
+    solve_data = {
+        "simulator_version": 352,
+        "post_player_board": {
+            "turn": 2,
+            "units": [mech_checkpoint, old_enemy_checkpoint],
+            "spawning_tiles": [[6, 3], [7, 3], [5, 5]],
+        },
+        "final_board": {
+            "turn": 3,
+            "units": [
+                dict(mech_checkpoint),
+                dict(old_enemy_checkpoint),
+            ],
+            "spawning_tiles": [[5, 5]],
+        },
+    }
+    web_item = {
+        "uid": mech.uid,
+        "type": mech.type,
+        "pos": [mech.x, mech.y],
+    }
+    deltas = {
+        "mech_status_diff": [{
+            "key": "mechs_webbed",
+            "status": "Web",
+            "predicted_count": 0,
+            "actual_count": 1,
+            "unexpected": [web_item],
+            "cleared": [],
+        }],
+        "unexpected_events": [
+            f"{mech.type} gained unexpected Web status"
+        ],
+    }
+    return board, solve_data, deltas, web_item
+
+
 def test_next_turn_retarget_web_is_explained_for_unfair_gate():
     board, solve_data, deltas, web_item = _next_turn_web_case()
 
@@ -875,6 +947,221 @@ def test_next_turn_retarget_web_is_explained_for_unfair_gate():
         result,
         RunSession(run_id="run", difficulty=3),
     )
+
+
+def test_emergent_next_turn_web_is_explained_for_unfair_gate():
+    board, solve_data, deltas, web_item = _emergent_next_turn_web_case()
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=3,
+        expected_turn=3,
+    )
+
+    web_delta = result["mech_status_diff"][0]
+    assert web_delta["unexpected"] == [web_item]
+    assert web_delta["unexplained_unexpected"] == []
+    assert web_delta["next_turn_web_grapples"] == [{
+        "uid": 0,
+        "type": "HornetMech",
+        "pos": [5, 3],
+        "source_uid": 792,
+        "source_type": "Scorpion2",
+        "previous_target": None,
+        "current_target": [5, 3],
+        "spawn_position": [6, 3],
+        "reason": "next_turn_emergent_web_source_targeted_stationary_mech",
+    }]
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_emergent_next_turn_web_fails_closed_without_complete_spawn_proof():
+    for case in (
+        "missing_final",
+        "retained_marker",
+        "known_source",
+        "unreachable_marker",
+        "moved_final_mech",
+        "boolean_marker",
+        "wrong_checkpoint_turn",
+        "pre_consumed_marker_version",
+    ):
+        board, solve_data, deltas, web_item = _emergent_next_turn_web_case()
+        if case == "missing_final":
+            del solve_data["final_board"]
+        elif case == "retained_marker":
+            solve_data["final_board"]["spawning_tiles"] = [
+                [6, 3], [7, 3], [5, 5]
+            ]
+        elif case == "known_source":
+            solve_data["final_board"]["units"].append({
+                "uid": 792,
+                "type": "Scorpion2",
+                "team": 6,
+                "hp": 5,
+                "x": 6,
+                "y": 3,
+            })
+        elif case == "unreachable_marker":
+            solve_data["post_player_board"]["spawning_tiles"] = [[0, 0]]
+            solve_data["final_board"]["spawning_tiles"] = []
+        elif case == "moved_final_mech":
+            solve_data["final_board"]["units"][0]["x"] = 4
+        elif case == "boolean_marker":
+            solve_data["post_player_board"]["spawning_tiles"] = [[6, False]]
+            solve_data["final_board"]["spawning_tiles"] = []
+        elif case == "wrong_checkpoint_turn":
+            solve_data["final_board"]["turn"] = 4
+        elif case == "pre_consumed_marker_version":
+            solve_data["simulator_version"] = 349
+
+        result = commands._classify_next_turn_web_grapples(
+            deltas,
+            solve_data,
+            board,
+            actual_turn=3,
+            expected_turn=3,
+        )
+
+        assert result["mech_status_diff"][0]["unexplained_unexpected"] == [
+            web_item
+        ], case
+        assert result["next_turn_web_grapples"] == [], case
+        assert commands._post_enemy_needs_investigation(
+            result,
+            RunSession(run_id="run", difficulty=3),
+        ), case
+
+
+def test_emergent_next_turn_web_requires_exact_live_grapple_evidence():
+    for case in ("wrong_owner", "wrong_target", "wrong_weapon", "minor_source"):
+        board, solve_data, deltas, web_item = _emergent_next_turn_web_case()
+        mech = next(unit for unit in board.units if unit.uid == 0)
+        source = next(unit for unit in board.units if unit.uid == 792)
+        if case == "wrong_owner":
+            mech.web_source_uid = 999
+        elif case == "wrong_target":
+            source.queued_target_x, source.queued_target_y = 5, 2
+        elif case == "wrong_weapon":
+            source.weapon = "FireflyAtk1"
+        elif case == "minor_source":
+            source.minor = True
+
+        result = commands._classify_next_turn_web_grapples(
+            deltas,
+            solve_data,
+            board,
+            actual_turn=3,
+            expected_turn=3,
+        )
+
+        assert result["mech_status_diff"][0]["unexplained_unexpected"] == [
+            web_item
+        ], case
+        assert result["next_turn_web_grapples"] == [], case
+
+
+def test_explained_emergent_next_turn_web_does_not_hide_grid_loss():
+    board, solve_data, deltas, _web_item = _emergent_next_turn_web_case()
+    deltas["grid_power_diff"] = -1
+    deltas["unexpected_events"].insert(
+        0,
+        "Grid power dropped by 1 unexpectedly",
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=3,
+        expected_turn=3,
+    )
+
+    assert len(result["next_turn_web_grapples"]) == 1
+    assert result["unexpected_events"] == [
+        "Grid power dropped by 1 unexpectedly"
+    ]
+    assert commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_emergent_next_turn_web_matches_multiple_sources_to_consumed_spawns():
+    board, solve_data, deltas, _web_item = _emergent_next_turn_web_case()
+    solve_data["post_player_board"]["spawning_tiles"] = [
+        [6, 3], [7, 4], [5, 5]
+    ]
+
+    second_mech = Unit(
+        uid=1,
+        type="JetMech",
+        x=4,
+        y=2,
+        hp=2,
+        max_hp=2,
+        team=1,
+        is_mech=True,
+        move_speed=4,
+        flying=True,
+        massive=True,
+        armor=False,
+        pushable=True,
+        weapon="Brute_Jetmech",
+        active=True,
+    )
+    second_mech.web = True
+    second_mech.web_source_uid = 793
+    board.units.append(second_mech)
+    second_source = _enemy(793, 4, 3)
+    second_source.type = "Scorpion1"
+    second_source.move_speed = 3
+    second_source.weapon = "ScorpionAtk1"
+    second_source.has_queued_attack = True
+    second_source.queued_target_x = second_mech.x
+    second_source.queued_target_y = second_mech.y
+    board.units.append(second_source)
+
+    second_checkpoint = {
+        "uid": second_mech.uid,
+        "type": second_mech.type,
+        "team": 1,
+        "hp": second_mech.hp,
+        "x": second_mech.x,
+        "y": second_mech.y,
+    }
+    solve_data["post_player_board"]["units"].append(second_checkpoint)
+    solve_data["final_board"]["units"].append(dict(second_checkpoint))
+    deltas["mech_status_diff"][0]["actual_count"] = 2
+    deltas["mech_status_diff"][0]["unexpected"].append({
+        "uid": second_mech.uid,
+        "type": second_mech.type,
+        "pos": [second_mech.x, second_mech.y],
+    })
+    deltas["unexpected_events"].append(
+        f"{second_mech.type} gained unexpected Web status"
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=3,
+        expected_turn=3,
+    )
+
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == []
+    by_source = {
+        item["source_uid"]: item["spawn_position"]
+        for item in result["next_turn_web_grapples"]
+    }
+    assert by_source == {792: [7, 4], 793: [6, 3]}
 
 
 def test_next_turn_web_classifier_fails_closed_without_changed_queue():

@@ -1020,6 +1020,55 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_terratide_smokes_full_row_and_advances_final_warning_lane() {
+        let bridge = r#"{
+          "mission_id": "Mission_Terratide",
+          "env_type": "sandstorm",
+          "turn": 2,
+          "total_turns": 3,
+          "tiles": [
+            {"x": 0, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 0, "y": 3, "terrain": "building", "building_hp": 1}
+          ],
+          "environment_danger_v2": [
+            [1, 4, 1, 0, 0], [2, 4, 1, 0, 0], [3, 4, 1, 0, 0],
+            [4, 4, 1, 0, 0], [5, 4, 1, 0, 0], [6, 4, 1, 0, 0],
+            [7, 4, 1, 0, 0]
+          ],
+          "spawning_tiles": [],
+          "remaining_spawns": 0,
+          "grid_power": 5,
+          "grid_power_max": 7,
+          "units": []
+        }"#;
+
+        let raw = replay_solution(bridge, "[]").expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let final_board = &v["final_board"];
+        assert_eq!(final_board["turn"], 3);
+        assert_eq!(final_board["grid_power"], 5);
+
+        let danger = final_board["environment_danger_v2"].as_array().unwrap();
+        assert_eq!(danger.len(), 7);
+        assert!(danger.iter().all(|entry| {
+            entry[1] == json!(3) && entry[3] == json!(0) && entry[4] == json!(0)
+        }));
+        assert!(!danger.iter().any(|entry| entry[1] == json!(4)));
+        for x in 1u8..8 {
+            assert!(danger.iter().any(|entry| entry == &json!([x, 3, 1, 0, 0])));
+        }
+
+        let current_lane_building = final_board["tiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|tile| tile["x"] == json!(0) && tile["y"] == json!(4))
+            .expect("current-lane building should be serialized");
+        assert_eq!(current_lane_building["building_hp"], 1);
+        assert_eq!(current_lane_building["smoke"], true);
+    }
+
+    #[test]
     fn replay_solution_mission_tides_wave_destroys_pod() {
         let bridge = r#"{
           "mission_id": "Mission_Tides",

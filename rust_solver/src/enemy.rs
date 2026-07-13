@@ -458,6 +458,31 @@ fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
 /// smoke behavior for fire removal, healing-smoke passives, and web release.
 fn apply_env_smoke_board(board: &mut Board) {
     let mut smoke_bits = board.env_smoke;
+    // Board:IsEnvironmentDanger mirrors Env_Tides:MarkBoard(), which omits a
+    // Terratide warning marker when the current lane crosses a building.
+    // Env_Tides:ApplyEffect() does not make that exception for
+    // NewTerrain=TERRAIN_SAND: every tile in the lane receives iSmoke=1.
+    // Reconstruct the complete effect row here while retaining env_smoke as
+    // the bridge-visible warning mask used by turn projection/serialization.
+    if board.mission_id == "Mission_Terratide" {
+        let mut warned = smoke_bits;
+        let mut warned_rows = 0u16;
+        while warned != 0 {
+            let tile_idx = warned.trailing_zeros() as usize;
+            warned &= warned - 1;
+            let (_, y) = idx_to_xy(tile_idx);
+            warned_rows |= 1u16 << y;
+        }
+        smoke_bits = 0;
+        for y in 0u8..8 {
+            if warned_rows & (1u16 << y) == 0 {
+                continue;
+            }
+            for x in 0u8..8 {
+                smoke_bits |= 1u64 << xy_to_idx(x, y);
+            }
+        }
+    }
     while smoke_bits != 0 {
         let tile_idx = smoke_bits.trailing_zeros() as usize;
         smoke_bits &= smoke_bits - 1;

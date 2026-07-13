@@ -5983,7 +5983,13 @@ def _checkpoint_spawn_positions(checkpoint: dict) -> set[tuple[int, int]] | None
         if not isinstance(item, (list, tuple)) or len(item) < 2:
             return None
         x, y = item[0], item[1]
-        if not isinstance(x, int) or not isinstance(y, int) or not (0 <= x < 8 and 0 <= y < 8):
+        if (
+            not isinstance(x, int)
+            or isinstance(x, bool)
+            or not isinstance(y, int)
+            or isinstance(y, bool)
+            or not (0 <= x < 8 and 0 <= y < 8)
+        ):
             return None
         positions.add((x, y))
     return positions
@@ -6103,8 +6109,9 @@ def _classify_next_turn_web_grapples(
     attack, after the simulated enemy phase has ended.  That AI move/retarget
     horizon is intentionally outside the deterministic replay.  Explain only
     an exact Web identity whose live source now queues at the same stationary
-    mech but targeted a different tile in the complete post-player checkpoint.
-    Everything incomplete, stale, or mixed remains fail-closed.
+    mech and either targeted a different tile in the complete post-player
+    checkpoint or is a newly materialized Vek reachable from a consumed spawn
+    marker.  Everything incomplete, stale, or mixed remains fail-closed.
     """
     deltas["next_turn_web_grapples"] = []
     if actual_turn != expected_turn or not isinstance(solve_data, dict):
@@ -6158,6 +6165,56 @@ def _classify_next_turn_web_grapples(
         if not isinstance(raw, dict) or not plain_int(raw.get("uid")):
             return deltas
         previous_by_uid[int(raw["uid"])] = raw
+
+    # Existing-source retargets need only the post-player checkpoint.  An
+    # emergent source needs the stronger two-checkpoint proof used by the
+    # emergent-pod classifier: it must be absent from both unit sets and
+    # reachable from a marker consumed by the projected emergence step.
+    final_board = solve_data.get("final_board")
+    final_units = (
+        final_board.get("units")
+        if isinstance(final_board, dict)
+        else None
+    )
+    final_by_uid: dict[int, dict] | None = None
+    if isinstance(final_units, list):
+        parsed_final: dict[int, dict] = {}
+        for raw in final_units:
+            if (
+                not isinstance(raw, dict)
+                or not plain_int(raw.get("uid"))
+                or int(raw["uid"]) in parsed_final
+            ):
+                parsed_final = {}
+                break
+            parsed_final[int(raw["uid"])] = raw
+        else:
+            final_by_uid = parsed_final
+
+    post_enemy_uids = _checkpoint_enemy_uids(post_player)
+    final_enemy_uids = _checkpoint_enemy_uids(final_board)
+    post_spawn_positions = _checkpoint_spawn_positions(post_player)
+    final_spawn_positions = _checkpoint_spawn_positions(final_board)
+    consumed_spawn_positions: set[tuple[int, int]] | None = None
+    if (
+        post_enemy_uids is not None
+        and final_enemy_uids is not None
+        and post_spawn_positions is not None
+        and final_spawn_positions is not None
+        and final_spawn_positions <= post_spawn_positions
+        and len(previous_by_uid) == len(checkpoint_units)
+        and final_by_uid is not None
+        and plain_int(solve_data.get("simulator_version"))
+        and int(solve_data["simulator_version"]) >= 350
+        and plain_int(post_player.get("turn"))
+        and int(post_player["turn"]) == expected_turn - 1
+        and plain_int(final_board.get("turn"))
+        and int(final_board["turn"]) == expected_turn
+    ):
+        consumed_spawn_positions = (
+            post_spawn_positions - final_spawn_positions
+        )
+
     actual_by_uid = {
         int(unit.uid): unit
         for unit in board.units
@@ -6165,6 +6222,35 @@ def _classify_next_turn_web_grapples(
     }
 
     explained_all: list[dict] = []
+    used_emergent_sources: set[int] = set()
+    emergent_candidates_by_source: dict[int, list[tuple[int, int]]] = {}
+    emergent_spawn_owner: dict[tuple[int, int], int] = {}
+    emergent_source_spawn: dict[int, tuple[int, int]] = {}
+    emergent_explanation_by_source: dict[int, dict] = {}
+
+    def claim_emergent_spawn(
+        source_uid: int,
+        seen: set[tuple[int, int]],
+    ) -> bool:
+        """Find a one-to-one source/marker assignment by augmenting path."""
+        for pos in emergent_candidates_by_source.get(source_uid, []):
+            if pos in seen:
+                continue
+            seen.add(pos)
+            owner = emergent_spawn_owner.get(pos)
+            if owner is not None and not claim_emergent_spawn(owner, seen):
+                continue
+            previous_pos = emergent_source_spawn.get(source_uid)
+            if (
+                previous_pos is not None
+                and emergent_spawn_owner.get(previous_pos) == source_uid
+            ):
+                del emergent_spawn_owner[previous_pos]
+            emergent_spawn_owner[pos] = source_uid
+            emergent_source_spawn[source_uid] = pos
+            return True
+        return False
+
     for status_delta in deltas.get("mech_status_diff", []) or []:
         if not isinstance(status_delta, dict):
             continue
@@ -6221,9 +6307,90 @@ def _classify_next_turn_web_grapples(
                 if isinstance(previous_source, dict)
                 else None
             )
+
+            if previous_source is None:
+                final_mech = (
+                    final_by_uid.get(uid)
+                    if final_by_uid is not None
+                    else None
+                )
+                move_speed = getattr(source, "move_speed", None)
+                reachable_spawns = (
+                    sorted(
+                        pos for pos in consumed_spawn_positions
+                        if abs(int(source.x) - pos[0])
+                        + abs(int(source.y) - pos[1]) <= int(move_speed)
+                    )
+                    if (
+                        source is not None
+                        and consumed_spawn_positions is not None
+                        and plain_int(move_speed)
+                        and int(move_speed) >= 0
+                    )
+                    else []
+                )
+                if (
+                    source is None
+                    or source_uid in used_emergent_sources
+                    or source_uid in (post_enemy_uids or set())
+                    or source_uid in (final_enemy_uids or set())
+                    or final_by_uid is None
+                    or source_uid in final_by_uid
+                    or not getattr(source, "is_enemy", False)
+                    or int(getattr(source, "hp", 0) or 0) <= 0
+                    or getattr(source, "is_extra_tile", False)
+                    or getattr(source, "minor", False)
+                    or not getattr(source, "has_queued_attack", False)
+                    or str(getattr(source, "weapon", ""))
+                    not in WEB_SOURCE_WEAPONS
+                    or current_target != (int(mech.x), int(mech.y))
+                    or abs(int(source.x) - int(mech.x))
+                    + abs(int(source.y) - int(mech.y)) != 1
+                    or not isinstance(final_mech, dict)
+                    or final_mech.get("team") != 1
+                    or not plain_int(final_mech.get("hp"))
+                    or final_mech.get("hp") <= 0
+                    or final_mech.get("type") != str(mech.type)
+                    or not plain_int(final_mech.get("x"))
+                    or not plain_int(final_mech.get("y"))
+                    or (final_mech.get("x"), final_mech.get("y"))
+                    != (int(mech.x), int(mech.y))
+                    or previous_mech.get("type") != str(mech.type)
+                    or not reachable_spawns
+                ):
+                    unexplained.append(item)
+                    continue
+
+                emergent_candidates_by_source[source_uid] = reachable_spawns
+                if not claim_emergent_spawn(source_uid, set()):
+                    del emergent_candidates_by_source[source_uid]
+                    unexplained.append(item)
+                    continue
+
+                used_emergent_sources.add(source_uid)
+                for assigned_uid, prior in emergent_explanation_by_source.items():
+                    assigned_pos = emergent_source_spawn[assigned_uid]
+                    prior["spawn_position"] = [assigned_pos[0], assigned_pos[1]]
+                spawn_position = emergent_source_spawn[source_uid]
+                explanation = {
+                    "uid": uid,
+                    "type": str(mech.type),
+                    "pos": [int(mech.x), int(mech.y)],
+                    "source_uid": source_uid,
+                    "source_type": str(source.type),
+                    "previous_target": None,
+                    "current_target": [current_target[0], current_target[1]],
+                    "spawn_position": [spawn_position[0], spawn_position[1]],
+                    "reason": (
+                        "next_turn_emergent_web_source_targeted_stationary_mech"
+                    ),
+                }
+                emergent_explanation_by_source[source_uid] = explanation
+                explained.append(explanation)
+                continue
+
             if (
                 source is None
-                or previous_source is None
                 or not getattr(source, "is_enemy", False)
                 or int(getattr(source, "hp", 0) or 0) <= 0
                 or not getattr(source, "has_queued_attack", False)

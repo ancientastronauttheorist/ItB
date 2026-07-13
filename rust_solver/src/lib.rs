@@ -2246,7 +2246,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Vek_Hornet base/A/B/AB IDs. Its Prime_Spear-derived line damages every
 //   tile through range 1/2/2/3 for 1/2/2/3, while only the selected far tile
 //   is pushed. Pre-v352 corpus archived as failure_db_snapshot_sim_v351.jsonl.
-pub const SIMULATOR_VERSION: u32 = 352;
+// v353 - Mission_Terratide applies its current smoke effect to the complete
+//   lane, including building tiles omitted by the live warning markers, then
+//   advances the next warning toward y=0 (y = 7 - Index). Ordinary
+//   Mission_Tides warnings continue advancing toward y=7. Pre-v353 corpus
+//   archived as failure_db_snapshot_sim_v352.jsonl.
+pub const SIMULATOR_VERSION: u32 = 353;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

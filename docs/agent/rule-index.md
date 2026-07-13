@@ -423,7 +423,7 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 416 | 729 | Diagnosis transport and fix snippets must preserve exact content. | `docs/diagnosis_loop_design.md` |
 | 417 | 731 | `auto_turn` must carry exact mech-loss consent end to end. | `docs/agent/safety-gates.md` |
 | 418 | 733 | Shared old markers must not hide a live `DIR_FLIP`. | `docs/agent/safety-gates.md` |
-| 419 | 735 | Mission_Terratide warnings are a zero-damage smoke wave. | `docs/agent/solver-reference.md` |
+| 419 | 735 | Mission_Terratide is full-row smoke moving toward y=0. | `docs/agent/solver-reference.md` |
 | 426 | 749 | Unknown-phase bridge mission IDs cannot establish a mission boundary. | `docs/agent/live-runbook.md` |
 | 427 | 751 | Hydraulic Legs death bursts resolve from the pushed corpse tile. | `docs/agent/solver-reference.md` |
 | 428 | 753 | Delayed player-attack follow-ups need authoritative settle rereads. | `docs/agent/safety-gates.md` |
@@ -460,3 +460,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 459 | 815 | Projected spawn markers persist only when occupied at emergence. | `docs/agent/solver-reference.md` |
 | 460 | 817 | Webbed enemies are stationary, not disarmed. | `docs/agent/solver-reference.md` |
 | 461 | 819 | Techno-Hornet Needle Shot damages its full selected line and pushes only the far tile. | `docs/agent/solver-reference.md` |
+| 462 | 821 | Emergent next-turn grapples require consumed-marker identity proof. | `docs/agent/safety-gates.md` |
