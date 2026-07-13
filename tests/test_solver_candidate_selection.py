@@ -394,6 +394,47 @@ def test_frontier_representatives_split_same_label_by_loss_magnitude():
     assert [c["rank"] for c in reps] == [0, 1]
 
 
+def test_frontier_representatives_append_required_candidate_after_limit():
+    def candidate(rank, grid_loss):
+        return {
+            "rank": rank,
+            "plan_safety": {
+                "status": "DIRTY",
+                "blocking": True,
+                "violations": [
+                    {
+                        "kind": "grid_damage",
+                        "current": 10,
+                        "predicted": 10 - grid_loss,
+                        "delta": -grid_loss,
+                    },
+                ],
+            },
+        }
+
+    candidates = [
+        candidate(0, 1),
+        candidate(1, 2),
+        candidate(2, 3),
+        candidate(3, 4),
+        candidate(4, 5),
+    ]
+    required = candidate(183, 6)
+    candidates.append(required)
+
+    reps = _candidate_frontier_representatives(
+        candidates,
+        required_candidate=required,
+    )
+    already_included = _candidate_frontier_representatives(
+        candidates,
+        required_candidate=candidates[0],
+    )
+
+    assert [c["rank"] for c in reps] == [0, 1, 2, 3, 4, 183]
+    assert [c["rank"] for c in already_included] == [0, 1, 2, 3, 4]
+
+
 def test_prepare_projected_bridge_preserves_solver_metadata():
     projected = {
         "tiles": [],

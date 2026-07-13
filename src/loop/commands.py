@@ -4377,6 +4377,7 @@ def _candidate_frontier_representatives(
     candidate_evals: list[dict],
     *,
     limit: int = 5,
+    required_candidate: dict | None = None,
 ) -> list[dict]:
     """Choose one candidate eval per safety-tradeoff signature."""
     buckets: dict[tuple, dict] = {}
@@ -4408,7 +4409,12 @@ def _candidate_frontier_representatives(
             return (0, rank)
         return (1, 10**9)
 
-    return sorted(buckets.values(), key=_sort_key)[:limit]
+    representatives = sorted(buckets.values(), key=_sort_key)[:limit]
+    if required_candidate is not None and not any(
+        candidate is required_candidate for candidate in representatives
+    ):
+        representatives.append(required_candidate)
+    return representatives
 
 
 def _solution_plan_payload(solution: Solution) -> list[dict]:
@@ -7842,7 +7848,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         block_mech_status_loss=block_mech_status_loss,
                     )
                     for candidate_eval in _candidate_frontier_representatives(
-                        summary_evals
+                        summary_evals,
+                        required_candidate=(
+                            selected_candidate_eval
+                            if candidate_rank is not None
+                            else None
+                        ),
                     )
                 ]
                 robust_frontier = _lookahead_robust_frontier(lookahead_frontier)

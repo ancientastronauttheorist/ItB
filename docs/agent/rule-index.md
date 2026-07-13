@@ -453,3 +453,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 452 | 801 | Water and Chasm deaths can settle after an attack ACK. | `docs/agent/solver-reference.md` |
 | 453 | 803 | `RegionData` shield positives are baseline evidence, never consumption evidence. | `docs/agent/solver-reference.md` |
 | 454 | 805 | Ordinary terminal audits accept same-turn MissionEnd dumps. | `docs/agent/safety-gates.md` |
+| 455 | 807 | Explicit dirty-rank lookahead must include the selected plan. | `docs/agent/safety-gates.md` |
