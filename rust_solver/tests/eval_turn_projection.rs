@@ -1,4 +1,4 @@
-//! Accuracy harness for **Option A** turn projection (clear queued targets, no re-queue).
+//! Accuracy harness for heuristic turn projection and requeue.
 //!
 //! For each (board_N, solve_N, board_{N+1}) triple found in recordings/,
 //! this test:
@@ -57,8 +57,8 @@ fn extract_actions(solve_v: &Value) -> Vec<MechAction> {
 
 /// Queued-target match between projected and actual boards.
 /// Returns (matched, total_shared_alive_enemies).
-/// Option A: projected enemies all have target (-1,-1); matched only when
-/// actual board also has (-1,-1) (frozen, webbed, out-of-range enemies).
+/// Queueless projected enemies match only when the actual board also has
+/// (-1,-1), as with frozen, smoked, out-of-range, or bespoke targeters.
 fn queued_target_match(proj_json: &str, actual_json: &str) -> (usize, usize) {
     let (pb, _, _, _, _, _) = match board_from_json(proj_json)   { Ok(b) => b, Err(_) => return (0,0) };
     let (ab, _, _, _, _, _) = match board_from_json(actual_json) { Ok(b) => b, Err(_) => return (0,0) };
@@ -143,7 +143,7 @@ fn eval_turn_projection_harness() {
         if seen.len() < 5 { seen.insert(run.clone()); true } else { seen.contains(&run) }
     }).collect();
 
-    println!("\n=== Option A Turn Projection Accuracy Harness (clear queued targets, no re-queue) ===");
+    println!("\n=== Heuristic Turn Projection Accuracy Harness ===");
     println!("triples_available: {}", selected.len());
 
     let mut t_match   = 0usize;
@@ -172,7 +172,7 @@ fn eval_turn_projection_harness() {
             Err(e) => { println!("  SKIP (parse): {:?}: {}", bp, e); continue; }
         };
 
-        // Project with Option A (clear queued targets, no re-queue)
+        // Project through enemy resolution and heuristic next-turn requeue.
         let (projected, result, projected_spawn_points) = project_plan_with_spawns(
             &board,
             &actions,
@@ -221,7 +221,7 @@ fn eval_turn_projection_harness() {
     println!("enemy_count_diff (proj-actual): {:.2}  (positive = sim over-predicts kills)", avg_e_diff);
     println!();
     println!("B: heuristic re-queue (closest Building in reach, fallback closest mech;");
-    println!("   skip Webbed/Frozen/Smoke). Expected qmatch ~29% against real game AI.");
+    println!("   webbed uses stationary reach; skip Frozen/Smoke). Expected qmatch ~29%.");
     println!("C: board_to_json injects eval_weights.pseudo_threat_eval=true so enemies");
     println!("   the heuristic left queueless still contribute a threat penalty via the");
     println!("   Option-C block in evaluate.rs.");

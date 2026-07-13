@@ -12,8 +12,8 @@
 //! # Why top-level K₁ plans get a level-1 bonus even when level-1 fails
 //!
 //! If `project_plan_with_spawns` produces a board with no legal actions
-//! (final turn, all mechs dead, every mech webbed/frozen) the sub-solver
-//! returns an empty vec. Those chains keep `level_1_best = None` and their
+//! (final turn, all mechs dead, or every mech otherwise actionless) the
+//! sub-solver returns an empty vec. Those chains keep `level_1_best = None` and their
 //! `chain_score` falls back to level-0 only. This is the correct signal:
 //! "the mission ends here, we only care about turn 1."
 //!

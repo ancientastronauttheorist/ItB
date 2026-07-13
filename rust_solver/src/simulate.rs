@@ -472,7 +472,11 @@ fn apply_healing_smoke_unit_on_tile(board: &mut Board, x: u8, y: u8) {
     }
 }
 
-fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
+pub(crate) fn apply_landing_effects(
+    board: &mut Board,
+    unit_idx: usize,
+    result: &mut ActionResult,
+) {
     let nx = board.units[unit_idx].x;
     let ny = board.units[unit_idx].y;
 

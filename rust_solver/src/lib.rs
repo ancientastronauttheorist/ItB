@@ -2234,7 +2234,15 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   dies or thaws from blocking damage still leaves its marker pending. This
 //   prevents depth-2 solves from inventing repeated blocks on phantom markers.
 //   Pre-v350 corpus archived as failure_db_snapshot_sim_v349.jsonl.
-pub const SIMULATOR_VERSION: u32 = 350;
+// v351 - Webbed and naturally immobile enemies remain attack-capable in
+//   projected requeue, threat evaluation, low-HP risk, and queueless threat
+//   scoring. Stationary reach uses a conservative weapon footprint; bespoke
+//   targeters stay queueless instead of receiving illegal building targets,
+//   with explicit passive-Psion and Snowmine status exceptions. Current-turn
+//   Snowmine resolution ignores Smoke, no-ops under Web, and models its
+//   mine-at-origin attack-move instead of fabricating ordinary weapon damage.
+//   Pre-v351 corpus archived as failure_db_snapshot_sim_v350.jsonl.
+pub const SIMULATOR_VERSION: u32 = 351;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -5,9 +5,11 @@
 ///
 /// After the enemy phase, `requeue_enemies_heuristic` populates a new
 /// queued target on each alive enemy using a cheap distance heuristic
-/// (closest Building within `move_speed + 4` Manhattan, fallback to
-/// closest mech, skip Webbed/Frozen/Smoked). This gives the downstream
-/// evaluator real per-tile threats on the projected board so
+/// (closest Building within a conservative attack envelope, fallback to
+/// closest mech, skip Frozen/Smoked and bespoke non-direct targeters).
+/// Stationary enemies remain attack-capable, so their envelope uses weapon
+/// family, range, splash, and push footprint without adding movement. This
+/// gives the downstream evaluator real per-tile threats on the projected board so
 /// `threats_cleared`, `building_coverage`, `perfect_defense_bonus`, and
 /// body-block scoring all work on turn+1. Empirically the heuristic
 /// agrees with real game AI on ~1-in-3 enemies — not perfect, but
@@ -21,7 +23,13 @@
 /// obvious target" case with a specific tile; C picks up the leftover
 /// "enemy with no obvious target" case with a scalar penalty.
 
-use crate::board::{count_unit_deaths_between, Board, ActionResult, UnitFlags};
+use crate::board::{
+    count_unit_deaths_between,
+    ActionResult,
+    Board,
+    Unit,
+    UnitFlags,
+};
 use crate::enemy::{
     apply_spawn_blocking,
     persisting_spawn_points,
@@ -30,7 +38,11 @@ use crate::enemy::{
 use crate::simulate::simulate_action_with_target2;
 use crate::solver::MechAction;
 use crate::types::{Terrain, idx_to_xy, xy_to_idx};
-use crate::weapons::WeaponTable;
+use crate::weapons::{
+    enemy_weapon_for_type,
+    WeaponTable,
+    WId,
+};
 
 #[derive(Clone, Debug)]
 pub struct ProjectedScenario {
@@ -40,6 +52,151 @@ pub struct ProjectedScenario {
     pub spawn_points: Vec<(u8, u8)>,
 }
 
+fn projected_enemy_weapon_id(enemy: &Unit) -> WId {
+    let mut wid = enemy_weapon_for_type(enemy.type_name_str());
+    if matches!(enemy.type_name_str(), "BotBoss" | "BotBoss2")
+        && enemy.weapon2.0 == WId::BossHeal as u16
+        && enemy.hp < enemy.max_hp
+    {
+        return WId::BossHeal;
+    }
+    if wid == WId::None {
+        let is_big = enemy.type_name_str().contains("Boss")
+            || enemy.type_name_str().contains("Leader");
+        wid = if enemy.ranged() {
+            if is_big { WId::FireflyAtk2 } else { WId::FireflyAtk1 }
+        } else if is_big {
+            WId::HornetAtk2
+        } else {
+            WId::HornetAtk1
+        };
+    }
+    wid
+}
+
+fn projected_enemy_uses_special_targeting(enemy: &Unit) -> bool {
+    let name = enemy.type_name_str();
+    if name.contains("Egg")
+        || name.starts_with("Jelly_")
+        || name.starts_with("Shaman")
+        || name.starts_with("Snowmine")
+    {
+        return true;
+    }
+    matches!(
+        projected_enemy_weapon_id(enemy),
+        WId::DiggerAtk1
+            | WId::DiggerAtk2
+            | WId::BlobberAtk1
+            | WId::BlobberAtk2
+            | WId::BlobberAtkB
+            | WId::SpiderAtk1
+            | WId::SpiderAtk2
+            | WId::BlobAtk1
+            | WId::BlobAtk2
+            | WId::BlobAtkB
+            | WId::StarfishAtk1
+            | WId::StarfishAtk2
+            | WId::StarfishAtkB1
+            | WId::TumblebugAtk1
+            | WId::TumblebugAtk2
+            | WId::PlasmodiaAtk1
+            | WId::PlasmodiaAtk2
+            | WId::ScorpionAtkB
+            | WId::BossHeal
+    )
+}
+
+fn projected_enemy_attack_reach(enemy: &Unit, weapons: &WeaponTable) -> i32 {
+    let name = enemy.type_name_str();
+    if name.starts_with("Shaman") {
+        return 14;
+    }
+    if name.starts_with("Snowmine") {
+        return 3;
+    }
+    if (name.starts_with("Dung") || name.starts_with("Tumblebug"))
+        && name.contains("Boss")
+    {
+        return 3;
+    }
+    let wid = projected_enemy_weapon_id(enemy);
+    let weapon = &weapons[wid as usize];
+    if matches!(wid, WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1) {
+        return 2;
+    }
+    if matches!(wid, WId::TumblebugAtk1 | WId::TumblebugAtk2) {
+        return 2;
+    }
+
+    // Enemy artillery often inherits DEF.range_max=1 while setting
+    // range_min=2; that inverted pair means board-wide targeting, not range
+    // one. Dispatch by weapon family before trusting the raw maximum. A
+    // cardinal line spans at most seven tiles, while unconstrained artillery
+    // and global/two-click attacks may span the board's 14-tile Manhattan
+    // diameter. Add a conservative footprint extension for line/AOE weapons
+    // that can hit beyond their clicked tile.
+    let direct_reach = match weapon.weapon_type {
+        crate::types::WeaponType::Melee => {
+            i32::from(weapon.range_max.max(1).max(weapon.path_size))
+        }
+        crate::types::WeaponType::Projectile
+        | crate::types::WeaponType::Laser
+        | crate::types::WeaponType::Charge
+        | crate::types::WeaponType::Pull => {
+            if weapon.range_max > 0 {
+                i32::from(weapon.range_max)
+            } else {
+                7
+            }
+        }
+        crate::types::WeaponType::SelfAoe => 1,
+        crate::types::WeaponType::Artillery => 14,
+        _ => 14,
+    };
+    let area_extension = if weapon.aoe_adjacent()
+        || weapon.aoe_behind()
+        || weapon.aoe_perpendicular()
+        || enemy.weapon_target_behind
+    {
+        1
+    } else {
+        0
+    };
+    let bump_extension = if weapon.push != crate::types::PushDir::None {
+        1
+    } else {
+        0
+    };
+    (direct_reach + area_extension + bump_extension).min(14)
+}
+
+pub(crate) fn projected_enemy_reach(
+    enemy: &Unit,
+    weapons: &WeaponTable,
+) -> i32 {
+    if enemy.web() || enemy.move_speed == 0 {
+        projected_enemy_attack_reach(enemy, weapons)
+    } else {
+        enemy.move_speed as i32 + 4
+    }
+}
+
+pub(crate) fn projected_enemy_has_attack_pressure(enemy: &Unit) -> bool {
+    let name = enemy.type_name_str();
+    if name.starts_with("Jelly_") {
+        return false;
+    }
+    if name.starts_with("Snowmine") && enemy.web() {
+        return false;
+    }
+    true
+}
+
+pub(crate) fn projected_enemy_smoke_cancels(enemy: &Unit) -> bool {
+    !enemy.type_name_str().starts_with("Snowmine")
+}
+
 /// Assign a new queued target to each alive enemy based on closest reachable
 /// threat. Pure function over the board; does not consume any simulation
 /// state. Caller is responsible for clearing stale `queued_target_x/_y`
@@ -47,27 +204,46 @@ pub struct ProjectedScenario {
 /// target; leaves them at -1 otherwise).
 ///
 /// Priority:
-///   1. Closest alive Building (Manhattan ≤ `move_speed + 4`)
-///   2. Closest alive player mech (Manhattan ≤ `move_speed + 4`)
+///   1. Closest alive Building within the projected reach envelope
+///   2. Closest alive player mech within the projected reach envelope
 ///   3. No target (leave at -1)
 ///
 /// Skipped enemies:
-///   - Webbed, Frozen — can't attack next turn
-///   - Standing on Smoke — smoke cancels attacks
+///   - Frozen — can't attack next turn
+///   - Standing on Smoke — smoke cancels ordinary attacks
+///   - Bespoke self/spawn/setup targeters — a building tile would be illegal
+///     or ineffective; Option C retains conservative queueless pressure
+///
+/// Webbed and naturally immobile enemies use a weapon-aware attack footprint
+/// without movement. Mobile enemies retain the bounded `move_speed + 4`
+/// heuristic and are surfaced as incomplete by the Python forecast audit.
+/// Mission Snowmines are explicit exceptions: Smoke does not cancel their
+/// setup attack, while Web does.
 ///
 /// Ties broken by lowest tile index for determinism.
-pub fn requeue_enemies_heuristic(board: &mut Board) {
+pub fn requeue_enemies_heuristic(board: &mut Board, weapons: &WeaponTable) {
     let n = board.unit_count as usize;
     for ei in 0..n {
-        let (ex, ey, reach, alive, is_enemy, frozen, webbed) = {
+        let (ex, ey, reach, alive, is_enemy, frozen) = {
             let e = &board.units[ei];
-            (e.x, e.y,
-             e.move_speed as i32 + 4,
-             e.alive(), e.is_enemy(), e.frozen(), e.web())
+            (
+                e.x,
+                e.y,
+                projected_enemy_reach(e, weapons),
+                e.alive(),
+                e.is_enemy(),
+                e.frozen(),
+            )
         };
         if !alive || !is_enemy { continue; }
-        if frozen || webbed { continue; }
-        if board.tile(ex, ey).smoke() { continue; }
+        if !projected_enemy_has_attack_pressure(&board.units[ei]) { continue; }
+        if frozen { continue; }
+        if board.tile(ex, ey).smoke()
+            && projected_enemy_smoke_cancels(&board.units[ei])
+        {
+            continue;
+        }
+        if projected_enemy_uses_special_targeting(&board.units[ei]) { continue; }
 
         // Pass 1: closest alive Building within reach.
         let mut best_bld: Option<(i32, usize)> = None; // (dist, flat_idx)
@@ -253,7 +429,7 @@ pub fn project_plan_with_spawns(
         board, actions, spawn_points, weapons,
     );
     // Option B: heuristic re-queue for surviving enemies.
-    requeue_enemies_heuristic(&mut b);
+    requeue_enemies_heuristic(&mut b, weapons);
     (b, aggregate, blocked_spawn_points)
 }
 
@@ -271,7 +447,7 @@ pub fn project_plan_scenarios(
     let mut scenarios = Vec::with_capacity(max_scenarios);
 
     let mut heuristic = base.clone();
-    requeue_enemies_heuristic(&mut heuristic);
+    requeue_enemies_heuristic(&mut heuristic, weapons);
     let mut signatures = vec![target_signature(&heuristic)];
     scenarios.push(ProjectedScenario {
         label: "heuristic_requeue".to_string(),
@@ -280,7 +456,7 @@ pub fn project_plan_scenarios(
         spawn_points: blocked_spawn_points.clone(),
     });
 
-    let mut retargets = building_retarget_candidates(&base);
+    let mut retargets = building_retarget_candidates(&base, weapons);
     retargets.sort_by(|a, b| {
         // Higher building HP first, then closer targets, then stable uid/tile.
         b.building_hp.cmp(&a.building_hp)
@@ -339,7 +515,10 @@ struct RetargetCandidate {
     building_hp: u8,
 }
 
-fn building_retarget_candidates(board: &Board) -> Vec<RetargetCandidate> {
+fn building_retarget_candidates(
+    board: &Board,
+    weapons: &WeaponTable,
+) -> Vec<RetargetCandidate> {
     let n = board.unit_count as usize;
     let mut out = Vec::new();
     for ei in 0..n {
@@ -347,7 +526,7 @@ fn building_retarget_candidates(board: &Board) -> Vec<RetargetCandidate> {
         if !eligible_for_requeue(board, ei) {
             continue;
         }
-        let reach = e.move_speed as i32 + 4;
+        let reach = projected_enemy_reach(e, weapons);
         for idx in 0..64usize {
             let tile = &board.tiles[idx];
             if tile.terrain != Terrain::Building || tile.building_hp == 0 {
@@ -376,9 +555,10 @@ fn eligible_for_requeue(board: &Board, unit_idx: usize) -> bool {
     let e = &board.units[unit_idx];
     e.alive()
         && e.is_enemy()
+        && projected_enemy_has_attack_pressure(e)
         && !e.frozen()
-        && !e.web()
-        && !board.tile(e.x, e.y).smoke()
+        && (!board.tile(e.x, e.y).smoke() || !projected_enemy_smoke_cancels(e))
+        && !projected_enemy_uses_special_targeting(e)
 }
 
 fn target_signature(board: &Board) -> Vec<(u16, i8, i8)> {
@@ -793,7 +973,7 @@ mod tests {
         b.tiles[xy_to_idx(0, 0)].terrain = Terrain::Building;
         b.tiles[xy_to_idx(0, 0)].building_hp = 1;
 
-        requeue_enemies_heuristic(&mut b);
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
 
         let e = &b.units[0];
         assert_eq!(e.queued_target_x, 4, "should target close building x");
@@ -823,7 +1003,7 @@ mod tests {
         enemy.queued_target_x = -1; enemy.queued_target_y = -1;
         b.add_unit(enemy);
 
-        requeue_enemies_heuristic(&mut b);
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
 
         let e = &b.units[1];
         assert_eq!(e.queued_target_x, 3);
@@ -832,7 +1012,7 @@ mod tests {
     }
 
     #[test]
-    fn test_heuristic_skips_frozen_webbed_smoked() {
+    fn test_heuristic_requeues_webbed_but_skips_frozen_smoked() {
         let mut b = Board::default();
         b.total_turns = 5; b.current_turn = 1;
         // Building right next to each enemy so that WITHOUT the skip
@@ -859,14 +1039,337 @@ mod tests {
         b.units[0].set_frozen(true);
         b.units[1].set_web(true);
 
-        requeue_enemies_heuristic(&mut b);
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
 
-        for i in 0..b.unit_count as usize {
+        for i in [0usize, 2usize] {
             let e = &b.units[i];
             assert_eq!(e.queued_target_x, -1,
                 "skipped enemy uid={} must stay queue-less", e.uid);
             assert!(!e.has_queued_attack());
         }
+        let webbed = &b.units[1];
+        assert_eq!(webbed.queued_target_x, 3);
+        assert_eq!(webbed.queued_target_y, 3);
+        assert!(webbed.has_queued_attack());
+    }
+
+    #[test]
+    fn test_webbed_melee_enemy_reach_excludes_movement() {
+        let mut b = Board::default();
+        b.total_turns = 5;
+        b.current_turn = 1;
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Scorpion1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 1;
+        enemy.max_hp = 1;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.move_speed = 3;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+
+        b.tiles[xy_to_idx(0, 1)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(0, 1)].building_hp = 1;
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+        assert_eq!(b.units[0].queued_target_x, 0);
+        assert_eq!(b.units[0].queued_target_y, 1);
+
+        b.tiles[xy_to_idx(0, 1)] = Default::default();
+        b.tiles[xy_to_idx(0, 2)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(0, 2)].building_hp = 1;
+        b.units[0].queued_target_x = -1;
+        b.units[0].queued_target_y = -1;
+        b.units[0].flags.remove(UnitFlags::HAS_QUEUED_ATTACK);
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+        assert_eq!(b.units[0].queued_target_x, -1);
+        assert!(!b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_webbed_projectile_uses_unlimited_line_reach() {
+        let mut b = Board::default();
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Firefly1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 1;
+        enemy.max_hp = 1;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.move_speed = 3;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(0, 7)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(0, 7)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+
+        assert_eq!(b.units[0].queued_target_x, 0);
+        assert_eq!(b.units[0].queued_target_y, 7);
+        assert!(b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_webbed_artillery_uses_full_board_reach() {
+        let mut b = Board::default();
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Scarab1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 1;
+        enemy.max_hp = 1;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(7, 7)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(7, 7)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+
+        assert_eq!(b.units[0].queued_target_x, 7);
+        assert_eq!(b.units[0].queued_target_y, 7);
+        assert!(b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_webbed_starfish_reach_includes_diagonal_appendages() {
+        let mut b = Board::default();
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Starfish1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 1;
+        enemy.max_hp = 1;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(1, 1)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(1, 1)].building_hp = 1;
+
+        assert_eq!(projected_enemy_reach(&b.units[0], &crate::weapons::WEAPONS), 2);
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+
+        // Starfish uses a self-targeted bespoke pattern, so the scalar reach
+        // evaluator keeps its pressure while requeue deliberately leaves it
+        // queueless instead of inventing an illegal building target.
+        assert_eq!(b.units[0].queued_target_x, -1);
+        assert!(!b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_stationary_special_attack_reach_covers_collateral() {
+        let mk = |name: &str| {
+            let mut enemy = Unit::default();
+            enemy.set_type_name(name);
+            enemy.hp = 1;
+            enemy.max_hp = 1;
+            enemy.team = Team::Enemy;
+            enemy.set_web(true);
+            enemy
+        };
+
+        assert_eq!(projected_enemy_reach(&mk("Tumblebug1"), &WEAPONS), 2);
+        assert_eq!(projected_enemy_reach(&mk("DungBoss"), &WEAPONS), 3);
+        assert_eq!(projected_enemy_reach(&mk("Bouncer1"), &WEAPONS), 2);
+        assert_eq!(projected_enemy_reach(&mk("BouncerBoss"), &WEAPONS), 3);
+        assert_eq!(projected_enemy_reach(&mk("Shaman1"), &WEAPONS), 14);
+        let mut snowmine = mk("Snowmine1");
+        snowmine.set_web(false);
+        snowmine.move_speed = 0;
+        assert_eq!(projected_enemy_reach(&snowmine, &WEAPONS), 3);
+    }
+
+    #[test]
+    fn test_stationary_special_targeting_stays_queueless() {
+        let mut b = Board::default();
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Blobber1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 2;
+        enemy.max_hp = 2;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(7, 7)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(7, 7)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut b, &WEAPONS);
+
+        assert_eq!(b.units[0].queued_target_x, -1);
+        assert!(!b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_bespoke_and_passive_enemies_stay_queueless() {
+        let mut b = Board::default();
+        b.tiles[xy_to_idx(3, 3)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(3, 3)].building_hp = 1;
+
+        let mut bot = Unit::default();
+        bot.uid = 10;
+        bot.set_type_name("BotBoss");
+        bot.x = 3;
+        bot.y = 2;
+        bot.hp = 2;
+        bot.max_hp = 4;
+        bot.team = Team::Enemy;
+        bot.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        bot.weapon2.0 = WId::BossHeal as u16;
+        bot.queued_target_x = -1;
+        bot.queued_target_y = -1;
+        b.add_unit(bot);
+
+        let mut egg = Unit::default();
+        egg.uid = 11;
+        egg.set_type_name("WebbEgg1");
+        egg.x = 2;
+        egg.y = 3;
+        egg.hp = 1;
+        egg.max_hp = 1;
+        egg.team = Team::Enemy;
+        egg.flags = UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
+        egg.queued_target_x = -1;
+        egg.queued_target_y = -1;
+        b.add_unit(egg);
+
+        let mut scorpion = Unit::default();
+        scorpion.uid = 12;
+        scorpion.set_type_name("ScorpionBoss");
+        scorpion.x = 4;
+        scorpion.y = 3;
+        scorpion.hp = 5;
+        scorpion.max_hp = 5;
+        scorpion.team = Team::Enemy;
+        scorpion.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        scorpion.queued_target_x = -1;
+        scorpion.queued_target_y = -1;
+        b.add_unit(scorpion);
+
+        let mut psion = Unit::default();
+        psion.uid = 13;
+        psion.set_type_name("Jelly_Armor1");
+        psion.x = 3;
+        psion.y = 4;
+        psion.hp = 2;
+        psion.max_hp = 2;
+        psion.team = Team::Enemy;
+        psion.flags = UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
+        psion.queued_target_x = -1;
+        psion.queued_target_y = -1;
+        b.add_unit(psion);
+
+        let mut shaman = Unit::default();
+        shaman.uid = 14;
+        shaman.set_type_name("Shaman1");
+        shaman.x = 1;
+        shaman.y = 3;
+        shaman.hp = 3;
+        shaman.max_hp = 3;
+        shaman.team = Team::Enemy;
+        shaman.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        shaman.queued_target_x = -1;
+        shaman.queued_target_y = -1;
+        b.add_unit(shaman);
+
+        let mut snowmine = Unit::default();
+        snowmine.uid = 15;
+        snowmine.set_type_name("Snowmine1");
+        snowmine.x = 5;
+        snowmine.y = 3;
+        snowmine.hp = 1;
+        snowmine.max_hp = 1;
+        snowmine.team = Team::Enemy;
+        snowmine.flags = UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
+        snowmine.move_speed = 0;
+        snowmine.queued_target_x = -1;
+        snowmine.queued_target_y = -1;
+        b.add_unit(snowmine);
+
+        requeue_enemies_heuristic(&mut b, &WEAPONS);
+
+        for enemy in &b.units[..b.unit_count as usize] {
+            assert_eq!(enemy.queued_target_x, -1);
+            assert!(!enemy.has_queued_attack());
+        }
+    }
+
+    #[test]
+    fn test_naturally_stationary_projectile_uses_attack_range() {
+        let mut b = Board::default();
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Totem1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 2;
+        enemy.max_hp = 2;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
+        enemy.move_speed = 0;
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(0, 7)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(0, 7)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut b, &WEAPONS);
+
+        assert_eq!(b.units[0].queued_target_x, 0);
+        assert_eq!(b.units[0].queued_target_y, 7);
+        assert!(b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_requeued_webbed_projectile_damages_on_second_projection() {
+        let mut b = Board::default();
+        b.grid_power = 7;
+        b.grid_power_max = 7;
+        b.current_turn = 1;
+        b.total_turns = 5;
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Firefly1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 2;
+        enemy.max_hp = 2;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(0, 7)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(0, 7)].building_hp = 1;
+
+        let (queued, _) = project_plan(&b, &[], &[], &WEAPONS);
+        let (attacked, _) = project_plan(&queued, &[], &[], &WEAPONS);
+
+        assert_eq!(queued.units[0].queued_target_x, 0);
+        assert_eq!(queued.units[0].queued_target_y, 7);
+        assert_eq!(attacked.tile(0, 7).building_hp, 0);
+        assert_eq!(attacked.grid_power, 6);
     }
 
     #[test]
@@ -879,7 +1382,7 @@ mod tests {
     }
 
     #[test]
-    fn test_project_plan_scenarios_includes_base_and_retarget() {
+    fn test_project_plan_scenarios_includes_webbed_retarget() {
         let mut b = Board::default();
         b.total_turns = 5; b.current_turn = 1; b.remaining_spawns = 2;
 
@@ -897,6 +1400,7 @@ mod tests {
         enemy.team = Team::Enemy;
         enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
         enemy.move_speed = 2; enemy.base_move = 2;
+        enemy.set_web(true);
         enemy.queued_target_x = -1; enemy.queued_target_y = -1;
         b.add_unit(enemy);
 

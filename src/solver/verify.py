@@ -1630,7 +1630,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # persist even if their blocker dies or thaws from blocking damage. This keeps
 # depth-2 solves from scoring repeated blocks on phantom markers. Pre-v350
 # corpus archived as failure_db_snapshot_sim_v349.jsonl.
-SIMULATOR_VERSION = 350
+# v351 - Webbed and naturally immobile enemies remain attack-capable in
+# projected requeue, threat evaluation, low-HP risk, and queueless threat
+# scoring. Stationary reach uses a conservative weapon footprint; bespoke
+# targeters stay queueless instead of receiving illegal building targets,
+# with explicit passive-Psion and Snowmine status exceptions. Current-turn
+# Snowmine resolution ignores Smoke, no-ops under Web, and models its
+# mine-at-origin attack-move instead of fabricating ordinary weapon damage.
+# Pre-v351 corpus archived as failure_db_snapshot_sim_v350.jsonl.
+SIMULATOR_VERSION = 351
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -83,9 +83,9 @@ Three candidates considered and rejected:
    which is exactly what's wrong here. And in a real overtime mission
    (some mission types legitimately run past total_turns), beam's
    projection IS useful.
-3. **"the heuristic re-queue is over-aggressive"** — On normal boards
-   the heuristic is conservative-ish (closest Building, skips
-   Webbed/Frozen/Smoked). On this board it happens to pick
+3. **"the heuristic re-queue is over-aggressive"** — At the time of this
+   historical investigation, the heuristic was conservative-ish (closest
+   Building, skipped Webbed/Frozen/Smoked). On this board it happened to pick
    grid-reward tiles because those are the closest surviving
    buildings to the surviving enemies. Real game AI would likely
    do the same.

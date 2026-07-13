@@ -251,7 +251,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     }
     board.current_turn = board.current_turn.saturating_add(1);
     advance_mission_tides_warning(&mut board);
-    requeue_enemies_heuristic(&mut board);
+    requeue_enemies_heuristic(&mut board, weapons_table);
 
     // Build predicted_outcome (mirrors solver.py:744-756).
     let mut buildings_alive = 0i32;

@@ -634,16 +634,16 @@ def test_lookahead_forecast_gaps_expose_mobile_enemies_and_spawns():
 
     assert [gap["kind"] for gap in gaps] == [
         "enemy_movement_unmodeled",
-        "enemy_retarget_unmodeled",
+        "stationary_enemy_retarget_approximate",
         "spawn_materialization_unmodeled",
     ]
     assert gaps[0]["enemy_uids"] == [10]
-    assert gaps[1]["enemy_uids"] == [12]
+    assert gaps[1]["enemy_uids"] == [12, 13]
     assert gaps[2]["unmodeled_emergence_count"] == 1
     assert gaps[2]["persisting_spawn_markers"] == []
 
 
-def test_lookahead_forecast_is_complete_when_only_immobile_enemies_remain():
+def test_lookahead_forecast_fails_closed_for_stationary_enemy_retargeting():
     projected = {
         "remaining_spawns": 0,
         "spawning_tiles": [],
@@ -657,7 +657,12 @@ def test_lookahead_forecast_is_complete_when_only_immobile_enemies_remain():
         projected,
         {},
         source_spawning_tiles=[],
-    ) == []
+    ) == [{
+        "kind": "stationary_enemy_retarget_approximate",
+        "reason": "weapon_targeting_and_bespoke_effects_are_heuristic",
+        "enemy_count": 1,
+        "enemy_uids": [13],
+    }]
 
 
 def test_lookahead_forecast_tracks_emerged_vek_after_marker_consumption():
@@ -739,7 +744,7 @@ def test_lookahead_forecast_fails_closed_on_spawn_lifecycle_mismatch():
     assert gaps[1]["kind"] == "spawn_materialization_unmodeled"
 
 
-def test_lookahead_forecast_is_incomplete_for_webbed_enemy_retarget():
+def test_lookahead_forecast_models_but_fails_closed_for_webbed_enemy():
     gaps = _lookahead_forecast_gaps({
         "remaining_spawns": 0,
         "spawning_tiles": [],
@@ -749,8 +754,8 @@ def test_lookahead_forecast_is_incomplete_for_webbed_enemy_retarget():
     }, source_spawning_tiles=[])
 
     assert gaps == [{
-        "kind": "enemy_retarget_unmodeled",
-        "reason": "webbed_enemy_skipped_by_stationary_retarget",
+        "kind": "stationary_enemy_retarget_approximate",
+        "reason": "weapon_targeting_and_bespoke_effects_are_heuristic",
         "enemy_count": 1,
         "enemy_uids": [12],
     }]
@@ -781,7 +786,7 @@ def test_lookahead_robust_summary_combines_current_and_worst_next_score():
 def test_lookahead_robust_summary_does_not_call_incomplete_forecast_clean():
     item = {
         "status": "OK",
-        "forecast_model": "stationary_retarget_v1",
+        "forecast_model": "stationary_retarget_v2",
         "forecast_complete": False,
         "forecast_gaps": [{"kind": "enemy_movement_unmodeled"}],
         "candidate_label": "grid_loss",

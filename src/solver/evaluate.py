@@ -567,10 +567,12 @@ def evaluate(
             # Low-HP risk: penalize 1HP mech near active enemies
             if m.hp == 1:
                 for e in board.enemies():
-                    if e.hp <= 0 or e.frozen or e.web:
+                    if (e.hp <= 0 or e.frozen
+                            or e.type.startswith("Jelly_")
+                            or (e.type.startswith("Snowmine") and e.web)):
                         continue
                     t = board.tile(e.x, e.y)
-                    if t.smoke:
+                    if t.smoke and not e.type.startswith("Snowmine"):
                         continue
                     if abs(m.x - e.x) + abs(m.y - e.y) <= 3:
                         score += _scaled(w.mech_low_hp_risk, ff, 0.0, 1.0)

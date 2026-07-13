@@ -1068,6 +1068,11 @@ def _threat_audit_requires_block(
     """Block End Turn when the pre-click audit still sees protected damage."""
     if not isinstance(threat_audit, dict):
         return False
+    # An unavailable audit cannot certify End Turn. In particular, keep this
+    # fail-closed even if an observational logger or persistence step failed
+    # after the live audit began.
+    if threat_audit.get("status") == "ERROR":
+        return True
     still_threatened = int(threat_audit.get("still_threatened_count") or 0)
     if still_threatened <= 0:
         return False
@@ -1112,6 +1117,45 @@ def _threat_audit_requires_block(
         if int(threat_audit.get("still_threatened_count") or 0) <= covered_pylon_losses:
             return False
     return True
+
+
+def _post_action_audit_evidence_error(
+    board,
+    bridge_data,
+    *,
+    expected_turn: int,
+) -> dict | None:
+    """Return a fail-closed error unless the final read proves this turn."""
+    if board is None:
+        return {
+            "status": "ERROR",
+            "error": "post_action_audit_board_missing",
+        }
+    if not isinstance(bridge_data, dict):
+        return {
+            "status": "ERROR",
+            "error": "post_action_audit_bridge_data_missing",
+        }
+    if bridge_data.get("phase") != "combat_player":
+        return {
+            "status": "ERROR",
+            "error": "post_action_audit_phase_mismatch",
+            "expected_phase": "combat_player",
+            "observed_phase": bridge_data.get("phase"),
+        }
+    if bridge_data.get("turn") != expected_turn:
+        return {
+            "status": "ERROR",
+            "error": "post_action_audit_turn_mismatch",
+            "expected_turn": expected_turn,
+            "observed_turn": bridge_data.get("turn"),
+        }
+    if bridge_data.get("in_active_mission") is False:
+        return {
+            "status": "ERROR",
+            "error": "post_action_audit_mission_inactive",
+        }
+    return None
 
 
 def _lightning_speed_plan_covers_threat_audit_loss(
@@ -2019,6 +2063,7 @@ def _classify_resist_outcome(
     attacker_found: bool,
     attacker_pos_changed: bool,
     attacker_webbed: bool,
+    attacker_smoked: bool | None,
     target_smoked: bool,
 ) -> str:
     """Classify one telegraphed-attack outcome post-enemy-phase.
@@ -2027,18 +2072,19 @@ def _classify_resist_outcome(
       destroyed:          hp_after == 0
       damaged:            hp_before > hp_after > 0
       resisted:           hp unchanged, attacker alive & at same pos,
-                          not webbed, target not smoked — the ONLY case
-                          where the roll-resist hypothesis is testable.
+                          and attacker not smoked — the ONLY case where
+                          the roll-resist hypothesis is testable. Web on
+                          the attacker and smoke on the target do not
+                          cancel an attack.
       attacker_killed:    hp unchanged, specific attacker UID gone —
                           solver preempted; attack never fired.
       attacker_pushed:    hp unchanged, attacker alive but moved —
                           telegraph disrupted; attack may or may not
                           have fired at a different tile.
-      attacker_webbed:    hp unchanged, attacker webbed — can't attack.
-      target_smoked:      hp unchanged, target tile has smoke — attack
-                          blocked by smoke (treated as 0-damage, not a
-                          roll resist).
-      unknown:            hp_after > hp_before (repair?) or unexpected.
+      attacker_smoked:    hp unchanged, attacker stands on smoke, so its
+                          attack was cancelled before firing.
+      unknown:            hp_after > hp_before (repair?), missing
+                          attack-start smoke provenance, or unexpected.
 
     Priority: destroyed/damaged > disruption flags > resisted. We check
     disruption flags BEFORE calling this "resisted" because disrupted
@@ -2056,10 +2102,14 @@ def _classify_resist_outcome(
         return "attacker_killed"
     if attacker_pos_changed:
         return "attacker_pushed"
-    if attacker_webbed:
-        return "attacker_webbed"
-    if target_smoked:
-        return "target_smoked"
+    if attacker_smoked:
+        return "attacker_smoked"
+    if attacker_smoked is None:
+        return "unknown"
+    # Retain these inputs as probe telemetry, but neither status disrupts an
+    # attack: Web prevents movement only, and smoke cancels the pawn standing
+    # on it rather than attacks aimed into the smoky tile.
+    _ = attacker_webbed, target_smoked
     return "resisted"
 
 
@@ -2073,6 +2123,22 @@ def _find_enemy_by_uid(board, uid: int):
     return None
 
 
+def _attacker_smoked_at_attack_start(board, attacker) -> bool:
+    """Return smoke cancellation latched before queued enemy attacks.
+
+    The prior player-phase tile state is authoritative for ordinary smoke.
+    Mission_Terratide's warned smoke tiles apply before queued attacks, so
+    include that pending environment set as well. Smoke created by an earlier
+    enemy attack is intentionally absent: it does not retroactively cancel a
+    later attack in the same enemy phase.
+    """
+    pos = (attacker.x, attacker.y)
+    return bool(
+        board.tiles[attacker.x][attacker.y].smoke
+        or pos in getattr(board, "environment_smoke", set())
+    )
+
+
 def _compute_resist_observations(prev_entry: dict, board,
                                  grid_power_now: int,
                                  prev_turn_start_grid_power: int | None = None
@@ -2082,7 +2148,7 @@ def _compute_resist_observations(prev_entry: dict, board,
     Uses attacker UID (captured at telegraph time) to identify the specific
     attacker post-enemy-phase, so we can distinguish a true resist (attack
     fired, rolled 0 damage) from a disrupted attack (solver killed, pushed,
-    or webbed the attacker before it could fire). The older implementation
+    or smoked the attacker before it could fire). The older implementation
     matched attackers by type name and produced ~70% false-positive resist
     rates when the solver preempted many attacks — see project memory
     `project_grid_defense_probe.md`.
@@ -2120,7 +2186,15 @@ def _compute_resist_observations(prev_entry: dict, board,
         attacker_pos_changed = (
             attacker_found and attacker_pos_now != attacker_pos_prev
         )
-        attacker_webbed = bool(attacker and attacker.web)
+        attacker_webbed = attack.get("attacker_webbed_at_probe")
+        if not isinstance(attacker_webbed, bool):
+            attacker_webbed = bool(attacker and attacker.web)
+        attacker_smoked = attack.get("attacker_smoked_at_attack_start")
+        if not isinstance(attacker_smoked, bool):
+            attacker_smoked = None
+        attacker_smoked_after = bool(
+            attacker and board.tiles[attacker.x][attacker.y].smoke
+        )
 
         coords = _visual_to_bridge(target_pos) if target_pos else None
         if coords is None:
@@ -2136,6 +2210,8 @@ def _compute_resist_observations(prev_entry: dict, board,
                 "attacker_found": attacker_found,
                 "attacker_pos_changed": attacker_pos_changed,
                 "attacker_webbed": attacker_webbed,
+                "attacker_smoked": attacker_smoked,
+                "attacker_smoked_after": attacker_smoked_after,
                 "target_smoked": False,
                 "inferred_outcome": "unknown",
             })
@@ -2154,6 +2230,7 @@ def _compute_resist_observations(prev_entry: dict, board,
             attacker_found=attacker_found,
             attacker_pos_changed=attacker_pos_changed,
             attacker_webbed=attacker_webbed,
+            attacker_smoked=attacker_smoked,
             target_smoked=target_smoked,
         )
         observations.append({
@@ -2168,22 +2245,34 @@ def _compute_resist_observations(prev_entry: dict, board,
             "attacker_found": attacker_found,
             "attacker_pos_changed": attacker_pos_changed,
             "attacker_webbed": attacker_webbed,
+            "attacker_smoked": attacker_smoked,
+            "attacker_smoked_after": attacker_smoked_after,
             "target_smoked": target_smoked,
             "inferred_outcome": outcome,
         })
     return observations
 
 
-def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
+def _log_resist_probe(
+    session: RunSession,
+    board,
+    bridge_data: dict,
+    *,
+    attack_start_provenance: bool = False,
+) -> None:
     """Log RNG seeds + telegraphed building attacks for the grid-defense probe.
 
-    Writes one JSONL entry per player-turn-start to
-    ``recordings/<run_id>/resist_probe.jsonl``. Each entry captures:
+    Writes JSONL checkpoints to ``recordings/<run_id>/resist_probe.jsonl``
+    at player-phase reads and once more from auto_turn's final fresh board
+    immediately before End Turn. Each entry captures:
 
     - master_seed, ai_seed (from saveData.lua; ai_seed advances per turn)
     - grid_defense_pct, grid_power
     - telegraphed attacks landing on building tiles (the events whose
-      resist outcome we want to predict)
+      resist outcome we want to predict). Only the post-player snapshot
+      captured immediately before End Turn is allowed to prove the smoke
+      state latched at enemy-attack start; ordinary reads retain telemetry
+      but leave that proof unknown.
     - ``resist_observations``: per-target outcome diffs against the
       previous entry's ``telegraphed_building_attacks``. Since the enemy
       phase runs between two consecutive player-turn snapshots, comparing
@@ -2230,10 +2319,19 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
         tile = board.tiles[e.target_x][e.target_y]
         if tile.terrain != "building" or tile.building_hp <= 0:
             continue
+        attacker_smoked_at_attack_start = (
+            _attacker_smoked_at_attack_start(board, e)
+            if attack_start_provenance
+            else None
+        )
         telegraphed.append({
             "attacker_uid": e.uid,
             "attacker_type": e.type,
             "attacker_pos": _bv(e.x, e.y),
+            "attacker_webbed_at_probe": bool(e.web),
+            "attacker_smoked_at_attack_start": (
+                attacker_smoked_at_attack_start
+            ),
             "target_pos": _bv(e.target_x, e.target_y),
             "target_building_hp_before": tile.building_hp,
         })
@@ -2289,11 +2387,43 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
             and board.tiles[x][y].building_hp > 0
         },
         "telegraphed_building_attacks": telegraphed,
+        "attack_start_provenance": (
+            "post_player_pre_end_turn" if attack_start_provenance else None
+        ),
         "resist_observations": resist_observations,
         "timestamp": int(bridge_data.get("timestamp", 0)),
     }
     with open(log_path, "a") as f:
         f.write(json.dumps(entry) + "\n")
+
+
+def _log_post_action_resist_probe(
+    session: RunSession,
+    board,
+    bridge_data: dict,
+    threat_audit: dict,
+) -> dict | None:
+    """Record the final resist probe without invalidating a live safety audit.
+
+    Resist telemetry is observational. A filesystem or serialization failure
+    must not replace an already-computed threat audit and thereby let End Turn
+    pass without its authoritative still-threatened count.
+    """
+    try:
+        _log_resist_probe(
+            session,
+            board,
+            bridge_data,
+            attack_start_provenance=True,
+        )
+    except Exception as exc:
+        error = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+        }
+        threat_audit["resist_probe_error"] = error
+        return error
+    return None
 
 
 def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
@@ -3985,6 +4115,7 @@ def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
     return (
         int(getattr(session, "difficulty", 0) or 0) >= 2
         or "hard victory" in targets
+        or "lightning war" in targets
         or "hard_victory" in tags
     )
 
@@ -4699,7 +4830,7 @@ def _lookahead_forecast_gaps(
         return [{"kind": "projected_board_missing"}]
 
     mobile_enemy_uids: list[int] = []
-    unmodeled_retarget_uids: list[int] = []
+    stationary_approx_uids: list[int] = []
     for unit in projected_bridge.get("units", []) or []:
         if not isinstance(unit, dict) or unit.get("is_extra_tile") is True:
             continue
@@ -4711,10 +4842,6 @@ def _lookahead_forecast_gaps(
         if not is_enemy or hp <= 0 or unit.get("frozen") is True:
             continue
         uid = unit.get("uid")
-        if unit.get("web") is True:
-            if isinstance(uid, int) and not isinstance(uid, bool):
-                unmodeled_retarget_uids.append(uid)
-            continue
         move_raw = unit.get("move", unit.get("move_speed", unit.get("base_move")))
         try:
             move = int(move_raw)
@@ -4722,7 +4849,14 @@ def _lookahead_forecast_gaps(
             # A live enemy without movement metadata is not proof of a
             # stationary forecast, so fail closed on completeness.
             move = 1
-        if move <= 0:
+        if unit.get("web") is True or move <= 0:
+            # Simulator v351 no longer suppresses stationary attackers and
+            # uses a conservative weapon-aware reach envelope. Exact target
+            # selection and bespoke effects (spawn artillery, self-AOE,
+            # Tumblebug setup) remain heuristic, so safety evidence must still
+            # fail closed when a stationary attacker survives.
+            if isinstance(uid, int) and not isinstance(uid, bool):
+                stationary_approx_uids.append(uid)
             continue
         if isinstance(uid, int) and not isinstance(uid, bool):
             mobile_enemy_uids.append(uid)
@@ -4734,14 +4868,13 @@ def _lookahead_forecast_gaps(
             "enemy_count": len(mobile_enemy_uids),
             "enemy_uids": sorted(mobile_enemy_uids),
         })
-    if unmodeled_retarget_uids:
+    if stationary_approx_uids:
         gaps.append({
-            "kind": "enemy_retarget_unmodeled",
-            "reason": "webbed_enemy_skipped_by_stationary_retarget",
-            "enemy_count": len(unmodeled_retarget_uids),
-            "enemy_uids": sorted(unmodeled_retarget_uids),
+            "kind": "stationary_enemy_retarget_approximate",
+            "reason": "weapon_targeting_and_bespoke_effects_are_heuristic",
+            "enemy_count": len(stationary_approx_uids),
+            "enemy_uids": sorted(stationary_approx_uids),
         })
-
     def _spawn_markers(raw) -> set[tuple[int, int]]:
         markers: set[tuple[int, int]] = set()
         for tile in raw or []:
@@ -5019,7 +5152,7 @@ def _candidate_lookahead_preview(
                     "projected_turn", projected_bridge.get("turn")
                 ),
                 "projected_action_result": scenario.get("action_result", {}),
-                "forecast_model": "stationary_retarget_v1",
+                "forecast_model": "stationary_retarget_v2",
                 "forecast_complete": not forecast_gaps,
                 "forecast_gaps": forecast_gaps,
             }
@@ -5099,7 +5232,7 @@ def _candidate_lookahead_preview(
                 "projected_turn": worst.get("projected_turn"),
                 "projected_action_result": worst.get("projected_action_result", {}),
                 "forecast_model": worst.get(
-                    "forecast_model", "stationary_retarget_v1"
+                    "forecast_model", "stationary_retarget_v2"
                 ),
                 "forecast_complete": worst.get("forecast_complete", True),
                 "forecast_gaps": worst.get("forecast_gaps", []),
@@ -32541,7 +32674,14 @@ def _lightning_click_reviewed_held_end_turn(
     try:
         refresh_bridge_state()
         audit_board, audit_data = read_bridge_state()
-        if audit_board is not None:
+        evidence_error = _post_action_audit_evidence_error(
+            audit_board,
+            audit_data,
+            expected_turn=turn,
+        )
+        if evidence_error is not None:
+            threat_audit = evidence_error
+        else:
             post_action_summary = _capture_board_summary(audit_board, audit_data)
             from src.solver.threat_audit import audit_threat_coverage
 
@@ -49547,7 +49687,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     try:
         refresh_bridge_state()
         audit_board, audit_data = read_bridge_state()
-        if audit_board is not None:
+        evidence_error = _post_action_audit_evidence_error(
+            audit_board,
+            audit_data,
+            expected_turn=turn,
+        )
+        if evidence_error is not None:
+            threat_audit = evidence_error
+        else:
             post_action_summary = _capture_board_summary(audit_board, audit_data)
             from src.solver.threat_audit import audit_threat_coverage
             threat_audit = audit_threat_coverage(
@@ -49561,6 +49708,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             _record_turn_state(
                 session, "threat_audit", threat_audit,
                 turn_override=turn,
+            )
+            # This is the first probe with proven post-player/pre-End-Turn
+            # timing. Earlier cmd_read snapshots may precede actions that add
+            # Smoke, so they cannot establish whether the enemy loop will
+            # latch an attacker as smoke-cancelled.
+            _log_post_action_resist_probe(
+                session,
+                audit_board,
+                audit_data,
+                threat_audit,
             )
             if threat_audit.get("entries"):
                 print("\nTHREAT COVERAGE AUDIT:")

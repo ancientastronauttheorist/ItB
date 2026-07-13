@@ -13,6 +13,7 @@ use crate::simulate::{
     apply_damage_defer_death_explosion,
     apply_damage_with_bombrock_exclusion,
     apply_death_explosion,
+    apply_landing_effects,
     apply_push,
     apply_push_no_edge_bump,
     apply_teleport_on_land,
@@ -715,6 +716,53 @@ fn hatch_spawn_destination(board: &Board, x: u8, y: u8) -> Option<(u8, u8)> {
     None
 }
 
+/// Resolve the Mine-Bot's bespoke queued setup skill.
+///
+/// `SnowmineAtk1` ignores Smoke. If the pawn is grappled, the shipped Lua
+/// returns an empty effect; otherwise a non-self target leaves a Freeze Mine
+/// on the origin tile and moves the pawn to its queued destination without
+/// dealing damage. The destination was path-validated when the game queued
+/// the skill, so this phase only needs to reject a target that became occupied
+/// or invalid while the player acted.
+fn simulate_snowmine_attack(
+    board: &mut Board,
+    enemy_idx: usize,
+    result: &mut ActionResult,
+) {
+    let (x, y, qtx, qty, inert) = {
+        let enemy = &board.units[enemy_idx];
+        (
+            enemy.x,
+            enemy.y,
+            enemy.queued_target_x,
+            enemy.queued_target_y,
+            enemy.frozen() || enemy.web(),
+        )
+    };
+    if inert || !in_bounds(qtx, qty) {
+        return;
+    }
+
+    let target = (qtx as u8, qty as u8);
+    if target == (x, y) {
+        return;
+    }
+
+    // The Lua effect queues the origin item before the movement. Preserve the
+    // mine even when the destination became occupied during the player phase.
+    board.tile_mut(x, y).set_freeze_mine(true);
+    if board
+        .unit_at(target.0, target.1)
+        .is_some_and(|idx| idx != enemy_idx)
+    {
+        return;
+    }
+
+    board.units[enemy_idx].x = target.0;
+    board.units[enemy_idx].y = target.1;
+    apply_landing_effects(board, enemy_idx, result);
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
 /// Processes in UID order and returns the accumulated outcome from fire,
 /// environment, enemy attacks, and other enemy-phase effects.
@@ -1139,6 +1187,14 @@ pub fn simulate_enemy_attacks(
             {
                 continue;
             }
+        }
+        // Mine-Bots use a bespoke attack-move setup skill rather than a
+        // weapon strike. It is Smoke-immune, while Web/Frozen make it a no-op.
+        // Handle it before the missing-target phantom-damage fallback and the
+        // generic Smoke latch so neither can fabricate ordinary attack damage.
+        if enemy.type_name_str().starts_with("Snowmine") {
+            simulate_snowmine_attack(board, ei, &mut result);
+            continue;
         }
         if enemy.queued_target_x < 0 {
             // PHANTOM-ATTACK GUARD: Vek reports has_queued_attack=true
@@ -2703,6 +2759,67 @@ mod tests {
 
         assert_eq!(board.tile(5, 1).building_hp, 2);
         assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_snowmine_attack_moves_and_leaves_freeze_mine_without_damage() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+
+        let snowmine =
+            add_enemy_with_type(&mut board, 131, 3, 3, 1, "Snowmine1", 3, 5);
+        board.units[snowmine]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[snowmine].x, board.units[snowmine].y), (3, 5));
+        assert!(board.tile(3, 3).freeze_mine());
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.buildings_damaged, 0);
+    }
+
+    #[test]
+    fn test_smoke_does_not_cancel_snowmine_attack_move() {
+        let mut board = Board::default();
+        board.tile_mut(2, 2).set_smoke(true);
+
+        // Snowmine2 shares SnowmineAtk1; exercise the type-family prefix in
+        // addition to the base mission pawn covered above.
+        let snowmine =
+            add_enemy_with_type(&mut board, 132, 2, 2, 1, "Snowmine2", 4, 2);
+        board.units[snowmine]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[snowmine].x, board.units[snowmine].y), (4, 2));
+        assert!(board.tile(2, 2).freeze_mine());
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_webbed_snowmine_attack_move_is_inert() {
+        let mut board = Board::default();
+        let snowmine =
+            add_enemy_with_type(&mut board, 133, 2, 2, 1, "Snowmine1", 4, 2);
+        board.units[snowmine]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[snowmine].set_web(true);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[snowmine].x, board.units[snowmine].y), (2, 2));
+        assert!(!board.tile(2, 2).freeze_mine());
         assert_eq!(result.grid_damage, 0);
     }
 

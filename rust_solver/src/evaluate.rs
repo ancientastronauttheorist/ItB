@@ -10,6 +10,12 @@
 use serde::Deserialize;
 use crate::types::*;
 use crate::board::*;
+use crate::turn_projection::{
+    projected_enemy_has_attack_pressure,
+    projected_enemy_reach,
+    projected_enemy_smoke_cancels,
+};
+use crate::weapons::WEAPONS;
 
 // ── Turn-aware scaling helpers ──────────────────────────────────────────────
 
@@ -281,18 +287,16 @@ pub struct EvalWeights {
     pub soft_disabled_penalty: f64,
 
     // Option C evaluator augmentation: "queueless threat" signal for projected
-    // boards. When `true`, `evaluate` applies an extra 1.5× next_turn_threat_penalty
-    // per alive enemy that has NO queued target (queued_target_x < 0) AND can
-    // reach a building within `move_speed + 4` Manhattan distance. This
-    // compensates for the fact that projected boards (from `project_plan`) have
-    // cleared enemy targets — the normal `next_turn_threat_penalty` block only
-    // fires for enemies WITH queued targets.
+    // boards. When `true`, `evaluate` applies an extra 1.5×
+    // next_turn_threat_penalty per alive enemy that the heuristic could not
+    // safely assign a target and that can still reach a building. This keeps
+    // frozen/smoked filtering and uses weapon-aware stationary reach for
+    // webbed or naturally immobile enemies.
     //
     // Default: `false` — the augmentation does NOT run on the standard 1-turn
     // evaluation path, so it cannot alter regression scores. It must be explicitly
     // enabled by setting this to `true` (done by `project_plan`'s returned
-    // `board_to_json` via `eval_weights.pseudo_threat_eval`). This gating ensures
-    // no SIMULATOR_VERSION bump is required.
+    // `board_to_json` via `eval_weights.pseudo_threat_eval`).
     #[serde(default)]
     pub pseudo_threat_eval: bool,
 }
@@ -681,14 +685,17 @@ pub fn evaluate(
             // damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
             score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90) * enemy_urgency;
             // Threat-weighted survivor penalty: enemies that hit hardest
-            // cost more to leave alive. Skips webbed/frozen (can't attack
-            // this turn) and units with no queued attack. weapon_damage
+            // cost more to leave alive. Frozen enemies cannot attack;
+            // webbed enemies remain attack-capable except for explicit
+            // weapon exceptions such as Snowmines. weapon_damage
             // is the per-attack damage value already populated by the
             // bridge (see enemy.rs WeaponDef populate_unit_from_weapon).
             if weights.enemy_threat_remaining != 0.0
                 && u.weapon_damage > 0
-                && !u.web()
                 && !u.frozen()
+                && projected_enemy_has_attack_pressure(u)
+                && (!board.tile(u.x, u.y).smoke()
+                    || !projected_enemy_smoke_cancels(u))
             {
                 score += (u.weapon_damage as f64)
                     * scaled(weights.enemy_threat_remaining, ff, 0.10, 0.90)
@@ -1144,8 +1151,10 @@ pub fn evaluate(
                 let dominated = (0..board.unit_count as usize).any(|j| {
                     let e = &board.units[j];
                     e.is_enemy() && e.hp > 0
-                        && !e.frozen() && !e.web()
-                        && !board.tile(e.x, e.y).smoke()
+                        && projected_enemy_has_attack_pressure(e)
+                        && !e.frozen()
+                        && (!board.tile(e.x, e.y).smoke()
+                            || !projected_enemy_smoke_cancels(e))
                         && ((u.x as i32 - e.x as i32).abs()
                           + (u.y as i32 - e.y as i32).abs()) <= 3
                 });
@@ -1211,24 +1220,26 @@ pub fn evaluate(
 
     // ── Turn+1 threat preview ──────────────────────────────────────────
     // For each surviving, unhindered enemy, count it as a threat if any
-    // building tile lies within its taxicab (move_speed + range_envelope)
-    // on the post-turn-1 board. Collapses to 0 on final turn via `ff`.
+    // building tile lies within its conservative reach envelope on the
+    // post-turn-1 board. Stationary enemies use weapon-aware attack reach;
+    // mobile enemies retain the bounded move+4 heuristic. Collapses to 0 on
+    // final turn via `ff`.
     //
-    // We use a generous range envelope of +4 tiles (covers adjacent-melee
-    // through most artillery/ranged weapons on an 8×8 board) because the
-    // goal is to TILT action selection toward clearing threat-adjacent
-    // enemies, not to precisely simulate turn+2. Precise enemy AI would
-    // require a much larger module and the 1-turn solver can't act on it
-    // anyway — a tilt is what helps it pick "kill the Hornet next to the
-    // Coal Plant" over "kill two far-side scouts" when scores are close.
+    // This is a conservative tilt, not precise turn+2 AI emulation. Mobile
+    // enemies use move+4; stationary enemies use weapon family/range plus
+    // bounded splash and bump reach. Exact target selection and bespoke
+    // effects remain outside this scalar evaluator.
     if weights.next_turn_threat_penalty > 0.0 && ff > 0.01 {
         let mut threatening_enemies = 0i32;
         for i in 0..board.unit_count as usize {
             let e = &board.units[i];
             if !e.is_enemy() || !e.alive() { continue; }
-            if e.frozen() || e.web() { continue; }
-            if board.tile(e.x, e.y).smoke() { continue; }
-            let reach = e.move_speed as i32 + 4;
+            if !projected_enemy_has_attack_pressure(e) { continue; }
+            if e.frozen() { continue; }
+            if board.tile(e.x, e.y).smoke() && projected_enemy_smoke_cancels(e) {
+                continue;
+            }
+            let reach = projected_enemy_reach(e, &WEAPONS);
             let mut can_reach_building = false;
             for idx in 0..64 {
                 let tile = &board.tiles[idx];
@@ -1251,29 +1262,33 @@ pub fn evaluate(
 
     // ── Option C: Queueless threat (projected boards only) ────────────────
     // Alive enemies that have NO queued target (queued_target_x < 0) but can
-    // still reach a building within `move_speed + 4` Manhattan are penalised
+    // still reach a building within the same conservative envelope are penalised
     // at 1.5× next_turn_threat_penalty. This compensates for the fact that
-    // `project_plan` (Option C) clears all enemy queued targets: without this
-    // extra signal the evaluator would see no threats and prefer "kill
-    // everything to exhaustion" over "protect buildings" — the same failure
-    // mode Option A exhibits.
+    // `project_plan` deliberately leaves bespoke non-direct targeters
+    // queueless instead of inventing illegal targets. Without this extra
+    // signal the evaluator can undervalue those survivors.
     //
     // Gated behind `pseudo_threat_eval` (default false) so it fires ONLY when
     // the caller explicitly sets it — i.e., on projected boards from
-    // `project_plan`. Normal 1-turn evaluation is unchanged, so no
-    // SIMULATOR_VERSION bump is needed.
+    // `project_plan`. Simulator v351 extends this projected-only path to
+    // stationary enemies and bespoke targeters left deliberately queueless.
     //
     // Filters: same as the existing `next_turn_threat_penalty` block — skip
-    // Frozen, Webbed, and enemies on Smoke.
+    // Frozen/passive enemies and ordinary enemies on Smoke. Webbed enemies
+    // remain stationary but attack-capable except for explicit weapon
+    // exceptions, so they use their conservative weapon footprint.
     if weights.pseudo_threat_eval && weights.next_turn_threat_penalty > 0.0 && ff > 0.01 {
         let mut queueless_threatening = 0i32;
         for i in 0..board.unit_count as usize {
             let e = &board.units[i];
             if !e.is_enemy() || !e.alive() { continue; }
             if e.queued_target_x >= 0 { continue; } // already has a target — don't double-count
-            if e.frozen() || e.web() { continue; }
-            if board.tile(e.x, e.y).smoke() { continue; }
-            let reach = e.move_speed as i32 + 4;
+            if !projected_enemy_has_attack_pressure(e) { continue; }
+            if e.frozen() { continue; }
+            if board.tile(e.x, e.y).smoke() && projected_enemy_smoke_cancels(e) {
+                continue;
+            }
+            let reach = projected_enemy_reach(e, &WEAPONS);
             let mut can_reach_building = false;
             for idx in 0..64 {
                 let tile = &board.tiles[idx];
@@ -1330,6 +1345,236 @@ mod tests {
     use super::*;
 
     fn no_psion() -> PsionState { PsionState::default() }
+
+    fn webbed_enemy_board() -> Board {
+        let mut board = Board::default();
+        board.current_turn = 1;
+        board.total_turns = 5;
+        board.remaining_spawns = 1;
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Firefly1");
+        enemy.x = 2;
+        enemy.y = 2;
+        enemy.hp = 3;
+        enemy.max_hp = 3;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.move_speed = 3;
+        enemy.base_move = 3;
+        enemy.weapon_damage = 2;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        board.add_unit(enemy);
+        board
+    }
+
+    #[test]
+    fn test_webbed_enemy_counts_threat_remaining() {
+        let board = webbed_enemy_board();
+        let mut baseline_weights = EvalWeights::default();
+        baseline_weights.enemy_threat_remaining = 0.0;
+        baseline_weights.next_turn_threat_penalty = 0.0;
+        baseline_weights.mech_low_hp_risk = 0.0;
+        let baseline = evaluate(
+            &board, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+
+        let mut threat_weights = baseline_weights.clone();
+        threat_weights.enemy_threat_remaining = -100.0;
+        let threatened = evaluate(
+            &board, &[], &threat_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        let ff = future_factor(1, 5, 1, false);
+        let expected = 2.0 * scaled(-100.0, ff, 0.10, 0.90);
+        assert!((threatened - baseline - expected).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_webbed_smoked_enemy_does_not_count_threat_remaining() {
+        let mut board = webbed_enemy_board();
+        board.tile_mut(2, 2).set_smoke(true);
+        let mut baseline_weights = EvalWeights::default();
+        baseline_weights.enemy_threat_remaining = 0.0;
+        baseline_weights.next_turn_threat_penalty = 0.0;
+        baseline_weights.mech_low_hp_risk = 0.0;
+        let baseline = evaluate(
+            &board, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+
+        let mut threat_weights = baseline_weights.clone();
+        threat_weights.enemy_threat_remaining = -100.0;
+        let smoked = evaluate(
+            &board, &[], &threat_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((smoked - baseline).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_snowmine_smoke_immunity_and_web_noop_pressure() {
+        let mut board = webbed_enemy_board();
+        board.units[0].set_type_name("Snowmine1");
+        board.units[0].set_web(false);
+        board.units[0].move_speed = 0;
+        board.tile_mut(2, 2).set_smoke(true);
+        board.tile_mut(2, 5).terrain = Terrain::Building;
+        board.tile_mut(2, 5).building_hp = 1;
+
+        let mut baseline_weights = EvalWeights::default();
+        baseline_weights.enemy_threat_remaining = 0.0;
+        baseline_weights.next_turn_threat_penalty = 0.0;
+        baseline_weights.mech_low_hp_risk = 0.0;
+        let mut threat_weights = baseline_weights.clone();
+        threat_weights.next_turn_threat_penalty = 100.0;
+
+        let baseline = evaluate(
+            &board, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        let smoke_immune_threat = evaluate(
+            &board, &[], &threat_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((smoke_immune_threat - baseline + 100.0).abs() < 1.0);
+
+        board.units[0].set_web(true);
+        let webbed_baseline = evaluate(
+            &board, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        let webbed_threat = evaluate(
+            &board, &[], &threat_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((webbed_threat - webbed_baseline).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_passive_psion_has_no_direct_attack_pressure() {
+        let mut board = webbed_enemy_board();
+        board.units[0].set_type_name("Jelly_Armor1");
+        board.units[0].set_web(false);
+        board.units[0].move_speed = 0;
+        board.tile_mut(2, 3).terrain = Terrain::Building;
+        board.tile_mut(2, 3).building_hp = 1;
+
+        let mut baseline_weights = EvalWeights::default();
+        baseline_weights.enemy_threat_remaining = 0.0;
+        baseline_weights.next_turn_threat_penalty = 0.0;
+        baseline_weights.mech_low_hp_risk = 0.0;
+        let baseline = evaluate(
+            &board, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+
+        let mut pressure_weights = baseline_weights.clone();
+        pressure_weights.enemy_threat_remaining = -100.0;
+        pressure_weights.next_turn_threat_penalty = 100.0;
+        pressure_weights.pseudo_threat_eval = true;
+        let passive = evaluate(
+            &board, &[], &pressure_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((passive - baseline).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_webbed_enemy_counts_low_hp_mech_risk() {
+        let mut board = webbed_enemy_board();
+        let mut mech = Unit::default();
+        mech.uid = 1;
+        mech.set_type_name("PunchMech");
+        mech.x = 2;
+        mech.y = 3;
+        mech.hp = 1;
+        mech.max_hp = 3;
+        mech.team = Team::Player;
+        mech.flags = UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
+        board.add_unit(mech);
+
+        let mut baseline_weights = EvalWeights::default();
+        baseline_weights.enemy_threat_remaining = 0.0;
+        baseline_weights.next_turn_threat_penalty = 0.0;
+        baseline_weights.mech_low_hp_risk = 0.0;
+        let baseline = evaluate(
+            &board, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+
+        let mut risk_weights = baseline_weights.clone();
+        risk_weights.mech_low_hp_risk = -200.0;
+        let risky = evaluate(
+            &board, &[], &risk_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        let ff = future_factor(1, 5, 1, false);
+        let expected = scaled(-200.0, ff, 0.0, 1.0);
+        assert!((risky - baseline - expected).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_webbed_enemy_next_turn_reach_uses_weapon_range_without_movement() {
+        let mut in_range = webbed_enemy_board();
+        in_range.units[0].set_type_name("Scorpion1");
+        in_range.tile_mut(2, 3).terrain = Terrain::Building;
+        in_range.tile_mut(2, 3).building_hp = 1;
+
+        let mut baseline_weights = EvalWeights::default();
+        baseline_weights.enemy_threat_remaining = 0.0;
+        baseline_weights.mech_low_hp_risk = 0.0;
+        baseline_weights.next_turn_threat_penalty = 0.0;
+        baseline_weights.pseudo_threat_eval = false;
+        let mut threat_weights = baseline_weights.clone();
+        threat_weights.next_turn_threat_penalty = 100.0;
+
+        let baseline = evaluate(
+            &in_range, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        let threatened = evaluate(
+            &in_range, &[], &threat_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((threatened - baseline + 100.0).abs() < 1.0);
+
+        let mut out_of_range = webbed_enemy_board();
+        out_of_range.units[0].set_type_name("Scorpion1");
+        out_of_range.tile_mut(2, 4).terrain = Terrain::Building;
+        out_of_range.tile_mut(2, 4).building_hp = 1;
+        let stationary_baseline = evaluate(
+            &out_of_range, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        let stationary_threat = evaluate(
+            &out_of_range, &[], &threat_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((stationary_threat - stationary_baseline).abs() < 1.0);
+
+        out_of_range.units[0].set_web(false);
+        let mobile_baseline = evaluate(
+            &out_of_range, &[], &baseline_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        let mobile_threat = evaluate(
+            &out_of_range, &[], &threat_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((mobile_threat - mobile_baseline + 100.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_webbed_queueless_enemy_gets_pseudo_threat_penalty() {
+        let mut board = webbed_enemy_board();
+        board.tile_mut(2, 7).terrain = Terrain::Building;
+        board.tile_mut(2, 7).building_hp = 1;
+
+        let mut standard_weights = EvalWeights::default();
+        standard_weights.enemy_threat_remaining = 0.0;
+        standard_weights.mech_low_hp_risk = 0.0;
+        standard_weights.next_turn_threat_penalty = 100.0;
+        standard_weights.pseudo_threat_eval = false;
+        let standard = evaluate(
+            &board, &[], &standard_weights, 0, 0, 0, &no_psion(), 0,
+        );
+
+        let mut pseudo_weights = standard_weights.clone();
+        pseudo_weights.pseudo_threat_eval = true;
+        let pseudo = evaluate(
+            &board, &[], &pseudo_weights, 0, 0, 0, &no_psion(), 0,
+        );
+        assert!((pseudo - standard + 150.0).abs() < 1.0);
+    }
 
     #[test]
     fn test_empty_board_score() {
