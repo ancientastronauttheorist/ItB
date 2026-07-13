@@ -1647,7 +1647,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # advances the next warning toward y=0 (y = 7 - Index). Mission_Tides keeps
 # its opposite y+1 direction. Pre-v353 corpus archived as
 # failure_db_snapshot_sim_v352.jsonl.
-SIMULATOR_VERSION = 353
+# v354 - MothAtk1/2 forward target pushes retain a lethally hit corpse long
+# enough to bump an occupied destination. Generic and Cluster Artillery keep
+# their observed corpse-absorption rule. Pre-v354 corpus archived as
+# failure_db_snapshot_sim_v353.jsonl.
+SIMULATOR_VERSION = 354
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -2587,6 +2587,11 @@ const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
     trigger_mines: true,
 };
 
+const DEAD_BUMPS_LIVE_BLOCKER_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_bumps_live_blocker: true,
+    ..DEFAULT_PUSH_POLICY
+};
+
 const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: true,
     dead_bumps_live_blocker: true,
@@ -2745,6 +2750,23 @@ pub(crate) fn apply_push_no_edge_bump(
     result: &mut ActionResult,
 ) {
     apply_push_with_policy(board, x, y, direction, result, NO_EDGE_BUMP_PUSH_POLICY);
+}
+
+pub(crate) fn apply_push_dead_bumps_live_blocker(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+) {
+    apply_push_with_policy(
+        board,
+        x,
+        y,
+        direction,
+        result,
+        DEAD_BUMPS_LIVE_BLOCKER_PUSH_POLICY,
+    );
 }
 
 fn apply_rocket_center_push(

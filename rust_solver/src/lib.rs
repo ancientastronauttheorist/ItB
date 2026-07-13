@@ -2251,7 +2251,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   advances the next warning toward y=0 (y = 7 - Index). Ordinary
 //   Mission_Tides warnings continue advancing toward y=7. Pre-v353 corpus
 //   archived as failure_db_snapshot_sim_v352.jsonl.
-pub const SIMULATOR_VERSION: u32 = 353;
+// v354 - MothAtk1/2 forward target pushes retain a lethally hit corpse long
+//   enough to bump an occupied destination. Generic and Cluster Artillery
+//   keep their observed corpse-absorption rule. Pre-v354 corpus archived as
+//   failure_db_snapshot_sim_v353.jsonl.
+pub const SIMULATOR_VERSION: u32 = 354;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

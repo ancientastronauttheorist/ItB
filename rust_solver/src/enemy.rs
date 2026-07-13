@@ -15,6 +15,7 @@ use crate::simulate::{
     apply_death_explosion,
     apply_landing_effects,
     apply_push,
+    apply_push_dead_bumps_live_blocker,
     apply_push_no_edge_bump,
     apply_teleport_on_land,
     apply_weapon_status,
@@ -1760,7 +1761,22 @@ pub fn simulate_enemy_attacks(
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                 if wdef.push == PushDir::Forward {
                     if let Some(dir) = attack_dir {
-                        apply_push(board, tx, ty, dir, &mut result);
+                        if matches!(enemy_wid, WId::MothAtk1 | WId::MothAtk2) {
+                            // Repulsive Pellets keeps the killed target's
+                            // forward push live long enough to bump an
+                            // occupied destination. Keep this Moth-specific:
+                            // generic and Cluster Artillery corpse pushes are
+                            // absorbed by live blockers.
+                            apply_push_dead_bumps_live_blocker(
+                                board,
+                                tx,
+                                ty,
+                                dir,
+                                &mut result,
+                            );
+                        } else {
+                            apply_push(board, tx, ty, dir, &mut result);
+                        }
                     }
                 }
 
@@ -3867,6 +3883,48 @@ mod tests {
             "Blocked recoil leaves the Moth in place");
         assert_eq!(board.tile(1, 3).building_hp, 1,
             "Moth artillery still damages its queued target after recoil");
+    }
+
+    #[test]
+    fn test_moth_artillery_killed_target_corpse_bumps_live_mech() {
+        // Exact post-player shape from Chaos Roll Unfair run
+        // 20260713_052159_731, Mission_Wind turn 4. Ignite pushed Alpha Moth
+        // E5->F5 and Alpha Bouncer C5->B5. The displaced Moth retained its
+        // original E5->A5 four-tile offset, so it fired F5->B5, killed the
+        // Bouncer, and the Bouncer corpse bumped Ignite on A5.
+        let mut board = Board::default();
+        board.grid_power = 5;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 1).terrain = Terrain::Building; // G5
+        board.tile_mut(3, 1).building_hp = 2;
+
+        let moth = add_enemy_with_type(&mut board, 813, 3, 2, 5, "Moth2", 3, 6);
+        board.units[moth].set_fire(true);
+        board.units[moth].queued_origin_x = 3;
+        board.units[moth].queued_origin_y = 3;
+        board.units[moth].queued_target_raw_x = 3;
+        board.units[moth].queued_target_raw_y = 7;
+        board.units[moth].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let bouncer = add_enemy_with_type(&mut board, 822, 3, 6, 3, "Bouncer1", -1, -1);
+        let ignite = add_mech_unit(&mut board, 2, 3, 7, 2);
+        board.units[ignite].set_type_name("FlameMech");
+        board.attack_order = vec![813, 822];
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[moth].hp, 3, "Fire plus blocked recoil costs the Moth 2 HP");
+        assert_eq!((board.units[moth].x, board.units[moth].y), (3, 2));
+        assert_eq!(board.tile(3, 1).building_hp, 1, "blocked recoil damages G5");
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.units[bouncer].hp, 0, "Alpha Moth artillery kills the Bouncer");
+        assert_eq!(board.units[ignite].hp, 1, "killed Bouncer corpse bumps Ignite for 1");
     }
 
     #[test]
