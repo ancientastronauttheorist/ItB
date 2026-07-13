@@ -158,6 +158,38 @@ def _frozen_building(board: Board, x: int, y: int) -> bool:
     return bool(getattr(board.tile(x, y), "frozen", False))
 
 
+def _shield_covers_single_building_threat(
+    board: Board,
+    x: int,
+    y: int,
+    current_target_counts: dict[tuple[int, int], int],
+) -> bool:
+    """True when the building's live shield safely absorbs its sole hit.
+
+    Keep this deliberately narrower than simulator prediction. Multiple live
+    threats can consume the same one-shot shield, and a pre-attack environment
+    hit or freeze can remove it before the queued Vek attack resolves.
+    """
+    if not _live_building(board, x, y):
+        return False
+    if not bool(getattr(board.tile(x, y), "shield", False)):
+        return False
+    if current_target_counts.get((x, y), 0) != 1:
+        return False
+    if _lethal_environment_resolves_after_attacks(board):
+        return True
+    if (x, y) in (getattr(board, "environment_freeze", set()) or set()):
+        return False
+    danger_v2 = getattr(board, "environment_danger_v2", {}) or {}
+    if (x, y) in danger_v2:
+        damage, _lethal = danger_v2[(x, y)]
+        if int(damage) > 0:
+            return False
+    if (x, y) in (getattr(board, "environment_danger", set()) or set()):
+        return False
+    return True
+
+
 def _will_die_to_fire_before_attack(board: Board, attacker: Unit) -> bool:
     """True when the enemy-phase fire tick should kill this attacker first."""
     if not getattr(attacker, "fire", False) or attacker.hp > 1:
@@ -701,7 +733,11 @@ def _will_be_moved_by_prior_attack_before_attack(board: Board, attacker: Unit) -
     return False, ""
 
 
-def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
+def _coverage_reason(
+    threat: dict[str, Any],
+    board: Board,
+    current_target_counts: dict[tuple[int, int], int],
+) -> tuple[str, str]:
     attacker_info = threat.get("attacker") or {}
     uid = attacker_info.get("uid")
     target = threat.get("target") or [-1, -1]
@@ -818,6 +854,13 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
     if current_target == [tx, ty]:
         if _frozen_building(board, tx, ty):
             return "target_frozen_building", "target building is frozen and will thaw"
+        if _shield_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            return (
+                "target_shielded_building",
+                "target building's live shield absorbs its sole queued hit",
+            )
         if moved:
             return "still_threatened_after_move", "attacker moved but still targets the building"
         return "still_threatened", "attacker still targets the building"
@@ -837,12 +880,22 @@ def audit_threat_coverage(
 ) -> dict[str, Any]:
     """Explain coverage for solve-time threats and block new live threats."""
     threats = initial_threats or []
+    current_threats = capture_building_threats(board)
+    current_target_counts: dict[tuple[int, int], int] = {}
+    for current in current_threats:
+        target = current.get("target") or [-1, -1]
+        try:
+            key = (int(target[0]), int(target[1]))
+        except (TypeError, ValueError, IndexError):
+            continue
+        current_target_counts[key] = current_target_counts.get(key, 0) + 1
+
     entries: list[dict[str, Any]] = []
     still_threatened = 0
     seen_threats: set[tuple[str, int, tuple[int, int]]] = set()
     for threat in threats:
         seen_threats.add(_threat_key(threat))
-        reason, detail = _coverage_reason(threat, board)
+        reason, detail = _coverage_reason(threat, board, current_target_counts)
         if reason.startswith("still_threatened"):
             still_threatened += 1
         entry = dict(threat)
@@ -852,12 +905,11 @@ def audit_threat_coverage(
         }
         entries.append(entry)
 
-    current_threats = capture_building_threats(board)
     new_current_threats = [
         threat for threat in current_threats if _threat_key(threat) not in seen_threats
     ]
     for threat in new_current_threats:
-        reason, detail = _coverage_reason(threat, board)
+        reason, detail = _coverage_reason(threat, board, current_target_counts)
         if reason.startswith("still_threatened"):
             still_threatened += 1
             reason = "still_threatened_current"

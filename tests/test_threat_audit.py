@@ -804,6 +804,48 @@ def test_threat_audit_still_threatened_warns():
     assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
 
 
+def test_threat_audit_single_shielded_building_target_is_covered():
+    board = _board()
+    board.tile(4, 2).shield = True
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "target_shielded_building"
+    )
+
+
+def test_threat_audit_shield_does_not_cover_multiple_building_threats():
+    board = _board()
+    board.tile(4, 2).shield = True
+    board.units.append(_enemy(uid=11))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 2
+    assert {
+        entry["coverage"]["reason"] for entry in audit["entries"]
+    } == {"still_threatened"}
+
+
+def test_threat_audit_environment_hit_can_consume_building_shield_first():
+    board = _board()
+    board.tile(4, 2).shield = True
+    board.environment_danger_v2[(4, 2)] = (1, False)
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
+
+
 def test_threat_audit_retargeted_nonbuilding():
     initial = capture_building_threats(_board())
     after = _board(_enemy(tx=0, ty=0))
