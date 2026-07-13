@@ -1101,6 +1101,82 @@ def _emergent_next_turn_web_case():
     return board, solve_data, deltas, web_item
 
 
+def _projected_wind_web_case():
+    """Reproduce Mission_Wind turn 2 -> 3 from run 20260713_052159_731."""
+    board = _board(5)
+    mech = board.units[0]
+    mech.type = "PunchMech"
+    mech.x, mech.y = 5, 6
+    mech.web = True
+    mech.web_source_uid = 808
+
+    source = _enemy(808, 4, 6)
+    source.type = "Scorpion2"
+    source.hp = source.max_hp = 5
+    source.weapon = "ScorpionAtk2"
+    source.has_queued_attack = True
+    source.queued_target_x, source.queued_target_y = mech.x, mech.y
+    source.target_x, source.target_y = mech.x, mech.y
+    board.units.append(source)
+
+    post_mech = {
+        "uid": mech.uid,
+        "type": mech.type,
+        "team": 1,
+        "hp": mech.hp,
+        "x": 5,
+        "y": 5,
+    }
+    post_source = {
+        "uid": source.uid,
+        "type": source.type,
+        "team": 6,
+        "hp": source.hp,
+        "x": 2,
+        "y": 7,
+        "weapons": ["ScorpionAtk2"],
+        "has_queued_attack": True,
+        "queued_origin": [2, 6],
+        "queued_target": [2, 5],
+        "move": source.move_speed,
+    }
+    solve_data = {
+        "simulator_version": 353,
+        "post_player_board": {
+            "turn": 2,
+            "units": [post_mech, post_source],
+            "spawning_tiles": [[5, 2], [7, 4]],
+        },
+        "final_board": {
+            "turn": 3,
+            "units": [
+                dict(post_mech, x=5, y=6),
+                dict(post_source),
+            ],
+            "spawning_tiles": [],
+        },
+    }
+    web_item = {
+        "uid": mech.uid,
+        "type": mech.type,
+        "pos": [mech.x, mech.y],
+    }
+    deltas = {
+        "mech_status_diff": [{
+            "key": "mechs_webbed",
+            "status": "Web",
+            "predicted_count": 0,
+            "actual_count": 1,
+            "unexpected": [web_item],
+            "cleared": [],
+        }],
+        "unexpected_events": [
+            f"{mech.type} gained unexpected Web status"
+        ],
+    }
+    return board, solve_data, deltas, web_item
+
+
 def test_next_turn_retarget_web_is_explained_for_unfair_gate():
     board, solve_data, deltas, web_item = _next_turn_web_case()
 
@@ -1162,6 +1238,168 @@ def test_emergent_next_turn_web_is_explained_for_unfair_gate():
         result,
         RunSession(run_id="run", difficulty=3),
     )
+
+
+def test_projected_wind_shift_web_is_explained_for_unfair_gate():
+    board, solve_data, deltas, web_item = _projected_wind_web_case()
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=3,
+        expected_turn=3,
+    )
+
+    web_delta = result["mech_status_diff"][0]
+    assert web_delta["unexpected"] == [web_item]
+    assert web_delta["unexplained_unexpected"] == []
+    assert web_delta["next_turn_web_grapples"] == [{
+        "uid": 0,
+        "type": "PunchMech",
+        "pos": [5, 6],
+        "source_uid": 808,
+        "source_type": "Scorpion2",
+        "previous_target": [2, 6],
+        "current_target": [5, 6],
+        "previous_mech_pos": [5, 5],
+        "projected_mech_pos": [5, 6],
+        "reason": "next_turn_web_source_retargeted_projected_mech",
+    }]
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_projected_wind_shift_web_ignores_explicit_extra_tile_rows():
+    board, solve_data, deltas, _web_item = _projected_wind_web_case()
+    for checkpoint in ("post_player_board", "final_board"):
+        primary = solve_data[checkpoint]["units"][0]
+        solve_data[checkpoint]["units"].append(dict(
+            primary,
+            is_extra_tile=True,
+            x=primary["x"],
+            y=primary["y"] + 1,
+        ))
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=3,
+        expected_turn=3,
+    )
+
+    assert len(result["next_turn_web_grapples"]) == 1
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == []
+
+
+def test_projected_wind_shift_web_requires_exact_final_checkpoint():
+    for case in (
+        "missing_final",
+        "wrong_position",
+        "wrong_type",
+        "dead_mech",
+        "wrong_hp",
+        "wrong_team",
+        "boolean_team",
+        "boolean_previous_team",
+        "out_of_bounds_previous_position",
+        "missing_previous_source_position",
+        "out_of_bounds_previous_source_position",
+        "wrong_turn",
+        "old_simulator",
+        "duplicate_post_player_uid",
+        "duplicate_final_uid",
+        "missing_final_source",
+        "dead_final_source",
+        "wrong_final_source_hp",
+        "wrong_final_source_type",
+        "wrong_final_source_team",
+        "frozen_final_source",
+        "webbed_final_source",
+        "missing_final_source_move",
+        "far_final_source",
+    ):
+        board, solve_data, deltas, web_item = _projected_wind_web_case()
+        if case == "missing_final":
+            del solve_data["final_board"]
+        elif case == "wrong_position":
+            solve_data["final_board"]["units"][0]["y"] = 7
+        elif case == "wrong_type":
+            solve_data["final_board"]["units"][0]["type"] = "JetMech"
+        elif case == "dead_mech":
+            solve_data["final_board"]["units"][0]["hp"] = 0
+        elif case == "wrong_hp":
+            solve_data["final_board"]["units"][0]["hp"] = 1
+        elif case == "wrong_team":
+            solve_data["final_board"]["units"][0]["team"] = 2
+        elif case == "boolean_team":
+            solve_data["final_board"]["units"][0]["team"] = True
+        elif case == "boolean_previous_team":
+            solve_data["post_player_board"]["units"][0]["team"] = True
+        elif case == "out_of_bounds_previous_position":
+            solve_data["post_player_board"]["units"][0]["x"] = 8
+        elif case == "missing_previous_source_position":
+            source = solve_data["post_player_board"]["units"][1]
+            del source["x"]
+            del source["y"]
+            del source["queued_origin"]
+        elif case == "out_of_bounds_previous_source_position":
+            solve_data["post_player_board"]["units"][1]["y"] = 8
+        elif case == "wrong_turn":
+            solve_data["final_board"]["turn"] = 4
+        elif case == "old_simulator":
+            solve_data["simulator_version"] = 352
+        elif case == "duplicate_post_player_uid":
+            units = solve_data["post_player_board"]["units"]
+            units.append(dict(units[0]))
+        elif case == "duplicate_final_uid":
+            units = solve_data["final_board"]["units"]
+            units.append(dict(units[0]))
+        elif case == "missing_final_source":
+            solve_data["final_board"]["units"].pop()
+        elif case == "dead_final_source":
+            solve_data["final_board"]["units"][1]["hp"] = 0
+        elif case == "wrong_final_source_hp":
+            solve_data["final_board"]["units"][1]["hp"] = 4
+        elif case == "wrong_final_source_type":
+            solve_data["final_board"]["units"][1]["type"] = "Leaper2"
+        elif case == "wrong_final_source_team":
+            solve_data["final_board"]["units"][1]["team"] = True
+        elif case == "frozen_final_source":
+            solve_data["final_board"]["units"][1]["frozen"] = True
+        elif case == "webbed_final_source":
+            solve_data["final_board"]["units"][1]["web"] = True
+        elif case == "missing_final_source_move":
+            del solve_data["final_board"]["units"][1]["move"]
+        elif case == "far_final_source":
+            solve_data["final_board"]["units"][1]["x"] = 0
+            solve_data["final_board"]["units"][1]["y"] = 0
+            next(
+                unit for unit in board.units if unit.uid == 808
+            ).move_speed = 99
+
+        result = commands._classify_next_turn_web_grapples(
+            deltas,
+            solve_data,
+            board,
+            actual_turn=3,
+            expected_turn=3,
+        )
+
+        web_delta = result["mech_status_diff"][0]
+        assert web_delta.get(
+            "unexplained_unexpected",
+            web_delta["unexpected"],
+        ) == [web_item], case
+        assert result["next_turn_web_grapples"] == [], case
+        assert commands._post_enemy_needs_investigation(
+            result,
+            RunSession(run_id="run", difficulty=3),
+        ), case
 
 
 def test_emergent_next_turn_web_fails_closed_without_complete_spawn_proof():

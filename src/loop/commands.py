@@ -6172,10 +6172,13 @@ def _classify_next_turn_web_grapples(
     Scorpions and Leapers apply Web when they choose their *next* queued
     attack, after the simulated enemy phase has ended.  That AI move/retarget
     horizon is intentionally outside the deterministic replay.  Explain only
-    an exact Web identity whose live source now queues at the same stationary
-    mech and either targeted a different tile in the complete post-player
-    checkpoint or is a newly materialized Vek reachable from a consumed spawn
-    marker.  Everything incomplete, stale, or mixed remains fail-closed.
+    an exact Web identity whose live source now queues at the same mech and
+    either targeted a different tile in the complete post-player checkpoint
+    or is a newly materialized Vek reachable from a consumed spawn marker. An
+    existing source may target a mech deterministically displaced to the exact
+    final-board position when that checkpoint also proves the source survived
+    and could reach its live position; emergent-source proof still requires
+    stationarity. Everything incomplete, stale, or mixed remains fail-closed.
     """
     deltas["next_turn_web_grapples"] = []
     if actual_turn != expected_turn or not isinstance(solve_data, dict):
@@ -6189,6 +6192,16 @@ def _classify_next_turn_web_grapples(
 
     def plain_int(value) -> bool:
         return isinstance(value, int) and not isinstance(value, bool)
+
+    def checkpoint_position(raw: dict | None) -> tuple[int, int] | None:
+        if (
+            not isinstance(raw, dict)
+            or not plain_int(raw.get("x"))
+            or not plain_int(raw.get("y"))
+        ):
+            return None
+        pos = int(raw["x"]), int(raw["y"])
+        return pos if all(0 <= value < 8 for value in pos) else None
 
     def checkpoint_queued_target(raw_source: dict) -> tuple[int, int] | None:
         """Return the source's effective target at the post-player checkpoint."""
@@ -6225,15 +6238,25 @@ def _classify_next_turn_web_grapples(
         return effective
 
     previous_by_uid: dict[int, dict] = {}
+    checkpoint_primary_count = 0
     for raw in checkpoint_units:
-        if not isinstance(raw, dict) or not plain_int(raw.get("uid")):
+        if (
+            not isinstance(raw, dict)
+            or not plain_int(raw.get("uid"))
+        ):
+            return deltas
+        if raw.get("is_extra_tile") is True:
+            continue
+        checkpoint_primary_count += 1
+        if int(raw["uid"]) in previous_by_uid:
             return deltas
         previous_by_uid[int(raw["uid"])] = raw
 
-    # Existing-source retargets need only the post-player checkpoint.  An
-    # emergent source needs the stronger two-checkpoint proof used by the
-    # emergent-pod classifier: it must be absent from both unit sets and
-    # reachable from a marker consumed by the projected emergence step.
+    # Stationary existing-source retargets need only the post-player checkpoint.
+    # Projected-displacement retargets also prove both identities in final_board.
+    # An emergent source needs the stronger two-checkpoint proof used by the
+    # emergent-pod classifier: it must be absent from both unit sets and reachable
+    # from a marker consumed by the projected emergence step.
     final_board = solve_data.get("final_board")
     final_units = (
         final_board.get("units")
@@ -6247,8 +6270,12 @@ def _classify_next_turn_web_grapples(
             if (
                 not isinstance(raw, dict)
                 or not plain_int(raw.get("uid"))
-                or int(raw["uid"]) in parsed_final
             ):
+                parsed_final = {}
+                break
+            if raw.get("is_extra_tile") is True:
+                continue
+            if int(raw["uid"]) in parsed_final:
                 parsed_final = {}
                 break
             parsed_final[int(raw["uid"])] = raw
@@ -6266,7 +6293,7 @@ def _classify_next_turn_web_grapples(
         and post_spawn_positions is not None
         and final_spawn_positions is not None
         and final_spawn_positions <= post_spawn_positions
-        and len(previous_by_uid) == len(checkpoint_units)
+        and len(previous_by_uid) == checkpoint_primary_count
         and final_by_uid is not None
         and plain_int(solve_data.get("simulator_version"))
         and int(solve_data["simulator_version"]) >= 350
@@ -6332,7 +6359,39 @@ def _classify_next_turn_web_grapples(
             uid = int(item["uid"])
             mech = actual_by_uid.get(uid)
             previous_mech = previous_by_uid.get(uid)
+            final_mech = (
+                final_by_uid.get(uid)
+                if final_by_uid is not None
+                else None
+            )
+            final_mech_pos = checkpoint_position(final_mech)
             item_pos = item.get("pos")
+            actual_pos = (
+                (int(mech.x), int(mech.y))
+                if mech is not None
+                else (-1, -1)
+            )
+            previous_pos = checkpoint_position(previous_mech)
+            stationary_mech = previous_pos == actual_pos
+            projected_mech = (
+                not stationary_mech
+                and mech is not None
+                and isinstance(final_mech, dict)
+                and plain_int(solve_data.get("simulator_version"))
+                and int(solve_data["simulator_version"]) >= 353
+                and plain_int(post_player.get("turn"))
+                and int(post_player["turn"]) == expected_turn - 1
+                and isinstance(final_board, dict)
+                and plain_int(final_board.get("turn"))
+                and int(final_board["turn"]) == expected_turn
+                and plain_int(final_mech.get("team"))
+                and int(final_mech["team"]) == 1
+                and plain_int(final_mech.get("hp"))
+                and int(final_mech["hp"]) > 0
+                and int(final_mech["hp"]) == int(mech.hp)
+                and final_mech.get("type") == str(mech.type)
+                and final_mech_pos == actual_pos
+            )
             if (
                 mech is None
                 or previous_mech is None
@@ -6343,13 +6402,13 @@ def _classify_next_turn_web_grapples(
                 or len(item_pos) != 2
                 or not all(plain_int(value) for value in item_pos)
                 or tuple(item_pos) != (int(mech.x), int(mech.y))
-                or previous_mech.get("team") != 1
+                or not plain_int(previous_mech.get("team"))
+                or int(previous_mech["team"]) != 1
                 or not plain_int(previous_mech.get("hp"))
                 or previous_mech.get("hp") <= 0
-                or not plain_int(previous_mech.get("x"))
-                or not plain_int(previous_mech.get("y"))
-                or (previous_mech.get("x"), previous_mech.get("y"))
-                != (int(mech.x), int(mech.y))
+                or previous_mech.get("type") != str(mech.type)
+                or previous_pos is None
+                or not (stationary_mech or projected_mech)
             ):
                 unexplained.append(item)
                 continue
@@ -6357,6 +6416,13 @@ def _classify_next_turn_web_grapples(
             source_uid = int(getattr(mech, "web_source_uid", -1) or -1)
             source = actual_by_uid.get(source_uid)
             previous_source = previous_by_uid.get(source_uid)
+            previous_source_pos = checkpoint_position(previous_source)
+            final_source = (
+                final_by_uid.get(source_uid)
+                if final_by_uid is not None
+                else None
+            )
+            final_source_pos = checkpoint_position(final_source)
             previous_target = (
                 checkpoint_queued_target(previous_source)
                 if isinstance(previous_source, dict)
@@ -6373,11 +6439,6 @@ def _classify_next_turn_web_grapples(
             )
 
             if previous_source is None:
-                final_mech = (
-                    final_by_uid.get(uid)
-                    if final_by_uid is not None
-                    else None
-                )
                 move_speed = getattr(source, "move_speed", None)
                 reachable_spawns = (
                     sorted(
@@ -6394,7 +6455,8 @@ def _classify_next_turn_web_grapples(
                     else []
                 )
                 if (
-                    source is None
+                    projected_mech
+                    or source is None
                     or source_uid in used_emergent_sources
                     or source_uid in (post_enemy_uids or set())
                     or source_uid in (final_enemy_uids or set())
@@ -6411,14 +6473,12 @@ def _classify_next_turn_web_grapples(
                     or abs(int(source.x) - int(mech.x))
                     + abs(int(source.y) - int(mech.y)) != 1
                     or not isinstance(final_mech, dict)
-                    or final_mech.get("team") != 1
+                    or not plain_int(final_mech.get("team"))
+                    or int(final_mech["team"]) != 1
                     or not plain_int(final_mech.get("hp"))
                     or final_mech.get("hp") <= 0
                     or final_mech.get("type") != str(mech.type)
-                    or not plain_int(final_mech.get("x"))
-                    or not plain_int(final_mech.get("y"))
-                    or (final_mech.get("x"), final_mech.get("y"))
-                    != (int(mech.x), int(mech.y))
+                    or final_mech_pos != (int(mech.x), int(mech.y))
                     or previous_mech.get("type") != str(mech.type)
                     or not reachable_spawns
                 ):
@@ -6463,7 +6523,9 @@ def _classify_next_turn_web_grapples(
                 or current_target != (int(mech.x), int(mech.y))
                 or abs(int(source.x) - int(mech.x))
                 + abs(int(source.y) - int(mech.y)) != 1
-                or previous_source.get("team") != 6
+                or not plain_int(previous_source.get("team"))
+                or int(previous_source["team"]) != 6
+                or (projected_mech and previous_source_pos is None)
                 or not plain_int(previous_source.get("hp"))
                 or previous_source.get("hp") <= 0
                 or previous_source.get("type") != str(source.type)
@@ -6474,6 +6536,37 @@ def _classify_next_turn_web_grapples(
                 or previous_target is None
                 or (previous_target[0], previous_target[1])
                 == (int(mech.x), int(mech.y))
+                or (
+                    projected_mech
+                    and (
+                        not isinstance(final_source, dict)
+                        or not plain_int(final_source.get("team"))
+                        or int(final_source["team"]) != 6
+                        or not plain_int(final_source.get("hp"))
+                        or int(final_source["hp"]) <= 0
+                        or int(final_source["hp"]) != int(source.hp)
+                        or final_source.get("type") != str(source.type)
+                        or final_source_pos is None
+                        or (
+                            final_source.get("frozen") is not None
+                            and final_source.get("frozen") is not False
+                        )
+                        or (
+                            final_source_pos != (int(source.x), int(source.y))
+                            and (
+                                (
+                                    final_source.get("web") is not None
+                                    and final_source.get("web") is not False
+                                )
+                                or not plain_int(final_source.get("move"))
+                                or int(final_source["move"]) < 0
+                                or abs(int(source.x) - final_source_pos[0])
+                                + abs(int(source.y) - final_source_pos[1])
+                                > int(final_source["move"])
+                            )
+                        )
+                    )
+                )
             ):
                 unexplained.append(item)
                 continue
@@ -6486,7 +6579,17 @@ def _classify_next_turn_web_grapples(
                 "source_type": str(source.type),
                 "previous_target": [previous_target[0], previous_target[1]],
                 "current_target": [current_target[0], current_target[1]],
-                "reason": "next_turn_web_source_retargeted_stationary_mech",
+                **({
+                    "previous_mech_pos": [previous_pos[0], previous_pos[1]],
+                    "projected_mech_pos": [actual_pos[0], actual_pos[1]],
+                    "reason": (
+                        "next_turn_web_source_retargeted_projected_mech"
+                    ),
+                } if projected_mech else {
+                    "reason": (
+                        "next_turn_web_source_retargeted_stationary_mech"
+                    ),
+                }),
             })
 
         status_delta["unexplained_unexpected"] = unexplained

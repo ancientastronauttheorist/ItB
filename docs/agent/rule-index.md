@@ -463,3 +463,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 462 | 821 | Emergent next-turn grapples require consumed-marker identity proof. | `docs/agent/safety-gates.md` |
 | 463 | 823 | Exact terminal audits restore mission context, never objective survival. | `docs/agent/safety-gates.md` |
 | 464 | 825 | A co-targeting Moth's occupied tile is not owned `DIR_FLIP` evidence. | `docs/agent/safety-gates.md` |
+| 465 | 827 | Exact projected displacement can precede an existing Vek's next-turn Web retarget. | `docs/agent/safety-gates.md` |
