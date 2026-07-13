@@ -37,18 +37,29 @@ fn clear_mites(unit: &mut Unit) {
 /// Eligible non-minor Vek killed by the burst can emit their own Blast Psion
 /// explosion; minor pawns still do not receive the aura.
 /// Volatile Vek's "Explosive Decay": 1 damage to all 4 adjacent tiles
-/// when it dies, for any cause. Bump-class unit damage ignores armor/acid,
-/// and the explosion ignites damaged forest tiles.
+/// when it dies, for any cause, plus one terrain-only center hit when the
+/// corpse is on Ice. Bump-class unit damage ignores armor/acid, and the
+/// adjacent explosion ignites damaged forest tiles.
 ///
 /// Per `data/vek.json` #262 the base-game Volatile Vek explodes for 1
-/// damage. Matches the Blast Psion aura in shape but is unit-intrinsic
-/// rather than aura-conditional — ``apply_damage``'s "track then check"
+/// damage. Its adjacent footprint matches the Blast Psion aura, but it is
+/// unit-intrinsic rather than aura-conditional — ``apply_damage``'s "track then check"
 /// pattern doesn't need re-entry protection here because the helper
 /// calls ``apply_damage_core`` directly (which doesn't re-trigger this
 /// helper). A ``depth`` cap still covers the chain-of-volatiles case
 /// where one explosion kills an adjacent volatile vek.
 pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
     if depth > 8 { return; }
+
+    if board.tile(x, y).terrain == Terrain::Ice {
+        // Chaos Roll run 20260713_052159_731, Mission_BoomBots turn 2:
+        // native Explodes=true supplied one terrain-only hit at the dead Boom
+        // Bot's center. A later blocked corpse bump then finished the intact
+        // Ice to Water. Keep this intrinsic-decay rule Ice-only until live
+        // evidence proves other center-terrain effects; Blast Psion and
+        // BombRock explosions use separate helpers.
+        apply_damage_core(board, x, y, 1, result, DamageSource::Bump);
+    }
 
     for &(dx, dy) in &DIRS {
         let nx = x as i8 + dx;
@@ -16949,6 +16960,57 @@ mod tests {
         assert_eq!(board.units[mech].hp, 2, "adjacent mech takes decay splash");
         assert_eq!(board.tile(3, 4).building_hp, 0, "adjacent building takes decay splash");
         assert_eq!(board.grid_power, 3, "explosion building damage drains grid");
+    }
+
+    #[test]
+    fn test_needle_shot_killed_boom_bot_blocked_push_melts_ice() {
+        // Chaos Roll run 20260713_052159_731, Mission_BoomBots turn 2.
+        // Base Needle Shot killed a 1-HP Boom Laser on intact Ice. Its
+        // forward corpse push was blocked by a 2-HP Mountain. Live resolved
+        // the origin Ice all the way to Water and the Mountain to Rubble.
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 0, 5, 1, 3, WId::VekHornet);
+        let boom = add_enemy_type(&mut board, 921, 6, 1, 1, "Snowlaser1_Boom");
+        board.tile_mut(6, 1).terrain = Terrain::Ice;
+        board.tile_mut(7, 1).terrain = Terrain::Mountain;
+        board.tile_mut(7, 1).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, hornet, WId::VekHornet, 6, 1);
+
+        assert_eq!(board.units[boom].hp, 0, "Needle Shot should kill the Boom Bot");
+        assert_eq!(
+            (board.units[boom].x, board.units[boom].y),
+            (6, 1),
+            "the Mountain should block the corpse push"
+        );
+        assert_eq!(
+            board.tile(6, 1).terrain,
+            Terrain::Water,
+            "the lethal explosive hit plus blocked corpse bump should melt the origin Ice"
+        );
+        assert!(!board.tile(6, 1).cracked());
+        assert_eq!(board.tile(7, 1).terrain, Terrain::Rubble);
+        assert_eq!(board.units[hornet].hp, 2, "Explosive Decay still splashes Hornet");
+    }
+
+    #[test]
+    fn test_needle_shot_non_boom_blocked_push_only_cracks_ice() {
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 0, 5, 1, 3, WId::VekHornet);
+        let laser = add_enemy_type(&mut board, 921, 6, 1, 1, "Snowlaser1");
+        board.tile_mut(6, 1).terrain = Terrain::Ice;
+        board.tile_mut(7, 1).terrain = Terrain::Mountain;
+        board.tile_mut(7, 1).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, hornet, WId::VekHornet, 6, 1);
+
+        assert_eq!(board.units[laser].hp, 0);
+        assert_eq!((board.units[laser].x, board.units[laser].y), (6, 1));
+        assert_eq!(board.tile(6, 1).terrain, Terrain::Ice);
+        assert!(board.tile(6, 1).cracked());
+        assert_eq!(board.tile(7, 1).terrain, Terrain::Mountain);
+        assert_eq!(board.tile(7, 1).building_hp, 1);
+        assert_eq!(board.units[hornet].hp, 3);
     }
 
     #[test]

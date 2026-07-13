@@ -1655,7 +1655,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # action's own push effects finish. Later Vek recoil and movement can therefore
 # enter the vacated tile. Pre-v355 corpus archived as
 # failure_db_snapshot_sim_v354.jsonl.
-SIMULATOR_VERSION = 355
+# v356 - Native Explodes=true / intrinsic volatile deaths apply one
+# terrain-only hit to Ice at the death center before their four cardinal decay
+# hits. This matches Mission_BoomBots where a lethal Needle Shot plus a blocked
+# corpse bump melted intact Ice to Water. Ordinary occupied-Ice hits, Blast
+# Psion bursts, and BombRock explosions retain their existing rules. Pre-v356
+# corpus archived as failure_db_snapshot_sim_v355.jsonl.
+SIMULATOR_VERSION = 356
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

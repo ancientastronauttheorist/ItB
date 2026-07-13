@@ -2259,7 +2259,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   corpse remains available to the killing action's own push effects, but it
 //   cannot block a later Vek's recoil or other subsequent-action movement.
 //   Pre-v355 corpus archived as failure_db_snapshot_sim_v354.jsonl.
-pub const SIMULATOR_VERSION: u32 = 355;
+// v356 - Native Explodes=true / intrinsic volatile deaths apply one
+//   terrain-only hit to Ice at the death center before their four cardinal
+//   decay hits. This matches Mission_BoomBots where a lethal Needle Shot plus
+//   a blocked corpse bump melted intact Ice to Water. Ordinary occupied-Ice
+//   hits, Blast Psion bursts, and BombRock explosions are unchanged. Pre-v356
+//   corpus archived as failure_db_snapshot_sim_v355.jsonl.
+pub const SIMULATOR_VERSION: u32 = 356;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
