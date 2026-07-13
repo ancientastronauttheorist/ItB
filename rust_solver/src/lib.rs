@@ -2265,7 +2265,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   a blocked corpse bump melted intact Ice to Water. Ordinary occupied-Ice
 //   hits, Blast Psion bursts, and BombRock explosions are unchanged. Pre-v356
 //   corpus archived as failure_db_snapshot_sim_v355.jsonl.
-pub const SIMULATOR_VERSION: u32 = 356;
+// v357 - Destroyed Digger `Wall` pawns clear at player-action boundaries,
+//   after the killing action's own collision finishes. A later mech can move
+//   or push into the vacated tile instead of taking a phantom wreck bump.
+//   Pre-v357 corpus archived as failure_db_snapshot_sim_v356.jsonl.
+pub const SIMULATOR_VERSION: u32 = 357;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

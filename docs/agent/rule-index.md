@@ -469,3 +469,8 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 468 | 833 | Chained BombRock building hits can outlive a fast bridge ACK. | `docs/agent/safety-gates.md` |
 | 469 | 835 | Dead Vek wrecks clear between queued enemy actions. | `docs/agent/solver-reference.md` |
 | 470 | 837 | Re-verify the loadout modal before every Storage drag, and translate fallback coordinates. | `docs/agent/live-runbook.md` |
+| 471 | 839 | Native Explosive Decay damages Ice at the death center. | `docs/agent/solver-reference.md` |
+| 472 | 841 | Destroyed Digger rock walls clear between player actions. | `docs/agent/solver-reference.md` |
+| 473 | 843 | Threat audits expand self-centered attacks over their real damage footprint. | `docs/agent/safety-gates.md` |
+| 474 | 845 | Final-action desyncs require terminal reprojection, not phantom re-solves. | `docs/agent/safety-gates.md` |
+| 475 | 847 | A successfully dispatched End Turn click is never retried from same-turn DONE evidence. | `docs/agent/live-runbook.md` |

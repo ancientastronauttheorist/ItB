@@ -15,6 +15,8 @@ from src.model.weapons import get_weapon_def
 
 
 DIRS: tuple[tuple[int, int], ...] = ((0, 1), (1, 0), (0, -1), (-1, 0))
+DIAGONALS: tuple[tuple[int, int], ...] = ((1, 1), (1, -1), (-1, 1), (-1, -1))
+STARFISH_SELF_AOE_WEAPONS = {"StarfishAtk1", "StarfishAtk2", "StarfishAtkB1"}
 ENGINE_DIR_TO_SOLVER_DIR = {
     0: 2,
     1: 1,
@@ -62,6 +64,61 @@ def _hatch_destination(board: Board, x: int, y: int) -> tuple[int, int] | None:
     return None
 
 
+def _self_aoe_building_targets(
+    board: Board,
+    attacker: Unit,
+    center: tuple[int, int] | None = None,
+) -> list[tuple[int, int]]:
+    """Return live buildings in a queued self-centered attack footprint."""
+    if attacker.team != 6 or attacker.hp <= 0:
+        return []
+    if not bool(getattr(attacker, "has_queued_attack", False)):
+        return []
+
+    tx = int(getattr(attacker, "queued_target_x", -1))
+    ty = int(getattr(attacker, "queued_target_y", -1))
+    if tx < 0 or ty < 0:
+        tx = int(attacker.target_x)
+        ty = int(attacker.target_y)
+    if (tx, ty) != (int(attacker.x), int(attacker.y)):
+        return []
+
+    wdef = get_weapon_def(attacker.weapon)
+    if wdef is None or not wdef.building_damage:
+        return []
+
+    base_damage = int(getattr(attacker, "weapon_damage", 0) or 0) or int(
+        wdef.damage
+    )
+    cx, cy = center or (int(attacker.x), int(attacker.y))
+    candidates: list[tuple[int, int, int]] = []
+    if attacker.weapon in STARFISH_SELF_AOE_WEAPONS:
+        # All Starfish variants damage the four diagonals. The leader also
+        # pushes cardinals, but those zero-damage tiles are not building hits.
+        candidates.extend(
+            (cx + dx, cy + dy, base_damage) for dx, dy in DIAGONALS
+        )
+    else:
+        if wdef.weapon_type != "self_aoe":
+            return []
+        if wdef.aoe_center:
+            candidates.append((cx, cy, base_damage))
+        if wdef.aoe_adjacent:
+            adjacent_damage = int(wdef.damage_outer) or base_damage
+            candidates.extend(
+                (cx + dx, cy + dy, adjacent_damage) for dx, dy in DIRS
+            )
+
+    return [
+        (x, y)
+        for x, y, damage in candidates
+        if damage > 0
+        and board.in_bounds(x, y)
+        and board.tile(x, y).terrain == "building"
+        and board.tile(x, y).building_hp > 0
+    ]
+
+
 def capture_building_threats(board: Board) -> list[dict[str, Any]]:
     """Capture enemy threats aimed at live buildings in A1-H8 terms."""
     out: list[dict[str, Any]] = []
@@ -77,6 +134,39 @@ def capture_building_threats(board: Board) -> list[dict[str, Any]]:
         })
         seen.add((int(attacker.uid), (int(tx), int(ty))))
         direct_threat_uids.add(int(attacker.uid))
+    for attacker in board.units:
+        prior_push = _prior_attack_push_destination(board, attacker)
+        if prior_push is None:
+            attack_center = (int(attacker.x), int(attacker.y))
+            threat_kind = "self_aoe_building"
+            prior_push_detail = None
+        else:
+            attack_center = (prior_push[0], prior_push[1])
+            threat_kind = "self_aoe_projected_building"
+            prior_push_detail = prior_push[2]
+        for tx, ty in _self_aoe_building_targets(
+            board, attacker, center=attack_center
+        ):
+            key = (int(attacker.uid), (int(tx), int(ty)))
+            if key in seen:
+                continue
+            tile = board.tile(tx, ty)
+            out.append({
+                "threat_kind": threat_kind,
+                "target": [int(tx), int(ty)],
+                "target_visual": _visual(int(tx), int(ty)),
+                "target_hp": int(tile.building_hp),
+                "attacker": _unit_record(attacker),
+                "attack_center": [int(attack_center[0]), int(attack_center[1])],
+                "attack_center_visual": _visual(*attack_center),
+                **(
+                    {"prior_push_projection": prior_push_detail}
+                    if prior_push_detail is not None
+                    else {}
+                ),
+            })
+            seen.add(key)
+            direct_threat_uids.add(int(attacker.uid))
     for attacker in board.units:
         if attacker.hp <= 0 or attacker.type not in {"WebbEgg1", "SpiderlingEgg1"}:
             continue
@@ -505,11 +595,14 @@ def _ordered_prior_enemies(board: Board, attacker: Unit) -> list[Unit]:
         positions = {int(uid): i for i, uid in enumerate(order)}
         fallback = len(positions) + 10000
         attacker_pos = positions.get(int(attacker.uid), fallback + int(attacker.uid))
-        return [
-            u for u in enemies
-            if int(u.uid) != int(attacker.uid)
-            and positions.get(int(u.uid), fallback + int(u.uid)) < attacker_pos
-        ]
+        return sorted(
+            (
+                u for u in enemies
+                if int(u.uid) != int(attacker.uid)
+                and positions.get(int(u.uid), fallback + int(u.uid)) < attacker_pos
+            ),
+            key=lambda u: positions.get(int(u.uid), fallback + int(u.uid)),
+        )
     return [u for u in sorted(enemies, key=lambda u: int(u.uid))
             if int(u.uid) < int(attacker.uid)]
 
@@ -664,6 +757,30 @@ def _push_destination_is_open(board: Board, unit: Unit, x: int, y: int) -> bool:
     return terrain not in {"mountain", "building"}
 
 
+def _virtual_push_destination_is_open(
+    board: Board,
+    attacker: Unit,
+    virtual_center: tuple[int, int],
+    x: int,
+    y: int,
+) -> bool:
+    """Open-tile check after earlier pushes virtually vacated the start tile."""
+    if not board.in_bounds(x, y):
+        return False
+    occupant = board.unit_at(x, y)
+    if occupant is not None:
+        attacker_vacated_start = (
+            int(occupant.uid) == int(attacker.uid)
+            and (x, y) == (int(attacker.x), int(attacker.y))
+            and virtual_center != (int(attacker.x), int(attacker.y))
+        )
+        if not attacker_vacated_start:
+            return False
+    if board.wreck_at(x, y):
+        return False
+    return board.tile(x, y).terrain not in {"mountain", "building"}
+
+
 def _will_die_to_prior_bump_before_attack(board: Board, attacker: Unit) -> tuple[bool, str]:
     """True when an earlier enemy attack should bump-kill this attacker.
 
@@ -697,14 +814,17 @@ def _will_die_to_prior_bump_before_attack(board: Board, attacker: Unit) -> tuple
     return False, ""
 
 
-def _will_be_moved_by_prior_attack_before_attack(board: Board, attacker: Unit) -> tuple[bool, str]:
-    """True when an earlier enemy attack pushes this attacker before it fires."""
+def _prior_attack_push_destination(
+    board: Board,
+    attacker: Unit,
+) -> tuple[int, int, str] | None:
+    """Evolve a virtual center through ordered earlier Moth/Bouncer pushes."""
     if (
         not getattr(attacker, "pushable", True)
         or getattr(attacker, "shield", False)
         or getattr(attacker, "frozen", False)
     ):
-        return False, ""
+        return None
 
     push_weapons = {
         "MothAtk1": "earlier Moth artillery pushes attacker before its attack",
@@ -712,11 +832,13 @@ def _will_be_moved_by_prior_attack_before_attack(board: Board, attacker: Unit) -
         "BouncerAtk1": "earlier Bouncer horn pushes attacker before its attack",
         "BouncerAtk2": "earlier Bouncer horn pushes attacker before its attack",
     }
+    virtual_center = (int(attacker.x), int(attacker.y))
+    details: list[str] = []
     for other in _ordered_prior_enemies(board, attacker):
         detail = push_weapons.get(other.weapon)
         if detail is None:
             continue
-        if [int(other.target_x), int(other.target_y)] != [int(attacker.x), int(attacker.y)]:
+        if (int(other.target_x), int(other.target_y)) != virtual_center:
             continue
         if not _attacker_can_fire_before_prior_attack(board, other):
             continue
@@ -725,12 +847,25 @@ def _will_be_moved_by_prior_attack_before_attack(board: Board, attacker: Unit) -
         dy = _sign(int(other.target_y) - int(other.y))
         if (dx != 0) == (dy != 0):
             continue
-        nx = int(attacker.x) + dx
-        ny = int(attacker.y) + dy
-        if _push_destination_is_open(board, attacker, nx, ny):
-            return True, f"{detail} to {_visual(nx, ny)}"
+        nx = virtual_center[0] + dx
+        ny = virtual_center[1] + dy
+        if _virtual_push_destination_is_open(
+            board, attacker, virtual_center, nx, ny
+        ):
+            virtual_center = (nx, ny)
+            details.append(f"{detail} to {_visual(nx, ny)}")
 
-    return False, ""
+    if not details:
+        return None
+    return virtual_center[0], virtual_center[1], "; then ".join(details)
+
+
+def _will_be_moved_by_prior_attack_before_attack(board: Board, attacker: Unit) -> tuple[bool, str]:
+    """True when an earlier enemy attack pushes this attacker before it fires."""
+    projection = _prior_attack_push_destination(board, attacker)
+    if projection is None:
+        return False, ""
+    return True, projection[2]
 
 
 def _coverage_reason(
@@ -801,6 +936,55 @@ def _coverage_reason(
     )
     if artillery_kill:
         return "attacker_will_die_to_prior_artillery", artillery_detail
+
+    if threat.get("threat_kind") in {
+        "self_aoe_building",
+        "self_aoe_projected_building",
+    }:
+        prior_push = _prior_attack_push_destination(board, attacker)
+        if prior_push is None:
+            attack_center = (int(attacker.x), int(attacker.y))
+        else:
+            attack_center = (prior_push[0], prior_push[1])
+        current_targets = set(
+            _self_aoe_building_targets(board, attacker, center=attack_center)
+        )
+        if (tx, ty) not in current_targets:
+            if not bool(getattr(attacker, "has_queued_attack", False)):
+                return "attack_cleared", "attacker no longer has a queued attack"
+            return (
+                "self_aoe_retargeted",
+                "building is no longer in the attacker's self-AOE footprint",
+            )
+        if _frozen_building(board, tx, ty):
+            return "target_frozen_building", "target building is frozen and will thaw"
+        if _shield_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            return (
+                "target_shielded_building",
+                "target building's live shield absorbs its sole queued hit",
+            )
+        if prior_push is not None:
+            return (
+                "still_threatened_self_aoe_after_prior_push",
+                f"{prior_push[2]}; shifted self-AOE footprint still includes "
+                f"{_visual(tx, ty)}",
+            )
+        old_pos = attacker_info.get("pos") or [-1, -1]
+        moved = [int(attacker.x), int(attacker.y)] != [
+            int(old_pos[0]), int(old_pos[1])
+        ]
+        if moved:
+            return (
+                "still_threatened_self_aoe_after_move",
+                "attacker moved but its self-AOE footprint still includes the building",
+            )
+        return (
+            "still_threatened_self_aoe",
+            "attacker's self-AOE footprint still includes the building",
+        )
+
     moved_by_prior, moved_detail = _will_be_moved_by_prior_attack_before_attack(board, attacker)
     if moved_by_prior:
         return "attacker_will_be_moved_by_prior_attack", moved_detail

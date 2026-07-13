@@ -1017,6 +1017,7 @@ def _partial_re_solve_threat_block_result(
     turn: int,
     actions_completed: int,
     re_solve_count: int,
+    detected_desync_count: int | None = None,
     actions: list,
     desync: dict,
     lightning_speed_loss_allowed: bool = False,
@@ -1037,6 +1038,11 @@ def _partial_re_solve_threat_block_result(
         "turn": turn,
         "actions_completed": actions_completed,
         "re_solves": re_solve_count,
+        "desyncs_detected": (
+            detected_desync_count
+            if detected_desync_count is not None
+            else re_solve_count
+        ),
         "plan_safety": plan_safety,
         "threat_audit": threat_audit,
         "actions": [a.description for a in actions],
@@ -47657,6 +47663,274 @@ def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0,
     return result
 
 
+def _terminal_desync_settle_fingerprint(
+    board: Board,
+    bridge_data: dict,
+) -> tuple:
+    """Fingerprint the complete replay input, excluding bridge wall-clock time.
+
+    ``_post_enemy_settle_fingerprint`` intentionally tracks only the values
+    that can lag during enemy animations.  Terminal desync reprojection has a
+    stricter requirement: two samples must agree on every bridge field that
+    can affect the empty-plan replay, including queued attacks, tile statuses,
+    attack order, environment metadata, and spawn markers.
+    """
+    stable_bridge_data = {
+        key: value
+        for key, value in bridge_data.items()
+        if key != "timestamp"
+    }
+    return (
+        _post_enemy_settle_fingerprint(board, bridge_data),
+        json.dumps(
+            stable_bridge_data,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+
+
+def _settle_terminal_desync_post_player_board(
+    board: Board,
+    bridge_data: dict,
+    *,
+    expected_turn: int,
+    prior_fingerprint: tuple | None = None,
+    max_wait: float = 1.5,
+    interval: float = 0.25,
+    read_fn=read_bridge_state,
+    refresh_fn=refresh_bridge_state,
+    sleep_fn=time.sleep,
+    now_fn=time.time,
+) -> tuple[Board | None, dict | None, dict]:
+    """Require a stable, all-actors-DONE board after a terminal desync.
+
+    The action verifier's actual snapshot is the first sample.  The normal
+    post-action audit read is the second sample; when they differ, keep
+    polling briefly until two consecutive full board fingerprints agree.
+    A terminal reprojection must never run from a READY actor, a different
+    turn, or a still-changing bridge payload.
+    """
+    evidence_error = _post_action_audit_evidence_error(
+        board,
+        bridge_data,
+        expected_turn=expected_turn,
+    )
+    if evidence_error is not None:
+        return None, None, {
+            "status": "ERROR",
+            "error": "terminal_desync_post_player_evidence_invalid",
+            "evidence": evidence_error,
+            "samples": 1,
+        }
+    active_actors = _active_player_action_count(board)
+    if active_actors > 0:
+        return None, None, {
+            "status": "ERROR",
+            "error": "terminal_desync_player_actors_still_active",
+            "active_player_actors": active_actors,
+            "samples": 1,
+        }
+
+    latest_board = board
+    latest_data = bridge_data
+    latest_fp = _terminal_desync_settle_fingerprint(board, bridge_data)
+    samples = 1
+    if prior_fingerprint is not None and latest_fp == prior_fingerprint:
+        return latest_board, latest_data, {
+            "status": "OK",
+            "samples": samples,
+            "elapsed_seconds": 0.0,
+            "matched_verify_snapshot": True,
+        }
+
+    start = now_fn()
+    while now_fn() - start < max_wait:
+        sleep_fn(interval)
+        try:
+            refresh_fn()
+            reread_board, reread_data = read_fn()
+        except Exception as exc:
+            return None, None, {
+                "status": "ERROR",
+                "error": "terminal_desync_post_player_reread_failed",
+                "message": str(exc),
+                "samples": samples,
+            }
+        samples += 1
+        evidence_error = _post_action_audit_evidence_error(
+            reread_board,
+            reread_data,
+            expected_turn=expected_turn,
+        )
+        if evidence_error is not None:
+            return None, None, {
+                "status": "ERROR",
+                "error": "terminal_desync_post_player_evidence_changed",
+                "evidence": evidence_error,
+                "samples": samples,
+            }
+        active_actors = _active_player_action_count(reread_board)
+        if active_actors > 0:
+            return None, None, {
+                "status": "ERROR",
+                "error": "terminal_desync_player_actors_became_active",
+                "active_player_actors": active_actors,
+                "samples": samples,
+            }
+        fingerprint = _terminal_desync_settle_fingerprint(
+            reread_board,
+            reread_data,
+        )
+        latest_board, latest_data = reread_board, reread_data
+        if fingerprint == latest_fp:
+            return latest_board, latest_data, {
+                "status": "OK",
+                "samples": samples,
+                "elapsed_seconds": round(now_fn() - start, 3),
+                "matched_verify_snapshot": False,
+            }
+        latest_fp = fingerprint
+
+    return None, None, {
+        "status": "ERROR",
+        "error": "terminal_desync_post_player_unsettled",
+        "samples": samples,
+        "elapsed_seconds": round(now_fn() - start, 3),
+    }
+
+
+def _build_terminal_desync_reprojection(
+    board: Board,
+    bridge_data: dict,
+    solve_data: dict,
+    session: RunSession,
+    *,
+    turn: int,
+    desync: dict,
+    detected_desync_count: int,
+    re_solve_count: int,
+    settlement: dict,
+) -> tuple[dict | None, dict | None]:
+    """Project enemy resolution from settled live state with zero actions.
+
+    The returned solve payload keeps the executed plan and its per-action
+    snapshots for diagnosis, but replaces every post-player/post-enemy safety
+    artifact with an empty-plan replay rooted at the verified actual board.
+    """
+    if not isinstance(solve_data, dict) or not solve_data:
+        return None, {
+            "status": "ERROR",
+            "error": "terminal_desync_original_solve_missing",
+        }
+
+    projection_data = dict(bridge_data)
+    _annotate_pending_grid_debt(session, board, projection_data)
+    spawns: list[tuple[int, int]] = []
+    for item in projection_data.get("spawning_tiles", []) or []:
+        if isinstance(item, (list, tuple)) and len(item) >= 2:
+            try:
+                spawns.append((int(item[0]), int(item[1])))
+            except (TypeError, ValueError):
+                continue
+
+    empty_solution = Solution(
+        actions=[],
+        score=0.0,
+        elapsed_seconds=0.0,
+        timed_out=False,
+        permutations_tried=0,
+        total_permutations=0,
+        active_mech_count=0,
+    )
+    raw_remaining_spawns = projection_data.get(
+        "remaining_spawns",
+        2**31 - 1,
+    )
+    try:
+        remaining_spawns = int(raw_remaining_spawns)
+    except (TypeError, ValueError):
+        remaining_spawns = 2**31 - 1
+    try:
+        projection = _evaluate_solution_safety(
+            board,
+            projection_data,
+            empty_solution,
+            spawns,
+            int(projection_data.get("turn", turn) or turn),
+            int(projection_data.get("total_turns", 5) or 5),
+            remaining_spawns,
+            block_mech_hp_loss=_blocks_mech_hp_loss_for_perfect_battle(session),
+            block_mech_status_loss=_blocks_mech_status_loss_for_run(session),
+        )
+    except Exception as exc:
+        return None, {
+            "status": "ERROR",
+            "error": "terminal_desync_replay_failed",
+            "message": str(exc),
+        }
+
+    enriched = projection.get("enriched")
+    predicted_outcome = projection.get("predicted_outcome")
+    predicted_summary = projection.get("predicted_board_summary")
+    current_outcome = projection.get("current_outcome")
+    plan_safety = projection.get("plan_safety")
+    if not isinstance(enriched, dict):
+        return None, {
+            "status": "ERROR",
+            "error": "terminal_desync_replay_artifacts_missing",
+            "artifact": "enriched",
+        }
+    post_player_board = _projected_post_player_board_data(
+        enriched,
+        projection_data,
+    )
+    final_board = _projected_final_board_data(enriched)
+    required = {
+        "post_player_board": post_player_board,
+        "final_board": final_board,
+        "predicted_outcome": predicted_outcome,
+        "predicted_board_summary": predicted_summary,
+        "current_outcome": current_outcome,
+        "plan_safety": plan_safety,
+    }
+    missing = [
+        key for key, value in required.items()
+        if not isinstance(value, dict) or not value
+    ]
+    if missing:
+        return None, {
+            "status": "ERROR",
+            "error": "terminal_desync_replay_artifacts_missing",
+            "artifacts": missing,
+        }
+
+    prior_source = solve_data.get("selected_candidate_source")
+    replacement = dict(solve_data)
+    replacement.update({
+        "post_enemy_prediction_source": "terminal_desync_reprojection",
+        "post_player_board": post_player_board,
+        "final_board": final_board,
+        "current_outcome": current_outcome,
+        "predicted_outcome": predicted_outcome,
+        "predicted_board_summary": predicted_summary,
+        "plan_safety": plan_safety,
+        "score_breakdown": enriched.get("score_breakdown", {}),
+        "terminal_desync_reprojection": {
+            "version": 1,
+            "source": "settled_actual_post_player_board",
+            "turn": turn,
+            "prior_selected_candidate_source": prior_source,
+            "projection_action_count": 0,
+            "desyncs_detected": detected_desync_count,
+            "actual_re_solves": re_solve_count,
+            "desync": desync,
+            "settlement": settlement,
+        },
+    })
+    return replacement, None
+
+
 def _re_solve_partial(
     board: Board,
     bridge_data: dict,
@@ -49455,6 +49729,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
     done_uids: set[int] = set()
     re_solve_count = 0
+    detected_desync_count = 0
+    terminal_desync: dict | None = None
     actions_completed = 0
     combat_pause_steps: list[dict] = []
     combat_timer_paused = False
@@ -49712,9 +49988,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                     f"a{actions_completed}"
                                 ),
                             )
-                        re_solve_count += 1
+                        detected_desync_count += 1
                         # Re-solve: this mech has moved but not attacked
                         if actual_data:
+                            re_solve_count += 1
                             (
                                 new_actions,
                                 new_preds,
@@ -49761,6 +50038,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                     "turn": turn,
                                     "actions_completed": actions_completed,
                                     "re_solves": re_solve_count,
+                                    "desyncs_detected": detected_desync_count,
                                     "plan_safety": new_safety,
                                     "actions": [a.description for a in new_actions],
                                     "desync": {
@@ -49789,6 +50067,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 turn=turn,
                                 actions_completed=actions_completed,
                                 re_solve_count=re_solve_count,
+                                detected_desync_count=detected_desync_count,
                                 actions=new_actions,
                                 desync={
                                     "phase": "move",
@@ -50059,8 +50338,32 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 f"a{actions_completed}"
                             ),
                         )
-                    # Skip re-solve if spawn-only on last action (new Vek emerged)
+                    detected_desync_count += 1
+                    # The final action has no remaining solver search, but its
+                    # actual board still invalidates the original enemy-phase
+                    # prediction. Preserve the verified sample so the later
+                    # post-action read can prove a settled reprojection root.
                     is_last_action = (action_idx >= len(actions) - 1)
+                    if is_last_action:
+                        terminal_desync = {
+                            "phase": final_phase,
+                            "action_index": actions_completed,
+                            "mech_uid": mech_uid,
+                            "classification": classification,
+                            "fuzzy_signal": fuzzy_signal,
+                            "diff_count": diff.total_count(),
+                            "actual_fingerprint": (
+                                _terminal_desync_settle_fingerprint(
+                                    actual_board,
+                                    actual_data,
+                                )
+                                if isinstance(actual_data, dict)
+                                else None
+                            ),
+                        }
+
+                    # Skip solver search if spawn-only on the last action (new
+                    # Vek emerged). The terminal reprojection still runs below.
                     spawn_new_only = (
                         diff.unit_diffs
                         and all(ud.get("field") == "missing_in_predicted"
@@ -50076,11 +50379,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         action_idx += 1
                         continue
 
-                    re_solve_count += 1
                     # Re-solve for remaining mechs
                     done_uids.add(mech_uid)
                     remaining = len(actions) - action_idx - 1
                     if remaining > 0 and actual_data:
+                        re_solve_count += 1
                         (
                             new_actions,
                             new_preds,
@@ -50123,6 +50426,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 "turn": turn,
                                 "actions_completed": actions_completed,
                                 "re_solves": re_solve_count,
+                                "desyncs_detected": detected_desync_count,
                                 "plan_safety": new_safety,
                                 "actions": [a.description for a in new_actions],
                                 "desync": {
@@ -50151,6 +50455,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             turn=turn,
                             actions_completed=actions_completed,
                             re_solve_count=re_solve_count,
+                            detected_desync_count=detected_desync_count,
                             actions=new_actions,
                             desync={
                                 "phase": final_phase,
@@ -50202,9 +50507,114 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
     threat_audit = None
     post_action_summary = None
+    terminal_reprojection = None
+    terminal_reprojection_error = None
+    terminal_reprojection_safety_blocked = False
+    terminal_reprojection_speed_loss = False
     try:
         refresh_bridge_state()
         audit_board, audit_data = read_bridge_state()
+        if terminal_desync is not None:
+            audit_board, audit_data, settlement = (
+                _settle_terminal_desync_post_player_board(
+                    audit_board,
+                    audit_data,
+                    expected_turn=turn,
+                    prior_fingerprint=terminal_desync.get(
+                        "actual_fingerprint"
+                    ),
+                )
+            )
+            if settlement.get("status") != "OK":
+                terminal_reprojection_error = settlement
+            else:
+                desync_provenance = {
+                    key: value
+                    for key, value in terminal_desync.items()
+                    if key != "actual_fingerprint"
+                }
+                replacement, projection_error = (
+                    _build_terminal_desync_reprojection(
+                        audit_board,
+                        audit_data,
+                        solve_data,
+                        session,
+                        turn=turn,
+                        desync=desync_provenance,
+                        detected_desync_count=detected_desync_count,
+                        re_solve_count=re_solve_count,
+                        settlement=settlement,
+                    )
+                )
+                if projection_error is not None:
+                    terminal_reprojection_error = projection_error
+                else:
+                    try:
+                        _record_turn_state(
+                            session,
+                            "solve",
+                            replacement,
+                            turn_override=turn,
+                        )
+                    except Exception as exc:
+                        terminal_reprojection_error = {
+                            "status": "ERROR",
+                            "error": (
+                                "terminal_desync_reprojection_persist_failed"
+                            ),
+                            "message": str(exc),
+                        }
+                    else:
+                        solve_data = replacement
+                        predicted_outcome = (
+                            solve_data.get("predicted_outcome") or {}
+                        )
+                        plan_safety = solve_data.get("plan_safety")
+                        terminal_reprojection = solve_data.get(
+                            "terminal_desync_reprojection"
+                        )
+                        terminal_reprojection_speed_loss = (
+                            bool(lightning_speed_loss_policy)
+                            and _allow_lightning_war_speed_loss(
+                                session,
+                                plan_safety,
+                            )
+                        )
+                        terminal_reprojection_safety_blocked = (
+                            plan_requires_safety_block(
+                                plan_safety,
+                                allow_dirty_plan=(
+                                    terminal_reprojection_speed_loss
+                                ),
+                                allow_protected_objective_loss_dirty=(
+                                    terminal_reprojection_speed_loss
+                                ),
+                                allow_objective_loss_dirty=(
+                                    terminal_reprojection_speed_loss
+                                ),
+                                allow_mech_loss_dirty=(
+                                    terminal_reprojection_speed_loss
+                                ),
+                                allow_pod_loss_dirty=(
+                                    terminal_reprojection_speed_loss
+                                ),
+                                allow_pod_destroy_dirty=(
+                                    destroy_time_pods_active
+                                ),
+                            )
+                        )
+                        print(
+                            "  TERMINAL DESYNC REPROJECTED: "
+                            "settled actual post-player board persisted"
+                        )
+
+        if terminal_reprojection_error is not None:
+            raise RuntimeError(
+                terminal_reprojection_error.get(
+                    "error",
+                    "terminal_desync_reprojection_failed",
+                )
+            )
         evidence_error = _post_action_audit_evidence_error(
             audit_board,
             audit_data,
@@ -50252,10 +50662,64 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "status": "ERROR",
             "error": str(exc),
         }
+        if (
+            terminal_desync is not None
+            and terminal_reprojection is None
+            and terminal_reprojection_error is None
+        ):
+            terminal_reprojection_error = {
+                "status": "ERROR",
+                "error": "terminal_desync_reprojection_failed",
+                "message": str(exc),
+            }
 
     fuzzy_detections = session.failure_events_this_run[pre_turn_event_count:]
     solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
     lightning_research_auto_resolved = _lightning_drain_known_behavior_research(session)
+
+    if terminal_reprojection_error is not None:
+        result = {
+            "status": "TERMINAL_DESYNC_REPROJECTION_BLOCKED",
+            "blocking": True,
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "desyncs_detected": detected_desync_count,
+            "desync": {
+                key: value
+                for key, value in (terminal_desync or {}).items()
+                if key != "actual_fingerprint"
+            },
+            "reprojection_error": terminal_reprojection_error,
+            "next_step": (
+                "The final action desynced and no settled actual-board "
+                "enemy-phase prediction was persisted. Do not click End "
+                "Turn; recover from a fresh read plus solve."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    if terminal_reprojection_safety_blocked:
+        result = {
+            "status": "SAFETY_BLOCKED_TERMINAL_REPROJECTION",
+            "blocking": True,
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "desyncs_detected": detected_desync_count,
+            "plan_safety": plan_safety,
+            "terminal_desync_reprojection": terminal_reprojection,
+            "next_step": (
+                "The settled actual board now predicts an unreviewed safety "
+                "loss. Do not click End Turn; reset or recover from a fresh "
+                "read plus solve."
+            ),
+        }
+        _print_result(result)
+        return result
 
     if grid_drop_investigations:
         pending_plan = _end_turn_click_plan_result()
@@ -50265,6 +50729,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "actions_completed": actions_completed,
             "score": score,
             "re_solves": re_solve_count,
+            "desyncs_detected": detected_desync_count,
             "investigations": grid_drop_investigations,
             "pending_end_turn_batch": pending_plan["batch"],
             "pending_end_turn_codex_computer_use_batch": pending_plan.get(
@@ -50303,6 +50768,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "actions_completed": actions_completed,
             "score": score,
             "re_solves": re_solve_count,
+            "desyncs_detected": detected_desync_count,
             "held_end_turn_batch": pending_plan["batch"],
             "held_end_turn_codex_computer_use_batch": pending_plan.get(
                 "codex_computer_use_batch", []
@@ -50347,6 +50813,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "actions_completed": actions_completed,
             "score": score,
             "re_solves": re_solve_count,
+            "desyncs_detected": detected_desync_count,
             "threat_audit": threat_audit,
             "held_end_turn_batch": pending_plan["batch"],
             "held_end_turn_codex_computer_use_batch": pending_plan.get(
@@ -50385,6 +50852,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "actions_completed": actions_completed,
             "score": score,
             "re_solves": re_solve_count,
+            "desyncs_detected": detected_desync_count,
             "post_action_mechs_on_danger": post_action_danger,
             "plan_safety": plan_safety,
             "next_step": (
@@ -50431,6 +50899,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "actions_completed": actions_completed,
             "score": score,
             "re_solves": re_solve_count,
+            "desyncs_detected": detected_desync_count,
             "wait_entry_seconds": wait_entry_seconds,
             "bridge_ack": end_result.get("bridge_ack"),
             "batch": end_result["batch"],
@@ -50481,6 +50950,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "actions_completed": actions_completed,
         "score": score,
         "re_solves": re_solve_count,
+        "desyncs_detected": detected_desync_count,
         "wait_entry_seconds": wait_entry_seconds,
         "post_phase": post_phase,
         "grid_power": f"{post_grid}/{post_grid_max}",
@@ -50511,6 +50981,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
     print(f"  Turn {turn} complete: {actions_completed} actions, "
           f"score={score:.0f}, grid={post_grid}/{post_grid_max}, "
+          f"desyncs={detected_desync_count}, "
           f"re-solves={re_solve_count}, next={post_phase}")
 
     _print_result(result)

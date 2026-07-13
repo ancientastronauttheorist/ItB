@@ -20,7 +20,11 @@ use crate::enemy::{
 };
 use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
-use crate::simulate::{simulate_attack_with_target2, simulate_move};
+use crate::simulate::{
+    clear_destroyed_digger_walls,
+    simulate_attack_with_target2,
+    simulate_move,
+};
 use crate::turn_projection::{
     advance_mission_tides_warning,
     board_to_json,
@@ -159,6 +163,10 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         let post_attack_snap = capture_snapshot(
             &board, i, mech_uid, &all_events, "after_mech_action",
         );
+        // The split replay path bypasses simulate_action_with_target2, so
+        // settle Digger rock walls explicitly after capturing the action's
+        // own simultaneous damage/push snapshot and before the next mech.
+        clear_destroyed_digger_walls(&mut board);
         player_phase_result.merge(&move_result);
         player_phase_result.merge(&attack_result);
         player_phase_unit_deaths += action_unit_deaths;

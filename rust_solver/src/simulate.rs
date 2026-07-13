@@ -6716,6 +6716,20 @@ fn sim_global_unit_effect(
 // a thin wrapper. Semantic behaviour is identical to the old monolithic
 // `simulate_action`; this is purely structural.
 
+/// Remove destroyed Digger rock-wall pawns once a complete player action has
+/// finished. A Wall can participate in the killing action's own collision,
+/// but live removes it before the next mech acts; retaining it as a generic
+/// dead-unit wreck creates phantom bumps and blocks movement into its tile.
+pub(crate) fn clear_destroyed_digger_walls(board: &mut Board) {
+    for i in 0..board.unit_count as usize {
+        let unit = &mut board.units[i];
+        if unit.hp <= 0 && unit.type_name_str() == "Wall" {
+            unit.x = 8;
+            unit.y = 8;
+        }
+    }
+}
+
 /// Move phase only: position update, pod pickup, ACID transfer, mines,
 /// fire-tile catch, teleporter pad swap, WebbEgg adjacency refresh.
 pub fn simulate_move(
@@ -7046,6 +7060,7 @@ pub fn simulate_action_with_target2(
         let gd = board.grid_defense_pct as f32;
         board.player_grid_save_expected += (result.grid_damage as f32) * (gd / 100.0);
     }
+    clear_destroyed_digger_walls(board);
     result
 }
 
@@ -10073,6 +10088,85 @@ mod tests {
         assert_eq!((board.units[middle].x, board.units[middle].y), (3, 4));
         assert_eq!(board.units[far].hp, 1);
         assert_eq!((board.units[far].x, board.units[far].y), (3, 6));
+    }
+
+    #[test]
+    fn test_dead_digger_wall_clears_before_later_needle_shot() {
+        // Chaos Roll Unfair 20260713_052159_731, Mission_Survive turn 1:
+        // Punch killed a Firefly at (4,5), whose corpse-push destroyed the
+        // Digger Wall at (4,4). Live removed that Wall before Hornet acted, so
+        // boosted Needle Shot pushed Digger2 from (4,3) into the vacated tile
+        // for only its two direct damage. Pre-v357 kept the Wall as a wreck,
+        // predicted a blocked-push bump, and left the Digger at (4,3) on 1 HP.
+        let mut board = make_test_board();
+        let punch = add_mech(&mut board, 0, 4, 6, 6, WId::PrimePunchmech);
+        let hornet = add_mech(&mut board, 2, 4, 2, 3, WId::VekHornet);
+        board.units[hornet].set_boosted(true);
+        let firefly = add_enemy_type(&mut board, 972, 4, 5, 3, "Firefly1");
+        let digger = add_enemy_type(&mut board, 969, 4, 3, 4, "Digger2");
+        board.units[digger].weapon = WeaponId(WId::DiggerAtk2 as u16);
+        board.units[digger].weapon_damage = 2;
+        board.units[digger]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::QUEUED_ORIGIN_SET);
+        board.units[digger].queued_target_x = 4;
+        board.units[digger].queued_target_y = 3;
+        board.units[digger].queued_origin_x = 4;
+        board.units[digger].queued_origin_y = 3;
+        board.units[digger].set_fire(true);
+        let wall = board.add_unit(Unit {
+            uid: 984,
+            x: 4,
+            y: 4,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Neutral,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[wall].set_type_name("Wall");
+
+        let _ = simulate_action(
+            &mut board,
+            punch,
+            (4, 6),
+            WId::PrimePunchmech,
+            (4, 5),
+            &WEAPONS,
+        );
+        assert_eq!(board.units[firefly].hp, 0);
+        assert_eq!(board.units[wall].hp, 0);
+        assert_eq!((board.units[wall].x, board.units[wall].y), (8, 8));
+
+        let _ = simulate_action(
+            &mut board,
+            hornet,
+            (4, 2),
+            WId::VekHornet,
+            (4, 3),
+            &WEAPONS,
+        );
+        assert_eq!(board.units[digger].hp, 2);
+        assert_eq!((board.units[digger].x, board.units[digger].y), (4, 4));
+
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.attack_order = vec![969];
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+        let _ = crate::enemy::simulate_enemy_attacks(
+            &mut board,
+            &original_positions,
+            &WEAPONS,
+        );
+        assert_eq!(board.units[digger].hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.grid_power, 5);
     }
 
     /// Regression: snapshot grid_drop_20260424_174047_323_t01_a3.

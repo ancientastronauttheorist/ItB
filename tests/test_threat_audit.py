@@ -1,3 +1,5 @@
+import pytest
+
 from src.model.board import Board, Unit
 from src.solver.threat_audit import (
     audit_threat_coverage,
@@ -66,6 +68,86 @@ def test_capture_building_threats_uses_visual_tiles():
     assert threats[0]["target"] == [4, 2]
     assert threats[0]["target_visual"] == "F4"
     assert threats[0]["attacker"]["target_visual"] == "F4"
+
+
+def test_capture_self_aoe_digger_threats_adjacent_d5_from_ground_self_target():
+    board = Board()
+    board.tile(3, 4).terrain = "building"
+    board.tile(3, 4).building_hp = 2
+    digger = _enemy(
+        uid=969,
+        pawn_type="Digger2",
+        x=4,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=2,
+    )
+    digger.max_hp = 4
+    digger.weapon = "DiggerAtk2"
+    digger.queued_target_x = 4
+    digger.queued_target_y = 4
+    board.units.append(digger)
+
+    assert board.tile(4, 4).terrain == "ground"
+    threats = capture_building_threats(board)
+
+    assert len(threats) == 1
+    assert threats[0]["threat_kind"] == "self_aoe_building"
+    assert threats[0]["target"] == [3, 4]
+    assert threats[0]["target_visual"] == "D5"
+    assert threats[0]["attacker"]["target_visual"] == "D4"
+
+    audit = audit_threat_coverage([], board)
+    assert audit["status"] == "WARN"
+    assert audit["current_threat_count"] == 1
+    assert audit["new_current_threat_count"] == 1
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "still_threatened_current"
+    )
+
+
+@pytest.mark.parametrize(
+    ("pawn_type", "weapon_id"),
+    [
+        ("Starfish1", "StarfishAtk1"),
+        ("Starfish2", "StarfishAtk2"),
+        ("StarfishBoss", "StarfishAtkB1"),
+    ],
+)
+def test_capture_starfish_self_target_threats_diagonal_not_cardinal(
+    pawn_type,
+    weapon_id,
+):
+    board = Board()
+    board.tile(3, 5).terrain = "building"
+    board.tile(3, 5).building_hp = 2
+    board.tile(3, 4).terrain = "building"
+    board.tile(3, 4).building_hp = 2
+    starfish = _enemy(
+        uid=970,
+        pawn_type=pawn_type,
+        x=4,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=3,
+    )
+    starfish.weapon = weapon_id
+    starfish.queued_target_x = 4
+    starfish.queued_target_y = 4
+    board.units.append(starfish)
+
+    threats = capture_building_threats(board)
+
+    assert [threat["target"] for threat in threats] == [[3, 5]]
+    assert threats[0]["target_visual"] == "C5"
+    assert all(threat["target"] != [3, 4] for threat in threats)
+    audit = audit_threat_coverage([], board)
+    assert audit["status"] == "WARN"
+    assert audit["current_threat_count"] == 1
+    assert audit["still_threatened_count"] == 1
 
 
 def test_threat_audit_attacker_killed():
@@ -586,6 +668,115 @@ def test_threat_audit_prior_moth_blocked_push_still_warns():
 
     assert audit["status"] == "WARN"
     assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
+
+
+@pytest.mark.parametrize(
+    ("pusher_type", "weapon_id", "pusher_x"),
+    [
+        ("Moth1", "MothAtk1", 2),
+        ("Bouncer1", "BouncerAtk1", 3),
+    ],
+)
+def test_threat_audit_projects_self_aoe_after_prior_enemy_push(
+    pusher_type,
+    weapon_id,
+    pusher_x,
+):
+    board = Board()
+    board.attack_order = [10, 20]
+    board.tile(6, 4).terrain = "building"
+    board.tile(6, 4).building_hp = 2
+    board.units.append(_enemy(
+        uid=10,
+        pawn_type=pusher_type,
+        x=pusher_x,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=3,
+    ))
+    board.units[-1].weapon = weapon_id
+    digger = _enemy(
+        uid=20,
+        pawn_type="Digger2",
+        x=4,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=4,
+    )
+    digger.max_hp = 4
+    digger.weapon = "DiggerAtk2"
+    digger.queued_target_x = 4
+    digger.queued_target_y = 4
+    board.units.append(digger)
+
+    threats = capture_building_threats(board)
+
+    assert len(threats) == 1
+    assert threats[0]["threat_kind"] == "self_aoe_projected_building"
+    assert threats[0]["attack_center"] == [5, 4]
+    assert threats[0]["target"] == [6, 4]
+    assert threats[0]["target_visual"] == "D2"
+    audit = audit_threat_coverage([], board)
+    assert audit["status"] == "WARN"
+    assert audit["current_threat_count"] == 1
+    assert audit["new_current_threat_count"] == 1
+    assert audit["still_threatened_count"] == 1
+
+
+def test_threat_audit_projects_self_aoe_through_two_ordered_prior_pushes():
+    board = Board()
+    board.attack_order = [10, 11, 20]
+    board.tile(7, 4).terrain = "building"
+    board.tile(7, 4).building_hp = 2
+    # Insert the pushers in reverse list order to prove attack_order controls
+    # the virtual center: D4 -> D3 -> D2, then Digger hits D1.
+    board.units.append(_enemy(
+        uid=11,
+        pawn_type="Moth1",
+        x=3,
+        y=4,
+        tx=5,
+        ty=4,
+        hp=3,
+    ))
+    board.units[-1].weapon = "MothAtk1"
+    board.units.append(_enemy(
+        uid=10,
+        pawn_type="Moth1",
+        x=2,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=3,
+    ))
+    board.units[-1].weapon = "MothAtk1"
+    digger = _enemy(
+        uid=20,
+        pawn_type="Digger2",
+        x=4,
+        y=4,
+        tx=4,
+        ty=4,
+        hp=4,
+    )
+    digger.max_hp = 4
+    digger.weapon = "DiggerAtk2"
+    digger.queued_target_x = 4
+    digger.queued_target_y = 4
+    board.units.append(digger)
+
+    threats = capture_building_threats(board)
+
+    assert len(threats) == 1
+    assert threats[0]["threat_kind"] == "self_aoe_projected_building"
+    assert threats[0]["attack_center"] == [6, 4]
+    assert threats[0]["target"] == [7, 4]
+    assert threats[0]["target_visual"] == "D1"
+    audit = audit_threat_coverage([], board)
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
 
 
 def test_threat_audit_attacker_will_be_moved_by_conveyor():

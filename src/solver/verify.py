@@ -1661,7 +1661,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # corpse bump melted intact Ice to Water. Ordinary occupied-Ice hits, Blast
 # Psion bursts, and BombRock explosions retain their existing rules. Pre-v356
 # corpus archived as failure_db_snapshot_sim_v355.jsonl.
-SIMULATOR_VERSION = 356
+# v357 - Destroyed Digger Wall pawns clear at player-action boundaries after
+# the killing action's own collision finishes. Later mechs may enter or push
+# into the vacated tile instead of taking a phantom wreck bump. Pre-v357 corpus
+# archived as failure_db_snapshot_sim_v356.jsonl.
+SIMULATOR_VERSION = 357
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
