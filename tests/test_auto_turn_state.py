@@ -14,7 +14,7 @@ import pytest
 from src.loop import commands as cmd_mod
 from src.loop.commands import _unit_roster_fingerprint
 from src.loop.session import ActiveSolution, RunSession, SolverAction
-from src.model.board import Board
+from src.model.board import Board, Unit
 from src.solver.verify import DiffResult
 
 
@@ -1163,6 +1163,117 @@ def test_unexpected_spider_psion_egg_or_mixed_loss_does_not_retry():
     ) is False
     assert cmd_mod._is_transient_delayed_spider_psion_egg_diff(
         other_egg, "move"
+    ) is False
+
+
+def _delayed_terrain_death_case(
+    *,
+    terrain: str = "water",
+    flying: bool = False,
+    massive: bool = False,
+    frozen: bool = False,
+):
+    uid = 638
+    board = Board()
+    board.tile(6, 2).terrain = terrain
+    board.units.append(Unit(
+        uid=uid,
+        type="Scorpion1",
+        x=6,
+        y=2,
+        hp=2,
+        max_hp=3,
+        team=6,
+        is_mech=False,
+        move_speed=3,
+        flying=flying,
+        massive=massive,
+        armor=True,
+        pushable=True,
+        weapon="ScorpionAtk1",
+        frozen=frozen,
+        shield=True,
+    ))
+    predicted = {
+        "units": [{
+            "uid": uid,
+            "type": "Scorpion1",
+            "pos": [6, 2],
+            "hp": 0,
+            "alive": False,
+            "status": {
+                "frozen": frozen,
+                "shield": True,
+            },
+        }],
+    }
+    diff = DiffResult(unit_diffs=[{
+        "uid": uid,
+        "type": "Scorpion1",
+        "field": "alive",
+        "predicted": False,
+        "actual": True,
+    }])
+    return diff, predicted, board
+
+
+def test_delayed_pushed_enemy_water_death_gets_settle_retry():
+    # Chaos Unfair run 20260712_193021_862, Mission_Belt turn 2:
+    # Ranged_Rocket pushed Scorpion uid638 onto Water.  The command's first
+    # verify read saw the Vek alive on its lethal landing tile; a later read
+    # showed the replay-predicted death.  Armor and Shield do not prevent the
+    # terrain kill, so their presence must not suppress this narrow retry.
+    diff, predicted, board = _delayed_terrain_death_case()
+
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        diff, predicted, board, "attack"
+    ) is True
+
+
+def test_delayed_terrain_death_retry_matches_flight_and_massive_rules():
+    frozen_flyer = _delayed_terrain_death_case(flying=True, frozen=True)
+    massive_chasm = _delayed_terrain_death_case(
+        terrain="chasm", massive=True
+    )
+    live_flyer = _delayed_terrain_death_case(flying=True)
+    massive_water = _delayed_terrain_death_case(massive=True)
+    frozen_ground_water = _delayed_terrain_death_case(frozen=True)
+
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        *frozen_flyer, "attack"
+    ) is True
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        *massive_chasm, "attack"
+    ) is True
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        *live_flyer, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        *massive_water, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        *frozen_ground_water, "attack"
+    ) is False
+
+
+def test_delayed_terrain_death_retry_rejects_unrelated_or_nonlethal_diffs():
+    diff, predicted, board = _delayed_terrain_death_case(terrain="ground")
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        diff, predicted, board, "attack"
+    ) is False
+
+    board.tile(6, 2).terrain = "water"
+    diff.scalar_diffs.append({
+        "field": "grid_power",
+        "predicted": 4,
+        "actual": 3,
+    })
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        diff, predicted, board, "attack"
+    ) is False
+    diff.scalar_diffs.clear()
+    assert cmd_mod._is_transient_delayed_lethal_terrain_death_diff(
+        diff, predicted, board, "move"
     ) is False
 
 

@@ -4859,6 +4859,88 @@ def _is_transient_delayed_spider_psion_egg_diff(diff, phase: str) -> bool:
     )
 
 
+def _is_transient_delayed_lethal_terrain_death_diff(
+    diff,
+    predicted: dict,
+    actual_board: Board,
+    phase: str,
+) -> bool:
+    """Return true while a pushed enemy's terrain death is still settling.
+
+    Live attack ACKs can precede the removal of a Vek that has already landed
+    in Water or a Chasm.  Retry only the exact above-prediction shape: Rust
+    says the enemy is dead, the first live read still has that same enemy on
+    the same lethal tile, and there are no other unit/tile/scalar diffs.
+
+    Terrain lethality mirrors Rust's landing rules.  Frozen flyers are
+    grounded, while frozen native ground units turn Water to Ice and survive.
+    Massive units survive Water, and neither Armor nor Shield saves an
+    otherwise-grounded unit from Water/Chasm.  Unfrozen flyers and Massive
+    units in Water therefore remain real mismatches instead of retrying.
+    """
+    if phase != "attack" or not isinstance(predicted, dict) or actual_board is None:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+
+    predicted_units = {
+        int(unit["uid"]): unit
+        for unit in predicted.get("units", []) or []
+        if isinstance(unit, dict) and isinstance(unit.get("uid"), int)
+    }
+    actual_units = {int(unit.uid): unit for unit in actual_board.units}
+
+    for unit_diff in unit_diffs:
+        if (
+            unit_diff.get("field") != "alive"
+            or unit_diff.get("predicted") is not False
+            or unit_diff.get("actual") is not True
+        ):
+            return False
+        try:
+            uid = int(unit_diff.get("uid"))
+        except (TypeError, ValueError):
+            return False
+        predicted_unit = predicted_units.get(uid)
+        actual_unit = actual_units.get(uid)
+        if predicted_unit is None or actual_unit is None:
+            return False
+        if actual_unit.team != 6 or actual_unit.hp <= 0:
+            return False
+        predicted_hp = predicted_unit.get("hp")
+        if (
+            predicted_unit.get("alive") is not False
+            or not isinstance(predicted_hp, (int, float))
+            or predicted_hp > 0
+            or actual_unit.hp <= predicted_hp
+        ):
+            return False
+        predicted_pos = predicted_unit.get("pos")
+        if (
+            not isinstance(predicted_pos, (list, tuple))
+            or len(predicted_pos) != 2
+            or [int(actual_unit.x), int(actual_unit.y)]
+            != [int(predicted_pos[0]), int(predicted_pos[1])]
+            or not actual_board.in_bounds(int(actual_unit.x), int(actual_unit.y))
+        ):
+            return False
+
+        terrain = actual_board.tile(int(actual_unit.x), int(actual_unit.y)).terrain
+        effectively_flying = bool(actual_unit.flying) and not bool(actual_unit.frozen)
+        if effectively_flying:
+            return False
+        if terrain == "water":
+            if actual_unit.massive or (actual_unit.frozen and not actual_unit.flying):
+                return False
+        elif terrain != "chasm":
+            return False
+
+    return True
+
+
 def _is_transient_delayed_multihit_damage_diff(
     diff,
     weapon_name: str | None,
@@ -8473,6 +8555,9 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
             diff, action_weapon, "attack"
         )
         or _is_transient_delayed_spider_psion_egg_diff(diff, "attack")
+        or _is_transient_delayed_lethal_terrain_death_diff(
+            diff, predicted, actual_board, "attack"
+        )
         or _is_transient_delayed_repair_platform_diff(diff, "move")
     ):
         for attempt in range(5):
@@ -47608,6 +47693,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
     def _is_transient_verify_diff(
         diff,
+        predicted: dict,
+        actual_board,
         actual_data,
         weapon_name: str | None,
         phase: str,
@@ -47619,6 +47706,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 diff, weapon_name, phase
             )
             or _is_transient_delayed_spider_psion_egg_diff(diff, phase)
+            or _is_transient_delayed_lethal_terrain_death_diff(
+                diff, predicted, actual_board, phase
+            )
             or _is_transient_delayed_repair_platform_diff(diff, phase)
         )
 
@@ -47632,7 +47722,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         """Re-read briefly for bridge effects that apply after command ACK."""
         diff = diff_states(predicted, actual_board)
         if diff.is_empty() or not _is_transient_verify_diff(
-            diff, actual_data, weapon_name, phase
+            diff, predicted, actual_board, actual_data, weapon_name, phase
         ):
             return actual_board, actual_data, diff
 
@@ -47644,6 +47734,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     diff, weapon_name, phase
                 )
                 or _is_transient_delayed_spider_psion_egg_diff(diff, phase)
+                or _is_transient_delayed_lethal_terrain_death_diff(
+                    diff, predicted, actual_board, phase
+                )
                 or _is_transient_delayed_repair_platform_diff(diff, phase)
             )
             else 3
@@ -47667,6 +47760,19 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 print(
                     f"  {phase.upper()} verify: delayed effect settled into "
                     "a non-transient mismatch"
+                )
+                return reread_board, reread_data, reread_diff
+            if (
+                _is_transient_delayed_lethal_terrain_death_diff(
+                    diff, predicted, actual_board, phase
+                )
+                and not _is_transient_delayed_lethal_terrain_death_diff(
+                    reread_diff, predicted, reread_board, phase
+                )
+            ):
+                print(
+                    f"  {phase.upper()} verify: delayed terrain death settled "
+                    "into a non-transient mismatch"
                 )
                 return reread_board, reread_data, reread_diff
             if reread_diff.total_count() < best_diff.total_count():
