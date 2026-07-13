@@ -461,3 +461,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 460 | 817 | Webbed enemies are stationary, not disarmed. | `docs/agent/solver-reference.md` |
 | 461 | 819 | Techno-Hornet Needle Shot damages its full selected line and pushes only the far tile. | `docs/agent/solver-reference.md` |
 | 462 | 821 | Emergent next-turn grapples require consumed-marker identity proof. | `docs/agent/safety-gates.md` |
+| 463 | 823 | Exact terminal audits restore mission context, never objective survival. | `docs/agent/safety-gates.md` |

@@ -4688,6 +4688,70 @@ def _terminal_post_enemy_ready_for_audit(
     return bool(board.tiles)
 
 
+def _terminal_summary_bridge_context(
+    session: RunSession,
+    bridge_data: dict | None,
+    solve_data: dict,
+    predicted: dict,
+) -> dict | None:
+    """Restore only agreed mission metadata lost during ``MissionEnd``.
+
+    The bridge deliberately clears its live mission reference before writing
+    an inactive terminal dump.  The physical board can therefore remain
+    complete while ``mission_id`` and objective-unit type lists are absent.
+    Reuse the frozen solve context only when every required source is present
+    and agrees; never copy predicted units or counts into the actual outcome.
+    """
+    if not isinstance(bridge_data, dict) or bridge_data.get("mission_id"):
+        return bridge_data
+
+    context_sources = [
+        predicted,
+        solve_data.get("current_outcome"),
+        solve_data.get("post_player_board"),
+        solve_data.get("final_board"),
+    ]
+    if not all(
+        isinstance(source, dict)
+        and isinstance(source.get("mission_id"), str)
+        and bool(source.get("mission_id"))
+        for source in context_sources
+    ):
+        return bridge_data
+    if not isinstance(session.current_mission, str) or not session.current_mission:
+        return bridge_data
+    mission_ids = {
+        source["mission_id"] for source in context_sources
+    }
+    mission_ids.add(session.current_mission)
+    if len(mission_ids) != 1:
+        return bridge_data
+
+    restored = dict(bridge_data)
+    restored["mission_id"] = next(iter(mission_ids))
+    checkpoints = [
+        solve_data["post_player_board"],
+        solve_data["final_board"],
+    ]
+    for key in (
+        "protect_objective_unit_types",
+        "destroy_objective_unit_types",
+        "bonus_objective_unit_types",
+    ):
+        values = []
+        for checkpoint in checkpoints:
+            raw = checkpoint.get(key)
+            if not isinstance(raw, list) or not all(
+                isinstance(item, str) and item for item in raw
+            ):
+                return bridge_data
+            values.append(tuple(raw))
+        if len(values) != 2 or len(set(values)) != 1:
+            return bridge_data
+        restored[key] = list(values[0])
+    return restored
+
+
 def _projected_scenarios(
     rust_module,
     bridge_data: dict,
@@ -6656,11 +6720,22 @@ def _record_post_enemy(session: RunSession, board: Board,
         _install_post_enemy_block(session, result)
         return result
 
-    # Capture actual board state
-    actual = _capture_board_summary(board, bridge_data)
-    if _terminal_post_enemy_ready_for_audit(
+    # Capture actual board state. MissionEnd can blank the live mission
+    # identity before its full terminal board dump, which would otherwise
+    # make physically present protected units invisible to the summary.
+    terminal_audit = _terminal_post_enemy_ready_for_audit(
         board, bridge_data, solved_turn
-    ):
+    )
+    summary_bridge_data = bridge_data
+    if terminal_audit:
+        summary_bridge_data = _terminal_summary_bridge_context(
+            session,
+            bridge_data,
+            solve_data,
+            predicted,
+        )
+    actual = _capture_board_summary(board, summary_bridge_data)
+    if terminal_audit:
         terminal_grid_baseline = solve_data.get("current_outcome")
         if not isinstance(terminal_grid_baseline, dict):
             terminal_grid_baseline = predicted

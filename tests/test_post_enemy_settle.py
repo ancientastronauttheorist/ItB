@@ -350,6 +350,189 @@ def test_terminal_grid_debt_uses_preplan_board_for_predicted_loss(
     assert result["deltas"]["building_hp_diff"] == 0
 
 
+def _terminal_filler_case(
+    tmp_path,
+    monkeypatch,
+    *,
+    run_id: str,
+    include_filler: bool = True,
+    final_mission_id: str = "Mission_Filler",
+    terminal: bool = True,
+    missing_mission_source: str | None = None,
+    missing_objective_metadata: tuple[str, str] | None = None,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id=run_id)
+    session.mission_index = 1
+    session.current_mission = "Mission_Filler"
+    if missing_mission_source == "session":
+        session.current_mission = None
+    run_dir = tmp_path / run_id
+    run_dir.mkdir()
+
+    board = _board(3)
+    if include_filler:
+        board.units.append(Unit(
+            uid=778,
+            type="Filler_Pawn",
+            x=3,
+            y=3,
+            hp=2,
+            max_hp=2,
+            team=1,
+            is_mech=False,
+            move_speed=0,
+            flying=False,
+            massive=True,
+            armor=False,
+            pushable=False,
+            weapon="Filler_Attack",
+            active=False,
+        ))
+
+    protected = [{
+        "uid": 778,
+        "type": "Filler_Pawn",
+        "pos": [3, 3],
+        "hp": 2,
+        "max_hp": 2,
+        "alive": True,
+        "frozen": False,
+        "webbed": False,
+        "team": 1,
+    }]
+    baseline = {
+        "buildings_alive": 6,
+        "building_hp_total": 7,
+        "grid_power": 3,
+        "enemies_alive": 0,
+        "mech_hp": [{
+            "uid": 0,
+            "type": "JetMech",
+            "hp": 2,
+            "max_hp": 2,
+        }],
+        "mission_id": "Mission_Filler",
+        "protected_objective_units": protected,
+        "protected_objective_units_alive": 1,
+        "protected_objective_units_frozen": 0,
+    }
+    checkpoint = {
+        "mission_id": "Mission_Filler",
+        "protect_objective_unit_types": ["Filler_Pawn"],
+        "destroy_objective_unit_types": [],
+        "bonus_objective_unit_types": [],
+    }
+    final_checkpoint = dict(checkpoint)
+    final_checkpoint["mission_id"] = final_mission_id
+    current_outcome = dict(baseline)
+    predicted = dict(baseline)
+    sources = {
+        "predicted": predicted,
+        "current": current_outcome,
+        "post_player": checkpoint,
+        "final": final_checkpoint,
+    }
+    if missing_mission_source in sources:
+        del sources[missing_mission_source]["mission_id"]
+    if missing_objective_metadata is not None:
+        checkpoint_name, key = missing_objective_metadata
+        del sources[checkpoint_name][key]
+    (run_dir / "m01_turn_04_solve.json").write_text(json.dumps({
+        "data": {
+            "current_outcome": current_outcome,
+            "predicted_board_summary": predicted,
+            "post_player_board": checkpoint,
+            "final_board": final_checkpoint,
+            "search_stats": {},
+        }
+    }))
+    bridge = {
+        "phase": "unknown" if terminal else "combat_player",
+        "turn": 4 if terminal else 5,
+        "mission_id": "",
+        "in_active_mission": not terminal,
+        "tiles": [{} for _ in range(64)],
+        "units": [],
+    }
+    return commands._record_post_enemy(
+        session,
+        board,
+        solved_turn=4,
+        bridge_data=bridge,
+    )
+
+
+def test_terminal_audit_restores_agreed_filler_context_and_recounts_live_pawn(
+    tmp_path,
+    monkeypatch,
+):
+    result = _terminal_filler_case(
+        tmp_path,
+        monkeypatch,
+        run_id="filler_alive",
+    )
+
+    assert result["status"] == "POST_ENEMY_RECORDED"
+    assert result["blocking"] is False
+    assert result["actual_outcome"]["mission_id"] == "Mission_Filler"
+    assert result["actual_outcome"]["protected_objective_units"] == [{
+        "uid": 778,
+        "type": "Filler_Pawn",
+        "pos": [3, 3],
+        "hp": 2,
+        "max_hp": 2,
+        "alive": True,
+        "frozen": False,
+        "webbed": False,
+        "team": 1,
+    }]
+    assert result["deltas"]["protected_objective_units_alive_diff"] == 0
+
+
+def test_terminal_filler_context_recovery_stays_fail_closed(
+    tmp_path,
+    monkeypatch,
+):
+    cases = (
+        ("missing_pawn", {"include_filler": False}),
+        ("conflicting_context", {"final_mission_id": "Mission_Train"}),
+        ("nonterminal", {"terminal": False}),
+    )
+    cases += tuple(
+        (
+            f"missing_{source}_mission",
+            {"missing_mission_source": source},
+        )
+        for source in ("predicted", "current", "post_player", "final", "session")
+    )
+    cases += tuple(
+        (
+            f"missing_{checkpoint_name}_{key}",
+            {"missing_objective_metadata": (checkpoint_name, key)},
+        )
+        for checkpoint_name in ("post_player", "final")
+        for key in (
+            "protect_objective_unit_types",
+            "destroy_objective_unit_types",
+            "bonus_objective_unit_types",
+        )
+    )
+    for run_id, kwargs in cases:
+        result = _terminal_filler_case(
+            tmp_path,
+            monkeypatch,
+            run_id=run_id,
+            **kwargs,
+        )
+
+        assert result["status"] == "INVESTIGATE_POST_ENEMY", run_id
+        assert result["blocking"] is True, run_id
+        assert (
+            result["deltas"]["protected_objective_units_alive_diff"] == -1
+        ), run_id
+
+
 def test_post_enemy_settle_waits_when_buildings_worse_but_grid_not_yet(monkeypatch):
     stale = _board(5)
     stale.tiles[1][6].terrain = "rubble"
