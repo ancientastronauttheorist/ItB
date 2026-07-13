@@ -10296,7 +10296,20 @@ def cmd_recommend_mission(
         }
         _print_result(result)
         return result
-    top3 = ranked[:3]
+    save_region_availability_ambiguous = bool(
+        (
+            island_map_source == "saveData"
+            and isinstance(save_island_map_result, dict)
+            and save_island_map_result.get("availability_ambiguous")
+        )
+        or (
+            isinstance(save_region_filter, dict)
+            and save_region_filter.get("availability_ambiguous")
+        )
+    )
+    top3 = [] if save_region_availability_ambiguous else ranked[:3]
+    actionable_ranked = [] if save_region_availability_ambiguous else ranked
+    potential_ranked = ranked if save_region_availability_ambiguous else []
 
     print(f"\n=== RECOMMEND_MISSION ===")
     print(f"Squad weapons:   "
@@ -10309,12 +10322,20 @@ def cmd_recommend_mission(
             f"{no_survivors_setup.get('setup_stage', 'UNKNOWN')}"
         )
     print(f"Source:          {island_map_source}")
-    print(f"Available:       {len(island_map)} mission(s)")
+    print(
+        f"{'Potential' if save_region_availability_ambiguous else 'Available'}:       "
+        f"{len(island_map)} mission(s)"
+    )
     if save_region_filter:
         print(
             "Save filter:     "
             f"{save_region_filter.get('matched', 0)} matched, "
             f"{save_region_filter.get('unavailable', 0)} unavailable"
+        )
+    if save_region_availability_ambiguous:
+        print(
+            "Save ambiguity: state 0 contains both red selectable and grey "
+            "locked regions; visual red-region labels are required."
         )
     print()
     for rank, m in enumerate(top3, start=1):
@@ -10326,25 +10347,50 @@ def cmd_recommend_mission(
         print()
 
     result = {
-        "status": "OK",
+        "status": (
+            _SAVE_REGION_AVAILABILITY_AMBIGUOUS
+            if save_region_availability_ambiguous
+            else "OK"
+        ),
         "grid_power": grid_power,
         "routing": routing,
         "no_survivors_setup": _compact_no_survivors_setup_for_route(
             no_survivors_setup
         ),
         "source": island_map_source,
-        "ranked": ranked,
+        "ranked": actionable_ranked,
         "top3": top3,
+        "potential_ranked": potential_ranked,
+        "potential_top3": potential_ranked[:3],
+        "save_region_availability_ambiguous": (
+            save_region_availability_ambiguous
+        ),
+        "note": (
+            "Save region state 0 does not distinguish selectable red regions "
+            "from locked grey regions. Use visible red-region OCR labels "
+            "before choosing a mission."
+            if save_region_availability_ambiguous
+            else None
+        ),
         "save_region_filter": save_region_filter,
         "pause_map_peek": pause_map_peek_result,
         "save_island_map": save_island_map_result,
         "bridge_refresh_ok": bridge_refresh_ok,
         "bridge_preview_freshness": bridge_preview_freshness,
         "ignored_bridge_preview": ignored_bridge_preview,
-        "speed_route_status": _lightning_speed_route_status(
-            ranked,
-            routing,
-            source=island_map_source,
+        "speed_route_status": (
+            {
+                "status": "AUTO_START_BLOCKED",
+                "auto_start_allowed": False,
+                "reason": "save_region_availability_ambiguous",
+            }
+            if save_region_availability_ambiguous
+            and routing in {"lightning_war", "lightning_baseline"}
+            else _lightning_speed_route_status(
+                actionable_ranked,
+                routing,
+                source=island_map_source,
+            )
         ),
     }
     _print_result(result)
@@ -10509,11 +10555,18 @@ def _pending_diagnosis_entries(session: RunSession) -> list[dict]:
 
 
 _SAVE_REGION_STATE_LABELS = {
-    0: "available",
-    1: "active",
-    2: "completed",
+    # These are persistence states, not island-map availability.  In
+    # particular, state 0 is used by both red selectable regions and grey
+    # locked regions until a mission has initialized a player record.
+    0: "uninitialized",
+    1: "initialized",
+    2: "unavailable",
     3: "overrun",
 }
+
+_SAVE_REGION_AVAILABILITY_AMBIGUOUS = (
+    "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
+)
 
 _BONUS_SAVE_TEXT = {
     1: "Bonus_Simple_Asset",
@@ -10736,12 +10789,26 @@ def _lightning_parse_save_current_units(text: str) -> list[dict]:
 
 
 def _lightning_save_route_state(regions: list[dict]) -> int | None:
-    """Choose the save-region state that currently represents red choices."""
-    mission_regions = [r for r in regions if r.get("mission_slot")]
-    if any(r.get("state") == 1 for r in mission_regions):
-        return 1
-    if any(r.get("state") == 0 for r in mission_regions):
-        return 0
+    """Return the sole persistence state among potential route choices.
+
+    This is diagnostic only.  Save state 0 does not distinguish selectable
+    red regions from locked grey regions, while state 1 can describe either
+    an initialized preview (turn 0) or a played mission (turn > 0).
+    """
+    route_states = {
+        int(region["state"])
+        for region in regions
+        if region.get("mission_slot")
+        and (
+            region.get("state") == 0
+            or (
+                region.get("state") == 1
+                and region.get("i_current_turn") == 0
+            )
+        )
+    }
+    if len(route_states) == 1:
+        return next(iter(route_states))
     return None
 
 
@@ -10752,21 +10819,30 @@ def _lightning_build_save_island_map_from_text(text: str) -> dict:
     active_region_index = _lightning_parse_save_active_region_index(text)
     route_state = _lightning_save_route_state(regions)
     island_map: list[dict] = []
+    ambiguous_regions: list[dict] = []
+    route_states: set[int] = set()
 
     for region in sorted(regions, key=lambda r: int(r.get("region_index") or 0)):
         mission_slot = str(region.get("mission_slot") or "")
-        if not mission_slot or route_state is None:
+        if not mission_slot:
             continue
-        if region.get("state") != route_state:
+        state = region.get("state")
+        current_turn = region.get("i_current_turn")
+        if state == 0:
+            route_availability = "ambiguous_uninitialized"
+        elif state == 1 and current_turn == 0:
+            route_availability = "initialized_unplayed"
+        else:
             continue
         if (
             active_region_index == region.get("region_index")
-            and (region.get("i_current_turn") or 0) > 0
+            and (current_turn or 0) > 0
         ):
             continue
         mission = missions_by_slot.get(mission_slot)
         if not mission:
             continue
+        route_states.add(int(state))
         entry = dict(mission)
         entry.update(
             {
@@ -10775,16 +10851,35 @@ def _lightning_build_save_island_map_from_text(text: str) -> dict:
                 "save_region_name": region.get("name"),
                 "save_region_state": region.get("state"),
                 "save_region_state_label": region.get("state_label"),
+                "save_region_route_availability": route_availability,
                 "mission_slot": mission_slot,
                 "source": "saveData",
             }
         )
+        if state == 0:
+            entry["save_region_availability_ambiguous"] = True
+            ambiguous_regions.append(
+                {
+                    "region_index": region.get("region_index"),
+                    "name": region.get("name"),
+                    "mission_slot": mission_slot,
+                    "state": state,
+                    "state_label": region.get("state_label"),
+                    "reason": "state0_can_be_selectable_red_or_locked_grey",
+                }
+            )
         if region.get("name") == "Corporate HQ":
             entry["boss"] = True
         island_map.append(entry)
 
     return {
-        "status": "OK" if island_map else "NO_SAVE_ROUTE_OPTIONS",
+        "status": (
+            _SAVE_REGION_AVAILABILITY_AMBIGUOUS
+            if island_map and ambiguous_regions
+            else "OK"
+            if island_map
+            else "NO_SAVE_ROUTE_OPTIONS"
+        ),
         "island_map": island_map,
         "units": _lightning_parse_save_current_units(text),
         "grid_power": _lightning_parse_save_grid_power(text),
@@ -10792,6 +10887,9 @@ def _lightning_build_save_island_map_from_text(text: str) -> dict:
         "mission_count": len(missions_by_slot),
         "active_region_index": active_region_index,
         "route_state": route_state,
+        "route_states": sorted(route_states),
+        "availability_ambiguous": bool(ambiguous_regions),
+        "ambiguous_regions": ambiguous_regions,
     }
 
 
@@ -12725,6 +12823,7 @@ def _lightning_annotate_island_map_with_save_regions(
     annotated: list[dict] = []
     matched = 0
     unavailable = 0
+    ambiguous = 0
     for entry in island_map:
         best_region = None
         best_score = 0
@@ -12743,7 +12842,15 @@ def _lightning_annotate_island_map_with_save_regions(
             out["save_region_state"] = state
             out["save_region_state_label"] = best_region.get("state_label")
             out["save_region_match_score"] = best_score
-            if state == 1:
+            if state == 0:
+                out["save_region_route_availability"] = (
+                    "ambiguous_uninitialized"
+                )
+                out["save_region_availability_ambiguous"] = True
+                ambiguous += 1
+            elif state == 1 and best_region.get("i_current_turn") == 0:
+                out["save_region_route_availability"] = "initialized_unplayed"
+            elif state == 1:
                 out["current"] = True
                 unavailable += 1
             elif state == 2:
@@ -12760,6 +12867,8 @@ def _lightning_annotate_island_map_with_save_regions(
         "save_regions": len(save_regions),
         "matched": matched,
         "unavailable": unavailable,
+        "ambiguous": ambiguous,
+        "availability_ambiguous": ambiguous > 0,
     }
 
 
@@ -13621,7 +13730,7 @@ def _lightning_recommend_save_routes(
             "speed_route_status": _lightning_speed_route_status([], routing),
         }
     try:
-        ranked = score_island_map(
+        potential_ranked = score_island_map(
             island_map,
             save_result.get("units") or [],
             int(save_result.get("grid_power") or 7),
@@ -13629,19 +13738,41 @@ def _lightning_recommend_save_routes(
         )
     except ValueError as exc:
         return {"status": "ERROR", "source": "saveData", "error": str(exc)}
+    availability_ambiguous = bool(save_result.get("availability_ambiguous"))
+    ranked = [] if availability_ambiguous else potential_ranked
     return {
-        "status": "OK" if ranked else "NO_AVAILABLE_MISSIONS",
+        "status": (
+            _SAVE_REGION_AVAILABILITY_AMBIGUOUS
+            if availability_ambiguous
+            else "OK"
+            if ranked
+            else "NO_AVAILABLE_MISSIONS"
+        ),
         "source": "saveData",
         "routing": routing,
         "grid_power": save_result.get("grid_power"),
         "available": len(island_map),
         "ranked": ranked,
         "top3": ranked[:3],
+        "potential_ranked": potential_ranked if availability_ambiguous else [],
+        "potential_top3": (
+            potential_ranked[:3] if availability_ambiguous else []
+        ),
+        "save_region_availability_ambiguous": availability_ambiguous,
         "save_island_map": save_result,
-        "speed_route_status": _lightning_speed_route_status(
-            ranked,
-            routing,
-            source="saveData",
+        "speed_route_status": (
+            {
+                "status": "AUTO_START_BLOCKED",
+                "auto_start_allowed": False,
+                "reason": "save_region_availability_ambiguous",
+            }
+            if availability_ambiguous
+            and routing in {"lightning_war", "lightning_baseline"}
+            else _lightning_speed_route_status(
+                ranked,
+                routing,
+                source="saveData",
+            )
         ),
     }
 
@@ -13653,6 +13784,12 @@ def _lightning_route_options_for_visual_assignment(
     if not isinstance(recommendation, dict):
         return []
     ranked = recommendation.get("ranked")
+    if (
+        not ranked
+        and recommendation.get("status")
+        == _SAVE_REGION_AVAILABILITY_AMBIGUOUS
+    ):
+        ranked = recommendation.get("potential_ranked")
     if not isinstance(ranked, list):
         return []
 
@@ -13778,7 +13915,12 @@ def _lightning_assign_visual_route_options(
         if isinstance(recommendation, dict)
         else None
     )
-    exact_assignment = source == "saveData"
+    save_availability_ambiguous = (
+        isinstance(recommendation, dict)
+        and recommendation.get("status")
+        == _SAVE_REGION_AVAILABILITY_AMBIGUOUS
+    )
+    exact_assignment = source == "saveData" and not save_availability_ambiguous
 
     option_by_label: dict[str, dict] = {}
     duplicate_option_labels: set[str] = set()
@@ -13854,9 +13996,13 @@ def _lightning_assign_visual_route_options(
                     visual_order=visual_order,
                 ),
                 route_option=region["route_option"],
-                identity_status="exact" if exact_assignment else "diagnostic",
-                exact=exact_assignment,
-                reason=None if exact_assignment else "non_save_assignment_source",
+                identity_status="exact" if source == "saveData" else "diagnostic",
+                exact=source == "saveData",
+                reason=(
+                    None
+                    if source == "saveData"
+                    else "non_save_assignment_source"
+                ),
             )
         out["regions"] = out_regions
         out["route_assignment"] = {
@@ -13866,6 +14012,29 @@ def _lightning_assign_visual_route_options(
             "save_route_options": len(options),
             "matched_visible_labels": len(label_matches),
         }
+        return out
+
+    if save_availability_ambiguous:
+        for visual_order, region in enumerate(out_regions):
+            region["route_identity"] = _lightning_route_identity(
+                recommendation=recommendation,
+                assignment_status="SAVE_AVAILABILITY_AMBIGUOUS",
+                assignment_method="save_region_state_requires_visual_ocr_label",
+                visual_signature=_lightning_visual_route_signature(
+                    region,
+                    visual_order=visual_order,
+                ),
+                identity_status="ambiguous",
+                exact=False,
+                reason="state0_can_be_selectable_red_or_locked_grey",
+            )
+        out["route_assignment"] = {
+            "status": "SAVE_AVAILABILITY_AMBIGUOUS",
+            "method": "save_region_state_requires_visual_ocr_label",
+            "visual_regions": len(out_regions),
+            "save_route_options": len(options),
+        }
+        out["regions"] = out_regions
         return out
 
     if len(out_regions) != len(options):

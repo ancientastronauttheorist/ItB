@@ -24473,7 +24473,10 @@ def test_lightning_save_region_filter_marks_completed_and_overrun():
     assert annotated[1]["save_region_name"] == "Archivist Hall"
     assert "completed" not in annotated[2]
     assert "overrun" not in annotated[2]
-    assert annotated[2]["save_region_state_label"] == "available"
+    assert annotated[2]["save_region_state_label"] == "uninitialized"
+    assert annotated[2]["save_region_availability_ambiguous"] is True
+    assert summary["ambiguous"] == 1
+    assert summary["availability_ambiguous"] is True
 
 
 def _lightning_save_route_fixture() -> str:
@@ -24494,6 +24497,146 @@ def _lightning_save_route_fixture() -> str:
     },
     }
     """
+
+
+def _mixed_save_route_fixture() -> str:
+    return """
+    GameData = {["network"] = 4,
+    ["current"] = {["weapons"] = {"Ranged_Rocket", "Ranged_Rockthrow", "Science_Gravwell"},},}
+    RegionData = {
+    ["region0"] = {["mission"] = "Mission3", ["state"] = 0, ["name"] = "The Heap", },
+    ["region2"] = {["mission"] = "Mission7", ["state"] = 0, ["name"] = "Venting Fields", },
+    ["region3"] = {["mission"] = "Mission4", ["player"] = {["iCurrentTurn"] = 4,}, ["state"] = 1, ["name"] = "Nano Silos", },
+    ["region5"] = {["mission"] = "Mission1", ["state"] = 0, ["name"] = "Waste Chambers", },
+    ["region6"] = {["mission"] = "Mission5", ["player"] = {["iCurrentTurn"] = 0,}, ["state"] = 1, ["name"] = "Chemical Field A", },
+    ["iBattleRegion"] = 3,
+    }
+    GAME = {
+    ["Missions"] = {
+    [1] = {["ID"] = "Mission_Belt", ["BonusObjs"] = {[1] = 1,}, },
+    [3] = {["ID"] = "Mission_Power", ["BonusObjs"] = {[1] = 3,}, },
+    [4] = {["ID"] = "Mission_Missiles", ["BonusObjs"] = {[1] = 1,}, },
+    [5] = {["ID"] = "Mission_Teleporter", ["BonusObjs"] = {[1] = 7,}, },
+    [7] = {["ID"] = "Mission_Acid", ["BonusObjs"] = {[1] = 4,}, },
+    },
+    }
+    """
+
+
+def test_lightning_save_route_mixed_states_fail_closed_as_ambiguous():
+    result = commands._lightning_build_save_island_map_from_text(
+        _mixed_save_route_fixture(),
+    )
+
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
+    assert result["availability_ambiguous"] is True
+    assert result["route_state"] is None
+    assert result["route_states"] == [0, 1]
+    assert [entry["save_region_index"] for entry in result["island_map"]] == [
+        0,
+        2,
+        5,
+        6,
+    ]
+    assert [entry["region_index"] for entry in result["ambiguous_regions"]] == [
+        0,
+        2,
+        5,
+    ]
+    chemical = result["island_map"][-1]
+    assert chemical["save_region_route_availability"] == "initialized_unplayed"
+    assert "save_region_availability_ambiguous" not in chemical
+
+
+def test_recommend_mission_mixed_save_routes_exposes_only_potential_diagnostics(
+    monkeypatch,
+    capsys,
+):
+    save_result = commands._lightning_build_save_island_map_from_text(
+        _mixed_save_route_fixture(),
+    )
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: False)
+    monkeypatch.setattr(
+        commands,
+        "_lightning_build_save_island_map",
+        lambda profile: save_result,
+    )
+
+    result = commands.cmd_recommend_mission(routing="lightning_war")
+    output = capsys.readouterr().out
+
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
+    assert result["ranked"] == []
+    assert result["top3"] == []
+    assert {entry["save_region_name"] for entry in result["potential_ranked"]} == {
+        "The Heap",
+        "Venting Fields",
+        "Waste Chambers",
+        "Chemical Field A",
+    }
+    assert result["speed_route_status"]["auto_start_allowed"] is False
+    assert result["speed_route_status"]["reason"] == (
+        "save_region_availability_ambiguous"
+    )
+    assert "Save ambiguity:" in output
+    assert "\n  #1" not in output
+
+
+def test_ambiguous_save_routes_require_ocr_labels_for_exact_visual_assignment(
+    monkeypatch,
+):
+    save_result = commands._lightning_build_save_island_map_from_text(
+        _mixed_save_route_fixture(),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_build_save_island_map",
+        lambda profile: save_result,
+    )
+    recommendation = commands._lightning_recommend_save_routes()
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {"index": 0, "window_x": 300, "window_y": 250, "visible_label": "Venting Fields"},
+            {"index": 1, "window_x": 600, "window_y": 350, "visible_label": "Waste Chambers"},
+            {"index": 2, "window_x": 800, "window_y": 500, "visible_label": "Chemical Field A"},
+        ],
+    }
+
+    candidates = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    assert {candidate["save_region_name"] for candidate in candidates} == {
+        "Venting Fields",
+        "Waste Chambers",
+        "Chemical Field A",
+    }
+    assert all(
+        candidate["route_identity"]["status"] == "exact"
+        and candidate["route_identity"]["exact"] is True
+        and candidate["route_identity"]["assignment_method"]
+        == "visible_ocr_label_to_save_region_name"
+        for candidate in candidates
+    )
+    assert all(candidate["save_region_name"] != "The Heap" for candidate in candidates)
+
+    unlabeled = {
+        "status": "OK",
+        "regions": [
+            {"index": index, "window_x": 200 + index * 100, "window_y": 300}
+            for index in range(4)
+        ],
+    }
+    blocked = commands._lightning_assign_visual_route_options(
+        unlabeled,
+        recommendation,
+    )
+    assert blocked["route_assignment"]["status"] == (
+        "SAVE_AVAILABILITY_AMBIGUOUS"
+    )
+    assert all("route_option" not in region for region in blocked["regions"])
 
 
 def test_lightning_builds_routeable_save_island_map():
@@ -26757,9 +26900,14 @@ def test_recommend_mission_uses_save_filter_for_live_bridge(monkeypatch):
 
     result = commands.cmd_recommend_mission(routing="lightning_war")
 
-    assert result["status"] == "OK"
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
     assert result["save_region_filter"]["unavailable"] == 2
-    assert [m["mission_id"] for m in result["ranked"]] == ["Mission_Satellite"]
+    assert result["save_region_filter"]["ambiguous"] == 1
+    assert result["ranked"] == []
+    assert result["top3"] == []
+    assert [m["mission_id"] for m in result["potential_ranked"]] == [
+        "Mission_Satellite"
+    ]
 
 
 def test_recommend_mission_can_peek_map_from_pause(monkeypatch):
