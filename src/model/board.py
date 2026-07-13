@@ -199,6 +199,7 @@ class BoardTile:
     has_pod: bool = False
     smoke: bool = False
     acid: bool = False
+    shield: bool = False
     frozen: bool = False
     cracked: bool = False    # ice tile that's been hit once (next hit → water)
     conveyor: int = -1       # -1 = not conveyor, 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)

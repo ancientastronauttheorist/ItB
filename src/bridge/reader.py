@@ -211,6 +211,69 @@ def _read_active_save_mission() -> dict | None:
     return mission if isinstance(mission, dict) else None
 
 
+def _read_active_building_shields_from_save() -> tuple[str, set[tuple[int, int]]]:
+    """Return active mission id plus positively shielded map tiles.
+
+    This supports a running pre-fix modloader only.  The caller must restrict
+    this on-disk data to a fresh player-turn boundary; it is unsafe after any
+    player action because a consumed live shield can remain in saveData.lua.
+    """
+    save_path = get_save_file("saveData.lua")
+    if not save_path.exists():
+        return "", set()
+    try:
+        data = parse_save_file(save_path)
+    except Exception:
+        return "", set()
+
+    region_data = data.get("RegionData", {})
+    if not isinstance(region_data, dict):
+        return "", set()
+    battle_region = region_data.get("iBattleRegion", -1)
+    if not isinstance(battle_region, int) or battle_region < 0:
+        return "", set()
+    region_key = "final_region" if battle_region == 20 else f"region{battle_region}"
+    region = region_data.get(region_key, {})
+    if not isinstance(region, dict):
+        return "", set()
+
+    mission_id = ""
+    mission_slot = region.get("mission", "")
+    match = re.fullmatch(r"Mission(\d+)", mission_slot) if isinstance(mission_slot, str) else None
+    missions = data.get("GAME", {}).get("Missions", {})
+    if match and isinstance(missions, dict):
+        mission = missions.get(int(match.group(1)), {})
+        if isinstance(mission, dict):
+            candidate = mission.get("ID") or mission.get("Class")
+            if isinstance(candidate, str):
+                mission_id = candidate
+
+    player = region.get("player", {})
+    map_data = player.get("map_data", {}) if isinstance(player, dict) else {}
+    entries = map_data.get("map", {}) if isinstance(map_data, dict) else {}
+    if isinstance(entries, dict):
+        values = entries.values()
+    elif isinstance(entries, (list, tuple)):
+        values = entries
+    else:
+        return mission_id, set()
+
+    shields: set[tuple[int, int]] = set()
+    for entry in values:
+        if not isinstance(entry, dict) or entry.get("shield") is not True:
+            continue
+        loc = entry.get("loc")
+        if isinstance(loc, Point):
+            x, y = loc.x, loc.y
+        elif isinstance(loc, (list, tuple)) and len(loc) >= 2:
+            x, y = loc[0], loc[1]
+        else:
+            continue
+        if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+            shields.add((x, y))
+    return mission_id, shields
+
+
 def _read_active_bonus_objective_ids_from_save() -> list[int]:
     """Return active mission BonusObjs from saveData.lua."""
     mission = _read_active_save_mission()
@@ -704,12 +767,13 @@ def _read_terraform_grass_tiles_from_save(data: dict) -> set[tuple[int, int]]:
     return set()
 
 
-def _safe_to_overlay_save_grass(data: dict) -> bool:
-    """Only use save grass at a fresh player-turn boundary.
+def _safe_to_overlay_turn_boundary_save_tiles(data: dict) -> bool:
+    """Only use volatile save tiles at a fresh player-turn boundary.
 
     saveData.lua does not update after every bridge action. If we overlaid
     save-derived grass mid-turn, a partial re-solve after the Terraformer fired
-    could see already-cleared grass as still present.
+    could see already-cleared grass as still present. The same guard prevents a
+    consumed building shield from being resurrected by a stale save overlay.
     """
     if data.get("phase") != "combat_player":
         return False
@@ -729,6 +793,42 @@ def _safe_to_overlay_save_grass(data: dict) -> bool:
         except (TypeError, ValueError):
             return False
     return all(bool(u.get("active", False)) for u in actors)
+
+
+def _safe_to_overlay_save_grass(data: dict) -> bool:
+    return _safe_to_overlay_turn_boundary_save_tiles(data)
+
+
+def _safe_to_overlay_save_building_shields(data: dict) -> bool:
+    return (
+        not bool(data.get("tile_shields_live", False))
+        and _safe_to_overlay_turn_boundary_save_tiles(data)
+    )
+
+
+def _apply_save_building_shield_overlay(data: dict) -> list[list[int]]:
+    """Apply the pre-fix bridge fallback and return patched coordinates."""
+    if not _safe_to_overlay_save_building_shields(data):
+        return []
+    save_mission_id, shield_tiles = _read_active_building_shields_from_save()
+    if save_mission_id != data.get("mission_id") or not shield_tiles:
+        return []
+
+    applied: list[list[int]] = []
+    for td in data.get("tiles", []) or []:
+        if not isinstance(td, dict):
+            continue
+        pos = (td.get("x"), td.get("y"))
+        is_building = (
+            td.get("terrain") == "building"
+            or td.get("terrain_id") == 1
+        )
+        if is_building and pos in shield_tiles:
+            td["shield"] = True
+            applied.append([pos[0], pos[1]])
+    if applied:
+        data["save_building_shield_overlay_tiles"] = sorted(applied)
+    return applied
 
 
 def _read_teleporter_pads_from_save() -> list[tuple[int, int, int, int]]:
@@ -1156,6 +1256,12 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                 if pos in grass_tiles:
                     td["grass"] = True
                     td.setdefault("custom", "ground_grass.png")
+
+    # Compatibility for a game still running the pre-fix modloader.  A fresh
+    # player-turn save can safely restore initial/persisting building shields,
+    # but the overlay is disabled immediately after the first actor acts.  New
+    # modloaders set tile_shields_live and always use their live Lua export.
+    _apply_save_building_shield_overlay(data)
 
     if data.get("mission_id") == "Mission_FreezeBldg":
         freeze_building_tiles = _read_freeze_building_objective_tiles_from_save()

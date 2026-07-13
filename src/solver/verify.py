@@ -1740,6 +1740,7 @@ def snapshot_after_move(
             "fire": t.on_fire,
             "acid": t.acid,
             "smoke": t.smoke,
+            "shield": t.shield,
             "has_pod": t.has_pod,
             "repair_platform": getattr(t, "repair_platform", False),
         })
@@ -1838,6 +1839,7 @@ def snapshot_after_action(
             "fire": t.on_fire,
             "acid": t.acid,
             "smoke": t.smoke,
+            "shield": t.shield,
             "has_pod": t.has_pod,
             "repair_platform": getattr(t, "repair_platform", False),
         })
@@ -2071,6 +2073,7 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             ("fire", "on_fire"),
             ("acid", "acid"),
             ("smoke", "smoke"),
+            ("shield", "shield"),
             ("has_pod", "has_pod"),
             ("repair_platform", "repair_platform"),
         ):
@@ -2185,7 +2188,7 @@ def classify_diff(diff: DiffResult, mech_uid: int = None, phase: str = "action")
             categories.add("pod")
         elif f == "repair_platform":
             categories.add("repair_platform")
-        elif f in ("fire", "acid", "smoke"):
+        elif f in ("fire", "acid", "smoke", "shield"):
             categories.add("tile_status")
 
     for sd in diff.scalar_diffs:
