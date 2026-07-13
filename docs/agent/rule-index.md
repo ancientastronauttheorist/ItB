@@ -454,3 +454,5 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 453 | 803 | `RegionData` shield positives are baseline evidence, never consumption evidence. | `docs/agent/solver-reference.md` |
 | 454 | 805 | Ordinary terminal audits accept same-turn MissionEnd dumps. | `docs/agent/safety-gates.md` |
 | 455 | 807 | Explicit dirty-rank lookahead must include the selected plan. | `docs/agent/safety-gates.md` |
+| 456 | 809 | Stationary lookahead gaps cannot certify robust-clean recovery. | `docs/agent/safety-gates.md` |
+| 457 | 811 | Dirty review surfaces stronger reserve tradeoffs without auto-selecting them. | `docs/agent/safety-gates.md` |

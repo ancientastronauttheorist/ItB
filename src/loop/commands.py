@@ -4589,32 +4589,58 @@ def _projected_scenarios(
     return [projected]
 
 
-def _lookahead_result_sort_key(item: dict) -> tuple[int, int, float]:
-    """Sort key where lower means a weaker projected recovery."""
+def _lookahead_robust_status(item: dict) -> str:
+    """Combine modeled safety severity with forecast completeness."""
     if item.get("status") != "OK":
-        return (0, 0, float("-inf"))
+        return "unresolved"
     safety = item.get("next_plan_safety") or {}
     profile = safety.get("loss_profile") or {}
     non_overridable = bool(profile.get("non_overridable"))
     blocking = bool(safety.get("blocking"))
+    incomplete = item.get("forecast_complete") is False
+    if incomplete and non_overridable:
+        return "incomplete_objective_dirty"
+    if incomplete and blocking:
+        return "incomplete_dirty"
+    if incomplete:
+        return "incomplete"
+    if non_overridable:
+        return "objective_dirty"
+    if blocking:
+        return "dirty"
+    return "clean"
+
+
+def _lookahead_status_rank(status: str | None) -> int:
+    """Higher means stronger recovery evidence."""
+    return {
+        "clean": 6,
+        "dirty": 5,
+        "objective_dirty": 4,
+        "incomplete": 3,
+        "incomplete_dirty": 2,
+        "incomplete_objective_dirty": 1,
+        "unresolved": 0,
+    }.get(status, 0)
+
+
+def _lookahead_result_sort_key(item: dict) -> tuple[int, int, float]:
+    """Sort key where lower means a weaker projected recovery."""
     score = item.get("next_score")
     if not isinstance(score, (int, float)):
         score = float("-inf")
-    return (1, 0 if non_overridable else (1 if blocking else 2), float(score))
+    return (
+        _lookahead_status_rank(_lookahead_robust_status(item)),
+        0,
+        float(score),
+    )
 
 
 def _lookahead_robust_summary(item: dict) -> dict:
     """Compact robust-score diagnostic for one lookahead frontier item."""
     safety = item.get("next_plan_safety") or {}
     profile = safety.get("loss_profile") or {}
-    if item.get("status") != "OK":
-        robust_status = "unresolved"
-    elif profile.get("non_overridable"):
-        robust_status = "objective_dirty"
-    elif safety.get("blocking"):
-        robust_status = "dirty"
-    else:
-        robust_status = "clean"
+    robust_status = _lookahead_robust_status(item)
 
     candidate_score = item.get("candidate_score")
     next_score = item.get("next_score")
@@ -4634,6 +4660,9 @@ def _lookahead_robust_summary(item: dict) -> dict:
         "next_loss_label": profile.get("label"),
         "robust_status": robust_status,
         "robust_score": robust_score,
+        "forecast_model": item.get("forecast_model"),
+        "forecast_complete": item.get("forecast_complete", True),
+        "forecast_gaps": item.get("forecast_gaps", []),
     }
 
 
@@ -4642,18 +4671,243 @@ def _lookahead_robust_frontier(lookahead_frontier: list[dict]) -> list[dict]:
     summaries = [_lookahead_robust_summary(item) for item in lookahead_frontier]
 
     def _sort_key(item: dict) -> tuple[int, float]:
-        status_rank = {
-            "clean": 3,
-            "dirty": 2,
-            "objective_dirty": 1,
-            "unresolved": 0,
-        }.get(item.get("robust_status"), 0)
+        status_rank = _lookahead_status_rank(item.get("robust_status"))
         score = item.get("robust_score")
         if not isinstance(score, (int, float)):
             score = float("-inf")
         return (status_rank, float(score))
 
     return sorted(summaries, key=_sort_key, reverse=True)
+
+
+def _lookahead_forecast_gaps(
+    projected_bridge: dict,
+    action_result: dict | None = None,
+) -> list[dict]:
+    """Describe state transitions omitted by stationary next-turn projection.
+
+    ``project_plan_scenarios`` keeps surviving Vek on their post-enemy-phase
+    tiles and only changes queued targets.  It also cannot instantiate the
+    identity, movement, or attack of a Vek emerging from a spawn marker.  The
+    synthetic solve remains useful, but a clean result is conditional whenever
+    either transition can still occur.
+    """
+    if not isinstance(projected_bridge, dict):
+        return [{"kind": "projected_board_missing"}]
+
+    mobile_enemy_uids: list[int] = []
+    unmodeled_retarget_uids: list[int] = []
+    for unit in projected_bridge.get("units", []) or []:
+        if not isinstance(unit, dict) or unit.get("is_extra_tile") is True:
+            continue
+        try:
+            hp = int(unit.get("hp") or 0)
+        except (TypeError, ValueError):
+            hp = 0
+        is_enemy = unit.get("team") == 6 or unit.get("is_enemy") is True
+        if not is_enemy or hp <= 0 or unit.get("frozen") is True:
+            continue
+        uid = unit.get("uid")
+        if unit.get("web") is True:
+            if isinstance(uid, int) and not isinstance(uid, bool):
+                unmodeled_retarget_uids.append(uid)
+            continue
+        move_raw = unit.get("move", unit.get("move_speed", unit.get("base_move")))
+        try:
+            move = int(move_raw)
+        except (TypeError, ValueError):
+            # A live enemy without movement metadata is not proof of a
+            # stationary forecast, so fail closed on completeness.
+            move = 1
+        if move <= 0:
+            continue
+        if isinstance(uid, int) and not isinstance(uid, bool):
+            mobile_enemy_uids.append(uid)
+
+    gaps: list[dict] = []
+    if mobile_enemy_uids:
+        gaps.append({
+            "kind": "enemy_movement_unmodeled",
+            "enemy_count": len(mobile_enemy_uids),
+            "enemy_uids": sorted(mobile_enemy_uids),
+        })
+    if unmodeled_retarget_uids:
+        gaps.append({
+            "kind": "enemy_retarget_unmodeled",
+            "reason": "webbed_enemy_skipped_by_stationary_retarget",
+            "enemy_count": len(unmodeled_retarget_uids),
+            "enemy_uids": sorted(unmodeled_retarget_uids),
+        })
+
+    spawning_tiles = [
+        tile for tile in projected_bridge.get("spawning_tiles", []) or []
+        if isinstance(tile, (list, tuple)) and len(tile) >= 2
+    ]
+    blocked = 0
+    if isinstance(action_result, dict):
+        try:
+            blocked = max(0, int(action_result.get("spawns_blocked") or 0))
+        except (TypeError, ValueError):
+            blocked = 0
+    unblocked_markers = max(0, len(spawning_tiles) - blocked)
+    remaining_raw = projected_bridge.get("remaining_spawns")
+    try:
+        remaining_spawns = int(remaining_raw)
+    except (TypeError, ValueError):
+        remaining_spawns = 0
+    if unblocked_markers > 0 or remaining_spawns > 0:
+        gaps.append({
+            "kind": "spawn_materialization_unmodeled",
+            "current_spawn_points": len(spawning_tiles),
+            "projected_spawns_blocked": blocked,
+            "unblocked_spawn_markers": unblocked_markers,
+            "projected_remaining_spawns": remaining_spawns,
+        })
+    return gaps
+
+
+def _recommend_dirty_candidate_from_robust(
+    selected_candidate: dict | None,
+    candidate_evals: list[dict],
+    robust_frontier: list[dict],
+    *,
+    explicit_candidate_rank: bool,
+) -> dict | None:
+    """Recommend a stronger reviewed line without changing the live selection.
+
+    Same-class collateral minimization remains the default dirty selector.  A
+    robust preview can nevertheless show that spending repairable mech HP buys
+    materially better reserve, either within the same irreversible loss or as
+    a different overridable tradeoff. Surface that alternative, with both loss
+    profiles, for an explicit-rank rerun; never replace an operator-requested
+    rank or relax the safety block automatically.
+    """
+    if (
+        explicit_candidate_rank
+        or selected_candidate is None
+        or not robust_frontier
+        or not plan_requires_safety_block(selected_candidate.get("plan_safety"))
+    ):
+        return None
+
+    selected_signature = _dirty_candidate_blocking_signature(selected_candidate)
+    selected_losses = (
+        safety_loss_profile(selected_candidate.get("plan_safety")).get("losses")
+        or {}
+    )
+    cross_signature_envelope = (
+        "grid_power",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "protected_objective_units_alive",
+        "mechs_alive",
+        "pylons_alive",
+        "pylon_hp_total",
+        "bigbomb_alive",
+    )
+    selected_key = (
+        selected_candidate.get("source"),
+        selected_candidate.get("rank"),
+    )
+    by_key = {
+        (candidate.get("source"), candidate.get("rank")): candidate
+        for candidate in candidate_evals
+    }
+    selected_preview = next(
+        (
+            item for item in robust_frontier
+            if (item.get("candidate_source"), item.get("candidate_rank"))
+            == selected_key
+        ),
+        None,
+    )
+    if selected_preview is None:
+        return None
+
+    recommended_item = None
+    recommended_candidate = None
+    exact_rank_sources = {
+        "top_k_requested",
+        "top_k_safety",
+        "hold_the_door_top_k",
+    }
+    for item in robust_frontier:
+        key = (item.get("candidate_source"), item.get("candidate_rank"))
+        candidate = by_key.get(key)
+        if candidate is None:
+            continue
+        if candidate.get("source") not in exact_rank_sources:
+            continue
+        if bool(
+            safety_loss_profile(candidate.get("plan_safety")).get(
+                "non_overridable"
+            )
+        ):
+            continue
+        candidate_profile = safety_loss_profile(candidate.get("plan_safety"))
+        candidate_signature = _dirty_candidate_blocking_signature(candidate)
+        candidate_losses = candidate_profile.get("losses") or {}
+        if candidate_signature != selected_signature and any(
+            candidate_losses.get(key, 0) != selected_losses.get(key, 0)
+            for key in cross_signature_envelope
+        ):
+            continue
+        recommended_item = item
+        recommended_candidate = candidate
+        break
+
+    if recommended_candidate is None:
+        return None
+    recommended_key = (
+        recommended_candidate.get("source"),
+        recommended_candidate.get("rank"),
+    )
+    if recommended_key == selected_key:
+        return None
+
+    def _strength(item: dict) -> tuple[int, float]:
+        status_rank = _lookahead_status_rank(item.get("robust_status"))
+        score = item.get("robust_score")
+        if not isinstance(score, (int, float)):
+            score = float("-inf")
+        return status_rank, float(score)
+
+    if _strength(recommended_item) <= _strength(selected_preview):
+        return None
+
+    solution = recommended_candidate.get("solution")
+    same_irreversible_loss = (
+        _dirty_candidate_blocking_signature(recommended_candidate)
+        == selected_signature
+    )
+    return {
+        "reason": (
+            "best_evaluated_robust_same_irreversible_loss"
+            if same_irreversible_loss
+            else "best_evaluated_robust_overridable_tradeoff"
+        ),
+        "same_irreversible_loss": same_irreversible_loss,
+        "selected_candidate_rank": selected_candidate.get("rank"),
+        "selected_candidate_source": selected_candidate.get("source"),
+        "selected_candidate_losses": selected_preview.get(
+            "candidate_losses", {}
+        ),
+        "candidate_rank": recommended_candidate.get("rank"),
+        "candidate_source": recommended_candidate.get("source"),
+        "candidate_score": (
+            solution.score if solution is not None else None
+        ),
+        "candidate_losses": recommended_item.get("candidate_losses", {}),
+        "robust_status": recommended_item.get("robust_status"),
+        "robust_score": recommended_item.get("robust_score"),
+        "forecast_complete": recommended_item.get("forecast_complete", True),
+        "forecast_gaps": recommended_item.get("forecast_gaps", []),
+        "actions": [
+            action.description for action in getattr(solution, "actions", [])
+        ],
+        "requires_explicit_candidate_rank": True,
+    }
 
 
 def _candidate_lookahead_preview(
@@ -4703,12 +4957,19 @@ def _candidate_lookahead_preview(
                 projected_bridge, bridge_data, eval_weights_dict,
             )
             projected_board = Board.from_bridge_data(projected_bridge)
+            forecast_gaps = _lookahead_forecast_gaps(
+                projected_bridge,
+                scenario.get("action_result", {}),
+            )
             scenario_preview = {
                 "scenario": scenario_label,
                 "projected_turn": scenario.get(
                     "projected_turn", projected_bridge.get("turn")
                 ),
                 "projected_action_result": scenario.get("action_result", {}),
+                "forecast_model": "stationary_retarget_v1",
+                "forecast_complete": not forecast_gaps,
+                "forecast_gaps": forecast_gaps,
             }
 
             if _active_player_action_count(projected_board) <= 0:
@@ -4785,6 +5046,11 @@ def _candidate_lookahead_preview(
                 "worst_scenario": worst.get("scenario"),
                 "projected_turn": worst.get("projected_turn"),
                 "projected_action_result": worst.get("projected_action_result", {}),
+                "forecast_model": worst.get(
+                    "forecast_model", "stationary_retarget_v1"
+                ),
+                "forecast_complete": worst.get("forecast_complete", True),
+                "forecast_gaps": worst.get("forecast_gaps", []),
             }
         )
         if worst.get("status") == "OK":
@@ -7437,6 +7703,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     dirty_frontier: list[dict] = []
     lookahead_frontier: list[dict] = []
     robust_frontier: list[dict] = []
+    dirty_recommendation: dict | None = None
     selected_candidate_rank = None
     selected_candidate_source = None
     candidate_count = 0
@@ -7849,14 +8116,16 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     )
                     for candidate_eval in _candidate_frontier_representatives(
                         summary_evals,
-                        required_candidate=(
-                            selected_candidate_eval
-                            if candidate_rank is not None
-                            else None
-                        ),
+                        required_candidate=selected_candidate_eval,
                     )
                 ]
                 robust_frontier = _lookahead_robust_frontier(lookahead_frontier)
+                dirty_recommendation = _recommend_dirty_candidate_from_robust(
+                    selected_candidate_eval,
+                    summary_evals,
+                    robust_frontier,
+                    explicit_candidate_rank=candidate_rank is not None,
+                )
             if selected_candidate_eval is not None:
                 solution = selected_candidate_eval["solution"]
                 selected_candidate_rank = selected_candidate_eval.get("rank")
@@ -8044,6 +8313,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         result["lookahead_frontier"] = lookahead_frontier
     if robust_frontier:
         result["robust_frontier"] = robust_frontier
+    if dirty_recommendation:
+        result["dirty_recommendation"] = dirty_recommendation
     if selected_candidate_eval.get("safety_widening"):
         result["safety_widening"] = selected_candidate_eval["safety_widening"]
 
@@ -8091,6 +8362,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "dirty_frontier": dirty_frontier,
         "lookahead_frontier": lookahead_frontier,
         "robust_frontier": robust_frontier,
+        "dirty_recommendation": dirty_recommendation,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
@@ -8134,10 +8406,16 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 if status == "OK":
                     safety = item.get("next_plan_safety") or {}
                     profile = safety.get("loss_profile") or {}
+                    forecast = (
+                        "complete"
+                        if item.get("forecast_complete", True)
+                        else "INCOMPLETE"
+                    )
                     print(
                         f"!   {label} rank {rank}: next {safety.get('status')} "
                         f"score {item.get('next_score'):.0f}, "
                         f"{profile.get('label')} "
+                        f"forecast={forecast} "
                         f"worst={item.get('worst_scenario')}"
                     )
                 else:
@@ -8156,6 +8434,23 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     f"{item.get('robust_status')} robust={score_text} "
                     f"worst={item.get('worst_scenario')}"
                 )
+        if dirty_recommendation:
+            score = dirty_recommendation.get("robust_score")
+            score_text = (
+                f"{score:.0f}" if isinstance(score, (int, float)) else "n/a"
+            )
+            loss_relation = (
+                "same irreversible loss"
+                if dirty_recommendation.get("same_irreversible_loss")
+                else "different overridable loss profile"
+            )
+            print(
+                "! Dirty review recommendation: rerun candidate rank "
+                f"{dirty_recommendation.get('candidate_rank')} "
+                f"for exact-consent review; {loss_relation}, "
+                f"{dirty_recommendation.get('robust_status')} "
+                f"robust={score_text}."
+            )
         if frontier_diagnostics_suppressed:
             print(
                 "! Heavy frontier diagnostics suppressed; rerun solve with "
@@ -48379,6 +48674,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "dirty_frontier",
             "lookahead_frontier",
             "robust_frontier",
+            "dirty_recommendation",
             "safety_widening",
             "frontier_diagnostics_suppressed",
         ):
@@ -48387,6 +48683,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 value = solve_data.get(key)
             if value:
                 result[key] = value
+        recommendation = result.get("dirty_recommendation")
+        if isinstance(recommendation, dict):
+            result["next_step"] = (
+                "The robust review found a stronger candidate tradeoff. "
+                "Compare selected_candidate_losses with candidate_losses, "
+                "then rerun auto_turn with --candidate-rank "
+                f"{recommendation.get('candidate_rank')} to inspect that exact "
+                "line and mint its one-use dirty_consent_id; do not reuse the "
+                "currently selected token."
+            )
         if final_cave_resist_gamble_allowed(plan_safety):
             result["final_cave_resist_gamble"] = True
             result["next_step"] = (

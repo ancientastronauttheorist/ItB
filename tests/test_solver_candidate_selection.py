@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from src.loop.commands import (
     _blocks_mech_hp_loss_for_perfect_battle,
     _blocks_mech_status_loss_for_run,
@@ -7,9 +9,11 @@ from src.loop.commands import (
     _is_expected_skip_state_diff,
     _is_implausible_stale_verify_actual,
     _lookahead_result_sort_key,
+    _lookahead_forecast_gaps,
     _lookahead_robust_frontier,
     _lookahead_robust_summary,
     _prepare_projected_bridge,
+    _recommend_dirty_candidate_from_robust,
     _safety_widening_top_k,
     _select_candidate_by_rank,
     _select_safe_plan_candidate,
@@ -482,6 +486,117 @@ def test_lookahead_result_sort_key_orders_dirty_before_clean():
     assert ordered == [error, dirty, clean]
 
 
+def test_lookahead_result_sort_key_treats_incomplete_as_unresolved_evidence():
+    incomplete = {
+        "status": "OK",
+        "forecast_complete": False,
+        "next_score": 10_000.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"non_overridable": False},
+        },
+    }
+    dirty = {
+        "status": "OK",
+        "forecast_complete": True,
+        "next_score": -100.0,
+        "next_plan_safety": {
+            "blocking": True,
+            "loss_profile": {"non_overridable": False},
+        },
+    }
+
+    ordered = sorted([dirty, incomplete], key=_lookahead_result_sort_key)
+
+    assert ordered == [incomplete, dirty]
+
+
+def test_incomplete_forecast_preserves_known_objective_loss_severity():
+    incomplete_objective_dirty = {
+        "status": "OK",
+        "forecast_complete": False,
+        "next_score": 10_000.0,
+        "next_plan_safety": {
+            "blocking": True,
+            "loss_profile": {"non_overridable": True},
+        },
+    }
+    incomplete_clean = {
+        "status": "OK",
+        "forecast_complete": False,
+        "next_score": -10_000.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"non_overridable": False},
+        },
+    }
+
+    ordered = sorted(
+        [incomplete_clean, incomplete_objective_dirty],
+        key=_lookahead_result_sort_key,
+    )
+
+    assert ordered == [incomplete_objective_dirty, incomplete_clean]
+    assert _lookahead_robust_summary(
+        incomplete_objective_dirty
+    )["robust_status"] == "incomplete_objective_dirty"
+
+
+def test_lookahead_forecast_gaps_expose_mobile_enemies_and_spawns():
+    projected = {
+        "remaining_spawns": 1,
+        "spawning_tiles": [[5, 5]],
+        "units": [
+            {"uid": 10, "team": 6, "hp": 3, "move": 3},
+            {"uid": 11, "team": 6, "hp": 3, "move": 3, "frozen": True},
+            {"uid": 12, "team": 6, "hp": 3, "move": 3, "web": True},
+            {"uid": 13, "team": 6, "hp": 3, "move": 0},
+            {"uid": 0, "team": 1, "hp": 3, "move": 3},
+        ],
+    }
+
+    gaps = _lookahead_forecast_gaps(projected, {"spawns_blocked": 0})
+
+    assert [gap["kind"] for gap in gaps] == [
+        "enemy_movement_unmodeled",
+        "enemy_retarget_unmodeled",
+        "spawn_materialization_unmodeled",
+    ]
+    assert gaps[0]["enemy_uids"] == [10]
+    assert gaps[1]["enemy_uids"] == [12]
+    assert gaps[2]["unblocked_spawn_markers"] == 1
+
+
+def test_lookahead_forecast_is_complete_when_only_immobile_enemies_remain():
+    projected = {
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "units": [
+            {"uid": 11, "team": 6, "hp": 3, "move": 3, "frozen": True},
+            {"uid": 13, "team": 6, "hp": 3, "move": 0},
+        ],
+    }
+
+    assert _lookahead_forecast_gaps(projected, {}) == []
+
+
+def test_lookahead_forecast_is_incomplete_for_webbed_enemy_retarget():
+    gaps = _lookahead_forecast_gaps({
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "units": [
+            {"uid": 12, "team": 6, "hp": 3, "move": 3, "web": True},
+        ],
+    })
+
+    assert gaps == [{
+        "kind": "enemy_retarget_unmodeled",
+        "reason": "webbed_enemy_skipped_by_stationary_retarget",
+        "enemy_count": 1,
+        "enemy_uids": [12],
+    }]
+
+
 def test_lookahead_robust_summary_combines_current_and_worst_next_score():
     item = {
         "status": "OK",
@@ -502,6 +617,213 @@ def test_lookahead_robust_summary_combines_current_and_worst_next_score():
     assert summary["robust_status"] == "clean"
     assert summary["robust_score"] == 750.0
     assert summary["next_loss_label"] == "clean"
+
+
+def test_lookahead_robust_summary_does_not_call_incomplete_forecast_clean():
+    item = {
+        "status": "OK",
+        "forecast_model": "stationary_retarget_v1",
+        "forecast_complete": False,
+        "forecast_gaps": [{"kind": "enemy_movement_unmodeled"}],
+        "candidate_label": "grid_loss",
+        "candidate_rank": 4,
+        "candidate_score": 1000.0,
+        "next_score": 250.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"label": "clean", "non_overridable": False},
+        },
+    }
+
+    summary = _lookahead_robust_summary(item)
+
+    assert summary["robust_status"] == "incomplete"
+    assert summary["forecast_complete"] is False
+    assert summary["forecast_gaps"] == item["forecast_gaps"]
+
+
+def test_dirty_robust_recommendation_can_spend_hp_for_same_irreversible_loss():
+    def candidate(
+        rank,
+        score,
+        mech_hp_loss,
+        *,
+        building_destroyed=True,
+        pod_lost=False,
+    ):
+        violations = [
+            {
+                "kind": "grid_damage",
+                "blocking": True,
+                "current": 4,
+                "predicted": 2,
+            },
+            {
+                "kind": "building_hp_loss",
+                "blocking": True,
+                "current": 9,
+                "predicted": 7,
+            },
+        ]
+        if building_destroyed:
+            violations.append({
+                "kind": "building_destroyed",
+                "blocking": True,
+                "current": 7,
+                "predicted": 6,
+            })
+        if pod_lost:
+            violations.append({
+                "kind": "pod_lost",
+                "blocking": True,
+                "current": 1,
+                "predicted": 0,
+            })
+        if mech_hp_loss:
+            violations.append({
+                "kind": "mech_hp_loss",
+                "blocking": False,
+                "current": 8,
+                "predicted": 8 - mech_hp_loss,
+            })
+        return {
+            "rank": rank,
+            "source": "top_k_safety",
+            "solution": SimpleNamespace(
+                score=score,
+                actions=[SimpleNamespace(description=f"candidate {rank}")],
+            ),
+            "plan_safety": {
+                "status": "DIRTY",
+                "blocking": True,
+                "current": {"mech_hp_total": 8},
+                "predicted": {"mech_hp_total": 8 - mech_hp_loss},
+                "violations": violations,
+            },
+        }
+
+    selected = candidate(183, -177_643.0, 0)
+    reserve = candidate(4, -124_643.0, 1)
+    robust = [
+        {
+            "candidate_rank": 4,
+            "candidate_source": "top_k_safety",
+            "candidate_losses": {
+                "grid_power": 2,
+                "buildings_alive": 1,
+                "building_hp_total": 2,
+                "mech_hp_total": 1,
+            },
+            "robust_status": "incomplete",
+            "robust_score": -115_118.0,
+            "forecast_complete": False,
+            "forecast_gaps": [{"kind": "enemy_movement_unmodeled"}],
+        },
+        {
+            "candidate_rank": 183,
+            "candidate_source": "top_k_safety",
+            "candidate_losses": {
+                "grid_power": 2,
+                "buildings_alive": 1,
+                "building_hp_total": 2,
+            },
+            "robust_status": "incomplete",
+            "robust_score": -211_118.0,
+            "forecast_complete": False,
+            "forecast_gaps": [{"kind": "enemy_movement_unmodeled"}],
+        },
+    ]
+
+    recommendation = _recommend_dirty_candidate_from_robust(
+        selected,
+        [selected, reserve],
+        robust,
+        explicit_candidate_rank=False,
+    )
+
+    assert recommendation["candidate_rank"] == 4
+    assert recommendation["selected_candidate_rank"] == 183
+    assert recommendation["same_irreversible_loss"] is True
+    assert recommendation["forecast_complete"] is False
+    assert recommendation["actions"] == ["candidate 4"]
+    assert _recommend_dirty_candidate_from_robust(
+        selected,
+        [selected, reserve],
+        robust,
+        explicit_candidate_rank=True,
+    ) is None
+    tied = [dict(robust[0], robust_score=-211_118.0), robust[1]]
+    assert _recommend_dirty_candidate_from_robust(
+        selected,
+        [selected, reserve],
+        tied,
+        explicit_candidate_rank=False,
+    ) is None
+
+    pod_default = candidate(
+        0,
+        -124_236.0,
+        1,
+        building_destroyed=False,
+        pod_lost=True,
+    )
+    cross_signature_robust = [
+        robust[0],
+        {
+            "candidate_rank": 0,
+            "candidate_source": "top_k_safety",
+            "candidate_losses": {
+                "grid_power": 2,
+                "building_hp_total": 2,
+                "pods_present": 1,
+                "mech_hp_total": 1,
+            },
+            "robust_status": "incomplete_objective_dirty",
+            "robust_score": -242_692.0,
+            "forecast_complete": False,
+            "forecast_gaps": [{"kind": "enemy_movement_unmodeled"}],
+        },
+    ]
+    tradeoff = _recommend_dirty_candidate_from_robust(
+        pod_default,
+        [pod_default, reserve],
+        cross_signature_robust,
+        explicit_candidate_rank=False,
+    )
+
+    assert tradeoff["candidate_rank"] == 4
+    assert tradeoff["same_irreversible_loss"] is False
+    assert tradeoff["reason"] == "best_evaluated_robust_overridable_tradeoff"
+    assert tradeoff["selected_candidate_losses"]["pods_present"] == 1
+
+    worse_grid = candidate(5, 1_000_000.0, 1)
+    next(
+        violation for violation in worse_grid["plan_safety"]["violations"]
+        if violation["kind"] == "grid_damage"
+    )["predicted"] = 1
+    unsafe_cross_signature = [
+        {
+            "candidate_rank": 5,
+            "candidate_source": "top_k_safety",
+            "candidate_losses": {
+                "grid_power": 3,
+                "buildings_alive": 1,
+                "building_hp_total": 2,
+                "mech_hp_total": 1,
+            },
+            "robust_status": "clean",
+            "robust_score": 2_000_000.0,
+            "forecast_complete": True,
+            "forecast_gaps": [],
+        },
+        cross_signature_robust[1],
+    ]
+    assert _recommend_dirty_candidate_from_robust(
+        pod_default,
+        [pod_default, worse_grid],
+        unsafe_cross_signature,
+        explicit_candidate_rank=False,
+    ) is None
 
 
 def test_lookahead_robust_frontier_sorts_by_status_then_score():
@@ -538,13 +860,32 @@ def test_lookahead_robust_frontier_sorts_by_status_then_score():
             "loss_profile": {"label": "clean", "non_overridable": False},
         },
     }
+    incomplete_huge = {
+        "status": "OK",
+        "forecast_complete": False,
+        "forecast_gaps": [{"kind": "enemy_movement_unmodeled"}],
+        "candidate_label": "incomplete_grid_loss",
+        "candidate_rank": 3,
+        "candidate_score": 1_000_000.0,
+        "next_score": 1_000_000.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"label": "clean", "non_overridable": False},
+        },
+    }
 
-    frontier = _lookahead_robust_frontier([clean_low, dirty_high, clean_high])
+    frontier = _lookahead_robust_frontier([
+        clean_low,
+        dirty_high,
+        clean_high,
+        incomplete_huge,
+    ])
 
     assert [item["candidate_label"] for item in frontier] == [
         "building_loss",
         "grid_loss",
         "mech_loss",
+        "incomplete_grid_loss",
     ]
 
 
