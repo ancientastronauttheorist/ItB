@@ -397,6 +397,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if tile.smoke()           { t["smoke"]             = json!(true); }
         if tile.acid()            { t["acid"]              = json!(true); }
         if tile.frozen()          { t["frozen"]            = json!(true); }
+        if tile.shield()          { t["shield"]            = json!(true); }
         if tile.cracked()         { t["cracked"]           = json!(true); }
         if tile.has_pod()         { t["has_pod"]           = json!(true); }
         if tile.freeze_mine()     { t["freeze_mine"]       = json!(true); }

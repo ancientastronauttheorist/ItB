@@ -1621,7 +1621,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # eligible solver actors, preserving the second Mission_Missiles barrage after
 # the exhausted primary slot is blanked. Pre-v348 corpus archived as
 # failure_db_snapshot_sim_v347.jsonl.
-SIMULATOR_VERSION = 348
+# v349 - Rust replay action snapshots and projected post-player boards preserve
+# terrain/building shield flags, preventing false shield-loss desyncs and
+# unshielded partial re-solves. Pre-v349 corpus archived as
+# failure_db_snapshot_sim_v348.jsonl.
+SIMULATOR_VERSION = 349
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

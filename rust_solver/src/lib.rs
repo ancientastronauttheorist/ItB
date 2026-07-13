@@ -2221,7 +2221,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v348 - Friendly controllable units with only a secondary weapon remain
 //   eligible solver actors. This lets Mission_Missiles keep using the second
 //   barrage slot after the exhausted primary slot is blanked in place.
-pub const SIMULATOR_VERSION: u32 = 348;
+// v349 - Replay action snapshots and projected post-player boards preserve
+//   terrain/building shield flags. This prevents live shielded buildings from
+//   appearing as false post-action desyncs or unshielded partial re-solves.
+pub const SIMULATOR_VERSION: u32 = 349;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

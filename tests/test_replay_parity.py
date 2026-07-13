@@ -121,7 +121,8 @@ EXPECTED_UNIT_KEYS = {
 EXPECTED_STATUS_KEYS = {"fire", "acid", "frozen", "shield", "web", "boosted"}
 
 EXPECTED_TILE_KEYS = {
-    "x", "y", "terrain", "building_hp", "fire", "acid", "smoke", "has_pod",
+    "x", "y", "terrain", "building_hp", "fire", "acid", "smoke", "shield",
+    "has_pod",
 }
 
 EXPECTED_OUTCOME_KEYS = {
@@ -236,6 +237,53 @@ def test_replay_solution_preserves_queued_attack_metadata():
         assert boss["queued_target"] == [3, 2]
         assert boss["queued_origin"] == [4, 2]
         assert boss["has_queued_attack"] is True
+
+
+@pytest.mark.regression
+def test_replay_solution_preserves_building_tile_shields():
+    """Tile shields must survive both sparse and full-board replay JSON."""
+    import itb_solver
+
+    shielded = {(1, 5), (1, 6), (4, 3)}
+    bridge = {
+        "mission_id": "Mission_Belt",
+        "tiles": [
+            {"x": x, "y": y, "terrain": "building", "building_hp": 1,
+             "shield": True}
+            for x, y in sorted(shielded)
+        ],
+        "units": [
+            {"uid": 0, "type": "PunchMech", "x": 6, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": True,
+             "move": 4, "active": True, "weapons": ["Prime_Punchmech"]},
+        ],
+        "grid_power": 4, "grid_power_max": 7,
+        "spawning_tiles": [], "environment_danger": [],
+        "remaining_spawns": 0, "turn": 1, "total_turns": 4,
+    }
+    plan = [{
+        "mech_uid": 0,
+        "move_to": [6, 4],
+        "weapon_id": "None",
+        "target": [255, 255],
+    }]
+
+    raw = itb_solver.replay_solution(json.dumps(bridge), json.dumps(plan))
+    data = json.loads(raw)
+
+    for phase in ("post_move", "post_attack"):
+        tiles = data["predicted_states"][0][phase]["tiles_changed"]
+        actual = {(t["x"], t["y"]) for t in tiles if t["shield"] is True}
+        assert actual == shielded
+
+    for checkpoint in ("post_player_board", "final_board"):
+        tiles = data[checkpoint]["tiles"]
+        actual = {
+            (t["x"], t["y"])
+            for t in tiles
+            if t.get("shield") is True
+        }
+        assert actual == shielded
 
 
 @pytest.mark.regression

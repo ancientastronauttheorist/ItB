@@ -435,6 +435,7 @@ fn capture_snapshot(
             "acid":         t.acid(),
             "smoke":        t.smoke(),
             "frozen":       t.frozen(),
+            "shield":       t.shield(),
             "has_pod":      t.has_pod(),
             "repair_platform": t.repair_platform(),
         }));
@@ -833,6 +834,67 @@ mod tests {
             .find(|t| t["x"] == 3 && t["y"] == 5)
             .unwrap();
         assert_eq!(pod_tile["has_pod"], false);
+    }
+
+    #[test]
+    fn replay_solution_preserves_building_tile_shields_in_all_checkpoints() {
+        let bridge = r#"{
+          "mission_id": "Mission_Belt",
+          "tiles": [
+            {"x": 1, "y": 5, "terrain": "building", "building_hp": 1, "shield": true},
+            {"x": 1, "y": 6, "terrain": "building", "building_hp": 1, "shield": true},
+            {"x": 4, "y": 3, "terrain": "building", "building_hp": 1, "shield": true}
+          ],
+          "units": [
+            {"uid": 0, "type": "PunchMech", "x": 6, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]}
+          ],
+          "grid_power": 4,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [6, 4],
+          "weapon_id": "None",
+          "target": [255, 255]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let shielded = [(1, 5), (1, 6), (4, 3)];
+
+        for phase in ["post_move", "post_attack"] {
+            let tiles = v["predicted_states"][0][phase]["tiles_changed"]
+                .as_array()
+                .unwrap();
+            for (x, y) in shielded {
+                let tile = tiles
+                    .iter()
+                    .find(|tile| tile["x"] == x && tile["y"] == y)
+                    .expect("building tiles are always included in action snapshots");
+                assert_eq!(tile["shield"], true, "{phase} omitted shield at ({x},{y})");
+            }
+        }
+
+        for checkpoint in ["post_player_board", "final_board"] {
+            let tiles = v[checkpoint]["tiles"].as_array().unwrap();
+            for (x, y) in shielded {
+                let tile = tiles
+                    .iter()
+                    .find(|tile| tile["x"] == x && tile["y"] == y)
+                    .expect("shielded building should be serialized");
+                assert_eq!(
+                    tile["shield"], true,
+                    "{checkpoint} omitted shield at ({x},{y})"
+                );
+            }
+        }
     }
 
     #[test]
