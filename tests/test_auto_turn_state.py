@@ -1166,6 +1166,116 @@ def test_unexpected_spider_psion_egg_or_mixed_loss_does_not_retry():
     ) is False
 
 
+def _delayed_chained_bombrock_building_case(
+    *,
+    predicted_hp: int = 1,
+    actual_hp: int = 2,
+    building: tuple[int, int] = (5, 1),
+    second_rock: tuple[int, int] = (4, 1),
+):
+    predicted = {
+        "units": [
+            {
+                "uid": 868,
+                "type": "BombRock",
+                "pos": [4, 2],
+                "hp": 0,
+                "alive": False,
+            },
+            {
+                "uid": 869,
+                "type": "BombRock",
+                "pos": list(second_rock),
+                "hp": 0,
+                "alive": False,
+            },
+        ],
+    }
+    diff = DiffResult(tile_diffs=[{
+        "x": building[0],
+        "y": building[1],
+        "field": "building_hp",
+        "predicted": predicted_hp,
+        "actual": actual_hp,
+    }])
+    return diff, predicted
+
+
+def test_delayed_chained_bombrock_building_damage_gets_settle_retry():
+    # Chaos Roll Unfair run 20260713_052159_731, Mission_DungBoss turn 1:
+    # Ignite pushed the F4 BombRock into G4.  The first bridge read had
+    # removed both rocks but had not yet applied G4's blast to G3.
+    diff, predicted = _delayed_chained_bombrock_building_case()
+
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        diff, predicted, "attack"
+    ) is True
+
+
+def test_chained_bombrock_retry_rejects_inverse_or_unproven_geometry():
+    inverse, predicted = _delayed_chained_bombrock_building_case(
+        predicted_hp=2, actual_hp=1
+    )
+    off_blast, _ = _delayed_chained_bombrock_building_case(building=(6, 6))
+    single_rock, single_predicted = _delayed_chained_bombrock_building_case(
+        second_rock=(1, 1)
+    )
+    alive_rock, alive_predicted = _delayed_chained_bombrock_building_case()
+    alive_predicted["units"][1].update({"hp": 1, "alive": True})
+
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        inverse, predicted, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        off_blast, predicted, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        single_rock, single_predicted, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        alive_rock, alive_predicted, "attack"
+    ) is False
+
+
+def test_chained_bombrock_retry_rejects_mixed_loss_or_wrong_phase():
+    mixed, predicted = _delayed_chained_bombrock_building_case()
+    mixed.scalar_diffs.append({
+        "field": "grid_power",
+        "predicted": 7,
+        "actual": 6,
+    })
+    mixed_unit, _ = _delayed_chained_bombrock_building_case()
+    mixed_unit.unit_diffs.append({
+        "uid": 838,
+        "type": "DungBoss",
+        "field": "hp",
+        "predicted": 4,
+        "actual": 5,
+    })
+    clean_shape, _ = _delayed_chained_bombrock_building_case()
+
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        mixed, predicted, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        mixed_unit, predicted, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_chained_bombrock_building_diff(
+        clean_shape, predicted, "move"
+    ) is False
+
+
+def test_chained_bombrock_retry_uses_newer_nontransient_reread():
+    initial, predicted = _delayed_chained_bombrock_building_case()
+    inverse, _ = _delayed_chained_bombrock_building_case(
+        predicted_hp=1, actual_hp=0
+    )
+
+    assert cmd_mod._delayed_chained_bombrock_reread_became_nontransient(
+        initial, inverse, predicted, "attack"
+    ) is True
+
+
 def _delayed_terrain_death_case(
     *,
     terrain: str = "water",

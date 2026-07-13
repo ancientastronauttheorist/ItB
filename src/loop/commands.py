@@ -5392,6 +5392,102 @@ def _is_transient_delayed_spider_psion_egg_diff(diff, phase: str) -> bool:
     )
 
 
+def _is_transient_delayed_chained_bombrock_building_diff(
+    diff,
+    predicted: dict,
+    phase: str,
+) -> bool:
+    """Return true while a chained BombRock building hit is still landing.
+
+    Fast bridge mode can reach its two-second ``Board:IsBusy`` cap after the
+    directly hit BombRock has exploded but before an adjacent BombRock's
+    secondary blast damages a building.  Retry only the exact favorable-lag
+    shape backed by replay geometry: building-HP-only diffs where live HP is
+    still above prediction and every affected building is cardinally adjacent
+    to a predicted-dead BombRock that is itself adjacent to another dead
+    BombRock.  A single boulder, mixed loss, or inverse HP drift remains a real
+    desync.
+    """
+    if phase != "attack" or not isinstance(predicted, dict):
+        return False
+    if getattr(diff, "unit_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    tile_diffs = getattr(diff, "tile_diffs", []) or []
+    if not tile_diffs:
+        return False
+
+    dead_rocks: set[tuple[int, int]] = set()
+    for unit in predicted.get("units", []) or []:
+        if not isinstance(unit, dict) or unit.get("type") != "BombRock":
+            continue
+        hp = unit.get("hp")
+        dead = unit.get("alive") is False or (
+            isinstance(hp, (int, float))
+            and not isinstance(hp, bool)
+            and hp <= 0
+        )
+        pos = unit.get("pos")
+        if not dead or not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            continue
+        try:
+            dead_rocks.add((int(pos[0]), int(pos[1])))
+        except (TypeError, ValueError):
+            continue
+
+    chained_rocks = {
+        rock
+        for rock in dead_rocks
+        if any(
+            other != rock
+            and abs(other[0] - rock[0]) + abs(other[1] - rock[1]) == 1
+            for other in dead_rocks
+        )
+    }
+    if not chained_rocks:
+        return False
+
+    for tile_diff in tile_diffs:
+        if tile_diff.get("field") != "building_hp":
+            return False
+        predicted_hp = tile_diff.get("predicted")
+        actual_hp = tile_diff.get("actual")
+        if (
+            not isinstance(predicted_hp, (int, float))
+            or isinstance(predicted_hp, bool)
+            or not isinstance(actual_hp, (int, float))
+            or isinstance(actual_hp, bool)
+            or actual_hp <= predicted_hp
+        ):
+            return False
+        try:
+            tile = (int(tile_diff.get("x")), int(tile_diff.get("y")))
+        except (TypeError, ValueError):
+            return False
+        if not any(
+            abs(rock[0] - tile[0]) + abs(rock[1] - tile[1]) == 1
+            for rock in chained_rocks
+        ):
+            return False
+    return True
+
+
+def _delayed_chained_bombrock_reread_became_nontransient(
+    initial_diff,
+    reread_diff,
+    predicted: dict,
+    phase: str,
+) -> bool:
+    """Return true when a chained-boulder retry reveals a newer real miss."""
+    return (
+        _is_transient_delayed_chained_bombrock_building_diff(
+            initial_diff, predicted, phase
+        )
+        and not _is_transient_delayed_chained_bombrock_building_diff(
+            reread_diff, predicted, phase
+        )
+    )
+
+
 def _reconcile_verified_building_shield_shadow(
     diff,
     predicted: dict,
@@ -9434,6 +9530,11 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
                 "(building-shield ledger advanced from exact replay)"
             )
     action_weapon = getattr(actions[action_index], "weapon", None)
+    delayed_chained_bombrock = (
+        _is_transient_delayed_chained_bombrock_building_diff(
+            diff, predicted, "attack"
+        )
+    )
     if (
         _is_transient_delayed_multihit_damage_diff(
             diff, action_weapon, "attack"
@@ -9443,8 +9544,11 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
             diff, predicted, actual_board, "attack"
         )
         or _is_transient_delayed_repair_platform_diff(diff, "move")
+        or delayed_chained_bombrock
     ):
-        for attempt in range(5):
+        initial_diff = diff
+        attempts = 10 if delayed_chained_bombrock else 5
+        for attempt in range(attempts):
             time.sleep(0.35)
             try:
                 refresh_bridge_state()
@@ -9459,6 +9563,14 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
                 print(
                     f"VERIFY {action_index}: PASS "
                     f"(multi-impact weapon settled after {attempt + 1} reread)"
+                )
+                break
+            if _delayed_chained_bombrock_reread_became_nontransient(
+                initial_diff, reread_diff, predicted, "attack"
+            ):
+                print(
+                    f"VERIFY {action_index}: delayed chained BombRock blast "
+                    "settled into a non-transient mismatch"
                 )
                 break
 
@@ -48644,6 +48756,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 diff, predicted, actual_board, phase
             )
             or _is_transient_delayed_repair_platform_diff(diff, phase)
+            or _is_transient_delayed_chained_bombrock_building_diff(
+                diff, predicted, phase
+            )
         )
 
     def _settle_transient_verify_diff(
@@ -48670,8 +48785,15 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             return actual_board, actual_data, diff
 
         best_board, best_data, best_diff = actual_board, actual_data, diff
+        delayed_chained_bombrock = (
+            _is_transient_delayed_chained_bombrock_building_diff(
+                diff, predicted, phase
+            )
+        )
         attempts = (
-            5
+            10
+            if delayed_chained_bombrock
+            else 5
             if (
                 _is_transient_delayed_multihit_damage_diff(
                     diff, weapon_name, phase
@@ -48703,6 +48825,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 print(
                     f"  {phase.upper()} verify: delayed effect settled into "
                     "a non-transient mismatch"
+                )
+                return reread_board, reread_data, reread_diff
+            if _delayed_chained_bombrock_reread_became_nontransient(
+                diff, reread_diff, predicted, phase
+            ):
+                print(
+                    f"  {phase.upper()} verify: delayed chained BombRock "
+                    "blast settled into a non-transient mismatch"
                 )
                 return reread_board, reread_data, reread_diff
             if (
