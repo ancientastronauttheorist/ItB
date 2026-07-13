@@ -36,6 +36,16 @@ _MISSION_METADATA_PATH = os.path.join(
 )
 _MISSION_METADATA_CACHE: dict | None = None
 
+# Vanilla Lua has no terrain-shield query. RegionData is only a static map
+# baseline, while saveData.lua is refreshed at player-turn boundaries. Seed a
+# per-process ledger from that boundary save, carry it through ordinary reads
+# in the same turn, and let the verifier update it only from an otherwise exact
+# replay checkpoint. A new process entering mid-turn has no ledger and therefore
+# reports no building shields (the conservative choice).
+_BUILDING_SHIELD_LEDGER_KEY: tuple[str, int] | None = None
+_BUILDING_SHIELD_LEDGER: set[tuple[int, int]] = set()
+_BUILDING_SHIELD_LEDGER_KNOWN = False
+
 
 def _load_mission_metadata() -> dict:
     global _MISSION_METADATA_CACHE
@@ -214,16 +224,23 @@ def _read_active_save_mission() -> dict | None:
 def _read_active_building_shields_from_save() -> tuple[str, set[tuple[int, int]]]:
     """Return active mission id plus positively shielded map tiles.
 
-    This supports a running pre-fix modloader only.  The caller must restrict
-    this on-disk data to a fresh player-turn boundary; it is unsafe after any
-    player action because a consumed live shield can remain in saveData.lua.
+    The active timeline may live in saveData.lua during continuous play or in
+    undoSave.lua after Save and Quit / Continue. The caller must restrict this
+    on-disk data to a fresh player-turn boundary; both files are unsafe after
+    any later player action.
     """
-    save_path = get_save_file("saveData.lua")
-    if not save_path.exists():
-        return "", set()
-    try:
-        data = parse_save_file(save_path)
-    except Exception:
+    data = None
+    for filename in ("saveData.lua", "undoSave.lua"):
+        save_path = get_save_file(filename)
+        if not save_path.exists():
+            continue
+        try:
+            data = parse_save_file(save_path)
+        except Exception:
+            continue
+        if isinstance(data, dict):
+            break
+    if not isinstance(data, dict):
         return "", set()
 
     region_data = data.get("RegionData", {})
@@ -806,6 +823,177 @@ def _safe_to_overlay_save_building_shields(data: dict) -> bool:
     )
 
 
+def _reset_building_shield_ledger() -> None:
+    """Reset process-local shield continuity (primarily for tests)."""
+    global _BUILDING_SHIELD_LEDGER_KEY
+    global _BUILDING_SHIELD_LEDGER
+    global _BUILDING_SHIELD_LEDGER_KNOWN
+    _BUILDING_SHIELD_LEDGER_KEY = None
+    _BUILDING_SHIELD_LEDGER = set()
+    _BUILDING_SHIELD_LEDGER_KNOWN = False
+
+
+def _building_shield_ledger_key(data: dict) -> tuple[str, int] | None:
+    mission_id = data.get("mission_id")
+    turn = data.get("turn")
+    if not isinstance(mission_id, str) or not mission_id:
+        return None
+    try:
+        return mission_id, int(turn)
+    except (TypeError, ValueError):
+        return None
+
+
+def _live_building_tile_positions(data: dict) -> set[tuple[int, int]]:
+    positions: set[tuple[int, int]] = set()
+    for tile in data.get("tiles", []) or []:
+        if not isinstance(tile, dict):
+            continue
+        if tile.get("terrain") != "building" and tile.get("terrain_id") != 1:
+            continue
+        x, y = tile.get("x"), tile.get("y")
+        if isinstance(x, int) and isinstance(y, int):
+            positions.add((x, y))
+    return positions
+
+
+def _apply_building_shield_ledger_to_data(
+    data: dict,
+    shield_tiles: set[tuple[int, int]],
+) -> list[list[int]]:
+    live_buildings = _live_building_tile_positions(data)
+    applied: list[list[int]] = []
+    for tile in data.get("tiles", []) or []:
+        if not isinstance(tile, dict):
+            continue
+        tile.pop("shield", None)
+        pos = (tile.get("x"), tile.get("y"))
+        if pos in live_buildings and pos in shield_tiles:
+            tile["shield"] = True
+            applied.append([pos[0], pos[1]])
+    return sorted(applied)
+
+
+def _reconcile_building_shield_source(data: dict) -> list[list[int]]:
+    """Replace static RegionData flags with a safe turn-scoped ledger.
+
+    A genuine extension-provided Board:IsShield/Board:IsShielded result remains
+    authoritative. Current/older modloaders label RegionData as
+    ``runtime_region`` even though live evidence proves it is a static map
+    snapshot; strip those flags before seeding from the fresh boundary save.
+    """
+    global _BUILDING_SHIELD_LEDGER_KEY
+    global _BUILDING_SHIELD_LEDGER
+    global _BUILDING_SHIELD_LEDGER_KNOWN
+
+    source = str(data.get("tile_shield_source") or "")
+    authoritative = bool(data.get("tile_shields_live", False)) and source in {
+        "board_api",
+        "board_is_shielded",
+    }
+    if authoritative:
+        data["tile_shield_ledger_known"] = True
+        data["tile_shield_ledger_source"] = source
+        return sorted([
+            [tile.get("x"), tile.get("y")]
+            for tile in data.get("tiles", []) or []
+            if isinstance(tile, dict) and tile.get("shield") is True
+        ])
+
+    key = _building_shield_ledger_key(data)
+    static_region = source in {
+        "runtime_region",
+        "runtime_region_turn1_baseline",
+    } or bool(data.get("tile_shields_static_baseline", False))
+    if static_region:
+        data["tile_shields_live"] = False
+        data["tile_shields_static_baseline"] = True
+        data["runtime_region_shield_tiles_suppressed"] = sorted([
+            [tile.get("x"), tile.get("y")]
+            for tile in data.get("tiles", []) or []
+            if isinstance(tile, dict) and tile.get("shield") is True
+        ])
+
+    known = False
+    ledger: set[tuple[int, int]] = set()
+    ledger_source = "unknown_mid_turn"
+    if key is not None and _safe_to_overlay_turn_boundary_save_tiles(data):
+        save_mission_id, save_shields = _read_active_building_shields_from_save()
+        if save_mission_id == key[0]:
+            _BUILDING_SHIELD_LEDGER_KEY = key
+            _BUILDING_SHIELD_LEDGER = set(save_shields)
+            _BUILDING_SHIELD_LEDGER_KNOWN = True
+            known = True
+            ledger = set(save_shields)
+            ledger_source = "turn_boundary_save"
+    elif (
+        key is not None
+        and _BUILDING_SHIELD_LEDGER_KNOWN
+        and _BUILDING_SHIELD_LEDGER_KEY == key
+    ):
+        known = True
+        ledger = set(_BUILDING_SHIELD_LEDGER)
+        ledger_source = "same_turn_ledger"
+    elif key != _BUILDING_SHIELD_LEDGER_KEY:
+        _reset_building_shield_ledger()
+
+    applied = _apply_building_shield_ledger_to_data(
+        data,
+        ledger if known else set(),
+    )
+    data["tile_shield_ledger_known"] = known
+    data["tile_shield_ledger_source"] = ledger_source
+    data["tile_shield_source"] = ledger_source
+    data["tile_shield_ledger_tiles"] = applied
+    return applied
+
+
+def update_building_shield_ledger_from_verified_snapshot(
+    predicted: dict,
+    actual_board: Board,
+    actual_data: dict,
+) -> bool:
+    """Promote an otherwise-exact replay checkpoint into the shield ledger.
+
+    Rust replay snapshots include every building tile. Refuse partial/older
+    snapshots so an unknown shield is never invented from incomplete data.
+    """
+    global _BUILDING_SHIELD_LEDGER
+
+    if not actual_data.get("tile_shield_ledger_known"):
+        return False
+    key = _building_shield_ledger_key(actual_data)
+    if key is None or key != _BUILDING_SHIELD_LEDGER_KEY:
+        return False
+    predicted_tiles = predicted.get("tiles_changed", []) if isinstance(predicted, dict) else []
+    if not isinstance(predicted_tiles, list):
+        return False
+    live_buildings = _live_building_tile_positions(actual_data)
+    predicted_buildings: dict[tuple[int, int], bool] = {}
+    for tile in predicted_tiles:
+        if not isinstance(tile, dict) or tile.get("terrain") != "building":
+            continue
+        x, y = tile.get("x"), tile.get("y")
+        if isinstance(x, int) and isinstance(y, int):
+            predicted_buildings[(x, y)] = bool(tile.get("shield", False))
+    if not live_buildings.issubset(predicted_buildings):
+        return False
+
+    _BUILDING_SHIELD_LEDGER = {
+        pos for pos in live_buildings if predicted_buildings.get(pos, False)
+    }
+    applied = _apply_building_shield_ledger_to_data(
+        actual_data,
+        _BUILDING_SHIELD_LEDGER,
+    )
+    for x, y in live_buildings:
+        actual_board.tile(x, y).shield = (x, y) in _BUILDING_SHIELD_LEDGER
+    actual_data["tile_shield_ledger_source"] = "verified_replay_checkpoint"
+    actual_data["tile_shield_source"] = "verified_replay_checkpoint"
+    actual_data["tile_shield_ledger_tiles"] = applied
+    return True
+
+
 def _apply_save_building_shield_overlay(data: dict) -> list[list[int]]:
     """Apply the pre-fix bridge fallback and return patched coordinates."""
     if not _safe_to_overlay_save_building_shields(data):
@@ -1257,11 +1445,11 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                     td["grass"] = True
                     td.setdefault("custom", "ground_grass.png")
 
-    # Compatibility for a game still running the pre-fix modloader.  A fresh
-    # player-turn save can safely restore initial/persisting building shields,
-    # but the overlay is disabled immediately after the first actor acts.  New
-    # modloaders set tile_shields_live and always use their live Lua export.
-    _apply_save_building_shield_overlay(data)
+    # Vanilla Lua cannot query terrain shields. RegionData is only the static
+    # starting map and can retain a consumed shield even after the tile becomes
+    # rubble. Seed exact state from the fresh turn-boundary save, carry it
+    # through same-process reads, and otherwise fail closed with no shields.
+    _reconcile_building_shield_source(data)
 
     if data.get("mission_id") == "Mission_FreezeBldg":
         freeze_building_tiles = _read_freeze_building_objective_tiles_from_save()

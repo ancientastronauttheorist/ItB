@@ -1230,6 +1230,45 @@ def test_delayed_pushed_enemy_water_death_gets_settle_retry():
     ) is True
 
 
+def test_verified_building_shield_shadow_requires_shield_only_diff(monkeypatch):
+    promoted = []
+    monkeypatch.setattr(
+        cmd_mod,
+        "update_building_shield_ledger_from_verified_snapshot",
+        lambda predicted, board, data: promoted.append((predicted, board, data)) or True,
+    )
+    predicted = {"tiles_changed": []}
+    board = Board()
+    data = {"tile_shield_ledger_known": True}
+    shield_only = DiffResult(tile_diffs=[{
+        "x": 4,
+        "y": 3,
+        "field": "shield",
+        "predicted": False,
+        "actual": True,
+    }])
+
+    assert cmd_mod._reconcile_verified_building_shield_shadow(
+        shield_only, predicted, board, data
+    ) is True
+    assert promoted == [(predicted, board, data)]
+
+    mixed = DiffResult(
+        tile_diffs=shield_only.tile_diffs,
+        unit_diffs=[{
+            "uid": 638,
+            "type": "Scorpion1",
+            "field": "hp",
+            "predicted": 0,
+            "actual": 1,
+        }],
+    )
+    assert cmd_mod._reconcile_verified_building_shield_shadow(
+        mixed, predicted, board, data
+    ) is False
+    assert promoted == [(predicted, board, data)]
+
+
 def test_delayed_terrain_death_retry_matches_flight_and_massive_rules():
     frozen_flyer = _delayed_terrain_death_case(flying=True, frozen=True)
     massive_chasm = _delayed_terrain_death_case(

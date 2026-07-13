@@ -66,7 +66,11 @@ from src.bridge.protocol import (
     is_bridge_active, is_bridge_alive, refresh_bridge_state, read_state,
     BridgeError, ACK_FILE, CMD_FILE, STATE_FILE, STATE_TMP,
 )
-from src.bridge.reader import WEB_SOURCE_WEAPONS, read_bridge_state
+from src.bridge.reader import (
+    WEB_SOURCE_WEAPONS,
+    read_bridge_state,
+    update_building_shield_ledger_from_verified_snapshot,
+)
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
     deploy_mech, set_bridge_speed, bridge_ui_probe,
@@ -4859,6 +4863,31 @@ def _is_transient_delayed_spider_psion_egg_diff(diff, phase: str) -> bool:
     )
 
 
+def _reconcile_verified_building_shield_shadow(
+    diff,
+    predicted: dict,
+    actual_board: Board,
+    actual_data: dict,
+) -> bool:
+    """Update an exact replay-backed shield ledger and mutate the live view.
+
+    The game exposes no terrain-shield getter on vanilla macOS. Only accept a
+    replay checkpoint when shield fields are the entire mismatch; any unit,
+    scalar, terrain, HP, status, or unrelated tile difference remains a normal
+    desync and cannot promote predicted shield state.
+    """
+    if getattr(diff, "unit_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    tile_diffs = getattr(diff, "tile_diffs", []) or []
+    if not tile_diffs or not all(td.get("field") == "shield" for td in tile_diffs):
+        return False
+    return update_building_shield_ledger_from_verified_snapshot(
+        predicted,
+        actual_board,
+        actual_data,
+    )
+
+
 def _is_transient_delayed_lethal_terrain_death_diff(
     diff,
     predicted: dict,
@@ -8542,13 +8571,22 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
         _print_result(result)
         return result
 
-    actual_board, _ = read_bridge_state()
+    actual_board, actual_data = read_bridge_state()
     if actual_board is None:
         result = {"status": "ERROR", "error": "failed to read bridge state"}
         _print_result(result)
         return result
 
     diff = diff_states(predicted, actual_board)
+    if _reconcile_verified_building_shield_shadow(
+        diff, predicted, actual_board, actual_data
+    ):
+        diff = diff_states(predicted, actual_board)
+        if diff.is_empty():
+            print(
+                f"VERIFY {action_index}: PASS "
+                "(building-shield ledger advanced from exact replay)"
+            )
     action_weapon = getattr(actions[action_index], "weapon", None)
     if (
         _is_transient_delayed_multihit_damage_diff(
@@ -47721,6 +47759,15 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     ):
         """Re-read briefly for bridge effects that apply after command ACK."""
         diff = diff_states(predicted, actual_board)
+        if _reconcile_verified_building_shield_shadow(
+            diff, predicted, actual_board, actual_data
+        ):
+            diff = diff_states(predicted, actual_board)
+            if diff.is_empty():
+                print(
+                    f"  {phase.upper()} VERIFIED: PASS "
+                    "(building-shield ledger advanced from exact replay)"
+                )
         if diff.is_empty() or not _is_transient_verify_diff(
             diff, predicted, actual_board, actual_data, weapon_name, phase
         ):

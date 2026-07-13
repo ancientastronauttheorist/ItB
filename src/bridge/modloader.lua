@@ -439,10 +439,12 @@ end
 -- State serializer: Board → JSON
 --------------------------------------------------------------------
 -- Vanilla Into the Breach does not expose a reliable Board:IsShield(Point)
--- query for terrain.  memedit adds that method, but an unextended game raises
--- when it is called.  RegionData is the live in-memory backing table that the
--- game later serializes to saveData.lua, so it is safe to consult between
--- actions without resurrecting a shield from a stale on-disk save.
+-- query for terrain. memedit adds that method, but an unextended game raises
+-- when it is called. RegionData contains the mission's static map baseline;
+-- native damage does not clear consumed shields there (it can even retain a
+-- shield after the tile becomes rubble). Export it only as a turn-1 seed and
+-- never claim it is live. Python refreshes later turns from saveData at the
+-- all-actors-active boundary and carries a verified replay-backed ledger.
 local function get_runtime_region_tile_shields()
     local region_data = _G.RegionData
     if type(region_data) ~= "table" then return nil end
@@ -483,9 +485,8 @@ local function get_live_tile_shield(pt, runtime_region_shields)
     local ok, shield = pcall(function() return Board:IsShield(pt) end)
     if ok and type(shield) == "boolean" then return shield end
 
-    -- Use the live Lua state, never save_data/saveData.lua.  In particular a
-    -- shield consumed after a player action is cleared here before the next
-    -- verify/re-solve even if the on-disk save still says shield=true.
+    -- RegionData is a static positive baseline supplied only on turn 1 by the
+    -- caller. It is intentionally absent on later turns.
     if runtime_region_shields ~= nil then
         shield = runtime_region_shields[pt.x .. "," .. pt.y]
         if shield ~= nil then return shield end
@@ -523,8 +524,8 @@ local function dump_state()
     -- Read all save-file-derived data in one I/O pass (grid power, queued shots, conveyors)
     local save_data = _read_save_data()
 
-    -- Capability/source marker lets the Python reader avoid its narrowly
-    -- turn-boundary-only save fallback once this live bridge fix is installed.
+    -- Only extension APIs are live. RegionData is a turn-1 static baseline;
+    -- the Python reader must replace it from the boundary save/ledger.
     local runtime_region_tile_shields = get_runtime_region_tile_shields()
     local ok_shield_api, shield_probe = pcall(function()
         return Board:IsShield(Point(0, 0))
@@ -534,14 +535,20 @@ local function dump_state()
     end)
     local has_shield_api = ok_shield_api and type(shield_probe) == "boolean"
     local has_shielded_api = ok_shielded_api and type(shielded_probe) == "boolean"
-    state.tile_shields_live = runtime_region_tile_shields ~= nil
-        or has_shield_api or has_shielded_api
+    local use_runtime_region_baseline = state.turn <= 1
+        and runtime_region_tile_shields ~= nil
+    local runtime_region_shields_for_export = nil
+    if use_runtime_region_baseline then
+        runtime_region_shields_for_export = runtime_region_tile_shields
+    end
+    state.tile_shields_live = has_shield_api or has_shielded_api
+    state.tile_shields_static_baseline = use_runtime_region_baseline
     if has_shield_api then
         state.tile_shield_source = "board_api"
-    elseif runtime_region_tile_shields ~= nil then
-        state.tile_shield_source = "runtime_region"
     elseif has_shielded_api then
         state.tile_shield_source = "board_is_shielded"
+    elseif use_runtime_region_baseline then
+        state.tile_shield_source = "runtime_region_turn1_baseline"
     end
 
     -- Grid power: prefer save file value (authoritative, updated at turn boundaries).
@@ -623,7 +630,7 @@ local function dump_state()
             if ok_s and smoke then tile.smoke = true end
             local ok_a, acid = pcall(function() return Board:IsAcid(pt) end)
             if ok_a and acid then tile.acid = true end
-            if get_live_tile_shield(pt, runtime_region_tile_shields) then
+            if get_live_tile_shield(pt, runtime_region_shields_for_export) then
                 tile.shield = true
             end
             local ok_fr, frozen = pcall(function() return Board:IsFrozen(pt) end)
