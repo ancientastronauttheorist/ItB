@@ -443,3 +443,5 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 442 | 781 | Force Swap powered variants survive save-overlay enrichment. | `docs/agent/solver-reference.md` |
 | 443 | 783 | Force Swap reattaches a stationary queued grapple to the replacement occupant. | `docs/agent/solver-reference.md` |
 | 444 | 785 | Fire ticks on occupied cracked Ground damage only the pawn. | `docs/agent/solver-reference.md` |
+| 445 | 787 | Detritus barrages need a global multi-impact settle retry. | `docs/agent/solver-reference.md` |
+| 446 | 789 | Detritus Contraption limited uses and secondary-only actor eligibility. | `docs/agent/solver-reference.md` |

@@ -1617,7 +1617,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Support direct-death hits now collapse empty cracked Ground without
 # generalizing across terrain-conversion hazards. Pre-v347 corpus archived as
 # failure_db_snapshot_sim_v346.jsonl.
-SIMULATOR_VERSION = 347
+# v348 - Friendly controllable units with only a secondary weapon remain
+# eligible solver actors, preserving the second Mission_Missiles barrage after
+# the exhausted primary slot is blanked. Pre-v348 corpus archived as
+# failure_db_snapshot_sim_v347.jsonl.
+SIMULATOR_VERSION = 348
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

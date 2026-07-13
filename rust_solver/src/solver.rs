@@ -3815,6 +3815,60 @@ mod top_k_tests {
     }
 
     #[test]
+    fn mission_missiles_secondary_only_contraption_remains_actionable() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Missiles".to_string();
+        let idx = board.add_unit(Unit {
+            uid: 20,
+            x: 1,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId::NONE,
+            weapon2: WeaponId(WId::MissilesOneDmg as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Missile_Unit");
+        board.add_unit(Unit {
+            uid: 21,
+            x: 6,
+            y: 3,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        assert!(board.units[idx].is_player_action_unit());
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(actions.iter().any(|a| {
+            a.1 == WId::MissilesOneDmg && a.2 == (6, 3)
+        }));
+        assert!(!actions.iter().any(|a| a.1 == WId::MissilesShield));
+    }
+
+    #[test]
+    fn mission_missiles_fully_exhausted_contraption_is_not_actionable() {
+        let mut unit = Unit {
+            uid: 20,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId::NONE,
+            weapon2: WeaponId::NONE,
+            flags: UnitFlags::ACTIVE,
+            ..Default::default()
+        };
+        unit.set_type_name("Missile_Unit");
+
+        assert!(!unit.is_player_action_unit());
+    }
+
+    #[test]
     fn mission_missiles_smoked_contraption_can_still_fire() {
         let mut board = Board::default();
         board.mission_id = "Mission_Missiles".to_string();

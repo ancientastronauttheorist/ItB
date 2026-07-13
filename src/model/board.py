@@ -478,6 +478,12 @@ class Board:
                 continue
             stats = get_pawn_stats(pawn.type)
             move = get_effective_move_speed(pawn.type, pawn.move_power)
+            primary_weapon = pawn.primary_weapon
+            secondary_weapon = pawn.secondary_weapon
+            if pawn.primary_uses is not None and pawn.primary_uses <= 0:
+                primary_weapon = ""
+            if pawn.secondary_uses is not None and pawn.secondary_uses <= 0:
+                secondary_weapon = ""
 
             u = Unit(
                 uid=pawn.pawn_id,
@@ -495,8 +501,8 @@ class Board:
                 armor=stats.armor,
                 pushable=stats.pushable,
                 minor=stats.minor,
-                weapon=pawn.primary_weapon,
-                weapon2=pawn.secondary_weapon,
+                weapon=primary_weapon,
+                weapon2=secondary_weapon,
                 active=pawn.active,
                 target_x=pawn.queued_shot.x if pawn.queued_shot else -1,
                 target_y=pawn.queued_shot.y if pawn.queued_shot else -1,

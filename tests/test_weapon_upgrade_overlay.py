@@ -1,6 +1,143 @@
 from types import SimpleNamespace
 
-from src.loop.commands import _enrich_bridge_mech_weapons_from_save
+from src.loop.commands import (
+    _enrich_bridge_limited_mission_weapons_from_save,
+    _enrich_bridge_mech_weapons_from_save,
+)
+
+
+def test_missile_unit_exhausted_slot_is_blank_without_reindexing(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Missiles",
+        "units": [{
+            "uid": 608,
+            "type": "Missile_Unit",
+            "mech": False,
+            "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
+        }],
+    }
+    pawn = SimpleNamespace(
+        pawn_id=608,
+        type="Missile_Unit",
+        primary_uses=0,
+        secondary_uses=1,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(pawns=[pawn]),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert bridge_data["units"][0]["weapons"] == ["", "Missiles_OneDmg"]
+    assert bridge_data["units"][0]["weapon_uses_remaining"] == [0, 1]
+    assert updates == [{
+        "uid": 608,
+        "slot": 0,
+        "weapon_id": "Missiles_Shield",
+        "uses_remaining": 0,
+    }]
+    assert bridge_data["limited_weapon_overlays"] == updates
+
+
+def test_missile_unit_missing_uses_fails_open(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Missiles",
+        "units": [{
+            "uid": 608,
+            "type": "Missile_Unit",
+            "mech": False,
+            "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
+        }],
+    }
+    pawn = SimpleNamespace(pawn_id=608, type="Missile_Unit")
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(pawns=[pawn]),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert updates == []
+    assert bridge_data["units"][0]["weapons"] == [
+        "Missiles_Shield",
+        "Missiles_OneDmg",
+    ]
+    assert bridge_data["units"][0]["weapon_uses_remaining"] == [None, None]
+
+
+def test_missile_unit_secondary_exhaustion_preserves_primary_slot(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Missiles",
+        "units": [{
+            "uid": 608,
+            "type": "Missile_Unit",
+            "mech": False,
+            "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
+        }],
+    }
+    pawn = SimpleNamespace(
+        pawn_id=608,
+        type="Missile_Unit",
+        primary_uses=1,
+        secondary_uses=0,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(pawns=[pawn]),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert bridge_data["units"][0]["weapons"] == ["Missiles_Shield", ""]
+    assert bridge_data["units"][0]["weapon_uses_remaining"] == [1, 0]
+    assert updates == [{
+        "uid": 608,
+        "slot": 1,
+        "weapon_id": "Missiles_OneDmg",
+        "uses_remaining": 0,
+    }]
+
+
+def test_missile_unit_stale_uid_type_mismatch_fails_open(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Missiles",
+        "units": [{
+            "uid": 608,
+            "type": "Missile_Unit",
+            "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
+        }],
+    }
+    pawn = SimpleNamespace(
+        pawn_id=608,
+        type="RocketMech",
+        primary_uses=0,
+        secondary_uses=0,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(pawns=[pawn]),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert updates == []
+    assert bridge_data["units"][0]["weapons"] == [
+        "Missiles_Shield",
+        "Missiles_OneDmg",
+    ]
 
 
 def test_partial_resolve_keeps_upgraded_weapon_overlay(monkeypatch):

@@ -267,6 +267,7 @@ impl Unit {
             && (
                 self.is_mech()
                 || !self.weapon.is_none()
+                || !self.weapon2.is_none()
                 || (self.move_speed > 0 && self.type_name_str() == "VIP_Truck")
             )
     }

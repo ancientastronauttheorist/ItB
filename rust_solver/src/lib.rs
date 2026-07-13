@@ -2218,7 +2218,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Air Support direct-death hits now collapse empty cracked Ground without
 //   generalizing across terrain-conversion hazards. Pre-v347 corpus archived
 //   as failure_db_snapshot_sim_v346.jsonl.
-pub const SIMULATOR_VERSION: u32 = 347;
+// v348 - Friendly controllable units with only a secondary weapon remain
+//   eligible solver actors. This lets Mission_Missiles keep using the second
+//   barrage slot after the exhausted primary slot is blanked in place.
+pub const SIMULATOR_VERSION: u32 = 348;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

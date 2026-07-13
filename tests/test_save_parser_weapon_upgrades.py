@@ -2,6 +2,7 @@ from pathlib import Path
 
 from src.capture import save_parser
 from src.capture.save_parser import Point, extract_mission_state, parse_lua_value
+from src.model.board import Board
 
 
 def test_bare_numeric_lua_array_parses_as_list():
@@ -79,6 +80,37 @@ def test_extract_mission_state_overlays_modeled_weapon_mods():
     )
 
     assert mission.pawns[0].primary_weapon == "Ranged_Rocket_A"
+
+
+def test_extract_mission_state_preserves_limited_weapon_uses():
+    mission = extract_mission_state(
+        {"sMission": "Mission_Missiles"},
+        {
+            "pawn_count": 1,
+            "pawn1": {
+                "id": 608,
+                "type": "Missile_Unit",
+                "location": Point(3, 2),
+                "health": 2,
+                "max_health": 2,
+                "iTeamId": 1,
+                "mech": False,
+                "primary": "Missiles_Shield",
+                "primary_uses": 0,
+                "secondary": "Missiles_OneDmg",
+                "secondary_uses": 1,
+            },
+        },
+    )
+
+    pawn = mission.pawns[0]
+    assert pawn.primary_uses == 0
+    assert pawn.secondary_uses == 1
+
+    board = Board.from_mission(mission)
+    contraption = board.units[0]
+    assert contraption.weapon == ""
+    assert contraption.weapon2 == "Missiles_OneDmg"
 
 
 def test_bomb_dispenser_two_bombs_upgrade_overlays():

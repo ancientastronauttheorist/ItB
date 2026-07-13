@@ -164,6 +164,16 @@ def test_terminal_post_enemy_ready_accepts_exact_ordinary_mission_snapshot():
     )
 
 
+def test_active_player_action_count_accepts_secondary_only_mission_actor():
+    board = _board(3)
+    actor = board.mechs()[0]
+    actor.is_mech = False
+    actor.weapon = ""
+    actor.weapon2 = "Missiles_OneDmg"
+
+    assert commands._active_player_action_count(board) == 1
+
+
 def test_same_turn_done_bridge_is_ambiguous_around_external_end_turn_click():
     session = RunSession(run_id="run")
     session.active_solution = ActiveSolution(actions=[], score=1.0, turn=3)

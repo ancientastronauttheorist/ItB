@@ -1152,6 +1152,112 @@ def test_tri_rocket_settle_retry_rejects_mixed_grid_loss():
     ) is False
 
 
+def test_missile_barrage_enemy_damage_only_diff_gets_settle_retry():
+    # Chaos Unfair run 20260712_193021_862, Mission_Missiles turn 1:
+    # player-unit missiles had landed when the first verify read arrived, but
+    # five enemy missiles were still in flight. The settled board matched the
+    # replay prediction exactly.
+    diff = DiffResult(unit_diffs=[
+        {
+            "uid": uid,
+            "type": unit_type,
+            "field": "hp",
+            "predicted": predicted,
+            "actual": predicted + 1,
+        }
+        for uid, unit_type, predicted in [
+            (610, "Scorpion1", 2),
+            (611, "Bouncer2", 3),
+            (613, "Firefly1", 2),
+            (614, "Firefly2", 4),
+            (615, "Bouncer1", 2),
+        ]
+    ])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Missiles_OneDmg", "attack"
+    ) is True
+
+
+def test_missile_barrage_player_damage_lag_gets_settle_retry():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 1,
+        "type": "RockartMech",
+        "field": "hp",
+        "predicted": 1,
+        "actual": 2,
+    }])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Missile Barrage", "attack"
+    ) is True
+
+
+def test_shield_barrage_status_lag_gets_longer_settle_retry():
+    diff = DiffResult(unit_diffs=[
+        {
+            "uid": 1,
+            "type": "RockartMech",
+            "field": "status.shield",
+            "predicted": True,
+            "actual": False,
+        },
+        {
+            "uid": 610,
+            "type": "Scorpion1",
+            "field": "status.shield",
+            "predicted": True,
+            "actual": False,
+        },
+    ])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Missiles_Shield", "attack"
+    ) is True
+
+
+def test_missile_barrage_settle_retry_rejects_source_or_scalar_diff():
+    source_diff = DiffResult(unit_diffs=[{
+        "uid": 608,
+        "type": "Missile_Unit",
+        "field": "hp",
+        "predicted": 1,
+        "actual": 2,
+    }])
+    mixed_diff = DiffResult(
+        unit_diffs=[{
+            "uid": 610,
+            "type": "Scorpion1",
+            "field": "hp",
+            "predicted": 2,
+            "actual": 3,
+        }],
+        scalar_diffs=[{
+            "field": "grid_power",
+            "predicted": 5,
+            "actual": 4,
+        }],
+    )
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        source_diff, "Missiles_OneDmg", "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        mixed_diff, "Missiles_OneDmg", "attack"
+    ) is False
+
+    shield_source_diff = DiffResult(unit_diffs=[{
+        "uid": 608,
+        "type": "Missile_Unit",
+        "field": "status.shield",
+        "predicted": True,
+        "actual": False,
+    }])
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        shield_source_diff, "Missiles_Shield", "attack"
+    ) is False
+
+
 def test_prime_leap_delayed_blast_building_damage_gets_settle_retry():
     diff = DiffResult(tile_diffs=[{
         "x": 5,

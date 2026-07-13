@@ -1856,6 +1856,72 @@ def _enrich_bridge_mech_weapons_from_save(
     return updates
 
 
+def _enrich_bridge_limited_mission_weapons_from_save(
+    bridge_data: dict | None,
+    profile: str = "Alpha",
+) -> list[dict]:
+    """Hide exhausted Detritus Contraption weapon slots from Rust.
+
+    The bridge exposes ``Missile_Unit``'s static two-entry SkillList even
+    after a Limited=2 barrage has no uses remaining. The turn-boundary save
+    carries authoritative ``primary_uses`` / ``secondary_uses`` values. Keep
+    the two list positions stable and blank only an exhausted slot so Rust
+    cannot plan a third use or accidentally remap the other barrage's slot.
+    """
+    if (
+        not isinstance(bridge_data, dict)
+        or bridge_data.get("mission_id") != "Mission_Missiles"
+    ):
+        return []
+
+    state = load_game_state(profile)
+    if state is None:
+        return []
+
+    updates: list[dict] = []
+    for unit in bridge_data.get("units", []) or []:
+        if not isinstance(unit, dict) or unit.get("type") != "Missile_Unit":
+            continue
+        try:
+            uid = int(unit.get("uid", -1))
+        except (TypeError, ValueError):
+            continue
+        pawn = _save_pawn_for_uid(state, uid)
+        if pawn is None or getattr(pawn, "type", None) != "Missile_Unit":
+            continue
+
+        weapons = unit.get("weapons")
+        if not isinstance(weapons, list):
+            continue
+        uses_remaining: list[int | None] = []
+        for slot, attr in enumerate(("primary_uses", "secondary_uses")):
+            raw_remaining = getattr(pawn, attr, None)
+            try:
+                remaining = (
+                    None if raw_remaining is None else int(raw_remaining)
+                )
+            except (TypeError, ValueError):
+                remaining = None
+            uses_remaining.append(remaining)
+            if remaining is None or remaining > 0 or slot >= len(weapons):
+                continue
+            weapon_id = weapons[slot]
+            if not isinstance(weapon_id, str) or not weapon_id:
+                continue
+            weapons[slot] = ""
+            updates.append({
+                "uid": uid,
+                "slot": slot,
+                "weapon_id": weapon_id,
+                "uses_remaining": remaining,
+            })
+        unit["weapon_uses_remaining"] = uses_remaining
+
+    if updates:
+        bridge_data["limited_weapon_overlays"] = updates
+    return updates
+
+
 def _visual_to_bridge(pos: str) -> tuple[int, int] | None:
     """Reverse of ``_bv``: 'C5' -> (3, 5). Returns None on malformed input."""
     if not isinstance(pos, str) or len(pos) < 2:
@@ -4392,7 +4458,7 @@ def _prepare_projected_bridge(
 def _active_player_action_count(board: Board) -> int:
     return sum(
         1 for u in board.mechs()
-        if u.active and u.hp > 0 and (u.is_mech or u.weapon)
+        if u.active and u.hp > 0 and (u.is_mech or u.weapon or u.weapon2)
     )
 
 
@@ -4782,9 +4848,10 @@ def _is_transient_delayed_multihit_damage_diff(
 ) -> bool:
     """Return true when a multi-impact weapon may still be animating.
 
-    Tri-Rocket's three impacts and Hydraulic Legs' Blast Psion follow-up can
-    land after the bridge command ACK and the first state refresh. Limit this
-    retry classification to damage that is strictly behind the prediction.
+    Tri-Rocket's three impacts, Detritus Missile Barrage's per-unit missiles,
+    and Hydraulic Legs' Blast Psion follow-up can land after the bridge
+    command ACK and the first state refresh. Limit this retry classification
+    to damage that is strictly behind the prediction.
     Hydraulic Legs can also expose the pre-push position for one bridge read;
     retry that exact one-tile, position-only lag. Mixed scalar/status diffs
     still go through the desync gate.
@@ -4821,7 +4888,26 @@ def _is_transient_delayed_multihit_damage_diff(
             and td["actual"] > td["predicted"]
             for td in tile_diffs
         )
-    if weapon != "Tri-Rocket" and not weapon.startswith("Ranged_Crack"):
+    is_missile_barrage = weapon in {"Missile Barrage", "Missiles_OneDmg"}
+    is_shield_barrage = weapon in {"Shield Barrage", "Missiles_Shield"}
+    if is_shield_barrage:
+        if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+            return False
+        unit_diffs = getattr(diff, "unit_diffs", []) or []
+        if not unit_diffs:
+            return False
+        return all(
+            str(ud.get("type") or "") != "Missile_Unit"
+            and ud.get("field") == "status.shield"
+            and ud.get("predicted") is True
+            and ud.get("actual") is False
+            for ud in unit_diffs
+        )
+    if (
+        weapon != "Tri-Rocket"
+        and not weapon.startswith("Ranged_Crack")
+        and not is_missile_barrage
+    ):
         return False
     if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
         return False
@@ -4830,7 +4916,10 @@ def _is_transient_delayed_multihit_damage_diff(
         return False
     for ud in unit_diffs:
         utype = str(ud.get("type") or "")
-        if utype.endswith("Mech") or utype in {
+        if is_missile_barrage:
+            if utype == "Missile_Unit":
+                return False
+        elif utype.endswith("Mech") or utype in {
             "Archive_Tank", "Disposal_Unit", "Terraformer", "Filler_Pawn",
         }:
             return False
@@ -7101,7 +7190,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             weapon_overlay_updates = _enrich_bridge_mech_weapons_from_save(
                 bridge_data, profile=profile,
             )
-            if weapon_overlay_updates:
+            limited_weapon_updates = (
+                _enrich_bridge_limited_mission_weapons_from_save(
+                    bridge_data, profile=profile,
+                )
+            )
+            if weapon_overlay_updates or limited_weapon_updates:
                 board = Board.from_bridge_data(bridge_data)
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
@@ -7140,7 +7234,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
     # Check for active mechs (includes friendly controllable units like ArchiveArtillery)
     active_mechs = [mech for mech in board.mechs()
-                    if mech.active and mech.hp > 0 and (mech.is_mech or mech.weapon)]
+                    if mech.active and mech.hp > 0
+                    and (mech.is_mech or mech.weapon or mech.weapon2)]
     if not active_mechs:
         result = {"error": "No active mechs — all have acted this turn"}
         _print_result(result)
@@ -46297,6 +46392,7 @@ def _re_solve_partial(
     # the Lua bridge reports base SkillList IDs, while powered upgrades such as
     # Science_Repulse_A change prediction semantics.
     _enrich_bridge_mech_weapons_from_save(bridge_data)
+    _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
 
     # Load weights
     weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"

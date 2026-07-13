@@ -136,6 +136,8 @@ class Pawn:
     is_mech: bool
     primary_weapon: str = ""
     secondary_weapon: str = ""
+    primary_uses: int | None = None
+    secondary_uses: int | None = None
     pilot_name: str = ""
     pilot_id: str = ""
     pilot_skill1: int = 0
@@ -658,6 +660,15 @@ def extract_mission_state(
         def _get_list(d, k):
             return _lua_list(d.get(k, []))
 
+        def _get_optional_int(d, k):
+            value = d.get(k)
+            if isinstance(value, bool) or value is None:
+                return None
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+
         primary_mod1 = _get_list(pd, 'primary_mod1')
         primary_mod2 = _get_list(pd, 'primary_mod2')
         secondary_mod1 = _get_list(pd, 'secondary_mod1')
@@ -681,6 +692,8 @@ def extract_mission_state(
                 secondary_mod1,
                 secondary_mod2,
             ),
+            primary_uses=_get_optional_int(pd, 'primary_uses'),
+            secondary_uses=_get_optional_int(pd, 'secondary_uses'),
             pilot_name=pilot.get('name', ''),
             pilot_id=pilot.get('id', ''),
             pilot_skill1=pilot.get('skill1', 0),
