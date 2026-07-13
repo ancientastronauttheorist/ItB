@@ -1625,7 +1625,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # terrain/building shield flags, preventing false shield-loss desyncs and
 # unshielded partial re-solves. Pre-v349 corpus archived as
 # failure_db_snapshot_sim_v348.jsonl.
-SIMULATOR_VERSION = 349
+# v350 - Rust turn projection consumes unblocked spawn markers after emergence
+# and carries forward only markers occupied at emergence time. Blocked markers
+# persist even if their blocker dies or thaws from blocking damage. This keeps
+# depth-2 solves from scoring repeated blocks on phantom markers. Pre-v350
+# corpus archived as failure_db_snapshot_sim_v349.jsonl.
+SIMULATOR_VERSION = 350
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

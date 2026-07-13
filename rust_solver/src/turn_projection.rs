@@ -33,6 +33,7 @@ pub struct ProjectedScenario {
     pub label: String,
     pub board: Board,
     pub action_result: ActionResult,
+    pub spawn_points: Vec<(u8, u8)>,
 }
 
 /// Assign a new queued target to each alive enemy based on closest reachable
@@ -120,7 +121,7 @@ fn apply_plan_and_enemy_phase(
     actions: &[MechAction],
     spawn_points: &[(u8, u8)],
     weapons: &WeaponTable,
-) -> (Board, ActionResult) {
+) -> (Board, ActionResult, Vec<(u8, u8)>) {
     let mut b = board.clone();
     let mut original_positions = [(0u8, 0u8); 16];
     for i in 0..b.unit_count as usize {
@@ -154,6 +155,20 @@ fn apply_plan_and_enemy_phase(
     let mut enemy_phase_result = enemy_phase_result;
     enemy_phase_result.unit_deaths = count_unit_deaths_between(&before_enemy_phase, &b);
     aggregate.merge(&enemy_phase_result);
+    // A marker persists only when a living pawn occupies it at emergence.
+    // Capture occupancy before the bump-class blocking damage: a blocker that
+    // dies or thaws from that damage still prevented this Vek from emerging,
+    // so the marker remains for the next turn. Unoccupied markers are consumed
+    // by emergence even though the unknown Vek itself is not materialized by
+    // this bounded projection.
+    let blocked_spawn_points: Vec<(u8, u8)> = spawn_points.iter()
+        .copied()
+        .filter(|&(sx, sy)| {
+            b.unit_at(sx, sy)
+                .map(|idx| b.units[idx].hp > 0)
+                .unwrap_or(false)
+        })
+        .collect();
     if !spawn_points.is_empty() {
         let before_spawn_block = b.clone();
         let spawn_result = apply_spawn_blocking(&mut b, spawn_points);
@@ -181,7 +196,7 @@ fn apply_plan_and_enemy_phase(
     }
     b.current_turn = b.current_turn.saturating_add(1);
     advance_mission_tides_warning(&mut b);
-    (b, aggregate)
+    (b, aggregate, blocked_spawn_points)
 }
 
 pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
@@ -220,12 +235,29 @@ pub fn project_plan(
     spawn_points: &[(u8, u8)],
     weapons: &WeaponTable,
 ) -> (Board, ActionResult) {
-    let (mut b, aggregate) = apply_plan_and_enemy_phase(
+    let (b, aggregate, _) = project_plan_with_spawns(
+        board, actions, spawn_points, weapons,
+    );
+    (b, aggregate)
+}
+
+/// Project one turn and return the spawn markers that genuinely persist.
+///
+/// Existing callers that only need board/action parity can use
+/// [`project_plan`]. Depth-2 callers must use this form so an unblocked marker
+/// consumed by emergence is not offered as a phantom block on the next turn.
+pub fn project_plan_with_spawns(
+    board: &Board,
+    actions: &[MechAction],
+    spawn_points: &[(u8, u8)],
+    weapons: &WeaponTable,
+) -> (Board, ActionResult, Vec<(u8, u8)>) {
+    let (mut b, aggregate, blocked_spawn_points) = apply_plan_and_enemy_phase(
         board, actions, spawn_points, weapons,
     );
     // Option B: heuristic re-queue for surviving enemies.
     requeue_enemies_heuristic(&mut b);
-    (b, aggregate)
+    (b, aggregate, blocked_spawn_points)
 }
 
 pub fn project_plan_scenarios(
@@ -236,7 +268,7 @@ pub fn project_plan_scenarios(
     max_scenarios: usize,
 ) -> Vec<ProjectedScenario> {
     let max_scenarios = max_scenarios.max(1);
-    let (base, aggregate) = apply_plan_and_enemy_phase(
+    let (base, aggregate, blocked_spawn_points) = apply_plan_and_enemy_phase(
         board, actions, spawn_points, weapons,
     );
     let mut scenarios = Vec::with_capacity(max_scenarios);
@@ -248,6 +280,7 @@ pub fn project_plan_scenarios(
         label: "heuristic_requeue".to_string(),
         board: heuristic.clone(),
         action_result: aggregate.clone(),
+        spawn_points: blocked_spawn_points.clone(),
     });
 
     let mut retargets = building_retarget_candidates(&base);
@@ -292,6 +325,7 @@ pub fn project_plan_scenarios(
             ),
             board: variant,
             action_result: aggregate.clone(),
+            spawn_points: blocked_spawn_points.clone(),
         });
     }
 
@@ -629,6 +663,89 @@ mod tests {
         let initial = board.current_turn;
         let (projected, _) = project_plan(&board, &[], &spawn_points, &WEAPONS);
         assert_eq!(projected.current_turn, initial + 1);
+    }
+
+    #[test]
+    fn test_projection_consumes_unblocked_spawn_markers() {
+        let mut b = Board::default();
+        b.total_turns = 5;
+        b.current_turn = 1;
+        b.remaining_spawns = 2;
+        let spawn_points = vec![(2, 2), (5, 5)];
+
+        let (_, result, projected_spawn_points) = project_plan_with_spawns(
+            &b,
+            &[],
+            &spawn_points,
+            &WEAPONS,
+        );
+
+        assert_eq!(result.spawns_blocked, 0);
+        assert!(projected_spawn_points.is_empty());
+    }
+
+    #[test]
+    fn test_projection_retains_marker_when_blocking_damage_kills_blocker() {
+        let mut b = Board::default();
+        b.total_turns = 5;
+        b.current_turn = 1;
+        b.remaining_spawns = 2;
+        let mut blocker = Unit::default();
+        blocker.uid = 1;
+        blocker.set_type_name("PunchMech");
+        blocker.x = 2;
+        blocker.y = 2;
+        blocker.hp = 1;
+        blocker.max_hp = 3;
+        blocker.team = Team::Player;
+        blocker.flags = UnitFlags::IS_MECH | UnitFlags::ACTIVE
+            | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        b.add_unit(blocker);
+        let spawn_points = vec![(2, 2), (5, 5)];
+
+        let (projected, result, projected_spawn_points) = project_plan_with_spawns(
+            &b,
+            &[],
+            &spawn_points,
+            &WEAPONS,
+        );
+
+        assert_eq!(result.spawns_blocked, 1);
+        assert_eq!(projected_spawn_points, vec![(2, 2)]);
+        assert!(!projected.units[0].alive());
+    }
+
+    #[test]
+    fn test_projection_retains_marker_when_blocking_damage_thaws_blocker() {
+        let mut b = Board::default();
+        b.total_turns = 5;
+        b.current_turn = 1;
+        b.remaining_spawns = 1;
+        let mut blocker = Unit::default();
+        blocker.uid = 1;
+        blocker.set_type_name("PunchMech");
+        blocker.x = 2;
+        blocker.y = 2;
+        blocker.hp = 1;
+        blocker.max_hp = 3;
+        blocker.team = Team::Player;
+        blocker.flags = UnitFlags::IS_MECH | UnitFlags::ACTIVE
+            | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        blocker.set_frozen(true);
+        b.add_unit(blocker);
+        let spawn_points = vec![(2, 2)];
+
+        let (projected, result, projected_spawn_points) = project_plan_with_spawns(
+            &b,
+            &[],
+            &spawn_points,
+            &WEAPONS,
+        );
+
+        assert_eq!(result.spawns_blocked, 1);
+        assert_eq!(projected_spawn_points, spawn_points);
+        assert_eq!(projected.units[0].hp, 1);
+        assert!(!projected.units[0].frozen());
     }
 
     #[test]

@@ -2,7 +2,8 @@
 //!
 //! Depth-N lookahead over plans. For depth = 1, equivalent to
 //! [`solve_turn_top_k`]. For depth = 2, expands each of the top-K₁ level-0
-//! plans by running [`project_plan`] + a nested [`solve_turn_top_k`] at
+//! plans by running [`project_plan_with_spawns`] + a nested
+//! [`solve_turn_top_k`] at
 //! K₂, then aggregates `chain_score = level_0.score + best_level_1.score`.
 //! The per-turn `future_factor` inside [`crate::evaluate::evaluate`]
 //! already damps turn+1 contributions, so we don't apply an additional
@@ -10,9 +11,9 @@
 //!
 //! # Why top-level K₁ plans get a level-1 bonus even when level-1 fails
 //!
-//! If `project_plan` produces a board with no legal actions (final turn,
-//! all mechs dead, every mech webbed/frozen) the sub-solver returns an
-//! empty vec. Those chains keep `level_1_best = None` and their
+//! If `project_plan_with_spawns` produces a board with no legal actions
+//! (final turn, all mechs dead, every mech webbed/frozen) the sub-solver
+//! returns an empty vec. Those chains keep `level_1_best = None` and their
 //! `chain_score` falls back to level-0 only. This is the correct signal:
 //! "the mission ends here, we only care about turn 1."
 //!
@@ -29,7 +30,7 @@ use crate::board::Board;
 use crate::evaluate::EvalWeights;
 use crate::solver::{solve_turn_top_k, Solution};
 use crate::types::DisabledMask;
-use crate::turn_projection::project_plan;
+use crate::turn_projection::project_plan_with_spawns;
 use crate::weapons::WeaponTable;
 
 /// One beam chain: a level-0 plan plus the best sub-plan discovered by
@@ -116,17 +117,20 @@ pub fn solve_beam(
 
     let mut chains: Vec<BeamChain> = Vec::with_capacity(level_0.len());
     for plan in level_0 {
-        let (projected, _ar) = project_plan(board, &plan.actions, spawn_points, weapons);
+        let (projected, _ar, projected_spawn_points) = project_plan_with_spawns(
+            board,
+            &plan.actions,
+            spawn_points,
+            weapons,
+        );
 
-        // Forward the SAME spawn_points to the sub-solve. project_plan
-        // doesn't mutate the spawn footprint (spawn TIMING changes as
-        // remaining_spawns decrements inside the board, but the set of
-        // tiles the game will use for spawns stays constant over a
-        // mission). If that assumption changes we'd want project_plan
-        // to return updated spawn_points.
+        // Only markers blocked at emergence persist. Forwarding every input
+        // marker here would let the depth-2 solve score a second block on a
+        // tile whose Vek already emerged (the spawned identity itself remains
+        // outside this bounded projection).
         let sub = solve_turn_top_k(
             &projected,
-            spawn_points,
+            &projected_spawn_points,
             per_chain_secs,
             99_999,
             weights,

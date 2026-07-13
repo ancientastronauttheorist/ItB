@@ -457,3 +457,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 456 | 809 | Stationary lookahead gaps cannot certify robust-clean recovery. | `docs/agent/safety-gates.md` |
 | 457 | 811 | Dirty review surfaces stronger reserve tradeoffs without auto-selecting them. | `docs/agent/safety-gates.md` |
 | 458 | 813 | Concurrent pytest processes must serialize live-session preservation. | `docs/agent/solver-reference.md` |
+| 459 | 815 | Projected spawn markers persist only when occupied at emergence. | `docs/agent/solver-reference.md` |

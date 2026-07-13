@@ -296,7 +296,9 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 ///     passed directly to `solve` / `solve_top_k` for depth-2 beam).
 ///   - `action_result`: aggregate outcome of the mech actions + enemy phase
 ///     (enemies_killed, mechs_killed, buildings_lost, grid_damage, ...).
-///   - `spawn_points`: spawn tile list forwarded from the input board.
+///   - `spawn_points`: only spawn markers that were blocked and therefore
+///     persist into the projected turn. Unblocked markers are consumed by
+///     emergence; the unknown spawned Vek is not materialized.
 ///
 /// Projection re-queues surviving enemies with the deterministic heuristic in
 /// `turn_projection.rs`. The returned `board_json` still injects
@@ -304,7 +306,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 /// targets remain conservatively penalized by downstream solve calls.
 #[pyfunction]
 fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
-    use crate::turn_projection::{project_plan as tp_project_plan, board_to_json};
+    use crate::turn_projection::{board_to_json, project_plan_with_spawns};
     use crate::solver::MechAction;
     use crate::weapons::wid_from_str;
 
@@ -346,12 +348,16 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             description: String::new(),
         }).collect();
 
-        let (projected, result) = tp_project_plan(&board, &actions, &spawn_points, weapons_table);
+        let (projected, result, projected_spawn_points) = project_plan_with_spawns(
+            &board,
+            &actions,
+            &spawn_points,
+            weapons_table,
+        );
 
-        let proj_board_json = board_to_json(&projected, &spawn_points);
+        let proj_board_json = board_to_json(&projected, &projected_spawn_points);
 
-        // Aggregate spawning_tiles forward (same as input)
-        let spawn_json: Vec<serde_json::Value> = spawn_points.iter()
+        let spawn_json: Vec<serde_json::Value> = projected_spawn_points.iter()
             .map(|&(x, y)| serde_json::json!([x, y]))
             .collect();
 
@@ -435,10 +441,6 @@ fn project_plan_scenarios(
             description: String::new(),
         }).collect();
 
-        let spawn_json: Vec<serde_json::Value> = spawn_points.iter()
-            .map(|&(x, y)| serde_json::json!([x, y]))
-            .collect();
-
         let scenarios = tp_project_plan_scenarios(
             &board,
             &actions,
@@ -447,9 +449,12 @@ fn project_plan_scenarios(
             max_scenarios,
         );
         let scenario_json: Vec<serde_json::Value> = scenarios.iter().map(|s| {
+            let spawn_json: Vec<serde_json::Value> = s.spawn_points.iter()
+                .map(|&(x, y)| serde_json::json!([x, y]))
+                .collect();
             serde_json::json!({
                 "label": s.label,
-                "board_json": board_to_json(&s.board, &spawn_points),
+                "board_json": board_to_json(&s.board, &s.spawn_points),
                 "spawn_points": spawn_json,
                 "action_result": {
                     "enemies_killed": s.action_result.enemies_killed,
@@ -2224,7 +2229,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v349 - Replay action snapshots and projected post-player boards preserve
 //   terrain/building shield flags. This prevents live shielded buildings from
 //   appearing as false post-action desyncs or unshielded partial re-solves.
-pub const SIMULATOR_VERSION: u32 = 349;
+// v350 - Turn projection consumes unblocked spawn markers after emergence and
+//   carries forward only markers occupied at emergence time. A blocker that
+//   dies or thaws from blocking damage still leaves its marker pending. This
+//   prevents depth-2 solves from inventing repeated blocks on phantom markers.
+//   Pre-v350 corpus archived as failure_db_snapshot_sim_v349.jsonl.
+pub const SIMULATOR_VERSION: u32 = 350;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

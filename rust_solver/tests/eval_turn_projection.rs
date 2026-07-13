@@ -4,7 +4,7 @@
 //! this test:
 //!   1. Parses board_N via `serde_bridge::board_from_json`
 //!   2. Extracts the solver's chosen actions from solve_N
-//!   3. Calls `project_plan(board_N, actions, spawn_points, weapons)` — Option A
+//!   3. Calls `project_plan_with_spawns(board_N, actions, spawn_points, weapons)`
 //!   4. Parses actual board_{N+1}
 //!   5. Computes accuracy metrics (see AGGREGATE output).
 //!
@@ -18,7 +18,7 @@ use glob::glob;
 use serde_json::Value;
 
 use itb_solver::serde_bridge::board_from_json;
-use itb_solver::turn_projection::{project_plan, board_to_json};
+use itb_solver::turn_projection::{board_to_json, project_plan_with_spawns};
 use itb_solver::solver::MechAction;
 use itb_solver::weapons::{wid_from_str, WEAPONS};
 
@@ -173,8 +173,13 @@ fn eval_turn_projection_harness() {
         };
 
         // Project with Option A (clear queued targets, no re-queue)
-        let (projected, result) = project_plan(&board, &actions, &spawn_points, &WEAPONS);
-        let proj_json = board_to_json(&projected, &spawn_points);
+        let (projected, result, projected_spawn_points) = project_plan_with_spawns(
+            &board,
+            &actions,
+            &spawn_points,
+            &WEAPONS,
+        );
+        let proj_json = board_to_json(&projected, &projected_spawn_points);
 
         let (qm, qs)       = queued_target_match(&proj_json, &next_str);
         let bldg_v         = building_hp_mae(&proj_json, &next_str);
