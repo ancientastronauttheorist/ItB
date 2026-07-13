@@ -24479,6 +24479,42 @@ def test_lightning_save_region_filter_marks_completed_and_overrun():
     assert summary["availability_ambiguous"] is True
 
 
+def test_lightning_save_region_filter_marks_state1_turn0_ambiguous():
+    save_regions = commands._lightning_parse_save_region_entries(
+        """
+        ["region7"] = {
+            ["mission"] = "Mission8",
+            ["player"] = {["iCurrentTurn"] = 0,},
+            ["state"] = 1,
+            ["name"] = "Corporate HQ",
+        },
+        """
+    )
+
+    annotated, summary = commands._lightning_annotate_island_map_with_save_regions(
+        [
+            {
+                "region_id": 7,
+                "mission_id": "Mission_DungBoss",
+                "bonus_objective_ids": [],
+                "environment": "Env_Null",
+                "boss": True,
+            }
+        ],
+        save_regions,
+    )
+
+    assert summary["status"] == "OK"
+    assert summary["matched"] == 1
+    assert summary["unavailable"] == 0
+    assert summary["ambiguous"] == 1
+    assert summary["availability_ambiguous"] is True
+    assert annotated[0]["save_region_route_availability"] == (
+        "ambiguous_initialized_turn0"
+    )
+    assert annotated[0]["save_region_availability_ambiguous"] is True
+
+
 def _lightning_save_route_fixture() -> str:
     return """
     GameData = {["network"] = 6,
@@ -24523,6 +24559,34 @@ def _mixed_save_route_fixture() -> str:
     """
 
 
+def _post_mission_lost_route_fixture() -> str:
+    """R.S.T. map where save state 1 turn-0 regions are visibly purple/lost."""
+    return """
+    GameData = { ["network"] = 6,
+    ["current"] = { ["weapons"] = {"Prime_Punchmech", "Ranged_Ignite", "Vek_Hornet"},},}
+    RegionData = {
+    ["region0"] = {["mission"] = "Mission7", ["player"] = {["iCurrentTurn"] = 0,}, ["state"] = 1, ["name"] = "Lone Mesa", },
+    ["region1"] = {["mission"] = "Mission4", ["player"] = {["iCurrentTurn"] = 4,}, ["state"] = 1, ["name"] = "Restricted Area", },
+    ["region2"] = {["mission"] = "Mission2", ["player"] = {["iCurrentTurn"] = 0,}, ["state"] = 1, ["name"] = "Hardened Shale", },
+    ["region3"] = {["mission"] = "", ["state"] = 2, ["name"] = "Sheer County", },
+    ["region4"] = {["mission"] = "Mission5", ["player"] = {["iCurrentTurn"] = 0,}, ["state"] = 1, ["name"] = "Erosion Flats", },
+    ["region5"] = {["mission"] = "", ["state"] = 2, ["name"] = "Black Rock", },
+    ["region6"] = {["mission"] = "", ["state"] = 2, ["name"] = "Detonation Bay", },
+    ["region7"] = {["mission"] = "", ["state"] = 2, ["name"] = "Corporate HQ", },
+    ["iBattleRegion"] = 1,
+    }
+    GAME = {
+    ["Missions"] = {
+    [2] = {["ID"] = "Mission_Train", ["BonusObjs"] = {}, },
+    [4] = {["ID"] = "Mission_Survive", ["BonusObjs"] = {[1] = 1,}, },
+    [5] = {["ID"] = "Mission_Solar", ["BonusObjs"] = {[1] = 5,}, },
+    [7] = {["ID"] = "Mission_Terraform", ["BonusObjs"] = {[1] = 1,}, },
+    [8] = {["ID"] = "Mission_DungBoss", ["BonusObjs"] = {}, ["BossMission"] = true, },
+    },
+    }
+    """
+
+
 def test_lightning_save_route_mixed_states_fail_closed_as_ambiguous():
     result = commands._lightning_build_save_island_map_from_text(
         _mixed_save_route_fixture(),
@@ -24542,10 +24606,152 @@ def test_lightning_save_route_mixed_states_fail_closed_as_ambiguous():
         0,
         2,
         5,
+        6,
     ]
     chemical = result["island_map"][-1]
-    assert chemical["save_region_route_availability"] == "initialized_unplayed"
-    assert "save_region_availability_ambiguous" not in chemical
+    assert chemical["save_region_route_availability"] == (
+        "ambiguous_initialized_turn0"
+    )
+    assert chemical["save_region_availability_ambiguous"] is True
+
+
+def test_post_mission_state1_turn0_regions_fail_closed_as_lost_or_preview():
+    result = commands._lightning_build_save_island_map_from_text(
+        _post_mission_lost_route_fixture(),
+    )
+
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
+    assert result["availability_ambiguous"] is True
+    assert result["route_state"] == 1
+    assert result["route_states"] == [1]
+    assert [entry["save_region_name"] for entry in result["island_map"]] == [
+        "Lone Mesa",
+        "Hardened Shale",
+        "Erosion Flats",
+    ]
+    assert {
+        entry["save_region_route_availability"]
+        for entry in result["island_map"]
+    } == {"ambiguous_initialized_turn0"}
+    assert {
+        entry["reason"] for entry in result["ambiguous_regions"]
+    } == {"state1_turn0_can_be_preview_or_lost"}
+    hq = next(
+        region
+        for region in result["save_regions"]
+        if region["name"] == "Corporate HQ"
+    )
+    assert hq["state"] == 2
+    assert hq["mission_slot"] == ""
+
+
+def test_post_mission_full_bridge_slate_keeps_lost_routes_potential_only(
+    monkeypatch,
+):
+    save_text = _post_mission_lost_route_fixture()
+    bridge_slate = []
+    for mission in commands._lightning_parse_save_mission_entries(save_text).values():
+        bridge_slate.append(
+            {
+                "region_id": mission["mission_index"],
+                "mission_id": mission["mission_id"],
+                "bonus_objective_ids": mission["bonus_objective_ids"],
+                "environment": mission.get("environment"),
+                "diff_mod": mission.get("diff_mod", 0),
+                "asset_id": mission.get("asset_id", ""),
+                "boss": mission.get("boss", False),
+            }
+        )
+    bridge_data = {
+        "island_map": bridge_slate,
+        "units": [
+            {
+                "mech": True,
+                "hp": 1,
+                "weapons": ["Prime_Punchmech", "Ranged_Ignite", "Vek_Hornet"],
+            }
+        ],
+        "grid_power": 6,
+        "phase": "unknown",
+    }
+
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: (None, bridge_data))
+    monkeypatch.setattr(
+        commands,
+        "_lightning_read_save_region_entries",
+        lambda profile: commands._lightning_parse_save_region_entries(save_text),
+    )
+
+    result = commands.cmd_recommend_mission(routing="lightning_war")
+
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
+    assert result["ranked"] == []
+    assert result["top3"] == []
+    assert result["save_region_filter"]["availability_ambiguous"] is True
+    assert {
+        entry["mission_id"] for entry in result["potential_ranked"]
+    }.issuperset({"Mission_Train", "Mission_Solar", "Mission_Terraform"})
+    lost = {
+        entry["mission_id"]: entry for entry in result["potential_ranked"]
+    }
+    for mission_id in ("Mission_Train", "Mission_Solar", "Mission_Terraform"):
+        assert lost[mission_id]["save_region_route_availability"] == (
+            "ambiguous_initialized_turn0"
+        )
+
+
+def test_single_red_hq_does_not_inherit_stale_save_route_identity():
+    recommendation = {
+        "status": "AMBIGUOUS_SAVE_REGION_AVAILABILITY",
+        "source": "saveData",
+        "ranked": [],
+        "top3": [],
+        "potential_ranked": [
+            {
+                "mission_id": "Mission_Train",
+                "save_region_index": 2,
+                "save_region_name": "Hardened Shale",
+                "score": 0,
+            },
+            {
+                "mission_id": "Mission_Solar",
+                "save_region_index": 4,
+                "save_region_name": "Erosion Flats",
+                "score": -12,
+            },
+            {
+                "mission_id": "Mission_Terraform",
+                "save_region_index": 0,
+                "save_region_name": "Lone Mesa",
+                "score": -45,
+            },
+        ],
+    }
+    visual_regions = {
+        "status": "OK",
+        "regions": [
+            {
+                "index": 0,
+                "window_x": 789,
+                "window_y": 567,
+                "visible_label": "Corporate HQ",
+            }
+        ],
+    }
+
+    candidates = commands._lightning_route_start_candidates(
+        visual_regions,
+        recommendation=recommendation,
+    )
+
+    assert len(candidates) == 1
+    assert "route_option" not in candidates[0]
+    assert "mission_id" not in candidates[0]
+    assert "--route-target-mission-id" not in candidates[0]["command"]
+    assert "--expected-mission-id" not in candidates[0]["route_start_command"]
+    assert candidates[0]["route_identity"]["exact"] is False
 
 
 def test_recommend_mission_mixed_save_routes_exposes_only_potential_diagnostics(
@@ -24639,12 +24845,13 @@ def test_ambiguous_save_routes_require_ocr_labels_for_exact_visual_assignment(
     assert all("route_option" not in region for region in blocked["regions"])
 
 
-def test_lightning_builds_routeable_save_island_map():
+def test_lightning_state1_turn0_save_slate_requires_visual_availability():
     result = commands._lightning_build_save_island_map_from_text(
         _lightning_save_route_fixture(),
     )
 
-    assert result["status"] == "OK"
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
+    assert result["availability_ambiguous"] is True
     assert result["grid_power"] == 6
     assert result["active_region_index"] == 1
     assert [entry["mission_id"] for entry in result["island_map"]] == [
@@ -24652,9 +24859,13 @@ def test_lightning_builds_routeable_save_island_map():
         "Mission_Train",
     ]
     assert result["island_map"][1]["save_region_name"] == "Train Crossing"
+    assert all(
+        entry["save_region_availability_ambiguous"] is True
+        for entry in result["island_map"]
+    )
 
 
-def test_recommend_mission_falls_back_to_save_route_slate(monkeypatch):
+def test_recommend_mission_exposes_state1_save_slate_as_potential_only(monkeypatch):
     save_result = commands._lightning_build_save_island_map_from_text(
         _lightning_save_route_fixture(),
     )
@@ -24668,11 +24879,15 @@ def test_recommend_mission_falls_back_to_save_route_slate(monkeypatch):
 
     result = commands.cmd_recommend_mission(routing="lightning_war")
 
-    assert result["status"] == "OK"
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
     assert result["source"] == "saveData"
-    assert result["top3"][0]["mission_id"] == "Mission_Train"
+    assert result["ranked"] == []
+    assert result["top3"] == []
+    assert result["potential_top3"][0]["mission_id"] == "Mission_Train"
     assert result["speed_route_status"]["auto_start_allowed"] is False
-    assert result["speed_route_status"]["reason"] == "vetoed_mission:Mission_Train"
+    assert result["speed_route_status"]["reason"] == (
+        "save_region_availability_ambiguous"
+    )
 
 
 def test_recommend_mission_baseline_blocks_train_auto_start(tmp_path):
@@ -26954,9 +27169,10 @@ def test_recommend_mission_can_peek_map_from_pause(monkeypatch):
         pause_map_peek=True,
     )
 
-    assert result["status"] == "OK"
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
     assert result["pause_map_peek"]["island_map_count"] == 1
-    assert result["top3"][0]["mission_id"] == "Mission_Sandstorm"
+    assert result["top3"] == []
+    assert result["potential_top3"][0]["mission_id"] == "Mission_Sandstorm"
 
 
 def test_recommend_mission_peek_runs_when_bridge_initially_inactive(monkeypatch):
@@ -26995,9 +27211,10 @@ def test_recommend_mission_peek_runs_when_bridge_initially_inactive(monkeypatch)
         pause_map_peek=True,
     )
 
-    assert result["status"] == "OK"
+    assert result["status"] == "AMBIGUOUS_SAVE_REGION_AVAILABILITY"
     assert result["pause_map_peek"]["island_map_count"] == 1
-    assert result["top3"][0]["mission_id"] == "Mission_Sandstorm"
+    assert result["top3"] == []
+    assert result["potential_top3"][0]["mission_id"] == "Mission_Sandstorm"
 
 
 def test_pause_map_peek_clears_safe_panel_before_second_read(monkeypatch):

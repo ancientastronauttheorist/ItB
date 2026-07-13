@@ -940,12 +940,13 @@ _UNAVAILABLE_STATE_VALUES = {
 
 
 def _unavailable_mission_reason(entry: dict[str, Any]) -> str | None:
-    """Return why a bridge island-map entry should not be rankable.
+    """Return why an island-map entry should not be rankable.
 
-    The Lua bridge normally emits only available island choices, but stale
-    reads from hover previews, completed regions, or pause-menu leakage can
-    carry the same mission-shaped payload. Prefer dropping explicitly marked
-    non-options over letting them outrank real island choices.
+    The Lua bridge's ``GAME.Missions`` payload is the full generated slate,
+    not proof that every row is currently red/selectable.  Upstream live-map
+    annotation must fail closed when availability is ambiguous; here, prefer
+    dropping explicitly marked non-options over letting them outrank a proven
+    island choice.
     """
     if entry.get("available") is False or entry.get("is_available") is False:
         return "available=false"

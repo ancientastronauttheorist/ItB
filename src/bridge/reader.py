@@ -1407,10 +1407,10 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     - phase: "combat_player" | "combat_enemy" | "unknown"
     - turn: int
     - island_map: [{region_id, mission_id, bonus_objective_ids, environment,
-                    diff_mod?, asset_id?, boss?}, ...] OR None — populated
-      when the player is between missions on the corp island map (so the
-      mission picker can score available missions). None inside an active
-      mission. Source: GAME.Missions in the Lua bridge (modloader.lua).
+                    diff_mod?, asset_id?, boss?}, ...] OR None — the full
+      generated GAME.Missions slate while between missions, not proof that
+      every row is currently red/selectable. None inside an active mission.
+      Source: GAME.Missions in the Lua bridge (modloader.lua).
     - island_index: int — 1-based current island slot, when island_map
       is non-null.
     """

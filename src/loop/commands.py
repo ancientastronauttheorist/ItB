@@ -11303,8 +11303,8 @@ def cmd_recommend_mission(
         )
     if save_region_availability_ambiguous:
         print(
-            "Save ambiguity: state 0 contains both red selectable and grey "
-            "locked regions; visual red-region labels are required."
+            "Save ambiguity: persistence state does not prove live map color "
+            "or selectability; visual red-region labels are required."
         )
     print()
     for rank, m in enumerate(top3, start=1):
@@ -11335,9 +11335,9 @@ def cmd_recommend_mission(
             save_region_availability_ambiguous
         ),
         "note": (
-            "Save region state 0 does not distinguish selectable red regions "
-            "from locked grey regions. Use visible red-region OCR labels "
-            "before choosing a mission."
+            "Save region persistence state does not distinguish selectable "
+            "red regions from locked, lost, or completed regions. Use visible "
+            "red-region OCR labels before choosing a mission."
             if save_region_availability_ambiguous
             else None
         ),
@@ -11760,9 +11760,11 @@ def _lightning_parse_save_current_units(text: str) -> list[dict]:
 def _lightning_save_route_state(regions: list[dict]) -> int | None:
     """Return the sole persistence state among potential route choices.
 
-    This is diagnostic only.  Save state 0 does not distinguish selectable
-    red regions from locked grey regions, while state 1 can describe either
-    an initialized preview (turn 0) or a played mission (turn > 0).
+    This is diagnostic only.  Neither save state 0 nor state 1 at turn 0
+    proves live island-map availability: state 0 can be selectable red or
+    locked grey, while state 1 at turn 0 can be an initialized preview or a
+    purple region already lost after another mission.  Visual red-region
+    evidence is required before either state becomes actionable.
     """
     route_states = {
         int(region["state"])
@@ -11782,7 +11784,7 @@ def _lightning_save_route_state(regions: list[dict]) -> int | None:
 
 
 def _lightning_build_save_island_map_from_text(text: str) -> dict:
-    """Build a routeable island-map slate from saveData.lua alone."""
+    """Build a diagnostic island-map slate from saveData.lua alone."""
     regions = _lightning_parse_save_region_entries(text)
     missions_by_slot = _lightning_parse_save_mission_entries(text)
     active_region_index = _lightning_parse_save_active_region_index(text)
@@ -11799,8 +11801,10 @@ def _lightning_build_save_island_map_from_text(text: str) -> dict:
         current_turn = region.get("i_current_turn")
         if state == 0:
             route_availability = "ambiguous_uninitialized"
+            ambiguity_reason = "state0_can_be_selectable_red_or_locked_grey"
         elif state == 1 and current_turn == 0:
-            route_availability = "initialized_unplayed"
+            route_availability = "ambiguous_initialized_turn0"
+            ambiguity_reason = "state1_turn0_can_be_preview_or_lost"
         else:
             continue
         if (
@@ -11825,18 +11829,17 @@ def _lightning_build_save_island_map_from_text(text: str) -> dict:
                 "source": "saveData",
             }
         )
-        if state == 0:
-            entry["save_region_availability_ambiguous"] = True
-            ambiguous_regions.append(
-                {
-                    "region_index": region.get("region_index"),
-                    "name": region.get("name"),
-                    "mission_slot": mission_slot,
-                    "state": state,
-                    "state_label": region.get("state_label"),
-                    "reason": "state0_can_be_selectable_red_or_locked_grey",
-                }
-            )
+        entry["save_region_availability_ambiguous"] = True
+        ambiguous_regions.append(
+            {
+                "region_index": region.get("region_index"),
+                "name": region.get("name"),
+                "mission_slot": mission_slot,
+                "state": state,
+                "state_label": region.get("state_label"),
+                "reason": ambiguity_reason,
+            }
+        )
         if region.get("name") == "Corporate HQ":
             entry["boss"] = True
         island_map.append(entry)
@@ -13757,6 +13760,18 @@ def _lightning_save_region_match_score(entry: dict, region: dict) -> int:
     objective_params = set(region.get("objective_params") or [])
     score = 0
 
+    # Lua exports GAME.Missions keys as ``region_id`` even though they are
+    # mission-slot indices, not live map-region identities.  Prefer that exact
+    # persistence join over objective heuristics when it is available.
+    mission_slot = str(entry.get("mission_slot") or "")
+    if not mission_slot and entry.get("region_id") is not None:
+        try:
+            mission_slot = f"Mission{int(entry['region_id'])}"
+        except (TypeError, ValueError):
+            mission_slot = ""
+    if mission_slot and mission_slot == str(region.get("mission_slot") or ""):
+        score += 100
+
     if objective_texts & _lightning_mission_objective_tokens(entry):
         score += 8
 
@@ -13783,11 +13798,27 @@ def _lightning_annotate_island_map_with_save_regions(
     island_map: list[dict] | None,
     save_regions: list[dict],
 ) -> tuple[list[dict] | None, dict]:
-    """Attach save-region state hints so completed entries stop ranking."""
+    """Attach provisional save hints to the full generated bridge slate."""
     if not island_map:
         return island_map, {"status": "NO_ISLAND_MAP"}
     if not save_regions:
-        return island_map, {"status": "NO_SAVE_REGIONS"}
+        annotated = []
+        for entry in island_map:
+            out = dict(entry)
+            out["save_region_route_availability"] = (
+                "ambiguous_unmatched_generated_mission"
+            )
+            out["save_region_availability_ambiguous"] = True
+            annotated.append(out)
+        return annotated, {
+            "status": "NO_SAVE_REGIONS",
+            "entries": len(annotated),
+            "save_regions": 0,
+            "matched": 0,
+            "unavailable": 0,
+            "ambiguous": len(annotated),
+            "availability_ambiguous": True,
+        }
 
     annotated: list[dict] = []
     matched = 0
@@ -13818,7 +13849,11 @@ def _lightning_annotate_island_map_with_save_regions(
                 out["save_region_availability_ambiguous"] = True
                 ambiguous += 1
             elif state == 1 and best_region.get("i_current_turn") == 0:
-                out["save_region_route_availability"] = "initialized_unplayed"
+                out["save_region_route_availability"] = (
+                    "ambiguous_initialized_turn0"
+                )
+                out["save_region_availability_ambiguous"] = True
+                ambiguous += 1
             elif state == 1:
                 out["current"] = True
                 unavailable += 1
@@ -13828,6 +13863,14 @@ def _lightning_annotate_island_map_with_save_regions(
             elif state == 3:
                 out["overrun"] = True
                 unavailable += 1
+        else:
+            # GAME.Missions contains every generated slot, not only red map
+            # regions.  An unmatched row has no live availability proof.
+            out["save_region_route_availability"] = (
+                "ambiguous_unmatched_generated_mission"
+            )
+            out["save_region_availability_ambiguous"] = True
+            ambiguous += 1
         annotated.append(out)
 
     return annotated, {
