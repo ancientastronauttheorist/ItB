@@ -1061,6 +1061,96 @@ def test_record_post_enemy_blocks_mech_death_for_lightning_war(
     assert session.post_enemy_block is not None
 
 
+def test_record_post_enemy_blocks_unexpected_mech_death_for_unfair(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(
+        run_id="run",
+        difficulty=3,
+        tags=["solver_eval", "chaos", "unfair"],
+    )
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    solve_file = run_dir / "m11_turn_01_solve.json"
+    solve_file.write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 5,
+                "enemies_alive": 0,
+                "mech_hp": [
+                    {"uid": 0, "type": "JetMech", "hp": 1, "max_hp": 2}
+                ],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(5)
+    actual.units[0].hp = 0
+    result = commands._record_post_enemy(session, actual, 1)
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
+    assert result["deltas"]["mech_hp_diff"] == [{
+        "uid": 0,
+        "type": "JetMech",
+        "predicted_hp": 1,
+        "actual_hp": 0,
+        "diff": -1,
+    }]
+    assert session.post_enemy_block is not None
+
+
+def test_record_post_enemy_accepts_predicted_mech_death_for_unfair(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(
+        run_id="run",
+        difficulty=3,
+        tags=["solver_eval", "chaos", "unfair"],
+    )
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    solve_file = run_dir / "m11_turn_01_solve.json"
+    solve_file.write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 5,
+                "enemies_alive": 0,
+                "mech_hp": [
+                    {"uid": 0, "type": "JetMech", "hp": 0, "max_hp": 2}
+                ],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(5)
+    actual.units[0].hp = 0
+    result = commands._record_post_enemy(session, actual, 1)
+
+    assert result["status"] == "POST_ENEMY_RECORDED"
+    assert result["blocking"] is False
+    assert result["deltas"]["mech_hp_diff"] == [{
+        "uid": 0,
+        "type": "JetMech",
+        "predicted_hp": 0,
+        "actual_hp": 0,
+        "diff": 0,
+    }]
+    assert session.post_enemy_block is None
+
+
 def test_record_post_enemy_records_unexpected_mech_status_for_lightning_war(
     tmp_path,
     monkeypatch,

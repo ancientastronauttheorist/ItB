@@ -442,3 +442,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 441 | 779 | Two-click actions preserve `target2` across every Python serialization boundary. | `docs/agent/solver-reference.md` |
 | 442 | 781 | Force Swap powered variants survive save-overlay enrichment. | `docs/agent/solver-reference.md` |
 | 443 | 783 | Force Swap reattaches a stationary queued grapple to the replacement occupant. | `docs/agent/solver-reference.md` |
+| 444 | 785 | Fire ticks on occupied cracked Ground damage only the pawn. | `docs/agent/solver-reference.md` |

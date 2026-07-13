@@ -2211,7 +2211,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   pawns land: the moved pawn breaks free, while a replacement pawn entering
 //   a still-targeted grapple tile becomes webbed. Pre-v346 corpus archived as
 //   failure_db_snapshot_sim_v345.jsonl.
-pub const SIMULATOR_VERSION: u32 = 346;
+// v347 - Start-of-enemy-turn Fire damages a pawn standing on cracked Ground
+//   without collapsing the occupied tile, so a surviving burning Vek still
+//   resolves its queued attack. Seismic Capacitor crack creation also clears
+//   ambient tile Fire while preserving the occupant's carried Fire. Archive
+//   Air Support direct-death hits now collapse empty cracked Ground without
+//   generalizing across terrain-conversion hazards. Pre-v347 corpus archived
+//   as failure_db_snapshot_sim_v346.jsonl.
+pub const SIMULATOR_VERSION: u32 = 347;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

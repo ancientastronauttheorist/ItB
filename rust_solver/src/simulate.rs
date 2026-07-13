@@ -1916,6 +1916,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                 source,
                 DamageSource::Weapon
                     | DamageSource::Bump
+                    | DamageSource::Fire
                     | DamageSource::BombRockBlast
                     | DamageSource::WeaponNoAcidPool
                     | DamageSource::MissionArtillery
@@ -3799,6 +3800,10 @@ fn create_crack(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
         let tile = board.tile_mut(x, y);
         match tile.terrain {
             Terrain::Ground | Terrain::Ice if !tile.cracked() => {
+                // Live EFFECT_CREATE crack creation replaces burning ground
+                // with a clean cracked tile. The occupant keeps its carried
+                // Fire status; only the tile's ambient Fire is cleared.
+                tile.set_on_fire(false);
                 tile.set_cracked(true);
                 result.events.push(format!("crack_created:{}:{}", x, y));
             }
@@ -8419,6 +8424,29 @@ mod tests {
             assert!(board.tile(x, y).cracked(), "expected crack at {},{}", x, y);
         }
         assert!(!board.tile(3, 2).cracked(), "center crack is not emitted by the live tooltip path");
+    }
+
+    #[test]
+    fn test_seismic_capacitor_crack_clears_tile_fire_but_not_unit_fire() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::ScienceKoCrack);
+        let victim = add_enemy(&mut board, 90, 3, 2, 1);
+        let burning_scorpion = add_enemy_type(&mut board, 509, 4, 2, 3, "Scorpion1");
+        board.tile_mut(4, 2).set_on_fire(true);
+        board.units[burning_scorpion].set_fire(true);
+
+        simulate_weapon(&mut board, mech, WId::ScienceKoCrack, 3, 2);
+
+        assert!(board.units[victim].hp <= 0);
+        assert!(board.tile(4, 2).cracked());
+        assert!(
+            !board.tile(4, 2).on_fire(),
+            "EFFECT_CREATE crack should clear ambient Fire from the tile",
+        );
+        assert!(
+            board.units[burning_scorpion].fire(),
+            "Seismic crack creation must preserve the occupant's carried Fire",
+        );
     }
 
     #[test]

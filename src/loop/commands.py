@@ -5675,6 +5675,19 @@ def _post_enemy_needs_investigation(
     ) < 0:
         return True
 
+    # An unexpected mech death invalidates the selected line in every run,
+    # not only in achievement modes that impose stricter HP constraints.
+    # A death that replay already predicted and the dirty frontier accepted
+    # remains nonblocking because predicted_hp is already zero.
+    for delta in deltas.get("mech_hp_diff", []) or []:
+        if not isinstance(delta, dict):
+            continue
+        if (
+            int(delta.get("predicted_hp", 0) or 0) > 0
+            and int(delta.get("actual_hp", 0) or 0) <= 0
+        ):
+            return True
+
     if _blocks_mech_hp_loss_for_perfect_battle(session):
         for delta in deltas.get("mech_hp_diff", []) or []:
             if isinstance(delta, dict) and int(delta.get("diff", 0) or 0) < 0:

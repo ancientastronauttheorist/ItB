@@ -265,6 +265,10 @@ fn apply_env_danger(
     skip_enemy_units: bool,
     result: &mut ActionResult,
 ) {
+    // Preserve pre-hit occupancy for terrain semantics. A pawn killed by the
+    // danger still occupied the tile when the engine applied SpaceDamage.
+    let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
+
     // Damage unit if present. Track whether an enemy died so we can run
     // the shared death-cleanup after the mutable borrow ends — Psion
     // auras must be torn down even on env kills, which bypass apply_damage.
@@ -399,6 +403,22 @@ fn apply_env_danger(
     if board.tile(x, y).has_pod() {
         board.tile_mut(x, y).set_has_pod(false);
         result.events.push(format!("pod_destroyed_env:{}:{}", x, y));
+    }
+
+    // Env_Airstrike emits ordinary DAMAGE_DEATH SpaceDamage with no terrain
+    // override. On an empty cracked Ground tile that direct hit opens a
+    // chasm. Keep this mission-scoped: terrain-conversion environments and
+    // Final Cave hazards carry different explicit terrain semantics, while an
+    // occupied pawn absorbs the terrain portion of the hit.
+    if board.mission_id == "Mission_Airstrike"
+        && lethal
+        && !occupied_by_alive_unit_at_start
+        && board.tile(x, y).terrain == Terrain::Ground
+        && board.tile(x, y).cracked()
+    {
+        let tile = board.tile_mut(x, y);
+        tile.terrain = Terrain::Chasm;
+        tile.set_cracked(false);
     }
 }
 
@@ -3740,6 +3760,106 @@ mod tests {
         assert_eq!(board.grid_power, 6);
         assert_eq!(result.grid_damage, 1);
         assert!(board.units[bouncer_idx].hp <= 0, "Bouncer drowns after recoil into water");
+    }
+
+    #[test]
+    fn test_burning_scorpion_on_cracked_ground_survives_tick_and_attacks() {
+        let mut board = Board::default();
+        let exchange_idx = add_mech_unit(&mut board, 1, 4, 2, 1);
+        let scorpion_idx = add_enemy_with_type(
+            &mut board,
+            509,
+            5,
+            2,
+            3,
+            "Scorpion1",
+            4,
+            2,
+        );
+        board.units[scorpion_idx].set_fire(true);
+        board.units[scorpion_idx].queued_origin_x = 2;
+        board.units[scorpion_idx].queued_origin_y = 2;
+        board.units[scorpion_idx].queued_target_raw_x = 1;
+        board.units[scorpion_idx].queued_target_raw_y = 2;
+        board.units[scorpion_idx].weapon_damage = 1;
+        board.units[scorpion_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+        board.tile_mut(5, 2).set_cracked(true);
+
+        let mut orig = default_orig_pos(&board);
+        orig[scorpion_idx] = (2, 2);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.tile(5, 2).terrain,
+            Terrain::Ground,
+            "fire damage to a pawn must not collapse its occupied cracked Ground tile",
+        );
+        assert!(
+            board.tile(5, 2).cracked(),
+            "the occupied cracked Ground tile should remain cracked after the fire tick",
+        );
+        assert_eq!(
+            board.units[scorpion_idx].hp,
+            2,
+            "the burning Scorpion should take only the one-point fire tick",
+        );
+        assert_eq!(
+            board.units[exchange_idx].hp,
+            0,
+            "the surviving displaced Scorpion should complete its queued attack",
+        );
+    }
+
+    #[test]
+    fn test_airstrike_lethal_danger_collapses_empty_cracked_ground() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Airstrike".to_string();
+        board.tile_mut(4, 3).set_cracked(true);
+        let bit = 1u64 << xy_to_idx(4, 3);
+        board.env_danger = bit;
+        board.env_danger_kill = bit;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Chasm);
+        assert!(!board.tile(4, 3).cracked());
+    }
+
+    #[test]
+    fn test_airstrike_lethal_danger_does_not_collapse_occupied_cracked_ground() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Airstrike".to_string();
+        let mech_idx = add_mech_unit(&mut board, 0, 4, 3, 3);
+        board.tile_mut(4, 3).set_cracked(true);
+        let bit = 1u64 << xy_to_idx(4, 3);
+        board.env_danger = bit;
+        board.env_danger_kill = bit;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[mech_idx].hp, 0);
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
+        assert!(board.tile(4, 3).cracked());
+    }
+
+    #[test]
+    fn test_airstrike_nonlethal_danger_leaves_empty_cracked_ground() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Airstrike".to_string();
+        board.tile_mut(4, 3).set_cracked(true);
+        board.env_danger = 1u64 << xy_to_idx(4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
+        assert!(board.tile(4, 3).cracked());
     }
 
     #[test]

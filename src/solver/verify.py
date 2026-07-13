@@ -1610,7 +1610,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v346 - Force Swap reattaches a stationary queued grapple to the replacement
 # occupant after both swapped pawns land. Pre-v346 corpus archived as
 # failure_db_snapshot_sim_v345.jsonl.
-SIMULATOR_VERSION = 346
+# v347 - Start-of-enemy-turn Fire damages a pawn standing on cracked Ground
+# without collapsing the occupied tile, so a surviving burning Vek still
+# resolves its queued attack. Seismic Capacitor crack creation also clears
+# ambient tile Fire while preserving the occupant's carried Fire. Archive Air
+# Support direct-death hits now collapse empty cracked Ground without
+# generalizing across terrain-conversion hazards. Pre-v347 corpus archived as
+# failure_db_snapshot_sim_v346.jsonl.
+SIMULATOR_VERSION = 347
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
