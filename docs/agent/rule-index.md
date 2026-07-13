@@ -447,3 +447,9 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 446 | 789 | Detritus Contraption limited uses and secondary-only actor eligibility. | `docs/agent/solver-reference.md` |
 | 447 | 791 | Bouncer backwards recoil markers are not flipped horn targets. | `docs/agent/solver-reference.md` |
 | 448 | 793 | Arachnid Psion death eggs can appear after attack ACK. | `docs/agent/solver-reference.md` |
+| 449 | 795 | Building shields use a turn-boundary save ledger when the Board API cannot read them. | `docs/agent/solver-reference.md` |
+| 450 | 797 | Every Rust board serialization boundary must preserve tile shields. | `docs/agent/solver-reference.md` |
+| 451 | 799 | A live building shield covers exactly one audited queued hit. | `docs/agent/solver-reference.md` |
+| 452 | 801 | Water and Chasm deaths can settle after an attack ACK. | `docs/agent/solver-reference.md` |
+| 453 | 803 | `RegionData` shield positives are baseline evidence, never consumption evidence. | `docs/agent/solver-reference.md` |
+| 454 | 805 | Ordinary terminal audits accept same-turn MissionEnd dumps. | `docs/agent/safety-gates.md` |

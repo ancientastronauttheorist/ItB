@@ -153,6 +153,9 @@ def test_terminal_post_enemy_ready_accepts_exact_ordinary_mission_snapshot():
     assert commands._terminal_post_enemy_ready_for_audit(
         board, bridge, solved_turn=3
     )
+    assert commands._terminal_post_enemy_ready_for_audit(
+        board, {**bridge, "turn": 3}, solved_turn=3
+    )
     assert not commands._terminal_post_enemy_ready_for_audit(
         board, {**bridge, "in_active_mission": True}, solved_turn=3
     )
@@ -160,8 +163,55 @@ def test_terminal_post_enemy_ready_accepts_exact_ordinary_mission_snapshot():
         board, {**bridge, "turn": 5}, solved_turn=3
     )
     assert not commands._terminal_post_enemy_ready_for_audit(
+        board, {**bridge, "turn": 2}, solved_turn=3
+    )
+    assert not commands._terminal_post_enemy_ready_for_audit(
         board, {**bridge, "tiles": []}, solved_turn=3
     )
+
+
+def test_cmd_read_records_same_turn_terminal_post_enemy_snapshot(monkeypatch):
+    session = RunSession(run_id="run")
+    session.current_mission = "Mission_Belt"
+    session.active_solution = ActiveSolution(actions=[], score=1.0, turn=4)
+    board = _board(2)
+    bridge = {
+        "phase": "unknown",
+        "turn": 4,
+        "mission_id": "Mission_Belt",
+        "in_active_mission": False,
+        "tiles": [{} for _ in range(64)],
+        "units": [],
+    }
+    recorded = []
+
+    monkeypatch.setattr(commands, "recalibrate", lambda: None)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
+    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands, "read_bridge_state", lambda: (board, bridge)
+    )
+    monkeypatch.setattr(
+        commands, "detect_game_phase", lambda _profile: "between_missions"
+    )
+    monkeypatch.setattr(commands, "_record_turn_state", lambda *_a, **_k: None)
+    monkeypatch.setattr(
+        commands,
+        "_record_post_enemy",
+        lambda _session, _board, solved_turn, bridge_data=None: (
+            recorded.append((solved_turn, bridge_data))
+            or {"status": "POST_ENEMY_RECORDED", "blocking": False}
+        ),
+    )
+    monkeypatch.setattr(RunSession, "save", lambda self: None)
+
+    result = commands.cmd_read()
+
+    assert result["phase"] == "unknown"
+    assert recorded == [(4, bridge)]
+    assert session.active_solution is None
+    assert session.post_enemy_block is None
 
 
 def test_active_player_action_count_accepts_secondary_only_mission_actor():

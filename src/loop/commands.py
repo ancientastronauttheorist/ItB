@@ -4532,7 +4532,15 @@ def _terminal_post_enemy_ready_for_audit(
         actual_turn = int(bridge_data.get("turn"))
     except (TypeError, ValueError):
         return False
-    if actual_turn != _post_enemy_expected_actual_turn(solved_turn):
+    # MissionEnd does not always increment Game:GetTurnCount().  Depending on
+    # when the final dump lands, the completed board can therefore retain the
+    # solved player-turn number or expose the ordinary next-turn number.  The
+    # inactive-mission/unknown-phase/full-board checks above distinguish this
+    # terminal payload from a held pre-End-Turn combat board.
+    if actual_turn not in {
+        int(solved_turn),
+        _post_enemy_expected_actual_turn(solved_turn),
+    }:
         return False
     tiles = bridge_data.get("tiles")
     units = bridge_data.get("units")
@@ -6946,9 +6954,12 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # NOTE: Cannot rely on actions_executed (MCP flow uses cmd_read
             # to verify, not cmd_verify, so the counter stays at 0).
             if (session.active_solution is not None
-                    and bridge_data.get("turn", 0) > session.active_solution.turn
                     and (
-                        _post_enemy_ready_for_audit(board, bridge_data)
+                        (
+                            bridge_data.get("turn", 0)
+                            > session.active_solution.turn
+                            and _post_enemy_ready_for_audit(board, bridge_data)
+                        )
                         or _terminal_post_enemy_ready_for_audit(
                             board,
                             bridge_data,
