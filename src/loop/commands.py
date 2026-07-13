@@ -4926,7 +4926,10 @@ def _is_transient_delayed_multihit_damage_diff(
         field = ud.get("field")
         predicted = ud.get("predicted")
         actual = ud.get("actual")
-        if field == "hp":
+        if field == "status.shield" and is_missile_barrage:
+            if predicted is not False or actual is not True:
+                return False
+        elif field == "hp":
             if not (
                 isinstance(predicted, (int, float))
                 and isinstance(actual, (int, float))

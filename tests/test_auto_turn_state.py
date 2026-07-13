@@ -1193,6 +1193,31 @@ def test_missile_barrage_player_damage_lag_gets_settle_retry():
     ) is True
 
 
+def test_missile_barrage_mixed_shield_consumption_and_damage_lag_retries():
+    # Same run, turn 3: the Bouncer's shield-consumption missile and the
+    # Spider Psion's damage missile were both still airborne at first read.
+    diff = DiffResult(unit_diffs=[
+        {
+            "uid": 615,
+            "type": "Bouncer1",
+            "field": "status.shield",
+            "predicted": False,
+            "actual": True,
+        },
+        {
+            "uid": 623,
+            "type": "Jelly_Spider1",
+            "field": "hp",
+            "predicted": 1,
+            "actual": 2,
+        },
+    ])
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Missiles_OneDmg", "attack"
+    ) is True
+
+
 def test_shield_barrage_status_lag_gets_longer_settle_retry():
     diff = DiffResult(unit_diffs=[
         {
