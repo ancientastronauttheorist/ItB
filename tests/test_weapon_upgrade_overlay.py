@@ -330,6 +330,45 @@ def test_force_swap_upgrades_overlay_from_save(monkeypatch):
         assert bridge_data["units"][0]["weapons"] == [upgraded]
 
 
+def test_needle_shot_upgrades_overlay_from_save(monkeypatch):
+    for upgraded in ("Vek_Hornet_A", "Vek_Hornet_B", "Vek_Hornet_AB"):
+        bridge_data = {
+            "units": [
+                {
+                    "uid": 2,
+                    "type": "HornetMech",
+                    "mech": True,
+                    "weapons": ["Vek_Hornet"],
+                }
+            ]
+        }
+
+        class FakeState:
+            weapons = [
+                "Prime_Punchmech",
+                "",
+                "Ranged_Ignite",
+                "",
+                upgraded,
+                "",
+            ]
+
+        monkeypatch.setattr(
+            "src.loop.commands.load_game_state",
+            lambda profile="Alpha", state=FakeState(): state,
+        )
+
+        updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+        assert updates == [{
+            "uid": 2,
+            "slot": 0,
+            "base": "Vek_Hornet",
+            "upgraded": upgraded,
+        }]
+        assert bridge_data["units"][0]["weapons"] == [upgraded]
+
+
 def test_firestorm_range_overlay_from_save(monkeypatch):
     bridge_data = {
         "units": [

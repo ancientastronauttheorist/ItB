@@ -646,9 +646,17 @@ pub enum WId {
     RangedSmokeFireB = 232,
     /// Smoldering Shells with More Smoke and +2 Damage powered.
     RangedSmokeFireAB = 233,
+    /// Secret Squad Techno-Hornet — Needle Shot.
+    VekHornet = 238,
+    /// Needle Shot with the first +1 Range / +1 Damage upgrade powered.
+    VekHornetA = 239,
+    /// Needle Shot with the second +1 Range / +1 Damage upgrade powered.
+    VekHornetB = 240,
+    /// Needle Shot with both +1 Range / +1 Damage upgrades powered.
+    VekHornetAB = 241,
 }
 
-pub const WEAPON_COUNT: usize = 238;
+pub const WEAPON_COUNT: usize = 242;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1047,6 +1055,19 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[228] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 3, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     w[229] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 4, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     w[230] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 5, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+
+    // 238-241: Vek_Hornet — Techno-Hornet's Needle Shot. The installed
+    // weapons_technovek.lua inherits Prime_Spear targeting: every tile through
+    // the selected distance takes full damage, while only the selected/farthest
+    // tile is pushed forward. Either upgrade adds one range and one damage.
+    w[238] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
+        range_max: 1, path_size: 1, flags: C, ..DEF };
+    w[239] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward,
+        range_max: 2, path_size: 2, flags: C, ..DEF };
+    w[240] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward,
+        range_max: 2, path_size: 2, flags: C, ..DEF };
+    w[241] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Forward,
+        range_max: 3, path_size: 3, flags: C, ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1897,6 +1918,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "RangedSmokeFireB" => WId::RangedSmokeFireB,
         "Ranged_SmokeFire_AB" => WId::RangedSmokeFireAB,
         "RangedSmokeFireAB" => WId::RangedSmokeFireAB,
+        "Vek_Hornet" => WId::VekHornet,
+        "Vek_Hornet_A" => WId::VekHornetA,
+        "Vek_Hornet_B" => WId::VekHornetB,
+        "Vek_Hornet_AB" => WId::VekHornetAB,
         "Missiles_Shield" => WId::MissilesShield,
         "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
@@ -2147,6 +2172,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedSmokeFireA => "Ranged_SmokeFire_A",
         WId::RangedSmokeFireB => "Ranged_SmokeFire_B",
         WId::RangedSmokeFireAB => "Ranged_SmokeFire_AB",
+        WId::VekHornet => "Vek_Hornet",
+        WId::VekHornetA => "Vek_Hornet_A",
+        WId::VekHornetB => "Vek_Hornet_B",
+        WId::VekHornetAB => "Vek_Hornet_AB",
         WId::ScorpionAtk1 => "ScorpionAtk1",
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
@@ -2432,6 +2461,8 @@ pub fn weapon_name(id: WId) -> &'static str {
             | WId::ScienceSwapB | WId::ScienceSwapAB => "Teleporter",
         WId::ScienceRainingFire | WId::ScienceRainingFireA
             | WId::ScienceRainingFireB | WId::ScienceRainingFireAB => "Firestorm Generator",
+        WId::VekHornet | WId::VekHornetA
+            | WId::VekHornetB | WId::VekHornetAB => "Needle Shot",
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
@@ -2602,6 +2633,32 @@ mod tests {
         assert_eq!(wid_from_str("Science_Swap_AB"), WId::ScienceSwapAB);
         assert_eq!(wid_to_str(WId::ScienceSwapAB), "Science_Swap_AB");
         assert_eq!(weapon_name(WId::ScienceSwapAB), "Teleporter");
+    }
+
+    #[test]
+    fn test_techno_hornet_needle_shot_defs_and_mappings() {
+        let expected = [
+            (WId::VekHornet, "Vek_Hornet", 1, 1),
+            (WId::VekHornetA, "Vek_Hornet_A", 2, 2),
+            (WId::VekHornetB, "Vek_Hornet_B", 2, 2),
+            (WId::VekHornetAB, "Vek_Hornet_AB", 3, 3),
+        ];
+        for (id, lua_id, damage, range) in expected {
+            let def = weapon_def(id);
+            assert_eq!(def.weapon_type, WeaponType::Melee);
+            assert_eq!(def.damage, damage);
+            assert_eq!(def.push, PushDir::Forward);
+            assert_eq!(def.range_max, range);
+            assert_eq!(def.path_size, range);
+            assert_eq!(wid_from_str(lua_id), id);
+            assert_eq!(wid_to_str(id), lua_id);
+            assert_eq!(weapon_name(id), "Needle Shot");
+        }
+
+        // The Secret Squad player weapon is not the enemy Hornet Sting:
+        // even the base Needle Shot pushes its selected tile.
+        assert_eq!(weapon_def(WId::HornetAtk1).push, PushDir::None);
+        assert_ne!(wid_from_str("Vek_Hornet"), WId::HornetAtk1);
     }
 
     #[test]

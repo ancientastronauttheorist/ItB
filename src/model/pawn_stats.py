@@ -26,7 +26,7 @@ class PawnStats:
     ignore_smoke: bool = False
     ignore_fire: bool = False
     default_weapon: str = ""
-    class_type: str = ""     # Prime, Brute, Ranged, Science
+    class_type: str = ""     # Prime, Brute, Ranged, Science, TechnoVek
 
 
 # Mechs
@@ -58,6 +58,7 @@ MECH_STATS = {
     "LeapMech":      PawnStats(move_speed=4, massive=True, class_type="Prime", default_weapon="Prime_Leap"),
     "UnstableTank":  PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_Unstable"),
     "NanoMech":      PawnStats(move_speed=4, massive=True, flying=True, class_type="Science", default_weapon="Science_AcidShot"),
+    "HornetMech":    PawnStats(move_speed=4, massive=True, flying=True, class_type="TechnoVek", default_weapon="Vek_Hornet"),
     # Advanced Edition mechs
     "BeetleMech":    PawnStats(move_speed=3, massive=True, class_type="Prime", default_weapon="Prime_Beetle"),
     "PierceMech":    PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_PierceShot"),

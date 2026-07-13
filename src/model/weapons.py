@@ -262,6 +262,26 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+acid on last tile",
         upgrade_b="+1 range (3 tiles)",
     ),
+    # Secret Squad Techno-Hornet. Like Prime_Spear, every tile through the
+    # selected distance takes full damage and only the far tile is pushed.
+    "Vek_Hornet": WeaponDef(
+        name="Needle Shot", weapon_type="melee",
+        damage=1, push="forward", range_max=1, path_size=1,
+        upgrade_a="+1 range and +1 damage",
+        upgrade_b="+1 range and +1 damage",
+    ),
+    "Vek_Hornet_A": WeaponDef(
+        name="Needle Shot", weapon_type="melee",
+        damage=2, push="forward", range_max=2, path_size=2,
+    ),
+    "Vek_Hornet_B": WeaponDef(
+        name="Needle Shot", weapon_type="melee",
+        damage=2, push="forward", range_max=2, path_size=2,
+    ),
+    "Vek_Hornet_AB": WeaponDef(
+        name="Needle Shot", weapon_type="melee",
+        damage=3, push="forward", range_max=3, path_size=3,
+    ),
     "Prime_Rockmech": WeaponDef(
         name="Rock Throw", weapon_type="projectile",
         damage=2, range_max=0,

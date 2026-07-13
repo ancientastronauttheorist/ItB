@@ -459,3 +459,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 458 | 813 | Concurrent pytest processes must serialize live-session preservation. | `docs/agent/solver-reference.md` |
 | 459 | 815 | Projected spawn markers persist only when occupied at emergence. | `docs/agent/solver-reference.md` |
 | 460 | 817 | Webbed enemies are stationary, not disarmed. | `docs/agent/solver-reference.md` |
+| 461 | 819 | Techno-Hornet Needle Shot damages its full selected line and pushes only the far tile. | `docs/agent/solver-reference.md` |

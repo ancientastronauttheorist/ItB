@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from src.model.pawn_stats import get_pawn_stats
 from src.model.weapons import get_weapon_def
+from src.solver import unknown_detector
 
 
 def test_snowtank_mark_i_weapon_def_matches_lua_projectile_fire():
@@ -64,6 +66,61 @@ def test_smoldering_shells_upgrade_weapon_defs():
     assert damage.damage == 3
     assert both.damage == 3
     assert more_smoke.upgrade_a == "more smoke"
+
+
+def test_techno_hornet_needle_shot_defs_and_fallback_stats():
+    known = json.loads(Path("data/known_types.json").read_text())
+    expected = {
+        "Vek_Hornet": (1, 1),
+        "Vek_Hornet_A": (2, 2),
+        "Vek_Hornet_B": (2, 2),
+        "Vek_Hornet_AB": (3, 3),
+    }
+
+    for weapon_id, (damage, range_max) in expected.items():
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None
+        assert weapon.name == "Needle Shot"
+        assert weapon.weapon_type == "melee"
+        assert weapon.damage == damage
+        assert weapon.push == "forward"
+        assert weapon.range_max == range_max
+        assert weapon.path_size == range_max
+
+    assert "VekHornet" in known["weapon_enum"]
+    assert "VekHornetAB" in known["weapon_enum"]
+    assert "Vek_Hornet" in known["observed_weapons"]
+    stats = get_pawn_stats("HornetMech")
+    assert stats.move_speed == 4
+    assert stats.flying is True
+    assert stats.massive is True
+    assert stats.class_type == "TechnoVek"
+    assert stats.default_weapon == "Vek_Hornet"
+
+
+def test_techno_hornet_needle_shot_does_not_trigger_unknown_gate():
+    unknown_detector.reset_cache()
+    board = SimpleNamespace(
+        units=[SimpleNamespace(
+            type="HornetMech",
+            weapon="Vek_Hornet",
+            weapon2="",
+            is_mech=True,
+        )],
+        tiles=[
+            [SimpleNamespace(terrain="ground") for _ in range(8)]
+            for _ in range(8)
+        ],
+    )
+
+    unknowns = unknown_detector.detect_unknowns(board, phase="combat_player")
+
+    assert unknowns == {
+        "types": [],
+        "terrain_ids": [],
+        "weapons": [],
+        "screens": [],
+    }
 
 
 def test_arachnophiles_catalog_entries_match_observed_lua_ids():

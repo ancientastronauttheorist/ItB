@@ -77,7 +77,7 @@ def _mech_base_hp(mech_type: str) -> int:
         "JetMech": 2, "RocketMech": 3, "PulseMech": 3, "GuardMech": 3,
         "LaserMech": 2, "ScienceMech": 2, "CannonMech": 3, "BoulderMech": 3,
         "SwapMech": 2, "WallMech": 2, "DamMech": 3, "ElectricMech": 2,
-        "NanoMech": 2,
+        "NanoMech": 2, "HornetMech": 2,
     }.get(mech_type, 0)
 
 

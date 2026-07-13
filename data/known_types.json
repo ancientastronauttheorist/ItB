@@ -423,6 +423,10 @@
     "TrappedExplode",
     "TumblebugAtk1",
     "TumblebugAtk2",
+    "VekHornet",
+    "VekHornetA",
+    "VekHornetAB",
+    "VekHornetB",
     "VipTruckMove"
   ],
   "terrain_enum": [
@@ -520,6 +524,7 @@
     "Hornet1",
     "Hornet2",
     "HornetBoss",
+    "HornetMech",
     "HydrantMech",
     "IceMech",
     "IgniteMech",
@@ -809,6 +814,7 @@
     "Train_Move",
     "Trapped_Explode",
     "VIP_Truck_Move",
+    "Vek_Hornet",
     "WebeggHatch1"
   ],
   "known_phases": [

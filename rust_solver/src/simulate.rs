@@ -9994,6 +9994,54 @@ mod tests {
             "Spear must enumerate range-1 tile (3,4); got {:?}", targets);
     }
 
+    #[test]
+    fn test_needle_shot_upgrade_target_ranges() {
+        let cases = [
+            (WId::VekHornet, 1),
+            (WId::VekHornetA, 2),
+            (WId::VekHornetB, 2),
+            (WId::VekHornetAB, 3),
+        ];
+        for (weapon, max_range) in cases {
+            let mut board = make_test_board();
+            add_mech(&mut board, 0, 3, 2, 2, weapon);
+            add_enemy(&mut board, 1, 3, 3, 8);
+            add_enemy(&mut board, 2, 3, 4, 8);
+            add_enemy(&mut board, 3, 3, 5, 8);
+
+            let targets = crate::solver::get_weapon_targets(
+                &board, 3, 2, weapon, (3, 2), &WEAPONS);
+            for distance in 1..=max_range {
+                assert!(targets.contains(&(3, 2 + distance)),
+                    "{:?} must include distance {}; got {:?}",
+                    weapon, distance, targets);
+            }
+            if max_range < 3 {
+                assert!(!targets.contains(&(3, 5)),
+                    "{:?} must stop at range {}; got {:?}",
+                    weapon, max_range, targets);
+            }
+        }
+    }
+
+    #[test]
+    fn test_needle_shot_ab_damages_full_line_and_pushes_only_farthest() {
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 0, 3, 2, 2, WId::VekHornetAB);
+        let near = add_enemy(&mut board, 1, 3, 3, 4);
+        let middle = add_enemy(&mut board, 2, 3, 4, 4);
+        let far = add_enemy(&mut board, 3, 3, 5, 4);
+
+        let _ = simulate_weapon(&mut board, hornet, WId::VekHornetAB, 3, 5);
+
+        assert_eq!(board.units[near].hp, 1);
+        assert_eq!((board.units[near].x, board.units[near].y), (3, 3));
+        assert_eq!(board.units[middle].hp, 1);
+        assert_eq!((board.units[middle].x, board.units[middle].y), (3, 4));
+        assert_eq!(board.units[far].hp, 1);
+        assert_eq!((board.units[far].x, board.units[far].y), (3, 6));
+    }
+
     /// Regression: snapshot grid_drop_20260424_174047_323_t01_a3.
     /// Titan Fist (plain Melee, no AOE flags) targeting an empty tile with
     /// mountains at the perpendicular cardinal neighbors must NOT damage

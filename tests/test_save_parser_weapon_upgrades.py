@@ -136,6 +136,35 @@ def test_bomb_dispenser_two_bombs_upgrade_overlays():
     assert mission.pawns[0].primary_weapon == "Ranged_DeployBomb_A"
 
 
+def test_needle_shot_upgrades_overlay_from_save_mods():
+    cases = [
+        ([1, 1], [0, 0, 0], "Vek_Hornet_A"),
+        ([0, 0], [1, 1, 1], "Vek_Hornet_B"),
+        ([1, 1], [1, 1, 1], "Vek_Hornet_AB"),
+    ]
+    for mod1, mod2, expected in cases:
+        mission = extract_mission_state(
+            {"sMission": "Mission_Test"},
+            {
+                "pawn_count": 1,
+                "pawn1": {
+                    "id": 0,
+                    "type": "HornetMech",
+                    "location": Point(2, 2),
+                    "health": 2,
+                    "max_health": 2,
+                    "iTeamId": 1,
+                    "mech": True,
+                    "primary": "Vek_Hornet",
+                    "primary_mod1": mod1,
+                    "primary_mod2": mod2,
+                },
+            },
+        )
+
+        assert mission.pawns[0].primary_weapon == expected
+
+
 def test_titan_fist_powered_mods_overlay():
     mission = extract_mission_state(
         {"sMission": "Mission_Test"},

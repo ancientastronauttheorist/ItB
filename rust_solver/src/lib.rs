@@ -2242,7 +2242,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Snowmine resolution ignores Smoke, no-ops under Web, and models its
 //   mine-at-origin attack-move instead of fabricating ordinary weapon damage.
 //   Pre-v351 corpus archived as failure_db_snapshot_sim_v350.jsonl.
-pub const SIMULATOR_VERSION: u32 = 351;
+// v352 - Secret Squad Techno-Hornet Needle Shot is modeled under its exact
+//   Vek_Hornet base/A/B/AB IDs. Its Prime_Spear-derived line damages every
+//   tile through range 1/2/2/3 for 1/2/2/3, while only the selected far tile
+//   is pushed. Pre-v352 corpus archived as failure_db_snapshot_sim_v351.jsonl.
+pub const SIMULATOR_VERSION: u32 = 352;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
