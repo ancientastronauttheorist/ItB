@@ -1651,7 +1651,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # enough to bump an occupied destination. Generic and Cluster Artillery keep
 # their observed corpse-absorption rule. Pre-v354 corpus archived as
 # failure_db_snapshot_sim_v353.jsonl.
-SIMULATOR_VERSION = 354
+# v355 - Dead Vek wrecks clear between queued enemy actions, after the killing
+# action's own push effects finish. Later Vek recoil and movement can therefore
+# enter the vacated tile. Pre-v355 corpus archived as
+# failure_db_snapshot_sim_v354.jsonl.
+SIMULATOR_VERSION = 355
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

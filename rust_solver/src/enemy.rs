@@ -1192,6 +1192,13 @@ pub fn simulate_enemy_attacks(
     }
 
     for &ei in &enemy_indices {
+        // A dead Vek remains pushable only for the rest of the queued action
+        // that killed it. Once the next attack-order entry begins, live has
+        // removed that corpse and later recoil/push effects may enter its tile.
+        // Keep this at the action boundary so Moth artillery can still push a
+        // lethally hit target into an occupied destination within one attack.
+        clear_pre_attack_dead_enemy_wrecks(board);
+
         // Mission_Train replaces a destroyed moving train with a fresh,
         // stationary damaged train. Mission updates run between queued unit
         // actions, so materialize that replacement before the next enemy can
@@ -3668,11 +3675,6 @@ mod tests {
 
         assert!(board.units[target_idx].hp <= 0);
         assert_eq!(
-            (board.units[target_idx].x, board.units[target_idx].y),
-            (5, 5),
-            "lethally hooked corpse should finish adjacent to the Gastropod",
-        );
-        assert_eq!(
             board.units[attacker_idx].hp, 3,
             "Blast burst must damage the attacker beside the final corpse tile",
         );
@@ -3925,6 +3927,44 @@ mod tests {
         assert_eq!(result.grid_damage, 1);
         assert_eq!(board.units[bouncer].hp, 0, "Alpha Moth artillery kills the Bouncer");
         assert_eq!(board.units[ignite].hp, 1, "killed Bouncer corpse bumps Ignite for 1");
+    }
+
+    #[test]
+    fn test_prior_enemy_kill_corpse_clears_before_later_moth_recoil() {
+        // Chaos Roll Unfair 20260713_052159_731, Mission_DungBoss turn 1:
+        // DungBoss killed Bouncer1 at (6,2) before Moth1 fired. Live removed
+        // the Bouncer between queued actions, so the Moth recoiled from (5,2)
+        // into the vacated tile without taking bump damage. Pre-v355 retained
+        // the dead Bouncer as a wreck and incorrectly reduced the Moth 2->1.
+        let mut board = Board::default();
+        let boss = add_enemy_with_type(
+            &mut board, 838, 6, 3, 4, "DungBoss", 6, 2,
+        );
+        board.units[boss].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let bouncer = add_enemy_with_type(
+            &mut board, 840, 6, 2, 3, "Bouncer1", -1, -1,
+        );
+        let moth = add_enemy_with_type(
+            &mut board, 842, 5, 2, 2, "Moth1", 3, 2,
+        );
+        board.units[moth].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.attack_order = vec![838, 840, 842];
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[bouncer].hp, 0, "DungBoss kills the Bouncer first");
+        assert_eq!(
+            (board.units[moth].x, board.units[moth].y),
+            (6, 2),
+            "later Moth recoil should enter the prior-action corpse tile",
+        );
+        assert_eq!(
+            board.units[moth].hp,
+            2,
+            "a prior-action Vek corpse must not deal phantom recoil bump damage",
+        );
     }
 
     #[test]

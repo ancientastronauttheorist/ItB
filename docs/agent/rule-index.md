@@ -467,3 +467,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 466 | 829 | Moth lethal artillery pushes corpse-bump an occupied destination. | `docs/agent/solver-reference.md` |
 | 467 | 831 | Persistence state and bridge mission membership do not prove live island-map availability. | `docs/agent/achievement-playbook.md` |
 | 468 | 833 | Chained BombRock building hits can outlive a fast bridge ACK. | `docs/agent/safety-gates.md` |
+| 469 | 835 | Dead Vek wrecks clear between queued enemy actions. | `docs/agent/solver-reference.md` |

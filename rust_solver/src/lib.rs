@@ -2255,7 +2255,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   enough to bump an occupied destination. Generic and Cluster Artillery
 //   keep their observed corpse-absorption rule. Pre-v354 corpus archived as
 //   failure_db_snapshot_sim_v353.jsonl.
-pub const SIMULATOR_VERSION: u32 = 354;
+// v355 - Dead Vek wrecks are cleared at queued enemy-action boundaries. A
+//   corpse remains available to the killing action's own push effects, but it
+//   cannot block a later Vek's recoil or other subsequent-action movement.
+//   Pre-v355 corpus archived as failure_db_snapshot_sim_v354.jsonl.
+pub const SIMULATOR_VERSION: u32 = 355;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
