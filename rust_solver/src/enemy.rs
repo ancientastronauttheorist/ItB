@@ -465,6 +465,20 @@ fn apply_env_smoke_board(board: &mut Board) {
     }
 }
 
+/// Return the current spawn markers occupied by a living pawn at emergence.
+///
+/// Call this after enemy attacks and before spawn-blocking damage. A marker
+/// persists even if that damage kills or thaws the pawn that blocked it.
+pub fn persisting_spawn_points(
+    board: &Board,
+    spawn_points: &[(u8, u8)],
+) -> Vec<(u8, u8)> {
+    spawn_points.iter()
+        .copied()
+        .filter(|&(sx, sy)| board.unit_at(sx, sy).is_some())
+        .collect()
+}
+
 /// Apply spawn blocking damage: units standing on spawn tiles take 1 damage
 /// when Vek try to emerge. Damage bypasses armor and ACID (bump-like damage)
 /// but is consumed by shield. Fires after enemy attacks, before next player turn.

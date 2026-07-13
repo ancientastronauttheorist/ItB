@@ -1,5 +1,7 @@
+import json
 from types import SimpleNamespace
 
+import src.loop.commands as commands
 from src.loop.commands import (
     _blocks_mech_hp_loss_for_perfect_battle,
     _blocks_mech_status_loss_for_run,
@@ -462,6 +464,75 @@ def test_prepare_projected_bridge_preserves_solver_metadata():
     assert out["weapon_overrides"] == source["weapon_overrides"]
 
 
+def test_lookahead_safety_uses_projected_spawn_markers(monkeypatch):
+    projected = {
+        "turn": 2,
+        "total_turns": 5,
+        "remaining_spawns": 1,
+        "spawning_tiles": [[2, 2]],
+        "tiles": [],
+        "units": [],
+    }
+    scenario = {
+        "label": "heuristic_requeue",
+        "board_json": json.dumps(projected),
+        "action_result": {"spawns_blocked": 1},
+    }
+    next_solution = SimpleNamespace(score=20.0, actions=[])
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        commands,
+        "_projected_scenarios",
+        lambda *_args, **_kwargs: [scenario],
+    )
+    monkeypatch.setattr(
+        commands.Board,
+        "from_bridge_data",
+        lambda _bridge: object(),
+    )
+    monkeypatch.setattr(commands, "_active_player_action_count", lambda _board: 1)
+    monkeypatch.setattr(
+        commands,
+        "_rust_result_to_solution",
+        lambda *_args, **_kwargs: next_solution,
+    )
+
+    def fake_safety(_board, _bridge, _solution, spawns, **_kwargs):
+        captured["spawns"] = spawns
+        return {
+            "plan_safety": {
+                "status": "CLEAN",
+                "blocking": False,
+                "violations": [],
+            },
+        }
+
+    monkeypatch.setattr(commands, "_evaluate_solution_safety", fake_safety)
+
+    class FakeRust:
+        @staticmethod
+        def solve(_bridge_json, _time_limit):
+            return "{}"
+
+    preview = commands._candidate_lookahead_preview(
+        FakeRust(),
+        {"spawning_tiles": [[2, 2], [5, 5]]},
+        {
+            "rank": 0,
+            "source": "test",
+            "solution": SimpleNamespace(score=10.0, actions=[]),
+            "plan_safety": {"status": "DIRTY", "blocking": True},
+        },
+        eval_weights_dict=None,
+        breakdown_weights=SimpleNamespace(),
+        time_limit=1.0,
+    )
+
+    assert preview["status"] == "OK"
+    assert captured["spawns"] == [(2, 2)]
+
+
 def test_lookahead_result_sort_key_orders_dirty_before_clean():
     dirty = {
         "status": "OK",
@@ -545,7 +616,7 @@ def test_incomplete_forecast_preserves_known_objective_loss_severity():
 def test_lookahead_forecast_gaps_expose_mobile_enemies_and_spawns():
     projected = {
         "remaining_spawns": 1,
-        "spawning_tiles": [[5, 5]],
+        "spawning_tiles": [],
         "units": [
             {"uid": 10, "team": 6, "hp": 3, "move": 3},
             {"uid": 11, "team": 6, "hp": 3, "move": 3, "frozen": True},
@@ -555,7 +626,11 @@ def test_lookahead_forecast_gaps_expose_mobile_enemies_and_spawns():
         ],
     }
 
-    gaps = _lookahead_forecast_gaps(projected, {"spawns_blocked": 0})
+    gaps = _lookahead_forecast_gaps(
+        projected,
+        {"spawns_blocked": 0},
+        source_spawning_tiles=[[5, 5]],
+    )
 
     assert [gap["kind"] for gap in gaps] == [
         "enemy_movement_unmodeled",
@@ -564,7 +639,8 @@ def test_lookahead_forecast_gaps_expose_mobile_enemies_and_spawns():
     ]
     assert gaps[0]["enemy_uids"] == [10]
     assert gaps[1]["enemy_uids"] == [12]
-    assert gaps[2]["unblocked_spawn_markers"] == 1
+    assert gaps[2]["unmodeled_emergence_count"] == 1
+    assert gaps[2]["persisting_spawn_markers"] == []
 
 
 def test_lookahead_forecast_is_complete_when_only_immobile_enemies_remain():
@@ -577,7 +653,90 @@ def test_lookahead_forecast_is_complete_when_only_immobile_enemies_remain():
         ],
     }
 
-    assert _lookahead_forecast_gaps(projected, {}) == []
+    assert _lookahead_forecast_gaps(
+        projected,
+        {},
+        source_spawning_tiles=[],
+    ) == []
+
+
+def test_lookahead_forecast_tracks_emerged_vek_after_marker_consumption():
+    projected = {
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "units": [],
+    }
+
+    gaps = _lookahead_forecast_gaps(
+        projected,
+        {"spawns_blocked": 0},
+        source_spawning_tiles=[[5, 5]],
+    )
+
+    assert gaps == [{
+        "kind": "spawn_materialization_unmodeled",
+        "source_spawn_markers": [[5, 5]],
+        "persisting_spawn_markers": [],
+        "reported_spawns_blocked": 0,
+        "unmodeled_emergence_count": 1,
+        "unmodeled_emergence_tiles": [[5, 5]],
+        "projected_remaining_spawns": 0,
+    }]
+
+
+def test_lookahead_forecast_keeps_persisting_spawn_pressure_incomplete():
+    gaps = _lookahead_forecast_gaps(
+        {
+            "remaining_spawns": 0,
+            "spawning_tiles": [[2, 2]],
+            "units": [],
+        },
+        {"spawns_blocked": 1},
+        source_spawning_tiles=[[2, 2]],
+    )
+
+    assert gaps[0]["kind"] == "spawn_materialization_unmodeled"
+    assert gaps[0]["unmodeled_emergence_count"] == 0
+    assert gaps[0]["persisting_spawn_markers"] == [[2, 2]]
+
+
+def test_lookahead_forecast_separates_emerged_and_persisting_markers():
+    gaps = _lookahead_forecast_gaps(
+        {
+            "remaining_spawns": 0,
+            "spawning_tiles": [[2, 2]],
+            "units": [],
+        },
+        {"spawns_blocked": 1},
+        source_spawning_tiles=[[2, 2], [5, 5]],
+    )
+
+    assert gaps == [{
+        "kind": "spawn_materialization_unmodeled",
+        "source_spawn_markers": [[2, 2], [5, 5]],
+        "persisting_spawn_markers": [[2, 2]],
+        "reported_spawns_blocked": 1,
+        "unmodeled_emergence_count": 1,
+        "unmodeled_emergence_tiles": [[5, 5]],
+        "projected_remaining_spawns": 0,
+    }]
+
+
+def test_lookahead_forecast_fails_closed_on_spawn_lifecycle_mismatch():
+    gaps = _lookahead_forecast_gaps(
+        {
+            "remaining_spawns": 0,
+            "spawning_tiles": [[2, 2]],
+            "units": [],
+        },
+        {"spawns_blocked": 0},
+        source_spawning_tiles=[[5, 5]],
+    )
+
+    assert gaps[0]["kind"] == "spawn_marker_lifecycle_inconsistent"
+    assert gaps[0]["unexpected_projected_markers"] == [[2, 2]]
+    assert gaps[0]["reported_spawns_blocked"] == 0
+    assert gaps[1]["kind"] == "spawn_materialization_unmodeled"
 
 
 def test_lookahead_forecast_is_incomplete_for_webbed_enemy_retarget():
@@ -587,7 +746,7 @@ def test_lookahead_forecast_is_incomplete_for_webbed_enemy_retarget():
         "units": [
             {"uid": 12, "team": 6, "hp": 3, "move": 3, "web": True},
         ],
-    })
+    }, source_spawning_tiles=[])
 
     assert gaps == [{
         "kind": "enemy_retarget_unmodeled",

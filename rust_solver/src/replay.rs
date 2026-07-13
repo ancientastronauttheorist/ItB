@@ -13,7 +13,11 @@
 //! tile-sampling rule (touched tiles + 1-tile buffer).
 
 use crate::board::{count_unit_deaths_between, ActionResult, Board, UnitFlags};
-use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
+use crate::enemy::{
+    apply_spawn_blocking,
+    persisting_spawn_points,
+    simulate_enemy_attacks,
+};
 use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
 use crate::simulate::{simulate_attack_with_target2, simulate_move};
@@ -216,6 +220,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     let before_enemy_phase_board = board.clone();
     let enemy_phase_result = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
     let enemy_phase_unit_deaths = count_unit_deaths_between(&before_enemy_phase_board, &board);
+    let projected_spawn_points = persisting_spawn_points(&board, &spawn_points);
     let before_spawn_block_board = board.clone();
     let spawn_block_result = apply_spawn_blocking(&mut board, &spawn_points);
     let spawn_block_unit_deaths = count_unit_deaths_between(&before_spawn_block_board, &board);
@@ -318,7 +323,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     // can build a Board and score it. board_to_json emits bridge JSON;
     // Board.from_bridge_data on the Python side consumes it.
     let final_board_json: Value = serde_json::from_str(
-        &board_to_json(&board, &spawn_points)
+        &board_to_json(&board, &projected_spawn_points)
     ).map_err(|e| format!("final_board reparse: {}", e))?;
 
     let out = json!({
@@ -941,6 +946,43 @@ mod tests {
             .iter().find(|u| u["uid"] == 10).unwrap();
         assert_eq!(next_turn_enemy["queued_target"], json!([4, 2]));
         assert_eq!(next_turn_enemy["has_queued_attack"], true);
+    }
+
+    #[test]
+    fn replay_final_board_consumes_unblocked_spawn_markers() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "PunchMech", "x": 2, "y": 2,
+             "hp": 1, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": false, "weapons": ["Prime_Punchmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [[2, 2], [5, 5]],
+          "environment_danger": [],
+          "remaining_spawns": 2,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+
+        let raw = replay_solution(bridge, "[]").expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+
+        assert_eq!(
+            v["post_player_board"]["spawning_tiles"],
+            json!([[2, 2], [5, 5]]),
+            "pre-emergence evidence must retain every current marker",
+        );
+        assert_eq!(
+            v["final_board"]["spawning_tiles"],
+            json!([[2, 2]]),
+            "only the marker blocked at emergence persists",
+        );
+        assert!(
+            v["final_board"]["units"].as_array().unwrap().is_empty(),
+            "the 1-HP blocker should die without consuming its marker",
+        );
     }
 
     #[test]

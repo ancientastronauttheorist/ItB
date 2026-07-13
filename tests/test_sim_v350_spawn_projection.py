@@ -88,3 +88,29 @@ def test_project_plan_scenarios_use_consumed_marker_set():
         board = json.loads(board_json) if isinstance(board_json, str) else board_json
         assert scenario["spawn_points"] == []
         assert board["spawning_tiles"] == []
+
+
+@pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
+def test_replay_final_board_consumes_unblocked_spawn_markers():
+    blocker = {
+        "uid": 1,
+        "type": "PunchMech",
+        "x": 2,
+        "y": 2,
+        "hp": 1,
+        "max_hp": 3,
+        "team": 1,
+        "mech": True,
+        "move": 3,
+        "base_move": 3,
+        "active": False,
+        "weapons": ["Prime_Punchmech"],
+    }
+
+    replay = json.loads(
+        itb_solver.replay_solution(json.dumps(_board(units=[blocker])), "[]")
+    )
+
+    assert replay["post_player_board"]["spawning_tiles"] == [[2, 2], [5, 5]]
+    assert replay["final_board"]["spawning_tiles"] == [[2, 2]]
+    assert replay["final_board"]["units"] == []

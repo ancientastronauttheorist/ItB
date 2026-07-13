@@ -22,7 +22,11 @@
 /// "enemy with no obvious target" case with a scalar penalty.
 
 use crate::board::{count_unit_deaths_between, Board, ActionResult, UnitFlags};
-use crate::enemy::{simulate_enemy_attacks, apply_spawn_blocking};
+use crate::enemy::{
+    apply_spawn_blocking,
+    persisting_spawn_points,
+    simulate_enemy_attacks,
+};
 use crate::simulate::simulate_action_with_target2;
 use crate::solver::MechAction;
 use crate::types::{Terrain, idx_to_xy, xy_to_idx};
@@ -161,14 +165,7 @@ fn apply_plan_and_enemy_phase(
     // so the marker remains for the next turn. Unoccupied markers are consumed
     // by emergence even though the unknown Vek itself is not materialized by
     // this bounded projection.
-    let blocked_spawn_points: Vec<(u8, u8)> = spawn_points.iter()
-        .copied()
-        .filter(|&(sx, sy)| {
-            b.unit_at(sx, sy)
-                .map(|idx| b.units[idx].hp > 0)
-                .unwrap_or(false)
-        })
-        .collect();
+    let blocked_spawn_points = persisting_spawn_points(&b, spawn_points);
     if !spawn_points.is_empty() {
         let before_spawn_block = b.clone();
         let spawn_result = apply_spawn_blocking(&mut b, spawn_points);

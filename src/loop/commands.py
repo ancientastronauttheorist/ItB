@@ -4683,14 +4683,17 @@ def _lookahead_robust_frontier(lookahead_frontier: list[dict]) -> list[dict]:
 def _lookahead_forecast_gaps(
     projected_bridge: dict,
     action_result: dict | None = None,
+    *,
+    source_spawning_tiles,
 ) -> list[dict]:
     """Describe state transitions omitted by stationary next-turn projection.
 
     ``project_plan_scenarios`` keeps surviving Vek on their post-enemy-phase
     tiles and only changes queued targets.  It also cannot instantiate the
-    identity, movement, or attack of a Vek emerging from a spawn marker.  The
-    synthetic solve remains useful, but a clean result is conditional whenever
-    either transition can still occur.
+    identity, movement, or attack of a Vek emerging from a spawn marker. The
+    caller supplies the source marker set because simulator v350 projects only
+    markers that persisted after a block. The synthetic solve remains useful,
+    but a clean result is conditional whenever either transition can occur.
     """
     if not isinstance(projected_bridge, dict):
         return [{"kind": "projected_board_missing"}]
@@ -4739,28 +4742,72 @@ def _lookahead_forecast_gaps(
             "enemy_uids": sorted(unmodeled_retarget_uids),
         })
 
-    spawning_tiles = [
-        tile for tile in projected_bridge.get("spawning_tiles", []) or []
-        if isinstance(tile, (list, tuple)) and len(tile) >= 2
-    ]
-    blocked = 0
-    if isinstance(action_result, dict):
+    def _spawn_markers(raw) -> set[tuple[int, int]]:
+        markers: set[tuple[int, int]] = set()
+        for tile in raw or []:
+            if not isinstance(tile, (list, tuple)) or len(tile) < 2:
+                continue
+            if isinstance(tile[0], bool) or isinstance(tile[1], bool):
+                continue
+            try:
+                marker = (int(tile[0]), int(tile[1]))
+            except (TypeError, ValueError):
+                continue
+            if 0 <= marker[0] < 8 and 0 <= marker[1] < 8:
+                markers.add(marker)
+        return markers
+
+    projected_markers = _spawn_markers(
+        projected_bridge.get("spawning_tiles", [])
+    )
+    source_markers = _spawn_markers(source_spawning_tiles)
+    emerged_markers = source_markers - projected_markers
+    unexpected_projected_markers = projected_markers - source_markers
+
+    reported_blocked = None
+    if isinstance(action_result, dict) and "spawns_blocked" in action_result:
         try:
-            blocked = max(0, int(action_result.get("spawns_blocked") or 0))
+            reported_blocked = max(
+                0,
+                int(action_result.get("spawns_blocked") or 0),
+            )
         except (TypeError, ValueError):
-            blocked = 0
-    unblocked_markers = max(0, len(spawning_tiles) - blocked)
+            reported_blocked = None
+
+    blocked_count_mismatch = (
+        reported_blocked is not None
+        and reported_blocked != len(projected_markers)
+    )
+    if unexpected_projected_markers or blocked_count_mismatch:
+        gaps.append({
+            "kind": "spawn_marker_lifecycle_inconsistent",
+            "source_spawn_markers": [list(p) for p in sorted(source_markers)],
+            "projected_spawn_markers": [
+                list(p) for p in sorted(projected_markers)
+            ],
+            "unexpected_projected_markers": [
+                list(p) for p in sorted(unexpected_projected_markers)
+            ],
+            "reported_spawns_blocked": reported_blocked,
+        })
+
     remaining_raw = projected_bridge.get("remaining_spawns")
     try:
         remaining_spawns = int(remaining_raw)
     except (TypeError, ValueError):
         remaining_spawns = 0
-    if unblocked_markers > 0 or remaining_spawns > 0:
+    if emerged_markers or projected_markers or remaining_spawns > 0:
         gaps.append({
             "kind": "spawn_materialization_unmodeled",
-            "current_spawn_points": len(spawning_tiles),
-            "projected_spawns_blocked": blocked,
-            "unblocked_spawn_markers": unblocked_markers,
+            "source_spawn_markers": [list(p) for p in sorted(source_markers)],
+            "persisting_spawn_markers": [
+                list(p) for p in sorted(projected_markers)
+            ],
+            "reported_spawns_blocked": reported_blocked,
+            "unmodeled_emergence_count": len(emerged_markers),
+            "unmodeled_emergence_tiles": [
+                list(p) for p in sorted(emerged_markers)
+            ],
             "projected_remaining_spawns": remaining_spawns,
         })
     return gaps
@@ -4914,7 +4961,6 @@ def _candidate_lookahead_preview(
     rust_module,
     bridge_data: dict,
     candidate_eval: dict,
-    spawns: list[tuple[int, int]],
     *,
     eval_weights_dict: dict | None,
     breakdown_weights,
@@ -4956,10 +5002,16 @@ def _candidate_lookahead_preview(
             projected_bridge = _prepare_projected_bridge(
                 projected_bridge, bridge_data, eval_weights_dict,
             )
+            projected_spawns = [
+                (int(tile[0]), int(tile[1]))
+                for tile in projected_bridge.get("spawning_tiles", []) or []
+                if isinstance(tile, (list, tuple)) and len(tile) >= 2
+            ]
             projected_board = Board.from_bridge_data(projected_bridge)
             forecast_gaps = _lookahead_forecast_gaps(
                 projected_bridge,
                 scenario.get("action_result", {}),
+                source_spawning_tiles=bridge_data.get("spawning_tiles", []),
             )
             scenario_preview = {
                 "scenario": scenario_label,
@@ -4999,7 +5051,7 @@ def _candidate_lookahead_preview(
                 projected_board,
                 projected_bridge,
                 sub_solution,
-                spawns,
+                projected_spawns,
                 current_turn=projected_bridge.get("turn", 0),
                 total_turns=projected_bridge.get("total_turns", 5),
                 remaining_spawns=projected_bridge.get(
@@ -8107,7 +8159,6 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         _rust,
                         bridge_data,
                         candidate_eval,
-                        spawns,
                         eval_weights_dict=eval_weights_dict,
                         breakdown_weights=breakdown_weights,
                         time_limit=time_limit,
