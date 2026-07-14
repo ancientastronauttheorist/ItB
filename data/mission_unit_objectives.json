@@ -18,6 +18,10 @@
     "destroy": [],
     "protect": ["Snowtank", "Snowlaser"]
   },
+  "Mission_BotDefense": {
+    "destroy": [],
+    "protect": ["Snowmine1"]
+  },
   "Mission_Bomb": {
     "destroy": [],
     "protect": ["ProtoBomb"]

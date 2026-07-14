@@ -13,6 +13,7 @@ from src.loop.commands import (
 )
 from src.loop.session import RunSession
 from src.model.board import Board
+from src.solver.plan_safety import audit_plan_safety
 from src.solver.solver import Solution
 from src.solver.verify import DiffResult
 
@@ -480,6 +481,51 @@ def test_summary_tracks_protected_objective_units_from_mission_metadata():
         "Snowtank1",
         "Snowlaser2",
     ]
+
+
+def test_botdefense_robot_loss_is_a_protected_objective_safety_block():
+    def summary_for(include_second_robot):
+        data = _bridge_with_mech()
+        data["mission_id"] = "Mission_BotDefense"
+        data["units"].append({
+            "uid": 974,
+            "type": "Snowmine1",
+            "x": 5,
+            "y": 2,
+            "hp": 1,
+            "max_hp": 1,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": ["SnowmineAtk1"],
+        })
+        if include_second_robot:
+            data["units"].append({
+                "uid": 975,
+                "type": "Snowmine1",
+                "x": 6,
+                "y": 0,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "move": 0,
+                "weapons": ["SnowmineAtk1"],
+            })
+        board = Board.from_bridge_data(data)
+        return _capture_board_summary(board, data)
+
+    current = summary_for(True)
+    predicted = summary_for(False)
+    safety = audit_plan_safety(current, predicted)
+
+    assert current["protected_objective_units_alive"] == 2
+    assert predicted["protected_objective_units_alive"] == 1
+    assert any(
+        violation["kind"] == "protected_objective_unit_lost"
+        and violation["blocking"]
+        for violation in safety["violations"]
+    )
 
 
 def test_summary_distinguishes_intact_and_damaged_train_value():

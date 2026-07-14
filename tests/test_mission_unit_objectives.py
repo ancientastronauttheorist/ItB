@@ -32,6 +32,26 @@ def test_mission_filler_protects_earth_mover():
     assert resolved["protect"] == ["Filler_Pawn"]
 
 
+def test_mission_botdefense_protects_snowmine_robots():
+    resolved = resolve_unit_objectives("Mission_BotDefense")
+
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["Snowmine1"]
+
+
+def test_mission_botdefense_empty_bridge_list_uses_static_robot_objective():
+    bridge_data = {
+        "mission_id": "Mission_BotDefense",
+        "protect_objective_unit_types": [],
+        "units": [{"uid": 974, "type": "Snowmine1", "hp": 1}],
+    }
+
+    resolved = inject_into_bridge(bridge_data)
+
+    assert resolved["protect"] == ["Snowmine1"]
+    assert bridge_data["protect_objective_unit_types"] == ["Snowmine1"]
+
+
 def test_bonus_debris_injects_bonus_debris_destroy_objective():
     bridge_data = {
         "mission_id": "Mission_Survive",
