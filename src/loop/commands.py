@@ -5860,11 +5860,72 @@ def _is_transient_delayed_multihit_damage_diff(
         and not is_missile_barrage
     ):
         return False
-    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+    if getattr(diff, "scalar_diffs", []):
         return False
     unit_diffs = getattr(diff, "unit_diffs", []) or []
-    if not unit_diffs:
+    tile_diffs = getattr(diff, "tile_diffs", []) or []
+    if not unit_diffs and not tile_diffs:
         return False
+
+    if is_missile_barrage and tile_diffs:
+        # A later Missile Barrage impact can kill an ACID pawn while a Blast
+        # Psion is alive.  The pawn may disappear before its corpse pool and
+        # cardinal death splash finish, leaving a mixed unit/tile lag.  Retry
+        # only the exact monotonic shapes seen while those effects are still
+        # landing.  A residual mismatch after the bounded rereads still
+        # follows the ordinary desync path.
+        tile_diffs_by_pos: dict[tuple[int, int], list[dict]] = {}
+        for tile_diff in tile_diffs:
+            x = tile_diff.get("x")
+            y = tile_diff.get("y")
+            if (
+                not isinstance(x, int)
+                or isinstance(x, bool)
+                or not isinstance(y, int)
+                or isinstance(y, bool)
+            ):
+                return False
+            tile_diffs_by_pos.setdefault((x, y), []).append(tile_diff)
+
+        for tile_diff in tile_diffs:
+            field = tile_diff.get("field")
+            if (
+                field == "acid"
+                and tile_diff.get("predicted") is True
+                and tile_diff.get("actual") is False
+            ):
+                continue
+            if field not in {"terrain", "building_hp"}:
+                return False
+            same_tile = tile_diffs_by_pos[(tile_diff["x"], tile_diff["y"])]
+            terrain_diff = next(
+                (item for item in same_tile if item.get("field") == "terrain"),
+                None,
+            )
+            hp_diff = next(
+                (
+                    item
+                    for item in same_tile
+                    if item.get("field") == "building_hp"
+                ),
+                None,
+            )
+            if (
+                not isinstance(terrain_diff, dict)
+                or terrain_diff.get("predicted") != "rubble"
+                or terrain_diff.get("actual") != "mountain"
+                or not isinstance(hp_diff, dict)
+                or hp_diff.get("predicted") != 0
+                or not isinstance(hp_diff.get("actual"), (int, float))
+                or isinstance(hp_diff.get("actual"), bool)
+                or hp_diff["actual"] <= 0
+                or hp_diff.get("predicted_terrain") != "rubble"
+                or hp_diff.get("actual_terrain") != "mountain"
+            ):
+                return False
+    elif tile_diffs:
+        return False
+
     for ud in unit_diffs:
         utype = str(ud.get("type") or "")
         if is_missile_barrage:

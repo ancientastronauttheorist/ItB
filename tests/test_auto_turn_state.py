@@ -1674,6 +1674,104 @@ def test_missile_barrage_mixed_shield_consumption_and_damage_lag_retries():
     ) is True
 
 
+def test_missile_barrage_delayed_acid_death_splash_tiles_get_settle_retry():
+    # Chaos Roll Unfair run 20260713_052159_731, Mission_Missiles turn 1:
+    # Firefly2 was already absent at the first read, while its ACID corpse pool
+    # and Blast-Psion splash on the adjacent Mountain were still landing.  A
+    # later Spider missile was also in flight.  The settled board matched the
+    # replay prediction exactly.
+    diff = DiffResult(
+        unit_diffs=[{
+            "uid": 1332,
+            "type": "Spider2",
+            "field": "hp",
+            "predicted": 2,
+            "actual": 3,
+        }],
+        tile_diffs=[
+            {
+                "x": 5,
+                "y": 1,
+                "field": "terrain",
+                "predicted": "rubble",
+                "actual": "mountain",
+            },
+            {
+                "x": 5,
+                "y": 1,
+                "field": "building_hp",
+                "predicted": 0,
+                "actual": 1,
+                "predicted_terrain": "rubble",
+                "actual_terrain": "mountain",
+            },
+            {
+                "x": 5,
+                "y": 2,
+                "field": "acid",
+                "predicted": True,
+                "actual": False,
+            },
+        ],
+    )
+
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Missiles_OneDmg", "attack"
+    ) is True
+    assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+        diff, "Missile Barrage", "attack"
+    ) is True
+
+
+def test_missile_barrage_tile_retry_rejects_unpaired_or_inverse_diffs():
+    cases = (
+        DiffResult(tile_diffs=[{
+            "x": 5,
+            "y": 1,
+            "field": "terrain",
+            "predicted": "rubble",
+            "actual": "mountain",
+        }]),
+        DiffResult(tile_diffs=[
+            {
+                "x": 5,
+                "y": 1,
+                "field": "terrain",
+                "predicted": "mountain",
+                "actual": "rubble",
+            },
+            {
+                "x": 5,
+                "y": 1,
+                "field": "building_hp",
+                "predicted": 1,
+                "actual": 0,
+                "predicted_terrain": "mountain",
+                "actual_terrain": "rubble",
+            },
+        ]),
+        DiffResult(tile_diffs=[{
+            "x": 5,
+            "y": 2,
+            "field": "acid",
+            "predicted": False,
+            "actual": True,
+        }]),
+        DiffResult(tile_diffs=[{
+            "x": 5,
+            "y": 2,
+            "field": "smoke",
+            "predicted": True,
+            "actual": False,
+        }]),
+    )
+
+    for diff in cases:
+        assert cmd_mod._is_transient_delayed_multihit_damage_diff(
+            diff, "Missiles_OneDmg", "attack"
+        ) is False
+
+
 def test_shield_barrage_status_lag_gets_longer_settle_retry():
     diff = DiffResult(unit_diffs=[
         {

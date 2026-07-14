@@ -487,3 +487,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 486 | 869 | Reviewed ordinary-building threat coverage may coexist with consented ACID debt. | `docs/agent/safety-gates.md` |
 | 487 | 871 | A proven one-step Spider move may precede a newly laid next-turn egg. | `docs/agent/safety-gates.md` |
 | 488 | 873 | A regular Spider's full proven Move-2 path may precede its next-turn egg. | `docs/agent/safety-gates.md` |
+| 489 | 875 | Missile Barrage kill side effects can remain in flight after the ACK. | `docs/agent/solver-reference.md` |
