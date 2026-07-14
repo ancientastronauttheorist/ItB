@@ -6033,6 +6033,16 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
             - predicted["protected_objective_units_alive"]
         )
     if (
+        "destroy_objective_units_alive" in predicted
+        and "destroy_objective_units_alive" in actual
+    ):
+        # Opposite polarity from protected objectives: a positive delta means
+        # more required kill targets survived than the solver predicted.
+        deltas["destroy_objective_units_alive_diff"] = (
+            actual["destroy_objective_units_alive"]
+            - predicted["destroy_objective_units_alive"]
+        )
+    if (
         isinstance(predicted.get("train_objective_value"), int)
         and isinstance(actual.get("train_objective_value"), int)
     ):
@@ -6149,6 +6159,9 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     if deltas.get("protected_objective_units_alive_diff", 0) < 0:
         unexpected.append(
             "Lost protected objective unit(s) unexpectedly")
+    if deltas.get("destroy_objective_units_alive_diff", 0) > 0:
+        unexpected.append(
+            "Destroy-objective unit(s) survived unexpectedly")
     if deltas.get("train_objective_value_diff", 0) < 0:
         unexpected.append(
             "Supply Train objective degraded unexpectedly")
@@ -6941,6 +6954,8 @@ def _post_enemy_needs_investigation(
             "protected_objective_units_frozen_diff",
         )
     ):
+        return True
+    if int(deltas.get("destroy_objective_units_alive_diff", 0) or 0) > 0:
         return True
     if int(
         deltas.get(

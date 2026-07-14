@@ -278,6 +278,7 @@ fn apply_env_danger(
     if let Some(uidx) = board.unit_at(x, y) {
         let unit = &mut board.units[uidx];
         if unit.hp > 0 && !(skip_enemy_units && unit.is_enemy()) {
+            let hp_before = unit.hp;
             // Tidal/Cataclysm/Seismic spare effectively-flying units. Massive
             // non-flying still die: water-conversion is destroy-not-drown per
             // project convention; chasm rules ignore Massive.
@@ -349,6 +350,9 @@ fn apply_env_danger(
                 }
             }
             // else: flying, non-lethal env doesn't hit
+            if unit.hp > 0 && unit.hp < hp_before {
+                crate::simulate::cancel_damaged_burrower_attack(unit);
+            }
         }
     }
     if let Some(idx) = enemy_died_idx {
@@ -816,7 +820,7 @@ pub fn simulate_enemy_attacks(
     // only matters if fire snuck in via an un-guarded path (future bug
     // guard) or if pilot_flags were injected mid-mission.
     for i in 0..board.unit_count as usize {
-        if board.units[i].fire() && board.units[i].hp > 0 {
+        if board.units[i].fire() && board.units[i].hp > 0 && !board.units[i].burrowed() {
             if board.flame_shielding && board.units[i].is_player() && board.units[i].is_mech() {
                 continue; // mechs immune to fire with Flame Shielding
             }
@@ -854,7 +858,10 @@ pub fn simulate_enemy_attacks(
     // Storm Generator: enemies in smoke take 1 damage
     if board.storm_generator {
         for i in 0..board.unit_count as usize {
-            if board.units[i].is_enemy() && board.units[i].hp > 0 {
+            if board.units[i].is_enemy()
+                && board.units[i].hp > 0
+                && !board.units[i].burrowed()
+            {
                 let x = board.units[i].x;
                 let y = board.units[i].y;
                 if board.tile(x, y).smoke() {
@@ -1155,7 +1162,7 @@ pub fn simulate_enemy_attacks(
     let mut smoke_cancelled_at_attack_start = [false; 16];
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
-        if u.hp > 0 && u.is_enemy() {
+        if u.hp > 0 && u.is_enemy() && !u.burrowed() {
             smoke_cancelled_at_attack_start[i] = board.tile(u.x, u.y).smoke();
         }
     }
@@ -1165,7 +1172,7 @@ pub fn simulate_enemy_attacks(
     // showed Pinnacle bots resolving in unit-list order, where sorting by UID
     // let a later Burnbug kill a Snowlaser before its live beam fired.
     let mut enemy_indices: Vec<usize> = (0..board.unit_count as usize)
-        .filter(|&i| board.units[i].is_enemy())
+        .filter(|&i| board.units[i].is_enemy() && !board.units[i].burrowed())
         .collect();
     if board.attack_order.is_empty() {
         enemy_indices.sort_by_key(|&i| board.units[i].uid);
@@ -2765,7 +2772,7 @@ fn apply_projectile_grapple(
 mod tests {
     use super::*;
     use crate::serde_bridge::board_from_json;
-    use crate::simulate::simulate_weapon;
+    use crate::simulate::{apply_damage, simulate_weapon};
 
     fn add_enemy_with_type(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, type_name: &str, qtx: i8, qty: i8) -> usize {
         let mut unit = Unit {
@@ -3479,6 +3486,153 @@ mod tests {
             assert_eq!(board.tile(4, 5).building_hp, expected_flank, "{type_name} should damage the other perpendicular flank");
             assert_eq!(board.tile(3, 4).building_hp, 1, "{type_name} should not hit a forward line tile");
         }
+    }
+
+    #[test]
+    fn test_nonlethal_bump_damage_cancels_alpha_burrower_slam() {
+        let mut board = Board::default();
+        let boss = add_enemy_with_type(&mut board, 1124, 4, 3, 3, "BlobberBoss", -1, -1);
+        board.units[boss].set_fire(true);
+        let burrower =
+            add_enemy_with_type(&mut board, 1197, 5, 4, 5, "Burrower2", 4, 4);
+        board.units[burrower]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::ACID | UnitFlags::FIRE);
+        board.units[burrower].queued_origin_x = 5;
+        board.units[burrower].queued_origin_y = 4;
+        board.units[burrower]
+            .flags
+            .insert(UnitFlags::QUEUED_ORIGIN_SET);
+
+        let mut bump = ActionResult::default();
+        apply_damage(
+            &mut board,
+            5,
+            4,
+            1,
+            &mut bump,
+            DamageSource::Bump,
+        );
+
+        assert_eq!(board.units[burrower].hp, 4);
+        assert_eq!(board.units[burrower].queued_target_x, -1);
+        assert!(!board.units[burrower].has_queued_attack());
+        assert!(board.units[burrower].burrowed());
+        assert_eq!(board.unit_at(5, 4), None);
+        assert_eq!(board.any_unit_at(5, 4), None);
+        assert!(!board.units[burrower].fire());
+        assert!(board.units[burrower].acid(), "ACID persists underground");
+        let projected = crate::turn_projection::board_to_json(&board, &[]);
+        assert!(
+            !projected.contains("\"uid\":1197"),
+            "an underground Burrower must be absent from projected board snapshots",
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.units[boss].hp, 2,
+            "the burning boss should take only its Fire tick; the canceled Burrower flank must not land",
+        );
+    }
+
+    #[test]
+    fn test_fire_tick_makes_surviving_burrower_retreat_before_its_attack() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(4, 4).terrain = Terrain::Building;
+        board.tile_mut(4, 4).building_hp = 2;
+
+        let burrower =
+            add_enemy_with_type(&mut board, 24, 5, 4, 3, "Burrower1", 4, 4);
+        board.units[burrower]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::FIRE);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[burrower].hp, 2);
+        assert!(board.units[burrower].burrowed());
+        assert!(!board.units[burrower].fire());
+        assert!(!board.units[burrower].has_queued_attack());
+        assert_eq!(board.tile(4, 4).building_hp, 2);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_environment_damage_makes_surviving_burrower_retreat_before_attack() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.env_danger = 1u64 << xy_to_idx(5, 4);
+        board.tile_mut(4, 4).terrain = Terrain::Building;
+        board.tile_mut(4, 4).building_hp = 2;
+
+        let burrower =
+            add_enemy_with_type(&mut board, 24, 5, 4, 3, "Burrower1", 4, 4);
+        board.units[burrower]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[burrower].hp, 2);
+        assert!(board.units[burrower].burrowed());
+        assert_eq!(board.tile(4, 4).building_hp, 2);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_shielded_burrower_does_not_retreat_without_real_damage() {
+        let mut board = Board::default();
+        let burrower =
+            add_enemy_with_type(&mut board, 24, 5, 4, 3, "Burrower1", 4, 4);
+        board.units[burrower]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::SHIELD);
+
+        let mut result = ActionResult::default();
+        apply_damage(
+            &mut board,
+            5,
+            4,
+            1,
+            &mut result,
+            DamageSource::Weapon,
+        );
+
+        assert_eq!(board.units[burrower].hp, 3);
+        assert!(!board.units[burrower].shield());
+        assert!(board.units[burrower].has_queued_attack());
+        assert_eq!(board.units[burrower].queued_target_x, 4);
+    }
+
+    #[test]
+    fn test_lethal_burrower_damage_is_a_kill_not_a_retreat() {
+        let mut board = Board::default();
+        let burrower =
+            add_enemy_with_type(&mut board, 24, 5, 4, 1, "Burrower1", 4, 4);
+        board.units[burrower]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let mut result = ActionResult::default();
+        apply_damage(
+            &mut board,
+            5,
+            4,
+            1,
+            &mut result,
+            DamageSource::Weapon,
+        );
+
+        assert_eq!(board.units[burrower].hp, 0);
+        assert!(!board.units[burrower].burrowed());
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]

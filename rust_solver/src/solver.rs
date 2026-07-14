@@ -760,7 +760,7 @@ pub(crate) fn get_weapon_targets(
             // excluded; clicking it silently spends the action with no effect.
             let mut fallback = None;
             for u in &board.units {
-                if u.hp <= 0 || (u.x, u.y) == (mx, my) { continue; }
+                if u.hp <= 0 || u.burrowed() || (u.x, u.y) == (mx, my) { continue; }
                 if u.is_enemy() {
                     targets.push((u.x, u.y));
                     return targets;
@@ -1372,9 +1372,16 @@ fn weapon_action_has_effect(
         }
         WeaponType::GlobalUnitEffect => {
             if wdef.shield() {
-                board.units.iter().any(|u| u.hp > 0 && (u.x, u.y) != (mx, my) && !u.shield())
+                board.units.iter().any(|u| {
+                    u.hp > 0
+                        && !u.burrowed()
+                        && (u.x, u.y) != (mx, my)
+                        && !u.shield()
+                })
             } else {
-                board.units.iter().any(|u| u.hp > 0 && (u.x, u.y) != (mx, my))
+                board.units.iter().any(|u| {
+                    u.hp > 0 && !u.burrowed() && (u.x, u.y) != (mx, my)
+                })
             }
         }
         WeaponType::Terraformer => {
@@ -1987,7 +1994,7 @@ fn prune_actions(
                     // candidates too much.
                     WeaponType::GlobalPush => {
                         if let Some(push_d) = support_wind_dir_from_target(target.0, target.1) {
-                            for u in board.units.iter().filter(|u| u.hp > 0) {
+                            for u in board.units.iter().filter(|u| u.hp > 0 && !u.burrowed()) {
                                 if push_hits_building(u.x, u.y, push_d, board) {
                                     s -= 300;
                                 }

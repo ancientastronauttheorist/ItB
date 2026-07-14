@@ -669,7 +669,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
     let mut units: Vec<Value> = Vec::with_capacity(board.unit_count as usize);
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
-        if u.hp <= 0 { continue; }
+        if u.hp <= 0 || u.burrowed() { continue; }
         let team_int: u8 = match u.team {
             crate::types::Team::Player  => 1,
             crate::types::Team::Neutral => 2,

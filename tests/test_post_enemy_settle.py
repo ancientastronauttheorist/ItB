@@ -845,6 +845,108 @@ def test_emergent_pod_classifier_fails_closed_for_known_or_wrong_tile_enemy():
         assert commands._post_enemy_needs_investigation(result)
 
 
+def test_surviving_destroy_objective_blocks_with_equal_enemy_aggregates():
+    predicted = {
+        "buildings_alive": 5,
+        "building_hp_total": 6,
+        "grid_power": 5,
+        "enemies_alive": 3,
+        "enemy_hp_total": 6,
+        "mech_hp": [],
+        "destroy_objective_units_alive": 0,
+    }
+    actual = {
+        **predicted,
+        "destroy_objective_units_alive": 1,
+        "destroy_objective_units": [{
+            "uid": 1124,
+            "type": "BlobberBoss",
+            "pos": [5, 6],
+            "hp": 2,
+            "alive": True,
+        }],
+    }
+
+    deltas = commands._compute_deltas(predicted, actual)
+
+    assert deltas["enemies_alive_diff"] == 0
+    assert deltas["destroy_objective_units_alive_diff"] == 1
+    assert (
+        "Destroy-objective unit(s) survived unexpectedly"
+        in deltas["unexpected_events"]
+    )
+    assert commands._post_enemy_needs_investigation(deltas)
+
+
+def test_destroy_objective_dying_unexpectedly_is_better_not_blocking():
+    predicted = {
+        "buildings_alive": 5,
+        "building_hp_total": 6,
+        "grid_power": 5,
+        "enemies_alive": 3,
+        "mech_hp": [],
+        "destroy_objective_units_alive": 1,
+    }
+    actual = {
+        **predicted,
+        "destroy_objective_units_alive": 0,
+    }
+
+    deltas = commands._compute_deltas(predicted, actual)
+
+    assert deltas["destroy_objective_units_alive_diff"] == -1
+    assert not commands._post_enemy_needs_investigation(deltas)
+
+
+def test_record_post_enemy_blocks_surviving_destroy_objective_with_equal_aggregates(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 14
+    session.current_mission = "Mission_BlobberBoss"
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "m14_turn_01_solve.json").write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 5,
+                "enemies_alive": 3,
+                "enemy_hp_total": 8,
+                "mech_hp": [
+                    {"uid": 0, "type": "JetMech", "hp": 2, "max_hp": 2}
+                ],
+                "mission_id": "Mission_BlobberBoss",
+                "destroy_objective_units_alive": 0,
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(5)
+    actual.mission_id = "Mission_BlobberBoss"
+    actual.destroy_objective_unit_types = ["BlobberBoss"]
+    boss = _enemy(1124, 5, 6)
+    boss.type = "BlobberBoss"
+    boss.hp = 2
+    boss.max_hp = 5
+    actual.units.extend([boss, _enemy(1196, 5, 2), _enemy(1220, 3, 5)])
+
+    result = commands._record_post_enemy(session, actual, 1)
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
+    assert result["deltas"]["enemies_alive_diff"] == 0
+    assert result["deltas"]["destroy_objective_units_alive_diff"] == 1
+    assert result["deltas"]["unexpected_events"] == [
+        "Destroy-objective unit(s) survived unexpectedly"
+    ]
+    assert session.post_enemy_block is not None
+
+
 def test_emergent_pod_classifier_fails_closed_for_partial_checkpoint_identity():
     board = _board(6)
     board.units.append(_enemy(369, 5, 5))

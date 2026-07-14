@@ -294,7 +294,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                 "hp": hp,
                 "max_hp": u.max_hp,
             }));
-        } else if u.is_enemy() && u.hp > 0 {
+        } else if u.is_enemy() && u.hp > 0 && !u.burrowed() {
             enemies_alive += 1;
             enemy_hp_total += u.hp as i32;
         }
@@ -424,6 +424,7 @@ fn capture_snapshot(
     let mut units: Vec<Value> = Vec::with_capacity(board.unit_count as usize);
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
+        if u.burrowed() && u.hp > 0 { continue; }
         let team_int: u8 = match u.team {
             crate::types::Team::Player  => 1,
             crate::types::Team::Neutral => 2,
@@ -724,6 +725,84 @@ mod tests {
             assert_eq!(boss["queued_origin"], json!([4, 2]));
             assert_eq!(boss["has_queued_attack"], true);
         }
+    }
+
+    #[test]
+    fn replay_solution_burrower_retreat_prevents_phantom_boss_kill() {
+        let bridge = r#"{
+            "mission_id": "Mission_BlobberBoss",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 7,
+            "tiles": [
+                {"x": 5, "y": 5, "terrain": "forest"}
+            ],
+            "units": [
+                {
+                    "uid": 1, "type": "IgniteMech", "x": 0, "y": 6,
+                    "hp": 4, "max_hp": 4, "team": 1, "mech": true,
+                    "active": true, "move": 3, "weapons": ["Ranged_Ignite"]
+                },
+                {
+                    "uid": 2, "type": "HornetMech", "x": 2, "y": 5,
+                    "hp": 5, "max_hp": 5, "team": 1, "mech": true,
+                    "active": true, "flying": true, "move": 4,
+                    "weapons": ["Vek_Hornet"]
+                },
+                {
+                    "uid": 1124, "type": "BlobberBoss", "x": 5, "y": 5,
+                    "hp": 5, "max_hp": 5, "team": 6, "pushable": true,
+                    "weapons": ["BlobberAtkB"]
+                },
+                {
+                    "uid": 1197, "type": "Burrower2", "x": 4, "y": 5,
+                    "hp": 5, "max_hp": 5, "team": 6, "pushable": false,
+                    "has_queued_attack": true,
+                    "queued_target": [4, 6], "queued_origin": [4, 5],
+                    "weapons": ["Burrower_Atk2"]
+                }
+            ]
+        }"#;
+        let plan = r#"[
+            {
+                "mech_uid": 2, "move_to": [6, 5],
+                "weapon_id": "Vek_Hornet", "target": [5, 5]
+            },
+            {
+                "mech_uid": 1, "move_to": [1, 4],
+                "weapon_id": "Ranged_Ignite", "target": [5, 4]
+            }
+        ]"#;
+
+        let raw = replay_solution(bridge, plan).expect("exact HQ replay succeeds");
+        let value: Value = serde_json::from_str(&raw).expect("valid replay JSON");
+
+        let post_player = value["post_player_board"]["units"]
+            .as_array()
+            .expect("post-player units");
+        assert!(
+            post_player.iter().all(|u| u["uid"] != 1197),
+            "the damaged Alpha Burrower should already be underground",
+        );
+        let post_boss = post_player
+            .iter()
+            .find(|u| u["uid"] == 1124)
+            .expect("boss survives player phase");
+        assert_eq!(post_boss["hp"], 3);
+        assert_eq!(post_boss["x"], 5);
+        assert_eq!(post_boss["y"], 6);
+        assert_eq!(post_boss["fire"], true);
+
+        let final_units = value["final_board"]["units"]
+            .as_array()
+            .expect("final units");
+        assert!(final_units.iter().all(|u| u["uid"] != 1197));
+        let final_boss = final_units
+            .iter()
+            .find(|u| u["uid"] == 1124)
+            .expect("boss survives the canceled Burrower slam");
+        assert_eq!(final_boss["hp"], 2);
+        assert_eq!(value["predicted_outcome"]["enemies_killed_by_enemy_phase"], 0);
     }
 
     #[test]

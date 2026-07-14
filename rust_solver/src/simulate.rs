@@ -30,6 +30,33 @@ fn clear_mites(unit: &mut Unit) {
     }
 }
 
+/// A surviving Burrower cancels its telegraphed attack as soon as it takes
+/// real damage and retreats underground.  The bounded board model retains the
+/// pawn internally at its last known tile as conservative latent next-turn
+/// pressure (the live bridge temporarily omits it), but marks it off-board so
+/// it cannot occupy tiles, take later hits, execute the canceled current-turn
+/// slam, or keep carried Fire while hidden. ACID intentionally persists.
+pub(crate) fn cancel_damaged_burrower_attack(unit: &mut Unit) -> bool {
+    if unit.hp <= 0 || !matches!(unit.type_name_str(), "Burrower1" | "Burrower2") {
+        return false;
+    }
+
+    unit.queued_target_x = -1;
+    unit.queued_target_y = -1;
+    unit.queued_target_raw_x = -1;
+    unit.queued_target_raw_y = -1;
+    unit.queued_origin_x = -1;
+    unit.queued_origin_y = -1;
+    unit.flags.remove(
+        UnitFlags::HAS_QUEUED_ATTACK
+            | UnitFlags::QUEUED_ORIGIN_SET
+            | UnitFlags::QUEUED_RAW_TARGET_SET,
+    );
+    unit.set_fire(false);
+    unit.set_burrowed(true);
+    true
+}
+
 // ── Blast Psion death explosion ──────────────────────────────────────────────
 
 /// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
@@ -1712,6 +1739,7 @@ fn apply_damage_core_with_options(
     let mut frozen_unit_absorbed_damage = false;
     let mut unit_received_nonshield_hit = false;
     let mut damaged_enemy_web_source_uid = None;
+    let mut burrower_retreated = false;
     let mut forest_pickup_deferred = false;
 
     // Damage unit if present
@@ -1761,6 +1789,7 @@ fn apply_damage_core_with_options(
             if actual > 0 {
                 clear_mites(unit);
                 unit_received_nonshield_hit = true;
+                burrower_retreated = cancel_damaged_burrower_attack(unit);
                 if unit.is_enemy()
                     && matches!(
                         source,
@@ -1802,7 +1831,7 @@ fn apply_damage_core_with_options(
 
     // Live refreshes ambient fire pickup after non-shield damage/thaw hits
     // an occupant already standing on a burning tile.
-    if unit_received_nonshield_hit {
+    if unit_received_nonshield_hit && !burrower_retreated {
         if let Some(idx) = board.unit_at(x, y) {
             apply_fire_tile_pickup(board, idx, x, y, result);
         }
@@ -6750,7 +6779,7 @@ fn sim_global_unit_effect(
 
     let targets: Vec<(u8, u8)> = board.units.iter()
         .filter(|u| {
-            u.hp > 0 && if wdef.targets_allies() {
+            u.hp > 0 && !u.burrowed() && if wdef.targets_allies() {
                 (u.x, u.y) != source
             } else {
                 u.is_enemy()

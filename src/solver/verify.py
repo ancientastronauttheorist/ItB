@@ -1676,7 +1676,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # catch the origin fire. Pre-existing, explicit weapon, and destination Fire
 # remain unchanged. Pre-v359 corpus archived as
 # failure_db_snapshot_sim_v358.jsonl.
-SIMULATOR_VERSION = 359
+# v360 - Any real nonlethal damage to Burrower1/2 marks it off-board, cancels
+# its queued slam, and clears carried Fire before enemy attacks, matching its
+# immediate underground retreat. The bounded model retains the hidden pawn
+# internally as latent HP/future pressure, omits it from board snapshots, and
+# preserves ACID. Pre-v360 corpus archived as failure_db_snapshot_sim_v359.jsonl.
+SIMULATOR_VERSION = 360
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

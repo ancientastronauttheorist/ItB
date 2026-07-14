@@ -163,6 +163,10 @@ bitflags! {
         /// Bridge provided the raw, pre-normalization queued target. Used as
         /// a direction fallback when normalized targets collapse to origin.
         const QUEUED_RAW_TARGET_SET = 0b1000_0000_0000_0000_0000;
+        /// A living Burrower that took damage and retreated underground for
+        /// the rest of the current turn. It remains alive for kill/HP/future
+        /// pressure accounting but is absent from board occupancy and output.
+        const BURROWED = 0b0001_0000_0000_0000_0000_0000;
     }
 }
 
@@ -250,6 +254,7 @@ impl Unit {
     pub fn minor(&self) -> bool { self.flags.contains(UnitFlags::MINOR) }
     pub fn boosted(&self) -> bool { self.flags.contains(UnitFlags::BOOSTED) }
     pub fn infected(&self) -> bool { self.flags.contains(UnitFlags::INFECTED) }
+    pub fn burrowed(&self) -> bool { self.flags.contains(UnitFlags::BURROWED) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -259,6 +264,7 @@ impl Unit {
     pub fn set_web(&mut self, v: bool) { self.flags.set(UnitFlags::WEB, v); }
     pub fn set_boosted(&mut self, v: bool) { self.flags.set(UnitFlags::BOOSTED, v); }
     pub fn set_infected(&mut self, v: bool) { self.flags.set(UnitFlags::INFECTED, v); }
+    pub fn set_burrowed(&mut self, v: bool) { self.flags.set(UnitFlags::BURROWED, v); }
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
@@ -626,7 +632,7 @@ impl Board {
     pub fn unit_at(&self, x: u8, y: u8) -> Option<usize> {
         for i in 0..self.unit_count as usize {
             let u = &self.units[i];
-            if u.x == x && u.y == y && u.hp > 0 {
+            if u.x == x && u.y == y && u.hp > 0 && !u.burrowed() {
                 return Some(i);
             }
         }
@@ -638,7 +644,7 @@ impl Board {
     pub fn any_unit_at(&self, x: u8, y: u8) -> Option<usize> {
         for i in 0..self.unit_count as usize {
             let u = &self.units[i];
-            if u.x == x && u.y == y {
+            if u.x == x && u.y == y && !u.burrowed() {
                 return Some(i);
             }
         }

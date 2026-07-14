@@ -2279,7 +2279,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   pushed to clean ground stays unburned; a blocked or non-moving pawn catches
 //   the origin fire. Pre-existing, explicit weapon, and destination Fire remain
 //   unchanged. Pre-v359 corpus archived as failure_db_snapshot_sim_v358.jsonl.
-pub const SIMULATOR_VERSION: u32 = 359;
+// v360 - Any real nonlethal damage to Burrower1/2 marks it off-board, cancels
+//   its queued slam, and clears carried Fire before the enemy attack step,
+//   matching its immediate underground retreat. The bounded model retains the
+//   hidden pawn internally as conservative latent HP/future pressure, omits it
+//   from board snapshots, and preserves ACID. Pre-v360 corpus archived as
+//   failure_db_snapshot_sim_v359.jsonl.
+pub const SIMULATOR_VERSION: u32 = 360;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
