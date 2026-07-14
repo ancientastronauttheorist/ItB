@@ -22853,7 +22853,7 @@ def test_dirty_consented_ordinary_grid_loss_satisfies_threat_audit():
     )
     threat_audit = {
         "still_threatened_count": 1,
-        "entries": [{"target_visual": "D4"}],
+        "entries": [{"target_visual": "D4", "target_hp": 1}],
     }
     plan_safety = {
         "blocking": True,
@@ -22896,7 +22896,7 @@ def test_dirty_consented_grid_loss_with_mech_hp_satisfies_threat_audit():
     )
     threat_audit = {
         "still_threatened_count": 1,
-        "entries": [{"target_visual": "F3"}],
+        "entries": [{"target_visual": "F3", "target_hp": 1}],
     }
     plan_safety = {
         "blocking": True,
@@ -22927,6 +22927,177 @@ def test_dirty_consented_grid_loss_with_mech_hp_satisfies_threat_audit():
         session,
         dirty_consent_validated=True,
     ) is False
+
+
+def test_dirty_consented_grid_loss_with_mech_acid_satisfies_threat_audit():
+    # Chaos Roll Unfair run 20260713_052159_731, Mission_Civilians T1:
+    # the exact rank-0 consent covered one 2-HP building hit plus Punch
+    # becoming ACIDed. The unrelated status debt must not require a second
+    # override for the already-reviewed ordinary building loss.
+    session = RunSession(
+        run_id="chaos",
+        difficulty=3,
+        tags=["solver_evaluation"],
+    )
+    threat_audit = {
+        "still_threatened_count": 1,
+        "entries": [{"target_visual": "E5", "target_hp": 2}],
+    }
+    plan_safety = {
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": "building_destroyed", "blocking": True},
+            {"kind": "building_hp_loss", "blocking": True},
+            {"kind": "mech_hp_loss", "blocking": False},
+            {"kind": "mech_acid", "blocking": True},
+        ],
+        "current": {
+            "grid_power": 6,
+            "building_hp_total": 11,
+            "buildings_alive": 8,
+            "mech_hp_total": 14,
+            "mechs_acid": [],
+        },
+        "predicted": {
+            "grid_power": 4,
+            "building_hp_total": 9,
+            "buildings_alive": 7,
+            "mech_hp_total": 12,
+            "mechs_acid": [{"uid": 0, "type": "PunchMech"}],
+        },
+    }
+
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=False,
+    ) is True
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is False
+
+    extra_threat_audit = {
+        "still_threatened_count": 2,
+        "entries": [
+            {"target_visual": "E5", "target_hp": 2},
+            {"target_visual": "E4", "target_hp": 2},
+        ],
+    }
+    assert commands._threat_audit_requires_block(
+        extra_threat_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    missing_hp_audit = {
+        "still_threatened_count": 1,
+        "entries": [{"target_visual": "E5"}],
+    }
+    assert commands._threat_audit_requires_block(
+        missing_hp_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    collapsed_plan_safety = {
+        **plan_safety,
+        "predicted": {**plan_safety["predicted"], "grid_power": 0},
+    }
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        collapsed_plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    malformed_plan_safety = {
+        **plan_safety,
+        "current": {**plan_safety["current"], "building_hp_total": True},
+    }
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        malformed_plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    negative_loss_plan_safety = {
+        **plan_safety,
+        "predicted": {**plan_safety["predicted"], "buildings_alive": 9},
+    }
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        negative_loss_plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    inconsistent_destroyed_plan_safety = {
+        **plan_safety,
+        "predicted": {**plan_safety["predicted"], "grid_power": 6},
+    }
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        inconsistent_destroyed_plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    malformed_count_audit = {
+        "still_threatened_count": True,
+        "entries": [{"target_visual": "E5", "target_hp": 2}],
+    }
+    assert commands._threat_audit_requires_block(
+        malformed_count_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    negative_count_audit = {
+        "still_threatened_count": -1,
+        "entries": [],
+    }
+    assert commands._threat_audit_requires_block(
+        negative_count_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    inconsistent_count_plan_safety = {
+        **plan_safety,
+        "predicted": {
+            **plan_safety["predicted"],
+            "grid_power": 5,
+            "building_hp_total": 10,
+            "buildings_alive": 6,
+        },
+    }
+    assert commands._threat_audit_requires_block(
+        extra_threat_audit,
+        inconsistent_count_plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
+
+    negative_scalar_plan_safety = {
+        **plan_safety,
+        "predicted": {**plan_safety["predicted"], "building_hp_total": -1},
+    }
+    assert commands._threat_audit_requires_block(
+        threat_audit,
+        negative_scalar_plan_safety,
+        session,
+        dirty_consent_validated=True,
+    ) is True
 
 
 def test_lightning_speed_loss_policy_allows_train_speed_trade():

@@ -1151,8 +1151,16 @@ def _threat_audit_requires_block(
     # after the live audit began.
     if threat_audit.get("status") == "ERROR":
         return True
-    still_threatened = int(threat_audit.get("still_threatened_count") or 0)
-    if still_threatened <= 0:
+    raw_still_threatened = threat_audit.get("still_threatened_count")
+    if isinstance(raw_still_threatened, bool) or not isinstance(
+        raw_still_threatened,
+        int,
+    ):
+        return True
+    still_threatened = raw_still_threatened
+    if still_threatened < 0:
+        return True
+    if still_threatened == 0:
         return False
     safety = plan_safety if isinstance(plan_safety, dict) else {}
     if dirty_consent_validated and _dirty_plan_covers_threat_audit_loss(
@@ -1315,15 +1323,23 @@ def _dirty_plan_covers_threat_audit_loss(
 ) -> bool:
     """Return true when a reviewed dirty plan already accounts for threats.
 
-    The threat audit runs after actions, just before End Turn. During Lightning
-    War we may intentionally accept an ordinary grid/building hit for speed.
-    In that case the audit should not demand a second manual override when the
-    remaining threat count is no larger than the already-reviewed ordinary
-    building/grid loss. Objective, pylon, timeline-collapse, and mech-loss
-    cases still block here.
+    The threat audit runs after actions, just before End Turn. An exact dirty
+    consent may intentionally accept an ordinary grid/building hit together
+    with nonlethal mech HP or ACID debt. The audit should not demand a second
+    manual override when the remaining threat count is no larger than the
+    already-reviewed ordinary building/grid loss. Objective, pylon,
+    timeline-collapse, mech-loss, and unknown loss kinds still block here.
     """
-    still_threatened = int(threat_audit.get("still_threatened_count") or 0)
-    if still_threatened <= 0:
+    raw_still_threatened = threat_audit.get("still_threatened_count")
+    if isinstance(raw_still_threatened, bool) or not isinstance(
+        raw_still_threatened,
+        int,
+    ):
+        return False
+    still_threatened = raw_still_threatened
+    if still_threatened < 0:
+        return False
+    if still_threatened == 0:
         return True
     if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
         return False
@@ -1338,6 +1354,7 @@ def _dirty_plan_covers_threat_audit_loss(
         "building_hp_loss",
         "building_destroyed",
         "mech_hp_loss",
+        "mech_acid",
         "pod_lost",
     }
     if not kinds or any(kind not in allowed_kinds for kind in kinds):
@@ -1347,20 +1364,69 @@ def _dirty_plan_covers_threat_audit_loss(
     predicted = plan_safety.get("predicted")
     if not isinstance(current, dict) or not isinstance(predicted, dict):
         return False
+    entries = threat_audit.get("entries")
+    if not isinstance(entries, list):
+        return False
+    live_entries = [
+        entry
+        for entry in entries
+        if isinstance(entry, dict)
+        and (
+            not isinstance(entry.get("coverage"), dict)
+            or str(entry.get("coverage", {}).get("reason") or "").startswith(
+                "still_threatened"
+            )
+        )
+    ]
+    if len(live_entries) != still_threatened:
+        return False
+    for entry in live_entries:
+        target_hp = entry.get("target_hp")
+        if (
+            isinstance(target_hp, bool)
+            or not isinstance(target_hp, int)
+            or target_hp <= 0
+        ):
+            return False
 
-    def loss(field: str) -> int:
+    def exact_loss(field: str) -> int | None:
         cur = current.get(field)
         pred = predicted.get(field)
-        if isinstance(cur, int) and isinstance(pred, int):
-            return max(0, cur - pred)
-        return 0
+        if (
+            isinstance(cur, bool)
+            or isinstance(pred, bool)
+            or not isinstance(cur, int)
+            or not isinstance(pred, int)
+            or cur < 0
+            or pred < 0
+            or pred > cur
+        ):
+            return None
+        return cur - pred
 
-    ordinary_hits = max(
-        loss("grid_power"),
-        loss("building_hp_total"),
-        loss("buildings_alive"),
-    )
-    return ordinary_hits >= still_threatened
+    grid_loss = exact_loss("grid_power")
+    building_hp_loss = exact_loss("building_hp_total")
+    buildings_destroyed = exact_loss("buildings_alive")
+    predicted_grid = predicted.get("grid_power")
+    if (
+        grid_loss is None
+        or building_hp_loss is None
+        or buildings_destroyed is None
+        or isinstance(predicted_grid, bool)
+        or not isinstance(predicted_grid, int)
+        or predicted_grid <= 0
+    ):
+        return False
+
+    if grid_loss <= 0 or building_hp_loss <= 0:
+        return False
+    if buildings_destroyed > min(grid_loss, building_hp_loss):
+        return False
+    if buildings_destroyed > 0:
+        covered_targets = buildings_destroyed
+    else:
+        covered_targets = 1
+    return still_threatened <= covered_targets
 
 
 def _end_turn_click_plan_result(*, bridge_ack: str | None = None) -> dict:

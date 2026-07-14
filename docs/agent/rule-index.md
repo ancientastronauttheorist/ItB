@@ -482,3 +482,6 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 481 | 859 | A newly laid Spider egg can explain an adjacent next-turn Web. | `docs/agent/safety-gates.md` |
 | 482 | 861 | Bridge attacks resolve the exact effective loadout slot and fail closed. | `docs/agent/solver-reference.md` |
 | 483 | 863 | ACID pawn death pools can appear after the attack ACK. | `docs/agent/solver-reference.md` |
+| 484 | 865 | Needle Shot lethal selected targets can corpse-bump a live blocker. | `docs/agent/solver-reference.md` |
+| 485 | 867 | Needle Shot centers intrinsic Explosive Decay on the final corpse tile. | `docs/agent/solver-reference.md` |
+| 486 | 869 | Reviewed ordinary-building threat coverage may coexist with consented ACID debt. | `docs/agent/safety-gates.md` |
