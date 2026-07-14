@@ -1035,6 +1035,105 @@ def test_partial_re_solve_threat_audit_keeps_real_post_player_threats():
     assert result["status"] == "THREAT_AUDIT_BLOCKED_RE_SOLVE"
 
 
+def test_partial_re_solve_record_preserves_final_board(monkeypatch):
+    import itb_solver
+
+    bridge_data = {
+        "phase": "combat_player",
+        "turn": 1,
+        "total_turns": 4,
+        "remaining_spawns": 0,
+        "grid_power": 5,
+        "grid_power_max": 7,
+        "spawning_tiles": [],
+        "tiles": [],
+        "units": [{
+            "uid": 0,
+            "type": "PunchMech",
+            "mech": True,
+            "team": 1,
+            "x": 4,
+            "y": 4,
+            "hp": 3,
+            "max_hp": 3,
+            "active": True,
+            "can_move": True,
+            "weapons": ["Prime_Punchmech"],
+        }],
+    }
+    post_player = json.loads(json.dumps(bridge_data))
+    post_player["units"][0]["active"] = False
+    final_board = json.loads(json.dumps(post_player))
+    final_board["turn"] = 2
+
+    def fake_solve(_payload, _time_limit):
+        return json.dumps({
+            "actions": [{
+                "mech_uid": 0,
+                "mech_type": "PunchMech",
+                "move_to": [4, 4],
+                "weapon_id": "None",
+                "target": [255, 255],
+                "description": "PunchMech, skip",
+            }],
+            "score": 0,
+            "stats": {
+                "timed_out": False,
+                "permutations_tried": 1,
+                "total_permutations": 1,
+            },
+            "threats": [],
+            "initial_building_threats": [],
+        })
+
+    final_summary = cmd_mod._capture_board_summary(
+        Board.from_bridge_data(final_board),
+        final_board,
+    )
+
+    def fake_replay(*_args, **_kwargs):
+        return {
+            "action_results": [{}],
+            "predicted_states": [],
+            "post_player_board": post_player,
+            "final_board": final_board,
+            "predicted_outcome": final_summary,
+            "score_breakdown": {},
+            "replay_annotations": [],
+        }
+
+    monkeypatch.setattr(itb_solver, "solve", fake_solve)
+    monkeypatch.setattr("src.solver.solver.replay_solution", fake_replay)
+    monkeypatch.setattr(
+        cmd_mod,
+        "_enrich_bridge_mech_weapons_from_save",
+        lambda _data: [],
+    )
+    monkeypatch.setattr(
+        cmd_mod,
+        "_enrich_bridge_limited_mission_weapons_from_save",
+        lambda _data: [],
+    )
+
+    _actions, _states, _score, _safety, solve_data = (
+        cmd_mod._re_solve_partial(
+            Board.from_bridge_data(bridge_data),
+            bridge_data,
+            done_uids=set(),
+            mid_action_uid=None,
+            time_limit=1.0,
+            session=RunSession(run_id="run"),
+        )
+    )
+
+    assert solve_data is not None
+    assert solve_data["partial_re_solve"] == {
+        "done_uids": [],
+        "mid_action_uid": None,
+    }
+    assert solve_data["final_board"] == final_board
+
+
 def test_enemy_survived_fuzzy_blocks_end_turn_even_when_audit_clean():
     block = cmd_mod._fuzzy_detections_require_end_turn_block([{
         "signature": "death|Brute_Grapple|attack",

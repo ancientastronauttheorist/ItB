@@ -1340,6 +1340,7 @@ def _next_turn_spider_egg_web_case():
         "final_board": {
             "turn": 2,
             "units": [dict(mech_checkpoint), dict(spider_checkpoint)],
+            "tiles": [],
             "spawning_tiles": [],
         },
     }
@@ -1582,6 +1583,212 @@ def _m16_moved_spider_egg_web_case():
     return board, solve_data, deltas, punch_item, vip_item
 
 
+def _m16_multistep_spider_egg_web_case():
+    """Reproduce Mission_Civilians turn 3 -> 4 from run 20260713_052159_731."""
+    board = _board(4)
+    hornet = board.units[0]
+    hornet.uid = 2
+    hornet.type = "HornetMech"
+    hornet.x, hornet.y = 2, 4
+    hornet.hp = hornet.max_hp = 5
+    hornet.weapon = "Vek_Hornet"
+    hornet.web = True
+    hornet.web_source_uid = 1502
+
+    vip = Unit(
+        uid=1338,
+        type="VIP_Truck",
+        x=3,
+        y=5,
+        hp=1,
+        max_hp=1,
+        team=1,
+        is_mech=False,
+        move_speed=0,
+        flying=False,
+        massive=False,
+        armor=False,
+        pushable=True,
+        weapon="VIP_Truck_Move",
+        active=True,
+    )
+    vip.web = True
+    vip.web_source_uid = 1502
+    board.units.append(vip)
+
+    spider = _enemy(1339, 5, 5)
+    spider.type = "Spider2"
+    spider.hp = 3
+    spider.max_hp = 4
+    spider.move_speed = spider.base_move = 2
+    spider.weapon = "SpiderAtk2"
+    spider.fire = True
+    spider.has_queued_attack = False
+    spider.queued_origin_x, spider.queued_origin_y = spider.x, spider.y
+    spider.queued_target_x = spider.queued_target_y = -1
+    board.units.append(spider)
+
+    existing_firefly = _enemy(1415, 6, 5)
+    existing_firefly.type = "Firefly2"
+    existing_firefly.hp = existing_firefly.max_hp = 5
+    existing_firefly.move_speed = 2
+    existing_firefly.weapon = "FireflyAtk2"
+    existing_firefly.has_queued_attack = True
+    existing_firefly.queued_origin_x = existing_firefly.x
+    existing_firefly.queued_origin_y = existing_firefly.y
+    existing_firefly.queued_target_x = 6
+    existing_firefly.queued_target_y = 4
+    board.units.append(existing_firefly)
+
+    spawn_firefly = _enemy(1453, 5, 1)
+    spawn_firefly.type = "Firefly2"
+    spawn_firefly.hp = spawn_firefly.max_hp = 5
+    spawn_firefly.move_speed = 2
+    spawn_firefly.weapon = "FireflyAtk2"
+    board.units.append(spawn_firefly)
+
+    spawn_scarab = _enemy(1454, 5, 4)
+    spawn_scarab.type = "Scarab2"
+    spawn_scarab.hp = spawn_scarab.max_hp = 4
+    spawn_scarab.move_speed = 3
+    spawn_scarab.weapon = "ScarabAtk2"
+    board.units.append(spawn_scarab)
+
+    egg = _enemy(1502, 2, 5, minor=True)
+    egg.type = "WebbEgg1"
+    egg.hp = egg.max_hp = 1
+    egg.move_speed = 0
+    egg.weapon = "WebeggHatch1"
+    egg.has_queued_attack = True
+    egg.queued_origin_x = egg.queued_target_x = egg.x
+    egg.queued_origin_y = egg.queued_target_y = egg.y
+    board.units.append(egg)
+
+    hornet_checkpoint = {
+        "uid": hornet.uid,
+        "type": hornet.type,
+        "team": 1,
+        "hp": hornet.hp,
+        "x": hornet.x,
+        "y": hornet.y,
+    }
+    vip_checkpoint = {
+        "uid": vip.uid,
+        "type": vip.type,
+        "team": 1,
+        "hp": vip.hp,
+        "x": vip.x,
+        "y": vip.y,
+    }
+    post_spider = {
+        "uid": spider.uid,
+        "type": spider.type,
+        "team": 6,
+        "hp": 4,
+        "x": 6,
+        "y": 4,
+        "move": 2,
+        "base_move": 2,
+        "can_move": True,
+        "fire": True,
+        "weapons": [spider.weapon],
+        "queued_origin": [-1, -1],
+        "queued_target": [-1, -1],
+    }
+    final_spider = {**post_spider, "hp": 3}
+    firefly_checkpoint = {
+        "uid": existing_firefly.uid,
+        "type": existing_firefly.type,
+        "team": 6,
+        "hp": existing_firefly.hp,
+        "x": 6,
+        "y": 6,
+        "move": 2,
+        "can_move": True,
+        "weapons": [existing_firefly.weapon],
+        "queued_origin": [6, 5],
+        "queued_target": [5, 6],
+    }
+    solve_data = {
+        "simulator_version": 362,
+        "post_player_board": {
+            "turn": 3,
+            "units": [
+                dict(hornet_checkpoint),
+                dict(vip_checkpoint),
+                dict(post_spider),
+                dict(firefly_checkpoint),
+            ],
+            "tiles": [{
+                "x": 6,
+                "y": 4,
+                "terrain": "ground",
+                "fire": True,
+            }],
+            "spawning_tiles": [[5, 1], [7, 3]],
+        },
+        "final_board": {
+            "turn": 4,
+            "units": [
+                dict(hornet_checkpoint),
+                dict(vip_checkpoint),
+                dict(final_spider),
+                dict(firefly_checkpoint),
+            ],
+            "tiles": [{
+                "x": 6,
+                "y": 4,
+                "terrain": "ground",
+                "fire": True,
+            }],
+            "spawning_tiles": [],
+        },
+    }
+    hornet_item = {
+        "uid": hornet.uid,
+        "type": hornet.type,
+        "pos": [hornet.x, hornet.y],
+    }
+    vip_item = {
+        "uid": vip.uid,
+        "type": vip.type,
+        "pos": [vip.x, vip.y],
+        "hp": vip.hp,
+        "max_hp": vip.max_hp,
+        "alive": True,
+        "frozen": False,
+        "webbed": True,
+        "team": 1,
+    }
+    deltas = {
+        "enemies_alive_diff": 3,
+        "protected_objective_units_webbed_diff": 1,
+        "mech_status_diff": [
+            {
+                "key": "mechs_webbed",
+                "status": "Web",
+                "predicted_count": 0,
+                "actual_count": 1,
+                "unexpected": [hornet_item],
+                "cleared": [],
+            },
+            {
+                "key": "protected_objective_units_webbed",
+                "status": "Web",
+                "predicted_count": 0,
+                "actual_count": 1,
+                "unexpected": [vip_item],
+                "cleared": [],
+            },
+        ],
+        "unexpected_events": [
+            "HornetMech gained unexpected Web status",
+            "VIP_Truck gained unexpected Web status",
+        ],
+    }
+    return board, solve_data, deltas, hornet_item, vip_item
+
+
 def test_compute_deltas_tracks_protected_objective_web_status():
     base = {
         "buildings_alive": 7,
@@ -1663,6 +1870,154 @@ def test_m16_moved_spider_egg_web_explains_mech_and_vip_status():
     )
 
 
+def test_m16_multistep_spider_egg_web_explains_hornet_and_vip_status():
+    board, solve_data, deltas, hornet_item, vip_item = (
+        _m16_multistep_spider_egg_web_case()
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=4,
+        expected_turn=4,
+    )
+
+    assert result["mech_status_diff"][0]["unexpected"] == [hornet_item]
+    assert result["mech_status_diff"][1]["unexpected"] == [vip_item]
+    assert all(
+        delta["unexplained_unexpected"] == []
+        for delta in result["mech_status_diff"]
+    )
+    assert {
+        (item["uid"], item["source_uid"], item["spider_uid"])
+        for item in result["next_turn_web_grapples"]
+    } == {(2, 1502, 1339), (1338, 1502, 1339)}
+    assert all(
+        item["reason"]
+        == "next_turn_moved_surviving_spider_laid_adjacent_webb_egg"
+        and item["spider_previous_position"] == [6, 4]
+        and item["spider_position"] == [5, 5]
+        for item in result["next_turn_web_grapples"]
+    )
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_multistep_spider_egg_web_requires_exact_path_evidence():
+    cases = (
+        "move_not_two",
+        "unexplained_parent_hp_drop",
+        "parent_hp_drop_exceeds_fire_tick",
+        "final_live_fire_mismatch",
+        "both_ground_paths_blocked",
+        "both_ground_paths_wrecked",
+        "both_ground_paths_are_spawn_markers",
+        "destination_wrecked",
+        "destination_is_spawn_marker",
+        "egg_target_wrecked",
+        "egg_target_is_spawn_marker",
+        "duplicate_tile_evidence",
+        "malformed_tile_evidence",
+    )
+    for case in cases:
+        board, solve_data, deltas, hornet_item, vip_item = (
+            _m16_multistep_spider_egg_web_case()
+        )
+        spider = next(unit for unit in board.units if unit.uid == 1339)
+        post_spider = solve_data["post_player_board"]["units"][2]
+        final_spider = solve_data["final_board"]["units"][2]
+        final_units = solve_data["final_board"]["units"]
+        final_tiles = solve_data["final_board"]["tiles"]
+
+        if case == "move_not_two":
+            final_spider["move"] = 3
+        elif case == "unexplained_parent_hp_drop":
+            post_spider["fire"] = False
+        elif case == "parent_hp_drop_exceeds_fire_tick":
+            post_spider["hp"] = 5
+        elif case == "final_live_fire_mismatch":
+            spider.fire = False
+        elif case == "both_ground_paths_blocked":
+            final_tiles.extend([
+                {"x": 5, "y": 4, "terrain": "mountain"},
+                {"x": 6, "y": 5, "terrain": "water"},
+            ])
+        elif case == "both_ground_paths_wrecked":
+            final_units.extend([
+                {
+                    "uid": 1700,
+                    "type": "Combat1",
+                    "team": 1,
+                    "hp": 0,
+                    "x": 5,
+                    "y": 4,
+                },
+                {
+                    "uid": 1701,
+                    "type": "Combat1",
+                    "team": 1,
+                    "hp": 0,
+                    "x": 6,
+                    "y": 5,
+                },
+            ])
+        elif case == "both_ground_paths_are_spawn_markers":
+            solve_data["post_player_board"]["spawning_tiles"] = [
+                [5, 4],
+                [6, 5],
+            ]
+        elif case == "destination_wrecked":
+            final_units.append({
+                "uid": 1702,
+                "type": "Combat1",
+                "team": 1,
+                "hp": 0,
+                "x": 5,
+                "y": 5,
+            })
+        elif case == "destination_is_spawn_marker":
+            solve_data["post_player_board"]["spawning_tiles"].append([5, 5])
+        elif case == "egg_target_wrecked":
+            final_units.append({
+                "uid": 1703,
+                "type": "Combat1",
+                "team": 1,
+                "hp": 0,
+                "x": 2,
+                "y": 5,
+            })
+        elif case == "egg_target_is_spawn_marker":
+            solve_data["post_player_board"]["spawning_tiles"].append([2, 5])
+        elif case == "duplicate_tile_evidence":
+            final_tiles.append(dict(final_tiles[0]))
+        elif case == "malformed_tile_evidence":
+            final_tiles.append({"x": "bad", "y": 0, "terrain": "ground"})
+
+        result = commands._classify_next_turn_web_grapples(
+            deltas,
+            solve_data,
+            board,
+            actual_turn=4,
+            expected_turn=4,
+        )
+
+        assert result["mech_status_diff"][0]["unexplained_unexpected"] == [
+            hornet_item
+        ], case
+        assert result["mech_status_diff"][1]["unexplained_unexpected"] == [
+            vip_item
+        ], case
+        assert result["next_turn_web_grapples"] == [], case
+        assert commands._post_enemy_needs_investigation(
+            result,
+            RunSession(run_id="run", difficulty=3),
+        ), case
+
+
 def test_explained_mech_web_preserves_unexplained_vip_web_event():
     board, solve_data, deltas, _punch_item, vip_item = (
         _m16_moved_spider_egg_web_case()
@@ -1693,9 +2048,8 @@ def test_explained_mech_web_preserves_unexplained_vip_web_event():
 
 def test_moved_spider_egg_web_requires_exact_movement_evidence():
     cases = (
-        "outside_one_step",
+        "outside_move_budget",
         "checkpoint_position_drift",
-        "egg_not_checkpoint_aligned",
         "final_cannot_move",
         "final_move_zero",
         "final_spider_webbed",
@@ -1717,13 +2071,10 @@ def test_moved_spider_egg_web_requires_exact_movement_evidence():
         post_spider = solve_data["post_player_board"]["units"][2]
         final_spider = solve_data["final_board"]["units"][2]
 
-        if case == "outside_one_step":
-            spider.y = 5
+        if case == "outside_move_budget":
+            spider.y = 6
         elif case == "checkpoint_position_drift":
             post_spider["x"], post_spider["y"] = 5, 3
-        elif case == "egg_not_checkpoint_aligned":
-            post_spider["x"], post_spider["y"] = 5, 4
-            final_spider["x"], final_spider["y"] = 5, 4
         elif case == "final_cannot_move":
             final_spider["can_move"] = False
         elif case == "final_move_zero":

@@ -6725,6 +6725,8 @@ def _classify_next_turn_web_grapples(
             or str(getattr(egg, "weapon", "")) != "WebeggHatch1"
             or not getattr(egg, "has_queued_attack", False)
             or getattr(board, "spider_psion_active", False)
+            or post_spawn_positions is None
+            or (int(egg.x), int(egg.y)) in post_spawn_positions
             or (
                 int(getattr(egg, "queued_origin_x", -1)),
                 int(getattr(egg, "queued_origin_y", -1)),
@@ -6806,6 +6808,7 @@ def _classify_next_turn_web_grapples(
             if not isinstance(tiles, list):
                 return None
             found: dict | None = None
+            seen: set[tuple[int, int]] = set()
             for raw in tiles:
                 if not isinstance(raw, dict):
                     return None
@@ -6813,7 +6816,14 @@ def _classify_next_turn_web_grapples(
                 y = raw.get("y")
                 if not plain_int(x) or not plain_int(y):
                     return None
-                if (int(x), int(y)) == pos:
+                raw_pos = (int(x), int(y))
+                if (
+                    not all(0 <= value < 8 for value in raw_pos)
+                    or raw_pos in seen
+                ):
+                    return None
+                seen.add(raw_pos)
+                if raw_pos == pos:
                     found = raw
             # Rust bridge serialization omits ordinary ground tiles.
             return found if found is not None else {"terrain": "ground"}
@@ -6824,14 +6834,80 @@ def _classify_next_turn_web_grapples(
             for raw in final_units:
                 if not isinstance(raw, dict) or not plain_int(raw.get("hp")):
                     return None
-                if int(raw["hp"]) <= 0:
-                    continue
                 raw_pos = checkpoint_position(raw)
                 if raw_pos is None:
                     return None
                 if raw_pos == pos:
+                    # A serialized dead row is a wreck until proven otherwise.
                     return True
             return False
+
+        def final_checkpoint_ground_path_exists(
+            start: tuple[int, int],
+            destination: tuple[int, int],
+            move_budget,
+        ) -> bool:
+            """Prove a conservative regular-Spider path in the final board.
+
+            The next AI setup may move a surviving Spider before it selects
+            an egg target.  We need only prove that the observed destination
+            was reachable, not reconstruct the AI's exact route.  Restrict
+            the proof to empty ordinary-Ground tiles; friendly pass-through
+            and special terrain remain deliberately unsupported.
+            """
+            if (
+                not plain_int(move_budget)
+                or not 1 <= int(move_budget) <= 8
+                or start == destination
+                or post_spawn_positions is None
+                or not all(0 <= value < 8 for value in (*start, *destination))
+            ):
+                return False
+
+            frontier = [(start, 0)]
+            seen = {start}
+            while frontier:
+                (x, y), distance = frontier.pop(0)
+                if distance >= int(move_budget):
+                    continue
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    pos = (x + dx, y + dy)
+                    if (
+                        pos in seen
+                        or not all(0 <= value < 8 for value in pos)
+                        or pos in post_spawn_positions
+                    ):
+                        continue
+                    tile = final_checkpoint_tile(pos)
+                    occupied = final_checkpoint_occupied(pos)
+                    if (
+                        not isinstance(tile, dict)
+                        or str(tile.get("terrain") or "ground").lower()
+                        != "ground"
+                        or occupied is not False
+                        or (
+                            pos == destination
+                            and tile.get("smoke") not in (None, False)
+                        )
+                    ):
+                        continue
+                    if pos == destination:
+                        return True
+                    seen.add(pos)
+                    frontier.append((pos, distance + 1))
+            return False
+
+        egg_position = (int(egg.x), int(egg.y))
+        egg_checkpoint_tile = final_checkpoint_tile(egg_position)
+        egg_checkpoint_occupied = final_checkpoint_occupied(egg_position)
+        if (
+            not isinstance(egg_checkpoint_tile, dict)
+            or str(
+                egg_checkpoint_tile.get("terrain") or "ground"
+            ).lower() != "ground"
+            or egg_checkpoint_occupied is not False
+        ):
+            return None
 
         candidates: list[Unit] = []
         for spider in actual_by_uid.values():
@@ -6873,6 +6949,19 @@ def _classify_next_turn_web_grapples(
                 if isinstance(final_spider, dict)
                 else None
             )
+
+            def final_parent_status_matches() -> bool:
+                if not isinstance(final_spider, dict):
+                    return False
+                for key in ("acid", "fire", "frozen", "shield", "web"):
+                    value = final_spider.get(key, False)
+                    if (
+                        not isinstance(value, bool)
+                        or value != bool(getattr(spider, key, False))
+                    ):
+                        return False
+                return True
+
             checkpoint_parent_unchanged = (
                 previous_spider_pos is not None
                 and previous_spider_pos == final_spider_pos
@@ -6892,29 +6981,27 @@ def _classify_next_turn_web_grapples(
                 )
                 and 2 <= live_egg_distance <= 8
             )
-            checkpoint_egg_aligned = (
-                checkpoint_parent_unchanged
-                and (
-                    final_spider_pos[0] == int(egg.x)
-                    or final_spider_pos[1] == int(egg.y)
-                )
-                and final_spider_pos != (int(egg.x), int(egg.y))
-            )
             moved_parent_proven = False
             if parent_moved and isinstance(final_spider, dict):
                 final_move = final_spider.get("move")
                 destination_tile = final_checkpoint_tile(live_spider_pos)
-                egg_tile = final_checkpoint_tile((int(egg.x), int(egg.y)))
                 destination_occupied = final_checkpoint_occupied(live_spider_pos)
-                egg_occupied = final_checkpoint_occupied(
-                    (int(egg.x), int(egg.y))
-                )
                 moved_parent_proven = (
                     final_spider.get("can_move") is True
                     and plain_int(final_move)
-                    and int(final_move) >= 1
-                    and abs(final_spider_pos[0] - live_spider_pos[0])
-                    + abs(final_spider_pos[1] - live_spider_pos[1]) == 1
+                    and int(final_move) == 2
+                    and (
+                        final_spider.get("base_move") is None
+                        or (
+                            plain_int(final_spider.get("base_move"))
+                            and int(final_spider["base_move"]) == 2
+                        )
+                    )
+                    and final_checkpoint_ground_path_exists(
+                        final_spider_pos,
+                        live_spider_pos,
+                        final_move,
+                    )
                     and (
                         final_spider.get("frozen") is None
                         or final_spider.get("frozen") is False
@@ -6928,18 +7015,29 @@ def _classify_next_turn_web_grapples(
                     and str(destination_tile.get("terrain") or "ground").lower()
                     == "ground"
                     and destination_tile.get("smoke") is not True
-                    and isinstance(egg_tile, dict)
-                    and str(egg_tile.get("terrain") or "ground").lower()
-                    == "ground"
                     and destination_occupied is False
-                    and egg_occupied is False
-                    and checkpoint_egg_aligned
                 )
             parent_position_proven = (
                 checkpoint_parent_unchanged
                 and (
                     final_spider_pos == live_spider_pos
                     or moved_parent_proven
+                )
+            )
+            parent_hp_transition_proven = (
+                isinstance(previous_spider, dict)
+                and isinstance(final_spider, dict)
+                and plain_int(previous_spider.get("hp"))
+                and plain_int(final_spider.get("hp"))
+                and int(previous_spider["hp"]) > 0
+                and (
+                    int(previous_spider["hp"]) == int(final_spider["hp"])
+                    or (
+                        int(previous_spider["hp"])
+                        == int(final_spider["hp"]) + 1
+                        and previous_spider.get("fire") is True
+                        and final_spider.get("fire") is True
+                    )
                 )
             )
             if (
@@ -6953,8 +7051,9 @@ def _classify_next_turn_web_grapples(
                 or final_spider.get("type") != spider_type
                 or not plain_int(previous_spider.get("hp"))
                 or not plain_int(final_spider.get("hp"))
-                or int(previous_spider["hp"]) != int(spider.hp)
+                or not parent_hp_transition_proven
                 or int(final_spider["hp"]) != int(spider.hp)
+                or not final_parent_status_matches()
                 or not parent_position_proven
                 or not checkpoint_explicitly_queueless(previous_spider)
                 or not checkpoint_explicitly_queueless(final_spider)
@@ -48989,6 +49088,7 @@ def _re_solve_partial(
                 "action_results": enriched.get("action_results", []),
                 "predicted_states": enriched.get("predicted_states", []),
                 "post_player_board": enriched.get("post_player_board", {}),
+                "final_board": final_board_data or {},
                 "replay_annotations": enriched.get("replay_annotations", []),
                 "current_outcome": current_outcome,
                 "predicted_outcome": enriched.get("predicted_outcome", {}),
