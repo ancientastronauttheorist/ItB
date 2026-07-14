@@ -1376,7 +1376,9 @@ fn weapon_action_has_effect(
                     u.hp > 0
                         && !u.burrowed()
                         && (u.x, u.y) != (mx, my)
-                        && !u.shield()
+                        && (!u.shield()
+                            || (weapon_id == WId::MissilesShield
+                                && board.mission_id == "Mission_Missiles"))
                 })
             } else {
                 board.units.iter().any(|u| {
@@ -3819,6 +3821,45 @@ mod top_k_tests {
             }),
             "Mission_Missiles should spend a Detritus Contraption shot instead of skipping"
         );
+    }
+
+    #[test]
+    fn mission_missiles_enumerates_shield_barrage_when_all_targets_are_shielded() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Missiles".to_string();
+        let idx = board.add_unit(Unit {
+            uid: 20,
+            x: 1,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::MissilesShield as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Missile_Unit");
+        let enemy = board.add_unit(Unit {
+            uid: 21,
+            x: 6,
+            y: 3,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[enemy].set_shield(true);
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(actions.iter().any(|a| {
+            a.1 == WId::MissilesShield && a.2 == (6, 3)
+        }), "the objective use must remain legal even when Shield Barrage changes no status");
+
+        board.mission_id.clear();
+        let non_objective_actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(!non_objective_actions.iter().any(|a| a.1 == WId::MissilesShield));
     }
 
     #[test]

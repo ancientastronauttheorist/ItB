@@ -1690,7 +1690,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # decay on the final corpse tile before any Blast/Boss death burst. In-path
 # kills, generic melee, enemy Hornet attacks, and BombRock timing stay
 # unchanged. Pre-v362 corpus archived as failure_db_snapshot_sim_v361.jsonl.
-SIMULATOR_VERSION = 362
+# v363 - Detritus global barrages resolve their snapshotted targets in Lua's
+# x-then-y board-coordinate order instead of insertion/UID order, preserving
+# aura-teardown and chained-death timing. Mission_Missiles also keeps an
+# otherwise status-no-op Shield Barrage legal because the four uses themselves
+# are the objective. Pre-v363 corpus archived as failure_db_snapshot_sim_v362.jsonl.
+SIMULATOR_VERSION = 363
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -6806,7 +6806,7 @@ fn sim_global_unit_effect(
         return;
     }
 
-    let targets: Vec<(u8, u8)> = board.units.iter()
+    let mut targets: Vec<(u8, u8)> = board.units.iter()
         .filter(|u| {
             u.hp > 0 && !u.burrowed() && if wdef.targets_allies() {
                 (u.x, u.y) != source
@@ -6816,6 +6816,11 @@ fn sim_global_unit_effect(
         })
         .map(|u| (u.x, u.y))
         .collect();
+    // Support_Missiles snapshots targets with x as the outer loop and y as
+    // the inner loop before queuing the per-pawn effects. Preserve that
+    // board-coordinate order: chained aura teardown and death bursts can make
+    // the result observably different from Board insertion/UID order.
+    targets.sort_unstable();
 
     for (x, y) in targets {
         if wdef.damage > 0 {
@@ -11080,6 +11085,29 @@ mod tests {
         let _ = simulate_weapon(&mut invalid, invalid_caster, WId::MissilesOneDmg, 3, 3);
         assert_eq!(invalid.units[invalid_caster].hp, 2, "source click should no-op");
         assert_eq!(invalid.units[invalid_enemy].hp, 3, "source click should emit no missiles");
+    }
+
+    #[test]
+    fn test_missile_barrage_uses_lua_coordinate_order_for_blast_psion_teardown() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 0, 7, 7, 2, WId::MissilesOneDmg);
+        // Insert the ordinary Vek before the lower-x Blast Psion so insertion
+        // order is deliberately the inverse of Lua's x-then-y target order.
+        let vek = add_enemy_type(&mut board, 1, 3, 1, 1, "Scarab1");
+        let psion = add_enemy_type(&mut board, 2, 1, 1, 1, "Jelly_Explode1");
+        board.blast_psion = true;
+        board.tile_mut(3, 2).terrain = Terrain::Building;
+        board.tile_mut(3, 2).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, caster, WId::MissilesOneDmg, 3, 1);
+
+        assert!(board.units[psion].hp <= 0);
+        assert!(board.units[vek].hp <= 0);
+        assert_eq!(
+            board.tile(3, 2).building_hp,
+            2,
+            "Lua hits the lower-x Blast Psion first, disabling its aura before the later Vek dies",
+        );
     }
 
     #[test]

@@ -2296,7 +2296,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   In-path kills, generic melee, enemy Hornet attacks, and BombRock timing
 //   remain unchanged. Pre-v362 corpus archived as
 //   failure_db_snapshot_sim_v361.jsonl.
-pub const SIMULATOR_VERSION: u32 = 362;
+// v363 - Detritus global barrages resolve their snapshotted targets in Lua's
+//   x-then-y board-coordinate order instead of Board insertion/UID order, so
+//   aura teardown and chained death effects have engine-parity timing. During
+//   Mission_Missiles, an otherwise status-no-op Shield Barrage also remains a
+//   legal action because spending all four Contraption charges is the mission
+//   objective. Pre-v363 corpus archived as failure_db_snapshot_sim_v362.jsonl.
+pub const SIMULATOR_VERSION: u32 = 363;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
