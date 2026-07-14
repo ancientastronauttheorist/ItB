@@ -2285,7 +2285,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   hidden pawn internally as conservative latent HP/future pressure, omits it
 //   from board snapshots, and preserves ACID. Pre-v360 corpus archived as
 //   failure_db_snapshot_sim_v359.jsonl.
-pub const SIMULATOR_VERSION: u32 = 360;
+// v361 - Techno-Hornet Needle Shot retains a lethally hit selected target
+//   through its same-SpaceDamage forward push. The corpse can bump a live
+//   blocker behind it; generic melee corpse absorption and in-path Needle
+//   tiles remain unchanged. Pre-v361 corpus archived as
+//   failure_db_snapshot_sim_v360.jsonl.
+pub const SIMULATOR_VERSION: u32 = 361;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

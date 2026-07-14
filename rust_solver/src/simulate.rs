@@ -4253,6 +4253,11 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
                     WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB
                 ) {
                     apply_push_with_policy(board, tx, ty, dir, result, ARACHNOID_BITE_PUSH_POLICY);
+                } else if matches!(
+                    weapon_id,
+                    WId::VekHornet | WId::VekHornetA | WId::VekHornetB | WId::VekHornetAB
+                ) {
+                    apply_push_dead_bumps_live_blocker(board, tx, ty, dir, result);
                 } else if wdef.burns_fire_targets() {
                     apply_push_with_policy(board, tx, ty, dir, result, FLAMETHROWER_PUSH_POLICY);
                 } else {
@@ -10166,6 +10171,27 @@ mod tests {
                     weapon, max_range, targets);
             }
         }
+    }
+
+    #[test]
+    fn test_needle_shot_killed_target_corpse_bumps_live_blocker() {
+        // Chaos Roll Unfair run 20260713_052159_731, Mission_Civilians T1:
+        // boosted base Needle Shot killed the ACID Web Egg on E6, and the
+        // same SpaceDamage's forward corpse push bumped Ignite on D6 for 1.
+        // Pre-v361 generic melee corpse absorption left Ignite at full HP.
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 2, 2, 2, 5, WId::VekHornet);
+        board.units[hornet].set_boosted(true);
+        let egg = add_enemy_type(&mut board, 1380, 2, 3, 1, "WebbEgg1");
+        board.units[egg].set_acid(true);
+        let ignite = add_mech(&mut board, 1, 2, 4, 4, WId::RangedIgnite);
+
+        let result = simulate_weapon(&mut board, hornet, WId::VekHornet, 2, 3);
+
+        assert!(board.units[egg].hp <= 0, "boosted ACID hit kills the Web Egg");
+        assert_eq!(board.units[ignite].hp, 3, "killed egg corpse bumps Ignite once");
+        assert_eq!(result.enemy_damage_dealt, 4);
+        assert_eq!(result.mech_damage_taken, 1);
     }
 
     #[test]
