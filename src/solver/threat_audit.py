@@ -726,6 +726,50 @@ def _will_die_to_prior_melee_before_attack(board: Board, attacker: Unit) -> tupl
     return False, ""
 
 
+def _will_die_to_prior_starfish_aoe_before_attack(
+    board: Board,
+    attacker: Unit,
+) -> tuple[bool, str]:
+    """True when an earlier Starfish diagonal strike kills this attacker."""
+    for other in _ordered_prior_enemies(board, attacker):
+        if other.weapon not in STARFISH_SELF_AOE_WEAPONS:
+            continue
+        if not _attacker_can_fire_before_prior_attack(board, other):
+            continue
+
+        queued_x = int(getattr(other, "queued_target_x", -1))
+        queued_y = int(getattr(other, "queued_target_y", -1))
+        if queued_x < 0 or queued_y < 0:
+            queued_x = int(other.target_x)
+            queued_y = int(other.target_y)
+        if (queued_x, queued_y) != (int(other.x), int(other.y)):
+            continue
+
+        prior_push = _prior_attack_push_destination(board, other)
+        if prior_push is None:
+            center_x, center_y = int(other.x), int(other.y)
+        else:
+            center_x, center_y = prior_push[0], prior_push[1]
+        if (
+            abs(int(attacker.x) - center_x) != 1
+            or abs(int(attacker.y) - center_y) != 1
+        ):
+            continue
+
+        wdef = get_weapon_def(other.weapon)
+        if wdef is None:
+            continue
+        damage = int(getattr(other, "weapon_damage", 0) or 0) or int(wdef.damage)
+        if _weapon_damage_kills_unit(damage, attacker):
+            return (
+                True,
+                f"earlier {other.type} uid={int(other.uid)} diagonal self-AOE "
+                f"hits attacker before it fires",
+            )
+
+    return False, ""
+
+
 def _will_die_to_prior_artillery_before_attack(board: Board, attacker: Unit) -> tuple[bool, str]:
     """True when an earlier enemy artillery shot lands on this attacker."""
     for other in _ordered_prior_enemies(board, attacker):
@@ -931,6 +975,11 @@ def _coverage_reason(
     )
     if melee_kill:
         return "attacker_will_die_to_prior_melee", melee_detail
+    starfish_kill, starfish_detail = _will_die_to_prior_starfish_aoe_before_attack(
+        board, attacker
+    )
+    if starfish_kill:
+        return "attacker_will_die_to_prior_starfish_aoe", starfish_detail
     artillery_kill, artillery_detail = _will_die_to_prior_artillery_before_attack(
         board, attacker
     )

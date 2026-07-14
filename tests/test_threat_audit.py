@@ -361,6 +361,72 @@ def test_threat_audit_dungboss_kills_bouncer_before_building_attack():
     )
 
 
+@pytest.mark.parametrize(
+    ("attack_order", "alpha_damage", "expected_status"),
+    [
+        ([1089, 1096], 2, "OK"),
+        ([1096, 1089], 2, "WARN"),
+        ([1089, 1096], 1, "WARN"),
+    ],
+)
+def test_threat_audit_starfish_kills_later_starfish_before_building_attack(
+    attack_order,
+    alpha_damage,
+    expected_status,
+):
+    """Archive m11 t3: E4 Alpha Starfish kills D5 before its C4 hit."""
+    board = Board()
+    board.attack_order = attack_order
+    board.tile(4, 5).terrain = "building"
+    board.tile(4, 5).building_hp = 2
+
+    alpha = _enemy(
+        uid=1089,
+        pawn_type="Starfish2",
+        x=4,
+        y=3,
+        tx=4,
+        ty=3,
+        hp=3,
+    )
+    alpha.max_hp = 4
+    alpha.weapon = "StarfishAtk2"
+    alpha.weapon_damage = alpha_damage
+    alpha.queued_target_x = 4
+    alpha.queued_target_y = 3
+    board.units.append(alpha)
+
+    starfish = _enemy(
+        uid=1096,
+        pawn_type="Starfish1",
+        x=3,
+        y=4,
+        tx=3,
+        ty=4,
+        hp=2,
+    )
+    starfish.max_hp = 2
+    starfish.weapon = "StarfishAtk1"
+    starfish.weapon_damage = 1
+    starfish.queued_target_x = 3
+    starfish.queued_target_y = 4
+    board.units.append(starfish)
+
+    initial = capture_building_threats(board)
+    audit = audit_threat_coverage(initial, board)
+
+    assert len(initial) == 1
+    assert initial[0]["target_visual"] == "C4"
+    assert audit["status"] == expected_status
+    if expected_status == "OK":
+        assert audit["still_threatened_count"] == 0
+        assert audit["entries"][0]["coverage"]["reason"] == (
+            "attacker_will_die_to_prior_starfish_aoe"
+        )
+    else:
+        assert audit["still_threatened_count"] == 1
+
+
 def test_threat_audit_attacker_will_die_to_prior_artillery():
     board = Board()
     board.attack_order = [10, 20]
