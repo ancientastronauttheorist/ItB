@@ -1512,7 +1512,8 @@ fn finish_instant_unit_death(
 /// Apply normal damage but defer Blast Psion explosion dispatch until the
 /// caller has resolved a simultaneous push. Used for single SpaceDamage-style
 /// damage+push hits where live game death effects occur from the final corpse
-/// tile rather than the pre-push damage tile.
+/// tile rather than the pre-push damage tile. Selected callers may also defer
+/// intrinsic volatile decay through the same push.
 pub(crate) fn apply_damage_defer_death_explosion(
     board: &mut Board,
     x: u8,
@@ -1522,7 +1523,7 @@ pub(crate) fn apply_damage_defer_death_explosion(
     source: DamageSource,
 ) -> Option<usize> {
     apply_damage_defer_death_explosion_impl(
-        board, x, y, damage, result, source, false, None, false,
+        board, x, y, damage, result, source, false, None, false, false,
     ).0
 }
 
@@ -1538,12 +1539,14 @@ fn apply_damage_defer_death_explosion_for_simultaneous_push(
     damage: u8,
     result: &mut ActionResult,
     source: DamageSource,
-) -> (Option<usize>, bool) {
-    let (death_explosion, _, forest_pickup_deferred) =
+    defer_volatile_decay: bool,
+) -> (Option<usize>, Option<usize>, bool) {
+    let (death_explosion, _, volatile_decay, forest_pickup_deferred) =
         apply_damage_defer_death_explosion_impl(
             board, x, y, damage, result, source, false, None, true,
+            defer_volatile_decay,
         );
-    (death_explosion, forest_pickup_deferred)
+    (death_explosion, volatile_decay, forest_pickup_deferred)
 }
 
 /// Prime Leap needs the normal BombRock exclusion around its landing mech,
@@ -1559,7 +1562,7 @@ fn apply_damage_defer_death_explosion_with_bombrock_exclusion(
     bombrock_exclude: Option<(u8, u8)>,
 ) -> Option<usize> {
     apply_damage_defer_death_explosion_impl(
-        board, x, y, damage, result, source, false, bombrock_exclude, false,
+        board, x, y, damage, result, source, false, bombrock_exclude, false, false,
     ).0
 }
 
@@ -1573,9 +1576,11 @@ fn apply_damage_defer_death_explosion_impl(
     defer_bombrock: bool,
     bombrock_exclude: Option<(u8, u8)>,
     defer_new_forest_pickup: bool,
-) -> (Option<usize>, Option<(u8, u8)>, bool) {
-    if damage == 0 { return (None, None, false); }
+    defer_volatile_decay: bool,
+) -> (Option<usize>, Option<(u8, u8)>, Option<usize>, bool) {
+    if damage == 0 { return (None, None, None, false); }
     let mut deferred_bombrock = None;
+    let mut deferred_volatile_decay = None;
 
     let death_check = if board.blast_psion || board.boss_psion {
         board.unit_at(x, y).and_then(|idx| {
@@ -1629,13 +1634,18 @@ fn apply_damage_defer_death_explosion_impl(
 
     if let Some(idx) = volatile_check {
         if board.units[idx].hp <= 0 {
-            apply_volatile_decay(board, x, y, result, 0);
+            if defer_volatile_decay {
+                deferred_volatile_decay = Some(idx);
+            } else {
+                apply_volatile_decay(board, x, y, result, 0);
+            }
         }
     }
 
     (
         death_check.filter(|idx| board.units[*idx].hp <= 0),
         deferred_bombrock,
+        deferred_volatile_decay,
         forest_pickup_deferred,
     )
 }
@@ -2329,6 +2339,13 @@ fn is_prime_leap_weapon(weapon_id: WId) -> bool {
     matches!(
         weapon_id,
         WId::PrimeLeap | WId::PrimeLeapA | WId::PrimeLeapB | WId::PrimeLeapAB
+    )
+}
+
+fn is_needle_shot_weapon(weapon_id: WId) -> bool {
+    matches!(
+        weapon_id,
+        WId::VekHornet | WId::VekHornetA | WId::VekHornetB | WId::VekHornetAB
     )
 }
 
@@ -4157,16 +4174,19 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
     } else {
         DamageSource::Weapon
     };
-    let (deferred_death_explosion, forest_pickup_deferred) = if defer_target_death_explosion {
-        apply_damage_defer_death_explosion_for_simultaneous_push(
-            board, tx, ty, target_dmg, result, direct_hit_source,
-        )
-    } else if !wdef.chain() {
-        apply_damage(board, tx, ty, target_dmg, result, direct_hit_source);
-        (None, false)
-    } else {
-        (None, false)
-    };
+    let defer_target_volatile_decay = is_needle_shot_weapon(weapon_id);
+    let (deferred_death_explosion, deferred_volatile_decay, forest_pickup_deferred) =
+        if defer_target_death_explosion {
+            apply_damage_defer_death_explosion_for_simultaneous_push(
+                board, tx, ty, target_dmg, result, direct_hit_source,
+                defer_target_volatile_decay,
+            )
+        } else if !wdef.chain() {
+            apply_damage(board, tx, ty, target_dmg, result, direct_hit_source);
+            (None, None, false)
+        } else {
+            (None, None, false)
+        };
 
     // Chain weapon (Electric Whip): BFS through adjacent pawns, and with
     // Building Chain powered, through live Grid Buildings as zero-damage
@@ -4253,10 +4273,7 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
                     WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB
                 ) {
                     apply_push_with_policy(board, tx, ty, dir, result, ARACHNOID_BITE_PUSH_POLICY);
-                } else if matches!(
-                    weapon_id,
-                    WId::VekHornet | WId::VekHornetA | WId::VekHornetB | WId::VekHornetAB
-                ) {
+                } else if is_needle_shot_weapon(weapon_id) {
                     apply_push_dead_bumps_live_blocker(board, tx, ty, dir, result);
                 } else if wdef.burns_fire_targets() {
                     apply_push_with_policy(board, tx, ty, dir, result, FLAMETHROWER_PUSH_POLICY);
@@ -4295,6 +4312,12 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
                 }
                 apply_fire_tile_pickup(board, idx, tx, ty, result);
             }
+        }
+
+        if let Some(idx) = deferred_volatile_decay {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_volatile_decay(board, ex, ey, result, 0);
         }
 
         if let Some(idx) = deferred_death_explosion {
@@ -4900,7 +4923,7 @@ fn sim_projectile(
         let deferred_death_explosion = if skip_friendly_damage {
             None
         } else if defer_death_explosion {
-            let (death_explosion, bombrock_explosion, _) =
+            let (death_explosion, bombrock_explosion, _, _) =
                 apply_damage_defer_death_explosion_impl(
                     board,
                     hx,
@@ -4910,6 +4933,7 @@ fn sim_projectile(
                     damage_source,
                     defer_bombrock_explosion,
                     None,
+                    false,
                     false,
                 );
             deferred_bombrock_explosion = bombrock_explosion;
@@ -10192,6 +10216,35 @@ mod tests {
         assert_eq!(board.units[ignite].hp, 3, "killed egg corpse bumps Ignite once");
         assert_eq!(result.enemy_damage_dealt, 4);
         assert_eq!(result.mech_damage_taken, 1);
+    }
+
+    #[test]
+    fn test_needle_shot_killed_boom_bot_open_push_decays_from_final_tile() {
+        // Chaos Roll Unfair run 20260713_052159_731, Mission_BoomBots T1:
+        // boosted Needle Shot killed Snowart1_Boom on (4,2) and pushed its
+        // corpse to open (4,3). Live centered Explosive Decay on (4,3), not
+        // the pre-push hit tile: Bouncer2 on (5,3) took 1 while Hornet on
+        // (4,1) and frozen Snowlaser1_Boom on (5,2) were untouched.
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 2, 4, 1, 3, WId::VekHornet);
+        board.units[hornet].set_boosted(true);
+        let boom = add_enemy_type(&mut board, 919, 4, 2, 1, "Snowart1_Boom");
+        let frozen_laser =
+            add_enemy_type(&mut board, 921, 5, 2, 1, "Snowlaser1_Boom");
+        board.units[frozen_laser].set_frozen(true);
+        let bouncer = add_enemy_type(&mut board, 927, 5, 3, 4, "Bouncer2");
+
+        let result = simulate_weapon(&mut board, hornet, WId::VekHornet, 4, 2);
+
+        assert_eq!(board.units[boom].hp, -1);
+        assert_eq!((board.units[boom].x, board.units[boom].y), (4, 3));
+        assert_eq!(board.units[hornet].hp, 3);
+        assert!(board.units[frozen_laser].frozen());
+        assert_eq!(board.units[frozen_laser].hp, 1);
+        assert_eq!(board.units[bouncer].hp, 3);
+        assert_eq!(result.enemy_damage_dealt, 3);
+        assert_eq!(result.mech_damage_taken, 0);
+        assert_eq!(result.enemies_killed, 1);
     }
 
     #[test]

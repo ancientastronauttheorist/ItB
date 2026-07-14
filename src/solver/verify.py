@@ -1685,7 +1685,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # through its same-SpaceDamage forward push. The corpse can bump a live blocker
 # behind it; generic melee corpse absorption and in-path Needle tiles remain
 # unchanged. Pre-v361 corpus archived as failure_db_snapshot_sim_v360.jsonl.
-SIMULATOR_VERSION = 361
+# v362 - Techno-Hornet Needle Shot defers a selected target's intrinsic
+# Explosive Decay through its same-SpaceDamage forward push, then centers the
+# decay on the final corpse tile before any Blast/Boss death burst. In-path
+# kills, generic melee, enemy Hornet attacks, and BombRock timing stay
+# unchanged. Pre-v362 corpus archived as failure_db_snapshot_sim_v361.jsonl.
+SIMULATOR_VERSION = 362
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
