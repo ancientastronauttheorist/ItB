@@ -475,3 +475,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 474 | 845 | Final-action desyncs require terminal reprojection, not phantom re-solves. | `docs/agent/safety-gates.md` |
 | 475 | 847 | A successfully dispatched End Turn click is never retried from same-turn DONE evidence. | `docs/agent/live-runbook.md` |
 | 476 | 849 | Zero-damage weapon Fire destroys Time Pods, and replay remembers pre-action pod tiles. | `docs/agent/solver-reference.md` |
+| 477 | 851 | Final-turn Time Pod safety needs a pickup search overlay, not only a post-solve gate. | `docs/agent/solver-reference.md` |

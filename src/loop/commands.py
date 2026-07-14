@@ -371,6 +371,7 @@ def _no_survivors_setup_requirements_status(
 
 _DESTROY_TIME_PODS_SURVIVAL_PENALTY = -1_000_000.0
 _DESTROY_TIME_PODS_PICKUP_PENALTY = -2_000_000.0
+_FINAL_TURN_POD_PICKUP_BONUS = 1_000_000.0
 
 
 _ACHIEVEMENT_PROOF_ALIASES = {
@@ -846,6 +847,77 @@ def _achievement_weight_overlay(
         weights, applied = _destroy_time_pods_weight_overlay(weights, applied)
 
     return weights, applied
+
+
+def _final_turn_pod_collection_weight_overlay(
+    base_weights: dict | None,
+    bridge_data: dict | None,
+    applied: list[str] | None = None,
+    *,
+    destroy_time_pods_active: bool = False,
+) -> tuple[dict | None, list[str]]:
+    """Surface pod-pickup lines when the current turn is the last chance.
+
+    Final-turn plan safety rejects an unrecovered Time Pod, but the ordinary
+    evaluator historically gave pickup no reward.  A safe pickup can therefore
+    sit below the bounded safety frontier while every returned plan fails the
+    objective.  Reward the simulator's explicit ``pods_collected`` event only
+    for a live final-turn pod.  The post-solve safety audit still decides which
+    pickup line is executable.
+
+    Chronophobia, Lightning War, and explicit ``--destroy-time-pods`` runs keep
+    their deliberate destruction policy and never receive this overlay.
+    """
+    overlays = list(applied or [])
+    if (
+        destroy_time_pods_active
+        or "destroy_time_pods" in overlays
+        or not isinstance(bridge_data, dict)
+    ):
+        return base_weights, overlays
+
+    has_live_pod = any(
+        isinstance(tile, dict)
+        and bool(tile.get("pod", tile.get("has_pod", False)))
+        for tile in (bridge_data.get("tiles") or [])
+    )
+    if not has_live_pod:
+        return base_weights, overlays
+
+    spawning_tiles = bridge_data.get("spawning_tiles")
+    if isinstance(spawning_tiles, list) and spawning_tiles:
+        return base_weights, overlays
+
+    def _plain_int(value: object) -> int | None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return None
+        return value
+
+    victory_turns = _plain_int(bridge_data.get("victory_turns"))
+    if victory_turns is not None:
+        final_turn = victory_turns <= 1
+    else:
+        turn = _plain_int(bridge_data.get("turn"))
+        total_turns = _plain_int(bridge_data.get("total_turns"))
+        remaining_spawns = _plain_int(bridge_data.get("remaining_spawns"))
+        if turn is not None and total_turns is not None:
+            final_turn = turn >= total_turns or (
+                turn >= max(0, total_turns - 1)
+                and (remaining_spawns is None or remaining_spawns == 0)
+            )
+        else:
+            final_turn = remaining_spawns == 0
+
+    if not final_turn:
+        return base_weights, overlays
+
+    weights = dict(base_weights or {})
+    weights["pod_collected"] = max(
+        float(weights.get("pod_collected", 0) or 0),
+        _FINAL_TURN_POD_PICKUP_BONUS,
+    )
+    overlays.append("final_turn_pod_collection")
+    return weights, overlays
 
 
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
@@ -8370,6 +8442,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 achievement_weight_overlays,
             )
         )
+    eval_weights_dict, achievement_weight_overlays = (
+        _final_turn_pod_collection_weight_overlay(
+            eval_weights_dict,
+            bridge_data,
+            achievement_weight_overlays,
+            destroy_time_pods_active=destroy_time_pods_active,
+        )
+    )
     if achievement_weight_overlays:
         weight_version = f"{weight_version}+{'+'.join(achievement_weight_overlays)}"
         print(f"  Achievement weight overlay: {', '.join(achievement_weight_overlays)}")
