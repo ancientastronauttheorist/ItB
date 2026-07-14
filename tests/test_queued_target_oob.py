@@ -340,6 +340,93 @@ def test_reconcile_shared_target_ignores_mirror_occupied_by_cotargeter():
     assert "queued_target_stale_save" not in scorpion
 
 
+def test_reconcile_shared_burrower_target_ignores_starfish_diagonal_marker():
+    """A Starfish appendage marker is not owned DIR_FLIP evidence."""
+    from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles
+
+    # Chaos Roll Unfair run 20260713_052159_731, Archive Mission_Survive
+    # turn 3: both Alpha Burrowers retained raw target E6. Starfish1 at D5
+    # independently marked the C6 mirror with its diagonal appendage, so the
+    # set-valued marker could not prove the D6 Burrower had flipped toward C6.
+    data = {
+        "targeted_tiles": [[2, 3], [2, 5], [4, 5]],
+        "units": [
+            {
+                "uid": 1085,
+                "type": "Burrower2",
+                "team": 6,
+                "hp": 1,
+                "x": 2,
+                "y": 2,
+                "has_queued_attack": True,
+                "queued_target": [2, 3],
+                "queued_target_raw": [2, 3],
+                "queued_target_normalized": True,
+                "weapons": ["Burrower_Atk2"],
+            },
+            {
+                "uid": 1086,
+                "type": "Burrower2",
+                "team": 6,
+                "hp": 1,
+                "x": 2,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [2, 3],
+                "queued_target_raw": [2, 3],
+                "queued_target_normalized": True,
+                "weapons": ["Burrower_Atk2"],
+            },
+            {
+                "uid": 1096,
+                "type": "Starfish1",
+                "team": 6,
+                "hp": 2,
+                "x": 3,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [3, 4],
+                "queued_target_raw": [3, 4],
+                "queued_target_normalized": True,
+                "weapons": ["StarfishAtk1"],
+            },
+        ],
+    }
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    first_burrower, second_burrower, _starfish = data["units"]
+    assert first_burrower["queued_target"] == [2, 3]
+    assert second_burrower["queued_target"] == [2, 3]
+    assert "queued_target_stale_save" not in second_burrower
+
+    # A queued Starfish elsewhere on the board must not suppress genuine,
+    # unowned mirror evidence when the mirror is not one of its diagonals.
+    starfish = data["units"][2]
+    starfish.update({
+        "x": 4,
+        "y": 4,
+        "queued_target": [4, 4],
+        "queued_target_raw": [4, 4],
+    })
+    data["targeted_tiles"] = [
+        [2, 3],
+        [2, 5],
+        [3, 3],
+        [3, 5],
+        [5, 3],
+        [5, 5],
+    ]
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    assert first_burrower["queued_target"] == [2, 3]
+    assert second_burrower["queued_target"] == [2, 5]
+    assert second_burrower["queued_target_reconcile_reason"] == (
+        "mirror_marker_with_shared_old_target"
+    )
+
+
 def test_reconcile_shared_target_still_flips_through_nonrecoil_cotargeter():
     """An occupied mirror alone must not suppress live flip evidence."""
     from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles

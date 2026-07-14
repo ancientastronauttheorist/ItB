@@ -6411,6 +6411,29 @@ def _classify_next_turn_web_grapples(
             return None
         return effective
 
+    def checkpoint_explicitly_queueless(raw_source: dict | None) -> bool:
+        """Accept only Rust's exact compact encoding for a source with no queue."""
+        if not isinstance(raw_source, dict):
+            return False
+        if (
+            "has_queued_attack" in raw_source
+            and raw_source.get("has_queued_attack") is not False
+        ):
+            return False
+
+        def minus_one_pair(value) -> bool:
+            return (
+                isinstance(value, (list, tuple))
+                and len(value) == 2
+                and all(plain_int(item) for item in value)
+                and tuple(value) == (-1, -1)
+            )
+
+        return (
+            minus_one_pair(raw_source.get("queued_target"))
+            and minus_one_pair(raw_source.get("queued_origin"))
+        )
+
     previous_by_uid: dict[int, dict] = {}
     checkpoint_primary_count = 0
     for raw in checkpoint_units:
@@ -6611,6 +6634,62 @@ def _classify_next_turn_web_grapples(
                 if isinstance(previous_source, dict)
                 else None
             )
+            previous_first_queue = (
+                isinstance(previous_source, dict)
+                and stationary_mech
+                and previous_source_pos is not None
+                and checkpoint_explicitly_queueless(previous_source)
+                and source is not None
+                and plain_int(previous_source.get("hp"))
+                and int(previous_source["hp"]) == int(source.hp)
+                and plain_int(solve_data.get("simulator_version"))
+                and int(solve_data["simulator_version"]) >= 353
+                and plain_int(post_player.get("turn"))
+                and int(post_player["turn"]) == expected_turn - 1
+                and isinstance(final_board, dict)
+                and plain_int(final_board.get("turn"))
+                and int(final_board["turn"]) == expected_turn
+                and isinstance(final_mech, dict)
+                and plain_int(final_mech.get("team"))
+                and int(final_mech["team"]) == 1
+                and plain_int(final_mech.get("hp"))
+                and int(final_mech["hp"]) == int(mech.hp)
+                and final_mech.get("type") == str(mech.type)
+                and final_mech_pos == actual_pos
+                and isinstance(final_source, dict)
+                and plain_int(final_source.get("team"))
+                and int(final_source["team"]) == 6
+                and plain_int(final_source.get("hp"))
+                and int(final_source["hp"]) == int(source.hp)
+                and final_source.get("type") == str(source.type)
+                and final_source_pos is not None
+                and (
+                    final_source.get("frozen") is None
+                    or final_source.get("frozen") is False
+                )
+                and (
+                    final_source.get("web") is None
+                    or final_source.get("web") is False
+                )
+                and plain_int(final_source.get("move"))
+                and int(final_source["move"]) >= 0
+                and (
+                    final_source_pos == (int(source.x), int(source.y))
+                    or (
+                        final_source.get("can_move") is True
+                        and abs(int(source.x) - final_source_pos[0])
+                        + abs(int(source.y) - final_source_pos[1])
+                        <= int(final_source["move"])
+                    )
+                )
+            )
+            previous_retarget = (
+                isinstance(previous_source, dict)
+                and previous_source.get("has_queued_attack") is True
+                and previous_target is not None
+                and (previous_target[0], previous_target[1])
+                != (int(mech.x), int(mech.y))
+            )
 
             if previous_source is None:
                 move_speed = getattr(source, "move_speed", None)
@@ -6703,13 +6782,10 @@ def _classify_next_turn_web_grapples(
                 or not plain_int(previous_source.get("hp"))
                 or previous_source.get("hp") <= 0
                 or previous_source.get("type") != str(source.type)
-                or previous_source.get("has_queued_attack") is not True
                 or not isinstance(previous_weapons, list)
                 or not previous_weapons
                 or previous_weapons[0] != str(source.weapon)
-                or previous_target is None
-                or (previous_target[0], previous_target[1])
-                == (int(mech.x), int(mech.y))
+                or not (previous_retarget or previous_first_queue)
                 or (
                     projected_mech
                     and (
@@ -6751,7 +6827,11 @@ def _classify_next_turn_web_grapples(
                 "pos": [int(mech.x), int(mech.y)],
                 "source_uid": source_uid,
                 "source_type": str(source.type),
-                "previous_target": [previous_target[0], previous_target[1]],
+                "previous_target": (
+                    [previous_target[0], previous_target[1]]
+                    if previous_target is not None
+                    else None
+                ),
                 "current_target": [current_target[0], current_target[1]],
                 **({
                     "previous_mech_pos": [previous_pos[0], previous_pos[1]],
@@ -6761,7 +6841,9 @@ def _classify_next_turn_web_grapples(
                     ),
                 } if projected_mech else {
                     "reason": (
-                        "next_turn_web_source_retargeted_stationary_mech"
+                        "next_turn_existing_queueless_web_source_first_queued_stationary_mech"
+                        if previous_first_queue
+                        else "next_turn_web_source_retargeted_stationary_mech"
                     ),
                 }),
             })

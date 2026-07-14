@@ -1208,6 +1208,315 @@ def test_next_turn_retarget_web_is_explained_for_unfair_gate():
     )
 
 
+def test_existing_queueless_leaper_first_web_is_explained_for_unfair_gate():
+    """Archive m11 t3: existing E2 Leaper first-targets stationary G4."""
+    board = _board(5)
+    mech = board.units[0]
+    mech.type = "HornetMech"
+    mech.x, mech.y = 4, 1
+    mech.web = True
+    mech.web_source_uid = 1097
+
+    source = _enemy(1097, 4, 2)
+    source.type = "Leaper2"
+    source.hp = source.max_hp = 3
+    source.move_speed = 4
+    source.weapon = "LeaperAtk2"
+    source.has_queued_attack = True
+    source.queued_target_x, source.queued_target_y = mech.x, mech.y
+    source.target_x, source.target_y = mech.x, mech.y
+    board.units.append(source)
+
+    solve_data = {
+        "simulator_version": 353,
+        "post_player_board": {
+            "turn": 3,
+            "units": [
+                {
+                    "uid": mech.uid,
+                    "type": mech.type,
+                    "team": 1,
+                    "hp": mech.hp,
+                    "x": mech.x,
+                    "y": mech.y,
+                },
+                {
+                    "uid": source.uid,
+                    "type": source.type,
+                    "team": 6,
+                    "hp": source.hp,
+                    "x": 6,
+                    "y": 3,
+                    "move": 4,
+                    "weapons": ["LeaperAtk2"],
+                    # False is omitted by compact replay serialization; the
+                    # paired sentinels are the canonical queueless proof.
+                    "queued_origin": [-1, -1],
+                    "queued_target": [-1, -1],
+                },
+            ],
+        },
+        "final_board": {
+            "turn": 4,
+            "units": [
+                {
+                    "uid": mech.uid,
+                    "type": mech.type,
+                    "team": 1,
+                    "hp": mech.hp,
+                    "x": mech.x,
+                    "y": mech.y,
+                },
+                {
+                    "uid": source.uid,
+                    "type": source.type,
+                    "team": 6,
+                    "hp": source.hp,
+                    "x": 6,
+                    "y": 3,
+                    "move": 4,
+                    "can_move": True,
+                    "weapons": ["LeaperAtk2"],
+                },
+            ],
+        },
+    }
+    web_item = {
+        "uid": mech.uid,
+        "type": mech.type,
+        "pos": [mech.x, mech.y],
+    }
+    deltas = {
+        "mech_status_diff": [{
+            "key": "mechs_webbed",
+            "status": "Web",
+            "predicted_count": 0,
+            "actual_count": 1,
+            "unexpected": [web_item],
+            "cleared": [],
+        }],
+        "unexpected_events": [
+            f"{mech.type} gained unexpected Web status"
+        ],
+    }
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=4,
+        expected_turn=4,
+    )
+
+    web_delta = result["mech_status_diff"][0]
+    assert web_delta["unexplained_unexpected"] == []
+    assert web_delta["next_turn_web_grapples"] == [{
+        "uid": 0,
+        "type": "HornetMech",
+        "pos": [4, 1],
+        "source_uid": 1097,
+        "source_type": "Leaper2",
+        "previous_target": None,
+        "current_target": [4, 1],
+        "reason": (
+            "next_turn_existing_queueless_web_source_first_queued_stationary_mech"
+        ),
+    }]
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_existing_queueless_first_web_requires_valid_move_range():
+    board = _board(5)
+    mech = board.units[0]
+    mech.web = True
+    mech.web_source_uid = 371
+    source = _enemy(371, mech.x - 1, mech.y)
+    source.has_queued_attack = True
+    source.queued_target_x, source.queued_target_y = mech.x, mech.y
+    source.target_x, source.target_y = mech.x, mech.y
+    board.units.append(source)
+    solve_data = {
+        "simulator_version": 353,
+        "post_player_board": {
+            "turn": 1,
+            "units": [
+                {
+                    "uid": mech.uid,
+                    "type": mech.type,
+                    "team": 1,
+                    "hp": mech.hp,
+                    "x": mech.x,
+                    "y": mech.y,
+                },
+                {
+                    "uid": source.uid,
+                    "type": source.type,
+                    "team": 6,
+                    "hp": source.hp,
+                    "x": 0,
+                    "y": 0,
+                    "move": 3,
+                    "weapons": ["LeaperAtk2"],
+                    "queued_origin": [-1, -1],
+                    "queued_target": [-1, -1],
+                },
+            ],
+        },
+        "final_board": {
+            "turn": 2,
+            "units": [
+                {
+                    "uid": mech.uid,
+                    "type": mech.type,
+                    "team": 1,
+                    "hp": mech.hp,
+                    "x": mech.x,
+                    "y": mech.y,
+                },
+                {
+                    "uid": source.uid,
+                    "type": source.type,
+                    "team": 6,
+                    "hp": source.hp,
+                    "x": 0,
+                    "y": 0,
+                    "move": 3,
+                    "can_move": True,
+                    "weapons": ["LeaperAtk2"],
+                },
+            ],
+        },
+    }
+    web_item = {"uid": mech.uid, "type": mech.type, "pos": [mech.x, mech.y]}
+    def fresh_deltas():
+        return {
+            "mech_status_diff": [{
+                "key": "mechs_webbed",
+                "status": "Web",
+                "predicted_count": 0,
+                "actual_count": 1,
+                "unexpected": [web_item],
+                "cleared": [],
+            }],
+            "unexpected_events": [
+                f"{mech.type} gained unexpected Web status"
+            ],
+        }
+
+    result = commands._classify_next_turn_web_grapples(
+        fresh_deltas(),
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == [web_item]
+    assert result["next_turn_web_grapples"] == []
+
+    # Even a stationary source needs a valid nonnegative movement bound. The
+    # equality branch must not let malformed ``move=-1`` checkpoint data pass.
+    final_source = solve_data["final_board"]["units"][1]
+    final_source.update({"x": source.x, "y": source.y, "move": -1})
+    result = commands._classify_next_turn_web_grapples(
+        fresh_deltas(),
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == [web_item]
+    assert result["next_turn_web_grapples"] == []
+
+    # Malformed status payloads must also fail closed rather than raising.
+    final_source.update({"move": source.move_speed, "frozen": []})
+    result = commands._classify_next_turn_web_grapples(
+        fresh_deltas(),
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == [web_item]
+    assert result["next_turn_web_grapples"] == []
+
+
+def test_existing_queueless_first_web_rejects_explicit_null_queue_flag():
+    board = _board(5)
+    mech = board.units[0]
+    mech.web = True
+    mech.web_source_uid = 371
+    source = _enemy(371, mech.x - 1, mech.y)
+    source.has_queued_attack = True
+    source.queued_target_x, source.queued_target_y = mech.x, mech.y
+    source.target_x, source.target_y = mech.x, mech.y
+    board.units.append(source)
+    previous_source = {
+        "uid": source.uid,
+        "type": source.type,
+        "team": 6,
+        "hp": source.hp,
+        "x": source.x,
+        "y": source.y,
+        "move": source.move_speed,
+        "weapons": ["LeaperAtk2"],
+        "has_queued_attack": None,
+        "queued_origin": [-1, -1],
+        "queued_target": [-1, -1],
+    }
+    mech_checkpoint = {
+        "uid": mech.uid,
+        "type": mech.type,
+        "team": 1,
+        "hp": mech.hp,
+        "x": mech.x,
+        "y": mech.y,
+    }
+    solve_data = {
+        "simulator_version": 353,
+        "post_player_board": {
+            "turn": 1,
+            "units": [mech_checkpoint, previous_source],
+        },
+        "final_board": {
+            "turn": 2,
+            "units": [
+                dict(mech_checkpoint),
+                dict(previous_source, has_queued_attack=True),
+            ],
+        },
+    }
+    web_item = {"uid": mech.uid, "type": mech.type, "pos": [mech.x, mech.y]}
+    deltas = {
+        "mech_status_diff": [{
+            "key": "mechs_webbed",
+            "status": "Web",
+            "predicted_count": 0,
+            "actual_count": 1,
+            "unexpected": [web_item],
+            "cleared": [],
+        }],
+        "unexpected_events": [f"{mech.type} gained unexpected Web status"],
+    }
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["mech_status_diff"][0]["unexplained_unexpected"] == [web_item]
+    assert result["next_turn_web_grapples"] == []
+
+
 def test_emergent_next_turn_web_is_explained_for_unfair_gate():
     board, solve_data, deltas, web_item = _emergent_next_turn_web_case()
 

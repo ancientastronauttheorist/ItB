@@ -1250,6 +1250,23 @@ def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
             # to the Moth's recoil footprint.  The geometry is ambiguous, so
             # preserve the raw queued target rather than inventing a DIR_FLIP.
             continue
+        if old_target_is_shared and any(
+            other is not u
+            and (other.get("weapons") or [""])[0] in {
+                "StarfishAtk1",
+                "StarfishAtk2",
+                "StarfishAtkB1",
+            }
+            and abs(int(other.get("x", -99)) - flipped_target[0]) == 1
+            and abs(int(other.get("y", -99)) - flipped_target[1]) == 1
+            for other in queued_enemies
+        ):
+            # Starfish appendages mark all four diagonals, and
+            # Board:IsTargeted() does not report which attacker owns a marker.
+            # A shared-target mirror already covered by a queued Starfish is
+            # therefore ambiguous rather than evidence that this attack was
+            # flipped. Preserve the authoritative raw queued target.
+            continue
         if old_target in targeted and not old_target_is_shared:
             continue
         u["queued_target_stale_save"] = [qx, qy]
