@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -19,6 +20,7 @@ import subprocess
 import tempfile
 import time
 import traceback
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -63,7 +65,8 @@ from src.control.executor import (
 )
 from src.capture.detect_grid import find_game_window, grid_from_window
 from src.bridge.protocol import (
-    is_bridge_active, is_bridge_alive, refresh_bridge_state, read_state,
+    is_bridge_active, is_bridge_alive, refresh_bridge_state,
+    refresh_bridge_state_fresh, read_state,
     BridgeError, ACK_FILE, CMD_FILE, STATE_FILE, STATE_TMP,
 )
 from src.bridge.reader import (
@@ -1210,6 +1213,7 @@ def _post_action_audit_evidence_error(
     bridge_data,
     *,
     expected_turn: int,
+    expected_mission_id: str | None = None,
 ) -> dict | None:
     """Return a fail-closed error unless the final read proves this turn."""
     if board is None:
@@ -1236,10 +1240,21 @@ def _post_action_audit_evidence_error(
             "expected_turn": expected_turn,
             "observed_turn": bridge_data.get("turn"),
         }
-    if bridge_data.get("in_active_mission") is False:
+    if bridge_data.get("in_active_mission") is not True:
         return {
             "status": "ERROR",
-            "error": "post_action_audit_mission_inactive",
+            "error": "post_action_audit_active_mission_not_proven",
+            "in_active_mission": bridge_data.get("in_active_mission"),
+        }
+    if (
+        expected_mission_id is not None
+        and bridge_data.get("mission_id") != expected_mission_id
+    ):
+        return {
+            "status": "ERROR",
+            "error": "post_action_audit_mission_id_mismatch",
+            "expected_mission_id": expected_mission_id,
+            "observed_mission_id": bridge_data.get("mission_id"),
         }
     return None
 
@@ -1427,29 +1442,6 @@ def _dirty_plan_covers_threat_audit_loss(
     else:
         covered_targets = 1
     return still_threatened <= covered_targets
-
-
-def _end_turn_click_plan_result(*, bridge_ack: str | None = None) -> dict:
-    recalibrate()
-    batch = plan_end_turn()
-    codex_batch = [
-        c["codex_computer_use"]
-        for c in batch
-        if isinstance(c, dict) and c.get("codex_computer_use")
-    ]
-    result = {
-        "status": "PLAN",
-        "batch": batch,
-        "codex_computer_use_batch": codex_batch,
-        "next_step": (
-            "dispatch codex_computer_use_batch with Computer Use "
-            "(or legacy batch with screen-coordinate batch tools), "
-            "wait ~6s, then `read`"
-        ),
-    }
-    if bridge_ack is not None:
-        result["bridge_ack"] = bridge_ack
-    return result
 
 
 def _dirty_consent_id(
@@ -2729,6 +2721,8 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
             session.mission_index += 1
             session.last_mission_turn = bridge_turn
             session.disabled_actions = []
+            session.held_end_turn_block = None
+            session.end_turn_plan_ledger = None
             return True
         # Track the high-water mark in-place for future regression checks.
         # This is a non-structural side effect and intentionally does NOT
@@ -2753,6 +2747,8 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
     session.mission_index += 1
     session.last_mission_turn = bridge_turn
     session.disabled_actions = []
+    session.held_end_turn_block = None
+    session.end_turn_plan_ledger = None
     # The post-bump mission has its own terrain anchor; clear the prior
     # fingerprint so the next ``cmd_read`` re-seeds without firing the
     # stage-change detector against a stale (different-mission) reference.
@@ -4136,15 +4132,45 @@ def _projected_post_player_board_data(
     projected = _carry_projected_summary_metadata(projected, bridge_data)
     if isinstance(bridge_data, dict):
         for key in (
-            "attack_order",
             "env_type",
             "environment_wind_dir",
             "environment_freeze",
             "environment_danger_v2",
             "environment_danger",
+            "teleporter_pairs",
         ):
             if key in bridge_data:
                 projected[key] = bridge_data[key]
+        surviving_queued_uids = {
+            unit.get("uid")
+            for unit in (projected.get("units") or [])
+            if isinstance(unit, dict)
+            and int(unit.get("hp", 0) or 0) > 0
+            and unit.get("has_queued_attack") is True
+        }
+        projected["attack_order"] = [
+            uid
+            for uid in (bridge_data.get("attack_order") or [])
+            if uid in surviving_queued_uids
+        ]
+        raw_tiles = {
+            (tile.get("x"), tile.get("y")): tile
+            for tile in (bridge_data.get("tiles") or [])
+            if isinstance(tile, dict)
+        }
+        for tile in projected.get("tiles") or []:
+            if not isinstance(tile, dict):
+                continue
+            raw_tile = raw_tiles.get((tile.get("x"), tile.get("y"))) or {}
+            if "conveyor" in raw_tile:
+                # Rust normalizes engine 0<->2 for simulation. The held
+                # checkpoint is compared to the live bridge, so retain the
+                # raw engine direction in the persisted JSON.
+                tile["conveyor"] = raw_tile["conveyor"]
+            if tile.get("terrain") == "building" and tile.get("unique_building"):
+                objective_name = raw_tile.get("objective_name")
+                if objective_name:
+                    tile["objective_name"] = objective_name
     return projected
 
 
@@ -8084,7 +8110,7 @@ def _settle_post_enemy_board(
     max_wait: float = 3.0,
     interval: float = 0.5,
     read_fn=read_bridge_state,
-    refresh_fn=refresh_bridge_state,
+    refresh_fn=refresh_bridge_state_fresh,
     sleep_fn=time.sleep,
     now_fn=time.time,
 ) -> tuple[Board, dict, dict | None]:
@@ -9882,6 +9908,20 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     }
     _record_turn_state(session, "solve", solve_data)
 
+    if _active_player_action_count(board) > 0:
+        held_clear_error = _clear_held_end_turn_block_after_fresh_solve(
+            session,
+            turn=current_turn,
+        )
+        if held_clear_error is not None:
+            result.update(held_clear_error)
+            result["actions"] = []
+            session.active_solution = None
+            session.actions_executed = 0
+            session.save()
+            _print_result(result)
+            return result
+
     # Print
     print(f"\n=== SOLUTION (score: {solution.score:.0f}) ===")
     for i, a in enumerate(solution.actions):
@@ -11149,22 +11189,2859 @@ def cmd_click_action(
     return result
 
 
-def cmd_click_end_turn() -> dict:
-    """Emit a click plan for the End Turn button.
+def _held_end_turn_action_record_matches(
+    recorded: object,
+    action: SolverAction,
+) -> bool:
+    """Return whether a recorded solve action is the active held action."""
+    if not isinstance(recorded, dict):
+        return False
 
-    Pure planner. Claude dispatches the batch via computer_batch, waits
-    for the enemy phase to finish (~6s), then calls ``read`` to detect
-    the new phase.
+    def _point(value: object) -> tuple[int, int] | None:
+        if value is None:
+            return None
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
+            return None
+        if any(
+            not isinstance(item, int) or isinstance(item, bool)
+            for item in value
+        ):
+            return None
+        if any(not 0 <= item < 8 for item in value):
+            return None
+        return value[0], value[1]
+
+    def _point_matches(
+        value: object,
+        expected: tuple[int, int] | None,
+    ) -> bool:
+        if expected is None:
+            return value is None
+        return _point(value) == expected
+
+    recorded_weapon = recorded.get("weapon_id")
+    if recorded_weapon is None:
+        recorded_weapon = recorded.get("weapon")
+    return (
+        type(recorded.get("mech_uid")) is int
+        and recorded["mech_uid"] >= 0
+        and recorded["mech_uid"] == action.mech_uid
+        and isinstance(recorded.get("mech_type"), str)
+        and bool(recorded["mech_type"])
+        and recorded["mech_type"] == action.mech_type
+        and _point_matches(recorded.get("move_to"), action.move_to)
+        and isinstance(recorded_weapon, str)
+        and bool(recorded_weapon)
+        and recorded_weapon == action.weapon
+        and _point_matches(recorded.get("target"), action.target)
+        and _point_matches(recorded.get("target2"), action.target2)
+        and isinstance(recorded.get("description"), str)
+        and recorded["description"] == action.description
+    )
+
+
+def _held_end_turn_solve_actions_match(
+    solve_data: dict,
+    active_actions: list[SolverAction],
+) -> bool:
+    """Tie a full solve record exactly to the active held solution."""
+    recorded_actions = solve_data.get("actions")
+    if not isinstance(recorded_actions, list):
+        return False
+    return len(recorded_actions) == len(active_actions) and all(
+        _held_end_turn_action_record_matches(recorded, action)
+        for recorded, action in zip(recorded_actions, active_actions)
+    )
+
+
+def _held_end_turn_record_matches(
+    record: object,
+    session: RunSession,
+    turn: int,
+) -> bool:
+    """Match only an exact, structurally valid mission-turn scope."""
+    return bool(
+        isinstance(record, dict)
+        and type(record.get("mission_index")) is int
+        and record["mission_index"] >= 0
+        and type(session.mission_index) is int
+        and record["mission_index"] == session.mission_index
+        and isinstance(record.get("mission_id"), str)
+        and bool(record["mission_id"])
+        and isinstance(session.current_mission, str)
+        and bool(session.current_mission)
+        and record.get("mission_id") == session.current_mission
+        and type(record.get("turn")) is int
+        and record["turn"] >= 0
+        and type(turn) is int
+        and record["turn"] == turn
+    )
+
+
+def _held_end_turn_timestamp_valid(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def _held_end_turn_block_schema_valid(record: object) -> bool:
+    return bool(
+        isinstance(record, dict)
+        and type(record.get("version")) is int
+        and record["version"] == 1
+        and type(record.get("mission_index")) is int
+        and record["mission_index"] >= 0
+        and isinstance(record.get("mission_id"), str)
+        and bool(record["mission_id"])
+        and type(record.get("turn")) is int
+        and record["turn"] >= 0
+        and isinstance(record.get("status"), str)
+        and bool(record["status"])
+        and isinstance(record.get("reason"), str)
+        and bool(record["reason"])
+        and _held_end_turn_timestamp_valid(record.get("recorded_at"))
+    )
+
+
+_END_TURN_PLAN_SOURCES = frozenset({
+    "auto_turn",
+    "click_end_turn",
+    "dispatch_end_turn",
+    "end_turn",
+    "lightning_loop",
+})
+_END_TURN_PLAN_STATUSES = frozenset({
+    "plan_issued",
+    "dispatch_attempted",
+    "delivered_confirmed",
+    "delivered_unconfirmed",
+})
+
+
+def _end_turn_plan_ledger_schema_valid(record: object) -> bool:
+    """Validate the durable one-shot state before trusting any transition."""
+    if not isinstance(record, dict):
+        return False
+    if not (
+        type(record.get("version")) is int
+        and record["version"] == 1
+        and type(record.get("mission_index")) is int
+        and record["mission_index"] >= 0
+        and isinstance(record.get("mission_id"), str)
+        and bool(record["mission_id"])
+        and type(record.get("turn")) is int
+        and record["turn"] >= 0
+        and record.get("status") in _END_TURN_PLAN_STATUSES
+        and record.get("source") in _END_TURN_PLAN_SOURCES
+        and record.get("delivery_mode") in {"external", "local"}
+        and isinstance(record.get("plan_id"), str)
+        and re.fullmatch(r"[0-9a-f]{16}", record["plan_id"])
+        and _held_end_turn_timestamp_valid(record.get("issued_at"))
+    ):
+        return False
+    source = record["source"]
+    delivery_mode = record["delivery_mode"]
+    if source in {"dispatch_end_turn", "lightning_loop"}:
+        if delivery_mode != "local":
+            return False
+    elif delivery_mode != "external":
+        return False
+
+    retry_at = record.get("last_pre_delivery_failure_at")
+    retry_reason = record.get("last_pre_delivery_failure")
+    if (retry_at is None) != (retry_reason is None):
+        return False
+    if retry_at is not None and not (
+        _held_end_turn_timestamp_valid(retry_at)
+        and isinstance(retry_reason, str)
+        and bool(retry_reason)
+        and delivery_mode == "local"
+    ):
+        return False
+
+    status = record["status"]
+    if status == "plan_issued":
+        return True
+    if status == "dispatch_attempted":
+        return bool(
+            delivery_mode == "local"
+            and _held_end_turn_timestamp_valid(
+                record.get("dispatch_attempted_at")
+            )
+        )
+    if not _held_end_turn_timestamp_valid(record.get("delivery_recorded_at")):
+        return False
+    if delivery_mode == "local":
+        return _held_end_turn_timestamp_valid(
+            record.get("dispatch_attempted_at")
+        )
+    return record.get("direct_bridge_delivery") is True
+
+
+def _end_turn_plan_provenance(record: object) -> dict:
+    if not isinstance(record, dict):
+        return {
+            "end_turn_plan_id": None,
+            "end_turn_plan_source": None,
+            "end_turn_delivery_mode": None,
+        }
+    return {
+        "end_turn_plan_id": record.get("plan_id"),
+        "end_turn_plan_source": record.get("source"),
+        "end_turn_delivery_mode": record.get("delivery_mode"),
+    }
+
+
+def _refresh_end_turn_bridge_state() -> bool:
+    """Prove the bridge processed a fresh command on a ticking game loop."""
+    if refresh_bridge_state_fresh() is not True:
+        return False
+    return bool(is_bridge_alive(max_stale_sec=5.0))
+
+
+def _current_end_turn_ledger_turn(session: RunSession) -> int | None:
+    """Return the proven turn key for one-shot End Turn delivery state."""
+    active = session.active_solution
+    try:
+        if not _refresh_end_turn_bridge_state():
+            return None
+        _board, bridge_data = read_bridge_state()
+    except Exception:
+        bridge_data = None
+    if (
+        isinstance(bridge_data, dict)
+        and bridge_data.get("phase") == "combat_player"
+        and bridge_data.get("in_active_mission") is True
+        and type(bridge_data.get("turn")) is int
+        and bool(session.current_mission)
+        and bridge_data.get("mission_id") == session.current_mission
+        and (
+            active is None
+            or (
+                type(active.turn) is int
+                and bridge_data.get("turn") == active.turn
+            )
+        )
+    ):
+        return bridge_data["turn"]
+    return None
+
+
+def _persist_held_end_turn_block(
+    session: RunSession,
+    result: dict,
+    *,
+    turn: int,
+) -> dict:
+    """Persist a hard stop that later standalone planners must honor."""
+    block = {
+        "version": 1,
+        "mission_index": session.mission_index,
+        "mission_id": session.current_mission,
+        "turn": turn,
+        "status": result.get("status"),
+        "reason": result.get("reason") or result.get("error"),
+        "recorded_at": datetime.now().isoformat(),
+    }
+    session.held_end_turn_block = block
+    errors = {}
+    try:
+        _record_turn_state(
+            session,
+            "held_end_turn_block",
+            block,
+            turn_override=turn,
+        )
+    except Exception as exc:
+        errors["recording"] = str(exc)
+    try:
+        session.save()
+    except Exception as exc:
+        errors["session"] = str(exc)
+    if len(errors) == 2:
+        return {
+            "status": "HELD_END_TURN_BLOCK_PERSIST_FAILED",
+            "blocking": True,
+            "turn": turn,
+            "reason": "held_end_turn_block_not_durable",
+            "persistence_errors": errors,
+            "original_block": block,
+            "next_step": (
+                "Do not click End Turn. Both durable block stores failed; "
+                "repair persistence, then recover from a fresh read plus "
+                "successful solve."
+            ),
+        }
+    if errors:
+        result = dict(result)
+        result["held_end_turn_block_persistence_warning"] = errors
+    return result
+
+
+def _clear_held_end_turn_block_after_fresh_solve(
+    session: RunSession,
+    *,
+    turn: int,
+) -> dict | None:
+    """Clear exact same-turn held state after a fresh active-player solve."""
+    block_path = (
+        _recording_dir(session)
+        / f"m{session.mission_index:02d}_turn_{turn:02d}_held_end_turn_block.json"
+    )
+    prior_block = session.held_end_turn_block
+    prior_ledger = session.end_turn_plan_ledger
+    clear_block = _held_end_turn_record_matches(
+        prior_block,
+        session,
+        turn,
+    )
+    clear_ledger = _held_end_turn_record_matches(
+        prior_ledger,
+        session,
+        turn,
+    )
+    if clear_block:
+        session.held_end_turn_block = None
+    if clear_ledger:
+        session.end_turn_plan_ledger = None
+    if clear_block or clear_ledger:
+        try:
+            session.save()
+        except Exception as exc:
+            session.held_end_turn_block = prior_block
+            session.end_turn_plan_ledger = prior_ledger
+            return {
+                "status": "HELD_END_TURN_CLEAR_BLOCKED",
+                "blocking": True,
+                "reason": "held_end_turn_state_clear_not_durable",
+                "error": str(exc),
+            }
+    try:
+        block_path.unlink(missing_ok=True)
+    except OSError as exc:
+        restore_error = None
+        if clear_block or clear_ledger:
+            session.held_end_turn_block = prior_block
+            session.end_turn_plan_ledger = prior_ledger
+            try:
+                session.save()
+            except Exception as restore_exc:
+                restore_error = str(restore_exc)
+        return {
+            "status": "HELD_END_TURN_CLEAR_BLOCKED",
+            "blocking": True,
+            "reason": "held_end_turn_block_record_could_not_be_cleared",
+            "error": str(exc),
+            "path": str(block_path),
+            **(
+                {"session_restore_error": restore_error}
+                if restore_error is not None
+                else {}
+            ),
+        }
+    return None
+
+
+def _mark_end_turn_plan_issued(
+    session: RunSession,
+    *,
+    turn: int,
+    source: str,
+    delivery_mode: str = "external",
+) -> dict | None:
+    """Persist one-shot plan emission before any external click is possible."""
+    if source not in _END_TURN_PLAN_SOURCES or delivery_mode not in {
+        "external",
+        "local",
+    }:
+        return {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_plan_ledger_transition_invalid",
+            "blocking": True,
+        }
+    if (
+        (source in {"dispatch_end_turn", "lightning_loop"})
+        != (delivery_mode == "local")
+    ):
+        return {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_plan_delivery_mode_invalid",
+            "blocking": True,
+        }
+    prior = session.end_turn_plan_ledger
+    if prior is not None and not _end_turn_plan_ledger_schema_valid(prior):
+        return {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_plan_ledger_malformed",
+            "blocking": True,
+            "end_turn_plan_ledger": prior,
+            "next_step": (
+                "Do not issue or dispatch End Turn. The durable delivery "
+                "ledger is malformed, so prior delivery cannot be excluded."
+            ),
+        }
+    if _held_end_turn_record_matches(prior, session, turn):
+        return {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_plan_already_issued",
+            "blocking": True,
+            "end_turn_plan_ledger": prior,
+            "next_step": (
+                "Do not issue or dispatch another End Turn plan for this "
+                "turn. Wait and poll with `read`; ambiguous delivery is "
+                "non-retryable."
+            ),
+        }
+    issued_at = datetime.now().isoformat()
+    plan_id = hashlib.sha256(
+        "|".join((
+            session.run_id,
+            str(session.mission_index),
+            str(session.current_mission),
+            str(turn),
+            source,
+            issued_at,
+        )).encode("utf-8")
+    ).hexdigest()[:16]
+    session.end_turn_plan_ledger = {
+        "version": 1,
+        "mission_index": session.mission_index,
+        "mission_id": session.current_mission,
+        "turn": turn,
+        "status": "plan_issued",
+        "source": source,
+        "delivery_mode": delivery_mode,
+        "plan_id": plan_id,
+        "issued_at": issued_at,
+    }
+    try:
+        session.save()
+    except Exception as exc:
+        session.end_turn_plan_ledger = prior
+        return {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_plan_ledger_persist_failed",
+            "blocking": True,
+            "error": str(exc),
+            "next_step": (
+                "Do not emit or click End Turn until the one-shot delivery "
+                "ledger can be persisted."
+            ),
+        }
+    return None
+
+
+def _restore_local_end_turn_plan_after_no_delivery(
+    *,
+    turn: int,
+    plan_id: str | None,
+    reason: str,
+) -> dict | None:
+    """Durably return an exact local-only plan to retryable issued state."""
+    session = _load_session()
+    ledger = session.end_turn_plan_ledger
+    if not (
+        _end_turn_plan_ledger_schema_valid(ledger)
+        and
+        _held_end_turn_record_matches(ledger, session, turn)
+        and ledger.get("plan_id") == plan_id
+        and ledger.get("source") in {"dispatch_end_turn", "lightning_loop"}
+        and ledger.get("delivery_mode") == "local"
+        and ledger.get("status") in {"plan_issued", "dispatch_attempted"}
+    ):
+        return {
+            "status": "ERROR",
+            "reason": "local_end_turn_retry_ledger_mismatch",
+            "end_turn_plan_ledger": ledger,
+        }
+    session.end_turn_plan_ledger = {
+        **ledger,
+        "status": "plan_issued",
+        "last_pre_delivery_failure_at": datetime.now().isoformat(),
+        "last_pre_delivery_failure": reason,
+    }
+    try:
+        session.save()
+    except Exception as exc:
+        session.end_turn_plan_ledger = ledger
+        return {
+            "status": "ERROR",
+            "reason": "local_end_turn_retry_ledger_persist_failed",
+            "error": str(exc),
+        }
+    return None
+
+
+def _held_end_turn_counter_sensitive(
+    solve_data: dict,
+    counter_ledger: dict,
+) -> bool:
+    """Whether a terminal replay needs complete kill/pod attribution."""
+
+    def _positive_int(value: object) -> bool:
+        return (
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and value > 0
+        )
+
+    summaries = [
+        value
+        for value in (
+            solve_data.get("current_outcome"),
+            solve_data.get("predicted_outcome"),
+            solve_data.get("predicted_board_summary"),
+            solve_data.get("post_player_board"),
+            solve_data.get("final_board"),
+            (
+                solve_data.get("plan_safety", {}).get("current")
+                if isinstance(solve_data.get("plan_safety"), dict)
+                else None
+            ),
+            (
+                solve_data.get("plan_safety", {}).get("predicted")
+                if isinstance(solve_data.get("plan_safety"), dict)
+                else None
+            ),
+        )
+        if isinstance(value, dict)
+    ]
+    for summary in summaries:
+        if _positive_int(summary.get("mission_kill_target")):
+            return True
+        if _positive_int(summary.get("mission_kill_limit")):
+            return True
+
+    pod_counts = [
+        summary.get("pods_present")
+        for summary in summaries
+        if type(summary.get("pods_present")) is int
+    ]
+    if pod_counts and min(pod_counts) < max(pod_counts):
+        return True
+    if _positive_int(counter_ledger.get("player_pods_collected")):
+        return True
+    for result in solve_data.get("action_results") or []:
+        if isinstance(result, dict) and _positive_int(result.get("pods_collected")):
+            return True
+    return False
+
+
+def _held_end_turn_terminal_provenance_error(
+    solve_data: dict,
+    *,
+    turn: int,
+    executed_action_count: int,
+) -> str | None:
+    """Validate persisted terminal-reprojection evidence before replanning."""
+    provenance = solve_data.get("terminal_desync_reprojection")
+    projection_source = solve_data.get("post_enemy_prediction_source")
+    terminal_source = "terminal_desync_reprojection"
+    if provenance is None:
+        return (
+            "terminal_reprojection_provenance_missing"
+            if projection_source == terminal_source
+            else None
+        )
+    if not isinstance(provenance, dict):
+        return "terminal_reprojection_provenance_malformed"
+    if projection_source != terminal_source:
+        return "terminal_reprojection_source_mismatch"
+    if (
+        type(provenance.get("version")) is not int
+        or provenance.get("version") != 1
+        or provenance.get("source") != "settled_actual_post_player_board"
+        or type(provenance.get("turn")) is not int
+        or provenance.get("turn") != turn
+        or type(provenance.get("projection_action_count")) is not int
+        or provenance.get("projection_action_count") != 0
+        or type(provenance.get("desyncs_detected")) is not int
+        or provenance.get("desyncs_detected") < 1
+        or type(provenance.get("actual_re_solves")) is not int
+        or provenance.get("actual_re_solves") < 0
+    ):
+        return "terminal_reprojection_provenance_mismatch"
+    settlement = provenance.get("settlement")
+    settlement_samples = (
+        settlement.get("samples") if isinstance(settlement, dict) else None
+    )
+    matched_verify_snapshot = (
+        settlement.get("matched_verify_snapshot")
+        if isinstance(settlement, dict)
+        else None
+    )
+    freshness_proven = (
+        settlement.get("freshness_proven")
+        if isinstance(settlement, dict)
+        else None
+    )
+    settlement_is_proven = bool(
+        isinstance(settlement, dict)
+        and settlement.get("status") == "OK"
+        and type(settlement_samples) is int
+        and settlement_samples >= 1
+        and type(matched_verify_snapshot) is bool
+        and freshness_proven is True
+        and (
+            settlement_samples >= 2
+            or matched_verify_snapshot is True
+        )
+    )
+    if not settlement_is_proven:
+        return "terminal_reprojection_settlement_unverified"
+    desync = provenance.get("desync")
+    action_index = desync.get("action_index") if isinstance(desync, dict) else None
+    desync_phase = desync.get("phase") if isinstance(desync, dict) else None
+    if (
+        type(action_index) is not int
+        or action_index < 0
+        or desync_phase not in {"attack", "repair", "skip"}
+        or type(executed_action_count) is not int
+        or executed_action_count <= 0
+        or action_index != executed_action_count - 1
+    ):
+        return "terminal_reprojection_action_index_invalid"
+
+    ledger = provenance.get("counter_ledger")
+    if (
+        not isinstance(ledger, dict)
+        or type(ledger.get("version")) is not int
+        or ledger.get("version") != 1
+    ):
+        return "terminal_reprojection_counter_ledger_missing"
+    for key in ("complete", "prefix_complete", "terminal_action_matched"):
+        if not isinstance(ledger.get(key), bool):
+            return "terminal_reprojection_counter_ledger_malformed"
+    verified_results = ledger.get("verified_action_results")
+    if (
+        not isinstance(verified_results, int)
+        or isinstance(verified_results, bool)
+        or verified_results < 0
+        or verified_results > executed_action_count
+    ):
+        return "terminal_reprojection_counter_ledger_malformed"
+    for key in (
+        "player_enemy_kills",
+        "player_unit_deaths",
+        "player_mission_kills",
+        "player_pods_collected",
+        "missing_player_mission_kills",
+    ):
+        value = ledger.get(key)
+        if (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or value < 0
+        ):
+            return "terminal_reprojection_counter_ledger_malformed"
+    if ledger["missing_player_mission_kills"] > ledger["player_mission_kills"]:
+        return "terminal_reprojection_counter_ledger_inconsistent"
+    if ledger.get("complete") and not (
+        ledger.get("prefix_complete")
+        and ledger.get("terminal_action_matched")
+        and verified_results == executed_action_count
+    ):
+        return "terminal_reprojection_counter_ledger_inconsistent"
+
+    predicted_outcome = solve_data.get("predicted_outcome")
+    predicted_summary = solve_data.get("predicted_board_summary")
+    if not isinstance(predicted_outcome, dict) or not isinstance(
+        predicted_summary, dict
+    ):
+        return "terminal_reprojection_counter_ledger_inconsistent"
+    counter_groups = (
+        (
+            "enemies_killed_by_player",
+            "enemies_killed_by_enemy_phase",
+            "enemies_killed_by_spawn_block",
+            "enemies_killed_total_projected",
+            "player_enemy_kills",
+        ),
+        (
+            "unit_deaths_by_player",
+            "unit_deaths_by_enemy_phase",
+            "unit_deaths_by_spawn_block",
+            "unit_deaths_total_projected",
+            "player_unit_deaths",
+        ),
+        (
+            "mission_kills_by_player",
+            "mission_kills_by_enemy_phase",
+            "mission_kills_by_spawn_block",
+            "mission_kills_total_projected",
+            "player_mission_kills",
+        ),
+    )
+    for player_field, enemy_field, spawn_field, total_field, ledger_field in counter_groups:
+        outcome_values = [
+            predicted_outcome.get(player_field),
+            predicted_outcome.get(enemy_field),
+            predicted_outcome.get(spawn_field),
+            predicted_outcome.get(total_field),
+        ]
+        summary_values = [
+            predicted_summary.get(player_field),
+            predicted_summary.get(enemy_field),
+            predicted_summary.get(spawn_field),
+            predicted_summary.get(total_field),
+        ]
+        if any(
+            type(value) is not int or value < 0
+            for value in (*outcome_values, *summary_values)
+        ):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        if outcome_values[0] != ledger.get(ledger_field):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        if outcome_values[3] != sum(outcome_values[:3]):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        if summary_values != outcome_values:
+            return "terminal_reprojection_counter_ledger_inconsistent"
+    summary_pods_collected = predicted_summary.get("pods_collected")
+    if (
+        type(summary_pods_collected) is not int
+        or summary_pods_collected < 0
+        or summary_pods_collected != ledger.get("player_pods_collected")
+    ):
+        return "terminal_reprojection_counter_ledger_inconsistent"
+
+    if not (
+        ledger.get("complete")
+        and ledger.get("prefix_complete")
+        and ledger.get("terminal_action_matched")
+        and verified_results == executed_action_count
+    ):
+        return "terminal_reprojection_counter_ledger_incomplete"
+    action_results = solve_data.get("action_results")
+    if (
+        not isinstance(action_results, list)
+        or len(action_results) != executed_action_count
+    ):
+        return "terminal_reprojection_counter_ledger_inconsistent"
+    aggregate_fields = {
+        "enemies_killed": "player_enemy_kills",
+        "unit_deaths": "player_unit_deaths",
+        "mission_kills": "player_mission_kills",
+        "pods_collected": "player_pods_collected",
+    }
+    totals = {field: 0 for field in aggregate_fields}
+    for action_result in action_results:
+        if not isinstance(action_result, dict):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        for field in aggregate_fields:
+            value = action_result.get(field)
+            if type(value) is not int or value < 0:
+                return "terminal_reprojection_counter_ledger_inconsistent"
+            totals[field] += value
+    for result_field, ledger_field in aggregate_fields.items():
+        if totals[result_field] != ledger.get(ledger_field):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+
+    if _held_end_turn_counter_sensitive(solve_data, ledger):
+        current_outcome = solve_data.get("current_outcome")
+        post_player = solve_data.get("post_player_board")
+        final_board = solve_data.get("final_board")
+        plan_safety = solve_data.get("plan_safety")
+        plan_current = (
+            plan_safety.get("current")
+            if isinstance(plan_safety, dict)
+            else None
+        )
+        plan_predicted = (
+            plan_safety.get("predicted")
+            if isinstance(plan_safety, dict)
+            else None
+        )
+        artifact_summaries = (
+            current_outcome,
+            post_player,
+            plan_current,
+            predicted_summary,
+            final_board,
+            plan_predicted,
+        )
+        if any(not isinstance(item, dict) for item in artifact_summaries):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        for field in ("mission_kill_target", "mission_kill_limit"):
+            values = [item.get(field) for item in artifact_summaries]
+            if any(type(value) is not int or value < 0 for value in values):
+                return "terminal_reprojection_counter_ledger_inconsistent"
+            if len(set(values)) != 1:
+                return "terminal_reprojection_counter_ledger_inconsistent"
+        progress_values = {
+            "current": (
+                current_outcome.get("mission_kills_done")
+                if isinstance(current_outcome, dict)
+                else None
+            ),
+            "post_player": (
+                post_player.get("mission_kills_done")
+                if isinstance(post_player, dict)
+                else None
+            ),
+            "final": (
+                final_board.get("mission_kills_done")
+                if isinstance(final_board, dict)
+                else None
+            ),
+            "projected": predicted_outcome.get(
+                "mission_kills_done_projected"
+            ),
+            "summary": predicted_summary.get("mission_kills_done"),
+            "planned": predicted_summary.get("mission_kills_planned"),
+        }
+        if any(
+            type(value) is not int or value < 0
+            for value in progress_values.values()
+        ):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        player_kills = ledger["player_mission_kills"]
+        enemy_kills = predicted_outcome["mission_kills_by_enemy_phase"]
+        spawn_kills = predicted_outcome["mission_kills_by_spawn_block"]
+        expected_post_player = progress_values["current"] + player_kills
+        expected_final = expected_post_player + enemy_kills + spawn_kills
+        if (
+            progress_values["post_player"] != expected_post_player
+            or progress_values["final"] != expected_final
+            or progress_values["projected"] != expected_final
+            or progress_values["summary"] != expected_final
+            or progress_values["planned"]
+            != player_kills + enemy_kills + spawn_kills
+        ):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+
+        try:
+            current_pods = current_outcome.get("pods_present")
+            post_player_pods = _capture_board_summary(
+                Board.from_bridge_data(post_player),
+                post_player,
+            ).get("pods_present")
+            final_pods = _capture_board_summary(
+                Board.from_bridge_data(final_board),
+                final_board,
+            ).get("pods_present")
+        except Exception:
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        if any(
+            type(value) is not int or value < 0
+            for value in (current_pods, post_player_pods, final_pods)
+        ):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        collected_pods = ledger["player_pods_collected"]
+        player_pods_destroyed = current_pods - post_player_pods - collected_pods
+        if (
+            collected_pods > current_pods
+            or player_pods_destroyed < 0
+            or predicted_summary.get("pods_present") != final_pods
+            or final_pods > post_player_pods
+        ):
+            return "terminal_reprojection_counter_ledger_inconsistent"
+        if player_pods_destroyed > 0:
+            violations = plan_safety.get("violations")
+            matching_pod_loss = bool(
+                solve_data.get("destroy_time_pods_policy") is True
+                and isinstance(violations, list)
+                and any(
+                    isinstance(item, dict)
+                    and item.get("kind") == "pod_lost"
+                    and item.get("blocking") is True
+                    and item.get("current") == current_pods
+                    and item.get("predicted") == final_pods
+                    and isinstance(item.get("details"), dict)
+                    and item["details"].get("pods_collected")
+                    == collected_pods
+                    for item in violations
+                )
+            )
+            if not matching_pod_loss:
+                return "terminal_reprojection_counter_ledger_inconsistent"
+
+    return None
+
+
+_HELD_END_TURN_REQUIRED_SUMMARY_FIELDS = frozenset({
+    "buildings_alive",
+    "building_hp_total",
+    "pylons_alive",
+    "pylon_hp_total",
+    "objective_buildings_alive",
+    "objective_building_hp_total",
+    "objective_buildings_targeted",
+    "objective_building_targets",
+    "pods_present",
+    "freeze_building_target",
+    "freeze_buildings_alive",
+    "freeze_buildings_frozen",
+    "freeze_buildings_thawed",
+    "freeze_buildings",
+    "grid_power",
+    "enemies_alive",
+    "enemy_hp_total",
+    "mechs_alive",
+    "mech_hp_total",
+    "mech_damage_taken_total",
+    "mech_damage_objective_limit",
+    "bigbomb_alive",
+    "terraform_grass_remaining",
+    "terraform_grass_tiles",
+    "mech_hp",
+    "mechs_acid",
+    "mechs_fire",
+    "mechs_on_danger",
+    "mechs_disabled",
+    "mechs_webbed",
+    "mechs_infected",
+    "mites_remaining",
+    "mites_status_tracked",
+    "mission_id",
+    "mission_kill_target",
+    "mission_kill_limit",
+    "mission_kills_done",
+    "mission_mountain_target",
+    "mission_mountains_destroyed",
+    "mission_mountain_tiles",
+    "turn",
+    "total_turns",
+    "remaining_spawns",
+    "is_infinite_spawn",
+    "spawn_points",
+    "victory_turns",
+    "destroy_objective_units",
+    "destroy_objective_units_alive",
+    "protected_objective_units",
+    "protected_objective_units_alive",
+    "train_objective_value",
+    "protected_objective_units_frozen",
+    "protected_objective_units_webbed",
+})
+
+_HELD_END_TURN_FINAL_BOARD_SUMMARY_FIELDS = frozenset({
+    "buildings_alive",
+    "building_hp_total",
+    "pylons_alive",
+    "pylon_hp_total",
+    "objective_buildings_alive",
+    "objective_building_hp_total",
+    "objective_buildings_targeted",
+    "objective_building_targets",
+    "pods_present",
+    "freeze_building_target",
+    "freeze_buildings_alive",
+    "freeze_buildings_frozen",
+    "freeze_buildings_thawed",
+    "freeze_buildings",
+    "grid_power",
+    "enemies_alive",
+    "enemy_hp_total",
+    "mechs_alive",
+    "mech_hp_total",
+    "mech_damage_taken_total",
+    "mech_damage_objective_limit",
+    "bigbomb_alive",
+    "terraform_grass_remaining",
+    "terraform_grass_tiles",
+    "mech_hp",
+    "mechs_acid",
+    "mechs_fire",
+    "mechs_on_danger",
+    "mechs_disabled",
+    "mechs_webbed",
+    "mechs_infected",
+    "mites_remaining",
+    "mites_status_tracked",
+    "mission_id",
+    "mission_kill_target",
+    "mission_kill_limit",
+    "mission_kills_done",
+    "mission_mountain_target",
+    "mission_mountains_destroyed",
+    "mission_mountain_tiles",
+    "turn",
+    "total_turns",
+    "remaining_spawns",
+    "is_infinite_spawn",
+    "spawn_points",
+    "victory_turns",
+    "destroy_objective_units",
+    "destroy_objective_units_alive",
+    "protected_objective_units",
+    "protected_objective_units_alive",
+    "train_objective_value",
+    "protected_objective_units_frozen",
+    "protected_objective_units_webbed",
+})
+
+
+def _held_end_turn_summary_schema_valid(summary: object) -> bool:
+    if not isinstance(summary, dict):
+        return False
+    if not _HELD_END_TURN_REQUIRED_SUMMARY_FIELDS.issubset(summary):
+        return False
+    required_int_fields = (
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "objective_buildings_targeted",
+        "pods_present",
+        "grid_power",
+        "enemies_alive",
+        "enemy_hp_total",
+        "mechs_alive",
+        "mech_hp_total",
+        "mech_damage_taken_total",
+        "mites_remaining",
+        "mission_kill_target",
+        "mission_kill_limit",
+        "mission_kills_done",
+        "mission_mountain_target",
+        "mission_mountains_destroyed",
+        "turn",
+        "total_turns",
+        "spawn_points",
+        "destroy_objective_units_alive",
+        "protected_objective_units_alive",
+        "protected_objective_units_frozen",
+        "protected_objective_units_webbed",
+    )
+    if any(
+        type(summary.get(field)) is not int or summary[field] < 0
+        for field in required_int_fields
+    ):
+        return False
+    if summary["total_turns"] <= 0:
+        return False
+    nullable_int_fields = (
+        "pylons_alive",
+        "pylon_hp_total",
+        "freeze_building_target",
+        "freeze_buildings_alive",
+        "freeze_buildings_frozen",
+        "freeze_buildings_thawed",
+        "mech_damage_objective_limit",
+        "terraform_grass_remaining",
+        "remaining_spawns",
+        "victory_turns",
+        "train_objective_value",
+    )
+    if any(
+        value is not None and (type(value) is not int or value < 0)
+        for value in (summary.get(field) for field in nullable_int_fields)
+    ):
+        return False
+    if type(summary.get("bigbomb_alive")) is not bool:
+        return False
+    if type(summary.get("mites_status_tracked")) is not bool:
+        return False
+    if (
+        summary.get("is_infinite_spawn") is not None
+        and type(summary.get("is_infinite_spawn")) is not bool
+    ):
+        return False
+    if (
+        not isinstance(summary.get("mission_id"), str)
+        or not summary.get("mission_id")
+    ):
+        return False
+    def _point_valid(value: object) -> bool:
+        return bool(
+            isinstance(value, (list, tuple))
+            and len(value) == 2
+            and all(type(coord) is int and 0 <= coord < 8 for coord in value)
+        )
+
+    def _unit_identity_valid(item: object) -> bool:
+        return bool(
+            isinstance(item, dict)
+            and type(item.get("uid")) is int
+            and item["uid"] >= 0
+            and isinstance(item.get("type"), str)
+            and bool(item.get("type"))
+            and _point_valid(item.get("pos"))
+        )
+
+    unit_status_fields = (
+        "mechs_acid",
+        "mechs_fire",
+        "mechs_webbed",
+        "mechs_infected",
+    )
+    for field in unit_status_fields:
+        value = summary.get(field)
+        if not isinstance(value, list) or any(
+            not _unit_identity_valid(item) for item in value
+        ):
+            return False
+        uids = [item["uid"] for item in value]
+        if len(uids) != len(set(uids)):
+            return False
+
+    danger_mechs = summary.get("mechs_on_danger")
+    if not isinstance(danger_mechs, list) or any(
+        not _unit_identity_valid(item)
+        or type(item.get("damage")) is not int
+        or item["damage"] < 0
+        for item in danger_mechs
+    ):
+        return False
+    disabled_mechs = summary.get("mechs_disabled")
+    if not isinstance(disabled_mechs, list) or any(
+        not _unit_identity_valid(item)
+        or not isinstance(item.get("reasons"), list)
+        or any(
+            not isinstance(reason, str) or not reason
+            for reason in item.get("reasons", [])
+        )
+        for item in disabled_mechs
+    ):
+        return False
+
+    mech_hp = summary.get("mech_hp")
+    if not isinstance(mech_hp, list) or any(
+        not isinstance(item, dict)
+        or type(item.get("uid")) is not int
+        or not isinstance(item.get("type"), str)
+        or not item.get("type")
+        or type(item.get("hp")) is not int
+        or item["hp"] < 0
+        or type(item.get("max_hp")) is not int
+        or item["max_hp"] <= 0
+        or item["hp"] > item["max_hp"]
+        for item in mech_hp
+    ):
+        return False
+    mech_uids = [item["uid"] for item in mech_hp]
+    if len(mech_uids) != len(set(mech_uids)):
+        return False
+
+    objective_targets = summary.get("objective_building_targets")
+    if not isinstance(objective_targets, list) or any(
+        not _unit_identity_valid(item) or not _point_valid(item.get("target"))
+        for item in objective_targets
+    ):
+        return False
+    objective_target_uids = [item["uid"] for item in objective_targets]
+    if len(objective_target_uids) != len(set(objective_target_uids)):
+        return False
+    freeze_buildings = summary.get("freeze_buildings")
+    if not isinstance(freeze_buildings, list) or any(
+        not isinstance(item, dict)
+        or not _point_valid(item.get("pos"))
+        or type(item.get("alive")) is not bool
+        or type(item.get("frozen")) is not bool
+        or type(item.get("hp")) is not int
+        or item["hp"] < 0
+        for item in freeze_buildings
+    ):
+        return False
+    mountain_tiles = summary.get("mission_mountain_tiles")
+    if not isinstance(mountain_tiles, list) or any(
+        not isinstance(item, dict)
+        or not _point_valid(item.get("pos"))
+        or type(item.get("hp")) is not int
+        or item["hp"] < 0
+        for item in mountain_tiles
+    ):
+        return False
+    for field, require_status in (
+        ("destroy_objective_units", False),
+        ("protected_objective_units", True),
+    ):
+        value = summary.get(field)
+        if not isinstance(value, list) or any(
+            not _unit_identity_valid(item)
+            or type(item.get("hp")) is not int
+            or item["hp"] < 0
+            or type(item.get("max_hp")) is not int
+            or item["max_hp"] <= 0
+            or item["hp"] > item["max_hp"]
+            or type(item.get("alive")) is not bool
+            or type(item.get("team")) is not int
+            or item["team"] not in {1, 2, 6}
+            or item["alive"] != (item["hp"] > 0)
+            or (
+                require_status
+                and (
+                    type(item.get("frozen")) is not bool
+                    or type(item.get("webbed")) is not bool
+                )
+            )
+            for item in value
+        ):
+            return False
+        uids = [item["uid"] for item in value]
+        if len(uids) != len(set(uids)):
+            return False
+    terraform_tiles = summary.get("terraform_grass_tiles")
+    if not isinstance(terraform_tiles, list) or any(
+        not _point_valid(item)
+        for item in terraform_tiles
+    ):
+        return False
+
+    def _positions_unique(items: list, *, field: str = "pos") -> bool:
+        positions = [tuple(item[field]) for item in items]
+        return len(positions) == len(set(positions))
+
+    mech_by_uid = {item["uid"]: item for item in mech_hp}
+    living_mech_uids = {
+        uid for uid, item in mech_by_uid.items() if item["hp"] > 0
+    }
+    if summary["mechs_alive"] != len(living_mech_uids):
+        return False
+    if summary["mech_hp_total"] != sum(item["hp"] for item in mech_hp):
+        return False
+    for field in (*unit_status_fields, "mechs_on_danger", "mechs_disabled"):
+        records = summary[field]
+        uids = [item["uid"] for item in records]
+        if len(uids) != len(set(uids)) or not set(uids) <= living_mech_uids:
+            return False
+        if any(
+            mech_by_uid[item["uid"]]["type"] != item["type"]
+            for item in records
+        ):
+            return False
+    if summary["mites_remaining"] != len(summary["mechs_infected"]):
+        return False
+    if summary["mites_remaining"] > 0 and not summary["mites_status_tracked"]:
+        return False
+    if summary["objective_buildings_targeted"] != len(objective_targets):
+        return False
+    if summary["objective_buildings_alive"] > summary["buildings_alive"]:
+        return False
+    if summary["objective_building_hp_total"] > summary["building_hp_total"]:
+        return False
+    if (summary["pylons_alive"] is None) != (summary["pylon_hp_total"] is None):
+        return False
+    if summary["pylons_alive"] is not None and (
+        summary["pylons_alive"] != summary["buildings_alive"]
+        or summary["pylon_hp_total"] != summary["building_hp_total"]
+    ):
+        return False
+
+    freeze_target = summary["freeze_building_target"]
+    freeze_counts = (
+        summary["freeze_buildings_alive"],
+        summary["freeze_buildings_frozen"],
+        summary["freeze_buildings_thawed"],
+    )
+    if freeze_target is None:
+        if any(value is not None for value in freeze_counts) or freeze_buildings:
+            return False
+    else:
+        if freeze_target <= 0 or any(value is None for value in freeze_counts):
+            return False
+        if len(freeze_buildings) != freeze_target:
+            return False
+        if not _positions_unique(freeze_buildings):
+            return False
+        alive_count = sum(1 for item in freeze_buildings if item["alive"])
+        frozen_count = sum(
+            1 for item in freeze_buildings if item["alive"] and item["frozen"]
+        )
+        thawed_count = sum(
+            1 for item in freeze_buildings if item["alive"] and not item["frozen"]
+        )
+        if freeze_counts != (alive_count, frozen_count, thawed_count):
+            return False
+
+    if not _positions_unique(mountain_tiles):
+        return False
+    if summary["mission_id"] == "Mission_Force":
+        mountain_target = summary["mission_mountain_target"]
+        mountains_destroyed = summary["mission_mountains_destroyed"]
+        if (
+            mountain_target <= 0
+            or mountains_destroyed > mountain_target
+        ):
+            return False
+    elif (
+        summary["mission_mountain_target"] != 0
+        or summary["mission_mountains_destroyed"] != 0
+        or mountain_tiles
+    ):
+        return False
+
+    terraform_remaining = summary["terraform_grass_remaining"]
+    if not _positions_unique(
+        [{"pos": item} for item in terraform_tiles]
+    ):
+        return False
+    if summary["mission_id"] == "Mission_Terraform":
+        if terraform_remaining is None or terraform_remaining != len(terraform_tiles):
+            return False
+    elif terraform_remaining is not None or terraform_tiles:
+        return False
+
+    destroy_units = summary["destroy_objective_units"]
+    protected_units = summary["protected_objective_units"]
+    if summary["destroy_objective_units_alive"] != sum(
+        1 for item in destroy_units if item["alive"]
+    ):
+        return False
+    protected_alive = sum(1 for item in protected_units if item["alive"])
+    protected_frozen = sum(
+        1
+        for item in protected_units
+        if item["alive"] and item["frozen"]
+    )
+    protected_webbed = sum(
+        1
+        for item in protected_units
+        if item["alive"] and item["webbed"]
+    )
+    if (
+        summary["protected_objective_units_alive"] != protected_alive
+        or summary["protected_objective_units_frozen"] != protected_frozen
+        or summary["protected_objective_units_webbed"] != protected_webbed
+    ):
+        return False
+
+    expected_train_value = None
+    if summary["mission_id"] in {"Mission_Train", "Mission_Armored_Train"}:
+        expected_train_value = 0
+        for item in protected_units:
+            if not item["alive"] or "Train" not in item["type"]:
+                continue
+            if (
+                item["type"] == "Train_Damaged"
+                or item["type"].startswith("Train_Armored_Damage")
+            ):
+                expected_train_value = max(expected_train_value, 1)
+            else:
+                expected_train_value = max(expected_train_value, 2)
+    if summary["train_objective_value"] != expected_train_value:
+        return False
+    return True
+
+
+def _held_end_turn_plan_safety_valid(
+    plan_safety: object,
+    session: RunSession,
+    current_outcome: object,
+    predicted_summary: object,
+    solve_data: dict,
+) -> bool:
+    if not isinstance(plan_safety, dict):
+        return False
+    status = plan_safety.get("status")
+    blocking = plan_safety.get("blocking")
+    violations = plan_safety.get("violations")
+    compared = plan_safety.get("compared")
+    if (
+        status not in {"CLEAN", "WARN", "DIRTY"}
+        or not isinstance(blocking, bool)
+        or not isinstance(violations, list)
+        or not isinstance(compared, list)
+        or not compared
+        or not isinstance(plan_safety.get("current"), dict)
+        or not isinstance(plan_safety.get("predicted"), dict)
+        or not _held_end_turn_summary_schema_valid(current_outcome)
+        or not _held_end_turn_summary_schema_valid(predicted_summary)
+        or any(not isinstance(item, dict) for item in violations)
+        or any(not isinstance(item, str) or not item for item in compared)
+    ):
+        return False
+    if (
+        not isinstance(current_outcome.get("mission_id"), str)
+        or not current_outcome.get("mission_id")
+        or current_outcome.get("mission_id") != session.current_mission
+        or type(current_outcome.get("turn")) is not int
+        or type(current_outcome.get("total_turns")) is not int
+        or not isinstance(predicted_summary.get("mission_id"), str)
+        or predicted_summary.get("mission_id") != session.current_mission
+        or type(predicted_summary.get("turn")) is not int
+        or type(predicted_summary.get("total_turns")) is not int
+    ):
+        return False
+    active_solution = session.active_solution
+    if active_solution is None or type(active_solution.turn) is not int:
+        return False
+    expected_turn = active_solution.turn
+    expected_next_turn = expected_turn + 1
+    final_board_data = solve_data.get("final_board")
+    post_player_data = solve_data.get("post_player_board")
+    if not isinstance(final_board_data, dict) or not final_board_data:
+        return False
+    if not isinstance(post_player_data, dict) or not post_player_data:
+        return False
+    if (
+        _held_end_turn_bridge_checkpoint_schema_error(post_player_data)
+        is not None
+        or _held_end_turn_bridge_checkpoint_schema_error(final_board_data)
+        is not None
+    ):
+        return False
+    plan_current = plan_safety["current"]
+    plan_predicted = plan_safety["predicted"]
+    if not (
+        current_outcome.get("turn") == expected_turn
+        and post_player_data.get("turn") == expected_turn
+        and plan_current.get("turn") == expected_turn
+        and predicted_summary.get("turn") == expected_next_turn
+        and final_board_data.get("turn") == expected_next_turn
+        and plan_predicted.get("turn") == expected_next_turn
+    ):
+        return False
+    artifact_summaries = (
+        current_outcome,
+        post_player_data,
+        plan_current,
+        predicted_summary,
+        final_board_data,
+        plan_predicted,
+    )
+    total_turn_values = [
+        artifact.get("total_turns") for artifact in artifact_summaries
+    ]
+    if any(type(value) is not int or value <= 0 for value in total_turn_values):
+        return False
+    if len(set(total_turn_values)) != 1:
+        return False
+    if any(
+        artifact.get("mission_id") != session.current_mission
+        for artifact in artifact_summaries
+    ):
+        return False
+    for field in ("mission_kill_target", "mission_kill_limit"):
+        values = [artifact.get(field) for artifact in artifact_summaries]
+        if any(type(value) is not int or value < 0 for value in values):
+            return False
+        if len(set(values)) != 1:
+            return False
+    violation_blocks = [item.get("blocking") for item in violations]
+    if any(not isinstance(value, bool) for value in violation_blocks):
+        return False
+    if status == "CLEAN":
+        schema_valid = not blocking and not violations
+    elif status == "WARN":
+        schema_valid = (
+            bool(violations)
+            and not blocking
+            and not any(violation_blocks)
+        )
+    else:
+        schema_valid = blocking and any(violation_blocks)
+    if not schema_valid:
+        return False
+    try:
+        recomputed = audit_plan_safety(
+            current_outcome,
+            predicted_summary,
+            block_mech_hp_loss=_blocks_mech_hp_loss_for_perfect_battle(
+                session
+            ),
+            block_mech_status_loss=_blocks_mech_status_loss_for_run(session),
+        )
+    except Exception:
+        return False
+    if not all(
+        recomputed.get(key) == plan_safety.get(key)
+        for key in (
+            "status",
+            "blocking",
+            "violations",
+            "compared",
+            "current",
+            "predicted",
+        )
+    ):
+        return False
+
+    try:
+        final_board_data = _carry_projected_summary_metadata(
+            deepcopy(final_board_data),
+            post_player_data,
+        )
+        derived_predicted = _capture_board_summary(
+            Board.from_bridge_data(final_board_data),
+            final_board_data,
+        )
+    except Exception:
+        return False
+    return all(
+        predicted_summary.get(field) == derived_predicted.get(field)
+        for field in _HELD_END_TURN_FINAL_BOARD_SUMMARY_FIELDS
+    )
+
+
+def _held_end_turn_bridge_checkpoint_schema_error(
+    data: object,
+) -> str | None:
+    if not isinstance(data, dict):
+        return "checkpoint_not_object"
+    for field in (
+        "grid_power",
+        "grid_power_max",
+        "turn",
+        "total_turns",
+        "remaining_spawns",
+        "mission_kill_target",
+        "mission_kill_limit",
+        "mission_kills_done",
+        "mission_mountain_target",
+        "mission_mountains_destroyed",
+        "repair_platform_target",
+        "repair_platforms_used",
+        "freeze_building_target",
+    ):
+        value = data.get(field)
+        if type(value) is not int or value < 0:
+            return f"checkpoint_{field}_invalid"
+    if data["total_turns"] <= 0:
+        return "checkpoint_total_turns_invalid"
+    if data["grid_power_max"] <= 0 or data["grid_power"] > data["grid_power_max"]:
+        return "checkpoint_grid_power_range_invalid"
+    if not isinstance(data.get("mission_id"), str) or not data["mission_id"]:
+        return "checkpoint_mission_id_invalid"
+    if "is_infinite_spawn" in data and type(data["is_infinite_spawn"]) is not bool:
+        return "checkpoint_is_infinite_spawn_invalid"
+    for field in ("victory_turns",):
+        value = data.get(field)
+        if value is not None and (type(value) is not int or value < 0):
+            return f"checkpoint_{field}_invalid"
+    if "env_type" in data and (
+        not isinstance(data["env_type"], str) or not data["env_type"]
+    ):
+        return "checkpoint_env_type_invalid"
+    wind = data.get("environment_wind_dir")
+    if wind is not None and (type(wind) is not int or not 0 <= wind <= 3):
+        return "checkpoint_environment_wind_dir_invalid"
+
+    def _point(value: object) -> tuple[int, int] | None:
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
+            return None
+        if any(type(coord) is not int or not 0 <= coord < 8 for coord in value):
+            return None
+        return int(value[0]), int(value[1])
+
+    def _point_list_error(field: str) -> str | None:
+        value = data.get(field, [])
+        if not isinstance(value, list):
+            return f"checkpoint_{field}_invalid"
+        points = [_point(item) for item in value]
+        if any(point is None for point in points):
+            return f"checkpoint_{field}_invalid"
+        if len(points) != len(set(points)):
+            return f"checkpoint_{field}_duplicate"
+        return None
+
+    attack_order = data.get("attack_order", [])
+    if not isinstance(attack_order, list) or any(
+        type(uid) is not int or uid < 0 for uid in attack_order
+    ):
+        return "checkpoint_attack_order_invalid"
+    if len(attack_order) != len(set(attack_order)):
+        return "checkpoint_attack_order_duplicate"
+    for field in (
+        "bonus_objective_unit_types",
+        "destroy_objective_unit_types",
+        "protect_objective_unit_types",
+    ):
+        value = data.get(field, [])
+        if not isinstance(value, list) or any(
+            not isinstance(item, str) or not item for item in value
+        ):
+            return f"checkpoint_{field}_invalid"
+        if len(value) != len(set(value)):
+            return f"checkpoint_{field}_duplicate"
+    for field in (
+        "spawning_tiles",
+        "freeze_building_tiles",
+        "mission_mountain_tiles",
+        "environment_freeze",
+        "environment_danger",
+    ):
+        error = _point_list_error(field)
+        if error is not None:
+            return error
+
+    danger_v2 = data.get("environment_danger_v2", [])
+    if not isinstance(danger_v2, list):
+        return "checkpoint_environment_danger_v2_invalid"
+    danger_v2_positions = []
+    for item in danger_v2:
+        if not isinstance(item, (list, tuple)) or len(item) not in {4, 5}:
+            return "checkpoint_environment_danger_v2_invalid"
+        point = _point(item[:2])
+        if point is None:
+            return "checkpoint_environment_danger_v2_invalid"
+        if type(item[2]) is not int or item[2] < 0:
+            return "checkpoint_environment_danger_v2_damage_invalid"
+        if type(item[3]) is not int or item[3] not in {0, 1}:
+            return "checkpoint_environment_danger_v2_kill_invalid"
+        if len(item) == 5 and (
+            type(item[4]) is not int or item[4] not in {0, 1}
+        ):
+            return "checkpoint_environment_danger_v2_flying_invalid"
+        danger_v2_positions.append(point)
+    if len(danger_v2_positions) != len(set(danger_v2_positions)):
+        return "checkpoint_environment_danger_v2_duplicate"
+
+    teleporter_pairs = data.get("teleporter_pairs", [])
+    if not isinstance(teleporter_pairs, list):
+        return "checkpoint_teleporter_pairs_invalid"
+    canonical_teleporters = []
+    teleporter_endpoints = []
+    for pair in teleporter_pairs:
+        endpoints = None
+        if isinstance(pair, (list, tuple)) and len(pair) == 4:
+            first = _point(pair[:2])
+            second = _point(pair[2:])
+            if first is not None and second is not None:
+                endpoints = (first, second)
+        elif isinstance(pair, (list, tuple)) and len(pair) == 2:
+            first = _point(pair[0])
+            second = _point(pair[1])
+            if first is not None and second is not None:
+                endpoints = (first, second)
+        if endpoints is None or endpoints[0] == endpoints[1]:
+            return "checkpoint_teleporter_pair_invalid"
+        canonical = tuple(sorted(endpoints))
+        canonical_teleporters.append(canonical)
+        teleporter_endpoints.extend(canonical)
+    if len(canonical_teleporters) != len(set(canonical_teleporters)):
+        return "checkpoint_teleporter_pair_duplicate"
+    if len(teleporter_endpoints) != len(set(teleporter_endpoints)):
+        return "checkpoint_teleporter_endpoint_duplicate"
+
+    tiles = data.get("tiles")
+    units = data.get("units")
+    if not isinstance(tiles, list):
+        return "checkpoint_tiles_invalid"
+    if not isinstance(units, list):
+        return "checkpoint_units_invalid"
+
+    tile_positions: set[tuple[int, int]] = set()
+    tile_bool_fields = (
+        "fire",
+        "has_pod",
+        "smoke",
+        "acid",
+        "shield",
+        "frozen",
+        "cracked",
+        "freeze_mine",
+        "old_earth_mine",
+        "repair_platform",
+        "grass",
+        "unique_building",
+    )
+    for tile in tiles:
+        if not isinstance(tile, dict):
+            return "checkpoint_tile_not_object"
+        x, y = tile.get("x"), tile.get("y")
+        if (
+            type(x) is not int
+            or type(y) is not int
+            or not (0 <= x < 8 and 0 <= y < 8)
+        ):
+            return "checkpoint_tile_position_invalid"
+        if (x, y) in tile_positions:
+            return "checkpoint_tile_position_duplicate"
+        tile_positions.add((x, y))
+        if not isinstance(tile.get("terrain"), str) or not tile["terrain"]:
+            return "checkpoint_tile_terrain_invalid"
+        if "terrain_id" in tile and (
+            type(tile["terrain_id"]) is not int or tile["terrain_id"] < 0
+        ):
+            return "checkpoint_tile_terrain_id_invalid"
+        for field in ("building_hp", "population"):
+            if field in tile and (
+                type(tile[field]) is not int or tile[field] < 0
+            ):
+                return f"checkpoint_tile_{field}_invalid"
+        if "conveyor" in tile and (
+            type(tile["conveyor"]) is not int
+            or tile["conveyor"] not in {-1, 0, 1, 2, 3}
+        ):
+            return "checkpoint_tile_conveyor_invalid"
+        for field in tile_bool_fields:
+            if field in tile and type(tile[field]) is not bool:
+                return f"checkpoint_tile_{field}_invalid"
+        if "pod" in tile and type(tile["pod"]) is not bool:
+            return "checkpoint_tile_pod_invalid"
+        if "objective_name" in tile and not isinstance(
+            tile["objective_name"], str
+        ):
+            return "checkpoint_tile_objective_name_invalid"
+        for field in ("item", "custom"):
+            if field in tile and not isinstance(tile[field], str):
+                return f"checkpoint_tile_{field}_invalid"
+    if tile_positions != {(x, y) for x in range(8) for y in range(8)}:
+        return "checkpoint_tiles_incomplete"
+
+    unit_keys: set[tuple[int, int, int]] = set()
+    occupied_positions: set[tuple[int, int]] = set()
+    primary_unit_uids: set[int] = set()
+    units_by_uid: dict[int, list[dict]] = {}
+    unit_bool_fields = (
+        "mech",
+        "active",
+        "can_move",
+        "pushable",
+        "flying",
+        "massive",
+        "armor",
+        "shield",
+        "acid",
+        "frozen",
+        "fire",
+        "web",
+        "infected",
+        "boosted",
+        "has_queued_attack",
+        "is_extra_tile",
+        "weapon_target_behind",
+        "queued_target_normalized",
+    )
+    for unit in units:
+        if not isinstance(unit, dict):
+            return "checkpoint_unit_not_object"
+        uid = unit.get("uid")
+        if type(uid) is not int or uid < 0:
+            return "checkpoint_unit_uid_invalid"
+        if not isinstance(unit.get("type"), str) or not unit["type"]:
+            return "checkpoint_unit_type_invalid"
+        for field in ("x", "y", "hp", "max_hp", "team", "move"):
+            if type(unit.get(field)) is not int:
+                return f"checkpoint_unit_{field}_invalid"
+        if not (0 <= unit["x"] < 8 and 0 <= unit["y"] < 8):
+            return "checkpoint_unit_position_invalid"
+        if unit["team"] not in {1, 2, 6}:
+            return "checkpoint_unit_team_invalid"
+        if unit["move"] < 0:
+            return "checkpoint_unit_move_invalid"
+        if "base_move" in unit and (
+            type(unit["base_move"]) is not int or unit["base_move"] < 0
+        ):
+            return "checkpoint_unit_base_move_invalid"
+        if type(unit.get("mech")) is not bool:
+            return "checkpoint_unit_mech_invalid"
+        if type(unit.get("active")) is not bool:
+            return "checkpoint_unit_active_invalid"
+        is_extra_tile = unit.get("is_extra_tile", False)
+        if type(is_extra_tile) is not bool:
+            return "checkpoint_unit_is_extra_tile_invalid"
+        unit_key = (uid, unit["x"], unit["y"])
+        if unit_key in unit_keys:
+            return "checkpoint_unit_key_duplicate"
+        unit_keys.add(unit_key)
+        position = (unit["x"], unit["y"])
+        if position in occupied_positions:
+            return "checkpoint_unit_position_duplicate"
+        occupied_positions.add(position)
+        units_by_uid.setdefault(uid, []).append(unit)
+        if not is_extra_tile:
+            if uid in primary_unit_uids:
+                return "checkpoint_primary_unit_uid_duplicate"
+            primary_unit_uids.add(uid)
+        persistent_player_wreck = bool(
+            unit["hp"] == 0
+            and unit["team"] == 1
+            and unit["mech"] is True
+        )
+        if (
+            unit["max_hp"] <= 0
+            or unit["hp"] < 0
+            or unit["hp"] > unit["max_hp"]
+            or (unit["hp"] == 0 and not persistent_player_wreck)
+        ):
+            return "checkpoint_unit_hp_invalid"
+        for field in unit_bool_fields:
+            if field in unit and type(unit[field]) is not bool:
+                return f"checkpoint_unit_{field}_invalid"
+        weapons = unit.get("weapons", [])
+        if not isinstance(weapons, list) or any(
+            not isinstance(weapon, str) or not weapon for weapon in weapons
+        ):
+            return "checkpoint_unit_weapons_invalid"
+        for field, upper_bound in (
+            ("ranged", 255),
+            ("weapon_damage", 65535),
+            ("weapon_push", 255),
+        ):
+            if field in unit and (
+                type(unit[field]) is not int
+                or not 0 <= unit[field] <= upper_bound
+            ):
+                return f"checkpoint_unit_{field}_invalid"
+        if "pilot_id" in unit and not isinstance(unit["pilot_id"], str):
+            return "checkpoint_unit_pilot_id_invalid"
+        if "pilot_value" in unit:
+            pilot_value = unit["pilot_value"]
+            if (
+                isinstance(pilot_value, bool)
+                or not isinstance(pilot_value, (int, float))
+                or not math.isfinite(float(pilot_value))
+                or pilot_value < 0
+            ):
+                return "checkpoint_unit_pilot_value_invalid"
+        for field in (
+            "queued_target",
+            "queued_origin",
+            "queued_target_raw",
+        ):
+            if field in unit:
+                value = unit[field]
+                if (
+                    not isinstance(value, (list, tuple))
+                    or len(value) != 2
+                    or any(type(coord) is not int for coord in value)
+                    or any(
+                        coord != -1 and not 0 <= coord < 8
+                        for coord in value
+                    )
+                    or ((value[0] == -1) != (value[1] == -1))
+                ):
+                    return f"checkpoint_unit_{field}_invalid"
+        if (
+            "web_source_uid" in unit
+            and (
+                type(unit["web_source_uid"]) is not int
+                or unit["web_source_uid"] < 0
+            )
+        ):
+            return "checkpoint_unit_web_source_uid_invalid"
+    logical_segment_fields = (
+        "type",
+        "hp",
+        "max_hp",
+        "team",
+        "mech",
+        "move",
+        "base_move",
+        "minor",
+        "active",
+        "can_move",
+        "pushable",
+        "flying",
+        "massive",
+        "armor",
+        "shield",
+        "acid",
+        "frozen",
+        "fire",
+        "web",
+        "infected",
+        "boosted",
+        "has_queued_attack",
+        "queued_target",
+        "queued_origin",
+        "queued_target_raw",
+        "web_source_uid",
+        "weapon_damage",
+        "weapon_push",
+        "weapon_target_behind",
+    )
+    for uid, segments in units_by_uid.items():
+        primaries = [
+            unit for unit in segments if unit.get("is_extra_tile") is not True
+        ]
+        extras = [
+            unit for unit in segments if unit.get("is_extra_tile") is True
+        ]
+        if extras and len(primaries) != 1:
+            return "checkpoint_extra_tile_primary_invalid"
+        if not extras:
+            continue
+        primary = primaries[0]
+        for extra in extras:
+            for field in logical_segment_fields:
+                if extra.get(field) != primary.get(field):
+                    return f"checkpoint_extra_tile_{field}_mismatch"
+
+    if any(uid not in primary_unit_uids for uid in attack_order):
+        return "checkpoint_attack_order_uid_invalid"
+    return None
+
+
+def _held_end_turn_post_player_parity_error(
+    solve_data: dict,
+    live_board: Board,
+    live_bridge_data: dict,
+    *,
+    allowed_mission_kill_counter_lag: int = 0,
+) -> dict | None:
+    checkpoint = solve_data.get("post_player_board")
+    if not isinstance(checkpoint, dict):
+        return {"reason": "post_player_checkpoint_missing"}
+    checkpoint_schema_error = _held_end_turn_bridge_checkpoint_schema_error(
+        checkpoint
+    )
+    if checkpoint_schema_error is not None:
+        return {
+            "reason": "post_player_checkpoint_schema_invalid",
+            "error": checkpoint_schema_error,
+        }
+    normalized_checkpoint_data = deepcopy(checkpoint)
+    normalized_live_data = deepcopy(live_bridge_data)
+    live_schema_error = _held_end_turn_bridge_checkpoint_schema_error(
+        normalized_live_data
+    )
+    if live_schema_error is not None:
+        return {
+            "reason": "post_player_live_schema_invalid",
+            "error": live_schema_error,
+        }
+
+    def _player_mech_wreck_record(unit: object) -> tuple | None:
+        if not (
+            isinstance(unit, dict)
+            and type(unit.get("uid")) is int
+            and isinstance(unit.get("type"), str)
+            and type(unit.get("x")) is int
+            and type(unit.get("y")) is int
+            and type(unit.get("hp")) is int
+            and unit["hp"] == 0
+            and unit.get("team") == 1
+            and unit.get("mech") is True
+        ):
+            return None
+        return (
+            unit["uid"],
+            unit["type"],
+            unit["x"],
+            unit["y"],
+            unit.get("is_extra_tile", False),
+        )
+
+    checkpoint_wrecks = sorted(
+        record
+        for record in (
+            _player_mech_wreck_record(unit)
+            for unit in normalized_checkpoint_data.get("units", [])
+        )
+        if record is not None
+    )
+    live_wrecks = sorted(
+        record
+        for record in (
+            _player_mech_wreck_record(unit)
+            for unit in normalized_live_data.get("units", [])
+        )
+        if record is not None
+    )
+    if checkpoint_wrecks != live_wrecks:
+        return {
+            "reason": "post_player_checkpoint_wreck_topology_mismatch",
+            "checkpoint_wrecks": [list(record) for record in checkpoint_wrecks],
+            "live_wrecks": [list(record) for record in live_wrecks],
+        }
+
+    # A dead player mech affects the replay only through wreck occupancy.
+    # Compare that topology explicitly above, then omit corpse-only status
+    # flags from the general unit-intent diff: the live pawn cleanup and Rust
+    # action simulator need not retain identical Active/status bits after HP 0.
+    normalized_checkpoint_data["units"] = [
+        unit
+        for unit in normalized_checkpoint_data.get("units", [])
+        if _player_mech_wreck_record(unit) is None
+    ]
+    normalized_live_data["units"] = [
+        unit
+        for unit in normalized_live_data.get("units", [])
+        if _player_mech_wreck_record(unit) is None
+    ]
+    checkpoint = normalized_checkpoint_data
+    uid_equivalence_fields = (
+        "type",
+        "x",
+        "y",
+        "hp",
+        "max_hp",
+        "team",
+        "is_mech",
+        "move_speed",
+        "flying",
+        "massive",
+        "armor",
+        "pushable",
+        "weapon",
+        "weapon2",
+        "minor",
+        "active",
+        "base_move",
+        "shield",
+        "acid",
+        "frozen",
+        "fire",
+        "web",
+        "infected",
+        "boosted",
+        "target_x",
+        "target_y",
+        "queued_target_x",
+        "queued_target_y",
+        "queued_origin_x",
+        "queued_origin_y",
+        "has_queued_attack",
+        "weapon_damage",
+        "weapon_push",
+        "weapon_target_behind",
+        "is_extra_tile",
+        "pilot_id",
+        "pilot_value",
+    )
+    try:
+        pre_checkpoint_board = Board.from_bridge_data(checkpoint)
+        pre_live_board = Board.from_bridge_data(normalized_live_data)
+    except Exception as exc:
+        return {
+            "reason": "post_player_checkpoint_diff_failed",
+            "error": str(exc),
+        }
+    checkpoint_ids = {unit.uid for unit in pre_checkpoint_board.units}
+    live_ids = {unit.uid for unit in pre_live_board.units}
+    proven_spawn_uids: set[int] = set()
+    predicted_states = solve_data.get("predicted_states")
+    if isinstance(predicted_states, list):
+        for entry in predicted_states:
+            if not isinstance(entry, dict):
+                return {"reason": "post_player_spawn_provenance_malformed"}
+            phases = (
+                (entry.get("post_move"), entry.get("post_attack"))
+                if "post_move" in entry or "post_attack" in entry
+                else (entry,)
+            )
+            for phase_state in phases:
+                if not isinstance(phase_state, dict):
+                    return {"reason": "post_player_spawn_provenance_malformed"}
+                spawned = phase_state.get("unstable_spawn_uids", [])
+                if not isinstance(spawned, list) or any(
+                    type(uid) is not int or uid < 0 for uid in spawned
+                ):
+                    return {"reason": "post_player_spawn_provenance_malformed"}
+                proven_spawn_uids.update(spawned)
+    objective_identity_types = set(
+        checkpoint.get("protect_objective_unit_types") or []
+    ) | set(checkpoint.get("destroy_objective_unit_types") or [])
+
+    unstable_spawn_types = {
+        "RockThrown",
+        "SpiderlingEgg1",
+        "DeployUnit_Bomby",
+        "DeployUnit_Aracnoid",
+        "DeployUnit_AracnoidB",
+    }
+
+    def _uid_may_be_unstable(unit: Unit, *, checkpoint_side: bool) -> bool:
+        return bool(
+            unit.type in unstable_spawn_types
+            and (not checkpoint_side or unit.uid in proven_spawn_uids)
+            and unit.type not in objective_identity_types
+            and not unit.is_mech
+            and not unit.is_extra_tile
+        )
+
+    checkpoint_by_signature: dict[tuple, list[Unit]] = {}
+    live_by_signature: dict[tuple, list[Unit]] = {}
+    for unit in pre_checkpoint_board.units:
+        if unit.uid in live_ids or not _uid_may_be_unstable(
+            unit,
+            checkpoint_side=True,
+        ):
+            continue
+        signature = tuple(
+            getattr(unit, field) for field in uid_equivalence_fields
+        )
+        checkpoint_by_signature.setdefault(signature, []).append(unit)
+    for unit in pre_live_board.units:
+        if unit.uid in checkpoint_ids or not _uid_may_be_unstable(
+            unit,
+            checkpoint_side=False,
+        ):
+            continue
+        signature = tuple(
+            getattr(unit, field) for field in uid_equivalence_fields
+        )
+        live_by_signature.setdefault(signature, []).append(unit)
+    live_to_checkpoint_uid: dict[int, int] = {}
+    for signature in set(checkpoint_by_signature) | set(live_by_signature):
+        predicted_units = checkpoint_by_signature.get(signature, [])
+        actual_units = live_by_signature.get(signature, [])
+        if len(predicted_units) == 1 and len(actual_units) == 1:
+            live_to_checkpoint_uid[actual_units[0].uid] = predicted_units[0].uid
+    if live_to_checkpoint_uid:
+        for raw_unit in normalized_live_data.get("units") or []:
+            if not isinstance(raw_unit, dict):
+                continue
+            raw_uid = raw_unit.get("uid")
+            if raw_uid in live_to_checkpoint_uid:
+                raw_unit["uid"] = live_to_checkpoint_uid[raw_uid]
+            web_source_uid = raw_unit.get("web_source_uid")
+            if web_source_uid in live_to_checkpoint_uid:
+                raw_unit["web_source_uid"] = live_to_checkpoint_uid[
+                    web_source_uid
+                ]
+        normalized_live_data["attack_order"] = [
+            live_to_checkpoint_uid.get(uid, uid)
+            for uid in (normalized_live_data.get("attack_order") or [])
+        ]
+    try:
+        from src.solver.verify import diff_states, snapshot_after_action
+
+        checkpoint_board = Board.from_bridge_data(checkpoint)
+        normalized_live_board = Board.from_bridge_data(normalized_live_data)
+        checkpoint_snapshot = snapshot_after_action(
+            checkpoint_board,
+            -1,
+            -1,
+            [],
+        )
+        diff = diff_states(checkpoint_snapshot, normalized_live_board)
+    except Exception as exc:
+        return {
+            "reason": "post_player_checkpoint_diff_failed",
+            "error": str(exc),
+        }
+    if not diff.is_empty():
+        return {
+            "reason": "post_player_checkpoint_mismatch",
+            "diff": diff.to_dict(),
+        }
+    tile_fields = (
+        "terrain",
+        "building_hp",
+        "population",
+        "on_fire",
+        "has_pod",
+        "smoke",
+        "acid",
+        "shield",
+        "frozen",
+        "cracked",
+        "conveyor",
+        "freeze_mine",
+        "old_earth_mine",
+        "repair_platform",
+        "grass",
+        "unique_building",
+        "objective_name",
+    )
+    tile_mismatches = []
+    for x in range(8):
+        for y in range(8):
+            checkpoint_tile = checkpoint_board.tile(x, y)
+            live_tile = normalized_live_board.tile(x, y)
+            changed = {
+                field: {
+                    "checkpoint": getattr(checkpoint_tile, field),
+                    "live": getattr(live_tile, field),
+                }
+                for field in tile_fields
+                if getattr(checkpoint_tile, field) != getattr(live_tile, field)
+            }
+            if changed:
+                tile_mismatches.append({"pos": [x, y], "fields": changed})
+    if tile_mismatches:
+        return {
+            "reason": "post_player_checkpoint_tile_mismatch",
+            "tiles": tile_mismatches,
+        }
+    if (
+        checkpoint_board.environment_wind_dir
+        != normalized_live_board.environment_wind_dir
+    ):
+        return {
+            "reason": "post_player_checkpoint_environment_metadata_mismatch",
+            "environment_wind_dir": {
+                "checkpoint": checkpoint_board.environment_wind_dir,
+                "live": normalized_live_board.environment_wind_dir,
+            },
+        }
+    def _unit_key(
+        unit: Unit,
+        uid_map: dict[int, int] | None = None,
+    ) -> tuple[int, int, int, bool]:
+        uid = unit.uid
+        if uid_map:
+            uid = uid_map.get(uid, uid)
+        return (uid, unit.x, unit.y, unit.is_extra_tile)
+
+    checkpoint_units = {
+        _unit_key(unit): unit for unit in checkpoint_board.units
+    }
+    live_units = {
+        _unit_key(unit): unit
+        for unit in normalized_live_board.units
+    }
+    intent_fields = (
+        "type",
+        "x",
+        "y",
+        "hp",
+        "max_hp",
+        "team",
+        "is_mech",
+        "move_speed",
+        "flying",
+        "massive",
+        "armor",
+        "pushable",
+        "weapon",
+        "weapon2",
+        "minor",
+        "active",
+        "base_move",
+        "shield",
+        "acid",
+        "frozen",
+        "fire",
+        "web",
+        "infected",
+        "boosted",
+        "web_source_uid",
+        "target_x",
+        "target_y",
+        "queued_target_x",
+        "queued_target_y",
+        "queued_origin_x",
+        "queued_origin_y",
+        "has_queued_attack",
+        "weapon_damage",
+        "weapon_push",
+        "weapon_target_behind",
+        "is_extra_tile",
+        "pilot_id",
+        "pilot_value",
+    )
+    intent_mismatches = []
+    for unit_key in sorted(set(checkpoint_units) | set(live_units)):
+        checkpoint_unit = checkpoint_units.get(unit_key)
+        live_unit = live_units.get(unit_key)
+        if checkpoint_unit is None or live_unit is None:
+            intent_mismatches.append({
+                "unit_key": list(unit_key),
+                "reason": "unit_set_mismatch",
+            })
+            continue
+        changed = {}
+        for field in intent_fields:
+            checkpoint_value = getattr(checkpoint_unit, field)
+            live_value = getattr(live_unit, field)
+            if checkpoint_value != live_value:
+                changed[field] = {
+                    "checkpoint": checkpoint_value,
+                    "live": live_value,
+                }
+        if changed:
+            intent_mismatches.append({
+                "unit_key": list(unit_key),
+                "fields": changed,
+            })
+    if intent_mismatches:
+        return {
+            "reason": "post_player_checkpoint_unit_intent_mismatch",
+            "units": intent_mismatches,
+        }
+    checkpoint_raw_units = {
+        (
+            unit["uid"],
+            unit["x"],
+            unit["y"],
+            unit.get("is_extra_tile", False),
+        ): unit
+        for unit in checkpoint.get("units", [])
+    }
+    live_raw_units = {
+        (
+            unit["uid"],
+            unit["x"],
+            unit["y"],
+            unit.get("is_extra_tile", False),
+        ): unit
+        for unit in normalized_live_data.get("units", [])
+    }
+    raw_intent_mismatches = []
+    for unit_key in sorted(set(checkpoint_raw_units) | set(live_raw_units)):
+        checkpoint_raw = checkpoint_raw_units.get(unit_key)
+        live_raw = live_raw_units.get(unit_key)
+        if checkpoint_raw is None or live_raw is None:
+            raw_intent_mismatches.append({
+                "unit_key": list(unit_key),
+                "reason": "raw_unit_set_mismatch",
+            })
+            continue
+        if checkpoint_raw.get("queued_target_raw") != live_raw.get(
+            "queued_target_raw"
+        ):
+            raw_intent_mismatches.append({
+                "unit_key": list(unit_key),
+                "field": "queued_target_raw",
+                "checkpoint": checkpoint_raw.get("queued_target_raw"),
+                "live": live_raw.get("queued_target_raw"),
+            })
+    if raw_intent_mismatches:
+        return {
+            "reason": "post_player_checkpoint_raw_unit_intent_mismatch",
+            "units": raw_intent_mismatches,
+        }
+    ordered_list_parity_fields = ("attack_order",)
+    set_list_parity_fields = (
+        "bonus_objective_unit_types",
+        "destroy_objective_unit_types",
+        "environment_danger",
+        "environment_danger_v2",
+        "environment_freeze",
+        "freeze_building_tiles",
+        "protect_objective_unit_types",
+        "spawning_tiles",
+        "teleporter_pairs",
+    )
+    scalar_parity_fields = (
+        "mission_id",
+        "turn",
+        "grid_power_max",
+        "env_type",
+        "environment_wind_dir",
+        "is_infinite_spawn",
+        "remaining_spawns",
+        "total_turns",
+        "victory_turns",
+    )
+    zero_default_parity_fields = (
+        "freeze_building_target",
+        "mission_kill_limit",
+        "mission_kill_target",
+        "mission_mountain_target",
+        "mission_mountains_destroyed",
+        "repair_platform_target",
+        "repair_platforms_used",
+    )
+    raw_mismatches = {}
+    for field in ordered_list_parity_fields:
+        checkpoint_value = checkpoint.get(field) or []
+        live_value = normalized_live_data.get(field) or []
+        if checkpoint_value != live_value:
+            raw_mismatches[field] = {
+                "checkpoint": checkpoint_value,
+                "live": live_value,
+            }
+    for field in set_list_parity_fields:
+        checkpoint_value = checkpoint.get(field) or []
+        live_value = normalized_live_data.get(field) or []
+        if field == "teleporter_pairs":
+            def _canonical_teleporter_pairs(value: object) -> list[str]:
+                pairs = []
+                for pair in value if isinstance(value, list) else []:
+                    endpoints = None
+                    if isinstance(pair, (list, tuple)) and len(pair) == 4:
+                        endpoints = [
+                            [pair[0], pair[1]],
+                            [pair[2], pair[3]],
+                        ]
+                    elif isinstance(pair, (list, tuple)) and len(pair) == 2:
+                        endpoints = [deepcopy(pair[0]), deepcopy(pair[1])]
+                    if endpoints is None:
+                        pairs.append(pair)
+                        continue
+                    endpoints = sorted(
+                        endpoints,
+                        key=lambda item: json.dumps(item, sort_keys=True),
+                    )
+                    pairs.append(endpoints)
+
+                return sorted(
+                    (json.dumps(item, sort_keys=True) for item in pairs)
+                )
+
+            checkpoint_canonical = _canonical_teleporter_pairs(
+                checkpoint_value
+            )
+            live_canonical = _canonical_teleporter_pairs(live_value)
+        else:
+            checkpoint_canonical = sorted(
+                json.dumps(item, sort_keys=True)
+                for item in checkpoint_value
+            )
+            live_canonical = sorted(
+                json.dumps(item, sort_keys=True)
+                for item in live_value
+            )
+        if checkpoint_canonical != live_canonical:
+            raw_mismatches[field] = {
+                "checkpoint": checkpoint_value,
+                "live": live_value,
+            }
+    for field in scalar_parity_fields:
+        checkpoint_value = checkpoint.get(field)
+        live_value = normalized_live_data.get(field)
+        if checkpoint_value != live_value:
+            raw_mismatches[field] = {
+                "checkpoint": checkpoint_value,
+                "live": live_value,
+            }
+    for field in zero_default_parity_fields:
+        checkpoint_value = checkpoint.get(field) or 0
+        live_value = normalized_live_data.get(field) or 0
+        if checkpoint_value != live_value:
+            raw_mismatches[field] = {
+                "checkpoint": checkpoint_value,
+                "live": live_value,
+            }
+    if raw_mismatches:
+        return {
+            "reason": "post_player_checkpoint_raw_mismatch",
+            "mismatches": raw_mismatches,
+        }
+    try:
+        checkpoint_summary = _capture_board_summary(checkpoint_board, checkpoint)
+        live_summary = _capture_board_summary(
+            normalized_live_board,
+            normalized_live_data,
+        )
+    except Exception as exc:
+        return {
+            "reason": "post_player_checkpoint_summary_failed",
+            "error": str(exc),
+        }
+    parity_fields = (
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "objective_buildings_targeted",
+        "pods_present",
+        "mechs_alive",
+        "mech_hp_total",
+        "mechs_acid",
+        "mechs_fire",
+        "mechs_webbed",
+        "mechs_disabled",
+        "bigbomb_alive",
+        "protected_objective_units_alive",
+        "protected_objective_units_frozen",
+        "protected_objective_units_webbed",
+        "destroy_objective_units_alive",
+        "train_objective_value",
+        "freeze_buildings_alive",
+        "freeze_buildings_thawed",
+        "terraform_grass_remaining",
+        "mission_mountains_destroyed",
+        "mites_remaining",
+    )
+    mismatches = {
+        field: {
+            "checkpoint": checkpoint_summary.get(field),
+            "live": live_summary.get(field),
+        }
+        for field in parity_fields
+        if checkpoint_summary.get(field) != live_summary.get(field)
+    }
+    if mismatches:
+        return {
+            "reason": "post_player_checkpoint_summary_mismatch",
+            "mismatches": mismatches,
+        }
+    checkpoint_kills = checkpoint_summary.get("mission_kills_done")
+    live_kills = live_summary.get("mission_kills_done")
+    kills_match = checkpoint_kills == live_kills
+    if (
+        not kills_match
+        and type(allowed_mission_kill_counter_lag) is int
+        and allowed_mission_kill_counter_lag >= 0
+        and type(checkpoint_kills) is int
+        and type(live_kills) is int
+        and live_kills <= checkpoint_kills
+        and checkpoint_kills - live_kills
+        <= allowed_mission_kill_counter_lag
+    ):
+        kills_match = True
+    provenance = solve_data.get("terminal_desync_reprojection")
+    if not kills_match and isinstance(provenance, dict):
+        ledger = provenance.get("counter_ledger")
+        missing = (
+            ledger.get("missing_player_mission_kills")
+            if isinstance(ledger, dict)
+            else None
+        )
+        kills_match = bool(
+            type(checkpoint_kills) is int
+            and type(live_kills) is int
+            and type(missing) is int
+            and missing >= 0
+            and live_kills + missing == checkpoint_kills
+        )
+    if not kills_match:
+        return {
+            "reason": "post_player_checkpoint_mission_kills_mismatch",
+            "checkpoint": checkpoint_kills,
+            "live": live_kills,
+        }
+    return None
+
+
+def _held_end_turn_safety_block_result(
+    session: RunSession,
+    *,
+    allow_issued_plan: bool = False,
+    lightning_speed_loss_allowed: bool = False,
+) -> dict | None:
+    """Fail closed when a solved held turn cannot be safely re-authorized."""
+    active = session.active_solution
+
+    def _blocked(reason: str, **extra) -> dict:
+        result = {
+            "status": "END_TURN_BLOCKED",
+            "reason": reason,
+            "blocking": True,
+            "next_step": (
+                "Do not click End Turn. Recover from a fresh `read` plus "
+                "`solve`, or resolve the recorded safety/research evidence."
+            ),
+        }
+        result.update(extra)
+        return result
+
+    try:
+        if not _refresh_end_turn_bridge_state():
+            return _blocked("held_end_turn_live_refresh_failed")
+        board, bridge_data = read_bridge_state()
+    except Exception as exc:
+        return _blocked("held_end_turn_live_audit_failed", error=str(exc))
+    if board is None or not isinstance(bridge_data, dict):
+        return _blocked("held_end_turn_live_evidence_missing")
+    try:
+        weapon_overlay_updates = _enrich_bridge_mech_weapons_from_save(
+            bridge_data
+        )
+        limited_weapon_updates = (
+            _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+        )
+        if weapon_overlay_updates or limited_weapon_updates:
+            board = Board.from_bridge_data(bridge_data)
+    except Exception as exc:
+        return _blocked(
+            "held_end_turn_weapon_overlay_failed",
+            error=str(exc),
+        )
+    if bridge_data.get("in_active_mission") is not True:
+        return _blocked(
+            "held_end_turn_active_mission_not_proven",
+            in_active_mission=bridge_data.get("in_active_mission"),
+        )
+    if type(bridge_data.get("turn")) is not int:
+        return _blocked(
+            "held_end_turn_turn_invalid",
+            observed_turn=bridge_data.get("turn"),
+        )
+
+    if (
+        not session.current_mission
+        or bridge_data.get("mission_id") != session.current_mission
+    ):
+        return _blocked(
+            "held_end_turn_mission_identity_mismatch",
+            expected_mission=session.current_mission,
+            observed_mission=bridge_data.get("mission_id"),
+        )
+
+    turn = int(bridge_data["turn"])
+    held_end_turn_block = session.held_end_turn_block
+    if (
+        held_end_turn_block is not None
+        and not _held_end_turn_block_schema_valid(held_end_turn_block)
+    ):
+        return _blocked(
+            "held_end_turn_persistent_block_malformed",
+            held_end_turn_block=held_end_turn_block,
+        )
+    if not _held_end_turn_record_matches(held_end_turn_block, session, turn):
+        recorded_block = _load_recorded_turn_state(
+            session,
+            "held_end_turn_block",
+            turn=turn,
+        )
+        if (
+            recorded_block is not None
+            and not _held_end_turn_block_schema_valid(recorded_block)
+        ):
+            return _blocked(
+                "held_end_turn_recorded_block_malformed",
+                held_end_turn_block=recorded_block,
+            )
+        if _held_end_turn_record_matches(recorded_block, session, turn):
+            held_end_turn_block = recorded_block
+    if _held_end_turn_record_matches(
+        held_end_turn_block,
+        session,
+        turn,
+    ):
+        return _blocked(
+            "held_end_turn_persistent_block",
+            held_end_turn_block=held_end_turn_block,
+        )
+    if (
+        session.end_turn_plan_ledger is not None
+        and not _end_turn_plan_ledger_schema_valid(
+            session.end_turn_plan_ledger
+        )
+    ):
+        return _blocked(
+            "end_turn_plan_ledger_malformed",
+            end_turn_plan_ledger=session.end_turn_plan_ledger,
+        )
+    matching_plan_ledger = bool(
+        _end_turn_plan_ledger_schema_valid(session.end_turn_plan_ledger)
+        and _held_end_turn_record_matches(
+            session.end_turn_plan_ledger,
+            session,
+            turn,
+        )
+    )
+    consumable_issued_plan = bool(
+        allow_issued_plan
+        and matching_plan_ledger
+        and session.end_turn_plan_ledger.get("status") == "plan_issued"
+    )
+    if matching_plan_ledger and not consumable_issued_plan:
+        return _blocked(
+            "end_turn_plan_already_issued",
+            end_turn_plan_ledger=session.end_turn_plan_ledger,
+            next_step=(
+                "Do not issue or dispatch another End Turn plan for this "
+                "turn. Wait and poll with `read`; ambiguous delivery is "
+                "non-retryable."
+            ),
+        )
+    active_player_actors = _active_player_action_count(board)
+    if active is None:
+        living_player_actors = sum(
+            1
+            for unit in board.mechs()
+            if not getattr(unit, "is_extra_tile", False)
+            and (unit.is_mech or unit.weapon or unit.weapon2)
+        )
+        return _blocked(
+            "end_turn_completed_solve_missing",
+            active_player_actors=active_player_actors,
+            living_player_actors=living_player_actors,
+        )
+
+    if not _same_turn_all_player_actors_done(
+        session,
+        bridge_data,
+        active_player_actors,
+    ):
+        return _blocked(
+            "held_end_turn_state_not_proven",
+            expected_turn=active.turn,
+            observed_turn=bridge_data.get("turn"),
+            observed_phase=bridge_data.get("phase"),
+            active_player_actors=active_player_actors,
+        )
+    evidence_error = _post_action_audit_evidence_error(
+        board,
+        bridge_data,
+        expected_turn=turn,
+        expected_mission_id=session.current_mission,
+    )
+    if evidence_error is not None:
+        return _blocked(
+            "held_end_turn_live_evidence_invalid",
+            evidence_error=evidence_error,
+        )
+    try:
+        from src.research.orchestrator import has_actionable_research
+
+        actionable_research = has_actionable_research(session, board)
+    except Exception as exc:
+        return _blocked("held_end_turn_research_audit_failed", error=str(exc))
+    if actionable_research:
+        return _blocked(
+            "held_end_turn_research_actionable",
+            research_queue_peek=_research_peek(session),
+        )
+    unresolved_research = [
+        entry
+        for entry in session.research_queue
+        if isinstance(entry, dict)
+        and entry.get("status") == "in_progress"
+        and entry.get("kind") != "mech_weapon"
+    ]
+    if unresolved_research:
+        return _blocked(
+            "held_end_turn_research_in_progress",
+            research_queue_peek=_research_peek(session),
+        )
+
+    solve_data = _load_recorded_turn_state(session, "solve", turn=turn)
+    if not isinstance(solve_data, dict):
+        return _blocked("held_end_turn_solve_record_missing")
+    initial_threats = solve_data.get("initial_building_threats")
+    if (
+        not isinstance(initial_threats, list)
+        or any(not isinstance(item, dict) for item in initial_threats)
+    ):
+        return _blocked("held_end_turn_initial_threats_missing")
+    if solve_data.get("selected_candidate_source") == "partial_re_solve":
+        return _blocked("held_end_turn_partial_re_solve_requires_review")
+    if not _held_end_turn_solve_actions_match(solve_data, active.actions):
+        return _blocked("held_end_turn_solution_mismatch")
+
+    plan_safety = solve_data.get("plan_safety")
+    if not _held_end_turn_plan_safety_valid(
+        plan_safety,
+        session,
+        solve_data.get("current_outcome"),
+        solve_data.get("predicted_board_summary"),
+        solve_data,
+    ):
+        return _blocked("held_end_turn_plan_safety_missing")
+    provenance_error = _held_end_turn_terminal_provenance_error(
+        solve_data,
+        turn=turn,
+        executed_action_count=len(active.actions),
+    )
+    if provenance_error is not None:
+        return _blocked(
+            provenance_error,
+            terminal_desync_reprojection=solve_data.get(
+                "terminal_desync_reprojection"
+            ),
+        )
+    parity_error = _held_end_turn_post_player_parity_error(
+        solve_data,
+        board,
+        bridge_data,
+    )
+    if parity_error is not None:
+        return _blocked(
+            "held_end_turn_post_player_mismatch",
+            parity_error=parity_error,
+        )
+
+    effective_lightning_speed_loss = bool(
+        lightning_speed_loss_allowed
+        and _lightning_speed_policy_active_for_plan(session, plan_safety)
+    )
+    dirty_consent_validated = False
+    if plan_safety.get("blocking"):
+        if effective_lightning_speed_loss:
+            dirty_consent_validated = True
+        else:
+            selected_rank = solve_data.get("selected_candidate_rank")
+            if not isinstance(selected_rank, int) or isinstance(selected_rank, bool):
+                selected_rank = None
+            expected_consent = _dirty_consent_id(
+                session,
+                turn,
+                plan_safety,
+                active.actions,
+                candidate_rank=selected_rank,
+            )
+            if expected_consent not in session.dirty_consent_used:
+                return _blocked(
+                    "held_end_turn_dirty_consent_invalid",
+                    dirty_consent_id=expected_consent,
+                    plan_safety=plan_safety,
+                )
+            dirty_consent_validated = True
+
+    post_action_summary = _capture_board_summary(board, bridge_data)
+    fire_debt = _lethal_end_turn_fire_mech_debts(board)
+    if fire_debt:
+        return _blocked(
+            "lethal_mech_fire_before_enemy_phase",
+            fire_debt=fire_debt,
+        )
+    post_action_danger = list(post_action_summary.get("mechs_on_danger") or [])
+    if post_action_danger:
+        return _blocked(
+            "held_end_turn_post_action_danger",
+            post_action_mechs_on_danger=post_action_danger,
+        )
+
+    try:
+        from src.solver.threat_audit import audit_threat_coverage
+
+        threat_audit = audit_threat_coverage(
+            initial_threats,
+            board,
+        )
+        threat_audit["phase"] = bridge_data.get("phase", "unknown")
+    except Exception as exc:
+        threat_audit = {"status": "ERROR", "error": str(exc)}
+    if _threat_audit_requires_block(
+        threat_audit,
+        plan_safety,
+        session,
+        dirty_consent_validated=dirty_consent_validated,
+        lightning_speed_loss_allowed=effective_lightning_speed_loss,
+    ):
+        return _blocked(
+            "held_end_turn_threat_audit_blocked",
+            plan_safety=plan_safety,
+            threat_audit=threat_audit,
+        )
+    return None
+
+
+def cmd_click_end_turn(
+    *,
+    _issue_ledger: bool = True,
+    _allow_issued_plan: bool = False,
+    _ledger_source: str = "click_end_turn",
+    _delivery_mode: str = "external",
+    _emit_output: bool = True,
+    _lightning_speed_loss_allowed: bool = False,
+) -> dict:
+    """Emit a guarded, one-shot click plan for the End Turn button.
+
+    The external click remains a Computer Use action, but plan emission is
+    persisted as non-retryable for this mission turn. Claude dispatches the
+    batch once, waits for the enemy phase (~6s), then calls ``read``.
     """
     session = _load_session()
     block = _post_enemy_block_result(session)
     if block is not None:
-        _print_result(block)
+        if _emit_output:
+            _print_result(block)
         return block
+    held_block = _held_end_turn_safety_block_result(
+        session,
+        allow_issued_plan=_allow_issued_plan,
+        lightning_speed_loss_allowed=_lightning_speed_loss_allowed,
+    )
+    if held_block is not None:
+        if _emit_output:
+            _print_result(held_block)
+        return held_block
     fire_block = _current_end_turn_fire_block()
     if fire_block is not None:
-        _print_result(fire_block)
+        if _emit_output:
+            _print_result(fire_block)
         return fire_block
+    ledger_turn = _current_end_turn_ledger_turn(session)
+    if _issue_ledger and ledger_turn is None:
+        result = {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_plan_turn_not_proven",
+            "blocking": True,
+            "next_step": (
+                "Run a fresh `read` and prove an active combat-player turn "
+                "before requesting an End Turn plan."
+            ),
+        }
+        if _emit_output:
+            _print_result(result)
+        return result
+    if _issue_ledger:
+        ledger_block = _mark_end_turn_plan_issued(
+            session,
+            turn=ledger_turn,
+            source=_ledger_source,
+            delivery_mode=_delivery_mode,
+        )
+        if ledger_block is not None:
+            if _emit_output:
+                _print_result(ledger_block)
+            return ledger_block
     recalibrate()
     batch = plan_end_turn()
     codex_batch = [
@@ -11176,22 +14053,43 @@ def cmd_click_end_turn() -> dict:
         "status": "PLAN",
         "batch": batch,
         "codex_computer_use_batch": codex_batch,
+        "end_turn_plan_id": (
+            session.end_turn_plan_ledger.get("plan_id")
+            if isinstance(session.end_turn_plan_ledger, dict)
+            else None
+        ),
+        "end_turn_plan_source": (
+            session.end_turn_plan_ledger.get("source")
+            if isinstance(session.end_turn_plan_ledger, dict)
+            else None
+        ),
+        "end_turn_delivery_mode": (
+            session.end_turn_plan_ledger.get("delivery_mode")
+            if isinstance(session.end_turn_plan_ledger, dict)
+            else None
+        ),
         "next_step": (
             "dispatch codex_computer_use_batch with Computer Use "
             "(or legacy batch with screen-coordinate batch tools), wait ~6s "
             "for enemy phase, then `read`"
         ),
     }
-    print(f"\n=== CLICK_END_TURN ===")
-    for i, c in enumerate(batch):
-        local = ""
-        if "window_x" in c and "window_y" in c:
-            local = f" | Codex window-local ({c['window_x']}, {c['window_y']})"
-        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}){local} "
-              f"-- {c['description']}")
-    print("Next: dispatch codex_computer_use_batch with Computer Use "
-          "(or legacy batch via computer_batch), wait ~6s, then `read`")
-    _print_result(result)
+    if _emit_output:
+        print(f"\n=== CLICK_END_TURN ===")
+        for i, c in enumerate(batch):
+            local = ""
+            if "window_x" in c and "window_y" in c:
+                local = (
+                    f" | Codex window-local "
+                    f"({c['window_x']}, {c['window_y']})"
+                )
+            print(
+                f"  {i+1}. {c['type']} ({c['x']}, {c['y']}){local} "
+                f"-- {c['description']}"
+            )
+        print("Next: dispatch codex_computer_use_batch with Computer Use "
+              "(or legacy batch via computer_batch), wait ~6s, then `read`")
+        _print_result(result)
     return result
 
 
@@ -11515,36 +14413,283 @@ def cmd_dispatch_end_turn(
     *,
     execute: bool = False,
     post_wait: float = 0.0,
+    _lightning_speed_loss_allowed: bool = False,
+    _allow_reserved_local_plan: bool = False,
 ) -> dict:
     """Plan and optionally dispatch the End Turn click locally."""
-    plan = cmd_click_end_turn()
+    if not execute:
+        session = _load_session()
+        block = _post_enemy_block_result(session)
+        if block is None:
+            block = _held_end_turn_safety_block_result(
+                session,
+                lightning_speed_loss_allowed=(
+                    _lightning_speed_loss_allowed
+                ),
+            )
+        if block is None:
+            block = _current_end_turn_fire_block()
+        if block is not None:
+            result = {
+                "status": "ERROR",
+                "reason": "dispatch_end_turn_dry_run_blocked",
+                "block": block,
+                "executed": False,
+            }
+            _print_result(result)
+            return result
+        guard = _prepare_local_dispatch_guard("end_turn_dry_run")
+        result = {
+            "status": "DRY_RUN" if guard.get("status") == "OK" else "ERROR",
+            "reason": "guard_capture_only_no_click_plan_exposed",
+            "execute_requested": False,
+            "executed": False,
+            "guard": guard,
+            "next_step": (
+                "Run dispatch_end_turn --execute for a fresh atomic "
+                "authorize-and-dispatch attempt. This dry run did not expose "
+                "or reserve a click plan."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    issued_session = _load_session()
+    issued_turn = _current_end_turn_ledger_turn(issued_session)
+    existing_local_retry = bool(
+        type(issued_turn) is int
+        and _end_turn_plan_ledger_schema_valid(
+            issued_session.end_turn_plan_ledger
+        )
+        and _held_end_turn_record_matches(
+            issued_session.end_turn_plan_ledger,
+            issued_session,
+            issued_turn,
+        )
+        and issued_session.end_turn_plan_ledger.get("status") == "plan_issued"
+        and issued_session.end_turn_plan_ledger.get("delivery_mode") == "local"
+        and (
+            (
+                issued_session.end_turn_plan_ledger.get("source")
+                == "dispatch_end_turn"
+                and isinstance(
+                    issued_session.end_turn_plan_ledger.get(
+                        "last_pre_delivery_failure_at"
+                    ),
+                    str,
+                )
+            )
+            or (
+                _allow_reserved_local_plan
+                and issued_session.end_turn_plan_ledger.get("source")
+                == "lightning_loop"
+            )
+        )
+    )
+    try:
+        if existing_local_retry:
+            plan = cmd_click_end_turn(
+                _issue_ledger=False,
+                _allow_issued_plan=True,
+                _emit_output=False,
+                _lightning_speed_loss_allowed=(
+                    _lightning_speed_loss_allowed
+                ),
+            )
+        else:
+            plan = cmd_click_end_turn(
+                _ledger_source="dispatch_end_turn",
+                _delivery_mode="local",
+                _emit_output=False,
+                _lightning_speed_loss_allowed=(
+                    _lightning_speed_loss_allowed
+                ),
+            )
+    except Exception as exc:
+        failure_session = _load_session()
+        failure_ledger = failure_session.end_turn_plan_ledger
+        failure_turn = (
+            failure_ledger.get("turn")
+            if _end_turn_plan_ledger_schema_valid(failure_ledger)
+            else None
+        )
+        restore_error = None
+        restored_for_retry = False
+        if (
+            type(failure_turn) is int
+            and isinstance(failure_ledger, dict)
+        ):
+            restore_error = _restore_local_end_turn_plan_after_no_delivery(
+                turn=failure_turn,
+                plan_id=failure_ledger.get("plan_id"),
+                reason="local_plan_generation_failed",
+            )
+            restored_for_retry = restore_error is None
+        result = {
+            "status": "ERROR",
+            "reason": "local_end_turn_plan_generation_failed",
+            "error": str(exc),
+            "executed": False,
+            "retry_allowed": restored_for_retry,
+            "retry_ledger_error": restore_error,
+            **_end_turn_plan_provenance(failure_ledger),
+        }
+        _print_result(result)
+        return result
     if plan.get("status") != "PLAN":
         result = {
             "status": "ERROR",
             "reason": "click_end_turn_plan_failed",
             "plan": plan,
             "executed": False,
+            "end_turn_plan_id": plan.get("end_turn_plan_id"),
+            "end_turn_plan_source": plan.get("end_turn_plan_source"),
+            "end_turn_delivery_mode": plan.get("end_turn_delivery_mode"),
         }
         _print_result(result)
         return result
+    dispatch_session = _load_session()
+    dispatch_turn = _current_end_turn_ledger_turn(dispatch_session)
+    matching_dispatch_ledger = bool(
+        type(dispatch_turn) is int
+        and _end_turn_plan_ledger_schema_valid(
+            dispatch_session.end_turn_plan_ledger
+        )
+        and _held_end_turn_record_matches(
+            dispatch_session.end_turn_plan_ledger,
+            dispatch_session,
+            dispatch_turn,
+        )
+        and dispatch_session.end_turn_plan_ledger.get("status") == "plan_issued"
+        and dispatch_session.end_turn_plan_ledger.get("source") in (
+            {"dispatch_end_turn", "lightning_loop"}
+            if _allow_reserved_local_plan
+            else {"dispatch_end_turn"}
+        )
+        and dispatch_session.end_turn_plan_ledger.get("delivery_mode") == "local"
+        and dispatch_session.end_turn_plan_ledger.get("plan_id")
+        == plan.get("end_turn_plan_id")
+    )
+    if not matching_dispatch_ledger:
+        result = {
+            "status": "ERROR",
+            "reason": "end_turn_local_plan_ledger_mismatch",
+            "executed": False,
+            "end_turn_plan_id": plan.get("end_turn_plan_id"),
+            "end_turn_plan_source": plan.get("end_turn_plan_source"),
+            "end_turn_delivery_mode": plan.get("end_turn_delivery_mode"),
+            "end_turn_plan_ledger": dispatch_session.end_turn_plan_ledger,
+            "next_step": (
+                "Do not click End Turn. The exact local plan ledger was not "
+                "present and durable immediately before dispatch."
+            ),
+        }
+        _print_result(result)
+        return result
+    dispatch_ledger = dispatch_session.end_turn_plan_ledger
+    dispatch_session.end_turn_plan_ledger = {
+        **dispatch_ledger,
+        "status": "dispatch_attempted",
+        "dispatch_attempted_at": datetime.now().isoformat(),
+    }
+    try:
+        dispatch_session.save()
+    except Exception as exc:
+        dispatch_session.end_turn_plan_ledger = dispatch_ledger
+        result = {
+            "status": "ERROR",
+            "reason": "end_turn_dispatch_ledger_persist_failed",
+            "error": str(exc),
+            "executed": False,
+            **_end_turn_plan_provenance(dispatch_ledger),
+            "next_step": (
+                "Do not dispatch End Turn until the one-shot delivery "
+                "attempt can be persisted."
+            ),
+        }
+        _print_result(result)
+        return result
+
     pre_click_bridge: dict = {}
-    if execute:
-        try:
-            refresh_bridge_state()
-            _board, bridge_data = read_bridge_state()
-            if isinstance(bridge_data, dict):
-                pre_click_bridge = {
-                    "phase": bridge_data.get("phase"),
-                    "turn": bridge_data.get("turn"),
-                }
-        except Exception as exc:
-            pre_click_bridge = {"capture_error": str(exc)}
+    try:
+        refresh_succeeded = _refresh_end_turn_bridge_state()
+        _board, bridge_data = read_bridge_state()
+        if isinstance(bridge_data, dict):
+            pre_click_bridge = {
+                "refresh_succeeded": refresh_succeeded,
+                "phase": bridge_data.get("phase"),
+                "turn": bridge_data.get("turn"),
+                "mission_id": bridge_data.get("mission_id"),
+                "in_active_mission": bridge_data.get("in_active_mission"),
+            }
+        else:
+            pre_click_bridge = {
+                "refresh_succeeded": refresh_succeeded,
+                "capture_error": "bridge_data_missing",
+            }
+    except Exception as exc:
+        pre_click_bridge = {
+            "refresh_succeeded": False,
+            "capture_error": str(exc),
+        }
+    pre_click_valid = bool(
+        pre_click_bridge.get("refresh_succeeded") is True
+        and pre_click_bridge.get("phase") == "combat_player"
+        and pre_click_bridge.get("in_active_mission") is True
+        and isinstance(pre_click_bridge.get("mission_id"), str)
+        and pre_click_bridge.get("mission_id")
+        == dispatch_session.current_mission
+        and type(pre_click_bridge.get("turn")) is int
+        and pre_click_bridge.get("turn") == dispatch_turn
+    )
+    if not pre_click_valid:
+        restore_error = _restore_local_end_turn_plan_after_no_delivery(
+            turn=dispatch_turn,
+            plan_id=plan.get("end_turn_plan_id"),
+            reason="pre_click_live_context_changed",
+        )
+        result = {
+            "status": "ERROR",
+            "reason": "end_turn_pre_click_context_invalid",
+            "pre_click_bridge": pre_click_bridge,
+            "executed": False,
+            "retry_allowed": restore_error is None,
+            "retry_ledger_error": restore_error,
+            **_end_turn_plan_provenance(dispatch_ledger),
+            "next_step": (
+                "No local input was sent. Re-read the board; retry only if "
+                "retry_allowed is true and the same turn is still held."
+            ),
+        }
+        _print_result(result)
+        return result
     dispatch = _dispatch_click_batch_locally(
         list(plan.get("batch") or []),
         execute=execute,
         label="end_turn",
         post_wait=post_wait,
     )
+    if (
+        dispatch.get("executed") is False
+    ):
+        # Rule 475 permits a retry only when the dispatcher positively proves
+        # that no input was delivered. Return the ledger to its issued state;
+        # every attempted/ambiguous delivery remains non-retryable.
+        restore_error = _restore_local_end_turn_plan_after_no_delivery(
+            turn=dispatch_turn,
+            plan_id=plan.get("end_turn_plan_id"),
+            reason=str(dispatch.get("reason") or "dispatcher_pre_input_failure"),
+        )
+        if restore_error is None:
+            dispatch["delivery_confirmation"] = "not_delivered"
+            dispatch["retry_allowed"] = True
+        else:
+            dispatch["delivery_confirmation"] = "ledger_state_uncertain"
+            dispatch["retry_allowed"] = False
+            dispatch["retry_ledger_error"] = restore_error
+    elif dispatch.get("status") != "DISPATCHED":
+        dispatch["delivery_confirmation"] = "delivered_unconfirmed"
+        dispatch["retry_allowed"] = False
     if execute and dispatch.get("status") == "DISPATCHED":
         observation = _observe_end_turn_after_click(pre_click_bridge)
         post_click_guard = _prepare_local_dispatch_guard("post_end_turn")
@@ -11558,10 +14703,42 @@ def cmd_dispatch_end_turn(
             ),
             "retry_allowed": False,
         })
+        delivery_session = _load_session()
+        delivery_ledger = delivery_session.end_turn_plan_ledger
+        delivery_turn = dispatch_turn
+        if (
+            type(delivery_turn) is int
+            and _end_turn_plan_ledger_schema_valid(delivery_ledger)
+            and _held_end_turn_record_matches(
+                delivery_ledger,
+                delivery_session,
+                delivery_turn,
+            )
+            and delivery_ledger.get("plan_id") == plan.get("end_turn_plan_id")
+            and delivery_ledger.get("status") == "dispatch_attempted"
+        ):
+            delivery_session.end_turn_plan_ledger = {
+                **delivery_ledger,
+                "status": (
+                    "delivered_confirmed" if confirmed
+                    else "delivered_unconfirmed"
+                ),
+                "delivery_recorded_at": datetime.now().isoformat(),
+            }
+            try:
+                delivery_session.save()
+            except Exception as exc:
+                dispatch["delivery_ledger_error"] = str(exc)
+                dispatch["delivery_ledger_persisted"] = False
+            else:
+                dispatch["delivery_ledger_persisted"] = True
     result = {
         "status": dispatch.get("status"),
         "execute_requested": bool(execute),
         "dispatch": dispatch,
+        "end_turn_plan_id": plan.get("end_turn_plan_id"),
+        "end_turn_plan_source": plan.get("end_turn_plan_source"),
+        "end_turn_delivery_mode": plan.get("end_turn_delivery_mode"),
         "next_step": (
             (
                 "read"
@@ -11569,7 +14746,15 @@ def cmd_dispatch_end_turn(
                 else "stop and inspect; the click may have been delivered, so do not retry"
             )
             if execute and dispatch.get("status") == "DISPATCHED"
-            else "rerun with --execute to perform the guarded local End Turn click"
+            else (
+                "rerun with --execute; the dispatcher proved no input was delivered"
+                if execute and dispatch.get("retry_allowed") is True
+                else (
+                    "stop and inspect; delivery may have been attempted, so do not retry"
+                    if execute
+                    else "rerun with --execute to perform the guarded local End Turn click"
+                )
+            )
         ),
     }
     _print_result(result)
@@ -11595,6 +14780,8 @@ def _unit_takes_end_turn_fire_tick(board: Board, unit) -> bool:
     if getattr(unit, "shield", False) or getattr(unit, "frozen", False):
         return False
     if get_pawn_stats(getattr(unit, "type", "")).ignore_fire:
+        return False
+    if getattr(unit, "pilot_id", "") == "Pilot_Rock":
         return False
     if (
         getattr(unit, "is_player", False)
@@ -11624,6 +14811,84 @@ def _lethal_end_turn_fire_mech_debts(board: Board) -> list[dict]:
                 "max_hp": unit.max_hp,
             })
     return debts
+
+
+def _critical_end_turn_units(
+    board: Board,
+    bridge_data: dict | None,
+) -> list[Unit]:
+    """Return mechs and mission-critical pawns that must survive End Turn."""
+    protected_patterns = _protected_objective_patterns(board, bridge_data)
+    return [
+        unit
+        for unit in board.units
+        if unit.hp > 0
+        and not unit.is_extra_tile
+        and (
+            (unit.is_player and unit.is_mech)
+            or unit.type == "BigBomb"
+            or _type_matches_any(unit.type, protected_patterns)
+        )
+    ]
+
+
+def _critical_end_turn_hazard_debts(
+    board: Board,
+    bridge_data: dict,
+) -> dict[str, list[dict]]:
+    critical_units = _critical_end_turn_units(board, bridge_data)
+    fire = [
+        {
+            "uid": unit.uid,
+            "type": unit.type,
+            "pos": [unit.x, unit.y],
+            "hp": unit.hp,
+        }
+        for unit in critical_units
+        if unit.hp <= 1 and _unit_takes_end_turn_fire_tick(board, unit)
+    ]
+    danger_info = _environment_danger_info(board, bridge_data)
+    danger = []
+    for unit in critical_units:
+        hazard = danger_info.get((unit.x, unit.y))
+        if not hazard or not hazard.get("lethal"):
+            continue
+        flying_spared = bool(
+            unit.flying
+            and hazard.get("flying_immune")
+            and not hazard.get("flying_damage")
+        )
+        if not flying_spared:
+            danger.append({
+                "uid": unit.uid,
+                "type": unit.type,
+                "pos": [unit.x, unit.y],
+                "hp": unit.hp,
+                "damage": hazard.get("damage", 1),
+            })
+    spawning_tiles = {
+        tuple(point[:2])
+        for point in (bridge_data.get("spawning_tiles") or [])
+        if isinstance(point, (list, tuple)) and len(point) >= 2
+    }
+    spawn_block = [
+        {
+            "uid": unit.uid,
+            "type": unit.type,
+            "pos": [unit.x, unit.y],
+            "hp": unit.hp,
+        }
+        for unit in critical_units
+        if unit.hp == 1
+        and not unit.frozen
+        and not unit.shield
+        and (unit.x, unit.y) in spawning_tiles
+    ]
+    return {
+        "fire": fire,
+        "danger": danger,
+        "spawn_block": spawn_block,
+    }
 
 
 def _current_end_turn_fire_block() -> dict | None:
@@ -17297,7 +20562,10 @@ def _lightning_bridge_snapshot_fresh_enough(snapshot: dict | None) -> bool:
     return True
 
 
-def _lightning_reactivate_player_turn_if_no_active(snapshot: dict | None) -> dict:
+def _lightning_reactivate_player_turn_if_no_active(
+    session: RunSession,
+    snapshot: dict | None,
+) -> dict:
     """Repair the bridge's inactive-player-turn fallback, when tightly proven."""
     if not isinstance(snapshot, dict) or snapshot.get("status") != "OK":
         return {"status": "SKIPPED", "reason": "snapshot_not_ok"}
@@ -17319,6 +20587,36 @@ def _lightning_reactivate_player_turn_if_no_active(snapshot: dict | None) -> dic
         return {"status": "SKIPPED", "reason": "no_player_mechs"}
     if snapshot.get("in_active_mission") is not True:
         return {"status": "SKIPPED", "reason": "not_in_active_mission"}
+    active_solution = session.active_solution
+    if active_solution is None:
+        return {
+            "status": "SKIPPED",
+            "reason": "next_turn_solution_provenance_missing",
+        }
+    solved_turn = int(active_solution.turn)
+    if turn != _post_enemy_expected_actual_turn(solved_turn):
+        return {
+            "status": "SKIPPED",
+            "reason": "not_exact_proven_next_player_turn",
+            "solved_turn": solved_turn,
+            "observed_turn": turn,
+        }
+    if snapshot.get("mission_id") != session.current_mission:
+        return {
+            "status": "SKIPPED",
+            "reason": "next_turn_mission_identity_mismatch",
+        }
+    post_enemy_key = [session.mission_index, solved_turn]
+    if (
+        post_enemy_key not in session.recorded_post_enemy_turns
+        or not _post_enemy_record_path(session, solved_turn).exists()
+        or _active_post_enemy_block(session) is not None
+    ):
+        return {
+            "status": "SKIPPED",
+            "reason": "next_turn_post_enemy_audit_not_proven_clean",
+            "solved_turn": solved_turn,
+        }
     try:
         ack = reactivate_player_pawns()
     except Exception as exc:
@@ -17556,6 +20854,21 @@ _LIGHTNING_UI_BURSTS = {
         "pause",
     ],
 }
+
+_LIGHTNING_END_TURN_PRIMARY_CONTROLS = {
+    "end_turn",
+    "turn",
+    "end",
+}
+_LIGHTNING_END_TURN_CONFIRM_CONTROLS = {
+    "end_turn_confirm_yes",
+    "end_turn_yes",
+    "confirm_end_turn",
+}
+_LIGHTNING_END_TURN_CONTROLS = (
+    _LIGHTNING_END_TURN_PRIMARY_CONTROLS
+    | _LIGHTNING_END_TURN_CONFIRM_CONTROLS
+)
 
 _LIGHTNING_PAUSE_BLOCKING_UIS = {
     "reward_panel",
@@ -26477,6 +29790,9 @@ def _compact_turn_result_for_lightning(result: dict | None) -> dict | None:
         "bridge_ack",
         "batch",
         "codex_computer_use_batch",
+        "end_turn_plan_id",
+        "end_turn_plan_source",
+        "end_turn_delivery_mode",
         "post_phase",
         "grid_power",
         "game_over",
@@ -26532,6 +29848,31 @@ def cmd_lightning_ui(
         return result
 
     control_slug = _lightning_capture_slug(control or "")
+    if control_slug in _LIGHTNING_END_TURN_PRIMARY_CONTROLS:
+        result = cmd_dispatch_end_turn(execute=not dry_run)
+        result = {
+            **result,
+            "lightning_ui_control": control_slug,
+            "routed_through_guarded_dispatch": True,
+        }
+        print("\n=== LIGHTNING UI GUARDED END TURN ===")
+        print(f"  control: {control_slug}")
+        print(f"  status:  {result.get('status')}")
+        _print_result(result)
+        return result
+    if control_slug in _LIGHTNING_END_TURN_CONFIRM_CONTROLS:
+        result = {
+            "status": "BLOCKED",
+            "reason": "direct_end_turn_confirmation_forbidden",
+            "control": control_slug,
+            "next_step": (
+                "Do not click an End Turn confirmation directly. Recover "
+                "from a fresh read plus solve and use the guarded atomic "
+                "dispatcher."
+            ),
+        }
+        _print_result(result)
+        return result
     if control_slug in {"ensure_pause", "pause_guard", "guard_pause"}:
         result = _lightning_ensure_pause_state(
             dry_run=dry_run,
@@ -26744,7 +30085,11 @@ def cmd_lightning_ui(
         _print_result(result)
         return result
 
-    controls = list_known_window_controls()
+    controls = {
+        name: spec
+        for name, spec in list_known_window_controls().items()
+        if _lightning_capture_slug(name) not in _LIGHTNING_END_TURN_CONTROLS
+    }
     if list_controls or not control:
         result = {
             "status": "OK",
@@ -26794,6 +30139,18 @@ def cmd_lightning_ui(
             burst_name = candidate
     if burst_name:
         sequence = _LIGHTNING_UI_BURSTS[burst_name]
+        if any(
+            _lightning_capture_slug(item) in _LIGHTNING_END_TURN_CONTROLS
+            for item in sequence
+        ):
+            result = {
+                "status": "BLOCKED",
+                "reason": "end_turn_forbidden_in_lightning_ui_burst",
+                "burst": burst_name,
+                "controls": sequence,
+            }
+            _print_result(result)
+            return result
         result = click_known_window_sequence(sequence, dry_run=dry_run)
         result["burst"] = burst_name
         print("\n=== LIGHTNING UI BURST ===")
@@ -26810,6 +30167,17 @@ def cmd_lightning_ui(
         if part.strip()
     ]
     if len(sequence) > 1:
+        if any(
+            _lightning_capture_slug(item) in _LIGHTNING_END_TURN_CONTROLS
+            for item in sequence
+        ):
+            result = {
+                "status": "BLOCKED",
+                "reason": "end_turn_forbidden_in_lightning_ui_sequence",
+                "controls": sequence,
+            }
+            _print_result(result)
+            return result
         result = click_known_window_sequence(sequence, dry_run=dry_run)
         print("\n=== LIGHTNING UI SEQUENCE ===")
         print(f"  controls: {' -> '.join(sequence)}")
@@ -33798,6 +37166,48 @@ def cmd_lightning_fast_burst(
         _print_result(result)
         return result
 
+    forbidden_controls = [
+        step.get("control")
+        for step in steps
+        if step.get("type") == "control"
+        and _lightning_capture_slug(step.get("control") or "")
+        in _LIGHTNING_END_TURN_CONTROLS
+    ]
+    if forbidden_controls:
+        result = {
+            "status": "BLOCKED",
+            "reason": "end_turn_forbidden_in_lightning_fast_burst",
+            "forbidden_controls": forbidden_controls,
+            "next_step": (
+                "Use the guarded atomic End Turn dispatcher; fast bursts "
+                "cannot contain End Turn or its confirmation."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    raw_steps = [
+        step for step in steps
+        if step.get("type") in {"key", "xy"}
+    ]
+    if raw_steps:
+        # A verified pause overlay does not prove what screen lies beneath it.
+        # Public raw keys/coordinates can bypass the combat bridge and the
+        # one-shot End Turn ledger, so this primitive accepts named controls
+        # and waits only.
+        result = {
+            "status": "BLOCKED",
+            "reason": "raw_input_forbidden_in_lightning_fast_burst",
+            "raw_steps": raw_steps,
+            "next_step": (
+                "Use a named non-combat control or inspect/click novel UI "
+                "through Computer Use. Keyboard and raw coordinates are not "
+                "accepted by this public burst command."
+            ),
+        }
+        _print_result(result)
+        return result
+
     screenshot_path, notes_path = _lightning_screenshot_paths(label, out_dir=out_dir)
     planned = ["verify_pause", "esc_resume", *steps, "screenshot", "esc_pause"]
     if dry_run:
@@ -34087,15 +37497,60 @@ def _lightning_click_reviewed_held_end_turn(
     ):
         return None
 
+    if dry_run or not click_ui:
+        return {
+            "status": "LIGHTNING_ATTEMPT_UI_READY",
+            "reason": "held_end_turn_atomic_dispatch_required",
+            "snapshot": snapshot,
+            "plan_safety": plan_safety,
+            "click_plan_exposed": False,
+            "authorization_deferred_until_live": True,
+            "next_step": (
+                "Rerun with click_ui enabled. The command will resume, prove "
+                "a fresh bridge generation, then authorize and dispatch "
+                "atomically without exposing coordinates."
+            ),
+        }
+
+    resume_result = _lightning_resume_if_paused(dry_run=False, click_ui=True)
+    if resume_result is not None and resume_result.get("status") not in {
+        "OK",
+        "PLANNED",
+    }:
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "held_end_turn_resume_failed",
+            "snapshot": snapshot,
+            "resume_before_end_turn": resume_result,
+        }
+    central_block = _held_end_turn_safety_block_result(
+        session,
+        lightning_speed_loss_allowed=allow_lightning_speed_loss,
+    )
+    if central_block is not None:
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "held_end_turn_central_authorization_blocked",
+            "snapshot": snapshot,
+            "resume_before_end_turn": resume_result,
+            "authorization_block": central_block,
+            "next_step": (
+                "Do not click End Turn. Resolve the central held-turn "
+                "authorization block first."
+            ),
+        }
+
     threat_audit = None
     post_action_summary = None
     try:
-        refresh_bridge_state()
+        if not _refresh_end_turn_bridge_state():
+            raise RuntimeError("lightning_post_action_bridge_refresh_failed")
         audit_board, audit_data = read_bridge_state()
         evidence_error = _post_action_audit_evidence_error(
             audit_board,
             audit_data,
             expected_turn=turn,
+            expected_mission_id=session.current_mission,
         )
         if evidence_error is not None:
             threat_audit = evidence_error
@@ -34152,36 +37607,31 @@ def _lightning_click_reviewed_held_end_turn(
             "post_action_mechs_on_danger": post_action_danger,
         }
 
-    pending_plan = _end_turn_click_plan_result()
-    if dry_run or not click_ui:
-        return {
-            "status": "LIGHTNING_ATTEMPT_UI_READY",
-            "reason": "held_end_turn_ready",
-            "snapshot": snapshot,
-            "plan_safety": plan_safety,
-            "threat_audit": threat_audit,
-            "pending_end_turn_batch": pending_plan["batch"],
-            "pending_end_turn_codex_computer_use_batch": pending_plan.get(
-                "codex_computer_use_batch", []
-            ),
-        }
-
-    resume_result = _lightning_resume_if_paused(dry_run=False, click_ui=True)
+    dispatch_result = None
     click_result = None
     observed = None
     if resume_result is None or resume_result.get("status") in {"OK", "PLANNED"}:
-        click_result = _click_end_turn_from_plan_result(pending_plan)
-        if click_result.get("status") == "OK":
-            observed = _observe_end_turn_after_click(pending_plan)
+        dispatch_result = cmd_dispatch_end_turn(
+            execute=True,
+            _lightning_speed_loss_allowed=allow_lightning_speed_loss,
+            _allow_reserved_local_plan=True,
+        )
+        if isinstance(dispatch_result, dict):
+            click_result = dispatch_result.get("dispatch")
+            if isinstance(click_result, dict):
+                observed = click_result.get("observation")
 
     status = "LIGHTNING_ATTEMPT_PANEL_CLEARED"
     reason = "held_end_turn_clicked"
     if resume_result is not None and resume_result.get("status") not in {"OK", "PLANNED"}:
         status = "LIGHTNING_ATTEMPT_STOPPED"
         reason = "held_end_turn_resume_failed"
-    elif not isinstance(click_result, dict) or click_result.get("status") != "OK":
+    elif (
+        not isinstance(dispatch_result, dict)
+        or dispatch_result.get("status") != "DISPATCHED"
+    ):
         status = "LIGHTNING_ATTEMPT_STOPPED"
-        reason = "held_end_turn_click_failed"
+        reason = "held_end_turn_dispatch_failed"
     elif not isinstance(observed, dict) or observed.get("status") != "OK":
         status = "LIGHTNING_ATTEMPT_STOPPED"
         reason = "held_end_turn_not_observed"
@@ -34195,6 +37645,7 @@ def _lightning_click_reviewed_held_end_turn(
         "dirty_consent_validated": dirty_consent_validated,
         "lightning_speed_loss_allowed": allow_lightning_speed_loss,
         "resume_before_end_turn": resume_result,
+        "end_turn_dispatch": dispatch_result,
         "end_turn_click": click_result,
         "end_turn_observed": observed,
         "next_step": (
@@ -36380,7 +39831,24 @@ def cmd_lightning_attempt(
             action_record["bridge_refine_snapshot"] = bridge_refine
             snapshot = {**bridge_refine, "visible_ui": visible_ui}
             return run_combat_loop(action="combat_loop_after_no_active_bridge_refine")
+        held_end_turn = _lightning_click_reviewed_held_end_turn(
+            session=session,
+            snapshot=snapshot,
+            profile=profile,
+            click_ui=click_ui,
+            dry_run=dry_run,
+            allow_dirty_plan=allow_dirty_plan,
+            candidate_rank=candidate_rank,
+            dirty_consent_id=dirty_consent_id,
+            allow_protected_objective_loss=allow_protected_objective_loss,
+            allow_objective_loss=allow_objective_loss,
+            lightning_speed_loss_policy=lightning_speed_loss_policy,
+            destroy_time_pods=destroy_time_pods,
+        )
+        if held_end_turn is not None:
+            return finish(held_end_turn)
         reactivation = _lightning_reactivate_player_turn_if_no_active(
+            session,
             refreshed_snapshot
             if isinstance(refreshed_snapshot, dict)
             and refreshed_snapshot.get("status") == "OK"
@@ -36398,22 +39866,6 @@ def cmd_lightning_attempt(
             action_record["initial_no_active_snapshot"] = initial_no_active_snapshot
             snapshot = reactivated_snapshot
             return run_combat_loop(action="combat_loop_after_no_active_reactivate")
-        held_end_turn = _lightning_click_reviewed_held_end_turn(
-            session=session,
-            snapshot=snapshot,
-            profile=profile,
-            click_ui=click_ui,
-            dry_run=dry_run,
-            allow_dirty_plan=allow_dirty_plan,
-            candidate_rank=candidate_rank,
-            dirty_consent_id=dirty_consent_id,
-            allow_protected_objective_loss=allow_protected_objective_loss,
-            allow_objective_loss=allow_objective_loss,
-            lightning_speed_loss_policy=lightning_speed_loss_policy,
-            destroy_time_pods=destroy_time_pods,
-        )
-        if held_end_turn is not None:
-            return finish(held_end_turn)
         if (
             visible_ui.get("status") == "OK"
             and visible_ui.get("recommended_control")
@@ -36465,17 +39917,21 @@ def cmd_lightning_attempt(
                 expected_actual_turn = _post_enemy_expected_actual_turn(solved_turn)
                 if turn >= expected_actual_turn:
                     try:
-                        refresh_bridge_state()
-                        post_board, post_data = read_bridge_state()
-                        if post_board is not None:
-                            post_enemy_result = _record_post_enemy(
-                                session,
-                                post_board,
-                                solved_turn,
-                                bridge_data=post_data,
+                        if not _refresh_end_turn_bridge_state():
+                            raise RuntimeError(
+                                "no_active_post_enemy_fresh_refresh_failed"
                             )
-                            session.active_solution = None
-                            session.save()
+                        post_board, post_data = read_bridge_state()
+                        if post_board is None or not isinstance(post_data, dict):
+                            raise RuntimeError(
+                                "no_active_post_enemy_state_missing"
+                            )
+                        post_enemy_result = _record_post_enemy(
+                            session,
+                            post_board,
+                            solved_turn,
+                            bridge_data=post_data,
+                        )
                     except Exception as exc:
                         post_enemy_result = {
                             "status": "POST_ENEMY_AUDIT_MISSING",
@@ -36485,8 +39941,6 @@ def cmd_lightning_attempt(
                             "turn": solved_turn,
                             "mission_index": session.mission_index,
                         }
-                        session.active_solution = None
-                        session.save()
                     if (
                         isinstance(post_enemy_result, dict)
                         and post_enemy_result.get("blocking")
@@ -36506,73 +39960,48 @@ def cmd_lightning_attempt(
                             result,
                             pause_reason="lightning_attempt_no_active_post_enemy_block",
                         )
-
-            pending_plan = _end_turn_click_plan_result()
-            resume_result = _lightning_resume_if_paused(
-                dry_run=False,
-                click_ui=True,
-            )
-            click_result = None
-            observed = None
-            if (
-                resume_result is None
-                or resume_result.get("status") in {"OK", "PLANNED"}
-            ):
-                click_result = _click_end_turn_from_plan_result(pending_plan)
-                if click_result.get("status") == "OK":
-                    observed = _observe_end_turn_after_click(
-                        {"turn": turn, **pending_plan},
+                    reactivation = _lightning_reactivate_player_turn_if_no_active(
+                        session,
+                        _lightning_live_snapshot(),
                     )
-
-            action_record.update(
-                {
-                    "action": "click_no_active_mechs_end_turn",
-                    "visible_ui": visible_ui,
-                    "post_enemy_result": post_enemy_result,
-                    "resume_before_end_turn": resume_result,
-                    "end_turn_click": click_result,
-                    "end_turn_observed": observed,
-                }
-            )
-            status = "LIGHTNING_ATTEMPT_PANEL_CLEARED"
-            reason = "no_active_mechs_end_turn_clicked"
-            if (
-                resume_result is not None
-                and resume_result.get("status") not in {"OK", "PLANNED"}
-            ):
-                status = "LIGHTNING_ATTEMPT_STOPPED"
-                reason = "no_active_mechs_resume_failed"
-            elif (
-                not isinstance(click_result, dict)
-                or click_result.get("status") != "OK"
-            ):
-                status = "LIGHTNING_ATTEMPT_STOPPED"
-                reason = "no_active_mechs_end_turn_click_failed"
-            elif (
-                not isinstance(observed, dict)
-                or observed.get("status") != "OK"
-            ):
-                status = "LIGHTNING_ATTEMPT_STOPPED"
-                reason = "no_active_mechs_end_turn_not_observed"
-
-            result = {
-                "status": status,
-                "reason": reason,
-                "snapshot": snapshot,
-                "budget": budget,
-                "preflight": preflight,
-                "action": action_record,
-                "pending_end_turn_batch": pending_plan["batch"],
-                "pending_end_turn_codex_computer_use_batch": pending_plan.get(
-                    "codex_computer_use_batch",
-                    [],
-                ),
-                "next_step": (
-                    "Rerun lightning_segment so enemy/player transition "
-                    "handling stays inside local automation."
-                ),
-            }
-            return finish(result, pause_reason="lightning_attempt_no_active_mechs_end_turn")
+                    action_record.update({
+                        "action": "reactivate_after_post_enemy_backfill",
+                        "visible_ui": visible_ui,
+                        "post_enemy_result": post_enemy_result,
+                        "post_enemy_reactivation": reactivation,
+                    })
+                    reactivated_snapshot = reactivation.get("snapshot")
+                    if (
+                        reactivation.get("status") == "OK"
+                        and _lightning_snapshot_is_fresh_actionable_player_turn(
+                            reactivated_snapshot
+                        )
+                    ):
+                        session.active_solution = None
+                        session.save()
+                        snapshot = reactivated_snapshot
+                        return run_combat_loop(
+                            action="combat_loop_after_post_enemy_backfill_reactivate"
+                        )
+                    result = {
+                        "status": "LIGHTNING_ATTEMPT_STOPPED",
+                        "reason": "post_enemy_backfilled_reactivation_not_proven",
+                        "snapshot": snapshot,
+                        "budget": budget,
+                        "preflight": preflight,
+                        "action": action_record,
+                        "next_step": (
+                            "Post-enemy evidence was recorded, but the next "
+                            "player turn was not freshly reactivated. Do not "
+                            "click End Turn; inspect and retry reactivation."
+                        ),
+                    }
+                    return finish(
+                        result,
+                        pause_reason=(
+                            "lightning_attempt_no_active_post_enemy_reactivate"
+                        ),
+                    )
 
         result = {
             "status": "LIGHTNING_ATTEMPT_STOPPED",
@@ -36751,10 +40180,10 @@ def cmd_lightning_attempt(
             "deploy_confirm",
             "modal_understood",
             "panel_continue",
-            "end_turn",
         ],
         "next_step": (
-            "Use lightning_ui for a calibrated visible button, or inspect the "
+            "Use lightning_ui for a non-combat calibrated visible button, "
+            "the guarded atomic dispatcher for End Turn, or inspect the "
             "screen before clicking any uncalibrated route/shop/start target."
         ),
     }
@@ -37444,6 +40873,9 @@ def _lightning_segment_recover_timed_out_no_active_end_turn(
     *,
     step_index: int,
     run_seconds: float = 2.0,
+    click_ui: bool = True,
+    dry_run: bool = False,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict | None:
     """Flush a completed combat turn when the bounded attempt timed out.
 
@@ -37471,10 +40903,54 @@ def _lightning_segment_recover_timed_out_no_active_end_turn(
     ):
         return None
 
+    if dry_run or not click_ui:
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "timeout_no_active_end_turn_input_not_authorized",
+            "timeout_attempt": attempt,
+            "snapshot": snapshot,
+            "dry_run": bool(dry_run),
+            "click_ui": bool(click_ui),
+            "next_step": (
+                "No input was sent. Rerun only with explicit UI execution "
+                "after reviewing the held-turn evidence."
+            ),
+        }
+
     flush = cmd_lightning_end_turn_pause(
         f"segment_timeout_no_active_step_{step_index}",
         run_seconds=run_seconds,
+        lightning_speed_loss_policy=lightning_speed_loss_policy,
     )
+    dispatch_result = flush.get("dispatch") if isinstance(flush, dict) else None
+    dispatch = (
+        dispatch_result.get("dispatch")
+        if isinstance(dispatch_result, dict)
+        else None
+    )
+    delivered = bool(
+        isinstance(flush, dict)
+        and flush.get("status") == "OK"
+        and isinstance(dispatch_result, dict)
+        and dispatch_result.get("status") == "DISPATCHED"
+        and isinstance(dispatch, dict)
+        and dispatch.get("delivery_confirmation") == "delivered_confirmed"
+    )
+    if not delivered:
+        return {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "timeout_no_active_end_turn_not_confirmed",
+            "timeout_attempt": attempt,
+            "snapshot": snapshot,
+            "action": {
+                "action": "recover_timeout_no_active_end_turn",
+                "end_turn_pause": flush,
+            },
+            "next_step": (
+                "The guarded End Turn wrapper did not prove one confirmed "
+                "delivery. Do not retry until the nested result is reviewed."
+            ),
+        }
     return {
         "status": "LIGHTNING_ATTEMPT_PANEL_CLEARED",
         "reason": "timeout_no_active_mechs_end_turn_clicked",
@@ -38840,6 +42316,9 @@ def cmd_lightning_segment(
             timeout_recovery = _lightning_segment_recover_timed_out_no_active_end_turn(
                 attempt,
                 step_index=step_index,
+                click_ui=click_ui,
+                dry_run=dry_run,
+                lightning_speed_loss_policy=lightning_speed_loss_policy,
             )
         if timeout_recovery is None:
             timeout_recovery = (
@@ -44809,61 +48288,6 @@ def cmd_lightning_select_first_island(
     return result
 
 
-def _click_end_turn_from_plan_result(
-    plan_result: dict,
-    *,
-    dry_run: bool = False,
-) -> dict:
-    batch = (
-        plan_result.get("batch")
-        or plan_result.get("pending_end_turn_batch")
-        or plan_result.get("held_end_turn_batch")
-        or []
-    )
-    click = next(
-        (
-            c for c in batch
-            if isinstance(c, dict)
-            and c.get("type") == "left_click"
-            and (
-                ("window_x" in c and "window_y" in c)
-                or ("x" in c and "y" in c)
-                or isinstance(c.get("codex_computer_use"), dict)
-            )
-        ),
-        None,
-    )
-    if click is None:
-        return {
-            "status": "ERROR",
-            "error": "no usable left_click in End Turn plan",
-        }
-    codex_click = click.get("codex_computer_use")
-    if "window_x" in click and "window_y" in click:
-        from src.control.mac_click import click_window_point
-        return click_window_point(
-            int(click["window_x"]),
-            int(click["window_y"]),
-            description=click.get("description", "Click End Turn"),
-            dry_run=dry_run,
-        )
-    if isinstance(codex_click, dict) and "x" in codex_click and "y" in codex_click:
-        from src.control.mac_click import click_window_point
-        return click_window_point(
-            int(codex_click["x"]),
-            int(codex_click["y"]),
-            description=codex_click.get("description", "Click End Turn"),
-            dry_run=dry_run,
-        )
-    from src.control.mac_click import click_screen_point
-    return click_screen_point(
-        int(click["x"]),
-        int(click["y"]),
-        description=click.get("description", "Click End Turn"),
-        dry_run=dry_run,
-    )
-
-
 def _observe_end_turn_after_click(
     turn_result: dict,
     *,
@@ -45183,46 +48607,27 @@ def _lightning_turn_result_desync_is_click_miss(turn_result: dict | None) -> boo
         desync = turn_result.get("desync")
         if not isinstance(desync, dict):
             return False
-        return any(
-            _lightning_signal_is_click_miss(source)
-            for source in (desync.get("classification"), desync.get("fuzzy_signal"))
-        )
-    if status != "FUZZY_INVESTIGATE_BLOCKED":
-        return False
-    if not (
-        turn_result.get("held_end_turn_batch")
-        or turn_result.get("held_end_turn_codex_computer_use_batch")
-    ):
-        return False
-    block_reason = turn_result.get("block_reason")
-    if not isinstance(block_reason, dict):
-        return False
-    if block_reason.get("reason") != "enemy_survived_unexpectedly":
-        return False
-    block_signature = block_reason.get("signature")
-    block_action_index = block_reason.get("action_index")
-    matched_blocking_signal = False
-    for signal in turn_result.get("fuzzy_detections") or []:
-        if not isinstance(signal, dict):
-            continue
-        asymmetry = set(signal.get("asymmetry") or [])
-        unsafe_signal = bool(
-            asymmetry
-            & {"enemy_survived_unexpectedly", "mech_died_unexpectedly"}
-        )
-        if unsafe_signal and not _lightning_signal_is_click_miss(signal):
+        signals = [
+            source
+            for source in (
+                desync.get("classification"),
+                desync.get("fuzzy_signal"),
+            )
+            if isinstance(source, dict)
+        ]
+        if not signals:
             return False
-        if block_signature and signal.get("signature") != block_signature:
-            continue
-        context = signal.get("context") or {}
-        if (
-            block_action_index is not None
-            and context.get("action_index") != block_action_index
-        ):
-            continue
-        if _lightning_signal_is_click_miss(signal):
-            matched_blocking_signal = True
-    return matched_blocking_signal
+        for signal in signals:
+            if not _lightning_signal_is_click_miss(signal):
+                return False
+            asymmetry = set(signal.get("asymmetry") or [])
+            if asymmetry - {"enemy_survived_unexpectedly"}:
+                return False
+        return True
+    # The former FUZZY recovery depended on now-removed click batches and had
+    # no durable proof tying Reset Turn to the exact blocked action. Fail closed
+    # until a reset-specific provenance record is available.
+    return False
 
 
 def _lightning_reset_turn_after_click_miss(turn_result: dict) -> dict:
@@ -45480,6 +48885,8 @@ def cmd_lightning_loop(
                 break
         restored_env: dict[str, str | None] = {}
         loop_env: list[tuple[str, str]] = []
+        if click_end_turn:
+            loop_env.append(("ITB_LIGHTNING_LOCAL_END_TURN", "1"))
         if lightning_speed_loss_policy:
             loop_env.append(("ITB_LIGHTNING_SKIP_WEIGHT_FILE", "1"))
         if pause_before_solve:
@@ -45625,48 +49032,30 @@ def cmd_lightning_loop(
                     "pause_between_actions": pause_between_actions,
                 }
             click_started_at = time.monotonic()
-            click_result = _click_end_turn_from_plan_result(turn_result)
+            dispatch_result = cmd_dispatch_end_turn(
+                execute=True,
+                _lightning_speed_loss_allowed=lightning_speed_loss_policy,
+                _allow_reserved_local_plan=True,
+            )
             record["end_turn_click_wall_seconds"] = round(
                 time.monotonic() - click_started_at,
                 3,
             )
+            record["end_turn_dispatch"] = dispatch_result
+            click_result = dispatch_result.get("dispatch")
             record["end_turn_click"] = click_result
-            if click_result.get("status") != "OK":
+            if dispatch_result.get("status") != "DISPATCHED":
                 stamp_turn_wall()
-                stopped_reason = "end_turn_click_failed"
+                stopped_reason = "end_turn_dispatch_failed"
                 break
             end_turn_clicks += 1
-            observe_started_at = time.monotonic()
-            observed = _observe_end_turn_after_click(turn_result)
-            record["end_turn_observe_wall_seconds"] = round(
-                time.monotonic() - observe_started_at,
-                3,
+            observed = (
+                click_result.get("observation")
+                if isinstance(click_result, dict)
+                else None
             )
             record["end_turn_observed"] = observed
-            if _lightning_end_turn_retryable(observed, turn_result):
-                retry_started_at = time.monotonic()
-                retry_click = _click_end_turn_from_plan_result(turn_result)
-                record["end_turn_retry_click_wall_seconds"] = round(
-                    time.monotonic() - retry_started_at,
-                    3,
-                )
-                record["end_turn_retry_click"] = retry_click
-                if retry_click.get("status") != "OK":
-                    stamp_turn_wall()
-                    stopped_reason = "end_turn_retry_click_failed"
-                    break
-                end_turn_clicks += 1
-                retry_observe_started_at = time.monotonic()
-                observed = _observe_end_turn_after_click(
-                    turn_result,
-                    timeout=6.0,
-                )
-                record["end_turn_retry_observe_wall_seconds"] = round(
-                    time.monotonic() - retry_observe_started_at,
-                    3,
-                )
-                record["end_turn_retry_observed"] = observed
-            if observed.get("status") != "OK":
+            if not isinstance(observed, dict) or observed.get("status") != "OK":
                 stamp_turn_wall()
                 stopped_reason = "end_turn_click_not_observed"
                 break
@@ -45798,6 +49187,12 @@ def cmd_lightning_auto_turn_pause(
                 if key not in os.environ:
                     restored_env[key] = None
                     os.environ[key] = value
+            local_end_turn_key = "ITB_LIGHTNING_LOCAL_END_TURN"
+            if local_end_turn_key not in restored_env:
+                restored_env[local_end_turn_key] = os.environ.get(
+                    local_end_turn_key
+                )
+            os.environ[local_end_turn_key] = "1"
             turn_result = cmd_auto_turn(
                 profile=profile,
                 time_limit=time_limit,
@@ -45837,16 +49232,36 @@ def cmd_lightning_auto_turn_pause(
             include_ocr=include_pause_ocr,
         )
 
+    nested_status = (
+        turn_result.get("status") if isinstance(turn_result, dict) else None
+    )
+    nested_success = bool(
+        isinstance(turn_result, dict)
+        and not turn_result.get("blocking")
+        and nested_status in {"OK", "PLAN"}
+    )
+    wrapper_status = (
+        "ERROR"
+        if error_result is not None
+        else ("OK" if nested_success else "STOPPED")
+    )
     result = {
-        "status": "OK" if error_result is None else "ERROR",
+        "status": wrapper_status,
         "label": label,
         "wall_seconds": round(time.monotonic() - started_at, 3),
         "auto_turn": turn_result,
         "error_result": error_result,
         "pause_snapshot": pause_snapshot,
         "next_step": (
-            "Inspect pause_snapshot and auto_turn before any additional combat "
-            "or End Turn action."
+            (
+                "Inspect the opaque local End Turn reservation, then consume "
+                "it once through lightning_end_turn_pause."
+            )
+            if nested_status == "PLAN" and nested_success
+            else (
+                "Inspect pause_snapshot and auto_turn before any additional "
+                "combat or End Turn action."
+            )
         ),
     }
     if pre_turn_pause is not None:
@@ -45870,8 +49285,9 @@ def cmd_lightning_end_turn_pause(
     max_wait: float = 30.0,
     wait_poll_interval: float = 0.20,
     resume_fast_guard_seconds: float = 300.0,
+    lightning_speed_loss_policy: bool = False,
 ) -> dict:
-    """Click End Turn from pause, handle confirmation by repeat click, pause."""
+    """Atomically authorize one End Turn click from pause, then pause."""
     started_at = time.monotonic()
     resume = _lightning_resume_if_paused(
         dry_run=False,
@@ -45895,11 +49311,62 @@ def cmd_lightning_end_turn_pause(
         _print_result(result)
         return result
 
-    from src.control.mac_click import click_known_window_control
-
-    click = click_known_window_control("end_turn")
-    time.sleep(max(0.0, float(confirm_delay_seconds or 0.0)))
-    confirm_click = click_known_window_control("end_turn")
+    dispatch_result = cmd_dispatch_end_turn(
+        execute=True,
+        _lightning_speed_loss_allowed=bool(lightning_speed_loss_policy),
+        _allow_reserved_local_plan=True,
+    )
+    click = dispatch_result.get("dispatch")
+    confirm_click = None
+    if dispatch_result.get("status") != "DISPATCHED":
+        pause_snapshot = cmd_lightning_snap_pause(
+            label,
+            note="end_turn_dispatch_blocked_pause_guard",
+            include_ocr=True,
+        )
+        result = {
+            "status": "ERROR",
+            "reason": "guarded_end_turn_dispatch_failed",
+            "resume": resume,
+            "dispatch": dispatch_result,
+            "pause_snapshot": pause_snapshot,
+            "wall_seconds": round(time.monotonic() - started_at, 3),
+        }
+        _print_result(result)
+        return result
+    delivery_confirmation = (
+        click.get("delivery_confirmation") if isinstance(click, dict) else None
+    )
+    if delivery_confirmation != "delivered_confirmed":
+        pause_snapshot = cmd_lightning_snap_pause(
+            label,
+            note="end_turn_delivery_unconfirmed_pause_guard",
+            include_ocr=True,
+        )
+        result = {
+            "status": "STOPPED",
+            "reason": "end_turn_delivery_unconfirmed",
+            "blocking": True,
+            "retry_allowed": False,
+            "resume": resume,
+            "dispatch": dispatch_result,
+            "pause_snapshot": pause_snapshot,
+            "wall_seconds": round(time.monotonic() - started_at, 3),
+            **{
+                key: dispatch_result.get(key)
+                for key in (
+                    "end_turn_plan_id",
+                    "end_turn_plan_source",
+                    "end_turn_delivery_mode",
+                )
+            },
+            "next_step": (
+                "The click may have been delivered. Do not retry; inspect the "
+                "paused screen and a fresh bridge read."
+            ),
+        }
+        _print_result(result)
+        return result
     wait_result = None
     if wait_until_ready:
         wait_result = _lightning_wait_for_player_turn_and_pause(
@@ -45923,6 +49390,15 @@ def cmd_lightning_end_turn_pause(
         "label": label,
         "resume": resume,
         "click": click,
+        "dispatch": dispatch_result,
+        "delivery_confirmation": delivery_confirmation,
+        "end_turn_plan_id": dispatch_result.get("end_turn_plan_id"),
+        "end_turn_plan_source": dispatch_result.get(
+            "end_turn_plan_source"
+        ),
+        "end_turn_delivery_mode": dispatch_result.get(
+            "end_turn_delivery_mode"
+        ),
         "confirm_click": confirm_click,
         "wait_until_ready": bool(wait_until_ready),
         "wait_result": wait_result,
@@ -46698,44 +50174,72 @@ def cmd_mine_overrides(
     return result
 
 
-def cmd_end_turn() -> dict:
-    """End the current turn.
-
-    In bridge mode: sends END_TURN command directly.
-    In MCP mode: returns click plan for End Turn button.
-    """
+def cmd_end_turn(
+    *,
+    _prevalidated: bool = False,
+    _lightning_speed_loss_allowed: bool = False,
+) -> dict:
+    """Authorize one exact End Turn delivery and return its outcome/plan."""
     session = _load_session()
-    logger = _get_logger(session)
     block = _post_enemy_block_result(session)
     if block is not None:
         _print_result(block)
         return block
+    held_block = _held_end_turn_safety_block_result(
+        session,
+        lightning_speed_loss_allowed=_lightning_speed_loss_allowed,
+    )
+    if held_block is not None:
+        _print_result(held_block)
+        return held_block
+    fire_block = _current_end_turn_fire_block()
+    if fire_block is not None:
+        _print_result(fire_block)
+        return fire_block
+    ledger_turn = _current_end_turn_ledger_turn(session)
+    if ledger_turn is None:
+        result = {
+            "status": "END_TURN_BLOCKED",
+            "reason": "end_turn_plan_turn_not_proven",
+            "blocking": True,
+            "next_step": (
+                "Run a fresh `read` and prove the exact active mission/turn "
+                "before ending the turn."
+            ),
+        }
+        _print_result(result)
+        return result
+    if ledger_turn is not None:
+        lightning_local_handoff = bool(
+            _prevalidated
+            and os.environ.get("ITB_LIGHTNING_LOCAL_END_TURN") == "1"
+        )
+        ledger_block = _mark_end_turn_plan_issued(
+            session,
+            turn=ledger_turn,
+            source=(
+                "lightning_loop"
+                if lightning_local_handoff
+                else ("auto_turn" if _prevalidated else "end_turn")
+            ),
+            delivery_mode=(
+                "local" if lightning_local_handoff else "external"
+            ),
+        )
+        if ledger_block is not None:
+            _print_result(ledger_block)
+            return ledger_block
+    plan_ledger = session.end_turn_plan_ledger or {}
+    plan_provenance = {
+        "end_turn_plan_id": plan_ledger.get("plan_id"),
+        "end_turn_plan_source": plan_ledger.get("source"),
+        "end_turn_delivery_mode": plan_ledger.get("delivery_mode"),
+    }
+    logger = _get_logger(session)
     logger.log_custom("End Turn Plan", (
         "End Turn click plan requested. This records plan emission only; "
         "the external Computer Use click is logged by the harness."
     ))
-
-    if os.environ.get("ITB_LIGHTNING_UI_END_TURN") == "1":
-        from src.control.mac_click import click_known_window_control
-
-        print("\n=== LIGHTNING UI END TURN ===")
-        end_click = click_known_window_control("end_turn")
-        time.sleep(0.12)
-        confirm_click = click_known_window_control(
-            "end_turn_confirm_yes",
-            settle_seconds=0.08,
-            hold_seconds=0.06,
-        )
-        result = {
-            "status": "OK",
-            "reason": "ui_end_turn_clicked",
-            "end_turn_click": end_click,
-            "confirm_click": confirm_click,
-            "bridge": False,
-        }
-        session.save()
-        _print_result(result)
-        return result
 
     # Bridge mode: the Lua END_TURN handler SetActives all player pawns for
     # solver-state consistency but cannot actually advance the turn without
@@ -46748,57 +50252,147 @@ def cmd_end_turn() -> dict:
             ack = execute_bridge_end_turn()
             print(f"  ACK: {ack}")
         except (TimeoutError, BridgeError) as e:
-            result = {"error": str(e), "bridge": True}
+            result = {
+                "status": "END_TURN_DELIVERY_UNCONFIRMED",
+                "error": str(e),
+                "bridge": True,
+                "blocking": True,
+                "delivery_confirmation": "delivered_unconfirmed",
+                "retry_allowed": False,
+                **plan_provenance,
+                "next_step": (
+                    "The bridge delivery attempt timed out or failed after "
+                    "one-shot reservation. Do not retry; inspect a fresh read."
+                ),
+            }
             print(f"  ERROR: {e}")
             session.save()
             _print_result(result)
             return result
 
         if ack.startswith("NEEDS_MCP_CLICK"):
-            recalibrate()
-            batch = plan_end_turn()
-            codex_batch = [
-                c["codex_computer_use"]
-                for c in batch
-                if isinstance(c, dict) and c.get("codex_computer_use")
-            ]
-            result = {
-                "status": "PLAN",
-                "bridge_ack": ack,
-                "batch": batch,
-                "codex_computer_use_batch": codex_batch,
-                "next_step": (
-                    "dispatch codex_computer_use_batch with Computer Use "
-                    "(or legacy batch with screen-coordinate batch tools), "
-                    "wait ~6s, then `read`"
-                ),
-            }
-            print("  -> bridge SetActive done; emitting MCP click plan")
-            for i, c in enumerate(batch):
-                local = ""
-                if "window_x" in c and "window_y" in c:
-                    local = f" | Codex window-local ({c['window_x']}, {c['window_y']})"
-                print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}){local} "
-                      f"-- {c['description']}")
+            if lightning_local_handoff:
+                result = {
+                    "status": "PLAN",
+                    "bridge_ack": ack,
+                    "local_end_turn_reserved": True,
+                    **plan_provenance,
+                    "next_step": (
+                        "Consume this opaque local reservation through the "
+                        "atomic End Turn dispatcher; no click coordinates "
+                        "were exposed."
+                    ),
+                }
+                print("  -> bridge SetActive done; local delivery reserved")
+            else:
+                recalibrate()
+                batch = plan_end_turn()
+                codex_batch = [
+                    c["codex_computer_use"]
+                    for c in batch
+                    if isinstance(c, dict) and c.get("codex_computer_use")
+                ]
+                result = {
+                    "status": "PLAN",
+                    "bridge_ack": ack,
+                    "batch": batch,
+                    "codex_computer_use_batch": codex_batch,
+                    **plan_provenance,
+                    "next_step": (
+                        "dispatch codex_computer_use_batch with Computer Use "
+                        "(or legacy batch with screen-coordinate batch tools), "
+                        "wait ~6s, then `read`"
+                    ),
+                }
+                print("  -> bridge SetActive done; emitting MCP click plan")
+                for i, c in enumerate(batch):
+                    local = ""
+                    if "window_x" in c and "window_y" in c:
+                        local = (
+                            " | Codex window-local "
+                            f"({c['window_x']}, {c['window_y']})"
+                        )
+                    print(
+                        f"  {i+1}. {c['type']} ({c['x']}, {c['y']})"
+                        f"{local} -- {c['description']}"
+                    )
         else:
-            result = {"bridge": True, "ack": ack}
+            prior_ledger = session.end_turn_plan_ledger
+            session.end_turn_plan_ledger = {
+                **prior_ledger,
+                "status": "delivered_confirmed",
+                "direct_bridge_delivery": True,
+                "delivery_recorded_at": datetime.now().isoformat(),
+            }
+            try:
+                session.save()
+            except Exception as exc:
+                result = {
+                    "status": "END_TURN_DELIVERY_LEDGER_UNCERTAIN",
+                    "bridge": True,
+                    "ack": ack,
+                    "blocking": True,
+                    "delivery_confirmation": "delivered_confirmed",
+                    "retry_allowed": False,
+                    "ledger_error": str(exc),
+                    **plan_provenance,
+                    "next_step": (
+                        "End Turn delivery was confirmed, but the terminal "
+                        "ledger update failed. Do not retry; inspect a fresh "
+                        "read and repair persistence."
+                    ),
+                }
+                _print_result(result)
+                return result
+            result = {
+                "status": "OK",
+                "bridge": True,
+                "ack": ack,
+                "delivery_confirmation": "delivered_confirmed",
+                "retry_allowed": False,
+                **plan_provenance,
+            }
 
-        session.save()
+        if ack.startswith("NEEDS_MCP_CLICK"):
+            session.save()
         _print_result(result)
         return result
 
     # MCP mode
-    clicks = plan_end_turn()
+    if lightning_local_handoff:
+        result = {
+            "status": "PLAN",
+            "local_end_turn_reserved": True,
+            **plan_provenance,
+            "next_step": (
+                "Consume this opaque local reservation through the atomic "
+                "End Turn dispatcher; no click coordinates were exposed."
+            ),
+        }
+        session.save()
+        _print_result(result)
+        return result
 
+    batch = plan_end_turn()
+    codex_batch = [
+        click["codex_computer_use"]
+        for click in batch
+        if isinstance(click, dict) and click.get("codex_computer_use")
+    ]
     result = {
-        "clicks": clicks,
-        "note": "After executing, wait for enemy phase animations (6+ seconds), "
-                "then run: game_loop.py verify",
+        "status": "PLAN",
+        "batch": batch,
+        "codex_computer_use_batch": codex_batch,
+        **plan_provenance,
+        "next_step": (
+            "Dispatch codex_computer_use_batch exactly once, wait for enemy "
+            "phase animations (6+ seconds), then run `read`."
+        ),
     }
 
     print("\n=== END TURN ===")
-    for i, c in enumerate(clicks):
-        if c["type"] == "click":
+    for i, c in enumerate(batch):
+        if c["type"] in {"click", "left_click"}:
             print(f"  {i+1}. CLICK ({c['x']}, {c['y']}) -- {c['description']}")
         elif c["type"] == "wait":
             print(f"  {i+1}. WAIT {c['duration']}s")
@@ -46849,6 +50443,44 @@ def cmd_status(profile: str = "Alpha") -> dict:
         )
         if requirements is not None:
             result["no_survivors_setup_requirements"] = requirements
+
+    status_turn = (
+        session.active_solution.turn
+        if session.active_solution is not None
+        else session.current_turn
+    )
+    held_block = session.held_end_turn_block
+    if not _held_end_turn_record_matches(
+        held_block,
+        session,
+        status_turn,
+    ):
+        try:
+            recorded_block = _load_recorded_turn_state(
+                session,
+                "held_end_turn_block",
+                turn=status_turn,
+            )
+        except Exception:
+            recorded_block = None
+        if _held_end_turn_record_matches(
+            recorded_block,
+            session,
+            status_turn,
+        ):
+            held_block = recorded_block
+    if _held_end_turn_record_matches(
+        held_block,
+        session,
+        status_turn,
+    ):
+        result["held_end_turn_block"] = held_block
+    if _held_end_turn_record_matches(
+        session.end_turn_plan_ledger,
+        session,
+        status_turn,
+    ):
+        result["end_turn_plan_ledger"] = session.end_turn_plan_ledger
 
     _attach_post_enemy_block(result, session)
     _print_result(result)
@@ -48608,10 +52240,11 @@ def _settle_terminal_desync_post_player_board(
     *,
     expected_turn: int,
     prior_fingerprint: tuple | None = None,
+    initial_refresh_succeeded: bool = False,
     max_wait: float = 1.5,
     interval: float = 0.25,
     read_fn=read_bridge_state,
-    refresh_fn=refresh_bridge_state,
+    refresh_fn=refresh_bridge_state_fresh,
     sleep_fn=time.sleep,
     now_fn=time.time,
 ) -> tuple[Board | None, dict | None, dict]:
@@ -48648,19 +52281,29 @@ def _settle_terminal_desync_post_player_board(
     latest_data = bridge_data
     latest_fp = _terminal_desync_settle_fingerprint(board, bridge_data)
     samples = 1
-    if prior_fingerprint is not None and latest_fp == prior_fingerprint:
+    if (
+        initial_refresh_succeeded is True
+        and prior_fingerprint is not None
+        and latest_fp == prior_fingerprint
+    ):
         return latest_board, latest_data, {
             "status": "OK",
             "samples": samples,
             "elapsed_seconds": 0.0,
             "matched_verify_snapshot": True,
+            "freshness_proven": True,
         }
 
     start = now_fn()
     while now_fn() - start < max_wait:
         sleep_fn(interval)
         try:
-            refresh_fn()
+            if refresh_fn() is not True:
+                return None, None, {
+                    "status": "ERROR",
+                    "error": "terminal_desync_post_player_refresh_failed",
+                    "samples": samples,
+                }
             reread_board, reread_data = read_fn()
         except Exception as exc:
             return None, None, {
@@ -48701,6 +52344,7 @@ def _settle_terminal_desync_post_player_board(
                 "samples": samples,
                 "elapsed_seconds": round(now_fn() - start, 3),
                 "matched_verify_snapshot": False,
+                "freshness_proven": True,
             }
         latest_fp = fingerprint
 
@@ -48726,7 +52370,6 @@ def _build_terminal_desync_reprojection(
     turn_start_outcome: dict | None = None,
     verified_action_results: list[dict] | None = None,
     counter_ledger_prefix_complete: bool = False,
-    terminal_predicted_state: dict | None = None,
     terminal_action_result: dict | None = None,
 ) -> tuple[dict | None, dict | None]:
     """Project enemy resolution from settled live state with zero actions.
@@ -48834,17 +52477,28 @@ def _build_terminal_desync_reprojection(
     ]
     terminal_action_matched = False
     terminal_action_diff = None
+    terminal_checkpoint = solve_data.get("post_player_board")
     if (
-        isinstance(terminal_predicted_state, dict)
+        isinstance(terminal_checkpoint, dict)
         and isinstance(terminal_action_result, dict)
     ):
-        from src.solver.verify import diff_states
-
-        terminal_action_diff = diff_states(
-            terminal_predicted_state,
+        counter_lag_budget = 0
+        provisional_results = [*ledger_results, terminal_action_result]
+        if all(
+            type(item.get("mission_kills")) is int
+            and item["mission_kills"] >= 0
+            for item in provisional_results
+        ):
+            counter_lag_budget = sum(
+                item["mission_kills"] for item in provisional_results
+            )
+        terminal_action_diff = _held_end_turn_post_player_parity_error(
+            solve_data,
             board,
+            bridge_data,
+            allowed_mission_kill_counter_lag=counter_lag_budget,
         )
-        terminal_action_matched = terminal_action_diff.is_empty()
+        terminal_action_matched = terminal_action_diff is None
         if terminal_action_matched:
             ledger_results.append(dict(terminal_action_result))
 
@@ -49037,9 +52691,7 @@ def _build_terminal_desync_reprojection(
             "pod_counter_valid": pod_counter_valid,
             "terminal_action_matched": terminal_action_matched,
             "terminal_action_diff": (
-                terminal_action_diff.to_dict()
-                if terminal_action_diff is not None
-                else None
+                terminal_action_diff
             ),
         }
     missing_player_mission_kills = max(
@@ -51749,7 +55401,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     terminal_reprojection_safety_blocked = False
     terminal_reprojection_speed_loss = False
     try:
-        refresh_bridge_state()
+        if not _refresh_end_turn_bridge_state():
+            raise RuntimeError("post_action_bridge_refresh_failed")
         audit_board, audit_data = read_bridge_state()
         if terminal_desync is not None:
             audit_board, audit_data, settlement = (
@@ -51757,6 +55410,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     audit_board,
                     audit_data,
                     expected_turn=turn,
+                    initial_refresh_succeeded=True,
                     prior_fingerprint=terminal_desync.get(
                         "actual_fingerprint"
                     ),
@@ -51785,9 +55439,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         verified_action_results=verified_action_results,
                         counter_ledger_prefix_complete=(
                             counter_ledger_prefix_complete
-                        ),
-                        terminal_predicted_state=terminal_desync.get(
-                            "_predicted_post_attack"
                         ),
                         terminal_action_result=terminal_desync.get(
                             "_action_result"
@@ -51867,6 +55518,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             audit_board,
             audit_data,
             expected_turn=turn,
+            expected_mission_id=session.current_mission,
         )
         if evidence_error is not None:
             threat_audit = evidence_error
@@ -51946,6 +55598,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 "Turn; recover from a fresh read plus solve."
             ),
         }
+        result = _persist_held_end_turn_block(session, result, turn=turn)
         _print_result(result)
         return result
 
@@ -51966,11 +55619,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 "read plus solve."
             ),
         }
+        result = _persist_held_end_turn_block(session, result, turn=turn)
         _print_result(result)
         return result
 
     if grid_drop_investigations:
-        pending_plan = _end_turn_click_plan_result()
         result = {
             "status": "INVESTIGATE",
             "turn": turn,
@@ -51979,10 +55632,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "re_solves": re_solve_count,
             "desyncs_detected": detected_desync_count,
             "investigations": grid_drop_investigations,
-            "pending_end_turn_batch": pending_plan["batch"],
-            "pending_end_turn_codex_computer_use_batch": pending_plan.get(
-                "codex_computer_use_batch", []
-            ),
             "bridge_ack": None,
             "next_step": (
                 "Resolve each investigation before dispatching the held "
@@ -52004,12 +55653,12 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
+        result = _persist_held_end_turn_block(session, result, turn=turn)
         _print_result(result)
         return result
 
     unsafe_fuzzy = _fuzzy_detections_require_end_turn_block(fuzzy_detections)
     if unsafe_fuzzy:
-        pending_plan = _end_turn_click_plan_result()
         result = {
             "status": "FUZZY_INVESTIGATE_BLOCKED",
             "turn": turn,
@@ -52017,10 +55666,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "score": score,
             "re_solves": re_solve_count,
             "desyncs_detected": detected_desync_count,
-            "held_end_turn_batch": pending_plan["batch"],
-            "held_end_turn_codex_computer_use_batch": pending_plan.get(
-                "codex_computer_use_batch", []
-            ),
             "block_reason": unsafe_fuzzy,
             "next_step": (
                 "A post-action desync left an enemy alive or a mech dead "
@@ -52044,6 +55689,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
+        result = _persist_held_end_turn_block(session, result, turn=turn)
         _print_result(result)
         return result
 
@@ -52054,7 +55700,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         dirty_consent_validated=dirty_consent_validated,
         lightning_speed_loss_allowed=allow_lightning_speed_loss,
     ):
-        pending_plan = _end_turn_click_plan_result()
         result = {
             "status": "THREAT_AUDIT_BLOCKED",
             "turn": turn,
@@ -52063,10 +55708,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "re_solves": re_solve_count,
             "desyncs_detected": detected_desync_count,
             "threat_audit": threat_audit,
-            "held_end_turn_batch": pending_plan["batch"],
-            "held_end_turn_codex_computer_use_batch": pending_plan.get(
-                "codex_computer_use_batch", []
-            ),
             "plan_safety": plan_safety,
             "next_step": (
                 "Threat audit still sees an unresolved building/pylon threat. "
@@ -52087,6 +55728,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
+        result = _persist_held_end_turn_block(session, result, turn=turn)
         _print_result(result)
         return result
 
@@ -52124,6 +55766,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
+        result = _persist_held_end_turn_block(session, result, turn=turn)
         _print_result(result)
         return result
 
@@ -52131,16 +55774,50 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     pause_detail = _resume_combat_timer_pause("before_end_turn")
     pause_error = _combat_pause_error("before_end_turn", pause_detail)
     if pause_error:
+        pause_error = _persist_held_end_turn_block(
+            session,
+            pause_error,
+            turn=turn,
+        )
         _print_result(pause_error)
         return pause_error
-    end_result = cmd_end_turn()
+    end_result = cmd_end_turn(
+        _prevalidated=True,
+        _lightning_speed_loss_allowed=allow_lightning_speed_loss,
+    )
     if "error" in end_result:
-        result = {"error": f"END_TURN: {end_result['error']}",
-                  "turn": turn, "actions_completed": actions_completed}
+        result = {
+            "status": "END_TURN_BLOCKED",
+            "blocking": True,
+            "error": f"END_TURN: {end_result['error']}",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "end_turn": end_result,
+        }
+        result = _persist_held_end_turn_block(session, result, turn=turn)
+        _print_result(result)
+        return result
+    if end_result.get("status") not in {"PLAN", "OK"}:
+        result = {
+            "status": "END_TURN_BLOCKED",
+            "blocking": True,
+            "reason": "end_turn_command_did_not_authorize_delivery",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "end_turn": end_result,
+            "next_step": (
+                "Do not click End Turn. Resolve the nested End Turn block, "
+                "then recover through a fresh read plus successful solve."
+            ),
+        }
+        result = _persist_held_end_turn_block(session, result, turn=turn)
         _print_result(result)
         return result
 
     if end_result.get("status") == "PLAN":
+        local_end_turn_reserved = bool(
+            end_result.get("local_end_turn_reserved")
+        )
         result = {
             "status": "PLAN",
             "turn": turn,
@@ -52150,14 +55827,29 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "desyncs_detected": detected_desync_count,
             "wait_entry_seconds": wait_entry_seconds,
             "bridge_ack": end_result.get("bridge_ack"),
-            "batch": end_result["batch"],
+            "batch": end_result.get("batch", []),
             "codex_computer_use_batch": end_result.get(
                 "codex_computer_use_batch", []
             ),
+            "end_turn_plan_id": end_result.get("end_turn_plan_id"),
+            "end_turn_plan_source": end_result.get(
+                "end_turn_plan_source"
+            ),
+            "end_turn_delivery_mode": end_result.get(
+                "end_turn_delivery_mode"
+            ),
+            "local_end_turn_reserved": local_end_turn_reserved,
             "next_step": (
-                "dispatch codex_computer_use_batch with Computer Use "
-                "(or legacy batch with screen-coordinate batch tools), "
-                "wait ~6s, then `read`"
+                (
+                    "Consume the opaque local reservation through the atomic "
+                    "End Turn dispatcher; no click coordinates were exposed."
+                )
+                if local_end_turn_reserved
+                else (
+                    "dispatch codex_computer_use_batch with Computer Use "
+                    "(or legacy batch with screen-coordinate batch tools), "
+                    "wait ~6s, then `read`"
+                )
             ),
             "fuzzy_detections": fuzzy_detections,
             "soft_disabled": list(session.disabled_actions),
@@ -54026,6 +57718,8 @@ def cmd_mission_end(
     session.current_mission = ""
     session.last_mission_turn = -1
     session.disabled_actions = []
+    session.held_end_turn_block = None
+    session.end_turn_plan_ledger = None
     session.save()
     result["next_mission_index"] = session.mission_index
 

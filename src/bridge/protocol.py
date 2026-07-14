@@ -129,6 +129,40 @@ def refresh_bridge_state() -> bool:
         return False
 
 
+def refresh_bridge_state_fresh(timeout: float = 2.0) -> bool:
+    """Request a dump and wait until a new readable state generation lands.
+
+    The Lua command handler writes its ACK immediately before ``dump_state``.
+    Waiting only for the ACK can therefore race and reread the previous JSON.
+    Capture every state candidate's file generation before the command, then
+    require a changed, parseable candidate after the ACK.
+    """
+
+    def generations() -> dict[str, tuple[int, int]]:
+        observed: dict[str, tuple[int, int]] = {}
+        for path in (STATE_FILE, STATE_TMP):
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            observed[str(path)] = (stat.st_mtime_ns, stat.st_size)
+        return observed
+
+    before = generations()
+    if refresh_bridge_state() is not True:
+        return False
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        after = generations()
+        for path_text, generation in after.items():
+            if before.get(path_text) == generation:
+                continue
+            if _read_json_file(Path(path_text)) is not None:
+                return True
+        time.sleep(0.02)
+    return False
+
+
 def read_state() -> dict | None:
     """Read the current game state JSON. Returns None if unavailable."""
     for path in _state_candidates_newest_first():

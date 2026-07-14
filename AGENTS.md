@@ -278,7 +278,7 @@ The solver enforces the full rules in `docs/agent/solver-reference.md` and
 - `status` - quick session summary plus persistent blocks.
 - `solve [--candidate-rank N]` - solve and record without executing.
 - `auto_turn [--time-limit N]` - default full combat turn.
-- `click_end_turn` - pure End Turn click planner.
+- `click_end_turn` - guarded one-shot End Turn authorization and click planner.
 - `deploy_recommended` - bridge deployment helper; click visible CONFIRM after.
 - `research_peek` - read-only research queue view.
 - `resolve_post_enemy_block --reason "<specific cause/fix>"` - clear a

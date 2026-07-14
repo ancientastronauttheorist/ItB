@@ -2302,7 +2302,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Missiles, an otherwise status-no-op Shield Barrage also remains a
 //   legal action because spending all four Contraption charges is the mission
 //   objective. Pre-v363 corpus archived as failure_db_snapshot_sim_v362.jsonl.
-pub const SIMULATOR_VERSION: u32 = 363;
+pub const SIMULATOR_VERSION: u32 = 364;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

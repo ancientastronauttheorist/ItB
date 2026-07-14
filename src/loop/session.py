@@ -312,6 +312,17 @@ class RunSession:
     # refuse solve/End Turn until the harness explicitly resolves it.
     post_enemy_block: dict | None = None
 
+    # Same-turn pre-End-Turn hard stop persisted by auto_turn after all
+    # actors are spent. Standalone planners must not reconstruct authority
+    # from an older clean solve after an investigation/reprojection failure.
+    held_end_turn_block: dict | None = None
+
+    # One-shot End Turn plan/delivery ledger. External Computer Use emission
+    # is non-retryable because delivery is asynchronous. A local-only plan may
+    # return to ``plan_issued`` solely after durable proof that no input was
+    # sent; solve/read never erase this ledger within the same mission turn.
+    end_turn_plan_ledger: dict | None = None
+
     # Dirty-plan consent tokens are exact to a board fingerprint + selected
     # action/loss profile and are consumed once. This prevents a stale
     # --allow-dirty-plan from carrying across a re-solve or later turn.
@@ -444,6 +455,8 @@ class RunSession:
             self.mission_index += 1
             self.last_mission_turn = -1
             self.disabled_actions = []
+            self.held_end_turn_block = None
+            self.end_turn_plan_ledger = None
 
     # --- Decision tracking ---
 
@@ -659,6 +672,8 @@ class RunSession:
             "lightning_route_probe_cache": self.lightning_route_probe_cache,
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
             "post_enemy_block": self.post_enemy_block,
+            "held_end_turn_block": self.held_end_turn_block,
+            "end_turn_plan_ledger": self.end_turn_plan_ledger,
             "dirty_consent_used": self.dirty_consent_used,
             "tags": self.tags,
             "failure_events_this_run": self.failure_events_this_run,
@@ -712,6 +727,8 @@ class RunSession:
             lightning_route_probe_cache=d.get("lightning_route_probe_cache") or [],
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             post_enemy_block=d.get("post_enemy_block"),
+            held_end_turn_block=d.get("held_end_turn_block"),
+            end_turn_plan_ledger=d.get("end_turn_plan_ledger"),
             dirty_consent_used=d.get("dirty_consent_used") or [],
             tags=d.get("tags", []),
             failure_events_this_run=d.get("failure_events_this_run") or [],

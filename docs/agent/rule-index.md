@@ -490,3 +490,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 489 | 875 | Missile Barrage kill side effects can remain in flight after the ACK. | `docs/agent/solver-reference.md` |
 | 490 | 877 | Detritus barrages preserve Lua coordinate order and objective-only Shield uses. | `docs/agent/solver-reference.md` |
 | 491 | 879 | Terminal reprojection preserves only verified player-action counters. | `docs/agent/safety-gates.md` |
+| 492 | 881 | Held End Turn revalidation and delivery are persistent authorization gates. | `docs/agent/safety-gates.md` |

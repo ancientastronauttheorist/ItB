@@ -45,6 +45,29 @@ def _post_setup_non_prompt_ui(*_args, **_kwargs) -> dict:
     return {"status": "OK", "visible_ui": "island_select_or_unknown"}
 
 
+def _confirmed_end_turn_dispatch(
+    observation: dict | None = None,
+    *,
+    delivery_confirmation: str = "delivered_confirmed",
+) -> dict:
+    """Return the atomic dispatcher shape used by Lightning wrappers."""
+    if observation is None:
+        observation = {"status": "OK", "reason": "phase_changed"}
+    return {
+        "status": "DISPATCHED",
+        "end_turn_plan_id": "0123456789abcdef",
+        "end_turn_plan_source": "lightning_loop",
+        "end_turn_delivery_mode": "local",
+        "dispatch": {
+            "status": "DISPATCHED",
+            "executed": True,
+            "delivery_confirmation": delivery_confirmation,
+            "retry_allowed": False,
+            "observation": observation,
+        },
+    }
+
+
 def _assert_preview_board_route_calls(
     calls: list[list[dict]],
     *,
@@ -192,7 +215,8 @@ def _patch_verified_first_island_save_guard(monkeypatch, *, advanced_value=0):
     )
 
 
-def test_read_git_short_hash_from_files_reads_branch_ref(tmp_path):
+def test_read_git_short_hash_from_files_reads_branch_ref(tmp_path, monkeypatch):
+    monkeypatch.setenv("ITB_ENABLE_GIT_SOLVER_VERSION", "1")
     git_dir = tmp_path / ".git"
     refs_dir = git_dir / "refs" / "heads"
     refs_dir.mkdir(parents=True)
@@ -295,7 +319,14 @@ def test_lightning_ocr_texts_from_image_keeps_top_nonempty_candidate(
 
     result = commands._lightning_ocr_texts_from_image(screenshot)
 
-    assert result == {"status": "OK", "texts": ["Best text", "Fallback text"]}
+    assert result == {
+        "status": "OK",
+        "texts": ["Best text", "Fallback text"],
+        "observations": [
+            {"text": "Best text"},
+            {"text": "Fallback text"},
+        ],
+    }
 
 
 def test_abandon_pilot_slot_targets_first_carry_forward_portrait():
@@ -3645,14 +3676,14 @@ def test_lightning_drain_known_behavior_research_requires_lightning_target(monke
     assert session.research_queue[0]["status"] == "pending"
 
 
-def test_lightning_loop_clicks_end_turn_plan(monkeypatch):
+def test_lightning_loop_dispatches_reserved_end_turn_plan(monkeypatch):
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
         difficulty=0,
         achievement_targets=["Lightning War"],
     )
-    calls = {"auto_turn": 0, "clicks": 0}
+    calls = {"auto_turn": 0, "dispatches": 0}
     wait_polls = []
 
     def fake_auto_turn(**kwargs):
@@ -3664,13 +3695,20 @@ def test_lightning_loop_clicks_end_turn_plan(monkeypatch):
                 "turn": 1,
                 "actions_completed": 3,
                 "score": 123,
-                "batch": [{"type": "left_click", "x": 341, "y": 152}],
+                "local_end_turn_reserved": True,
+                "end_turn_plan_source": "lightning_loop",
+                "end_turn_delivery_mode": "local",
             }
         return {"status": "TERMINAL_OR_MISSION_END", "turn": 2}
 
-    def fake_click(plan):
-        calls["clicks"] += 1
-        return {"status": "OK", "x": 341, "y": 152}
+    def fake_dispatch(**kwargs):
+        calls["dispatches"] += 1
+        assert kwargs == {
+            "execute": True,
+            "_lightning_speed_loss_allowed": False,
+            "_allow_reserved_local_plan": True,
+        }
+        return _confirmed_end_turn_dispatch()
 
     monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
     monkeypatch.setattr(commands, "_load_session", lambda: session)
@@ -3681,12 +3719,7 @@ def test_lightning_loop_clicks_end_turn_plan(monkeypatch):
         "_lightning_visible_ui_snapshot",
         lambda: {"status": "OK", "visible_ui": "combat_screen"},
     )
-    monkeypatch.setattr(commands, "_click_end_turn_from_plan_result", fake_click)
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda turn_result: {"status": "OK", "reason": "phase_changed"},
-    )
+    monkeypatch.setattr(commands, "cmd_dispatch_end_turn", fake_dispatch)
 
     result = commands.cmd_lightning_loop(max_turns=3, pause_before_solve=False)
 
@@ -3695,7 +3728,7 @@ def test_lightning_loop_clicks_end_turn_plan(monkeypatch):
     assert result["turns"][0]["auto_turn_wall_seconds"] >= 0
     assert result["turns"][0]["turn_wall_seconds"] >= 0
     assert wait_polls == [0.35, 0.35]
-    assert calls == {"auto_turn": 2, "clicks": 1}
+    assert calls == {"auto_turn": 2, "dispatches": 1}
 
 
 def test_lightning_quiet_call_counts_output_without_result_json(capsys):
@@ -3841,7 +3874,7 @@ def test_lightning_loop_passes_dirty_consent_to_first_turn_only(monkeypatch):
                 "status": "PLAN",
                 "turn": 4,
                 "actions_completed": 3,
-                "batch": [{"type": "left_click", "x": 341, "y": 152}],
+                "local_end_turn_reserved": True,
             }
         return {"status": "TERMINAL_OR_MISSION_END", "turn": 5}
 
@@ -3856,13 +3889,8 @@ def test_lightning_loop_passes_dirty_consent_to_first_turn_only(monkeypatch):
     )
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda plan: {"status": "OK"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda turn_result: {"status": "OK", "reason": "phase_changed"},
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: _confirmed_end_turn_dispatch(),
     )
 
     result = commands.cmd_lightning_loop(
@@ -4125,7 +4153,7 @@ def test_lightning_loop_passes_speed_loss_policy_to_every_turn(monkeypatch):
                 "status": "PLAN",
                 "turn": 1,
                 "actions_completed": 3,
-                "batch": [{"type": "left_click", "x": 341, "y": 152}],
+                "local_end_turn_reserved": True,
             }
         return {"status": "TERMINAL_OR_MISSION_END", "turn": 2}
 
@@ -4140,19 +4168,15 @@ def test_lightning_loop_passes_speed_loss_policy_to_every_turn(monkeypatch):
     )
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda plan: {"status": "OK"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda turn_result: {"status": "OK", "reason": "phase_changed"},
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: _confirmed_end_turn_dispatch(),
     )
 
     result = commands.cmd_lightning_loop(
         max_turns=2,
         lightning_speed_loss_policy=True,
         pause_before_solve=False,
+        pause_on_stop=False,
     )
 
     assert result["reason"] == "TERMINAL_OR_MISSION_END"
@@ -14172,6 +14196,7 @@ def test_lightning_attempt_clicks_reviewed_held_end_turn(monkeypatch):
         achievement_targets=["Lightning War"],
     )
     session.current_turn = 3
+    session.current_mission = "Mission_Test"
     session.active_solution = ActiveSolution(
         actions=[
             SolverAction(
@@ -14231,6 +14256,11 @@ def test_lightning_attempt_clicks_reviewed_held_end_turn(monkeypatch):
     )
     monkeypatch.setattr(
         commands,
+        "_lightning_visible_ui_snapshot",
+        lambda **kwargs: {"status": "OK", "visible_ui": "combat_screen"},
+    )
+    monkeypatch.setattr(
+        commands,
         "_load_recorded_turn_state",
         lambda session, label, turn=None: {
             "plan_safety": plan_safety,
@@ -14239,11 +14269,24 @@ def test_lightning_attempt_clicks_reviewed_held_end_turn(monkeypatch):
         },
     )
     monkeypatch.setattr(commands, "_dirty_consent_gate", lambda *args, **kwargs: None)
-    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "_held_end_turn_safety_block_result",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(commands, "_refresh_end_turn_bridge_state", lambda: True)
     monkeypatch.setattr(
         commands,
         "read_bridge_state",
-        lambda: (object(), {"phase": "combat_player"}),
+        lambda: (
+            object(),
+            {
+                "phase": "combat_player",
+                "turn": 3,
+                "mission_id": "Mission_Test",
+                "in_active_mission": True,
+            },
+        ),
     )
     monkeypatch.setattr(
         commands,
@@ -14252,24 +14295,14 @@ def test_lightning_attempt_clicks_reviewed_held_end_turn(monkeypatch):
     )
     monkeypatch.setattr(
         "src.solver.threat_audit.audit_threat_coverage",
-        lambda threats, board: {"still_threatened_count": 1, "entries": []},
+        lambda threats, board: {"still_threatened_count": 0, "entries": []},
     )
     monkeypatch.setattr(commands, "_record_turn_state", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        commands,
-        "_end_turn_click_plan_result",
-        lambda: {"status": "PLAN", "batch": [{"left_click": {"x": 1, "y": 2}}]},
-    )
     monkeypatch.setattr(commands, "_lightning_resume_if_paused", lambda **kwargs: None)
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda result: {"status": "OK"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda result: {"status": "OK", "phase": "combat_enemy"},
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: _confirmed_end_turn_dispatch(),
     )
 
     result = commands.cmd_lightning_attempt(
@@ -15240,16 +15273,13 @@ def test_lightning_attempt_stops_quickly_on_player_phase_without_active_mechs(mo
     assert calls == []
 
 
-def test_lightning_attempt_clicks_end_turn_when_no_active_mechs_for_speedrun(monkeypatch):
+def test_lightning_attempt_does_not_end_turn_without_reviewed_held_plan(monkeypatch):
     session = RunSession(
         run_id="lw",
         squad="Blitzkrieg",
         difficulty=0,
         achievement_targets=["Lightning War"],
     )
-    clicks = []
-    observations = []
-
     monkeypatch.setattr(commands, "_load_session", lambda: session)
     monkeypatch.setattr(commands, "is_bridge_alive", lambda max_stale_sec=5.0: True)
     monkeypatch.setattr(
@@ -15282,41 +15312,20 @@ def test_lightning_attempt_clicks_end_turn_when_no_active_mechs_for_speedrun(mon
     monkeypatch.setattr(
         commands,
         "_lightning_reactivate_player_turn_if_no_active",
-        lambda snapshot: {"status": "NO_CHANGE", "reason": "test_no_change"},
+        lambda *args: {"status": "NO_CHANGE", "reason": "test_no_change"},
     )
     monkeypatch.setattr(
         commands,
-        "_end_turn_click_plan_result",
-        lambda: {
-            "status": "PLAN",
-            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
-            "codex_computer_use_batch": [],
-        },
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("unreviewed no-active state must not dispatch")
+        ),
     )
-    monkeypatch.setattr(
-        commands,
-        "_lightning_resume_if_paused",
-        lambda **kwargs: {"status": "OK"},
-    )
-
-    def fake_click(plan):
-        clicks.append(plan)
-        return {"status": "OK"}
-
-    def fake_observe(plan):
-        observations.append(plan)
-        return {"status": "OK", "reason": "phase_changed"}
-
-    monkeypatch.setattr(commands, "_click_end_turn_from_plan_result", fake_click)
-    monkeypatch.setattr(commands, "_observe_end_turn_after_click", fake_observe)
 
     result = commands.cmd_lightning_attempt(lightning_speed_loss_policy=True)
 
-    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
-    assert result["reason"] == "no_active_mechs_end_turn_clicked"
-    assert result["action"]["action"] == "click_no_active_mechs_end_turn"
-    assert clicks
-    assert observations[0]["turn"] == 2
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "player_turn_no_active_mechs"
 
 
 def test_lightning_attempt_reactivates_no_active_player_turn_before_end_turn(
@@ -15365,7 +15374,7 @@ def test_lightning_attempt_reactivates_no_active_player_turn_before_end_turn(
     monkeypatch.setattr(
         commands,
         "_lightning_reactivate_player_turn_if_no_active",
-        lambda snapshot: {
+        lambda *args: {
             "status": "OK",
             "reason": "player_pawns_reactivated",
             "ack": "OK LUA: reactivated count=3 active=3",
@@ -15396,7 +15405,6 @@ def test_lightning_attempt_no_active_mechs_ignores_resumed_combat_board_classifi
         difficulty=0,
         achievement_targets=["Lightning War"],
     )
-    clicks = []
     resume_calls = []
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
@@ -15423,7 +15431,7 @@ def test_lightning_attempt_no_active_mechs_ignores_resumed_combat_board_classifi
     monkeypatch.setattr(
         commands,
         "_lightning_visible_ui_snapshot",
-        lambda: {
+        lambda **kwargs: {
             "status": "OK",
             "visible_ui": "island_map_or_unknown",
             "recommended_control": None,
@@ -15439,16 +15447,7 @@ def test_lightning_attempt_no_active_mechs_ignores_resumed_combat_board_classifi
     monkeypatch.setattr(
         commands,
         "_lightning_reactivate_player_turn_if_no_active",
-        lambda snapshot: {"status": "NO_CHANGE", "reason": "test_no_change"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_end_turn_click_plan_result",
-        lambda: {
-            "status": "PLAN",
-            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
-            "codex_computer_use_batch": [],
-        },
+        lambda *args: {"status": "NO_CHANGE", "reason": "test_no_change"},
     )
 
     def fake_resume(**kwargs):
@@ -15466,13 +15465,10 @@ def test_lightning_attempt_no_active_mechs_ignores_resumed_combat_board_classifi
     monkeypatch.setattr(commands, "_lightning_resume_if_paused", fake_resume)
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda plan: clicks.append(plan) or {"status": "OK"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda plan: {"status": "OK", "reason": "phase_changed"},
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("no-active classifier must not dispatch")
+        ),
     )
 
     result = commands.cmd_lightning_attempt(
@@ -15480,11 +15476,9 @@ def test_lightning_attempt_no_active_mechs_ignores_resumed_combat_board_classifi
         lightning_speed_loss_policy=True,
     )
 
-    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
-    assert result["reason"] == "no_active_mechs_end_turn_clicked"
-    assert result["action"]["action"] == "click_no_active_mechs_end_turn"
-    assert len(resume_calls) == 2
-    assert clicks
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "player_turn_no_active_mechs"
+    assert len(resume_calls) == 1
 
 
 def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypatch):
@@ -15529,7 +15523,7 @@ def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypa
             "recommended_control": None,
         },
     )
-    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(commands, "_refresh_end_turn_bridge_state", lambda: True)
     monkeypatch.setattr(
         commands,
         "read_bridge_state",
@@ -15543,12 +15537,8 @@ def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypa
     monkeypatch.setattr(commands, "_record_post_enemy", fake_record_post_enemy)
     monkeypatch.setattr(
         commands,
-        "_end_turn_click_plan_result",
-        lambda: {
-            "status": "PLAN",
-            "batch": [{"type": "left_click", "window_x": 126, "window_y": 120}],
-            "codex_computer_use_batch": [],
-        },
+        "_lightning_reactivate_player_turn_if_no_active",
+        lambda *args: {"status": "NO_CHANGE", "reason": "test_no_change"},
     )
     monkeypatch.setattr(
         commands,
@@ -15556,20 +15546,18 @@ def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypa
         lambda **kwargs: {"status": "OK"},
     )
 
-    def fake_click(plan):
-        calls.append(("click", plan))
-        return {"status": "OK"}
-
-    monkeypatch.setattr(commands, "_click_end_turn_from_plan_result", fake_click)
     monkeypatch.setattr(
         commands,
-        "_observe_end_turn_after_click",
-        lambda plan: {"status": "OK", "reason": "phase_changed"},
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("post-enemy backfill must reactivate before dispatch")
+        ),
     )
 
     result = commands.cmd_lightning_attempt(lightning_speed_loss_policy=True)
 
-    assert result["status"] == "LIGHTNING_ATTEMPT_PANEL_CLEARED"
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "post_enemy_backfilled_reactivation_not_proven"
     assert result["action"]["post_enemy_result"]["status"] == "POST_ENEMY_RECORDED"
     assert calls[0] == (
         "post_enemy",
@@ -15577,8 +15565,8 @@ def test_lightning_attempt_records_post_enemy_before_no_active_end_turn(monkeypa
         "board",
         {"turn": 2, "phase": "combat_player"},
     )
-    assert session.active_solution is None
-    assert calls[1][0] == "click"
+    assert session.active_solution is not None
+    assert len(calls) == 1
 
 
 def test_lightning_attempt_blocks_no_active_end_turn_on_post_enemy_gate(monkeypatch):
@@ -15593,8 +15581,6 @@ def test_lightning_attempt_blocks_no_active_end_turn_on_post_enemy_gate(monkeypa
         score=100.0,
         turn=1,
     )
-    clicks = []
-
     monkeypatch.setattr(commands, "_load_session", lambda: session)
     monkeypatch.setattr(
         commands,
@@ -15623,7 +15609,7 @@ def test_lightning_attempt_blocks_no_active_end_turn_on_post_enemy_gate(monkeypa
             "recommended_control": None,
         },
     )
-    monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(commands, "_refresh_end_turn_bridge_state", lambda: True)
     monkeypatch.setattr(
         commands,
         "read_bridge_state",
@@ -15640,15 +15626,16 @@ def test_lightning_attempt_blocks_no_active_end_turn_on_post_enemy_gate(monkeypa
     )
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda plan: clicks.append(plan) or {"status": "OK"},
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("post-enemy block must prevent dispatch")
+        ),
     )
 
     result = commands.cmd_lightning_attempt(lightning_speed_loss_policy=True)
 
     assert result["status"] == "INVESTIGATE_POST_ENEMY"
     assert result["action"]["action"] == "no_active_mechs_post_enemy_block"
-    assert clicks == []
 
 
 def test_lightning_attempt_clears_safe_panel_when_no_active_mechs(monkeypatch):
@@ -23998,6 +23985,381 @@ def test_lightning_loop_ignores_background_mech_weapon_research(monkeypatch):
     assert result["turns_attempted"] == 1
 
 
+@pytest.mark.parametrize(
+    "call_kwargs",
+    [
+        {"dry_run": True, "click_ui": True},
+        {"dry_run": False, "click_ui": False},
+    ],
+)
+def test_timeout_no_active_recovery_never_mutates_without_input_authority(
+    monkeypatch,
+    call_kwargs,
+):
+    wrapper_calls = []
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "in_active_mission": True,
+            "active_mechs": 0,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_end_turn_pause",
+        lambda *args, **kwargs: wrapper_calls.append((args, kwargs)),
+    )
+
+    result = commands._lightning_segment_recover_timed_out_no_active_end_turn(
+        {"status": "ERROR", "reason": "attempt_subcall_timeout"},
+        step_index=4,
+        **call_kwargs,
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "timeout_no_active_end_turn_input_not_authorized"
+    assert wrapper_calls == []
+
+
+@pytest.mark.parametrize(
+    "flush",
+    [
+        {
+            "status": "ERROR",
+            "reason": "guarded_end_turn_dispatch_failed",
+            "dispatch": {"status": "ERROR", "executed": False},
+        },
+        {
+            "status": "STOPPED",
+            "reason": "end_turn_delivery_unconfirmed",
+            "retry_allowed": False,
+            "dispatch": _confirmed_end_turn_dispatch(
+                delivery_confirmation="delivered_unconfirmed"
+            ),
+        },
+    ],
+)
+def test_timeout_no_active_recovery_stops_when_flush_is_not_confirmed(
+    monkeypatch,
+    flush,
+):
+    wrapper_calls = []
+    monkeypatch.setattr(
+        commands,
+        "_lightning_live_snapshot",
+        lambda: {
+            "status": "OK",
+            "phase": "combat_player",
+            "turn": 2,
+            "in_active_mission": True,
+            "active_mechs": 0,
+        },
+    )
+
+    def fake_end_turn_pause(*args, **kwargs):
+        wrapper_calls.append((args, kwargs))
+        return flush
+
+    monkeypatch.setattr(commands, "cmd_lightning_end_turn_pause", fake_end_turn_pause)
+
+    result = commands._lightning_segment_recover_timed_out_no_active_end_turn(
+        {"status": "ERROR", "reason": "attempt_subcall_timeout"},
+        step_index=5,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "LIGHTNING_ATTEMPT_STOPPED"
+    assert result["reason"] == "timeout_no_active_end_turn_not_confirmed"
+    assert wrapper_calls == [
+        (
+            ("segment_timeout_no_active_step_5",),
+            {"run_seconds": 2.0, "lightning_speed_loss_policy": True},
+        )
+    ]
+
+
+def test_lightning_end_turn_pause_consumes_reserved_local_plan_once(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lightning-reserved",
+        squad="Blitzkrieg",
+        current_mission="Mission_Test",
+    )
+    session.current_turn = 2
+    monkeypatch.setattr(session, "save", lambda *args, **kwargs: None)
+    assert commands._mark_end_turn_plan_issued(
+        session,
+        turn=2,
+        source="lightning_loop",
+        delivery_mode="local",
+    ) is None
+
+    speed_flags = []
+    dispatches = []
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_post_enemy_block_result", lambda session: None)
+
+    def fake_held_guard(*args, **kwargs):
+        speed_flags.append(kwargs.get("lightning_speed_loss_allowed"))
+        return None
+
+    monkeypatch.setattr(commands, "_held_end_turn_safety_block_result", fake_held_guard)
+    monkeypatch.setattr(commands, "_current_end_turn_fire_block", lambda: None)
+    monkeypatch.setattr(commands, "_current_end_turn_ledger_turn", lambda session: 2)
+    monkeypatch.setattr(commands, "recalibrate", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "plan_end_turn",
+        lambda: [
+            {
+                "type": "left_click",
+                "window_x": 126,
+                "window_y": 120,
+                "description": "Click End Turn",
+            }
+        ],
+    )
+    monkeypatch.setattr(commands, "_refresh_end_turn_bridge_state", lambda: True)
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: (
+            object(),
+            {
+                "phase": "combat_player",
+                "turn": 2,
+                "mission_id": "Mission_Test",
+                "in_active_mission": True,
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_dispatch_click_batch_locally",
+        lambda *args, **kwargs: dispatches.append((args, kwargs))
+        or {"status": "DISPATCHED", "executed": True},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda state: {"status": "OK", "reason": "phase_changed"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_prepare_local_dispatch_guard",
+        lambda label: {"status": "OK", "label": label},
+    )
+    monkeypatch.setattr(commands, "_lightning_resume_if_paused", lambda **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_snap_pause",
+        lambda *args, **kwargs: {"status": "OK", "label": args[0]},
+    )
+
+    first = commands.cmd_lightning_end_turn_pause(
+        "reserved-first",
+        run_seconds=0,
+        lightning_speed_loss_policy=True,
+    )
+    second = commands.cmd_lightning_end_turn_pause(
+        "reserved-second",
+        run_seconds=0,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert first["status"] == "OK"
+    assert first["end_turn_plan_source"] == "lightning_loop"
+    assert first["end_turn_delivery_mode"] == "local"
+    assert second["status"] == "ERROR"
+    assert second["reason"] == "guarded_end_turn_dispatch_failed"
+    assert len(dispatches) == 1
+    assert session.end_turn_plan_ledger["status"] == "delivered_confirmed"
+    assert speed_flags and all(flag is True for flag in speed_flags)
+
+
+def test_lightning_end_turn_pause_treats_unconfirmed_delivery_as_nonretryable(
+    monkeypatch,
+):
+    dispatch_calls = []
+    monkeypatch.setattr(commands, "_lightning_resume_if_paused", lambda **kwargs: None)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_snap_pause",
+        lambda *args, **kwargs: {"status": "OK", "label": args[0]},
+    )
+
+    def fake_dispatch(**kwargs):
+        dispatch_calls.append(kwargs)
+        return _confirmed_end_turn_dispatch(
+            delivery_confirmation="delivered_unconfirmed"
+        )
+
+    monkeypatch.setattr(commands, "cmd_dispatch_end_turn", fake_dispatch)
+
+    result = commands.cmd_lightning_end_turn_pause(
+        "unconfirmed",
+        run_seconds=0,
+        lightning_speed_loss_policy=True,
+    )
+
+    assert result["status"] == "STOPPED"
+    assert result["reason"] == "end_turn_delivery_unconfirmed"
+    assert result["blocking"] is True
+    assert result["retry_allowed"] is False
+    assert dispatch_calls == [
+        {
+            "execute": True,
+            "_lightning_speed_loss_allowed": True,
+            "_allow_reserved_local_plan": True,
+        }
+    ]
+
+
+def test_lightning_auto_turn_pause_creates_opaque_local_reservation_and_restores_env(
+    monkeypatch,
+):
+    session = RunSession(
+        run_id="lightning-auto-pause",
+        squad="Blitzkrieg",
+        current_mission="Mission_Test",
+    )
+    session.current_turn = 2
+    monkeypatch.setattr(session, "save", lambda *args, **kwargs: None)
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_post_enemy_block_result", lambda session: None)
+    monkeypatch.setattr(
+        commands,
+        "_held_end_turn_safety_block_result",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(commands, "_current_end_turn_fire_block", lambda: None)
+    monkeypatch.setattr(commands, "_current_end_turn_ledger_turn", lambda session: 2)
+    monkeypatch.setattr(
+        commands,
+        "_get_logger",
+        lambda session: SimpleNamespace(log_custom=lambda *args, **kwargs: None),
+    )
+    monkeypatch.setattr(commands, "is_bridge_active", lambda: False)
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_snap_pause",
+        lambda *args, **kwargs: {"status": "OK", "label": args[0]},
+    )
+
+    seen_env = {}
+
+    def fake_auto_turn(**kwargs):
+        seen_env["local"] = os.environ.get("ITB_LIGHTNING_LOCAL_END_TURN")
+        seen_env["cached"] = os.environ.get("ITB_LIGHTNING_READ_CACHED_BRIDGE")
+        seen_env["skip_weight"] = os.environ.get("ITB_LIGHTNING_SKIP_WEIGHT_FILE")
+        return commands.cmd_end_turn(_prevalidated=True)
+
+    monkeypatch.setattr(commands, "cmd_auto_turn", fake_auto_turn)
+    monkeypatch.setenv("ITB_LIGHTNING_LOCAL_END_TURN", "prior-value")
+    monkeypatch.delenv("ITB_LIGHTNING_READ_CACHED_BRIDGE", raising=False)
+    monkeypatch.delenv("ITB_LIGHTNING_READ_CACHED_MAX_AGE", raising=False)
+    monkeypatch.delenv("ITB_LIGHTNING_SKIP_WEIGHT_FILE", raising=False)
+
+    result = commands.cmd_lightning_auto_turn_pause("opaque-reservation")
+
+    nested = result["auto_turn"]
+    assert result["status"] == "OK"
+    assert nested["status"] == "PLAN"
+    assert nested["local_end_turn_reserved"] is True
+    assert nested["end_turn_plan_source"] == "lightning_loop"
+    assert nested["end_turn_delivery_mode"] == "local"
+    assert "batch" not in nested
+    assert "codex_computer_use_batch" not in nested
+    assert seen_env == {"local": "1", "cached": "1", "skip_weight": "1"}
+    assert os.environ["ITB_LIGHTNING_LOCAL_END_TURN"] == "prior-value"
+    assert "ITB_LIGHTNING_READ_CACHED_BRIDGE" not in os.environ
+    assert "ITB_LIGHTNING_READ_CACHED_MAX_AGE" not in os.environ
+    assert "ITB_LIGHTNING_SKIP_WEIGHT_FILE" not in os.environ
+
+
+def test_lightning_auto_turn_pause_propagates_nested_hard_stop(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "cmd_auto_turn",
+        lambda **kwargs: {
+            "status": "THREAT_AUDIT_BLOCKED",
+            "blocking": True,
+            "reason": "uncovered_building_threat",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "cmd_lightning_snap_pause",
+        lambda *args, **kwargs: {"status": "OK", "label": args[0]},
+    )
+
+    result = commands.cmd_lightning_auto_turn_pause("hard-stop")
+
+    assert result["status"] == "STOPPED"
+    assert result["auto_turn_status"] == "THREAT_AUDIT_BLOCKED"
+    assert result["auto_turn"]["blocking"] is True
+
+
+def test_held_post_player_checkpoint_blocks_relocated_dead_player_mech_wreck():
+    checkpoint = {
+        "mission_id": "Mission_Test",
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "turn": 2,
+        "total_turns": 4,
+        "remaining_spawns": 0,
+        "mission_kill_target": 0,
+        "mission_kill_limit": 0,
+        "mission_kills_done": 0,
+        "mission_mountain_target": 0,
+        "mission_mountains_destroyed": 0,
+        "repair_platform_target": 0,
+        "repair_platforms_used": 0,
+        "freeze_building_target": 0,
+        "tiles": [
+            {"x": x, "y": y, "terrain": "ground"}
+            for x in range(8)
+            for y in range(8)
+        ],
+        "units": [
+            {
+                "uid": 11,
+                "type": "ElectricMech",
+                "x": 2,
+                "y": 3,
+                "hp": 0,
+                "max_hp": 3,
+                "team": 1,
+                "mech": True,
+                "move": 3,
+                "active": False,
+                "can_move": False,
+                "weapons": ["Prime_Lightning"],
+            }
+        ],
+    }
+    live_data = json.loads(json.dumps(checkpoint))
+    live_data["units"][0]["x"] = 4
+    live_board = commands.Board.from_bridge_data(live_data)
+
+    assert commands._held_end_turn_bridge_checkpoint_schema_error(checkpoint) is None
+    result = commands._held_end_turn_post_player_parity_error(
+        {"post_player_board": checkpoint, "actions": []},
+        live_board,
+        live_data,
+    )
+
+    assert result is not None
+    assert result["reason"] == "post_player_checkpoint_wreck_topology_mismatch"
+    assert result["checkpoint_wrecks"] == [[11, "ElectricMech", 2, 3, False]]
+    assert result["live_wrecks"] == [[11, "ElectricMech", 4, 3, False]]
+
+
 def test_lightning_loop_resets_turn_once_after_click_miss_resolve_block(
     monkeypatch,
 ):
@@ -24044,6 +24406,7 @@ def test_lightning_loop_resets_turn_once_after_click_miss_resolve_block(
         max_turns=2,
         pause_before_solve=False,
         lightning_speed_loss_policy=True,
+        pause_on_stop=False,
     )
 
     assert result["reason"] == "TERMINAL_OR_MISSION_END"
@@ -24058,73 +24421,42 @@ def test_lightning_loop_resets_turn_once_after_click_miss_resolve_block(
     ]
 
 
-def test_lightning_loop_resets_turn_once_after_click_miss_fuzzy_block(
-    monkeypatch,
-):
-    session = RunSession(
-        run_id="lw",
-        squad="Blitzkrieg",
-        difficulty=0,
-        achievement_targets=["Lightning War"],
-    )
-    auto_turn_results = iter(
-        [
-            {
-                "status": "FUZZY_INVESTIGATE_BLOCKED",
-                "turn": 2,
-                "actions_completed": 3,
-                "block_reason": {
-                    "reason": "enemy_survived_unexpectedly",
-                    "signature": "click_miss|Brute_Grapple|attack",
-                    "action_index": 1,
-                },
-                "held_end_turn_batch": [{"type": "left_click"}],
-                "fuzzy_detections": [
-                    {
-                        "top_category": "click_miss",
-                        "categories": ["click_miss"],
-                        "model_gap": False,
-                        "signature": "click_miss|Brute_Grapple|attack",
-                        "asymmetry": ["enemy_survived_unexpectedly"],
-                        "context": {"action_index": 1},
-                    }
-                ],
+def test_lightning_click_miss_predicate_does_not_require_held_click_batch():
+    turn_result = {
+        "status": "SAFETY_BLOCKED_RE_SOLVE",
+        "desync": {
+            "classification": {
+                "top_category": "click_miss",
+                "categories": ["click_miss"],
+                "model_gap": False,
+                "asymmetry": ["enemy_survived_unexpectedly"],
+            }
+        },
+    }
+
+    assert commands._lightning_turn_result_desync_is_click_miss(turn_result) is True
+
+
+def test_lightning_click_miss_predicate_rejects_mixed_model_gap_evidence():
+    turn_result = {
+        "status": "SAFETY_BLOCKED_RE_SOLVE",
+        "desync": {
+            "classification": {
+                "top_category": "click_miss",
+                "categories": ["click_miss"],
+                "model_gap": False,
+                "asymmetry": ["enemy_survived_unexpectedly"],
             },
-            {"status": "TERMINAL_OR_MISSION_END", "turn": 2},
-        ]
-    )
-    reset_calls = []
+            "fuzzy_signal": {
+                "top_category": "click_miss",
+                "categories": ["click_miss"],
+                "model_gap": True,
+                "asymmetry": ["enemy_survived_unexpectedly"],
+            },
+        },
+    }
 
-    monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
-    monkeypatch.setattr(commands, "_load_session", lambda: session)
-    monkeypatch.setattr(commands, "cmd_bridge_speed", lambda mode: {"status": "OK"})
-    monkeypatch.setattr(commands, "cmd_auto_turn", lambda **kwargs: next(auto_turn_results))
-    monkeypatch.setattr(
-        "src.control.mac_click.click_known_window_sequence",
-        lambda sequence, **kwargs: reset_calls.append((sequence, kwargs))
-        or {"status": "OK", "sequence": sequence},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_lightning_ensure_pause_state",
-        lambda **kwargs: {"status": "OK", "reason": kwargs.get("reason")},
-    )
-
-    result = commands.cmd_lightning_loop(
-        max_turns=2,
-        pause_before_solve=False,
-        lightning_speed_loss_policy=True,
-    )
-
-    assert result["reason"] == "TERMINAL_OR_MISSION_END"
-    assert result["click_miss_resets"] == 1
-    assert result["turns"][0]["status"] == "CLICK_MISS_RESET_TURN"
-    assert reset_calls == [
-        (
-            ["menu_continue", "reset_turn", "leave_confirm_yes", "pause"],
-            {"dry_run": False},
-        )
-    ]
+    assert commands._lightning_turn_result_desync_is_click_miss(turn_result) is False
 
 
 def test_lightning_loop_does_not_reset_non_click_miss_safety_block(monkeypatch):
@@ -24164,6 +24496,7 @@ def test_lightning_loop_does_not_reset_non_click_miss_safety_block(monkeypatch):
         max_turns=2,
         pause_before_solve=False,
         lightning_speed_loss_policy=True,
+        pause_on_stop=False,
     )
 
     assert result["reason"] == "SAFETY_BLOCKED_RE_SOLVE"
@@ -24195,7 +24528,6 @@ def test_lightning_loop_does_not_reset_model_gap_fuzzy_block(monkeypatch):
                 "signature": "model_gap|Brute_Grapple|attack",
                 "action_index": 1,
             },
-            "held_end_turn_batch": [{"type": "left_click"}],
             "fuzzy_detections": [
                 {
                     "top_category": "click_miss",
@@ -24218,6 +24550,7 @@ def test_lightning_loop_does_not_reset_model_gap_fuzzy_block(monkeypatch):
         max_turns=2,
         pause_before_solve=False,
         lightning_speed_loss_policy=True,
+        pause_on_stop=False,
     )
 
     assert result["reason"] == "unexpected_status:FUZZY_INVESTIGATE_BLOCKED"
@@ -24251,7 +24584,6 @@ def test_lightning_loop_does_not_reset_mixed_fuzzy_block_with_real_investigation
                 "signature": "click_miss|Brute_Grapple|attack",
                 "action_index": 1,
             },
-            "held_end_turn_batch": [{"type": "left_click"}],
             "fuzzy_detections": [
                 {
                     "top_category": "click_miss",
@@ -24281,6 +24613,7 @@ def test_lightning_loop_does_not_reset_mixed_fuzzy_block_with_real_investigation
         max_turns=2,
         pause_before_solve=False,
         lightning_speed_loss_policy=True,
+        pause_on_stop=False,
     )
 
     assert result["reason"] == "unexpected_status:FUZZY_INVESTIGATE_BLOCKED"
@@ -24288,7 +24621,7 @@ def test_lightning_loop_does_not_reset_mixed_fuzzy_block_with_real_investigation
     assert reset_calls == []
 
 
-def test_click_end_turn_prefers_window_local_coordinates(monkeypatch):
+def test_atomic_dispatch_prefers_window_local_coordinates(monkeypatch):
     calls = []
 
     def fake_window_click(x, y, **kwargs):
@@ -24299,24 +24632,41 @@ def test_click_end_turn_prefers_window_local_coordinates(monkeypatch):
         "src.control.mac_click.click_window_point",
         fake_window_click,
     )
-
-    result = commands._click_end_turn_from_plan_result(
-        {
-            "batch": [
-                {
-                    "type": "left_click",
-                    "x": 341,
-                    "y": 152,
-                    "window_x": 126,
-                    "window_y": 120,
-                    "description": "Click End Turn",
-                }
-            ]
-        }
+    monkeypatch.setattr(
+        commands,
+        "_prepare_local_dispatch_guard",
+        lambda label: {"status": "OK", "label": label},
     )
 
-    assert result["status"] == "OK"
-    assert calls == [(126, 120, {"description": "Click End Turn", "dry_run": False})]
+    result = commands._dispatch_click_batch_locally(
+        [
+            {
+                "type": "left_click",
+                "x": 341,
+                "y": 152,
+                "window_x": 126,
+                "window_y": 120,
+                "description": "Click End Turn",
+            }
+        ],
+        execute=True,
+        label="end_turn",
+    )
+
+    assert result["status"] == "DISPATCHED"
+    assert calls == [
+        (
+            126,
+            120,
+            {
+                "description": "Click End Turn",
+                "dry_run": False,
+                "settle_seconds": 0.05,
+                "hold_seconds": 0.12,
+                "pre_click_seconds": 0.20,
+            },
+        )
+    ]
 
 
 def test_lightning_loop_stops_when_end_turn_click_not_observed(monkeypatch):
@@ -24334,15 +24684,7 @@ def test_lightning_loop_stops_when_end_turn_click_not_observed(monkeypatch):
             "status": "PLAN",
             "turn": 2,
             "actions_completed": 3,
-            "batch": [
-                {
-                    "type": "left_click",
-                    "x": 341,
-                    "y": 152,
-                    "window_x": 126,
-                    "window_y": 120,
-                }
-            ],
+            "local_end_turn_reserved": True,
         }
 
     monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
@@ -24351,13 +24693,11 @@ def test_lightning_loop_stops_when_end_turn_click_not_observed(monkeypatch):
     monkeypatch.setattr(commands, "cmd_auto_turn", fake_auto_turn)
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda plan: {"status": "OK"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda turn_result: {"status": "END_TURN_CLICK_NOT_OBSERVED"},
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: _confirmed_end_turn_dispatch(
+            {"status": "END_TURN_CLICK_NOT_OBSERVED"},
+            delivery_confirmation="delivered_unconfirmed",
+        ),
     )
 
     result = commands.cmd_lightning_loop(max_turns=3, pause_before_solve=False)
@@ -24385,15 +24725,7 @@ def test_lightning_loop_treats_unknown_after_end_turn_as_mission_end(monkeypatch
             "status": "PLAN",
             "turn": 4,
             "actions_completed": 3,
-            "batch": [
-                {
-                    "type": "left_click",
-                    "x": 341,
-                    "y": 152,
-                    "window_x": 126,
-                    "window_y": 120,
-                }
-            ],
+            "local_end_turn_reserved": True,
         }
 
     monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
@@ -24402,17 +24734,16 @@ def test_lightning_loop_treats_unknown_after_end_turn_as_mission_end(monkeypatch
     monkeypatch.setattr(commands, "cmd_auto_turn", fake_auto_turn)
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda plan: {"status": "OK"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda turn_result: {
-            "status": "OK",
-            "reason": "phase_changed",
-            "samples": [{"phase": "unknown", "turn": 4, "active_mechs": 0}],
-        },
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: _confirmed_end_turn_dispatch(
+            {
+                "status": "OK",
+                "reason": "phase_changed",
+                "samples": [
+                    {"phase": "unknown", "turn": 4, "active_mechs": 0}
+                ],
+            }
+        ),
     )
 
     result = commands.cmd_lightning_loop(max_turns=3, pause_before_solve=False)
@@ -24437,15 +24768,7 @@ def test_lightning_loop_stops_before_wait_when_terminal_panel_visible(monkeypatc
             "status": "PLAN",
             "turn": 4,
             "actions_completed": 3,
-            "batch": [
-                {
-                    "type": "left_click",
-                    "x": 341,
-                    "y": 152,
-                    "window_x": 126,
-                    "window_y": 120,
-                }
-            ],
+            "local_end_turn_reserved": True,
         }
 
     monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
@@ -24454,17 +24777,16 @@ def test_lightning_loop_stops_before_wait_when_terminal_panel_visible(monkeypatc
     monkeypatch.setattr(commands, "cmd_auto_turn", fake_auto_turn)
     monkeypatch.setattr(
         commands,
-        "_click_end_turn_from_plan_result",
-        lambda plan: {"status": "OK"},
-    )
-    monkeypatch.setattr(
-        commands,
-        "_observe_end_turn_after_click",
-        lambda turn_result: {
-            "status": "OK",
-            "reason": "phase_changed",
-            "samples": [{"phase": "combat_enemy", "turn": 4, "active_mechs": 0}],
-        },
+        "cmd_dispatch_end_turn",
+        lambda **kwargs: _confirmed_end_turn_dispatch(
+            {
+                "status": "OK",
+                "reason": "phase_changed",
+                "samples": [
+                    {"phase": "combat_enemy", "turn": 4, "active_mechs": 0}
+                ],
+            }
+        ),
     )
     monkeypatch.setattr(
         commands,

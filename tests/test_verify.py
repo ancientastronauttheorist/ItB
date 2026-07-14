@@ -133,6 +133,22 @@ diff = diff_states(snap, b2)
 check("dead-mech equivalence (both dead = empty diff)", diff.is_empty(),
       diff.unit_diffs)
 
+missing_wreck_diff = diff_states(snap, make_board(units=[]))
+check(
+    "dead player-mech wreck missing from live board is a diff",
+    any(d["field"] == "missing_in_actual" for d in missing_wreck_diff.unit_diffs),
+    missing_wreck_diff.unit_diffs,
+)
+moved_wreck_board = make_board(units=[
+    mk_unit(1, "PunchMech", 5, 4, hp=0, active=False),
+])
+moved_wreck_diff = diff_states(snap, moved_wreck_board)
+check(
+    "dead player-mech wreck relocation is a topology diff",
+    any(d["field"] == "pos" for d in moved_wreck_diff.unit_diffs),
+    moved_wreck_diff.unit_diffs,
+)
+
 # Test 8: mech still active when expected inactive → click_miss
 b = make_board(units=[mk_unit(1, "PunchMech", 4, 4, active=False)])
 snap = snapshot_after_action(b, 0, mech_uid=1, events=[])
@@ -289,6 +305,7 @@ predicted_rock = {
     }],
     "tiles_changed": [],
     "grid_power": 7,
+    "unstable_spawn_uids": [2333],
 }
 actual_rock_board = make_board(units=[
     mk_unit(2338, "RockThrown", 3, 2, hp=1, max_hp=1, team=2, is_mech=False,
@@ -310,6 +327,7 @@ predicted_spider_egg = {
     }],
     "tiles_changed": [],
     "grid_power": 7,
+    "unstable_spawn_uids": [1902],
 }
 actual_spider_egg_board = make_board(units=[
     mk_unit(1904, "SpiderlingEgg1", 3, 4, hp=1, max_hp=1, team=6,

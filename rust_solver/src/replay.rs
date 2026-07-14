@@ -137,6 +137,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         let post_move_snap = capture_snapshot(
             &board, i, mech_uid, &move_result.events, "after_move",
             &post_move_extra_touched,
+            &new_unit_uids(&before_move_board, &board),
         );
 
         // Phase 2: attack
@@ -171,6 +172,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         let post_attack_snap = capture_snapshot(
             &board, i, mech_uid, &all_events, "after_mech_action",
             &post_attack_extra_touched,
+            &new_unit_uids(&before_attack_board, &board),
         );
         // The split replay path bypasses simulate_action_with_target2, so
         // settle Digger rock walls explicitly after capturing the action's
@@ -381,6 +383,7 @@ fn capture_snapshot(
     events: &[String],
     snapshot_phase: &str,
     extra_touched: &[(u8, u8)],
+    unstable_spawn_uids: &[u16],
 ) -> Value {
     // Touched tile set: parse coords from events, always include the
     // mech's current tile.
@@ -491,7 +494,20 @@ fn capture_snapshot(
         "tiles_changed":  tiles_changed,
         "grid_power":     board.grid_power,
         "repair_platforms_used": board.repair_platforms_used,
+        "unstable_spawn_uids": unstable_spawn_uids,
     })
+}
+
+fn new_unit_uids(before: &Board, after: &Board) -> Vec<u16> {
+    let before_uids: BTreeSet<u16> = before.units[..before.unit_count as usize]
+        .iter()
+        .map(|unit| unit.uid)
+        .collect();
+    after.units[..after.unit_count as usize]
+        .iter()
+        .filter(|unit| !before_uids.contains(&unit.uid))
+        .map(|unit| unit.uid)
+        .collect()
 }
 
 /// Parse `(x, y)` coord pairs out of an event string. Only on-board
@@ -1152,10 +1168,12 @@ mod tests {
             json!([[2, 2]]),
             "only the marker blocked at emergence persists",
         );
-        assert!(
-            v["final_board"]["units"].as_array().unwrap().is_empty(),
-            "the 1-HP blocker should die without consuming its marker",
-        );
+        let wreck = v["final_board"]["units"].as_array().unwrap()
+            .iter()
+            .find(|unit| unit["uid"] == 1)
+            .expect("the disabled player mech must persist as a wreck");
+        assert_eq!((wreck["x"].as_u64(), wreck["y"].as_u64()), (Some(2), Some(2)));
+        assert_eq!(wreck["hp"], 0);
     }
 
     #[test]

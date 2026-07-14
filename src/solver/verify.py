@@ -1695,7 +1695,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # aura-teardown and chained-death timing. Mission_Missiles also keeps an
 # otherwise status-no-op Shield Barrage legal because the four uses themselves
 # are the objective. Pre-v363 corpus archived as failure_db_snapshot_sim_v362.jsonl.
-SIMULATOR_VERSION = 363
+SIMULATOR_VERSION = 364
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1836,6 +1836,7 @@ def snapshot_after_move(
         "tiles_changed": tiles_snapshot,
         "grid_power": board.grid_power,
         "repair_platforms_used": getattr(board, "repair_platforms_used", 0),
+        "unstable_spawn_uids": [],
     }
 
 
@@ -1940,6 +1941,7 @@ def snapshot_after_action(
         "tiles_changed": tiles_snapshot,
         "grid_power": board.grid_power,
         "repair_platforms_used": getattr(board, "repair_platforms_used", 0),
+        "unstable_spawn_uids": [],
     }
 
 
@@ -1970,11 +1972,27 @@ class DiffResult:
         }
 
 
-_UNSTABLE_SPAWN_IDENTITY_TYPES = {"RockThrown", "SpiderlingEgg1"}
+_UNSTABLE_SPAWN_IDENTITY_TYPES = {
+    "RockThrown",
+    "SpiderlingEgg1",
+    "DeployUnit_Bomby",
+    "DeployUnit_Aracnoid",
+    "DeployUnit_AracnoidB",
+}
 
 
-def _normalize_unstable_spawn_uids(pred_units: dict, actual_units: dict) -> None:
-    """Pair engine-assigned spawn UIDs with simulator-assigned UIDs in-place."""
+def _normalize_unstable_spawn_uids(
+    pred_units: dict,
+    actual_units: dict,
+    unstable_spawn_uids: object,
+) -> None:
+    """Pair only units proven newly created by this replay sub-action."""
+    if not isinstance(unstable_spawn_uids, list) or any(
+        isinstance(uid, bool) or not isinstance(uid, int) or uid < 0
+        for uid in unstable_spawn_uids
+    ):
+        return
+    allowed_predicted_uids = set(unstable_spawn_uids)
     actual_by_identity: dict[tuple, list[int]] = {}
     for uid, au in actual_units.items():
         if au.type not in _UNSTABLE_SPAWN_IDENTITY_TYPES:
@@ -1982,6 +2000,8 @@ def _normalize_unstable_spawn_uids(pred_units: dict, actual_units: dict) -> None
         actual_by_identity.setdefault((au.type, au.x, au.y), []).append(uid)
 
     for pred_uid, pu in list(pred_units.items()):
+        if pred_uid not in allowed_predicted_uids:
+            continue
         ptype = pu.get("type")
         if ptype not in _UNSTABLE_SPAWN_IDENTITY_TYPES:
             continue
@@ -2033,7 +2053,11 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
 
     pred_units = {u["uid"]: u for u in predicted.get("units", [])}
     actual_units = {u.uid: u for u in actual_board.units}
-    _normalize_unstable_spawn_uids(pred_units, actual_units)
+    _normalize_unstable_spawn_uids(
+        pred_units,
+        actual_units,
+        predicted.get("unstable_spawn_uids"),
+    )
 
     for uid in set(pred_units) | set(actual_units):
         pu = pred_units.get(uid)
@@ -2054,13 +2078,18 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             })
             continue
 
-        # Unit only in predicted: removed by the actual game.
-        # Dead enemies are expected to be absent from the bridge —
-        # the game engine removes dead Vek entirely (only mech wrecks persist).
+        # Unit only in predicted: removed by the actual game. Dead enemies are
+        # expected to be absent, but player-mech wrecks must persist because
+        # their occupied tile remains a movement/push blocker.
         if au is None:
             pu_alive = pu.get("alive", True)
             pu_hp = pu.get("hp", 1)
-            if not pu_alive or pu_hp <= 0:
+            persistent_player_wreck = bool(
+                pu.get("is_mech") is True
+                and pu.get("team") == 1
+                and (not pu_alive or pu_hp <= 0)
+            )
+            if (not pu_alive or pu_hp <= 0) and not persistent_player_wreck:
                 continue  # expected: dead enemy gone from bridge
             result.unit_diffs.append({
                 "uid": uid,
@@ -2071,10 +2100,31 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             })
             continue
 
-        # Dead-mech equivalence: if both report dead, ignore everything else.
+        # Dead enemy state is irrelevant after removal. A dead player mech is
+        # different: its UID/type/tile define persistent wreck topology used
+        # by every subsequent movement and push simulation.
         pu_alive = pu.get("alive", True)
         au_alive = au.hp > 0
         if not pu_alive and not au_alive:
+            predicted_wreck = bool(
+                pu.get("is_mech") is True and pu.get("team") == 1
+            )
+            actual_wreck = bool(au.is_mech and au.is_player)
+            if predicted_wreck or actual_wreck:
+                for field, predicted_value, actual_value in (
+                    ("type", pu.get("type"), au.type),
+                    ("pos", list(pu.get("pos", [-1, -1])), [au.x, au.y]),
+                    ("team", pu.get("team"), au.team),
+                    ("is_mech", pu.get("is_mech"), au.is_mech),
+                ):
+                    if predicted_value != actual_value:
+                        result.unit_diffs.append({
+                            "uid": uid,
+                            "type": au.type,
+                            "field": field,
+                            "predicted": predicted_value,
+                            "actual": actual_value,
+                        })
             continue
 
         if pu_alive != au_alive:

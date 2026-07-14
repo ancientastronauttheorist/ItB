@@ -669,7 +669,16 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
     let mut units: Vec<Value> = Vec::with_capacity(board.unit_count as usize);
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
-        if u.hp <= 0 || u.burrowed() { continue; }
+        // Dead player mechs remain physical wrecks while disabled (including
+        // across later turns of the mission).
+        // Movement and push simulation consults Board::wreck_at, so dropping
+        // them from the post-player checkpoint can silently authorize an
+        // enemy-phase replay rooted in different blocker topology.  Dead
+        // enemies/neutral units are removed by the game and stay omitted.
+        let persistent_player_wreck =
+            u.hp <= 0 && u.team == crate::types::Team::Player && u.is_mech();
+        if (u.hp <= 0 && !persistent_player_wreck) || u.burrowed() { continue; }
+        let serialized_hp = if persistent_player_wreck { 0 } else { u.hp };
         let team_int: u8 = match u.team {
             crate::types::Team::Player  => 1,
             crate::types::Team::Neutral => 2,
@@ -699,7 +708,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             "type":       u.type_name_str(),
             "x":          u.x,
             "y":          u.y,
-            "hp":         u.hp,
+            "hp":         serialized_hp,
             "max_hp":     u.max_hp,
             "team":       team_int,
             "mech":       u.is_mech(),
@@ -714,6 +723,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if !weapons_list.is_empty()       { unit_val["weapons"]              = json!(weapons_list); }
         if u.flying()                     { unit_val["flying"]               = json!(true); }
         if u.massive()                    { unit_val["massive"]              = json!(true); }
+        if u.minor()                      { unit_val["minor"]                = json!(true); }
         if u.armor()                      { unit_val["armor"]                = json!(true); }
         if u.shield()                     { unit_val["shield"]               = json!(true); }
         if u.acid()                       { unit_val["acid"]                 = json!(true); }
@@ -724,12 +734,32 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if u.boosted()                    { unit_val["boosted"]              = json!(true); }
         if u.ranged()                     { unit_val["ranged"]               = json!(1u8); }
         if u.has_queued_attack()          { unit_val["has_queued_attack"]    = json!(true); }
+        if u.queued_target_raw_x >= 0 && u.queued_target_raw_y >= 0 {
+            unit_val["queued_target_raw"] = json!([
+                u.queued_target_raw_x,
+                u.queued_target_raw_y,
+            ]);
+        }
         if u.is_extra_tile()              { unit_val["is_extra_tile"]        = json!(true); }
         if u.web_source_uid != 0          { unit_val["web_source_uid"]       = json!(u.web_source_uid); }
         if u.weapon_damage > 0            { unit_val["weapon_damage"]        = json!(u.weapon_damage); }
         if u.weapon_push > 0              { unit_val["weapon_push"]          = json!(u.weapon_push); }
         if u.weapon_target_behind         { unit_val["weapon_target_behind"] = json!(true); }
         if u.pilot_value != 0.0           { unit_val["pilot_value"]          = json!(u.pilot_value as f64); }
+        let pilot_id = if u.pilot_flags.contains(crate::board::PilotFlags::SOLDIER) {
+            Some("Pilot_Soldier")
+        } else if u.pilot_flags.contains(crate::board::PilotFlags::ROCK) {
+            Some("Pilot_Rock")
+        } else if u.pilot_flags.contains(crate::board::PilotFlags::REPAIRMAN) {
+            Some("Pilot_Repairman")
+        } else if u.pilot_flags.contains(crate::board::PilotFlags::CHEMICAL) {
+            Some("Pilot_Chemical")
+        } else if u.pilot_flags.contains(crate::board::PilotFlags::ARROGANT) {
+            Some("Pilot_Arrogant")
+        } else {
+            None
+        };
+        if let Some(pilot_id) = pilot_id  { unit_val["pilot_id"]             = json!(pilot_id); }
         units.push(unit_val);
     }
     let spawning_tiles: Vec<Vec<u8>> = spawn_points.iter().map(|&(x, y)| vec![x, y]).collect();
@@ -1519,9 +1549,26 @@ mod tests {
     #[test]
     fn test_board_to_json_roundtrip() {
         let (mut board, spawn_points) = simple_board();
+        board.units[1].queued_target_raw_x = 5;
+        board.units[1].queued_target_raw_y = 4;
+        board.units[0].pilot_flags = crate::board::PilotFlags::ROCK;
+        board.units[0].pilot_value = 0.75;
+        board.units[1].flags |= UnitFlags::MINOR | UnitFlags::RANGED | UnitFlags::MASSIVE;
         board.bonus_dont_kill_types.push("Volatile_Vek".to_string());
         board.destroy_objective_unit_types.push("Hacked_Building".to_string());
         board.protect_objective_unit_types.push("Snowtank".to_string());
+        let mut wreck = Unit::default();
+        wreck.uid = 42;
+        wreck.set_type_name("PunchMech");
+        wreck.x = 6;
+        wreck.y = 1;
+        // Overkill is represented internally as negative HP in some damage
+        // paths.  The persisted checkpoint canonicalizes every wreck to 0.
+        wreck.hp = -2;
+        wreck.max_hp = 3;
+        wreck.team = Team::Player;
+        wreck.flags = UnitFlags::IS_MECH | UnitFlags::PUSHABLE;
+        board.add_unit(wreck);
         let alive_before: usize = (0..board.unit_count as usize)
             .filter(|&i| board.units[i].alive()).count();
         let json_str = board_to_json(&board, &spawn_points);
@@ -1532,6 +1579,19 @@ mod tests {
         assert_eq!(alive_before, alive_after, "unit count must survive round-trip");
         assert_eq!(board.grid_power, b2.grid_power);
         assert_eq!(board.current_turn, b2.current_turn);
+        assert_eq!(b2.units[1].queued_target_raw_x, 5);
+        assert_eq!(b2.units[1].queued_target_raw_y, 4);
+        assert!(b2.units[1].minor());
+        assert!(b2.units[1].ranged());
+        assert!(b2.units[1].massive());
+        assert!(b2.units[0].pilot_flags.contains(crate::board::PilotFlags::ROCK));
+        assert_eq!(b2.units[0].pilot_value, 0.75);
+        let wreck_after = (0..b2.unit_count as usize)
+            .map(|i| &b2.units[i])
+            .find(|unit| unit.uid == 42)
+            .expect("dead player-mech wreck must survive round-trip");
+        assert_eq!((wreck_after.x, wreck_after.y, wreck_after.hp), (6, 1, 0));
+        assert!(b2.wreck_at(6, 1));
         assert_eq!(b2.bonus_dont_kill_types, vec!["Volatile_Vek".to_string()]);
         assert_eq!(b2.destroy_objective_unit_types, vec!["Hacked_Building".to_string()]);
         assert_eq!(b2.protect_objective_unit_types, vec!["Snowtank".to_string()]);

@@ -11,8 +11,9 @@ from src.loop.commands import (
     _maybe_flag_grid_drop,
     _summary_with_pending_grid_debt,
 )
-from src.loop.session import RunSession
+from src.loop.session import RunSession, SolverAction
 from src.model.board import Board
+from src.research import orchestrator as research_orchestrator
 from src.solver.plan_safety import audit_plan_safety
 from src.solver.solver import Solution
 from src.solver.verify import DiffResult
@@ -20,9 +21,39 @@ from src.solver.verify import DiffResult
 
 def _bridge_with_mech(*, flying=False, danger=None):
     return {
+        "mission_id": "Mission_Test",
+        "phase": "combat_player",
+        "in_active_mission": True,
         "grid_power": 7,
-        "tiles": [],
+        "grid_power_max": 7,
+        "turn": 1,
+        "total_turns": 4,
+        "remaining_spawns": 2,
+        "is_infinite_spawn": False,
+        "mission_kill_target": 0,
+        "mission_kill_limit": 0,
+        "mission_kills_done": 0,
+        "mission_mountain_target": 0,
+        "mission_mountains_destroyed": 0,
+        "repair_platform_target": 0,
+        "repair_platforms_used": 0,
+        "freeze_building_target": 0,
+        "tiles": [
+            {"x": x, "y": y, "terrain": "ground"}
+            for x in range(8)
+            for y in range(8)
+        ],
+        "attack_order": [],
+        "spawning_tiles": [],
+        "environment_danger": [],
         "environment_danger_v2": danger or [],
+        "environment_freeze": [],
+        "freeze_building_tiles": [],
+        "mission_mountain_tiles": [],
+        "teleporter_pairs": [],
+        "bonus_objective_unit_types": [],
+        "destroy_objective_unit_types": [],
+        "protect_objective_unit_types": [],
         "units": [{
             "uid": 11,
             "type": "TeleMech",
@@ -231,6 +262,7 @@ def test_click_end_turn_blocks_lethal_fire_debt(monkeypatch):
     )
 
     monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_held_end_turn_safety_block_result", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(commands, "read_bridge_state", lambda: (board, data))
     monkeypatch.setattr(
         commands,
@@ -248,6 +280,635 @@ def test_click_end_turn_blocks_lethal_fire_debt(monkeypatch):
     assert result["status"] == "END_TURN_BLOCKED"
     assert result["reason"] == "lethal_mech_fire_before_enemy_phase"
     assert result["fire_debt"][0]["uid"] == 11
+
+
+def _held_end_turn_case(monkeypatch, *, plan_safety=None, solve_extra=None):
+    data = _bridge_with_mech()
+    data.update({
+        "phase": "combat_player",
+        "turn": 1,
+        "in_active_mission": True,
+    })
+    data["units"][0]["active"] = False
+    data["units"][0]["can_move"] = False
+    board = Board.from_bridge_data(data)
+    current_data = json.loads(json.dumps(data))
+    current_data["units"][0]["active"] = True
+    current_data["units"][0]["can_move"] = True
+    current_board = Board.from_bridge_data(current_data)
+    final_data = json.loads(json.dumps(data))
+    final_data["turn"] = 2
+    final_data["units"][0]["active"] = True
+    final_data["units"][0]["can_move"] = True
+    if isinstance(plan_safety, dict) and plan_safety.get("status") == "DIRTY":
+        requested_grid = (plan_safety.get("predicted") or {}).get("grid_power")
+        if type(requested_grid) is int:
+            final_data["grid_power"] = requested_grid
+    final_board = Board.from_bridge_data(final_data)
+    current_summary = _capture_board_summary(current_board, current_data)
+    final_summary = _capture_board_summary(final_board, final_data)
+    projected_counters = {
+        "enemies_killed_by_player": 0,
+        "enemies_killed_by_enemy_phase": 0,
+        "enemies_killed_by_spawn_block": 0,
+        "enemies_killed_total_projected": 0,
+        "unit_deaths_by_player": 0,
+        "unit_deaths_by_enemy_phase": 0,
+        "unit_deaths_by_spawn_block": 0,
+        "unit_deaths_total_projected": 0,
+        "mission_kills_by_player": 0,
+        "mission_kills_by_enemy_phase": 0,
+        "mission_kills_by_spawn_block": 0,
+        "mission_kills_total_projected": 0,
+    }
+    final_summary.update(projected_counters)
+    final_summary["pods_collected"] = 0
+    action = SolverAction(
+        mech_uid=11,
+        mech_type="TeleMech",
+        move_to=None,
+        weapon="Science_Swap",
+        target=(2, 4),
+        description="TeleMech, fire Teleporter at D6",
+    )
+    session = RunSession(run_id="held-end-turn", squad="Flame Behemoths")
+    session.current_mission = "Mission_Test"
+    session.mission_index = 1
+    session.set_solution([action], score=10.0, turn=1)
+    monkeypatch.setattr(session, "save", lambda *_args, **_kwargs: None)
+    safety = (
+        audit_plan_safety(current_summary, final_summary)
+        if isinstance(plan_safety, dict) and plan_safety.get("status") == "DIRTY"
+        else plan_safety or audit_plan_safety(current_summary, final_summary)
+    )
+    solve_data = {
+        "actions": [{
+            "mech_uid": 11,
+            "mech_type": "TeleMech",
+            "move_to": None,
+            "weapon_id": "Science_Swap",
+            "target": [2, 4],
+            "description": "TeleMech, fire Teleporter at D6",
+        }],
+        "initial_building_threats": [],
+        "plan_safety": safety,
+        "selected_candidate_rank": 0,
+        "current_outcome": current_summary,
+        "predicted_board_summary": final_summary,
+        "predicted_outcome": dict(projected_counters),
+        "predicted_states": [{
+            "post_move": {"unstable_spawn_uids": []},
+            "post_attack": {"unstable_spawn_uids": []},
+        }],
+        "post_player_board": json.loads(json.dumps(data)),
+        "final_board": final_data,
+        "action_results": [{
+            "enemies_killed": 0,
+            "unit_deaths": 0,
+            "mission_kills": 0,
+            "pods_collected": 0,
+        }],
+    }
+    solve_data.update(solve_extra or {})
+
+    monkeypatch.setattr(commands, "_load_session", lambda: session)
+    monkeypatch.setattr(commands, "_refresh_end_turn_bridge_state", lambda: True)
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: (board, data))
+    monkeypatch.setattr(
+        commands,
+        "_load_recorded_turn_state",
+        lambda _session, label, **_kwargs: solve_data if label == "solve" else None,
+    )
+    monkeypatch.setattr(commands, "recalibrate", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "plan_end_turn",
+        lambda: [{
+            "type": "left_click",
+            "x": 341,
+            "y": 152,
+            "description": "Click End Turn",
+            "codex_computer_use": {
+                "type": "left_click",
+                "x": 126,
+                "y": 120,
+            },
+        }],
+    )
+    return session, action, solve_data
+
+
+def _terminal_provenance(*, ledger):
+    return {
+        "version": 1,
+        "source": "settled_actual_post_player_board",
+        "turn": 1,
+        "projection_action_count": 0,
+        "desyncs_detected": 1,
+        "actual_re_solves": 0,
+        "desync": {"action_index": 0, "phase": "attack"},
+        "settlement": {
+            "status": "OK",
+            "samples": 2,
+            "matched_verify_snapshot": False,
+            "freshness_proven": True,
+        },
+        "counter_ledger": ledger,
+    }
+
+
+def _counter_ledger(**updates):
+    ledger = {
+        "version": 1,
+        "complete": False,
+        "prefix_complete": False,
+        "terminal_action_matched": False,
+        "verified_action_results": 0,
+        "player_enemy_kills": 0,
+        "player_unit_deaths": 0,
+        "player_mission_kills": 0,
+        "player_pods_collected": 0,
+        "missing_player_mission_kills": 0,
+    }
+    ledger.update(updates)
+    return ledger
+
+
+def test_click_end_turn_revalidates_clean_held_turn(monkeypatch):
+    _held_end_turn_case(monkeypatch)
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "PLAN"
+    assert result["codex_computer_use_batch"][0]["x"] == 126
+
+
+def test_click_end_turn_blocks_changed_dirty_consent_for_held_turn(monkeypatch):
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{"kind": "grid_power_loss", "blocking": True}],
+        "compared": ["grid_power"],
+        "current": {"grid_power": 7, "pods_present": 0},
+        "predicted": {"grid_power": 6, "pods_present": 0},
+    }
+    session, _, _ = _held_end_turn_case(
+        monkeypatch,
+        plan_safety=safety,
+    )
+    session.dirty_consent_used.append("consent-for-an-earlier-loss-profile")
+    monkeypatch.setattr(
+        commands,
+        "plan_end_turn",
+        lambda: (_ for _ in ()).throw(AssertionError("must not plan")),
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "held_end_turn_dirty_consent_invalid"
+
+
+def test_click_end_turn_accepts_exact_consumed_dirty_consent(monkeypatch):
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{"kind": "grid_power_loss", "blocking": True}],
+        "compared": ["grid_power"],
+        "current": {"grid_power": 7, "pods_present": 0},
+        "predicted": {"grid_power": 6, "pods_present": 0},
+    }
+    session, action, solve_data = _held_end_turn_case(
+        monkeypatch,
+        plan_safety=safety,
+    )
+    token = commands._dirty_consent_id(
+        session,
+        1,
+        solve_data["plan_safety"],
+        [action],
+        candidate_rank=solve_data["selected_candidate_rank"],
+    )
+    session.dirty_consent_used.append(token)
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "PLAN"
+
+
+def test_click_end_turn_blocks_legacy_pod_reprojection_without_ledger(
+    monkeypatch,
+):
+    terminal = _terminal_provenance(ledger=_counter_ledger())
+    terminal.pop("counter_ledger")
+    _, _, solve_data = _held_end_turn_case(
+        monkeypatch,
+        solve_extra={
+            "post_enemy_prediction_source": "terminal_desync_reprojection",
+            "terminal_desync_reprojection": terminal,
+        },
+    )
+    # Legacy M17 overwrote current_outcome.pods_present to zero, so the
+    # action result is the surviving proof that this replay is pod-sensitive.
+    solve_data["action_results"][0]["pods_collected"] = 1
+    monkeypatch.setattr(
+        commands,
+        "plan_end_turn",
+        lambda: (_ for _ in ()).throw(AssertionError("must not plan")),
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "terminal_reprojection_counter_ledger_missing"
+
+
+def test_click_end_turn_blocks_non_counter_sensitive_incomplete_ledger(
+    monkeypatch,
+):
+    _held_end_turn_case(
+        monkeypatch,
+        solve_extra={
+            "post_enemy_prediction_source": "terminal_desync_reprojection",
+            "terminal_desync_reprojection": _terminal_provenance(
+                ledger=_counter_ledger()
+            ),
+        },
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "terminal_reprojection_counter_ledger_incomplete"
+
+
+def test_click_end_turn_accepts_single_sample_matching_verify_snapshot(
+    monkeypatch,
+):
+    provenance = _terminal_provenance(ledger=_counter_ledger(
+        complete=True,
+        prefix_complete=True,
+        terminal_action_matched=True,
+        verified_action_results=1,
+    ))
+    provenance["settlement"] = {
+        "status": "OK",
+        "samples": 1,
+        "matched_verify_snapshot": True,
+        "freshness_proven": True,
+    }
+    _held_end_turn_case(
+        monkeypatch,
+        solve_extra={
+            "post_enemy_prediction_source": "terminal_desync_reprojection",
+            "terminal_desync_reprojection": provenance,
+        },
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "PLAN"
+
+
+def test_click_end_turn_requires_complete_ledger_for_pod_reprojection(
+    monkeypatch,
+):
+    _, _, solve_data = _held_end_turn_case(
+        monkeypatch,
+        solve_extra={
+            "post_enemy_prediction_source": "terminal_desync_reprojection",
+            "terminal_desync_reprojection": _terminal_provenance(
+                ledger=_counter_ledger()
+            ),
+        },
+    )
+    solve_data["action_results"][0]["pods_collected"] = 1
+    monkeypatch.setattr(
+        commands,
+        "plan_end_turn",
+        lambda: (_ for _ in ()).throw(AssertionError("must not plan")),
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "terminal_reprojection_counter_ledger_incomplete"
+
+
+def test_click_end_turn_accepts_complete_ledger_for_pod_reprojection(
+    monkeypatch,
+):
+    complete = _counter_ledger(
+        complete=True,
+        prefix_complete=True,
+        terminal_action_matched=True,
+        verified_action_results=1,
+        player_pods_collected=1,
+    )
+    _, _, solve_data = _held_end_turn_case(
+        monkeypatch,
+        solve_extra={
+            "post_enemy_prediction_source": "terminal_desync_reprojection",
+            "terminal_desync_reprojection": _terminal_provenance(
+                ledger=complete
+            ),
+        },
+    )
+    solve_data["action_results"][0]["pods_collected"] = 1
+    solve_data["current_outcome"]["pods_present"] = 1
+    solve_data["predicted_outcome"]["mission_kills_done_projected"] = 0
+    solve_data["predicted_board_summary"]["mission_kills_planned"] = 0
+    solve_data["predicted_board_summary"]["pods_collected"] = 1
+    solve_data["plan_safety"] = audit_plan_safety(
+        solve_data["current_outcome"],
+        solve_data["predicted_board_summary"],
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "PLAN"
+
+
+def test_click_end_turn_plan_emission_is_same_turn_one_shot(monkeypatch):
+    _held_end_turn_case(monkeypatch)
+
+    first = commands.cmd_click_end_turn()
+    second = commands.cmd_click_end_turn()
+
+    assert first["status"] == "PLAN"
+    assert second["status"] == "END_TURN_BLOCKED"
+    assert second["reason"] == "end_turn_plan_already_issued"
+
+
+def test_dispatch_end_turn_does_not_retry_unconfirmed_delivery(monkeypatch):
+    _held_end_turn_case(monkeypatch)
+    dispatches = []
+    monkeypatch.setattr(
+        commands,
+        "_dispatch_click_batch_locally",
+        lambda *_args, **_kwargs: dispatches.append(True) or {
+            "status": "DISPATCHED",
+            "executed": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda _state: {
+            "status": "END_TURN_CLICK_NOT_OBSERVED",
+            "reason": "bridge_still_player_turn",
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_prepare_local_dispatch_guard",
+        lambda _label: {"status": "OK"},
+    )
+
+    first = commands.cmd_dispatch_end_turn(execute=True)
+    second = commands.cmd_dispatch_end_turn(execute=True)
+
+    assert first["dispatch"]["delivery_confirmation"] == "delivered_unconfirmed"
+    assert first["dispatch"]["retry_allowed"] is False
+    assert len(dispatches) == 1
+    assert second["reason"] == "click_end_turn_plan_failed"
+    assert second["plan"]["reason"] == "end_turn_plan_already_issued"
+
+
+def test_dispatch_end_turn_rejects_previously_issued_external_plan(monkeypatch):
+    session, _, _ = _held_end_turn_case(monkeypatch)
+    dispatches = []
+    monkeypatch.setattr(
+        commands,
+        "_dispatch_click_batch_locally",
+        lambda *_args, **_kwargs: dispatches.append(True) or {
+            "status": "DISPATCHED",
+            "executed": True,
+        },
+    )
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda _state: {"status": "OK", "reason": "phase_changed"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_prepare_local_dispatch_guard",
+        lambda _label: {"status": "OK"},
+    )
+
+    issued = commands.cmd_click_end_turn()
+    result = commands.cmd_dispatch_end_turn(execute=True)
+
+    assert issued["status"] == "PLAN"
+    assert result["status"] == "ERROR"
+    assert result["plan"]["reason"] == "end_turn_plan_already_issued"
+    assert dispatches == []
+    assert session.end_turn_plan_ledger["status"] == "plan_issued"
+
+
+def test_dispatch_end_turn_retries_only_proven_pre_delivery_failure(
+    monkeypatch,
+):
+    session, _, _ = _held_end_turn_case(monkeypatch)
+    dispatches = iter([
+        {
+            "status": "ERROR",
+            "reason": "dispatch_guard_failed",
+            "executed": False,
+        },
+        {"status": "DISPATCHED", "executed": True},
+    ])
+    monkeypatch.setattr(
+        commands,
+        "_dispatch_click_batch_locally",
+        lambda *_args, **_kwargs: next(dispatches),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_observe_end_turn_after_click",
+        lambda _state: {"status": "OK", "reason": "phase_changed"},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_prepare_local_dispatch_guard",
+        lambda _label: {"status": "OK"},
+    )
+
+    first = commands.cmd_dispatch_end_turn(execute=True)
+    second = commands.cmd_dispatch_end_turn(execute=True)
+
+    assert first["dispatch"]["delivery_confirmation"] == "not_delivered"
+    assert first["dispatch"]["retry_allowed"] is True
+    assert second["status"] == "DISPATCHED"
+    assert session.end_turn_plan_ledger["status"] == "delivered_confirmed"
+
+
+def test_click_end_turn_honors_persisted_same_turn_block(monkeypatch):
+    session, _, _ = _held_end_turn_case(monkeypatch)
+    session.held_end_turn_block = {
+        "version": 1,
+        "mission_index": session.mission_index,
+        "mission_id": session.current_mission,
+            "turn": 1,
+            "status": "TERMINAL_DESYNC_REPROJECTION_BLOCKED",
+            "reason": "terminal_desync_reprojection_blocked",
+            "recorded_at": "2026-07-14T10:00:00",
+        }
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "held_end_turn_persistent_block"
+
+
+def test_click_end_turn_ignores_unscoped_historical_fuzzy_event(monkeypatch):
+    session, _, _ = _held_end_turn_case(monkeypatch)
+    session.failure_events_this_run.append({
+        "asymmetry": ["enemy_survived_unexpectedly"],
+        "context": {"turn": 1},
+    })
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "PLAN"
+
+
+def test_click_end_turn_blocks_live_post_player_checkpoint_drift(monkeypatch):
+    _, _, solve_data = _held_end_turn_case(monkeypatch)
+    solve_data["post_player_board"]["units"][0]["hp"] = 2
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "held_end_turn_post_player_mismatch"
+
+
+def test_click_end_turn_requires_positive_active_mission_evidence(monkeypatch):
+    _, _, solve_data = _held_end_turn_case(monkeypatch)
+    live_data = json.loads(json.dumps(solve_data["post_player_board"]))
+    live_data.pop("in_active_mission")
+    live_board = Board.from_bridge_data(live_data)
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: (live_board, live_data),
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "held_end_turn_active_mission_not_proven"
+
+
+def test_click_end_turn_ignores_non_actionable_research_backlog(monkeypatch):
+    session, _, _ = _held_end_turn_case(monkeypatch)
+    session.research_queue.append({
+        "type": "TeleMech",
+        "kind": "mech_weapon",
+        "status": "in_progress",
+    })
+    monkeypatch.setattr(
+        research_orchestrator,
+        "has_actionable_research",
+        lambda *_args: False,
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "PLAN"
+
+
+def test_click_end_turn_blocks_actionable_research(monkeypatch):
+    _held_end_turn_case(monkeypatch)
+    monkeypatch.setattr(
+        research_orchestrator,
+        "has_actionable_research",
+        lambda *_args: True,
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "held_end_turn_research_actionable"
+
+
+def test_click_end_turn_rejects_unknown_plan_safety(monkeypatch):
+    safety = {
+        "status": "UNKNOWN",
+        "blocking": False,
+        "violations": [],
+        "compared": ["grid_power"],
+        "current": {"grid_power": 7},
+        "predicted": {"grid_power": 7},
+    }
+    _held_end_turn_case(monkeypatch, plan_safety=safety)
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "held_end_turn_plan_safety_missing"
+
+
+def test_click_end_turn_rejects_terminal_source_without_provenance(monkeypatch):
+    _held_end_turn_case(
+        monkeypatch,
+        solve_extra={
+            "post_enemy_prediction_source": "terminal_desync_reprojection",
+        },
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "terminal_reprojection_provenance_missing"
+
+
+def test_click_end_turn_rejects_terminal_action_cardinality_mismatch(
+    monkeypatch,
+):
+    provenance = _terminal_provenance(ledger=_counter_ledger())
+    provenance["desync"]["action_index"] = 1
+    _held_end_turn_case(
+        monkeypatch,
+        solve_extra={
+            "post_enemy_prediction_source": "terminal_desync_reprojection",
+            "terminal_desync_reprojection": provenance,
+        },
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "terminal_reprojection_action_index_invalid"
+
+
+def test_click_end_turn_audits_fire_on_proven_held_board(monkeypatch):
+    _, _, solve_data = _held_end_turn_case(monkeypatch)
+    live_data = json.loads(json.dumps(solve_data["post_player_board"]))
+    live_data["units"][0]["fire"] = True
+    solve_data["post_player_board"]["units"][0]["fire"] = True
+    live_board = Board.from_bridge_data(live_data)
+    reads = iter([(live_board, live_data), (None, {})])
+    monkeypatch.setattr(commands, "read_bridge_state", lambda: next(reads))
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "lethal_mech_fire_before_enemy_phase"
+
+
+def test_click_end_turn_blocks_partial_re_solve_reconstruction(monkeypatch):
+    _, _, solve_data = _held_end_turn_case(monkeypatch)
+    solve_data.update({
+        "selected_candidate_source": "partial_re_solve",
+        "partial_re_solve": {"done_uids": [], "mid_action_uid": None},
+    })
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "END_TURN_BLOCKED"
+    assert result["reason"] == "held_end_turn_partial_re_solve_requires_review"
 
 
 def test_summary_tracks_mech_damage_objective_from_bonus_ids():

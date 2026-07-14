@@ -74,7 +74,26 @@ def _bridge_data(*, player_active: bool) -> dict:
         "grid_power_max": 7,
         "total_turns": 4,
         "remaining_spawns": 1,
+        "is_infinite_spawn": False,
+        "mission_kill_target": 0,
+        "mission_kill_limit": 0,
+        "mission_kills_done": 0,
+        "mission_mountain_target": 0,
+        "mission_mountains_destroyed": 0,
+        "repair_platform_target": 0,
+        "repair_platforms_used": 0,
+        "freeze_building_target": 0,
+        "attack_order": [10],
         "spawning_tiles": [],
+        "environment_danger": [],
+        "environment_danger_v2": [],
+        "environment_freeze": [],
+        "freeze_building_tiles": [],
+        "mission_mountain_tiles": [],
+        "teleporter_pairs": [],
+        "bonus_objective_unit_types": [],
+        "destroy_objective_unit_types": [],
+        "protect_objective_unit_types": [],
         "units": [
             {
                 "uid": 0,
@@ -86,6 +105,8 @@ def _bridge_data(*, player_active: bool) -> dict:
                 "team": 1,
                 "mech": True,
                 "active": player_active,
+                "can_move": player_active,
+                "move": 3,
                 "weapons": ["Prime_Punchmech"],
             },
             {
@@ -98,10 +119,16 @@ def _bridge_data(*, player_active: bool) -> dict:
                 "team": 6,
                 "mech": False,
                 "active": False,
+                "can_move": False,
+                "move": 3,
                 "weapons": ["FireflyAtk1"],
             },
         ],
-        "tiles": [],
+        "tiles": [
+            {"x": x, "y": y, "terrain": "ground"}
+            for x in range(8)
+            for y in range(8)
+        ],
     }
 
 
@@ -210,6 +237,7 @@ def test_terminal_desync_settlement_accepts_matching_verify_snapshot():
             audit_data,
             expected_turn=1,
             prior_fingerprint=fingerprint,
+            initial_refresh_succeeded=True,
             read_fn=lambda: (_ for _ in ()).throw(
                 AssertionError("matching verify snapshot must not reread")
             ),
@@ -223,6 +251,7 @@ def test_terminal_desync_settlement_accepts_matching_verify_snapshot():
         "samples": 1,
         "elapsed_seconds": 0.0,
         "matched_verify_snapshot": True,
+        "freshness_proven": True,
     }
 
 
@@ -253,7 +282,7 @@ def test_terminal_desync_settlement_does_not_ignore_queued_attack_drift():
             expected_turn=1,
             prior_fingerprint=fingerprint,
             read_fn=reread,
-            refresh_fn=lambda: None,
+            refresh_fn=lambda: True,
             sleep_fn=lambda _seconds: None,
             now_fn=lambda: 0.0,
         )
@@ -265,6 +294,7 @@ def test_terminal_desync_settlement_does_not_ignore_queued_attack_drift():
     assert info["status"] == "OK"
     assert info["samples"] == 2
     assert info["matched_verify_snapshot"] is False
+    assert info["freshness_proven"] is True
 
 
 def test_terminal_desync_settlement_rejects_ready_actor():
@@ -373,6 +403,7 @@ def test_terminal_desync_reprojection_restores_verified_player_counters(
         {
             "actions": [{"description": "executed original plan"}],
             "current_outcome": turn_start,
+            "post_player_board": _bridge_data(player_active=False),
         },
         RunSession(run_id="terminal"),
         turn=1,
@@ -402,7 +433,6 @@ def test_terminal_desync_reprojection_restores_verified_player_counters(
             },
         ],
         counter_ledger_prefix_complete=True,
-        terminal_predicted_state=predicted_terminal,
         terminal_action_result={
             "enemies_killed": 2,
             "unit_deaths": 2,
@@ -469,7 +499,10 @@ def test_terminal_desync_reprojection_restored_kills_block_over_limit(
     replacement, error = commands._build_terminal_desync_reprojection(
         board,
         _bridge_data(player_active=False),
-        {"current_outcome": turn_start},
+        {
+            "current_outcome": turn_start,
+            "post_player_board": _bridge_data(player_active=False),
+        },
         RunSession(run_id="terminal"),
         turn=1,
         desync={"phase": "attack", "action_index": 3, "mech_uid": 0},
@@ -498,7 +531,6 @@ def test_terminal_desync_reprojection_restored_kills_block_over_limit(
             },
         ],
         counter_ledger_prefix_complete=True,
-        terminal_predicted_state=predicted_terminal,
         terminal_action_result={
             "enemies_killed": 1,
             "unit_deaths": 1,
@@ -555,7 +587,10 @@ def test_terminal_desync_reprojection_does_not_double_count_live_player_kill(
     replacement, error = commands._build_terminal_desync_reprojection(
         board,
         _bridge_data(player_active=False),
-        {"current_outcome": turn_start},
+        {
+            "current_outcome": turn_start,
+            "post_player_board": _bridge_data(player_active=False),
+        },
         RunSession(run_id="terminal"),
         turn=1,
         desync={"phase": "attack", "action_index": 3, "mech_uid": 0},
@@ -565,7 +600,6 @@ def test_terminal_desync_reprojection_does_not_double_count_live_player_kill(
         turn_start_outcome=turn_start,
         verified_action_results=[dict(zero_result) for _ in range(3)],
         counter_ledger_prefix_complete=True,
-        terminal_predicted_state=predicted_terminal,
         terminal_action_result={
             "enemies_killed": 1,
             "unit_deaths": 1,
@@ -618,7 +652,6 @@ def test_terminal_desync_reprojection_blocks_counter_objective_when_ledger_uncer
         turn_start_outcome=turn_start,
         verified_action_results=[],
         counter_ledger_prefix_complete=False,
-        terminal_predicted_state=None,
         terminal_action_result=None,
     )
 
@@ -646,7 +679,10 @@ def test_terminal_desync_reprojection_blocks_claimed_pod_without_baseline(
     replacement, error = commands._build_terminal_desync_reprojection(
         board,
         _bridge_data(player_active=False),
-        {"current_outcome": {"grid_power": 5}},
+        {
+            "current_outcome": {"grid_power": 5},
+            "post_player_board": _bridge_data(player_active=False),
+        },
         RunSession(run_id="terminal"),
         turn=1,
         desync={"phase": "attack", "action_index": 0, "mech_uid": 0},
@@ -656,7 +692,6 @@ def test_terminal_desync_reprojection_blocks_claimed_pod_without_baseline(
         turn_start_outcome={"grid_power": 5},
         verified_action_results=[],
         counter_ledger_prefix_complete=True,
-        terminal_predicted_state=predicted_terminal,
         terminal_action_result={
             "enemies_killed": 0,
             "unit_deaths": 0,
@@ -703,7 +738,10 @@ def test_terminal_desync_reprojection_blocks_missing_projected_kill_progress(
     replacement, error = commands._build_terminal_desync_reprojection(
         board,
         _bridge_data(player_active=False),
-        {"current_outcome": turn_start},
+        {
+            "current_outcome": turn_start,
+            "post_player_board": _bridge_data(player_active=False),
+        },
         RunSession(run_id="terminal"),
         turn=1,
         desync={"phase": "attack", "action_index": 0, "mech_uid": 0},
@@ -713,7 +751,6 @@ def test_terminal_desync_reprojection_blocks_missing_projected_kill_progress(
         turn_start_outcome=turn_start,
         verified_action_results=[],
         counter_ledger_prefix_complete=True,
-        terminal_predicted_state=predicted_terminal,
         terminal_action_result={
             "enemies_killed": 0,
             "unit_deaths": 0,
@@ -732,6 +769,7 @@ def test_terminal_desync_reprojection_blocks_missing_projected_kill_progress(
 def _patch_terminal_auto_turn_harness(tmp_path, monkeypatch, *, persist=True):
     session = RunSession(run_id="terminal", difficulty=0)
     session.mission_index = 0
+    session.current_mission = "Mission_Survive"
     session.current_turn = 1
     action = SolverAction(
         mech_uid=0,
@@ -760,6 +798,7 @@ def _patch_terminal_auto_turn_harness(tmp_path, monkeypatch, *, persist=True):
             "predicted_outcome": {"grid_power": 7},
             "predicted_board_summary": {"grid_power": 7},
             "current_outcome": {"grid_power": 5},
+            "post_player_board": _bridge_data(player_active=False),
             "plan_safety": clean_safety,
             "initial_building_threats": [],
         }
@@ -779,7 +818,17 @@ def _patch_terminal_auto_turn_harness(tmp_path, monkeypatch, *, persist=True):
     monkeypatch.setattr(commands, "_load_session", lambda: session)
     monkeypatch.setattr(commands, "_read_save_file_difficulty", lambda _p: None)
     monkeypatch.setattr(commands, "refresh_bridge_state", lambda: None)
+    monkeypatch.setattr(
+        commands,
+        "_refresh_end_turn_bridge_state",
+        lambda: True,
+    )
     monkeypatch.setattr(commands, "read_bridge_state", lambda: next(reads))
+    monkeypatch.setattr(
+        commands,
+        "_enrich_bridge_mech_weapons_from_save",
+        lambda *_args, **_kwargs: [],
+    )
     monkeypatch.setattr(commands, "attack_mech", lambda *_args: "OK")
     monkeypatch.setattr(
         commands,
@@ -848,7 +897,7 @@ def _patch_terminal_auto_turn_harness(tmp_path, monkeypatch, *, persist=True):
     monkeypatch.setattr(
         commands,
         "cmd_end_turn",
-        lambda: end_turn_calls.append(True) or {
+        lambda **_kwargs: end_turn_calls.append(True) or {
             "status": "PLAN",
             "batch": [{"type": "left_click", "x": 1, "y": 2}],
             "codex_computer_use_batch": [],
