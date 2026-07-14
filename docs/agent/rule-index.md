@@ -476,3 +476,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 475 | 847 | A successfully dispatched End Turn click is never retried from same-turn DONE evidence. | `docs/agent/live-runbook.md` |
 | 476 | 849 | Zero-damage weapon Fire destroys Time Pods, and replay remembers pre-action pod tiles. | `docs/agent/solver-reference.md` |
 | 477 | 851 | Final-turn Time Pod safety needs a pickup search overlay, not only a post-solve gate. | `docs/agent/solver-reference.md` |
+| 478 | 853 | Direct-target `sim_melee` damage-and-push does not carry newly created Forest fire. | `docs/agent/solver-reference.md` |

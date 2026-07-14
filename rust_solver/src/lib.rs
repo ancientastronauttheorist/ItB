@@ -2274,7 +2274,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   tiles across move/attack transitions so distant pod destruction is visible
 //   to per-action verification. Pre-v358 corpus archived as
 //   failure_db_snapshot_sim_v357.jsonl.
-pub const SIMULATOR_VERSION: u32 = 358;
+// v359 - The direct-target damage+push path in sim_melee defers newly ignited
+//   Forest-origin fire pickup until its simultaneous push settles. A survivor
+//   pushed to clean ground stays unburned; a blocked or non-moving pawn catches
+//   the origin fire. Pre-existing, explicit weapon, and destination Fire remain
+//   unchanged. Pre-v359 corpus archived as failure_db_snapshot_sim_v358.jsonl.
+pub const SIMULATOR_VERSION: u32 = 359;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

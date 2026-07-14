@@ -1670,7 +1670,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Per-action snapshots retain explicit targets and pre-action/live pod tiles so
 # distant pod-state mismatches cannot evade verify. Pre-v358 corpus archived as
 # failure_db_snapshot_sim_v357.jsonl.
-SIMULATOR_VERSION = 358
+# v359 - The direct-target damage+push path in Rust sim_melee defers newly
+# ignited Forest-origin fire pickup until its simultaneous push settles. A
+# survivor pushed to clean ground stays unburned; blocked or non-moving pawns
+# catch the origin fire. Pre-existing, explicit weapon, and destination Fire
+# remain unchanged. Pre-v359 corpus archived as
+# failure_db_snapshot_sim_v358.jsonl.
+SIMULATOR_VERSION = 359
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

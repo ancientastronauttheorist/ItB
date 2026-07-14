@@ -1495,8 +1495,28 @@ pub(crate) fn apply_damage_defer_death_explosion(
     source: DamageSource,
 ) -> Option<usize> {
     apply_damage_defer_death_explosion_impl(
-        board, x, y, damage, result, source, false, None,
+        board, x, y, damage, result, source, false, None, false,
     ).0
+}
+
+/// Resolve the damage half of a single SpaceDamage-style damage+push hit while
+/// deferring pickup from a Forest that the same hit just ignited. Live leaves a
+/// successfully displaced pawn unburned; a blocked/non-moving pawn picks up the
+/// origin fire after push resolution. The caller must settle the returned flag
+/// once it has attempted the push.
+fn apply_damage_defer_death_explosion_for_simultaneous_push(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+) -> (Option<usize>, bool) {
+    let (death_explosion, _, forest_pickup_deferred) =
+        apply_damage_defer_death_explosion_impl(
+            board, x, y, damage, result, source, false, None, true,
+        );
+    (death_explosion, forest_pickup_deferred)
 }
 
 /// Prime Leap needs the normal BombRock exclusion around its landing mech,
@@ -1512,7 +1532,7 @@ fn apply_damage_defer_death_explosion_with_bombrock_exclusion(
     bombrock_exclude: Option<(u8, u8)>,
 ) -> Option<usize> {
     apply_damage_defer_death_explosion_impl(
-        board, x, y, damage, result, source, false, bombrock_exclude,
+        board, x, y, damage, result, source, false, bombrock_exclude, false,
     ).0
 }
 
@@ -1525,8 +1545,9 @@ fn apply_damage_defer_death_explosion_impl(
     source: DamageSource,
     defer_bombrock: bool,
     bombrock_exclude: Option<(u8, u8)>,
-) -> (Option<usize>, Option<(u8, u8)>) {
-    if damage == 0 { return (None, None); }
+    defer_new_forest_pickup: bool,
+) -> (Option<usize>, Option<(u8, u8)>, bool) {
+    if damage == 0 { return (None, None, false); }
     let mut deferred_bombrock = None;
 
     let death_check = if board.blast_psion || board.boss_psion {
@@ -1559,7 +1580,15 @@ fn apply_damage_defer_death_explosion_impl(
         } else { None }
     });
 
-    apply_damage_core(board, x, y, damage, result, source);
+    let forest_pickup_deferred = apply_damage_core_with_options(
+        board,
+        x,
+        y,
+        damage,
+        result,
+        source,
+        defer_new_forest_pickup,
+    );
 
     if let Some(idx) = bombrock_check {
         if board.units[idx].hp <= 0 {
@@ -1580,6 +1609,7 @@ fn apply_damage_defer_death_explosion_impl(
     (
         death_check.filter(|idx| board.units[*idx].hp <= 0),
         deferred_bombrock,
+        forest_pickup_deferred,
     )
 }
 
@@ -1664,12 +1694,25 @@ pub(crate) fn thaw_frozen_building(
 
 
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
-    if damage == 0 { return; }
+    let _ = apply_damage_core_with_options(board, x, y, damage, result, source, false);
+}
+
+fn apply_damage_core_with_options(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+    defer_new_forest_pickup: bool,
+) -> bool {
+    if damage == 0 { return false; }
 
     let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
     let mut frozen_unit_absorbed_damage = false;
     let mut unit_received_nonshield_hit = false;
     let mut damaged_enemy_web_source_uid = None;
+    let mut forest_pickup_deferred = false;
 
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
@@ -1972,11 +2015,17 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             tile.set_on_fire(true);
             if unit_received_nonshield_hit {
                 if let Some(idx) = board.unit_at(x, y) {
-                    apply_fire_tile_pickup(board, idx, x, y, result);
+                    if defer_new_forest_pickup {
+                        forest_pickup_deferred = true;
+                    } else {
+                        apply_fire_tile_pickup(board, idx, x, y, result);
+                    }
                 }
             }
-            // Live consumes occupied Forest immediately and the surviving
-            // occupant catches the newly lit tile fire in the same action.
+            // Live consumes occupied Forest immediately. Ordinary surviving
+            // occupants catch the newly lit tile fire in the same action;
+            // SpaceDamage-style damage+push callers can defer that pickup
+            // until the simultaneous displacement has settled.
         }
 
         // Sand: weapon/self damage -> smoke (fire weapon -> fire tile instead)
@@ -2084,6 +2133,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     refresh_all_arrogant_boosts(board);
+    forest_pickup_deferred
 }
 
 /// Convert a single tile to Water, drowning any non-flying non-massive unit
@@ -4078,15 +4128,15 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
     } else {
         DamageSource::Weapon
     };
-    let deferred_death_explosion = if defer_target_death_explosion {
-        apply_damage_defer_death_explosion(
+    let (deferred_death_explosion, forest_pickup_deferred) = if defer_target_death_explosion {
+        apply_damage_defer_death_explosion_for_simultaneous_push(
             board, tx, ty, target_dmg, result, direct_hit_source,
         )
     } else if !wdef.chain() {
         apply_damage(board, tx, ty, target_dmg, result, direct_hit_source);
-        None
+        (None, false)
     } else {
-        None
+        (None, false)
     };
 
     // Chain weapon (Electric Whip): BFS through adjacent pawns, and with
@@ -4188,6 +4238,18 @@ fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8
             }
             PushDir::Throw => apply_throw(board, ax, ay, tx, ty, dir, result),
             _ => {}
+        }
+
+        // A SpaceDamage that both damages a Forest occupant and successfully
+        // pushes it away ignites the origin tile without transferring that
+        // newly created Fire to the pawn. If the push was blocked (or the pawn
+        // was otherwise immovable), it remains on the burning origin and picks
+        // the Fire up now. Destination Fire/Lava was already handled by the
+        // push landing path; explicit FIRE weapons use their status path above.
+        if forest_pickup_deferred {
+            if let Some(idx) = board.unit_at(tx, ty) {
+                apply_fire_tile_pickup(board, idx, tx, ty, result);
+            }
         }
 
         if flamethrower_push {
@@ -4804,7 +4866,7 @@ fn sim_projectile(
         let deferred_death_explosion = if skip_friendly_damage {
             None
         } else if defer_death_explosion {
-            let (death_explosion, bombrock_explosion) =
+            let (death_explosion, bombrock_explosion, _) =
                 apply_damage_defer_death_explosion_impl(
                     board,
                     hx,
@@ -4814,6 +4876,7 @@ fn sim_projectile(
                     damage_source,
                     defer_bombrock_explosion,
                     None,
+                    false,
                 );
             deferred_bombrock_explosion = bombrock_explosion;
             death_explosion
@@ -10074,6 +10137,72 @@ mod tests {
                     weapon, max_range, targets);
             }
         }
+    }
+
+    #[test]
+    fn test_needle_shot_push_off_newly_ignited_forest_does_not_carry_fire() {
+        // Chaos Roll Unfair run 20260713_052159_731, Mission_BlobberBoss T2:
+        // base Needle Shot damaged BlobB on E7 Forest and pushed it to clean
+        // D7. Live converted E7 to Ground+Fire but left the displaced Blob
+        // fire=false. Pre-v359 applied the origin fire before resolving push,
+        // falsely projecting that the 1-HP Blob would burn before exploding.
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 0, 1, 2, 5, WId::VekHornet);
+        let blob = add_enemy_type(&mut board, 1161, 1, 3, 2, "BlobB");
+        board.tile_mut(1, 3).terrain = Terrain::Forest;
+
+        let result = simulate_weapon(&mut board, hornet, WId::VekHornet, 1, 3);
+
+        assert_eq!(board.units[blob].hp, 1);
+        assert_eq!((board.units[blob].x, board.units[blob].y), (1, 4));
+        assert!(!board.units[blob].fire(), "new origin fire must not follow a successful push");
+        assert_eq!(board.tile(1, 3).terrain, Terrain::Ground);
+        assert!(board.tile(1, 3).on_fire(), "damaged Forest still becomes burning Ground");
+        assert!(!board.tile(1, 4).on_fire(), "clean destination must remain clean");
+        assert_eq!(result.enemy_damage_dealt, 1);
+    }
+
+    #[test]
+    fn test_needle_shot_blocked_forest_push_still_ignites_occupant() {
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 0, 1, 2, 5, WId::VekHornet);
+        let target = add_enemy(&mut board, 1, 1, 3, 4);
+        board.tile_mut(1, 3).terrain = Terrain::Forest;
+        board.tile_mut(1, 4).terrain = Terrain::Mountain;
+        board.tile_mut(1, 4).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, hornet, WId::VekHornet, 1, 3);
+
+        assert_eq!((board.units[target].x, board.units[target].y), (1, 3));
+        assert!(board.units[target].fire(), "a target left on the burning origin catches fire");
+    }
+
+    #[test]
+    fn test_needle_shot_forest_push_preserves_preexisting_fire() {
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 0, 1, 2, 5, WId::VekHornet);
+        let target = add_enemy(&mut board, 1, 1, 3, 3);
+        board.units[target].set_fire(true);
+        board.tile_mut(1, 3).terrain = Terrain::Forest;
+
+        let _ = simulate_weapon(&mut board, hornet, WId::VekHornet, 1, 3);
+
+        assert_eq!((board.units[target].x, board.units[target].y), (1, 4));
+        assert!(board.units[target].fire(), "pre-existing Fire follows the displaced unit");
+    }
+
+    #[test]
+    fn test_needle_shot_forest_push_onto_fire_keeps_destination_pickup() {
+        let mut board = make_test_board();
+        let hornet = add_mech(&mut board, 0, 1, 2, 5, WId::VekHornet);
+        let target = add_enemy(&mut board, 1, 1, 3, 3);
+        board.tile_mut(1, 3).terrain = Terrain::Forest;
+        board.tile_mut(1, 4).set_on_fire(true);
+
+        let _ = simulate_weapon(&mut board, hornet, WId::VekHornet, 1, 3);
+
+        assert_eq!((board.units[target].x, board.units[target].y), (1, 4));
+        assert!(board.units[target].fire(), "clean-origin exemption must not suppress destination Fire");
     }
 
     #[test]
