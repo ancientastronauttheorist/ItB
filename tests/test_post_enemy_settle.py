@@ -1427,6 +1427,376 @@ def test_next_turn_spider_egg_web_is_explained_for_unfair_gate():
     )
 
 
+def _m16_moved_spider_egg_web_case():
+    """Reproduce Mission_Civilians turn 1 -> 2 from run 20260713_052159_731."""
+    board = _board(4)
+    punch = board.units[0]
+    punch.type = "PunchMech"
+    punch.x, punch.y = 5, 2
+    punch.hp, punch.max_hp = 4, 6
+    punch.web = True
+    punch.web_source_uid = 1414
+
+    vip = Unit(
+        uid=1337,
+        type="VIP_Truck",
+        x=6,
+        y=1,
+        hp=1,
+        max_hp=1,
+        team=1,
+        is_mech=False,
+        move_speed=0,
+        flying=False,
+        massive=False,
+        armor=False,
+        pushable=True,
+        weapon="VIP_Truck_Move",
+        active=True,
+    )
+    vip.web = True
+    vip.web_source_uid = 1414
+    board.units.append(vip)
+
+    spider = _enemy(1339, 6, 4)
+    spider.type = "Spider2"
+    spider.hp = spider.max_hp = 4
+    spider.move_speed = 2
+    spider.weapon = "SpiderAtk2"
+    spider.has_queued_attack = False
+    spider.queued_origin_x = spider.queued_origin_y = -1
+    spider.queued_target_x = spider.queued_target_y = -1
+    board.units.append(spider)
+
+    egg = _enemy(1414, 6, 2, minor=True)
+    egg.type = "WebbEgg1"
+    egg.hp = egg.max_hp = 1
+    egg.move_speed = 0
+    egg.weapon = "WebeggHatch1"
+    egg.has_queued_attack = True
+    egg.queued_origin_x = egg.queued_target_x = egg.x
+    egg.queued_origin_y = egg.queued_target_y = egg.y
+    board.units.append(egg)
+
+    punch_post = {
+        "uid": punch.uid,
+        "type": punch.type,
+        "team": 1,
+        "hp": 6,
+        "x": punch.x,
+        "y": punch.y,
+    }
+    punch_final = {**punch_post, "hp": 4}
+    vip_checkpoint = {
+        "uid": vip.uid,
+        "type": vip.type,
+        "team": 1,
+        "hp": vip.hp,
+        "x": vip.x,
+        "y": vip.y,
+    }
+    spider_checkpoint = {
+        "uid": spider.uid,
+        "type": spider.type,
+        "team": 6,
+        "hp": spider.hp,
+        "x": 6,
+        "y": 3,
+        "weapons": [spider.weapon],
+        "queued_origin": [-1, -1],
+        "queued_target": [-1, -1],
+    }
+    solve_data = {
+        "simulator_version": 362,
+        "post_player_board": {
+            "turn": 1,
+            "units": [
+                dict(punch_post),
+                dict(vip_checkpoint),
+                dict(spider_checkpoint),
+            ],
+            "spawning_tiles": [],
+        },
+        "final_board": {
+            "turn": 2,
+            "units": [
+                dict(punch_final),
+                dict(vip_checkpoint),
+                dict(
+                    spider_checkpoint,
+                    can_move=True,
+                    move=2,
+                    frozen=False,
+                    web=False,
+                ),
+            ],
+            "tiles": [{
+                "x": 6,
+                "y": 2,
+                "terrain": "ground",
+                "acid": True,
+            }],
+            "spawning_tiles": [],
+        },
+    }
+    punch_item = {
+        "uid": punch.uid,
+        "type": punch.type,
+        "pos": [punch.x, punch.y],
+    }
+    vip_item = {
+        "uid": vip.uid,
+        "type": vip.type,
+        "pos": [vip.x, vip.y],
+        "hp": vip.hp,
+        "max_hp": vip.max_hp,
+        "alive": True,
+        "frozen": False,
+        "webbed": True,
+        "team": 1,
+    }
+    deltas = {
+        "mech_status_diff": [
+            {
+                "key": "mechs_webbed",
+                "status": "Web",
+                "predicted_count": 0,
+                "actual_count": 1,
+                "unexpected": [punch_item],
+                "cleared": [],
+            },
+            {
+                "key": "protected_objective_units_webbed",
+                "status": "Web",
+                "predicted_count": 0,
+                "actual_count": 1,
+                "unexpected": [vip_item],
+                "cleared": [],
+            },
+        ],
+        "unexpected_events": [
+            "PunchMech gained unexpected Web status",
+            "VIP_Truck gained unexpected Web status",
+        ],
+    }
+    return board, solve_data, deltas, punch_item, vip_item
+
+
+def test_compute_deltas_tracks_protected_objective_web_status():
+    base = {
+        "buildings_alive": 7,
+        "building_hp_total": 9,
+        "grid_power": 4,
+        "enemies_alive": 6,
+        "mech_hp": [],
+    }
+    vip = {
+        "uid": 1337,
+        "type": "VIP_Truck",
+        "pos": [6, 1],
+        "hp": 1,
+        "max_hp": 1,
+        "alive": True,
+        "frozen": False,
+        "team": 1,
+    }
+    predicted = {
+        **base,
+        "protected_objective_units": [{**vip, "webbed": False}],
+        "protected_objective_units_webbed": 0,
+    }
+    actual = {
+        **base,
+        "protected_objective_units": [{**vip, "webbed": True}],
+        "protected_objective_units_webbed": 1,
+    }
+
+    result = commands._compute_deltas(predicted, actual)
+
+    assert result["protected_objective_units_webbed_diff"] == 1
+    web_delta = result["mech_status_diff"][0]
+    assert web_delta["key"] == "protected_objective_units_webbed"
+    assert web_delta["unexpected"] == [{**vip, "webbed": True}]
+    assert result["unexpected_events"] == [
+        "VIP_Truck gained unexpected Web status"
+    ]
+    assert commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_m16_moved_spider_egg_web_explains_mech_and_vip_status():
+    board, solve_data, deltas, punch_item, vip_item = (
+        _m16_moved_spider_egg_web_case()
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert result["mech_status_diff"][0]["unexpected"] == [punch_item]
+    assert result["mech_status_diff"][1]["unexpected"] == [vip_item]
+    assert all(
+        delta["unexplained_unexpected"] == []
+        for delta in result["mech_status_diff"]
+    )
+    assert {
+        (item["uid"], item["source_uid"], item["spider_uid"])
+        for item in result["next_turn_web_grapples"]
+    } == {(0, 1414, 1339), (1337, 1414, 1339)}
+    assert all(
+        item["reason"]
+        == "next_turn_moved_surviving_spider_laid_adjacent_webb_egg"
+        and item["spider_previous_position"] == [6, 3]
+        and item["spider_position"] == [6, 4]
+        for item in result["next_turn_web_grapples"]
+    )
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_explained_mech_web_preserves_unexplained_vip_web_event():
+    board, solve_data, deltas, _punch_item, vip_item = (
+        _m16_moved_spider_egg_web_case()
+    )
+    vip = next(unit for unit in board.units if unit.uid == 1337)
+    vip.web_source_uid = -1
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert len(result["next_turn_web_grapples"]) == 1
+    assert result["mech_status_diff"][1]["unexplained_unexpected"] == [
+        vip_item
+    ]
+    assert result["unexpected_events"] == [
+        "VIP_Truck gained unexpected Web status"
+    ]
+    assert commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_moved_spider_egg_web_requires_exact_movement_evidence():
+    cases = (
+        "outside_one_step",
+        "checkpoint_position_drift",
+        "egg_not_checkpoint_aligned",
+        "final_cannot_move",
+        "final_move_zero",
+        "final_spider_webbed",
+        "live_spider_webbed",
+        "destination_occupied",
+        "destination_not_ground",
+        "destination_smoke",
+        "egg_target_occupied",
+        "egg_target_not_ground",
+        "live_egg_distance_one",
+        "live_egg_diagonal",
+        "missing_final_tiles",
+    )
+    for case in cases:
+        board, solve_data, deltas, punch_item, vip_item = (
+            _m16_moved_spider_egg_web_case()
+        )
+        spider = next(unit for unit in board.units if unit.uid == 1339)
+        post_spider = solve_data["post_player_board"]["units"][2]
+        final_spider = solve_data["final_board"]["units"][2]
+
+        if case == "outside_one_step":
+            spider.y = 5
+        elif case == "checkpoint_position_drift":
+            post_spider["x"], post_spider["y"] = 5, 3
+        elif case == "egg_not_checkpoint_aligned":
+            post_spider["x"], post_spider["y"] = 5, 4
+            final_spider["x"], final_spider["y"] = 5, 4
+        elif case == "final_cannot_move":
+            final_spider["can_move"] = False
+        elif case == "final_move_zero":
+            final_spider["move"] = 0
+        elif case == "final_spider_webbed":
+            final_spider["web"] = True
+        elif case == "live_spider_webbed":
+            spider.web = True
+        elif case == "destination_occupied":
+            solve_data["final_board"]["units"].append({
+                "uid": 1500,
+                "type": "Leaper1",
+                "team": 6,
+                "hp": 2,
+                "x": 6,
+                "y": 4,
+                "queued_origin": [-1, -1],
+                "queued_target": [-1, -1],
+            })
+        elif case == "destination_not_ground":
+            solve_data["final_board"]["tiles"].append({
+                "x": 6,
+                "y": 4,
+                "terrain": "water",
+            })
+        elif case == "destination_smoke":
+            solve_data["final_board"]["tiles"].append({
+                "x": 6,
+                "y": 4,
+                "terrain": "ground",
+                "smoke": True,
+            })
+        elif case == "egg_target_occupied":
+            solve_data["final_board"]["units"].append({
+                "uid": 1501,
+                "type": "Leaper1",
+                "team": 6,
+                "hp": 2,
+                "x": 6,
+                "y": 2,
+                "queued_origin": [-1, -1],
+                "queued_target": [-1, -1],
+            })
+        elif case == "egg_target_not_ground":
+            solve_data["final_board"]["tiles"][0]["terrain"] = "water"
+        elif case == "live_egg_distance_one":
+            spider.x, spider.y = 6, 3
+        elif case == "live_egg_diagonal":
+            spider.x, spider.y = 5, 3
+        elif case == "missing_final_tiles":
+            del solve_data["final_board"]["tiles"]
+
+        result = commands._classify_next_turn_web_grapples(
+            deltas,
+            solve_data,
+            board,
+            actual_turn=2,
+            expected_turn=2,
+        )
+
+        assert result["mech_status_diff"][0]["unexplained_unexpected"] == [
+            punch_item
+        ], case
+        assert result["mech_status_diff"][1]["unexplained_unexpected"] == [
+            vip_item
+        ], case
+        assert result["next_turn_web_grapples"] == [], case
+        assert commands._post_enemy_needs_investigation(
+            result,
+            RunSession(run_id="run", difficulty=3),
+        ), case
+
+
 def test_next_turn_spider_egg_web_requires_complete_fresh_evidence():
     cases = (
         "outside_turn_window",
@@ -1437,12 +1807,12 @@ def test_next_turn_spider_egg_web_requires_complete_fresh_evidence():
         "egg_not_self_hatching",
         "egg_origin_not_self",
         "moved_mech",
-        "mech_hp_drift",
+        "final_mech_hp_mismatch",
         "missing_final_mech",
         "missing_post_player_spider",
         "missing_final_spider",
         "spider_hp_drift",
-        "moved_spider",
+        "moved_spider_out_of_range",
         "post_player_spider_queued",
         "live_spider_queued",
         "live_spider_queue_sentinels_stale",
@@ -1498,8 +1868,8 @@ def test_next_turn_spider_egg_web_requires_complete_fresh_evidence():
             egg.queued_origin_x, egg.queued_origin_y = 3, 4
         elif case == "moved_mech":
             post_units[0]["x"] = 3
-        elif case == "mech_hp_drift":
-            post_units[0]["hp"] = mech.hp - 1
+        elif case == "final_mech_hp_mismatch":
+            final_units[0]["hp"] = mech.hp - 1
         elif case == "missing_final_mech":
             final_units.pop(0)
         elif case == "missing_post_player_spider":
@@ -1508,8 +1878,8 @@ def test_next_turn_spider_egg_web_requires_complete_fresh_evidence():
             final_units.pop(1)
         elif case == "spider_hp_drift":
             final_units[1]["hp"] = spider.hp - 1
-        elif case == "moved_spider":
-            spider.x = 5
+        elif case == "moved_spider_out_of_range":
+            spider.x = 1
         elif case == "post_player_spider_queued":
             post_units[1]["has_queued_attack"] = True
             post_units[1]["queued_origin"] = [spider.x, spider.y]

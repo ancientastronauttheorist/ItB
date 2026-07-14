@@ -485,3 +485,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 484 | 865 | Needle Shot lethal selected targets can corpse-bump a live blocker. | `docs/agent/solver-reference.md` |
 | 485 | 867 | Needle Shot centers intrinsic Explosive Decay on the final corpse tile. | `docs/agent/solver-reference.md` |
 | 486 | 869 | Reviewed ordinary-building threat coverage may coexist with consented ACID debt. | `docs/agent/safety-gates.md` |
+| 487 | 871 | A proven one-step Spider move may precede a newly laid next-turn egg. | `docs/agent/safety-gates.md` |

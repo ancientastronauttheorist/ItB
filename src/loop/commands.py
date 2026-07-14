@@ -6177,6 +6177,14 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
             actual["protected_objective_units_frozen"]
             - predicted["protected_objective_units_frozen"]
         )
+    if (
+        "protected_objective_units_webbed" in predicted
+        and "protected_objective_units_webbed" in actual
+    ):
+        deltas["protected_objective_units_webbed_diff"] = (
+            actual["protected_objective_units_webbed"]
+            - predicted["protected_objective_units_webbed"]
+        )
 
     # Per-mech HP comparison — match by UID for precision. Actual summaries can
     # omit dead mechs in older recordings, so predicted-but-missing UIDs count
@@ -6221,6 +6229,16 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     deltas["mech_hp_diff"] = mech_deltas
 
     status_deltas = []
+
+    def status_ident(item: dict) -> tuple:
+        uid = item.get("uid")
+        if uid is not None:
+            return ("uid", uid)
+        pos = item.get("pos")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            return ("pos", item.get("type"), pos[0], pos[1])
+        return ("type", item.get("type"))
+
     for key, label in (
         ("mechs_acid", "ACID"),
         ("mechs_fire", "Fire"),
@@ -6238,24 +6256,15 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         if not predicted_items and not actual_items:
             continue
 
-        def ident(item: dict) -> tuple:
-            uid = item.get("uid")
-            if uid is not None:
-                return ("uid", uid)
-            pos = item.get("pos")
-            if isinstance(pos, (list, tuple)) and len(pos) == 2:
-                return ("pos", item.get("type"), pos[0], pos[1])
-            return ("type", item.get("type"))
-
-        predicted_ids = {ident(item) for item in predicted_items}
-        actual_ids = {ident(item) for item in actual_items}
+        predicted_ids = {status_ident(item) for item in predicted_items}
+        actual_ids = {status_ident(item) for item in actual_items}
         unexpected = [
             item for item in actual_items
-            if ident(item) not in predicted_ids
+            if status_ident(item) not in predicted_ids
         ]
         cleared = [
             item for item in predicted_items
-            if ident(item) not in actual_ids
+            if status_ident(item) not in actual_ids
         ]
         status_deltas.append({
             "key": key,
@@ -6264,6 +6273,46 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
             "actual_count": len(actual_items),
             "unexpected": unexpected,
             "cleared": cleared,
+        })
+
+    predicted_protected_webbed = [
+        item
+        for item in predicted.get("protected_objective_units", []) or []
+        if (
+            isinstance(item, dict)
+            and item.get("alive") is True
+            and item.get("webbed") is True
+        )
+    ]
+    actual_protected_webbed = [
+        item
+        for item in actual.get("protected_objective_units", []) or []
+        if (
+            isinstance(item, dict)
+            and item.get("alive") is True
+            and item.get("webbed") is True
+        )
+    ]
+    if predicted_protected_webbed or actual_protected_webbed:
+        predicted_ids = {
+            status_ident(item) for item in predicted_protected_webbed
+        }
+        actual_ids = {status_ident(item) for item in actual_protected_webbed}
+        status_deltas.append({
+            "key": "protected_objective_units_webbed",
+            "status": "Web",
+            "predicted_count": len(predicted_protected_webbed),
+            "actual_count": len(actual_protected_webbed),
+            "unexpected": [
+                item
+                for item in actual_protected_webbed
+                if status_ident(item) not in predicted_ids
+            ],
+            "cleared": [
+                item
+                for item in predicted_protected_webbed
+                if status_ident(item) not in actual_ids
+            ],
         })
     deltas["mech_status_diff"] = status_deltas
 
@@ -6750,6 +6799,40 @@ def _classify_next_turn_web_grapples(
             ):
                 return None
 
+        def final_checkpoint_tile(pos: tuple[int, int]) -> dict | None:
+            if not isinstance(final_board, dict):
+                return None
+            tiles = final_board.get("tiles")
+            if not isinstance(tiles, list):
+                return None
+            found: dict | None = None
+            for raw in tiles:
+                if not isinstance(raw, dict):
+                    return None
+                x = raw.get("x")
+                y = raw.get("y")
+                if not plain_int(x) or not plain_int(y):
+                    return None
+                if (int(x), int(y)) == pos:
+                    found = raw
+            # Rust bridge serialization omits ordinary ground tiles.
+            return found if found is not None else {"terrain": "ground"}
+
+        def final_checkpoint_occupied(pos: tuple[int, int]) -> bool | None:
+            if not isinstance(final_units, list):
+                return None
+            for raw in final_units:
+                if not isinstance(raw, dict) or not plain_int(raw.get("hp")):
+                    return None
+                if int(raw["hp"]) <= 0:
+                    continue
+                raw_pos = checkpoint_position(raw)
+                if raw_pos is None:
+                    return None
+                if raw_pos == pos:
+                    return True
+            return False
+
         candidates: list[Unit] = []
         for spider in actual_by_uid.values():
             spider_uid = int(getattr(spider, "uid", -1) or -1)
@@ -6790,6 +6873,75 @@ def _classify_next_turn_web_grapples(
                 if isinstance(final_spider, dict)
                 else None
             )
+            checkpoint_parent_unchanged = (
+                previous_spider_pos is not None
+                and previous_spider_pos == final_spider_pos
+            )
+            parent_moved = (
+                checkpoint_parent_unchanged
+                and final_spider_pos != live_spider_pos
+            )
+            live_egg_distance = (
+                abs(live_spider_pos[0] - int(egg.x))
+                + abs(live_spider_pos[1] - int(egg.y))
+            )
+            live_egg_line_valid = (
+                (
+                    live_spider_pos[0] == int(egg.x)
+                    or live_spider_pos[1] == int(egg.y)
+                )
+                and 2 <= live_egg_distance <= 8
+            )
+            checkpoint_egg_aligned = (
+                checkpoint_parent_unchanged
+                and (
+                    final_spider_pos[0] == int(egg.x)
+                    or final_spider_pos[1] == int(egg.y)
+                )
+                and final_spider_pos != (int(egg.x), int(egg.y))
+            )
+            moved_parent_proven = False
+            if parent_moved and isinstance(final_spider, dict):
+                final_move = final_spider.get("move")
+                destination_tile = final_checkpoint_tile(live_spider_pos)
+                egg_tile = final_checkpoint_tile((int(egg.x), int(egg.y)))
+                destination_occupied = final_checkpoint_occupied(live_spider_pos)
+                egg_occupied = final_checkpoint_occupied(
+                    (int(egg.x), int(egg.y))
+                )
+                moved_parent_proven = (
+                    final_spider.get("can_move") is True
+                    and plain_int(final_move)
+                    and int(final_move) >= 1
+                    and abs(final_spider_pos[0] - live_spider_pos[0])
+                    + abs(final_spider_pos[1] - live_spider_pos[1]) == 1
+                    and (
+                        final_spider.get("frozen") is None
+                        or final_spider.get("frozen") is False
+                    )
+                    and (
+                        final_spider.get("web") is None
+                        or final_spider.get("web") is False
+                    )
+                    and not getattr(spider, "web", False)
+                    and isinstance(destination_tile, dict)
+                    and str(destination_tile.get("terrain") or "ground").lower()
+                    == "ground"
+                    and destination_tile.get("smoke") is not True
+                    and isinstance(egg_tile, dict)
+                    and str(egg_tile.get("terrain") or "ground").lower()
+                    == "ground"
+                    and destination_occupied is False
+                    and egg_occupied is False
+                    and checkpoint_egg_aligned
+                )
+            parent_position_proven = (
+                checkpoint_parent_unchanged
+                and (
+                    final_spider_pos == live_spider_pos
+                    or moved_parent_proven
+                )
+            )
             if (
                 not isinstance(previous_spider, dict)
                 or not isinstance(final_spider, dict)
@@ -6803,8 +6955,7 @@ def _classify_next_turn_web_grapples(
                 or not plain_int(final_spider.get("hp"))
                 or int(previous_spider["hp"]) != int(spider.hp)
                 or int(final_spider["hp"]) != int(spider.hp)
-                or previous_spider_pos != live_spider_pos
-                or final_spider_pos != live_spider_pos
+                or not parent_position_proven
                 or not checkpoint_explicitly_queueless(previous_spider)
                 or not checkpoint_explicitly_queueless(final_spider)
                 or not isinstance(previous_weapons, list)
@@ -6820,12 +6971,7 @@ def _classify_next_turn_web_grapples(
                     and final_spider.get("frozen") is not False
                 )
                 or (
-                    int(spider.x) == int(egg.x)
-                    and int(spider.y) == int(egg.y)
-                )
-                or (
-                    int(spider.x) != int(egg.x)
-                    and int(spider.y) != int(egg.y)
+                    not live_egg_line_valid
                 )
             ):
                 continue
@@ -6864,7 +7010,10 @@ def _classify_next_turn_web_grapples(
     for status_delta in deltas.get("mech_status_diff", []) or []:
         if not isinstance(status_delta, dict):
             continue
-        if status_delta.get("key") != "mechs_webbed":
+        if status_delta.get("key") not in {
+            "mechs_webbed",
+            "protected_objective_units_webbed",
+        }:
             continue
         raw_unexpected = status_delta.get("unexpected")
         if not isinstance(raw_unexpected, list) or not raw_unexpected:
@@ -6978,8 +7127,6 @@ def _classify_next_turn_web_grapples(
                 and previous_pos == actual_pos
                 and isinstance(final_mech, dict)
                 and final_mech_pos == actual_pos
-                and plain_int(previous_mech.get("hp"))
-                and int(previous_mech["hp"]) == int(mech.hp)
                 and plain_int(final_mech.get("team"))
                 and int(final_mech["team"]) == 1
                 and plain_int(final_mech.get("hp"))
@@ -6996,6 +7143,14 @@ def _classify_next_turn_web_grapples(
             if next_turn_spider_egg_web:
                 spider_parent = newly_laid_spider_egg_parent(source)
                 if spider_parent is not None:
+                    previous_parent_pos = checkpoint_position(
+                        previous_by_uid.get(int(spider_parent.uid))
+                    )
+                    live_parent_pos = (
+                        int(spider_parent.x),
+                        int(spider_parent.y),
+                    )
+                    parent_moved = previous_parent_pos != live_parent_pos
                     explained.append({
                         "uid": uid,
                         "type": str(mech.type),
@@ -7006,7 +7161,23 @@ def _classify_next_turn_web_grapples(
                         "spider_type": str(spider_parent.type),
                         "egg_position": [int(source.x), int(source.y)],
                         "reason": (
-                            "next_turn_surviving_spider_laid_adjacent_webb_egg"
+                            "next_turn_moved_surviving_spider_laid_adjacent_webb_egg"
+                            if parent_moved
+                            else "next_turn_surviving_spider_laid_adjacent_webb_egg"
+                        ),
+                        **(
+                            {
+                                "spider_previous_position": [
+                                    previous_parent_pos[0],
+                                    previous_parent_pos[1],
+                                ],
+                                "spider_position": [
+                                    live_parent_pos[0],
+                                    live_parent_pos[1],
+                                ],
+                            }
+                            if parent_moved and previous_parent_pos is not None
+                            else {}
                         ),
                     })
                     continue
@@ -7240,7 +7411,10 @@ def _classify_next_turn_web_grapples(
         for status_delta in deltas.get("mech_status_diff", []) or []:
             if not isinstance(status_delta, dict):
                 continue
-            if status_delta.get("key") != "mechs_webbed":
+            if status_delta.get("key") not in {
+                "mechs_webbed",
+                "protected_objective_units_webbed",
+            }:
                 continue
             for item in status_delta.get("unexplained_unexpected", []) or []:
                 if isinstance(item, dict):
