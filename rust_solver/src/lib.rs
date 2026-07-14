@@ -2269,7 +2269,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   after the killing action's own collision finishes. A later mech can move
 //   or push into the vacated tile instead of taking a phantom wreck bump.
 //   Pre-v357 corpus archived as failure_db_snapshot_sim_v356.jsonl.
-pub const SIMULATOR_VERSION: u32 = 357;
+// v358 - Successful weapon Fire destroys Time Pods even when the weapon deals
+//   zero direct damage. Replay snapshots also retain explicit targets and pod
+//   tiles across move/attack transitions so distant pod destruction is visible
+//   to per-action verification. Pre-v358 corpus archived as
+//   failure_db_snapshot_sim_v357.jsonl.
+pub const SIMULATOR_VERSION: u32 = 358;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

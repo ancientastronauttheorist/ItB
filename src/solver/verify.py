@@ -19,6 +19,7 @@ Design notes:
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -1665,7 +1666,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # the killing action's own collision finishes. Later mechs may enter or push
 # into the vacated tile instead of taking a phantom wreck bump. Pre-v357 corpus
 # archived as failure_db_snapshot_sim_v356.jsonl.
-SIMULATOR_VERSION = 357
+# v358 - Successful weapon Fire destroys Time Pods even at zero direct damage.
+# Per-action snapshots retain explicit targets and pre-action/live pod tiles so
+# distant pod-state mismatches cannot evade verify. Pre-v358 corpus archived as
+# failure_db_snapshot_sim_v357.jsonl.
+SIMULATOR_VERSION = 358
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1715,6 +1720,7 @@ def snapshot_after_move(
     action_index: int,
     mech_uid: int,
     move_events: list[str],
+    extra_touched: Iterable[tuple[int, int]] | None = None,
 ) -> dict:
     """Capture board snapshot after only the move phase.
 
@@ -1724,6 +1730,9 @@ def snapshot_after_move(
     before proceeding to the attack phase.
     """
     touched: set[tuple[int, int]] = set(parse_tiles_from_events(move_events))
+    for x, y in extra_touched or ():
+        if 0 <= x < 8 and 0 <= y < 8:
+            touched.add((x, y))
 
     for u in board.units:
         if u.uid == mech_uid:
@@ -1737,6 +1746,11 @@ def snapshot_after_move(
                 nx, ny = tx + dx, ty + dy
                 if 0 <= nx < 8 and 0 <= ny < 8:
                     expanded.add((nx, ny))
+    for x in range(8):
+        for y in range(8):
+            tile = board.tile(x, y)
+            if tile.terrain == "building" or tile.has_pod:
+                expanded.add((x, y))
 
     units_snapshot = []
     for u in board.units:
@@ -1805,6 +1819,7 @@ def snapshot_after_action(
     action_index: int,
     mech_uid: int,
     events: list[str],
+    extra_touched: Iterable[tuple[int, int]] | None = None,
 ) -> dict:
     """Capture a JSON-friendly board snapshot after a mech action mutates it.
 
@@ -1816,6 +1831,9 @@ def snapshot_after_action(
     building outside an event-derived neighborhood.
     """
     touched: set[tuple[int, int]] = set(parse_tiles_from_events(events))
+    for x, y in extra_touched or ():
+        if 0 <= x < 8 and 0 <= y < 8:
+            touched.add((x, y))
 
     # Always capture the mech's current tile (move-only actions emit no
     # events but we still want the destination).
@@ -1834,7 +1852,8 @@ def snapshot_after_action(
                     expanded.add((nx, ny))
     for x in range(8):
         for y in range(8):
-            if board.tile(x, y).terrain == "building":
+            tile = board.tile(x, y)
+            if tile.terrain == "building" or tile.has_pod:
                 expanded.add((x, y))
 
     units_snapshot = []

@@ -132,8 +132,11 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             None => simulate_move(&mut board, mech_idx, move_to),
         };
         let move_unit_deaths = count_unit_deaths_between(&before_move_board, &board);
+        let mut post_move_extra_touched = pod_coords(&before_move_board);
+        post_move_extra_touched.push(move_to);
         let post_move_snap = capture_snapshot(
             &board, i, mech_uid, &move_result.events, "after_move",
+            &post_move_extra_touched,
         );
 
         // Phase 2: attack
@@ -160,8 +163,14 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         let action_unit_deaths = move_unit_deaths + attack_unit_deaths;
         let mut all_events = move_result.events.clone();
         all_events.extend_from_slice(&attack_result.events);
+        let mut post_attack_extra_touched = pod_coords(&before_attack_board);
+        post_attack_extra_touched.push((act.target[0], act.target[1]));
+        if let Some(target2) = act.target2 {
+            post_attack_extra_touched.push((target2[0], target2[1]));
+        }
         let post_attack_snap = capture_snapshot(
             &board, i, mech_uid, &all_events, "after_mech_action",
+            &post_attack_extra_touched,
         );
         // The split replay path bypasses simulate_action_with_target2, so
         // settle Digger rock walls explicitly after capturing the action's
@@ -344,26 +353,45 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     Ok(out.to_string())
 }
 
+fn pod_coords(board: &Board) -> Vec<(u8, u8)> {
+    let mut pods = Vec::new();
+    for x in 0..8u8 {
+        for y in 0..8u8 {
+            if board.tile(x, y).has_pod() {
+                pods.push((x, y));
+            }
+        }
+    }
+    pods
+}
+
 // ── Snapshot helpers ────────────────────────────────────────────────────────
 
 /// Mirror `src/solver/verify.py::snapshot_after_action` (and
 /// `snapshot_after_move`). Captures every unit (alive or dead — diff
-/// engine needs death/spawn detection) and the tiles touched by `events` +
-/// a 1-tile buffer + the mech's current tile + every building tile. Buildings
-/// are included globally because Grid Defense / Blast Psion interactions can
-/// damage a building outside the sparse event-derived neighborhood.
+/// engine needs death/spawn detection) and the tiles touched by `events` or
+/// `extra_touched` + a 1-tile buffer + the mech's current tile + every building
+/// and currently-present pod tile. Buildings and pods are included globally
+/// because they are critical safety state even when outside the sparse
+/// event-derived neighborhood.
 fn capture_snapshot(
     board: &Board,
     action_index: usize,
     mech_uid: u16,
     events: &[String],
     snapshot_phase: &str,
+    extra_touched: &[(u8, u8)],
 ) -> Value {
     // Touched tile set: parse coords from events, always include the
     // mech's current tile.
     let mut touched: BTreeSet<(u8, u8)> = BTreeSet::new();
     for ev in events {
         for (x, y) in parse_coords(ev) {
+            touched.insert((x, y));
+        }
+    }
+    for &(x, y) in extra_touched {
+        if x < 8 && y < 8 {
             touched.insert((x, y));
         }
     }
@@ -387,7 +415,7 @@ fn capture_snapshot(
     for x in 0..8u8 {
         for y in 0..8u8 {
             let t = board.tile(x, y);
-            if t.terrain == Terrain::Building {
+            if t.terrain == Terrain::Building || t.has_pod() {
                 expanded.insert((x, y));
             }
         }
@@ -847,6 +875,64 @@ mod tests {
             .find(|t| t["x"] == 3 && t["y"] == 5)
             .unwrap();
         assert_eq!(pod_tile["has_pod"], false);
+    }
+
+    #[test]
+    fn replay_solution_distant_ranged_ignite_serializes_destroyed_time_pod() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 1, "y": 2, "terrain": "ground", "has_pod": true}
+          ],
+          "units": [
+            {"uid": 0, "type": "IgniteMech", "x": 6, "y": 2,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true,
+             "weapons": ["Ranged_Ignite"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [6, 2],
+          "weapon_id": "Ranged_Ignite",
+          "target": [1, 2]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+
+        let post_move_tiles = v["predicted_states"][0]["post_move"]["tiles_changed"]
+            .as_array()
+            .unwrap();
+        let pod_before_attack = post_move_tiles
+            .iter()
+            .find(|tile| tile["x"] == 1 && tile["y"] == 2)
+            .expect("distant pre-attack pod must be serialized");
+        assert_eq!(pod_before_attack["has_pod"], true);
+
+        let post_attack_tiles = v["predicted_states"][0]["post_attack"]["tiles_changed"]
+            .as_array()
+            .unwrap();
+        let burned_pod = post_attack_tiles
+            .iter()
+            .find(|tile| tile["x"] == 1 && tile["y"] == 2)
+            .expect("distant Ignite target must be serialized");
+        assert_eq!(burned_pod["fire"], true);
+        assert_eq!(burned_pod["has_pod"], false);
+
+        for board_key in ["post_player_board", "final_board"] {
+            let tiles = v[board_key]["tiles"].as_array().unwrap();
+            assert!(
+                tiles.iter().all(|tile| tile["has_pod"].as_bool() != Some(true)),
+                "{board_key} must not retain a pod destroyed by Ignite"
+            );
+        }
     }
 
     #[test]

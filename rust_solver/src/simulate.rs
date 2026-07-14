@@ -3086,6 +3086,10 @@ fn apply_fire_weapon_tile_status(board: &mut Board, x: u8, y: u8) {
     }
     tile.set_smoke(false);
     tile.set_on_fire(true);
+    // Time Pods are destroyed when their tile is successfully set on Fire,
+    // even when the weapon deals zero direct damage (for example Vulcan
+    // Artillery / Ranged_Ignite).
+    tile.set_has_pod(false);
 }
 
 fn apply_freeze_weapon_tile_status(board: &mut Board, x: u8, y: u8) {
@@ -3991,9 +3995,9 @@ fn sim_firestorm_generator(
         if !in_bounds(px, py) { break; }
         let x = px as u8;
         let y = py as u8;
+        let had_pod = board.tile(x, y).has_pod();
         newly_burning += apply_weapon_fire_and_count_new_enemy(board, x, y, wdef);
-        if board.tile(x, y).has_pod() && board.tile(x, y).on_fire() {
-            board.tile_mut(x, y).set_has_pod(false);
+        if had_pod && !board.tile(x, y).has_pod() {
             result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
         }
     }
@@ -12841,6 +12845,32 @@ mod tests {
 
         assert_eq!(board.units[enemy].hp, 3, "zero-damage adjacent push stays non-damaging");
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 4));
+    }
+
+    #[test]
+    fn test_ranged_ignite_center_fire_destroys_time_pod_without_collecting() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 2, 3, WId::RangedIgnite);
+        board.tile_mut(4, 4).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedIgnite, 4, 4);
+
+        assert!(board.tile(4, 4).on_fire(), "Vulcan target tile catches fire");
+        assert!(!board.tile(4, 4).has_pod(), "Fire destroys the target Time Pod");
+        assert_eq!(result.pods_collected, 0, "burning a pod is not collection");
+    }
+
+    #[test]
+    fn test_ranged_ignite_adjacent_unlit_time_pod_survives() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 2, 3, WId::RangedIgnite);
+        board.tile_mut(5, 4).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedIgnite, 4, 4);
+
+        assert!(!board.tile(5, 4).on_fire(), "Vulcan does not ignite adjacent tiles");
+        assert!(board.tile(5, 4).has_pod(), "zero-damage adjacent air push leaves the pod intact");
+        assert_eq!(result.pods_collected, 0);
     }
 
     #[test]

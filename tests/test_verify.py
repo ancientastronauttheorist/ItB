@@ -18,6 +18,7 @@ Covers:
 from src.solver.verify import (
     SOLVE_RECORD_SCHEMA_VERSION,
     parse_tiles_from_events,
+    snapshot_after_move,
     snapshot_after_action,
     diff_states,
     classify_diff,
@@ -355,6 +356,61 @@ diff = diff_states(predicted_post_action_pod, actual_mid_move_pod_board)
 check("post-action pod mismatch still reported",
       any(d["field"] == "has_pod" for d in diff.tile_diffs),
       diff.tile_diffs)
+
+# Test 23: explicit pre-action pod coordinates survive sparse post-action
+# capture even after the predicted board has removed the pod.
+distant_pod = (6, 6)
+predicted_pod_destroyed_board = make_board(units=[
+    mk_unit(3, "IgniteMech", 1, 1, hp=3, max_hp=3),
+])
+move_snap = snapshot_after_move(
+    predicted_pod_destroyed_board,
+    0,
+    mech_uid=3,
+    move_events=[],
+    extra_touched=[distant_pod],
+)
+attack_snap = snapshot_after_action(
+    predicted_pod_destroyed_board,
+    0,
+    mech_uid=3,
+    events=[],
+    extra_touched=[distant_pod],
+)
+check("move snapshot retains explicit distant pod coordinate",
+      any(t["x"] == 6 and t["y"] == 6 and t["has_pod"] is False
+          for t in move_snap["tiles_changed"]),
+      move_snap["tiles_changed"])
+check("action snapshot retains explicit distant pod coordinate",
+      any(t["x"] == 6 and t["y"] == 6 and t["has_pod"] is False
+          for t in attack_snap["tiles_changed"]),
+      attack_snap["tiles_changed"])
+
+# Test 24: every live pod is sampled globally, so an unmodeled distant pod
+# disappearance becomes a classified has_pod diff.
+predicted_live_pod_board = make_board(units=[
+    mk_unit(3, "IgniteMech", 1, 1, hp=3, max_hp=3),
+])
+predicted_live_pod_board.tile(*distant_pod).has_pod = True
+predicted_live_pod = snapshot_after_action(
+    predicted_live_pod_board, 0, mech_uid=3, events=[]
+)
+actual_missing_pod_board = make_board(units=[
+    mk_unit(3, "IgniteMech", 1, 1, hp=3, max_hp=3),
+])
+diff = diff_states(predicted_live_pod, actual_missing_pod_board)
+classification = classify_diff(diff, mech_uid=3)
+check("distant live pod is sampled globally",
+      any(t["x"] == 6 and t["y"] == 6 and t["has_pod"] is True
+          for t in predicted_live_pod["tiles_changed"]),
+      predicted_live_pod["tiles_changed"])
+check("distant missing pod yields has_pod diff",
+      any(d["x"] == 6 and d["y"] == 6 and d["field"] == "has_pod"
+          and d["predicted"] is True and d["actual"] is False
+          for d in diff.tile_diffs),
+      diff.tile_diffs)
+check("distant missing pod classifies as pod",
+      "pod" in classification["categories"], classification)
 
 print(f"\n{passed}/{passed+failed} tests passed")
 if failed:
