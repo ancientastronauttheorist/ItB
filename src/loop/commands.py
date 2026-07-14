@@ -35,7 +35,7 @@ from src.capture.save_parser import (
     parse_lua_table,
     SAVE_DIR,
 )
-from src.model.board import Board
+from src.model.board import Board, Unit
 from src.model.pawn_stats import get_pawn_stats
 from src.model.weapons import get_weapon_name
 from src.solver.solver import MechAction, Solution, replay_solution
@@ -6524,10 +6524,200 @@ def _classify_next_turn_web_grapples(
 
     explained_all: list[dict] = []
     used_emergent_sources: set[int] = set()
+    spider_parent_by_egg_uid: dict[int, Unit] = {}
+    used_spider_parent_uids: set[int] = set()
     emergent_candidates_by_source: dict[int, list[tuple[int, int]]] = {}
     emergent_spawn_owner: dict[tuple[int, int], int] = {}
     emergent_source_spawn: dict[int, tuple[int, int]] = {}
     emergent_explanation_by_source: dict[int, dict] = {}
+
+    def newly_laid_spider_egg_parent(egg: Unit) -> Unit | None:
+        """Prove that an actual-only WebbEgg came from one surviving Spider.
+
+        Spider target selection and egg placement happen in the next AI
+        telegraph horizon, after deterministic one-turn replay ends.  Keep
+        this explanation deliberately narrower than generic next-turn Web:
+        the egg must be new in the fresh board, self-queue its hatch, and
+        align with exactly one unchanged, canonically queueless regular
+        Spider that survived both replay checkpoints.
+        """
+        egg_uid = int(getattr(egg, "uid", -1) or -1)
+        cached = spider_parent_by_egg_uid.get(egg_uid)
+        if cached is not None:
+            return cached
+        if (
+            egg_uid < 0
+            or egg_uid in previous_by_uid
+            or final_by_uid is None
+            or egg_uid in final_by_uid
+            or str(getattr(egg, "type", "")) != "WebbEgg1"
+            or not getattr(egg, "is_enemy", False)
+            or not getattr(egg, "minor", False)
+            or int(getattr(egg, "hp", 0) or 0) <= 0
+            or str(getattr(egg, "weapon", "")) != "WebeggHatch1"
+            or not getattr(egg, "has_queued_attack", False)
+            or getattr(board, "spider_psion_active", False)
+            or (
+                int(getattr(egg, "queued_origin_x", -1)),
+                int(getattr(egg, "queued_origin_y", -1)),
+            ) != (int(egg.x), int(egg.y))
+            or (
+                int(getattr(egg, "queued_target_x", -1)),
+                int(getattr(egg, "queued_target_y", -1)),
+            ) != (int(egg.x), int(egg.y))
+        ):
+            return None
+
+        fresh_eggs = [
+            raw for raw in actual_by_uid.values()
+            if (
+                str(getattr(raw, "type", "")) == "WebbEgg1"
+                and getattr(raw, "is_enemy", False)
+                and int(getattr(raw, "hp", 0) or 0) > 0
+                and int(getattr(raw, "uid", -1) or -1) not in previous_by_uid
+                and int(getattr(raw, "uid", -1) or -1) not in final_by_uid
+            )
+        ]
+        if len(fresh_eggs) != 1 or int(fresh_eggs[0].uid) != egg_uid:
+            return None
+
+        # Do not infer a next-telegraph parent when the deterministic enemy
+        # phase had any other way to create a WebbEgg.  A queued Spider attack
+        # or a live Spider Psion could expose a real replay miss; an unrelated
+        # queueless Spider aligned with the resulting egg must not hide it.
+        for checkpoint in (previous_by_uid, final_by_uid):
+            for raw in checkpoint.values():
+                if (
+                    not isinstance(raw, dict)
+                    or not plain_int(raw.get("team"))
+                    or int(raw["team"]) != 6
+                    or not plain_int(raw.get("hp"))
+                    or int(raw["hp"]) <= 0
+                ):
+                    continue
+                raw_type = str(raw.get("type") or "")
+                if raw_type in {"Jelly_Spider1", "SpiderBoss"}:
+                    return None
+                if (
+                    raw_type in {"Spider1", "Spider2"}
+                    and not checkpoint_explicitly_queueless(raw)
+                ):
+                    return None
+
+        for raw in actual_by_uid.values():
+            if (
+                not getattr(raw, "is_enemy", False)
+                or int(getattr(raw, "hp", 0) or 0) <= 0
+            ):
+                continue
+            raw_uid = int(getattr(raw, "uid", -1) or -1)
+            raw_type = str(getattr(raw, "type", ""))
+            if raw_type in {"Jelly_Spider1", "SpiderBoss"}:
+                return None
+            if raw_type not in {"Spider1", "Spider2"}:
+                continue
+            if raw_uid not in previous_by_uid or raw_uid not in final_by_uid:
+                return None
+            if (
+                getattr(raw, "has_queued_attack", False)
+                or (
+                    int(getattr(raw, "queued_origin_x", -1)),
+                    int(getattr(raw, "queued_origin_y", -1)),
+                ) not in {(-1, -1), (int(raw.x), int(raw.y))}
+                or (
+                    int(getattr(raw, "queued_target_x", -1)),
+                    int(getattr(raw, "queued_target_y", -1)),
+                ) != (-1, -1)
+            ):
+                return None
+
+        candidates: list[Unit] = []
+        for spider in actual_by_uid.values():
+            spider_uid = int(getattr(spider, "uid", -1) or -1)
+            spider_type = str(getattr(spider, "type", ""))
+            spider_weapon = str(getattr(spider, "weapon", ""))
+            if (
+                spider_uid < 0
+                or spider_uid in used_spider_parent_uids
+                or spider_type not in {"Spider1", "Spider2"}
+                or spider_weapon not in {"SpiderAtk1", "SpiderAtk2"}
+                or not getattr(spider, "is_enemy", False)
+                or int(getattr(spider, "hp", 0) or 0) <= 0
+                or getattr(spider, "has_queued_attack", False)
+                or getattr(spider, "frozen", False)
+                or (
+                    int(getattr(spider, "queued_origin_x", -1)),
+                    int(getattr(spider, "queued_origin_y", -1)),
+                ) not in {(-1, -1), (int(spider.x), int(spider.y))}
+                or (
+                    int(getattr(spider, "queued_target_x", -1)),
+                    int(getattr(spider, "queued_target_y", -1)),
+                ) != (-1, -1)
+            ):
+                continue
+
+            previous_spider = previous_by_uid.get(spider_uid)
+            final_spider = final_by_uid.get(spider_uid)
+            previous_spider_pos = checkpoint_position(previous_spider)
+            final_spider_pos = checkpoint_position(final_spider)
+            live_spider_pos = (int(spider.x), int(spider.y))
+            previous_weapons = (
+                previous_spider.get("weapons")
+                if isinstance(previous_spider, dict)
+                else None
+            )
+            final_weapons = (
+                final_spider.get("weapons")
+                if isinstance(final_spider, dict)
+                else None
+            )
+            if (
+                not isinstance(previous_spider, dict)
+                or not isinstance(final_spider, dict)
+                or not plain_int(previous_spider.get("team"))
+                or int(previous_spider["team"]) != 6
+                or not plain_int(final_spider.get("team"))
+                or int(final_spider["team"]) != 6
+                or previous_spider.get("type") != spider_type
+                or final_spider.get("type") != spider_type
+                or not plain_int(previous_spider.get("hp"))
+                or not plain_int(final_spider.get("hp"))
+                or int(previous_spider["hp"]) != int(spider.hp)
+                or int(final_spider["hp"]) != int(spider.hp)
+                or previous_spider_pos != live_spider_pos
+                or final_spider_pos != live_spider_pos
+                or not checkpoint_explicitly_queueless(previous_spider)
+                or not checkpoint_explicitly_queueless(final_spider)
+                or not isinstance(previous_weapons, list)
+                or previous_weapons != [spider_weapon]
+                or not isinstance(final_weapons, list)
+                or final_weapons != [spider_weapon]
+                or (
+                    previous_spider.get("frozen") is not None
+                    and previous_spider.get("frozen") is not False
+                )
+                or (
+                    final_spider.get("frozen") is not None
+                    and final_spider.get("frozen") is not False
+                )
+                or (
+                    int(spider.x) == int(egg.x)
+                    and int(spider.y) == int(egg.y)
+                )
+                or (
+                    int(spider.x) != int(egg.x)
+                    and int(spider.y) != int(egg.y)
+                )
+            ):
+                continue
+            candidates.append(spider)
+
+        if len(candidates) != 1:
+            return None
+        parent = candidates[0]
+        spider_parent_by_egg_uid[egg_uid] = parent
+        used_spider_parent_uids.add(int(parent.uid))
+        return parent
 
     def claim_emergent_spawn(
         source_uid: int,
@@ -6632,6 +6822,17 @@ def _classify_next_turn_web_grapples(
                 if final_by_uid is not None
                 else None
             )
+            adjacent_live_egg_uids = {
+                int(getattr(raw, "uid", -1) or -1)
+                for raw in actual_by_uid.values()
+                if (
+                    str(getattr(raw, "type", "")) == "WebbEgg1"
+                    and getattr(raw, "is_enemy", False)
+                    and int(getattr(raw, "hp", 0) or 0) > 0
+                    and abs(int(raw.x) - int(mech.x))
+                    + abs(int(raw.y) - int(mech.y)) == 1
+                )
+            }
             final_source_pos = checkpoint_position(final_source)
             previous_target = (
                 checkpoint_queued_target(previous_source)
@@ -6647,6 +6848,49 @@ def _classify_next_turn_web_grapples(
                 if isinstance(previous_source, dict)
                 else None
             )
+            next_turn_spider_egg_web = (
+                source is not None
+                and str(getattr(source, "type", "")) == "WebbEgg1"
+                and previous_source is None
+                and final_source is None
+                and adjacent_live_egg_uids == {source_uid}
+                and abs(int(source.x) - int(mech.x))
+                + abs(int(source.y) - int(mech.y)) == 1
+                and previous_pos == actual_pos
+                and isinstance(final_mech, dict)
+                and final_mech_pos == actual_pos
+                and plain_int(previous_mech.get("hp"))
+                and int(previous_mech["hp"]) == int(mech.hp)
+                and plain_int(final_mech.get("team"))
+                and int(final_mech["team"]) == 1
+                and plain_int(final_mech.get("hp"))
+                and int(final_mech["hp"]) == int(mech.hp)
+                and final_mech.get("type") == str(mech.type)
+                and plain_int(solve_data.get("simulator_version"))
+                and int(solve_data["simulator_version"]) >= 353
+                and plain_int(post_player.get("turn"))
+                and int(post_player["turn"]) == expected_turn - 1
+                and isinstance(final_board, dict)
+                and plain_int(final_board.get("turn"))
+                and int(final_board["turn"]) == expected_turn
+            )
+            if next_turn_spider_egg_web:
+                spider_parent = newly_laid_spider_egg_parent(source)
+                if spider_parent is not None:
+                    explained.append({
+                        "uid": uid,
+                        "type": str(mech.type),
+                        "pos": [int(mech.x), int(mech.y)],
+                        "source_uid": int(source.uid),
+                        "source_type": str(source.type),
+                        "spider_uid": int(spider_parent.uid),
+                        "spider_type": str(spider_parent.type),
+                        "egg_position": [int(source.x), int(source.y)],
+                        "reason": (
+                            "next_turn_surviving_spider_laid_adjacent_webb_egg"
+                        ),
+                    })
+                    continue
             previous_first_queue = (
                 isinstance(previous_source, dict)
                 and stationary_mech
