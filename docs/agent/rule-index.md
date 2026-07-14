@@ -489,3 +489,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 488 | 873 | A regular Spider's full proven Move-2 path may precede its next-turn egg. | `docs/agent/safety-gates.md` |
 | 489 | 875 | Missile Barrage kill side effects can remain in flight after the ACK. | `docs/agent/solver-reference.md` |
 | 490 | 877 | Detritus barrages preserve Lua coordinate order and objective-only Shield uses. | `docs/agent/solver-reference.md` |
+| 491 | 879 | Terminal reprojection preserves only verified player-action counters. | `docs/agent/safety-gates.md` |

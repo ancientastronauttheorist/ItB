@@ -48723,6 +48723,11 @@ def _build_terminal_desync_reprojection(
     detected_desync_count: int,
     re_solve_count: int,
     settlement: dict,
+    turn_start_outcome: dict | None = None,
+    verified_action_results: list[dict] | None = None,
+    counter_ledger_prefix_complete: bool = False,
+    terminal_predicted_state: dict | None = None,
+    terminal_action_result: dict | None = None,
 ) -> tuple[dict | None, dict | None]:
     """Project enemy resolution from settled live state with zero actions.
 
@@ -48785,7 +48790,7 @@ def _build_terminal_desync_reprojection(
     enriched = projection.get("enriched")
     predicted_outcome = projection.get("predicted_outcome")
     predicted_summary = projection.get("predicted_board_summary")
-    current_outcome = projection.get("current_outcome")
+    settled_current_outcome = projection.get("current_outcome")
     plan_safety = projection.get("plan_safety")
     if not isinstance(enriched, dict):
         return None, {
@@ -48803,7 +48808,7 @@ def _build_terminal_desync_reprojection(
         "final_board": final_board,
         "predicted_outcome": predicted_outcome,
         "predicted_board_summary": predicted_summary,
-        "current_outcome": current_outcome,
+        "current_outcome": settled_current_outcome,
         "plan_safety": plan_safety,
     }
     missing = [
@@ -48817,13 +48822,276 @@ def _build_terminal_desync_reprojection(
             "artifacts": missing,
         }
 
+    # The empty replay starts after every player action, so its physical board
+    # is authoritative but its action attribution is necessarily zero. Carry
+    # only counters from results whose post-action snapshots were verified.
+    # The terminal action itself becomes trustworthy only when the settled
+    # board exactly matches its predicted post-attack snapshot.
+    ledger_results = [
+        dict(item)
+        for item in (verified_action_results or [])
+        if isinstance(item, dict)
+    ]
+    terminal_action_matched = False
+    terminal_action_diff = None
+    if (
+        isinstance(terminal_predicted_state, dict)
+        and isinstance(terminal_action_result, dict)
+    ):
+        from src.solver.verify import diff_states
+
+        terminal_action_diff = diff_states(
+            terminal_predicted_state,
+            board,
+        )
+        terminal_action_matched = terminal_action_diff.is_empty()
+        if terminal_action_matched:
+            ledger_results.append(dict(terminal_action_result))
+
+    required_counter_fields = (
+        "enemies_killed",
+        "unit_deaths",
+        "mission_kills",
+        "pods_collected",
+    )
+
+    def _nonnegative_int(value: object) -> int | None:
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            return None
+        return value
+
+    ledger_validation_errors: list[dict] = []
+    for index, item in enumerate(ledger_results):
+        for field in required_counter_fields:
+            value = item.get(field)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                ledger_validation_errors.append({
+                    "action_index": index,
+                    "field": field,
+                    "value": value,
+                })
+
+    expected_action_results = _nonnegative_int(desync.get("action_index"))
+    if expected_action_results is not None:
+        expected_action_results += 1
+    ledger_count_matches = (
+        expected_action_results is not None
+        and len(ledger_results) == expected_action_results
+    )
+
+    empty_projection_counter_fields = (
+        "enemies_killed_by_enemy_phase",
+        "enemies_killed_by_spawn_block",
+        "unit_deaths_by_enemy_phase",
+        "unit_deaths_by_spawn_block",
+        "mission_kills_by_enemy_phase",
+        "mission_kills_by_spawn_block",
+        "mission_kills_done_projected",
+    )
+    projection_counter_errors: list[dict] = []
+    for field in empty_projection_counter_fields:
+        value = predicted_outcome.get(field)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            projection_counter_errors.append({"field": field, "value": value})
+    for checkpoint_name, checkpoint in (
+        ("post_player_board", post_player_board),
+        ("final_board", final_board),
+    ):
+        value = checkpoint.get("mission_kills_done")
+        if _nonnegative_int(value) is None:
+            projection_counter_errors.append({
+                "field": f"{checkpoint_name}.mission_kills_done",
+                "value": value,
+            })
+
+    counter_ledger_complete = bool(
+        counter_ledger_prefix_complete
+        and terminal_action_matched
+        and ledger_count_matches
+        and not ledger_validation_errors
+        and not projection_counter_errors
+    )
+
+    initial_outcome = dict(settled_current_outcome)
+    if isinstance(turn_start_outcome, dict) and turn_start_outcome:
+        # Keep newly surfaced metadata from the settled summary, but audit the
+        # complete turn against its true pre-action baseline so player-phase
+        # Grid/building/mech/pod losses cannot disappear during reprojection.
+        initial_outcome.update(turn_start_outcome)
+
+    kill_target = _nonnegative_int(initial_outcome.get("mission_kill_target"))
+    kill_limit = _nonnegative_int(initial_outcome.get("mission_kill_limit"))
+    initial_pods = _nonnegative_int(initial_outcome.get("pods_present"))
+    settled_pods = _nonnegative_int(
+        settled_current_outcome.get("pods_present")
+    )
+    pod_transition_needs_proof = (
+        initial_pods is not None
+        and settled_pods is not None
+        and settled_pods < initial_pods
+    )
+
+    def _sum_counter(field: str) -> int:
+        if ledger_validation_errors:
+            return 0
+        return sum(int(item[field]) for item in ledger_results)
+
+    player_enemy_kills = _sum_counter("enemies_killed")
+    player_unit_deaths = _sum_counter("unit_deaths")
+    player_mission_kills = _sum_counter("mission_kills")
+    player_pods_collected = _sum_counter("pods_collected")
+
+    predicted_outcome = dict(predicted_outcome)
+    predicted_summary = dict(predicted_summary)
+    post_player_board = dict(post_player_board)
+    final_board = dict(final_board)
+
+    player_fields = {
+        "enemies_killed_by_player": player_enemy_kills,
+        "unit_deaths_by_player": player_unit_deaths,
+        "mission_kills_by_player": player_mission_kills,
+    }
+
+    def _projection_count(field: str) -> int:
+        value = predicted_outcome.get(field)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            return 0
+        return value
+
+    total_fields = {
+        "enemies_killed_total_projected": (
+            player_enemy_kills
+            + _projection_count("enemies_killed_by_enemy_phase")
+            + _projection_count("enemies_killed_by_spawn_block")
+        ),
+        "unit_deaths_total_projected": (
+            player_unit_deaths
+            + _projection_count("unit_deaths_by_enemy_phase")
+            + _projection_count("unit_deaths_by_spawn_block")
+        ),
+        "mission_kills_total_projected": (
+            player_mission_kills
+            + _projection_count("mission_kills_by_enemy_phase")
+            + _projection_count("mission_kills_by_spawn_block")
+        ),
+    }
+    for field, value in player_fields.items():
+        predicted_outcome[field] = value
+    for field, value in total_fields.items():
+        predicted_outcome[field] = value
+
+    # A live mission counter may already include player-phase kills, or it may
+    # stay at the turn-start value until End Turn. Add only the verified share
+    # that is still absent from the settled counter.
+    initial_kills_done = _nonnegative_int(
+        initial_outcome.get("mission_kills_done")
+    )
+    settled_kills_done = _nonnegative_int(
+        settled_current_outcome.get("mission_kills_done")
+    )
+    player_kills_already_visible = 0
+    if initial_kills_done is None or settled_kills_done is None:
+        counter_ledger_complete = False
+    else:
+        visible_delta = settled_kills_done - initial_kills_done
+        if visible_delta < 0 or visible_delta > player_mission_kills:
+            counter_ledger_complete = False
+        else:
+            player_kills_already_visible = visible_delta
+
+    pod_counter_valid = True
+    if player_pods_collected > 0:
+        if initial_pods is None or settled_pods is None:
+            pod_counter_valid = False
+        else:
+            pod_counter_valid = player_pods_collected <= max(
+                0,
+                initial_pods - settled_pods,
+            )
+    if not pod_counter_valid:
+        counter_ledger_complete = False
+
+    counter_sensitive = (
+        (kill_target is not None and kill_target > 0)
+        or (kill_limit is not None and kill_limit > 0)
+        or pod_transition_needs_proof
+        or player_pods_collected > 0
+        or not pod_counter_valid
+    )
+    if not counter_ledger_complete and counter_sensitive:
+        return None, {
+            "status": "ERROR",
+            "error": "terminal_desync_counter_provenance_uncertain",
+            "kill_target": kill_target,
+            "kill_limit": kill_limit,
+            "pod_transition_needs_proof": pod_transition_needs_proof,
+            "expected_action_results": expected_action_results,
+            "verified_action_results": len(ledger_results),
+            "ledger_count_matches": ledger_count_matches,
+            "ledger_validation_errors": ledger_validation_errors,
+            "projection_counter_errors": projection_counter_errors,
+            "initial_kills_done": initial_kills_done,
+            "settled_kills_done": settled_kills_done,
+            "player_mission_kills": player_mission_kills,
+            "player_pods_collected": player_pods_collected,
+            "pod_counter_valid": pod_counter_valid,
+            "terminal_action_matched": terminal_action_matched,
+            "terminal_action_diff": (
+                terminal_action_diff.to_dict()
+                if terminal_action_diff is not None
+                else None
+            ),
+        }
+    missing_player_mission_kills = max(
+        0,
+        player_mission_kills - player_kills_already_visible,
+    )
+    projected_kills_done = _nonnegative_int(
+        predicted_outcome.get("mission_kills_done_projected")
+    )
+    if projected_kills_done is not None:
+        predicted_outcome["mission_kills_done_projected"] = (
+            projected_kills_done + missing_player_mission_kills
+        )
+    for checkpoint in (post_player_board, final_board):
+        checkpoint_kills = _nonnegative_int(
+            checkpoint.get("mission_kills_done")
+        )
+        if checkpoint_kills is not None:
+            checkpoint["mission_kills_done"] = (
+                checkpoint_kills + missing_player_mission_kills
+            )
+
+    for field in (*player_fields, *total_fields):
+        predicted_summary[field] = predicted_outcome.get(field, 0)
+    corrected_kills_done = _nonnegative_int(
+        predicted_outcome.get("mission_kills_done_projected")
+    )
+    if corrected_kills_done is not None:
+        predicted_summary["mission_kills_done"] = corrected_kills_done
+    predicted_summary["mission_kills_planned"] = int(
+        predicted_outcome.get("mission_kills_total_projected", 0) or 0
+    )
+    predicted_summary["pods_collected"] = player_pods_collected
+    for field in ("mission_kill_target", "mission_kill_limit"):
+        value = _nonnegative_int(initial_outcome.get(field))
+        if value is not None and value > 0:
+            predicted_summary[field] = value
+
+    plan_safety = audit_plan_safety(
+        initial_outcome,
+        predicted_summary,
+        block_mech_hp_loss=_blocks_mech_hp_loss_for_perfect_battle(session),
+        block_mech_status_loss=_blocks_mech_status_loss_for_run(session),
+    )
+
     prior_source = solve_data.get("selected_candidate_source")
     replacement = dict(solve_data)
     replacement.update({
         "post_enemy_prediction_source": "terminal_desync_reprojection",
         "post_player_board": post_player_board,
         "final_board": final_board,
-        "current_outcome": current_outcome,
+        "current_outcome": initial_outcome,
         "predicted_outcome": predicted_outcome,
         "predicted_board_summary": predicted_summary,
         "plan_safety": plan_safety,
@@ -48838,6 +49106,20 @@ def _build_terminal_desync_reprojection(
             "actual_re_solves": re_solve_count,
             "desync": desync,
             "settlement": settlement,
+            "counter_ledger": {
+                "version": 1,
+                "complete": counter_ledger_complete,
+                "prefix_complete": bool(counter_ledger_prefix_complete),
+                "terminal_action_matched": terminal_action_matched,
+                "verified_action_results": len(ledger_results),
+                "player_enemy_kills": player_enemy_kills,
+                "player_unit_deaths": player_unit_deaths,
+                "player_mission_kills": player_mission_kills,
+                "player_pods_collected": player_pods_collected,
+                "missing_player_mission_kills": (
+                    missing_player_mission_kills
+                ),
+            },
         },
     })
     return replacement, None
@@ -50647,6 +50929,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     re_solve_count = 0
     detected_desync_count = 0
     terminal_desync: dict | None = None
+    turn_start_outcome = dict(solve_data.get("current_outcome") or {})
+    verified_action_results: list[dict] = []
+    counter_ledger_prefix_complete = True
     actions_completed = 0
     combat_pause_steps: list[dict] = []
     combat_timer_paused = False
@@ -50771,6 +51056,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         pred_entry = predicted_states[action_idx] if action_idx < len(predicted_states) else {}
         pred_post_move = pred_entry.get("post_move") if isinstance(pred_entry, dict) else None
         pred_post_attack = pred_entry.get("post_attack") if isinstance(pred_entry, dict) else pred_entry
+        solve_action_results = solve_data.get("action_results") or []
+        predicted_action_result = (
+            solve_action_results[action_idx]
+            if action_idx < len(solve_action_results)
+            and isinstance(solve_action_results[action_idx], dict)
+            else None
+        )
+        final_action_result_verified = False
 
         # --- MOVE PHASE ---
         if has_move:
@@ -50906,6 +51199,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             )
                         detected_desync_count += 1
                         # Re-solve: this mech has moved but not attacked
+                        # The live move may already have collected a pod or
+                        # changed another action counter. A partial replay
+                        # rooted after that move cannot reconstruct it.
+                        counter_ledger_prefix_complete = False
                         if actual_data:
                             re_solve_count += 1
                             (
@@ -51165,12 +51462,15 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 ):
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(active-state drift ignored)")
+                    final_action_result_verified = True
                 elif _is_harmless_player_hp_gain_diff(diff):
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(player HP gain drift ignored)")
+                    final_action_result_verified = True
                 elif _is_harmless_burrower_missing_drift(diff):
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(Burrower missing-after-damage drift ignored)")
+                    final_action_result_verified = True
                 else:
                     pending_grid_debt = _annotate_pending_grid_debt(
                         session, actual_board, actual_data
@@ -51279,7 +51579,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 if isinstance(actual_data, dict)
                                 else None
                             ),
+                            "_predicted_post_attack": pred_post_attack,
+                            "_action_result": predicted_action_result,
                         }
+                    else:
+                        counter_ledger_prefix_complete = False
 
                     # Skip solver search if spawn-only on the last action (new
                     # Vek emerged). The terminal reprojection still runs below.
@@ -51302,6 +51606,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     done_uids.add(mech_uid)
                     remaining = len(actions) - action_idx - 1
                     if remaining > 0 and actual_data:
+                        counter_ledger_prefix_complete = False
                         re_solve_count += 1
                         (
                             new_actions,
@@ -51419,7 +51724,20 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             continue  # restart loop with new solution
             else:
                 print(f"  {final_phase.upper()} VERIFIED: PASS")
+                final_action_result_verified = True
 
+        if final_action_result_verified:
+            if isinstance(predicted_action_result, dict):
+                verified_action_results.append(
+                    dict(predicted_action_result)
+                )
+            else:
+                counter_ledger_prefix_complete = False
+        elif not (
+            terminal_desync is not None
+            and terminal_desync.get("action_index") == actions_completed
+        ):
+            counter_ledger_prefix_complete = False
         done_uids.add(mech_uid)
         actions_completed += 1
         action_idx += 1
@@ -51450,7 +51768,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 desync_provenance = {
                     key: value
                     for key, value in terminal_desync.items()
-                    if key != "actual_fingerprint"
+                    if key != "actual_fingerprint" and not key.startswith("_")
                 }
                 replacement, projection_error = (
                     _build_terminal_desync_reprojection(
@@ -51463,6 +51781,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         detected_desync_count=detected_desync_count,
                         re_solve_count=re_solve_count,
                         settlement=settlement,
+                        turn_start_outcome=turn_start_outcome,
+                        verified_action_results=verified_action_results,
+                        counter_ledger_prefix_complete=(
+                            counter_ledger_prefix_complete
+                        ),
+                        terminal_predicted_state=terminal_desync.get(
+                            "_predicted_post_attack"
+                        ),
+                        terminal_action_result=terminal_desync.get(
+                            "_action_result"
+                        ),
                     )
                 )
                 if projection_error is not None:
@@ -51608,7 +51937,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "desync": {
                 key: value
                 for key, value in (terminal_desync or {}).items()
-                if key != "actual_fingerprint"
+                if key != "actual_fingerprint" and not key.startswith("_")
             },
             "reprojection_error": terminal_reprojection_error,
             "next_step": (

@@ -131,6 +131,71 @@ def _clean_projection() -> dict:
     }
 
 
+def _counter_projection(
+    enemy_phase_mission_kills: int,
+    *,
+    settled_mission_kills: int = 0,
+) -> dict:
+    current = {
+        "grid_power": 5,
+        "buildings_alive": 0,
+        "building_hp_total": 0,
+        "mission_kills_done": settled_mission_kills,
+        "mission_kill_limit": 4,
+        "pods_present": 0,
+        "turn": 1,
+        "total_turns": 4,
+        "remaining_spawns": 1,
+    }
+    predicted = {
+        **current,
+        "mission_kills_by_enemy_phase": enemy_phase_mission_kills,
+        "mission_kills_by_player": 0,
+        "mission_kills_by_spawn_block": 0,
+        "mission_kills_total_projected": enemy_phase_mission_kills,
+        "mission_kills_done_projected": (
+            settled_mission_kills + enemy_phase_mission_kills
+        ),
+        "enemies_killed_by_enemy_phase": enemy_phase_mission_kills,
+        "enemies_killed_by_player": 0,
+        "enemies_killed_by_spawn_block": 0,
+        "enemies_killed_total_projected": enemy_phase_mission_kills,
+        "unit_deaths_by_enemy_phase": enemy_phase_mission_kills,
+        "unit_deaths_by_player": 0,
+        "unit_deaths_by_spawn_block": 0,
+        "unit_deaths_total_projected": enemy_phase_mission_kills,
+        "mission_kills_done": (
+            settled_mission_kills + enemy_phase_mission_kills
+        ),
+        "mission_kills_planned": enemy_phase_mission_kills,
+    }
+    return {
+        "enriched": {
+            "post_player_board": {
+                "source": "settled_actual",
+                "mission_kills_done": settled_mission_kills,
+            },
+            "final_board": {
+                "source": "projected_enemy_phase",
+                "mission_kills_done": (
+                    settled_mission_kills + enemy_phase_mission_kills
+                ),
+            },
+            "score_breakdown": {"total": 123},
+        },
+        "current_outcome": current,
+        "predicted_outcome": predicted,
+        "predicted_board_summary": dict(predicted),
+        "plan_safety": {
+            "status": "CLEAN",
+            "blocking": False,
+            "violations": [],
+            "current": current,
+            "predicted": predicted,
+        },
+    }
+
+
 def test_terminal_desync_settlement_accepts_matching_verify_snapshot():
     board = _board(enemy_hp=2, player_active=False)
     data = _bridge_data(player_active=False)
@@ -273,6 +338,395 @@ def test_terminal_desync_reprojection_uses_empty_plan_and_stamps_provenance(
     assert provenance["desyncs_detected"] == 2
     assert provenance["actual_re_solves"] == 1
     assert original["predicted_board_summary"] == {"grid_power": 7}
+
+
+def test_terminal_desync_reprojection_restores_verified_player_counters(
+    monkeypatch,
+):
+    board = _board(enemy_hp=2, player_active=False)
+    predicted_terminal = snapshot_after_action(board, 3, 0, [])
+    monkeypatch.setattr(
+        commands,
+        "_evaluate_solution_safety",
+        lambda *_args, **_kwargs: _counter_projection(3),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_annotate_pending_grid_debt",
+        lambda *_args, **_kwargs: 0,
+    )
+    turn_start = {
+        "grid_power": 5,
+        "buildings_alive": 0,
+        "building_hp_total": 0,
+        "mission_kills_done": 0,
+        "mission_kill_limit": 4,
+        "pods_present": 1,
+        "turn": 1,
+        "total_turns": 4,
+        "remaining_spawns": 1,
+    }
+
+    replacement, error = commands._build_terminal_desync_reprojection(
+        board,
+        _bridge_data(player_active=False),
+        {
+            "actions": [{"description": "executed original plan"}],
+            "current_outcome": turn_start,
+        },
+        RunSession(run_id="terminal"),
+        turn=1,
+        desync={"phase": "attack", "action_index": 3, "mech_uid": 0},
+        detected_desync_count=1,
+        re_solve_count=0,
+        settlement={"status": "OK", "samples": 2},
+        turn_start_outcome=turn_start,
+        verified_action_results=[
+            {
+                "enemies_killed": 0,
+                "unit_deaths": 0,
+                "mission_kills": 0,
+                "pods_collected": 1,
+            },
+            {
+                "enemies_killed": 0,
+                "unit_deaths": 0,
+                "mission_kills": 0,
+                "pods_collected": 0,
+            },
+            {
+                "enemies_killed": 0,
+                "unit_deaths": 0,
+                "mission_kills": 0,
+                "pods_collected": 0,
+            },
+        ],
+        counter_ledger_prefix_complete=True,
+        terminal_predicted_state=predicted_terminal,
+        terminal_action_result={
+            "enemies_killed": 2,
+            "unit_deaths": 2,
+            "mission_kills": 1,
+            "pods_collected": 0,
+        },
+    )
+
+    assert error is None
+    predicted = replacement["predicted_outcome"]
+    assert predicted["enemies_killed_by_player"] == 2
+    assert predicted["enemies_killed_total_projected"] == 5
+    assert predicted["unit_deaths_by_player"] == 2
+    assert predicted["unit_deaths_total_projected"] == 5
+    assert predicted["mission_kills_by_player"] == 1
+    assert predicted["mission_kills_total_projected"] == 4
+    assert predicted["mission_kills_done_projected"] == 4
+    assert replacement["post_player_board"]["mission_kills_done"] == 1
+    assert replacement["final_board"]["mission_kills_done"] == 4
+    assert replacement["predicted_board_summary"]["pods_collected"] == 1
+    assert replacement["plan_safety"]["status"] == "CLEAN"
+    ledger = replacement["terminal_desync_reprojection"]["counter_ledger"]
+    assert ledger == {
+        "version": 1,
+        "complete": True,
+        "prefix_complete": True,
+        "terminal_action_matched": True,
+        "verified_action_results": 4,
+        "player_enemy_kills": 2,
+        "player_unit_deaths": 2,
+        "player_mission_kills": 1,
+        "player_pods_collected": 1,
+        "missing_player_mission_kills": 1,
+    }
+
+
+def test_terminal_desync_reprojection_restored_kills_block_over_limit(
+    monkeypatch,
+):
+    board = _board(enemy_hp=2, player_active=False)
+    predicted_terminal = snapshot_after_action(board, 3, 0, [])
+    monkeypatch.setattr(
+        commands,
+        "_evaluate_solution_safety",
+        lambda *_args, **_kwargs: _counter_projection(4),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_annotate_pending_grid_debt",
+        lambda *_args, **_kwargs: 0,
+    )
+    turn_start = {
+        "grid_power": 5,
+        "buildings_alive": 0,
+        "building_hp_total": 0,
+        "mission_kills_done": 0,
+        "mission_kill_limit": 4,
+        "pods_present": 0,
+        "turn": 1,
+        "total_turns": 4,
+        "remaining_spawns": 1,
+    }
+
+    replacement, error = commands._build_terminal_desync_reprojection(
+        board,
+        _bridge_data(player_active=False),
+        {"current_outcome": turn_start},
+        RunSession(run_id="terminal"),
+        turn=1,
+        desync={"phase": "attack", "action_index": 3, "mech_uid": 0},
+        detected_desync_count=1,
+        re_solve_count=0,
+        settlement={"status": "OK", "samples": 2},
+        turn_start_outcome=turn_start,
+        verified_action_results=[
+            {
+                "enemies_killed": 0,
+                "unit_deaths": 0,
+                "mission_kills": 0,
+                "pods_collected": 0,
+            },
+            {
+                "enemies_killed": 0,
+                "unit_deaths": 0,
+                "mission_kills": 0,
+                "pods_collected": 0,
+            },
+            {
+                "enemies_killed": 0,
+                "unit_deaths": 0,
+                "mission_kills": 0,
+                "pods_collected": 0,
+            },
+        ],
+        counter_ledger_prefix_complete=True,
+        terminal_predicted_state=predicted_terminal,
+        terminal_action_result={
+            "enemies_killed": 1,
+            "unit_deaths": 1,
+            "mission_kills": 1,
+            "pods_collected": 0,
+        },
+    )
+
+    assert error is None
+    assert replacement["predicted_board_summary"]["mission_kills_done"] == 5
+    assert replacement["plan_safety"]["blocking"] is True
+    assert any(
+        item["kind"] == "kill_limit_objective_failed"
+        for item in replacement["plan_safety"]["violations"]
+    )
+
+
+def test_terminal_desync_reprojection_does_not_double_count_live_player_kill(
+    monkeypatch,
+):
+    board = _board(enemy_hp=2, player_active=False)
+    predicted_terminal = snapshot_after_action(board, 3, 0, [])
+    monkeypatch.setattr(
+        commands,
+        "_evaluate_solution_safety",
+        lambda *_args, **_kwargs: _counter_projection(
+            1,
+            settled_mission_kills=4,
+        ),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_annotate_pending_grid_debt",
+        lambda *_args, **_kwargs: 0,
+    )
+    turn_start = {
+        "grid_power": 5,
+        "buildings_alive": 0,
+        "building_hp_total": 0,
+        "mission_kills_done": 3,
+        "mission_kill_limit": 4,
+        "pods_present": 0,
+        "turn": 1,
+        "total_turns": 4,
+        "remaining_spawns": 1,
+    }
+    zero_result = {
+        "enemies_killed": 0,
+        "unit_deaths": 0,
+        "mission_kills": 0,
+        "pods_collected": 0,
+    }
+
+    replacement, error = commands._build_terminal_desync_reprojection(
+        board,
+        _bridge_data(player_active=False),
+        {"current_outcome": turn_start},
+        RunSession(run_id="terminal"),
+        turn=1,
+        desync={"phase": "attack", "action_index": 3, "mech_uid": 0},
+        detected_desync_count=1,
+        re_solve_count=0,
+        settlement={"status": "OK", "samples": 2},
+        turn_start_outcome=turn_start,
+        verified_action_results=[dict(zero_result) for _ in range(3)],
+        counter_ledger_prefix_complete=True,
+        terminal_predicted_state=predicted_terminal,
+        terminal_action_result={
+            "enemies_killed": 1,
+            "unit_deaths": 1,
+            "mission_kills": 1,
+            "pods_collected": 0,
+        },
+    )
+
+    assert error is None
+    assert replacement["predicted_outcome"]["mission_kills_by_player"] == 1
+    assert replacement["predicted_outcome"]["mission_kills_total_projected"] == 2
+    assert replacement["predicted_outcome"]["mission_kills_done_projected"] == 5
+    assert replacement["final_board"]["mission_kills_done"] == 5
+    assert replacement["plan_safety"]["blocking"] is True
+    assert any(
+        item["kind"] == "kill_limit_objective_failed"
+        for item in replacement["plan_safety"]["violations"]
+    )
+
+
+def test_terminal_desync_reprojection_blocks_counter_objective_when_ledger_uncertain(
+    monkeypatch,
+):
+    board = _board(enemy_hp=2, player_active=False)
+    monkeypatch.setattr(
+        commands,
+        "_evaluate_solution_safety",
+        lambda *_args, **_kwargs: _counter_projection(1),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_annotate_pending_grid_debt",
+        lambda *_args, **_kwargs: 0,
+    )
+    turn_start = {
+        "mission_kills_done": 2,
+        "mission_kill_limit": 4,
+    }
+
+    replacement, error = commands._build_terminal_desync_reprojection(
+        board,
+        _bridge_data(player_active=False),
+        {"current_outcome": turn_start},
+        RunSession(run_id="terminal"),
+        turn=1,
+        desync={"phase": "attack", "action_index": 3, "mech_uid": 0},
+        detected_desync_count=1,
+        re_solve_count=1,
+        settlement={"status": "OK", "samples": 2},
+        turn_start_outcome=turn_start,
+        verified_action_results=[],
+        counter_ledger_prefix_complete=False,
+        terminal_predicted_state=None,
+        terminal_action_result=None,
+    )
+
+    assert replacement is None
+    assert error["error"] == "terminal_desync_counter_provenance_uncertain"
+    assert error["kill_limit"] == 4
+
+
+def test_terminal_desync_reprojection_blocks_claimed_pod_without_baseline(
+    monkeypatch,
+):
+    board = _board(enemy_hp=2, player_active=False)
+    predicted_terminal = snapshot_after_action(board, 0, 0, [])
+    monkeypatch.setattr(
+        commands,
+        "_evaluate_solution_safety",
+        lambda *_args, **_kwargs: _clean_projection(),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_annotate_pending_grid_debt",
+        lambda *_args, **_kwargs: 0,
+    )
+
+    replacement, error = commands._build_terminal_desync_reprojection(
+        board,
+        _bridge_data(player_active=False),
+        {"current_outcome": {"grid_power": 5}},
+        RunSession(run_id="terminal"),
+        turn=1,
+        desync={"phase": "attack", "action_index": 0, "mech_uid": 0},
+        detected_desync_count=1,
+        re_solve_count=0,
+        settlement={"status": "OK", "samples": 2},
+        turn_start_outcome={"grid_power": 5},
+        verified_action_results=[],
+        counter_ledger_prefix_complete=True,
+        terminal_predicted_state=predicted_terminal,
+        terminal_action_result={
+            "enemies_killed": 0,
+            "unit_deaths": 0,
+            "mission_kills": 0,
+            "pods_collected": 1,
+        },
+    )
+
+    assert replacement is None
+    assert error["error"] == "terminal_desync_counter_provenance_uncertain"
+    assert error["player_pods_collected"] == 1
+    assert error["pod_counter_valid"] is False
+
+
+def test_terminal_desync_reprojection_blocks_missing_projected_kill_progress(
+    monkeypatch,
+):
+    board = _board(enemy_hp=2, player_active=False)
+    predicted_terminal = snapshot_after_action(board, 0, 0, [])
+
+    def malformed_projection():
+        projection = _counter_projection(1)
+        projection["predicted_outcome"].pop(
+            "mission_kills_done_projected"
+        )
+        return projection
+
+    monkeypatch.setattr(
+        commands,
+        "_evaluate_solution_safety",
+        lambda *_args, **_kwargs: malformed_projection(),
+    )
+    monkeypatch.setattr(
+        commands,
+        "_annotate_pending_grid_debt",
+        lambda *_args, **_kwargs: 0,
+    )
+    turn_start = {
+        "mission_kills_done": 0,
+        "mission_kill_limit": 4,
+        "pods_present": 0,
+    }
+
+    replacement, error = commands._build_terminal_desync_reprojection(
+        board,
+        _bridge_data(player_active=False),
+        {"current_outcome": turn_start},
+        RunSession(run_id="terminal"),
+        turn=1,
+        desync={"phase": "attack", "action_index": 0, "mech_uid": 0},
+        detected_desync_count=1,
+        re_solve_count=0,
+        settlement={"status": "OK", "samples": 2},
+        turn_start_outcome=turn_start,
+        verified_action_results=[],
+        counter_ledger_prefix_complete=True,
+        terminal_predicted_state=predicted_terminal,
+        terminal_action_result={
+            "enemies_killed": 0,
+            "unit_deaths": 0,
+            "mission_kills": 0,
+            "pods_collected": 0,
+        },
+    )
+
+    assert replacement is None
+    assert error["error"] == "terminal_desync_counter_provenance_uncertain"
+    assert {
+        item["field"] for item in error["projection_counter_errors"]
+    } == {"mission_kills_done_projected"}
 
 
 def _patch_terminal_auto_turn_harness(tmp_path, monkeypatch, *, persist=True):
