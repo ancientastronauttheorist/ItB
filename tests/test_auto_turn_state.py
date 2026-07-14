@@ -1166,6 +1166,45 @@ def test_unexpected_spider_psion_egg_or_mixed_loss_does_not_retry():
     ) is False
 
 
+def test_delayed_acid_pool_retries_only_predicted_pool_lag():
+    delayed = DiffResult(tile_diffs=[{
+        "x": 4,
+        "y": 4,
+        "field": "acid",
+        "predicted": True,
+        "actual": False,
+    }])
+    inverse = DiffResult(tile_diffs=[{
+        "x": 4,
+        "y": 4,
+        "field": "acid",
+        "predicted": False,
+        "actual": True,
+    }])
+    mixed = DiffResult(
+        tile_diffs=list(delayed.tile_diffs),
+        unit_diffs=[{
+            "uid": 1,
+            "field": "hp",
+            "predicted": 3,
+            "actual": 4,
+        }],
+    )
+
+    assert cmd_mod._is_transient_delayed_acid_pool_diff(
+        delayed, "attack"
+    ) is True
+    assert cmd_mod._is_transient_delayed_acid_pool_diff(
+        delayed, "move"
+    ) is False
+    assert cmd_mod._is_transient_delayed_acid_pool_diff(
+        inverse, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_acid_pool_diff(
+        mixed, "attack"
+    ) is False
+
+
 def _delayed_chained_bombrock_building_case(
     *,
     predicted_hp: int = 1,

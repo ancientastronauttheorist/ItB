@@ -479,3 +479,6 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 478 | 853 | Direct-target `sim_melee` damage-and-push does not carry newly created Forest fire. | `docs/agent/solver-reference.md` |
 | 479 | 855 | Real damage makes a surviving Burrower retreat before its queued attack. | `docs/agent/solver-reference.md` |
 | 480 | 857 | Post-enemy audits compare required destroy-objective survival directly. | `docs/agent/safety-gates.md` |
+| 481 | 859 | A newly laid Spider egg can explain an adjacent next-turn Web. | `docs/agent/safety-gates.md` |
+| 482 | 861 | Bridge attacks resolve the exact effective loadout slot and fail closed. | `docs/agent/solver-reference.md` |
+| 483 | 863 | ACID pawn death pools can appear after the attack ACK. | `docs/agent/solver-reference.md` |

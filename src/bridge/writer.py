@@ -11,7 +11,7 @@ import os
 from src.solver.solver import MechAction
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.model.board import Board
-from src.bridge.protocol import write_command, wait_for_ack
+from src.bridge.protocol import BridgeError, write_command, wait_for_ack
 
 
 def _action_timeout() -> float:
@@ -21,12 +21,19 @@ def _action_timeout() -> float:
         return 60.0
 
 
-def _resolve_weapon_slot(action: MechAction, board: Board) -> int:
-    """Resolve weapon name to 0-based slot index by matching against the mech's weapons.
+def _resolve_weapon_slot(action: MechAction, board: Board | None) -> int:
+    """Resolve an action weapon to its exact 0-based equipped slot.
 
-    Returns 0 for primary weapon, 1 for secondary weapon.
-    Falls back to 0 if the weapon can't be matched (better than failing with 'Unknown').
+    An unmatched explicit weapon must fail closed.  Defaulting it to slot 0
+    can silently fire a different weapon after a live bridge read loses a
+    save-backed secondary loadout.
     """
+    if board is None:
+        raise BridgeError(
+            f"Cannot resolve weapon slot for uid={action.mech_uid}: "
+            "live board is unavailable"
+        )
+
     mech = None
     for u in board.units:
         if u.uid == action.mech_uid:
@@ -34,16 +41,33 @@ def _resolve_weapon_slot(action: MechAction, board: Board) -> int:
             break
 
     if mech is None:
-        return 0
+        raise BridgeError(
+            f"Cannot resolve weapon slot for uid={action.mech_uid}: "
+            "actor is absent from the live board"
+        )
 
-    if action.weapon == mech.weapon:
+    if action.weapon and action.weapon == mech.weapon:
         return 0
-    if action.weapon == mech.weapon2:
+    if action.weapon and action.weapon == mech.weapon2:
         return 1
 
-    # Fallback: weapon name didn't match either slot exactly.
-    # Default to slot 0 (primary) — this is more likely correct than failing.
-    return 0
+    # Older solver payloads can use ``Unknown`` for an unmodeled weapon.  It
+    # remains safe to infer the slot only when exactly one weapon is equipped.
+    equipped = [
+        (slot, weapon)
+        for slot, weapon in ((0, mech.weapon), (1, mech.weapon2))
+        if weapon
+    ]
+    if action.weapon in {"", "None", "Unknown"} and len(equipped) == 1:
+        return equipped[0][0]
+
+    available = ", ".join(
+        f"slot{slot}={weapon}" for slot, weapon in equipped
+    ) or "no equipped weapons"
+    raise BridgeError(
+        f"Cannot resolve weapon {action.weapon!r} for uid={action.mech_uid}; "
+        f"live board reports {available}"
+    )
 
 
 def execute_bridge_action(action: MechAction, board: Board) -> str:

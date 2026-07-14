@@ -845,7 +845,10 @@ local function dump_state()
                 local ok_ar, ar = pcall(function() return p:IsArmor() end)
                 if ok_ar and ar then unit.armor = true end
 
-                -- Weapons from type definition
+                -- Weapons from type definition. Python applies the narrow
+                -- modeled save overlay before solving and action execution;
+                -- exporting every purchased passive here could bypass the
+                -- solver's known-type/research gate.
                 unit.weapons = {}
                 if pawn_def and pawn_def.SkillList then
                     for _, wname in ipairs(pawn_def.SkillList) do
@@ -1930,14 +1933,9 @@ local function effective_weapon_name_by_slot(pawn, weapon_slot)
     local slot = weapon_slot + 1
     local ptype = pawn:GetType()
     local pawn_def = _G[ptype]
-    local skill_count = 0
-    if pawn_def and pawn_def.SkillList then
-        skill_count = #pawn_def.SkillList
-    end
-    if skill_count == 0 or slot > skill_count then
+    if not (pawn_def and pawn_def.SkillList) then
         return nil, nil, nil, "weapon slot " .. weapon_slot ..
-               " out of range (pawn " .. ptype ..
-               " has " .. skill_count .. " skills)"
+               " unavailable (pawn " .. ptype .. " has no SkillList)"
     end
 
     local uid = nil
@@ -1947,6 +1945,12 @@ local function effective_weapon_name_by_slot(pawn, weapon_slot)
     local save_data = _read_save_data()
     local wname, wsource =
         effective_weapon_from_save(save_data, uid, weapon_slot, base_wname)
+    if wname == nil then
+        return nil, nil, nil, "weapon slot " .. weapon_slot ..
+               " out of range (pawn " .. ptype .. " has " ..
+               tostring(#pawn_def.SkillList) ..
+               " static skills and no save-backed weapon)"
+    end
     return wname, base_wname, slot, nil, wsource, pawn_def, uid
 end
 
@@ -2334,9 +2338,9 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     if err ~= nil then
         return false, err
     end
-    local restore_wname = nil
+    local restore_skill_list = false
     if wname ~= base_wname then
-        restore_wname = base_wname
+        restore_skill_list = true
         pawn_def.SkillList[slot] = wname
         log_bridge("EFFECTIVE_WEAPON: uid=" .. tostring(uid) ..
                    " slot=" .. slot .. " " .. tostring(base_wname) ..
@@ -2368,8 +2372,8 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     end
     if string.find(wname, "^Prime_TC_Punt") ~= nil then
         local ok_punt, method = execute_prime_tc_punt(pawn, wname, tx, ty)
-        if restore_wname ~= nil then
-            pawn_def.SkillList[slot] = restore_wname
+        if restore_skill_list then
+            pawn_def.SkillList[slot] = base_wname
         end
         if not ok_punt then
             log_bridge("WARN: Prime_TC_Punt failed for slot " .. slot ..
@@ -2398,16 +2402,22 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
             end
         end
     end
-    local ok, err = pcall(function()
-        pawn:FireWeapon(Point(tx, ty), slot)
+    local ok, fired_or_err = pcall(function()
+        return pawn:FireWeapon(Point(tx, ty), slot)
     end)
-    if restore_wname ~= nil then
-        pawn_def.SkillList[slot] = restore_wname
+    if restore_skill_list then
+        pawn_def.SkillList[slot] = base_wname
     end
     if not ok then
         log_bridge("WARN: FireWeapon failed for slot " .. slot ..
-                   " (" .. wname .. "): " .. tostring(err))
-        return false, "FireWeapon failed: " .. tostring(err)
+                   " (" .. wname .. "): " .. tostring(fired_or_err))
+        return false, "FireWeapon failed: " .. tostring(fired_or_err)
+    end
+    if fired_or_err == false then
+        log_bridge("WARN: FireWeapon returned false for slot " .. slot ..
+                   " (" .. wname .. ")")
+        return false, "FireWeapon returned false for slot " .. tostring(slot) ..
+               " (" .. tostring(wname) .. ")"
     end
     log_bridge("FIRE: " .. wname .. " slot=" .. slot .. " " ..
                source.x .. "," .. source.y .. " -> " .. tx .. "," .. ty)

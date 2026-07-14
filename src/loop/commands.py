@@ -2048,6 +2048,39 @@ def _enrich_bridge_limited_mission_weapons_from_save(
     return updates
 
 
+def _refresh_board_weapon_slots_from_save(
+    board: Board | None,
+    bridge_data: dict | None,
+    profile: str = "Alpha",
+) -> Board | None:
+    """Align a live Board's weapon slots with the save-backed loadout.
+
+    ``read_bridge_state`` preserves the running bridge's raw SkillList for
+    compatibility.  Older bridge builds can therefore omit a purchased
+    secondary weapon from a fresh mid-turn read even though the initial solve
+    correctly overlaid it from saveData.  Refresh the raw payload and mirror
+    just those slot IDs onto the already-enriched Board before execution.
+    """
+    if board is None or not isinstance(bridge_data, dict):
+        return board
+
+    _enrich_bridge_mech_weapons_from_save(bridge_data, profile=profile)
+    _enrich_bridge_limited_mission_weapons_from_save(
+        bridge_data, profile=profile,
+    )
+    raw_by_uid = _bridge_units_by_uid(bridge_data)
+    for unit in board.units:
+        raw = raw_by_uid.get(unit.uid)
+        if not isinstance(raw, dict):
+            continue
+        weapons = raw.get("weapons")
+        if not isinstance(weapons, list):
+            continue
+        unit.weapon = weapons[0] if len(weapons) > 0 else ""
+        unit.weapon2 = weapons[1] if len(weapons) > 1 else ""
+    return board
+
+
 def _visual_to_bridge(pos: str) -> tuple[int, int] | None:
     """Reverse of ``_bv``: 'C5' -> (3, 5). Returns None on malformed input."""
     if not isinstance(pos, str) or len(pos) < 2:
@@ -5467,6 +5500,26 @@ def _is_transient_delayed_spider_psion_egg_diff(diff, phase: str) -> bool:
         and ud.get("predicted") == "present"
         and ud.get("actual") == "absent"
         for ud in unit_diffs
+    )
+
+
+def _is_transient_delayed_acid_pool_diff(diff, phase: str) -> bool:
+    """Return true while an ACID unit's death pool is still appearing.
+
+    A weapon effect can remove the ACID pawn before the engine materializes
+    its pool. Retry only the favorable tile-only lag; inverse or mixed changes
+    remain immediate mismatches.
+    """
+    if phase != "attack":
+        return False
+    if getattr(diff, "unit_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    tile_diffs = getattr(diff, "tile_diffs", []) or []
+    return bool(tile_diffs) and all(
+        td.get("field") == "acid"
+        and td.get("predicted") is True
+        and td.get("actual") is False
+        for td in tile_diffs
     )
 
 
@@ -9556,8 +9609,10 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
         logger.log_mech_action(action_index, action.description, 0)
 
         # Load board for move detection
-        board_data, _ = read_bridge_state()
-        board = board_data
+        board_data, bridge_data = read_bridge_state()
+        board = _refresh_board_weapon_slots_from_save(
+            board_data, bridge_data, profile=profile,
+        )
 
         print(f"\n=== BRIDGE EXECUTE Action {action_index}: {action.description} ===")
         try:
@@ -9967,6 +10022,7 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
             diff, action_weapon, "attack"
         )
         or _is_transient_delayed_spider_psion_egg_diff(diff, "attack")
+        or _is_transient_delayed_acid_pool_diff(diff, "attack")
         or _is_transient_delayed_lethal_terrain_death_diff(
             diff, predicted, actual_board, "attack"
         )
@@ -9974,7 +10030,12 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
         or delayed_chained_bombrock
     ):
         initial_diff = diff
-        attempts = 10 if delayed_chained_bombrock else 5
+        attempts = (
+            10
+            if delayed_chained_bombrock
+            or _is_transient_delayed_acid_pool_diff(diff, "attack")
+            else 5
+        )
         for attempt in range(attempts):
             time.sleep(0.35)
             try:
@@ -49477,6 +49538,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 diff, weapon_name, phase
             )
             or _is_transient_delayed_spider_psion_egg_diff(diff, phase)
+            or _is_transient_delayed_acid_pool_diff(diff, phase)
             or _is_transient_delayed_lethal_terrain_death_diff(
                 diff, predicted, actual_board, phase
             )
@@ -49515,15 +49577,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 diff, predicted, phase
             )
         )
+        delayed_acid_pool = _is_transient_delayed_acid_pool_diff(diff, phase)
         attempts = (
             10
-            if delayed_chained_bombrock
+            if delayed_chained_bombrock or delayed_acid_pool
             else 5
             if (
                 _is_transient_delayed_multihit_damage_diff(
                     diff, weapon_name, phase
                 )
                 or _is_transient_delayed_spider_psion_egg_diff(diff, phase)
+                or _is_transient_delayed_acid_pool_diff(diff, phase)
                 or _is_transient_delayed_lethal_terrain_death_diff(
                     diff, predicted, actual_board, phase
                 )
@@ -50567,8 +50631,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         # --- ATTACK PHASE ---
         if has_attack:
             refresh_bridge_state()
-            current_board, _ = read_bridge_state()
-            weapon_slot = _resolve_weapon_slot(mech_action, current_board) if current_board else 0
+            current_board, current_data = read_bridge_state()
+            current_board = _refresh_board_weapon_slots_from_save(
+                current_board, current_data, profile=profile,
+            )
 
             pause_detail = _resume_combat_timer_pause("before_attack")
             pause_error = _combat_pause_error("before_attack", pause_detail)
@@ -50576,6 +50642,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 _print_result(pause_error)
                 return pause_error
             try:
+                weapon_slot = _resolve_weapon_slot(mech_action, current_board)
                 if _is_control_shot_weapon(action.weapon) and action.target2 is not None:
                     if current_board is None:
                         raise BridgeError("Control Shot UI execution needs live board state")
