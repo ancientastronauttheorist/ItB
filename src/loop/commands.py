@@ -10700,6 +10700,7 @@ def _dispatch_click_batch_locally(
             dry_run=not execute,
             settle_seconds=0.05,
             hold_seconds=0.12,
+            pre_click_seconds=0.20 if label == "end_turn" else 0.08,
         )
         step = {
             "index": idx,
@@ -10806,18 +10807,47 @@ def cmd_dispatch_end_turn(
         }
         _print_result(result)
         return result
+    pre_click_bridge: dict = {}
+    if execute:
+        try:
+            refresh_bridge_state()
+            _board, bridge_data = read_bridge_state()
+            if isinstance(bridge_data, dict):
+                pre_click_bridge = {
+                    "phase": bridge_data.get("phase"),
+                    "turn": bridge_data.get("turn"),
+                }
+        except Exception as exc:
+            pre_click_bridge = {"capture_error": str(exc)}
     dispatch = _dispatch_click_batch_locally(
         list(plan.get("batch") or []),
         execute=execute,
         label="end_turn",
         post_wait=post_wait,
     )
+    if execute and dispatch.get("status") == "DISPATCHED":
+        observation = _observe_end_turn_after_click(pre_click_bridge)
+        post_click_guard = _prepare_local_dispatch_guard("post_end_turn")
+        confirmed = observation.get("status") == "OK"
+        dispatch.update({
+            "pre_click_bridge": pre_click_bridge,
+            "observation": observation,
+            "post_click_guard": post_click_guard,
+            "delivery_confirmation": (
+                "delivered_confirmed" if confirmed else "delivered_unconfirmed"
+            ),
+            "retry_allowed": False,
+        })
     result = {
         "status": dispatch.get("status"),
         "execute_requested": bool(execute),
         "dispatch": dispatch,
         "next_step": (
-            "read"
+            (
+                "read"
+                if dispatch.get("delivery_confirmation") == "delivered_confirmed"
+                else "stop and inspect; the click may have been delivered, so do not retry"
+            )
             if execute and dispatch.get("status") == "DISPATCHED"
             else "rerun with --execute to perform the guarded local End Turn click"
         ),

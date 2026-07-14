@@ -1088,6 +1088,7 @@ def _pyautogui_click(
     y: int,
     *,
     hold_seconds: float = 0.3,
+    pre_click_seconds: float = 0.08,
     release_x: int | None = None,
     release_y: int | None = None,
 ) -> dict:
@@ -1098,6 +1099,8 @@ def _pyautogui_click(
         return {"status": "ERROR", "error": f"pyautogui unavailable: {exc}"}
     try:
         pyautogui.moveTo(int(x), int(y), duration=0.05)
+        if pre_click_seconds > 0:
+            time.sleep(max(0.0, pre_click_seconds))
         pyautogui.mouseDown(int(x), int(y))
         time.sleep(max(0.0, hold_seconds))
         up_x = int(x if release_x is None else release_x)
@@ -1107,7 +1110,11 @@ def _pyautogui_click(
         pyautogui.mouseUp(up_x, up_y)
     except Exception as exc:
         return {"status": "ERROR", "error": f"pyautogui click failed: {exc}"}
-    result = {"status": "OK", "hold_seconds": hold_seconds}
+    result = {
+        "status": "OK",
+        "hold_seconds": hold_seconds,
+        "pre_click_seconds": max(0.0, pre_click_seconds),
+    }
     if release_x is not None and release_y is not None:
         result["release_x"] = int(release_x)
         result["release_y"] = int(release_y)
@@ -1499,6 +1506,9 @@ def click_screen_point(
             x,
             y,
             hold_seconds=hold_seconds,
+            pre_click_seconds=(
+                0.08 if pre_click_seconds is None else pre_click_seconds
+            ),
             release_x=release_x,
             release_y=release_y,
         )
@@ -1510,6 +1520,9 @@ def click_screen_point(
             x,
             y,
             hold_seconds=hold_seconds,
+            pre_click_seconds=(
+                0.08 if pre_click_seconds is None else pre_click_seconds
+            ),
             release_x=release_x,
             release_y=release_y,
         )
@@ -1763,6 +1776,7 @@ def click_window_point(
     dry_run: bool = False,
     settle_seconds: float = 0.15,
     hold_seconds: float = 0.3,
+    pre_click_seconds: float | None = None,
     release_window_x: int | None = None,
     release_window_y: int | None = None,
 ) -> dict:
@@ -1811,6 +1825,7 @@ def click_window_point(
         dry_run=False,
         settle_seconds=settle_seconds,
         hold_seconds=hold_seconds,
+        pre_click_seconds=pre_click_seconds,
         release_x=release_x,
         release_y=release_y,
     )
