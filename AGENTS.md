@@ -35,6 +35,33 @@ Do not create feature branches for this project. Do all work, commits, and
 pushes directly on `main`, then push `main` back to GitHub when the requested
 change is complete.
 
+## Agents, Branches, and Worktrees
+
+- Use subagents liberally for independent research, implementation, validation,
+  and review. Parallelize bounded tasks when useful, give every subagent a clear
+  scope, and reconcile their results before drawing conclusions. Avoid having
+  multiple agents edit the same files concurrently; the primary agent remains
+  responsible for integration and final validation.
+- Keep the primary checkout on `main` and work directly on `main`. Do not
+  create, publish, or switch to another named local or remote branch unless I
+  explicitly change this policy.
+- Detached auxiliary worktrees are allowed for isolated testing, builds, risky
+  investigations, or disposable experiments. Create them from the exact
+  intended `main` commit using `git worktree add --detach`; do not create a
+  branch for the worktree, and never switch the primary checkout away from
+  `main`.
+- Treat detached worktrees as temporary. Before removing one, verify that it is
+  clean or deliberately transfer every retained change back to the primary
+  `main` checkout. Validate and commit durable changes from the primary
+  checkout.
+- Never remove a dirty worktree, abandon detached commits, overwrite unrelated
+  changes, or delete untracked user files.
+- Remove auxiliary worktrees when their purpose is complete. Keep all durable
+  project history on `main`.
+- Before editing, update `main` with `git pull --ff-only` when the worktree is
+  clean, then inspect `git status`. If existing changes prevent a safe update,
+  preserve them and work around them rather than discarding them.
+
 ## Project Goal
 
 Earn all 70 Into the Breach achievements autonomously on macOS and Windows while
