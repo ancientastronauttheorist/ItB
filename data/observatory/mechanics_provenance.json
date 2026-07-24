@@ -249,6 +249,96 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Lua source defines Titan Fist base damage 2 and push, Dash as an unlimited directional charge, Damage as 4, and the combined AB variant."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has distinct IDs and definitions for all four Titan Fist variants, dispatches base/B as melee and A/AB as charge, and exercises targeting, impact, terrain, upgrade, and bridge-replay behavior in focused tests."
+        }
+      ],
+      "id": "player-weapon-titan-fist",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::PrimePunchmech",
+            "WId::PrimePunchmechA",
+            "WId::PrimePunchmechB",
+            "WId::PrimePunchmechAB",
+            "WEAPONS",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_weapon_with",
+            "sim_melee",
+            "sim_charge"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "charge_first_hit",
+            "charge_terrain_blocks"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native GetProjectileEnd, Board:GetSimplePath, AddCharge, and AddMelee helper semantics have not been independently traced for this build.",
+        "The damage-only B variant has a definition test but no dedicated end-to-end simulator test; AB supplies the focused upgraded-damage charge evidence.",
+        "Exact conformance across every obstacle, edge, and status interaction remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_prime.lua",
+          "sha256": "ad82af253572fe7e86293592d0b670e5851e90842666062b919421e134173ac6",
+          "symbols": [
+            "Prime_Punchmech",
+            "Prime_Punchmech:GetSkillEffect",
+            "Prime_Punchmech_A",
+            "Prime_Punchmech_B",
+            "Prime_Punchmech_AB"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_titan_fist",
+            "test_titan_fist_upgraded_defs",
+            "test_wid_to_str_roundtrip"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_titan_fist_kill_and_push",
+            "test_titan_fist_does_not_damage_perpendicular_mountains",
+            "test_titan_fist_perp_mountains_with_full_neighbourhood",
+            "test_titan_fist_dash_punch_charges_to_target_and_records_ramming_speed",
+            "test_titan_fist_ab_dash_punch_uses_damage_upgrade",
+            "test_titan_fist_dash_crosses_water_before_first_blocker",
+            "test_titan_fist_dash_dead_target_bumps_live_blocker",
+            "test_titan_fist_plain_dead_target_bumps_live_blocker",
+            "test_titan_fist_perp_via_bridge_replay"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "titan_fist_dash_enumerates_direction_selector_for_long_target"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "Mission base classes and callbacks define objectives, turn limits, scripted pawns, and mission-specific behavior."
         },
         {

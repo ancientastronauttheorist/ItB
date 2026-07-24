@@ -364,3 +364,67 @@ def test_source_audit_cli_emits_machine_readable_json(
         "indexed_files": 1,
         "unindexed_files": 0,
     }
+
+
+def test_real_titan_fist_record_is_family_scoped():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-titan-fist"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/weapons_prime.lua",
+            "sha256": (
+                "ad82af253572fe7e86293592d0b670e5"
+                "851e90842666062b919421e134173ac6"
+            ),
+            "symbols": [
+                "Prime_Punchmech",
+                "Prime_Punchmech:GetSkillEffect",
+                "Prime_Punchmech_A",
+                "Prime_Punchmech_B",
+                "Prime_Punchmech_AB",
+            ],
+        }
+    ]
+    implementation_symbols = {
+        symbol
+        for reference in record["implementations"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "WId::PrimePunchmech",
+        "WId::PrimePunchmechA",
+        "WId::PrimePunchmechB",
+        "WId::PrimePunchmechAB",
+        "sim_melee",
+        "sim_charge",
+        "charge_first_hit",
+    } <= implementation_symbols
+    test_symbols = {
+        symbol
+        for reference in record["tests"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "test_titan_fist",
+        "test_titan_fist_upgraded_defs",
+        "test_titan_fist_kill_and_push",
+        "test_titan_fist_ab_dash_punch_uses_damage_upgrade",
+        "test_titan_fist_perp_via_bridge_replay",
+        "titan_fist_dash_enumerates_direction_selector_for_long_target",
+    } <= test_symbols
+    assert record["known_gaps"]

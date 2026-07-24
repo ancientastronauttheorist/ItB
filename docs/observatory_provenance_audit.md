@@ -50,10 +50,19 @@ is not yet named by the provenance index. Conversely, the large player-weapon
 and mission gaps mean the current broad records do not enumerate most exact
 source files, even where Rust behavior and tests already exist.
 
+The first family-level player-weapon slice is
+`player-weapon-titan-fist`. It pins the exact `weapons_prime.lua` hash, all four
+`Prime_Punchmech` Lua variants, their Rust `WId`/melee/charge implementations,
+and focused definition, simulator, solver-targeting, and bridge-replay tests.
+It remains `partial`: native path/effect helpers are not traced, the B variant
+lacks a dedicated end-to-end simulator case, and exhaustive edge conformance is
+not claimed. This improves record granularity without changing the file-index
+count because `weapons_prime.lua` was already present in the umbrella record.
+
 ## Highest-value expansion order
 
-1. Split player weapons into family-level records and tie each exact source hash
-   to its `WId`/simulator cases and focused tests.
+1. Continue splitting player weapons into family-level records, using the Titan
+   Fist slice as the minimum evidence pattern.
 2. Add mission records only when a static callback, Rust transition, and
    regression fixture can be named precisely; do not bulk-index files merely to
    improve the count.
