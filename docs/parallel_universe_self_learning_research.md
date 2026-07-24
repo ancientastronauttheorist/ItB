@@ -66,8 +66,9 @@ The most valuable learning consumers would be:
 
 - A simulator residual/uncertainty model that predicts the probability and
   type of a simulation miss.
-- A learned enemy movement and targeting model. The current depth-2 projection
-  documents only about one-third agreement with real enemy targeting.
+- A learned enemy movement and targeting model. Historical local experiments
+  reported about one-third agreement for depth-2 projection, but that dated
+  figure was not pinned to the current solver, corpus, and engine identity.
 - A spawn-distribution model. Robust planning over plausible spawns may be
   more practical than reproducing the private RNG exactly.
 - An action-ordering prior distilled from deeper search, used to accelerate
@@ -94,10 +95,12 @@ different fidelity levels:
 | Live memory checkpoint | CPU, RAM, devices, disks, process state, hidden RNG | Best candidate for an exact universe |
 
 The repository's existing snapshot command is not an exact engine capsule. It
-copies saves and session information, not the running process's memory. The
-project's seed-replay experiments also found that captured master and AI seeds
-were insufficient to reproduce spawns because engine-private RNG behavior and
-consumption order remain unknown.
+copies saves and session information, not the running process's memory. In two
+noisy seed-replay cases, simple candidate streams showed no obvious manual
+alignment with observed new-unit diffs. No pool mapping or formal call-order
+fit was performed, so the experiment did not establish whether captured master
+and AI seeds are sufficient. Engine-private RNG behavior and call order remain
+unknown.
 
 A live VM checkpoint preserves much more of the required state:
 
@@ -226,7 +229,9 @@ small number of high-information branches.
 Each result bundle should include:
 
 - Experiment, worker, root-state, and parent-snapshot identifiers.
-- Game, modloader, and bridge build hashes.
+- Build platform, executable format/architecture, Steam build/depot evidence,
+  executable/native-library hashes, and normalized scripts/maps revisions.
+- Modloader and bridge hashes.
 - Solver commit, simulator version, and weight profile.
 - Master and AI seeds.
 - Initial canonical state hash.
@@ -280,6 +285,15 @@ The practical headless stack is therefore:
 - Mesa LLVMpipe or virtual GPU rendering.
 - One isolated prefix, display, profile, and bridge directory per worker.
 
+This is also an experimental-control decision. As of the 2026-07-23 depot
+inventory, the native Linux depot is on build `21601364`, while the public
+Windows and macOS depots are on `13725832`. Standardizing oracle workers on the
+exact Windows build—on Windows or under Wine/Proton—reduces native platform and
+version variance and matches the Mod Loader's supported native path. A native
+Linux worker is a separate cohort: never merge its RNG, offset, hook, or
+tie-breaking evidence into Windows results merely because the Lua filenames
+look the same.
+
 A DRM-free offline build is operationally simpler for isolated research
 workers. GOG offers an offline installer, requires no activation or Galaxy
 client, and supports Windows, Linux, and macOS. See [Into the Breach on
@@ -292,6 +306,9 @@ experiment, but Wine, graphics sockets, file locks, and the display server make
 it a riskier foundation.
 
 ## Feasibility on This Computer
+
+The following hardware and concurrency figures are a dated inspection snapshot,
+not a statement about every current worker host.
 
 The inspected host has:
 

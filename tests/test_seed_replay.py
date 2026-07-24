@@ -2,11 +2,12 @@
 Golden-value tests for scripts/seed_replay.py.
 
 The goldens were hand-derived by running a tiny C program that calls
-srand(SEED) then rand() repeatedly, on the same macOS libc that Into
-the Breach links against.  See docs/seed_replay_hypotheses.md §1.2.
+srand(SEED) then rand() repeatedly in one sampled macOS environment. This
+validates the modeled libc stream, not which RNG an ITB native binding uses.
+See docs/seed_replay_hypotheses.md section 1.2.
 
-If any assertion here fails on another machine, the host libc is NOT
-macOS Park-Miller and the PRNG module will need to be adapted.
+These fixed tests run the Python model identically on every host. Identifying a
+different host libc requires a separate native C probe and comparison.
 """
 from __future__ import annotations
 
@@ -18,6 +19,8 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
 import seed_replay  # noqa: E402
+import seed_replay_experiment  # noqa: E402
+import pytest  # noqa: E402
 
 
 def test_rand_max_is_park_miller():
@@ -37,6 +40,13 @@ def test_raw_sequence_seed_zero_special_case():
     # 123459876 * 16807 mod (2**31 - 1) == 520932930.
     got = seed_replay.raw_sequence(0, 5)
     assert got == [520932930, 28925691, 822784415, 890459872, 145532761]
+
+
+def test_seed_domain_fails_closed_outside_sampled_range():
+    with pytest.raises(ValueError, match="sampled domain"):
+        seed_replay.raw_sequence(-1, 1)
+    with pytest.raises(ValueError, match="sampled domain"):
+        seed_replay.raw_sequence(seed_replay.RAND_MAX, 1)
 
 
 def test_raw_sequence_observed_aiseed():
@@ -98,3 +108,24 @@ def test_rolls_matches_407184687():
     # The other aiSeed in our probe log (turn 4).
     got = seed_replay.rolls(407184687, 10, upper=100)
     assert got == [78, 10, 62, 41, 81, 76, 33, 26, 40, 28]
+
+
+def test_new_unit_classification_separates_spider_lifecycle_candidates():
+    pre = [
+        {"uid": 1, "team": 6, "type": "Spider2"},
+        {"uid": 2, "team": 6, "type": "WebbEgg1"},
+    ]
+    diff = {
+        "new": [
+            {"uid": 3, "team": 6, "type": "Firefly1"},
+            {"uid": 4, "team": 6, "type": "Spiderling1"},
+            {"uid": 5, "team": 6, "type": "WebbEgg1"},
+        ],
+        "removed": [{"uid": 2, "team": 6, "type": "WebbEgg1"}],
+    }
+    got = seed_replay_experiment.classify_new_units(pre, diff)
+    assert [item["origin"] for item in got] == [
+        "direct_spawn_candidate",
+        "lifecycle_candidate:hatched_egg",
+        "lifecycle_candidate:spider_created_egg",
+    ]

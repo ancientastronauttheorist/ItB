@@ -1,7 +1,8 @@
 # Seed-replay experiment — can we reproduce ITB spawns offline?
 
-**Status:** experiment ran on two recorded turns. **Result: no match.** The
-limitation is documented; offline tools downstream of this insight are
+**Status:** candidate streams were printed for two recorded turns. A reviewer
+noticed no obvious manual alignment; mechanical matching was not implemented.
+The limitation is documented; offline tools downstream of this insight are
 described below.
 
 This document is the writeup for `scripts/seed_replay_experiment.py`. It is
@@ -9,29 +10,39 @@ This document is the writeup for `scripts/seed_replay_experiment.py`. It is
 
 ## TL;DR
 
-We cannot mechanically reproduce ITB spawn outcomes from the captured
-`master_seed` + `ai_seed` alone, because `random_int` and `random_bool`
-(the two C functions the Lua spawner calls — see `spawner_backend.lua`
-lines 209, 222, 245) are defined inside `itb_test.dylib`, the engine's
-stripped C++ shared library. We can read their *names* (`strings` on the
-main binary surfaces `random_int` / `random_bool` / `aiSeed` / `seed`), but
-not their RNG type, their seeding ritual, or whether they share state with
-Lua's `math.random` (which IS Park-Miller — see `seed_replay.py`).
+The two noisy recorded cases showed no obvious alignment under manual
+inspection of simple Park-Miller candidate streams. The experiment did not map
+the spawn pool or perform a formal call-order/offset fit, so it cannot determine
+whether `master_seed` + `ai_seed` are sufficient. The Lua spawner calls
+native-visible `random_int` and `random_bool` at known semantic points, but we
+have not mapped their implementation, state, seeding ritual, or complete call
+order. The recording manifests do not contain platform, executable/native
+hashes, depot/build identity, libc identity, or content revisions, so their
+engine provenance is unverified. Separately, strings in the inventoried Windows
+PE expose `random_int`, `random_bool`, `aiSeed`, and `seed`; that does not prove
+which RNG backed these recordings or whether either path shares state with
+Lua's `math.random`.
+
+The locally observed `itb_test.dylib` is not a trustworthy origin for these
+claims. The official macOS depot does not list it, and the local artifact's
+provenance is unresolved. It must not be described as a shipped core engine
+library without direct build-keyed evidence.
 
 That said, the experiment was still worth running:
 
-- **It rules out the easy hypothesis.** No window of the Park-Miller stream
-  seeded by `ai_seed` (or `master_seed`, or the post-turn `ai_seed`)
-  produces an obvious structural alignment with the observed spawn-type
-  sequences across the 30 leading rolls. So `random_int` is not a thin
-  passthrough to `math.random` consumed in Lua-level call order.
+- **It exposed candidate prefixes for inspection.** A reviewer noticed no
+  obvious alignment in the displayed Park-Miller prefixes seeded by
+  `ai_seed`, `master_seed`, or the post-turn `ai_seed`. No window scan, pool
+  mapping, or formal call-order fit was performed. With only two noisy,
+  build-unkeyed cases, this does not rule out shared Park-Miller state or
+  another offset model.
 - **It catalogs what we DO know** (algorithm in Lua, seed sources we
-  capture, libc PRNG identity) and what is blocked (the C++ call order /
-  RNG instance binding inside `itb_test.dylib`).
+  capture, and one sampled macOS libc PRNG identity) and what is blocked
+  (native binding identity, hidden state, and complete consumption order).
 - **It justifies why we keep capturing `ai_seed`** in `resist_probe.jsonl`
   and `bridge_state.mission_seeds[<region>].ai_seed` even though it
-  cannot be replayed offline. It still functions as a fingerprint for
-  run/turn identity in regression analysis.
+  has not been validated as an offline replay key. It still functions as a
+  fingerprint for run/turn identity in regression analysis.
 
 ## What was tested
 
@@ -45,44 +56,76 @@ That said, the experiment was still worth running:
 For each case:
 
 1. The pre-turn `bridge_state` contributes `master_seed`, `mission_seeds[<active>].ai_seed`, the `spawning_tiles` list (alarmed eggs telegraphing *next* enemy phase's spawns), and `remaining_spawns`.
-2. The post-turn `bridge_state` is diffed against pre-turn to extract the ground-truth set of new enemy uids and where they ended up (after their first move).
-3. Park-Miller is seeded from each candidate seed (`ai_seed`-pre, `ai_seed`-post, `master_seed`) using the existing `scripts/seed_replay.py` reproducer (verified-correct against macOS libc — see `tests/test_seed_replay.py`).
-4. The first 50 outputs of `math.random(5)`, `math.random(7)`, `math.random(8)` are printed. These are reasonable upper-bounds for the spawner's `random_int` calls — `5` matches `curr_weakRatio[2]` and `start_spawns` constants, `7` and `8` match plausible sizes of the per-island `GAME:GetSpawnList()` pool.
-5. The script does NOT auto-declare a match. It prints the streams alongside the observed type sequence so a human can confirm or reject visually.
+2. The post-turn `bridge_state` is diffed against pre-turn to identify new enemy uids and where they ended up (after their first move). This is a new-unit diff, not a ground-truth direct-spawn set.
+3. New Spiderling and WebbEgg uids are conservatively labeled as lifecycle candidates when the pre/post evidence supports a hatch or Spider-created egg.
+4. Park-Miller is seeded from each candidate seed (`ai_seed`-pre, `ai_seed`-post, `master_seed`) using the existing `scripts/seed_replay.py` reproducer, which was checked against one sampled macOS libc environment (see `tests/test_seed_replay.py`).
+5. The number requested by `--rolls` of `math.random(5)`, `math.random(7)`, and `math.random(8)` outputs is printed. These are candidate pool sizes, not a recovered engine pool.
+6. The script performs no pool mapping or formal call-order/offset fit and does not auto-declare a match. It prints streams for manual inspection.
+
+The two recording manifests predate Observatory build identity and do not pin
+their platform, executable, native libraries, depot/build, libc, or content
+revisions. They are useful exploratory artifacts, not build-keyed RNG evidence.
 
 ## What was found
 
-For both cases, *no* leading window of any stream aligns with the observed type sequence under any obvious mapping. Examples:
+For both cases, no obvious alignment was noticed in the displayed candidate
+prefixes. This is a manual observation from two noisy cases, not a mechanical
+negative result:
 
-- Case 1: observed `[Scorpion2, Scorpion1, Scorpion1, Firefly1]`. None of the seeded streams produce a 4-tuple where the same index appears at positions 1 and 2 followed by a different index at positions 0 and 3 (the structural shape required if the spawner is picking from a pool list).
-- Case 2: observed `[Firefly1, Scorpion2, Spiderling1, WebbEgg1]`. Even more challenging — `Spiderling1` and `WebbEgg1` are spawn-emergent (Spider's lifecycle), not direct `Spawner:NextPawn` outputs. Three of the four observed "spawns" are likely not spawns at all: they're the *result* of a Spider2 already on the board hatching its egg + an Alpha/Vek emerging from a previous turn's eggs. So the case is doubly noisy as a spawn-prediction test.
+- Case 1's new-UID sequence is `[Scorpion2, Scorpion1, Scorpion1, Firefly1]`.
+  `Scorpion2` and `Scorpion1` can share one base-pawn choice followed by an
+  independent upgrade decision, so raw type equality does not imply repeated
+  pool indices. The exact pool, its order, branch draws, and upgrade draws were
+  not recovered.
+- Case 2's new-UID sequence is
+  `[Firefly1, Scorpion2, Spiderling1, WebbEgg1]`. The pre/post snapshots support
+  two lifecycle-created units: pre-existing `WebbEgg1` uid 500 is replaced by
+  `Spiderling1` uid 542, and a pre-existing `Spider2` can explain new
+  `WebbEgg1` uid 571. `Firefly1` uid 501 and `Scorpion2` uid 502 are the two
+  plausible direct-spawn candidates corresponding to the two alarmed tiles.
 
 ## Why this is hard (and what we'd need to change)
 
-The blocker is the `random_int` / `random_bool` binding:
+The blocker is the `random_int` / `random_bool` boundary and the hidden engine
+state around it:
 
-- `nm -gU itb_test.dylib` exports only `_luaopen_itb_test`. All other symbols are static.
-- `strings .../Into the Breach` confirms the names `random_int` and `random_bool` are resident in the main binary, not `itb_test.dylib` (which contains different code paths). They are likely registered via `lua_register` from the C++ side.
+- `strings` on the sampled main executable confirms the binding names are
+  resident there. Their registration mechanism and function bodies remain
+  unmapped.
+- `nm -gU` on the unrelated-provenance local `itb_test.dylib` exports only
+  `_luaopen_itb_test`; this does not locate the game's RNG bindings.
 - We do not know whether they:
   - call `rand()` (sharing libc state with Lua's `math.random`),
   - own a private `std::mt19937` seeded from `aiSeed`,
   - or use a third RNG (xorshift, MINSTD, Knuth's TYPE_3, etc.).
-- Even if (the most optimistic case) they share libc `rand()` state, the engine consumes RNG between turns for: AI movement planning, attack-target pre-rolls, animation jitter, and other systems. Without instrumentation we cannot count those consumptions.
+- Even if they share libc `rand()` state, other engine systems may consume RNG
+  between turns. AI planning, target choice, and animation are candidates, not
+  established consumers of the same stream. Without instrumentation we cannot
+  identify or count those calls.
 
 To get a real prediction match we would need either:
 
 1. **Live-game RNG instrumentation.** Add a Lua hook in `modloader.lua` that wraps `random_int` / `random_bool` and logs every call with its result during an enemy phase. Then we can verify Park-Miller equivalence empirically. **(out of scope for this experiment — would touch live bridge code.)**
-2. **Binary diffing of the engine.** Disassemble `itb_test.dylib` / the main binary in Hopper/Ghidra to find the `random_int` body. **(huge time cost; the engine is closed-source.)**
+2. **Targeted native boundary research.** On an exact platform/build/hash,
+   anchor the Lua registration strings in the main executable and validate the
+   mapped behavior empirically. Do not assume a local dylib contains the body.
 3. **Differential observation.** Capture *thousands* of (ai_seed → first-spawn-type) pairs and treat it as a regression problem: can we learn a function `(ai_seed) → spawn_index_offset` empirically? Plausible but expensive.
 
 ## What this enables anyway
 
 Even with prediction blocked, `ai_seed` capture remains valuable for:
 
-- **Run/turn fingerprinting.** Two recordings with the same `(master_seed, ai_seed, mission_id, turn)` are *guaranteed* to be the same engine state. This makes regression bisection deterministic.
-- **Post-hoc determinism checks.** If a recorded turn is replayed inside the game (via `recover_state` / `undo`) and produces a different `ai_seed`, that signals a desync we can flag.
-- **Detecting silent re-seeds.** The engine occasionally re-seeds (e.g., on save/load). The capture cadence in `resist_probe.jsonl` lets us detect those events.
-- **Future grid-defense resist work.** The companion `seed_probe_analyze.py` tool already uses this data for the 15% resist-roll hypothesis; that path is independent of the spawn problem and may yet pay off (resist rolls are simpler — one `random_int(100)` per attack — and the call ordering may be tractable).
+- **Run/turn fingerprinting.** `(master_seed, ai_seed, mission_id, turn)` is a
+  useful grouping key, but it is not proof of identical full engine state.
+  Hidden RNG position, queue state, or other native fields may differ.
+- **Post-hoc determinism checks.** A changed `ai_seed` after a controlled replay
+  is evidence of divergence worth investigating, not sufficient proof of the
+  cause.
+- **Detecting possible re-seeds.** Seed transitions can identify candidates for
+  tracing; without observing the RNG boundary, they do not prove a reseed event.
+- **Future Grid Defense work.** `seed_probe_analyze.py` can compare candidate
+  streams with resist evidence, but the RNG function, number of draws, and call
+  ordering remain hypotheses.
 
 ## Files
 
@@ -93,6 +136,10 @@ Even with prediction blocked, `ai_seed` capture remains valuable for:
 
 ## Honest scorecard
 
-- **Match declared:** 0 / 2 cases.
+- **Mechanical matcher:** not implemented.
+- **Manual observation:** no obvious alignment noticed in two displayed,
+  noisy prefixes; this is not a rejection test.
 - **Useful artifacts produced:** documentation of the algorithm flow, a reusable forensic CLI, a clear list of what's blocked.
-- **Should we integrate this into a live path?** **No.** The experiment confirms there's nothing to integrate — we cannot predict spawns from seeds alone today, and the user explicitly scoped this to offline post-hoc validation.
+- **Should we integrate this into a live path?** **No.** The experiment produced
+  no validated spawn predictor. Keep it offline until build-keyed traces support
+  a behavioral model.

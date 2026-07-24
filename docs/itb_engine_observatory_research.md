@@ -25,16 +25,27 @@ Parallelizing an inaccurate simulator generates confident mistakes faster.
 Improving fidelity first makes every later rollout and every VM worker more
 valuable.
 
-## Evidence from the installed Windows build
+## Build and content evidence
 
-The locally installed Steam build was inspected read-only on 2026-07-16. Its
-game directory contained:
+### Modified local Windows installation
 
-- 153 `.lua` files totaling approximately 37,000 lines and 1.28 MB.
-- 376 `.map` files.
+The locally installed Steam build was inspected read-only on 2026-07-16 and
+inventoried deterministically on 2026-07-23. This is a **modified installation**:
+its `scripts/` tree contains the bridge `modloader.lua` and backup artifacts. It
+must not be treated as a vanilla-depot file count.
+
+The local `scripts/` tree contained 153 `.lua` files; `maps/` contained 376
+`.map` files plus `maphelper.lua`. The complete byte-level Observatory snapshot
+records 305 regular files under `scripts/**` and 377 under `maps/**`, plus:
+
 - A 5,530,112-byte `Breach.exe`.
 - A separate `lua5.1.dll`.
-- Separate SDL2, OpenGL, FMOD, and Steam libraries.
+- Separate SDL2, FMOD, Steam, and Visual C++ runtime libraries.
+
+The snapshot is
+`data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json`.
+It contains normalized relative paths, per-file SHA-256 values, aggregate
+scripts/maps revisions, and no absolute user path.
 
 The executable is 32-bit x86 and imports the Lua 5.1 C API directly, including
 functions such as `lua_pushcclosure`, `lua_setfield`, `lua_pcall`, and
@@ -48,16 +59,15 @@ functions such as `lua_pushcclosure`, `lua_setfield`, `lua_pcall`, and
 - `ScorePositioning`
 - `GetTargetScore`
 
-Its debug directory retains the original PDB build path:
+This Windows PE's debug directory retains the original PDB build path:
 
 ```text
 D:\bigbrother\Kaiju\bin\Breach.pdb
 ```
 
 The PDB itself is not installed, so a decompiler will not magically recover
-the original source names. The path does, however, confirm that the executable
-was built with debug-symbol metadata and gives us a useful fingerprint for the
-native target.
+the original source names. The embedded path is evidence about this Windows PE
+only. It is not evidence about the macOS or Linux binaries.
 
 The executable inspected during this snapshot had SHA-256:
 
@@ -65,9 +75,38 @@ The executable inspected during this snapshot had SHA-256:
 31FE352655982398FB3EE8B0BBE80EFD5D65E3A9AA11E3DC39D0364354493FE9
 ```
 
-Any native offsets, signatures, or behavioral conclusions should be pinned to
-an executable hash or exact game version. Memory layouts may change between
-builds.
+### Public vanilla-depot comparison
+
+The public Steam depot listings were checked on 2026-07-23:
+
+| Build platform | Depot | Build / manifest | Public content counts | Native shape |
+|---|---:|---|---|---|
+| Windows | [590381](https://steamdb.info/depot/590381/) | build `13725832`; manifest `8335438558621014449` | 154 Lua, 376 maps | `Breach.exe`, six DLLs including `lua5.1.dll` |
+| macOS | [590382](https://steamdb.info/depot/590382/) | build `13725832`; manifest `2336337887533649473` | 152 Lua, 376 maps | app-bundle Mach-O plus frameworks/dylibs |
+| Linux | [590383](https://steamdb.info/depot/590383/) | build `21601364`; manifest `8584573075182422035` | 152 Lua, 376 maps | `Breach` plus `linux_x64/*.so*` |
+
+The Windows vanilla count includes the shipped zero-byte
+`scripts/modloader.lua`; the local modified installation instead has a
+non-empty bridge and backups. Counts and matching sizes are only clues. Public
+file hashes require authentication, so shared Lua equality must be established
+with inventories from clean local depots before it is claimed.
+
+The depot listings demonstrate both the useful common layer and the native
+boundary: the platforms expose the same broad Lua/map mechanics tree while
+shipping different executables and libraries. They also demonstrate current
+version drift: Linux is on build `21601364`, while the public Windows and macOS
+depots remain on `13725832`.
+
+The official macOS depot listing does **not** contain `itb_test.dylib`. The
+tracked local `src/native/itb_test.dylib` is therefore a locally observed
+artifact of unproven origin, not evidence that this library ships as a core
+part of the macOS game.
+
+Any native offset, hook, RNG conclusion, or Ghidra project must be keyed by the
+full identity tuple: platform, executable format and architecture, build and
+depot manifest, executable/native-library hashes, and scripts/maps content
+revisions. Native behavior must not be transferred between Windows, macOS, and
+Linux merely because surrounding Lua filenames match.
 
 ## What is already open in Lua
 
@@ -139,17 +178,21 @@ Two current limitations line up directly with the remaining native unknowns.
 
 ### Enemy projection
 
-The current depth-2 projection documents only about one-third agreement with
-real enemy targeting. Observing the engine's candidate scores and final choices
-could replace a broad learned approximation with a mostly exact algorithm plus
-a much smaller residual model.
+Historical local experiments described the depth-2 projection as agreeing with
+real enemy targeting only about one-third of the time. That figure is a dated
+diagnostic, not a current benchmark: it was not pinned to the present solver,
+corpus, and engine identity. A build-keyed candidate/score trace can replace
+the broad approximation with a mostly exact algorithm and make future accuracy
+claims reproducible.
 
 ### Spawn replay
 
-The seed-replay experiment showed that `master_seed` and `ai_seed` were not
-enough to reproduce observed spawn outcomes. The blocker was not the Lua spawn
-policy; it was the native `random_int`/`random_bool` behavior and hidden call
-order. Runtime RNG tracing attacks that blocker directly.
+In two noisy seed-replay cases, manual inspection of simple Park-Miller
+candidate streams found no obvious alignment with the new-unit diffs. No spawn
+pool mapping or formal call-order fit was performed, so the experiment did not
+establish whether `master_seed` and `ai_seed` are sufficient. The unmapped
+native `random_int`/`random_bool` behavior and hidden call order remain the
+central blockers; runtime RNG tracing attacks them directly.
 
 Related local research:
 
@@ -267,14 +310,14 @@ If wrapping a global captures calls originating in Lua but not RNG calls made
 entirely inside native code, the experiment should move down to the native Lua
 boundary.
 
-## Phase 4: Build a native Lua-call tracer
+## Phase 4: Investigate a native Lua-call tracer
 
 `Breach.exe` imports Lua 5.1 directly. Native functions exposed to Lua must be
 registered through the Lua C API. The Mod Loader already uses replacement or
 proxy DLLs for additional Windows functionality, making that boundary a
 promising observation point.
 
-A tracing proxy could observe sequences such as:
+A build-specific tracing proxy might observe sequences such as:
 
 ```text
 lua_pushcclosure(native_function_pointer)
@@ -287,9 +330,11 @@ and produce a map:
 Lua function name -> native function address
 ```
 
-Selected native Lua functions could potentially be registered through a
-generic trampoline that records their Lua stack arguments and results before
-and after invoking the original function. High-value candidates include:
+Selected native Lua functions might be observable through a carefully validated
+trampoline that records Lua stack arguments and results before and after
+invoking the original function. This is a research design, not an established
+capability. A trampoline can change calling or timing behavior and must be
+validated against the exact binary before its evidence is trusted.
 
 - `random_int`
 - `random_bool`
@@ -350,7 +395,8 @@ Useful string anchors already present in `Breach.exe` include:
 
 The likely workflow is:
 
-1. Load the exact executable into Ghidra and record its hash.
+1. Load the exact platform/build executable into Ghidra and record its full
+   Observatory identity.
 2. Identify xrefs to the known Lua registration strings.
 3. Recover the native function pointer registered for each name.
 4. Name only the relevant functions and adjacent data structures.
@@ -452,6 +498,14 @@ Parallel ITB workers can:
 - Generate independent rollouts from checkpoints.
 - Confirm determinism across cloned instances.
 - Collect large training corpora for genuinely irreducible uncertainty.
+
+For comparable oracle results, standardize workers on one exact build. Today
+the practical default is the Windows build, either on Windows or under
+Wine/Proton: it matches the community Mod Loader's native support and avoids
+pooling results from the newer Linux executable with the older Windows/macOS
+builds. Every result bundle must still include the build/content identity.
+Native Linux workers are a separate experimental cohort, not interchangeable
+replicas.
 
 Longer term, sufficient knowledge of serialization and RNG state may allow
 lighter-weight cloning than whole-VM checkpoints. A canonical scenario could be

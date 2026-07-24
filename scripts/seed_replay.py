@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-seed_replay.py — Pure-Python replay of Lua 5.1's `math.random` / `math.randomseed`
-as they behave in Into the Breach on macOS.
+seed_replay.py — Pure-Python replay of Lua 5.1's `math.random` /
+`math.randomseed` under one sampled macOS libc model.
 
 Lua 5.1's math library (lmathlib.c) wraps the C standard library's rand()/srand()
 directly:
@@ -30,8 +30,10 @@ directly:
       }
     }
 
-So to reproduce Lua 5.1 `math.random` outcomes we need only reproduce the macOS
-libc `rand()` sequence for a given `srand(seed)`.
+For a Lua build proven to use that sampled libc path, reproducing
+`math.random` requires reproducing its `rand()` sequence for a given
+`srand(seed)`. This does not establish that Into the Breach's native
+`random_int`, `random_bool`, spawn, or resist bindings use the same state.
 
 macOS libc `rand()` (verified empirically against /usr/lib/libSystem on
 darwin 25.x; see docs/seed_replay_hypotheses.md) is the classical Park-Miller
@@ -79,35 +81,30 @@ _state: int = 1
 
 
 def _normalize_seed(s: int) -> int:
-    """Replicate `srand(int s)` cast semantics.
+    """Normalize only the seed domain verified by the sampled native probe.
 
-    Lua's `luaL_checkint` casts the Lua number to C `int`, which on all
-    platforms ITB runs on is 32-bit signed.  libc's `srand` takes an
-    `unsigned int`, so negative seeds wrap mod 2**32.  We model the same by
-    first reducing mod 2**32, then applying the Park-Miller domain constraint.
+    The recorded seeds are non-negative and below ``RAND_MAX``. Apple/FreeBSD
+    ``srand`` behavior outside that domain is not the simple modular reduction
+    previously used here, so unsupported negative or large seeds fail closed.
     """
-    s = int(s) & 0xFFFFFFFF
-    # Park-Miller state must be in [1, _M - 1].  macOS libc reseeds 0 to a
-    # hard-coded non-zero state (123459876) so the stream escapes the zero
-    # fixed point.  For s > _M we reduce mod (_M - 1) + 1 which keeps the
-    # state in the valid range; any standards-compliant LCG srand will also
-    # normalize somehow, but since every seed we care about fits in the
-    # [1, _M-1] interval we only need the zero special case in practice.
+    s = int(s)
+    if s < 0 or s >= _M:
+        raise ValueError(
+            f"seed must be in the sampled domain [0, {_M - 1}]"
+        )
     if s == 0:
         return 123459876
-    if s >= _M:
-        s = (s % (_M - 1)) + 1
     return s
 
 
 def seed(s: int) -> None:
-    """Equivalent to Lua's `math.randomseed(s)` / C's `srand(s)` on macOS."""
+    """Seed the sampled Park-Miller model within its verified input domain."""
     global _state
     _state = _normalize_seed(s)
 
 
 def _rand_raw() -> int:
-    """One step of the Park-Miller LCG.  Equivalent to macOS libc `rand()`."""
+    """Advance one step of the sampled Park-Miller model."""
     global _state
     _state = (_state * _A) % _M
     return _state
