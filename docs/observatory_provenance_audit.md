@@ -36,9 +36,9 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 2 | 2 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 4 | 10 |
-| Missions | 75 | 2 | 73 |
-| Environments | 15 | 2 | 13 |
-| Unique total | 97 | 13 | 84 |
+| Missions | 75 | 3 | 72 |
+| Environments | 15 | 3 | 12 |
+| Unique total | 97 | 14 | 83 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
@@ -86,6 +86,15 @@ live-derived regressions.
 It remains `partial`: Rust consumes bridge-supplied lanes/direction rather than
 reproducing Lua/native RNG planning, and native scheduler plus
 bridge-extraction conformance remain unresolved.
+
+The second mission-environment slice, `environment-mission-tides`, pins the
+exact base Tidal Waves mission to warning ingestion, post-attack danger
+resolution, observed flyer damage, pod destruction, and projected/replayed
+lane advancement. It remains `partial`: Rust does not convert flooded tiles to
+water, reproduce Lua's permanent spawn blocking, or reconstruct the native
+environment scheduler and `SpaceDamage.iTerrain` semantics. The exact
+attack-before-wave and flyer-damage rules are supported by live-derived
+regressions, not by the Lua file alone.
 
 ## Highest-value expansion order
 

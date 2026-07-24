@@ -67,6 +67,96 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Lua source assigns Mission_Tides to Env_Tides and defines deterministic Index-based lane progression, permanent next-lane spawn blocking, building-aware warnings, and current-lane water conversion."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust consumes live warning metadata, defers Mission_Tides danger until after queued attacks, applies grounded lethality and the observed one damage to flyers, destroys marked pods, and advances the serialized warning lane; focused tests include live-derived timing and flyer regressions."
+        }
+      ],
+      "id": "environment-mission-tides",
+      "implementations": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger",
+            "apply_env_danger_board",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "advance_mission_tides_warning",
+            "project_plan_with_spawns"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust does not currently convert a flooded tile to Terrain::Water; it models marked unit, building, and pod consequences while leaving terrain unchanged.",
+        "Rust does not independently reproduce Env_Tides:Start or Env_Tides:Plan permanent Board:BlockSpawn calls; it consumes current spawn and warning state from the bridge.",
+        "Warning advancement shifts serialized danger bits instead of reconstructing Lua Index, building-shadow, and convert logic.",
+        "Queued-attacks-before-wave and one damage to flyers are live-derived runtime observations, not explicit Lua semantics or an independently traced native scheduler and SpaceDamage proof.",
+        "Shield, frozen, building, terrain, and native SpaceDamage.iTerrain edge conformance remains non-exhaustive.",
+        "This record excludes the NewTerrain=TERRAIN_SAND Terratide branches, presentation effects, and campaign environment selection."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/grass/mission_tides.lua",
+          "sha256": "d27dab9f44e804e90385a6557057fc9a1281fab4bc83d6fff50151fc7702277a",
+          "symbols": [
+            "Mission_Tides",
+            "Env_Tides",
+            "Env_Tides:Start",
+            "Env_Tides:MarkBoard",
+            "Env_Tides:Plan",
+            "Env_Tides:ApplyEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_mission_tides_flying_mech_takes_one_damage",
+            "test_mission_tides_vek_attack_before_wave",
+            "test_massive_tidal_wave_lethal_destroys",
+            "test_tidal_wave_lethal_spares_flying",
+            "test_tidal_wave_lethal_kills_grounded"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_mission_tides_projection_advances_warning_lane"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_mission_tides_advances_final_warning_lane",
+            "replay_solution_mission_tides_wave_destroys_pod"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "The exact inventoried Lua sources define Rocket Artillery's inherited cardinal target area with minimum range two, base damage 2, smoke behind the shooter, forward push, two damage-3 variants, and combined damage 4 variant."
         },
         {

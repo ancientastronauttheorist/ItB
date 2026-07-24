@@ -637,3 +637,69 @@ def test_real_mission_wind_record_keeps_rng_and_bridge_gaps_explicit():
     assert "RNG" in gaps
     assert "bridge" in gaps.lower()
     assert "native" in gaps.lower()
+
+
+def test_real_mission_tides_record_keeps_terrain_and_native_order_gaps_explicit():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-tides"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/grass/mission_tides.lua",
+            "sha256": (
+                "d27dab9f44e804e90385a6557057fc9a"
+                "1281fab4bc83d6fff50151fc7702277a"
+            ),
+            "symbols": [
+                "Mission_Tides",
+                "Env_Tides",
+                "Env_Tides:Start",
+                "Env_Tides:MarkBoard",
+                "Env_Tides:Plan",
+                "Env_Tides:ApplyEffect",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "apply_env_danger",
+        "apply_env_danger_board",
+        "simulate_enemy_attacks",
+    } <= implementations["rust_solver/src/enemy.rs"]
+    assert {
+        "advance_mission_tides_warning",
+        "project_plan_with_spawns",
+    } <= implementations["rust_solver/src/turn_projection.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert {
+        "test_mission_tides_flying_mech_takes_one_damage",
+        "test_mission_tides_vek_attack_before_wave",
+    } <= tests["rust_solver/src/simulate.rs"]
+    assert tests["rust_solver/src/replay.rs"] == {
+        "replay_solution_mission_tides_advances_final_warning_lane",
+        "replay_solution_mission_tides_wave_destroys_pod",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "does not currently convert a flooded tile to Terrain::Water" in gaps
+    assert "does not independently reproduce Env_Tides:Start" in gaps
+    assert "live-derived runtime observations" in gaps
