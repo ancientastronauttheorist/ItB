@@ -71,6 +71,22 @@ python scripts/itb_provenance.py \
 The JSON output says only whether an exact source hash is indexed. It explicitly
 does not equate source indexing with implemented or verified behavior.
 
+Build a lexical player-weapon Lua-to-Rust ID index from the exact inventoried
+files:
+
+```text
+python scripts/itb_weapon_coverage.py \
+  data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json \
+  "B:\SteamLibrary\steamapps\common\Into the Breach"
+```
+
+The second argument is the installation's content root (the directory
+containing `scripts/`). The tool reads and hash-verifies all 14 selected Lua
+files, masks Lua comments and strings, extracts active global constructor and
+alias candidates, and joins them to direct `wid_from_str` arms. It emits JSON
+to stdout and never writes to the installation. An exact ID match is not a
+claim about Rust weapon definitions, simulator behavior, or conformance.
+
 ## Windows PE named anchors
 
 Create a conservative string/address candidate map outside the game:

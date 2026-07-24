@@ -216,7 +216,7 @@
         }
       ],
       "known_gaps": [
-        "No generated one-to-one coverage report yet ties every shipped player weapon function to Rust cases and focused tests.",
+        "The generated lexical ID index maps exact Lua constructor candidates to wid_from_str, but it does not tie every weapon function to Rust simulator cases and focused tests.",
         "Two-click target legality and native helper semantics remain especially important audit targets."
       ],
       "sources": [

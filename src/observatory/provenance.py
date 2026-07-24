@@ -439,21 +439,7 @@ def _source_audit_category(path: str, category: str) -> bool:
             "scripts/advanced/ae_weapons_enemy.lua",
         }
     if category == "player-weapons":
-        base = (
-            path.startswith("scripts/weapons_")
-            and path.endswith(".lua")
-            and path
-            not in {
-                "scripts/weapons_enemy.lua",
-                "scripts/weapons_mission.lua",
-            }
-        )
-        advanced = (
-            path.startswith("scripts/advanced/ae_weapons")
-            and path.endswith(".lua")
-            and path != "scripts/advanced/ae_weapons_enemy.lua"
-        )
-        return base or advanced
+        return is_player_weapon_source(path)
     if category == "missions":
         return (
             path.startswith("scripts/missions/")
@@ -462,6 +448,25 @@ def _source_audit_category(path: str, category: str) -> bool:
     if category == "environments":
         return path in ENVIRONMENT_SOURCE_PATHS
     raise ProvenanceError(f"unknown source audit category: {category}")
+
+
+def is_player_weapon_source(path: str) -> bool:
+    """Return whether an inventory path is selected for player-weapon audit."""
+    base = (
+        path.startswith("scripts/weapons_")
+        and path.endswith(".lua")
+        and path
+        not in {
+            "scripts/weapons_enemy.lua",
+            "scripts/weapons_mission.lua",
+        }
+    )
+    advanced = (
+        path.startswith("scripts/advanced/ae_weapons")
+        and path.endswith(".lua")
+        and path != "scripts/advanced/ae_weapons_enemy.lua"
+    )
+    return base or advanced
 
 
 def audit_provenance_sources(

@@ -58,6 +58,8 @@ It remains `partial`: native path/effect helpers are not traced, the B variant
 lacks a dedicated end-to-end simulator case, and exhaustive edge conformance is
 not claimed. This improves record granularity without changing the file-index
 count because `weapons_prime.lua` was already present in the umbrella record.
+The reusable lexical inventory behind further family selection is documented
+in [`observatory_player_weapon_id_index.md`](observatory_player_weapon_id_index.md).
 
 ## Highest-value expansion order
 
