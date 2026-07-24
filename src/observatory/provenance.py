@@ -590,6 +590,77 @@ def audit_provenance_sources(
     }
 
 
+def audit_provenance_gaps(
+    provenance: Mapping[str, Any],
+    inventory: Mapping[str, Any],
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, Any]:
+    """Return a deterministic, build-keyed queue of open provenance gaps."""
+    coverage = validate_provenance(
+        provenance,
+        inventory,
+        repo_root=repo_root,
+    )
+    records = []
+    known_gap_items = 0
+    open_evidence_items = 0
+    for record in provenance["records"]:
+        open_evidence = [
+            {
+                "classification": item["classification"],
+                "statement": item["statement"],
+            }
+            for item in record["evidence"]
+            if item["classification"] in {"hypothesis", "unresolved"}
+        ]
+        gaps = list(record["known_gaps"])
+        if record["coverage"] == "verified" and not open_evidence:
+            continue
+        known_gap_items += len(gaps)
+        open_evidence_items += len(open_evidence)
+        records.append(
+            {
+                "id": record["id"],
+                "coverage": record["coverage"],
+                "sources": sorted(
+                    source["path"] for source in record["sources"]
+                ),
+                "known_gaps": gaps,
+                "open_evidence": open_evidence,
+            }
+        )
+    records.sort(key=lambda item: item["id"])
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "analysis_kind": "provenance_gap_audit",
+        "build_identity": dict(provenance["build_identity"]),
+        "method": {
+            "included_records": (
+                "non-verified coverage, plus any verified record that still "
+                "contains hypothesis or unresolved evidence"
+            ),
+            "ordering": "record id; source paths are sorted",
+            "known_gaps": "verbatim record-level limitations",
+            "open_evidence": (
+                "hypothesis and unresolved evidence with classification "
+                "preserved"
+            ),
+        },
+        "records": records,
+        "summary": {
+            "records_total": len(provenance["records"]),
+            "open_records": len(records),
+            "known_gap_items": known_gap_items,
+            "records_with_open_evidence": sum(
+                bool(record["open_evidence"]) for record in records
+            ),
+            "open_evidence_items": open_evidence_items,
+            "coverage": coverage,
+        },
+    }
+
+
 class _DuplicateKeyError(ValueError):
     pass
 

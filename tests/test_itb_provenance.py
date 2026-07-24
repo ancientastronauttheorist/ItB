@@ -11,6 +11,7 @@ import pytest
 from scripts.itb_provenance import main as provenance_main
 from src.observatory.provenance import (
     ProvenanceError,
+    audit_provenance_gaps,
     audit_provenance_sources,
     load_json_object,
     validate_provenance,
@@ -391,6 +392,114 @@ def test_source_audit_distinguishes_indexing_from_behavioral_coverage():
     }
 
 
+def test_gap_audit_exposes_build_keyed_open_work():
+    audit = audit_provenance_gaps(_provenance(), _inventory())
+
+    assert audit["analysis_kind"] == "provenance_gap_audit"
+    assert audit["build_identity"] == _provenance()["build_identity"]
+    assert audit["summary"] == {
+        "records_total": 1,
+        "open_records": 1,
+        "known_gap_items": 1,
+        "records_with_open_evidence": 0,
+        "open_evidence_items": 0,
+        "coverage": {
+            "gap": 0,
+            "native_dependency": 0,
+            "partial": 1,
+            "verified": 0,
+        },
+    }
+    assert audit["records"] == [
+        {
+            "id": "enemy-scoring",
+            "coverage": "partial",
+            "sources": ["scripts/global.lua"],
+            "known_gaps": [
+                "Native candidate enumeration is unresolved."
+            ],
+            "open_evidence": [],
+        }
+    ]
+
+
+def test_gap_audit_includes_unresolved_evidence_and_sorts_records():
+    provenance = _provenance()
+    second = deepcopy(provenance["records"][0])
+    second["id"] = "alpha-gap"
+    second["evidence"].append(
+        {
+            "classification": "unresolved",
+            "statement": "Native tie order is unknown.",
+        }
+    )
+    provenance["records"].append(second)
+
+    audit = audit_provenance_gaps(provenance, _inventory())
+
+    assert [record["id"] for record in audit["records"]] == [
+        "alpha-gap",
+        "enemy-scoring",
+    ]
+    assert audit["records"][0]["open_evidence"] == [
+        {
+            "classification": "unresolved",
+            "statement": "Native tie order is unknown.",
+        }
+    ]
+    assert audit["summary"]["records_with_open_evidence"] == 1
+    assert audit["summary"]["open_evidence_items"] == 1
+
+
+def test_gap_audit_preserves_hypothesis_classification():
+    provenance = _provenance()
+    provenance["records"][0]["evidence"].append(
+        {
+            "classification": "hypothesis",
+            "statement": "Candidate order may be stable.",
+        }
+    )
+
+    record = audit_provenance_gaps(
+        provenance,
+        _inventory(),
+    )["records"][0]
+
+    assert record["open_evidence"] == [
+        {
+            "classification": "hypothesis",
+            "statement": "Candidate order may be stable.",
+        }
+    ]
+
+
+def test_gap_audit_verified_record_requires_open_evidence_for_inclusion():
+    provenance = _provenance()
+    record = provenance["records"][0]
+    record["coverage"] = "verified"
+    record["known_gaps"] = []
+
+    clean_audit = audit_provenance_gaps(provenance, _inventory())
+    assert clean_audit["records"] == []
+    assert clean_audit["summary"]["open_records"] == 0
+
+    record["evidence"].append(
+        {
+            "classification": "unresolved",
+            "statement": "Native tie order remains untraced.",
+        }
+    )
+    open_audit = audit_provenance_gaps(provenance, _inventory())
+    assert open_audit["records"][0]["coverage"] == "verified"
+    assert open_audit["records"][0]["known_gaps"] == []
+    assert open_audit["records"][0]["open_evidence"] == [
+        {
+            "classification": "unresolved",
+            "statement": "Native tie order remains untraced.",
+        }
+    ]
+
+
 def test_source_audit_is_deterministic():
     first = audit_provenance_sources(_provenance(), _inventory())
     reordered_inventory = _inventory()
@@ -439,6 +548,38 @@ def test_source_audit_cli_emits_machine_readable_json(
         "indexed_files": 1,
         "unindexed_files": 0,
     }
+
+
+def test_gap_audit_cli_emits_machine_readable_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    (tmp_path / "rust_solver/src").mkdir(parents=True)
+    (tmp_path / "rust_solver/src/turn_projection.rs").write_text(
+        "// requeue_enemies_heuristic test_projection",
+        encoding="utf-8",
+    )
+    inventory_path = tmp_path / "data/observatory/inventories/test.json"
+    inventory_path.parent.mkdir(parents=True)
+    provenance_path = tmp_path / "provenance.json"
+    inventory_path.write_text(json.dumps(_inventory()), encoding="utf-8")
+    provenance_path.write_text(json.dumps(_provenance()), encoding="utf-8")
+
+    assert (
+        provenance_main(
+            [
+                str(provenance_path),
+                str(inventory_path),
+                "--repo-root",
+                str(tmp_path),
+                "--audit-gaps",
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+    assert result["analysis_kind"] == "provenance_gap_audit"
+    assert result["summary"]["records_total"] == 1
+    assert result["records"][0]["id"] == "enemy-scoring"
 
 
 def test_real_titan_fist_record_is_family_scoped():

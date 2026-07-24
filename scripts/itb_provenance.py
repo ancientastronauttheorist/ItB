@@ -13,6 +13,7 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 from src.observatory.provenance import (  # noqa: E402
     ProvenanceError,
+    audit_provenance_gaps,
     audit_provenance_sources,
     load_json_object,
     validate_provenance,
@@ -24,10 +25,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("provenance", type=Path)
     parser.add_argument("inventory", type=Path)
     parser.add_argument("--repo-root", type=Path, default=_REPO_ROOT)
-    parser.add_argument(
+    audit_group = parser.add_mutually_exclusive_group()
+    audit_group.add_argument(
         "--audit-sources",
         action="store_true",
         help="print a deterministic high-value Lua source-index audit",
+    )
+    audit_group.add_argument(
+        "--audit-gaps",
+        action="store_true",
+        help="print a deterministic build-keyed queue of open mechanics gaps",
     )
     args = parser.parse_args(argv)
     try:
@@ -35,6 +42,12 @@ def main(argv: list[str] | None = None) -> int:
         inventory = load_json_object(args.inventory)
         if args.audit_sources:
             result = audit_provenance_sources(
+                provenance,
+                inventory,
+                repo_root=args.repo_root,
+            )
+        elif args.audit_gaps:
+            result = audit_provenance_gaps(
                 provenance,
                 inventory,
                 repo_root=args.repo_root,
@@ -53,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(
             result,
             ensure_ascii=False,
-            indent=2 if args.audit_sources else None,
+            indent=2 if args.audit_sources or args.audit_gaps else None,
             sort_keys=True,
         )
     )

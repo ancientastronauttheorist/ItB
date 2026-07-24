@@ -20,6 +20,22 @@ python scripts/itb_provenance.py \
   --audit-sources
 ```
 
+Extract the build-keyed record-level work queue with the same validator:
+
+```text
+python scripts/itb_provenance.py \
+  data/observatory/mechanics_provenance.json \
+  data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json \
+  --audit-gaps
+```
+
+The gap audit emits validated source paths, known gaps, and classification-
+preserving hypothesis/unresolved evidence for every non-verified record, plus
+any verified record that still carries open evidence. The deterministic
+alphabetical output is a work inventory, not a severity ranking or permission
+to change solver behavior without the normal simulator-version and
+conformance-test discipline.
+
 The validator first proves that the inventory content exactly matches the path
 embedded in the provenance document, validates all source hashes, and checks
 repository references. Repository symbols without whitespace or wildcards are
