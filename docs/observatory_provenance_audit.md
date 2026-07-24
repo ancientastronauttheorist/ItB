@@ -52,23 +52,25 @@ For the modified local Windows inventory at scripts revision
 
 | Category | Candidate files | Indexed | Unindexed |
 |---|---:|---:|---:|
-| Spawn selection | 3 | 2 | 1 |
+| Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 2 | 2 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 5 | 9 |
 | Missions | 75 | 4 | 71 |
 | Environments | 15 | 4 | 11 |
-| Unique total | 97 | 16 | 81 |
+| Unique total | 97 | 17 | 80 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
-existing records remain `native_dependency` or `partial`. The spawn audit also
-shows that `scripts/spawner.lua`, which contains difficulty/island parameters,
-is not yet named by the provenance index. Conversely, the large player-weapon
-and mission gaps mean the current broad records do not enumerate most exact
-source files, even where Rust behavior and tests already exist.
+existing records remain `native_dependency` or `partial`. All three selected
+spawn files are now named, including the exact 16-cell difficulty/sector matrix
+in `scripts/spawner.lua`, but Rust still projects marker persistence/blocking
+without applying that matrix or materializing the selected pawn. Native roster
+selection, RNG state, and call order remain unresolved. Conversely, the large
+player-weapon and mission gaps mean the current broad records do not enumerate
+most exact source files, even where Rust behavior and tests already exist.
 
 The first family-level player-weapon slice is
 `player-weapon-titan-fist`. It pins the exact `weapons_prime.lua` hash, all four

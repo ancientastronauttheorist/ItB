@@ -582,6 +582,61 @@ def test_gap_audit_cli_emits_machine_readable_json(
     assert result["records"][0]["id"] == "enemy-scoring"
 
 
+def test_real_spawn_selection_record_includes_sector_parameter_matrix():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "spawn-selection"
+    )
+    assert record["coverage"] == "native_dependency"
+    sources = {source["path"]: source for source in record["sources"]}
+    assert sources["scripts/spawner.lua"] == {
+        "path": "scripts/spawner.lua",
+        "sha256": (
+            "03c4004ce21e450a21d1018627380302"
+            "aea80f8718edf05877834ee9c6a84a2e"
+        ),
+        "symbols": [
+            "SectorSpawners",
+            "DIFF_EASY",
+            "DIFF_NORMAL",
+            "DIFF_HARD",
+            "DIFF_UNFAIR",
+        ],
+    }
+    assert sources["scripts/spawner_backend.lua"]["symbols"] == [
+        "Spawner:NextPawn",
+        "Spawner:SelectPawn",
+        "Spawner:ModifyCount",
+    ]
+    assert sources["scripts/advanced/ae_spawner_backend.lua"]["symbols"] == [
+        "WeakPawns",
+        "Spawner.max_pawns",
+        "Spawner.max_level",
+        "getFinalEnemyLists",
+    ]
+    assert sources["scripts/missions/missions.lua"]["symbols"] == [
+        "Mission:CreateSpawner"
+    ]
+    evidence = " ".join(item["statement"] for item in record["evidence"])
+    assert "optional mission-specific data overrides" in evidence
+    gaps = " ".join(record["known_gaps"])
+    assert "does not parse or apply SectorSpawners" in gaps
+    assert "GAME:GetSpawnList" in gaps
+    assert "parameter matrix does not itself determine spawn count" in gaps
+
+
 def test_real_titan_fist_record_is_family_scoped():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(

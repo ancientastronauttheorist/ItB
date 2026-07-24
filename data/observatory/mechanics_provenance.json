@@ -18,6 +18,10 @@
           "statement": "The Lua sources define weak/strong selection, upgrades, caps, and the semantic call sites of random_int and random_bool."
         },
         {
+          "classification": "fact",
+          "statement": "The exact inventoried spawner.lua defines 16 difficulty/sector parameter sets for weak selection, upgrade selection, simultaneous living-upgrade caps, and conditional boss promotion; Mission:CreateSpawner instantiates the current difficulty/sector entry with optional mission-specific data overrides for Spawner:NextPawn."
+        },
+        {
           "classification": "unresolved",
           "statement": "The native RNG implementation, state, and complete consumption order have not been traced for this build."
         }
@@ -33,8 +37,9 @@
         }
       ],
       "known_gaps": [
-        "Rust projects known or scenario-supplied spawn identities; it does not independently reproduce Spawner:NextPawn.",
-        "Native random_int/random_bool behavior and pre-spawn call order are unresolved."
+        "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, random_int/random_bool behavior, RNG state, and complete pre-spawn call order are unresolved.",
+        "The parameter matrix does not itself determine spawn count, timing, locations, or roster; selection fallbacks, living caps, streak rules, and conditional promotion can change the nominal weak, upgrade, and boss outcomes."
       ],
       "sources": [
         {
@@ -42,14 +47,36 @@
           "sha256": "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301",
           "symbols": [
             "Spawner:NextPawn",
-            "Spawner:SelectPawn"
+            "Spawner:SelectPawn",
+            "Spawner:ModifyCount"
           ]
         },
         {
           "path": "scripts/advanced/ae_spawner_backend.lua",
           "sha256": "88570b60c16583f86b00231fa65f99bdde74677171e6b7bf32a1c0685261f586",
           "symbols": [
-            "Spawner:ModifyCount"
+            "WeakPawns",
+            "Spawner.max_pawns",
+            "Spawner.max_level",
+            "getFinalEnemyLists"
+          ]
+        },
+        {
+          "path": "scripts/spawner.lua",
+          "sha256": "03c4004ce21e450a21d1018627380302aea80f8718edf05877834ee9c6a84a2e",
+          "symbols": [
+            "SectorSpawners",
+            "DIFF_EASY",
+            "DIFF_NORMAL",
+            "DIFF_HARD",
+            "DIFF_UNFAIR"
+          ]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": [
+            "Mission:CreateSpawner"
           ]
         }
       ],
