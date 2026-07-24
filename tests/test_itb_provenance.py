@@ -848,3 +848,66 @@ def test_real_mission_tides_record_keeps_terrain_and_native_order_gaps_explicit(
     assert "does not currently convert a flooded tile to Terrain::Water" in gaps
     assert "does not independently reproduce Env_Tides:Start" in gaps
     assert "live-derived runtime observations" in gaps
+
+
+def test_real_final_cave_record_is_limited_to_marked_lethal_danger():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-final-cave-danger"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/final/env_final.lua",
+            "sha256": (
+                "8d9220a9f7c0b6f3887ec8b9ffdd351b"
+                "25cd4c53696d2f401c81dbeb932a6f33"
+            ),
+            "symbols": [
+                "Env_Final",
+                "Env_Final:Start",
+                "Env_Final:MarkSpace",
+                "Env_Final:SelectSpaces",
+                "Env_Final:ApplyStart",
+                "Env_Final:ApplyEnd",
+                "Env_Final:GetAttackEffect",
+                "IsBomb",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {"board_from_json", "final_cave_env"} <= implementations[
+        "rust_solver/src/serde_bridge.rs"
+    ]
+    assert {
+        "apply_env_danger",
+        "apply_env_danger_board",
+        "simulate_enemy_attacks",
+    } <= implementations["rust_solver/src/enemy.rs"]
+    assert record["tests"] == [
+        {
+            "path": "rust_solver/src/simulate.rs",
+            "symbols": [
+                "test_final_cave_env_ignores_stale_flying_immune_field"
+            ],
+        }
+    ]
+    gaps = " ".join(record["known_gaps"])
+    assert "does not reproduce Env_Final:Start" in gaps
+    assert "does not implement Env_Final terrain mutations" in gaps
+    assert "does not cover Env_Volcano" in gaps

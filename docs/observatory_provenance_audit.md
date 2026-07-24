@@ -40,9 +40,9 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 2 | 2 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 5 | 9 |
-| Missions | 75 | 3 | 72 |
-| Environments | 15 | 3 | 12 |
-| Unique total | 97 | 15 | 82 |
+| Missions | 75 | 4 | 71 |
+| Environments | 15 | 4 | 11 |
+| Unique total | 97 | 16 | 81 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
@@ -107,6 +107,15 @@ water, reproduce Lua's permanent spawn blocking, or reconstruct the native
 environment scheduler and `SpaceDamage.iTerrain` semantics. The exact
 attack-before-wave and flyer-damage rules are supported by live-derived
 regressions, not by the Lua file alone.
+
+The third mission-environment slice, `environment-final-cave-danger`, pins the
+exact Final Cave `env_final.lua` source to Rust's marked-tile lethal-danger
+ingestion and its live-derived stale-flying-immunity regression. It remains
+`partial`: Rust consumes the selected mask without reproducing the four-phase
+selector, modes, RNG, scheduling, BigBomb exclusion, or enemy avoidance, and
+does not apply the source's road/lava terrain aftermath. `env_volcano.lua`
+remains unindexed because no focused Rust mode, terrain, fire, phase, or
+selection conformance test exists yet.
 
 ## Highest-value expansion order
 

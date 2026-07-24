@@ -905,6 +905,68 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Final Cave Lua source alternates rock and tentacle modes across a four-phase selector, removes a selected BigBomb tile, marks selected tiles dangerous, and emits deadly rock-to-road or tentacle-to-lava effects."
+        },
+        {
+          "classification": "fact",
+          "statement": "For Mission_Final_Cave, Rust consumes bridge-supplied danger tiles, overrides stale flying-immunity metadata, and applies marked lethal danger to flyers as well as grounded units; a focused live-derived regression proves that boundary."
+        }
+      ],
+      "id": "environment-final-cave-danger",
+      "implementations": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "final_cave_env"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger",
+            "apply_env_danger_board",
+            "simulate_enemy_attacks"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes bridge-supplied danger tiles and does not reproduce Env_Final:Start, the four-phase selector, mode alternation, RNG, quarter or lava-cluster selection, crossing-path planning, Instant or Ordered scheduling, water targeting, BigBomb exclusion, or Board:SetDangerous enemy avoidance.",
+        "Rust does not implement Env_Final terrain mutations to TERRAIN_ROAD or TERRAIN_LAVA, mode identity, crack, shake, dropper, animation, or sound effects.",
+        "The focused proof covers one flying mech and stale-v2 correction, not grounded units, buildings, pods, shield or frozen behavior, terrain aftermath, selection, exact timing, legacy-v1 behavior, or exhaustive bridge extraction.",
+        "Native Env_Attack, GetQuarters, GetCrossingPath, RNG, SpaceDamage, and scheduler semantics have not been independently traced for this build.",
+        "This record covers Env_Final in Mission_Final_Cave and does not cover Env_Volcano or the preceding Mission_Final stage."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/final/env_final.lua",
+          "sha256": "8d9220a9f7c0b6f3887ec8b9ffdd351b25cd4c53696d2f401c81dbeb932a6f33",
+          "symbols": [
+            "Env_Final",
+            "Env_Final:Start",
+            "Env_Final:MarkSpace",
+            "Env_Final:SelectSpaces",
+            "Env_Final:ApplyStart",
+            "Env_Final:ApplyEnd",
+            "Env_Final:GetAttackEffect",
+            "IsBomb"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_final_cave_env_ignores_stale_flying_immune_field"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
