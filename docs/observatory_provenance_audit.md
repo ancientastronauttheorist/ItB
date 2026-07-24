@@ -35,10 +35,10 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 2 | 1 |
 | Enemy scoring | 2 | 2 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 1 | 13 |
+| Player weapons | 14 | 3 | 11 |
 | Missions | 75 | 1 | 74 |
 | Environments | 15 | 1 | 14 |
-| Unique total | 97 | 9 | 88 |
+| Unique total | 97 | 11 | 86 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
@@ -60,6 +60,13 @@ not claimed. This improves record granularity without changing the file-index
 count because `weapons_prime.lua` was already present in the umbrella record.
 The reusable lexical inventory behind further family selection is documented
 in [`observatory_player_weapon_id_index.md`](observatory_player_weapon_id_index.md).
+
+The second slice, `player-weapon-rocket-artillery`, adds the exact
+`weapons_ranged.lua` family and its inherited `LineArtillery:GetTargetArea`
+source in `weapons_base.lua`. It ties all four `Ranged_Rocket` IDs to Rust
+definitions, smoke/push dispatch, cardinal targeting, and replay regressions.
+It remains `partial` because native artillery/effect ordering, dedicated B/AB
+end-to-end cases, and exhaustive collision/status conformance are unresolved.
 
 ## Highest-value expansion order
 

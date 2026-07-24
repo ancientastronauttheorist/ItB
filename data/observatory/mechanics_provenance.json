@@ -67,6 +67,114 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Lua sources define Rocket Artillery's inherited cardinal target area with minimum range two, base damage 2, smoke behind the shooter, forward push, two damage-3 variants, and combined damage 4 variant."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has distinct IDs and definitions for all four variants plus family-specific smoke, killed-target push, targeting, and illegal-replay handling exercised by focused tests."
+        }
+      ],
+      "id": "player-weapon-rocket-artillery",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::RangedRocket",
+            "WId::RangedRocketA",
+            "WId::RangedRocketB",
+            "WId::RangedRocketAB",
+            "WEAPONS",
+            "is_rocket_artillery",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_weapon_with",
+            "sim_artillery",
+            "apply_rocket_center_push"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "enumerate_actions"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native AddArtillery, SpaceDamage, push, smoke, and effect-order helper semantics have not been independently traced exhaustively for this build.",
+        "The B and AB variants have exact definition/mapping coverage but no dedicated end-to-end simulator case; the A variant supplies the upgraded live-derived regression.",
+        "Exact conformance across every terrain, status, objective, and collision interaction remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "LineArtillery",
+            "LineArtillery:GetTargetArea"
+          ]
+        },
+        {
+          "path": "scripts/weapons_ranged.lua",
+          "sha256": "41417c5d5690bc2f51938480eb2c538f7b260e8233c4ad9209b35080ece90747",
+          "symbols": [
+            "Ranged_Rocket",
+            "Ranged_Rocket:GetSkillEffect",
+            "Ranged_Rocket_A",
+            "Ranged_Rocket_B",
+            "Ranged_Rocket_AB"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_rocket_artillery_damage_upgrades"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_sim_artillery_rocket_smokes_behind_shooter",
+            "test_sim_artillery_rocket_no_smoke_when_shooter_on_edge",
+            "test_rocket_kills_target_still_bumps_mountain_behind",
+            "test_rocket_kills_target_still_bumps_building_behind",
+            "test_upgraded_rocket_damage_plus_blocked_bump_kills_alpha_scorpion",
+            "test_rocket_live_edge_target_takes_damage_without_edge_bump",
+            "test_rocket_killed_target_bumps_live_mech_blocker",
+            "test_rocket_killed_nonpushable_target_bumps_building",
+            "test_arachnid_psion_egg_follows_rocket_killed_corpse_push"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "rocket_artillery_rejects_off_axis_targets"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_noops_off_axis_rocket_target"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "global.lua defines default GetTargetArea, GetTargetScore, ScoreList, and ScorePositioning logic for this observed content revision."
         },
         {

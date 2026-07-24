@@ -428,3 +428,68 @@ def test_real_titan_fist_record_is_family_scoped():
         "titan_fist_dash_enumerates_direction_selector_for_long_target",
     } <= test_symbols
     assert record["known_gaps"]
+
+
+def test_real_rocket_artillery_record_includes_inherited_targeting():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-rocket-artillery"
+    )
+    assert record["coverage"] == "partial"
+    sources = {source["path"]: source for source in record["sources"]}
+    assert sources["scripts/weapons_base.lua"] == {
+        "path": "scripts/weapons_base.lua",
+        "sha256": (
+            "bdb55457746d08b46e8b62ad7cfc27f"
+            "0a08bde9fab7397a4780dfe945b5f8f38"
+        ),
+        "symbols": ["LineArtillery", "LineArtillery:GetTargetArea"],
+    }
+    assert sources["scripts/weapons_ranged.lua"]["symbols"] == [
+        "Ranged_Rocket",
+        "Ranged_Rocket:GetSkillEffect",
+        "Ranged_Rocket_A",
+        "Ranged_Rocket_B",
+        "Ranged_Rocket_AB",
+    ]
+    implementation_symbols = {
+        symbol
+        for reference in record["implementations"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "WId::RangedRocket",
+        "WId::RangedRocketA",
+        "WId::RangedRocketB",
+        "WId::RangedRocketAB",
+        "is_rocket_artillery",
+        "sim_artillery",
+        "apply_rocket_center_push",
+        "enumerate_actions",
+        "replay_solution",
+    } <= implementation_symbols
+    test_symbols = {
+        symbol
+        for reference in record["tests"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "test_rocket_artillery_damage_upgrades",
+        "test_sim_artillery_rocket_smokes_behind_shooter",
+        "test_upgraded_rocket_damage_plus_blocked_bump_kills_alpha_scorpion",
+        "rocket_artillery_rejects_off_axis_targets",
+        "replay_solution_noops_off_axis_rocket_target",
+    } <= test_symbols
+    assert record["known_gaps"]
