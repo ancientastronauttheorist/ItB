@@ -17,6 +17,7 @@ sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 import itb_pe_anchor_map  # noqa: E402
 
 from src.observatory.pe_anchor_map import (
+    PEImage,
     PEAnchorError,
     build_pe_anchor_map,
     encode_anchor_map,
@@ -50,6 +51,9 @@ def _synthetic_pe(anchor: bytes = b"random_int\0") -> bytes:
     struct.pack_into("<I", data, optional + 60, 0x200)
     struct.pack_into("<I", data, optional + 92, 16)
     struct.pack_into(
+        "<II", data, optional + 96 + 1 * 8, 0x1280, 40
+    )
+    struct.pack_into(
         "<II", data, optional + 96 + 6 * 8, 0x1200, 28
     )
     section = optional + 0xE0
@@ -81,6 +85,22 @@ def _synthetic_pe(anchor: bytes = b"random_int\0") -> bytes:
         0x440,
     )
     data[0x440 : 0x440 + len(codeview)] = codeview
+    struct.pack_into(
+        "<IIIII",
+        data,
+        0x480,
+        0x12E0,
+        0,
+        0,
+        0x12C0,
+        0x1300,
+    )
+    data[0x4C0 : 0x4C0 + len(b"lua5.1.dll\0")] = b"lua5.1.dll\0"
+    struct.pack_into("<II", data, 0x4E0, 0x1320, 0)
+    struct.pack_into("<II", data, 0x500, 0x1320, 0)
+    struct.pack_into("<H", data, 0x520, 7)
+    import_name = b"lua_pushcclosure\0"
+    data[0x522 : 0x522 + len(import_name)] = import_name
     return bytes(data)
 
 
@@ -110,6 +130,61 @@ def _inventory(data: bytes) -> dict:
     }
 
 
+def _synthetic_pe64() -> bytes:
+    data = bytearray(0x600)
+    data[:2] = b"MZ"
+    struct.pack_into("<I", data, 0x3C, 0x80)
+    data[0x80:0x84] = b"PE\0\0"
+    struct.pack_into(
+        "<HHIIIHH",
+        data,
+        0x84,
+        0x8664,
+        1,
+        0x12345678,
+        0,
+        0,
+        0xF0,
+        0x0022,
+    )
+    optional = 0x98
+    struct.pack_into("<H", data, optional, 0x20B)
+    struct.pack_into("<I", data, optional + 16, 0x1000)
+    struct.pack_into("<Q", data, optional + 24, 0x140000000)
+    struct.pack_into("<I", data, optional + 32, 0x1000)
+    struct.pack_into("<I", data, optional + 36, 0x200)
+    struct.pack_into("<I", data, optional + 56, 0x2000)
+    struct.pack_into("<I", data, optional + 60, 0x200)
+    struct.pack_into("<I", data, optional + 108, 16)
+    struct.pack_into(
+        "<II", data, optional + 112 + 1 * 8, 0x1280, 40
+    )
+    section = optional + 0xF0
+    data[section : section + 8] = b".text\0\0\0"
+    struct.pack_into(
+        "<IIII", data, section + 8, 0x400, 0x1000, 0x400, 0x200
+    )
+    struct.pack_into("<I", data, section + 36, 0x60000020)
+    struct.pack_into(
+        "<IIIII",
+        data,
+        0x480,
+        0x12E0,
+        0,
+        0,
+        0x12C0,
+        0x1300,
+    )
+    data[0x4C0 : 0x4C0 + len(b"lua5.1.dll\0")] = b"lua5.1.dll\0"
+    ordinal = (1 << 63) | 42
+    struct.pack_into("<QQQ", data, 0x4E0, 0x1320, ordinal, 0)
+    struct.pack_into("<QQQ", data, 0x500, 0x1320, ordinal, 0)
+    struct.pack_into("<H", data, 0x520, 9)
+    name = b"lua_setfield\0"
+    data[0x522 : 0x522 + len(name)] = name
+    return bytes(data)
+
+
 def test_maps_string_and_push_address_candidate(tmp_path: Path):
     executable = tmp_path / "Breach.exe"
     data = _synthetic_pe()
@@ -137,6 +212,16 @@ def test_maps_string_and_push_address_candidate(tmp_path: Path):
             "debug_version": "0.0",
         }
     ]
+    assert result["pe"]["lua_api_imports"] == [
+        {
+            "evidence_class": "fact",
+            "library": "lua5.1.dll",
+            "name": "lua_pushcclosure",
+            "ordinal": None,
+            "hint": 7,
+            "iat_rva": "0x00001300",
+        }
+    ]
     by_name = {item["name"]: item for item in result["anchors"]}
     occurrence = by_name["random_int"]["string_occurrences"][0]
     assert occurrence == {
@@ -157,6 +242,7 @@ def test_maps_string_and_push_address_candidate(tmp_path: Path):
         "anchors_found": 1,
         "string_occurrences": 1,
         "address_reference_candidates": 1,
+        "lua_api_imports": 1,
     }
 
 
@@ -260,6 +346,60 @@ def test_non_x86_images_receive_only_generic_reference_labels(
         for item in result["anchors"][0]["address_reference_candidates"]
     }
     assert kinds == {"literal_address_candidate"}
+
+
+def test_import_directory_requires_descriptor_terminator(tmp_path: Path):
+    executable = tmp_path / "Breach.exe"
+    malformed = bytearray(_synthetic_pe())
+    optional = 0x98
+    struct.pack_into(
+        "<II", malformed, optional + 96 + 1 * 8, 0x1280, 20
+    )
+    executable.write_bytes(malformed)
+    with pytest.raises(PEAnchorError, match="descriptor table"):
+        build_pe_anchor_map(executable)
+
+
+def test_import_thunks_and_iat_slots_must_stay_in_mapped_image(
+    tmp_path: Path,
+):
+    executable = tmp_path / "Breach.exe"
+
+    overlay_terminator = bytearray(_synthetic_pe())
+    struct.pack_into("<I", overlay_terminator, 0x480, 0x13FC)
+    struct.pack_into("<I", overlay_terminator, 0x5FC, 0x1320)
+    overlay_terminator.extend(b"\0\0\0\0")
+    executable.write_bytes(overlay_terminator)
+    with pytest.raises(PEAnchorError, match="thunk"):
+        build_pe_anchor_map(executable)
+
+    unmapped_iat = bytearray(_synthetic_pe())
+    struct.pack_into("<I", unmapped_iat, 0x480 + 16, 0x00700000)
+    executable.write_bytes(unmapped_iat)
+    with pytest.raises(PEAnchorError, match="IAT slot"):
+        build_pe_anchor_map(executable)
+
+
+def test_pe32_plus_named_and_ordinal_imports_use_64_bit_thunks():
+    imports = PEImage(_synthetic_pe64()).imports()
+    assert imports == [
+        {
+            "evidence_class": "fact",
+            "library": "lua5.1.dll",
+            "name": "lua_setfield",
+            "ordinal": None,
+            "hint": 9,
+            "iat_rva": "0x00001300",
+        },
+        {
+            "evidence_class": "fact",
+            "library": "lua5.1.dll",
+            "name": None,
+            "ordinal": 42,
+            "hint": None,
+            "iat_rva": "0x00001308",
+        },
+    ]
 
 
 def test_anchors_must_be_ascii_and_nonempty(tmp_path: Path):

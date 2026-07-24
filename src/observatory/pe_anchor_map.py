@@ -29,6 +29,7 @@ DEFAULT_ANCHORS = (
 _PE32_MAGIC = 0x10B
 _PE32_PLUS_MAGIC = 0x20B
 _IMAGE_SCN_MEM_EXECUTE = 0x20000000
+_IMAGE_DIRECTORY_ENTRY_IMPORT = 1
 _IMAGE_DEBUG_TYPE_CODEVIEW = 2
 
 
@@ -242,6 +243,35 @@ class PEImage:
             return rva
         return None
 
+    def rva_span_to_file_offset(self, rva: int, size: int) -> int | None:
+        """Map a span only when every byte is contiguous file-backed image data."""
+        if type(rva) is not int or type(size) is not int or rva < 0 or size < 0:
+            return None
+        if rva < min(self.size_of_headers, len(self.data)):
+            if rva + size <= min(self.size_of_headers, len(self.data)):
+                return rva
+            return None
+        for section in self.sections:
+            if section.virtual_address <= rva:
+                delta = rva - section.virtual_address
+                if delta <= section.raw_size and delta + size <= section.raw_size:
+                    return section.raw_offset + delta
+        return None
+
+    def rva_span_is_mapped(self, rva: int, size: int) -> bool:
+        """Return whether a span belongs to one contiguous mapped image region."""
+        if type(rva) is not int or type(size) is not int or rva < 0 or size < 0:
+            return False
+        if rva < self.size_of_headers:
+            return rva + size <= self.size_of_headers
+        for section in self.sections:
+            extent = max(section.virtual_size, section.raw_size)
+            if section.virtual_address <= rva:
+                delta = rva - section.virtual_address
+                if delta <= extent and delta + size <= extent:
+                    return True
+        return False
+
     def codeview_records(self) -> list[dict[str, Any]]:
         """Return deterministic CodeView fingerprints from the debug directory."""
         if len(self.data_directories) <= 6:
@@ -291,6 +321,165 @@ class PEImage:
                     "debug_version": f"{major}.{minor}",
                 }
             )
+        return records
+
+    def _read_rva_c_string(
+        self,
+        rva: int,
+        label: str,
+        *,
+        maximum_bytes: int = 4096,
+    ) -> str:
+        offset = self.rva_span_to_file_offset(rva, 1)
+        if offset is None:
+            raise PEAnchorError(f"{label} RVA is not file-backed")
+        if rva < min(self.size_of_headers, len(self.data)):
+            available = min(self.size_of_headers, len(self.data)) - rva
+        else:
+            available = 0
+            for section in self.sections:
+                if section.virtual_address <= rva:
+                    delta = rva - section.virtual_address
+                    if delta < section.raw_size:
+                        available = section.raw_size - delta
+                        break
+        end_limit = offset + min(maximum_bytes, available)
+        terminator = self.data.find(b"\0", offset, end_limit)
+        if terminator < 0:
+            raise PEAnchorError(f"{label} is not null-terminated")
+        try:
+            return self.data[offset:terminator].decode("ascii")
+        except UnicodeDecodeError as exc:
+            raise PEAnchorError(f"{label} is not ASCII") from exc
+
+    def imports(self) -> list[dict[str, Any]]:
+        """Parse named PE imports with their exact IAT slot RVAs."""
+        if len(self.data_directories) <= _IMAGE_DIRECTORY_ENTRY_IMPORT:
+            return []
+        import_rva, import_size = self.data_directories[
+            _IMAGE_DIRECTORY_ENTRY_IMPORT
+        ]
+        if not import_rva or not import_size:
+            return []
+        import_offset = self.rva_span_to_file_offset(import_rva, import_size)
+        if import_offset is None:
+            raise PEAnchorError(
+                "import directory is not contiguous file-backed data"
+            )
+        if import_size < 20:
+            raise PEAnchorError("import directory is undersized")
+        pointer_format = "<I" if self.bits == 32 else "<Q"
+        pointer_size = struct.calcsize(pointer_format)
+        ordinal_mask = 1 << (self.bits - 1)
+        address_mask = ordinal_mask - 1
+        records: list[dict[str, Any]] = []
+        terminated = False
+        for descriptor_index in range(import_size // 20):
+            descriptor_offset = import_offset + descriptor_index * 20
+            (
+                original_thunk_rva,
+                timestamp,
+                forwarder_chain,
+                name_rva,
+                first_thunk_rva,
+            ) = _unpack(
+                "<IIIII",
+                self.data,
+                descriptor_offset,
+                f"import descriptor {descriptor_index}",
+            )
+            if not any(
+                (
+                    original_thunk_rva,
+                    timestamp,
+                    forwarder_chain,
+                    name_rva,
+                    first_thunk_rva,
+                )
+            ):
+                terminated = True
+                break
+            if not name_rva or not first_thunk_rva:
+                raise PEAnchorError(
+                    f"import descriptor {descriptor_index} is incomplete"
+                )
+            library = self._read_rva_c_string(
+                name_rva, f"import library {descriptor_index}"
+            )
+            lookup_rva = original_thunk_rva or first_thunk_rva
+            thunk_terminated = False
+            for thunk_index in range(65536):
+                entry_rva = lookup_rva + thunk_index * pointer_size
+                entry_offset = self.rva_span_to_file_offset(
+                    entry_rva, pointer_size
+                )
+                if entry_offset is None:
+                    raise PEAnchorError(
+                        f"import thunk {descriptor_index}:{thunk_index} "
+                        "is not file-backed"
+                    )
+                (entry,) = _unpack(
+                    pointer_format,
+                    self.data,
+                    entry_offset,
+                    f"import thunk {descriptor_index}:{thunk_index}",
+                )
+                if entry == 0:
+                    thunk_terminated = True
+                    break
+                iat_rva = first_thunk_rva + thunk_index * pointer_size
+                if self.image_base + iat_rva > (1 << self.bits) - 1:
+                    raise PEAnchorError("import IAT slot exceeds address width")
+                if not self.rva_span_is_mapped(iat_rva, pointer_size):
+                    raise PEAnchorError("import IAT slot is outside the image")
+                if self.rva_span_to_file_offset(iat_rva, pointer_size) is None:
+                    raise PEAnchorError(
+                        "import IAT slot is not file-backed"
+                    )
+                if entry & ordinal_mask:
+                    records.append(
+                        {
+                            "evidence_class": "fact",
+                            "library": library,
+                            "name": None,
+                            "ordinal": entry & 0xFFFF,
+                            "hint": None,
+                            "iat_rva": _hex(iat_rva),
+                        }
+                    )
+                    continue
+                name_entry_rva = entry & address_mask
+                name_entry_offset = self.rva_span_to_file_offset(
+                    name_entry_rva, 2
+                )
+                if name_entry_offset is None:
+                    raise PEAnchorError(
+                        "import-by-name entry is not file-backed"
+                    )
+                (hint,) = _unpack(
+                    "<H",
+                    self.data,
+                    name_entry_offset,
+                    "import hint",
+                )
+                name = self._read_rva_c_string(
+                    name_entry_rva + 2,
+                    f"import name {descriptor_index}:{thunk_index}",
+                )
+                records.append(
+                    {
+                        "evidence_class": "fact",
+                        "library": library,
+                        "name": name,
+                        "ordinal": None,
+                        "hint": hint,
+                        "iat_rva": _hex(iat_rva),
+                    }
+                )
+            if not thunk_terminated:
+                raise PEAnchorError("import thunk table lacks a terminator")
+        if not terminated:
+            raise PEAnchorError("import descriptor table lacks a terminator")
         return records
 
 
@@ -617,6 +806,25 @@ def build_pe_anchor_map(
             }
         )
 
+    imports = image.imports()
+    lua_api_imports = sorted(
+        [
+            item
+            for item in imports
+            if (
+                item["name"] is not None
+                and (
+                    str(item["library"]).casefold().startswith("lua")
+                    or str(item["name"]).startswith("lua")
+                )
+            )
+        ],
+        key=lambda item: (
+            str(item["library"]).casefold(),
+            str(item["name"]),
+            item["iat_rva"],
+        ),
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "analysis_kind": "pe_named_anchor_map",
@@ -639,6 +847,7 @@ def build_pe_anchor_map(
                 for section in image.sections
             ],
             "codeview": image.codeview_records(),
+            "lua_api_imports": lua_api_imports,
         },
         "method": {
             "string_occurrences": "fact: exact ASCII bytes in the sampled PE",
@@ -666,6 +875,7 @@ def build_pe_anchor_map(
                 len(item["address_reference_candidates"])
                 for item in anchor_records
             ),
+            "lua_api_imports": len(lua_api_imports),
         },
     }
 

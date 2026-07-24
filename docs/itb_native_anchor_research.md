@@ -50,6 +50,26 @@ The operand RVAs and candidate kind for each row remain in the JSON. Ghidra or
 another decoder must confirm instruction boundaries, containing functions,
 control flow, and Lua API calls before a candidate is promoted.
 
+### Lua C-API import boundary
+
+The same PE import-directory parser found 54 named `lua5.1.dll` imports. These
+are direct facts from the exact executable and provide stable starting points
+for call-site analysis:
+
+| Imported API | IAT slot RVA |
+|---|---:|
+| `lua_pushcclosure` | `0x003d64a0` |
+| `lua_setfield` | `0x003d6520` |
+| `lua_getfield` | `0x003d6504` |
+| `lua_pcall` | `0x003d64d0` |
+| `lua_call` | `0x003d6540` |
+| `luaL_loadfile` | `0x003d64cc` |
+| `luaL_loadbuffer` | `0x003d64d4` |
+
+All 54 names, import hints, library names, and IAT RVAs are preserved in the
+machine-readable map. An import proves the executable can call that API; it
+does not associate any named game anchor with a particular call site.
+
 ## Community evidence
 
 The community work supports a narrow empirical strategy:

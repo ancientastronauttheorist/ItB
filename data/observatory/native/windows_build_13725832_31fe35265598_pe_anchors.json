@@ -242,6 +242,440 @@
     "coff_timestamp": 1710319986,
     "entrypoint_rva": "0x00357fd6",
     "image_base": "0x00400000",
+    "lua_api_imports": [
+      {
+        "evidence_class": "fact",
+        "hint": 18,
+        "iat_rva": "0x003d64d4",
+        "library": "lua5.1.dll",
+        "name": "luaL_loadbuffer",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 19,
+        "iat_rva": "0x003d64cc",
+        "library": "lua5.1.dll",
+        "name": "luaL_loadfile",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 20,
+        "iat_rva": "0x003d64c8",
+        "library": "lua5.1.dll",
+        "name": "luaL_loadstring",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 22,
+        "iat_rva": "0x003d64dc",
+        "library": "lua5.1.dll",
+        "name": "luaL_newstate",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 24,
+        "iat_rva": "0x003d64d8",
+        "library": "lua5.1.dll",
+        "name": "luaL_openlibs",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 30,
+        "iat_rva": "0x003d64e8",
+        "library": "lua5.1.dll",
+        "name": "luaL_ref",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 33,
+        "iat_rva": "0x003d64ec",
+        "library": "lua5.1.dll",
+        "name": "luaL_unref",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 36,
+        "iat_rva": "0x003d6540",
+        "library": "lua5.1.dll",
+        "name": "lua_call",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 38,
+        "iat_rva": "0x003d64e0",
+        "library": "lua5.1.dll",
+        "name": "lua_close",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 39,
+        "iat_rva": "0x003d6490",
+        "library": "lua5.1.dll",
+        "name": "lua_concat",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 41,
+        "iat_rva": "0x003d6518",
+        "library": "lua5.1.dll",
+        "name": "lua_createtable",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 43,
+        "iat_rva": "0x003d64c4",
+        "library": "lua5.1.dll",
+        "name": "lua_equal",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 44,
+        "iat_rva": "0x003d6498",
+        "library": "lua5.1.dll",
+        "name": "lua_error",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 47,
+        "iat_rva": "0x003d6538",
+        "library": "lua5.1.dll",
+        "name": "lua_getfenv",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 48,
+        "iat_rva": "0x003d6504",
+        "library": "lua5.1.dll",
+        "name": "lua_getfield",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 54,
+        "iat_rva": "0x003d6534",
+        "library": "lua5.1.dll",
+        "name": "lua_getmetatable",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 56,
+        "iat_rva": "0x003d64bc",
+        "library": "lua5.1.dll",
+        "name": "lua_gettable",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 57,
+        "iat_rva": "0x003d650c",
+        "library": "lua5.1.dll",
+        "name": "lua_gettop",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 58,
+        "iat_rva": "0x003d6548",
+        "library": "lua5.1.dll",
+        "name": "lua_getupvalue",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 59,
+        "iat_rva": "0x003d6514",
+        "library": "lua5.1.dll",
+        "name": "lua_insert",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 61,
+        "iat_rva": "0x003d6480",
+        "library": "lua5.1.dll",
+        "name": "lua_isnumber",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 68,
+        "iat_rva": "0x003d6528",
+        "library": "lua5.1.dll",
+        "name": "lua_newuserdata",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 69,
+        "iat_rva": "0x003d64b4",
+        "library": "lua5.1.dll",
+        "name": "lua_next",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 70,
+        "iat_rva": "0x003d64a8",
+        "library": "lua5.1.dll",
+        "name": "lua_objlen",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 71,
+        "iat_rva": "0x003d64d0",
+        "library": "lua5.1.dll",
+        "name": "lua_pcall",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 72,
+        "iat_rva": "0x003d64a4",
+        "library": "lua5.1.dll",
+        "name": "lua_pushboolean",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 73,
+        "iat_rva": "0x003d64a0",
+        "library": "lua5.1.dll",
+        "name": "lua_pushcclosure",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 74,
+        "iat_rva": "0x003d6544",
+        "library": "lua5.1.dll",
+        "name": "lua_pushfstring",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 75,
+        "iat_rva": "0x003d648c",
+        "library": "lua5.1.dll",
+        "name": "lua_pushinteger",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 76,
+        "iat_rva": "0x003d651c",
+        "library": "lua5.1.dll",
+        "name": "lua_pushlightuserdata",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 77,
+        "iat_rva": "0x003d6508",
+        "library": "lua5.1.dll",
+        "name": "lua_pushlstring",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 78,
+        "iat_rva": "0x003d64b8",
+        "library": "lua5.1.dll",
+        "name": "lua_pushnil",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 79,
+        "iat_rva": "0x003d6488",
+        "library": "lua5.1.dll",
+        "name": "lua_pushnumber",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 80,
+        "iat_rva": "0x003d6494",
+        "library": "lua5.1.dll",
+        "name": "lua_pushstring",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 81,
+        "iat_rva": "0x003d6524",
+        "library": "lua5.1.dll",
+        "name": "lua_pushthread",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 82,
+        "iat_rva": "0x003d64e4",
+        "library": "lua5.1.dll",
+        "name": "lua_pushvalue",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 85,
+        "iat_rva": "0x003d6484",
+        "library": "lua5.1.dll",
+        "name": "lua_rawget",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 86,
+        "iat_rva": "0x003d64c0",
+        "library": "lua5.1.dll",
+        "name": "lua_rawgeti",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 87,
+        "iat_rva": "0x003d652c",
+        "library": "lua5.1.dll",
+        "name": "lua_rawset",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 88,
+        "iat_rva": "0x003d64b0",
+        "library": "lua5.1.dll",
+        "name": "lua_rawseti",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 89,
+        "iat_rva": "0x003d64ac",
+        "library": "lua5.1.dll",
+        "name": "lua_remove",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 90,
+        "iat_rva": "0x003d6554",
+        "library": "lua5.1.dll",
+        "name": "lua_replace",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 93,
+        "iat_rva": "0x003d654c",
+        "library": "lua5.1.dll",
+        "name": "lua_setfenv",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 94,
+        "iat_rva": "0x003d6520",
+        "library": "lua5.1.dll",
+        "name": "lua_setfield",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 98,
+        "iat_rva": "0x003d6530",
+        "library": "lua5.1.dll",
+        "name": "lua_setmetatable",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 99,
+        "iat_rva": "0x003d6550",
+        "library": "lua5.1.dll",
+        "name": "lua_settable",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 100,
+        "iat_rva": "0x003d6510",
+        "library": "lua5.1.dll",
+        "name": "lua_settop",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 103,
+        "iat_rva": "0x003d64f8",
+        "library": "lua5.1.dll",
+        "name": "lua_toboolean",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 104,
+        "iat_rva": "0x003d653c",
+        "library": "lua5.1.dll",
+        "name": "lua_tocfunction",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 105,
+        "iat_rva": "0x003d64f0",
+        "library": "lua5.1.dll",
+        "name": "lua_tointeger",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 106,
+        "iat_rva": "0x003d6500",
+        "library": "lua5.1.dll",
+        "name": "lua_tolstring",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 107,
+        "iat_rva": "0x003d64f4",
+        "library": "lua5.1.dll",
+        "name": "lua_tonumber",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 110,
+        "iat_rva": "0x003d649c",
+        "library": "lua5.1.dll",
+        "name": "lua_touserdata",
+        "ordinal": null
+      },
+      {
+        "evidence_class": "fact",
+        "hint": 111,
+        "iat_rva": "0x003d64fc",
+        "library": "lua5.1.dll",
+        "name": "lua_type",
+        "ordinal": null
+      }
+    ],
     "sections": [
       {
         "executable": true,
@@ -305,6 +739,7 @@
   "summary": {
     "address_reference_candidates": 9,
     "anchors_found": 5,
+    "lua_api_imports": 54,
     "requested_anchors": 5,
     "string_occurrences": 5
   }
