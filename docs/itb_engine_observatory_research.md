@@ -199,6 +199,7 @@ Related local research:
 - [`docs/seed_replay_experiment.md`](seed_replay_experiment.md)
 - [`docs/seed_replay_hypotheses.md`](seed_replay_hypotheses.md)
 - [`docs/parallel_universe_self_learning_research.md`](parallel_universe_self_learning_research.md)
+- [`docs/itb_native_anchor_research.md`](itb_native_anchor_research.md)
 
 ## Recommended inside-out research ladder
 

@@ -1,0 +1,311 @@
+{
+  "analysis_kind": "pe_named_anchor_map",
+  "anchors": [
+    {
+      "address_reference_candidates": [
+        {
+          "candidate_kind": "push_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x002293c6",
+          "operand_rva": "0x002293c7",
+          "section": ".text",
+          "target_string_rva": "0x004380dc"
+        }
+      ],
+      "name": "GetTargetScore",
+      "status": "string_and_reference_candidates",
+      "string_occurrences": [
+        {
+          "evidence_class": "fact",
+          "file_offset": "0x004370dc",
+          "null_terminated": true,
+          "rva": "0x004380dc",
+          "section": ".rdata",
+          "virtual_address": "0x008380dc"
+        }
+      ]
+    },
+    {
+      "address_reference_candidates": [
+        {
+          "candidate_kind": "push_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x000f78c8",
+          "operand_rva": "0x000f78c9",
+          "section": ".text",
+          "target_string_rva": "0x0042a848"
+        },
+        {
+          "candidate_kind": "push_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x0016ce68",
+          "operand_rva": "0x0016ce69",
+          "section": ".text",
+          "target_string_rva": "0x0042a848"
+        }
+      ],
+      "name": "ScorePositioning",
+      "status": "string_and_reference_candidates",
+      "string_occurrences": [
+        {
+          "evidence_class": "fact",
+          "file_offset": "0x00429848",
+          "null_terminated": true,
+          "rva": "0x0042a848",
+          "section": ".rdata",
+          "virtual_address": "0x0082a848"
+        }
+      ]
+    },
+    {
+      "address_reference_candidates": [
+        {
+          "candidate_kind": "push_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x000f6d83",
+          "operand_rva": "0x000f6d84",
+          "section": ".text",
+          "target_string_rva": "0x0042a7f4"
+        },
+        {
+          "candidate_kind": "push_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x000f6ef2",
+          "operand_rva": "0x000f6ef3",
+          "section": ".text",
+          "target_string_rva": "0x0042a7f4"
+        }
+      ],
+      "name": "aiSeed",
+      "status": "string_and_reference_candidates",
+      "string_occurrences": [
+        {
+          "evidence_class": "fact",
+          "file_offset": "0x004297f4",
+          "null_terminated": true,
+          "rva": "0x0042a7f4",
+          "section": ".rdata",
+          "virtual_address": "0x0082a7f4"
+        }
+      ]
+    },
+    {
+      "address_reference_candidates": [
+        {
+          "candidate_kind": "mov_reg_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x0004b491",
+          "operand_rva": "0x0004b492",
+          "section": ".text",
+          "target_string_rva": "0x00420b08"
+        },
+        {
+          "candidate_kind": "mov_mem_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x000541cc",
+          "operand_rva": "0x000541cf",
+          "section": ".text",
+          "target_string_rva": "0x00420b08"
+        }
+      ],
+      "name": "random_bool",
+      "status": "string_and_reference_candidates",
+      "string_occurrences": [
+        {
+          "evidence_class": "fact",
+          "file_offset": "0x0041fb08",
+          "null_terminated": true,
+          "rva": "0x00420b08",
+          "section": ".rdata",
+          "virtual_address": "0x00820b08"
+        }
+      ]
+    },
+    {
+      "address_reference_candidates": [
+        {
+          "candidate_kind": "mov_mem_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x0005407c",
+          "operand_rva": "0x0005407f",
+          "section": ".text",
+          "target_string_rva": "0x00420afc"
+        },
+        {
+          "candidate_kind": "mov_mem_imm_address_candidate",
+          "evidence_class": "inference",
+          "instruction_rva": "0x000540ec",
+          "operand_rva": "0x000540ef",
+          "section": ".text",
+          "target_string_rva": "0x00420afc"
+        }
+      ],
+      "name": "random_int",
+      "status": "string_and_reference_candidates",
+      "string_occurrences": [
+        {
+          "evidence_class": "fact",
+          "file_offset": "0x0041fafc",
+          "null_terminated": true,
+          "rva": "0x00420afc",
+          "section": ".rdata",
+          "virtual_address": "0x00820afc"
+        }
+      ]
+    }
+  ],
+  "identity": {
+    "appmanifest_sha256": "075cffc2f0027fb793040cd0a66c72c09a17bab6a9cb9407a644725c5b5a6d98",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "address_reference_candidates": "inference: pointer-sized target addresses found in executable sections; candidates are not decoded or proven call sites",
+    "not_claimed": [
+      "Lua registration ownership",
+      "function boundaries or behavior",
+      "RNG algorithm or state",
+      "cross-build or cross-platform offset stability"
+    ],
+    "string_occurrences": "fact: exact ASCII bytes in the sampled PE"
+  },
+  "pe": {
+    "bits": 32,
+    "codeview": [
+      {
+        "age": 1,
+        "debug_timestamp": 1710319986,
+        "debug_version": "0.0",
+        "evidence_class": "fact",
+        "format": "RSDS",
+        "guid": "a842b21e-6b7c-43b5-ac68-b0231cef7684",
+        "pdb_path": "D:\\bigbrother\\Kaiju\\bin\\Breach.pdb",
+        "raw_guid_bytes_hex": "1eb242a87c6bb543ac68b0231cef7684"
+      }
+    ],
+    "coff_timestamp": 1710319986,
+    "entrypoint_rva": "0x00357fd6",
+    "image_base": "0x00400000",
+    "sections": [
+      {
+        "executable": true,
+        "name": ".text",
+        "raw_size": 4017152,
+        "rva": "0x00001000",
+        "virtual_size": 4016974
+      },
+      {
+        "executable": false,
+        "name": ".rdata",
+        "raw_size": 766464,
+        "rva": "0x003d6000",
+        "virtual_size": 766108
+      },
+      {
+        "executable": false,
+        "name": ".data",
+        "raw_size": 149504,
+        "rva": "0x00492000",
+        "virtual_size": 291276
+      },
+      {
+        "executable": false,
+        "name": ".gfids",
+        "raw_size": 4608,
+        "rva": "0x004da000",
+        "virtual_size": 4400
+      },
+      {
+        "executable": false,
+        "name": ".tls",
+        "raw_size": 512,
+        "rva": "0x004dc000",
+        "virtual_size": 9
+      },
+      {
+        "executable": false,
+        "name": "_RDATA",
+        "raw_size": 512,
+        "rva": "0x004dd000",
+        "virtual_size": 32
+      },
+      {
+        "executable": false,
+        "name": ".rsrc",
+        "raw_size": 371200,
+        "rva": "0x004de000",
+        "virtual_size": 370944
+      },
+      {
+        "executable": false,
+        "name": ".reloc",
+        "raw_size": 219136,
+        "rva": "0x00539000",
+        "virtual_size": 218648
+      }
+    ]
+  },
+  "schema_version": 1,
+  "summary": {
+    "address_reference_candidates": 9,
+    "anchors_found": 5,
+    "requested_anchors": 5,
+    "string_occurrences": 5
+  }
+}

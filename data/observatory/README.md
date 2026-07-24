@@ -54,3 +54,23 @@ python scripts/itb_provenance.py \
 Validation fails closed on build drift, stale Lua hashes, missing repository
 paths, duplicate records, unsupported status values, or a non-verified record
 without an explicit gap.
+
+## Windows PE named anchors
+
+Create a conservative string/address candidate map outside the game:
+
+```text
+python scripts/itb_pe_anchor_map.py \
+  --executable "<Into the Breach>/Breach.exe" \
+  --inventory data/observatory/inventories/<matching-snapshot>.json \
+  --output data/observatory/native/<build-keyed-name>.json
+```
+
+The executable must match the supplied inventory's size, SHA-256, format, and
+architecture. File output is restricted to direct children of this repository's
+`data/observatory/native/` directory and uses atomic replacement; use stdout for
+other workflows. Existing non-anchor artifacts, symlinks, game paths, bridge
+paths, and session paths are never overwritten. The map contains no binary
+bytes or decompiled source: string locations are facts, while pointer-shaped
+values in executable sections remain explicitly labeled reference candidates
+until a decoder and control-flow analysis confirm them.
