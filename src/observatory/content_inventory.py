@@ -28,6 +28,21 @@ class InventoryError(RuntimeError):
     """Raised when a requested installation cannot be inventoried safely."""
 
 
+_STABLE_STAT_FIELDS = ("st_dev", "st_ino", "st_size", "st_mtime_ns")
+
+
+def _require_stable_file(
+    path: Path,
+    before: os.stat_result,
+    after: os.stat_result,
+) -> None:
+    if any(
+        getattr(before, field) != getattr(after, field)
+        for field in _STABLE_STAT_FIELDS
+    ):
+        raise InventoryError(f"file changed while it was being inventoried: {path}")
+
+
 def normalize_platform(value: str | None = None) -> str:
     """Return one of ``windows``, ``macos``, or ``linux``."""
     raw = (value or host_platform.system()).strip().lower()
@@ -50,18 +65,25 @@ def _path_key(path: Path) -> tuple[str, str]:
     return normalized.casefold(), normalized
 
 
-def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
-    """Hash *path* without opening it for writing."""
+def _stable_file_fingerprint(
+    path: Path,
+    chunk_size: int = 1024 * 1024,
+) -> tuple[str, os.stat_result]:
+    """Return one hash/stat snapshot or reject a concurrent mutation."""
     before = path.stat()
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         while chunk := stream.read(chunk_size):
             digest.update(chunk)
     after = path.stat()
-    stable_fields = ("st_dev", "st_ino", "st_size", "st_mtime_ns")
-    if any(getattr(before, field) != getattr(after, field) for field in stable_fields):
-        raise InventoryError(f"file changed while it was being inventoried: {path}")
-    return digest.hexdigest()
+    _require_stable_file(path, before, after)
+    return digest.hexdigest(), after
+
+
+def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    """Hash *path* without opening it for writing."""
+    digest, _ = _stable_file_fingerprint(path, chunk_size)
+    return digest
 
 
 def _revision_hash(files: Sequence[Mapping[str, Any]]) -> str:
@@ -84,11 +106,12 @@ def build_manifest(content_root: Path, directory: str) -> dict[str, Any]:
     if root.is_dir():
         paths = _contained_regular_files(root, content_root)
         for path in paths:
+            sha256, stable_stat = _stable_file_fingerprint(path)
             entries.append(
                 {
                     "path": path.relative_to(content_root).as_posix(),
-                    "size": path.stat().st_size,
-                    "sha256": sha256_file(path),
+                    "size": stable_stat.st_size,
+                    "sha256": sha256,
                 }
             )
     return {
@@ -225,15 +248,23 @@ def _contained_regular_files(scan_root: Path, containment_root: Path) -> list[Pa
     return sorted(paths, key=_path_key)
 
 
-def _relative_record(path: Path, install_root: Path) -> dict[str, Any]:
+def _relative_record(
+    path: Path,
+    install_root: Path,
+    *,
+    inspection_stat: os.stat_result | None = None,
+) -> dict[str, Any]:
     try:
         relative = path.relative_to(install_root).as_posix()
     except ValueError:
         relative = path.name
+    sha256, stable_stat = _stable_file_fingerprint(path)
+    if inspection_stat is not None:
+        _require_stable_file(path, inspection_stat, stable_stat)
     return {
         "path": relative,
-        "size": path.stat().st_size,
-        "sha256": sha256_file(path),
+        "size": stable_stat.st_size,
+        "sha256": sha256,
     }
 
 
@@ -284,11 +315,12 @@ def inventory_native_libraries(
     exclude: Path | None = None,
 ) -> list[dict[str, Any]]:
     """Hash native shared libraries shipped inside the installation."""
-    libraries: list[tuple[Path, dict[str, Any]]] = []
+    libraries: list[tuple[Path, dict[str, Any], dict[str, Any]]] = []
     excluded = exclude.resolve() if exclude is not None else None
     for path in _contained_regular_files(install_root, install_root):
         if excluded is not None and path.resolve() == excluded:
             continue
+        inspection_stat = path.stat()
         lower_name = path.name.lower()
         named_library = path.suffix.lower() in NATIVE_SUFFIXES or ".so." in lower_name
         binary_format = inspect_executable_format(path)
@@ -296,15 +328,23 @@ def inventory_native_libraries(
             libraries.append(
                 (
                     path,
+                    _relative_record(
+                        path,
+                        install_root,
+                        inspection_stat=inspection_stat,
+                    ),
                     binary_format or {"format": "unknown", "architecture": "unknown"},
                 )
             )
     return [
         {
-            **_relative_record(path, install_root),
+            **record,
             **binary_format,
         }
-        for path, binary_format in sorted(libraries, key=lambda item: _path_key(item[0]))
+        for path, record, binary_format in sorted(
+            libraries,
+            key=lambda item: _path_key(item[0]),
+        )
     ]
 
 
@@ -421,6 +461,7 @@ def create_inventory(
     content_root = resolve_content_root(root)
     requested_platform = normalize_platform(platform_name) if platform_name else None
     executable_path = find_executable(root, requested_platform)
+    executable_inspection_stat = executable_path.stat()
     executable_format = inspect_executable_format(executable_path)
     if executable_format is None:
         raise InventoryError(f"unrecognized executable format: {executable_path}")
@@ -437,7 +478,11 @@ def create_inventory(
             f"{executable_format['format']} ({build_platform})"
         )
     executable = {
-        **_relative_record(executable_path, root),
+        **_relative_record(
+            executable_path,
+            root,
+            inspection_stat=executable_inspection_stat,
+        ),
         **executable_format,
     }
     return {

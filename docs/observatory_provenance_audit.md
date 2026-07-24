@@ -53,12 +53,12 @@ For the modified local Windows inventory at scripts revision
 | Category | Candidate files | Indexed | Unindexed |
 |---|---:|---:|---:|
 | Spawn selection | 3 | 3 | 0 |
-| Enemy scoring | 2 | 2 | 0 |
+| Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 5 | 9 |
-| Missions | 75 | 4 | 71 |
+| Missions | 75 | 5 | 70 |
 | Environments | 15 | 4 | 11 |
-| Unique total | 97 | 17 | 80 |
+| Unique total | 96 | 17 | 79 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.

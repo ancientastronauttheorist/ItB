@@ -526,13 +526,6 @@
             "Skill:ScoreList",
             "ScorePositioning"
           ]
-        },
-        {
-          "path": "scripts/advanced/ae_global.lua",
-          "sha256": "1786dbdc4ba7848a8e0cb681a4ebf6feb1d6aceb8d09181023cad5125ca07538",
-          "symbols": [
-            "ScorePositioning"
-          ]
         }
       ],
       "tests": [
@@ -799,7 +792,13 @@
           "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
           "symbols": [
             "Mission",
-            "Mission_Infinite",
+            "Mission_Infinite"
+          ]
+        },
+        {
+          "path": "scripts/missions/mission_critical.lua",
+          "sha256": "bc16a066792b75f03eb7b75de4ea548d52dac7f87abc6149ab966393ed0aa7b5",
+          "symbols": [
             "Mission_Critical"
           ]
         }

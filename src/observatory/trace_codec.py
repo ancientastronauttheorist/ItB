@@ -198,16 +198,26 @@ def _validate_build_identity(identity: Any) -> dict[str, Any]:
         raise TraceCodecError("build_identity must be an object")
     _require_exact_fields(identity, BUILD_IDENTITY_FIELDS, "build_identity")
     result = dict(identity)
-    if result["platform"] not in KNOWN_PLATFORMS:
+    if (
+        type(result["platform"]) is not str
+        or result["platform"] not in KNOWN_PLATFORMS
+    ):
         raise TraceCodecError("invalid build_identity.platform")
-    if result["architecture"] not in KNOWN_ARCHITECTURES:
+    if (
+        type(result["architecture"]) is not str
+        or result["architecture"] not in KNOWN_ARCHITECTURES
+    ):
         raise TraceCodecError("invalid build_identity.architecture")
     slices = result["architectures"]
     if result["architecture"] == "universal":
         if (
             not isinstance(slices, list)
             or not slices
-            or any(item not in KNOWN_ARCHITECTURE_SLICES for item in slices)
+            or any(
+                type(item) is not str
+                or item not in KNOWN_ARCHITECTURE_SLICES
+                for item in slices
+            )
             or slices != sorted(set(slices))
         ):
             raise TraceCodecError(
@@ -230,7 +240,7 @@ def _validate_build_identity(identity: Any) -> dict[str, Any]:
         "build_identity.maps_revision_sha256",
     )
     evidence = result["build_evidence"]
-    if evidence not in BUILD_EVIDENCE_KINDS:
+    if type(evidence) is not str or evidence not in BUILD_EVIDENCE_KINDS:
         raise TraceCodecError("invalid build_identity.build_evidence")
     build_id = result["build_id"]
     manifest = result["depot_manifest"]
@@ -288,6 +298,8 @@ def _validate_actor_fields(payload: Mapping[str, Any], prefix: str) -> None:
 
 
 def _validate_payload(kind: str, payload: Any) -> None:
+    if type(kind) is not str:
+        raise TraceCodecError("event kind must be text")
     if not isinstance(payload, Mapping):
         raise TraceCodecError("payload must be an object")
     label = f"{kind} payload"
@@ -355,7 +367,10 @@ def _validate_payload(kind: str, payload: Any) -> None:
             }
         )
         _require_exact_fields(payload, fields, label)
-        if payload["payload_version"] != 1:
+        if (
+            type(payload["payload_version"]) is not int
+            or payload["payload_version"] != 1
+        ):
             raise TraceCodecError(f"{label}.payload_version must be 1")
         if payload["representation"] != "coordinate_list":
             raise TraceCodecError(
@@ -383,7 +398,10 @@ def _validate_payload(kind: str, payload: Any) -> None:
             }
         )
         _require_exact_fields(payload, fields, label)
-        if payload["payload_version"] != 1:
+        if (
+            type(payload["payload_version"]) is not int
+            or payload["payload_version"] != 1
+        ):
             raise TraceCodecError(f"{label}.payload_version must be 1")
         if payload["representation"] != "opaque_primitive_summary":
             raise TraceCodecError(
@@ -457,13 +475,13 @@ class TraceBuffer:
         """Record one event, invoking ``payload_factory`` only when eligible."""
         if not self.config.enabled:
             return False
-        if phase not in KNOWN_PHASES:
+        if type(phase) is not str or phase not in KNOWN_PHASES:
             self._serialization_errors += 1
             return False
         if phase not in self.config.allowed_phases:
             self._filtered += 1
             return False
-        if kind not in EVENT_KINDS:
+        if type(kind) is not str or kind not in EVENT_KINDS:
             self._serialization_errors += 1
             return False
         if (
@@ -628,7 +646,10 @@ def parse_trace(text: str) -> dict[str, Any]:
     if not isinstance(trace, dict):
         raise TraceCodecError("trace must be an object")
     _require_exact_fields(trace, TOP_LEVEL_FIELDS, "trace")
-    if trace["schema_version"] != SCHEMA_VERSION:
+    if (
+        type(trace["schema_version"]) is not int
+        or trace["schema_version"] != SCHEMA_VERSION
+    ):
         raise TraceCodecError(
             f"unsupported trace schema: {trace['schema_version']!r}"
         )
@@ -655,14 +676,17 @@ def parse_trace(text: str) -> dict[str, Any]:
         _require_exact_fields(
             event, EVENT_FIELDS, f"events[{expected_seq}]"
         )
-        if event["seq"] != expected_seq:
+        if type(event["seq"]) is not int or event["seq"] != expected_seq:
             raise TraceCodecError(
                 f"non-contiguous event sequence at {expected_seq}"
             )
         kind = event["kind"]
-        if kind not in EVENT_KINDS:
+        if type(kind) is not str or kind not in EVENT_KINDS:
             raise TraceCodecError(f"unknown event kind at {expected_seq}")
-        if event["phase"] not in parsed_config.allowed_phases:
+        if (
+            type(event["phase"]) is not str
+            or event["phase"] not in parsed_config.allowed_phases
+        ):
             raise TraceCodecError(
                 f"event phase is outside trace config at {expected_seq}"
             )

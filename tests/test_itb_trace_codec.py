@@ -385,12 +385,24 @@ def test_target_area_and_effect_payloads_are_explicitly_versioned():
             "unsupported trace schema",
         ),
         (
+            lambda data: data.update(schema_version=True),
+            "unsupported trace schema",
+        ),
+        (
             lambda data: data["events"][0].update(seq=5),
             "non-contiguous event sequence",
         ),
         (
             lambda data: data["events"][0].update(kind="unknown"),
             "unknown event kind",
+        ),
+        (
+            lambda data: data["events"][0].update(kind=[]),
+            "unknown event kind",
+        ),
+        (
+            lambda data: data["build_identity"].update(platform=[]),
+            "platform",
         ),
         (
             lambda data: data["summary"].update(accepted_events=0),
@@ -441,6 +453,25 @@ def test_build_identity_is_validated_at_buffer_construction():
         build_evidence="unavailable",
     )
     TraceBuffer(identity)
+
+
+def test_payload_versions_require_exact_integers():
+    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    assert not trace.record(
+        "get_target_area",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        payload={
+            "payload_version": True,
+            "representation": "coordinate_list",
+            "pawn_uid": 1,
+            "skill_id": "FireflyAtk1",
+            "origin": [1, 1],
+            "target_area": [[1, 2]],
+        },
+    )
+    assert trace.to_dict()["summary"]["serialization_errors"] == 1
 
 
 def test_inventory_architecture_vocabulary_round_trips():

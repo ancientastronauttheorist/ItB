@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from src.observatory import content_inventory as inventory_module
 from src.observatory.content_inventory import (
     InventoryError,
     build_manifest,
@@ -54,6 +55,60 @@ def test_manifest_is_sorted_normalized_and_content_addressed(tmp_path: Path):
     assert global_entry["sha256"] == hashlib.sha256(b"return 1\n").hexdigest()
     assert manifest["file_count"] == 2
     assert manifest["byte_count"] == len(b"return 1\n") + len(b"return 2\n")
+
+
+def test_manifest_size_and_hash_come_from_one_stable_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    root = _installation(tmp_path, script_body=b"x")
+    target = root / "scripts/global.lua"
+    original_sha256_file = inventory_module.sha256_file
+
+    def mutate_before_legacy_hash(path: Path, chunk_size: int = 1024 * 1024):
+        if path == target:
+            path.write_bytes(b"replacement")
+        return original_sha256_file(path, chunk_size)
+
+    # The legacy manifest path read size first and called this public helper
+    # afterward, producing an old-size/new-hash record under this mutation.
+    monkeypatch.setattr(
+        inventory_module,
+        "sha256_file",
+        mutate_before_legacy_hash,
+    )
+    manifest = build_manifest(root, "scripts")
+    entry = next(
+        item
+        for item in manifest["files"]
+        if item["path"] == "scripts/global.lua"
+    )
+    observed = target.read_bytes()
+    assert entry["size"] == len(observed)
+    assert entry["sha256"] == hashlib.sha256(observed).hexdigest()
+
+
+def test_inventory_rejects_change_between_format_inspection_and_hash(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    root = _installation(tmp_path)
+    executable = root / "Breach.exe"
+    original_inspect = inventory_module.inspect_executable_format
+
+    def mutate_after_inspection(path: Path):
+        result = original_inspect(path)
+        if path == executable:
+            path.write_bytes(path.read_bytes() + b"replacement")
+        return result
+
+    monkeypatch.setattr(
+        inventory_module,
+        "inspect_executable_format",
+        mutate_after_inspection,
+    )
+    with pytest.raises(InventoryError, match="changed while"):
+        create_inventory(root, platform_name="windows")
 
 
 def test_inventory_is_deterministic_and_reads_steam_evidence(tmp_path: Path):

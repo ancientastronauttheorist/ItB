@@ -355,17 +355,14 @@ def test_source_audit_distinguishes_indexing_from_behavioral_coverage():
         item["category"]: item for item in audit["categories"]
     }
     scoring = categories["enemy-scoring"]
-    assert scoring["candidate_files"] == 2
+    assert scoring["candidate_files"] == 1
     assert scoring["indexed_files"] == 1
-    assert scoring["unindexed_files"] == 1
+    assert scoring["unindexed_files"] == 0
     scoring_files = {item["path"]: item for item in scoring["files"]}
     assert scoring_files["scripts/global.lua"]["indexed_by"] == [
         "enemy-scoring"
     ]
-    assert (
-        scoring_files["scripts/advanced/ae_global.lua"]["status"]
-        == "unindexed"
-    )
+    assert "scripts/advanced/ae_global.lua" not in scoring_files
     assert categories["player-weapons"]["unindexed_files"] == 1
     assert categories["spawn-selection"]["unindexed_files"] == 1
     assert categories["missions"]["unindexed_files"] == 3
@@ -386,9 +383,9 @@ def test_source_audit_distinguishes_indexing_from_behavioral_coverage():
         category["candidate_files"] for category in audit["categories"]
     ) > audit["summary"]["candidate_files"]
     assert audit["summary"] == {
-        "candidate_files": 7,
+        "candidate_files": 6,
         "indexed_files": 1,
-        "unindexed_files": 6,
+        "unindexed_files": 5,
     }
 
 
@@ -635,6 +632,43 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "does not parse or apply SectorSpawners" in gaps
     assert "GAME:GetSpawnList" in gaps
     assert "parameter matrix does not itself determine spawn count" in gaps
+
+
+def test_real_broad_records_keep_symbols_on_their_exact_source_files():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    records = {record["id"]: record for record in provenance["records"]}
+
+    assert records["enemy-target-scoring"]["sources"] == [
+        {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883"
+                "e1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": [
+                "Skill:GetTargetArea",
+                "Skill:GetTargetScore",
+                "Skill:ScoreList",
+                "ScorePositioning",
+            ],
+        }
+    ]
+    mission_sources = {
+        source["path"]: source["symbols"]
+        for source in records["missions"]["sources"]
+    }
+    assert mission_sources == {
+        "scripts/missions/missions.lua": [
+            "Mission",
+            "Mission_Infinite",
+        ],
+        "scripts/missions/mission_critical.lua": [
+            "Mission_Critical",
+        ],
+    }
 
 
 def test_real_titan_fist_record_is_family_scoped():

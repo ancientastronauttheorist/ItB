@@ -48,7 +48,7 @@ SOURCE_AUDIT_CATEGORIES = (
     ),
     (
         "enemy-scoring",
-        "Base and Advanced Edition enemy target-scoring policy.",
+        "Base enemy target-scoring policy.",
     ),
     (
         "enemy-weapons",
@@ -452,10 +452,7 @@ def _source_audit_category(path: str, category: str) -> bool:
             "scripts/advanced/ae_spawner_backend.lua",
         }
     if category == "enemy-scoring":
-        return path in {
-            "scripts/global.lua",
-            "scripts/advanced/ae_global.lua",
-        }
+        return path == "scripts/global.lua"
     if category == "enemy-weapons":
         return path in {
             "scripts/weapons_enemy.lua",
