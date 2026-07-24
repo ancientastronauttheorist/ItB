@@ -967,6 +967,118 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Advanced Edition Lua source defines Control Shot as an adjacent cardinal first click gated by IsControllable, followed by native path-profile movement within maximum budgets of 2, 3, 3, or 4 tiles; aside from TipImage metadata, A, B, and AB change only MoveDistance."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has all four exact IDs, mappings, and definitions plus bespoke target enumeration, reachability, simulation, landing effects, achievement events, and 11 focused tests."
+        },
+        {
+          "classification": "unresolved",
+          "statement": "Rust's enemy-only eligibility predicate differs materially from the Lua IsControllable body, and native/UI behavior for predicate cases not represented by Rust has not been established."
+        }
+      ],
+      "id": "player-weapon-control-shot",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::ScienceTcControl",
+            "WId::ScienceTcControlA",
+            "WId::ScienceTcControlB",
+            "WId::ScienceTcControlAB",
+            "is_control_shot",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/movement.rs",
+          "symbols": [
+            "controlled_reachable_tiles_with_cost",
+            "controlled_reachable_tiles"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "control_shot_target_range",
+            "control_shot_move_budget",
+            "control_shot_eligible_unit",
+            "control_shot_has_clear_projectile_line",
+            "enumerate_control_shot_targets"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "control_shot_target_range",
+            "control_shot_move_budget",
+            "control_shot_eligible_unit",
+            "control_shot_has_clear_projectile_line",
+            "sim_control_shot"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust adds enemy-only and non-extra-tile requirements absent from Lua, omits Lua's powered, guarding with burrower exception, and nonzero base-move predicates, rejects a zero-current-speed grappled pawn that Lua may admit, and does not preserve Lua's explicit Snowmine1 or VIP_Truck exceptions.",
+        "The source predicate mismatch does not by itself prove every otherwise qualifying ally is live-controllable because native IsPowered and related pawn methods remain untraced.",
+        "Native Board:GetReachable, Board:GetPath, Pawn:GetPathProf, IsPowered, IsGuarding, IsGrappled, GetMoveSpeed, GetBaseMove, AddMove, AddLeap, and AddBurrow semantics have not been independently traced for this build.",
+        "A and B have exact definition and mapping coverage but no exact-ID behavior test; base and AB supply the current behavior evidence.",
+        "Destination reachability, path profile, terrain, status, and landing-effect equivalence is not exhaustive; Rust uses independent reachability and direct coordinate mutation rather than native path-effect sequencing.",
+        "The projectile-blocker condition has no corresponding explicit Lua check and is normally redundant at fixed Range=1; current blocker tests use a distance-two target that is already out of range.",
+        "There is no focused replay or exact bridge/native UI conformance proof, and raw bridge execution has not supplied reliable Let's Walk achievement credit."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_weapons.lua",
+          "sha256": "5566b679c696ab489e40a0189d0a63b699d01e9657f79a20e6f119239af1680f",
+          "symbols": [
+            "Science_TC_Control",
+            "Science_TC_Control:GetTargetArea",
+            "Science_TC_Control:IsControllable",
+            "Science_TC_Control:GetSkillEffect",
+            "Science_TC_Control:GetSecondTargetArea",
+            "Science_TC_Control:GetFinalEffect",
+            "Science_TC_Control_A",
+            "Science_TC_Control_B",
+            "Science_TC_Control_AB"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_control_shot_mapping_and_def"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "control_shot_target_enumeration_respects_first_click_range",
+            "control_shot_target_enumeration_respects_projectile_blockers"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_control_shot_moves_enemy_and_emits_lets_walk_distance",
+            "test_control_shot_ab_adjacent_target_can_move_four_spaces",
+            "test_control_shot_can_move_webbed_unit",
+            "test_control_shot_rejects_allied_target_unit",
+            "test_control_shot_rejects_out_of_range_destination",
+            "test_control_shot_rejects_out_of_range_target_unit",
+            "test_control_shot_rejects_diagonal_target_unit",
+            "test_control_shot_rejects_blocked_projectile_line"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

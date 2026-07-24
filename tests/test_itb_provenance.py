@@ -911,3 +911,71 @@ def test_real_final_cave_record_is_limited_to_marked_lethal_danger():
     assert "does not reproduce Env_Final:Start" in gaps
     assert "does not implement Env_Final terrain mutations" in gaps
     assert "does not cover Env_Volcano" in gaps
+
+
+def test_real_control_shot_record_exposes_source_predicate_mismatch():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-control-shot"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/ae_weapons.lua",
+            "sha256": (
+                "5566b679c696ab489e40a0189d0a63b6"
+                "99d01e9657f79a20e6f119239af1680f"
+            ),
+            "symbols": [
+                "Science_TC_Control",
+                "Science_TC_Control:GetTargetArea",
+                "Science_TC_Control:IsControllable",
+                "Science_TC_Control:GetSkillEffect",
+                "Science_TC_Control:GetSecondTargetArea",
+                "Science_TC_Control:GetFinalEffect",
+                "Science_TC_Control_A",
+                "Science_TC_Control_B",
+                "Science_TC_Control_AB",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::ScienceTcControl",
+        "WId::ScienceTcControlA",
+        "WId::ScienceTcControlB",
+        "WId::ScienceTcControlAB",
+        "is_control_shot",
+    } <= implementations["rust_solver/src/weapons.rs"]
+    assert {
+        "controlled_reachable_tiles_with_cost",
+        "controlled_reachable_tiles",
+    } == implementations["rust_solver/src/movement.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert len(set().union(*tests.values())) == 11
+    assert "test_control_shot_rejects_allied_target_unit" in tests[
+        "rust_solver/src/simulate.rs"
+    ]
+    gaps = " ".join(record["known_gaps"])
+    assert "enemy-only" in gaps
+    assert "Snowmine1 or VIP_Truck" in gaps
+    assert "zero-current-speed grappled pawn" in gaps
+    assert "fixed Range=1" in gaps

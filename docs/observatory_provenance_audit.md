@@ -91,6 +91,16 @@ remains `partial`: behavior tests use only the base ID, native path/effect
 helpers are untraced, and the range-three/range-four variants lack exact-ID
 end-to-end targeting and damage cases.
 
+The fifth slice, `player-weapon-control-shot`, reuses that exact
+`ae_weapons.lua` hash but adds family-level evidence for all four
+`Science_TC_Control` variants. It records a concrete fidelity gap rather than
+raising the file count: Rust restricts first-click eligibility to enemies and
+does not reproduce several Lua `IsControllable` branches, including powered,
+guarding/burrower, base-move, grappled zero-speed, Snowmine, and VIP Truck
+cases. Fixed adjacent first-click range and the separate maximum 2/3/3/4
+controlled movement budgets are now explicit. Native pawn predicates, path
+effects, and visible UI behavior remain unresolved.
+
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
 pre-attack push simulation plus four focused tests, including three
@@ -124,8 +134,8 @@ selection conformance test exists yet.
 2. Add mission records only when a static callback, Rust transition, and
    regression fixture can be named precisely; do not bulk-index files merely to
    improve the count.
-3. Add `env_final.lua` and `env_volcano.lua` alongside exact phase-order and
-   effect conformance tests.
+3. Add `env_volcano.lua` only after exact mode, phase-order, terrain, fire, and
+   selection conformance tests exist.
 4. Keep native-dependent target selection and RNG records non-verified until a
    build-keyed trace supplies the missing boundary evidence.
 
