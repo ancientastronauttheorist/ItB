@@ -28,6 +28,7 @@ from src.loop.lightning_telemetry import (
 )
 from src.loop.commands import _lightning_read_save_game_timer
 from src.control.mac_click import list_known_window_controls
+from src.itb_paths import get_artifact_path
 
 from scripts import lightning_war_fast_walkthrough as fast
 from scripts import itb_timer_memory_probe as memory_probe
@@ -35,7 +36,7 @@ from scripts import itb_timer_memory_probe as memory_probe
 
 PROFILE_PATH = ROOT / "data" / "lightning_war_timing_profile.json"
 NOTEBOOK_PATH = ROOT / "docs" / "agent" / "lightning-war-timing-profile.md"
-REPORT_DIR = ROOT / "run_notes" / "lightning_ui_timing_loop"
+REPORT_DIR = get_artifact_path("run_notes", "lightning_ui_timing_loop")
 LIGHTNING_TIMER_LIMIT_SECONDS = 30 * 60
 TRUSTED_MEMORY_CLOCK_SOURCES = {
     "memory_live_numeric_candidate",
@@ -502,7 +503,7 @@ def _resolve_live_timer_from_proof(
 
 
 def _default_memory_live_timer_proof_path() -> Path:
-    return ROOT / memory_probe.DEFAULT_SESSION_CLOCK_PROOF_PATH
+    return memory_probe.DEFAULT_SESSION_CLOCK_PROOF_PATH
 
 
 def _selected_memory_live_timer_proof_path(
@@ -3614,7 +3615,10 @@ def run_current_combat_region_secured(args: argparse.Namespace) -> dict[str, Any
         memory_live_timer_kind,
         memory_live_timer_proof_validation,
     ) = _resolve_live_timer_config(args)
-    telemetry = TelemetryRecorder(run_id=run_id, root=ROOT / "recordings")
+    telemetry = TelemetryRecorder(
+        run_id=run_id,
+        root=get_artifact_path("recordings"),
+    )
     route_slice = (
         "current_combat_to_region_secured_continue_click"
         if args.region_secured_click_continue
@@ -4175,7 +4179,10 @@ def run_opening_milestone(args: argparse.Namespace) -> dict[str, Any]:
         if click_red_mission
         else "main_menu_to_archive_red_map"
     )
-    telemetry = TelemetryRecorder(run_id=run_id, root=ROOT / "recordings")
+    telemetry = TelemetryRecorder(
+        run_id=run_id,
+        root=get_artifact_path("recordings"),
+    )
     telemetry.write_manifest(
         {
             "achievement": "Lightning War",

@@ -209,8 +209,10 @@ unnecessary. Use isolated Wine prefixes or containers with:
 - A host-only control channel.
 - Immutable result uploads to one coordinator/ingester.
 
-The current code still hardcodes `sessions/active_session.json` and several
-artifact locations. Before parallel play, introduce configuration such as:
+The active-session path supports an absolute `ITB_SESSION_FILE` override,
+save/bridge roots support `ITB_SAVE_DIR` / `ITB_BRIDGE_DIR`, and mutable bot
+artifacts can be rooted beneath `ITB_ARTIFACT_ROOT`. Before parallel play,
+complete the remaining instance identity and process supervision:
 
 - `ITB_INSTANCE_ID`
 - `ITB_SESSION_FILE`

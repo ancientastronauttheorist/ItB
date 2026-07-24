@@ -120,4 +120,11 @@ else:
     failed += 1
 
 print(f"\n{passed}/{passed+failed} tests passed")
-exit(0 if failed == 0 else 1)
+
+
+def test_environment_danger_cases_pass():
+    assert failed == 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(0 if failed == 0 else 1)

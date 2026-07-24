@@ -3159,7 +3159,11 @@ def test_resolve_live_timer_config_auto_uses_default_proof(monkeypatch, tmp_path
     default_proof = tmp_path / "recordings" / "lightning_session_clock_proof.json"
     default_proof.parent.mkdir(parents=True)
     default_proof.write_text('{"status": "OK"}\n', encoding="utf-8")
-    monkeypatch.setattr(lab, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        lab.memory_probe,
+        "DEFAULT_SESSION_CLOCK_PROOF_PATH",
+        default_proof,
+    )
     monkeypatch.setattr(
         lab.memory_probe,
         "validate_session_clock_proof",

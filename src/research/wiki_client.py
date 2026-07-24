@@ -34,9 +34,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from src.itb_paths import get_artifact_path
 
 WIKI_API_URL = "https://intothebreach.fandom.com/api.php"
-WIKI_CACHE_DIR = Path(__file__).parent.parent.parent / "data" / "wiki_raw"
+WIKI_CACHE_DIR = get_artifact_path("data", "wiki_raw")
 
 DEFAULT_USER_AGENT = (
     "ItB-achievement-bot/0.1 (self-healing research client; "

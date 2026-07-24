@@ -184,8 +184,10 @@ def test_apply_fix_replaces_unique_block(sandbox_target):
     )
     originals = apply_fix(plan)
     assert target in originals
-    assert "alpha — patched" in target.read_text()
-    assert "println!(\"beta\")" in target.read_text(), "untouched code preserved"
+    assert "alpha — patched" in target.read_text(encoding="utf-8")
+    assert "println!(\"beta\")" in target.read_text(
+        encoding="utf-8"
+    ), "untouched code preserved"
 
 
 @pytest.mark.regression

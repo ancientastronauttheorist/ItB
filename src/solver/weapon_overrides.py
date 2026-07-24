@@ -12,9 +12,11 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
+from src.itb_paths import get_artifact_path
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OVERRIDES_PATH = REPO_ROOT / "data" / "weapon_overrides.json"
-DEFAULT_STAGED_PATH = REPO_ROOT / "data" / "weapon_overrides_staged.jsonl"
+DEFAULT_OVERRIDES_PATH = get_artifact_path("data", "weapon_overrides.json")
+DEFAULT_STAGED_PATH = get_artifact_path("data", "weapon_overrides_staged.jsonl")
 
 # Mismatch fields the auto-stager can translate into a concrete override
 # patch. Other fields (unknown_weapon, footprint_size, push_arrows,

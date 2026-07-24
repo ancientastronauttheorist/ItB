@@ -14,7 +14,10 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-LOG_DIR = Path(__file__).parent.parent.parent / "logs"
+from src.itb_paths import get_artifact_path
+
+
+LOG_DIR = get_artifact_path("logs")
 
 
 class DecisionLog:

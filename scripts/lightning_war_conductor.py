@@ -21,8 +21,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.itb_paths import get_artifact_path
+
 RESULT_MARKER = "--- Result ---"
 LIGHTNING_WAR = "Lightning War"
 START_ISLAND_CONTROLS = {
@@ -213,6 +217,7 @@ def run_game_loop(args: list[str], *, timeout: float | None = None) -> CommandRe
     completed = subprocess.run(
         command,
         cwd=ROOT,
+        env=os.environ.copy(),
         text=True,
         encoding="utf-8",
         errors="replace",
@@ -593,7 +598,10 @@ def journal_path(enabled: bool) -> Path | None:
     if not enabled:
         return None
     date = datetime.now().strftime("%Y-%m-%d")
-    return ROOT / "run_notes" / f"lightning_war_conductor_{date}.jsonl"
+    return get_artifact_path(
+        "run_notes",
+        f"lightning_war_conductor_{date}.jsonl",
+    )
 
 
 def run_observed(

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
+
+import pytest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "lightning_war_conductor.py"
@@ -11,6 +14,54 @@ conductor = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 sys.modules[SPEC.name] = conductor
 SPEC.loader.exec_module(conductor)
+
+
+def test_run_game_loop_propagates_isolated_runtime_environment(monkeypatch):
+    captured = {}
+
+    class Completed:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return Completed()
+
+    isolated = {
+        "ITB_SESSION_FILE": r"C:\isolated\sessions\active_session.json",
+        "ITB_PYTEST_SESSION_GUARD": "1",
+        "ITB_SAVE_DIR": r"C:\isolated\save",
+        "ITB_BRIDGE_DIR": r"C:\isolated\bridge",
+        "ITB_ARTIFACT_ROOT": r"C:\isolated\artifacts",
+        "ITB_PYTEST_RUNTIME_GUARD": "1",
+    }
+    for name, value in isolated.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setattr(conductor.subprocess, "run", fake_run)
+
+    conductor.run_game_loop(["status"])
+
+    child_env = captured["kwargs"]["env"]
+    assert {name: child_env[name] for name in isolated} == isolated
+    assert child_env is not os.environ
+
+
+def test_journal_path_uses_validated_artifact_root(monkeypatch):
+    artifact_root = Path(os.environ["ITB_ARTIFACT_ROOT"]).resolve()
+    assert conductor.journal_path(True).resolve().is_relative_to(artifact_root)
+
+    monkeypatch.setenv("ITB_ARTIFACT_ROOT", "relative-artifacts")
+    with pytest.raises(ValueError, match="absolute"):
+        conductor.journal_path(True)
+
+
+def test_journal_path_rejects_repository_overlap(monkeypatch):
+    monkeypatch.setenv("ITB_ARTIFACT_ROOT", str(conductor.ROOT))
+    monkeypatch.setenv("ITB_PYTEST_RUNTIME_GUARD", "1")
+    with pytest.raises(RuntimeError, match="overlapping"):
+        conductor.journal_path(True)
 
 
 def test_extract_result_json_after_marker():

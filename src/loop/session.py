@@ -17,10 +17,58 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 SESSION_DIR = Path(__file__).parent.parent.parent / "sessions"
-DEFAULT_SESSION_FILE = SESSION_DIR / "active_session.json"
+SESSION_FILE_ENV = "ITB_SESSION_FILE"
+PYTEST_SESSION_GUARD_ENV = "ITB_PYTEST_SESSION_GUARD"
+LIVE_SESSION_FILE = SESSION_DIR / "active_session.json"
+
+
+def configured_default_session_file(
+    environ: Mapping[str, str] | None = None,
+) -> Path:
+    """Resolve the configured session path.
+
+    Production keeps the repository-local session pointer. Test and worker
+    processes can set ``ITB_SESSION_FILE`` to an isolated absolute path.
+    ``RunSession.save/load`` call this through ``resolve_session_file`` at
+    operation time; ``DEFAULT_SESSION_FILE`` remains an import-time
+    compatibility alias.
+    """
+    environment = os.environ if environ is None else environ
+    override = environment.get(SESSION_FILE_ENV)
+    if not override:
+        return LIVE_SESSION_FILE
+    path = Path(override).expanduser()
+    if not path.is_absolute():
+        raise ValueError(f"{SESSION_FILE_ENV} must be an absolute path")
+    return path
+
+
+DEFAULT_SESSION_FILE = configured_default_session_file()
+
+
+def resolve_session_file(
+    path: str | Path | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> Path:
+    """Resolve a call-time session path and enforce the pytest live-file guard."""
+    environment = os.environ if environ is None else environ
+    resolved = (
+        configured_default_session_file(environment)
+        if path is None
+        else Path(path).expanduser()
+    )
+    if (
+        environment.get(PYTEST_SESSION_GUARD_ENV) == "1"
+        and resolved.resolve() == LIVE_SESSION_FILE.resolve()
+    ):
+        raise RuntimeError(
+            "pytest session guard refused the live active_session.json"
+        )
+    return resolved
 
 # Mirror of ``_SOFT_DISABLE_PER_RUN_CAP`` in ``src/loop/commands.py``. Kept
 # here to break what would otherwise be a circular import when
@@ -108,6 +156,7 @@ def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
     Re-entrant: if this process already holds the lock, returns immediately.
     """
     global _lock_handle, _lock_path
+    path = resolve_session_file(path)
 
     # Already locked by this process — re-entrant
     if _lock_handle is not None and _lock_path == str(path):
@@ -743,9 +792,9 @@ class RunSession:
 
     # --- Persistence with file locking ---
 
-    def save(self, path: str | Path = DEFAULT_SESSION_FILE):
+    def save(self, path: str | Path | None = None):
         """Save session to JSON with file locking and atomic write."""
-        path = Path(path)
+        path = resolve_session_file(path)
         _acquire_lock(path)
 
         tmp_path = path.parent / f".tmp.{os.getpid()}.{path.name}"
@@ -761,9 +810,9 @@ class RunSession:
             raise
 
     @classmethod
-    def load(cls, path: str | Path = DEFAULT_SESSION_FILE) -> RunSession:
+    def load(cls, path: str | Path | None = None) -> RunSession:
         """Load session from JSON with file locking."""
-        path = Path(path)
+        path = resolve_session_file(path)
         _acquire_lock(path)
 
         if not path.exists():

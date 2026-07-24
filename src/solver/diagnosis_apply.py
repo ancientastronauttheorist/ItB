@@ -45,7 +45,7 @@ SIM_FILE_PREFIXES: tuple[str, ...] = (
 
 VERSION_FILE_RUST = REPO_ROOT / "rust_solver" / "src" / "lib.rs"
 VERSION_FILE_PY = REPO_ROOT / "src" / "solver" / "verify.py"
-FAILURE_DB_PATH = REPO_ROOT / "recordings" / "failure_db.jsonl"
+FAILURE_DB_PATH = RECORDINGS_DIR / "failure_db.jsonl"
 
 
 # ── Markdown frontmatter parser ────────────────────────────────────────────
@@ -160,7 +160,7 @@ def build_apply_plan(failure_id: str,
                 f"recordings/<run_id>/diagnoses/"
             ),
         }
-    text = diagnosis_path.read_text()
+    text = diagnosis_path.read_text(encoding="utf-8")
     fm, _body = parse_frontmatter(text)
     if not fm:
         return {
@@ -308,7 +308,7 @@ def apply_fix(plan: ApplyPlan) -> dict[Path, str]:
     for sf in plan.suspect_files:
         rel = sf.get("path") or ""
         path = REPO_ROOT / rel
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         count = text.count(before)
         if count == 0:
             continue  # try next target — agent may have cited multiple files
@@ -318,7 +318,7 @@ def apply_fix(plan: ApplyPlan) -> dict[Path, str]:
                 "must be unique. Refine the snippet to include more context."
             )
         originals[path] = text
-        path.write_text(text.replace(before, after))
+        path.write_text(text.replace(before, after), encoding="utf-8")
         matched += 1
     if matched == 0:
         raise ValueError(
@@ -332,7 +332,7 @@ def apply_fix(plan: ApplyPlan) -> dict[Path, str]:
 def revert_fix(originals: dict[Path, str]) -> None:
     """Restore each captured file to its pre-apply content."""
     for path, text in originals.items():
-        path.write_text(text)
+        path.write_text(text, encoding="utf-8")
 
 
 # ── SIMULATOR_VERSION atomic bump + corpus archive ────────────────────────
@@ -348,7 +348,7 @@ def read_sim_version_py(path: Path | None = None) -> int | None:
     p = path if path is not None else VERSION_FILE_PY
     if not p.exists():
         return None
-    m = _PY_VERSION_RE.search(p.read_text())
+    m = _PY_VERSION_RE.search(p.read_text(encoding="utf-8"))
     return int(m.group(1)) if m else None
 
 
@@ -356,7 +356,7 @@ def read_sim_version_rust(path: Path | None = None) -> int | None:
     p = path if path is not None else VERSION_FILE_RUST
     if not p.exists():
         return None
-    m = _RUST_VERSION_RE.search(p.read_text())
+    m = _RUST_VERSION_RE.search(p.read_text(encoding="utf-8"))
     return int(m.group(1)) if m else None
 
 
@@ -391,18 +391,24 @@ def bump_simulator_version(
         )
     new_v = py_v + 1
     originals = {
-        py_path: py_path.read_text(),
-        rust_path: rust_path.read_text(),
+        py_path: py_path.read_text(encoding="utf-8"),
+        rust_path: rust_path.read_text(encoding="utf-8"),
     }
     py_path.write_text(
-        _PY_VERSION_RE.sub(f"SIMULATOR_VERSION = {new_v}", py_path.read_text(), count=1)
+        _PY_VERSION_RE.sub(
+            f"SIMULATOR_VERSION = {new_v}",
+            py_path.read_text(encoding="utf-8"),
+            count=1,
+        ),
+        encoding="utf-8",
     )
     rust_path.write_text(
         _RUST_VERSION_RE.sub(
             f"pub const SIMULATOR_VERSION: u32 = {new_v};",
-            rust_path.read_text(),
+            rust_path.read_text(encoding="utf-8"),
             count=1,
-        )
+        ),
+        encoding="utf-8",
     )
     return py_v, new_v, originals
 
@@ -495,7 +501,7 @@ def update_diagnosis_status(
     frontmatter (proposed_files, fix_snippet, etc.) survive untouched
     so re-runs / reverts can still parse them.
     """
-    text = diagnosis_path.read_text()
+    text = diagnosis_path.read_text(encoding="utf-8")
     if not text.startswith("---"):
         return
     end = text.find("\n---", 3)
@@ -516,7 +522,7 @@ def update_diagnosis_status(
     if extra:
         for k, v in extra.items():
             head += f"\n{k}: {v}"
-    diagnosis_path.write_text(head + tail)
+    diagnosis_path.write_text(head + tail, encoding="utf-8")
 
 
 # ── Top-level orchestrator ────────────────────────────────────────────────

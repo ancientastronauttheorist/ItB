@@ -390,7 +390,7 @@ def test_diagnose_writes_markdown_with_frontmatter(tmp_path):
 
     md_path = out_dir / f"{failure['id']}.md"
     assert md_path.exists()
-    text = md_path.read_text()
+    text = md_path.read_text(encoding="utf-8")
     assert text.startswith("---\n"), "frontmatter must be first"
     assert "status: rule_match" in text
     assert "move_only_active_guard" in text
@@ -441,7 +441,7 @@ def test_diagnose_unmatched_falls_through_to_needs_agent(tmp_path):
     )
     assert result["status"] == "needs_agent"
     assert result["rule_id"] is None
-    text = (out_dir / f"{failure['id']}.md").read_text()
+    text = (out_dir / f"{failure['id']}.md").read_text(encoding="utf-8")
     assert "status: needs_agent" in text
     assert "Agent fallback" in text or "needs agent" in text.lower()
 

@@ -467,13 +467,8 @@ def _read_repair_pickups_from_save() -> int | None:
     in the save contain RepairPickups, return None instead of guessing which
     one is live.
     """
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
+    content = _read_save_text("saveData.lua")
+    if content is None:
         return None
 
     matches = re.findall(r'\["RepairPickups"\]\s*=\s*(\d+)', content)

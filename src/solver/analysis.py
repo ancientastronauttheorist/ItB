@@ -24,6 +24,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+from src.itb_paths import get_artifact_path
 
 def detect_triggers(
     actual: dict,
@@ -380,7 +381,7 @@ def is_auto_fixable_by_tuning(record: dict, board=None) -> bool:
 
 # --- Failure database ---
 
-FAILURE_DB_PATH = Path(__file__).parent.parent.parent / "recordings" / "failure_db.jsonl"
+FAILURE_DB_PATH = get_artifact_path("recordings", "failure_db.jsonl")
 
 
 def append_to_failure_db(

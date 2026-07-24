@@ -46,10 +46,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.itb_paths import get_artifact_path
 from src.model.weapons import WEAPON_DEFS, WeaponDef
 
 
-MISMATCHES_PATH = Path(__file__).parent.parent.parent / "data" / "weapon_def_mismatches.jsonl"
+MISMATCHES_PATH = get_artifact_path("data", "weapon_def_mismatches.jsonl")
 
 
 # ── display-name → WEAPON_DEFS key ───────────────────────────────────────────

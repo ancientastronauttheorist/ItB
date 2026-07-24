@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from src.itb_paths import get_artifact_path
 from src.solver.verify import (
     _diff_signature,
     load_known_gaps,
@@ -36,8 +37,8 @@ from src.solver.verify import (
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 RULES_PATH = REPO_ROOT / "diagnoses" / "rules.yaml"
-REJECTIONS_PATH = REPO_ROOT / "diagnoses" / "rejections.jsonl"
-RECORDINGS_DIR = REPO_ROOT / "recordings"
+REJECTIONS_PATH = get_artifact_path("diagnoses", "rejections.jsonl")
+RECORDINGS_DIR = get_artifact_path("recordings")
 FAILURE_DB_PATH = RECORDINGS_DIR / "failure_db.jsonl"
 
 

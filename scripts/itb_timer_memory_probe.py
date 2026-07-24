@@ -28,6 +28,12 @@ from typing import Any
 
 from ctypes import wintypes
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.itb_paths import get_artifact_path
+
 
 PROCESS_QUERY_INFORMATION = 0x0400
 PROCESS_VM_READ = 0x0010
@@ -35,7 +41,10 @@ MEM_COMMIT = 0x1000
 PAGE_NOACCESS = 0x01
 PAGE_GUARD = 0x100
 DEFAULT_MAX_VISIBLE_TIMER_SECONDS = 30 * 60
-DEFAULT_SESSION_CLOCK_PROOF_PATH = Path("recordings/lightning_session_clock_proof.json")
+DEFAULT_SESSION_CLOCK_PROOF_PATH = get_artifact_path(
+    "recordings",
+    "lightning_session_clock_proof.json",
+)
 SESSION_CLOCK_PROOF_SCHEMA_VERSION = 1
 
 

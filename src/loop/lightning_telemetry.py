@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from src.itb_paths import get_artifact_path
+
 try:
     from PIL import Image, ImageChops, ImageStat
 except ImportError:  # pragma: no cover - only used on stripped environments
@@ -24,6 +26,8 @@ except ImportError:  # pragma: no cover - only used on stripped environments
 
 SCHEMA_VERSION = 1
 DEFAULT_SCREENSHOT_RUN_CAP = 3
+DEFAULT_RECORDINGS_ROOT = get_artifact_path("recordings")
+DEFAULT_RUN_NOTES_ROOT = get_artifact_path("run_notes")
 
 
 def _now_iso() -> str:
@@ -116,8 +120,8 @@ def lightning_screenshot_run_cap() -> int | None:
 
 def prune_lightning_screenshot_runs(
     *,
-    recordings_root: Path | str = Path("recordings"),
-    run_notes_root: Path | str = Path("run_notes"),
+    recordings_root: Path | str = DEFAULT_RECORDINGS_ROOT,
+    run_notes_root: Path | str = DEFAULT_RUN_NOTES_ROOT,
     max_runs: int | None = None,
 ) -> dict[str, Any]:
     """Delete screenshot-heavy Lightning artifacts outside the newest runs."""
@@ -292,7 +296,7 @@ def _event_base(run_id: str, event_type: str) -> dict[str, Any]:
 @dataclass
 class TelemetryRecorder:
     run_id: str
-    root: Path = Path("recordings")
+    root: Path = DEFAULT_RECORDINGS_ROOT
 
     def __post_init__(self) -> None:
         self.run_dir = self.root / self.run_id
@@ -305,8 +309,8 @@ class TelemetryRecorder:
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
         run_notes_root = (
-            Path("run_notes")
-            if self.root == Path("recordings")
+            DEFAULT_RUN_NOTES_ROOT
+            if self.root == DEFAULT_RECORDINGS_ROOT
             else self.root.parent / "run_notes"
         )
         self.retention_result = prune_lightning_screenshot_runs(

@@ -80,7 +80,8 @@ from src.bridge.writer import (
     move_mech, attack_mech, attack_mech_two, skip_mech, repair_mech,
     reactivate_player_pawns,
 )
-from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
+from src.loop.session import RunSession, SolverAction, resolve_session_file
+from src.itb_paths import get_artifact_path
 from src.loop.logger import DecisionLog
 from src.loop import weapon_penalty_log
 from src.strategy.achievement_sync import (
@@ -163,12 +164,12 @@ def _execute_visible_click_plan(
 BONUS_MECH_DAMAGE_ID = 4
 MECH_DAMAGE_OBJECTIVE_LIMIT = 4
 
-SNAPSHOT_DIR = Path(__file__).parent.parent.parent / "snapshots"
+SNAPSHOT_DIR = get_artifact_path("snapshots")
 
 
 def _load_session() -> RunSession:
     """Load the active session (creates default if none exists)."""
-    return RunSession.load(DEFAULT_SESSION_FILE)
+    return RunSession.load()
 
 
 def _get_logger(session: RunSession) -> DecisionLog:
@@ -923,7 +924,7 @@ def _final_turn_pod_collection_weight_overlay(
     return weights, overlays
 
 
-RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
+RECORDING_DIR = get_artifact_path("recordings")
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
 _SAFETY_WIDENING_TOP_K = 1000
 _PROTECTED_OBJECTIVE_SAFETY_WIDENING_TOP_K = 5000
@@ -10609,10 +10610,7 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
             classification=classification,
         )
         if enqueued:
-            # Pass the session path explicitly so test monkeypatches on
-            # DEFAULT_SESSION_FILE flow through (the default-arg form binds
-            # at import time and would write to the original location).
-            session.save(DEFAULT_SESSION_FILE)
+            session.save()
             print(f"  [auto-diagnose] enqueued — drain via "
                   f"`game_loop.py diagnose_next` (queue depth: "
                   f"{sum(1 for e in session.diagnosis_queue if e.get('status') == 'pending')})")
@@ -10734,7 +10732,7 @@ def cmd_diagnose_next(force: bool = False) -> dict:
     except Exception as e:
         entry["status"] = "failed"
         entry["error"] = str(e)
-        session.save(DEFAULT_SESSION_FILE)
+        session.save()
         result = {
             "status": "ERROR",
             "failure_id": failure_id,
@@ -10750,7 +10748,7 @@ def cmd_diagnose_next(force: bool = False) -> dict:
     entry["markdown"] = diag.get("markdown")
     if diag.get("status") == "ERROR":
         entry["error"] = diag.get("error")
-    session.save(DEFAULT_SESSION_FILE)
+    session.save()
 
     print(f"DIAGNOSE_NEXT {failure_id}: {diag.get('status')}")
     if diag.get("rule_id"):
@@ -14199,9 +14197,9 @@ def _prepare_local_dispatch_guard(label: str) -> dict:
         }
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    path = (
-        Path("run_notes")
-        / f"local_dispatch_pre_{_safe_dispatch_label(label)}_{timestamp}.png"
+    path = get_artifact_path(
+        "run_notes",
+        f"local_dispatch_pre_{_safe_dispatch_label(label)}_{timestamp}.png",
     )
     try:
         take_screenshot(path, bounds=bounds)
@@ -30282,7 +30280,10 @@ def cmd_lightning_capture(
     base_dir = (
         Path(out_dir)
         if out_dir
-        else Path("run_notes") / f"lightning_war_smoke_{datetime.now():%Y-%m-%d}"
+        else get_artifact_path(
+            "run_notes",
+            f"lightning_war_smoke_{datetime.now():%Y-%m-%d}",
+        )
     )
     screenshots_dir = base_dir / "screenshots"
     index = _lightning_capture_next_index(screenshots_dir)
@@ -30367,7 +30368,10 @@ def _lightning_run_notes_base(out_dir: str | None = None) -> Path:
     return (
         Path(out_dir)
         if out_dir
-        else Path("run_notes") / f"lightning_war_smoke_{datetime.now():%Y-%m-%d}"
+        else get_artifact_path(
+            "run_notes",
+            f"lightning_war_smoke_{datetime.now():%Y-%m-%d}",
+        )
     )
 
 
@@ -50657,8 +50661,9 @@ def cmd_snapshot(label: str, profile: str = "Alpha") -> dict:
             shutil.copy2(str(src), str(snap_dir / fname))
 
     # Copy session
-    if DEFAULT_SESSION_FILE.exists():
-        shutil.copy2(str(DEFAULT_SESSION_FILE), str(snap_dir / "session.json"))
+    session_file = resolve_session_file()
+    if session_file.exists():
+        shutil.copy2(str(session_file), str(snap_dir / "session.json"))
 
     # Save board state as JSON
     state = load_game_state(profile)
@@ -57565,18 +57570,41 @@ def _mission_end_auto_commit(
     """
     import subprocess
 
-    repo = repo_root or Path(__file__).parent.parent.parent
+    repo = (repo_root or Path(__file__).parent.parent.parent).resolve()
+    try:
+        artifact_root = repo if repo_root is not None else get_artifact_path()
+    except (OSError, RuntimeError, ValueError) as exc:
+        return {
+            "status": "failed",
+            "stage": "paths",
+            "error": str(exc),
+        }
     run_id = session.run_id
     mi = mission_index
     mission_name = session.current_mission or "mission"
 
-    candidate_paths = [
-        f"recordings/{run_id}",
-        "sessions/active_session.json",
-        f"logs/{run_id}_log.md",
-        "data/weapon_overrides_staged.jsonl",
+    candidates = [
+        artifact_root / "recordings" / run_id,
+        artifact_root / "logs" / f"{run_id}_log.md",
+        artifact_root / "data" / "weapon_overrides_staged.jsonl",
     ]
-    existing = [p for p in candidate_paths if (repo / p).exists()]
+    existing: list[str] = []
+    for candidate in candidates:
+        try:
+            relative = candidate.resolve().relative_to(repo).as_posix()
+        except (OSError, ValueError):
+            continue
+        if relative not in ("", ".") and candidate.exists():
+            existing.append(relative)
+    try:
+        session_candidate = resolve_session_file().resolve()
+        session_relative = session_candidate.relative_to(repo).as_posix()
+        if session_relative in ("", ".") or not session_candidate.is_file():
+            session_relative = None
+    except (OSError, RuntimeError, ValueError):
+        session_relative = None
+    if session_relative is not None:
+        existing.insert(1, session_relative)
     if not existing:
         return {"status": "skipped", "reason": "no stageable artifacts"}
 

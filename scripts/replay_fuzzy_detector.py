@@ -35,8 +35,9 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from src.solver import fuzzy_detector  # noqa: E402
+from src.itb_paths import get_artifact_path  # noqa: E402
 
-FAILURE_DB = REPO / "recordings" / "failure_db.jsonl"
+FAILURE_DB = get_artifact_path("recordings", "failure_db.jsonl")
 
 
 def _reconstruct_diff(record: dict) -> SimpleNamespace:

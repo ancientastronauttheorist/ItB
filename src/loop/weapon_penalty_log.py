@@ -22,7 +22,10 @@ import json
 from pathlib import Path
 from typing import Iterable
 
-_LOG_PATH = Path(__file__).resolve().parents[2] / "data" / "weapon_penalty_log.json"
+from src.itb_paths import get_artifact_path
+
+
+_LOG_PATH = get_artifact_path("data", "weapon_penalty_log.json")
 
 
 def _load() -> dict:

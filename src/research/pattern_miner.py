@@ -38,13 +38,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from src.itb_paths import get_artifact_path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_VISION_PATH = REPO_ROOT / "data" / "weapon_def_mismatches.jsonl"
-DEFAULT_FAILURE_PATH = REPO_ROOT / "recordings" / "failure_db.jsonl"
-DEFAULT_DENY_PATH = REPO_ROOT / "data" / "weapon_overrides_rejected.jsonl"
+DEFAULT_VISION_PATH = get_artifact_path("data", "weapon_def_mismatches.jsonl")
+DEFAULT_FAILURE_PATH = get_artifact_path("recordings", "failure_db.jsonl")
+DEFAULT_DENY_PATH = get_artifact_path("data", "weapon_overrides_rejected.jsonl")
 DEFAULT_CUTOFF_PATH = REPO_ROOT / "data" / "mining_cutoff.json"
-DEFAULT_RECORDINGS_ROOT = REPO_ROOT / "recordings"
+DEFAULT_RECORDINGS_ROOT = get_artifact_path("recordings")
 
 
 # ── signatures ──────────────────────────────────────────────────────────────

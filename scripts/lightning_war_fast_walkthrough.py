@@ -55,19 +55,36 @@ from src.loop.commands import (
     cmd_verify_action,
 )
 from src.solver.plan_safety import POD_LOSS_DIRTY_KINDS
+from src.itb_paths import get_artifact_path
 
 
 APP_NAME = "Into the Breach"
 LIGHTNING_UI_BASE_SIZE = (1280, 748)
-TIMING_SCREENSHOT_DIR = ROOT / "run_notes" / "lightning_war_walkthrough" / "timing_screenshots"
+TIMING_SCREENSHOT_DIR = get_artifact_path(
+    "run_notes",
+    "lightning_war_walkthrough",
+    "timing_screenshots",
+)
 STARTUP_SCREENSHOT_DIR = (
-    ROOT / "run_notes" / "lightning_war_fast_walkthrough" / "startup_screenshots"
+    get_artifact_path(
+        "run_notes",
+        "lightning_war_fast_walkthrough",
+        "startup_screenshots",
+    )
 )
 STARTUP_REVIEW_DIR = (
-    ROOT / "run_notes" / "lightning_war_fast_walkthrough" / "startup_reviews"
+    get_artifact_path(
+        "run_notes",
+        "lightning_war_fast_walkthrough",
+        "startup_reviews",
+    )
 )
 STARTUP_REFERENCE_SCREENSHOT = (
-    ROOT / "run_notes" / "lightning_war_fast_walkthrough" / "reference_title_screen.png"
+    get_artifact_path(
+        "run_notes",
+        "lightning_war_fast_walkthrough",
+        "reference_title_screen.png",
+    )
 )
 STARTUP_LATEST_REVIEW_FILE = STARTUP_REVIEW_DIR / "latest_startup_visual_review.json"
 TERMINAL_OR_CLEAR_UIS = {

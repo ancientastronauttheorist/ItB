@@ -285,18 +285,8 @@ def test_drain_marks_entry_done_with_diagnose_status(tmp_path, monkeypatch):
     session_path = tmp_path / "active_session.json"
     s.save(session_path)
 
-    # Patch DEFAULT_SESSION_FILE so cmd_diagnose_next loads our test session.
-    # Both modules see it: commands.py uses it on load, session.save's default
-    # argument resolves through src.loop.session at definition time so we
-    # patch both to keep them consistent.
-    monkeypatch.setattr(
-        "src.loop.commands.DEFAULT_SESSION_FILE",
-        session_path,
-    )
-    monkeypatch.setattr(
-        "src.loop.session.DEFAULT_SESSION_FILE",
-        session_path,
-    )
+    # The no-argument load/save path resolves this override at call time.
+    monkeypatch.setenv("ITB_SESSION_FILE", str(session_path))
     # Diagnose writes markdown under recordings/<run_id>/diagnoses/. Send
     # those writes into tmp_path too.
     diag_out = tmp_path / "diag"
@@ -329,8 +319,7 @@ def test_drain_returns_empty_when_queue_drained(tmp_path, monkeypatch):
     s = _make_session(tmp_path)
     session_path = tmp_path / "active_session.json"
     s.save(session_path)
-    monkeypatch.setattr("src.loop.commands.DEFAULT_SESSION_FILE", session_path)
-    monkeypatch.setattr("src.loop.session.DEFAULT_SESSION_FILE", session_path)
+    monkeypatch.setenv("ITB_SESSION_FILE", str(session_path))
 
     from src.loop.commands import cmd_diagnose_next
     result = cmd_diagnose_next()

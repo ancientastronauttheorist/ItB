@@ -9,9 +9,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from src.itb_paths import get_artifact_path
+
 
 ROOT = Path(__file__).resolve().parents[2]
-ACHIEVEMENTS_PATH = ROOT / "data" / "achievements_detailed.json"
+ACHIEVEMENTS_PATH = get_artifact_path("data", "achievements_detailed.json")
 STEAM_LIBRARYCACHE_ROOT = (
     Path.home() / "Library" / "Application Support" / "Steam" / "userdata"
 )

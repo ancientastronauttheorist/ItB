@@ -23,6 +23,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from src.itb_paths import get_artifact_path
 
 # Solve-record schema version. Bump when the shape of the ``data`` block
 # written by cmd_solve changes in a way readers must adapt to.
@@ -2454,7 +2455,7 @@ def _load_cached_signatures(run_id: str | None) -> dict[str, str]:
     """
     if not run_id:
         return {}
-    diag_dir = _REPO_ROOT / "recordings" / run_id / "diagnoses"
+    diag_dir = get_artifact_path("recordings", run_id, "diagnoses")
     if not diag_dir.exists():
         return {}
     out: dict[str, str] = {}

@@ -71,11 +71,14 @@ from typing import Any
 _THIS_DIR = Path(__file__).resolve().parent
 if str(_THIS_DIR) not in sys.path:
     sys.path.insert(0, str(_THIS_DIR))
+REPO_ROOT = _THIS_DIR.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import seed_replay  # noqa: E402
+from src.itb_paths import get_artifact_path  # noqa: E402
 
-REPO_ROOT = _THIS_DIR.parent
-RECORDINGS = REPO_ROOT / "recordings"
+RECORDINGS = get_artifact_path("recordings")
 
 
 # ---- helpers ------------------------------------------------------------

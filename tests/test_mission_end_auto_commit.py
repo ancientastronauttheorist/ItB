@@ -12,14 +12,25 @@ artifacts there so the existence checks fire naturally.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
+
+import pytest
 
 from src.loop import commands as loop_commands
 from src.loop.session import RunSession
 
 
 RUN_ID = "20260420_000000_test"
+
+
+@pytest.fixture(autouse=True)
+def _isolated_repo_session(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv(
+        "ITB_SESSION_FILE",
+        str(tmp_path / "sessions" / "active_session.json"),
+    )
 
 
 def _session() -> RunSession:
@@ -95,6 +106,73 @@ def test_auto_commit_happy_path(monkeypatch, tmp_path):
 
     push_cmd = next(c for c in double.calls if c[3] == "push")
     assert push_cmd[-2:] == ["origin", "HEAD"]
+
+
+def test_auto_commit_omits_session_outside_repo(monkeypatch, tmp_path):
+    _plant_artifacts(tmp_path)
+    outside_session = tmp_path.parent / "isolated-session" / "active_session.json"
+    outside_session.parent.mkdir(parents=True, exist_ok=True)
+    outside_session.write_text("{}")
+    monkeypatch.setenv("ITB_SESSION_FILE", str(outside_session))
+    double = _SubprocessDouble(responses={
+        "add": _FakeCompleted(0),
+        "diff": _FakeCompleted(0),
+    })
+    monkeypatch.setattr("subprocess.run", double.run)
+
+    loop_commands._mission_end_auto_commit(
+        _session(), "win", 0, repo_root=tmp_path,
+    )
+
+    add_cmd = next(c for c in double.calls if c[3] == "add")
+    assert f"recordings/{RUN_ID}" in add_cmd
+    assert not any("active_session.json" in argument for argument in add_cmd)
+
+
+def test_auto_commit_omits_in_repo_session_directory(monkeypatch, tmp_path):
+    _plant_artifacts(tmp_path)
+    monkeypatch.setenv("ITB_SESSION_FILE", str(tmp_path.resolve()))
+    double = _SubprocessDouble(responses={
+        "add": _FakeCompleted(0),
+        "diff": _FakeCompleted(0),
+    })
+    monkeypatch.setattr("subprocess.run", double.run)
+
+    loop_commands._mission_end_auto_commit(
+        _session(), "win", 0, repo_root=tmp_path,
+    )
+
+    add_cmd = next(c for c in double.calls if c[3] == "add")
+    assert "." not in add_cmd[4:]
+    assert f"recordings/{RUN_ID}" in add_cmd
+
+
+def test_auto_commit_never_stages_out_of_repo_artifact_root(monkeypatch):
+    artifact_root = Path(os.environ["ITB_ARTIFACT_ROOT"])
+    recording = artifact_root / "recordings" / RUN_ID / "m00_outcome.json"
+    recording.parent.mkdir(parents=True, exist_ok=True)
+    recording.write_text("{}")
+    double = _SubprocessDouble()
+    monkeypatch.setattr("subprocess.run", double.run)
+
+    out = loop_commands._mission_end_auto_commit(_session(), "win", 0)
+
+    assert out["status"] == "skipped"
+    assert out["reason"] == "no stageable artifacts"
+    assert double.calls == []
+
+
+def test_auto_commit_reports_invalid_artifact_root(monkeypatch):
+    monkeypatch.setenv("ITB_ARTIFACT_ROOT", "relative-artifacts")
+    double = _SubprocessDouble()
+    monkeypatch.setattr("subprocess.run", double.run)
+
+    out = loop_commands._mission_end_auto_commit(_session(), "win", 0)
+
+    assert out["status"] == "failed"
+    assert out["stage"] == "paths"
+    assert "absolute" in out["error"]
+    assert double.calls == []
 
 
 # ── skip paths ───────────────────────────────────────────────────────────────
