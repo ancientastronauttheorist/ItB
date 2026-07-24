@@ -577,6 +577,76 @@ def test_real_aerial_bombs_record_keeps_variant_test_gaps_explicit():
     assert "bypassing B/AB dispatch" in gaps
 
 
+def test_real_reverse_thrusters_record_keeps_upgrade_proof_gaps_explicit():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-reverse-thrusters"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/ae_weapons.lua",
+            "sha256": (
+                "5566b679c696ab489e40a0189d0a63b6"
+                "99d01e9657f79a20e6f119239af1680f"
+            ),
+            "symbols": [
+                "Brute_KickBack",
+                "Brute_KickBack:GetTargetArea",
+                "Brute_KickBack:GetSkillEffect",
+                "Brute_KickBack_A",
+                "Brute_KickBack_B",
+                "Brute_KickBack_AB",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::BruteKickBack",
+        "WId::BruteKickBackA",
+        "WId::BruteKickBackB",
+        "WId::BruteKickBackAB",
+        "is_reverse_thrusters",
+        "reverse_thrusters_hit_tile",
+    } <= implementations["rust_solver/src/weapons.rs"]
+    assert {
+        "reverse_thrusters_landing_illegal_reason",
+        "reverse_thrusters_effective_unit_damage",
+        "sim_reverse_thrusters",
+    } <= implementations["rust_solver/src/simulate.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/replay.rs"] == {
+        "replay_solution_reverse_thrusters_backblast_smoke_does_not_same_action_heal"
+    }
+    assert "test_reverse_thrusters_upgrades" in tests["rust_solver/src/weapons.rs"]
+    assert {
+        "test_reverse_thrusters_smokes_backblast_tile_self_damages_and_dashes",
+        "test_boosted_reverse_thrusters_adds_dash_and_recoil_damage",
+        "test_reverse_thrusters_acid_two_tile_dash_fires_backburner_event",
+    } <= tests["rust_solver/src/simulate.rs"]
+    gaps = " ".join(record["known_gaps"])
+    assert "no exact-ID end-to-end case" in gaps
+    assert "Boost and Nanofilter timing are live-derived" in gaps
+
+
 def test_real_mission_wind_record_keeps_rng_and_bridge_gaps_explicit():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(

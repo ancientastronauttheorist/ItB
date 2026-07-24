@@ -268,6 +268,107 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Advanced Edition Lua source defines Reverse Thrusters as a cardinal charge whose single backblast tile takes distance-scaled damage and smoke while the origin takes one self-damage; A and B extend range to three, and AB extends it to four."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has distinct IDs and DashAway definitions for all four variants, implements landing legality, backblast damage and smoke, recoil, movement, scoring, and replay, and exercises the base family behavior in focused tests."
+        }
+      ],
+      "id": "player-weapon-reverse-thrusters",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::BruteKickBack",
+            "WId::BruteKickBackA",
+            "WId::BruteKickBackB",
+            "WId::BruteKickBackAB",
+            "is_reverse_thrusters",
+            "reverse_thrusters_hit_tile",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_weapon_with",
+            "reverse_thrusters_landing_illegal_reason",
+            "reverse_thrusters_effective_unit_damage",
+            "sim_reverse_thrusters"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "reverse_thrusters_landing_blocked",
+            "get_weapon_targets",
+            "reverse_thrusters_four_damage_from_events"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:IsBlocked, Pawn:GetPathProf, SpaceDamage, AddCharge, terrain traversal, and effect-order semantics have not been independently traced for this build.",
+        "All behavior-level simulator, solver, and replay tests use the base BruteKickBack ID; A, B, and AB have exact definition and mapping coverage but no exact-ID end-to-end case for range-three or range-four targeting and backblast damage.",
+        "No focused family test exhaustively pins landing legality across occupied units, buildings, mountains, and grounded-versus-flying water or chasm cases, intermediate obstacle traversal, and off-board backblast behavior.",
+        "Boost and Nanofilter timing are live-derived Rust regressions rather than facts established by this Lua body; exhaustive status, objective, terrain, and collision conformance remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_weapons.lua",
+          "sha256": "5566b679c696ab489e40a0189d0a63b699d01e9657f79a20e6f119239af1680f",
+          "symbols": [
+            "Brute_KickBack",
+            "Brute_KickBack:GetTargetArea",
+            "Brute_KickBack:GetSkillEffect",
+            "Brute_KickBack_A",
+            "Brute_KickBack_B",
+            "Brute_KickBack_AB"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_reverse_thrusters_upgrades"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_reverse_thrusters_smokes_backblast_tile_self_damages_and_dashes",
+            "test_reverse_thrusters_backblast_smoke_does_not_same_action_heal",
+            "test_reverse_thrusters_smoked_forest_backblast_extinguishes_survivor",
+            "test_boosted_reverse_thrusters_adds_dash_and_recoil_damage",
+            "test_reverse_thrusters_acid_two_tile_dash_fires_backburner_event"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "reverse_thrusters_targets_include_vacated_start_tile"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_reverse_thrusters_backblast_smoke_does_not_same_action_heal"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "The exact inventoried Lua source defines Aerial Bombs as a cardinal leap of two tiles, extended to three by the range upgrade, that damages and smokes each strict transit tile; its A, B, and AB variants raise damage, range, or both."
         },
         {

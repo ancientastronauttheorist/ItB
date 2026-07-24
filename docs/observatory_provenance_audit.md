@@ -35,10 +35,10 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 2 | 1 |
 | Enemy scoring | 2 | 2 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 4 | 10 |
+| Player weapons | 14 | 5 | 9 |
 | Missions | 75 | 3 | 72 |
 | Environments | 15 | 3 | 12 |
-| Unique total | 97 | 14 | 83 |
+| Unique total | 97 | 15 | 82 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
@@ -78,6 +78,14 @@ damage-two variants lack exact-ID end-to-end simulator cases, and the current
 range-upgraded transit tests call `sim_leap` directly with the unchanged base
 ID and definition at distance three, bypassing B/AB dispatch and range-three
 target enumeration.
+
+The fourth slice, `player-weapon-reverse-thrusters`, adds the exact Advanced
+Edition `ae_weapons.lua` source and all four `Brute_KickBack` variants. It
+connects the Lua dash, distance-scaled backblast, smoke, and recoil behavior to
+Rust landing checks, simulation, scoring, achievement events, and replay. It
+remains `partial`: behavior tests use only the base ID, native path/effect
+helpers are untraced, and the range-three/range-four variants lack exact-ID
+end-to-end targeting and damage cases.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
