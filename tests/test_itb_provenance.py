@@ -497,6 +497,86 @@ def test_real_rocket_artillery_record_includes_inherited_targeting():
     assert record["known_gaps"]
 
 
+def test_real_aerial_bombs_record_keeps_variant_test_gaps_explicit():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-aerial-bombs"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/weapons_brute.lua",
+            "sha256": (
+                "e5989a06676ee04827401007a825c771"
+                "9048268fb8ff2303bce921a32441b265"
+            ),
+            "symbols": [
+                "Brute_Jetmech",
+                "Brute_Jetmech:GetTargetArea",
+                "Brute_Jetmech:GetSkillEffect",
+                "Brute_Jetmech_A",
+                "Brute_Jetmech_B",
+                "Brute_Jetmech_AB",
+            ],
+        }
+    ]
+    implementation_symbols = {
+        symbol
+        for reference in record["implementations"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "WId::BruteJetmech",
+        "WId::BruteJetmechA",
+        "WId::BruteJetmechB",
+        "WId::BruteJetmechAB",
+        "simulate_weapon_with",
+        "sim_leap",
+        "get_weapon_targets",
+        "is_aerial_bombs",
+        "aerial_bombs_transit_smoke_score",
+    } <= implementation_symbols
+    test_symbols = {
+        symbol
+        for reference in record["tests"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "test_aerial_bombs_upgrades",
+        "test_jetmech_smokes_transit_base_range",
+        "test_aerial_bombs_damages_transit_tile_base_range",
+        "test_aerial_bombs_damages_both_transit_tiles_range_upgraded",
+        "test_aerial_bombs_enum_rejects_landing_on_water",
+        "test_aerial_bombs_sim_noops_illegal_enemy_landing",
+        "moved_aerial_bombs_targets_from_post_move_tile",
+        "aerial_bombs_transit_smoke_building_threat_survives_pruning",
+        "replay_solution_counts_aerial_bombs_pod_collection",
+    } <= test_symbols
+    replay_tests = next(
+        reference
+        for reference in record["tests"]
+        if reference["path"] == "rust_solver/src/replay.rs"
+    )
+    assert replay_tests["symbols"] == [
+        "replay_solution_counts_aerial_bombs_pod_collection"
+    ]
+    gaps = " ".join(record["known_gaps"])
+    assert "no exact-ID end-to-end simulator case" in gaps
+    assert "bypassing B/AB dispatch" in gaps
+
+
 def test_real_mission_wind_record_keeps_rng_and_bridge_gaps_explicit():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(

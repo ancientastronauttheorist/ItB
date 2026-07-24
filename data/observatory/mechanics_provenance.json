@@ -178,6 +178,99 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Lua source defines Aerial Bombs as a cardinal leap of two tiles, extended to three by the range upgrade, that damages and smokes each strict transit tile; its A, B, and AB variants raise damage, range, or both."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has distinct IDs and definitions for all four variants, applies the family-specific transit effects and landing restrictions, and covers definitions, transit behavior, target enumeration, illegal landings, scoring, and replay in focused tests."
+        }
+      ],
+      "id": "player-weapon-aerial-bombs",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::BruteJetmech",
+            "WId::BruteJetmechA",
+            "WId::BruteJetmechB",
+            "WId::BruteJetmechAB",
+            "WEAPONS",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_weapon_with",
+            "sim_leap"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets",
+            "is_aerial_bombs",
+            "aerial_bombs_transit_smoke_score"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:IsBlocked, Pawn:GetPathProf, AddLeap, SpaceDamage, and effect-order semantics have not been independently traced for this build.",
+        "The A and AB damage-two variants have exact definition coverage but no exact-ID end-to-end simulator case.",
+        "Existing range-upgraded transit tests call sim_leap directly with the unchanged base ID and definition at distance three, bypassing B/AB dispatch and range-three target enumeration.",
+        "Exact conformance across every landing terrain, carried status, transit occupant, and effect-order interaction remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_brute.lua",
+          "sha256": "e5989a06676ee04827401007a825c7719048268fb8ff2303bce921a32441b265",
+          "symbols": [
+            "Brute_Jetmech",
+            "Brute_Jetmech:GetTargetArea",
+            "Brute_Jetmech:GetSkillEffect",
+            "Brute_Jetmech_A",
+            "Brute_Jetmech_B",
+            "Brute_Jetmech_AB"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_aerial_bombs_upgrades"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_jetmech_smokes_transit_base_range",
+            "test_aerial_bombs_damages_transit_tile_base_range",
+            "test_aerial_bombs_damages_both_transit_tiles_range_upgraded",
+            "test_aerial_bombs_enum_rejects_landing_on_water",
+            "test_aerial_bombs_sim_noops_illegal_enemy_landing"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "moved_aerial_bombs_targets_from_post_move_tile",
+            "aerial_bombs_transit_smoke_building_threat_survives_pruning"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_counts_aerial_bombs_pod_collection"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "global.lua defines default GetTargetArea, GetTargetScore, ScoreList, and ScorePositioning logic for this observed content revision."
         },
         {

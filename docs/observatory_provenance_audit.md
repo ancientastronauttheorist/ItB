@@ -35,10 +35,10 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 2 | 1 |
 | Enemy scoring | 2 | 2 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 3 | 11 |
+| Player weapons | 14 | 4 | 10 |
 | Missions | 75 | 2 | 73 |
 | Environments | 15 | 2 | 13 |
-| Unique total | 97 | 12 | 85 |
+| Unique total | 97 | 13 | 84 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
@@ -69,6 +69,15 @@ targeting/replay regressions. It remains `partial` because Rust intentionally
 filters intact building centers that Lua permits, while native effect ordering,
 dedicated B/AB end-to-end cases, and exhaustive collision/status conformance
 are unresolved.
+
+The third slice, `player-weapon-aerial-bombs`, pins the exact
+`weapons_brute.lua` family and all four `Brute_Jetmech` variants to Rust leap
+simulation, landing restrictions, target enumeration, and transit-effect
+scoring. It remains `partial`: native path/effect helpers are not traced,
+damage-two variants lack exact-ID end-to-end simulator cases, and the current
+range-upgraded transit tests call `sim_leap` directly with the unchanged base
+ID and definition at distance three, bypassing B/AB dispatch and range-three
+target enumeration.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
