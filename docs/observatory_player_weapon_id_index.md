@@ -87,13 +87,23 @@ verified vanilla depot bytes. They are also not behavioral coverage:
 - Rust-only mappings include enemy, mission, compatibility, and other IDs
   outside this deliberately selected player-weapon source set.
 
+Five family-level provenance slices now consume this lexical index:
+`player-weapon-titan-fist`, `player-weapon-rocket-artillery`,
+`player-weapon-aerial-bombs`, `player-weapon-reverse-thrusters`, and
+`player-weapon-control-shot`. Together they name five of the 14 selected source
+files because Rocket Artillery uses both `weapons_base.lua` and
+`weapons_ranged.lua`, while Reverse Thrusters and Control Shot share
+`advanced/ae_weapons.lua`. Every slice remains `partial`; notably, the Control
+Shot record exposes a source-predicate mismatch instead of treating ID
+coverage as behavioral agreement.
+
 ## How to use the index
 
 Use exact matches to choose small, well-tested families for provenance slices,
-as with Titan Fist. For each family, separately inspect its Lua effect/target
-functions, all powered variants, Rust definitions and dispatch, focused tests,
-native-helper dependencies, and known edge gaps. Use absent and many-to-one
-entries as review queues, never as automatic bug reports.
+as with the five current slices. For each family, separately inspect its Lua
+effect/target functions, all powered variants, Rust definitions and dispatch,
+focused tests, native-helper dependencies, and known edge gaps. Use absent and
+many-to-one entries as review queues, never as automatic bug reports.
 
 The next useful extension is a checked family-level report that joins this
 lexical evidence to explicit Rust definition, dispatch, and test symbols
