@@ -71,7 +71,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust has distinct IDs and definitions for all four variants plus family-specific smoke, killed-target push, targeting, and illegal-replay handling exercised by focused tests."
+          "statement": "Rust has distinct IDs and definitions for all four variants, family-specific smoke and killed-target push, and generic artillery targeting and invalid-replay handling exercised by Rocket-focused tests."
         }
       ],
       "id": "player-weapon-rocket-artillery",
@@ -91,6 +91,7 @@
         {
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
+            "simulate_action",
             "simulate_weapon_with",
             "sim_artillery",
             "apply_rocket_center_push"
@@ -99,6 +100,7 @@
         {
           "path": "rust_solver/src/solver.rs",
           "symbols": [
+            "get_weapon_targets",
             "enumerate_actions"
           ]
         },
@@ -112,6 +114,7 @@
       "known_gaps": [
         "Native AddArtillery, SpaceDamage, push, smoke, and effect-order helper semantics have not been independently traced exhaustively for this build.",
         "The B and AB variants have exact definition/mapping coverage but no dedicated end-to-end simulator case; the A variant supplies the upgraded live-derived regression.",
+        "Lua LineArtillery with OnlyEmpty=false permits intact building centers, while Rust deliberately filters ordinary artillery centers that would damage intact buildings; minimum range, blocker continuation, and board-edge extent also lack a Rocket-specific conformance test.",
         "Exact conformance across every terrain, status, objective, and collision interaction remains unverified."
       ],
       "sources": [
@@ -555,6 +558,66 @@
           "path": "rust_solver/src/enemy.rs",
           "symbols": [
             "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Advanced Edition Lua source assigns Mission_Wind to Env_RandomWind; MarkBoard exposes two selected lanes, Plan chooses WindDir and non-repeating indices with random_bool/random_int, and ApplyEffect emits push-only SpaceDamage in direction-dependent scan order."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust routes live wind warnings out of damage handling, converts engine WindDir into solver coordinates, and pushes initially occupied marked tiles before queued attacks; four focused tests, including three live-derived regressions, cover marker classification, blocked-push grid damage, pre-gust corpse cleanup, and raw-direction conversion."
+        }
+      ],
+      "id": "environment-mission-wind",
+      "implementations": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "engine_dir_to_solver_dir",
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_mission_wind",
+            "simulate_enemy_attacks"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust does not reproduce Env_RandomWind:Plan RNG, LastIndices exclusion, or native RNG state/call order; it consumes the current bridge-supplied lane mask and direction.",
+        "Exact native environment-versus-attack orchestration is not independently traced for this build; pre-attack ordering is supported by live regressions rather than a native scheduler proof.",
+        "Bridge marked-lane/WindDir extraction and class fallback remain runtime dependencies and are not exhaustively conformance-tested across every mission state.",
+        "This record covers Mission_Wind with RandomWind=true and Freeze=false, not generic, nonrandom, or freeze subclasses, presentation effects, or campaign environment selection."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/sand/mission_wind.lua",
+          "sha256": "4e84bbb892fa90cf8e17f60c5b7d899d8258141e79445c130a1d2375f3750c67",
+          "symbols": [
+            "Mission_Wind",
+            "Env_RandomWind",
+            "Env_RandomWind:MarkBoard",
+            "Env_RandomWind:Plan",
+            "Env_RandomWind:ApplyEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_mission_wind_markers_do_not_damage_buildings",
+            "test_mission_wind_dir_push_bumps_mech_into_building",
+            "test_mission_wind_fire_kill_corpse_does_not_block_later_gust",
+            "test_mission_wind_raw_dir_two_pushes_egg_sack_out_of_burnbug_lane"
           ]
         }
       ]

@@ -475,8 +475,10 @@ def test_real_rocket_artillery_record_includes_inherited_targeting():
         "WId::RangedRocketB",
         "WId::RangedRocketAB",
         "is_rocket_artillery",
+        "simulate_action",
         "sim_artillery",
         "apply_rocket_center_push",
+        "get_weapon_targets",
         "enumerate_actions",
         "replay_solution",
     } <= implementation_symbols
@@ -493,3 +495,65 @@ def test_real_rocket_artillery_record_includes_inherited_targeting():
         "replay_solution_noops_off_axis_rocket_target",
     } <= test_symbols
     assert record["known_gaps"]
+
+
+def test_real_mission_wind_record_keeps_rng_and_bridge_gaps_explicit():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-wind"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/missions/sand/mission_wind.lua",
+            "sha256": (
+                "4e84bbb892fa90cf8e17f60c5b7d899d"
+                "8258141e79445c130a1d2375f3750c67"
+            ),
+            "symbols": [
+                "Mission_Wind",
+                "Env_RandomWind",
+                "Env_RandomWind:MarkBoard",
+                "Env_RandomWind:Plan",
+                "Env_RandomWind:ApplyEffect",
+            ],
+        }
+    ]
+    implementation_symbols = {
+        symbol
+        for reference in record["implementations"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "engine_dir_to_solver_dir",
+        "board_from_json",
+        "simulate_mission_wind",
+        "simulate_enemy_attacks",
+    } <= implementation_symbols
+    test_symbols = {
+        symbol
+        for reference in record["tests"]
+        for symbol in reference["symbols"]
+    }
+    assert test_symbols == {
+        "test_mission_wind_markers_do_not_damage_buildings",
+        "test_mission_wind_dir_push_bumps_mech_into_building",
+        "test_mission_wind_fire_kill_corpse_does_not_block_later_gust",
+        "test_mission_wind_raw_dir_two_pushes_egg_sack_out_of_burnbug_lane",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "RNG" in gaps
+    assert "bridge" in gaps.lower()
+    assert "native" in gaps.lower()

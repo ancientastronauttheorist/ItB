@@ -36,9 +36,9 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 2 | 2 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 3 | 11 |
-| Missions | 75 | 1 | 74 |
-| Environments | 15 | 1 | 14 |
-| Unique total | 97 | 11 | 86 |
+| Missions | 75 | 2 | 73 |
+| Environments | 15 | 2 | 13 |
+| Unique total | 97 | 12 | 85 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
@@ -64,9 +64,19 @@ in [`observatory_player_weapon_id_index.md`](observatory_player_weapon_id_index.
 The second slice, `player-weapon-rocket-artillery`, adds the exact
 `weapons_ranged.lua` family and its inherited `LineArtillery:GetTargetArea`
 source in `weapons_base.lua`. It ties all four `Ranged_Rocket` IDs to Rust
-definitions, smoke/push dispatch, cardinal targeting, and replay regressions.
-It remains `partial` because native artillery/effect ordering, dedicated B/AB
-end-to-end cases, and exhaustive collision/status conformance are unresolved.
+definitions, family smoke/push dispatch, and Rocket-focused generic artillery
+targeting/replay regressions. It remains `partial` because Rust intentionally
+filters intact building centers that Lua permits, while native effect ordering,
+dedicated B/AB end-to-end cases, and exhaustive collision/status conformance
+are unresolved.
+
+The first mission-environment slice, `environment-mission-wind`, pins the
+self-contained Advanced Edition Wind mission source to direction parsing and
+pre-attack push simulation plus four focused tests, including three
+live-derived regressions.
+It remains `partial`: Rust consumes bridge-supplied lanes/direction rather than
+reproducing Lua/native RNG planning, and native scheduler plus
+bridge-extraction conformance remain unresolved.
 
 ## Highest-value expansion order
 
