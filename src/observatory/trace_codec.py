@@ -728,9 +728,15 @@ def parse_trace(text: str) -> dict[str, Any]:
     if not isinstance(summary, dict):
         raise TraceCodecError("summary must be an object")
     _require_exact_fields(summary, SUMMARY_FIELDS, "summary")
-    if summary["accepted_events"] != len(events):
+    if (
+        type(summary["accepted_events"]) is not int
+        or summary["accepted_events"] != len(events)
+    ):
         raise TraceCodecError("summary accepted_events mismatch")
-    if summary["event_bytes"] != event_bytes:
+    if (
+        type(summary["event_bytes"]) is not int
+        or summary["event_bytes"] != event_bytes
+    ):
         raise TraceCodecError("summary event_bytes mismatch")
     for field in (
         "dropped_events",

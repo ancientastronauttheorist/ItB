@@ -435,6 +435,14 @@ def test_malformed_trace_fails_closed(mutation, message: str):
         parse_trace(json.dumps(data))
 
 
+@pytest.mark.parametrize("field", ["accepted_events", "event_bytes"])
+def test_empty_trace_summary_counts_require_exact_integers(field: str):
+    data = TraceBuffer(_identity(), TraceConfig(enabled=True)).to_dict()
+    data["summary"][field] = False
+    with pytest.raises(TraceCodecError, match=field):
+        parse_trace(json.dumps(data))
+
+
 def test_build_identity_is_validated_at_buffer_construction():
     identity = _identity()
     identity["platform"] = "solaris"
