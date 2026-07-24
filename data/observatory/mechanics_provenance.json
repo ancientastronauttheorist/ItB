@@ -1,0 +1,366 @@
+{
+  "build_identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "inventory": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+  "records": [
+    {
+      "coverage": "native_dependency",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The Lua sources define weak/strong selection, upgrades, caps, and the semantic call sites of random_int and random_bool."
+        },
+        {
+          "classification": "unresolved",
+          "statement": "The native RNG implementation, state, and complete consumption order have not been traced for this build."
+        }
+      ],
+      "id": "spawn-selection",
+      "implementations": [
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "project_plan_scenarios",
+            "project_plan_with_spawns"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust projects known or scenario-supplied spawn identities; it does not independently reproduce Spawner:NextPawn.",
+        "Native random_int/random_bool behavior and pre-spawn call order are unresolved."
+      ],
+      "sources": [
+        {
+          "path": "scripts/spawner_backend.lua",
+          "sha256": "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301",
+          "symbols": [
+            "Spawner:NextPawn",
+            "Spawner:SelectPawn"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_spawner_backend.lua",
+          "sha256": "88570b60c16583f86b00231fa65f99bdde74677171e6b7bf32a1c0685261f586",
+          "symbols": [
+            "Spawner:ModifyCount"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_projection_consumes_unblocked_spawn_markers"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "global.lua defines default GetTargetArea, GetTargetScore, ScoreList, and ScorePositioning logic for this observed content revision."
+        },
+        {
+          "classification": "inference",
+          "statement": "Remaining disagreement is expected to include native candidate generation, movement/path enumeration, and tie-breaking."
+        }
+      ],
+      "id": "enemy-target-scoring",
+      "implementations": [
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "requeue_enemies_heuristic",
+            "building_retarget_candidates"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "evaluate"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the Lua scoring tournament.",
+        "Candidate evaluation order and native tie-breaking are not captured."
+      ],
+      "sources": [
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "Skill:GetTargetArea",
+            "Skill:GetTargetScore",
+            "Skill:ScoreList",
+            "ScorePositioning"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_global.lua",
+          "sha256": "1786dbdc4ba7848a8e0cb681a4ebf6feb1d6aceb8d09181023cad5125ca07538",
+          "symbols": [
+            "ScorePositioning"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_webbed_melee_enemy_reach_excludes_movement",
+            "test_stationary_special_targeting_stays_queueless"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "Enemy weapon effects and many custom target-score overrides are readable in the base and Advanced Edition Lua sources."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust maps known enemy weapon identifiers to WId values and resolves queued attacks in simulate_enemy_attacks."
+        }
+      ],
+      "id": "enemy-weapons",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId",
+            "wid_from_str",
+            "enemy_weapon_for_type"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Coverage is broad but not generated or audited one-to-one against every shipped GetSkillEffect and target override.",
+        "Native effect helpers can retain behavior not explicit in Lua."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_enemy.lua",
+          "sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "symbols": [
+            "*:GetSkillEffect",
+            "*:GetTargetScore"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons_enemy.lua",
+          "sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "symbols": [
+            "*:GetSkillEffect",
+            "*:GetTargetScore"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_enemy_weapon_for_type_mapping",
+            "test_alpha_scorpion_webs_target",
+            "test_blobber_leader_spawns_blob_leader"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "Player weapon target areas and SkillEffects are defined across shipped weapon Lua files."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust WId definitions and simulator cases independently implement many player weapon families."
+        }
+      ],
+      "id": "player-weapons",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId",
+            "WEAPONS",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_action",
+            "simulate_action_with_target2"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "No generated one-to-one coverage report yet ties every shipped player weapon function to Rust cases and focused tests.",
+        "Two-click target legality and native helper semantics remain especially important audit targets."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_prime.lua",
+          "sha256": "ad82af253572fe7e86293592d0b670e5851e90842666062b919421e134173ac6",
+          "symbols": [
+            "*:GetTargetArea",
+            "*:GetSkillEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "tests"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "tests"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "Mission base classes and callbacks define objectives, turn limits, scripted pawns, and mission-specific behavior."
+        },
+        {
+          "classification": "fact",
+          "statement": "The repository extracts static mission metadata and implements selected mission transitions in the Rust simulator."
+        }
+      ],
+      "id": "missions",
+      "implementations": [
+        {
+          "path": "scripts/extract_mission_metadata.py",
+          "symbols": [
+            "mission metadata extractor"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "mission-specific enemy phase handlers"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "mission input normalization"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Dynamic Lua callbacks cannot all be recovered by the static metadata extractor.",
+        "Mission coverage is not yet audited against every base and Advanced Edition mission script."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": [
+            "Mission",
+            "Mission_Infinite",
+            "Mission_Critical"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_mission_trapped_two_hp_buildings_use_unique_grid_accounting",
+            "test_teleporter_mission_keeps_pad_pairs"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "Environment selection and effect callbacks are readable in environments.lua and mission-specific scripts."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust independently applies environment danger and selected mission-specific ordering, including Mission_Tides."
+        }
+      ],
+      "id": "environments",
+      "implementations": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "advance_mission_tides_warning"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "The index does not yet enumerate every environment subclass and callback.",
+        "Native turn orchestration remains authoritative where Lua callback order is ambiguous."
+      ],
+      "sources": [
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": [
+            "Environment",
+            "*:MarkBoard",
+            "*:ApplyEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_mission_tides_projection_advances_warning_lane",
+            "test_mission_terratide_projection_smokes_full_row_and_advances_warning_backwards"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack"
+          ]
+        }
+      ]
+    }
+  ],
+  "schema_version": 1
+}
