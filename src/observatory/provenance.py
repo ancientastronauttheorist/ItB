@@ -41,6 +41,49 @@ REPO_REFERENCE_FIELDS = {"path", "symbols"}
 EVIDENCE_FIELDS = {"classification", "statement"}
 _ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+SOURCE_AUDIT_CATEGORIES = (
+    (
+        "spawn-selection",
+        "Spawner selection and Advanced Edition spawn-count policy.",
+    ),
+    (
+        "enemy-scoring",
+        "Base and Advanced Edition enemy target-scoring policy.",
+    ),
+    (
+        "enemy-weapons",
+        "Base and Advanced Edition enemy weapon Lua.",
+    ),
+    (
+        "player-weapons",
+        "Base and Advanced Edition non-enemy weapon Lua.",
+    ),
+    (
+        "missions",
+        "Base and Advanced Edition mission Lua.",
+    ),
+    (
+        "environments",
+        "Global and mission-specific environment Lua.",
+    ),
+)
+ENVIRONMENT_SOURCE_PATHS = {
+    "scripts/environments.lua",
+    "scripts/advanced/missions/acid/mission_acidstorm.lua",
+    "scripts/advanced/missions/acid/mission_nanostorm.lua",
+    "scripts/advanced/missions/sand/mission_terratide.lua",
+    "scripts/advanced/missions/sand/mission_wind.lua",
+    "scripts/missions/final/env_final.lua",
+    "scripts/missions/final/env_volcano.lua",
+    "scripts/missions/acid/mission_belt.lua",
+    "scripts/missions/grass/mission_tides.lua",
+    "scripts/missions/grass/mission_airstrike.lua",
+    "scripts/missions/sand/mission_cataclysm.lua",
+    "scripts/missions/sand/mission_lightning.lua",
+    "scripts/missions/sand/mission_sandstorm.lua",
+    "scripts/missions/sand/mission_wind.lua",
+    "scripts/missions/snow/mission_snowstorm.lua",
+}
 
 
 class ProvenanceError(RuntimeError):
@@ -376,6 +419,147 @@ def validate_provenance(
                 f"{record_id}: verified coverage cannot declare known_gaps"
             )
     return counts
+
+
+def _source_audit_category(path: str, category: str) -> bool:
+    if category == "spawn-selection":
+        return path in {
+            "scripts/spawner.lua",
+            "scripts/spawner_backend.lua",
+            "scripts/advanced/ae_spawner_backend.lua",
+        }
+    if category == "enemy-scoring":
+        return path in {
+            "scripts/global.lua",
+            "scripts/advanced/ae_global.lua",
+        }
+    if category == "enemy-weapons":
+        return path in {
+            "scripts/weapons_enemy.lua",
+            "scripts/advanced/ae_weapons_enemy.lua",
+        }
+    if category == "player-weapons":
+        base = (
+            path.startswith("scripts/weapons_")
+            and path.endswith(".lua")
+            and path
+            not in {
+                "scripts/weapons_enemy.lua",
+                "scripts/weapons_mission.lua",
+            }
+        )
+        advanced = (
+            path.startswith("scripts/advanced/ae_weapons")
+            and path.endswith(".lua")
+            and path != "scripts/advanced/ae_weapons_enemy.lua"
+        )
+        return base or advanced
+    if category == "missions":
+        return (
+            path.startswith("scripts/missions/")
+            or path.startswith("scripts/advanced/missions/")
+        ) and path.endswith(".lua")
+    if category == "environments":
+        return path in ENVIRONMENT_SOURCE_PATHS
+    raise ProvenanceError(f"unknown source audit category: {category}")
+
+
+def audit_provenance_sources(
+    provenance: Mapping[str, Any],
+    inventory: Mapping[str, Any],
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, Any]:
+    """Report high-value shipped Lua files absent from the provenance index.
+
+    A file being indexed is not a claim that its behavior is implemented or
+    verified. Coverage status remains record-level evidence in the provenance
+    document.
+    """
+    validate_provenance(
+        provenance,
+        inventory,
+        repo_root=repo_root,
+    )
+    indexed_by: dict[str, list[str]] = {}
+    for record in provenance["records"]:
+        for source in record["sources"]:
+            indexed_by.setdefault(source["path"], []).append(record["id"])
+
+    inventory_scripts = inventory["content"]["scripts"]["files"]
+    script_entries: list[dict[str, str]] = []
+    for index, raw_entry in enumerate(inventory_scripts):
+        entry = _require_mapping(
+            raw_entry, f"inventory script file {index}"
+        )
+        path = _safe_repo_path(
+            entry.get("path"), f"inventory script file {index}.path"
+        ).as_posix()
+        sha256 = entry.get("sha256")
+        if (
+            type(sha256) is not str
+            or not _SHA256_RE.fullmatch(sha256)
+        ):
+            raise ProvenanceError(
+                f"inventory script file {index}.sha256 is invalid"
+            )
+        script_entries.append({"path": path, "sha256": sha256})
+
+    categories = []
+    all_candidate_paths: set[str] = set()
+    all_indexed_paths: set[str] = set()
+    for category, scope in SOURCE_AUDIT_CATEGORIES:
+        files = []
+        for entry in script_entries:
+            if not _source_audit_category(entry["path"], category):
+                continue
+            records = sorted(indexed_by.get(entry["path"], []))
+            files.append(
+                {
+                    "path": entry["path"],
+                    "sha256": entry["sha256"],
+                    "status": "indexed" if records else "unindexed",
+                    "indexed_by": records,
+                }
+            )
+            all_candidate_paths.add(entry["path"])
+            if records:
+                all_indexed_paths.add(entry["path"])
+        files.sort(key=lambda item: item["path"])
+        indexed_count = sum(item["status"] == "indexed" for item in files)
+        categories.append(
+            {
+                "category": category,
+                "scope": scope,
+                "candidate_files": len(files),
+                "indexed_files": indexed_count,
+                "unindexed_files": len(files) - indexed_count,
+                "files": files,
+            }
+        )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "analysis_kind": "provenance_source_index_audit",
+        "build_identity": dict(provenance["build_identity"]),
+        "method": {
+            "indexed_means": (
+                "the exact file hash appears in at least one provenance record"
+            ),
+            "indexed_does_not_mean": (
+                "the Lua behavior is implemented, conformant, or verified"
+            ),
+            "summary_counts": (
+                "unique file paths across potentially overlapping categories"
+            ),
+        },
+        "categories": categories,
+        "summary": {
+            "candidate_files": len(all_candidate_paths),
+            "indexed_files": len(all_indexed_paths),
+            "unindexed_files": len(all_candidate_paths - all_indexed_paths),
+        },
+    }
 
 
 class _DuplicateKeyError(ValueError):

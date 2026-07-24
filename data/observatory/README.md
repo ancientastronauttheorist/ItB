@@ -58,6 +58,19 @@ The inventory path embedded in the provenance file must resolve inside the
 repository and its parsed content must equal the inventory supplied to the
 validator.
 
+Audit which high-value shipped Lua files are named by at least one provenance
+record:
+
+```text
+python scripts/itb_provenance.py \
+  data/observatory/mechanics_provenance.json \
+  data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json \
+  --audit-sources
+```
+
+The JSON output says only whether an exact source hash is indexed. It explicitly
+does not equate source indexing with implemented or verified behavior.
+
 ## Windows PE named anchors
 
 Create a conservative string/address candidate map outside the game:
