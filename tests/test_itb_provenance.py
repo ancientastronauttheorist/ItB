@@ -93,7 +93,10 @@ def _provenance() -> dict:
 
 def test_valid_provenance_is_counted(tmp_path: Path):
     (tmp_path / "rust_solver/src").mkdir(parents=True)
-    (tmp_path / "rust_solver/src/turn_projection.rs").write_text("// test")
+    (tmp_path / "rust_solver/src/turn_projection.rs").write_text(
+        "// requeue_enemies_heuristic test_projection",
+        encoding="utf-8",
+    )
     inventory_path = tmp_path / "data/observatory/inventories/test.json"
     inventory_path.parent.mkdir(parents=True)
     inventory_path.write_text(json.dumps(_inventory()), encoding="utf-8")
@@ -106,6 +109,71 @@ def test_valid_provenance_is_counted(tmp_path: Path):
         "partial": 1,
         "verified": 0,
     }
+
+
+@pytest.mark.parametrize("reference_kind", ["implementations", "tests"])
+def test_literal_repo_symbol_must_exist_in_its_claimed_file(
+    tmp_path: Path,
+    reference_kind: str,
+):
+    (tmp_path / "rust_solver/src").mkdir(parents=True)
+    present_symbol = (
+        "test_projection"
+        if reference_kind == "implementations"
+        else "requeue_enemies_heuristic"
+    )
+    (tmp_path / "rust_solver/src/turn_projection.rs").write_text(
+        f"// {present_symbol}",
+        encoding="utf-8",
+    )
+    inventory_path = tmp_path / "data/observatory/inventories/test.json"
+    inventory_path.parent.mkdir(parents=True)
+    inventory_path.write_text(json.dumps(_inventory()), encoding="utf-8")
+    provenance = _provenance()
+    provenance["records"][0][reference_kind][0]["symbols"] = [
+        "missing_anchor"
+    ]
+
+    with pytest.raises(ProvenanceError, match="anchor is absent.*missing_anchor"):
+        validate_provenance(
+            provenance,
+            _inventory(),
+            repo_root=tmp_path,
+        )
+
+
+@pytest.mark.parametrize("symbol", [" ", "missing_symbol "])
+def test_repo_symbols_reject_whitespace_escape(symbol: str):
+    provenance = _provenance()
+    provenance["records"][0]["implementations"][0]["symbols"] = [symbol]
+
+    with pytest.raises(ProvenanceError, match="leading or trailing whitespace"):
+        validate_provenance(provenance, _inventory())
+
+
+def test_descriptive_and_wildcard_repo_symbols_are_not_literal_anchors(
+    tmp_path: Path,
+):
+    (tmp_path / "rust_solver/src").mkdir(parents=True)
+    (tmp_path / "rust_solver/src/turn_projection.rs").write_text(
+        "// test_projection",
+        encoding="utf-8",
+    )
+    inventory_path = tmp_path / "data/observatory/inventories/test.json"
+    inventory_path.parent.mkdir(parents=True)
+    inventory_path.write_text(json.dumps(_inventory()), encoding="utf-8")
+    provenance = _provenance()
+    provenance["records"][0]["implementations"][0]["symbols"] = [
+        "mission-specific handler",
+        "*:MarkBoard",
+    ]
+
+    counts = validate_provenance(
+        provenance,
+        _inventory(),
+        repo_root=tmp_path,
+    )
+    assert counts["partial"] == 1
 
 
 @pytest.mark.parametrize(
@@ -196,7 +264,10 @@ def test_malformed_inventory_shapes_fail_closed(mutation):
 
 def test_referenced_inventory_must_match_supplied_inventory(tmp_path: Path):
     (tmp_path / "rust_solver/src").mkdir(parents=True)
-    (tmp_path / "rust_solver/src/turn_projection.rs").write_text("// test")
+    (tmp_path / "rust_solver/src/turn_projection.rs").write_text(
+        "// requeue_enemies_heuristic test_projection",
+        encoding="utf-8",
+    )
     inventory_path = tmp_path / "data/observatory/inventories/test.json"
     inventory_path.parent.mkdir(parents=True)
     other = _inventory()
@@ -210,7 +281,10 @@ def test_referenced_inventory_must_match_supplied_inventory(tmp_path: Path):
 
 def test_referenced_inventory_equality_is_json_type_strict(tmp_path: Path):
     (tmp_path / "rust_solver/src").mkdir(parents=True)
-    (tmp_path / "rust_solver/src/turn_projection.rs").write_text("// test")
+    (tmp_path / "rust_solver/src/turn_projection.rs").write_text(
+        "// requeue_enemies_heuristic test_projection",
+        encoding="utf-8",
+    )
     inventory_path = tmp_path / "data/observatory/inventories/test.json"
     inventory_path.parent.mkdir(parents=True)
     supplied = _inventory()
@@ -337,7 +411,8 @@ def test_source_audit_cli_emits_machine_readable_json(
 ):
     (tmp_path / "rust_solver/src").mkdir(parents=True)
     (tmp_path / "rust_solver/src/turn_projection.rs").write_text(
-        "// test", encoding="utf-8"
+        "// requeue_enemies_heuristic test_projection",
+        encoding="utf-8",
     )
     inventory_path = tmp_path / "data/observatory/inventories/test.json"
     inventory_path.parent.mkdir(parents=True)

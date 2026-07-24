@@ -145,6 +145,13 @@ def _resolve_repo_file(repo_root: Path, path: PurePosixPath, label: str) -> Path
     return resolved
 
 
+def _literal_reference_symbol(symbol: str) -> bool:
+    """Whether a repository symbol is intended as an exact textual anchor."""
+    return "*" not in symbol and not any(
+        character.isspace() for character in symbol
+    )
+
+
 def _same_json_value(left: Any, right: Any) -> bool:
     """Compare parsed JSON values without Python's bool/int coercion."""
     if type(left) is not type(right):
@@ -231,9 +238,25 @@ def _validate_repo_references(
         reference = _require_mapping(raw_reference, item_label)
         _exact_fields(reference, REPO_REFERENCE_FIELDS, item_label)
         path = _safe_repo_path(reference["path"], f"{item_label}.path")
-        _string_list(reference["symbols"], f"{item_label}.symbols")
+        symbols = _string_list(reference["symbols"], f"{item_label}.symbols")
+        if any(symbol != symbol.strip() for symbol in symbols):
+            raise ProvenanceError(
+                f"{item_label}.symbols entries must not have leading or "
+                "trailing whitespace"
+            )
         if repo_root is not None:
-            _resolve_repo_file(repo_root, path, f"{item_label}.path")
+            resolved = _resolve_repo_file(
+                repo_root,
+                path,
+                f"{item_label}.path",
+            )
+            text = resolved.read_text(encoding="utf-8", errors="replace")
+            for symbol in symbols:
+                if _literal_reference_symbol(symbol) and symbol not in text:
+                    raise ProvenanceError(
+                        f"{item_label}.symbols anchor is absent from "
+                        f"{path}: {symbol}"
+                    )
         result.append(reference)
     return result
 

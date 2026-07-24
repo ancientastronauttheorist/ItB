@@ -22,8 +22,12 @@ python scripts/itb_provenance.py \
 
 The validator first proves that the inventory content exactly matches the path
 embedded in the provenance document, validates all source hashes, and checks
-repository references. The audit then selects high-value Lua paths from that
-inventory; it never scans or modifies the installed game.
+repository references. Repository symbols without whitespace or wildcards are
+also treated as literal anchors and must occur in their claimed file; this
+catches a real test or implementation symbol being attributed to the wrong
+module. Descriptive labels and asterisk (`*`) wildcard families remain
+human-reviewed. The audit then selects high-value Lua paths from that inventory;
+it never scans or modifies the installed game.
 
 ## Current result
 
