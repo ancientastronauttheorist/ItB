@@ -52,8 +52,11 @@ python scripts/itb_provenance.py \
 ```
 
 Validation fails closed on build drift, stale Lua hashes, missing repository
-paths, duplicate records, unsupported status values, or a non-verified record
-without an explicit gap.
+paths, path escapes, duplicate keys/records/symbols, non-finite JSON,
+unsupported status values, or a non-verified record without an explicit gap.
+The inventory path embedded in the provenance file must resolve inside the
+repository and its parsed content must equal the inventory supplied to the
+validator.
 
 ## Windows PE named anchors
 
@@ -73,4 +76,6 @@ other workflows. Existing non-anchor artifacts, symlinks, game paths, bridge
 paths, and session paths are never overwritten. The map contains no binary
 bytes or decompiled source: string locations are facts, while pointer-shaped
 values in executable sections remain explicitly labeled reference candidates
-until a decoder and control-flow analysis confirm them.
+until a decoder and control-flow analysis confirm them. Named Lua C-API imports
+and their IAT-slot RVAs are parsed as direct PE facts to support that later
+control-flow work.
