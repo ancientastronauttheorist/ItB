@@ -1200,7 +1200,12 @@ def test_real_control_shot_record_exposes_source_predicate_mismatch():
         reference["path"]: set(reference["symbols"])
         for reference in record["tests"]
     }
-    assert len(set().union(*tests.values())) == 11
+    assert len(set().union(*tests.values())) == 14
+    assert {
+        "control_shot_variants_enumerate_exact_move_budgets",
+        "test_control_shot_single_upgrade_variants_move_three_spaces",
+        "test_control_shot_variants_reject_first_destination_beyond_budget",
+    } <= set().union(*tests.values())
     assert "test_control_shot_rejects_allied_target_unit" in tests[
         "rust_solver/src/simulate.rs"
     ]

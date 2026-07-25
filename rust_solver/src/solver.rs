@@ -3006,6 +3006,83 @@ mod top_k_tests {
     }
 
     #[test]
+    fn control_shot_variants_enumerate_exact_move_budgets() {
+        for (weapon, move_budget) in [
+            (WId::ScienceTcControl, 2),
+            (WId::ScienceTcControlA, 3),
+            (WId::ScienceTcControlB, 3),
+            (WId::ScienceTcControlAB, 4),
+        ] {
+            let mut board = Board::default();
+            let idx = board.add_unit(Unit {
+                uid: 12,
+                x: 1,
+                y: 1,
+                hp: 2,
+                max_hp: 2,
+                team: Team::Player,
+                weapon: WeaponId(weapon as u16),
+                flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+                move_speed: 0,
+                ..Default::default()
+            });
+            board.add_unit(Unit {
+                uid: 101,
+                x: 1,
+                y: 2,
+                hp: 3,
+                max_hp: 3,
+                team: Team::Enemy,
+                flags: UnitFlags::PUSHABLE,
+                move_speed: 5,
+                base_move: 5,
+                ..Default::default()
+            });
+            board.add_unit(Unit {
+                uid: 102,
+                x: 3,
+                y: 1,
+                hp: 3,
+                max_hp: 3,
+                team: Team::Enemy,
+                flags: UnitFlags::PUSHABLE,
+                move_speed: 5,
+                base_move: 5,
+                ..Default::default()
+            });
+
+            let targets = get_weapon_targets(
+                &board,
+                1,
+                1,
+                weapon,
+                (1, 1),
+                &WEAPONS,
+            );
+            assert!(
+                !targets.is_empty() && targets.iter().all(|target| *target == (1, 2)),
+                "{weapon:?} should use only the adjacent enemy as its first click"
+            );
+
+            let actions = enumerate_actions(&board, idx, &WEAPONS);
+            let furthest_legal = (1, 2 + move_budget);
+            let first_illegal = (1, 3 + move_budget);
+            assert!(
+                actions.iter().any(|a| {
+                    a.1 == weapon && a.2 == (1, 2) && a.3 == Some(furthest_legal)
+                }),
+                "{weapon:?} should enumerate its exact {move_budget}-space destination"
+            );
+            assert!(
+                actions.iter().all(|a| {
+                    !(a.1 == weapon && a.2 == (1, 2) && a.3 == Some(first_illegal))
+                }),
+                "{weapon:?} must not enumerate a destination beyond its {move_budget}-space budget"
+            );
+        }
+    }
+
+    #[test]
     fn control_shot_target_enumeration_respects_projectile_blockers() {
         let mut board = Board::default();
         let idx = board.add_unit(Unit {

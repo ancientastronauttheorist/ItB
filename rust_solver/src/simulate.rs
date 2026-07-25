@@ -7364,6 +7364,85 @@ mod tests {
     }
 
     #[test]
+    fn test_control_shot_single_upgrade_variants_move_three_spaces() {
+        for weapon in [WId::ScienceTcControlA, WId::ScienceTcControlB] {
+            let mut board = make_test_board();
+            let control = add_mech(&mut board, 0, 3, 3, 2, weapon);
+            let enemy = add_enemy(&mut board, 1, 3, 4, 3);
+            board.units[enemy].move_speed = 4;
+            board.units[enemy].base_move = 4;
+
+            let result = simulate_attack_with_target2(
+                &mut board,
+                control,
+                weapon,
+                (3, 4),
+                Some((6, 4)),
+                &WEAPONS,
+            );
+
+            assert_eq!(
+                (board.units[enemy].x, board.units[enemy].y),
+                (6, 4),
+                "{weapon:?} should move its target three spaces"
+            );
+            assert!(
+                result
+                    .events
+                    .iter()
+                    .any(|e| e == "control_shot:3:4:6:4:distance:3"),
+                "{weapon:?} should report the exact three-space move"
+            );
+            assert!(
+                result.events.iter().any(|e| {
+                    e == "achievement_lets_walk:distance:3:target:3:4:dest:6:4"
+                }),
+                "{weapon:?} should emit Let's Walk progress for all three spaces"
+            );
+        }
+    }
+
+    #[test]
+    fn test_control_shot_variants_reject_first_destination_beyond_budget() {
+        for (weapon, move_budget) in [
+            (WId::ScienceTcControl, 2u8),
+            (WId::ScienceTcControlA, 3u8),
+            (WId::ScienceTcControlB, 3u8),
+            (WId::ScienceTcControlAB, 4u8),
+        ] {
+            let mut board = make_test_board();
+            let control = add_mech(&mut board, 0, 1, 0, 2, weapon);
+            let enemy = add_enemy(&mut board, 1, 1, 1, 3);
+            board.units[enemy].move_speed = 6;
+            board.units[enemy].base_move = 6;
+            let illegal_y = 2 + move_budget;
+
+            let result = simulate_attack_with_target2(
+                &mut board,
+                control,
+                weapon,
+                (1, 1),
+                Some((1, illegal_y)),
+                &WEAPONS,
+            );
+
+            assert_eq!(
+                (board.units[enemy].x, board.units[enemy].y),
+                (1, 1),
+                "{weapon:?} must reject a destination one space beyond its budget"
+            );
+            assert!(
+                result.events.iter().any(|event| {
+                    event == &format!(
+                        "invalid_control_shot_destination:1:1:1:{illegal_y}"
+                    )
+                }),
+                "{weapon:?} should report the over-budget destination"
+            );
+        }
+    }
+
+    #[test]
     fn test_control_shot_ab_adjacent_target_can_move_four_spaces() {
         let mut board = make_test_board();
         let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControlAB);

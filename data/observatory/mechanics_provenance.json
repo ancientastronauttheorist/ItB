@@ -1003,7 +1003,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust has all four exact IDs, mappings, and definitions plus bespoke target enumeration, reachability, simulation, landing effects, achievement events, and 11 focused tests."
+          "statement": "Rust has all four exact IDs, mappings, and definitions plus bespoke target enumeration, reachability, simulation, landing effects, achievement events, and 14 focused tests, including exact base/A/B/AB movement-budget boundaries."
         },
         {
           "classification": "unresolved",
@@ -1055,7 +1055,6 @@
         "Rust adds enemy-only and non-extra-tile requirements absent from Lua, omits Lua's powered, guarding with burrower exception, and nonzero base-move predicates, rejects a zero-current-speed grappled pawn that Lua may admit, and does not preserve Lua's explicit Snowmine1 or VIP_Truck exceptions.",
         "The source predicate mismatch does not by itself prove every otherwise qualifying ally is live-controllable because native IsPowered and related pawn methods remain untraced.",
         "Native Board:GetReachable, Board:GetPath, Pawn:GetPathProf, IsPowered, IsGuarding, IsGrappled, GetMoveSpeed, GetBaseMove, AddMove, AddLeap, and AddBurrow semantics have not been independently traced for this build.",
-        "A and B have exact definition and mapping coverage but no exact-ID behavior test; base and AB supply the current behavior evidence.",
         "Destination reachability, path profile, terrain, status, and landing-effect equivalence is not exhaustive; Rust uses independent reachability and direct coordinate mutation rather than native path-effect sequencing.",
         "The projectile-blocker condition has no corresponding explicit Lua check and is normally redundant at fixed Range=1; current blocker tests use a distance-two target that is already out of range.",
         "There is no focused replay or exact bridge/native UI conformance proof, and raw bridge execution has not supplied reliable Let's Walk achievement credit."
@@ -1088,6 +1087,7 @@
           "path": "rust_solver/src/solver.rs",
           "symbols": [
             "control_shot_target_enumeration_respects_first_click_range",
+            "control_shot_variants_enumerate_exact_move_budgets",
             "control_shot_target_enumeration_respects_projectile_blockers"
           ]
         },
@@ -1095,6 +1095,8 @@
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
             "test_control_shot_moves_enemy_and_emits_lets_walk_distance",
+            "test_control_shot_single_upgrade_variants_move_three_spaces",
+            "test_control_shot_variants_reject_first_destination_beyond_budget",
             "test_control_shot_ab_adjacent_target_can_move_four_spaces",
             "test_control_shot_can_move_webbed_unit",
             "test_control_shot_rejects_allied_target_unit",
