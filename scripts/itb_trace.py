@@ -19,6 +19,11 @@ from src.observatory.raw_trace import (  # noqa: E402
     build_arm_packet,
     finalize_raw_checkpoint,
 )
+from src.observatory.controller_bundle import (  # noqa: E402
+    ControllerBundleError,
+    build_controller_bundle,
+    controller_bundle_sha256,
+)
 from src.observatory.trace_store import (  # noqa: E402
     TraceStoreError,
     build_identity_from_inventory,
@@ -29,6 +34,7 @@ from src.observatory.trace_store import (  # noqa: E402
     stable_file_sha256,
     summarize_trace,
     write_arm_packet,
+    write_controller_bundle,
     write_final_trace,
 )
 
@@ -96,6 +102,22 @@ def _parser() -> argparse.ArgumentParser:
     build.add_argument("--max-attempts", type=int, required=True)
     build.add_argument("--checkpoint-seq", type=int, required=True)
     build.add_argument("--output-root", type=Path, required=True)
+
+    controller = subparsers.add_parser(
+        "build-controller",
+        help="build an inert self-contained Lua controller artifact",
+    )
+    controller.add_argument(
+        "--runtime-source",
+        type=Path,
+        default=_REPO_ROOT / "src" / "bridge" / "observatory_trace.lua",
+    )
+    controller.add_argument(
+        "--controller-source",
+        type=Path,
+        default=_REPO_ROOT / "src" / "bridge" / "observatory_controller.lua",
+    )
+    controller.add_argument("--output-root", type=Path, required=True)
 
     finalize = subparsers.add_parser(
         "finalize-raw",
@@ -189,6 +211,16 @@ def _build_arm(args: argparse.Namespace) -> int:
     return 0
 
 
+def _build_controller(args: argparse.Namespace) -> int:
+    bundle = build_controller_bundle(
+        runtime_path=args.runtime_source,
+        controller_path=args.controller_source,
+    )
+    path = write_controller_bundle(bundle, root=args.output_root)
+    print(f"controller={path} sha256={controller_bundle_sha256(bundle)}")
+    return 0
+
+
 def _finalize_raw(args: argparse.Namespace) -> int:
     build, capture = _load_trusted(args)
     _verify_artifacts(args, capture)
@@ -233,8 +265,16 @@ def main(argv: list[str] | None = None) -> int:
             return _validate_or_summarize(args)
         if args.command == "build-arm":
             return _build_arm(args)
+        if args.command == "build-controller":
+            return _build_controller(args)
         return _finalize_raw(args)
-    except (TraceStoreError, RawTraceError, KeyError, TypeError) as exc:
+    except (
+        TraceStoreError,
+        RawTraceError,
+        ControllerBundleError,
+        KeyError,
+        TypeError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

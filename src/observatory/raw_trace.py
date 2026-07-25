@@ -33,6 +33,7 @@ from src.observatory.trace_codec import (
 
 RAW_SCHEMA_VERSION = 1
 RUNTIME_VERSION = "observatory-lua/1"
+CONTROLLER_VERSION = "observatory-controller/1"
 HARD_MAX_EVENTS = 4096
 HARD_MAX_EVENTS_PER_TURN = 1024
 HARD_MAX_EVENT_BYTES = 64 * 1024
@@ -40,6 +41,7 @@ HARD_MAX_TOTAL_EVENT_BYTES = 4 * 1024 * 1024
 HARD_MAX_ATTEMPTS = 16 * 1024
 HARD_BUNDLE_RESERVE_BYTES = 2 * 1024 * 1024
 LUA_MAX_EXACT_INTEGER = (2**53) - 1
+CONTROLLER_V1_KINDS = frozenset({"random_int", "random_bool"})
 
 RAW_FIELDS = frozenset(
     {
@@ -422,6 +424,8 @@ def build_arm_packet(
         raise RawTraceError(f"invalid trace config: {exc}") from exc
     if capture["expected_phase"] != "combat_enemy":
         raise RawTraceError("Lua Observatory captures require combat_enemy")
+    if capture["controller_version"] != CONTROLLER_VERSION:
+        raise RawTraceError("unsupported Observatory controller version")
     _validate_lua_config(parsed_config)
     if (
         type(max_attempts) is not int
@@ -440,6 +444,25 @@ def build_arm_packet(
     )
     if not installed_kinds:
         raise RawTraceError("arm packet requires at least one installed hook")
+    installed_entries = [
+        entry for entry in coverage if entry["status"] == "installed"
+    ]
+    if (
+        len(installed_entries) != 1
+        or installed_entries[0]["event_kind"] not in CONTROLLER_V1_KINDS
+    ):
+        raise RawTraceError(
+            "controller v1 requires exactly one installed RNG hook"
+        )
+    installed = installed_entries[0]
+    expected_target = f"_G.{installed['event_kind']}"
+    if (
+        installed["target"] != expected_target
+        or installed["target_kind"] != "lua_global"
+    ):
+        raise RawTraceError(
+            "controller v1 requires the exact Lua global RNG target"
+        )
     config_digest = trace_config_sha256(parsed_config)
     coverage_digest = hook_coverage_sha256(coverage)
     if capture["config_sha256"] != config_digest:

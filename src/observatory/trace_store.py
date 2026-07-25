@@ -22,6 +22,7 @@ from src.observatory.trace_codec import (
     validate_build_identity,
 )
 from src.observatory.raw_trace import arm_packet_sha256
+from src.observatory.controller_bundle import controller_bundle_sha256
 
 
 FINAL_TRACE_RE = re.compile(
@@ -40,6 +41,9 @@ RAW_CHECKPOINT_RE = re.compile(
     r"^itb_observatory_trace_"
     r"(?P<capture_id>[a-z0-9][a-z0-9._-]{0,127})_"
     r"(?P<checkpoint_seq>0|[1-9][0-9]*)\.raw$"
+)
+CONTROLLER_BUNDLE_RE = re.compile(
+    r"^itb_observatory_controller_(?P<sha256>[0-9a-f]{64})\.lua$"
 )
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
@@ -643,6 +647,37 @@ def write_arm_packet(
     final_path = packet_root / arm_packet_filename(
         capture_id, checkpoint_seq, digest
     )
+    _publish_create_only(
+        rendered_bytes,
+        final_path,
+        max_bytes=HARD_MAX_BUNDLE_BYTES,
+    )
+    return final_path
+
+
+def write_controller_bundle(bundle: str, *, root: Path) -> Path:
+    """Publish one deterministic self-contained Lua controller bundle."""
+    if type(bundle) is not str:
+        raise TraceStoreError("controller bundle must be text")
+    try:
+        rendered_bytes = bundle.encode("utf-8", errors="strict")
+        digest = controller_bundle_sha256(bundle)
+    except (UnicodeEncodeError, RuntimeError) as exc:
+        raise TraceStoreError(f"invalid controller bundle: {exc}") from exc
+    if len(rendered_bytes) > HARD_MAX_BUNDLE_BYTES:
+        raise TraceStoreError("controller bundle exceeds hard size limit")
+    bundle_root = _root(root)
+    try:
+        bundle_root.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise TraceStoreError(
+            f"cannot create controller bundle root: {exc}"
+        ) from exc
+    final_path = bundle_root / (
+        f"itb_observatory_controller_{digest}.lua"
+    )
+    if CONTROLLER_BUNDLE_RE.fullmatch(final_path.name) is None:
+        raise TraceStoreError("invalid controller bundle identity")
     _publish_create_only(
         rendered_bytes,
         final_path,

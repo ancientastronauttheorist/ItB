@@ -11,7 +11,11 @@ Loading it performs no file I/O, polling, arming, or hook installation. It
 requires an exact short-lived manifest, a separate one-shot activation nonce,
 an exact trusted policy and full hook plan, a trusted live identity/clock
 provider, and an explicit call for each independently proven non-yielding hook.
-`scripts/itb_trace.py build-arm|finalize-raw|validate|summary` requires the
+The equally inert `src/bridge/observatory_controller.lua` exposes only an
+explicit `prepare -> activate -> checkpoint` lifecycle. A deterministic
+controller bundle contains both exact source modules so its one SHA-256 covers
+the complete loaded observation code.
+`scripts/itb_trace.py build-controller|build-arm|finalize-raw|validate|summary` requires the
 appropriate trusted content inventory, capture identity, exact artifact
 hashes, and external evidence digests; structural validation alone is not
 treated as authoritative.
@@ -20,6 +24,14 @@ No trace hook is connected to Mod Loader or installed into the game by this
 work. `src/bridge/modloader.lua`, the installed game, the game process, and the
 active achievement session remain untouched. Deployment requires a separately
 reviewed safe window.
+
+Controller v1 permits exactly one installed hook, either `_G.random_int` or
+`_G.random_bool`; all seven other event families must be explicitly disabled.
+It calls the original once, preserves every return (including interior and
+trailing nils), performs bounded extraction only after the return, and restores
+the original before invoking the host-provided raw writer. It neither polls nor
+owns file paths. A disposable experiment host must pass the already verified
+packet and nonce explicitly and provide a create-only raw writer.
 
 ## Goals
 
@@ -218,6 +230,8 @@ inconsistent summary fail validation.
 Example offline validation:
 
 ```bash
+python scripts/itb_trace.py build-controller \
+  --output-root CONTROLLER_DIRECTORY
 python scripts/itb_trace.py build-arm \
   --inventory INVENTORY.json \
   --capture-identity CAPTURE_IDENTITY.json \

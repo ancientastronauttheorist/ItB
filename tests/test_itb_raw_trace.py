@@ -102,7 +102,7 @@ def _hook_plan() -> list[dict]:
         {
             "hook_id": f"hook.{kind}",
             "event_kind": kind,
-            "target": f"observatory.{kind}",
+            "target": f"_G.{kind}",
             "target_kind": "lua_global",
             "status": "installed" if kind == "random_int" else "disabled",
             "source_sha256": HASH_C,
@@ -155,7 +155,7 @@ def _event() -> dict:
         "phase": "combat_enemy",
         "mission_id": "Mission_Test",
         "turn": 2,
-        "context": {"call_site": "observatory.random_int"},
+        "context": {"call_site": "_G.random_int"},
         "payload": {"call_order": 0, "upper_bound": 5, "result": 2},
     }
 
@@ -301,6 +301,12 @@ def test_build_arm_packet_matches_lua_contract_and_is_deterministic():
                 target="\u00e9" * 200
             ),
             "target exceeds the Lua runtime byte limit",
+        ),
+        (
+            lambda plan, capture, config: plan[6].update(
+                target="_G.some_other_function"
+            ),
+            "exact Lua global RNG target",
         ),
         (
             lambda plan, capture, config: capture.update(
