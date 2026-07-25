@@ -2302,7 +2302,15 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Missiles, an otherwise status-no-op Shield Barrage also remains a
 //   legal action because spending all four Contraption charges is the mission
 //   objective. Pre-v363 corpus archived as failure_db_snapshot_sim_v362.jsonl.
-pub const SIMULATOR_VERSION: u32 = 364;
+// v364 - Replay snapshots identify newly spawned UID-unstable units so verify
+//   normalizes only those identities, while dead player-mech wreck topology
+//   remains exact. Pre-v364 corpus archived as
+//   failure_db_snapshot_sim_v363.jsonl.
+// v365 - Mission_Tides converts marked current-lane terrain to Water and
+//   rebuilds the next warning lane from Env_Tides' exact Index direction,
+//   building-shadow, and existing-Water conversion rules. Pre-v365 corpus
+//   archived as failure_db_snapshot_sim_v364.jsonl.
+pub const SIMULATOR_VERSION: u32 = 365;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

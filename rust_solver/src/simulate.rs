@@ -15930,6 +15930,40 @@ mod tests {
 
         assert_eq!(board.units[ice].hp, 1);
         assert_eq!(result.mech_damage_taken, 1);
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Water);
+    }
+
+    #[test]
+    fn test_mission_tides_converts_marked_ground_and_mountain_to_water() {
+        // Exact source: Env_Tides:ApplyEffect sets iTerrain=TERRAIN_WATER
+        // on every marked current-lane tile and adds DAMAGE_DEATH when the
+        // pre-effect terrain is a Mountain.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Tides".to_string();
+        board.tile_mut(2, 3).terrain = Terrain::Mountain;
+        let grounded = add_enemy(&mut board, 40, 1, 3, 4);
+        let mountain_flyer = add_flying_enemy(&mut board, 41, 2, 3, 4);
+
+        for (x, y) in [(1u8, 3u8), (2u8, 3u8)] {
+            let bit = 1u64 << xy_to_idx(x, y);
+            board.env_danger |= bit;
+            board.env_danger_kill |= bit;
+            board.env_danger_flying_immune |= bit;
+        }
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.tile(1, 3).terrain, Terrain::Water);
+        assert_eq!(board.tile(2, 3).terrain, Terrain::Water);
+        assert_eq!(board.units[grounded].hp, 0);
+        assert_eq!(
+            board.units[mountain_flyer].hp,
+            0,
+            "Env_Tides' explicit Mountain DAMAGE_DEATH must kill flyers"
+        );
     }
 
     #[test]

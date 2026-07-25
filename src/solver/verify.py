@@ -1696,7 +1696,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # aura-teardown and chained-death timing. Mission_Missiles also keeps an
 # otherwise status-no-op Shield Barrage legal because the four uses themselves
 # are the objective. Pre-v363 corpus archived as failure_db_snapshot_sim_v362.jsonl.
-SIMULATOR_VERSION = 364
+# v364 - Replay snapshots identify newly spawned UID-unstable units so verify
+# normalizes only those identities, while dead player-mech wreck topology
+# remains exact. Pre-v364 corpus archived as
+# failure_db_snapshot_sim_v363.jsonl.
+# v365 - Mission_Tides converts marked current-lane terrain to Water and
+# rebuilds the next warning lane from Env_Tides' exact Index direction,
+# building-shadow, and existing-Water conversion rules. Pre-v365 corpus
+# archived as failure_db_snapshot_sim_v364.jsonl.
+SIMULATOR_VERSION = 365
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1014,7 +1014,7 @@ def test_real_mission_wind_record_keeps_rng_and_bridge_gaps_explicit():
     assert "native" in gaps.lower()
 
 
-def test_real_mission_tides_record_keeps_terrain_and_native_order_gaps_explicit():
+def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explicit():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(
         repo_root / "data/observatory/mechanics_provenance.json"
@@ -1068,15 +1068,20 @@ def test_real_mission_tides_record_keeps_terrain_and_native_order_gaps_explicit(
     }
     assert {
         "test_mission_tides_flying_mech_takes_one_damage",
+        "test_mission_tides_converts_marked_ground_and_mountain_to_water",
         "test_mission_tides_vek_attack_before_wave",
     } <= tests["rust_solver/src/simulate.rs"]
+    assert {
+        "test_mission_tides_projection_advances_warning_lane",
+        "test_mission_tides_projection_reconstructs_building_shadow_and_convert_mask",
+    } == tests["rust_solver/src/turn_projection.rs"]
     assert tests["rust_solver/src/replay.rs"] == {
         "replay_solution_mission_tides_advances_final_warning_lane",
         "replay_solution_mission_tides_wave_destroys_pod",
     }
     gaps = " ".join(record["known_gaps"])
-    assert "does not currently convert a flooded tile to Terrain::Water" in gaps
     assert "does not independently reproduce Env_Tides:Start" in gaps
+    assert "does not expose Index" in gaps
     assert "live-derived runtime observations" in gaps
 
 

@@ -98,7 +98,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust consumes live warning metadata, defers Mission_Tides danger until after queued attacks, applies grounded lethality and the observed one damage to flyers, destroys marked pods, and advances the serialized warning lane; focused tests include live-derived timing and flyer regressions."
+          "statement": "Rust consumes live warning metadata, defers Mission_Tides danger until after queued attacks, applies grounded lethality, the observed one damage to ordinary flyers, and Lua's explicit DAMAGE_DEATH on flooded Mountains even for flyers; it destroys marked pods, converts marked current-lane terrain to Water, and reconstructs the next warning from Lua's building-shadow and convert rules."
         }
       ],
       "id": "environment-mission-tides",
@@ -132,9 +132,8 @@
         }
       ],
       "known_gaps": [
-        "Rust does not currently convert a flooded tile to Terrain::Water; it models marked unit, building, and pod consequences while leaving terrain unchanged.",
         "Rust does not independently reproduce Env_Tides:Start or Env_Tides:Plan permanent Board:BlockSpawn calls; it consumes current spawn and warning state from the bridge.",
-        "Warning advancement shifts serialized danger bits instead of reconstructing Lua Index, building-shadow, and convert logic.",
+        "Rust infers the next Env_Tides Index from at least one serialized warning marker; when Lua emits no marker because every column is shadowed or already Water, the bridge does not expose Index and Rust cannot advance the invisible lane independently.",
         "Queued-attacks-before-wave and one damage to flyers are live-derived runtime observations, not explicit Lua semantics or an independently traced native scheduler and SpaceDamage proof.",
         "Shield, frozen, building, terrain, and native SpaceDamage.iTerrain edge conformance remains non-exhaustive.",
         "This record excludes the NewTerrain=TERRAIN_SAND Terratide branches, presentation effects, and campaign environment selection."
@@ -158,6 +157,7 @@
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
             "test_mission_tides_flying_mech_takes_one_damage",
+            "test_mission_tides_converts_marked_ground_and_mountain_to_water",
             "test_mission_tides_vek_attack_before_wave",
             "test_massive_tidal_wave_lethal_destroys",
             "test_tidal_wave_lethal_spares_flying",
@@ -167,7 +167,8 @@
         {
           "path": "rust_solver/src/turn_projection.rs",
           "symbols": [
-            "test_mission_tides_projection_advances_warning_lane"
+            "test_mission_tides_projection_advances_warning_lane",
+            "test_mission_tides_projection_reconstructs_building_shadow_and_convert_mask"
           ]
         },
         {

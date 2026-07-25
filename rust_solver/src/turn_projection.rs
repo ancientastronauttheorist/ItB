@@ -412,30 +412,41 @@ pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
     if board.mission_id != "Mission_Tides" || board.env_danger == 0 {
         return;
     }
+
+    // Env_Tides::Plan increments Index, and MarkBoard reconstructs only that
+    // new y=Index lane. It does not shift the old marker bits column by
+    // column: a column is omitted when any live building exists at or below
+    // the new lane, or when the new tile is already Water. Rebuild every
+    // represented row from board state so previously omitted columns can
+    // reappear when appropriate while Lua's building shadow stays intact.
+    let mut warned = board.env_danger;
+    let mut next_rows = 0u16;
+    while warned != 0 {
+        let tile_idx = warned.trailing_zeros() as usize;
+        warned &= warned - 1;
+        let (_, y) = idx_to_xy(tile_idx);
+        if y < 7 {
+            next_rows |= 1u16 << (y + 1);
+        }
+    }
+
     let mut next_danger = 0u64;
-    let mut next_kill = 0u64;
-    let mut next_flying_immune = 0u64;
-    for idx in 0..64usize {
-        let bit = 1u64 << idx;
-        if board.env_danger & bit == 0 {
+    for y in 0u8..8 {
+        if next_rows & (1u16 << y) == 0 {
             continue;
         }
-        let (x, y) = idx_to_xy(idx);
-        if y >= 7 {
-            continue;
-        }
-        let next_bit = 1u64 << xy_to_idx(x, y + 1);
-        next_danger |= next_bit;
-        if board.env_danger_kill & bit != 0 {
-            next_kill |= next_bit;
-        }
-        if board.env_danger_flying_immune & bit != 0 {
-            next_flying_immune |= next_bit;
+        for x in 0u8..8 {
+            let building_shadow =
+                (0u8..=y).any(|scan_y| board.tile(x, scan_y).is_building());
+            let convert = board.tile(x, y).terrain != Terrain::Water;
+            if !building_shadow && convert {
+                next_danger |= 1u64 << xy_to_idx(x, y);
+            }
         }
     }
     board.env_danger = next_danger;
-    board.env_danger_kill = next_kill;
-    board.env_danger_flying_immune = next_flying_immune;
+    board.env_danger_kill = next_danger;
+    board.env_danger_flying_immune = next_danger;
 }
 
 pub fn project_plan(
@@ -1014,6 +1025,49 @@ mod tests {
         assert!(projected.is_env_danger(6, 4));
         assert!(projected.is_env_danger_kill(1, 4));
         assert!(projected.is_env_danger_flying_immune(6, 4));
+    }
+
+    #[test]
+    fn test_mission_tides_projection_reconstructs_building_shadow_and_convert_mask() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.total_turns = 3;
+        b.current_turn = 2;
+        b.remaining_spawns = 0;
+
+        // The serialized y=3 warning can be sparse. On the next Plan call,
+        // Lua rebuilds y=4 from Env_Tides.Index instead of shifting only the
+        // old bits. A building in any earlier flooded row shadows its column;
+        // a building or existing Water tile on the new row also has no marker.
+        b.tile_mut(0, 1).terrain = Terrain::Building;
+        b.tile_mut(0, 1).building_hp = 1;
+        b.tile_mut(2, 4).terrain = Terrain::Building;
+        b.tile_mut(2, 4).building_hp = 1;
+        b.tile_mut(3, 4).terrain = Terrain::Water;
+        for x in [2u8, 3u8, 4u8, 5u8, 7u8] {
+            b.tile_mut(x, 3).terrain = Terrain::Water;
+        }
+        for x in [1u8, 6u8] {
+            let bit = 1u64 << xy_to_idx(x, 3);
+            b.env_danger |= bit;
+            b.env_danger_kill |= bit;
+            b.env_danger_flying_immune |= bit;
+        }
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.current_turn, 3);
+        for x in [0u8, 2u8, 3u8] {
+            assert!(
+                !projected.is_env_danger(x, 4),
+                "Lua warning construction should omit ({x},4)"
+            );
+        }
+        for x in [1u8, 4u8, 5u8, 6u8, 7u8] {
+            assert!(projected.is_env_danger(x, 4), "expected warning at ({x},4)");
+            assert!(projected.is_env_danger_kill(x, 4));
+            assert!(projected.is_env_danger_flying_immune(x, 4));
+        }
     }
 
     #[test]

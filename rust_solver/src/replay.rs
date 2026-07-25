@@ -1206,8 +1206,18 @@ mod tests {
         let final_board = &v["final_board"];
         assert_eq!(final_board["turn"], 3);
         let danger = final_board["environment_danger_v2"].as_array().unwrap();
-        assert!(danger.iter().any(|entry| entry == &json!([1, 4, 1, 1, 1])));
+        assert_eq!(danger.len(), 8);
+        for x in 0u8..8 {
+            assert!(danger.iter().any(|entry| entry == &json!([x, 4, 1, 1, 1])));
+        }
         assert!(!danger.iter().any(|entry| entry == &json!([1, 3, 1, 1, 1])));
+        let flooded_tile = final_board["tiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|tile| tile["x"] == json!(1) && tile["y"] == json!(3))
+            .expect("the resolved current lane should be serialized as Water");
+        assert_eq!(flooded_tile["terrain"], "water");
     }
 
     #[test]
@@ -1284,6 +1294,11 @@ mod tests {
             .filter(|tile| tile["has_pod"].as_bool() == Some(true))
             .collect();
         assert!(pod_tiles.is_empty(), "Tidal wave should destroy pods on flooded tiles");
+        let flooded_tile = final_tiles
+            .iter()
+            .find(|tile| tile["x"] == json!(1) && tile["y"] == json!(3))
+            .expect("the pod tile should remain serialized as flooded terrain");
+        assert_eq!(flooded_tile["terrain"], "water");
     }
 
     #[test]

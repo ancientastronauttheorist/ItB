@@ -270,6 +270,9 @@ fn apply_env_danger(
     // Preserve pre-hit occupancy for terrain semantics. A pawn killed by the
     // danger still occupied the tile when the engine applied SpaceDamage.
     let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
+    let building_at_start = board.tile(x, y).is_building();
+    let mission_tides_mountain = board.mission_id == "Mission_Tides"
+        && board.tile(x, y).terrain == Terrain::Mountain;
 
     // Damage unit if present. Track whether an enemy died so we can run
     // the shared death-cleanup after the mutable borrow ends — Psion
@@ -282,7 +285,13 @@ fn apply_env_danger(
             // Tidal/Cataclysm/Seismic spare effectively-flying units. Massive
             // non-flying still die: water-conversion is destroy-not-drown per
             // project convention; chasm rules ignore Massive.
-            let spared_by_flight = lethal && flying_immune && unit.effectively_flying();
+            // Env_Tides adds explicit DAMAGE_DEATH when the pre-effect terrain
+            // is Mountain. That hit kills even a flyer before/while the tile
+            // becomes Water; ordinary tide tiles retain flying immunity.
+            let spared_by_flight = lethal
+                && flying_immune
+                && !mission_tides_mountain
+                && unit.effectively_flying();
             if lethal && !spared_by_flight {
                 // Deadly Threat: bypass shield/frozen/armor/ACID, set HP=0
                 let prev_hp = unit.hp;
@@ -425,6 +434,20 @@ fn apply_env_danger(
         let tile = board.tile_mut(x, y);
         tile.terrain = Terrain::Chasm;
         tile.set_cracked(false);
+    }
+
+    // Exact Env_Tides:ApplyEffect source sets iTerrain=TERRAIN_WATER on every
+    // marked tile in the current lane. MarkBoard/ApplyEffect omit live
+    // buildings, so do not apply the terrain override if a stale or synthetic
+    // payload nevertheless marks one. Mountain tiles receive DAMAGE_DEATH
+    // plus the same terrain override and therefore also become Water.
+    if board.mission_id == "Mission_Tides"
+        && lethal
+        && flying_immune
+        && !building_at_start
+    {
+        let tile = board.tile_mut(x, y);
+        tile.terrain = Terrain::Water;
     }
 }
 
