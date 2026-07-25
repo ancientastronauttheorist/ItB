@@ -739,6 +739,85 @@ def test_real_titan_fist_record_is_family_scoped():
     assert "Native GetProjectileEnd" in gaps
 
 
+def test_real_needle_shot_record_is_family_scoped():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-needle-shot"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/weapons_technovek.lua",
+            "sha256": (
+                "6e770aa6ea4c8a9cbcb295574c608f76e"
+                "1afdc3f3ffd944848f7329b6dcaeb0e"
+            ),
+            "symbols": [
+                "Vek_Hornet",
+                "Vek_Hornet:GetSkillEffect",
+                "Vek_Hornet_A",
+                "Vek_Hornet_B",
+                "Vek_Hornet_AB",
+            ],
+        },
+        {
+            "path": "scripts/weapons_prime.lua",
+            "sha256": (
+                "ad82af253572fe7e86293592d0b670e5"
+                "851e90842666062b919421e134173ac6"
+            ),
+            "symbols": [
+                "Prime_Spear",
+                "Prime_Spear:GetTargetArea",
+            ],
+        },
+    ]
+    implementation_symbols = {
+        symbol
+        for reference in record["implementations"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "WId::VekHornet",
+        "WId::VekHornetA",
+        "WId::VekHornetB",
+        "WId::VekHornetAB",
+        "get_weapon_targets",
+        "sim_melee",
+        "is_needle_shot_weapon",
+        "replay_solution",
+    } <= implementation_symbols
+    test_symbols = {
+        symbol
+        for reference in record["tests"]
+        for symbol in reference["symbols"]
+    }
+    assert {
+        "test_techno_hornet_needle_shot_defs_and_mappings",
+        "test_needle_shot_upgrade_target_ranges",
+        "test_needle_shot_variants_dispatch_exact_damage_and_push",
+        "test_needle_shot_ab_damages_full_line_and_pushes_only_farthest",
+        "test_needle_shot_killed_target_corpse_bumps_live_blocker",
+        "replay_solution_burrower_retreat_prevents_phantom_boss_kill",
+    } <= test_symbols
+    gaps = " ".join(record["known_gaps"])
+    assert "Native Board:IsValid" in gaps
+    assert "otherwise-empty intact building target" in gaps
+    assert "no dedicated exact-ID" not in gaps
+
+
 def test_real_rocket_artillery_record_includes_inherited_targeting():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(

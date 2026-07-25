@@ -10282,6 +10282,56 @@ mod tests {
     }
 
     #[test]
+    fn test_needle_shot_variants_dispatch_exact_damage_and_push() {
+        for (weapon_id, max_range, expected_damage) in [
+            (WId::VekHornet, 1, 1),
+            (WId::VekHornetA, 2, 2),
+            (WId::VekHornetB, 2, 2),
+            (WId::VekHornetAB, 3, 3),
+        ] {
+            let mut board = make_test_board();
+            let hornet = add_mech(&mut board, 0, 3, 2, 3, weapon_id);
+            let mut targets = Vec::new();
+            for distance in 1..=max_range {
+                targets.push(add_enemy(
+                    &mut board,
+                    10 + distance as u16,
+                    3,
+                    2 + distance,
+                    8,
+                ));
+            }
+
+            let _ = simulate_weapon(
+                &mut board,
+                hornet,
+                weapon_id,
+                3,
+                2 + max_range,
+            );
+
+            for (index, target) in targets.into_iter().enumerate() {
+                assert_eq!(
+                    board.units[target].hp,
+                    8 - expected_damage,
+                    "{weapon_id:?} must damage every selected line tile",
+                );
+                let distance = index as u8 + 1;
+                let expected_y = if distance == max_range {
+                    3 + max_range
+                } else {
+                    2 + distance
+                };
+                assert_eq!(
+                    (board.units[target].x, board.units[target].y),
+                    (3, expected_y),
+                    "{weapon_id:?} must push only the farthest selected tile",
+                );
+            }
+        }
+    }
+
+    #[test]
     fn test_needle_shot_killed_target_corpse_bumps_live_blocker() {
         // Chaos Roll Unfair run 20260713_052159_731, Mission_Civilians T1:
         // boosted base Needle Shot killed the ACID Web Egg on E6, and the

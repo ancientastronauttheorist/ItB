@@ -94,6 +94,102 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried TechnoVek Lua source defines Needle Shot as inherited Spear targeting with base range and damage one, A and B range and damage two, and AB range and damage three; every selected line tile takes damage and only the farthest receives forward push."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has distinct IDs and definitions for all four variants and exercises exact-ID maximum ranges, line damage, farthest-only push, killed-target collision behavior, and bridge replay in focused tests."
+        }
+      ],
+      "id": "player-weapon-needle-shot",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::VekHornet",
+            "WId::VekHornetA",
+            "WId::VekHornetB",
+            "WId::VekHornetAB",
+            "WEAPONS",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_weapon_with",
+            "sim_melee",
+            "is_needle_shot_weapon"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:IsValid, SpaceDamage, AddDamage, push, and effect-order helper semantics have not been independently traced for this build.",
+        "Inherited Lua targeting publishes every cardinal path tile through PathSize, including intact building centers, while Rust deliberately filters an otherwise-empty intact building target; exact UI-versus-solver target equivalence is therefore not claimed.",
+        "Exact conformance across every obstacle, edge, terrain, status, objective, and collision interaction remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_technovek.lua",
+          "sha256": "6e770aa6ea4c8a9cbcb295574c608f76e1afdc3f3ffd944848f7329b6dcaeb0e",
+          "symbols": [
+            "Vek_Hornet",
+            "Vek_Hornet:GetSkillEffect",
+            "Vek_Hornet_A",
+            "Vek_Hornet_B",
+            "Vek_Hornet_AB"
+          ]
+        },
+        {
+          "path": "scripts/weapons_prime.lua",
+          "sha256": "ad82af253572fe7e86293592d0b670e5851e90842666062b919421e134173ac6",
+          "symbols": [
+            "Prime_Spear",
+            "Prime_Spear:GetTargetArea"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_techno_hornet_needle_shot_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_needle_shot_upgrade_target_ranges",
+            "test_needle_shot_variants_dispatch_exact_damage_and_push",
+            "test_needle_shot_ab_damages_full_line_and_pushes_only_farthest",
+            "test_needle_shot_killed_target_corpse_bumps_live_blocker"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_burrower_retreat_prevents_phantom_boss_kill"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "The exact inventoried Mission_Terratide source selects Env_Terratide, seeds smoke across y=7 at mission start, and subclasses Env_Tides with NewTerrain=TERRAIN_SAND and Index=1."
         },
         {

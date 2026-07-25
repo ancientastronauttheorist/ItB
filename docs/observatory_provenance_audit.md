@@ -55,13 +55,21 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 5 | 9 |
-| Missions | 75 | 5 | 70 |
-| Environments | 15 | 4 | 11 |
-| Unique total | 96 | 17 | 79 |
+| Player weapons | 14 | 6 | 8 |
+| Missions | 75 | 6 | 69 |
+| Environments | 15 | 5 | 10 |
+| Unique total | 96 | 19 | 77 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
+
+The exact callback audit finds 742 active top-level callback definition
+instances, representing 741 unique `path + symbol` pairs. Current provenance
+names 38 definitions literally and leaves 704 unindexed. Category totals
+overlap for mission-environment files. Most importantly, the two broad enemy
+weapon files contain 40 callback definitions but the current wildcard record
+names zero of them literally; that is a precise indexing backlog, not evidence
+that all 40 behaviors are absent from Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected
@@ -76,10 +84,11 @@ The first family-level player-weapon slice is
 `player-weapon-titan-fist`. It pins the exact `weapons_prime.lua` hash, all four
 `Prime_Punchmech` Lua variants, their Rust `WId`/melee/charge implementations,
 and focused definition, simulator, solver-targeting, and bridge-replay tests.
-It remains `partial`: native path/effect helpers are not traced, the B variant
-lacks a dedicated end-to-end simulator case, and exhaustive edge conformance is
-not claimed. This improves record granularity without changing the file-index
-count because `weapons_prime.lua` was already present in the umbrella record.
+It remains `partial`: native path/effect helpers and exhaustive edge
+conformance are not traced, even though the damage-only B variant now has a
+dedicated end-to-end simulator case. This improves record granularity without
+changing the file-index count because `weapons_prime.lua` was already present
+in the umbrella record.
 The reusable lexical inventory behind further family selection is documented
 in [`observatory_player_weapon_id_index.md`](observatory_player_weapon_id_index.md).
 
@@ -88,26 +97,24 @@ The second slice, `player-weapon-rocket-artillery`, adds the exact
 source in `weapons_base.lua`. It ties all four `Ranged_Rocket` IDs to Rust
 definitions, family smoke/push dispatch, and Rocket-focused generic artillery
 targeting/replay regressions. It remains `partial` because Rust intentionally
-filters intact building centers that Lua permits, while native effect ordering,
-dedicated B/AB end-to-end cases, and exhaustive collision/status conformance
-are unresolved.
+filters intact building centers that Lua permits, while native effect ordering
+and exhaustive collision/status conformance are unresolved. All four exact IDs
+now have end-to-end damage, push, and smoke dispatch coverage.
 
 The third slice, `player-weapon-aerial-bombs`, pins the exact
 `weapons_brute.lua` family and all four `Brute_Jetmech` variants to Rust leap
 simulation, landing restrictions, target enumeration, and transit-effect
-scoring. It remains `partial`: native path/effect helpers are not traced,
-damage-two variants lack exact-ID end-to-end simulator cases, and the current
-range-upgraded transit tests call `sim_leap` directly with the unchanged base
-ID and definition at distance three, bypassing B/AB dispatch and range-three
-target enumeration.
+scoring. It remains `partial`: native path/effect helpers and exhaustive
+terrain/status ordering are not traced. Exact base/A/B/AB dispatch, damage,
+smoke, and base-versus-upgraded range enumeration now have focused coverage.
 
 The fourth slice, `player-weapon-reverse-thrusters`, adds the exact Advanced
 Edition `ae_weapons.lua` source and all four `Brute_KickBack` variants. It
 connects the Lua dash, distance-scaled backblast, smoke, and recoil behavior to
 Rust landing checks, simulation, scoring, achievement events, and replay. It
-remains `partial`: behavior tests use only the base ID, native path/effect
-helpers are untraced, and the range-three/range-four variants lack exact-ID
-end-to-end targeting and damage cases.
+remains `partial`: native path/effect helpers and exhaustive landing, terrain,
+status, and collision behavior are untraced. Exact A/B range-three and AB
+range-four dispatch now pins backblast damage, smoke, recoil, and movement.
 
 The fifth slice, `player-weapon-control-shot`, reuses that exact
 `ae_weapons.lua` hash but adds family-level evidence for all four
@@ -118,6 +125,14 @@ guarding/burrower, base-move, grappled zero-speed, Snowmine, and VIP Truck
 cases. Fixed adjacent first-click range and the separate maximum 2/3/3/4
 controlled movement budgets are now explicit. Native pawn predicates, path
 effects, and visible UI behavior remain unresolved.
+
+The sixth slice, `player-weapon-needle-shot`, adds the previously unindexed
+`weapons_technovek.lua` source plus inherited Spear targeting. It pins all four
+`Vek_Hornet` IDs, exact 1/2/2/3 range and damage, full-line damage,
+farthest-only push, collision regressions, and bridge replay. It remains
+`partial`: native effect helpers are untraced, Rust deliberately omits an
+otherwise-empty intact-building target that Lua publishes, and exhaustive
+terrain/status/collision conformance is open.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
@@ -130,11 +145,19 @@ bridge-extraction conformance remain unresolved.
 The second mission-environment slice, `environment-mission-tides`, pins the
 exact base Tidal Waves mission to warning ingestion, post-attack danger
 resolution, observed flyer damage, pod destruction, and projected/replayed
-lane advancement. It remains `partial`: Rust does not convert flooded tiles to
-water, reproduce Lua's permanent spawn blocking, or reconstruct the native
-environment scheduler and `SpaceDamage.iTerrain` semantics. The exact
-attack-before-wave and flyer-damage rules are supported by live-derived
-regressions, not by the Lua file alone.
+lane advancement. Rust now applies exact full-row water conversion and derives
+the permanent spawn-block boundary plus markerless future warning from the
+source `Index`. It remains `partial`: the dormant bridge export has not been
+installed during the protected live session, native blocked-cell and scheduler
+helpers are untraced, and flyer/timing evidence remains live-derived.
+
+The inherited `environment-mission-terratide` slice pins its exact Advanced
+Edition source plus the base Tides implementation. It covers full-row smoke,
+pre-attack cancellation, reverse warning advancement, and the fact that a
+prior-row building does not shadow the next warning. It remains `partial`
+because the bridge does not export `Env_Terratide.Index`, native scheduling and
+smoke interactions are not exhaustive, and initial smoke/permanent spawn setup
+is consumed from live state rather than independently generated.
 
 The third mission-environment slice, `environment-final-cave-danger`, pins the
 exact Final Cave `env_final.lua` source to Rust's marked-tile lethal-danger
