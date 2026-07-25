@@ -681,7 +681,13 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             t["repair_platform"] = json!(true);
             t["item"] = json!("Item_Repair_Mine");
         }
-        if tile.conveyor_dir >= 0 { t["conveyor"]          = json!(tile.conveyor_dir); }
+        if let Some(engine_dir) =
+            crate::serde_bridge::solver_dir_to_engine_dir(tile.conveyor_dir)
+        {
+            // board_from_json treats this interchange field as an engine
+            // DIR_* value and normalizes it into solver coordinates.
+            t["conveyor"] = json!(engine_dir);
+        }
         if (board.unique_buildings >> idx) & 1 != 0 {
             t["unique_building"] = json!(true);
             if (board.grid_reward_buildings >> idx) & 1 != 0 {
@@ -1784,6 +1790,44 @@ mod tests {
         // that board_to_json injects.
         assert!(weights.pseudo_threat_eval,
             "projected board_to_json must set eval_weights.pseudo_threat_eval=true");
+    }
+
+    #[test]
+    fn test_board_to_json_roundtrip_preserves_all_conveyor_directions() {
+        let (mut board, spawn_points) = simple_board();
+        for solver_dir in 0..4i8 {
+            board.tile_mut(solver_dir as u8, 7).conveyor_dir = solver_dir;
+        }
+
+        let json_str = board_to_json(&board, &spawn_points);
+        let value: serde_json::Value =
+            serde_json::from_str(&json_str).expect("board_to_json emits valid json");
+        let expected_engine_dirs = [2, 1, 0, 3];
+        for (solver_dir, expected_engine_dir) in
+            expected_engine_dirs.into_iter().enumerate()
+        {
+            let tile = value["tiles"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|tile| tile["x"] == solver_dir && tile["y"] == 7)
+                .expect("conveyor tile is serialized");
+            assert_eq!(
+                tile["conveyor"],
+                expected_engine_dir,
+                "solver direction {solver_dir} must serialize in engine coordinates",
+            );
+        }
+
+        let (roundtrip, _sp, _, _weights, _, _) = board_from_json(&json_str)
+            .expect("projected conveyor board must round-trip");
+        for solver_dir in 0..4i8 {
+            assert_eq!(
+                roundtrip.tile(solver_dir as u8, 7).conveyor_dir,
+                solver_dir,
+                "solver direction {solver_dir} changed across checkpoint round-trip",
+            );
+        }
     }
 
     #[test]

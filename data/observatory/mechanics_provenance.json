@@ -1380,6 +1380,142 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Conveyor Belt Lua source defines permanent belt setup, invalidation on hole/water/cracked terrain, custom directional tiles, and a zero-damage directional SpaceDamage for every current belt; the line variant builds a native crossing path toward an acid-water endpoint, while the random variant uses native quarters and RNG to build short paths."
+        },
+        {
+          "classification": "fact",
+          "statement": "The bridge and Python fallback extract live serialized conveyor sprites, Rust normalizes engine directions, simulates standard belts before queued attacks and random belts after queued attacks, and now converts solver directions back to engine DIR_* values before projected/checkpoint JSON round-trips."
+        }
+      ],
+      "id": "environment-mission-belt-conveyors",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "_read_save_data",
+            "dump_state"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_parse_conveyor_belts_from_save_text",
+            "_read_conveyor_belts_from_save"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "engine_dir_to_solver_dir",
+            "solver_dir_to_engine_dir",
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "active_conveyor_mission",
+            "simulate_conveyor_belts",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "board_to_json"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_active_conveyor_mission",
+            "_conveyor_delta",
+            "_projected_attack_building_after_conveyor"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes live serialized belts and does not reproduce native GetCrossingPath, GetQuarters, random_element, random_int, setup clearing, permanent spawn blocks, endpoint acid/water, or CheckBelts removal.",
+        "Standard-before-attacks and random-after-attacks timing is live-derived; the native environment scheduler and SpaceDamage effect ordering have not been independently traced for this build.",
+        "The Lua bridge extraction path lacks a dedicated runtime-stub test; only the Python save fallback parser has focused extraction coverage.",
+        "Rust's front-to-back same-tick collision algorithm is not proven statically equivalent to native SkillEffect ordering, and the Python threat audit deliberately does not reproduce every multi-rider or blocker-vacating chain.",
+        "No focused disappearing-belt, setup, exhaustive status/terrain matrix, or full live bridge replay conformance proof exists."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_belt.lua",
+          "sha256": "0cde35aae24938eb38a0e4dcb03d5ee7a6ea4f6fc6ae8201c9d568f8ef590f5a",
+          "symbols": [
+            "Mission_Belt",
+            "Mission_BeltRandom",
+            "Env_Belt",
+            "Env_Belt:IsValidTarget",
+            "Env_Belt:IsBelt",
+            "Env_Belt:GetDir",
+            "Env_Belt:CheckBelts",
+            "Env_Belt:AddBelt",
+            "Env_Belt:MarkBoard",
+            "Env_Belt:IsEffect",
+            "Env_Belt:ApplyBelts",
+            "Env_Belt:ApplyEffect",
+            "Env_BeltLine",
+            "Env_BeltLine:Start",
+            "Env_BeltRandom",
+            "Env_BeltRandom:IsValidTarget",
+            "Env_BeltRandom:Start"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_conveyor_engine_dirs_normalized_to_solver_dirs"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_board_to_json_roundtrip_preserves_all_conveyor_directions"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_conveyor_moves_enemy_before_projectile_attack",
+            "test_conveyor_dir_two_capture_bumps_mech_into_building",
+            "test_beltrandom_queued_attack_resolves_before_random_belt_tick",
+            "test_conveyor_collision_with_same_tick_mover_does_not_bump_damage",
+            "test_mission_missiles_decorative_conveyor_does_not_move_enemy_attack"
+          ]
+        },
+        {
+          "path": "tests/test_conveyor_save_parser.py",
+          "symbols": [
+            "test_conveyor_parser_does_not_cross_tile_entries"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_threat_audit_attacker_will_be_moved_by_conveyor",
+            "test_threat_audit_beltrandom_conveyor_does_not_cover_attack",
+            "test_threat_audit_conveyor_projected_building_still_warns"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

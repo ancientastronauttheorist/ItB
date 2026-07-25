@@ -2315,7 +2315,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   permanent full-row BlockSpawn boundary (rows 1..=Index), carries Index
 //   through replay/projection, and preserves marker inference for old captures.
 //   Pre-v366 corpus archived as failure_db_snapshot_sim_v365.jsonl.
-pub const SIMULATOR_VERSION: u32 = 366;
+// v367 - Projected/checkpoint conveyor directions are converted from solver
+//   coordinates back to engine DIR_* values before JSON serialization, so
+//   board_from_json does not normalize directions 0 and 2 a second time.
+//   Pre-v367 corpus archived as failure_db_snapshot_sim_v366.jsonl.
+pub const SIMULATOR_VERSION: u32 = 367;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

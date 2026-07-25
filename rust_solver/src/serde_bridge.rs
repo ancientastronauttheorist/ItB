@@ -375,6 +375,12 @@ fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
     }
 }
 
+pub(crate) fn solver_dir_to_engine_dir(dir: i8) -> Option<i8> {
+    // The vertical-axis conversion is an involution: solver up/down map back
+    // to engine down/up, while left/right retain their numeric identities.
+    engine_dir_to_solver_dir(dir)
+}
+
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
 
 pub fn board_from_json(json_str: &str)

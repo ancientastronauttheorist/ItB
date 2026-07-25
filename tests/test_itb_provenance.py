@@ -1408,3 +1408,87 @@ def test_real_control_shot_record_exposes_source_predicate_mismatch():
     assert "Snowmine1 or VIP_Truck" in gaps
     assert "zero-current-speed grappled pawn" in gaps
     assert "fixed Range=1" in gaps
+
+
+def test_real_mission_belt_record_pins_checkpoint_direction_fix():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-belt-conveyors"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/acid/mission_belt.lua",
+            "sha256": (
+                "0cde35aae24938eb38a0e4dcb03d5ee7"
+                "a6ea4f6fc6ae8201c9d568f8ef590f5a"
+            ),
+            "symbols": [
+                "Mission_Belt",
+                "Mission_BeltRandom",
+                "Env_Belt",
+                "Env_Belt:IsValidTarget",
+                "Env_Belt:IsBelt",
+                "Env_Belt:GetDir",
+                "Env_Belt:CheckBelts",
+                "Env_Belt:AddBelt",
+                "Env_Belt:MarkBoard",
+                "Env_Belt:IsEffect",
+                "Env_Belt:ApplyBelts",
+                "Env_Belt:ApplyEffect",
+                "Env_BeltLine",
+                "Env_BeltLine:Start",
+                "Env_BeltRandom",
+                "Env_BeltRandom:IsValidTarget",
+                "Env_BeltRandom:Start",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "engine_dir_to_solver_dir",
+        "solver_dir_to_engine_dir",
+        "board_from_json",
+    } <= implementations["rust_solver/src/serde_bridge.rs"]
+    assert {
+        "active_conveyor_mission",
+        "simulate_conveyor_belts",
+        "simulate_enemy_attacks",
+    } == implementations["rust_solver/src/enemy.rs"]
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "board_to_json"
+    }
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_conveyor_engine_dirs_normalized_to_solver_dirs"
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_board_to_json_roundtrip_preserves_all_conveyor_directions"
+    }
+    assert {
+        "test_conveyor_moves_enemy_before_projectile_attack",
+        "test_beltrandom_queued_attack_resolves_before_random_belt_tick",
+        "test_conveyor_collision_with_same_tick_mover_does_not_bump_damage",
+    } <= tests["rust_solver/src/enemy.rs"]
+    gaps = " ".join(record["known_gaps"])
+    assert "does not reproduce native GetCrossingPath" in gaps
+    assert "native environment scheduler" in gaps
+    assert "runtime-stub test" in gaps

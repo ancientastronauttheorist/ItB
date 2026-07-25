@@ -1709,7 +1709,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # permanent full-row BlockSpawn boundary (rows 1..=Index), carries Index
 # through replay/projection, and preserves marker inference for old captures.
 # Pre-v366 corpus archived as failure_db_snapshot_sim_v365.jsonl.
-SIMULATOR_VERSION = 366
+# v367 - Projected/checkpoint conveyor directions are converted from solver
+# coordinates back to engine DIR_* values before JSON serialization, so
+# board_from_json does not normalize directions 0 and 2 a second time.
+# Pre-v367 corpus archived as failure_db_snapshot_sim_v366.jsonl.
+SIMULATOR_VERSION = 367
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

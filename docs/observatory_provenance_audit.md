@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 6 | 8 |
-| Missions | 75 | 6 | 69 |
-| Environments | 15 | 5 | 10 |
-| Unique total | 96 | 19 | 77 |
+| Missions | 75 | 7 | 68 |
+| Environments | 15 | 6 | 9 |
+| Unique total | 96 | 20 | 76 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 38 definitions literally and leaves 704 unindexed. Category totals
+names 50 definitions literally and leaves 692 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions but the current wildcard record
 names zero of them literally; that is a precise indexing backlog, not evidence
@@ -158,6 +158,17 @@ prior-row building does not shadow the next warning. It remains `partial`
 because the bridge does not export `Env_Terratide.Index`, native scheduling and
 smoke interactions are not exhaustive, and initial smoke/permanent spawn setup
 is consumed from live state rather than independently generated.
+
+The Conveyor Belt slice, `environment-mission-belt-conveyors`, adds the exact
+`mission_belt.lua` source and all 12 of its top-level callbacks. It connects
+live bridge/save extraction to engine-direction normalization, standard
+before-attack and random after-attack movement, threat auditing, and projected
+checkpoint round-trips. Simulator v367 fixes a proven checkpoint bug where
+already-normalized directions 0 and 2 were serialized as raw engine values and
+normalized a second time on reload. The record remains `partial`: native path,
+quarter, RNG, setup, scheduler, and effect-order behavior is not reproduced or
+independently traced, and live extraction/status/collision coverage is not
+exhaustive.
 
 The third mission-environment slice, `environment-final-cave-danger`, pins the
 exact Final Cave `env_final.lua` source to Rust's marked-tile lethal-danger
