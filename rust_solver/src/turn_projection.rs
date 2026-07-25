@@ -1222,6 +1222,26 @@ mod tests {
     }
 
     #[test]
+    fn test_mission_terratide_prior_building_does_not_shadow_next_warning() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Terratide".to_string();
+        b.tile_mut(0, 4).terrain = Terrain::Building;
+        b.tile_mut(0, 4).building_hp = 1;
+        for x in 1u8..8 {
+            b.env_smoke |= 1u64 << xy_to_idx(x, 4);
+        }
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        for x in 0u8..8 {
+            assert!(
+                projected.is_env_smoke(x, 3),
+                "a higher-y building must not shadow Terratide warning ({x},3)",
+            );
+        }
+    }
+
+    #[test]
     fn test_heuristic_picks_closest_building() {
         // Surviving enemy at (4,4). Two buildings: (4,3) dist=1 and
         // (0,0) dist=8 (out of reach 2+4=6). Heuristic should pick (4,3).

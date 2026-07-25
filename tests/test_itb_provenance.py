@@ -1098,6 +1098,91 @@ def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explici
     assert "live-derived runtime observations" in gaps
 
 
+def test_real_mission_terratide_record_tracks_inherited_smoke_semantics():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-terratide"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/missions/sand/mission_terratide.lua",
+            "sha256": (
+                "43356b9cb53d0ec369cf1a2bc5519acf"
+                "7baa8cd54d096b4afbe8ff4fabd2c7dd"
+            ),
+            "symbols": [
+                "Mission_Terratide",
+                "Mission_Terratide:StartMission",
+                "Env_Terratide",
+            ],
+        },
+        {
+            "path": "scripts/missions/grass/mission_tides.lua",
+            "sha256": (
+                "d27dab9f44e804e90385a6557057fc9a"
+                "1281fab4bc83d6fff50151fc7702277a"
+            ),
+            "symbols": [
+                "Env_Tides",
+                "Env_Tides:Start",
+                "Env_Tides:MarkBoard",
+                "Env_Tides:Plan",
+                "Env_Tides:ApplyEffect",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {"dump_state", "Mission_Terratide"} <= implementations[
+        "src/bridge/modloader.lua"
+    ]
+    assert implementations["src/model/board.py"] == {"from_bridge_data"}
+    assert implementations["src/solver/threat_audit.py"] == {
+        "_will_be_smoked_by_environment_before_attack"
+    }
+    assert {"apply_env_smoke_board", "simulate_enemy_attacks"} <= (
+        implementations["rust_solver/src/enemy.rs"]
+    )
+    assert {
+        "advance_mission_tides_warning",
+        "project_plan_with_spawns",
+    } <= implementations["rust_solver/src/turn_projection.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_mission_terratide_projection_smokes_full_row_and_advances_warning_backwards",
+        "test_mission_terratide_prior_building_does_not_shadow_next_warning",
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack"
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_terratide_danger_routes_to_smoke_not_damage",
+        "test_tides_index_is_accepted_only_for_mission_tides",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "does not export Env_Terratide.Index" in gaps
+    assert "does not independently seed" in gaps
+    assert "live-derived" in gaps
+
+
 def test_real_final_cave_record_is_limited_to_marked_lethal_danger():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(

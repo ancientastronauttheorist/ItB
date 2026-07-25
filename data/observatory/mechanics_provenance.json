@@ -94,6 +94,141 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Mission_Terratide source selects Env_Terratide, seeds smoke across y=7 at mission start, and subclasses Env_Tides with NewTerrain=TERRAIN_SAND and Index=1."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inherited Env_Tides source maps Terratide lane i to y=7-i, omits only a building on the currently marked tile, increments Index without adding later permanent spawn blocks, and applies iSmoke=1 to every tile in the complete current lane without terrain conversion or damage."
+        },
+        {
+          "classification": "fact",
+          "statement": "The bridge classifies Mission_Terratide before generic inherited-Index detection. Rust routes its warning mask to pending smoke, reconstructs the complete effect row including buildings before queued attacks, and advances the next non-building warning row toward y=0."
+        }
+      ],
+      "id": "environment-mission-terratide",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "dump_state",
+            "Mission_Terratide"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_will_be_smoked_by_environment_before_attack"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_smoke_board",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "advance_mission_tides_warning",
+            "project_plan_with_spawns"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "The bridge does not export Env_Terratide.Index. Rust infers the current and next rows from at least one warning marker, so it cannot reconstruct or advance a lane whose eight visible markers are all absent.",
+        "Rust does not independently seed Mission_Terratide:StartMission's initial y=7 smoke or Env_Tides:Start's inherited permanent y=1 spawn block; it consumes live tile and current spawn-marker state and does not generate future spawn locations.",
+        "Terratide-before-queued-attacks ordering is live-derived rather than proven from an independently traced native scheduler.",
+        "Native iSmoke interactions with every pawn passive, status, item, and terrain combination remain non-exhaustive.",
+        "This record excludes presentation effects, bonus/campaign selection, and generic Sandstorm behavior outside Mission_Terratide."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/sand/mission_terratide.lua",
+          "sha256": "43356b9cb53d0ec369cf1a2bc5519acf7baa8cd54d096b4afbe8ff4fabd2c7dd",
+          "symbols": [
+            "Mission_Terratide",
+            "Mission_Terratide:StartMission",
+            "Env_Terratide"
+          ]
+        },
+        {
+          "path": "scripts/missions/grass/mission_tides.lua",
+          "sha256": "d27dab9f44e804e90385a6557057fc9a1281fab4bc83d6fff50151fc7702277a",
+          "symbols": [
+            "Env_Tides",
+            "Env_Tides:Start",
+            "Env_Tides:MarkBoard",
+            "Env_Tides:Plan",
+            "Env_Tides:ApplyEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_modloader_terratide.py",
+          "symbols": [
+            "test_terratide_overrides_inherited_tides_before_class_detection"
+          ]
+        },
+        {
+          "path": "tests/test_terratide_smoke.py",
+          "symbols": [
+            "test_terratide_warning_routes_to_pending_smoke_not_damage",
+            "test_threat_audit_credits_attacker_on_pending_terratide_smoke"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_terratide_danger_routes_to_smoke_not_damage",
+            "test_tides_index_is_accepted_only_for_mission_tides"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_mission_terratide_projection_smokes_full_row_and_advances_warning_backwards",
+            "test_mission_terratide_prior_building_does_not_shadow_next_warning"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_terratide_smokes_full_row_and_advances_final_warning_lane"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "The exact inventoried Lua source assigns Mission_Tides to Env_Tides and defines deterministic Index-based lane progression, permanent next-lane spawn blocking, building-aware warnings, and current-lane water conversion."
         },
         {
