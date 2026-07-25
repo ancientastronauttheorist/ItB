@@ -1803,6 +1803,151 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Advanced Edition Lua sources map Moth1 and Moth2 to MothAtk1 and MothAtk2, inherit LineArtillery cardinal targeting at distances 2 through ArtillerySize 5 with occupied targets allowed, and queue backward zero-damage self-recoil before 1 or 3 artillery damage plus forward target push."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v369 gives both Rust and Python Moth definitions the exact 2..=5 interval, rejects queued distance-one and distance-six/seven attacks before recoil, bounds webbed next-turn projection at five, and exercises exact IDs, damage, range endpoints, recoil, killed-target collision, prior-corpse ordering, moving-train interaction, queued-marker reconciliation, and threat auditing in focused tests."
+        }
+      ],
+      "id": "enemy-weapon-moth",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::MothAtk1",
+            "WId::MothAtk2",
+            "WEAPONS",
+            "weapon_def",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_push_no_edge_bump",
+            "apply_push_dead_bumps_live_blocker"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "projected_enemy_attack_reach",
+            "projected_enemy_reach",
+            "requeue_enemies_heuristic"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS",
+            "get_weapon_def"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_reconcile_flipped_queued_targets_with_targeted_tiles"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_prior_attack_push_destination"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes queued Moth attacks and does not reproduce native movement, target acquisition, inherited target scoring, candidate selection, or tie-breaking.",
+        "Native LineArtillery, Board:IsValid, Board:IsBlocked, GetDirection, SpaceDamage, AddQueuedDamage, AddQueuedArtillery, push, collision, and queued-effect ordering helpers have not been independently traced for this build.",
+        "Mobile next-turn projection remains a coarse movement-plus-attack heuristic rather than exact pathing and native selection across the 2..=5 target interval.",
+        "Exact conformance across every board edge, obstacle, terrain, status, objective, corpse, and multi-unit collision interaction remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": [
+            "Moth1",
+            "Moth2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons_enemy.lua",
+          "sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "symbols": [
+            "MothAtk1",
+            "MothAtk1:GetSkillEffect",
+            "MothAtk2"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "LineArtillery",
+            "LineArtillery:GetTargetArea"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_moth_weapon_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_moth_variants_enforce_exact_lua_range_and_damage",
+            "test_moth_artillery_self_bounce_bumps_blocking_mech",
+            "test_moth_artillery_killed_target_corpse_bumps_live_mech",
+            "test_prior_enemy_kill_corpse_clears_before_later_moth_recoil",
+            "test_moth_kill_replaces_moving_train_before_advance"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_webbed_moth_reach_stops_at_lua_maximum"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_moth_weapon_defs_match_inherited_lua_artillery_range"
+          ]
+        },
+        {
+          "path": "tests/test_queued_target_oob.py",
+          "symbols": [
+            "test_reconcile_shared_target_ignores_mirror_occupied_by_cotargeter"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_threat_audit_attacker_will_be_moved_by_prior_moth_attack",
+            "test_threat_audit_prior_moth_blocked_push_still_warns"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

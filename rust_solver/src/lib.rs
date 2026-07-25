@@ -2323,7 +2323,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Starfish's own tile, matching the sole Lua target and diagonal ScoreList
 //   footprint instead of replacing the attack with scalar pseudo-pressure.
 //   Pre-v368 corpus archived as failure_db_snapshot_sim_v367.jsonl.
-pub const SIMULATOR_VERSION: u32 = 368;
+// v369 - Rust/Python Moth definitions and queued artillery resolution enforce
+//   the exact inherited LineArtillery target interval of 2..=5 instead of
+//   storing a contradictory maximum of 1 and accepting distance-six/seven shots.
+//   Pre-v369 corpus archived as failure_db_snapshot_sim_v368.jsonl.
+pub const SIMULATOR_VERSION: u32 = 369;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

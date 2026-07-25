@@ -1130,11 +1130,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     # ── Advanced Edition Artillery ───────────────────────────────────
     "MothAtk1": WeaponDef(
         name="Repulsive Pellets", weapon_type="artillery",
-        damage=1, push="forward", push_self=True, range_min=2,
+        damage=1, push="forward", push_self=True, range_min=2, range_max=5,
     ),
     "MothAtk2": WeaponDef(
         name="Alpha Repulsive Pellets", weapon_type="artillery",
-        damage=3, push="forward", push_self=True, range_min=2,
+        damage=3, push="forward", push_self=True, range_min=2, range_max=5,
     ),
     "PlasmodiaAtk1": WeaponDef(
         name="Plasmodia Spore", weapon_type="artillery",

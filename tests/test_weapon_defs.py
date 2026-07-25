@@ -51,6 +51,19 @@ def test_dung_attack_aliases_match_tumblebug_weapon_defs():
     assert alpha.damage == 3
 
 
+def test_moth_weapon_defs_match_inherited_lua_artillery_range():
+    for weapon_id, damage in (("MothAtk1", 1), ("MothAtk2", 3)):
+        weapon = get_weapon_def(weapon_id)
+
+        assert weapon is not None
+        assert weapon.weapon_type == "artillery"
+        assert weapon.damage == damage
+        assert weapon.push == "forward"
+        assert weapon.push_self is True
+        assert weapon.range_min == 2
+        assert weapon.range_max == 5
+
+
 def test_smoldering_shells_upgrade_weapon_defs():
     base = get_weapon_def("Ranged_SmokeFire")
     more_smoke = get_weapon_def("Ranged_SmokeFire_A")

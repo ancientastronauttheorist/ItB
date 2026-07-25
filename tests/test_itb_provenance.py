@@ -1694,3 +1694,90 @@ def test_real_bouncer_record_pins_exact_family_dispatch():
     assert "does not reproduce native target acquisition" in gaps
     assert "leader branch uses generic apply_push" in gaps
     assert "no focused live leader-at-edge evidence" in gaps
+
+
+def test_real_moth_record_pins_exact_range_fix():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-moth"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/ae_pawns.lua",
+            "sha256": (
+                "e87efe90c0342f26969c14159e6b6c93"
+                "766aeedcbc3319fb0f418048d129e9f4"
+            ),
+            "symbols": ["Moth1", "Moth2"],
+        },
+        {
+            "path": "scripts/advanced/ae_weapons_enemy.lua",
+            "sha256": (
+                "db757b1afa790fe3f7576930abd0c7e4"
+                "cf5d8b9dc7308aa15ce9a9736f224d13"
+            ),
+            "symbols": ["MothAtk1", "MothAtk1:GetSkillEffect", "MothAtk2"],
+        },
+        {
+            "path": "scripts/weapons_base.lua",
+            "sha256": (
+                "bdb55457746d08b46e8b62ad7cfc27f"
+                "0a08bde9fab7397a4780dfe945b5f8f38"
+            ),
+            "symbols": ["LineArtillery", "LineArtillery:GetTargetArea"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::MothAtk1",
+        "WId::MothAtk2",
+        "WEAPONS",
+        "weapon_def",
+        "wid_from_str",
+        "wid_to_str",
+        "enemy_weapon_for_type",
+        "weapon_name",
+    } == implementations["rust_solver/src/weapons.rs"]
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "projected_enemy_attack_reach",
+        "projected_enemy_reach",
+        "requeue_enemies_heuristic",
+    }
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_moth_weapon_defs_and_mappings"
+    }
+    assert {
+        "test_moth_variants_enforce_exact_lua_range_and_damage",
+        "test_moth_artillery_self_bounce_bumps_blocking_mech",
+        "test_moth_artillery_killed_target_corpse_bumps_live_mech",
+    } <= tests["rust_solver/src/enemy.rs"]
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_webbed_moth_reach_stops_at_lua_maximum"
+    }
+    assert tests["tests/test_weapon_defs.py"] == {
+        "test_moth_weapon_defs_match_inherited_lua_artillery_range"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "does not reproduce native movement, target acquisition" in gaps
+    assert "movement-plus-attack heuristic" in gaps
+    assert "2..=5 target interval" in gaps

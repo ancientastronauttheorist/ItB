@@ -1770,6 +1770,11 @@ pub fn simulate_enemy_attacks(
                 // Min-range check against the (new) attacker→target distance.
                 let curr_range = offset_x.abs() + offset_y.abs();
                 if (curr_range as u8) < wdef.range_min { continue; }
+                if matches!(enemy_wid, WId::MothAtk1 | WId::MothAtk2)
+                    && (curr_range as u8) > wdef.range_max
+                {
+                    continue;
+                }
 
                 let tx = new_tx as u8;
                 let ty = new_ty as u8;
@@ -4087,6 +4092,47 @@ mod tests {
             "Blocked recoil leaves the Moth in place");
         assert_eq!(board.tile(1, 3).building_hp, 1,
             "Moth artillery still damages its queued target after recoil");
+    }
+
+    #[test]
+    fn test_moth_variants_enforce_exact_lua_range_and_damage() {
+        for (pawn_type, distance, expected_damage) in [
+            ("Moth1", 1u8, 0u8),
+            ("Moth1", 2, 1),
+            ("Moth2", 5, 3),
+            ("Moth2", 6, 0),
+        ] {
+            let mut board = Board::default();
+            let target_y = 1 + distance;
+            let moth_idx = add_enemy_with_type(
+                &mut board,
+                50,
+                1,
+                1,
+                4,
+                pawn_type,
+                1,
+                target_y as i8,
+            );
+            board.units[moth_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+            board.tile_mut(1, target_y).terrain = Terrain::Building;
+            board.tile_mut(1, target_y).building_hp = 4;
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(
+                board.tile(1, target_y).building_hp,
+                4 - expected_damage,
+                "{pawn_type} distance {distance} damage mismatch",
+            );
+            let expected_y = if expected_damage > 0 { 0 } else { 1 };
+            assert_eq!(
+                (board.units[moth_idx].x, board.units[moth_idx].y),
+                (1, expected_y),
+                "{pawn_type} must recoil only for a legal distance",
+            );
+        }
     }
 
     #[test]

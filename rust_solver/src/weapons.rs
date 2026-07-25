@@ -1126,10 +1126,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[67] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Forward,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     // 68: MothAtk1 — artillery, 1 dmg, pushes target + pushes self backward (flying)
-    w[68] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 2,
+    w[68] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward,
+        range_min: 2, range_max: 5,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     // 69: MothAtk2 — alpha artillery, 3 dmg
-    w[69] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, push: PushDir::Forward, range_min: 2,
+    w[69] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, push: PushDir::Forward,
+        range_min: 2, range_max: 5,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     // 70: MosquitoAtk1 — melee, 1 dmg, applies smoke (flying)
     w[70] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1,
@@ -2740,6 +2742,39 @@ mod tests {
         assert!(weapon_def(WId::BouncerAtkB).aoe_perpendicular());
         assert!(!weapon_def(WId::BouncerAtk1).aoe_perpendicular());
         assert!(!weapon_def(WId::BouncerAtk2).aoe_perpendicular());
+    }
+
+    #[test]
+    fn test_moth_weapon_defs_and_mappings() {
+        let expected = [
+            (
+                WId::MothAtk1,
+                "MothAtk1",
+                "Moth1",
+                "Repulsive Pellets",
+                1,
+            ),
+            (
+                WId::MothAtk2,
+                "MothAtk2",
+                "Moth2",
+                "Alpha Repulsive Pellets",
+                3,
+            ),
+        ];
+        for (id, lua_id, pawn_type, name, damage) in expected {
+            let def = weapon_def(id);
+            assert_eq!(def.weapon_type, WeaponType::Artillery);
+            assert_eq!(def.damage, damage);
+            assert_eq!(def.push, PushDir::Forward);
+            assert!(def.push_self());
+            assert_eq!(def.range_min, 2);
+            assert_eq!(def.range_max, 5);
+            assert_eq!(wid_from_str(lua_id), id);
+            assert_eq!(wid_to_str(id), lua_id);
+            assert_eq!(enemy_weapon_for_type(pawn_type), id);
+            assert_eq!(weapon_name(id), name);
+        }
     }
 
     #[test]

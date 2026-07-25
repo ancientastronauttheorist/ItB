@@ -65,11 +65,11 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 53 definitions literally and leaves 689 unindexed. Category totals
+names 54 definitions literally and leaves 688 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
-weapon files contain 40 callback definitions; the Starfish and Bouncer family
-records name three literally and leave 37 unindexed. That is a precise indexing
-backlog, not evidence that all 37 behaviors are absent from Rust.
+weapon files contain 40 callback definitions; the Starfish, Bouncer, and Moth
+family records name four literally and leave 36 unindexed. That is a precise
+indexing backlog, not evidence that all 36 behaviors are absent from Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected
@@ -156,6 +156,17 @@ callback from the core enemy-weapon backlog without changing simulator
 semantics. The record remains `partial`: native target selection and effect
 helpers are untraced, exhaustive edge/status/collision conformance is open,
 and the leader's generic edge-recoil policy lacks focused live evidence.
+
+The third family-level enemy-weapon slice, `enemy-weapon-moth`, pins normal and
+alpha pawn mappings, their exact Advanced Edition effect, and inherited
+`LineArtillery` targeting. Simulator v369 fixes the proven range mismatch:
+Rust and Python definitions plus queued resolution now enforce Lua's cardinal
+distances 2–5, and webbed projection no longer invents distance-six/seven targets. Exact
+1/3 damage, valid and invalid range boundaries, recoil, killed-target
+collision, prior-corpse ordering, train interaction, marker reconciliation,
+and threat auditing have focused tests. The record remains `partial`: native
+movement/selection and effect helpers are untraced, mobile projection is
+heuristic, and exhaustive edge/status/collision behavior remains open.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and

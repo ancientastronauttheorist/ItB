@@ -125,6 +125,9 @@ fn projected_enemy_attack_reach(enemy: &Unit, weapons: &WeaponTable) -> i32 {
     if matches!(wid, WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1) {
         return 2;
     }
+    if matches!(wid, WId::MothAtk1 | WId::MothAtk2) {
+        return i32::from(weapon.range_max);
+    }
     if matches!(wid, WId::TumblebugAtk1 | WId::TumblebugAtk2) {
         return 2;
     }
@@ -1483,6 +1486,44 @@ mod tests {
         assert_eq!(b.units[0].queued_target_x, 7);
         assert_eq!(b.units[0].queued_target_y, 7);
         assert!(b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_webbed_moth_reach_stops_at_lua_maximum() {
+        let moth = |building_y: u8| {
+            let mut b = Board::default();
+            let mut enemy = Unit::default();
+            enemy.uid = 10;
+            enemy.set_type_name("Moth1");
+            enemy.x = 0;
+            enemy.y = 0;
+            enemy.hp = 3;
+            enemy.max_hp = 3;
+            enemy.team = Team::Enemy;
+            enemy.flags =
+                UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+            enemy.set_web(true);
+            enemy.queued_target_x = -1;
+            enemy.queued_target_y = -1;
+            b.add_unit(enemy);
+            b.tiles[xy_to_idx(0, building_y)].terrain = Terrain::Building;
+            b.tiles[xy_to_idx(0, building_y)].building_hp = 1;
+            b
+        };
+
+        let mut at_maximum = moth(5);
+        assert_eq!(
+            projected_enemy_reach(&at_maximum.units[0], &WEAPONS),
+            5,
+        );
+        requeue_enemies_heuristic(&mut at_maximum, &WEAPONS);
+        assert_eq!(at_maximum.units[0].queued_target_y, 5);
+        assert!(at_maximum.units[0].has_queued_attack());
+
+        let mut beyond_maximum = moth(6);
+        requeue_enemies_heuristic(&mut beyond_maximum, &WEAPONS);
+        assert_eq!(beyond_maximum.units[0].queued_target_y, -1);
+        assert!(!beyond_maximum.units[0].has_queued_attack());
     }
 
     #[test]
