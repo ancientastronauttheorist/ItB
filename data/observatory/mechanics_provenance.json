@@ -1665,6 +1665,144 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Advanced Edition Lua sources map Bouncer1, Bouncer2, and BouncerBoss to BouncerAtk1, BouncerAtk2, and BouncerAtkB: normal and alpha queue a backward zero-damage self-push followed by 1 or 3 damage and forward push on the adjacent target, while the leader deals 2 damage and forward push to the target and its two perpendicular neighbors with self-recoil queued between the center and side hits."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has distinct IDs, definitions, names, and pawn mappings for all three variants, resolves normal/alpha recoil before the horn hit and the leader's ordered T footprint, and exercises exact damage dispatch, recoil, target push, side hits, collision, fire/ice/water timing, displacement, prior-attack death, threat auditing, and queued-marker ambiguity in focused tests."
+        }
+      ],
+      "id": "enemy-weapon-bouncer",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::BouncerAtk1",
+            "WId::BouncerAtk2",
+            "WId::BouncerAtkB",
+            "WEAPONS",
+            "weapon_def",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_push",
+            "apply_push_no_edge_bump"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS",
+            "get_weapon_def"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_reconcile_flipped_queued_targets_with_targeted_tiles"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_will_die_to_prior_bump_before_attack",
+            "_prior_attack_push_destination"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes queued Bouncer attacks and does not reproduce native target acquisition, inherited target scoring, movement selection, or tie-breaking.",
+        "Native GetDirection, SpaceDamage, AddQueuedDamage, push, collision, Armor, fire, ice, water, and queued-effect ordering helpers have not been independently traced for this build.",
+        "Normal and alpha use Rust's no-edge-bump self-recoil helper while the leader branch uses generic apply_push; no focused live leader-at-edge evidence proves whether that policy difference is exact.",
+        "Exact conformance across every board edge, obstacle, terrain, status, objective, corpse, and multi-unit collision interaction remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": [
+            "Bouncer1",
+            "Bouncer2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons_enemy.lua",
+          "sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "symbols": [
+            "BouncerAtk1",
+            "BouncerAtk1:GetSkillEffect",
+            "BouncerAtk2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/bosses/bouncer.lua",
+          "sha256": "39b41d020af444251d3565b3cf606ac7e6a56547f26ca88efdd7d24182a38704",
+          "symbols": [
+            "BouncerBoss",
+            "BouncerAtkB",
+            "BouncerAtkB:GetSkillEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_bouncer_weapon_defs_and_mappings",
+            "test_bouncer_boss_sweeping_horns_def"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_bouncer_melee_self_bounce_and_target_push",
+            "test_bouncer_variants_dispatch_exact_damage_and_recoil",
+            "test_burning_bouncer_on_ice_still_attacks_before_recoil_drowning",
+            "test_swapped_bouncer_uses_current_cardinal_target_when_origin_stale",
+            "test_beetle_push_into_bouncer_chain_kills_rocket",
+            "test_bouncer_boss_enemy_attack_hits_t_pattern_and_bounces",
+            "test_bouncer_attack_damages_proto_bomb",
+            "test_burning_dam_does_not_flood_before_bouncer_attack"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_bouncer_boss_sweeping_horns_hits_t_pattern_and_bounces"
+          ]
+        },
+        {
+          "path": "tests/test_queued_target_oob.py",
+          "symbols": [
+            "test_reconcile_shared_bouncer_target_ignores_own_recoil_marker"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_threat_audit_attacker_will_die_to_prior_bouncer_bump",
+            "test_threat_audit_dungboss_kills_bouncer_before_building_attack"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

@@ -2702,6 +2702,47 @@ mod tests {
     }
 
     #[test]
+    fn test_bouncer_weapon_defs_and_mappings() {
+        let expected = [
+            (
+                WId::BouncerAtk1,
+                "BouncerAtk1",
+                "Bouncer1",
+                "Energized Horns",
+                1,
+            ),
+            (
+                WId::BouncerAtk2,
+                "BouncerAtk2",
+                "Bouncer2",
+                "Alpha Energized Horns",
+                3,
+            ),
+            (
+                WId::BouncerAtkB,
+                "BouncerAtkB",
+                "BouncerBoss",
+                "Sweeping Horns",
+                2,
+            ),
+        ];
+        for (id, lua_id, pawn_type, name, damage) in expected {
+            let def = weapon_def(id);
+            assert_eq!(def.weapon_type, WeaponType::Melee);
+            assert_eq!(def.damage, damage);
+            assert_eq!(def.push, PushDir::Forward);
+            assert!(def.push_self());
+            assert_eq!(wid_from_str(lua_id), id);
+            assert_eq!(wid_to_str(id), lua_id);
+            assert_eq!(enemy_weapon_for_type(pawn_type), id);
+            assert_eq!(weapon_name(id), name);
+        }
+        assert!(weapon_def(WId::BouncerAtkB).aoe_perpendicular());
+        assert!(!weapon_def(WId::BouncerAtk1).aoe_perpendicular());
+        assert!(!weapon_def(WId::BouncerAtk2).aoe_perpendicular());
+    }
+
+    #[test]
     fn test_flamethrower_upgrade_ranges() {
         assert_eq!(weapon_def(WId::PrimeFlamethrower).range_max, 1);
         assert_eq!(weapon_def(WId::PrimeFlamethrower).path_size, 1);

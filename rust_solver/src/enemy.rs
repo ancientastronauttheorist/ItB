@@ -4187,6 +4187,36 @@ mod tests {
     }
 
     #[test]
+    fn test_bouncer_variants_dispatch_exact_damage_and_recoil() {
+        for (pawn_type, expected_damage) in [
+            ("Bouncer1", 1),
+            ("Bouncer2", 3),
+            ("BouncerBoss", 2),
+        ] {
+            let mut board = Board::default();
+            let idx =
+                add_enemy_with_type(&mut board, 40, 3, 3, 6, pawn_type, 3, 4);
+            board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+            board.tile_mut(3, 4).terrain = Terrain::Building;
+            board.tile_mut(3, 4).building_hp = 4;
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(
+                board.tile(3, 4).building_hp,
+                4 - expected_damage,
+                "{pawn_type} must dispatch its exact Lua damage",
+            );
+            assert_eq!(
+                (board.units[idx].x, board.units[idx].y),
+                (3, 2),
+                "{pawn_type} must recoil before completing its strike",
+            );
+        }
+    }
+
+    #[test]
     fn test_burning_bouncer_on_ice_still_attacks_before_recoil_drowning() {
         let mut board = Board::default();
         board.grid_power = 7;

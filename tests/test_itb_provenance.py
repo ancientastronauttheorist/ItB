@@ -1604,3 +1604,93 @@ def test_real_starfish_record_pins_exact_family_dispatch():
     assert "next-turn projection reproduces the sole self-target" in gaps
     assert "not native movement, candidate selection, tie-breaking" in gaps
     assert "Vek Hormones" in gaps
+
+
+def test_real_bouncer_record_pins_exact_family_dispatch():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-bouncer"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/ae_pawns.lua",
+            "sha256": (
+                "e87efe90c0342f26969c14159e6b6c93"
+                "766aeedcbc3319fb0f418048d129e9f4"
+            ),
+            "symbols": ["Bouncer1", "Bouncer2"],
+        },
+        {
+            "path": "scripts/advanced/ae_weapons_enemy.lua",
+            "sha256": (
+                "db757b1afa790fe3f7576930abd0c7e4"
+                "cf5d8b9dc7308aa15ce9a9736f224d13"
+            ),
+            "symbols": [
+                "BouncerAtk1",
+                "BouncerAtk1:GetSkillEffect",
+                "BouncerAtk2",
+            ],
+        },
+        {
+            "path": "scripts/advanced/bosses/bouncer.lua",
+            "sha256": (
+                "39b41d020af444251d3565b3cf606ac7"
+                "e6a56547f26ca88efdd7d24182a38704"
+            ),
+            "symbols": [
+                "BouncerBoss",
+                "BouncerAtkB",
+                "BouncerAtkB:GetSkillEffect",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::BouncerAtk1",
+        "WId::BouncerAtk2",
+        "WId::BouncerAtkB",
+        "WEAPONS",
+        "weapon_def",
+        "wid_from_str",
+        "wid_to_str",
+        "enemy_weapon_for_type",
+        "weapon_name",
+    } == implementations["rust_solver/src/weapons.rs"]
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "apply_push",
+        "apply_push_no_edge_bump",
+    }
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert {
+        "test_bouncer_weapon_defs_and_mappings",
+        "test_bouncer_boss_sweeping_horns_def",
+    } == tests["rust_solver/src/weapons.rs"]
+    assert {
+        "test_bouncer_melee_self_bounce_and_target_push",
+        "test_bouncer_variants_dispatch_exact_damage_and_recoil",
+        "test_bouncer_boss_enemy_attack_hits_t_pattern_and_bounces",
+    } <= tests["rust_solver/src/enemy.rs"]
+    gaps = " ".join(record["known_gaps"])
+    assert "does not reproduce native target acquisition" in gaps
+    assert "leader branch uses generic apply_push" in gaps
+    assert "no focused live leader-at-edge evidence" in gaps

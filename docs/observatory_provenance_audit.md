@@ -65,11 +65,11 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 52 definitions literally and leaves 690 unindexed. Category totals
+names 53 definitions literally and leaves 689 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
-weapon files contain 40 callback definitions; the Starfish family record names
-two literally and leaves 38 unindexed. That is a precise indexing backlog, not
-evidence that all 38 behaviors are absent from Rust.
+weapon files contain 40 callback definitions; the Starfish and Bouncer family
+records name three literally and leave 37 unindexed. That is a precise indexing
+backlog, not evidence that all 37 behaviors are absent from Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected
@@ -146,6 +146,16 @@ footprint is positive, instead of substituting scalar pseudo-pressure. The
 record remains `partial`: native movement/candidate selection, every
 `ScoreList` branch, effect helpers, and exhaustive edge/status/collision
 behavior are not reproduced or independently traced.
+
+The second family-level enemy-weapon slice, `enemy-weapon-bouncer`, pins normal,
+alpha, and leader pawn-to-weapon mappings plus the exact Advanced Edition
+weapon and boss effects. Distinct IDs, 1/3/2 damage, backward recoil, forward
+target push, the leader's ordered three-tile sweep, collision, displacement,
+and mission-order interactions have focused tests. It adds one literal
+callback from the core enemy-weapon backlog without changing simulator
+semantics. The record remains `partial`: native target selection and effect
+helpers are untraced, exhaustive edge/status/collision conformance is open,
+and the leader's generic edge-recoil policy lacks focused live evidence.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
