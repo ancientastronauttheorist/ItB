@@ -2,17 +2,22 @@
 
 ## Status and safety boundary
 
-This document defines a trace evidence contract and the smallest future Lua
-integration. The reusable Python codec and immutable offline store are
-implemented in `src/observatory/trace_codec.py` and
-`src/observatory/trace_store.py`. Neither installs or activates a game hook.
+This document defines a trace evidence contract and its dormant Lua runtime.
+The reusable Python codec and immutable offline store are implemented in
+`src/observatory/trace_codec.py` and `src/observatory/trace_store.py`. The
+source-only runtime is implemented in `src/bridge/observatory_trace.lua`.
+Loading it performs no file I/O, polling, arming, or hook installation. It
+requires an exact short-lived manifest, a separate one-shot activation nonce,
+an exact trusted policy and full hook plan, a trusted live identity/clock
+provider, and an explicit call for each independently proven non-yielding hook.
 `scripts/itb_trace.py validate|summary` requires a trusted content inventory
 and the exact expected capture identity; structural validation alone is not
 treated as authoritative.
 
-No trace hook is installed by this work. `src/bridge/modloader.lua`, the
-installed game, the game process, and the active achievement session remain
-untouched. Deployment requires a separately reviewed safe window.
+No trace hook is connected to Mod Loader or installed into the game by this
+work. `src/bridge/modloader.lua`, the installed game, the game process, and the
+active achievement session remain untouched. Deployment requires a separately
+reviewed safe window.
 
 ## Goals
 
@@ -81,6 +86,27 @@ enabled:
 9. Do not call game APIs or wrapped engine callbacks while extracting an event;
    copy only values already available at the boundary.
 
+The runtime owns one observation attempt per wrapper call. It checks the
+trusted live identity, phase, and clock before extraction, then supplies the
+observer only bounded primitive copies of the arguments, return values, and
+runtime identity. Boundaries containing userdata, functions, cycles, or other
+non-primitive values fail closed without invoking the observer. The original
+call runs before the extraction reentrancy guard is set, so legitimate nested
+engine calls remain visible; only observer-triggered recursion is skipped.
+
+The trusted policy is compared field-for-field with the armed caps, phase, and
+event allowlist. Every planned installed hook has a unique ID and a frozen
+construction-time holder/key/function binding; checkpointing fails if any
+planned hook was not installed or is no longer attached. The raw checkpoint
+repeats the canonical Python config and hook-coverage digest preimages (the
+runtime-only hook IDs stay internal), so offline canonicalization can recompute
+both digests. This initial primitive runtime accepts `installed` and `disabled`
+coverage entries with source hashes; an `unavailable` target fails arming until
+an explicit Lua-null serialization contract is added.
+Nonce and wrapper registries live in a process-global table initialized by
+runtime construction, so reloading the module cannot replay a nonce or stack a
+wrapper. Loading the module alone still creates no global state.
+
 For proven non-yieldable Lua 5.1 functions, a wrapper can preserve multiple
 returns with a
 `pack(...)= {n=select("#", ...), ...}` helper and
@@ -89,6 +115,20 @@ the original error path while guaranteeing one invocation. This pattern must
 not be applied generically to functions that may yield: Lua 5.1 yield behavior
 across C/Lua wrapper boundaries requires separate proof, and an unsafe wrapper
 must not be installed.
+
+The exact-language behavior harness uses the Lua 5.1 runtime bundled by the
+optional `lupa.lua51` package:
+
+```powershell
+python -m pytest tests/test_observatory_trace_lua.py -q
+```
+
+Without that optional package, the test module skips. The isolated harness
+proves disabled-load behavior, two-step/replay-safe activation, full capture
+identity and bounds, lazy payload construction, primitive-only copies, global
+reload-safe wrapper registration, exact return/error behavior, reentrancy,
+restoration conflicts, maximum-envelope checkpointing, attempt/outcome
+reconciliation, and disarming checkpoints.
 
 ## Bounds and phase policy
 
@@ -105,6 +145,18 @@ enforces:
 - bounded-width observation counters with explicit saturation/truncation;
 - truncation and dropped/error counters.
 
+The dormant Lua runtime enforces those byte caps with a conservative
+pretty-JSON upper bound rather than claiming to reproduce Python's encoder:
+each input string byte reserves the worst-case JSON escape width, numbers and
+table entries reserve fixed worst-case syntax/indentation overhead, and the
+full event envelope plus its collection delimiter is charged. The raw summary
+labels this value `event_byte_upper_bound`; offline canonicalization recomputes
+the exact `event_bytes`. Arming also requires
+`max_bundle_bytes >= max_total_event_bytes + 2 MiB`, and checkpoint copying is
+bounded by `max_bundle_bytes`, so the published Python byte-policy preimage is
+never weaker than the runtime limit. Adversarial quote/backslash/control-byte
+tests compare the Lua upper bound with Python's canonical JSON bytes.
+
 Caps are checked before lazy payload construction wherever possible. Disabled,
 wrong-phase, and already-capped calls avoid expensive board/effect extraction.
 The final serializer refuses a bundle over its configured persisted-byte cap,
@@ -113,7 +165,7 @@ trusting configuration from the input.
 
 ## Side-band persistence
 
-A future Lua implementation must write untrusted bounded raw checkpoints
+A deployed Lua integration must write untrusted bounded raw checkpoints
 separate from state/command/ACK. Offline Python validation/canonicalization then
 publishes an immutable final bundle:
 
