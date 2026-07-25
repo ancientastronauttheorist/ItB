@@ -365,7 +365,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust has distinct IDs and definitions for all four variants, family-specific smoke and killed-target push, and generic artillery targeting and invalid-replay handling exercised by Rocket-focused tests."
+          "statement": "Rust has distinct IDs and definitions for all four variants, exact-ID end-to-end damage, forward-push, and smoke dispatch coverage, family-specific killed-target push, and generic artillery targeting and invalid-replay handling exercised by Rocket-focused tests."
         }
       ],
       "id": "player-weapon-rocket-artillery",
@@ -407,7 +407,6 @@
       ],
       "known_gaps": [
         "Native AddArtillery, SpaceDamage, push, smoke, and effect-order helper semantics have not been independently traced exhaustively for this build.",
-        "The B and AB variants have exact definition/mapping coverage but no dedicated end-to-end simulator case; the A variant supplies the upgraded live-derived regression.",
         "Lua LineArtillery with OnlyEmpty=false permits intact building centers, while Rust deliberately filters ordinary artillery centers that would damage intact buildings; minimum range, blocker continuation, and board-edge extent also lack a Rocket-specific conformance test.",
         "Exact conformance across every terrain, status, objective, and collision interaction remains unverified."
       ],
@@ -443,6 +442,7 @@
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
             "test_sim_artillery_rocket_smokes_behind_shooter",
+            "test_rocket_artillery_variants_dispatch_exact_damage_push_and_smoke",
             "test_sim_artillery_rocket_no_smoke_when_shooter_on_edge",
             "test_rocket_kills_target_still_bumps_mountain_behind",
             "test_rocket_kills_target_still_bumps_building_behind",
@@ -476,7 +476,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust has distinct IDs and DashAway definitions for all four variants, implements landing legality, backblast damage and smoke, recoil, movement, scoring, and replay, and exercises the base family behavior in focused tests."
+          "statement": "Rust has distinct IDs and DashAway definitions for all four variants, implements landing legality, backblast damage and smoke, recoil, movement, scoring, and replay, and exercises exact A/B range-three and AB range-four dispatch with backblast damage, smoke, recoil, and movement in a focused simulator test."
         }
       ],
       "id": "player-weapon-reverse-thrusters",
@@ -519,7 +519,6 @@
       ],
       "known_gaps": [
         "Native Board:IsBlocked, Pawn:GetPathProf, SpaceDamage, AddCharge, terrain traversal, and effect-order semantics have not been independently traced for this build.",
-        "All behavior-level simulator, solver, and replay tests use the base BruteKickBack ID; A, B, and AB have exact definition and mapping coverage but no exact-ID end-to-end case for range-three or range-four targeting and backblast damage.",
         "No focused family test exhaustively pins landing legality across occupied units, buildings, mountains, and grounded-versus-flying water or chasm cases, intermediate obstacle traversal, and off-board backblast behavior.",
         "Boost and Nanofilter timing are live-derived Rust regressions rather than facts established by this Lua body; exhaustive status, objective, terrain, and collision conformance remains unverified."
       ],
@@ -551,7 +550,8 @@
             "test_reverse_thrusters_backblast_smoke_does_not_same_action_heal",
             "test_reverse_thrusters_smoked_forest_backblast_extinguishes_survivor",
             "test_boosted_reverse_thrusters_adds_dash_and_recoil_damage",
-            "test_reverse_thrusters_acid_two_tile_dash_fires_backburner_event"
+            "test_reverse_thrusters_acid_two_tile_dash_fires_backburner_event",
+            "test_reverse_thrusters_upgrade_ids_dispatch_exact_extended_ranges"
           ]
         },
         {
@@ -577,7 +577,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust has distinct IDs and definitions for all four variants, applies the family-specific transit effects and landing restrictions, and covers definitions, transit behavior, target enumeration, illegal landings, scoring, and replay in focused tests."
+          "statement": "Rust has distinct IDs and definitions for all four variants, applies the family-specific transit effects and landing restrictions, and covers exact base/A/B/AB dispatch, variant damage, transit smoke, base versus upgraded range enumeration, illegal landings, scoring, and replay in focused tests."
         }
       ],
       "id": "player-weapon-aerial-bombs",
@@ -611,8 +611,6 @@
       ],
       "known_gaps": [
         "Native Board:IsBlocked, Pawn:GetPathProf, AddLeap, SpaceDamage, and effect-order semantics have not been independently traced for this build.",
-        "The A and AB damage-two variants have exact definition coverage but no exact-ID end-to-end simulator case.",
-        "Existing range-upgraded transit tests call sim_leap directly with the unchanged base ID and definition at distance three, bypassing B/AB dispatch and range-three target enumeration.",
         "Exact conformance across every landing terrain, carried status, transit occupant, and effect-order interaction remains unverified."
       ],
       "sources": [
@@ -643,14 +641,16 @@
             "test_aerial_bombs_damages_transit_tile_base_range",
             "test_aerial_bombs_damages_both_transit_tiles_range_upgraded",
             "test_aerial_bombs_enum_rejects_landing_on_water",
-            "test_aerial_bombs_sim_noops_illegal_enemy_landing"
+            "test_aerial_bombs_sim_noops_illegal_enemy_landing",
+            "test_aerial_bombs_variants_dispatch_exact_damage_and_range"
           ]
         },
         {
           "path": "rust_solver/src/solver.rs",
           "symbols": [
             "moved_aerial_bombs_targets_from_post_move_tile",
-            "aerial_bombs_transit_smoke_building_threat_survives_pruning"
+            "aerial_bombs_transit_smoke_building_threat_survives_pruning",
+            "aerial_bombs_range_upgrade_ids_enumerate_distance_three"
           ]
         },
         {
@@ -845,7 +845,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust has distinct IDs and definitions for all four Titan Fist variants, dispatches base/B as melee and A/AB as charge, and exercises targeting, impact, terrain, upgrade, and bridge-replay behavior in focused tests."
+          "statement": "Rust has distinct IDs and definitions for all four Titan Fist variants, dispatches base/B as melee and A/AB as charge, and exercises the damage-only B variant's exact melee damage and push alongside targeting, impact, terrain, other upgrades, and bridge-replay behavior in focused tests."
         }
       ],
       "id": "player-weapon-titan-fist",
@@ -879,7 +879,6 @@
       ],
       "known_gaps": [
         "Native GetProjectileEnd, Board:GetSimplePath, AddCharge, and AddMelee helper semantics have not been independently traced for this build.",
-        "The damage-only B variant has a definition test but no dedicated end-to-end simulator test; AB supplies the focused upgraded-damage charge evidence.",
         "Exact conformance across every obstacle, edge, and status interaction remains unverified."
       ],
       "sources": [
@@ -915,6 +914,7 @@
             "test_titan_fist_dash_crosses_water_before_first_blocker",
             "test_titan_fist_dash_dead_target_bumps_live_blocker",
             "test_titan_fist_plain_dead_target_bumps_live_blocker",
+            "test_titan_fist_b_dispatches_exact_damage_only_melee",
             "test_titan_fist_perp_via_bridge_replay"
           ]
         },

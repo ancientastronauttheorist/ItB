@@ -728,11 +728,15 @@ def test_real_titan_fist_record_is_family_scoped():
         "test_titan_fist",
         "test_titan_fist_upgraded_defs",
         "test_titan_fist_kill_and_push",
+        "test_titan_fist_b_dispatches_exact_damage_only_melee",
         "test_titan_fist_ab_dash_punch_uses_damage_upgrade",
         "test_titan_fist_perp_via_bridge_replay",
         "titan_fist_dash_enumerates_direction_selector_for_long_target",
     } <= test_symbols
     assert record["known_gaps"]
+    gaps = " ".join(record["known_gaps"])
+    assert "damage-only B variant" not in gaps
+    assert "Native GetProjectileEnd" in gaps
 
 
 def test_real_rocket_artillery_record_includes_inherited_targeting():
@@ -795,14 +799,17 @@ def test_real_rocket_artillery_record_includes_inherited_targeting():
     assert {
         "test_rocket_artillery_damage_upgrades",
         "test_sim_artillery_rocket_smokes_behind_shooter",
+        "test_rocket_artillery_variants_dispatch_exact_damage_push_and_smoke",
         "test_upgraded_rocket_damage_plus_blocked_bump_kills_alpha_scorpion",
         "rocket_artillery_rejects_off_axis_targets",
         "replay_solution_noops_off_axis_rocket_target",
     } <= test_symbols
-    assert record["known_gaps"]
+    gaps = " ".join(record["known_gaps"])
+    assert "B and AB variants" not in gaps
+    assert "OnlyEmpty=false" in gaps
 
 
-def test_real_aerial_bombs_record_keeps_variant_test_gaps_explicit():
+def test_real_aerial_bombs_record_proves_exact_variant_dispatch():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(
         repo_root / "data/observatory/mechanics_provenance.json"
@@ -865,8 +872,10 @@ def test_real_aerial_bombs_record_keeps_variant_test_gaps_explicit():
         "test_aerial_bombs_damages_both_transit_tiles_range_upgraded",
         "test_aerial_bombs_enum_rejects_landing_on_water",
         "test_aerial_bombs_sim_noops_illegal_enemy_landing",
+        "test_aerial_bombs_variants_dispatch_exact_damage_and_range",
         "moved_aerial_bombs_targets_from_post_move_tile",
         "aerial_bombs_transit_smoke_building_threat_survives_pruning",
+        "aerial_bombs_range_upgrade_ids_enumerate_distance_three",
         "replay_solution_counts_aerial_bombs_pod_collection",
     } <= test_symbols
     replay_tests = next(
@@ -878,11 +887,13 @@ def test_real_aerial_bombs_record_keeps_variant_test_gaps_explicit():
         "replay_solution_counts_aerial_bombs_pod_collection"
     ]
     gaps = " ".join(record["known_gaps"])
-    assert "no exact-ID end-to-end simulator case" in gaps
-    assert "bypassing B/AB dispatch" in gaps
+    assert "no exact-ID end-to-end simulator case" not in gaps
+    assert "bypassing B/AB dispatch" not in gaps
+    assert "Native Board:IsBlocked" in gaps
+    assert "Exact conformance across every landing terrain" in gaps
 
 
-def test_real_reverse_thrusters_record_keeps_upgrade_proof_gaps_explicit():
+def test_real_reverse_thrusters_record_proves_exact_upgrade_dispatch():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(
         repo_root / "data/observatory/mechanics_provenance.json"
@@ -946,9 +957,10 @@ def test_real_reverse_thrusters_record_keeps_upgrade_proof_gaps_explicit():
         "test_reverse_thrusters_smokes_backblast_tile_self_damages_and_dashes",
         "test_boosted_reverse_thrusters_adds_dash_and_recoil_damage",
         "test_reverse_thrusters_acid_two_tile_dash_fires_backburner_event",
+        "test_reverse_thrusters_upgrade_ids_dispatch_exact_extended_ranges",
     } <= tests["rust_solver/src/simulate.rs"]
     gaps = " ".join(record["known_gaps"])
-    assert "no exact-ID end-to-end case" in gaps
+    assert "no exact-ID end-to-end case" not in gaps
     assert "Boost and Nanofilter timing are live-derived" in gaps
 
 

@@ -10608,6 +10608,20 @@ mod tests {
     }
 
     #[test]
+    fn test_titan_fist_b_dispatches_exact_damage_only_melee() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::PrimePunchmechB);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 6);
+
+        let _ =
+            simulate_weapon(&mut board, mech, WId::PrimePunchmechB, 3, 4);
+
+        assert_eq!((board.units[mech].x, board.units[mech].y), (3, 3));
+        assert_eq!(board.units[enemy].hp, 2);
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 5));
+    }
+
+    #[test]
     fn test_titan_fist_dash_crosses_water_before_first_blocker() {
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 2, 3, 3, WId::PrimePunchmechA);
@@ -11284,6 +11298,37 @@ mod tests {
             !board.tile(3, 6).smoke(),
             "target tile must NOT be smoked — Ranged_Rocket smokes behind the shooter, not the target"
         );
+    }
+
+    #[test]
+    fn test_rocket_artillery_variants_dispatch_exact_damage_push_and_smoke() {
+        for (weapon_id, expected_damage) in [
+            (WId::RangedRocket, 2),
+            (WId::RangedRocketA, 3),
+            (WId::RangedRocketB, 3),
+            (WId::RangedRocketAB, 4),
+        ] {
+            let mut board = make_test_board();
+            let mech_idx = add_mech(&mut board, 0, 3, 3, 3, weapon_id);
+            let enemy_idx = add_enemy(&mut board, 1, 3, 6, 8);
+
+            let _ = simulate_weapon(&mut board, mech_idx, weapon_id, 3, 6);
+
+            assert_eq!(
+                board.units[enemy_idx].hp,
+                8 - expected_damage,
+                "{weapon_id:?} must dispatch its exact variant damage",
+            );
+            assert_eq!(
+                (board.units[enemy_idx].x, board.units[enemy_idx].y),
+                (3, 7),
+                "{weapon_id:?} must preserve Rocket's forward push",
+            );
+            assert!(
+                board.tile(3, 2).smoke(),
+                "{weapon_id:?} must preserve smoke behind the shooter",
+            );
+        }
     }
 
     #[test]
@@ -12225,6 +12270,45 @@ mod tests {
             board.units[east_of_land].hp, 3,
             "East-of-landing (3,6) enemy must take NO damage"
         );
+    }
+
+    #[test]
+    fn test_aerial_bombs_variants_dispatch_exact_damage_and_range() {
+        for (weapon_id, landing_y, expected_damage) in [
+            (WId::BruteJetmech, 5, 1),
+            (WId::BruteJetmechA, 5, 2),
+            (WId::BruteJetmechB, 6, 1),
+            (WId::BruteJetmechAB, 6, 2),
+        ] {
+            let mut board = make_test_board();
+            let mech = add_mech(&mut board, 0, 3, 3, 3, weapon_id);
+            let first_transit = add_enemy(&mut board, 10, 3, 4, 5);
+            let second_transit = if landing_y == 6 {
+                Some(add_enemy(&mut board, 11, 3, 5, 5))
+            } else {
+                None
+            };
+
+            let _ =
+                simulate_weapon(&mut board, mech, weapon_id, 3, landing_y);
+
+            assert_eq!((board.units[mech].x, board.units[mech].y), (3, landing_y));
+            assert_eq!(
+                board.units[first_transit].hp,
+                5 - expected_damage,
+                "{weapon_id:?} must dispatch exact transit damage",
+            );
+            assert!(board.tile(3, 4).smoke());
+            if let Some(second_transit) = second_transit {
+                assert_eq!(
+                    board.units[second_transit].hp,
+                    5 - expected_damage,
+                    "{weapon_id:?} must affect both range-three transit tiles",
+                );
+                assert!(board.tile(3, 5).smoke());
+            }
+            assert!(!board.tile(3, landing_y).smoke());
+        }
     }
 
     #[test]
@@ -15099,6 +15183,38 @@ mod tests {
             "legal dash should not emit illegal event: {:?}",
             result.events
         );
+    }
+
+    #[test]
+    fn test_reverse_thrusters_upgrade_ids_dispatch_exact_extended_ranges() {
+        for (weapon_id, landing_y, expected_damage) in [
+            (WId::BruteKickBackA, 6, 3),
+            (WId::BruteKickBackB, 6, 3),
+            (WId::BruteKickBackAB, 7, 4),
+        ] {
+            let mut board = make_test_board();
+            let mech = add_mech(&mut board, 0, 3, 3, 3, weapon_id);
+            let enemy = add_enemy(&mut board, 10, 3, 2, 8);
+
+            let result =
+                simulate_weapon(&mut board, mech, weapon_id, 3, landing_y);
+
+            assert_eq!((board.units[mech].x, board.units[mech].y), (3, landing_y));
+            assert_eq!(
+                board.units[enemy].hp,
+                8 - expected_damage,
+                "{weapon_id:?} must deal distance-scaled backblast damage",
+            );
+            assert_eq!(board.units[mech].hp, 2);
+            assert!(board.tile(3, 2).smoke());
+            assert!(
+                !result.events.iter().any(|event| {
+                    event.starts_with("illegal_reverse_thrusters")
+                        || event.starts_with("unexpected_dash_away_weapon")
+                }),
+                "{weapon_id:?} should dispatch as a legal Reverse Thrusters variant",
+            );
+        }
     }
 
     #[test]

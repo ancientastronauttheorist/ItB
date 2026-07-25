@@ -4518,6 +4518,46 @@ mod top_k_tests {
     }
 
     #[test]
+    fn aerial_bombs_range_upgrade_ids_enumerate_distance_three() {
+        for (weapon_id, expected) in [
+            (WId::BruteJetmech, false),
+            (WId::BruteJetmechA, false),
+            (WId::BruteJetmechB, true),
+            (WId::BruteJetmechAB, true),
+        ] {
+            let mut board = Board::default();
+            let idx = board.add_unit(Unit {
+                uid: 0,
+                x: 3,
+                y: 3,
+                hp: 3,
+                max_hp: 3,
+                team: Team::Player,
+                weapon: WeaponId(weapon_id as u16),
+                flags: UnitFlags::IS_MECH
+                    | UnitFlags::MASSIVE
+                    | UnitFlags::PUSHABLE
+                    | UnitFlags::FLYING
+                    | UnitFlags::ACTIVE,
+                move_speed: 0,
+                ..Default::default()
+            });
+
+            let actions = enumerate_actions(&board, idx, &WEAPONS);
+            let has_distance_three = actions.iter().any(|action| {
+                action.0 == (3, 3)
+                    && action.1 == weapon_id
+                    && action.2 == (3, 6)
+            });
+            assert_eq!(
+                has_distance_three,
+                expected,
+                "{weapon_id:?} distance-three target mismatch",
+            );
+        }
+    }
+
+    #[test]
     fn rocket_artillery_rejects_off_axis_targets() {
         // Live Rocket Artillery no-ops when FireWeapon is pointed off-axis.
         // Keep Rocket-specific enumeration cardinal-only so the solver doesn't
