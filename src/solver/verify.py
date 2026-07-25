@@ -1704,7 +1704,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # rebuilds the next warning lane from Env_Tides' exact Index direction,
 # building-shadow, and existing-Water conversion rules. Pre-v365 corpus
 # archived as failure_db_snapshot_sim_v364.jsonl.
-SIMULATOR_VERSION = 365
+# v366 - The bridge exports Mission_Tides' live Env_Tides.Index, allowing
+# markerless warning lanes to advance exactly. Rust derives the source's
+# permanent full-row BlockSpawn boundary (rows 1..=Index), carries Index
+# through replay/projection, and preserves marker inference for old captures.
+# Pre-v366 corpus archived as failure_db_snapshot_sim_v365.jsonl.
+SIMULATOR_VERSION = 366
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -409,7 +409,7 @@ pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
         return;
     }
 
-    if board.mission_id != "Mission_Tides" || board.env_danger == 0 {
+    if board.mission_id != "Mission_Tides" {
         return;
     }
 
@@ -419,14 +419,27 @@ pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
     // the new lane, or when the new tile is already Water. Rebuild every
     // represented row from board state so previously omitted columns can
     // reappear when appropriate while Lua's building shadow stays intact.
-    let mut warned = board.env_danger;
     let mut next_rows = 0u16;
-    while warned != 0 {
-        let tile_idx = warned.trailing_zeros() as usize;
-        warned &= warned - 1;
-        let (_, y) = idx_to_xy(tile_idx);
-        if y < 7 {
-            next_rows |= 1u16 << (y + 1);
+    if let Some(index) = board.env_tides_index {
+        // The live scalar is authoritative even if every visible marker was
+        // omitted by building shadow / existing Water. Preserve 8 as the
+        // terminal off-board Index without constructing an invalid row.
+        let next_index = index.saturating_add(1).min(8);
+        board.env_tides_index = Some(next_index);
+        if next_index < 8 {
+            next_rows |= 1u16 << next_index;
+        }
+    } else {
+        // Legacy recordings do not carry Index. Keep the marker-derived
+        // direction fallback exactly as before.
+        let mut warned = board.env_danger;
+        while warned != 0 {
+            let tile_idx = warned.trailing_zeros() as usize;
+            warned &= warned - 1;
+            let (_, y) = idx_to_xy(tile_idx);
+            if y < 7 {
+                next_rows |= 1u16 << (y + 1);
+            }
         }
     }
 
@@ -824,6 +837,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "total_turns":           board.total_turns,
         "remaining_spawns":      board.remaining_spawns,
         "spawning_tiles":        spawning_tiles,
+        "environment_tides_index": board.env_tides_index,
         "environment_danger_v2": env_danger_v2,
         "env_type":              if board.env_smoke != 0 { "sandstorm" } else { "unknown" },
         "mission_id":            board.mission_id,
@@ -1067,6 +1081,99 @@ mod tests {
             assert!(projected.is_env_danger(x, 4), "expected warning at ({x},4)");
             assert!(projected.is_env_danger_kill(x, 4));
             assert!(projected.is_env_danger_flying_immune(x, 4));
+        }
+    }
+
+    #[test]
+    fn test_mission_tides_index_advances_markerless_lane_and_spawn_boundary() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.total_turns = 5;
+        b.current_turn = 2;
+        b.env_tides_index = Some(3);
+
+        // The current warning is completely invisible. Index still advances
+        // to y=4. A building shadow and existing Water suppress warnings, but
+        // Env_Tides::Plan permanently blocks every x in the full lane.
+        b.tile_mut(0, 1).terrain = Terrain::Building;
+        b.tile_mut(0, 1).building_hp = 1;
+        b.tile_mut(2, 4).terrain = Terrain::Water;
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.env_tides_index, Some(4));
+        assert!(!projected.is_env_danger(0, 4));
+        assert!(!projected.is_env_danger(2, 4));
+        for x in [1u8, 3, 4, 5, 6, 7] {
+            assert!(projected.is_env_danger(x, 4));
+        }
+        for x in 0u8..8 {
+            assert!(projected.is_tides_spawn_permanently_blocked(x, 4));
+            assert!(!projected.is_tides_spawn_permanently_blocked(x, 5));
+        }
+    }
+
+    #[test]
+    fn test_mission_tides_index_beats_stale_visible_marker_row() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.env_tides_index = Some(3);
+        b.env_danger = 1u64 << xy_to_idx(6, 5);
+        b.env_danger_kill = b.env_danger;
+        b.env_danger_flying_immune = b.env_danger;
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.env_tides_index, Some(4));
+        for x in 0u8..8 {
+            assert!(projected.is_env_danger(x, 4));
+            assert!(!projected.is_env_danger(x, 6));
+        }
+    }
+
+    #[test]
+    fn test_mission_tides_conservative_projection_keeps_current_marker() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.env_tides_index = Some(3);
+        let mut blocker = Unit::default();
+        blocker.uid = 1;
+        blocker.set_type_name("PunchMech");
+        blocker.x = 5;
+        blocker.y = 4;
+        blocker.hp = 2;
+        blocker.max_hp = 3;
+        blocker.team = Team::Player;
+        blocker.flags = UnitFlags::IS_MECH | UnitFlags::PUSHABLE;
+        b.add_unit(blocker);
+
+        let (projected, result, projected_spawns) =
+            project_plan_with_spawns(&b, &[], &[(5, 4)], &WEAPONS);
+
+        assert_eq!(result.spawns_blocked, 1);
+        assert_eq!(projected.env_tides_index, Some(4));
+        assert!(projected.is_tides_spawn_permanently_blocked(5, 4));
+        // Rust does not model native future-spawn selection, and the effect of
+        // BlockSpawn on a marker that already persisted through emergence is
+        // untraced. Conservatively retain that known marker; do not fabricate
+        // a native deletion from the source-derived future eligibility mask.
+        assert_eq!(projected_spawns, vec![(5, 4)]);
+        assert_eq!(projected.units[0].hp, 1);
+    }
+
+    #[test]
+    fn test_mission_tides_legacy_marker_fallback_still_advances() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.env_danger = 1u64 << xy_to_idx(3, 2);
+        b.env_danger_kill = b.env_danger;
+        b.env_danger_flying_immune = b.env_danger;
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.env_tides_index, None);
+        for x in 0u8..8 {
+            assert!(projected.is_env_danger(x, 3));
         }
     }
 
@@ -1603,6 +1710,8 @@ mod tests {
     #[test]
     fn test_board_to_json_roundtrip() {
         let (mut board, spawn_points) = simple_board();
+        board.mission_id = "Mission_Tides".to_string();
+        board.env_tides_index = Some(3);
         board.units[1].queued_target_raw_x = 5;
         board.units[1].queued_target_raw_y = 4;
         board.units[0].pilot_flags = crate::board::PilotFlags::ROCK;
@@ -1633,6 +1742,8 @@ mod tests {
         assert_eq!(alive_before, alive_after, "unit count must survive round-trip");
         assert_eq!(board.grid_power, b2.grid_power);
         assert_eq!(board.current_turn, b2.current_turn);
+        assert_eq!(b2.env_tides_index, Some(3));
+        assert!(b2.is_tides_spawn_permanently_blocked(7, 3));
         assert_eq!(b2.units[1].queued_target_raw_x, 5);
         assert_eq!(b2.units[1].queued_target_raw_y, 4);
         assert!(b2.units[1].minor());

@@ -98,11 +98,25 @@
         },
         {
           "classification": "fact",
-          "statement": "Rust consumes live warning metadata, defers Mission_Tides danger until after queued attacks, applies grounded lethality, the observed one damage to ordinary flyers, and Lua's explicit DAMAGE_DEATH on flooded Mountains even for flyers; it destroys marked pods, converts marked current-lane terrain to Water, and reconstructs the next warning from Lua's building-shadow and convert rules."
+          "statement": "The dormant bridge source exports Mission_Tides' live Env_Tides.Index. Rust consumes it to advance markerless warning lanes, derives the exact source-defined permanent full-row spawn-block boundary through the current Index, defers Mission_Tides danger until after queued attacks, applies grounded lethality, the observed one damage to ordinary flyers, and Lua's explicit DAMAGE_DEATH on flooded Mountains even for flyers; it destroys marked pods, converts marked current-lane terrain to Water, and reconstructs the next warning from Lua's building-shadow and convert rules."
         }
       ],
       "id": "environment-mission-tides",
       "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "mission_tides_index",
+            "dump_state"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "tides_permanent_spawn_block_mask",
+            "is_tides_spawn_permanently_blocked"
+          ]
+        },
         {
           "path": "rust_solver/src/serde_bridge.rs",
           "symbols": [
@@ -132,8 +146,8 @@
         }
       ],
       "known_gaps": [
-        "Rust does not independently reproduce Env_Tides:Start or Env_Tides:Plan permanent Board:BlockSpawn calls; it consumes current spawn and warning state from the bridge.",
-        "Rust infers the next Env_Tides Index from at least one serialized warning marker; when Lua emits no marker because every column is shadowed or already Water, the bridge does not expose Index and Rust cannot advance the invisible lane independently.",
+        "Rust source-projects Env_Tides:Start/Plan's exact full-row permanent spawn-block mask from live Index, but no native blocked-cell getter has been identified or traced for this build; Rust does not generate future spawn positions or materialize unknown Vek, and conservatively retains a current marker that already persisted through emergence because native BlockSpawn behavior for that marker is untraced, so this is not full spawn-selection reproduction.",
+        "The environment_tides_index bridge export is implemented and default behavior-preserving but has not been installed or live-captured during the protected active achievement session.",
         "Queued-attacks-before-wave and one damage to flyers are live-derived runtime observations, not explicit Lua semantics or an independently traced native scheduler and SpaceDamage proof.",
         "Shield, frozen, building, terrain, and native SpaceDamage.iTerrain edge conformance remains non-exhaustive.",
         "This record excludes the NewTerrain=TERRAIN_SAND Terratide branches, presentation effects, and campaign environment selection."
@@ -154,6 +168,27 @@
       ],
       "tests": [
         {
+          "path": "tests/test_modloader_tides_metadata.py",
+          "symbols": [
+            "test_tides_metadata_exports_exact_integer_index",
+            "test_tides_metadata_omits_terratide_and_other_missions",
+            "test_tides_metadata_rejects_missing_fractional_and_out_of_range_indices",
+            "test_modloader_serializes_only_the_mission_scoped_tides_index"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "test_tides_index_derives_exact_permanent_spawn_lanes"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_tides_index_is_accepted_only_for_mission_tides"
+          ]
+        },
+        {
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
             "test_mission_tides_flying_mech_takes_one_damage",
@@ -168,13 +203,19 @@
           "path": "rust_solver/src/turn_projection.rs",
           "symbols": [
             "test_mission_tides_projection_advances_warning_lane",
-            "test_mission_tides_projection_reconstructs_building_shadow_and_convert_mask"
+            "test_mission_tides_projection_reconstructs_building_shadow_and_convert_mask",
+            "test_mission_tides_index_advances_markerless_lane_and_spawn_boundary",
+            "test_mission_tides_index_beats_stale_visible_marker_row",
+            "test_mission_tides_conservative_projection_keeps_current_marker",
+            "test_mission_tides_legacy_marker_fallback_still_advances",
+            "test_board_to_json_roundtrip"
           ]
         },
         {
           "path": "rust_solver/src/replay.rs",
           "symbols": [
             "replay_solution_mission_tides_advances_final_warning_lane",
+            "replay_solution_mission_tides_index_recovers_markerless_warning",
             "replay_solution_mission_tides_wave_destroys_pod"
           ]
         }

@@ -30,6 +30,9 @@ pub struct JsonInput {
     /// worthless. Floored at 0.5 in `evaluate::future_factor` instead.
     pub is_infinite_spawn: Option<bool>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
+    /// Live Mission_Tides Env_Tides Index. This survives markerless warning
+    /// lanes and is mission-gated while loading.
+    pub environment_tides_index: Option<u8>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int, flying_immune?], ...]
     /// Ice Storm freeze tiles (sim v25). List of [x, y]. Vanilla Env_SnowStorm
@@ -507,6 +510,16 @@ pub fn board_from_json(json_str: &str)
         | Some("Mission_Cataclysm")
         | Some("Mission_Crack")
     );
+    // The scalar is mission-scoped. Ignore stale/foreign payloads so an Index
+    // inherited by Terratide or retained across missions cannot change Tides
+    // projection semantics.
+    board.env_tides_index = if mission_id == Some("Mission_Tides") {
+        input
+            .environment_tides_index
+            .filter(|index| (1..=8).contains(index))
+    } else {
+        None
+    };
     // Back-compat fallback: when the 5th element is missing, look at the
     // top-level env_type to decide whether the lethal hazard is terrain-
     // conversion (flying_immune=true) or Deadly Threat (false).
@@ -1153,6 +1166,52 @@ mod tests {
         assert_eq!(board.env_danger, 0);
         assert_eq!(board.env_danger_kill, 0);
         assert_eq!(board.env_danger_flying_immune, 0);
+    }
+
+    #[test]
+    fn test_tides_index_is_accepted_only_for_mission_tides() {
+        let tides = r#"{
+            "mission_id": "Mission_Tides",
+            "environment_tides_index": 3,
+            "tiles": [],
+            "units": [],
+            "spawning_tiles": []
+        }"#;
+        let (board, ..) = board_from_json(tides).expect("Tides bridge json parses");
+        assert_eq!(board.env_tides_index, Some(3));
+        assert!(board.is_tides_spawn_permanently_blocked(7, 3));
+        assert!(!board.is_tides_spawn_permanently_blocked(7, 4));
+
+        let terratide = r#"{
+            "mission_id": "Mission_Terratide",
+            "environment_tides_index": 3,
+            "tiles": [],
+            "units": [],
+            "spawning_tiles": []
+        }"#;
+        let (board, ..) =
+            board_from_json(terratide).expect("Terratide bridge json parses");
+        assert_eq!(board.env_tides_index, None);
+
+        let legacy = r#"{
+            "mission_id": "Mission_Tides",
+            "tiles": [],
+            "units": [],
+            "spawning_tiles": []
+        }"#;
+        let (board, ..) = board_from_json(legacy).expect("legacy bridge json parses");
+        assert_eq!(board.env_tides_index, None);
+
+        let impossible_zero = r#"{
+            "mission_id": "Mission_Tides",
+            "environment_tides_index": 0,
+            "tiles": [],
+            "units": [],
+            "spawning_tiles": []
+        }"#;
+        let (board, ..) =
+            board_from_json(impossible_zero).expect("malformed Index is ignored");
+        assert_eq!(board.env_tides_index, None);
     }
 
     #[test]

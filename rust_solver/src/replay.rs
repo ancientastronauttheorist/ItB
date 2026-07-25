@@ -1180,6 +1180,7 @@ mod tests {
     fn replay_solution_mission_tides_advances_final_warning_lane() {
         let bridge = r#"{
           "mission_id": "Mission_Tides",
+          "environment_tides_index": 3,
           "turn": 2,
           "total_turns": 3,
           "tiles": [],
@@ -1203,8 +1204,10 @@ mod tests {
 
         let raw = replay_solution(bridge, plan).expect("replay should succeed");
         let v: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(v["post_player_board"]["environment_tides_index"], 3);
         let final_board = &v["final_board"];
         assert_eq!(final_board["turn"], 3);
+        assert_eq!(final_board["environment_tides_index"], 4);
         let danger = final_board["environment_danger_v2"].as_array().unwrap();
         assert_eq!(danger.len(), 8);
         for x in 0u8..8 {
@@ -1299,6 +1302,37 @@ mod tests {
             .find(|tile| tile["x"] == json!(1) && tile["y"] == json!(3))
             .expect("the pod tile should remain serialized as flooded terrain");
         assert_eq!(flooded_tile["terrain"], "water");
+    }
+
+    #[test]
+    fn replay_solution_mission_tides_index_recovers_markerless_warning() {
+        let bridge = r#"{
+          "mission_id": "Mission_Tides",
+          "environment_tides_index": 3,
+          "turn": 2,
+          "total_turns": 4,
+          "tiles": [
+            {"x": 0, "y": 1, "terrain": "building", "building_hp": 1},
+            {"x": 2, "y": 4, "terrain": "water"}
+          ],
+          "environment_danger_v2": [],
+          "spawning_tiles": [],
+          "remaining_spawns": 0,
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "units": []
+        }"#;
+
+        let raw = replay_solution(bridge, "[]").expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let final_board = &v["final_board"];
+        assert_eq!(final_board["environment_tides_index"], 4);
+        let danger = final_board["environment_danger_v2"].as_array().unwrap();
+        assert_eq!(danger.len(), 6);
+        for x in [1u8, 3, 4, 5, 6, 7] {
+            assert!(danger.iter().any(|entry| entry == &json!([x, 4, 1, 1, 1])));
+        }
+        assert!(!danger.iter().any(|entry| entry[0] == 0 || entry[0] == 2));
     }
 
     #[test]

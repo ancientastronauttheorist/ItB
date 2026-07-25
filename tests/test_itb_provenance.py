@@ -1053,6 +1053,13 @@ def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explici
         reference["path"]: set(reference["symbols"])
         for reference in record["implementations"]
     }
+    assert {"mission_tides_index", "dump_state"} <= implementations[
+        "src/bridge/modloader.lua"
+    ]
+    assert {
+        "tides_permanent_spawn_block_mask",
+        "is_tides_spawn_permanently_blocked",
+    } <= implementations["rust_solver/src/board.rs"]
     assert {
         "apply_env_danger",
         "apply_env_danger_board",
@@ -1074,14 +1081,20 @@ def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explici
     assert {
         "test_mission_tides_projection_advances_warning_lane",
         "test_mission_tides_projection_reconstructs_building_shadow_and_convert_mask",
+        "test_mission_tides_index_advances_markerless_lane_and_spawn_boundary",
+        "test_mission_tides_index_beats_stale_visible_marker_row",
+        "test_mission_tides_conservative_projection_keeps_current_marker",
+        "test_mission_tides_legacy_marker_fallback_still_advances",
+        "test_board_to_json_roundtrip",
     } == tests["rust_solver/src/turn_projection.rs"]
     assert tests["rust_solver/src/replay.rs"] == {
         "replay_solution_mission_tides_advances_final_warning_lane",
+        "replay_solution_mission_tides_index_recovers_markerless_warning",
         "replay_solution_mission_tides_wave_destroys_pod",
     }
     gaps = " ".join(record["known_gaps"])
-    assert "does not independently reproduce Env_Tides:Start" in gaps
-    assert "does not expose Index" in gaps
+    assert "no native blocked-cell getter has been identified or traced" in gaps
+    assert "not been installed or live-captured" in gaps
     assert "live-derived runtime observations" in gaps
 
 

@@ -408,6 +408,10 @@ pub struct Board {
     /// Mission_Wind push direction, matching engine DIR_* constants and Rust
     /// DIRS. -1 means older bridge/recording without WindDir export.
     pub env_wind_dir: i8,
+    /// Live Mission_Tides Env_Tides `Index`. None means an older bridge or a
+    /// different environment. Unlike visible warnings, Index remains
+    /// available when MarkBoard hides every tile in the lane.
+    pub env_tides_index: Option<u8>,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
     /// Frozen=true to any alive unit standing on these tiles. Buildings
@@ -557,6 +561,7 @@ impl Default for Board {
             env_smoke: 0,
             env_wind: 0,
             env_wind_dir: -1,
+            env_tides_index: None,
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
@@ -785,6 +790,32 @@ impl Board {
     pub fn is_env_smoke(&self, x: u8, y: u8) -> bool {
         let bit = 1u64 << xy_to_idx(x, y);
         self.env_smoke & bit != 0
+    }
+
+    /// Exact source-derived permanent Board:BlockSpawn mask for Mission_Tides.
+    /// Start blocks y=1; every Plan increments Index and blocks the new row.
+    pub fn tides_permanent_spawn_block_mask(&self) -> u64 {
+        if self.mission_id != "Mission_Tides" {
+            return 0;
+        }
+        let Some(index) = self.env_tides_index else {
+            return 0;
+        };
+        let mut mask = 0u64;
+        for y in 1..=index.clamp(1, 7) {
+            for x in 0u8..8 {
+                mask |= 1u64 << xy_to_idx(x, y);
+            }
+        }
+        mask
+    }
+
+    /// Has Mission_Tides permanently excluded this tile from future spawn
+    /// selection according to the exact source-derived Index boundary?
+    #[inline]
+    pub fn is_tides_spawn_permanently_blocked(&self, x: u8, y: u8) -> bool {
+        let bit = 1u64 << xy_to_idx(x, y);
+        self.tides_permanent_spawn_block_mask() & bit != 0
     }
 
     /// Iterate alive player units (mechs + friendly controllable).
@@ -1086,5 +1117,23 @@ mod tests {
         board.env_danger |= 1u64 << xy_to_idx(2, 3);
         assert!(board.is_env_danger(2, 3));
         assert!(!board.is_env_danger(0, 0));
+    }
+
+    #[test]
+    fn test_tides_index_derives_exact_permanent_spawn_lanes() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Tides".to_string();
+        board.env_tides_index = Some(4);
+
+        for x in 0u8..8 {
+            assert!(!board.is_tides_spawn_permanently_blocked(x, 0));
+            for y in 1u8..=4 {
+                assert!(board.is_tides_spawn_permanently_blocked(x, y));
+            }
+            assert!(!board.is_tides_spawn_permanently_blocked(x, 5));
+        }
+
+        board.mission_id = "Mission_Terratide".to_string();
+        assert_eq!(board.tides_permanent_spawn_block_mask(), 0);
     }
 }

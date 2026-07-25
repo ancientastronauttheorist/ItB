@@ -498,6 +498,24 @@ local function get_live_tile_shield(pt, runtime_region_shields)
     return false
 end
 
+-- Env_Tides source metadata that Board:IsEnvironmentDanger cannot express.
+-- Keep this helper pure so the mission-scoped scalar is independently
+-- testable without loading the game or installing this bridge.
+local function mission_tides_index(mission_id, live_environment)
+    if mission_id ~= "Mission_Tides" then return nil end
+    if type(live_environment) ~= "table"
+            or type(live_environment.Index) ~= "number" then
+        return nil
+    end
+
+    local index = live_environment.Index
+    if index ~= index or index == math.huge or index == -math.huge
+            or index < 1 or index > 8 or index ~= math.floor(index) then
+        return nil
+    end
+    return index
+end
+
 local function dump_state()
     if not Board then return end
 
@@ -1246,6 +1264,24 @@ local function dump_state()
         end
     end)
     state.env_type = env_type
+
+    -- The visible warning mask can be empty when every column is hidden by a
+    -- building shadow or already has the target terrain. Export the live
+    -- Index so Rust can still advance Env_Tides::Plan exactly. Rust derives
+    -- the full-row permanent spawn-block boundary from the inventoried source;
+    -- no native blocked-cell getter has been identified for this build.
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if not mission or not mission.LiveEnvironment then return end
+        local index = mission_tides_index(
+            mission.ID or "",
+            mission.LiveEnvironment
+        )
+        if index ~= nil then
+            state.environment_tides_index = index
+        end
+    end)
+
     if env_type == "wind" then
         pcall(function()
             local mission = _ITB_CURRENT_MISSION

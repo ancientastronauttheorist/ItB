@@ -2310,7 +2310,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   rebuilds the next warning lane from Env_Tides' exact Index direction,
 //   building-shadow, and existing-Water conversion rules. Pre-v365 corpus
 //   archived as failure_db_snapshot_sim_v364.jsonl.
-pub const SIMULATOR_VERSION: u32 = 365;
+// v366 - The bridge exports Mission_Tides' live Env_Tides.Index, allowing
+//   markerless warning lanes to advance exactly. Rust derives the source's
+//   permanent full-row BlockSpawn boundary (rows 1..=Index), carries Index
+//   through replay/projection, and preserves marker inference for old captures.
+//   Pre-v366 corpus archived as failure_db_snapshot_sim_v365.jsonl.
+pub const SIMULATOR_VERSION: u32 = 366;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
