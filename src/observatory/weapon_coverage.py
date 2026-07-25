@@ -113,7 +113,7 @@ def _safe_path(value: Any, label: str) -> PurePosixPath:
     return path
 
 
-def _read_exact_inventory_file(
+def read_exact_inventory_file(
     content_root: Path,
     relative: PurePosixPath,
     *,
@@ -240,7 +240,7 @@ def _blank(masked: list[str], start: int, end: int) -> None:
             masked[index] = " "
 
 
-def _mask_lua_opaque(text: str) -> str:
+def mask_lua_opaque(text: str) -> str:
     """Blank Lua comments and strings while preserving offsets/newlines."""
     masked = list(text)
     index = 0
@@ -349,7 +349,7 @@ def _mask_rust_comments(text: str) -> str:
     return "".join(masked)
 
 
-def _lua_function_spans(masked: str) -> list[tuple[int, int]]:
+def lua_function_spans(masked: str) -> list[tuple[int, int]]:
     """Return function regions using Lua block keywords outside opaque text."""
     stack: list[dict[str, Any]] = []
     spans: list[tuple[int, int]] = []
@@ -397,7 +397,7 @@ def _inside_spans(offset: int, spans: list[tuple[int, int]]) -> bool:
     return any(start <= offset < end for start, end in spans)
 
 
-def _lua_brace_depths(masked: str) -> list[int]:
+def lua_brace_depths(masked: str) -> list[int]:
     depths = [0] * (len(masked) + 1)
     depth = 0
     for index, character in enumerate(masked):
@@ -414,7 +414,7 @@ def _lua_brace_depths(masked: str) -> list[int]:
     return depths
 
 
-def _position(text: str, offset: int) -> tuple[int, int]:
+def source_position(text: str, offset: int) -> tuple[int, int]:
     line_start = text.rfind("\n", 0, offset) + 1
     return text.count("\n", 0, offset) + 1, offset - line_start + 1
 
@@ -443,9 +443,9 @@ def _constructor_end(masked: str, match: re.Match[str]) -> int | None:
 
 
 def _lua_candidates(path: str, sha256: str, text: str) -> list[dict[str, Any]]:
-    masked = _mask_lua_opaque(text)
-    spans = _lua_function_spans(masked)
-    brace_depths = _lua_brace_depths(masked)
+    masked = mask_lua_opaque(text)
+    spans = lua_function_spans(masked)
+    brace_depths = lua_brace_depths(masked)
     methods: dict[str, set[str]] = defaultdict(set)
     for match in _LUA_METHOD_RE.finditer(masked):
         if brace_depths[match.start()] != 0 or any(
@@ -466,7 +466,7 @@ def _lua_candidates(path: str, sha256: str, text: str) -> list[dict[str, Any]]:
         if constructor_end is None:
             continue
         lua_id, parent, constructor_argument = match.groups()
-        line, column = _position(text, match.start(1))
+        line, column = source_position(text, match.start(1))
         candidates.append(
             {
                 "lua_id": lua_id,
@@ -496,7 +496,7 @@ def _lua_candidates(path: str, sha256: str, text: str) -> list[dict[str, Any]]:
         lua_id, target = match.groups()
         if target in _LUA_RESERVED:
             continue
-        line, column = _position(text, match.start(1))
+        line, column = source_position(text, match.start(1))
         candidates.append(
             {
                 "lua_id": lua_id,
@@ -619,7 +619,7 @@ def analyze_player_weapon_ids(
         if not is_player_weapon_source(path):
             continue
         sha256 = entry.get("sha256")
-        text = _read_exact_inventory_file(
+        text = read_exact_inventory_file(
             content_root,
             relative,
             expected_size=entry.get("size"),

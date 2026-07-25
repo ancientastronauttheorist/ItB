@@ -470,6 +470,15 @@ def _source_audit_category(path: str, category: str) -> bool:
     raise ProvenanceError(f"unknown source audit category: {category}")
 
 
+def source_audit_categories(path: str) -> list[str]:
+    """Return deterministic high-value provenance categories for a Lua path."""
+    return [
+        category
+        for category, _scope in SOURCE_AUDIT_CATEGORIES
+        if _source_audit_category(path, category)
+    ]
+
+
 def is_player_weapon_source(path: str) -> bool:
     """Return whether an inventory path is selected for player-weapon audit."""
     base = (

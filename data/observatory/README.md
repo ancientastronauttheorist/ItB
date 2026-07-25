@@ -71,6 +71,26 @@ python scripts/itb_provenance.py \
 The JSON output says only whether an exact source hash is indexed. It explicitly
 does not equate source indexing with implemented or verified behavior.
 
+Audit active top-level Lua callback declarations against exact provenance
+symbols:
+
+```text
+python scripts/itb_callback_coverage.py \
+  data/observatory/mechanics_provenance.json \
+  data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json \
+  "B:\SteamLibrary\steamapps\common\Into the Breach"
+```
+
+The callback audit hash-verifies every selected installed Lua file, masks
+comments and strings, excludes nested and local functions, and joins exact
+`path + hash + symbol` triples to the validated provenance index. A callback
+reported as indexed is only named by a record; the report deliberately makes
+no claim about runtime reachability, inheritance, Rust equivalence, test
+adequacy, native helpers, or behavioral conformance.
+Mission-environment files can belong to both categories, so category callback
+totals intentionally overlap. The report distinguishes callback definition
+instances from unique `path + symbol` pairs.
+
 Build a lexical player-weapon Lua-to-Rust ID index from the exact inventoried
 files:
 
