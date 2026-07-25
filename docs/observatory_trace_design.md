@@ -3,15 +3,17 @@
 ## Status and safety boundary
 
 This document defines a trace evidence contract and its dormant Lua runtime.
-The reusable Python codec and immutable offline store are implemented in
-`src/observatory/trace_codec.py` and `src/observatory/trace_store.py`. The
+The reusable Python codec, strict raw finalizer, and immutable offline store
+are implemented in `src/observatory/trace_codec.py`,
+`src/observatory/raw_trace.py`, and `src/observatory/trace_store.py`. The
 source-only runtime is implemented in `src/bridge/observatory_trace.lua`.
 Loading it performs no file I/O, polling, arming, or hook installation. It
 requires an exact short-lived manifest, a separate one-shot activation nonce,
 an exact trusted policy and full hook plan, a trusted live identity/clock
 provider, and an explicit call for each independently proven non-yielding hook.
-`scripts/itb_trace.py validate|summary` requires a trusted content inventory
-and the exact expected capture identity; structural validation alone is not
+`scripts/itb_trace.py build-arm|finalize-raw|validate|summary` requires the
+appropriate trusted content inventory, capture identity, exact artifact
+hashes, and external evidence digests; structural validation alone is not
 treated as authoritative.
 
 No trace hook is connected to Mod Loader or installed into the game by this
@@ -166,10 +168,13 @@ trusting configuration from the input.
 ## Side-band persistence
 
 A deployed Lua integration must write untrusted bounded raw checkpoints
-separate from state/command/ACK. Offline Python validation/canonicalization then
-publishes an immutable final bundle:
+separate from state/command/ACK. The controller first consumes an immutable,
+content-addressed arm packet. Offline Python validation/canonicalization then
+requires the externally recorded arm and raw SHA-256 values and publishes an
+immutable final bundle:
 
 ```text
+itb_observatory_arm_<capture_id>_<checkpoint_seq>_<sha256>.json
 itb_observatory_trace_<capture_id>_<checkpoint_seq>.raw
 itb_observatory_trace_<capture_id>_<checkpoint_seq>.raw.tmp
 itb_observatory_trace_<capture_id>_<checkpoint_seq>_<sha256>.json
@@ -185,6 +190,17 @@ checkpoint, and externally trusted content SHA-256 (never guess "latest"), cap
 bytes before parsing, use strict UTF-8, reject symlinks and nested paths, and
 verify the opened file descriptor and directory entry remained the same and
 stable across the bounded read.
+
+The arm packet carries the authoritative build identity, checkpoint sequence,
+exact manifest, trusted digests, policy, and hook plan. Its digest remains
+external rather than being embedded circularly. The raw checkpoint repeats the
+checkpoint sequence and records the actual successful activation time as
+`started_epoch`. Finalization rederives the packet, compares raw configuration
+and coverage exactly, recomputes canonical event bytes, and rejects any hook
+restore conflict, filtered event, or nonempty runtime stop reason. A stopped
+capture is bounded diagnostic output, not authoritative evidence, because the
+schema-v2 summary cannot preserve every runtime-stop semantic without making a
+complete capture look truncated or vice versa.
 
 Final publication is create-only, content-addressed, fsynced, and made
 read-only; it never replaces prior evidence. The filename digest and trusted
@@ -202,6 +218,28 @@ inconsistent summary fail validation.
 Example offline validation:
 
 ```bash
+python scripts/itb_trace.py build-arm \
+  --inventory INVENTORY.json \
+  --capture-identity CAPTURE_IDENTITY.json \
+  --controller-artifact CONTROLLER_BUNDLE \
+  --installed-modloader DEPLOYED_MODLOADER.lua \
+  --config TRACE_CONFIG.json \
+  --hook-plan HOOK_PLAN.json \
+  --max-attempts 512 \
+  --checkpoint-seq 0 \
+  --output-root ARM_DIRECTORY
+python scripts/itb_trace.py finalize-raw RAW_DIRECTORY/itb_observatory_trace_CAPTURE_0.raw \
+  --inventory INVENTORY.json \
+  --capture-identity CAPTURE_IDENTITY.json \
+  --controller-artifact CONTROLLER_BUNDLE \
+  --installed-modloader DEPLOYED_MODLOADER.lua \
+  --arm ARM_DIRECTORY/itb_observatory_arm_CAPTURE_0_SHA.json \
+  --arm-root ARM_DIRECTORY \
+  --arm-sha256 TRUSTED_ARM_SHA256 \
+  --raw-root RAW_DIRECTORY \
+  --raw-sha256 TRUSTED_RAW_SHA256 \
+  --checkpoint-seq 0 \
+  --output-root FINAL_DIRECTORY
 python scripts/itb_trace.py validate TRACE.json \
   --inventory INVENTORY.json \
   --capture-identity CAPTURE_IDENTITY.json \

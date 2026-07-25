@@ -51,6 +51,7 @@ local KNOWN_KIND_ORDER = {
 local MANIFEST_FIELDS = {
     schema_version = true,
     capture_id = true,
+    checkpoint_seq = true,
     arm_nonce = true,
     controller_version = true,
     controller_sha256 = true,
@@ -538,6 +539,7 @@ local function validate_manifest(manifest, trusted, policy, runtime)
     if not runtime_ok then return false, runtime_error end
     if manifest.schema_version ~= 1
         or not capture_id(manifest.capture_id)
+        or not nonnegative_integer(manifest.checkpoint_seq)
         or not arm_nonce(manifest.arm_nonce)
         or not bounded_text(manifest.controller_version, 128)
         or not lower_sha256(manifest.controller_sha256)
@@ -710,6 +712,7 @@ function M.new(options)
     self.prepare_consumed = false
     self.checkpointed = false
     self.manifest = nil
+    self.started_epoch = nil
     self.enabled = false
     self.in_trace = false
     self.events = {}
@@ -790,6 +793,7 @@ function Runtime:activate(nonce)
     end
     self.used_nonces[nonce] = true
     self.manifest = copied_or_error
+    self.started_epoch = runtime.now_epoch
     self.enabled = true
     return true
 end
@@ -1084,6 +1088,7 @@ function Runtime:checkpoint(reason)
         raw_schema_version = 1,
         runtime_version = M.VERSION,
         capture_id = manifest.capture_id,
+        checkpoint_seq = manifest.checkpoint_seq,
         arm_nonce = manifest.arm_nonce,
         controller_version = manifest.controller_version,
         controller_sha256 = manifest.controller_sha256,
@@ -1111,6 +1116,7 @@ function Runtime:checkpoint(reason)
         hook_coverage = self.hook_coverage,
         activated_epoch = manifest.activated_epoch,
         expires_epoch = manifest.expires_epoch,
+        started_epoch = self.started_epoch,
         completed_epoch = runtime.now_epoch,
         checkpoint_reason = reason,
         attempted_calls = self.attempted_calls,

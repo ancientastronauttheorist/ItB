@@ -21,6 +21,7 @@ from src.observatory.trace_codec import (
     parse_trace,
     validate_build_identity,
 )
+from src.observatory.raw_trace import arm_packet_sha256
 
 
 FINAL_TRACE_RE = re.compile(
@@ -28,6 +29,17 @@ FINAL_TRACE_RE = re.compile(
     r"(?P<capture_id>[a-z0-9][a-z0-9._-]{0,127})_"
     r"(?P<checkpoint_seq>0|[1-9][0-9]*)_"
     r"(?P<sha256>[0-9a-f]{64})\.json$"
+)
+ARM_PACKET_RE = re.compile(
+    r"^itb_observatory_arm_"
+    r"(?P<capture_id>[a-z0-9][a-z0-9._-]{0,127})_"
+    r"(?P<checkpoint_seq>0|[1-9][0-9]*)_"
+    r"(?P<sha256>[0-9a-f]{64})\.json$"
+)
+RAW_CHECKPOINT_RE = re.compile(
+    r"^itb_observatory_trace_"
+    r"(?P<capture_id>[a-z0-9][a-z0-9._-]{0,127})_"
+    r"(?P<checkpoint_seq>0|[1-9][0-9]*)\.raw$"
 )
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
@@ -183,6 +195,26 @@ def final_trace_filename(
     return candidate
 
 
+def arm_packet_filename(
+    capture_id: str,
+    checkpoint_seq: int,
+    sha256: str,
+) -> str:
+    candidate = (
+        f"itb_observatory_arm_{capture_id}_{checkpoint_seq}_{sha256}.json"
+    )
+    match = ARM_PACKET_RE.fullmatch(candidate)
+    if (
+        match is None
+        or type(checkpoint_seq) is not int
+        or int(match.group("checkpoint_seq")) != checkpoint_seq
+        or type(sha256) is not str
+        or match.group("sha256") != sha256
+    ):
+        raise TraceStoreError("invalid arm packet identity")
+    return candidate
+
+
 def _root(root: Path | None) -> Path:
     selected = (
         get_artifact_path("observatory", "traces")
@@ -268,6 +300,122 @@ def _stable_read_bytes(path: Path, max_bytes: int) -> bytes:
         return raw
     finally:
         os.close(descriptor)
+
+
+def stable_file_sha256(
+    path: Path,
+    *,
+    max_bytes: int = HARD_MAX_BUNDLE_BYTES,
+) -> str:
+    """Hash one stable regular non-symlink file within an explicit byte cap."""
+    return hashlib.sha256(_stable_read_bytes(Path(path), max_bytes)).hexdigest()
+
+
+def _strict_json_object(raw: bytes, label: str) -> dict[str, Any]:
+    try:
+        value = json.loads(
+            raw.decode("utf-8", errors="strict"),
+            object_pairs_hook=_object_without_duplicates,
+            parse_constant=_reject_json_constant,
+        )
+    except (
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+        _DuplicateKeyError,
+        ValueError,
+    ) as exc:
+        raise TraceStoreError(f"invalid {label} JSON: {exc}") from exc
+    if not isinstance(value, dict):
+        raise TraceStoreError(f"{label} must be a JSON object")
+    return value
+
+
+def _direct_named_path(
+    path: Path,
+    root: Path,
+    pattern: re.Pattern[str],
+    label: str,
+) -> re.Match[str]:
+    absolute = Path(os.path.abspath(path.expanduser()))
+    if absolute.parent != root:
+        raise TraceStoreError(f"{label} must be a direct child of its root")
+    match = pattern.fullmatch(absolute.name)
+    if match is None:
+        raise TraceStoreError(f"invalid {label} filename")
+    return match
+
+
+def read_arm_packet(
+    path: Path,
+    *,
+    expected_capture_id: str,
+    expected_checkpoint_seq: int,
+    expected_arm_sha256: str,
+    root: Path,
+) -> dict[str, Any]:
+    """Read one exact immutable, content-addressed arm packet."""
+    packet_root = _root(root)
+    match = _direct_named_path(
+        path, packet_root, ARM_PACKET_RE, "arm packet"
+    )
+    if (
+        type(expected_arm_sha256) is not str
+        or not _SHA256_RE.fullmatch(expected_arm_sha256)
+    ):
+        raise TraceStoreError("expected arm digest must be lowercase SHA-256")
+    if (
+        match.group("capture_id") != expected_capture_id
+        or int(match.group("checkpoint_seq")) != expected_checkpoint_seq
+        or match.group("sha256") != expected_arm_sha256
+    ):
+        raise TraceStoreError("arm packet filename identity mismatch")
+    raw = _stable_read_bytes(Path(path), HARD_MAX_BUNDLE_BYTES)
+    if hashlib.sha256(raw).hexdigest() != expected_arm_sha256:
+        raise TraceStoreError("arm packet content digest mismatch")
+    packet = _strict_json_object(raw, "arm packet")
+    try:
+        canonical_digest = arm_packet_sha256(packet)
+    except Exception as exc:
+        raise TraceStoreError(f"invalid arm packet: {exc}") from exc
+    if canonical_digest != expected_arm_sha256:
+        raise TraceStoreError("arm packet is not canonical")
+    return packet
+
+
+def read_raw_checkpoint(
+    path: Path,
+    *,
+    expected_capture_id: str,
+    expected_checkpoint_seq: int,
+    expected_raw_sha256: str,
+    root: Path,
+    max_bytes: int,
+) -> dict[str, Any]:
+    """Read one exact raw Lua checkpoint without guessing a latest file."""
+    raw_root = _root(root)
+    match = _direct_named_path(
+        path, raw_root, RAW_CHECKPOINT_RE, "raw checkpoint"
+    )
+    if (
+        type(expected_raw_sha256) is not str
+        or not _SHA256_RE.fullmatch(expected_raw_sha256)
+    ):
+        raise TraceStoreError("expected raw digest must be lowercase SHA-256")
+    if (
+        match.group("capture_id") != expected_capture_id
+        or int(match.group("checkpoint_seq")) != expected_checkpoint_seq
+    ):
+        raise TraceStoreError("raw checkpoint filename identity mismatch")
+    if (
+        type(max_bytes) is not int
+        or max_bytes < 1
+        or max_bytes > HARD_MAX_BUNDLE_BYTES
+    ):
+        raise TraceStoreError("invalid raw checkpoint byte limit")
+    raw = _stable_read_bytes(Path(path), max_bytes)
+    if hashlib.sha256(raw).hexdigest() != expected_raw_sha256:
+        raise TraceStoreError("raw checkpoint content digest mismatch")
+    return _strict_json_object(raw, "raw checkpoint")
 
 
 def read_final_trace(
@@ -402,6 +550,105 @@ def _remove_new_file(path: Path) -> None:
         except OSError:
             raise chmod_exc
     path.unlink()
+
+
+def _publish_create_only(
+    content: bytes,
+    final_path: Path,
+    *,
+    max_bytes: int,
+) -> None:
+    temp_name = (
+        f".{final_path.name}.{os.getpid()}."
+        f"{secrets.token_hex(8)}.publishing"
+    )
+    temp_path = final_path.parent / temp_name
+    published = False
+    try:
+        with temp_path.open("xb") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temp_path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        if os.name == "nt":
+            os.rename(temp_path, final_path)
+            published = True
+        else:
+            os.link(temp_path, final_path)
+            published = True
+            temp_path.unlink()
+        _fsync_directory(final_path.parent)
+        if _stable_read_bytes(final_path, max_bytes) != content:
+            raise TraceStoreError("published content changed before verification")
+    except FileExistsError as exc:
+        raise TraceStoreError("immutable output already exists") from exc
+    except TraceStoreError:
+        if published:
+            try:
+                _remove_new_file(final_path)
+            except OSError as cleanup_exc:
+                raise TraceStoreError(
+                    "publication failed and final cleanup was unsuccessful: "
+                    f"{cleanup_exc}"
+                )
+        raise
+    except OSError as exc:
+        if published:
+            try:
+                _remove_new_file(final_path)
+            except OSError as cleanup_exc:
+                raise TraceStoreError(
+                    "publication failed and final cleanup was unsuccessful: "
+                    f"{cleanup_exc}"
+                ) from exc
+        raise TraceStoreError(f"cannot publish immutable output: {exc}") from exc
+    finally:
+        try:
+            _remove_new_file(temp_path)
+        except FileNotFoundError:
+            pass
+
+
+def write_arm_packet(
+    packet: Mapping[str, Any],
+    *,
+    root: Path,
+) -> Path:
+    """Publish one canonical arm packet immutably and content-address it."""
+    try:
+        rendered = (
+            json.dumps(
+                packet,
+                ensure_ascii=False,
+                allow_nan=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            + "\n"
+        )
+        digest = arm_packet_sha256(packet)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TraceStoreError(f"cannot publish invalid arm packet: {exc}") from exc
+    rendered_bytes = rendered.encode("utf-8")
+    if len(rendered_bytes) > HARD_MAX_BUNDLE_BYTES:
+        raise TraceStoreError("arm packet exceeds hard size limit")
+    manifest = _mapping(packet.get("manifest"), "arm packet manifest")
+    capture_id = manifest.get("capture_id")
+    checkpoint_seq = manifest.get("checkpoint_seq")
+    packet_root = _root(root)
+    try:
+        packet_root.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise TraceStoreError(f"cannot create arm packet root: {exc}") from exc
+    final_path = packet_root / arm_packet_filename(
+        capture_id, checkpoint_seq, digest
+    )
+    _publish_create_only(
+        rendered_bytes,
+        final_path,
+        max_bytes=HARD_MAX_BUNDLE_BYTES,
+    )
+    return final_path
 
 
 def write_final_trace(

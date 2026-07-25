@@ -113,6 +113,7 @@ function arm_manifest(policy, overrides)
     local value = {
         schema_version = 1,
         capture_id = "capture-001",
+        checkpoint_seq = 0,
         arm_nonce = string.rep("f", 32),
         controller_version = "test-controller/1",
         controller_sha256 = sha("a"),
@@ -799,6 +800,8 @@ def test_checkpoint_contains_bound_policy_coverage_and_reconciles(lua):
         assert(bindings["random_int.default"].holder.f(3) == 3)
         local snapshot = assert(runtime:checkpoint("explicit"))
         assert(snapshot.capture_id == manifest.capture_id)
+        assert(snapshot.checkpoint_seq == manifest.checkpoint_seq)
+        assert(snapshot.started_epoch == 1001)
         assert(snapshot.master_seed == -17)
         assert(snapshot.config.max_events == manifest.max_events)
         assert(snapshot.hook_coverage[7].target == "_G.random_int")

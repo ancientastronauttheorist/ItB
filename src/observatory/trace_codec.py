@@ -335,6 +335,14 @@ def validate_build_identity(identity: Any) -> dict[str, Any]:
     return _validate_build_identity(identity)
 
 
+def build_identity_sha256(identity: Any) -> str:
+    """Return the canonical digest used to bind a trace to one game build."""
+    validated = _validate_build_identity(identity)
+    return hashlib.sha256(
+        _canonical_line(validated).encode("utf-8")
+    ).hexdigest()
+
+
 def _validate_utc(value: Any, label: str) -> datetime:
     if type(value) is not str or not _UTC_RE.fullmatch(value):
         raise TraceCodecError(f"{label} must be an ISO-8601 UTC timestamp")
@@ -428,6 +436,11 @@ def _validate_capture_identity(identity: Any) -> dict[str, Any]:
             "capture_identity window exceeds the maximum duration"
         )
     return _json_copy(result)
+
+
+def validate_capture_identity(identity: Any) -> dict[str, Any]:
+    """Return a validated, detached capture identity."""
+    return _validate_capture_identity(identity)
 
 
 def _validate_checkpoint(
@@ -558,6 +571,11 @@ def hook_coverage_sha256(coverage: Any) -> str:
     return hashlib.sha256(
         _canonical_line(validated).encode("utf-8")
     ).hexdigest()
+
+
+def validate_hook_coverage(coverage: Any) -> list[dict[str, Any]]:
+    """Return validated, detached, canonically ordered hook coverage."""
+    return _validate_hook_coverage(coverage)
 
 
 def _coordinate(value: Any, label: str) -> None:
@@ -1093,6 +1111,11 @@ def _parse_config(config: Any) -> TraceConfig:
         )
     except (TypeError, ValueError) as exc:
         raise TraceCodecError(f"invalid trace config: {exc}") from exc
+
+
+def validate_trace_config(config: Any) -> TraceConfig:
+    """Return a validated trace configuration from its JSON representation."""
+    return _parse_config(config)
 
 
 def parse_trace(text: str) -> dict[str, Any]:
