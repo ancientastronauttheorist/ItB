@@ -3,8 +3,12 @@
 ## Status and safety boundary
 
 This document defines a trace evidence contract and the smallest future Lua
-integration. The reusable Python codec is implemented in
-`src/observatory/trace_codec.py`; it has no dependency on the live bridge.
+integration. The reusable Python codec and immutable offline store are
+implemented in `src/observatory/trace_codec.py` and
+`src/observatory/trace_store.py`. Neither installs or activates a game hook.
+`scripts/itb_trace.py validate|summary` requires a trusted content inventory
+and the exact expected capture identity; structural validation alone is not
+treated as authoritative.
 
 No trace hook is installed by this work. `src/bridge/modloader.lua`, the
 installed game, the game process, and the active achievement session remain
@@ -15,9 +19,12 @@ untouched. Deployment requires a separately reviewed safe window.
 The trace must answer narrow fidelity questions without becoming part of game
 behavior. Initial event families are:
 
-- `random_int` and `random_bool`: raw arguments, result, call-site tag,
-  sequence. The `random_bool` argument is deliberately named `argument`; calls
-  such as `random_bool(5)` do not establish percentage semantics.
+- `random_int` and `random_bool`: raw arguments, result, real call-site tag,
+  accepted-event sequence, and separate attempted `call_order`. Gaps in
+  `call_order` are expected when an observation is filtered or dropped, but
+  accepted RNG events must retain increasing attempted order. The
+  `random_bool` argument is deliberately named `argument`; calls such as
+  `random_bool(5)` do not establish percentage semantics.
 - `enemy_candidate`: pawn, skill, origin, destination, target, enumeration
   order.
 - `enemy_target_score` and `score_positioning`: candidate identity and score.
@@ -26,13 +33,25 @@ behavior. Initial event families are:
 - `enemy_action_selected`: final pawn movement, skill, and target selected by
   the engine.
 
-Every bundle carries the build platform, architecture, executable hash,
+Every schema-v2 bundle carries the build platform, architecture, executable hash,
 numeric build/depot identity plus its evidence source, and scripts/maps
 revisions. Hashes are lowercase SHA-256 values. The architecture vocabulary
 matches the inventory schema, including ARMv7 and a canonical list of slices
 for universal Mach-O builds. Unknown architecture is explicit rather than
 guessed; unavailable build evidence requires null build/manifest fields.
-Evidence from different identities must not be pooled silently.
+Evidence from different identities must not be pooled silently. Authoritative
+loading rejects `build_evidence: unavailable` and requires a type-exact match
+with the trusted inventory-derived identity.
+
+Each bundle also carries a one-shot capture identity: capture ID and arm nonce,
+controller version/hash, installed Mod Loader hash, expected mission/turn,
+timeline and AI-seed fingerprints, master seed, region, and a short UTC
+activation/expiry window capped at 15 minutes. It also binds the expected phase
+and SHA-256 digests of both the exact cap/phase configuration and canonical
+hook-coverage manifest. The checkpoint repeats the mission/turn, fixes the
+phase, records attempted calls for every event family, and has bounded
+start/completion timestamps. Accepted events must match that identity and
+checkpoint exactly.
 
 Payloads are event-specific rather than arbitrary JSON. RNG results are checked
 against their declared bounds; candidates and actions require pawn, skill,
@@ -83,6 +102,7 @@ enforces:
 - actual UTF-8 bytes in the persisted, pretty-printed bundle;
 - a fixed event-kind allowlist;
 - contiguous accepted-event sequence numbers;
+- bounded-width observation counters with explicit saturation/truncation;
 - truncation and dropped/error counters.
 
 Caps are checked before lazy payload construction wherever possible. Disabled,
@@ -93,34 +113,72 @@ trusting configuration from the input.
 
 ## Side-band persistence
 
-A future Lua implementation should use files separate from state/command/ACK:
+A future Lua implementation must write untrusted bounded raw checkpoints
+separate from state/command/ACK. Offline Python validation/canonicalization then
+publishes an immutable final bundle:
 
 ```text
-itb_observatory_trace.json
-itb_observatory_trace.json.tmp
+itb_observatory_trace_<capture_id>_<checkpoint_seq>.raw
+itb_observatory_trace_<capture_id>_<checkpoint_seq>.raw.tmp
+itb_observatory_trace_<capture_id>_<checkpoint_seq>_<sha256>.json
 ```
 
 Buffer events in memory and flush a bounded bundle atomically at a controlled
-turn boundary or explicit experiment checkpoint. Do not append synchronously
-on each RNG or scoring call. Readers must select only a complete valid bundle
-and tolerate a partial/malformed temp candidate without writing back.
+turn boundary or explicit experiment checkpoint. Do not append synchronously on
+each RNG or scoring call. Raw game output belongs in the isolated bridge
+directory; finalized offline evidence defaults under the configured artifact
+root at `observatory/traces`, never beside live state/CMD/ACK files. Final
+readers ignore raw/temp/publishing candidates, require the exact capture,
+checkpoint, and externally trusted content SHA-256 (never guess "latest"), cap
+bytes before parsing, use strict UTF-8, reject symlinks and nested paths, and
+verify the opened file descriptor and directory entry remained the same and
+stable across the bounded read.
 
-The build identity and cap configuration are part of the bundle. Duplicate JSON
-keys, unknown object fields, malformed event payloads, missing identity,
-non-contiguous sequence, out-of-policy phase, cap violation, or inconsistent
-summary fail validation.
+Final publication is create-only, content-addressed, fsynced, and made
+read-only; it never replaces prior evidence. The filename digest and trusted
+digest are both checked against the bytes, so later in-place mutation fails
+closed.
+
+The build identity, capture identity, exact hook-coverage manifest, checkpoint,
+and cap configuration are part of the bundle. Every event family must have a
+coverage entry marked `installed`, `unavailable`, or `disabled`; absence cannot
+be mistaken for a negative result. Duplicate JSON keys, unknown object fields,
+malformed event payloads, missing identity, non-contiguous sequence,
+out-of-policy phase, cap violation, inconsistent attempted-call counts, or an
+inconsistent summary fail validation.
+
+Example offline validation:
+
+```bash
+python scripts/itb_trace.py validate TRACE.json \
+  --inventory INVENTORY.json \
+  --capture-identity CAPTURE_IDENTITY.json \
+  --trace-sha256 TRUSTED_FINAL_SHA256
+python scripts/itb_trace.py summary TRACE.json \
+  --inventory INVENTORY.json \
+  --capture-identity CAPTURE_IDENTITY.json \
+  --trace-sha256 TRUSTED_FINAL_SHA256
+```
 
 ## Hooking sequence
 
 Before any Lua change:
 
-1. Inventory the exact clean game and active Mod Loader/bridge files.
+1. Inventory the exact clean game and active Mod Loader/bridge files. Reject
+   missing build evidence or any hash mismatch.
 2. Confirm there is no achievement session that a restart or timing change can
    disturb.
-3. Add one event family at a time, beginning with `random_int`/`random_bool`.
-4. Use a controlled synthetic experiment, not an achievement run.
-5. Compare enabled versus disabled outcomes and repeated identical trials.
-6. Remove or disable the hook after evidence capture.
+3. Create a separate short-lived, one-shot arm manifest bound to the exact
+   build, controller/Mod Loader hashes, mission/turn, timeline/seed
+   fingerprints, phase, exact config digest, caps, nonce, and expiry. A generic
+   bridge command must never activate tracing.
+4. Add one event family at a time, beginning with `random_int`/`random_bool`,
+   only after the exact boundary is proven non-yielding and return-preserving in
+   a Lua 5.1-compatible harness.
+5. Use a controlled synthetic experiment, not an achievement run.
+6. Compare enabled versus disabled outcomes and repeated identical trials.
+7. Finalize raw evidence offline, preserve the hook-coverage manifest, and
+   remove or disable the hook after capture.
 
 Enemy methods need extra care. Base `Skill` wrappers do not automatically
 observe every subclass override, and rebinding every table method can change

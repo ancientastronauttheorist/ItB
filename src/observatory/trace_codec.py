@@ -7,17 +7,21 @@ installing Lua hooks, writing game files, or touching an achievement session.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import re
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 HARD_MAX_BUNDLE_BYTES = 64 * 1024 * 1024
+MAX_CAPTURE_WINDOW_SECONDS = 15 * 60
+MAX_OBSERVATIONS_PER_KIND = 9_999_999
 KNOWN_PHASES = frozenset({"combat_enemy", "combat_player"})
 KNOWN_PLATFORMS = frozenset({"windows", "macos", "linux"})
 KNOWN_ARCHITECTURES = frozenset(
@@ -66,6 +70,41 @@ CONFIG_FIELDS = frozenset(
 EVENT_FIELDS = frozenset(
     {"seq", "kind", "phase", "mission_id", "turn", "context", "payload"}
 )
+CAPTURE_IDENTITY_FIELDS = frozenset(
+    {
+        "capture_id",
+        "arm_nonce",
+        "controller_version",
+        "controller_sha256",
+        "installed_modloader_sha256",
+        "expected_mission_id",
+        "expected_turn",
+        "timeline_fingerprint",
+        "master_seed",
+        "region_id",
+        "ai_seed_fingerprint",
+        "expected_phase",
+        "config_sha256",
+        "hook_coverage_sha256",
+        "activated_at_utc",
+        "expires_at_utc",
+    }
+)
+CHECKPOINT_FIELDS = frozenset(
+    {
+        "seq",
+        "reason",
+        "mission_id",
+        "turn",
+        "phase",
+        "attempted_calls",
+        "started_at_utc",
+        "completed_at_utc",
+    }
+)
+HOOK_COVERAGE_FIELDS = frozenset(
+    {"event_kind", "target", "target_kind", "status", "source_sha256"}
+)
 SUMMARY_FIELDS = frozenset(
     {
         "accepted_events",
@@ -78,7 +117,16 @@ SUMMARY_FIELDS = frozenset(
     }
 )
 TOP_LEVEL_FIELDS = frozenset(
-    {"schema_version", "build_identity", "config", "events", "summary"}
+    {
+        "schema_version",
+        "build_identity",
+        "capture_identity",
+        "checkpoint",
+        "hook_coverage",
+        "config",
+        "events",
+        "summary",
+    }
 )
 TRUNCATION_REASONS = frozenset(
     {
@@ -86,10 +134,24 @@ TRUNCATION_REASONS = frozenset(
         "max_events_per_turn",
         "max_event_bytes",
         "max_total_event_bytes",
+        "max_bundle_bytes",
+        "max_observations_per_kind",
     }
 )
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _DIGITS_RE = re.compile(r"^[0-9]+$")
+_CAPTURE_ID_RE = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{0,127})$")
+_NONCE_RE = re.compile(r"^[0-9a-f]{32,64}$")
+_UTC_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$"
+)
+CHECKPOINT_REASONS = frozenset(
+    {"turn_boundary", "mission_end", "explicit"}
+)
+HOOK_TARGET_KINDS = frozenset(
+    {"lua_global", "lua_method", "native_boundary"}
+)
+HOOK_STATUSES = frozenset({"installed", "unavailable", "disabled"})
 
 
 class TraceCodecError(RuntimeError):
@@ -163,6 +225,13 @@ def _canonical_line(value: Any) -> str:
         separators=(",", ":"),
         sort_keys=True,
     )
+
+
+def trace_config_sha256(config: TraceConfig) -> str:
+    """Return the arm-manifest digest for one exact trace policy."""
+    return hashlib.sha256(
+        _canonical_line(config.to_dict()).encode("utf-8")
+    ).hexdigest()
 
 
 def _json_copy(value: Any) -> Any:
@@ -261,6 +330,236 @@ def _validate_build_identity(identity: Any) -> dict[str, Any]:
     return _json_copy(result)
 
 
+def validate_build_identity(identity: Any) -> dict[str, Any]:
+    """Return a validated, detached build identity."""
+    return _validate_build_identity(identity)
+
+
+def _validate_utc(value: Any, label: str) -> datetime:
+    if type(value) is not str or not _UTC_RE.fullmatch(value):
+        raise TraceCodecError(f"{label} must be an ISO-8601 UTC timestamp")
+    try:
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+    except ValueError as exc:
+        raise TraceCodecError(
+            f"{label} must be an ISO-8601 UTC timestamp"
+        ) from exc
+    if parsed.tzinfo != timezone.utc:
+        raise TraceCodecError(f"{label} must use UTC")
+    return parsed
+
+
+def _validate_capture_identity(identity: Any) -> dict[str, Any]:
+    if not isinstance(identity, Mapping):
+        raise TraceCodecError("capture_identity must be an object")
+    _require_exact_fields(
+        identity,
+        CAPTURE_IDENTITY_FIELDS,
+        "capture_identity",
+    )
+    result = dict(identity)
+    if (
+        type(result["capture_id"]) is not str
+        or not _CAPTURE_ID_RE.fullmatch(result["capture_id"])
+    ):
+        raise TraceCodecError("invalid capture_identity.capture_id")
+    if (
+        type(result["arm_nonce"]) is not str
+        or not _NONCE_RE.fullmatch(result["arm_nonce"])
+    ):
+        raise TraceCodecError("invalid capture_identity.arm_nonce")
+    _text(
+        result["controller_version"],
+        "capture_identity.controller_version",
+    )
+    for field in (
+        "controller_sha256",
+        "installed_modloader_sha256",
+        "timeline_fingerprint",
+        "ai_seed_fingerprint",
+    ):
+        _validate_sha256(
+            result[field],
+            f"capture_identity.{field}",
+        )
+    _text(
+        result["expected_mission_id"],
+        "capture_identity.expected_mission_id",
+    )
+    _integer(
+        result["expected_turn"],
+        "capture_identity.expected_turn",
+    )
+    _integer(
+        result["master_seed"],
+        "capture_identity.master_seed",
+        minimum=None,
+    )
+    _text(result["region_id"], "capture_identity.region_id")
+    if (
+        type(result["expected_phase"]) is not str
+        or result["expected_phase"] not in KNOWN_PHASES
+    ):
+        raise TraceCodecError("invalid capture_identity.expected_phase")
+    _validate_sha256(
+        result["config_sha256"],
+        "capture_identity.config_sha256",
+    )
+    _validate_sha256(
+        result["hook_coverage_sha256"],
+        "capture_identity.hook_coverage_sha256",
+    )
+    activated = _validate_utc(
+        result["activated_at_utc"],
+        "capture_identity.activated_at_utc",
+    )
+    expires = _validate_utc(
+        result["expires_at_utc"],
+        "capture_identity.expires_at_utc",
+    )
+    if expires <= activated:
+        raise TraceCodecError(
+            "capture_identity expiry must follow activation"
+        )
+    if (
+        expires - activated
+    ).total_seconds() > MAX_CAPTURE_WINDOW_SECONDS:
+        raise TraceCodecError(
+            "capture_identity window exceeds the maximum duration"
+        )
+    return _json_copy(result)
+
+
+def _validate_checkpoint(
+    checkpoint: Any,
+    capture_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(checkpoint, Mapping):
+        raise TraceCodecError("checkpoint must be an object")
+    _require_exact_fields(checkpoint, CHECKPOINT_FIELDS, "checkpoint")
+    result = dict(checkpoint)
+    _integer(result["seq"], "checkpoint.seq")
+    if (
+        type(result["reason"]) is not str
+        or result["reason"] not in CHECKPOINT_REASONS
+    ):
+        raise TraceCodecError("invalid checkpoint.reason")
+    _text(result["mission_id"], "checkpoint.mission_id")
+    _integer(result["turn"], "checkpoint.turn")
+    if (
+        result["mission_id"] != capture_identity["expected_mission_id"]
+        or result["turn"] != capture_identity["expected_turn"]
+    ):
+        raise TraceCodecError(
+            "checkpoint mission/turn does not match capture identity"
+        )
+    if (
+        type(result["phase"]) is not str
+        or result["phase"] not in KNOWN_PHASES
+    ):
+        raise TraceCodecError("invalid checkpoint.phase")
+    if result["phase"] != capture_identity["expected_phase"]:
+        raise TraceCodecError(
+            "checkpoint phase does not match capture identity"
+        )
+    attempted = result["attempted_calls"]
+    if not isinstance(attempted, Mapping):
+        raise TraceCodecError("checkpoint.attempted_calls must be an object")
+    _require_exact_fields(
+        attempted,
+        EVENT_KINDS,
+        "checkpoint.attempted_calls",
+    )
+    for kind, count in attempted.items():
+        _integer(count, f"checkpoint.attempted_calls.{kind}")
+    started = _validate_utc(
+        result["started_at_utc"],
+        "checkpoint.started_at_utc",
+    )
+    completed = _validate_utc(
+        result["completed_at_utc"],
+        "checkpoint.completed_at_utc",
+    )
+    activated = _validate_utc(
+        capture_identity["activated_at_utc"],
+        "capture_identity.activated_at_utc",
+    )
+    expires = _validate_utc(
+        capture_identity["expires_at_utc"],
+        "capture_identity.expires_at_utc",
+    )
+    if started < activated or completed < started or completed > expires:
+        raise TraceCodecError(
+            "checkpoint timestamps fall outside the armed capture window"
+        )
+    return _json_copy(result)
+
+
+def _validate_hook_coverage(coverage: Any) -> list[dict[str, Any]]:
+    if not isinstance(coverage, list):
+        raise TraceCodecError("hook_coverage must be an array")
+    result: list[dict[str, Any]] = []
+    seen_targets: set[tuple[str, str]] = set()
+    covered_kinds: set[str] = set()
+    for index, entry in enumerate(coverage):
+        label = f"hook_coverage[{index}]"
+        if not isinstance(entry, Mapping):
+            raise TraceCodecError(f"{label} must be an object")
+        _require_exact_fields(entry, HOOK_COVERAGE_FIELDS, label)
+        normalized = dict(entry)
+        kind = normalized["event_kind"]
+        if type(kind) is not str or kind not in EVENT_KINDS:
+            raise TraceCodecError(f"invalid {label}.event_kind")
+        _text(normalized["target"], f"{label}.target")
+        target_kind = normalized["target_kind"]
+        if (
+            type(target_kind) is not str
+            or target_kind not in HOOK_TARGET_KINDS
+        ):
+            raise TraceCodecError(f"invalid {label}.target_kind")
+        status = normalized["status"]
+        if type(status) is not str or status not in HOOK_STATUSES:
+            raise TraceCodecError(f"invalid {label}.status")
+        source_hash = normalized["source_sha256"]
+        if source_hash is not None:
+            _validate_sha256(source_hash, f"{label}.source_sha256")
+        if status == "installed" and source_hash is None:
+            raise TraceCodecError(
+                f"{label}.source_sha256 is required when installed"
+            )
+        if status == "unavailable" and source_hash is not None:
+            raise TraceCodecError(
+                f"{label}.source_sha256 must be null when unavailable"
+            )
+        target_key = (kind, normalized["target"])
+        if target_key in seen_targets:
+            raise TraceCodecError(f"duplicate hook coverage target: {target_key}")
+        seen_targets.add(target_key)
+        covered_kinds.add(kind)
+        result.append(normalized)
+    expected_order = sorted(
+        result,
+        key=lambda item: (item["event_kind"], item["target"]),
+    )
+    if result != expected_order:
+        raise TraceCodecError("hook_coverage must use canonical order")
+    missing = EVENT_KINDS - covered_kinds
+    if missing:
+        raise TraceCodecError(
+            "hook_coverage missing event kinds: "
+            + ", ".join(sorted(missing))
+        )
+    return _json_copy(result)
+
+
+def hook_coverage_sha256(coverage: Any) -> str:
+    """Return the arm-manifest digest for canonical hook coverage."""
+    validated = _validate_hook_coverage(coverage)
+    return hashlib.sha256(
+        _canonical_line(validated).encode("utf-8")
+    ).hexdigest()
+
+
 def _coordinate(value: Any, label: str) -> None:
     if (
         not isinstance(value, list)
@@ -270,9 +569,21 @@ def _coordinate(value: Any, label: str) -> None:
         raise TraceCodecError(f"{label} must be an [x, y] board coordinate")
 
 
-def _integer(value: Any, label: str, *, minimum: int = 0) -> None:
-    if type(value) is not int or value < minimum:
-        raise TraceCodecError(f"{label} must be an integer >= {minimum}")
+def _integer(
+    value: Any,
+    label: str,
+    *,
+    minimum: int | None = 0,
+) -> None:
+    if type(value) is not int or (
+        minimum is not None and value < minimum
+    ):
+        suffix = (
+            "an integer"
+            if minimum is None
+            else f"an integer >= {minimum}"
+        )
+        raise TraceCodecError(f"{label} must be {suffix}")
 
 
 def _number(value: Any, label: str) -> None:
@@ -304,8 +615,9 @@ def _validate_payload(kind: str, payload: Any) -> None:
         raise TraceCodecError("payload must be an object")
     label = f"{kind} payload"
     if kind == "random_int":
-        fields = frozenset({"upper_bound", "result"})
+        fields = frozenset({"call_order", "upper_bound", "result"})
         _require_exact_fields(payload, fields, label)
+        _integer(payload["call_order"], f"{label}.call_order")
         _integer(payload["upper_bound"], f"{label}.upper_bound", minimum=1)
         _integer(payload["result"], f"{label}.result")
         if payload["result"] >= payload["upper_bound"]:
@@ -313,8 +625,9 @@ def _validate_payload(kind: str, payload: Any) -> None:
                 f"{label}.result must be below upper_bound"
             )
     elif kind == "random_bool":
-        fields = frozenset({"argument", "result"})
+        fields = frozenset({"call_order", "argument", "result"})
         _require_exact_fields(payload, fields, label)
+        _integer(payload["call_order"], f"{label}.call_order")
         _integer(payload["argument"], f"{label}.argument", minimum=1)
         if type(payload["result"]) is not bool:
             raise TraceCodecError(f"{label}.result must be boolean")
@@ -421,7 +734,7 @@ def _validate_payload(kind: str, payload: Any) -> None:
         raise TraceCodecError(f"unknown event kind: {kind!r}")
 
 
-def _validate_context(context: Any) -> None:
+def _validate_context(kind: str, context: Any) -> None:
     if not isinstance(context, Mapping):
         raise TraceCodecError("context must be an object")
     allowed = frozenset({"call_site", "source"})
@@ -432,6 +745,8 @@ def _validate_context(context: Any) -> None:
         )
     for key, value in context.items():
         _text(value, f"context.{key}")
+    if kind in {"random_int", "random_bool"} and "call_site" not in context:
+        raise TraceCodecError("RNG context requires call_site")
 
 
 class TraceBuffer:
@@ -446,9 +761,69 @@ class TraceBuffer:
         self,
         build_identity: Mapping[str, Any],
         config: TraceConfig | None = None,
+        *,
+        capture_identity: Mapping[str, Any],
+        checkpoint: Mapping[str, Any],
+        hook_coverage: Sequence[Mapping[str, Any]],
     ) -> None:
         self.build_identity = _validate_build_identity(build_identity)
+        self.capture_identity = _validate_capture_identity(capture_identity)
+        self.checkpoint = _validate_checkpoint(
+            checkpoint,
+            self.capture_identity,
+        )
+        self.hook_coverage = _validate_hook_coverage(list(hook_coverage))
         self.config = config or TraceConfig()
+        if (
+            self.capture_identity["config_sha256"]
+            != trace_config_sha256(self.config)
+        ):
+            raise ValueError(
+                "trace config does not match armed capture identity"
+            )
+        if (
+            self.capture_identity["hook_coverage_sha256"]
+            != hook_coverage_sha256(self.hook_coverage)
+        ):
+            raise ValueError(
+                "hook coverage does not match armed capture identity"
+            )
+        if (
+            self.capture_identity["expected_phase"]
+            != self.checkpoint["phase"]
+        ):
+            raise ValueError(
+                "checkpoint phase does not match armed capture identity"
+            )
+        if self.checkpoint["phase"] not in self.config.allowed_phases:
+            raise ValueError(
+                "checkpoint phase must be included in allowed_phases"
+            )
+        installed_kinds = {
+            entry["event_kind"]
+            for entry in self.hook_coverage
+            if entry["status"] == "installed"
+        }
+        self._installed_targets = {
+            kind: {
+                entry["target"]
+                for entry in self.hook_coverage
+                if entry["event_kind"] == kind
+                and entry["status"] == "installed"
+            }
+            for kind in EVENT_KINDS
+        }
+        if any(self.checkpoint["attempted_calls"].values()):
+            raise ValueError(
+                "new trace buffer requires zero attempted calls"
+            )
+        if not self.config.enabled:
+            if installed_kinds:
+                raise ValueError(
+                    "disabled trace cannot report installed hooks"
+                )
+        self._installed_kinds = installed_kinds
+        self._attempted_calls: Counter[str] = Counter()
         self.events: list[dict[str, Any]] = []
         self._turn_counts: Counter[tuple[str, int]] = Counter()
         self._event_bytes = 0
@@ -456,10 +831,58 @@ class TraceBuffer:
         self._filtered = 0
         self._serialization_errors = 0
         self._truncation_reasons: Counter[str] = Counter()
+        self._sealed = False
+        self._counter_reserve_bytes = 0
+        empty_bundle_bytes = len(
+            _render_trace(self.to_dict()).encode("utf-8")
+        )
+        if empty_bundle_bytes > self.config.max_bundle_bytes:
+            raise ValueError(
+                "max_bundle_bytes cannot fit the empty trace envelope"
+            )
+        if self.config.enabled and installed_kinds:
+            reserved = self.to_dict()
+            for kind in installed_kinds:
+                reserved["checkpoint"]["attempted_calls"][kind] = (
+                    MAX_OBSERVATIONS_PER_KIND
+                )
+            max_outcomes = (
+                len(installed_kinds) * MAX_OBSERVATIONS_PER_KIND
+            )
+            reserved["summary"].update(
+                accepted_events=self.config.max_events,
+                event_bytes=self.config.max_total_event_bytes,
+                dropped_events=max_outcomes,
+                filtered_events=max_outcomes,
+                serialization_errors=max_outcomes,
+                truncated=True,
+                truncation_reasons={
+                    reason: max_outcomes
+                    for reason in sorted(TRUNCATION_REASONS)
+                },
+            )
+            reserved_bytes = len(
+                _render_trace(reserved).encode("utf-8")
+            )
+            if reserved_bytes > self.config.max_bundle_bytes:
+                raise ValueError(
+                    "max_bundle_bytes cannot fit the counter reserve envelope"
+                )
+            self._counter_reserve_bytes = (
+                reserved_bytes - empty_bundle_bytes
+            )
 
     def _drop(self, reason: str) -> bool:
         self._dropped += 1
         self._truncation_reasons[reason] += 1
+        if reason in {
+            "max_events",
+            "max_events_per_turn",
+            "max_total_event_bytes",
+            "max_bundle_bytes",
+            "max_observations_per_kind",
+        }:
+            self._sealed = True
         return False
 
     def record_lazy(
@@ -475,20 +898,37 @@ class TraceBuffer:
         """Record one event, invoking ``payload_factory`` only when eligible."""
         if not self.config.enabled:
             return False
+        if self._sealed:
+            return False
+        if type(kind) is not str or kind not in EVENT_KINDS:
+            return False
+        if kind not in self._installed_kinds:
+            return False
+        if (
+            self._attempted_calls[kind]
+            >= MAX_OBSERVATIONS_PER_KIND - 1
+        ):
+            self._attempted_calls[kind] += 1
+            return self._drop("max_observations_per_kind")
+        self._attempted_calls[kind] += 1
         if type(phase) is not str or phase not in KNOWN_PHASES:
             self._serialization_errors += 1
             return False
         if phase not in self.config.allowed_phases:
             self._filtered += 1
             return False
-        if type(kind) is not str or kind not in EVENT_KINDS:
-            self._serialization_errors += 1
-            return False
         if (
             type(mission_id) is not str
             or not mission_id
             or type(turn) is not int
             or turn < 0
+        ):
+            self._serialization_errors += 1
+            return False
+        if (
+            mission_id != self.capture_identity["expected_mission_id"]
+            or turn != self.capture_identity["expected_turn"]
+            or phase != self.checkpoint["phase"]
         ):
             self._serialization_errors += 1
             return False
@@ -504,7 +944,15 @@ class TraceBuffer:
         try:
             payload = payload_factory()
             normalized_context = {} if context is None else context
-            _validate_context(normalized_context)
+            _validate_context(kind, normalized_context)
+            if (
+                kind in {"random_int", "random_bool"}
+                and normalized_context["call_site"]
+                not in self._installed_targets[kind]
+            ):
+                raise TraceCodecError(
+                    "RNG call_site is absent from installed hook coverage"
+                )
             _validate_payload(kind, payload)
             event = {
                 "seq": len(self.events),
@@ -525,8 +973,19 @@ class TraceBuffer:
             return self._drop("max_event_bytes")
         if self._event_bytes + byte_count > self.config.max_total_event_bytes:
             return self._drop("max_total_event_bytes")
+        normalized_event = json.loads(rendered)
+        projected = self.to_dict()
+        projected["events"].append(normalized_event)
+        projected["summary"]["accepted_events"] += 1
+        projected["summary"]["event_bytes"] += byte_count
+        if (
+            len(_render_trace(projected).encode("utf-8"))
+            + self._counter_reserve_bytes
+            > self.config.max_bundle_bytes
+        ):
+            return self._drop("max_bundle_bytes")
 
-        self.events.append(json.loads(rendered))
+        self.events.append(normalized_event)
         self._event_bytes += byte_count
         self._turn_counts[turn_key] += 1
         return True
@@ -551,9 +1010,17 @@ class TraceBuffer:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        checkpoint = _json_copy(self.checkpoint)
+        checkpoint["attempted_calls"] = {
+            kind: self._attempted_calls[kind]
+            for kind in sorted(EVENT_KINDS)
+        }
         return {
             "schema_version": SCHEMA_VERSION,
             "build_identity": _json_copy(self.build_identity),
+            "capture_identity": _json_copy(self.capture_identity),
+            "checkpoint": checkpoint,
+            "hook_coverage": _json_copy(self.hook_coverage),
             "config": self.config.to_dict(),
             "events": _json_copy(self.events),
             "summary": {
@@ -655,9 +1122,65 @@ def parse_trace(text: str) -> dict[str, Any]:
         )
 
     _validate_build_identity(trace["build_identity"])
+    capture_identity = _validate_capture_identity(trace["capture_identity"])
+    checkpoint = _validate_checkpoint(
+        trace["checkpoint"],
+        capture_identity,
+    )
+    hook_coverage = _validate_hook_coverage(trace["hook_coverage"])
     parsed_config = _parse_config(trace["config"])
     if actual_bundle_bytes > parsed_config.max_bundle_bytes:
         raise TraceCodecError("trace exceeds max_bundle_bytes")
+    if (
+        capture_identity["config_sha256"]
+        != trace_config_sha256(parsed_config)
+    ):
+        raise TraceCodecError(
+            "trace config does not match capture identity"
+        )
+    if (
+        capture_identity["hook_coverage_sha256"]
+        != hook_coverage_sha256(hook_coverage)
+    ):
+        raise TraceCodecError(
+            "hook coverage does not match capture identity"
+        )
+    if checkpoint["phase"] != capture_identity["expected_phase"]:
+        raise TraceCodecError(
+            "checkpoint phase does not match capture identity"
+        )
+    if checkpoint["phase"] not in parsed_config.allowed_phases:
+        raise TraceCodecError(
+            "checkpoint phase is outside trace config"
+        )
+    installed_kinds = {
+        entry["event_kind"]
+        for entry in hook_coverage
+        if entry["status"] == "installed"
+    }
+    installed_targets = {
+        kind: {
+            entry["target"]
+            for entry in hook_coverage
+            if entry["event_kind"] == kind
+            and entry["status"] == "installed"
+        }
+        for kind in EVENT_KINDS
+    }
+    if not parsed_config.enabled:
+        if installed_kinds:
+            raise TraceCodecError(
+                "disabled trace cannot report installed hooks"
+            )
+        if any(checkpoint["attempted_calls"].values()):
+            raise TraceCodecError(
+                "disabled trace cannot report attempted calls"
+            )
+    for kind, attempts in checkpoint["attempted_calls"].items():
+        if attempts and kind not in installed_kinds:
+            raise TraceCodecError(
+                f"attempted calls require an installed {kind} hook"
+            )
 
     events = trace["events"]
     if not isinstance(events, list):
@@ -667,7 +1190,9 @@ def parse_trace(text: str) -> dict[str, Any]:
     if len(events) > parsed_config.max_events:
         raise TraceCodecError("events exceed max_events")
     turn_counts: Counter[tuple[str, int]] = Counter()
+    accepted_by_kind: Counter[str] = Counter()
     event_bytes = 0
+    last_rng_call_order = -1
     for expected_seq, event in enumerate(events):
         if not isinstance(event, dict):
             raise TraceCodecError(
@@ -683,6 +1208,10 @@ def parse_trace(text: str) -> dict[str, Any]:
         kind = event["kind"]
         if type(kind) is not str or kind not in EVENT_KINDS:
             raise TraceCodecError(f"unknown event kind at {expected_seq}")
+        if kind not in installed_kinds:
+            raise TraceCodecError(
+                f"event kind lacks installed hook at {expected_seq}"
+            )
         if (
             type(event["phase"]) is not str
             or event["phase"] not in parsed_config.allowed_phases
@@ -698,8 +1227,30 @@ def parse_trace(text: str) -> dict[str, Any]:
             )
         if type(turn) is not int or turn < 0:
             raise TraceCodecError(f"invalid turn at {expected_seq}")
-        _validate_context(event["context"])
+        if (
+            mission_id != capture_identity["expected_mission_id"]
+            or turn != capture_identity["expected_turn"]
+            or event["phase"] != checkpoint["phase"]
+        ):
+            raise TraceCodecError(
+                f"event does not match checkpoint identity at {expected_seq}"
+            )
+        _validate_context(kind, event["context"])
+        if (
+            kind in {"random_int", "random_bool"}
+            and event["context"]["call_site"] not in installed_targets[kind]
+        ):
+            raise TraceCodecError(
+                f"RNG call_site lacks installed hook at {expected_seq}"
+            )
         _validate_payload(kind, event["payload"])
+        if kind in {"random_int", "random_bool"}:
+            call_order = event["payload"]["call_order"]
+            if call_order <= last_rng_call_order:
+                raise TraceCodecError(
+                    f"non-increasing RNG call_order at {expected_seq}"
+                )
+            last_rng_call_order = call_order
         try:
             rendered_bytes = (
                 len(_canonical_line(event).encode("utf-8")) + 1
@@ -713,6 +1264,7 @@ def parse_trace(text: str) -> dict[str, Any]:
                 f"event exceeds max_event_bytes at {expected_seq}"
             )
         event_bytes += rendered_bytes
+        accepted_by_kind[kind] += 1
         turn_counts[(mission_id, turn)] += 1
         if (
             turn_counts[(mission_id, turn)]
@@ -723,6 +1275,20 @@ def parse_trace(text: str) -> dict[str, Any]:
             )
     if event_bytes > parsed_config.max_total_event_bytes:
         raise TraceCodecError("events exceed max_total_event_bytes")
+    attempted_calls = checkpoint["attempted_calls"]
+    for kind, accepted in accepted_by_kind.items():
+        if attempted_calls[kind] < accepted:
+            raise TraceCodecError(
+                f"checkpoint attempted count is below accepted {kind} events"
+            )
+    rng_attempts = (
+        attempted_calls["random_int"]
+        + attempted_calls["random_bool"]
+    )
+    if last_rng_call_order >= rng_attempts:
+        raise TraceCodecError(
+            "RNG call_order exceeds attempted RNG calls"
+        )
 
     summary = trace["summary"]
     if not isinstance(summary, dict):
@@ -759,4 +1325,14 @@ def parse_trace(text: str) -> dict[str, Any]:
         raise TraceCodecError("summary truncated flag mismatch")
     if summary["dropped_events"] != sum(reasons.values()):
         raise TraceCodecError("summary dropped_events mismatch")
+    total_outcomes = (
+        len(events)
+        + summary["dropped_events"]
+        + summary["filtered_events"]
+        + summary["serialization_errors"]
+    )
+    if sum(attempted_calls.values()) != total_outcomes:
+        raise TraceCodecError(
+            "checkpoint attempted calls do not reconcile with outcomes"
+        )
     return trace

@@ -6,18 +6,23 @@ import json
 
 import pytest
 
+from src.observatory import trace_codec as trace_codec_module
 from src.observatory.trace_codec import (
     TraceBuffer,
     TraceCodecError,
     TraceConfig,
     encode_trace,
+    hook_coverage_sha256,
     parse_trace,
+    trace_config_sha256,
 )
 
 
 HASH_A = "a" * 64
 HASH_B = "b" * 64
 HASH_C = "c" * 64
+HASH_D = "d" * 64
+HASH_E = "e" * 64
 
 
 def _identity() -> dict:
@@ -34,8 +39,118 @@ def _identity() -> dict:
     }
 
 
+def _capture_identity() -> dict:
+    return {
+        "capture_id": "experiment-001",
+        "arm_nonce": "0123456789abcdef0123456789abcdef",
+        "controller_version": "observatory-test/1",
+        "controller_sha256": HASH_D,
+        "installed_modloader_sha256": HASH_E,
+        "expected_mission_id": "Mission_Test",
+        "expected_turn": 1,
+        "timeline_fingerprint": HASH_A,
+        "master_seed": 12345,
+        "region_id": "archive_a",
+        "ai_seed_fingerprint": HASH_B,
+        "expected_phase": "combat_enemy",
+        "config_sha256": trace_config_sha256(TraceConfig()),
+        "hook_coverage_sha256": hook_coverage_sha256(_hook_coverage()),
+        "activated_at_utc": "2026-07-24T12:00:00Z",
+        "expires_at_utc": "2026-07-24T12:05:00Z",
+    }
+
+
+def _checkpoint() -> dict:
+    return {
+        "seq": 0,
+        "reason": "turn_boundary",
+        "mission_id": "Mission_Test",
+        "turn": 1,
+        "phase": "combat_enemy",
+        "attempted_calls": {
+            kind: 0
+            for kind in (
+                "enemy_action_selected",
+                "enemy_candidate",
+                "enemy_target_score",
+                "get_skill_effect",
+                "get_target_area",
+                "random_bool",
+                "random_int",
+                "score_positioning",
+            )
+        },
+        "started_at_utc": "2026-07-24T12:00:01Z",
+        "completed_at_utc": "2026-07-24T12:00:02Z",
+    }
+
+
+def _hook_coverage() -> list[dict]:
+    return [
+        {
+            "event_kind": kind,
+            "target": f"test.{kind}",
+            "target_kind": "lua_global",
+            "status": "disabled",
+            "source_sha256": HASH_C,
+        }
+        for kind in (
+            "enemy_action_selected",
+            "enemy_candidate",
+            "enemy_target_score",
+            "get_skill_effect",
+            "get_target_area",
+            "random_bool",
+            "random_int",
+            "score_positioning",
+        )
+    ]
+
+
+def _buffer(
+    identity: dict | None = None,
+    config: TraceConfig | None = None,
+    *,
+    capture_identity: dict | None = None,
+    checkpoint: dict | None = None,
+    hook_coverage: list[dict] | None = None,
+    expected_mission_id: str = "Mission_Test",
+    expected_turn: int = 1,
+) -> TraceBuffer:
+    active = bool(config and config.enabled)
+    effective_config = config or TraceConfig()
+    checkpoint_value = checkpoint or _checkpoint()
+    checkpoint_value = dict(checkpoint_value)
+    checkpoint_value["attempted_calls"] = dict(
+        checkpoint_value["attempted_calls"]
+    )
+    checkpoint_value["mission_id"] = expected_mission_id
+    checkpoint_value["turn"] = expected_turn
+    coverage_value = hook_coverage or _hook_coverage()
+    coverage_value = [dict(entry) for entry in coverage_value]
+    if hook_coverage is None and active:
+        for entry in coverage_value:
+            entry["status"] = "installed"
+    capture = capture_identity or _capture_identity()
+    capture = dict(capture)
+    if capture_identity is None:
+        capture["config_sha256"] = trace_config_sha256(effective_config)
+        capture["hook_coverage_sha256"] = hook_coverage_sha256(
+            coverage_value
+        )
+    capture["expected_mission_id"] = expected_mission_id
+    capture["expected_turn"] = expected_turn
+    return TraceBuffer(
+        identity or _identity(),
+        config,
+        capture_identity=capture,
+        checkpoint=checkpoint_value,
+        hook_coverage=coverage_value,
+    )
+
+
 def _random_int_payload() -> dict:
-    return {"upper_bound": 5, "result": 2}
+    return {"call_order": 0, "upper_bound": 5, "result": 2}
 
 
 def _encoded_with_exact_bundle_cap(trace: TraceBuffer) -> str:
@@ -43,6 +158,9 @@ def _encoded_with_exact_bundle_cap(trace: TraceBuffer) -> str:
     cap = data["config"]["max_bundle_bytes"]
     for _ in range(20):
         data["config"]["max_bundle_bytes"] = cap
+        data["capture_identity"]["config_sha256"] = trace_config_sha256(
+            TraceConfig(**data["config"])
+        )
         rendered = json.dumps(
             data,
             ensure_ascii=False,
@@ -65,7 +183,7 @@ def test_disabled_trace_does_not_evaluate_payload():
         called = True
         return _random_int_payload()
 
-    trace = TraceBuffer(_identity())
+    trace = _buffer(_identity())
     assert not trace.record_lazy(
         "random_int",
         phase="combat_enemy",
@@ -83,9 +201,9 @@ def test_phase_filter_and_turn_cap_short_circuit_payload():
     def payload():
         nonlocal calls
         calls += 1
-        return {"upper_bound": 5, "result": calls}
+        return {"call_order": 0, "upper_bound": 5, "result": calls}
 
-    trace = TraceBuffer(
+    trace = _buffer(
         _identity(),
         TraceConfig(enabled=True, max_events_per_turn=1),
     )
@@ -95,6 +213,7 @@ def test_phase_filter_and_turn_cap_short_circuit_payload():
         mission_id="Mission_Test",
         turn=1,
         payload_factory=payload,
+        context={"call_site": "test.random_int"},
     )
     assert trace.record_lazy(
         "random_int",
@@ -102,6 +221,7 @@ def test_phase_filter_and_turn_cap_short_circuit_payload():
         mission_id="Mission_Test",
         turn=1,
         payload_factory=payload,
+        context={"call_site": "test.random_int"},
     )
     assert not trace.record_lazy(
         "random_int",
@@ -119,7 +239,7 @@ def test_phase_filter_and_turn_cap_short_circuit_payload():
 
 
 def test_invalid_runtime_phase_is_an_error_not_a_filter():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert not trace.record(
         "random_int",
         phase="combat_enmey",
@@ -133,7 +253,7 @@ def test_invalid_runtime_phase_is_an_error_not_a_filter():
 
 
 def test_falsy_non_mapping_context_is_not_silently_normalized():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert not trace.record(
         "random_int",
         phase="combat_enemy",
@@ -146,7 +266,7 @@ def test_falsy_non_mapping_context_is_not_silently_normalized():
 
 
 def test_payload_error_is_observational_and_swallowed():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
 
     def broken_payload():
         raise RuntimeError("observatory extraction failed")
@@ -155,26 +275,27 @@ def test_payload_error_is_observational_and_swallowed():
         "get_skill_effect",
         phase="combat_enemy",
         mission_id="Mission_Test",
-        turn=2,
+        turn=1,
         payload_factory=broken_payload,
     )
     assert trace.to_dict()["summary"]["serialization_errors"] == 1
 
 
 def test_invalid_payload_is_rejected_without_escaping():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert not trace.record(
         "random_int",
         phase="combat_enemy",
         mission_id="Mission_Test",
         turn=1,
-        payload={"upper_bound": 5, "result": 5},
+        payload={"call_order": 0, "upper_bound": 5, "result": 5},
+        context={"call_site": "test.random_int"},
     )
     assert trace.to_dict()["summary"]["serialization_errors"] == 1
 
 
 def test_event_byte_cap_is_enforced():
-    trace = TraceBuffer(
+    trace = _buffer(
         _identity(),
         TraceConfig(enabled=True, max_event_bytes=240),
     )
@@ -183,7 +304,10 @@ def test_event_byte_cap_is_enforced():
         phase="combat_enemy",
         mission_id="Mission_Test",
         turn=1,
-        context={"source": "é" * 200},
+        context={
+            "call_site": "test.random_int",
+            "source": "é" * 200,
+        },
         payload=_random_int_payload(),
     )
     assert trace.to_dict()["summary"]["truncation_reasons"] == {
@@ -192,17 +316,18 @@ def test_event_byte_cap_is_enforced():
 
 
 def test_total_byte_cap_short_circuits_payload_when_full():
-    probe = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    probe = _buffer(_identity(), TraceConfig(enabled=True))
     assert probe.record(
         "random_int",
         phase="combat_enemy",
         mission_id="Mission_Test",
         turn=1,
         payload=_random_int_payload(),
+        context={"call_site": "test.random_int"},
     )
     event_bytes = probe.to_dict()["summary"]["event_bytes"]
 
-    trace = TraceBuffer(
+    trace = _buffer(
         _identity(),
         TraceConfig(
             enabled=True,
@@ -215,6 +340,7 @@ def test_total_byte_cap_short_circuits_payload_when_full():
         mission_id="Mission_Test",
         turn=1,
         payload=_random_int_payload(),
+        context={"call_site": "test.random_int"},
     )
     called = False
 
@@ -229,6 +355,7 @@ def test_total_byte_cap_short_circuits_payload_when_full():
         mission_id="Mission_Test",
         turn=1,
         payload_factory=payload,
+        context={"call_site": "test.random_bool"},
     )
     assert not called
     assert trace.to_dict()["summary"]["truncation_reasons"] == {
@@ -237,12 +364,12 @@ def test_total_byte_cap_short_circuits_payload_when_full():
 
 
 def test_trace_round_trip_is_deterministic():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert trace.record(
         "enemy_target_score",
         phase="combat_enemy",
         mission_id="Mission_Test",
-        turn=3,
+        turn=1,
         context={"call_site": "Skill:GetTargetScore"},
         payload={
             "pawn_uid": 42,
@@ -265,23 +392,29 @@ def test_trace_round_trip_is_deterministic():
 @pytest.mark.parametrize(
     ("payload", "message"),
     [
-        ({"upper_bound": 0, "result": 0}, "upper_bound"),
-        ({"upper_bound": 5, "result": True}, "result"),
-        ({"upper_bound": 5, "result": 5}, "below upper_bound"),
+        ({"call_order": 0, "upper_bound": 0, "result": 0}, "upper_bound"),
+        ({"call_order": 0, "upper_bound": 5, "result": True}, "result"),
+        ({"call_order": 0, "upper_bound": 5, "result": 5}, "below upper_bound"),
         (
-            {"upper_bound": 5, "result": 2, "unknown": 1},
+            {
+                "call_order": 0,
+                "upper_bound": 5,
+                "result": 2,
+                "unknown": 1,
+            },
             "unknown fields",
         ),
     ],
 )
 def test_random_int_schema_rejects_malformed_payload(payload, message):
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     trace.record(
         "random_int",
         phase="combat_enemy",
         mission_id="Mission_Test",
         turn=1,
         payload=_random_int_payload(),
+        context={"call_site": "test.random_int"},
     )
     data = trace.to_dict()
     data["events"][0]["payload"] = payload
@@ -292,19 +425,20 @@ def test_random_int_schema_rejects_malformed_payload(payload, message):
 @pytest.mark.parametrize(
     "payload",
     [
-        {"argument": 0, "result": True},
-        {"argument": 5.0, "result": False},
-        {"argument": 5, "result": 1},
+        {"call_order": 0, "argument": 0, "result": True},
+        {"call_order": 0, "argument": 5.0, "result": False},
+        {"call_order": 0, "argument": 5, "result": 1},
     ],
 )
 def test_random_bool_schema_rejects_malformed_payload(payload):
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     trace.record(
         "random_bool",
         phase="combat_enemy",
         mission_id="Mission_Test",
         turn=1,
-        payload={"argument": 15, "result": True},
+        payload={"call_order": 0, "argument": 15, "result": True},
+        context={"call_site": "test.random_bool"},
     )
     data = trace.to_dict()
     data["events"][0]["payload"] = payload
@@ -313,7 +447,7 @@ def test_random_bool_schema_rejects_malformed_payload(payload):
 
 
 def test_coordinates_scores_and_selected_action_are_validated():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert not trace.record(
         "score_positioning",
         phase="combat_enemy",
@@ -343,7 +477,7 @@ def test_coordinates_scores_and_selected_action_are_validated():
 
 
 def test_target_area_and_effect_payloads_are_explicitly_versioned():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert trace.record(
         "get_target_area",
         phase="combat_enemy",
@@ -421,13 +555,14 @@ def test_target_area_and_effect_payloads_are_explicitly_versioned():
     ],
 )
 def test_malformed_trace_fails_closed(mutation, message: str):
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     trace.record(
         "random_bool",
         phase="combat_enemy",
         mission_id="Mission_Test",
         turn=1,
-        payload={"argument": 15, "result": True},
+        payload={"call_order": 0, "argument": 15, "result": True},
+        context={"call_site": "test.random_bool"},
     )
     data = trace.to_dict()
     mutation(data)
@@ -437,7 +572,7 @@ def test_malformed_trace_fails_closed(mutation, message: str):
 
 @pytest.mark.parametrize("field", ["accepted_events", "event_bytes"])
 def test_empty_trace_summary_counts_require_exact_integers(field: str):
-    data = TraceBuffer(_identity(), TraceConfig(enabled=True)).to_dict()
+    data = _buffer(_identity(), TraceConfig(enabled=True)).to_dict()
     data["summary"][field] = False
     with pytest.raises(TraceCodecError, match=field):
         parse_trace(json.dumps(data))
@@ -447,12 +582,12 @@ def test_build_identity_is_validated_at_buffer_construction():
     identity = _identity()
     identity["platform"] = "solaris"
     with pytest.raises(TraceCodecError, match="platform"):
-        TraceBuffer(identity)
+        _buffer(identity)
 
     identity = _identity()
     identity["build_id"] = None
     with pytest.raises(TraceCodecError, match="numeric"):
-        TraceBuffer(identity)
+        _buffer(identity)
 
     identity = _identity()
     identity.update(
@@ -460,11 +595,11 @@ def test_build_identity_is_validated_at_buffer_construction():
         depot_manifest=None,
         build_evidence="unavailable",
     )
-    TraceBuffer(identity)
+    _buffer(identity)
 
 
 def test_payload_versions_require_exact_integers():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert not trace.record(
         "get_target_area",
         phase="combat_enemy",
@@ -485,7 +620,7 @@ def test_payload_versions_require_exact_integers():
 def test_inventory_architecture_vocabulary_round_trips():
     armv7 = _identity()
     armv7.update(platform="linux", architecture="armv7")
-    TraceBuffer(armv7)
+    _buffer(armv7)
 
     universal = _identity()
     universal.update(
@@ -493,12 +628,12 @@ def test_inventory_architecture_vocabulary_round_trips():
         architecture="universal",
         architectures=["arm64", "x86_64"],
     )
-    parsed = parse_trace(encode_trace(TraceBuffer(universal)))
+    parsed = parse_trace(encode_trace(_buffer(universal)))
     assert parsed["build_identity"]["architectures"] == ["arm64", "x86_64"]
 
     universal["architectures"] = ["x86_64", "arm64"]
     with pytest.raises(TraceCodecError, match="sorted unique"):
-        TraceBuffer(universal)
+        _buffer(universal)
 
 
 @pytest.mark.parametrize(
@@ -516,16 +651,20 @@ def test_phase_configuration_rejects_ambiguous_values(phases):
 
 
 def test_disabled_bundle_with_events_is_rejected():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     trace.record(
         "random_int",
         phase="combat_enemy",
         mission_id="Mission_Test",
         turn=1,
         payload=_random_int_payload(),
+        context={"call_site": "test.random_int"},
     )
     data = trace.to_dict()
     data["config"]["enabled"] = False
+    data["capture_identity"]["config_sha256"] = trace_config_sha256(
+        TraceConfig(**data["config"])
+    )
     with pytest.raises(TraceCodecError, match="disabled trace"):
         parse_trace(json.dumps(data))
 
@@ -536,7 +675,7 @@ def test_duplicate_json_keys_are_rejected():
 
 
 def test_nonfinite_numbers_are_rejected_without_escaping():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(_identity(), TraceConfig(enabled=True))
     assert not trace.record(
         "score_positioning",
         phase="combat_enemy",
@@ -553,13 +692,20 @@ def test_nonfinite_numbers_are_rejected_without_escaping():
 
 
 def test_bundle_cap_counts_actual_utf8_bytes_at_exact_boundary():
-    trace = TraceBuffer(_identity(), TraceConfig(enabled=True))
+    trace = _buffer(
+        _identity(),
+        TraceConfig(enabled=True),
+        expected_mission_id="Misión_é",
+    )
     assert trace.record(
         "random_int",
         phase="combat_enemy",
         mission_id="Misión_é",
         turn=1,
-        context={"source": "native_é"},
+        context={
+            "call_site": "test.random_int",
+            "source": "native_é",
+        },
         payload=_random_int_payload(),
     )
     exact = _encoded_with_exact_bundle_cap(trace)
@@ -567,6 +713,9 @@ def test_bundle_cap_counts_actual_utf8_bytes_at_exact_boundary():
 
     data = json.loads(exact)
     data["config"]["max_bundle_bytes"] -= 1
+    data["capture_identity"]["config_sha256"] = trace_config_sha256(
+        TraceConfig(**data["config"])
+    )
     too_small = json.dumps(
         data,
         ensure_ascii=False,
@@ -577,3 +726,391 @@ def test_bundle_cap_counts_actual_utf8_bytes_at_exact_boundary():
     assert len(too_small.encode("utf-8")) == len(exact.encode("utf-8"))
     with pytest.raises(TraceCodecError, match="max_bundle_bytes"):
         parse_trace(too_small)
+
+
+def test_capture_window_and_checkpoint_binding_fail_closed():
+    capture = _capture_identity()
+    capture["expires_at_utc"] = capture["activated_at_utc"]
+    with pytest.raises(TraceCodecError, match="expiry"):
+        _buffer(capture_identity=capture)
+
+    checkpoint = _checkpoint()
+    checkpoint["completed_at_utc"] = "2026-07-24T12:06:00Z"
+    with pytest.raises(TraceCodecError, match="armed capture window"):
+        _buffer(checkpoint=checkpoint)
+
+
+def test_hook_coverage_requires_canonical_complete_manifest():
+    incomplete = _hook_coverage()[:-1]
+    with pytest.raises(TraceCodecError, match="missing event kinds"):
+        _buffer(hook_coverage=incomplete)
+
+    reversed_coverage = list(reversed(_hook_coverage()))
+    with pytest.raises(TraceCodecError, match="canonical order"):
+        _buffer(hook_coverage=reversed_coverage)
+
+    unavailable_with_hash = _hook_coverage()
+    unavailable_with_hash[0]["status"] = "unavailable"
+    with pytest.raises(TraceCodecError, match="must be null"):
+        _buffer(hook_coverage=unavailable_with_hash)
+
+
+def test_rng_requires_call_site_and_preserves_attempted_order_gaps():
+    trace = _buffer(config=TraceConfig(enabled=True))
+    assert not trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        payload={"call_order": 0, "upper_bound": 5, "result": 2},
+    )
+    assert trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_int"},
+        payload={"call_order": 1, "upper_bound": 5, "result": 2},
+    )
+    assert not trace.record(
+        "random_bool",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_bool"},
+        payload={"call_order": 2, "argument": 15, "result": 1},
+    )
+    assert trace.record(
+        "random_bool",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_bool"},
+        payload={"call_order": 3, "argument": 15, "result": True},
+    )
+    parse_trace(encode_trace(trace))
+
+    data = trace.to_dict()
+    data["events"][1]["payload"]["call_order"] = 1
+    with pytest.raises(TraceCodecError, match="non-increasing RNG"):
+        parse_trace(json.dumps(data))
+
+
+def test_parser_requires_rng_call_site_and_attempted_count():
+    trace = _buffer(config=TraceConfig(enabled=True))
+    assert trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_int"},
+        payload=_random_int_payload(),
+    )
+    data = trace.to_dict()
+    data["events"][0]["context"] = {}
+    with pytest.raises(TraceCodecError, match="requires call_site"):
+        parse_trace(json.dumps(data))
+
+    data = trace.to_dict()
+    data["checkpoint"]["attempted_calls"]["random_int"] = 0
+    with pytest.raises(TraceCodecError, match="below accepted"):
+        parse_trace(json.dumps(data))
+
+
+def test_configured_bundle_cap_must_fit_empty_envelope():
+    with pytest.raises(ValueError, match="empty trace envelope"):
+        _buffer(config=TraceConfig(max_bundle_bytes=128))
+    with pytest.raises(ValueError, match="counter reserve envelope"):
+        _buffer(
+            config=TraceConfig(
+                enabled=True,
+                max_bundle_bytes=4_500,
+            )
+        )
+
+
+def test_disabled_capture_cannot_claim_hooks_or_attempts():
+    coverage = _hook_coverage()
+    coverage[0]["status"] = "installed"
+    with pytest.raises(ValueError, match="installed hooks"):
+        _buffer(hook_coverage=coverage)
+
+    checkpoint = _checkpoint()
+    checkpoint["attempted_calls"]["random_int"] = 1
+    with pytest.raises(ValueError, match="attempted calls"):
+        _buffer(checkpoint=checkpoint)
+
+
+def test_event_requires_installed_hook_manifest_entry():
+    trace = _buffer(config=TraceConfig(enabled=True))
+    assert trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_int"},
+        payload=_random_int_payload(),
+    )
+    data = trace.to_dict()
+    for entry in data["hook_coverage"]:
+        if entry["event_kind"] == "random_int":
+            entry["status"] = "disabled"
+    data["capture_identity"]["hook_coverage_sha256"] = (
+        hook_coverage_sha256(data["hook_coverage"])
+    )
+    with pytest.raises(TraceCodecError, match="require an installed"):
+        parse_trace(json.dumps(data))
+
+
+def test_capture_policy_binds_phase_caps_and_short_window():
+    trace = _buffer(config=TraceConfig(enabled=True))
+    data = trace.to_dict()
+    data["config"]["max_events"] += 1
+    with pytest.raises(TraceCodecError, match="config does not match"):
+        parse_trace(json.dumps(data))
+
+    data = trace.to_dict()
+    data["hook_coverage"][0]["target"] += ".changed"
+    data["hook_coverage"].sort(
+        key=lambda entry: (entry["event_kind"], entry["target"])
+    )
+    with pytest.raises(TraceCodecError, match="hook coverage does not match"):
+        parse_trace(json.dumps(data))
+
+    data = trace.to_dict()
+    data["capture_identity"]["expected_phase"] = "combat_player"
+    data["checkpoint"]["phase"] = "combat_player"
+    with pytest.raises(TraceCodecError, match="outside trace config"):
+        parse_trace(json.dumps(data))
+
+    capture = _capture_identity()
+    capture["expires_at_utc"] = "2026-07-24T12:15:01Z"
+    with pytest.raises(TraceCodecError, match="maximum duration"):
+        _buffer(capture_identity=capture)
+
+
+def test_signed_master_seed_is_preserved():
+    capture = _capture_identity()
+    capture["master_seed"] = -2147483648
+    trace = _buffer(capture_identity=capture)
+    assert trace.capture_identity["master_seed"] == -2147483648
+
+
+def test_attempts_require_hooks_and_reconcile_with_outcomes():
+    trace = _buffer(config=TraceConfig(enabled=True))
+    assert trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_int"},
+        payload=_random_int_payload(),
+    )
+    data = trace.to_dict()
+    for entry in data["hook_coverage"]:
+        if entry["event_kind"] == "enemy_candidate":
+            entry["status"] = "unavailable"
+            entry["source_sha256"] = None
+    data["capture_identity"]["hook_coverage_sha256"] = (
+        hook_coverage_sha256(data["hook_coverage"])
+    )
+    data["checkpoint"]["attempted_calls"]["enemy_candidate"] = 1
+    with pytest.raises(TraceCodecError, match="installed enemy_candidate"):
+        parse_trace(json.dumps(data))
+
+    data = trace.to_dict()
+    data["checkpoint"]["attempted_calls"]["random_int"] = 100
+    with pytest.raises(TraceCodecError, match="do not reconcile"):
+        parse_trace(json.dumps(data))
+
+    data = trace.to_dict()
+    data["events"][0]["payload"]["call_order"] = 1
+    with pytest.raises(TraceCodecError, match="exceeds attempted RNG"):
+        parse_trace(json.dumps(data))
+
+
+def test_projected_bundle_cap_drops_before_checkpoint_becomes_unencodable():
+    trace = _buffer(
+        config=TraceConfig(
+            enabled=True,
+            max_event_bytes=10_000,
+            max_total_event_bytes=100_000,
+            max_bundle_bytes=5_000,
+        )
+    )
+    assert not trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={
+            "call_site": "test.random_int",
+            "source": "x" * 2_000,
+        },
+        payload=_random_int_payload(),
+    )
+    assert trace.to_dict()["summary"]["truncation_reasons"] == {
+        "max_bundle_bytes": 1
+    }
+    parse_trace(encode_trace(trace))
+
+
+def test_reserved_counter_width_keeps_rejected_calls_encodable():
+    filtered = _buffer(
+        config=TraceConfig(enabled=True, max_bundle_bytes=5_000)
+    )
+    for _ in range(100):
+        assert not filtered.record(
+            "random_int",
+            phase="combat_player",
+            mission_id="Mission_Test",
+            turn=1,
+            context={"call_site": "test.random_int"},
+            payload=_random_int_payload(),
+        )
+    parse_trace(encode_trace(filtered))
+
+    dropped = _buffer(
+        config=TraceConfig(
+            enabled=True,
+            max_event_bytes=1,
+            max_bundle_bytes=5_000,
+        )
+    )
+    for _ in range(100):
+        assert not dropped.record(
+            "random_int",
+            phase="combat_enemy",
+            mission_id="Mission_Test",
+            turn=1,
+            context={"call_site": "test.random_int"},
+            payload=_random_int_payload(),
+        )
+    parse_trace(encode_trace(dropped))
+
+    errored = _buffer(
+        config=TraceConfig(enabled=True, max_bundle_bytes=5_000)
+    )
+    for call_order in range(100):
+        assert not errored.record(
+            "random_bool",
+            phase="combat_enemy",
+            mission_id="Mission_Test",
+            turn=1,
+            context={"call_site": "test.random_bool"},
+            payload={
+                "call_order": call_order,
+                "argument": 15,
+                "result": 1,
+            },
+        )
+    parse_trace(encode_trace(errored))
+
+
+def test_event_projection_reserves_future_counter_growth():
+    trace = _buffer(
+        config=TraceConfig(
+            enabled=True,
+            max_bundle_bytes=5_310,
+        )
+    )
+    assert trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={
+            "call_site": "test.random_int",
+            "source": "x" * 180,
+        },
+        payload=_random_int_payload(),
+    )
+    for _ in range(10):
+        assert not trace.record(
+            "random_int",
+            phase="combat_player",
+            mission_id="Mission_Test",
+            turn=1,
+            context={"call_site": "test.random_int"},
+            payload=_random_int_payload(),
+        )
+    rendered = encode_trace(trace)
+    assert len(rendered.encode("utf-8")) <= 5_310
+    parse_trace(rendered)
+
+
+def test_pre_hook_api_misuse_is_not_persisted_as_an_attempt():
+    trace = _buffer(config=TraceConfig(enabled=True))
+    assert not trace.record(
+        "unknown",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        payload={},
+    )
+    parse_trace(encode_trace(trace))
+
+
+def test_observation_saturation_is_explicit_and_encodable(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        trace_codec_module,
+        "MAX_OBSERVATIONS_PER_KIND",
+        3,
+    )
+    trace = _buffer(config=TraceConfig(enabled=True))
+    for call_order in range(2):
+        assert trace.record(
+            "random_int",
+            phase="combat_enemy",
+            mission_id="Mission_Test",
+            turn=1,
+            context={"call_site": "test.random_int"},
+            payload={
+                "call_order": call_order,
+                "upper_bound": 5,
+                "result": 2,
+            },
+        )
+    assert not trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_int"},
+        payload={
+            "call_order": 2,
+            "upper_bound": 5,
+            "result": 2,
+        },
+    )
+    before = trace.to_dict()
+    assert before["summary"]["truncation_reasons"] == {
+        "max_observations_per_kind": 1
+    }
+    assert not trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_int"},
+        payload=_random_int_payload(),
+    )
+    assert trace.to_dict() == before
+    parse_trace(encode_trace(trace))
+
+    coverage = _hook_coverage()
+    trace = _buffer(
+        config=TraceConfig(enabled=True),
+        hook_coverage=coverage,
+    )
+    assert not trace.record(
+        "random_int",
+        phase="combat_enemy",
+        mission_id="Mission_Test",
+        turn=1,
+        context={"call_site": "test.random_int"},
+        payload=_random_int_payload(),
+    )
+    parse_trace(encode_trace(trace))
