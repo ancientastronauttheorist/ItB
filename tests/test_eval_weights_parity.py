@@ -24,7 +24,7 @@ RUST_EVAL = REPO_ROOT / "rust_solver" / "src" / "evaluate.rs"
 
 
 def _rust_eval_weights_fields() -> set[str]:
-    text = RUST_EVAL.read_text()
+    text = RUST_EVAL.read_text(encoding="utf-8")
     m = re.search(
         r"pub struct EvalWeights\s*\{(.*?)^\}",
         text,
