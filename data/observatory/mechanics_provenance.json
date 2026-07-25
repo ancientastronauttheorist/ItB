@@ -1948,6 +1948,179 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Advanced Edition Lua sources map Dung1, Dung2, and the ranged DungBoss to DungAtk1, DungAtk2, and DungAtkB; target one adjacent non-Pod, non-chasm tile; immediately spawn one neutral 1-HP BombRock when legal; and queue 1 or 3 melee damage on that first tile. The Leader conditionally spawns a second rock one tile farther only after the first spawn succeeds."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v370 gives all three live DungAtk IDs distinct canonical Rust mappings, preserves the Leader's two-rock identity, and projects the immediate one/two BombRock blockers plus queued first-tile hit. Focused tests cover exact ID round-trips, damage definitions, legal and blocked spawns, the positive ScoreList gate, Leader chaining, Python aliases, existing enemy-phase explosions, mission ordering, and threat auditing."
+        },
+        {
+          "classification": "unresolved",
+          "statement": "Projected direction scoring uses the exact visible ScoreList footprint and deployment bonus shape but approximates the native Board:GetDeployLocScore boundary, movement, candidate enumeration, and tie-breaking."
+        }
+      ],
+      "id": "enemy-weapon-tumblebug",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::TumblebugAtk1",
+            "WId::TumblebugAtk2",
+            "WId::TumblebugAtkB",
+            "WEAPONS",
+            "weapon_def",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_bombrock_explosion",
+            "apply_damage_with_bombrock_exclusion"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "projected_enemy_uses_special_targeting",
+            "projected_enemy_attack_reach",
+            "projected_enemy_reach",
+            "projected_tumblebug_target_score",
+            "projected_tumblebug_can_spawn_rock",
+            "spawn_projected_bombrock",
+            "requeue_tumblebug_heuristic",
+            "eligible_for_requeue",
+            "requeue_enemies_heuristic"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS",
+            "get_weapon_def"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "VEK_STATS",
+            "ALL_PAWN_STATS",
+            "get_pawn_stats"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_will_die_to_prior_melee_before_attack"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust does not reproduce native movement, candidate enumeration, Board:GetDeployLocScore, final target selection, or tie-breaking; mobile projection scores adjacent directions from the retained projected position.",
+        "Projected BombRock legality mirrors known blockers, Pods, Chasm, Water, and occupied tiles, but native PATH_PROJECTILE, Lava, fire, item, capacity, and every terrain/status edge have not been independently traced.",
+        "Rust models the immediate spawn and queued hit structure, but native AddDamage, AddQueuedMelee, sPawn, Explodes, collision, chain, scheduler, and effect-order helpers are not independently traced end-to-end.",
+        "Current-turn Rust consumes bridge-materialized BombRocks; exact conformance still depends on the bridge exposing the engine's already-selected spawn result."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": [
+            "Dung1",
+            "Dung2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons_enemy.lua",
+          "sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "symbols": [
+            "DungAtk1",
+            "BombRock",
+            "DungAtk1:GetTargetArea",
+            "DungAtk1:GetTargetScore",
+            "DungAtk1:CanSpawnRock",
+            "DungAtk1:GetSkillEffect",
+            "DungAtk2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/bosses/dung.lua",
+          "sha256": "2aa80c73688694d9f904c6264ef63e7fe1562028cc5007705a561c8696cbf906",
+          "symbols": [
+            "DungBoss",
+            "DungAtkB"
+          ]
+        },
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "Skill:ScoreList"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_tumblebug_live_lua_dung_aliases"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_enemy_phase_bump_debt_flushes_before_player_turn",
+            "test_prior_enemy_kill_corpse_clears_before_later_moth_recoil"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_tumblebug_projection_spawns_bombrock_and_queues_its_hit",
+            "test_tumblebug_leader_projection_spawns_two_rocks_in_attack_line",
+            "test_tumblebug_leader_projection_skips_blocked_second_rock_only",
+            "test_tumblebug_projection_does_not_spawn_when_first_target_is_blocked",
+            "test_tumblebug_projection_rejects_harmless_empty_rock_targets",
+            "test_tumblebug_projected_bombrock_legality_matrix",
+            "test_stationary_special_attack_reach_covers_collateral"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_dung_attack_aliases_match_tumblebug_weapon_defs"
+          ]
+        },
+        {
+          "path": "tests/test_digger_research_catalog.py",
+          "symbols": [
+            "test_known_types_catalogs_tumblebug_live_lua_aliases",
+            "test_tumblebug_live_lua_aliases_do_not_trigger_research_gate",
+            "test_tumblebug_live_lua_aliases_have_static_stats"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_threat_audit_dungboss_kills_bouncer_before_building_attack"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

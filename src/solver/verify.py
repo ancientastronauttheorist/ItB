@@ -1721,7 +1721,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # the exact inherited LineArtillery target interval of 2..=5 instead of
 # storing a contradictory maximum of 1 and accepting distance-six/seven shots.
 # Pre-v369 corpus archived as failure_db_snapshot_sim_v368.jsonl.
-SIMULATOR_VERSION = 369
+# v370 - Tumblebug live DungAtk IDs round-trip exactly, the Leader keeps its
+# distinct two-boulder weapon identity, and next-turn projection materializes
+# the one/two immediate BombRock spawns before queueing the first-tile hit.
+# Pre-v370 corpus archived as failure_db_snapshot_sim_v369.jsonl.
+SIMULATOR_VERSION = 370
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

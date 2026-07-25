@@ -103,7 +103,7 @@ def test_tumblebug_live_lua_aliases_have_static_stats():
     assert boss.move_speed == 3
     assert d1.ranged == 0
     assert d2.ranged == 0
-    assert boss.ranged == 0
+    assert boss.ranged == 1
     assert boss.massive is True
     assert boss.default_weapon == "DungAtkB"
     assert bombrock.move_speed == 0

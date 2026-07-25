@@ -37,7 +37,7 @@ use crate::enemy::{
 };
 use crate::simulate::simulate_action_with_target2;
 use crate::solver::MechAction;
-use crate::types::{Terrain, idx_to_xy, xy_to_idx};
+use crate::types::{Terrain, Team, DIRS, idx_to_xy, xy_to_idx};
 use crate::weapons::{
     enemy_weapon_for_type,
     WeaponTable,
@@ -100,6 +100,7 @@ fn projected_enemy_uses_special_targeting(enemy: &Unit) -> bool {
             | WId::StarfishAtkB1
             | WId::TumblebugAtk1
             | WId::TumblebugAtk2
+            | WId::TumblebugAtkB
             | WId::PlasmodiaAtk1
             | WId::PlasmodiaAtk2
             | WId::ScorpionAtkB
@@ -115,11 +116,6 @@ fn projected_enemy_attack_reach(enemy: &Unit, weapons: &WeaponTable) -> i32 {
     if name.starts_with("Snowmine") {
         return 3;
     }
-    if (name.starts_with("Dung") || name.starts_with("Tumblebug"))
-        && name.contains("Boss")
-    {
-        return 3;
-    }
     let wid = projected_enemy_weapon_id(enemy);
     let weapon = &weapons[wid as usize];
     if matches!(wid, WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1) {
@@ -128,8 +124,11 @@ fn projected_enemy_attack_reach(enemy: &Unit, weapons: &WeaponTable) -> i32 {
     if matches!(wid, WId::MothAtk1 | WId::MothAtk2) {
         return i32::from(weapon.range_max);
     }
-    if matches!(wid, WId::TumblebugAtk1 | WId::TumblebugAtk2) {
-        return 2;
+    if matches!(
+        wid,
+        WId::TumblebugAtk1 | WId::TumblebugAtk2 | WId::TumblebugAtkB
+    ) {
+        return if wid == WId::TumblebugAtkB { 3 } else { 2 };
     }
 
     // Enemy artillery often inherits DEF.range_max=1 while setting
@@ -229,6 +228,176 @@ fn projected_starfish_target_score(board: &Board, enemy: &Unit) -> i32 {
     score
 }
 
+fn projected_tumblebug_damage_score(board: &Board, x: u8, y: u8) -> i32 {
+    if let Some(unit_idx) = board.unit_at(x, y) {
+        let target = &board.units[unit_idx];
+        if target.is_enemy() {
+            return if target.frozen() { 5 } else { -2 };
+        }
+        if target.is_player() {
+            return 5;
+        }
+        return 0;
+    }
+    let tile = board.tile(x, y);
+    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+        5
+    } else {
+        0
+    }
+}
+
+fn projected_tumblebug_target_legal(board: &Board, x: u8, y: u8) -> bool {
+    !board.tile(x, y).has_pod() && board.tile(x, y).terrain != Terrain::Chasm
+}
+
+fn projected_tumblebug_can_spawn_rock(board: &Board, x: u8, y: u8) -> bool {
+    if board.unit_at(x, y).is_some() || board.tile(x, y).has_pod() {
+        return false;
+    }
+    if let Some(unit_idx) = board.any_unit_at(x, y) {
+        // Disabled player mechs remain solid wrecks, but an exploded
+        // BombRock is removed by the engine even though the simulator keeps
+        // its hp<=0 record for outcome accounting and deterministic indices.
+        if board.units[unit_idx].type_name_str() != "BombRock" {
+            return false;
+        }
+    }
+    !matches!(
+        board.tile(x, y).terrain,
+        Terrain::Building
+            | Terrain::Mountain
+            | Terrain::Water
+            | Terrain::Chasm
+            | Terrain::Lava
+    )
+}
+
+fn projected_tumblebug_target_score(
+    board: &Board,
+    origin: (u8, u8),
+    first_rock: (u8, u8),
+    dir: (i8, i8),
+    rock_count: usize,
+) -> i32 {
+    let mut damage_score = 0;
+    let mut bonus_for_rock = 0;
+    let mut rock = (first_rock.0 as i8, first_rock.1 as i8);
+    for rock_index in 0..rock_count {
+        if !(0..8).contains(&rock.0) || !(0..8).contains(&rock.1) {
+            break;
+        }
+        let (rx, ry) = (rock.0 as u8, rock.1 as u8);
+        if projected_tumblebug_can_spawn_rock(board, rx, ry) {
+            // Native GetDeployLocScore remains opaque. A legal BombRock
+            // placement approximates Lua's `deploy_score > 0` gate here. The
+            // +10 deployment bonus is returned only when the exact visible
+            // ScoreList footprint has a positive score, as in live Lua.
+            bonus_for_rock += 10;
+            damage_score += projected_tumblebug_damage_score(board, rx, ry);
+            for &(dx, dy) in &DIRS {
+                let nx = rock.0 + dx;
+                let ny = rock.1 + dy;
+                if !(0..8).contains(&nx) || !(0..8).contains(&ny) {
+                    continue;
+                }
+                let pos = (nx as u8, ny as u8);
+                if pos != origin && pos != first_rock {
+                    damage_score += projected_tumblebug_damage_score(board, pos.0, pos.1);
+                }
+            }
+        } else if rock_index == 0 {
+            damage_score += projected_tumblebug_damage_score(board, rx, ry);
+            break;
+        }
+        rock.0 += dir.0;
+        rock.1 += dir.1;
+    }
+    if damage_score > 0 {
+        damage_score + bonus_for_rock
+    } else {
+        0
+    }
+}
+
+fn spawn_projected_bombrock(board: &mut Board, x: u8, y: u8) -> bool {
+    if board.unit_count as usize >= board.units.len()
+        || !projected_tumblebug_can_spawn_rock(board, x, y)
+    {
+        return false;
+    }
+    let mut uid = 1u16;
+    for i in 0..board.unit_count as usize {
+        uid = uid.max(board.units[i].uid.saturating_add(1));
+    }
+    let on_fire = board.tile(x, y).on_fire() || board.tile(x, y).terrain == Terrain::Fire;
+    let mut rock = Unit {
+        uid,
+        x,
+        y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Neutral,
+        flags: UnitFlags::PUSHABLE,
+        ..Unit::default()
+    };
+    rock.set_type_name("BombRock");
+    rock.set_fire(on_fire);
+    board.add_unit(rock);
+    true
+}
+
+fn requeue_tumblebug_heuristic(board: &mut Board, enemy_idx: usize, wid: WId) {
+    let (ex, ey) = (board.units[enemy_idx].x, board.units[enemy_idx].y);
+    let rock_count = if wid == WId::TumblebugAtkB { 2 } else { 1 };
+    let mut best: Option<(i32, usize, u8, u8)> = None;
+    for (dir_index, &(dx, dy)) in DIRS.iter().enumerate() {
+        let tx = ex as i8 + dx;
+        let ty = ey as i8 + dy;
+        if !(0..8).contains(&tx) || !(0..8).contains(&ty) {
+            continue;
+        }
+        let (tx, ty) = (tx as u8, ty as u8);
+        if !projected_tumblebug_target_legal(board, tx, ty) {
+            continue;
+        }
+        let score = projected_tumblebug_target_score(
+            board,
+            (ex, ey),
+            (tx, ty),
+            (dx, dy),
+            rock_count,
+        );
+        if best.is_none_or(|(best_score, best_dir, _, _)| {
+            score > best_score || (score == best_score && dir_index < best_dir)
+        }) {
+            best = Some((score, dir_index, tx, ty));
+        }
+    }
+
+    let Some((score, dir_index, tx, ty)) = best else {
+        return;
+    };
+    if score <= 0 {
+        return;
+    }
+
+    let first_spawned = spawn_projected_bombrock(board, tx, ty);
+    if wid == WId::TumblebugAtkB && first_spawned {
+        let (dx, dy) = DIRS[dir_index];
+        let second_x = tx as i8 + dx;
+        let second_y = ty as i8 + dy;
+        if (0..8).contains(&second_x) && (0..8).contains(&second_y) {
+            spawn_projected_bombrock(board, second_x as u8, second_y as u8);
+        }
+    }
+
+    let enemy = &mut board.units[enemy_idx];
+    enemy.queued_target_x = tx as i8;
+    enemy.queued_target_y = ty as i8;
+    enemy.flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+}
+
 /// Assign a new queued target to each alive enemy based on closest reachable
 /// threat. Pure function over the board; does not consume any simulation
 /// state. Caller is responsible for clearing stale `queued_target_x/_y`
@@ -289,6 +458,18 @@ pub fn requeue_enemies_heuristic(board: &mut Board, weapons: &WeaponTable) {
                 e.queued_target_y = ey as i8;
                 e.flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
             }
+            continue;
+        }
+        if matches!(
+            enemy_wid,
+            WId::TumblebugAtk1 | WId::TumblebugAtk2 | WId::TumblebugAtkB
+        ) {
+            // Tumblebug planning immediately materializes one BombRock (two
+            // for the Leader when both tiles are legal), then queues the hit
+            // on the first selected adjacent tile. Native movement and
+            // GetDeployLocScore remain heuristic, but the resulting board
+            // now carries the real spawned blockers and next-turn explosion.
+            requeue_tumblebug_heuristic(board, ei, enemy_wid);
             continue;
         }
         if projected_enemy_uses_special_targeting(&board.units[ei]) { continue; }
@@ -1524,6 +1705,252 @@ mod tests {
         requeue_enemies_heuristic(&mut beyond_maximum, &WEAPONS);
         assert_eq!(beyond_maximum.units[0].queued_target_y, -1);
         assert!(!beyond_maximum.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_tumblebug_projection_spawns_bombrock_and_queues_its_hit() {
+        let mut board = Board::default();
+        let mut dung = Unit::default();
+        dung.uid = 10;
+        dung.set_type_name("Dung1");
+        dung.x = 3;
+        dung.y = 3;
+        dung.hp = 2;
+        dung.max_hp = 2;
+        dung.team = Team::Enemy;
+        dung.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        dung.set_web(true);
+        dung.queued_target_x = -1;
+        dung.queued_target_y = -1;
+        board.add_unit(dung);
+        board.tiles[xy_to_idx(3, 1)].terrain = Terrain::Building;
+        board.tiles[xy_to_idx(3, 1)].building_hp = 2;
+
+        requeue_enemies_heuristic(&mut board, &WEAPONS);
+
+        assert_eq!(
+            (board.units[0].queued_target_x, board.units[0].queued_target_y),
+            (3, 2),
+        );
+        assert!(board.units[0].has_queued_attack());
+        let rock_idx = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].type_name_str() == "BombRock")
+            .expect("Tumblebug planning must immediately spawn BombRock");
+        assert_eq!((board.units[rock_idx].x, board.units[rock_idx].y), (3, 2));
+        assert_eq!(board.units[rock_idx].team, Team::Neutral);
+        assert_eq!(board.units[rock_idx].hp, 1);
+
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+        simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[rock_idx].hp, 0);
+        assert_eq!(
+            board.tile(3, 1).building_hp,
+            1,
+            "queued hit must detonate the projected boulder on the next enemy phase",
+        );
+    }
+
+    #[test]
+    fn test_tumblebug_leader_projection_spawns_two_rocks_in_attack_line() {
+        let mut board = Board::default();
+        let mut boss = Unit::default();
+        boss.uid = 20;
+        boss.set_type_name("DungBoss");
+        boss.x = 3;
+        boss.y = 4;
+        boss.hp = 6;
+        boss.max_hp = 6;
+        boss.team = Team::Enemy;
+        boss.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        boss.set_web(true);
+        boss.queued_target_x = -1;
+        boss.queued_target_y = -1;
+        board.add_unit(boss);
+        board.tiles[xy_to_idx(3, 1)].terrain = Terrain::Building;
+        board.tiles[xy_to_idx(3, 1)].building_hp = 2;
+
+        requeue_enemies_heuristic(&mut board, &WEAPONS);
+
+        assert_eq!(
+            (board.units[0].queued_target_x, board.units[0].queued_target_y),
+            (3, 3),
+        );
+        let rocks: Vec<usize> = (0..board.unit_count as usize)
+            .filter(|&i| board.units[i].type_name_str() == "BombRock")
+            .collect();
+        assert_eq!(rocks.len(), 2);
+        assert_eq!(
+            rocks
+                .iter()
+                .map(|&i| (board.units[i].x, board.units[i].y))
+                .collect::<Vec<_>>(),
+            vec![(3, 3), (3, 2)],
+        );
+
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+        simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert!(
+            rocks.iter().all(|&i| board.units[i].hp <= 0),
+            "projected rock HP after chain: {:?}",
+            rocks.iter().map(|&i| board.units[i].hp).collect::<Vec<_>>(),
+        );
+        assert_eq!(
+            board.tile(3, 1).building_hp,
+            1,
+            "first boulder must chain into the Leader's second boulder",
+        );
+    }
+
+    #[test]
+    fn test_tumblebug_leader_projection_skips_blocked_second_rock_only() {
+        let mut board = Board::default();
+        let mut boss = Unit::default();
+        boss.uid = 25;
+        boss.set_type_name("DungBoss");
+        boss.x = 3;
+        boss.y = 4;
+        boss.hp = 6;
+        boss.max_hp = 6;
+        boss.team = Team::Enemy;
+        boss.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        boss.set_web(true);
+        boss.queued_target_x = -1;
+        boss.queued_target_y = -1;
+        board.add_unit(boss);
+        board.tiles[xy_to_idx(2, 3)].terrain = Terrain::Building;
+        board.tiles[xy_to_idx(2, 3)].building_hp = 2;
+        board.tiles[xy_to_idx(3, 2)].terrain = Terrain::Water;
+        for (x, y) in [(4, 4), (3, 5), (2, 4)] {
+            board.tiles[xy_to_idx(x, y)].terrain = Terrain::Chasm;
+        }
+
+        requeue_enemies_heuristic(&mut board, &WEAPONS);
+
+        assert_eq!(
+            (board.units[0].queued_target_x, board.units[0].queued_target_y),
+            (3, 3),
+        );
+        let rocks: Vec<(u8, u8)> = (0..board.unit_count as usize)
+            .filter(|&i| board.units[i].type_name_str() == "BombRock")
+            .map(|i| (board.units[i].x, board.units[i].y))
+            .collect();
+        assert_eq!(rocks, vec![(3, 3)]);
+    }
+
+    #[test]
+    fn test_tumblebug_projection_does_not_spawn_when_first_target_is_blocked() {
+        let mut board = Board::default();
+        let mut boss = Unit::default();
+        boss.uid = 30;
+        boss.set_type_name("DungBoss");
+        boss.x = 3;
+        boss.y = 3;
+        boss.hp = 6;
+        boss.max_hp = 6;
+        boss.team = Team::Enemy;
+        boss.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        boss.set_web(true);
+        boss.queued_target_x = -1;
+        boss.queued_target_y = -1;
+        board.add_unit(boss);
+
+        board.tiles[xy_to_idx(3, 2)].terrain = Terrain::Building;
+        board.tiles[xy_to_idx(3, 2)].building_hp = 2;
+        for (x, y) in [(3, 4), (4, 3), (2, 3)] {
+            board.tiles[xy_to_idx(x, y)].terrain = Terrain::Chasm;
+        }
+
+        requeue_enemies_heuristic(&mut board, &WEAPONS);
+
+        assert_eq!(
+            (board.units[0].queued_target_x, board.units[0].queued_target_y),
+            (3, 2),
+        );
+        assert!(board.units[0].has_queued_attack());
+        assert!(
+            (0..board.unit_count as usize)
+                .all(|i| board.units[i].type_name_str() != "BombRock"),
+            "blocked first target prevents both Leader boulder spawns",
+        );
+    }
+
+    #[test]
+    fn test_tumblebug_projection_rejects_harmless_empty_rock_targets() {
+        let mut board = Board::default();
+        let mut dung = Unit::default();
+        dung.uid = 35;
+        dung.set_type_name("Dung1");
+        dung.x = 3;
+        dung.y = 3;
+        dung.hp = 2;
+        dung.max_hp = 2;
+        dung.team = Team::Enemy;
+        dung.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        dung.set_web(true);
+        dung.queued_target_x = -1;
+        dung.queued_target_y = -1;
+        board.add_unit(dung);
+
+        requeue_enemies_heuristic(&mut board, &WEAPONS);
+
+        assert!(!board.units[0].has_queued_attack());
+        assert!(
+            (0..board.unit_count as usize)
+                .all(|i| board.units[i].type_name_str() != "BombRock"),
+            "Lua returns zero when the fake explosion has no positive target score",
+        );
+    }
+
+    #[test]
+    fn test_tumblebug_projected_bombrock_legality_matrix() {
+        let mut board = Board::default();
+        assert!(projected_tumblebug_can_spawn_rock(&board, 2, 2));
+
+        board.tiles[xy_to_idx(2, 2)].terrain = Terrain::Water;
+        assert!(!projected_tumblebug_can_spawn_rock(&board, 2, 2));
+        board.tiles[xy_to_idx(2, 2)].terrain = Terrain::Chasm;
+        assert!(!projected_tumblebug_can_spawn_rock(&board, 2, 2));
+        board.tiles[xy_to_idx(2, 2)].terrain = Terrain::Building;
+        board.tiles[xy_to_idx(2, 2)].building_hp = 2;
+        assert!(!projected_tumblebug_can_spawn_rock(&board, 2, 2));
+
+        board.tiles[xy_to_idx(2, 2)] = Default::default();
+        board.tiles[xy_to_idx(2, 2)].set_has_pod(true);
+        assert!(!projected_tumblebug_target_legal(&board, 2, 2));
+        assert!(!projected_tumblebug_can_spawn_rock(&board, 2, 2));
+
+        board.tiles[xy_to_idx(2, 2)] = Default::default();
+        let mut blocker = Unit::default();
+        blocker.uid = 40;
+        blocker.set_type_name("PunchMech");
+        blocker.x = 2;
+        blocker.y = 2;
+        blocker.hp = 3;
+        blocker.max_hp = 3;
+        blocker.team = Team::Player;
+        board.add_unit(blocker);
+        assert!(projected_tumblebug_target_legal(&board, 2, 2));
+        assert!(!projected_tumblebug_can_spawn_rock(&board, 2, 2));
+
+        board.units[0].hp = 0;
+        assert!(
+            !projected_tumblebug_can_spawn_rock(&board, 2, 2),
+            "a disabled player mech remains a blocking wreck",
+        );
+        board.units[0].set_type_name("BombRock");
+        board.units[0].team = Team::Neutral;
+        assert!(
+            projected_tumblebug_can_spawn_rock(&board, 2, 2),
+            "an exploded BombRock's retained record must not block the next planning phase",
+        );
     }
 
     #[test]

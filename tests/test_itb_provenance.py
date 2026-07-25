@@ -1781,3 +1781,113 @@ def test_real_moth_record_pins_exact_range_fix():
     assert "does not reproduce native movement, target acquisition" in gaps
     assert "movement-plus-attack heuristic" in gaps
     assert "2..=5 target interval" in gaps
+
+
+def test_real_tumblebug_record_pins_live_ids_and_projected_bombrocks():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-tumblebug"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/ae_pawns.lua",
+            "sha256": (
+                "e87efe90c0342f26969c14159e6b6c93"
+                "766aeedcbc3319fb0f418048d129e9f4"
+            ),
+            "symbols": ["Dung1", "Dung2"],
+        },
+        {
+            "path": "scripts/advanced/ae_weapons_enemy.lua",
+            "sha256": (
+                "db757b1afa790fe3f7576930abd0c7e4"
+                "cf5d8b9dc7308aa15ce9a9736f224d13"
+            ),
+            "symbols": [
+                "DungAtk1",
+                "BombRock",
+                "DungAtk1:GetTargetArea",
+                "DungAtk1:GetTargetScore",
+                "DungAtk1:CanSpawnRock",
+                "DungAtk1:GetSkillEffect",
+                "DungAtk2",
+            ],
+        },
+        {
+            "path": "scripts/advanced/bosses/dung.lua",
+            "sha256": (
+                "2aa80c73688694d9f904c6264ef63e7f"
+                "e1562028cc5007705a561c8696cbf906"
+            ),
+            "symbols": ["DungBoss", "DungAtkB"],
+        },
+        {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883"
+                "e1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": ["Skill:ScoreList"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::TumblebugAtk1",
+        "WId::TumblebugAtk2",
+        "WId::TumblebugAtkB",
+        "WEAPONS",
+        "weapon_def",
+        "wid_from_str",
+        "wid_to_str",
+        "enemy_weapon_for_type",
+        "weapon_name",
+    } == implementations["rust_solver/src/weapons.rs"]
+    assert {
+        "projected_enemy_uses_special_targeting",
+        "projected_enemy_attack_reach",
+        "projected_enemy_reach",
+        "projected_tumblebug_target_score",
+        "projected_tumblebug_can_spawn_rock",
+        "spawn_projected_bombrock",
+        "requeue_tumblebug_heuristic",
+        "eligible_for_requeue",
+        "requeue_enemies_heuristic",
+    } == implementations["rust_solver/src/turn_projection.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_tumblebug_live_lua_dung_aliases"
+    }
+    assert {
+        "test_tumblebug_projection_spawns_bombrock_and_queues_its_hit",
+        "test_tumblebug_leader_projection_spawns_two_rocks_in_attack_line",
+        "test_tumblebug_leader_projection_skips_blocked_second_rock_only",
+        "test_tumblebug_projection_does_not_spawn_when_first_target_is_blocked",
+        "test_tumblebug_projection_rejects_harmless_empty_rock_targets",
+        "test_tumblebug_projected_bombrock_legality_matrix",
+    } <= tests["rust_solver/src/turn_projection.rs"]
+    assert tests["tests/test_weapon_defs.py"] == {
+        "test_dung_attack_aliases_match_tumblebug_weapon_defs"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "Board:GetDeployLocScore" in gaps
+    assert "mobile projection" in gaps
+    assert "bridge-materialized BombRocks" in gaps

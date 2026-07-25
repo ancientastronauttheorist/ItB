@@ -40,6 +40,7 @@ def test_hacking_cannon_bot_player_aliases_match_mark_i():
 def test_dung_attack_aliases_match_tumblebug_weapon_defs():
     normal = get_weapon_def("DungAtk1")
     alpha = get_weapon_def("DungAtk2")
+    leader = get_weapon_def("DungAtkB")
 
     assert normal is not None
     assert normal.name == "Tumblebug Boulder"
@@ -49,6 +50,10 @@ def test_dung_attack_aliases_match_tumblebug_weapon_defs():
     assert alpha.name == "Alpha Tumblebug Boulder"
     assert alpha.weapon_type == "melee"
     assert alpha.damage == 3
+    assert leader is not None
+    assert leader.name == "Tumblebug Leader Boulder"
+    assert leader.weapon_type == "melee"
+    assert leader.damage == 3
 
 
 def test_moth_weapon_defs_match_inherited_lua_artillery_range():

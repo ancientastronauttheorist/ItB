@@ -654,9 +654,12 @@ pub enum WId {
     VekHornetB = 240,
     /// Needle Shot with both +1 Range / +1 Damage upgrades powered.
     VekHornetAB = 241,
+    /// Tumblebug Leader's live Lua attack. It shares Alpha damage but spawns
+    /// up to two BombRocks instead of one.
+    TumblebugAtkB = 242,
 }
 
-pub const WEAPON_COUNT: usize = 242;
+pub const WEAPON_COUNT: usize = 243;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1205,6 +1208,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // still leaving smoke/web metadata visible to targeting/status helpers.
     w[157] = WeaponDef { weapon_type: WeaponType::Melee, damage: 255,
         flags: f(WeaponFlags::SMOKE.bits() | WeaponFlags::WEB.bits()), ..DEF };
+    // 242: DungAtkB — Tumblebug Leader, 3 dmg. The second immediate
+    // BombRock spawn is modeled by next-turn projection, not WeaponDef.
+    w[242] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, flags: C, ..DEF };
 
     // 158-161: Brute_TC_Ricochet — Ricochet Rocket. Two-click Lua weapon:
     // first click chooses the initial projectile blocker, second click chooses
@@ -1981,10 +1987,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "StarfishAtkB1" => WId::StarfishAtkB1,
         "DungAtk1" => WId::TumblebugAtk1,
         "DungAtk2" => WId::TumblebugAtk2,
-        "DungAtkB" => WId::TumblebugAtk2,
+        "DungAtkB" => WId::TumblebugAtkB,
         "TumblebugAtk1" => WId::TumblebugAtk1,
         "TumblebugAtk2" => WId::TumblebugAtk2,
-        "TumblebugAtkB" => WId::TumblebugAtk2,
+        "TumblebugAtkB" => WId::TumblebugAtkB,
         "PlasmodiaAtk1" => WId::PlasmodiaAtk1,
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
@@ -2229,8 +2235,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::StarfishAtk1 => "StarfishAtk1",
         WId::StarfishAtk2 => "StarfishAtk2",
         WId::StarfishAtkB1 => "StarfishAtkB1",
-        WId::TumblebugAtk1 => "TumblebugAtk1",
-        WId::TumblebugAtk2 => "TumblebugAtk2",
+        WId::TumblebugAtk1 => "DungAtk1",
+        WId::TumblebugAtk2 => "DungAtk2",
+        WId::TumblebugAtkB => "DungAtkB",
         WId::PlasmodiaAtk1 => "PlasmodiaAtk1",
         WId::PlasmodiaAtk2 => "PlasmodiaAtk2",
         WId::FireflyAtkB => "FireflyAtkB",
@@ -2312,10 +2319,10 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "StarfishBoss" => WId::StarfishAtkB1,
         "Dung1" => WId::TumblebugAtk1,
         "Dung2" => WId::TumblebugAtk2,
-        "DungBoss" => WId::TumblebugAtk2,
+        "DungBoss" => WId::TumblebugAtkB,
         "Tumblebug1" => WId::TumblebugAtk1,
         "Tumblebug2" => WId::TumblebugAtk2,
-        "TumblebugBoss" => WId::TumblebugAtk2,
+        "TumblebugBoss" => WId::TumblebugAtkB,
         "Plasmodia1" => WId::PlasmodiaAtk1,
         "Plasmodia2" => WId::PlasmodiaAtk2,
         "Totem1" => WId::TotemAtk1,
@@ -2534,6 +2541,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::StarfishAtkB1 => "Scored Appendages",
         WId::TumblebugAtk1 => "Tumblebug Boulder",
         WId::TumblebugAtk2 => "Alpha Tumblebug Boulder",
+        WId::TumblebugAtkB => "Tumblebug Leader Boulder",
         WId::PlasmodiaAtk1 => "Plasmodia Spore",
         WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
         WId::FireflyAtkB => "Firefly Boss Shot",
@@ -3079,10 +3087,19 @@ mod tests {
     fn test_tumblebug_live_lua_dung_aliases() {
         assert_eq!(wid_from_str("DungAtk1"), WId::TumblebugAtk1);
         assert_eq!(wid_from_str("DungAtk2"), WId::TumblebugAtk2);
-        assert_eq!(wid_from_str("DungAtkB"), WId::TumblebugAtk2);
+        assert_eq!(wid_from_str("DungAtkB"), WId::TumblebugAtkB);
+        assert_eq!(wid_to_str(WId::TumblebugAtk1), "DungAtk1");
+        assert_eq!(wid_to_str(WId::TumblebugAtk2), "DungAtk2");
+        assert_eq!(wid_to_str(WId::TumblebugAtkB), "DungAtkB");
         assert_eq!(enemy_weapon_for_type("Dung1"), WId::TumblebugAtk1);
         assert_eq!(enemy_weapon_for_type("Dung2"), WId::TumblebugAtk2);
-        assert_eq!(enemy_weapon_for_type("DungBoss"), WId::TumblebugAtk2);
+        assert_eq!(enemy_weapon_for_type("DungBoss"), WId::TumblebugAtkB);
+        assert_eq!(weapon_name(WId::TumblebugAtk1), "Tumblebug Boulder");
+        assert_eq!(weapon_name(WId::TumblebugAtk2), "Alpha Tumblebug Boulder");
+        assert_eq!(weapon_name(WId::TumblebugAtkB), "Tumblebug Leader Boulder");
+        assert_eq!(weapon_def(WId::TumblebugAtk1).damage, 1);
+        assert_eq!(weapon_def(WId::TumblebugAtk2).damage, 3);
+        assert_eq!(weapon_def(WId::TumblebugAtkB).damage, 3);
     }
 
     #[test]

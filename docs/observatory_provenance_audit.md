@@ -65,11 +65,12 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 54 definitions literally and leaves 688 unindexed. Category totals
+names 58 definitions literally and leaves 684 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
-weapon files contain 40 callback definitions; the Starfish, Bouncer, and Moth
-family records name four literally and leave 36 unindexed. That is a precise
-indexing backlog, not evidence that all 36 behaviors are absent from Rust.
+weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth, and
+Tumblebug family records name eight literally and leave 32 unindexed. That is a
+precise indexing backlog, not evidence that all 32 behaviors are absent from
+Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected
@@ -167,6 +168,23 @@ collision, prior-corpse ordering, train interaction, marker reconciliation,
 and threat auditing have focused tests. The record remains `partial`: native
 movement/selection and effect helpers are untraced, mobile projection is
 heuristic, and exhaustive edge/status/collision behavior remains open.
+
+The fourth family-level enemy-weapon slice, `enemy-weapon-tumblebug`, pins the
+live `Dung1`/`Dung2`/ranged `DungBoss` pawn and weapon IDs, all four family
+callbacks, the neutral `BombRock`, and the Leader's inherited two-rock variant.
+Simulator v370 fixes proven gaps: live IDs now round-trip canonically without
+collapsing the Leader onto the Alpha weapon, Python preserves the live Leader
+ranged flag, and next-turn projection materializes the immediate one/two
+boulders before queueing the first-tile hit.
+Source-stated Pod/chasm/water/occupied boundaries, the blocked-first/second-rock
+dependency, chain detonation, existing enemy-phase ordering, Python aliases,
+the positive ScoreList gate, and threat auditing have focused tests. The record
+remains `partial`: mobile movement and direction selection are heuristic,
+`Board:GetDeployLocScore` and native tie-breaking are untraced, current-turn
+execution consumes bridge-selected boulders, and exhaustive
+terrain/status/scheduler behavior remains open. The exact Leader source is
+outside the audit's selected 96-file high-value candidate set, so this family
+does not change the source-index totals.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and

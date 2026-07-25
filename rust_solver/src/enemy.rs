@@ -2172,7 +2172,10 @@ pub fn simulate_enemy_attacks(
                     let target_was_mountain = board.tile(tx, ty).terrain == Terrain::Mountain;
                     let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
-                    if matches!(enemy_wid, WId::TumblebugAtk1 | WId::TumblebugAtk2) {
+                    if matches!(
+                        enemy_wid,
+                        WId::TumblebugAtk1 | WId::TumblebugAtk2 | WId::TumblebugAtkB
+                    ) {
                         apply_damage_with_bombrock_exclusion(
                             board,
                             tx,

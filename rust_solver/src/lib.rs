@@ -2327,7 +2327,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   the exact inherited LineArtillery target interval of 2..=5 instead of
 //   storing a contradictory maximum of 1 and accepting distance-six/seven shots.
 //   Pre-v369 corpus archived as failure_db_snapshot_sim_v368.jsonl.
-pub const SIMULATOR_VERSION: u32 = 369;
+// v370 - Tumblebug live DungAtk IDs round-trip exactly, the Leader keeps its
+//   distinct two-boulder weapon identity, and next-turn projection materializes
+//   the one/two immediate BombRock spawns before queueing the first-tile hit.
+//   Pre-v370 corpus archived as failure_db_snapshot_sim_v369.jsonl.
+pub const SIMULATOR_VERSION: u32 = 370;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
