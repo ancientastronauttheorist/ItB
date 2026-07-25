@@ -65,11 +65,11 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 50 definitions literally and leaves 692 unindexed. Category totals
+names 52 definitions literally and leaves 690 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
-weapon files contain 40 callback definitions but the current wildcard record
-names zero of them literally; that is a precise indexing backlog, not evidence
-that all 40 behaviors are absent from Rust.
+weapon files contain 40 callback definitions; the Starfish family record names
+two literally and leaves 38 unindexed. That is a precise indexing backlog, not
+evidence that all 38 behaviors are absent from Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected
@@ -133,6 +133,19 @@ farthest-only push, collision regressions, and bridge replay. It remains
 `partial`: native effect helpers are untraced, Rust deliberately omits an
 otherwise-empty intact-building target that Lua publishes, and exhaustive
 terrain/status/collision conformance is open.
+
+The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
+normal, alpha, and leader pawn-to-weapon mappings and all five family-specific
+Lua callbacks across the exact Advanced Edition weapon and boss sources. The
+two callbacks in the core enemy-weapon audit are now indexed. Rust's distinct
+IDs, 1/2/3 diagonal damage, leader cardinal pushes, projected reach, threat
+capture, prior-attack death, and ambiguous queued-marker handling all have
+focused tests. Simulator v368 fixes a proven projection gap by queueing the
+Starfish's sole Lua target—its own tile—when the known diagonal `ScoreList`
+footprint is positive, instead of substituting scalar pseudo-pressure. The
+record remains `partial`: native movement/candidate selection, every
+`ScoreList` branch, effect helpers, and exhaustive edge/status/collision
+behavior are not reproduced or independently traced.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and

@@ -2319,7 +2319,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   coordinates back to engine DIR_* values before JSON serialization, so
 //   board_from_json does not normalize directions 0 and 2 a second time.
 //   Pre-v367 corpus archived as failure_db_snapshot_sim_v366.jsonl.
-pub const SIMULATOR_VERSION: u32 = 367;
+// v368 - Next-turn projection queues positive-score Starfish attacks on the
+//   Starfish's own tile, matching the sole Lua target and diagonal ScoreList
+//   footprint instead of replacing the attack with scalar pseudo-pressure.
+//   Pre-v368 corpus archived as failure_db_snapshot_sim_v367.jsonl.
+pub const SIMULATOR_VERSION: u32 = 368;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

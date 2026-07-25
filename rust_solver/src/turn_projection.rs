@@ -197,6 +197,35 @@ pub(crate) fn projected_enemy_smoke_cancels(enemy: &Unit) -> bool {
     !enemy.type_name_str().starts_with("Snowmine")
 }
 
+fn projected_starfish_target_score(board: &Board, enemy: &Unit) -> i32 {
+    let mut score = 0;
+    for (dx, dy) in [(1i8, 1i8), (1, -1), (-1, 1), (-1, -1)] {
+        let x = enemy.x as i8 + dx;
+        let y = enemy.y as i8 + dy;
+        if !(0..8).contains(&x) || !(0..8).contains(&y) {
+            continue;
+        }
+        let (x, y) = (x as u8, y as u8);
+        if let Some(unit_idx) = board.unit_at(x, y) {
+            let target = &board.units[unit_idx];
+            if target.is_enemy() {
+                // Skill:ScoreList penalizes queued friendly damage, except
+                // that thawing a currently untargeted frozen ally is scored
+                // like an enemy hit.
+                score += if target.frozen() { 5 } else { -2 };
+            } else {
+                score += 5;
+            }
+        } else {
+            let tile = board.tile(x, y);
+            if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+                score += 5;
+            }
+        }
+    }
+    score
+}
+
 /// Assign a new queued target to each alive enemy based on closest reachable
 /// threat. Pure function over the board; does not consume any simulation
 /// state. Caller is responsible for clearing stale `queued_target_x/_y`
@@ -241,6 +270,22 @@ pub fn requeue_enemies_heuristic(board: &mut Board, weapons: &WeaponTable) {
         if board.tile(ex, ey).smoke()
             && projected_enemy_smoke_cancels(&board.units[ei])
         {
+            continue;
+        }
+        let enemy_wid = projected_enemy_weapon_id(&board.units[ei]);
+        if matches!(
+            enemy_wid,
+            WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1
+        ) {
+            // Lua exposes only the Starfish's own tile and scores the four
+            // queued diagonal damage cells. Preserve that exact target shape
+            // whenever the known footprint has a positive native-style score.
+            if projected_starfish_target_score(board, &board.units[ei]) > 0 {
+                let e = &mut board.units[ei];
+                e.queued_target_x = ex as i8;
+                e.queued_target_y = ey as i8;
+                e.flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+            }
             continue;
         }
         if projected_enemy_uses_special_targeting(&board.units[ei]) { continue; }
@@ -1441,7 +1486,7 @@ mod tests {
     }
 
     #[test]
-    fn test_webbed_starfish_reach_includes_diagonal_appendages() {
+    fn test_webbed_starfish_requeues_self_for_positive_diagonal_score() {
         let mut b = Board::default();
         let mut enemy = Unit::default();
         enemy.uid = 10;
@@ -1462,11 +1507,64 @@ mod tests {
         assert_eq!(projected_enemy_reach(&b.units[0], &crate::weapons::WEAPONS), 2);
         requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
 
-        // Starfish uses a self-targeted bespoke pattern, so the scalar reach
-        // evaluator keeps its pressure while requeue deliberately leaves it
-        // queueless instead of inventing an illegal building target.
+        assert_eq!(b.units[0].queued_target_x, 0);
+        assert_eq!(b.units[0].queued_target_y, 0);
+        assert!(b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_starfish_zero_score_projection_stays_queueless() {
+        let mut b = Board::default();
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Starfish2");
+        enemy.x = 3;
+        enemy.y = 3;
+        enemy.hp = 4;
+        enemy.max_hp = 4;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+
+        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+
         assert_eq!(b.units[0].queued_target_x, -1);
+        assert_eq!(b.units[0].queued_target_y, -1);
         assert!(!b.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_requeued_starfish_damages_on_second_projection() {
+        let mut b = Board::default();
+        b.grid_power = 7;
+        b.grid_power_max = 7;
+        b.current_turn = 1;
+        b.total_turns = 5;
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Starfish1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 2;
+        enemy.max_hp = 2;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(1, 1)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(1, 1)].building_hp = 1;
+
+        let (queued, _) = project_plan(&b, &[], &[], &WEAPONS);
+        let (attacked, _) = project_plan(&queued, &[], &[], &WEAPONS);
+
+        assert_eq!(queued.units[0].queued_target_x, 0);
+        assert_eq!(queued.units[0].queued_target_y, 0);
+        assert_eq!(attacked.tile(1, 1).building_hp, 0);
+        assert_eq!(attacked.grid_power, 6);
     }
 
     #[test]

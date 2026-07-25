@@ -3758,6 +3758,31 @@ mod tests {
     }
 
     #[test]
+    fn test_starfish_variants_dispatch_exact_diagonal_damage() {
+        for (pawn_type, expected_damage) in [
+            ("Starfish1", 1),
+            ("Starfish2", 2),
+            ("StarfishBoss", 3),
+        ] {
+            let mut board = Board::default();
+            let idx =
+                add_enemy_with_type(&mut board, 30, 3, 3, 6, pawn_type, 3, 3);
+            board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+            board.tile_mut(4, 4).terrain = Terrain::Building;
+            board.tile_mut(4, 4).building_hp = 4;
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(
+                board.tile(4, 4).building_hp,
+                4 - expected_damage,
+                "{pawn_type} must dispatch its exact Lua diagonal damage",
+            );
+        }
+    }
+
+    #[test]
     fn test_gastropod_projectile_keeps_traveling_after_target_moves() {
         let mut board = Board::default();
         board.grid_power = 6;

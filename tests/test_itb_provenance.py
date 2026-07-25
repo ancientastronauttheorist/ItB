@@ -1492,3 +1492,115 @@ def test_real_mission_belt_record_pins_checkpoint_direction_fix():
     assert "does not reproduce native GetCrossingPath" in gaps
     assert "native environment scheduler" in gaps
     assert "runtime-stub test" in gaps
+
+
+def test_real_starfish_record_pins_exact_family_dispatch():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-starfish"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/ae_pawns.lua",
+            "sha256": (
+                "e87efe90c0342f26969c14159e6b6c93"
+                "766aeedcbc3319fb0f418048d129e9f4"
+            ),
+            "symbols": ["Starfish1", "Starfish2"],
+        },
+        {
+            "path": "scripts/advanced/ae_weapons_enemy.lua",
+            "sha256": (
+                "db757b1afa790fe3f7576930abd0c7e4"
+                "cf5d8b9dc7308aa15ce9a9736f224d13"
+            ),
+            "symbols": [
+                "StarfishAtk1",
+                "StarfishAtk1:GetTargetArea",
+                "StarfishAtk1:GetSkillEffect",
+                "StarfishAtk2",
+            ],
+        },
+        {
+            "path": "scripts/advanced/bosses/starfish.lua",
+            "sha256": (
+                "6d7d122e7be43abf535bf4295afde222"
+                "aeb6d61482a97d7787d1f962b585fe94"
+            ),
+            "symbols": [
+                "StarfishBoss",
+                "StarfishAtkB1",
+                "StarfishAtkB1:GetTargetArea",
+                "StarfishAtkB1:GetTargetScore",
+                "StarfishAtkB1:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883e"
+                "1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": ["Skill:GetTargetScore", "Skill:ScoreList"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::StarfishAtk1",
+        "WId::StarfishAtk2",
+        "WId::StarfishAtkB1",
+        "WEAPONS",
+        "weapon_def",
+        "wid_from_str",
+        "wid_to_str",
+        "enemy_weapon_for_type",
+        "weapon_name",
+    } == implementations["rust_solver/src/weapons.rs"]
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "apply_starfish_appendages",
+        "simulate_enemy_attacks",
+    }
+    assert {
+        "projected_enemy_uses_special_targeting",
+        "projected_enemy_attack_reach",
+        "projected_enemy_reach",
+        "projected_starfish_target_score",
+        "requeue_enemies_heuristic",
+    } == implementations["rust_solver/src/turn_projection.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_starfish_weapon_defs_and_mappings"
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_starfish_hits_diagonal_tiles_only",
+        "test_starfish_leader_diagonal_damage_and_cardinal_push",
+        "test_starfish_variants_dispatch_exact_diagonal_damage",
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_webbed_starfish_requeues_self_for_positive_diagonal_score",
+        "test_starfish_zero_score_projection_stays_queueless",
+        "test_requeued_starfish_damages_on_second_projection",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "next-turn projection reproduces the sole self-target" in gaps
+    assert "not native movement, candidate selection, tie-breaking" in gaps
+    assert "Vek Hormones" in gaps

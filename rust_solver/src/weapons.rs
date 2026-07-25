@@ -2662,6 +2662,46 @@ mod tests {
     }
 
     #[test]
+    fn test_starfish_weapon_defs_and_mappings() {
+        let expected = [
+            (
+                WId::StarfishAtk1,
+                "StarfishAtk1",
+                "Starfish1",
+                1,
+                WeaponType::Melee,
+            ),
+            (
+                WId::StarfishAtk2,
+                "StarfishAtk2",
+                "Starfish2",
+                2,
+                WeaponType::Melee,
+            ),
+            (
+                WId::StarfishAtkB1,
+                "StarfishAtkB1",
+                "StarfishBoss",
+                3,
+                WeaponType::SelfAoe,
+            ),
+        ];
+        for (id, lua_id, pawn_type, damage, weapon_type) in expected {
+            let def = weapon_def(id);
+            assert_eq!(def.weapon_type, weapon_type);
+            assert_eq!(def.damage, damage);
+            assert_eq!(wid_from_str(lua_id), id);
+            assert_eq!(wid_to_str(id), lua_id);
+            assert_eq!(enemy_weapon_for_type(pawn_type), id);
+        }
+
+        assert_eq!(weapon_def(WId::StarfishAtkB1).push, PushDir::Outward);
+        assert_eq!(weapon_name(WId::StarfishAtk1), "Starfish Slash");
+        assert_eq!(weapon_name(WId::StarfishAtk2), "Alpha Starfish Slash");
+        assert_eq!(weapon_name(WId::StarfishAtkB1), "Scored Appendages");
+    }
+
+    #[test]
     fn test_flamethrower_upgrade_ranges() {
         assert_eq!(weapon_def(WId::PrimeFlamethrower).range_max, 1);
         assert_eq!(weapon_def(WId::PrimeFlamethrower).path_size, 1);

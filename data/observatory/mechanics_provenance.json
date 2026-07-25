@@ -1516,6 +1516,155 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Advanced Edition Lua sources map Starfish1, Starfish2, and StarfishBoss to StarfishAtk1, StarfishAtk2, and StarfishAtkB1: normal and alpha self-target and queue damage 1 or 2 on all four diagonal tiles, while the leader queues damage 3 on the same diagonals plus zero-damage outward pushes on all four cardinal neighbors."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust has distinct IDs, definitions, and pawn mappings for all three variants, resolves the bespoke diagonal and leader-cardinal footprints, queues the Lua self-target during projection when the known diagonal ScoreList footprint is positive, and exercises exact damage dispatch, footprint, push, projected reach, threat capture, prior-attack death, and ambiguous-target reconciliation in focused tests."
+        }
+      ],
+      "id": "enemy-weapon-starfish",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::StarfishAtk1",
+            "WId::StarfishAtk2",
+            "WId::StarfishAtkB1",
+            "WEAPONS",
+            "weapon_def",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_starfish_appendages",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "projected_enemy_uses_special_targeting",
+            "projected_enemy_attack_reach",
+            "projected_enemy_reach",
+            "projected_starfish_target_score",
+            "requeue_enemies_heuristic"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS",
+            "get_weapon_def"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_reconcile_flipped_queued_targets_with_targeted_tiles"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "STARFISH_SELF_AOE_WEAPONS",
+            "_self_aoe_building_targets",
+            "_will_die_to_prior_starfish_aoe_before_attack"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Current-turn Rust consumes queued Starfish attacks; next-turn projection reproduces the sole self-target and the ordinary positive diagonal score, but not native movement, candidate selection, tie-breaking, or every ScoreList branch for non-grid structures, temporary pawns, and targeted frozen allies.",
+        "Native DIR_* iteration, SpaceDamage, AddQueuedDamage, ScoreList, push, collision, Armor, ACID, Shield, Frozen, and effect-order helper semantics have not been independently traced for this build.",
+        "Exact conformance across every board edge, terrain, status, psion, Vek Hormones, objective, and multi-unit collision interaction remains unverified."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": [
+            "Starfish1",
+            "Starfish2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons_enemy.lua",
+          "sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "symbols": [
+            "StarfishAtk1",
+            "StarfishAtk1:GetTargetArea",
+            "StarfishAtk1:GetSkillEffect",
+            "StarfishAtk2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/bosses/starfish.lua",
+          "sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94",
+          "symbols": [
+            "StarfishBoss",
+            "StarfishAtkB1",
+            "StarfishAtkB1:GetTargetArea",
+            "StarfishAtkB1:GetTargetScore",
+            "StarfishAtkB1:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "Skill:GetTargetScore",
+            "Skill:ScoreList"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_starfish_weapon_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_starfish_hits_diagonal_tiles_only",
+            "test_starfish_leader_diagonal_damage_and_cardinal_push",
+            "test_starfish_variants_dispatch_exact_diagonal_damage"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_webbed_starfish_requeues_self_for_positive_diagonal_score",
+            "test_starfish_zero_score_projection_stays_queueless",
+            "test_requeued_starfish_damages_on_second_projection"
+          ]
+        },
+        {
+          "path": "tests/test_queued_target_oob.py",
+          "symbols": [
+            "test_reconcile_shared_burrower_target_ignores_starfish_diagonal_marker"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_capture_starfish_self_target_threats_diagonal_not_cardinal",
+            "test_threat_audit_starfish_kills_later_starfish_before_building_attack"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
