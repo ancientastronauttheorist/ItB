@@ -2090,3 +2090,62 @@ def test_real_supply_train_record_pins_inherited_lifecycle_and_immunities():
     assert "VEC_UP" in gaps
     assert "AddQueuedCharge" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_reactivation_record_pins_roster_thaw_approximation():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-reactivation"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/snow/mission_reactivation.lua",
+            "sha256": (
+                "8dd29071133d7af56d872792e97323541"
+                "226e93315f76d729ccdd8ea9145e9d5"
+            ),
+            "symbols": [
+                "Mission_Reactivation",
+                "Mission_Reactivation:StartMission",
+                "Mission_Reactivation:NextTurn",
+            ],
+        }
+    ]
+    assert record["implementations"] == [
+        {
+            "path": "rust_solver/src/enemy.rs",
+            "symbols": [
+                "simulate_enemy_attacks",
+                "simulate_reactivation_thaw",
+            ],
+        }
+    ]
+    assert record["tests"] == [
+        {
+            "path": "rust_solver/src/enemy.rs",
+            "symbols": [
+                "test_reactivation_thaws_two_per_enemy_turn",
+                "test_reactivation_thaw_skipped_on_other_missions",
+                "test_reactivation_thaw_caps_at_two_even_with_more_frozen",
+            ],
+        }
+    ]
+    gaps = " ".join(record["known_gaps"])
+    assert "Mission_Reactivation.Enemies" in gaps
+    assert "lowest-UID" in " ".join(
+        item["statement"] for item in record["evidence"]
+    )
+    assert "random_removal" in gaps

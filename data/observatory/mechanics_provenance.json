@@ -2430,6 +2430,64 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried mission source attempts to create three frozen NextRobot pawns plus four frozen NextPawn pawns, adds a fifth NextPawn attempt on Unfair, stores each successfully created pawn ID in a mission-start roster, and places it on a randomly removed unblocked PATH_GROUND Point(i,j) for i=3..7 and j=0..7."
+        },
+        {
+          "classification": "fact",
+          "statement": "At each enemy-team NextTurn callback, Lua randomly removes roster IDs until it has thawed at most two currently alive frozen pawns or exhausted the roster; dead and already-thawed entries are consumed without increasing the thaw count."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust runs the reactivation hook before the frozen attack skip, thaws at most two living frozen enemies, and has focused tests for the two-unit cap and mission gate."
+        },
+        {
+          "classification": "unresolved",
+          "statement": "Rust deterministically selects the lowest-UID living frozen enemies from current board state instead of sampling only the mission-start roster, so it can thaw a non-roster pawn and can guarantee two thaws where Lua's consumed roster yields fewer."
+        }
+      ],
+      "id": "mission-reactivation",
+      "implementations": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks",
+            "simulate_reactivation_thaw"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust does not serialize Mission_Reactivation.Enemies and therefore cannot reproduce roster-only random removal, consumed dead/already-thawed IDs, exact pawn choice, native RNG state, or call order.",
+        "Mission setup is consumed from live board state rather than generated: Rust does not reproduce the valid PATH_GROUND location set, random placement, three NextRobot selections, four/five NextPawn selections, zero SpawnStart values, or the Unfair extra Vek.",
+        "Native Mission_Infinite, Board:IsBlocked, random_removal, PAWN_FACTORY, spawner, NextRobot, NextPawn, AddPawn, SetFrozen, Game:GetTeamTurn, and voice-event behavior remain untraced.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_reactivation.lua",
+          "sha256": "8dd29071133d7af56d872792e97323541226e93315f76d729ccdd8ea9145e9d5",
+          "symbols": [
+            "Mission_Reactivation",
+            "Mission_Reactivation:StartMission",
+            "Mission_Reactivation:NextTurn"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_reactivation_thaws_two_per_enemy_turn",
+            "test_reactivation_thaw_skipped_on_other_missions",
+            "test_reactivation_thaw_caps_at_two_even_with_more_frozen"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

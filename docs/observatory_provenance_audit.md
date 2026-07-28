@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 6 | 8 |
-| Missions | 75 | 9 | 66 |
+| Missions | 75 | 10 | 65 |
 | Environments | 15 | 6 | 9 |
-| Unique total | 96 | 22 | 74 |
+| Unique total | 96 | 23 | 73 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 72 definitions literally and leaves 670 unindexed. Category totals
+names 74 definitions literally and leaves 668 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -212,6 +212,16 @@ fire-exposed trains. The record remains `partial`: Rust infers rail direction
 from serialized multi-space tiles, and native blocker, effect queue, pawn
 factory, objective UI, scheduler, corpse, and exhaustive terrain/status
 semantics remain untraced.
+
+The second mission-objective slice, `mission-reactivation`, pins the compact
+Pinnacle thaw mission's exact frozen roster setup and two-per-enemy-turn
+callback. Rust's pre-attack hook and three focused tests preserve the important
+thaw cap and mission gate. The record remains `partial` and names the known
+selection mismatch explicitly: Lua randomly consumes only IDs captured at
+mission start, including dead or already-thawed entries, while Rust
+deterministically thaws the lowest-UID living frozen enemies on the current
+board. Setup placement, spawner/native robot choice, RNG state, and helper
+ordering remain untraced.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
