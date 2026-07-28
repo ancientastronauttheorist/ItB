@@ -37,11 +37,15 @@ change is complete.
 
 ## Agents, Branches, and Worktrees
 
-- Use subagents liberally for independent research, implementation, validation,
-  and review. Parallelize bounded tasks when useful, give every subagent a clear
-  scope, and reconcile their results before drawing conclusions. Avoid having
-  multiple agents edit the same files concurrently; the primary agent remains
-  responsible for integration and final validation.
+- Use `gpt-5.6-terra` for every subagent by default. Pass the model override
+  explicitly when spawning, use a bounded context fork plus a self-contained
+  task packet because full-history forks cannot take a model override, and use
+  another model only when the user explicitly requests it.
+- Use those Terra subagents liberally for independent research, implementation,
+  validation, and review. Parallelize bounded tasks when useful, give every
+  subagent a clear scope, and reconcile their results before drawing
+  conclusions. Avoid having multiple agents edit the same files concurrently;
+  the primary agent remains responsible for integration and final validation.
 - Keep the primary checkout on `main` and work directly on `main`. Do not
   create, publish, or switch to another named local or remote branch unless I
   explicitly change this policy.
