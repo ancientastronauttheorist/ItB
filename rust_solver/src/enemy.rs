@@ -1027,7 +1027,7 @@ pub fn simulate_enemy_attacks(
     // a single batch (mission_snowstorm.lua:28-53). Frozen units have HP
     // protected from the upcoming Vek attacks (the attack loop's
     // `if e.frozen() || e.web() { continue; }` skip). Buildings and mountains
-    // are unaffected — Frozen is a unit status, terrain has no flag for it.
+    // receive the same frozen layer because the source does not exclude them.
     //
     // Order vs env_danger: env_danger fires first so Lightning kills the
     // unit before Ice Storm freezes its corpse. In practice Ice Storm and
@@ -1042,18 +1042,29 @@ pub fn simulate_enemy_attacks(
                 let unit = &mut board.units[uidx];
                 if unit.hp > 0 {
                     if unit.shield() {
-                        // ITB shield rule: blocks one instance of damage OR
-                        // negative effect. Freeze is a negative effect, so
-                        // shield consumes and the unit stays unfrozen.
+                        // Native shield behavior blocks the negative Frozen
+                        // status and consumes the shield even at iDamage=0.
                         unit.set_shield(false);
                     } else if !unit.frozen() {
                         // Already-frozen → idempotent (no double-flag); only
                         // freshly-applied freeze sets the flag.
+                        unit.set_fire(false);
                         unit.set_frozen(true);
                     }
                 }
             }
-            // Buildings/mountains/other terrain on this tile: untouched.
+            let tile = board.tile_mut(x, y);
+            if matches!(tile.terrain, Terrain::Building | Terrain::Mountain)
+                && tile.building_hp > 0
+            {
+                if tile.shield() {
+                    tile.set_shield(false);
+                } else {
+                    tile.set_on_fire(false);
+                    tile.set_frozen(true);
+                }
+            }
+            // Empty ground and other terrain do not carry a frozen layer.
         }
     }
 
@@ -3828,6 +3839,100 @@ mod tests {
         assert_eq!(board.grid_power, 7);
         assert_eq!(result.grid_damage, 0);
         assert_eq!(result.mech_damage_taken, 0);
+    }
+
+    #[test]
+    fn test_ice_storm_freezes_building_then_damage_only_thaws_it() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        board.env_freeze = 1u64 << xy_to_idx(3, 4);
+
+        let orig = default_orig_pos(&board);
+        let freeze_result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.tile(3, 4).frozen());
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(freeze_result.grid_damage, 0);
+
+        let mut thaw_result = ActionResult::default();
+        apply_damage(
+            &mut board,
+            3,
+            4,
+            1,
+            &mut thaw_result,
+            DamageSource::Weapon,
+        );
+
+        assert!(!board.tile(3, 4).frozen());
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(thaw_result.grid_damage, 0);
+        assert!(thaw_result
+            .events
+            .iter()
+            .any(|event| event == "building_thawed:3:4"));
+    }
+
+    #[test]
+    fn test_ice_storm_shield_blocks_status_and_is_consumed() {
+        let mut board = Board::default();
+        let mut unit = Unit {
+            uid: 7,
+            x: 2,
+            y: 2,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        unit.set_shield(true);
+        board.add_unit(unit);
+        board.tile_mut(4, 4).terrain = Terrain::Mountain;
+        board.tile_mut(4, 4).building_hp = 2;
+        board.tile_mut(4, 4).set_shield(true);
+        board.env_freeze =
+            (1u64 << xy_to_idx(2, 2)) | (1u64 << xy_to_idx(4, 4));
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(!board.units[0].shield());
+        assert!(!board.units[0].frozen());
+        assert!(!board.tile(4, 4).shield());
+        assert!(!board.tile(4, 4).frozen());
+    }
+
+    #[test]
+    fn test_ice_storm_extinguishes_and_freezes_burning_unit_and_mountain() {
+        let mut board = Board::default();
+        let mut unit = Unit {
+            uid: 7,
+            x: 2,
+            y: 2,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        unit.set_fire(true);
+        board.add_unit(unit);
+        board.tile_mut(4, 4).terrain = Terrain::Mountain;
+        board.tile_mut(4, 4).building_hp = 2;
+        board.tile_mut(4, 4).set_on_fire(true);
+        board.env_freeze =
+            (1u64 << xy_to_idx(2, 2)) | (1u64 << xy_to_idx(4, 4));
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(!board.units[0].fire());
+        assert!(board.units[0].frozen());
+        assert!(!board.tile(4, 4).on_fire());
+        assert!(board.tile(4, 4).frozen());
     }
 
     #[test]

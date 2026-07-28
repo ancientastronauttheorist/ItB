@@ -248,6 +248,24 @@ def _frozen_building(board: Board, x: int, y: int) -> bool:
     return bool(getattr(board.tile(x, y), "frozen", False))
 
 
+def _freeze_covers_single_building_threat(
+    board: Board,
+    x: int,
+    y: int,
+    current_target_counts: dict[tuple[int, int], int],
+) -> bool:
+    """True when current or incoming Ice absorbs the building's sole hit."""
+    if not _live_building(board, x, y):
+        return False
+    if current_target_counts.get((x, y), 0) != 1:
+        return False
+    if _frozen_building(board, x, y):
+        return True
+    if bool(getattr(board.tile(x, y), "shield", False)):
+        return False
+    return (x, y) in (getattr(board, "environment_freeze", set()) or set())
+
+
 def _shield_covers_single_building_threat(
     board: Board,
     x: int,
@@ -258,7 +276,7 @@ def _shield_covers_single_building_threat(
 
     Keep this deliberately narrower than simulator prediction. Multiple live
     threats can consume the same one-shot shield, and a pre-attack environment
-    hit or freeze can remove it before the queued Vek attack resolves.
+    hit or negative status can remove it before the queued Vek attack resolves.
     """
     if not _live_building(board, x, y):
         return False
@@ -1005,8 +1023,18 @@ def _coverage_reason(
                 "self_aoe_retargeted",
                 "building is no longer in the attacker's self-AOE footprint",
             )
-        if _frozen_building(board, tx, ty):
-            return "target_frozen_building", "target building is frozen and will thaw"
+        if _freeze_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            if _frozen_building(board, tx, ty):
+                return (
+                    "target_frozen_building",
+                    "target building is frozen and will thaw",
+                )
+            return (
+                "target_will_be_frozen_by_environment",
+                "Ice Storm freezes the target building before its sole queued hit",
+            )
         if _shield_covers_single_building_threat(
             board, tx, ty, current_target_counts
         ):
@@ -1067,12 +1095,26 @@ def _coverage_reason(
                 "conveyor moves attacker to "
                 f"{_visual(conveyor_pos[0], conveyor_pos[1])} before attacks",
             )
-        if _frozen_building(board, conveyor_building[0], conveyor_building[1]):
+        if _freeze_covers_single_building_threat(
+            board,
+            conveyor_building[0],
+            conveyor_building[1],
+            current_target_counts,
+        ):
+            if _frozen_building(
+                board, conveyor_building[0], conveyor_building[1]
+            ):
+                protection = "is frozen"
+                reason = "target_frozen_building_after_conveyor"
+            else:
+                protection = "will be frozen by Ice Storm"
+                reason = "target_will_be_frozen_by_environment_after_conveyor"
             return (
-                "target_frozen_building_after_conveyor",
+                reason,
                 "conveyor moves attacker to "
                 f"{_visual(conveyor_pos[0], conveyor_pos[1])}, but target "
-                f"{_visual(conveyor_building[0], conveyor_building[1])} is frozen",
+                f"{_visual(conveyor_building[0], conveyor_building[1])} "
+                f"{protection}",
             )
         return (
             "still_threatened_after_conveyor",
@@ -1085,8 +1127,18 @@ def _coverage_reason(
     moved = [int(attacker.x), int(attacker.y)] != [int(old_pos[0]), int(old_pos[1])]
     current_target = [int(attacker.target_x), int(attacker.target_y)]
     if current_target == [tx, ty]:
-        if _frozen_building(board, tx, ty):
-            return "target_frozen_building", "target building is frozen and will thaw"
+        if _freeze_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            if _frozen_building(board, tx, ty):
+                return (
+                    "target_frozen_building",
+                    "target building is frozen and will thaw",
+                )
+            return (
+                "target_will_be_frozen_by_environment",
+                "Ice Storm freezes the target building before its sole queued hit",
+            )
         if _shield_covers_single_building_threat(
             board, tx, ty, current_target_counts
         ):

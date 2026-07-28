@@ -2463,3 +2463,72 @@ def test_real_sandstorm_record_pins_non_damage_boundary_and_open_row_gap():
     assert "Env_Sandstorm.Row" in gaps
     assert "RandomizeTerrain" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_ice_storm_record_pins_freeze_status_and_open_rng_gap():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-ice-storm"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    assert sources["scripts/missions/snow/mission_snowstorm.lua"] == {
+        "path": "scripts/missions/snow/mission_snowstorm.lua",
+        "sha256": (
+            "b798e1faca26239af59057eaa83155fe"
+            "3fac9db4e6fdb8010907bad258d9c4d6"
+        ),
+        "symbols": [
+            "Mission_SnowStorm",
+            "Mission_SnowStorm:StartMission",
+            "Env_SnowStorm",
+            "Env_SnowStorm:MarkSpace",
+            "Env_SnowStorm:ApplyEffect",
+            "Env_SnowStorm:SelectSpaces",
+        ],
+    }
+    assert {
+        "Env_Attack:Start",
+        "Env_Attack:IsEffect",
+        "Env_Attack:BlockSpawn",
+        "Env_Attack:Plan",
+        "Env_Attack:MarkBoard",
+    } <= set(sources["scripts/environments.lua"]["symbols"])
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert "_freeze_covers_single_building_threat" in implementations[
+        "src/solver/threat_audit.py"
+    ]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_ice_storm_freezes_building_then_damage_only_thaws_it",
+        "test_ice_storm_shield_blocks_status_and_is_consumed",
+        "test_ice_storm_extinguishes_and_freezes_burning_unit_and_mountain",
+    }
+    assert "test_ice_storm_freezes_flying_enemy_and_cancels_attack" in tests[
+        "tests/test_ice_storm_pytest.py"
+    ]
+    gaps = " ".join(record["known_gaps"])
+    assert "random selection" in gaps
+    assert "ACID application" in gaps
+    assert "protected live achievement session" in gaps

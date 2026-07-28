@@ -2978,6 +2978,136 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_SnowStorm source selects one center without replacement from four fixed interior points, resets that pool after exhaustion, and marks the center plus its eight neighbors. Env_SnowStorm queues zero-damage Frozen status on all nine tiles with no team, flight, terrain, or building exclusion."
+        },
+        {
+          "classification": "fact",
+          "statement": "The bridge distinguishes vanilla Env_SnowStorm from its Acid subclass and exports the vanilla warning mask through environment_freeze; Python and Rust preserve that dedicated status channel separately from damaging environment danger."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v373 freezes marked living units and live buildings or mountains, clears Fire when Frozen is applied, preserves the existing live-derived rule that a shield blocks Frozen and is consumed, rewards freezing flying enemies, and treats current or incoming unshielded building Ice as protection from only one queued hit."
+        }
+      ],
+      "id": "environment-mission-ice-storm",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "Env_SnowStorm",
+            "environment_freeze",
+            "route_to_freeze"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data",
+            "environment_freeze"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "environment_freeze"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "evaluate",
+            "enemy_on_danger"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_will_be_frozen_by_environment_before_attack",
+            "_freeze_covers_single_building_threat"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes live bridge markers rather than reproducing the four-center option pool, random selection, three-by-three construction, or temporary spawn blocking.",
+        "Native Frozen status, effect scheduling, weather, sound, delay, animation, and presentation order have not been independently traced end-to-end.",
+        "Shield guidance conflicts: a recorded live Cryo hit consumed Shield, while the general mechanics references and Freeze Mine behavior say status-only Freeze does not. Ice Storm keeps the conservative pre-v373 consumption rule pending a controlled native reproducer.",
+        "The Env_SnowStormAcid subclass's native ACID application is not carried by the bridge's current NanoStorm damage-only channel.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_snowstorm.lua",
+          "sha256": "b798e1faca26239af59057eaa83155fe3fac9db4e6fdb8010907bad258d9c4d6",
+          "symbols": [
+            "Mission_SnowStorm",
+            "Mission_SnowStorm:StartMission",
+            "Env_SnowStorm",
+            "Env_SnowStorm:MarkSpace",
+            "Env_SnowStorm:ApplyEffect",
+            "Env_SnowStorm:SelectSpaces"
+          ]
+        },
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": [
+            "Env_Attack",
+            "Env_Attack:Start",
+            "Env_Attack:IsEffect",
+            "Env_Attack:BlockSpawn",
+            "Env_Attack:Plan",
+            "Env_Attack:MarkBoard"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_ice_storm_freezes_building_then_damage_only_thaws_it",
+            "test_ice_storm_shield_blocks_status_and_is_consumed",
+            "test_ice_storm_extinguishes_and_freezes_burning_unit_and_mountain"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "test_ice_storm_rewards_freezing_flying_enemy_like_ground_enemy"
+          ]
+        },
+        {
+          "path": "tests/test_ice_storm_pytest.py",
+          "symbols": [
+            "test_ice_storm_freezes_mech_without_damage",
+            "test_ice_storm_freezes_flying_enemy_and_cancels_attack",
+            "test_ice_storm_freezes_building_without_grid_loss",
+            "test_ice_storm_shield_blocks_freeze_and_is_consumed",
+            "test_nano_storm_remains_damage_without_freeze"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_threat_audit_frozen_building_does_not_cover_two_hits",
+            "test_threat_audit_ice_storm_covers_single_building_hit",
+            "test_threat_audit_ice_storm_does_not_cover_two_building_hits",
+            "test_threat_audit_ice_storm_consumes_building_shield_before_hit"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

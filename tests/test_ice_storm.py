@@ -1,8 +1,8 @@
 """Sim v25 Ice Storm freeze validation tests.
 
 Vanilla Env_SnowStorm tiles are non-lethal: at start of enemy turn the
-simulator applies Frozen=true to any alive unit standing on them. Shield
-blocks + consumed; already-frozen idempotent; buildings/mountains untouched.
+simulator applies Frozen=true to any alive unit or live structure standing on
+them. Shield blocks and is consumed; already-frozen is idempotent.
 Frozen Vek skip their attacks via the existing attack-loop guard.
 
 Tests:
@@ -10,7 +10,7 @@ Tests:
   2. Mech with shield on freeze tile: shield consumed, mech NOT frozen
   3. Already-frozen mech on freeze tile stays frozen (idempotent), HP unchanged
   4. Enemy on freeze tile gets Frozen, queued attack does NOT fire
-  5. Building on freeze tile: untouched (no HP loss, no terrain change)
+  5. Building on freeze tile: Frozen=true, HP and terrain unchanged
   6. Empty freeze tile: no-op
   7. NanoStorm path (kill=0, dmg=1) still fires through env_danger — guard
      against accidental routing into the freeze channel.
@@ -157,7 +157,7 @@ else:
     failed += 1
 
 
-# Test 5: Building on freeze tile is untouched (no HP loss, no terrain change)
+# Test 5: Building on freeze tile is frozen without HP or terrain loss
 mech = {"uid": 0, "type": "PunchMech", "x": 7, "y": 7, "hp": 3, "max_hp": 3,
         "team": 1, "mech": True, "move": 0, "active": True,
         "weapons": ["Prime_Punchmech"]}
@@ -165,8 +165,9 @@ tiles = [{"x": 3, "y": 3, "terrain": "building", "building_hp": 1}]
 b = base_board([mech], tiles=tiles, freeze_tiles=[[3, 3]])
 post = project(b, [])
 bld = find_tile(post, 3, 3)
-if bld and bld["terrain"] == "building" and bld["building_hp"] == 1:
-    print("  PASS Test 5: Building on freeze tile untouched")
+if (bld and bld["terrain"] == "building" and bld["building_hp"] == 1
+        and bld.get("frozen", False)):
+    print("  PASS Test 5: Building on freeze tile is Frozen, HP intact")
     passed += 1
 else:
     print(f"  FAIL Test 5: bld={bld}")

@@ -1734,7 +1734,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # changes without iDamage, so marked mechs/buildings retain HP/grid power.
 # Full row progression remains pending bridge Row export.
 # Pre-v372 corpus archived as failure_db_snapshot_sim_v371.jsonl.
-SIMULATOR_VERSION = 372
+# v373 - Ice Storm freezes marked buildings and mountains; shield blocks the
+# negative status and is consumed, and first damage against Ice only thaws.
+# Evaluation also rewards freezing flying Vek like grounded Vek.
+# Pre-v373 corpus archived as failure_db_snapshot_sim_v372.jsonl.
+SIMULATOR_VERSION = 373
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

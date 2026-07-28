@@ -1066,6 +1066,50 @@ def test_threat_audit_frozen_building_target_is_thaw_covered():
     assert audit["entries"][0]["coverage"]["reason"] == "target_frozen_building"
 
 
+def test_threat_audit_frozen_building_does_not_cover_two_hits():
+    board = _board()
+    board.tile(4, 2).frozen = True
+    board.units.append(_enemy(uid=11))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 2
+    assert {
+        entry["coverage"]["reason"] for entry in audit["entries"]
+    } == {"still_threatened"}
+
+
+def test_threat_audit_ice_storm_covers_single_building_hit():
+    board = _board()
+    board.environment_freeze.add((4, 2))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "target_will_be_frozen_by_environment"
+    )
+
+
+def test_threat_audit_ice_storm_does_not_cover_two_building_hits():
+    board = _board()
+    board.environment_freeze.add((4, 2))
+    board.units.append(_enemy(uid=11))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 2
+    assert {
+        entry["coverage"]["reason"] for entry in audit["entries"]
+    } == {"still_threatened"}
+
+
 def test_threat_audit_still_threatened_warns():
     initial = capture_building_threats(_board())
 
@@ -1088,6 +1132,19 @@ def test_threat_audit_single_shielded_building_target_is_covered():
     assert audit["entries"][0]["coverage"]["reason"] == (
         "target_shielded_building"
     )
+
+
+def test_threat_audit_ice_storm_consumes_building_shield_before_hit():
+    board = _board()
+    board.tile(4, 2).shield = True
+    board.environment_freeze.add((4, 2))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
 
 
 def test_threat_audit_shield_does_not_cover_multiple_building_threats():

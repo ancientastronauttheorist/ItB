@@ -1072,9 +1072,9 @@ pub fn evaluate(
             let u = &board.units[i];
             if !u.alive() { continue; }
             if !board.is_env_freeze(u.x, u.y) { continue; }
-            if u.is_enemy() && !u.flying() {
-                // Flying enemies don't land on the freeze tile (effectively
-                // hover) — match the env_danger flying-skip convention.
+            if u.is_enemy() {
+                // Env_SnowStorm applies iFrozen without an IsFlying filter;
+                // flying Vek receive the same pre-attack freeze as ground Vek.
                 score += scaled(weights.enemy_on_danger, ff, 0.20, 1.60);
             }
         }
@@ -2086,5 +2086,42 @@ mod tests {
 
         assert!((s_one - s_frozen - 12000.0).abs() < 1.0);
         assert!((s_all - s_frozen - 180000.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_ice_storm_rewards_freezing_flying_enemy_like_ground_enemy() {
+        let weights = EvalWeights::default();
+        let psion = no_psion();
+        let mut board = Board::default();
+        let mut enemy = Unit {
+            uid: 41,
+            x: 3,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        enemy.set_type_name("Hornet1");
+        board.add_unit(enemy);
+
+        let ground_without_storm =
+            evaluate(&board, &[], &weights, 0, 0, 0, &psion, 0);
+        board.env_freeze = 1u64 << xy_to_idx(3, 3);
+        let ground_with_storm =
+            evaluate(&board, &[], &weights, 0, 0, 0, &psion, 0);
+        let ground_delta = ground_with_storm - ground_without_storm;
+
+        board.units[0].flags.insert(UnitFlags::FLYING);
+        board.env_freeze = 0;
+        let flying_without_storm =
+            evaluate(&board, &[], &weights, 0, 0, 0, &psion, 0);
+        board.env_freeze = 1u64 << xy_to_idx(3, 3);
+        let flying_with_storm =
+            evaluate(&board, &[], &weights, 0, 0, 0, &psion, 0);
+        let flying_delta = flying_with_storm - flying_without_storm;
+
+        assert!(ground_delta > 0.0);
+        assert!((flying_delta - ground_delta).abs() < 1.0);
     }
 }

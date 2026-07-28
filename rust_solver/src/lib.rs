@@ -2340,7 +2340,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   changes without iDamage, so marked mechs/buildings retain HP/grid power.
 //   Full row progression remains pending bridge Row export.
 //   Pre-v372 corpus archived as failure_db_snapshot_sim_v371.jsonl.
-pub const SIMULATOR_VERSION: u32 = 372;
+// v373 - Ice Storm freezes marked buildings and mountains; shield blocks the
+//   negative status and is consumed, and first damage against Ice only thaws.
+//   Evaluation also rewards freezing flying Vek like grounded Vek.
+//   Pre-v373 corpus archived as failure_db_snapshot_sim_v372.jsonl.
+pub const SIMULATOR_VERSION: u32 = 373;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

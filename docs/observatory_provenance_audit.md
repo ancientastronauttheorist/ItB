@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 7 | 7 |
-| Missions | 75 | 14 | 61 |
-| Environments | 15 | 8 | 7 |
-| Unique total | 96 | 28 | 68 |
+| Missions | 75 | 15 | 60 |
+| Environments | 15 | 9 | 6 |
+| Unique total | 96 | 29 | 67 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 96 definitions literally and leaves 646 unindexed. Category totals
+names 103 definitions literally and leaves 639 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -272,6 +272,20 @@ focused loader and enemy-phase regressions. It remains `partial`: the bridge
 does not export the live `Row`, so two-row smoke and terrain progression,
 mission-start random Sand placement, native timing, and interactions are not
 yet reproduced.
+
+The Ice Storm slice, `environment-mission-ice-storm`, pins its four-center
+without-replacement selection, exact 3-by-3 Frozen effect, and inherited
+`Env_Attack` staging callbacks. Simulator v373 closes four source
+contradictions: marked buildings and mountains now freeze, applying Frozen
+clears Fire, and flying Vek receive the same freeze reward as ground Vek. The
+safety audit now counts current or incoming unshielded building Ice as
+protection against exactly one queued hit because the first hit only thaws it.
+The record remains `partial`: Rust consumes live markers rather than
+reproducing the center pool or native RNG, native scheduler and presentation
+details are untraced, the Acid subclass's ACID application is not carried by
+the current NanoStorm channel, and conflicting Shield evidence requires a
+controlled native reproducer. Until then, v373 conservatively preserves the
+pre-existing live-derived Shield-consumption behavior.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and

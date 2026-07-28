@@ -424,11 +424,10 @@ pub struct Board {
     pub env_tides_index: Option<u8>,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
-    /// Frozen=true to any alive unit standing on these tiles. Buildings
-    /// and mountains are unaffected (Frozen is a unit status). Shield
-    /// blocks the freeze and is consumed (per ITB shield rule:
-    /// "blocks one instance of damage + negative effects"). Already-
-    /// frozen units no-op (idempotent).
+    /// Frozen=true to any alive unit standing on these tiles and freezes live
+    /// buildings/mountains on otherwise unoccupied marked tiles. Shield blocks
+    /// this negative status and is consumed. Already-frozen targets no-op
+    /// (idempotent).
     ///
     /// Disjoint from `env_danger` — freeze tiles route here instead, so
     /// the evaluator scores "lose a turn" via `mech_self_frozen` rather
@@ -769,9 +768,9 @@ impl Board {
         self.env_danger & bit != 0
     }
 
-    /// Is tile on the env_freeze bitset (Ice Storm)? Units standing here at
-    /// the start of the enemy turn get Frozen=true (shield blocks + consumed,
-    /// already-frozen idempotent, buildings/mountains unaffected).
+    /// Is tile on the env_freeze bitset (Ice Storm)? Units and live structures
+    /// here get Frozen=true at enemy-turn start (shield blocks and is consumed;
+    /// already-frozen targets are idempotent).
     #[inline]
     pub fn is_env_freeze(&self, x: u8, y: u8) -> bool {
         let bit = 1u64 << xy_to_idx(x, y);
