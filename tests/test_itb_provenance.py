@@ -2272,3 +2272,69 @@ def test_real_teleporter_record_pins_live_pair_capture_and_scoping():
     assert "Environment:GetQuarters" in gaps
     assert "Board:AddTeleport" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_airstrike_record_pins_lethal_cross_and_spawn_boundary():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-airstrike"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    assert sources["scripts/missions/grass/mission_airstrike.lua"] == {
+        "path": "scripts/missions/grass/mission_airstrike.lua",
+        "sha256": (
+            "5adcffbf370ba0e33a029fc22cb71c892"
+            "62b00d64b83e30dabe6a4842effe94a"
+        ),
+        "symbols": [
+            "Mission_Airstrike",
+            "Env_Airstrike",
+            "Env_Airstrike:GetAttackArea",
+            "Env_Airstrike:MarkSpace",
+            "Env_Airstrike:GetAttackEffect",
+            "Env_Airstrike:BlockSpawn",
+            "Env_Airstrike:IsValidTarget",
+            "Env_Airstrike:SelectSpaces",
+        ],
+    }
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "apply_env_danger",
+        "apply_env_danger_board",
+        "simulate_enemy_attacks",
+    }
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_airstrike_lethal_danger_collapses_empty_cracked_ground",
+        "test_airstrike_lethal_danger_does_not_collapse_occupied_cracked_ground",
+        "test_airstrike_nonlethal_danger_leaves_empty_cracked_ground",
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_airstrike_env_ignores_stale_flying_immune_field"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "native scheduler" in gaps
+    assert "SpaceDamage(DAMAGE_DEATH)" in gaps
+    assert "protected live achievement session" in gaps

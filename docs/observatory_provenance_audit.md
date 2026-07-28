@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 6 | 8 |
-| Missions | 75 | 12 | 63 |
-| Environments | 15 | 6 | 9 |
-| Unique total | 96 | 25 | 71 |
+| Missions | 75 | 13 | 62 |
+| Environments | 15 | 7 | 8 |
+| Unique total | 96 | 26 | 70 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 81 definitions literally and leaves 661 unindexed. Category totals
+names 90 definitions literally and leaves 652 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -242,6 +242,15 @@ ordinary and lethal-mine landings, empty pairs, and post-swap targeting. It
 remains `partial`: quarter selection, validity/blocking helpers, RNG,
 `Board:AddTeleport`, native timing/chaining, and UI behavior are not
 independently reproduced.
+
+The first lethal mission-environment slice, `environment-mission-airstrike`,
+pins its exact five-tile cross for marking, `DAMAGE_DEATH`, and temporary spawn
+blocking plus the inherited `Env_Attack` staging callbacks. The bridge and Rust
+classify the live danger as lethal without flyer immunity, with focused tests
+for empty/occupied cracked Ground and stale immunity input. It remains
+`partial`: Rust consumes live markers rather than reproducing quarter
+selection, validity, native RNG, spawn-block lifecycle, or scheduler order,
+and native `SpaceDamage` behavior is not independently traced end-to-end.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and

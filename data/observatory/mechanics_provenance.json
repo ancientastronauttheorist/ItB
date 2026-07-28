@@ -2682,6 +2682,97 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Airstrike environment defines a five-tile center-plus-cardinals attack area, marks every tile deadly, queues ordinary DAMAGE_DEATH SpaceDamage on all five, and temporarily blocks spawns across the same footprint."
+        },
+        {
+          "classification": "fact",
+          "statement": "Lua selects at most one random center from x=3..5 and y=1..6 whose full cross has no building or pod. The inherited Env_Attack base stages selected locations before applying their effects."
+        },
+        {
+          "classification": "fact",
+          "statement": "The bridge and Rust identify Mission_Airstrike danger as lethal without flyer immunity. Focused tests cover lethal and nonlethal cracked Ground, occupied cracked Ground, and stale flyer-immunity input."
+        }
+      ],
+      "id": "environment-mission-airstrike",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "Mission_Airstrike",
+            "lightning_or_airstrike"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "Mission_Airstrike"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger",
+            "apply_env_danger_board",
+            "simulate_enemy_attacks"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes bridge-marked danger and spawn state; it does not reproduce Env_Attack Locations/Planned/CurrentAttack, random center selection, target validity, temporary spawn-block creation/removal, or native RNG state and call order.",
+        "Source proves staged inherited application but not the native scheduler's exact ordering relative to queued enemy attacks; Rust's pre-attack timing is live-supported rather than statically derived.",
+        "Native SpaceDamage(DAMAGE_DEATH) terrain, shield, frozen, armor, pod, building, death/corpse, bounce, and scheduler behavior is not independently traced end-to-end.",
+        "The simulator's empty cracked-Ground chasm conversion is evidence-backed behavior rather than an explicit Lua branch in this source.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/grass/mission_airstrike.lua",
+          "sha256": "5adcffbf370ba0e33a029fc22cb71c89262b00d64b83e30dabe6a4842effe94a",
+          "symbols": [
+            "Mission_Airstrike",
+            "Env_Airstrike",
+            "Env_Airstrike:GetAttackArea",
+            "Env_Airstrike:MarkSpace",
+            "Env_Airstrike:GetAttackEffect",
+            "Env_Airstrike:BlockSpawn",
+            "Env_Airstrike:IsValidTarget",
+            "Env_Airstrike:SelectSpaces"
+          ]
+        },
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": [
+            "Env_Attack",
+            "Env_Attack:Plan",
+            "Env_Attack:ApplyEffect",
+            "Env_Attack:MarkBoard"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_airstrike_lethal_danger_collapses_empty_cracked_ground",
+            "test_airstrike_lethal_danger_does_not_collapse_occupied_cracked_ground",
+            "test_airstrike_nonlethal_danger_leaves_empty_cracked_ground"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_airstrike_env_ignores_stale_flying_immune_field"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
