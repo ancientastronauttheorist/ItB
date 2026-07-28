@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 7 | 7 |
-| Missions | 75 | 13 | 62 |
-| Environments | 15 | 7 | 8 |
-| Unique total | 96 | 27 | 69 |
+| Missions | 75 | 14 | 61 |
+| Environments | 15 | 8 | 7 |
+| Unique total | 96 | 28 | 68 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 93 definitions literally and leaves 649 unindexed. Category totals
+names 96 definitions literally and leaves 646 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -261,6 +261,17 @@ for empty/occupied cracked Ground and stale immunity input. It remains
 `partial`: Rust consumes live markers rather than reproducing quarter
 selection, validity, native RNG, spawn-block lifecycle, or scheduler order,
 and native `SpaceDamage` behavior is not independently traced end-to-end.
+
+The Sandstorm slice, `environment-mission-sandstorm`, adds the exact
+`mission_sandstorm.lua` source and closes a proven simulator contradiction.
+The Lua environment creates/removes smoke and converts Sand, Road, and Water,
+but never assigns damage; the bridge's warning markers previously entered
+Rust and Python as generic 1-damage danger, costing phantom mech HP and grid.
+Simulator v372 now mission-scopes those markers out of the damage path, with
+focused loader and enemy-phase regressions. It remains `partial`: the bridge
+does not export the live `Row`, so two-row smoke and terrain progression,
+mission-start random Sand placement, native timing, and interactions are not
+yet reproduced.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and

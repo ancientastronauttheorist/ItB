@@ -3398,6 +3398,11 @@ def _environment_danger_info(board: Board,
     if isinstance(bridge_data, dict):
         mission_id = str(bridge_data.get("mission_id") or "")
     mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    # Env_Sandstorm's warning markers drive smoke/terrain changes only. The
+    # bridge does not yet export Row, so no exact effect projection is
+    # available, but these tiles must never be reported as HP/grid damage.
+    if mission_id == "Mission_Sandstorm":
+        return {}
     final_cave_env = mission_id == "Mission_Final_Cave"
     tidal_env = mission_id == "Mission_Tides"
     deadly_threat_env = mission_id in {
@@ -13520,6 +13525,16 @@ def _held_end_turn_post_player_parity_error(
                 "live": live_value,
             }
     for field in set_list_parity_fields:
+        if (
+            checkpoint.get("mission_id") == "Mission_Sandstorm"
+            and normalized_live_data.get("mission_id") == "Mission_Sandstorm"
+            and field in {"environment_danger", "environment_danger_v2"}
+        ):
+            # v372 deliberately strips Sandstorm's non-damage warning markers
+            # from projected boards. Their raw bridge representation therefore
+            # cannot participate in held-End-Turn parity until Row-driven
+            # smoke/terrain projection exists.
+            continue
         checkpoint_value = checkpoint.get(field) or []
         live_value = normalized_live_data.get(field) or []
         if field == "teleporter_pairs":

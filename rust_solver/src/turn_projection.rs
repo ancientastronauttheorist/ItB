@@ -1074,7 +1074,11 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "spawning_tiles":        spawning_tiles,
         "environment_tides_index": board.env_tides_index,
         "environment_danger_v2": env_danger_v2,
-        "env_type":              if board.env_smoke != 0 { "sandstorm" } else { "unknown" },
+        "env_type":              if board.env_smoke != 0 || board.mission_id == "Mission_Sandstorm" {
+            "sandstorm"
+        } else {
+            "unknown"
+        },
         "mission_id":            board.mission_id,
         "mission_kill_target":   board.mission_kill_target,
         "mission_kill_limit":    board.mission_kill_limit,
@@ -2356,6 +2360,23 @@ mod tests {
         // that board_to_json injects.
         assert!(weights.pseudo_threat_eval,
             "projected board_to_json must set eval_weights.pseudo_threat_eval=true");
+    }
+
+    #[test]
+    fn test_board_to_json_preserves_sandstorm_environment_identity() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Sandstorm".to_string();
+
+        let json_str = board_to_json(&board, &[]);
+        let value: serde_json::Value =
+            serde_json::from_str(&json_str).expect("board_to_json emits valid json");
+
+        assert_eq!(value["env_type"], "sandstorm");
+        assert_eq!(
+            value["environment_danger_v2"].as_array().unwrap().len(),
+            0,
+            "unmodeled Sandstorm markers must not re-enter the damage channel"
+        );
     }
 
     #[test]

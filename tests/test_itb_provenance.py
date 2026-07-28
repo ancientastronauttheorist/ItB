@@ -2400,3 +2400,66 @@ def test_real_support_wind_record_pins_zones_scan_order_and_use_limit():
     assert "one representative target per 2x2 zone" in gaps
     assert "cross-turn single-use state" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_sandstorm_record_pins_non_damage_boundary_and_open_row_gap():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-sandstorm"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/sand/mission_sandstorm.lua",
+            "sha256": (
+                "e657b1a8fdc21cd011d28b16051336b3"
+                "820248a4cab1c111e36a437a209650c1"
+            ),
+            "symbols": [
+                "Mission_Sandstorm",
+                "Env_Sandstorm",
+                "Env_Sandstorm:Start",
+                "Env_Sandstorm:IsEffect",
+                "Env_Sandstorm:ApplyEffect",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert "env_sandstorm_non_damage" in implementations[
+        "rust_solver/src/serde_bridge.rs"
+    ]
+    assert "sandstorm_non_damage" in implementations["src/model/board.py"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_sandstorm_markers_do_not_damage_mech_or_building"
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_board_to_json_preserves_sandstorm_environment_identity"
+    }
+    assert tests["tests/test_sandstorm_environment.py"] == {
+        "test_sandstorm_warning_omits_phantom_damage",
+        "test_sandstorm_warning_is_not_reported_as_damage",
+        "test_sandstorm_raw_markers_do_not_break_held_checkpoint_parity",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "Env_Sandstorm.Row" in gaps
+    assert "RandomizeTerrain" in gaps
+    assert "protected live achievement session" in gaps

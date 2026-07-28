@@ -2866,6 +2866,118 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Sandstorm source replaces existing Sand with Road at mission start, randomizes twelve Sand tiles, then processes two descending rows per application. Current-row SpaceDamage creates Smoke and converts Sand to Road; preceding-row SpaceDamage removes Smoke and converts Road or Water to Sand."
+        },
+        {
+          "classification": "fact",
+          "statement": "Env_Sandstorm:ApplyEffect never assigns iDamage. The bridge identifies the live class as env_type sandstorm but exports Board:IsEnvironmentDanger tiles through the generic nonlethal danger channel."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v372 mission-scopes Sandstorm markers out of both Rust and Python damage representations. Focused loader and enemy-phase tests prove marked mechs and buildings retain HP, grid power, and damage counters."
+        }
+      ],
+      "id": "environment-mission-sandstorm",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "Env_Sandstorm",
+            "env_type",
+            "add_danger"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "env_sandstorm_non_damage",
+            "Mission_Sandstorm"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger_board",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data",
+            "sandstorm_non_damage"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_environment_danger_info",
+            "_held_end_turn_post_player_parity_error"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "board_to_json",
+            "Mission_Sandstorm"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "The bridge does not export Env_Sandstorm.Row, so Rust and Python do not yet reproduce the two-row smoke creation/removal or Sand/Road/Water terrain progression.",
+        "Mission-start Board:RandomizeTerrain(TERRAIN_SAND,12), native RNG state and call order, effect delays, board shake, animation, and presentation remain unmodeled.",
+        "Board:IsEnvironmentDanger marker timing and coverage relative to ApplyEffect have not been independently traced for this build.",
+        "Native SpaceDamage smoke/terrain ordering, interaction with units/buildings/items/fire, and scheduler order relative to queued attacks remain untraced.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_sandstorm.lua",
+          "sha256": "e657b1a8fdc21cd011d28b16051336b3820248a4cab1c111e36a437a209650c1",
+          "symbols": [
+            "Mission_Sandstorm",
+            "Env_Sandstorm",
+            "Env_Sandstorm:Start",
+            "Env_Sandstorm:IsEffect",
+            "Env_Sandstorm:ApplyEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_sandstorm_danger_is_not_hp_damage"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_sandstorm_markers_do_not_damage_mech_or_building"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_board_to_json_preserves_sandstorm_environment_identity"
+          ]
+        },
+        {
+          "path": "tests/test_sandstorm_environment.py",
+          "symbols": [
+            "test_sandstorm_warning_omits_phantom_damage",
+            "test_sandstorm_warning_is_not_reported_as_damage",
+            "test_sandstorm_raw_markers_do_not_break_held_checkpoint_parity"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

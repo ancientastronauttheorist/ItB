@@ -252,9 +252,11 @@ fn apply_starfish_appendages(
 /// pure Deadly Threat, preserving pre-fix behavior). Final Cave falling rocks
 /// are Deadly Threats, not hoverable chasm conversion.
 ///
-/// `lethal=false` (sandstorm, wind storm, snow storm) does 1 damage with
-/// bump-like semantics: ignored by armor/ACID, consumed by shield, skips
-/// flying units. Buildings take 1 HP.
+/// `lethal=false` is a genuine non-lethal damage payload (for example
+/// NanoStorm): it does 1 damage with bump-like semantics, ignored by
+/// armor/ACID and consumed by shield, and skips flying units. Buildings take
+/// 1 HP. Status/movement-only environments are removed from `env_danger`
+/// during bridge deserialization.
 ///
 /// Inlined unit/building handling (does not call apply_damage) so we can bypass
 /// shield/frozen for the lethal case without polluting the core damage path.
@@ -3786,6 +3788,46 @@ mod tests {
                 "{pawn_type} must dispatch its exact Lua diagonal damage",
             );
         }
+    }
+
+    #[test]
+    fn test_sandstorm_markers_do_not_damage_mech_or_building() {
+        let input = r#"{
+            "mission_id": "Mission_Sandstorm",
+            "env_type": "sandstorm",
+            "tiles": [
+                {"x": 2, "y": 2, "terrain": "building", "building_hp": 2}
+            ],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "PunchMech",
+                    "x": 3,
+                    "y": 3,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "active": false
+                }
+            ],
+            "grid_power": 7,
+            "grid_power_max": 7,
+            "spawning_tiles": [],
+            "environment_danger": [[2, 2], [3, 3]],
+            "environment_danger_v2": [[2, 2, 1, 0, 0], [3, 3, 1, 0, 0]]
+        }"#;
+
+        let (mut board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("Sandstorm bridge JSON parses");
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[0].hp, 3);
+        assert_eq!(board.tile(2, 2).building_hp, 2);
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.mech_damage_taken, 0);
     }
 
     #[test]

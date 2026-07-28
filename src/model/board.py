@@ -587,12 +587,19 @@ class Board:
         wind_dir = data.get("environment_wind_dir")
         if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
             board.environment_wind_dir = wind_dir
-        terratide_smoke = data.get("mission_id") == "Mission_Terratide"
+        mission_id = data.get("mission_id")
+        terratide_smoke = mission_id == "Mission_Terratide"
+        # Env_Sandstorm markers describe smoke/terrain changes and never carry
+        # iDamage. Until the bridge exports its live Row, omit them from the
+        # generic damage channel instead of predicting phantom HP/grid loss.
+        sandstorm_non_damage = mission_id == "Mission_Sandstorm"
         for dt in data.get("environment_danger_v2", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 4:
                 pos = (dt[0], dt[1])
                 if terratide_smoke:
                     board.environment_smoke.add(pos)
+                    continue
+                if sandstorm_non_damage:
                     continue
                 board.environment_danger.add(pos)
                 board.environment_danger_v2[pos] = (dt[2], dt[3] != 0)
@@ -604,6 +611,8 @@ class Board:
                 pos = (dt[0], dt[1])
                 if terratide_smoke:
                     board.environment_smoke.add(pos)
+                    continue
+                if sandstorm_non_damage:
                     continue
                 board.environment_danger.add(pos)
                 if pos not in board.environment_danger_v2:

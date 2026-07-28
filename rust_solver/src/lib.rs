@@ -2335,7 +2335,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   IgnoreFire flags; Python fallback metadata also preserves the standard
 //   train's source MoveSpeed, Pushable, and IgnoreSmoke values.
 //   Pre-v371 corpus archived as failure_db_snapshot_sim_v370.jsonl.
-pub const SIMULATOR_VERSION: u32 = 371;
+// v372 - Mission_Sandstorm warning markers no longer enter the generic
+//   nonlethal environment-damage path. Exact Lua applies smoke and terrain
+//   changes without iDamage, so marked mechs/buildings retain HP/grid power.
+//   Full row progression remains pending bridge Row export.
+//   Pre-v372 corpus archived as failure_db_snapshot_sim_v371.jsonl.
+pub const SIMULATOR_VERSION: u32 = 372;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

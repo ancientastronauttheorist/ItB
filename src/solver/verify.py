@@ -1729,7 +1729,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # IgnoreFire flags; Python fallback metadata also preserves the standard
 # train's source MoveSpeed, Pushable, and IgnoreSmoke values.
 # Pre-v371 corpus archived as failure_db_snapshot_sim_v370.jsonl.
-SIMULATOR_VERSION = 371
+# v372 - Mission_Sandstorm warning markers no longer enter the generic
+# nonlethal environment-damage path. Exact Lua applies smoke and terrain
+# changes without iDamage, so marked mechs/buildings retain HP/grid power.
+# Full row progression remains pending bridge Row export.
+# Pre-v372 corpus archived as failure_db_snapshot_sim_v371.jsonl.
+SIMULATOR_VERSION = 372
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

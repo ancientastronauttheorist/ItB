@@ -587,7 +587,18 @@ pub fn board_from_json(json_str: &str)
     } else {
         0
     };
-    let non_damage_env = env_smoke | env_wind;
+    // Exact Env_Sandstorm:ApplyEffect source never sets iDamage. The bridge
+    // currently exposes its warning mask but not LiveEnvironment.Row, so a
+    // faithful smoke/removal/terrain projection is not yet possible. Strip
+    // those markers from generic damage now rather than inventing 1 HP/grid
+    // loss. Keep this mission-scoped: legacy env_type="sandstorm" can also
+    // describe Mission_Terratide.
+    let env_sandstorm_non_damage = if mission_id == Some("Mission_Sandstorm") {
+        env_danger
+    } else {
+        0
+    };
+    let non_damage_env = env_smoke | env_wind | env_sandstorm_non_damage;
     if non_damage_env != 0 {
         env_danger &= !non_damage_env;
         env_danger_kill &= !non_damage_env;
@@ -1172,6 +1183,41 @@ mod tests {
         assert_eq!(board.env_danger, 0);
         assert_eq!(board.env_danger_kill, 0);
         assert_eq!(board.env_danger_flying_immune, 0);
+    }
+
+    #[test]
+    fn test_sandstorm_danger_is_not_hp_damage() {
+        let input = r#"{
+            "mission_id": "Mission_Sandstorm",
+            "env_type": "sandstorm",
+            "tiles": [
+                {"x": 2, "y": 2, "terrain": "building", "building_hp": 2}
+            ],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "PunchMech",
+                    "x": 3,
+                    "y": 3,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": [],
+            "environment_danger": [[2, 2], [3, 3]],
+            "environment_danger_v2": [[2, 2, 1, 0, 0], [3, 3, 1, 0, 0]]
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("Sandstorm bridge json parses");
+
+        assert_eq!(board.env_danger, 0);
+        assert_eq!(board.env_danger_kill, 0);
+        assert_eq!(board.env_danger_flying_immune, 0);
+        assert_eq!(board.env_smoke, 0, "full Sandstorm smoke needs Row export");
     }
 
     #[test]
