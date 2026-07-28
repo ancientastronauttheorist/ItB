@@ -247,7 +247,10 @@ VEK_STATS = {
 # Neutral / environmental pawns
 NEUTRAL_STATS = {
     "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False),
-    "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False),
+    "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False,
+                                   ignore_fire=True, ignore_smoke=True),
+    "Train_Damaged":     PawnStats(move_speed=0, massive=True, pushable=False,
+                                   ignore_fire=True),
     "Train_Armored":     PawnStats(move_speed=0, massive=True, armor=True,
                                    pushable=False, ignore_fire=True,
                                    ignore_smoke=True,

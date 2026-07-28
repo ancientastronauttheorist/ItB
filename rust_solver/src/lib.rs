@@ -2331,7 +2331,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   distinct two-boulder weapon identity, and next-turn projection materializes
 //   the one/two immediate BombRock spawns before queueing the first-tile hit.
 //   Pre-v370 corpus archived as failure_db_snapshot_sim_v369.jsonl.
-pub const SIMULATOR_VERSION: u32 = 370;
+// v371 - Standard and Armored Supply Train bodies honor the shipped Lua
+//   IgnoreFire flags; Python fallback metadata also preserves the standard
+//   train's source MoveSpeed, Pushable, and IgnoreSmoke values.
+//   Pre-v371 corpus archived as failure_db_snapshot_sim_v370.jsonl.
+pub const SIMULATOR_VERSION: u32 = 371;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

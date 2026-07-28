@@ -2261,6 +2261,175 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried base mission creates a two-tile Train_Pawn at Point(4,6), advances it two VEC_UP cells through Train_Move, destroys the first valid PATH_GROUND blocker, and applies one ordinary self-damage that Mission_Train replaces with a live Train_Damaged body worth one of the objective's two reputation."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact Advanced Edition child inherits Mission_Train's lifecycle with Train_Armored and Train_Armored_Damaged substitutions. Its armored move destroys both entered cells and then charges through them, while both shipped moving trains ignore smoke, flip, and fire and both damaged bodies ignore fire."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v371 makes all four train identities fire-immune at application and enemy-phase tick time, preserves the standard Python fallback stats, and tests direct Flamethrower ignition, stale fire, smoke activation, clear and blocked movement, immediate damaged-body replacement, and one-reputation degradation."
+        },
+        {
+          "classification": "unresolved",
+          "statement": "Rust infers forward direction from the serialized primary and extra tiles rather than the source's fixed VEC_UP and does not independently reproduce every native blocker, queued-charge, damage, pawn-factory, corpse, multi-space, scheduler, objective-UI, or off-board helper."
+        }
+      ],
+      "id": "mission-supply-train",
+      "implementations": [
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "can_catch_fire"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks",
+            "simulate_train_advance",
+            "transition_destroyed_supply_train"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_weapon"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "Train_Damaged",
+            "Train_Armored_Damage"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "NEUTRAL_STATS",
+            "get_pawn_stats"
+          ]
+        },
+        {
+          "path": "src/solver/evaluate.py",
+          "symbols": [
+            "_is_degraded_train_type"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_unit_takes_fire_tick",
+            "_will_die_to_fire_before_attack"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust infers the moving train's forward direction from serialized primary and extra tiles; the shipped Lua always targets VEC_UP, so alternate-orientation equivalence needs live evidence.",
+        "Native Board:IsBlocked(PATH_GROUND), Board:IsPawnSpace, AddQueuedCharge, SpaceDamage, DAMAGE_DEATH, PAWN_FACTORY, RemovePawn, AddPawn, corpse FlyAway, multi-space occupancy, and exact queued-effect scheduling are not independently traced for this build.",
+        "Mission objective presentation and native UpdateMission callback timing are represented through live-derived transition and scoring behavior rather than a complete reproduction of Game:AddObjective and Mission_Infinite orchestration.",
+        "Exhaustive terrain, status, collision, corpse, exit, shield, and two-tile conformance remains open; the protected live achievement session prevented fresh controlled capture."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/mission_train.lua",
+          "sha256": "a9ec7ce1ea386e3b82ecd992b6cacd8ca17990cb37f7109e8060140cbb3a5e0b",
+          "symbols": [
+            "Mission_Train",
+            "Mission_Train:StartMission",
+            "Mission_Train:IsTrainAlive",
+            "Mission_Train:UpdateObjectives",
+            "Mission_Train:GetCompletedObjectives",
+            "Mission_Train:StopTrain",
+            "Mission_Train:UpdateMission",
+            "Train_Pawn",
+            "Train_Damaged",
+            "Train_Move",
+            "Train_Move:GetTargetArea",
+            "Train_Move:GetSkillEffect",
+            "Train_Move:GetTargetScore"
+          ]
+        },
+        {
+          "path": "scripts/advanced/missions/grass/mission_armored_train.lua",
+          "sha256": "4c1438bd02ffdcc0d4f975f432168d1d45017126f819995c86873978b67a288a",
+          "symbols": [
+            "Mission_Armored_Train",
+            "Train_Armored_Damaged",
+            "Train_Armored",
+            "Armored_Train_Move",
+            "Armored_Train_Move:GetTargetArea",
+            "Armored_Train_Move:GetSkillEffect",
+            "Armored_Train_Move:GetTargetScore"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_train_advances_on_clear_path",
+            "test_frozen_train_does_not_activate",
+            "test_smoked_train_still_activates",
+            "test_shielded_train_absorbs_blocked_charge_self_damage",
+            "test_train_stops_and_becomes_damaged_when_first_step_is_blocked",
+            "test_train_advances_one_step_kills_second_step_blocker_and_stops",
+            "test_moth_kill_replaces_moving_train_before_advance",
+            "test_armored_train_kills_blocker_and_advances",
+            "test_train_survives_off_board_exit",
+            "test_destroyed_train_is_replaced_by_damaged_body",
+            "test_supply_train_types_clear_stale_fire_without_tick_damage"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_player_seismic_kill_immediately_replaces_supply_train",
+            "test_chain_whip_forest_does_not_ignite_fireproof_supply_trains",
+            "test_supply_train_types_ignore_flamethrower_fire"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_train_stop_is_visible_to_next_player_action"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "test_damaged_train_scores_one_rep_degradation_once_per_uid"
+          ]
+        },
+        {
+          "path": "tests/test_train_objective_scoring.py",
+          "symbols": [
+            "test_python_breakdown_scores_train_once_and_penalizes_degradation",
+            "test_supply_train_static_stats_match_lua"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_supply_train_types_ignore_projected_fire_tick"
+          ]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": [
+            "test_summary_distinguishes_intact_and_damaged_train_value",
+            "test_post_enemy_delta_catches_unexpected_train_degradation"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

@@ -300,10 +300,20 @@ impl Unit {
     pub fn pilot_chemical(&self) -> bool { self.pilot_flags.contains(PilotFlags::CHEMICAL) }
     pub fn pilot_arrogant(&self) -> bool { self.pilot_flags.contains(PilotFlags::ARROGANT) }
 
-    /// Can this unit catch fire? False for Ariadne (Pilot_Rock). Squad-wide
-    /// Flame Shielding is handled at call sites because it needs board state,
-    /// and it applies only to player mechs, not controllable mission allies.
-    pub fn can_catch_fire(&self) -> bool { !self.pilot_rock() }
+    /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and the
+    /// source-defined fireproof Supply Train bodies. Squad-wide Flame
+    /// Shielding is handled at call sites because it needs board state, and
+    /// it applies only to player mechs, not controllable mission allies.
+    pub fn can_catch_fire(&self) -> bool {
+        !self.pilot_rock()
+            && !matches!(
+                self.type_name_str(),
+                "Train_Pawn" | "Train_Damaged" | "Train_Armored"
+            )
+            // The fixed bridge type buffer stores Train_Armored_Damaged as
+            // its observed 20-character prefix.
+            && !self.type_name_str().starts_with("Train_Armored_Damage")
+    }
 
     /// Get pawn type name as string (from stored bytes).
     pub fn type_name_str(&self) -> &str {

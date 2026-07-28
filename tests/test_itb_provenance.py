@@ -1995,3 +1995,98 @@ def test_real_centipede_record_pins_acid_t_shape_and_leader_trail():
     assert "GetProjectileEnd" in gaps
     assert "ScoreList" in gaps
     assert "bridge-selected queued target" in gaps
+
+
+def test_real_supply_train_record_pins_inherited_lifecycle_and_immunities():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-supply-train"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/mission_train.lua",
+            "sha256": (
+                "a9ec7ce1ea386e3b82ecd992b6cacd8c"
+                "a17990cb37f7109e8060140cbb3a5e0b"
+            ),
+            "symbols": [
+                "Mission_Train",
+                "Mission_Train:StartMission",
+                "Mission_Train:IsTrainAlive",
+                "Mission_Train:UpdateObjectives",
+                "Mission_Train:GetCompletedObjectives",
+                "Mission_Train:StopTrain",
+                "Mission_Train:UpdateMission",
+                "Train_Pawn",
+                "Train_Damaged",
+                "Train_Move",
+                "Train_Move:GetTargetArea",
+                "Train_Move:GetSkillEffect",
+                "Train_Move:GetTargetScore",
+            ],
+        },
+        {
+            "path": (
+                "scripts/advanced/missions/grass/"
+                "mission_armored_train.lua"
+            ),
+            "sha256": (
+                "4c1438bd02ffdcc0d4f975f432168d1d4"
+                "5017126f819995c86873978b67a288a"
+            ),
+            "symbols": [
+                "Mission_Armored_Train",
+                "Train_Armored_Damaged",
+                "Train_Armored",
+                "Armored_Train_Move",
+                "Armored_Train_Move:GetTargetArea",
+                "Armored_Train_Move:GetSkillEffect",
+                "Armored_Train_Move:GetTargetScore",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/board.rs"] == {
+        "can_catch_fire"
+    }
+    assert {
+        "simulate_enemy_attacks",
+        "simulate_train_advance",
+        "transition_destroyed_supply_train",
+    } == implementations["rust_solver/src/enemy.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert {
+        "test_smoked_train_still_activates",
+        "test_supply_train_types_clear_stale_fire_without_tick_damage",
+    } <= tests["rust_solver/src/enemy.rs"]
+    assert {
+        "test_chain_whip_forest_does_not_ignite_fireproof_supply_trains",
+        "test_supply_train_types_ignore_flamethrower_fire",
+    } <= tests["rust_solver/src/simulate.rs"]
+    assert tests["tests/test_train_objective_scoring.py"] == {
+        "test_python_breakdown_scores_train_once_and_penalizes_degradation",
+        "test_supply_train_static_stats_match_lua",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "VEC_UP" in gaps
+    assert "AddQueuedCharge" in gaps
+    assert "protected live achievement session" in gaps

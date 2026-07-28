@@ -838,18 +838,16 @@ pub fn simulate_enemy_attacks(
 
     // Fire tick: burning units take 1 damage before attacks
     // Flame Shielding: player mechs immune to fire
-    // Pilot_Rock (Ariadne): defensive skip. The fire-apply hooks never set
-    // the FIRE flag on a Rockman mech in the first place, so this branch
-    // only matters if fire snuck in via an un-guarded path (future bug
-    // guard) or if pilot_flags were injected mid-mission.
+    // Source-defined fire immunity: defensive skip. The fire-apply hooks never
+    // set FIRE on Ariadne or a Supply Train body, so this branch only matters
+    // when stale bridge/status data carries FIRE into the projection.
     for i in 0..board.unit_count as usize {
         if board.units[i].fire() && board.units[i].hp > 0 && !board.units[i].burrowed() {
             if board.flame_shielding && board.units[i].is_player() && board.units[i].is_mech() {
                 continue; // mechs immune to fire with Flame Shielding
             }
-            if board.units[i].pilot_rock() {
-                // Rockman is fire-immune; clear the flag as a safety net
-                // so a stale burn doesn't sit on the unit forever.
+            if !board.units[i].can_catch_fire() {
+                // Fire-immune pawns clear stale FIRE without taking the tick.
                 board.units[i].set_fire(false);
                 continue;
             }
@@ -4799,6 +4797,18 @@ mod tests {
     }
 
     #[test]
+    fn test_smoked_train_still_activates() {
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        board.tile_mut(4, 6).set_smoke(true);
+
+        simulate_train_advance(&mut board);
+
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 4));
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 5));
+    }
+
+    #[test]
     fn test_shielded_train_absorbs_blocked_charge_self_damage() {
         let mut board = Board::default();
         let (p, e) = add_train(&mut board, 4, 6, 4, 7);
@@ -5475,6 +5485,42 @@ mod tests {
             "Default-pilot mech takes 1 fire-tick damage");
         assert!(board.units[idx].fire(),
             "Fire flag persists for a non-Rockman mech");
+    }
+
+    #[test]
+    fn test_supply_train_types_clear_stale_fire_without_tick_damage() {
+        for (uid, type_name) in [
+            (2500, "Train_Pawn"),
+            (2501, "Train_Damaged"),
+            (2502, "Train_Armored"),
+            (2503, "Train_Armored_Damage"),
+        ] {
+            let mut board = Board::default();
+            let mut unit = Unit {
+                uid,
+                x: 3,
+                y: 3,
+                hp: 1,
+                max_hp: 1,
+                team: Team::Player,
+                flags: UnitFlags::FIRE,
+                ..Default::default()
+            };
+            unit.set_type_name(type_name);
+            let idx = board.add_unit(unit);
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(
+                board.units[idx].hp, 1,
+                "{type_name} must ignore enemy-phase fire damage"
+            );
+            assert!(
+                !board.units[idx].fire(),
+                "{type_name} should clear a stale FIRE flag"
+            );
+        }
     }
 
     #[test]

@@ -2,6 +2,7 @@ import pytest
 
 from src.model.board import Board, Unit
 from src.solver.threat_audit import (
+    _unit_takes_fire_tick,
     audit_threat_coverage,
     capture_building_threats,
 )
@@ -60,6 +61,20 @@ def _board(attacker=None):
     tile.building_hp = 1
     board.units.append(attacker or _enemy())
     return board
+
+
+def test_supply_train_types_ignore_projected_fire_tick():
+    board = Board()
+    for uid, pawn_type in [
+        (2500, "Train_Pawn"),
+        (2501, "Train_Damaged"),
+        (2502, "Train_Armored"),
+        (2503, "Train_Armored_Damaged"),
+    ]:
+        train = _enemy(uid=uid, pawn_type=pawn_type, hp=1)
+        train.team = 1
+        train.fire = True
+        assert not _unit_takes_fire_tick(board, train)
 
 
 def test_capture_building_threats_uses_visual_tiles():

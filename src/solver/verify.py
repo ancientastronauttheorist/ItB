@@ -1725,7 +1725,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # distinct two-boulder weapon identity, and next-turn projection materializes
 # the one/two immediate BombRock spawns before queueing the first-tile hit.
 # Pre-v370 corpus archived as failure_db_snapshot_sim_v369.jsonl.
-SIMULATOR_VERSION = 370
+# v371 - Standard and Armored Supply Train bodies honor the shipped Lua
+# IgnoreFire flags; Python fallback metadata also preserves the standard
+# train's source MoveSpeed, Pushable, and IgnoreSmoke values.
+# Pre-v371 corpus archived as failure_db_snapshot_sim_v370.jsonl.
+SIMULATOR_VERSION = 371
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

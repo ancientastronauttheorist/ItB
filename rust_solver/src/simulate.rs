@@ -2101,7 +2101,9 @@ fn apply_damage_core_with_options(
         };
         if ignited {
             if let Some(idx) = board.unit_at(x, y) {
-                if board.units[idx].hp > 0 {
+                if board.units[idx].hp > 0
+                    && board.units[idx].can_catch_fire()
+                {
                     board.units[idx].set_fire(true);
                 }
             }
@@ -9769,6 +9771,50 @@ mod tests {
     }
 
     #[test]
+    fn test_chain_whip_forest_does_not_ignite_fireproof_supply_trains() {
+        for (uid, type_name) in [
+            (2500, "Train_Pawn"),
+            (2501, "Train_Damaged"),
+            (2502, "Train_Armored"),
+            (2503, "Train_Armored_Damage"),
+        ] {
+            let mut board = make_test_board();
+            let mech =
+                add_mech(&mut board, 0, 5, 3, 5, WId::PrimeLightning);
+            board.tile_mut(4, 3).terrain = Terrain::Forest;
+            let mut train = Unit {
+                uid,
+                x: 4,
+                y: 3,
+                hp: 1,
+                max_hp: 1,
+                team: Team::Player,
+                flags: UnitFlags::SHIELD,
+                ..Default::default()
+            };
+            train.set_type_name(type_name);
+            let train_idx = board.add_unit(train);
+
+            let _ = simulate_attack(
+                &mut board,
+                mech,
+                WId::PrimeLightning,
+                (4, 3),
+                &WEAPONS,
+            );
+
+            assert_eq!(board.units[train_idx].hp, 1);
+            assert!(!board.units[train_idx].shield());
+            assert!(
+                !board.units[train_idx].fire(),
+                "{type_name} must ignore Chain Whip forest ignition"
+            );
+            assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
+            assert!(board.tile(4, 3).on_fire());
+        }
+    }
+
+    #[test]
     fn test_chain_whip_building_chain_uses_zero_damage_building_node() {
         let mut board = make_test_board();
         let mech = add_mech(&mut board, 0, 4, 4, 5, WId::PrimeLightningA);
@@ -13411,6 +13457,45 @@ mod tests {
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 1));
         assert!(board.tile(5, 2).on_fire(), "Flamethrower should ignite the struck tile");
         assert!(board.units[enemy].fire(), "Ground target should catch newly lit tile fire");
+    }
+
+    #[test]
+    fn test_supply_train_types_ignore_flamethrower_fire() {
+        for (uid, type_name) in [
+            (2500, "Train_Pawn"),
+            (2501, "Train_Damaged"),
+            (2502, "Train_Armored"),
+            (2503, "Train_Armored_Damage"),
+        ] {
+            let mut board = make_test_board();
+            let mech_idx =
+                add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+            let mut train = Unit {
+                uid,
+                x: 5,
+                y: 2,
+                hp: 1,
+                max_hp: 1,
+                team: Team::Player,
+                ..Default::default()
+            };
+            train.set_type_name(type_name);
+            let train_idx = board.add_unit(train);
+
+            let _ = simulate_weapon(
+                &mut board,
+                mech_idx,
+                WId::PrimeFlamethrower,
+                5,
+                2,
+            );
+
+            assert_eq!(board.units[train_idx].hp, 1);
+            assert!(
+                !board.units[train_idx].fire(),
+                "{type_name} must ignore direct Flamethrower ignition"
+            );
+        }
     }
 
     #[test]

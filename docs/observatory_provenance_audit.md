@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 6 | 8 |
-| Missions | 75 | 7 | 68 |
+| Missions | 75 | 9 | 66 |
 | Environments | 15 | 6 | 9 |
-| Unique total | 96 | 20 | 76 |
+| Unique total | 96 | 22 | 74 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 60 definitions literally and leaves 682 unindexed. Category totals
+names 72 definitions literally and leaves 670 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -198,6 +198,20 @@ projection is generic, and native movement, candidate enumeration,
 remain untraced. The pawn and Leader files are outside the audit's selected
 96-file high-value source set, so the family indexes two callbacks without
 changing source-index totals.
+
+The first mission-objective slice, `mission-supply-train`, pins both the base
+Supply Train mission and the Advanced Edition Armored Train child. It covers
+the inherited mission lifecycle, two-tile normal/damaged replacements,
+one-reputation degradation, normal stop-on-block versus armored
+destroy-and-charge movement, and source-defined smoke/fire immunities.
+Simulator v371 fixes the proven fire mismatch: all four train identities now
+reject ignition and stale fire ticks, while Python fallback metadata preserves
+the standard train's move-zero, nonpushable, and smoke/fire flags. Focused
+tests cover clear, blocked, frozen, smoked, shielded, replaced, degraded, and
+fire-exposed trains. The record remains `partial`: Rust infers rail direction
+from serialized multi-space tiles, and native blocker, effect queue, pawn
+factory, objective UI, scheduler, corpse, and exhaustive terrain/status
+semantics remain untraced.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
