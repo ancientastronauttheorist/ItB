@@ -2149,3 +2149,68 @@ def test_real_reactivation_record_pins_roster_thaw_approximation():
         item["statement"] for item in record["evidence"]
     )
     assert "random_removal" in gaps
+
+
+def test_real_dam_record_pins_dual_tile_objective_and_flood():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-dam-flood"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/grass/mission_dam.lua",
+            "sha256": (
+                "bc677d4ea6f0dfc80b43b6711d1f20e"
+                "3ea2d75fb87c869d59956c745830c7f08"
+            ),
+            "symbols": [
+                "Mission_Dam",
+                "Mission_Dam:StartMission",
+                "Mission_Dam:IsEndBlocked",
+                "Mission_Dam:UpdateObjectives",
+                "Mission_Dam:GetCompletedObjectives",
+                "Mission_Dam:NextTurn",
+                "Mission_Dam:UpdateMission",
+                "Dam_Pawn",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "apply_damage_inner",
+        "dam_dead",
+        "trigger_dam_flood",
+        "flood_tile",
+    }
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert {
+        "test_dam_flood_destroys_time_pod_without_collecting",
+        "test_dam_flood_drowning_triggers_blast_psion_explosion",
+        "test_dam_flood_extinguishes_forest_ignited_by_same_attack",
+    } <= tests["rust_solver/src/simulate.rs"]
+    assert tests["tests/test_mission_unit_objectives.py"] == {
+        "test_mission_dam_destroys_dam_pawn"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "named dam location" in gaps
+    assert "IsEndBlocked" in gaps
+    assert "IgnoreSmoke" in gaps

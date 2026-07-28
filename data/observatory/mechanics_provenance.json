@@ -2488,6 +2488,113 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried mission creates a neutral, massive, nonpushable two-tile Dam_Pawn with 2 HP at the named dam location and converts both occupied tiles to Water. Its IsEndBlocked callback returns while the dam lives, and its one-point objective completes only when the dam is destroyed."
+        },
+        {
+          "classification": "fact",
+          "statement": "On the first UpdateMission that observes the dam dead, Lua queues exactly fourteen Water conversions in y-major order for y=1..7 and x=0..1 relative to DamPos, then marks the flood complete so it cannot repeat."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust mirrors dual-tile dam HP, triggers the 2-by-7 flood once, and applies water conversion, fire clearing, pod destruction, drowning, and death side effects. Evaluation and Python mission metadata preserve the destroy-only objective."
+        }
+      ],
+      "id": "mission-dam-flood",
+      "implementations": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_damage_inner",
+            "dam_dead",
+            "trigger_dam_flood",
+            "flood_tile"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "dam_hp",
+            "evaluate"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "NEUTRAL_STATS"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes the live bridge placement and initial Water tiles rather than reproducing the map's named dam location or Mission_Dam:StartMission setup.",
+        "Native Mission_Infinite, Objective, Board:IsPawnAlive, Board:AddEffect, SkillEffect, SpaceDamage terrain conversion, AddBounce, AddDelay, IsEndBlocked scheduling, and exact UpdateMission callback timing remain untraced.",
+        "Board shake, bounce, delay, reminder voice, and objective UI are presentation-only and intentionally not simulated.",
+        "Python static Dam_Pawn metadata omits source IgnoreSmoke, but the pawn has MoveSpeed 0 and no SkillList, so no current modeled behavior depends on that flag.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/grass/mission_dam.lua",
+          "sha256": "bc677d4ea6f0dfc80b43b6711d1f20e3ea2d75fb87c869d59956c745830c7f08",
+          "symbols": [
+            "Mission_Dam",
+            "Mission_Dam:StartMission",
+            "Mission_Dam:IsEndBlocked",
+            "Mission_Dam:UpdateObjectives",
+            "Mission_Dam:GetCompletedObjectives",
+            "Mission_Dam:NextTurn",
+            "Mission_Dam:UpdateMission",
+            "Dam_Pawn"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_thermal_discharger_side_pushes_before_dam_flood_and_flood_destroys_pod",
+            "test_dam_flood_destroys_time_pod_without_collecting",
+            "test_dam_flood_drowning_triggers_blast_psion_explosion",
+            "test_dam_flood_extinguishes_forest_ignited_by_same_attack",
+            "test_dam_flood_minor_totem_does_not_receive_blast_psion_aura"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_burning_dam_does_not_flood_before_bouncer_attack"
+          ]
+        },
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": [
+            "test_mission_dam_destroys_dam_pawn"
+          ]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": [
+            "test_summary_tracks_dam_pawn_destroy_objective_from_metadata"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

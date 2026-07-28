@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 6 | 8 |
-| Missions | 75 | 10 | 65 |
+| Missions | 75 | 11 | 64 |
 | Environments | 15 | 6 | 9 |
-| Unique total | 96 | 23 | 73 |
+| Unique total | 96 | 24 | 72 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 74 definitions literally and leaves 668 unindexed. Category totals
+names 80 definitions literally and leaves 662 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -222,6 +222,15 @@ mission start, including dead or already-thawed entries, while Rust
 deterministically thaws the lowest-UID living frozen enemies on the current
 board. Setup placement, spawner/native robot choice, RNG state, and helper
 ordering remain untraced.
+
+The third mission-objective slice, `mission-dam-flood`, pins the exact
+two-tile, two-HP destroy objective and its one-shot 2-by-7 Water conversion.
+Rust's damage/flood path plus Python objective metadata have focused coverage
+for multi-tile HP, flood ordering, pod destruction, fire clearing, drowning,
+Blast Psion side effects, and the enemy-phase burning-dam guard. It remains
+`partial`: live placement and initial Water are consumed from the bridge,
+native objective/scheduler/effect helpers are untraced, and presentation-only
+shake, bounce, delay, voice, and UI behavior are intentionally omitted.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
