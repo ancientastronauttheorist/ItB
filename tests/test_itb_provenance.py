@@ -2214,3 +2214,61 @@ def test_real_dam_record_pins_dual_tile_objective_and_flood():
     assert "named dam location" in gaps
     assert "IsEndBlocked" in gaps
     assert "IgnoreSmoke" in gaps
+
+
+def test_real_teleporter_record_pins_live_pair_capture_and_scoping():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-teleporter-pads"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/acid/mission_teleport.lua",
+            "sha256": (
+                "b6aa9286de8cfd6f871ed479b8d78f84"
+                "02860db15e5c5dc7b29f33972680ea8f"
+            ),
+            "symbols": [
+                "Mission_Teleporter",
+                "Mission_Teleporter:StartMission",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "apply_teleport_on_land"
+    }
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_non_teleporter_mission_ignores_stale_pad_pairs",
+        "test_teleporter_mission_keeps_pad_pairs",
+    }
+    assert {
+        "test_teleport_partner_lookup_both_directions",
+        "test_mine_kill_on_pad_does_not_teleport",
+        "test_mech_move_onto_pad_teleports",
+        "test_empty_teleporter_pairs_is_noop",
+    } == tests["rust_solver/src/simulate.rs"]
+    gaps = " ".join(record["known_gaps"])
+    assert "Environment:GetQuarters" in gaps
+    assert "Board:AddTeleport" in gaps
+    assert "protected live achievement session" in gaps

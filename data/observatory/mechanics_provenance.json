@@ -2595,6 +2595,93 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried mission gets native Environment quarters and randomly removes candidates while the current point is invalid or PATH_GROUND-blocked, stopping at a valid choice or list exhaustion, then randomly pairs the four resulting points into two Board:AddTeleport links."
+        },
+        {
+          "classification": "fact",
+          "statement": "The opt-in bridge captures live teleporter pairs, clears stale pairs across mission lifecycle boundaries, and Rust accepts them only for Mission_Teleporter before applying bidirectional landing swaps."
+        },
+        {
+          "classification": "fact",
+          "statement": "Focused tests cover mission scoping, both pair directions, ordinary mech landing, lethal mine landing, empty-pair no-op behavior, and post-teleport solver targeting."
+        }
+      ],
+      "id": "mission-teleporter-pads",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "clear_stale_teleporter_pairs_for",
+            "teleporter_pairs"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "teleporter_pairs"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_teleport_on_land"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "enumerate_actions"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes bridge-captured pairs and does not reproduce Environment:GetQuarters, random_removal, native RNG state/call order, Board:IsValid, Board:IsBlocked(PATH_GROUND), or Board:AddTeleport setup.",
+        "Native AddTeleport timing, occupied-pad behavior, chaining, animation/UI, and interactions outside the focused landing cases remain untraced.",
+        "Bridge pair capture and lifecycle wrapping remain a native-runtime dependency rather than an independent generator of mission setup.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_teleport.lua",
+          "sha256": "b6aa9286de8cfd6f871ed479b8d78f8402860db15e5c5dc7b29f33972680ea8f",
+          "symbols": [
+            "Mission_Teleporter",
+            "Mission_Teleporter:StartMission"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_non_teleporter_mission_ignores_stale_pad_pairs",
+            "test_teleporter_mission_keeps_pad_pairs"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_teleport_partner_lookup_both_directions",
+            "test_mine_kill_on_pad_does_not_teleport",
+            "test_mech_move_onto_pad_teleports",
+            "test_empty_teleporter_pairs_is_noop"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "self_aoe_after_teleporter_targets_post_swap_tile",
+            "moved_aerial_bombs_targets_from_post_move_tile"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
