@@ -1891,3 +1891,107 @@ def test_real_tumblebug_record_pins_live_ids_and_projected_bombrocks():
     assert "Board:GetDeployLocScore" in gaps
     assert "mobile projection" in gaps
     assert "bridge-materialized BombRocks" in gaps
+
+
+def test_real_centipede_record_pins_acid_t_shape_and_leader_trail():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-centipede"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/pawns.lua",
+            "sha256": (
+                "e999b8d98526c1e36f4746dd65b9d9e"
+                "7ee3ca0b22029ed391d5b71fda49dc239"
+            ),
+            "symbols": ["Centipede1", "Centipede2"],
+        },
+        {
+            "path": "scripts/weapons_enemy.lua",
+            "sha256": (
+                "5231dd7a2de730f04fa4116c0d99f07e"
+                "cbb3b25059db3593d54d689c37bd4b7b"
+            ),
+            "symbols": [
+                "CentipedeAtk1",
+                "CentipedeAtk1:GetTargetScore",
+                "CentipedeAtk1:GetSkillEffect",
+                "CentipedeAtk2",
+                "CentipedeAtk_Acid",
+            ],
+        },
+        {
+            "path": "scripts/advanced/bosses/centipede.lua",
+            "sha256": (
+                "eaa9a21947be4b7aa8e016558aadc79c"
+                "b528f1bfa3cf20c2fd747ff947711ef0"
+            ),
+            "symbols": [
+                "CentipedeBoss",
+                "CentipedeAtkB",
+                "CentipedeAtkB:GetTargetScore",
+                "CentipedeAtkB:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883"
+                "e1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": ["Skill:ScoreList"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::CentipedeAtk1",
+        "WId::CentipedeAtk2",
+        "WId::CentipedeAtkB",
+        "WEAPONS",
+        "weapon_def",
+        "wid_from_str",
+        "wid_to_str",
+        "enemy_weapon_for_type",
+        "weapon_name",
+    } == implementations["rust_solver/src/weapons.rs"]
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "simulate_enemy_attacks"
+    }
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_centipede_weapon_defs_and_mappings"
+    }
+    assert {
+        "test_normal_centipede_applies_one_damage_and_acid_t_splash",
+        "test_alpha_centipede_applies_acid_to_target",
+        "test_alpha_centipede_aoe_perpendicular_splashes",
+        "test_centipede_leader_acidifies_projectile_path",
+        "test_centipede_attack_lands_on_board_edge",
+    } <= tests["rust_solver/src/enemy.rs"]
+    assert tests["tests/test_weapon_defs.py"] == {
+        "test_centipede_weapon_defs_match_lua_acid_t_shape"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "GetProjectileEnd" in gaps
+    assert "ScoreList" in gaps
+    assert "bridge-selected queued target" in gaps

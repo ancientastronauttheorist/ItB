@@ -5026,6 +5026,23 @@ mod tests {
     }
 
     #[test]
+    fn test_normal_centipede_applies_one_damage_and_acid_t_splash() {
+        let mut board = Board::default();
+        let target_idx = add_mech_unit(&mut board, 10, 4, 3, 5);
+        let north_idx = add_mech_unit(&mut board, 11, 4, 4, 5);
+        let south_idx = add_mech_unit(&mut board, 12, 4, 2, 5);
+        add_enemy_with_type(&mut board, 1, 0, 3, 3, "Centipede1", 4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        for idx in [target_idx, north_idx, south_idx] {
+            assert_eq!(board.units[idx].hp, 4);
+            assert!(board.units[idx].acid());
+        }
+    }
+
+    #[test]
     fn test_alpha_centipede_aoe_perpendicular_splashes() {
         let mut board = Board::default();
         // Alpha Centipede at (0,3) firing east, target mech at (4,3).

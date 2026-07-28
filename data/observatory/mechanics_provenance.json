@@ -2121,6 +2121,146 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Lua maps ranged Centipede1, Centipede2, and massive ranged CentipedeBoss to CentipedeAtk1, CentipedeAtk2, and CentipedeAtkB. Their unlimited projectiles deal 1, 2, and 3 damage and apply ACID to the impact tile plus both perpendicular tiles; the Leader additionally queues zero-damage ACID on every cardinal path tile strictly between attacker and impact."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust and Python preserve all three live IDs, damage values, unlimited projectile range, ACID T footprint, pawn movement/ranged metadata, and the Leader's strict pre-impact ACID trail. Focused tests cover normal and Alpha impact footprints, ground and water ACID conversion, the Leader trail, board-edge impact, exact mappings, Python definitions, known types, and static pawn data."
+        },
+        {
+          "classification": "unresolved",
+          "statement": "Lua rejects a direct enemy-unit candidate before calling queued-effect ScoreList, while Rust consumes bridge-selected current-turn targets and uses a generic movement-plus-attack projection heuristic. Native candidate enumeration, movement, GetProjectileEnd, ScoreList, final selection, and tie-breaking are not reproduced."
+        }
+      ],
+      "id": "enemy-weapon-centipede",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::CentipedeAtk1",
+            "WId::CentipedeAtk2",
+            "WId::CentipedeAtkB",
+            "WEAPONS",
+            "weapon_def",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "projected_enemy_attack_reach",
+            "projected_enemy_reach",
+            "requeue_enemies_heuristic"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS",
+            "get_weapon_def"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "VEK_STATS",
+            "ALL_PAWN_STATS",
+            "get_pawn_stats"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust does not reproduce native movement, candidate enumeration, GetProjectileEnd, ScoreList, final target selection, or tie-breaking; mobile projection remains a generic movement-plus-attack heuristic.",
+        "Current-turn Rust consumes the bridge-selected queued target and models the visible damage/ACID footprint, but native Board helpers, SpaceDamage status application, queued projectile/damage scheduling, terrain conversion, collision, and effect order are not independently traced end-to-end.",
+        "CentipedeAtk_Acid is defined in Lua but is not assigned to a shipped Centipede pawn; exhaustive status, terrain, edge, and collision conformance remains open."
+      ],
+      "sources": [
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "Centipede1",
+            "Centipede2"
+          ]
+        },
+        {
+          "path": "scripts/weapons_enemy.lua",
+          "sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "symbols": [
+            "CentipedeAtk1",
+            "CentipedeAtk1:GetTargetScore",
+            "CentipedeAtk1:GetSkillEffect",
+            "CentipedeAtk2",
+            "CentipedeAtk_Acid"
+          ]
+        },
+        {
+          "path": "scripts/advanced/bosses/centipede.lua",
+          "sha256": "eaa9a21947be4b7aa8e016558aadc79cb528f1bfa3cf20c2fd747ff947711ef0",
+          "symbols": [
+            "CentipedeBoss",
+            "CentipedeAtkB",
+            "CentipedeAtkB:GetTargetScore",
+            "CentipedeAtkB:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "Skill:ScoreList"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_centipede_weapon_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_normal_centipede_applies_one_damage_and_acid_t_splash",
+            "test_alpha_centipede_applies_acid_to_target",
+            "test_alpha_centipede_aoe_perpendicular_splashes",
+            "test_alpha_centipede_converts_water_to_acid_tile",
+            "test_alpha_centipede_converts_ground_to_acid_pool",
+            "test_centipede_leader_acidifies_projectile_path",
+            "test_centipede_attack_lands_on_board_edge"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_centipede_weapon_defs_match_lua_acid_t_shape"
+          ]
+        },
+        {
+          "path": "tests/test_digger_research_catalog.py",
+          "symbols": [
+            "test_known_types_catalogs_centipede_bridge_tiers",
+            "test_centipedes_do_not_trigger_research_gate",
+            "test_centipedes_have_static_stats"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

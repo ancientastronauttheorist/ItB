@@ -3129,16 +3129,42 @@ mod tests {
     }
 
     #[test]
-    fn test_centipede_boss_caustic_vomit_def() {
-        let w = weapon_def(WId::CentipedeAtkB);
-        assert_eq!(w.weapon_type, WeaponType::Projectile);
-        assert_eq!(w.damage, 3);
-        assert!(w.acid());
-        assert!(w.aoe_perpendicular());
-        assert_eq!(wid_from_str("CentipedeAtkB"), WId::CentipedeAtkB);
-        assert_eq!(wid_to_str(WId::CentipedeAtkB), "CentipedeAtkB");
-        assert_eq!(enemy_weapon_for_type("CentipedeBoss"), WId::CentipedeAtkB);
-        assert_eq!(weapon_name(WId::CentipedeAtkB), "Caustic Vomit");
+    fn test_centipede_weapon_defs_and_mappings() {
+        let cases = [
+            (
+                WId::CentipedeAtk1,
+                "CentipedeAtk1",
+                "Centipede1",
+                "Centipede Spit",
+                1,
+            ),
+            (
+                WId::CentipedeAtk2,
+                "CentipedeAtk2",
+                "Centipede2",
+                "Alpha Centipede Spit",
+                2,
+            ),
+            (
+                WId::CentipedeAtkB,
+                "CentipedeAtkB",
+                "CentipedeBoss",
+                "Caustic Vomit",
+                3,
+            ),
+        ];
+        for (wid, live_id, pawn_type, name, damage) in cases {
+            let w = weapon_def(wid);
+            assert_eq!(w.weapon_type, WeaponType::Projectile);
+            assert_eq!(w.damage, damage);
+            assert_eq!(w.range_max, 0);
+            assert!(w.acid());
+            assert!(w.aoe_perpendicular());
+            assert_eq!(wid_from_str(live_id), wid);
+            assert_eq!(wid_to_str(wid), live_id);
+            assert_eq!(enemy_weapon_for_type(pawn_type), wid);
+            assert_eq!(weapon_name(wid), name);
+        }
     }
 
     #[test]

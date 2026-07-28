@@ -69,6 +69,24 @@ def test_moth_weapon_defs_match_inherited_lua_artillery_range():
         assert weapon.range_max == 5
 
 
+def test_centipede_weapon_defs_match_lua_acid_t_shape():
+    expected = {
+        "CentipedeAtk1": ("Centipede Spit", 1),
+        "CentipedeAtk2": ("Alpha Centipede Spit", 2),
+        "CentipedeAtkB": ("Caustic Vomit", 3),
+    }
+
+    for weapon_id, (name, damage) in expected.items():
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None
+        assert weapon.name == name
+        assert weapon.weapon_type == "projectile"
+        assert weapon.damage == damage
+        assert weapon.range_max == 0
+        assert weapon.acid is True
+        assert weapon.aoe_perpendicular is True
+
+
 def test_smoldering_shells_upgrade_weapon_defs():
     base = get_weapon_def("Ranged_SmokeFire")
     more_smoke = get_weapon_def("Ranged_SmokeFire_A")

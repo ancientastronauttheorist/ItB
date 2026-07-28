@@ -33,8 +33,11 @@ def test_known_types_catalogs_centipede_bridge_tiers():
     with open(repo_root / "data" / "known_types.json") as f:
         known = json.load(f)
     observed = set(known["observed_pawn_types"])
-    for pawn_type in ("Centipede1", "Centipede2"):
+    for pawn_type in ("Centipede1", "Centipede2", "CentipedeBoss"):
         assert pawn_type in observed
+    weapons = set(known["observed_weapons"])
+    for weapon_id in ("CentipedeAtk1", "CentipedeAtk2", "CentipedeAtkB"):
+        assert weapon_id in weapons
 
 
 def test_known_types_catalogs_tumblebug_live_lua_aliases():
@@ -58,9 +61,13 @@ def test_digger_and_wall_do_not_trigger_research_gate():
 
 def test_centipedes_do_not_trigger_research_gate():
     unknown_detector.reset_cache()
-    board = _fake_board(["Centipede1", "Centipede2"])
+    board = _fake_board(["Centipede1", "Centipede2", "CentipedeBoss"])
+    board.units[0].weapon = "CentipedeAtk1"
+    board.units[1].weapon = "CentipedeAtk2"
+    board.units[2].weapon = "CentipedeAtkB"
     unknowns = unknown_detector.detect_unknowns(board)
     assert unknowns["types"] == []
+    assert unknowns["weapons"] == []
 
 
 def test_tumblebug_live_lua_aliases_do_not_trigger_research_gate():
@@ -87,10 +94,15 @@ def test_digger_and_wall_have_static_stats():
 def test_centipedes_have_static_stats():
     c1 = get_pawn_stats("Centipede1")
     c2 = get_pawn_stats("Centipede2")
+    boss = get_pawn_stats("CentipedeBoss")
     assert c1.move_speed == 2
     assert c2.move_speed == 2
+    assert boss.move_speed == 3
     assert c1.ranged == 1
     assert c2.ranged == 1
+    assert boss.ranged == 1
+    assert boss.massive is True
+    assert boss.default_weapon == "CentipedeAtkB"
 
 
 def test_tumblebug_live_lua_aliases_have_static_stats():

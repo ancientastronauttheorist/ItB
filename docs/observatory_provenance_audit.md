@@ -65,12 +65,12 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 58 definitions literally and leaves 684 unindexed. Category totals
+names 60 definitions literally and leaves 682 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
-weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth, and
-Tumblebug family records name eight literally and leave 32 unindexed. That is a
-precise indexing backlog, not evidence that all 32 behaviors are absent from
-Rust.
+weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
+Tumblebug, and Centipede family records name ten literally and leave 30
+unindexed. That is a precise indexing backlog, not evidence that all 30
+behaviors are absent from Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected
@@ -185,6 +185,19 @@ execution consumes bridge-selected boulders, and exhaustive
 terrain/status/scheduler behavior remains open. The exact Leader source is
 outside the audit's selected 96-file high-value candidate set, so this family
 does not change the source-index totals.
+
+The fifth family-level enemy-weapon slice, `enemy-weapon-centipede`, pins the
+normal, Alpha, and Leader pawn/weapon IDs, damage values, unlimited projectile
+range, ACID impact T, direct-enemy candidate rejection, and the Leader's strict
+pre-impact ACID trail. Exact mappings plus normal/Alpha/Leader damage and ACID
+footprints, ground/water conversion, board-edge impact, Python definitions,
+known types, and static pawn metadata have focused tests. The record remains
+`partial`: current-turn resolution consumes the bridge-selected target, mobile
+projection is generic, and native movement, candidate enumeration,
+`GetProjectileEnd`, `ScoreList`, effect scheduling, selection, and tie-breaking
+remain untraced. The pawn and Leader files are outside the audit's selected
+96-file high-value source set, so the family indexes two callbacks without
+changing source-index totals.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and
