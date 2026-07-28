@@ -2773,6 +2773,99 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Wind Torrent source exposes sixteen fixed target tiles grouped into four 2x2 edge zones. The clicked zone selects left, right, up, or down with x-axis precedence, snapshots current pawn spaces in direction-specific scan order, then queues a zero-damage directional push and 0.2 delay for each."
+        },
+        {
+          "classification": "fact",
+          "statement": "The base Support_Wind is single-use and Support_Wind_A removes that limit without changing the board effect."
+        },
+        {
+          "classification": "fact",
+          "statement": "Python and Rust define Wind Torrent as a global push, Rust maps both exact IDs to one simulator primitive, enumerates one effect-equivalent representative per target zone, and focused tests cover definitions, zone directions, sequential scan order, all-unit push, building bump damage, and attack classification."
+        }
+      ],
+      "id": "player-weapon-support-wind",
+      "implementations": [
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS",
+            "Support_Wind"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::SupportWind",
+            "SUPPORT_WIND_TARGETS",
+            "support_wind_dir_from_target",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "WeaponType::GlobalPush",
+            "SUPPORT_WIND_TARGETS",
+            "support_wind_dir_from_target"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "WeaponType::GlobalPush",
+            "sim_global_push",
+            "support_wind_dir_from_target"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust deliberately enumerates one representative target per 2x2 zone rather than all sixteen UI coordinates; the representatives are effect-equivalent under the source direction branches.",
+        "Rust maps Support_Wind and Support_Wind_A to one WId and does not independently enforce the base weapon's cross-turn single-use state versus the upgraded unlimited state.",
+        "Native Board:IsPawnSpace corner cases, SpaceDamage push and collision semantics outside the focused tests, two emitters, 0.2 delays, effect scheduling, target-zone rendering, animation, and sound remain untraced.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_support.lua",
+          "sha256": "f5fc6be6bde2aae2676f29c39b45fe039d2a81537608e1f43e17ebc3ecda1855",
+          "symbols": [
+            "Support_Wind",
+            "Support_Wind:GetTargetZone",
+            "Support_Wind:GetTargetArea",
+            "Support_Wind:GetSkillEffect",
+            "Support_Wind_A"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_support_wind_def_and_target_zones"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_support_wind_pushes_every_unit_left",
+            "test_support_wind_right_scan_order_moves_leading_unit_first",
+            "test_support_wind_bump_into_building_costs_grid"
+          ]
+        },
+        {
+          "path": "tests/test_action_classification.py",
+          "symbols": [
+            "test_support_wind_target_zone_is_attack"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

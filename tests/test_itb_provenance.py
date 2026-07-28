@@ -2338,3 +2338,65 @@ def test_real_airstrike_record_pins_lethal_cross_and_spawn_boundary():
     assert "native scheduler" in gaps
     assert "SpaceDamage(DAMAGE_DEATH)" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_support_wind_record_pins_zones_scan_order_and_use_limit():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-support-wind"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/weapons_support.lua",
+            "sha256": (
+                "f5fc6be6bde2aae2676f29c39b45fe03"
+                "9d2a81537608e1f43e17ebc3ecda1855"
+            ),
+            "symbols": [
+                "Support_Wind",
+                "Support_Wind:GetTargetZone",
+                "Support_Wind:GetTargetArea",
+                "Support_Wind:GetSkillEffect",
+                "Support_Wind_A",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::SupportWind",
+        "SUPPORT_WIND_TARGETS",
+        "support_wind_dir_from_target",
+    } <= implementations["rust_solver/src/weapons.rs"]
+    assert "sim_global_push" in implementations["rust_solver/src/simulate.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_support_wind_pushes_every_unit_left",
+        "test_support_wind_right_scan_order_moves_leading_unit_first",
+        "test_support_wind_bump_into_building_costs_grid",
+    }
+    assert tests["tests/test_action_classification.py"] == {
+        "test_support_wind_target_zone_is_attack"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "one representative target per 2x2 zone" in gaps
+    assert "cross-turn single-use state" in gaps
+    assert "protected live achievement session" in gaps

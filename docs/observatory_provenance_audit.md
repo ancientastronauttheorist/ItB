@@ -55,17 +55,17 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 6 | 8 |
+| Player weapons | 14 | 7 | 7 |
 | Missions | 75 | 13 | 62 |
 | Environments | 15 | 7 | 8 |
-| Unique total | 96 | 26 | 70 |
+| Unique total | 96 | 27 | 69 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 90 definitions literally and leaves 652 unindexed. Category totals
+names 93 definitions literally and leaves 649 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -134,6 +134,16 @@ farthest-only push, collision regressions, and bridge replay. It remains
 `partial`: native effect helpers are untraced, Rust deliberately omits an
 otherwise-empty intact-building target that Lua publishes, and exhaustive
 terrain/status/collision conformance is open.
+
+The seventh slice, `player-weapon-support-wind`, adds the exact
+`weapons_support.lua` source and both `Support_Wind` IDs. It pins all sixteen
+Lua target tiles, their four 2x2 zone groups, direction precedence, scan order,
+zero-damage pushes, and base-versus-upgraded use limits to the Python and Rust
+global-push implementations. Focused tests cover target directions, sequential
+movement, building bump damage, and attack classification. It remains
+`partial`: Rust intentionally searches one effect-equivalent representative per
+zone, does not independently track the base weapon's cross-turn use limit, and
+native effect scheduling, presentation, and pawn-space edge cases are untraced.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific
