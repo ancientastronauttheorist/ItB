@@ -5023,6 +5023,110 @@ def test_real_mission_shields_record_preserves_source_live_gap():
     assert "controlled direct-hit, push, and death traces" in gaps
 
 
+def test_real_mission_acid_record_pins_native_spawn_gap():
+    record = _mission_provenance_record("mission-acid-water-spawns")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/acid/mission_acid.lua",
+        "sha256": "082947a38cd3ad831ecca58cb046a5817d6c0669cbae11160604c3c25f73a461",
+        "symbols": [
+            "Mission_Acid", "Mission_Acid:StartMission",
+            "Mission_Acid:UpdateSpawning", "Mission_Acid:SpawnAcidMonsters",
+        ],
+    }]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/bridge/modloader.lua"] == {"dump_state"}
+    assert implementations["src/model/board.py"] == {"from_bridge_data"}
+    assert implementations["rust_solver/src/serde_bridge.rs"] == {"board_from_json"}
+    assert implementations["src/solver/plan_safety.py"] == {"audit_plan_safety"}
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "ACID-water tiles" in facts
+    assert "SpawnPawns(GetSpawnCount()) first" in facts
+    assert "except on the final turn" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "GetBoardList ACID-water snapshot" in gaps
+    assert "Mission_Infinite and Mission_Auto inheritance" in gaps
+    assert "no source-specific forecast" in gaps
+
+
+def test_real_mission_fence_record_pins_native_wall_gate():
+    record = _mission_provenance_record("mission-fence-edge-walls")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/acid/mission_fence.lua",
+        "sha256": "3833931bfd66db1690ba76ebca3890d4cea5a6f2904d3beecf17ae69d75789a0",
+        "symbols": [
+            "Mission_Fence", "Mission_Fence:IsObstructed",
+            "Mission_Fence:TrimFence", "Mission_Fence:StartMission",
+        ],
+    }]
+    implementations = next(
+        reference
+        for reference in record["implementations"]
+        if reference["path"] == "src/loop/commands.py"
+    )
+    assert implementations["path"] == "src/loop/commands.py"
+    assert set(implementations["symbols"]) == {
+        "_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block",
+        "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "at most five directional Board:SetWall segments" in facts
+    assert "exact-ID" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "edge geometry" in gaps
+    assert "fail-closed and non-overridable" in gaps
+
+
+def test_real_mission_laser_record_pins_native_beam_gate():
+    record = _mission_provenance_record("mission-laser-queued-beam")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/acid/mission_laser.lua",
+        "sha256": "e9195a160fd8a7b971555d767033eb7baea116668462cc0f50d22de01d2b13db",
+        "symbols": [
+            "Mission_Laser", "Mission_Laser:GetLaserDirection",
+            "Mission_Laser:StartMission", "Laser_U_Atk:GetTargetArea",
+            "Laser_U_Atk:GetTargetScore", "Laser_U_Atk:GetSkillEffect",
+        ],
+    }, {
+        "path": "scripts/weapons_base.lua",
+        "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+        "symbols": ["Laser_Base:AddQueuedLaser", "Laser_Base:AddLaser"],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "neutral, immobile, nonpushable Corpse" in facts
+    assert "damage 5 decaying to minimum 1" in facts
+    assert "passes pawns and stops at a Building, Mountain, or board edge" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "queued Laser_Base traversal" in gaps
+    assert "fail-closed and non-overridable" in gaps
+
+
+def test_real_mission_respawn_record_pins_native_resurrection_gate():
+    record = _mission_provenance_record("mission-respawn-major-vek")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/acid/mission_respawn.lua",
+        "sha256": "15abbd0799343a36c0b849f184b1afcb21b9cc6d8358e9f0f0260c4bc26874a1",
+        "symbols": [
+            "Mission_Respawn", "Mission_Respawn:StartMission",
+            "Mission_Respawn:UpdateMission", "Mission_Respawn:NextTurn",
+        ],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "latest space" in facts
+    assert "enemy-turn entry" in facts
+    assert "new native pawn identity" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Board:IsBusy timing" in gaps
+    assert "enemy-zone random selection" in gaps
+    assert "fail-closed and non-overridable" in gaps
+
+
 def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
     record = _mission_provenance_record("mission-boombots-explosive-decay")
     assert record["coverage"] == "partial"

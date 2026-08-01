@@ -240,6 +240,17 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     "Mission_Power":          ["protect_specific_building"],
 }
 
+# These mission templates have source-confirmed objective/environment behavior
+# that the native simulator cannot yet forecast. Keep this list exact-ID only:
+# a similarly named future template remains unknown rather than gated.
+NATIVE_FORECAST_GATED_MISSION_IDS = frozenset({
+    "Mission_Fence",
+    "Mission_Laser",
+    "Mission_Respawn",
+})
+_NATIVE_FORECAST_GATE_TAG = "native_forecast_gate"
+_NATIVE_FORECAST_GATE_PENALTY = 1000
+
 # Environment string → mission tags. Lua emits the class name like
 # "Env_TidalWaves". Substring match (Env_Lava → tag "env_lava").
 ENVIRONMENT_TAGS: dict[str, list[str]] = {
@@ -1001,6 +1012,8 @@ def score_mission(
         env,
         mission_metadata,
     )
+    if mission_id in NATIVE_FORECAST_GATED_MISSION_IDS:
+        mission_tags.add(_NATIVE_FORECAST_GATE_TAG)
     rationale: list[str] = []
     score = 0
 
@@ -1040,6 +1053,12 @@ def score_mission(
         score -= 50
         rationale.append(
             "-50 mite counter objective not fully solver-gated — hard veto"
+        )
+    if _NATIVE_FORECAST_GATE_TAG in mission_tags:
+        score -= _NATIVE_FORECAST_GATE_PENALTY
+        rationale.append(
+            f"-{_NATIVE_FORECAST_GATE_PENALTY} native forecast semantics "
+            f"unavailable ({mission_id}) — hard veto"
         )
     if "cataclysm_chasm" in squad_tags:
         if mission_id == "Mission_Trapped":
@@ -1120,7 +1139,7 @@ def score_mission(
     #     no fixed-roster alternative exists.
     #   grid≤2: -50 → hard veto, matching high_threat semantics. At this
     #     grid the next mission decides the run; only Mission_Battle /
-    #     Mission_Reactivation / Mission_Respawn-style missions stay
+    #     Mission_Reactivation-style missions stay
     #     viable.
     # Subsumes the ``boss + grid<4`` -4 penalty (every boss mission is
     # also infinite_spawn, and -10/-50 dominates -4): use elif so we
@@ -1184,6 +1203,14 @@ def score_mission(
         )
     elif routing != "default":
         raise ValueError(f"unknown mission routing mode: {routing}")
+
+    if (
+        routing in {"lightning_war", "lightning_baseline"}
+        and mission_id in NATIVE_FORECAST_GATED_MISSION_IDS
+    ):
+        # Commands honors this per-ranked-option signal before a Lightning
+        # route auto-starts, independent of the final score ordering.
+        route_auto_start_veto_reason = f"native_forecast_gate:{mission_id}"
 
     out = dict(entry)
     out["score"] = score

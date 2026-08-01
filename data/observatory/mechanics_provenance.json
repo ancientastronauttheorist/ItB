@@ -7569,6 +7569,216 @@
           "symbols": ["test_real_mission_shields_record_preserves_source_live_gap"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Acid source builds its SpawnTable from ACID-water tiles, runs normal SpawnPawns(GetSpawnCount()) first, and then, except on the final turn, selects up to AcidSpawn unblocked, non-pod, non-spawning ACID-water points for native Vek spawns before calling Pawn:SetAcid(true)."
+        },
+        {
+          "classification": "fact",
+          "statement": "Bridge/Python/Rust import already retains ACID tile state and gives grounded units on imported ACID pools ACID while preserving flying-unit exceptions. Existing plan safety tracks new mech ACID exposure, but neither representation simulates Mission_Acid's SpawnTable filtering, selection, Vek identity, or scheduling."
+        }
+      ],
+      "id": "mission-acid-water-spawns",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["dump_state"]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": ["from_bridge_data"]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": ["board_from_json"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["audit_plan_safety"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Acid's GetBoardList ACID-water snapshot, IsBlocked/IsPod/IsSpawning eligibility, random_removal, NextPawn type selection, Board:SpawnPawn placement, Pawn:SetAcid ordering, final-turn exception, and normal spawn ordering are native-only here; no source-specific forecast is claimed.",
+        "Mission_Infinite and Mission_Auto inheritance, UseBonus/BonusPool selection and objective timing are native dependencies. Generic ACID import and plan safety must not be interpreted as a reconstruction of this mission's spawning phase.",
+        "No controlled live trace establishes how these queued native spawns interact with every tile, flying, shield, frozen, corpse, or simultaneous-spawn edge case."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_acid.lua",
+          "sha256": "082947a38cd3ad831ecca58cb046a5817d6c0669cbae11160604c3c25f73a461",
+          "symbols": ["Mission_Acid", "Mission_Acid:StartMission", "Mission_Acid:UpdateSpawning", "Mission_Acid:SpawnAcidMonsters"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": ["test_acid_pool_import_respects_flying_units"]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": ["test_new_acid_mech_blocks_plan", "test_existing_acid_mech_does_not_block_again"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_acid_record_pins_native_spawn_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Fence source enumerates native horizontal candidate paths, rejects Buildings, Mountains, and Water, randomly trims paths, and places at most five directional Board:SetWall segments while limiting itself to one choke candidate."
+        },
+        {
+          "classification": "fact",
+          "statement": "The shared exact-ID policy gives Mission_Fence a default routing hard veto, preserves that veto through Lightning forced-preview paths, and blocks solve plus every public End Turn route before it can rely on an unproven forecast. This is a safety stop, not an edge-wall simulation."
+        }
+      ],
+      "id": "mission-fence-edge-walls",
+      "implementations": [
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["NATIVE_FORECAST_GATED_MISSION_IDS", "score_mission"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
+        }
+      ],
+      "known_gaps": [
+        "No model reconstructs the candidate-path scan, random trimming/removal, choke selection, existing-wall checks, or Board:SetWall edge geometry. The solver cannot forecast movement, pushes, attacks, spawning, or end-turn consequences around these native walls.",
+        "The exact-ID research block is deliberately fail-closed and non-overridable; it does not prove any native wall duration, presentation, or scheduling behavior."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_fence.lua",
+          "sha256": "3833931bfd66db1690ba76ebca3890d4cea5a6f2904d3beecf17ae69d75789a0",
+          "symbols": ["Mission_Fence", "Mission_Fence:IsObstructed", "Mission_Fence:TrimFence", "Mission_Fence:StartMission"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_mission_native_forecast_gates.py",
+          "symbols": ["test_cmd_solve_returns_exact_non_overridable_native_forecast_gate", "test_auto_turn_preserves_native_forecast_gate_metadata", "test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch", "test_exact_non_target_mission_is_unaffected", "test_lightning_route_veto_recognizes_native_forecast_gate_from_id_alone", "test_lightning_forced_preview_keeps_native_forecast_route_veto", "test_lightning_forced_preview_candidate_preserves_native_forecast_veto"]
+        },
+        {
+          "path": "tests/test_mission_picker.py",
+          "symbols": ["test_native_forecast_gated_mission_loses_to_safe_default_pick", "test_native_forecast_gate_is_exact_id_only", "test_lightning_routes_auto_start_veto_native_forecast_gated_missions"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_fence_record_pins_native_wall_gate"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Laser source creates one neutral, immobile, nonpushable Corpse directional laser pawn from its native zone. Laser_U_Atk queues a directional beam with damage 5 decaying to minimum 1; the native Laser_Base behavior passes pawns and stops at a Building, Mountain, or board edge."
+        },
+        {
+          "classification": "fact",
+          "statement": "The shared exact-ID policy gives Mission_Laser a default routing hard veto, preserves that veto through Lightning forced-preview paths, and blocks solve plus every public End Turn route before it can rely on an unproven queued-beam forecast. This is a safety stop, not a beam simulation."
+        }
+      ],
+      "id": "mission-laser-queued-beam",
+      "implementations": [
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["NATIVE_FORECAST_GATED_MISSION_IDS", "score_mission"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
+        }
+      ],
+      "known_gaps": [
+        "No model reconstructs native laser-zone selection, direction tie-breaking, pawn placement, queued Laser_Base traversal, damage decay, or interaction ordering. The solver cannot forecast player, enemy, building, terrain, corpse, shield, or push outcomes of this beam.",
+        "The exact-ID research block is deliberately fail-closed and non-overridable; it does not claim that the safety layer reproduces the native queue, damage, or presentation."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_laser.lua",
+          "sha256": "e9195a160fd8a7b971555d767033eb7baea116668462cc0f50d22de01d2b13db",
+          "symbols": ["Mission_Laser", "Mission_Laser:GetLaserDirection", "Mission_Laser:StartMission", "Laser_U_Atk:GetTargetArea", "Laser_U_Atk:GetTargetScore", "Laser_U_Atk:GetSkillEffect"]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": ["Laser_Base:AddQueuedLaser", "Laser_Base:AddLaser"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_mission_native_forecast_gates.py",
+          "symbols": ["test_cmd_solve_returns_exact_non_overridable_native_forecast_gate", "test_auto_turn_preserves_native_forecast_gate_metadata", "test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch", "test_exact_non_target_mission_is_unaffected", "test_lightning_route_veto_recognizes_native_forecast_gate_from_id_alone", "test_lightning_forced_preview_keeps_native_forecast_route_veto", "test_lightning_forced_preview_candidate_preserves_native_forecast_veto"]
+        },
+        {
+          "path": "tests/test_mission_picker.py",
+          "symbols": ["test_native_forecast_gated_mission_loses_to_safe_default_pick", "test_native_forecast_gate_is_exact_id_only", "test_lightning_routes_auto_start_veto_native_forecast_gated_missions"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_laser_record_pins_native_beam_gate"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Respawn source initially spawns three Vek, records each living enemy's type and latest space, and at enemy-turn entry recreates a dead non-Minor tracked Vek at its last free ground space or an available enemy-zone fallback with a new native pawn identity."
+        },
+        {
+          "classification": "fact",
+          "statement": "The shared exact-ID policy gives Mission_Respawn a default routing hard veto, preserves that veto through Lightning forced-preview paths, and blocks solve plus every public End Turn route before it can rely on an unproven resurrection forecast. This is a safety stop, not a respawn simulation."
+        }
+      ],
+      "id": "mission-respawn-major-vek",
+      "implementations": [
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["NATIVE_FORECAST_GATED_MISSION_IDS", "score_mission"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
+        }
+      ],
+      "known_gaps": [
+        "No model reconstructs the tracked pawn table, Board:IsBusy timing, SetActive, last-space updates, blocked-tile fallback, enemy-zone random selection, animation/effect queue, or new pawn identity. The solver cannot forecast the returned Vek's attacks, threats, objectives, or spawning interactions.",
+        "The exact-ID research block is deliberately fail-closed and non-overridable; it does not claim a simulation of Mission_Respawn's enemy-turn scheduling or presentation."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_respawn.lua",
+          "sha256": "15abbd0799343a36c0b849f184b1afcb21b9cc6d8358e9f0f0260c4bc26874a1",
+          "symbols": ["Mission_Respawn", "Mission_Respawn:StartMission", "Mission_Respawn:UpdateMission", "Mission_Respawn:NextTurn"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_mission_native_forecast_gates.py",
+          "symbols": ["test_cmd_solve_returns_exact_non_overridable_native_forecast_gate", "test_auto_turn_preserves_native_forecast_gate_metadata", "test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch", "test_exact_non_target_mission_is_unaffected", "test_lightning_route_veto_recognizes_native_forecast_gate_from_id_alone", "test_lightning_forced_preview_keeps_native_forecast_route_veto", "test_lightning_forced_preview_candidate_preserves_native_forecast_veto"]
+        },
+        {
+          "path": "tests/test_mission_picker.py",
+          "symbols": ["test_native_forecast_gated_mission_loses_to_safe_default_pick", "test_native_forecast_gate_is_exact_id_only", "test_lightning_routes_auto_start_veto_native_forecast_gated_missions"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_respawn_record_pins_native_resurrection_gate"]
+        }
+      ]
     }
   ],
   "schema_version": 1

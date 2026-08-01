@@ -7,6 +7,8 @@ we expect to in the near future).
 """
 from __future__ import annotations
 
+import pytest
+
 from src.strategy.mission_picker import (
     BONUS_ASSET,
     BONUS_BLOCK,
@@ -369,6 +371,114 @@ def test_train_no_defender_loses_to_safe_battle():
     # Sanity check the rationale surfaces the actual penalty.
     train_rationale = " ".join(ranked[1]["rationale_lines"])
     assert "no train_defender" in train_rationale
+
+
+@pytest.mark.parametrize(
+    "mission_id",
+    ("Mission_Fence", "Mission_Laser", "Mission_Respawn"),
+)
+def test_native_forecast_gated_mission_loses_to_safe_default_pick(mission_id):
+    """Known native-only mission semantics never outrank a safe slate option."""
+    gated = {
+        "region_id": 91,
+        "mission_id": mission_id,
+        "bonus_objective_ids": [BONUS_ASSET],
+        "environment": "Env_Null",
+    }
+    ranked = score_island_map(
+        [gated, _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    scored = next(entry for entry in ranked if entry["mission_id"] == mission_id)
+    assert "native_forecast_gate" in scored["mission_tags"]
+    assert scored["score"] <= -995
+    assert "native forecast semantics unavailable" in " ".join(
+        scored["rationale_lines"]
+    )
+
+
+def test_native_forecast_gate_is_exact_id_only():
+    """Unknown lookalikes keep ordinary ranking semantics."""
+    scored = score_mission(
+        {
+            "region_id": 92,
+            "mission_id": "Mission_Fence_Unknown",
+            "bonus_objective_ids": [BONUS_ASSET],
+            "environment": "Env_Null",
+        },
+        derive_squad_tags(RIFT_WALKERS_SQUAD),
+        grid_power=7,
+        mission_metadata={},
+    )
+
+    assert scored["score"] == 5
+    assert "native_forecast_gate" not in scored["mission_tags"]
+
+
+@pytest.mark.parametrize("routing", ("lightning_war", "lightning_baseline"))
+def test_lightning_routes_auto_start_veto_native_forecast_gated_missions(routing):
+    """Speed and baseline routes propagate an explicit start refusal."""
+    gated = [
+        {
+            "region_id": index,
+            "mission_id": mission_id,
+            "bonus_objective_ids": [],
+            "environment": "Env_Null",
+        }
+        for index, mission_id in enumerate(
+            ("Mission_Fence", "Mission_Laser", "Mission_Respawn"), start=93
+        )
+    ]
+    ranked = score_island_map(
+        [*gated, _safe_battle_mission()],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing=routing,
+    )
+
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    for mission_id in ("Mission_Fence", "Mission_Laser", "Mission_Respawn"):
+        scored = next(entry for entry in ranked if entry["mission_id"] == mission_id)
+        assert scored["route_auto_start_veto_reason"] == (
+            f"native_forecast_gate:{mission_id}"
+        )
+
+
+def test_lightning_route_all_native_forecast_gates_remain_ranked_but_vetoed():
+    """The picker preserves a fully gated preview for reporting; it cannot auto-start."""
+    ranked = score_island_map(
+        [
+            {
+                "region_id": index,
+                "mission_id": mission_id,
+                "bonus_objective_ids": [],
+                "environment": "Env_Null",
+            }
+            for index, mission_id in enumerate(
+                ("Mission_Fence", "Mission_Laser", "Mission_Respawn"), start=96
+            )
+        ],
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+        routing="lightning_war",
+    )
+
+    assert {entry["mission_id"] for entry in ranked} == {
+        "Mission_Fence",
+        "Mission_Laser",
+        "Mission_Respawn",
+    }
+    assert all(
+        entry["route_auto_start_veto_reason"]
+        == f"native_forecast_gate:{entry['mission_id']}"
+        for entry in ranked
+    )
 
 
 def test_lightning_war_routing_vetoes_train_speed_trap():

@@ -98,6 +98,7 @@ from src.loop.lightning_conductor import (
 )
 from src.strategy.run_planner import recommend_squad_for_run
 from src.strategy.setup_verifier import capture_and_check_setup
+from src.strategy.mission_picker import NATIVE_FORECAST_GATED_MISSION_IDS
 
 _CONTROL_SHOT_PREFIX = "Science_TC_Control"
 
@@ -9160,6 +9161,44 @@ _MISSION_PISTON_TYPES = frozenset({
 })
 
 
+_MISSION_NATIVE_FORECAST_GAPS = {
+    "Mission_Fence": "mission_fence_edge_walls_unmodeled",
+    "Mission_Laser": "mission_laser_queued_beam_unmodeled",
+    "Mission_Respawn": "mission_respawn_resurrection_unmodeled",
+}
+
+
+def _mission_native_forecast_block(board, bridge_data: dict | None) -> dict | None:
+    """Fail closed for exact missions whose native phases lack a forecast.
+
+    These IDs are intentionally a small allowlist rather than a broad
+    mission-name heuristic.  Each has a source-proven native mechanic the
+    simulator cannot currently project, so neither clean-plan selection nor
+    dirty-plan consent can make its End Turn safe.
+    """
+    mission_id = ""
+    if isinstance(bridge_data, dict):
+        mission_id = str(bridge_data.get("mission_id") or "")
+    mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    gap_kind = _MISSION_NATIVE_FORECAST_GAPS.get(mission_id)
+    if gap_kind is None:
+        return None
+    return {
+        "error": "RESEARCH_REQUIRED",
+        "requires_research": True,
+        "blocking": True,
+        "non_overridable": True,
+        "reason": "mission_native_forecast_unproven",
+        "mission_id": mission_id,
+        "forecast_complete": False,
+        "forecast_gaps": [{"kind": gap_kind}],
+        "next": (
+            "Capture and model this mission's native phase before allowing "
+            "solver forecasts or End Turn delivery."
+        ),
+    }
+
+
 def _mission_piston_forecast_block(board, bridge_data: dict | None) -> dict | None:
     """Fail closed while Mission_Piston's native hazard phase is unproven.
 
@@ -9340,6 +9379,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     if piston_gate is not None:
         _print_result(piston_gate)
         return piston_gate
+
+    native_mission_gate = _mission_native_forecast_block(board, bridge_data)
+    if native_mission_gate is not None:
+        _print_result(native_mission_gate)
+        return native_mission_gate
 
     # Check for active mechs (includes friendly controllable units like ArchiveArtillery)
     active_mechs = [mech for mech in board.mechs()
@@ -13926,6 +13970,17 @@ def _held_end_turn_safety_block_result(
             next_step=(
                 "Do not click End Turn. Capture native Mission_Auto Piston "
                 "ordering/corpse behavior before enabling this mission."
+            ),
+        )
+
+    native_mission_gate = _mission_native_forecast_block(board, bridge_data)
+    if native_mission_gate is not None:
+        return _blocked(
+            "held_end_turn_mission_native_unproven",
+            mission_native_forecast=native_mission_gate,
+            next_step=(
+                "Do not click End Turn. Capture and model this mission's "
+                "native phase before enabling it."
             ),
         )
 
@@ -18834,6 +18889,8 @@ def _lightning_route_auto_start_veto_reason(
     mission_id = str(option.get("mission_id") or "").strip()
     if not mission_id:
         return "missing_route_mission_id"
+    if mission_id in NATIVE_FORECAST_GATED_MISSION_IDS:
+        return f"native_forecast_gate:{mission_id}"
     if routing == "lightning_baseline":
         mission_vetoes = _LIGHTNING_ROUTE_AUTO_START_BASELINE_VETO_MISSIONS
         tag_vetoes = _LIGHTNING_ROUTE_AUTO_START_BASELINE_VETO_TAGS
@@ -18886,11 +18943,20 @@ def _lightning_speed_route_status(
         ranked,
         source=source,
     )
-    veto_reason = None if boss else _lightning_route_auto_start_veto_reason(
+    veto_reason = _lightning_route_auto_start_veto_reason(
         top,
         routing=routing,
     )
-    if forced_preview_allowed and routing != "lightning_baseline":
+    native_forecast_veto = bool(
+        veto_reason and veto_reason.startswith("native_forecast_gate:")
+    )
+    if boss and not native_forecast_veto:
+        veto_reason = None
+    if (
+        forced_preview_allowed
+        and routing != "lightning_baseline"
+        and not native_forecast_veto
+    ):
         veto_reason = None
     if veto_reason:
         return {
@@ -18977,8 +19043,12 @@ def _lightning_auto_start_preview_block_reason(
             top = dict(top3[0])
             top["mission_id"] = mission_id
 
+    route_veto = _lightning_route_auto_start_veto_reason(top, routing=routing)
+    native_forecast_veto = bool(
+        route_veto and route_veto.startswith("native_forecast_gate:")
+    )
     boss = bool(top.get("boss")) or mission_id.endswith("Boss")
-    if boss:
+    if boss and not native_forecast_veto:
         return None
     if preview_source == "visible_preview_ocr":
         visible_preview_ocr = preview_recommendation.get("visible_preview_ocr")
@@ -18989,19 +19059,15 @@ def _lightning_auto_start_preview_block_reason(
             and str(visible_preview_ocr.get("mission_id") or "").strip()
             == mission_id
         ):
-            early_veto = _lightning_route_auto_start_veto_reason(
-                top,
-                routing=routing,
-            )
-            if early_veto:
-                return early_veto
+            if route_veto:
+                return route_veto
     if not _lightning_route_preview_source_verified(
         preview_recommendation,
         mission_id,
         routing=routing,
     ):
         return f"unverified_preview_source:{preview_source or 'unknown'}"
-    return _lightning_route_auto_start_veto_reason(top, routing=routing)
+    return route_veto
 
 
 def _lightning_visible_preview_ocr_start_authorized(
@@ -19717,11 +19783,14 @@ def _lightning_candidate_auto_block_reason(
         return "forced_bridge_preview_multiple_visible_regions"
     if not option.get("mission_id"):
         return "missing_route_mission_id"
+    veto_reason = _lightning_route_auto_start_veto_reason(option, routing=routing)
     if candidate.get("forced_preview_route") and not candidate.get(
         "forced_preview_ambiguous"
     ):
+        if veto_reason and veto_reason.startswith("native_forecast_gate:"):
+            return veto_reason
         return None
-    return _lightning_route_auto_start_veto_reason(option, routing=routing)
+    return veto_reason
 
 
 def _lightning_candidate_auto_allowed(

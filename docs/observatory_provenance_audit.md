@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 47 | 28 |
+| Missions | 75 | 51 | 24 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 66 | 30 |
+| Unique total | 96 | 70 | 26 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 292 definitions literally and leaves 450 unindexed. Category totals
+names 308 definitions literally and leaves 434 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -106,6 +106,26 @@ legacy live-derived inference, not source proof: its original Ricochet path was
 later diagnosed as a native no-op and the observed Scorpion already had a
 shield. Controlled direct-hit, push, and generator-death traces are required
 before reconciling that inference with the exact Lua semantics.
+
+The Acid-base native-phase slice adds four exact shipped mission sources in four
+bounded `partial` records and names all fourteen active mission callbacks among
+them, plus the two inherited `Laser_Base` construction callbacks.
+Mission_Acid captures its ACID-water SpawnTable and its normal-then-one-ACIDed
+Vek spawn ordering, but generic ACID bridge/Rust import and plan safety are not
+misreported as a source-specific spawn forecast. Mission_Fence can place up to
+five randomly selected directional native edge-wall segments. Mission_Laser
+creates a neutral directional Corpse whose queued damage-five-to-one beam passes
+pawns and stops at a building, mountain, or edge; that traversal is pinned to
+the exact `weapons_base.lua` helpers rather than attributed only to the mission
+file. Mission_Respawn records enemy
+types and last spaces, then recreates dead non-Minor Vek at enemy-turn entry
+with a new native identity and fallback enemy-zone placement. The latter three
+are all exact-ID, fail-closed policies: default routing assigns a hard veto,
+Lightning auto-start preserves it even for forced previews, and solve plus every
+public End Turn route stop before planning or delivery because their native
+wall, queued-beam, and resurrection phases are not simulated. The gates are safety evidence only,
+not a claim of conformance to their native setup, RNG, geometry, effect queue,
+or scheduling.
 
 The Pinnacle mission slice adds five exact shipped sources in five bounded
 `partial` records and names all sixteen active callbacks among them. Boom Bots
