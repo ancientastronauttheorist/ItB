@@ -338,14 +338,14 @@ impl Unit {
     pub fn pilot_arrogant(&self) -> bool { self.pilot_flags.contains(PilotFlags::ARROGANT) }
 
     /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and the
-    /// source-defined fireproof Supply Train bodies. Squad-wide Flame
+    /// source-defined fireproof Supply Train and Renfield Bomb bodies. Squad-wide Flame
     /// Shielding is handled at call sites because it needs board state, and
     /// it applies only to player mechs, not controllable mission allies.
     pub fn can_catch_fire(&self) -> bool {
         !self.pilot_rock()
             && !matches!(
                 self.type_name_str(),
-                "Train_Pawn" | "Train_Damaged" | "Train_Armored"
+                "Train_Pawn" | "Train_Damaged" | "Train_Armored" | "ProtoBomb"
             )
             // The fixed bridge type buffer stores Train_Armored_Damaged as
             // its observed 20-character prefix.

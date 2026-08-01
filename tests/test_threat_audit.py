@@ -77,6 +77,15 @@ def test_supply_train_types_ignore_projected_fire_tick():
         assert not _unit_takes_fire_tick(board, train)
 
 
+def test_protobomb_ignores_projected_fire_tick():
+    board = Board()
+    bomb = _enemy(uid=2600, pawn_type="ProtoBomb", hp=1)
+    bomb.team = 1
+    bomb.fire = True
+
+    assert not _unit_takes_fire_tick(board, bomb)
+
+
 def test_capture_building_threats_uses_visual_tiles():
     threats = capture_building_threats(_board())
 

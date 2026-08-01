@@ -4778,3 +4778,133 @@ def test_real_mission_missiles_record_pins_barrages_and_partial_objective():
     assert "Board:IsPawnSpace" in gaps
     assert "generic friendly-NPC penalty" in gaps
     assert "decorative" in gaps
+
+
+def test_real_mission_bomb_record_pins_objective_and_fire_immunity():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-bomb-protobombs"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/sand/mission_bomb.lua",
+            "sha256": (
+                "6fba941f738972f39a69432da105c4b06"
+                "a77e8b4042ac191a3415c320b9051f2"
+            ),
+            "symbols": [
+                "Mission_Bomb",
+                "Mission_Bomb:StartMission",
+                "Mission_Bomb:GetCompletedObjectives",
+                "Mission_Bomb:CountBombs",
+                "Mission_Bomb:UpdateObjectives",
+                "ProtoBomb",
+            ],
+        },
+        {
+            "path": "scripts/missions/missions.lua",
+            "sha256": (
+                "505c02a8668ba2e39d868f95051ede81"
+                "c6cc1611f1e409219b6caa4fbe1d0257"
+            ),
+            "symbols": ["Mission:AddDefended", "Mission_Infinite"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/board.rs"] == {"can_catch_fire"}
+    assert implementations["src/solver/threat_audit.py"] == {
+        "_unit_takes_fire_tick"
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "one reputation when exactly one survives" in facts
+    assert "Corpse=false, IgnoreFire=true, and Explodes=true" in facts
+    assert "two nonadjacent satellite-zone points" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "explosion footprint" in gaps
+    assert "Mission:AddDefended selection randomness" in gaps
+    assert "safety policy" in gaps
+
+
+def test_real_mission_civilians_record_pins_vip_move_semantics():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-civilians-vip-trucks"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/missions/acid/mission_civilians.lua",
+            "sha256": (
+                "ebee1b69eb19f0449777894056b5b695f"
+                "8d41dd4f20d2da0a17a72e87fc9caf8"
+            ),
+            "symbols": [
+                "Mission_Civilians",
+                "Mission_Civilians:StartMission",
+                "Mission_Civilians:NextTurn",
+                "Mission_Civilians:GetCompletedObjectives",
+                "Mission_Civilians:CountTanks",
+                "Mission_Civilians:UpdateObjectives",
+                "VIP_Truck",
+                "VIP_Truck_Move",
+                "VIP_Truck_Move:GetTargetArea",
+                "VIP_Truck_Move:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/missions/missions.lua",
+            "sha256": (
+                "505c02a8668ba2e39d868f95051ede81"
+                "c6cc1611f1e409219b6caa4fbe1d0257"
+            ),
+            "symbols": ["Mission:AddDefended", "Mission_Infinite"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_enrich_bridge_limited_mission_weapons_from_save"
+    }
+    assert implementations["rust_solver/src/solver.rs"] == {
+        "enumerate_actions",
+        "get_weapon_targets",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "one reputation when exactly one survives" in facts
+    assert "IgnoreSmoke=true" in facts
+    assert "Limited=2" in facts
+    assert "mission-, UID-, type-, slot-, and weapon-matched" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Native Board:GetReachable" in gaps
+    assert "stale" in gaps
+    assert "Mission:AddDefended satellite-zone randomness" in gaps

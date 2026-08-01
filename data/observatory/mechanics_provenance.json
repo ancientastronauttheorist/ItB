@@ -6773,6 +6773,265 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Bomb source creates two defended ProtoBomb pawns and awards two reputation when both survive, one reputation when exactly one survives, and a failed objective when neither survives. Its in-mission objective display reports the living count out of two and changes to failed only at zero."
+        },
+        {
+          "classification": "fact",
+          "statement": "ProtoBomb is an explicitly one-HP, zero-move, player-team neutral pawn with Corpse=false, IgnoreFire=true, and Explodes=true. The inherited Mission:AddDefended helper selects two nonadjacent satellite-zone points through random removal, converts both selected tiles to Road, and places the two created pawns."
+        },
+        {
+          "classification": "fact",
+          "statement": "Python static pawn metadata and the threat audit now preserve ProtoBomb fire immunity. Rust can_catch_fire rejects direct ignition and clears a stale carried Fire flag without enemy-phase damage, while the mission objective configuration and solver safety policy protect every living ProtoBomb rather than intentionally trading one for the source's partial reward."
+        }
+      ],
+      "id": "mission-bomb-protobombs",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": [
+            "Mission_Bomb",
+            "ProtoBomb"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "ProtoBomb"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_unit_takes_fire_tick"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "can_catch_fire"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_fire_weapon_unit_status"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "ProtoBomb's source-defined Corpse=false and Explodes=true flags are not implemented as a ProtoBomb-specific native death path. The Lua establishes the flags but not the engine's explosion footprint, ordering, or interactions, so controlled live evidence is required before extending Rust death semantics.",
+        "Mission:AddDefended selection randomness, native zone ordering, pawn-ID allocation, placement failure paths, road-conversion presentation, and Mission_Infinite spawn scheduling are not reconstructed; the solver consumes the resulting live board.",
+        "Native Board:IsPawnAlive timing, objective UI refresh, end-of-mission reward settlement, and every direct or terrain Fire producer are not exhaustively traced. Focused tests cover source-defined direct ignition immunity, stale-Fire tick immunity, and Python threat-audit treatment.",
+        "The source permits a partial one-reputation outcome when one bomb survives. The solver's generic protected-objective policy deliberately rejects voluntary ProtoBomb loss; that is safety policy, not a source-derived claim that partial completion is impossible."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_bomb.lua",
+          "sha256": "6fba941f738972f39a69432da105c4b06a77e8b4042ac191a3415c320b9051f2",
+          "symbols": [
+            "Mission_Bomb",
+            "Mission_Bomb:StartMission",
+            "Mission_Bomb:GetCompletedObjectives",
+            "Mission_Bomb:CountBombs",
+            "Mission_Bomb:UpdateObjectives",
+            "ProtoBomb"
+          ]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": [
+            "Mission:AddDefended",
+            "Mission_Infinite"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_protobomb_ignores_flamethrower_fire"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_protobomb_clears_stale_fire_without_tick_damage"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_bomb_and_civilians_source_pawn_stats"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_protobomb_ignores_projected_fire_tick"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_bomb_record_pins_objective_and_fire_immunity"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Civilians source creates two defended VIP_Truck pawns and awards two reputation when both survive, one reputation when exactly one survives, and a failed objective when neither survives. The first empty NextTurn definition is immediately overwritten; the effective callback only prepares a voice event on player turn one."
+        },
+        {
+          "classification": "fact",
+          "statement": "VIP_Truck is an explicitly one-HP, zero-move, player-team corporate pawn with IgnoreSmoke=true and primary VIP_Truck_Move. That skill has Limited=2, obtains range-three destinations from Board:GetReachable with Pawn:GetPathProf, and applies AddMove along Board:GetPath with the same path profile."
+        },
+        {
+          "classification": "fact",
+          "statement": "Python static metadata preserves the truck's source-defined smoke immunity and weapon identity. Rust enumerates its range-three movement skill while the origin is smoked and executes the move through the attack path. A mission-, UID-, type-, slot-, and weapon-matched turn-boundary save overlay blanks the exact primary slot only at zero remaining uses, preventing a third move while incomplete, malformed, or stale evidence fails open."
+        }
+      ],
+      "id": "mission-civilians-vip-trucks",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": [
+            "Mission_Civilians",
+            "VIP_Truck"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "VIP_Truck"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "VIP_Truck_Move"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_enrich_bridge_limited_mission_weapons_from_save"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "VipTruckMove",
+            "wid_from_str",
+            "wid_to_str",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "enumerate_actions",
+            "get_weapon_targets"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_attack_with_target2",
+            "simulate_move",
+            "simulate_weapon_with"
+          ]
+        },
+        {
+          "path": "rust_solver/src/movement.rs",
+          "symbols": [
+            "controlled_reachable_tiles_with_cost"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:GetReachable, Board:GetPath, Pawn:GetPathProf, AddMove, path interruption, and every terrain, item, and collision edge are not independently traced. Rust uses its grounded range-three controlled-reachability and move simulation as the current bounded representation.",
+        "The live bridge still exposes the static VIP_Truck SkillList. Turn-boundary save primary_uses is used only when exact mission and pawn identity match; missing, malformed, stale, mid-turn, or unexpectedly remapped evidence deliberately fails open rather than inventing depletion.",
+        "Mission:AddDefended satellite-zone randomness, nonadjacent formation, road conversion, pawn-ID allocation, placement failures, and Mission_Infinite spawn scheduling are not reconstructed; the solver consumes the resulting live board.",
+        "Native Board:IsPawnAlive timing, partial/full objective UI and reward settlement, the overwritten empty NextTurn definition, and voice presentation are not modeled. The generic safety policy protects both trucks rather than intentionally accepting the source's partial one-reputation result."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/acid/mission_civilians.lua",
+          "sha256": "ebee1b69eb19f0449777894056b5b695f8d41dd4f20d2da0a17a72e87fc9caf8",
+          "symbols": [
+            "Mission_Civilians",
+            "Mission_Civilians:StartMission",
+            "Mission_Civilians:NextTurn",
+            "Mission_Civilians:GetCompletedObjectives",
+            "Mission_Civilians:CountTanks",
+            "Mission_Civilians:UpdateObjectives",
+            "VIP_Truck",
+            "VIP_Truck_Move",
+            "VIP_Truck_Move:GetTargetArea",
+            "VIP_Truck_Move:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": [
+            "Mission:AddDefended",
+            "Mission_Infinite"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "smoked_vip_truck_with_move_helper_is_active_solver_unit"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_smoked_vip_truck_move_ignores_smoke"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_upgrade_overlay.py",
+          "symbols": [
+            "test_vip_truck_exhausted_move_is_blank",
+            "test_vip_truck_malformed_uses_or_wrong_slot_fails_open",
+            "test_vip_truck_remaining_move_stays_usable",
+            "test_vip_truck_stale_save_mission_fails_open"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_bomb_and_civilians_source_pawn_stats"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_civilians_record_pins_vip_move_semantics"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

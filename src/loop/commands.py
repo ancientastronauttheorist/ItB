@@ -71,6 +71,7 @@ from src.bridge.protocol import (
 )
 from src.bridge.reader import (
     WEB_SOURCE_WEAPONS,
+    _safe_to_overlay_turn_boundary_save_tiles,
     read_bridge_state,
     update_building_shield_ledger_from_verified_snapshot,
 )
@@ -2067,53 +2068,95 @@ def _enrich_bridge_limited_mission_weapons_from_save(
     bridge_data: dict | None,
     profile: str = "Alpha",
 ) -> list[dict]:
-    """Hide exhausted Detritus Contraption weapon slots from Rust.
+    """Hide exhausted, source-proven Limited mission weapon slots from Rust.
 
-    The bridge exposes ``Missile_Unit``'s static two-entry SkillList even
-    after a Limited=2 barrage has no uses remaining. The turn-boundary save
-    carries authoritative ``primary_uses`` / ``secondary_uses`` values. Keep
-    the two list positions stable and blank only an exhausted slot so Rust
-    cannot plan a third use or accidentally remap the other barrage's slot.
+    The live bridge exposes static SkillLists after Limited uses are spent.
+    Turn-boundary save pawn fields carry the remaining-use counters. Match the
+    exact mission, pawn identity, UID, slot, and weapon before blanking a zero-
+    use slot; incomplete or stale evidence deliberately fails open.
     """
-    if (
-        not isinstance(bridge_data, dict)
-        or bridge_data.get("mission_id") != "Mission_Missiles"
-    ):
+    supported = {
+        "Mission_Missiles": {
+            "Missile_Unit": (
+                ("primary_uses", "Missiles_Shield"),
+                ("secondary_uses", "Missiles_OneDmg"),
+            ),
+        },
+        "Mission_Civilians": {
+            "VIP_Truck": (("primary_uses", "VIP_Truck_Move"),),
+        },
+    }
+    if not isinstance(bridge_data, dict):
+        return []
+    if not _safe_to_overlay_turn_boundary_save_tiles(bridge_data):
         return []
 
-    state = load_game_state(profile)
+    mission_id = bridge_data.get("mission_id")
+    if not isinstance(mission_id, str):
+        return []
+    mission_units = supported.get(mission_id)
+    if mission_units is None:
+        return []
+
+    try:
+        state = load_game_state(profile)
+    except Exception:
+        return []
     if state is None:
+        return []
+    active_mission = getattr(state, "active_mission", None)
+    if getattr(active_mission, "mission_name", None) != mission_id:
+        return []
+    bridge_turn = bridge_data.get("turn")
+    save_turn = getattr(active_mission, "current_turn", None)
+    if isinstance(bridge_turn, bool) or isinstance(save_turn, bool):
+        return []
+    try:
+        if int(bridge_turn) != int(save_turn):
+            return []
+    except (TypeError, ValueError):
         return []
 
     updates: list[dict] = []
     for unit in bridge_data.get("units", []) or []:
-        if not isinstance(unit, dict) or unit.get("type") != "Missile_Unit":
+        if not isinstance(unit, dict):
+            continue
+        unit_type = unit.get("type")
+        if not isinstance(unit_type, str):
+            continue
+        slots = mission_units.get(unit_type)
+        if slots is None:
             continue
         try:
             uid = int(unit.get("uid", -1))
         except (TypeError, ValueError):
             continue
         pawn = _save_pawn_for_uid(state, uid)
-        if pawn is None or getattr(pawn, "type", None) != "Missile_Unit":
+        if pawn is None or getattr(pawn, "type", None) != unit_type:
             continue
 
         weapons = unit.get("weapons")
         if not isinstance(weapons, list):
             continue
         uses_remaining: list[int | None] = []
-        for slot, attr in enumerate(("primary_uses", "secondary_uses")):
+        for slot, (attr, expected_weapon_id) in enumerate(slots):
             raw_remaining = getattr(pawn, attr, None)
-            try:
-                remaining = (
-                    None if raw_remaining is None else int(raw_remaining)
-                )
-            except (TypeError, ValueError):
+            if isinstance(raw_remaining, bool) or not isinstance(
+                raw_remaining, (int, str)
+            ):
                 remaining = None
+            else:
+                try:
+                    remaining = int(raw_remaining)
+                except (TypeError, ValueError):
+                    remaining = None
+                if remaining is not None and remaining < 0:
+                    remaining = None
             uses_remaining.append(remaining)
-            if remaining is None or remaining > 0 or slot >= len(weapons):
+            if remaining != 0 or slot >= len(weapons):
                 continue
             weapon_id = weapons[slot]
-            if not isinstance(weapon_id, str) or not weapon_id:
+            if weapon_id != expected_weapon_id:
                 continue
             weapons[slot] = ""
             updates.append({

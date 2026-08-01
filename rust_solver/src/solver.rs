@@ -1462,6 +1462,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         let ignores_smoke = action_unit.type_name_str() == "Trapped_Building"
             || action_unit.type_name_str() == "Disposal_Unit"
             || action_unit.type_name_str() == "Missile_Unit"
+            || action_unit.type_name_str() == "VIP_Truck"
             || action_unit.type_name_str().starts_with("Snowmine");
         if !tile.smoke() || ignores_smoke {
             // Primary weapon — filter out no-op fires (empty space, nothing affected)
@@ -2076,6 +2077,7 @@ fn search_recursive(
     mission_kills_so_far: i32,
     unit_deaths_so_far: i32,
     bumps_so_far: i32,
+    buildings_damaged_so_far: i32,
     nanobots_heal_so_far: i32,
     powered_blast_so_far: i32,
     reverse_thrusters_four_damage_so_far: i32,
@@ -2221,8 +2223,14 @@ fn search_recursive(
             *best_score = score;
             *best_actions = actions_so_far.clone();
         }
-        let mech_buildings_lost = initial_building_count - buildings_before_enemy;
-        if mech_buildings_lost == 0 && score > *best_clean_score {
+        // A surviving building that lost HP is still grid damage. Track the
+        // per-action damage total as well as destroyed-building count so the
+        // preservation pass cannot label nonlethal friendly fire "clean".
+        if player_plan_is_clean(
+            initial_building_count,
+            buildings_before_enemy,
+            buildings_damaged_so_far,
+        ) && score > *best_clean_score {
             *best_clean_score = score;
             *best_clean_actions = actions_so_far.clone();
         }
@@ -2240,7 +2248,7 @@ fn search_recursive(
         search_recursive(
             board, mech_order, depth + 1,
             actions_so_far, kills_so_far, mission_kills_so_far,
-            unit_deaths_so_far, bumps_so_far,
+            unit_deaths_so_far, bumps_so_far, buildings_damaged_so_far,
             nanobots_heal_so_far, powered_blast_so_far,
             reverse_thrusters_four_damage_so_far,
             feed_the_flame_so_far,
@@ -2352,6 +2360,7 @@ fn search_recursive(
             mission_kills_so_far + result.mission_kills,
             unit_deaths_so_far + unit_deaths_add,
             bumps_so_far + result.buildings_bump_damaged,
+            buildings_damaged_so_far + result.buildings_damaged,
             nanobots_heal_so_far + nanobots_heal_add,
             powered_blast_so_far + powered_blast_add,
             reverse_thrusters_four_damage_so_far + reverse_thrusters_four_damage_add,
@@ -2480,6 +2489,14 @@ fn count_buildings(board: &Board) -> i32 {
     count
 }
 
+fn player_plan_is_clean(
+    initial_building_count: i32,
+    buildings_before_enemy: i32,
+    buildings_damaged: i32,
+) -> bool {
+    initial_building_count == buildings_before_enemy && buildings_damaged == 0
+}
+
 // ── Main solve entry point ───────────────────────────────────────────────────
 
 pub fn solve_turn(
@@ -2530,7 +2547,8 @@ pub fn solve_turn(
         .map(|p| p.iter().map(|&i| active[i]).collect())
         .collect();
 
-    // Initial building count for two-stage clean-plan tracking
+    // Initial building count for two-stage clean-plan tracking. Player-phase
+    // HP damage is accumulated separately inside `search_recursive`.
     let initial_building_count = count_buildings(board);
 
     // Parallel search via rayon
@@ -2547,7 +2565,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -2655,7 +2673,8 @@ pub fn solve_turn(
     let global_clean_score = clean_score_v;
     let global_clean_actions = clean_actions_v;
 
-    // Two-stage filter: prefer clean plan if within threshold of best
+    // Two-stage filter: prefer a plan with no player-caused building loss or
+    // HP damage when it is within the configured threshold of the raw best.
     if global_clean_score > f64::NEG_INFINITY && !best.actions.is_empty() {
         let gap = best.score - global_clean_score;
         let threshold = (best.score.abs() * weights.building_preservation_threshold).max(500.0);
@@ -2752,7 +2771,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -2824,6 +2843,88 @@ mod top_k_tests {
     //! 1 already — but catching the regression here gives a sharper failure
     //! message than a byte-diff at the Python layer.
     use super::*;
+
+    #[test]
+    fn clean_plan_rejects_nonlethal_player_building_damage() {
+        assert!(player_plan_is_clean(3, 3, 0));
+        assert!(!player_plan_is_clean(3, 3, 1));
+        assert!(!player_plan_is_clean(3, 2, 1));
+    }
+
+    #[test]
+    fn solve_turn_prefers_clean_plan_over_nonlethal_friendly_fire() {
+        let mut board = Board::default();
+        board.current_turn = 4;
+        board.total_turns = 4;
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.add_unit(Unit {
+            uid: 1,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteTcDoubleShot as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 100,
+            x: 3,
+            y: 1,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        for (x, y) in [(2, 3), (4, 3), (3, 5)] {
+            let building = board.tile_mut(x, y);
+            building.terrain = Terrain::Building;
+            building.building_hp = 2;
+        }
+
+        let mut weights = EvalWeights::default();
+        weights.building_alive = 0.0;
+        weights.building_hp = 0.0;
+        weights.grid_power = 0.0;
+        weights.grid_capacity_penalty = 0.0;
+        weights.enemy_killed = 10_000.0;
+        weights.building_preservation_threshold = 10.0;
+
+        let raw = solve_turn_top_k(
+            &board,
+            &[],
+            1.0,
+            100,
+            &weights,
+            [0; 2],
+            &WEAPONS,
+            1,
+        );
+        assert_eq!(raw.len(), 1);
+        assert!(raw[0].actions.iter().any(|action| {
+            action.weapon == WId::BruteTcDoubleShot
+        }), "raw score should favor the kill-plus-building-hit line");
+
+        let solution = solve_turn(
+            &board,
+            &[],
+            1.0,
+            100,
+            &weights,
+            [0; 2],
+            &WEAPONS,
+        );
+        assert!(solution.actions.iter().all(|action| {
+            action.weapon != WId::BruteTcDoubleShot
+        }), "clean-plan filter should reject nonlethal player building damage; got {:?}", solution.actions);
+    }
 
     #[test]
     fn nanobots_heal_events_sum_actual_hp_restored() {
@@ -3788,7 +3889,7 @@ mod top_k_tests {
     }
 
     #[test]
-    fn vip_truck_with_move_helper_is_active_solver_unit() {
+    fn smoked_vip_truck_with_move_helper_is_active_solver_unit() {
         let mut board = Board::default();
         board.current_turn = 2;
         board.total_turns = 4;
@@ -3808,6 +3909,7 @@ mod top_k_tests {
             ..Default::default()
         });
         board.units[truck_idx].set_type_name("VIP_Truck");
+        board.tile_mut(3, 3).set_smoke(true);
 
         let enemy_idx = board.add_unit(Unit {
             uid: 200,
@@ -3844,7 +3946,7 @@ mod top_k_tests {
                     && a.move_to == (3, 3)
                     && a.target != (3, 3)
             }),
-            "solver should use VIP_Truck_Move on the threatened truck; got {:?}",
+            "smoked VIP_Truck has IgnoreSmoke=true and should use VIP_Truck_Move; got {:?}",
             solution.actions
         );
     }

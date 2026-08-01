@@ -6904,6 +6904,30 @@ mod tests {
     }
 
     #[test]
+    fn test_protobomb_clears_stale_fire_without_tick_damage() {
+        use crate::board::UnitFlags;
+        let mut board = Board::default();
+        let mut unit = Unit {
+            uid: 2600,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::FIRE,
+            ..Default::default()
+        };
+        unit.set_type_name("ProtoBomb");
+        let idx = board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 1);
+        assert!(!board.units[idx].fire());
+    }
+
+    #[test]
     fn test_flame_shielding_does_not_skip_ally_fire_tick() {
         // Regression: Archive_Tank is team Player but not a mech. Flame
         // Shielding must not prevent its fire tick.

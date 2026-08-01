@@ -287,6 +287,9 @@ NEUTRAL_STATS = {
     # Tumblebug explosive boulder. The live bridge exposes this as a neutral
     # pawn (1 HP, Move 0) with the engine's Explodes flag.
     "BombRock":          PawnStats(move_speed=0),
+    # Mission_Bomb Renfield Bomb: a one-HP, pushable protected pawn whose
+    # source explicitly ignores Fire. Explosion/corpse behavior stays native.
+    "ProtoBomb":         PawnStats(move_speed=0, ignore_fire=True),
     # Digger rock wall: bridge exposes the spawned rock as a neutral "Wall"
     # pawn (1 HP, Move 0, no weapon) rather than terrain.
     "Wall":              PawnStats(move_speed=0),
@@ -316,7 +319,9 @@ NEUTRAL_STATS = {
                                    default_weapon="Rocket_Launch"),
     "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
     "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
-    "VIP_Truck":         PawnStats(move_speed=0, ranged=1,
+    # Mission_Civilians VIP: immobile except for its Limited=2 range-three
+    # movement skill, which is explicitly usable through Smoke.
+    "VIP_Truck":         PawnStats(move_speed=0, ranged=1, ignore_smoke=True,
                                    default_weapon="VIP_Truck_Move"),
     # Detritus Contraption (Mission_Missiles): immobile corporate mission
     # ally with two global-use weapons, not pushable, smoke-immune.

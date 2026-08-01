@@ -1805,6 +1805,9 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v396: Mission_Bomb's ProtoBomb honors IgnoreFire=true; Mission_Civilians'
+# VIP_Truck honors IgnoreSmoke=true while using its Limited movement skill.
+# Pre-v396 corpus is archived as recordings/failure_db_snapshot_sim_v395.jsonl.
 # v395: Mission_Terraform's queued custom-tile script clears objective grass
 # on every swept tile, including Mountains whose terrain remains Mountain.
 # The bridge now exports only still-custom points from the exact live grass
@@ -1842,7 +1845,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 395
+SIMULATOR_VERSION = 396
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

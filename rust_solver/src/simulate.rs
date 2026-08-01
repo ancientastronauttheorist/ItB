@@ -7055,6 +7055,7 @@ pub fn simulate_attack_with_target2(
             let ignores_smoke = unit.type_name_str() == "Trapped_Building"
                 || unit.type_name_str() == "Disposal_Unit"
                 || unit.type_name_str() == "Missile_Unit"
+                || unit.type_name_str() == "VIP_Truck"
                 || unit.type_name_str().starts_with("Snowmine");
             (unit.x, unit.y, ignores_smoke)
         };
@@ -11901,6 +11902,40 @@ mod tests {
     }
 
     #[test]
+    fn test_smoked_vip_truck_move_ignores_smoke() {
+        let mut board = make_test_board();
+        let truck = board.add_unit(Unit {
+            uid: 1337,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            weapon: crate::board::WeaponId(WId::VipTruckMove as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[truck].set_type_name("VIP_Truck");
+        board.tile_mut(3, 3).set_smoke(true);
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            truck,
+            WId::VipTruckMove,
+            (3, 6),
+            None,
+            &WEAPONS,
+        );
+
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_attack_smoke")),
+            "VIP_Truck has IgnoreSmoke=true and should not no-op in smoke"
+        );
+        assert_eq!((board.units[truck].x, board.units[truck].y), (3, 6));
+    }
+
+    #[test]
     fn test_push_onto_fire_tile() {
         let mut board = make_test_board();
         board.tile_mut(3, 4).set_on_fire(true);
@@ -14059,6 +14094,35 @@ mod tests {
                 "{type_name} must ignore direct Flamethrower ignition"
             );
         }
+    }
+
+    #[test]
+    fn test_protobomb_ignores_flamethrower_fire() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        let mut bomb = Unit {
+            uid: 2600,
+            x: 5,
+            y: 2,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        };
+        bomb.set_type_name("ProtoBomb");
+        let bomb_idx = board.add_unit(bomb);
+
+        let _ = simulate_weapon(
+            &mut board,
+            mech_idx,
+            WId::PrimeFlamethrower,
+            5,
+            2,
+        );
+
+        assert_eq!(board.units[bomb_idx].hp, 1);
+        assert!(!board.units[bomb_idx].fire());
     }
 
     #[test]

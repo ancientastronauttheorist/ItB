@@ -133,6 +133,18 @@ def test_disposal_launcher_source_defs_allow_self_targeting():
     assert weapon.aoe_adjacent is True
 
 
+def test_bomb_and_civilians_source_pawn_stats():
+    bomb = get_pawn_stats("ProtoBomb")
+    vip = get_pawn_stats("VIP_Truck")
+
+    assert bomb.move_speed == 0
+    assert bomb.pushable is True
+    assert bomb.ignore_fire is True
+    assert vip.move_speed == 0
+    assert vip.ignore_smoke is True
+    assert vip.default_weapon == "VIP_Truck_Move"
+
+
 def test_shaman_and_totem_source_stats_and_weapon_definitions():
     known = json.loads(Path("data/known_types.json").read_text())
     shaman1 = get_pawn_stats("Shaman1")

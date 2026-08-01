@@ -6,6 +6,16 @@ from src.loop.commands import (
 )
 
 
+def _mark_fresh_player_turn(bridge_data, turn=2):
+    bridge_data.update({
+        "phase": "combat_player",
+        "turn": turn,
+        "active_mechs": len(bridge_data.get("units", [])),
+    })
+    for unit in bridge_data.get("units", []):
+        unit.update({"team": 1, "hp": 1, "active": True})
+
+
 def test_missile_unit_exhausted_slot_is_blank_without_reindexing(monkeypatch):
     bridge_data = {
         "mission_id": "Mission_Missiles",
@@ -16,6 +26,7 @@ def test_missile_unit_exhausted_slot_is_blank_without_reindexing(monkeypatch):
             "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
         }],
     }
+    _mark_fresh_player_turn(bridge_data)
     pawn = SimpleNamespace(
         pawn_id=608,
         type="Missile_Unit",
@@ -23,7 +34,9 @@ def test_missile_unit_exhausted_slot_is_blank_without_reindexing(monkeypatch):
         secondary_uses=1,
     )
     state = SimpleNamespace(
-        active_mission=SimpleNamespace(pawns=[pawn]),
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Missiles", current_turn=2, pawns=[pawn]
+        ),
     )
     monkeypatch.setattr(
         "src.loop.commands.load_game_state",
@@ -53,9 +66,12 @@ def test_missile_unit_missing_uses_fails_open(monkeypatch):
             "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
         }],
     }
+    _mark_fresh_player_turn(bridge_data)
     pawn = SimpleNamespace(pawn_id=608, type="Missile_Unit")
     state = SimpleNamespace(
-        active_mission=SimpleNamespace(pawns=[pawn]),
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Missiles", current_turn=2, pawns=[pawn]
+        ),
     )
     monkeypatch.setattr(
         "src.loop.commands.load_game_state",
@@ -82,6 +98,7 @@ def test_missile_unit_secondary_exhaustion_preserves_primary_slot(monkeypatch):
             "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
         }],
     }
+    _mark_fresh_player_turn(bridge_data)
     pawn = SimpleNamespace(
         pawn_id=608,
         type="Missile_Unit",
@@ -89,7 +106,9 @@ def test_missile_unit_secondary_exhaustion_preserves_primary_slot(monkeypatch):
         secondary_uses=0,
     )
     state = SimpleNamespace(
-        active_mission=SimpleNamespace(pawns=[pawn]),
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Missiles", current_turn=2, pawns=[pawn]
+        ),
     )
     monkeypatch.setattr(
         "src.loop.commands.load_game_state",
@@ -117,6 +136,7 @@ def test_missile_unit_stale_uid_type_mismatch_fails_open(monkeypatch):
             "weapons": ["Missiles_Shield", "Missiles_OneDmg"],
         }],
     }
+    _mark_fresh_player_turn(bridge_data)
     pawn = SimpleNamespace(
         pawn_id=608,
         type="RocketMech",
@@ -124,7 +144,9 @@ def test_missile_unit_stale_uid_type_mismatch_fails_open(monkeypatch):
         secondary_uses=0,
     )
     state = SimpleNamespace(
-        active_mission=SimpleNamespace(pawns=[pawn]),
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Missiles", current_turn=2, pawns=[pawn]
+        ),
     )
     monkeypatch.setattr(
         "src.loop.commands.load_game_state",
@@ -138,6 +160,212 @@ def test_missile_unit_stale_uid_type_mismatch_fails_open(monkeypatch):
         "Missiles_Shield",
         "Missiles_OneDmg",
     ]
+
+
+def test_vip_truck_exhausted_move_is_blank(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Civilians",
+        "units": [{
+            "uid": 1337,
+            "type": "VIP_Truck",
+            "mech": False,
+            "weapons": ["VIP_Truck_Move"],
+        }],
+    }
+    _mark_fresh_player_turn(bridge_data)
+    pawn = SimpleNamespace(
+        pawn_id=1337,
+        type="VIP_Truck",
+        primary_uses=0,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Civilians", current_turn=2, pawns=[pawn]
+        ),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert bridge_data["units"][0]["weapons"] == [""]
+    assert bridge_data["units"][0]["weapon_uses_remaining"] == [0]
+    assert updates == [{
+        "uid": 1337,
+        "slot": 0,
+        "weapon_id": "VIP_Truck_Move",
+        "uses_remaining": 0,
+    }]
+    assert bridge_data["limited_weapon_overlays"] == updates
+
+
+def test_vip_truck_remaining_move_stays_usable(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Civilians",
+        "units": [{
+            "uid": 1337,
+            "type": "VIP_Truck",
+            "weapons": ["VIP_Truck_Move"],
+        }],
+    }
+    _mark_fresh_player_turn(bridge_data)
+    pawn = SimpleNamespace(
+        pawn_id=1337,
+        type="VIP_Truck",
+        primary_uses=1,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Civilians", current_turn=2, pawns=[pawn]
+        ),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert updates == []
+    assert bridge_data["units"][0]["weapons"] == ["VIP_Truck_Move"]
+    assert bridge_data["units"][0]["weapon_uses_remaining"] == [1]
+
+
+def test_vip_truck_midturn_save_uses_fail_open(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Civilians",
+        "units": [{
+            "uid": 1337,
+            "type": "VIP_Truck",
+            "weapons": ["VIP_Truck_Move"],
+        }],
+    }
+    _mark_fresh_player_turn(bridge_data)
+    bridge_data["active_mechs"] = 0
+    bridge_data["units"][0]["active"] = False
+    pawn = SimpleNamespace(
+        pawn_id=1337,
+        type="VIP_Truck",
+        primary_uses=0,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Civilians", current_turn=2, pawns=[pawn]
+        ),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert updates == []
+    assert bridge_data["units"][0]["weapons"] == ["VIP_Truck_Move"]
+    assert "weapon_uses_remaining" not in bridge_data["units"][0]
+
+
+def test_vip_truck_mismatched_save_turn_fails_open(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Civilians",
+        "units": [{
+            "uid": 1337,
+            "type": "VIP_Truck",
+            "weapons": ["VIP_Truck_Move"],
+        }],
+    }
+    _mark_fresh_player_turn(bridge_data, turn=3)
+    pawn = SimpleNamespace(
+        pawn_id=1337,
+        type="VIP_Truck",
+        primary_uses=0,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Civilians", current_turn=2, pawns=[pawn]
+        ),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert updates == []
+    assert bridge_data["units"][0]["weapons"] == ["VIP_Truck_Move"]
+    assert "weapon_uses_remaining" not in bridge_data["units"][0]
+
+
+def test_vip_truck_stale_save_mission_fails_open(monkeypatch):
+    bridge_data = {
+        "mission_id": "Mission_Civilians",
+        "units": [{
+            "uid": 1337,
+            "type": "VIP_Truck",
+            "weapons": ["VIP_Truck_Move"],
+        }],
+    }
+    _mark_fresh_player_turn(bridge_data)
+    pawn = SimpleNamespace(
+        pawn_id=1337,
+        type="VIP_Truck",
+        primary_uses=0,
+    )
+    state = SimpleNamespace(
+        active_mission=SimpleNamespace(
+            mission_name="Mission_Missiles", current_turn=2, pawns=[pawn]
+        ),
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": state,
+    )
+
+    updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+    assert updates == []
+    assert bridge_data["units"][0]["weapons"] == ["VIP_Truck_Move"]
+    assert "weapon_uses_remaining" not in bridge_data["units"][0]
+
+
+def test_vip_truck_malformed_uses_or_wrong_slot_fails_open(monkeypatch):
+    for raw_uses, weapon_id in [
+        (True, "VIP_Truck_Move"),
+        (-1, "VIP_Truck_Move"),
+        ("bad", "VIP_Truck_Move"),
+        (0, "Science_Repulse"),
+    ]:
+        bridge_data = {
+            "mission_id": "Mission_Civilians",
+            "units": [{
+                "uid": 1337,
+                "type": "VIP_Truck",
+                "weapons": [weapon_id],
+            }],
+        }
+        _mark_fresh_player_turn(bridge_data)
+        pawn = SimpleNamespace(
+            pawn_id=1337,
+            type="VIP_Truck",
+            primary_uses=raw_uses,
+        )
+        state = SimpleNamespace(
+            active_mission=SimpleNamespace(
+                mission_name="Mission_Civilians", current_turn=2, pawns=[pawn]
+            ),
+        )
+        monkeypatch.setattr(
+            "src.loop.commands.load_game_state",
+            lambda profile="Alpha", state=state: state,
+        )
+
+        updates = _enrich_bridge_limited_mission_weapons_from_save(bridge_data)
+
+        assert updates == []
+        assert bridge_data["units"][0]["weapons"] == [weapon_id]
 
 
 def test_partial_resolve_keeps_upgraded_weapon_overlay(monkeypatch):

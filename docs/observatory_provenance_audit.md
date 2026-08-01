@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 34 | 41 |
+| Missions | 75 | 36 | 39 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 53 | 43 |
+| Unique total | 96 | 55 | 41 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 237 definitions literally and leaves 505 unindexed. Category totals
+names 250 definitions literally and leaves 492 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -137,6 +137,30 @@ eligibility, turn-boundary slot depletion, delayed-effect settlement, and
 decorative-conveyor regression provide the implementation anchors. Direct
 mid-turn `ShotsUsed`, native pawn-space edges, artillery scheduling, setup, and
 ZONE_ALL presentation remain partial-coverage gaps.
+
+The Renfield Bomb slice adds the exact
+`scripts/missions/sand/mission_bomb.lua` source and its four mission callbacks,
+plus the inherited `Mission:AddDefended` helper. Lua creates two one-HP,
+zero-move, fire-immune `ProtoBomb` pawns and awards full, partial, or failed
+reputation for two, one, or zero survivors. Simulator v396 now prevents direct
+ignition and clears stale Fire without tick damage; Python static metadata and
+the threat audit preserve the same immunity. The solver intentionally protects
+both bombs instead of accepting the source's partial reward. Native
+`Corpse=false`/`Explodes=true` death behavior, placement RNG, explosion order,
+objective scheduling, and Mission_Infinite spawns remain explicit gaps.
+
+The Nano Silos VIP slice adds the exact
+`scripts/advanced/missions/acid/mission_civilians.lua` source and its eight
+active callback definition instances; its first empty `NextTurn` definition is
+immediately overwritten. Lua creates two one-HP `VIP_Truck` pawns with
+`MoveSpeed=0`, `IgnoreSmoke=true`, and a Limited=2 range-three path-move skill.
+Simulator v396 now enumerates and executes that skill through Smoke. A narrow
+turn-boundary save overlay blanks the exact primary slot at zero uses only when
+the player actors are fresh, save and bridge turns plus mission, UID, type,
+slot, and weapon identity all match, preventing a stale mid-turn third
+move while stale or malformed evidence fails open. Native path helpers,
+AddMove scheduling, setup RNG, objective/voice presentation, and inherited
+spawn behavior remain partial-coverage gaps.
 
 The Acid Vats slice adds the exact
 `scripts/missions/acid/mission_barrels.lua` source and all nine of its active
