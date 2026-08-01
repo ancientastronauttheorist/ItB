@@ -1170,8 +1170,10 @@ pub fn board_from_json(json_str: &str)
     // Health=4, Neutral=true, Corpse=false, IgnoreFire=true, MoveSpeed=0,
     // DefaultTeam=TEAM_PLAYER. Bridge surfaces it with team=Player, mech=false,
     // so the friendly_npc_killed penalty already fires on death. The
-    // bigbomb_alive flag layers a much larger explicit kill penalty in the
-    // evaluator since losing the bomb fails the entire run.
+    // mission source later drops a replacement bomb and adds 2 to TurnLimit
+    // after a loss. The solver does not model that delayed recovery, so the
+    // bigbomb_alive flag layers a much larger conservative current-objective
+    // loss penalty in the evaluator.
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.type_name_str() == "BigBomb" && u.hp > 0 {

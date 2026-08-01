@@ -6,11 +6,13 @@ import pytest
 
 from src.loop import commands
 from src.loop.session import RunSession
+from src.strategy.mission_picker import NATIVE_FORECAST_GATED_MISSION_IDS
 
 
 MISSION_GAPS = {
     "Mission_BlobBoss": "mission_blob_boss_five_death_counter_unmodeled",
     "Mission_Fence": "mission_fence_edge_walls_unmodeled",
+    "Mission_Final": "mission_final_volcano_mode_and_lava_conversion_unmodeled",
     "Mission_Laser": "mission_laser_queued_beam_unmodeled",
     "Mission_Respawn": "mission_respawn_resurrection_unmodeled",
     "Mission_SpiderBoss": "mission_spider_boss_recurring_egg_spawns_unmodeled",
@@ -23,6 +25,13 @@ def _gate(mission_id: str) -> dict:
     return commands._mission_native_forecast_block(
         SimpleNamespace(mission_id=mission_id), {"mission_id": mission_id},
     )
+
+
+def test_native_forecast_gate_catalogs_match_and_final_cave_remains_ungated():
+    assert set(MISSION_GAPS) == set(commands._MISSION_NATIVE_FORECAST_GAPS)
+    assert set(MISSION_GAPS) == set(NATIVE_FORECAST_GATED_MISSION_IDS)
+    assert _gate("Mission_Final_Cave") is None
+    assert "Mission_Final_Cave" not in NATIVE_FORECAST_GATED_MISSION_IDS
 
 
 def _patch_solve_inputs(monkeypatch, mission_id: str, board=None):

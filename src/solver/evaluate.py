@@ -56,9 +56,10 @@ class EvalWeights:
     mech_low_hp_risk: float = -2000   # 1HP mech near active enemy (binary)
     friendly_npc_killed: float = -20000  # non-mech player unit killed (penalty)
     volatile_enemy_killed: float = -10000  # protected Volatile Vek killed
-    # Renfield Bomb destruction in Mission_Final_Cave — mission-failure
-    # penalty layered on top of friendly_npc_killed. The bomb's detonation
-    # is the win condition; losing it ends the run. Mirrors Rust default.
+    # Current Renfield Bomb destruction in Mission_Final_Cave — conservative
+    # objective-loss penalty layered on top of friendly_npc_killed. Source
+    # respawns a replacement and adds 2 to TurnLimit, but that delayed recovery
+    # is not modeled. Keep the current loss unacceptable. Mirrors Rust default.
     bigbomb_killed: float = -200000
 
     # Grid urgency multipliers (applied to building scores)
@@ -428,9 +429,10 @@ def evaluate(
     if dam_was_alive and not getattr(board, 'dam_alive', False):
         score += _scaled(w.dam_destroyed, ff, 0.10, 0.90)
 
-    # --- RENFIELD BOMB DESTROYED: mission-failure penalty ---
-    # NOT scaled by future_factor — losing the bomb fails the run regardless
-    # of which turn the loss happens. Mirrors rust_solver/src/evaluate.rs.
+    # --- CURRENT RENFIELD BOMB DESTROYED: conservative objective-loss penalty ---
+    # Source respawns a replacement and adds 2 to TurnLimit, but the model does
+    # not simulate that delayed recovery. NOT scaled by future_factor so the
+    # current bomb remains unacceptable to trade. Mirrors Rust.
     if bigbomb_was_alive and not getattr(board, 'bigbomb_alive', False):
         score += w.bigbomb_killed
 

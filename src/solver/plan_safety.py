@@ -48,6 +48,9 @@ NON_OVERRIDABLE_KINDS = {
     "grid_timeline_collapse",
     "pylon_destroyed",
     "pylon_hp_loss",
+    # Mission_Final_Cave source respawns a replacement bomb and adds 2 to
+    # TurnLimit, but the model does not simulate that recovery. Keep loss of
+    # the current objective non-overridable rather than authorizing blind play.
     "bigbomb_lost",
     "objective_building_destroyed",
     "objective_building_hp_loss",

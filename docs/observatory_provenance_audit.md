@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 14 | 0 |
-| Missions | 75 | 72 | 3 |
-| Environments | 15 | 14 | 1 |
-| Unique total | 96 | 93 | 3 |
+| Missions | 75 | 75 | 0 |
+| Environments | 15 | 15 | 0 |
+| Unique total | 96 | 96 | 0 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 385 definitions literally and leaves 357 unindexed. Category totals
+names 404 definitions literally and leaves 338 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -817,9 +817,44 @@ exact Final Cave `env_final.lua` source to Rust's marked-tile lethal-danger
 ingestion and its live-derived stale-flying-immunity regression. It remains
 `partial`: Rust consumes the selected mask without reproducing the four-phase
 selector, modes, RNG, scheduling, BigBomb exclusion, or enemy avoidance, and
-does not apply the source's road/lava terrain aftermath. `env_volcano.lua`
-remains unindexed because no focused Rust mode, terrain, fire, phase, or
-selection conformance test exists yet.
+does not apply the source's road/lava terrain aftermath. The preceding
+`env_volcano.lua` stage is now indexed separately below without claiming the
+still-absent Rust mode, terrain, fire, phase, or selection conformance.
+
+The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
+indexes all fifteen callback definitions in `mission_final.lua` and
+`mission_final_two.lua`, plus the cave source's local `SpawnMechs` helper. The
+surface source adds a random leader only on Hard
+or Unfair, builds lethal occupied pylons on enemy turn zero, restores the fixed
+four-space supervolcano, blocks ordinary ending, and queues the falling-board
+handoff to `Mission_Final_Cave`. The cave source reserves a random deployment
+point for BigBomb, may first spawn a normal pawn there, drops the mountain and
+pylon setup, relocates all three Mechs, spawns a random leader, and delegates
+ordinary spawning. Its `IsFinalTurn` returns false, and each nonbusy missing-
+bomb update chooses another valid point, drops BigBomb, and extends `TurnLimit`
+by two. BigBomb's exact four-HP, neutral, no-corpse, fire-ignoring, immobile
+TEAM_PLAYER definition is pinned, but the source does not state that its loss
+is terminal. Current liveness/pylon safety and volcano-to-caverns fingerprint
+tests are conservative live-state and policy anchors, not reproduction of
+native RNG, effects, collisions, scheduling, phase handoff, or mission-end
+settlement.
+
+The final Volcano-environment slice, `environment-final-volcano-cycle`, closes
+the mechanical source index at 96/96 without upgrading behavioral coverage.
+Its selector toggles before choosing, yielding exactly Lava, Rocks, Lava,
+Rocks over phases one through four. Lava consumes one of two starting points
+and extends up to three right/down non-Lava, non-Mountain, non-Building steps;
+Rocks chooses at most one non-sentinel point from each inherited quarter. The
+effects are respectively zero-damage Lava terrain conversion and lethal
+fire-setting artillery. Inherited `Env_Attack:Plan` temporarily spawn-blocks
+the whole selected set, while `Ordered=true` makes application consume the
+queued locations from the front. The bridge currently falls through the
+non-nil `StartEffect` signature as `cataclysm_or_seismic`, exports neither mode
+nor phase, and cannot encode both effect kinds correctly. The exact
+`Mission_Final` native-forecast gate therefore blocks solve, auto-turn, and End
+Turn, with picker and route vetoes as conservative anchors. No live trace or
+Rust selector, terrain, fire, spawn-block, ordering, or scheduler conformance
+is claimed.
 
 The neutral mission-hazard slice, `mission-piston-trash-compactors`, adds the
 previously unindexed `mission_piston.lua` source and all three active callbacks.
@@ -888,8 +923,8 @@ cross-turn `Limited=1` state remain partial gaps.
 2. Add mission records only when a static callback, Rust transition, and
    regression fixture can be named precisely; do not bulk-index files merely to
    improve the count.
-3. Add `env_volcano.lua` only after exact mode, phase-order, terrain, fire, and
-   selection conformance tests exist.
+3. Keep the indexed `env_volcano.lua` record partial until exact mode,
+   phase-order, terrain, fire, selection, and scheduler conformance tests exist.
 4. Keep native-dependent target selection and RNG records non-verified until a
    build-keyed trace supplies the missing boundary evidence.
 

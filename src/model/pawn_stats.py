@@ -371,9 +371,11 @@ NEUTRAL_STATS = {
     # down a turn-limit counter (`Mission_Final_Cave.TurnLimit + 2` per drop).
     # Mirrors the Filler_Pawn pattern (player-team NPC, not is_mech) so the
     # evaluator's `friendly_npc_killed` (-20000) penalty fires on death.
-    # `bigbomb_alive` (Rust Board) layers a much larger survival bonus on top
-    # since losing the bomb fails the mission. Despite being immobile, live
-    # final-cave evidence showed it can be pushed/bumped by Vulcan Artillery.
+    # If it is destroyed, mission source drops a replacement and adds 2 to
+    # TurnLimit. The solver does not model that delayed recovery, so
+    # `bigbomb_alive` layers a much larger conservative current-objective loss
+    # penalty on top. Despite being immobile, the inherited source default and
+    # live final-cave evidence show it can be pushed/bumped by Vulcan Artillery.
     "BigBomb":           PawnStats(move_speed=0, pushable=True, ignore_fire=True),
 }
 

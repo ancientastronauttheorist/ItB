@@ -5,17 +5,20 @@ Per `scripts/missions/final/mission_final_two.lua:179-188`:
                 MoveSpeed=0, DefaultTeam=TEAM_PLAYER, IsPortrait=false }
 
 The bomb sits on the board and self-detonates on a fixed turn limit,
-clearing all enemies. Defending it is the win condition; losing it fails
-the run. The simulator wires this in three places:
+clearing all enemies. If it is destroyed, mission source drops a replacement
+and adds 2 to TurnLimit. The solver does not simulate that delayed respawn and
+conservatively treats loss of the current objective as unacceptable. The model
+wires this in three places:
 
 1. `data/known_types.json` lists "BigBomb" so the research-gate doesn't
    block the final mission.
 2. `src/model/pawn_stats.py` has stats so move/push semantics resolve
-   (move_speed=0, pushable=False, ignore_fire=True).
+   (move_speed=0, pushable=True, ignore_fire=True). Pushability follows the
+   inherited source default and live final-cave evidence.
 3. `Board.bigbomb_alive` (Python and Rust) flips false the moment the
    last BigBomb pawn drops to hp <= 0 — and the evaluator scores the
    alive→dead transition with `bigbomb_killed` (default -200000), a
-   mission-failure penalty layered on top of the standard
+   conservative current-objective loss penalty layered on top of the standard
    `friendly_npc_killed` (-20000) NPC penalty.
 
 Covers:
@@ -57,7 +60,7 @@ def _make_minimal_bomb_board(bomb_hp: int) -> Board:
         flying=False,
         massive=False,
         armor=False,
-        pushable=False,
+        pushable=True,
         weapon="",
     )
     b.units = [bomb]
@@ -73,7 +76,7 @@ def test_pawn_stats_registers_bigbomb():
     assert "BigBomb" in ALL_PAWN_STATS
     stats = get_pawn_stats("BigBomb")
     assert stats.move_speed == 0           # Lua MoveSpeed = 0
-    assert stats.pushable is False         # bomb sits in place
+    assert stats.pushable is True          # inherited default + live push evidence
     assert stats.ignore_fire is True       # Lua IgnoreFire = true
     # Default class_type / leader / ranged should remain at defaults —
     # the bomb is purely passive and these knobs aren't relevant.
@@ -211,10 +214,12 @@ def test_evaluator_does_not_pay_bigbomb_killed_when_bomb_survives():
 
 
 def test_bigbomb_killed_is_not_scaled_by_future_factor():
-    """The penalty MUST NOT scale by future_factor — losing the bomb on the
-    final turn is just as catastrophic as losing it on the first turn.
-    Both calls below should subtract the full -200000 (default)."""
+    """The penalty MUST NOT scale by future_factor. Source respawns a bomb and
+    adds 2 to TurnLimit, but that recovery is not modeled; current-objective
+    loss stays unacceptable on every turn. Both calls subtract the full
+    -200000 default."""
     w = EvalWeights()
+    assert w.bigbomb_killed == -200000
     dead_board = _make_minimal_bomb_board(bomb_hp=0)
 
     # First combat turn (ff ≈ 1.0)

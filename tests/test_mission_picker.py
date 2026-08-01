@@ -379,6 +379,7 @@ def test_train_no_defender_loses_to_safe_battle():
     (
         "Mission_BlobBoss",
         "Mission_Fence",
+        "Mission_Final",
         "Mission_Laser",
         "Mission_Respawn",
         "Mission_SpiderBoss",
@@ -463,6 +464,7 @@ def test_lightning_routes_auto_start_veto_native_forecast_gated_missions(routing
             (
                 "Mission_BlobBoss",
                 "Mission_Fence",
+                "Mission_Final",
                 "Mission_Laser",
                 "Mission_Respawn",
                 "Mission_SpiderBoss",
@@ -484,6 +486,7 @@ def test_lightning_routes_auto_start_veto_native_forecast_gated_missions(routing
     for mission_id in (
         "Mission_BlobBoss",
         "Mission_Fence",
+        "Mission_Final",
         "Mission_Laser",
         "Mission_Respawn",
         "Mission_SpiderBoss",
@@ -510,6 +513,7 @@ def test_lightning_route_all_native_forecast_gates_remain_ranked_but_vetoed():
                 (
                     "Mission_BlobBoss",
                     "Mission_Fence",
+                    "Mission_Final",
                     "Mission_Laser",
                     "Mission_Respawn",
                     "Mission_SpiderBoss",
@@ -528,6 +532,7 @@ def test_lightning_route_all_native_forecast_gates_remain_ranked_but_vetoed():
     assert {entry["mission_id"] for entry in ranked} == {
         "Mission_BlobBoss",
         "Mission_Fence",
+        "Mission_Final",
         "Mission_Laser",
         "Mission_Respawn",
         "Mission_SpiderBoss",

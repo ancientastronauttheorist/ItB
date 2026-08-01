@@ -441,11 +441,12 @@ class Board:
         # Dam_Pawn tile dies; the transition triggers trigger_dam_flood.
         self.dam_alive: bool = False
         self.dam_primary: tuple[int, int] | None = None
-        # Renfield Bomb state — Mission_Final_Cave win-condition NPC. True
-        # while at least one BigBomb pawn has hp > 0. The alive→dead
-        # transition pays `bigbomb_killed` in the evaluator (mission-failure
-        # penalty layered on top of friendly_npc_killed). Always False on
-        # missions without a bomb.
+        # Renfield Bomb state — true while the current Mission_Final_Cave
+        # BigBomb has hp > 0. Source respawns a replacement and adds 2 to
+        # TurnLimit after destruction, but the model does not simulate that
+        # delayed recovery. The alive→dead transition therefore pays the
+        # conservative `bigbomb_killed` objective-loss penalty on top of
+        # friendly_npc_killed. Always False on missions without a bomb.
         self.bigbomb_alive: bool = False
         # Teleporter pad pairs (Mission_Teleporter overlay from
         # Board:AddTeleport in mission_teleport.lua). Each entry =

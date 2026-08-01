@@ -9164,6 +9164,7 @@ _MISSION_PISTON_TYPES = frozenset({
 _MISSION_NATIVE_FORECAST_GAPS = {
     "Mission_BlobBoss": "mission_blob_boss_five_death_counter_unmodeled",
     "Mission_Fence": "mission_fence_edge_walls_unmodeled",
+    "Mission_Final": "mission_final_volcano_mode_and_lava_conversion_unmodeled",
     "Mission_Laser": "mission_laser_queued_beam_unmodeled",
     "Mission_Respawn": "mission_respawn_resurrection_unmodeled",
     "Mission_SpiderBoss": "mission_spider_boss_recurring_egg_spawns_unmodeled",

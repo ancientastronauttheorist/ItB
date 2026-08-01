@@ -5759,6 +5759,136 @@ def test_real_mission_snowbattle_record_pins_native_setup_gap():
     assert "safety gate after bridge state extraction" in gaps
 
 
+def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_terminal_inference():
+    record = _mission_provenance_record(
+        "mission-final-surface-and-cave-lifecycle"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/final/mission_final.lua",
+            "sha256": (
+                "f92875ba570871b7b3184adb168105c8"
+                "f29150398b8b14e87a863f67d6c61e29"
+            ),
+            "symbols": [
+                "Mission_Final", "Mission_Final:StartMission",
+                "Mission_Final:NextTurn", "Mission_Final:MissionEnd",
+                "Mission_Final:UpdateMission",
+                "Mission_Final:UpdateObjectives",
+                "Mission_Final:IsEndBlocked",
+            ],
+        },
+        {
+            "path": "scripts/missions/final/mission_final_two.lua",
+            "sha256": (
+                "c8a8e40f512939c1f4fd0e0df416e5c"
+                "baec00c639e2985ad776e13c38735b17c"
+            ),
+            "symbols": [
+                "Mission_Final_Cave", "SpawnMechs",
+                "Mission_Final_Cave:MissionEnd",
+                "Mission_Final_Cave:NextTurn",
+                "Mission_Final_Cave:IsFinalTurn",
+                "Mission_Final_Cave:StartMission",
+                "Mission_Final_Cave:UpdateSpawning",
+                "Mission_Final_Cave:UpdateMission",
+                "Mission_Final_Cave:UpdateObjectives",
+                "Mission_Final_Cave:AddBomb",
+                "Mission_Final_Cave:IsEndBlocked", "BigBomb", "AddPawn",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/bridge/terrain_fingerprint.py"] == {
+        "fingerprint_from_bridge_tiles", "is_stage_change",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_detect_terrain_stage_change",
+    }
+    assert implementations["src/model/board.py"] == {
+        "from_bridge_data", "bigbomb_alive", "BigBomb",
+    }
+    assert implementations["src/solver/plan_safety.py"] == {
+        "final_cave_emergency_pylon_loss_allowed",
+        "final_cave_resist_gamble_allowed", "bigbomb_alive",
+        "pylons_alive", "pylon_hp_total",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "only Hard or Unfair" in facts
+    assert "does not explicitly reset iDamage" in facts
+    assert "fixed four-space supervolcano" in facts
+    assert "50% native RNG branch" in facts
+    assert "IsFinalTurn returns false exactly" in facts
+    assert "increments TurnLimit by 2" in facts
+    assert "does not state that bomb loss is terminal" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "separately indexed partial scripts/missions/final/env_volcano.lua" in gaps
+    assert "whether reused SpaceDamage objects are copied immediately" in gaps
+    assert "repeated TurnLimit+2 extension" in gaps
+    assert "not source proof that bomb destruction is a terminal mission loss" in gaps
+
+
+def test_real_environment_final_volcano_record_pins_four_phase_cycle_and_gate():
+    record = _mission_provenance_record("environment-final-volcano-cycle")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/final/env_volcano.lua",
+            "sha256": (
+                "e3499feaaf71d01a78bd649915165ec1"
+                "c6713d20baa39bb2ac12db7bb787ea16"
+            ),
+            "symbols": [
+                "Env_Volcano", "Env_Volcano:Start",
+                "Env_Volcano:MarkSpace", "Env_Volcano:SelectSpaces",
+                "Env_Volcano:GetAttackEffect",
+            ],
+        },
+        {
+            "path": "scripts/environments.lua",
+            "sha256": (
+                "5f8a7d74f537abb33bc88c1f9669f3f"
+                "6fabdd5c8c51aad3486d2e965e4fb80ec"
+            ),
+            "symbols": [
+                "Env_Attack", "Env_Attack:Start", "Env_Attack:IsEffect",
+                "Env_Attack:BlockSpawn", "Env_Attack:Plan",
+                "Env_Attack:ApplyEffect", "Env_Attack:MarkBoard",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block",
+        "mission_final_volcano_mode_and_lava_conversion_unmodeled",
+        "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn",
+        "cmd_end_turn",
+    }
+    assert implementations["src/strategy/mission_picker.py"] == {
+        "NATIVE_FORECAST_GATED_MISSION_IDS", "Mission_Final",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "phase 1 Lava, phase 2 Rocks, phase 3 Lava, and phase 4 Rocks" in facts
+    assert "up to three random right-or-down steps" in facts
+    assert "at most one randomly removed point per returned quarter" in facts
+    assert "DAMAGE_DEATH, iFire=1" in facts
+    assert "temporarily spawn-blocks every selected point" in facts
+    assert "classifies this environment as cataclysm_or_seismic" in facts
+    assert "mission_final_volcano_mode_and_lava_conversion_unmodeled" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "No Rust/Python simulator path reproduces Env_Volcano" in gaps
+    assert "LavaStart is consumed by the two Lava phases" in gaps
+    assert "no live trace" in gaps
+    assert "must remain fail-closed" in gaps
+
+
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():
     record = _mission_provenance_record(
         "player-sources-dormant-experiment-structure"

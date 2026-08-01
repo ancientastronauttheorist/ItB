@@ -129,14 +129,13 @@ pub struct EvalWeights {
     pub mech_low_hp_risk: f64,       // 1HP mech near active enemy (binary, negative)
     pub friendly_npc_killed: f64,    // non-mech player unit killed (penalty)
     pub volatile_enemy_killed: f64,  // Volatile Vek killed (Weather Watch ⭐ bonus)
-    pub bigbomb_killed: f64,         // Renfield Bomb destroyed in Mission_Final_Cave —
-                                     // mission-failure penalty layered on top of the
-                                     // standard friendly_npc_killed term. The bomb's
-                                     // detonation is the win-condition; losing it ends
-                                     // the run. Default value chosen large enough to
-                                     // dominate any kill score, mirroring how
-                                     // building_objective_bonus dominates a normal
-                                     // building's grid_power value.
+    pub bigbomb_killed: f64,         // Current Renfield Bomb destroyed in
+                                     // Mission_Final_Cave — conservative objective-loss
+                                     // penalty layered on top of friendly_npc_killed.
+                                     // Source respawns a replacement and adds 2 to
+                                     // TurnLimit, but that recovery is not simulated.
+                                     // Default dominates every kill score so losing the
+                                     // current bomb remains unacceptable.
 
     // Grid urgency multipliers (applied to building scores)
     pub grid_urgency_critical: f64,  // grid_power <= 1
@@ -334,8 +333,8 @@ impl Default for EvalWeights {
             mech_low_hp_risk: -2000.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
             volatile_enemy_killed: -10000.0, // Volatile Vek must not die (Weather Watch ⭐)
-            bigbomb_killed: -200000.0,       // Renfield Bomb death = run failure;
-                                             // dwarfs every kill bonus on the board
+            bigbomb_killed: -200000.0,       // Current Renfield Bomb loss remains
+                                             // conservatively unacceptable
             // Pro-strategy
             threats_cleared: 4000.0,
             body_block_bonus: 0.0,
@@ -841,13 +840,13 @@ pub fn evaluate(
         }
     }
 
-    // ── Mission failure: Renfield Bomb destroyed ──
-    // Mission_Final_Cave win-condition: defend the BigBomb until it
-    // self-detonates. Losing it fails the run. The transition fires once
-    // per evaluate() call on the alive→dead edge. NOT scaled by future_factor:
-    // a dead bomb can't be revived next turn, and the penalty must dominate
-    // even on the final-turn floor (ff ≈ 0.05) so the solver never trades
-    // the bomb for any kill bonus.
+    // ── Conservative objective loss: current Renfield Bomb destroyed ──
+    // Mission_Final_Cave source responds by dropping a replacement bomb and
+    // adding 2 to TurnLimit. That delayed respawn is outside the current model,
+    // so the alive→dead edge remains unacceptable and fires this penalty once
+    // per evaluate() call. NOT scaled by future_factor: the penalty must dominate
+    // even on the final-turn floor (ff ≈ 0.05) so the solver never trades the
+    // current bomb for a kill bonus.
     if psion_before.bigbomb && !board.bigbomb_alive {
         score += weights.bigbomb_killed;
     }

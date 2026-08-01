@@ -2208,12 +2208,13 @@ fn apply_damage_core_with_options(
         }
     }
 
-    // Renfield Bomb destruction: flip bigbomb_alive once the last BigBomb
-    // pawn drops to hp <= 0. The evaluator's PsionState.bigbomb captures
-    // the pre-action state and scores the alive→dead transition with
-    // `bigbomb_killed`. No flood/AOE side effect — the bomb's mission-end
-    // detonation is out of the 1-turn solver horizon (and irrelevant once
-    // it's dead). Idempotent via the bigbomb_alive gate.
+    // Renfield Bomb destruction: flip bigbomb_alive once the current BigBomb
+    // pawn drops to hp <= 0. Mission_Final_Cave source later drops a replacement
+    // and adds 2 to TurnLimit; this one-turn simulator does not invent that
+    // delayed respawn. The evaluator's PsionState.bigbomb therefore captures
+    // and conservatively penalizes the current objective's alive→dead edge with
+    // `bigbomb_killed`. No immediate flood/AOE side effect. Idempotent via the
+    // bigbomb_alive gate.
     if board.bigbomb_alive {
         let bomb_dead = (0..board.unit_count as usize).all(|i| {
             let u = &board.units[i];

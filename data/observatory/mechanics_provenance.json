@@ -8895,6 +8895,184 @@
           "symbols": ["test_real_player_support_force_record_pins_active_drop_reachability_and_gap"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact Mission_Final surface source configures Env_Volcano, the final-island map tag, three initial spawns, no bonus objective, and NextPhase=Mission_Final_Cave. StartMission sets spawn island 5 and permanently spawn-blocks every pylon-zone tile; only Hard or Unfair additionally calls Board:SpawnPawn with one random ScorpionBoss, FireflyBoss, or HornetBoss and no explicit location."
+        },
+        {
+          "classification": "fact",
+          "statement": "On enemy turn zero, Mission_Final:NextTurn queues two building droppers at each randomly removed pylon location after a 4.5 delay and assigns DAMAGE_DEATH when the selected location is pawn-occupied. It reuses one SpaceDamage object and does not explicitly reset iDamage after a lethal assignment, so the exact native effect-copy and later-pylon result is not inferred. MissionEnd queues the falling-zone and off-zone Mech bounces plus Board:Slide(DIR_UP); IsEndBlocked always returns true."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_Final:UpdateMission marks the fixed four-space supervolcano at (0,0), (1,0), (0,1), and (1,1), restores damaged members to Mountain, and, when a member has no pawn, clears Frozen and Shield. UpdateObjectives presents the standard zero-reputation Mission_Final_Obj; these direct calls do not establish native callback timing or phase-transition settlement."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact Mission_Final_Cave setup sets spawn island 5, adds two Scorpion and two Leaper counts, removes one deployment point for the bomb, and has a 50% native RNG branch that spawns self:NextPawn() on that point before the queued setup effect. It lethally drops every mountain-zone rock with a temporary spawn block, scripts Mechs 0 through 2 onto the remaining deployment points, permanently spawn-blocks and builds the pylon zone with occupied locations assigned lethal damage, then queues AddBomb at the reserved point and independently spawns one random BeetleBoss, FireflyBoss, or HornetBoss without an explicit location."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_Final_Cave:UpdateSpawning delegates the ordinary count to SpawnPawns, while IsFinalTurn returns false exactly. Once Board is not busy, UpdateMission replaces a missing IsBomb() result by calling AddBomb with no fixed point and increments TurnLimit by 2. AddBomb excludes player-occupied, building, and current environment-danger cells, prefers an interior point while candidates remain, falls back to (4,4) only when no candidate exists, changes the chosen terrain to Road, and drops BigBomb. The source defines BigBomb as a four-HP, neutral, no-corpse, fire-ignoring, zero-move TEAM_PLAYER pawn; it does not state that bomb loss is terminal."
+        },
+        {
+          "classification": "fact",
+          "statement": "Repository anchors expose current BigBomb liveness and known type data, detect a large live terrain swap within Mission_Final, and apply conservative final-cave pylon and bomb safety policy. Those tests validate extracted state and repository policy only: they do not reproduce the source's native boss/spawner RNG, effect queues, NextPhase scheduler, bomb replacement, or mission-end lifecycle."
+        }
+      ],
+      "id": "mission-final-surface-and-cave-lifecycle",
+      "implementations": [
+        {
+          "path": "data/known_types.json",
+          "symbols": ["BigBomb", "BeetleBoss", "FireflyBoss", "HornetBoss", "ScorpionBoss"]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["mission_bridge_id", "dump_state", "Mission_Final_Cave", "env_type"]
+        },
+        {
+          "path": "src/bridge/terrain_fingerprint.py",
+          "symbols": ["fingerprint_from_bridge_tiles", "is_stage_change"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_detect_terrain_stage_change"]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": ["from_bridge_data", "bigbomb_alive", "BigBomb"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["BigBomb"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["final_cave_emergency_pylon_loss_allowed", "final_cave_resist_gamble_allowed", "bigbomb_alive", "pylons_alive", "pylon_hp_total"]
+        }
+      ],
+      "known_gaps": [
+        "The separately indexed partial scripts/missions/final/env_volcano.lua record covers exact stage-one source and the fail-closed gate; this lifecycle record itself claims no environmental selection, phase, fire, terrain-conversion, or scheduler conformance. Env_Final cave danger remains bounded by its own separate partial record.",
+        "Mission_Infinite inheritance, native turn and team callback order, NextPhase and IsEndBlocked orchestration, StartMission completion, MissionEnd presentation and travel timing, spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, RNG, boss placement, UID allocation, and map-zone contents remain native dependencies.",
+        "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
+        "The repository does not forecast the cave's random opening pawn, ordinary spawn schedule, boss choice/location, future bomb candidate, missing-bomb replacement, or repeated TurnLimit+2 extension. IsBomb semantics, native candidate occupancy changes, an exhausted-edge AddBomb choice, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
+        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The terrain fingerprint proves that a large live board change is detected, not that Mission_Final:MissionEnd or the native phase handoff executed conformantly."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/final/mission_final.lua",
+          "sha256": "f92875ba570871b7b3184adb168105c8f29150398b8b14e87a863f67d6c61e29",
+          "symbols": ["Mission_Final", "Mission_Final:StartMission", "Mission_Final:NextTurn", "Mission_Final:MissionEnd", "Mission_Final:UpdateMission", "Mission_Final:UpdateObjectives", "Mission_Final:IsEndBlocked"]
+        },
+        {
+          "path": "scripts/missions/final/mission_final_two.lua",
+          "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+          "symbols": ["Mission_Final_Cave", "SpawnMechs", "Mission_Final_Cave:MissionEnd", "Mission_Final_Cave:NextTurn", "Mission_Final_Cave:IsFinalTurn", "Mission_Final_Cave:StartMission", "Mission_Final_Cave:UpdateSpawning", "Mission_Final_Cave:UpdateMission", "Mission_Final_Cave:UpdateObjectives", "Mission_Final_Cave:AddBomb", "Mission_Final_Cave:IsEndBlocked", "BigBomb", "AddPawn"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_terrain_fingerprint.py",
+          "symbols": ["test_is_stage_change_volcano_to_caverns_fires", "test_detect_volcano_to_caverns_fires_and_records"]
+        },
+        {
+          "path": "tests/test_renfield_bomb.py",
+          "symbols": ["test_known_types_includes_bigbomb_and_final_pawns", "test_bridge_data_sets_bigbomb_alive_when_alive", "test_bridge_data_leaves_bigbomb_alive_false_when_dead"]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": ["test_final_cave_resist_gamble_can_be_dirty_consented_on_last_turn", "test_final_cave_resist_gamble_rejects_before_last_turn", "test_final_cave_resist_gamble_rejects_bomb_loss", "test_final_cave_pylon_loss_is_named", "test_final_cave_emergency_pylon_loss_can_be_dirty_consented", "test_final_cave_emergency_pylon_loss_rejects_mech_hp_debt"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_terminal_inference"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact Env_Volcano source subclasses Env_Attack with Ordered=true, Instant inherited false, WaterTarget=false, Phase=0, and initial Mode=ENV_ROCKS. Start first delegates to Env_Attack:Start to reset Locations and Planned, then initializes LavaStart once to (2,1) and (1,2) when it is nil."
+        },
+        {
+          "classification": "fact",
+          "statement": "Each SelectSpaces increments Phase with a 4-to-1 wrap and toggles Mode before selection, so the first four selections are exactly phase 1 Lava, phase 2 Rocks, phase 3 Lava, and phase 4 Rocks. A Lava phase randomly removes one of the two LavaStart points, then extends a path by up to three random right-or-down steps that reject existing Lava, Mountain, and Building terrain. The source does not reset the consumed LavaStart list when Phase wraps."
+        },
+        {
+          "classification": "fact",
+          "statement": "On Rocks phases, SelectSpaces calls inherited GetQuarters and attempts at most one randomly removed point per returned quarter, using (1,1) as a sentinel to skip while more than one point remains and omitting the quarter if the final choice is still that sentinel. Native GetQuarters defines the actual quarter contents and order."
+        },
+        {
+          "classification": "fact",
+          "statement": "GetAttackEffect in Rocks mode queues a fireball artillery SpaceDamage with DAMAGE_DEATH, iFire=1, and explo_fire1 animation. In Lava mode it directly queues zero damage with TERRAIN_LAVA and the lava-tile sound. MarkSpace presents Rocks as deadly flying_rock and Lava as nondeadly volcano_lava, darkens already-Lava terrain, and adds a red active overlay when requested."
+        },
+        {
+          "classification": "fact",
+          "statement": "Inherited Env_Attack:Plan selects only when Locations is empty, temporarily spawn-blocks every selected point, and appends one Planned point per non-Instant planning call. Inherited ApplyEffect uses Env_Volcano's Ordered=true to remove and apply the first queued location instead of a random location, with Start/End effect hooks and environment ownership supplied by the base lifecycle."
+        },
+        {
+          "classification": "fact",
+          "statement": "The current bridge has no Env_Volcano or Mission_Final identity override: because the live inherited StartEffect field is non-nil, its field-signature fallback classifies this environment as cataclysm_or_seismic before reaching the generic Locations branch. It exports one default damage encoding for the visible mask and does not expose Mode, Phase, LavaStart, or selected-path order, so it cannot distinguish the source's lethal fireballs from nonlethal Lava conversion."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact Mission_Final forecast gate now returns mission_final_volcano_mode_and_lava_conversion_unmodeled and blocks solve, auto-turn, and public End Turn delivery; the picker also penalizes and route-vetoes that exact mission ID. Those are conservative safety anchors, not Rust terrain, fire, selection, or scheduler conformance, and no controlled live Env_Volcano trace is claimed."
+        }
+      ],
+      "id": "environment-final-volcano-cycle",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["env_type", "env_kill_default", "env_flying_immune_default", "environment_danger", "environment_danger_v2", "StartEffect", "Locations"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block", "mission_final_volcano_mode_and_lava_conversion_unmodeled", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
+        },
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["NATIVE_FORECAST_GATED_MISSION_IDS", "Mission_Final"]
+        }
+      ],
+      "known_gaps": [
+        "No Rust/Python simulator path reproduces Env_Volcano Mode or Phase, the LavaStart pool, Lava path selection, Rocks quarter selection, temporary spawn blocks, ordered effect consumption, lethal fireball plus Fire, or Lava terrain conversion. The current bridge classification and single danger encoding are source-incompatible, so the exact Mission_Final gate must remain fail-closed.",
+        "Native Environment/Mission_Infinite planning and application cadence, Start/Plan/ApplyEffect/MarkBoard call order, Board:IsBusy interaction, BlockSpawn duration, StartEffect/EndEffect hooks, ENV_EFFECT ownership, sound and animation timing, and phase relation to Vek attacks are not traced for this build.",
+        "GetQuarters geometry/order, random_removal state and call order, Board terrain queries, path early termination, target occupancy, buildings/grid/pods, shields, frozen/fire/status ordering, flying behavior, pawn death/corpse handling, Lava replacement, and simultaneous native effects require controlled build-keyed traces.",
+        "The source's Phase counter wraps after four while LavaStart is consumed by the two Lava phases and is not explicitly reset. No behavior beyond the mission's exact four-turn sequence is inferred, and no native trace establishes what a later empty-pool random_removal would do.",
+        "The forecast gate and mission-picker veto prevent unsupported autonomous progression; they do not prove any environment result. This record remains partial with no live trace and no Rust terrain, fire, selector, or scheduler conformance test."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/final/env_volcano.lua",
+          "sha256": "e3499feaaf71d01a78bd649915165ec1c6713d20baa39bb2ac12db7bb787ea16",
+          "symbols": ["Env_Volcano", "Env_Volcano:Start", "Env_Volcano:MarkSpace", "Env_Volcano:SelectSpaces", "Env_Volcano:GetAttackEffect"]
+        },
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": ["Env_Attack", "Env_Attack:Start", "Env_Attack:IsEffect", "Env_Attack:BlockSpawn", "Env_Attack:Plan", "Env_Attack:ApplyEffect", "Env_Attack:MarkBoard"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_mission_native_forecast_gates.py",
+          "symbols": ["test_cmd_solve_returns_exact_non_overridable_native_forecast_gate", "test_auto_turn_preserves_native_forecast_gate_metadata", "test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch", "test_lightning_route_veto_recognizes_native_forecast_gate_from_id_alone"]
+        },
+        {
+          "path": "tests/test_mission_picker.py",
+          "symbols": ["test_native_forecast_gated_mission_loses_to_safe_default_pick", "test_native_forecast_gate_is_exact_id_only", "test_lightning_routes_auto_start_veto_native_forecast_gated_missions"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_environment_final_volcano_record_pins_four_phase_cycle_and_gate"]
+        }
+      ]
     }
   ],
   "schema_version": 1
