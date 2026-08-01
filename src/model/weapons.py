@@ -957,10 +957,16 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Critical Shields", weapon_type="passive",
     ),
     "Passive_HealingSmoke": WeaponDef(
-        name="Healing Fog", weapon_type="passive",
+        name="Nanofilter Mending", weapon_type="passive",
     ),
     "Passive_FireBoost": WeaponDef(
-        name="Flame Boost", weapon_type="passive",
+        name="Heat Engines", weapon_type="passive",
+    ),
+    "Passive_PlayerTurnShield": WeaponDef(
+        name="Networked Shielding", weapon_type="passive",
+    ),
+    "Passive_VoidShock": WeaponDef(
+        name="Void Shocker", weapon_type="passive",
     ),
     "Passive_ForceAmp": WeaponDef(
         name="Force Amp", weapon_type="passive",

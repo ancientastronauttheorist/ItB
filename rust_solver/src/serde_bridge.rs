@@ -293,6 +293,7 @@ pub struct JsonUnit {
     pub armor: Option<bool>,
     pub massive: Option<bool>,
     pub minor: Option<bool>,
+    pub void_shock_immune: Option<bool>,
     pub pushable: Option<bool>,
     pub active: Option<bool>,
     pub shield: Option<bool>,
@@ -736,6 +737,7 @@ pub fn board_from_json(json_str: &str)
             if ju.flying.unwrap_or(false) { flags |= UnitFlags::FLYING; }
             if ju.massive.unwrap_or(false) { flags |= UnitFlags::MASSIVE; }
             if ju.minor.unwrap_or_else(|| known_minor_type(&ju.unit_type)) { flags |= UnitFlags::MINOR; }
+            if ju.void_shock_immune.unwrap_or(false) { flags |= UnitFlags::VOID_SHOCK_IMMUNE; }
             if ju.armor.unwrap_or(false) { flags |= UnitFlags::ARMOR; }
             if ju.pushable.unwrap_or(true) { flags |= UnitFlags::PUSHABLE; }
             if ju.ranged.unwrap_or(0) > 0 { flags |= UnitFlags::RANGED; }
@@ -1098,6 +1100,10 @@ pub fn board_from_json(json_str: &str)
                             "Passive_FlameImmune" => board.flame_shielding = true,
                             "Passive_FireBoost" => board.heat_engines = true,
                             "Passive_HealingSmoke" => board.healing_smoke = true,
+                            "Passive_PlayerTurnShield" => board.networked_shielding = true,
+                            "Passive_VoidShock" => {
+                                board.void_shocker_damage = board.void_shocker_damage.max(1);
+                            }
                             "Passive_Leech" => {
                                 board.viscera_nanobots_heal = board.viscera_nanobots_heal.max(1);
                             }
@@ -1998,7 +2004,9 @@ mod tests {
                         "Passive_FriendlyFire_AB",
                         "Passive_MassRepair",
                         "Passive_AutoShields",
-                        "Passive_Burrows"
+                        "Passive_Burrows",
+                        "Passive_PlayerTurnShield",
+                        "Passive_VoidShock"
                     ]
                 },
                 {
@@ -2013,7 +2021,8 @@ mod tests {
                     "weapons": [
                         "Passive_Electric",
                         "Passive_FriendlyFire_B"
-                    ]
+                    ],
+                    "void_shock_immune": true
                 }
             ],
             "grid_power": 7,
@@ -2028,5 +2037,8 @@ mod tests {
         assert!(board.mass_repair);
         assert!(board.auto_shields);
         assert!(board.stabilizers);
+        assert!(board.networked_shielding);
+        assert_eq!(board.void_shocker_damage, 1);
+        assert!(board.units[1].void_shock_immune());
     }
 }

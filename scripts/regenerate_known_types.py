@@ -178,17 +178,21 @@ SOURCE_KNOWN_WEAPONS: list[str] = [
     "Passive_Electric",
     "Passive_Electric_A",
     "Passive_FastDecay",
+    "Passive_FireBoost",
     "Passive_FlameImmune",
     "Passive_ForceAmp",
     "Passive_FriendlyFire",
     "Passive_FriendlyFire_A",
     "Passive_FriendlyFire_AB",
     "Passive_FriendlyFire_B",
+    "Passive_HealingSmoke",
     "Passive_Leech",
     "Passive_Leech_A",
     "Passive_MassRepair",
     "Passive_Medical",
     "Passive_Psions",
+    "Passive_PlayerTurnShield",
+    "Passive_VoidShock",
 ]
 
 

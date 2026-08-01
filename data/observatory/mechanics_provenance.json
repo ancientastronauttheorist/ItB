@@ -28,6 +28,18 @@
         {
           "classification": "fact",
           "statement": "Simulator v379 preserves exact Storm Generator and Vek Hormones upgrade magnitudes and adds bounded Repair Field, Auto-Shields, and Stabilizers board effects. Source-catalogued passive IDs remain outside Rust WId action slots while save overlays preserve their exact powered variants."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact Advanced Edition source defines Nanofilter Mending, Heat Engines, Networked Shielding, and Void Shocker as four base-only PassiveSkill constructors. Their callbacks are fixed TipImage demonstrations; the shipped English localization states the native board contracts for smoke healing, fire-to-Boost conversion, player-turn mech damage immunity, and one Void Shocker damage after a Vek attack damages no unit or building."
+        },
+        {
+          "classification": "fact",
+          "statement": "VoidShockImmune defaults false on pawn definitions and is true on source-defined support/spawner families including Blobbers, Shamans, Spiders/eggs, and Psions. Simulator v380 imports that exact pawn property, models Networked Shielding only through the player-phase boundary, and evaluates Void Shocker after each complete queued attack using actual unit/building HP loss."
+        },
+        {
+          "classification": "fact",
+          "statement": "Passive_VoidShock has no Upgrades, UpgradeCost, UpgradeList, or Damage field and therefore inherits Skill.Upgrades=0. The executable and local save corpus contain no Passive_VoidShock_A runtime ID; the localization-only +1 Damage strings are orphan text and are deliberately excluded from catalogs and save overlays."
         }
       ],
       "id": "player-weapon-passive-board-effects",
@@ -39,7 +51,10 @@
             "vek_hormones_damage",
             "mass_repair",
             "auto_shields",
-            "stabilizers"
+            "stabilizers",
+            "networked_shielding",
+            "void_shocker_damage",
+            "VOID_SHOCK_IMMUNE"
           ]
         },
         {
@@ -53,14 +68,17 @@
           "symbols": [
             "enemy_hit_damage",
             "apply_spawn_blocking",
-            "simulate_enemy_attacks"
+            "simulate_enemy_attacks",
+            "AttackDamageSnapshot",
+            "apply_void_shocker_after_attack"
           ]
         },
         {
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
             "apply_auto_shield_after_building_damage",
-            "simulate_attack_with_target2"
+            "simulate_attack_with_target2",
+            "networked_shield_blocks"
           ]
         },
         {
@@ -81,7 +99,8 @@
           "path": "src/bridge/modloader.lua",
           "symbols": [
             "direct_repair_pawn",
-            "Mass_Repair"
+            "Mass_Repair",
+            "void_shock_immune"
           ]
         },
         {
@@ -116,6 +135,8 @@
         "Forestry Nano is removed from ordinary drops in this build and its death-to-Forest behavior is not simulated. Viscera Nanobots, Flame Shielding, Force Amp, and Medical Supplies retain their earlier bounded implementations but do not have exhaustive native scheduler/status conformance.",
         "Networked Armor and Kickoff Boosters are trusted through live effective HP and Move values; Rust does not independently reproduce their native mission-start or turn-start application and adjacency timing.",
         "Auto-Shields is implemented after known Rust building-damage paths, but native trigger ordering across every SpaceDamage, grid-resist, multi-effect, destruction, and mission-script edge has not been captured independently.",
+        "Networked Shielding protects numeric damage routed through the simulator's shared player-phase damage core and Old Earth Mine DAMAGE_DEATH paths. Native treatment of non-damage instant-death terrain and unusual mission-script direct HP mutation remains untraced.",
+        "Void Shocker uses per-attack unit/building HP loss and the bridged VoidShockImmune property. Native ordering against net-zero damage-plus-heal actions, mission-script mutations, Armor/ACID on the retaliated Vek, and death-effect chains remains without a controlled trace.",
         "The passive callback bodies prove tooltip examples and fields, not the native Passive-string implementation. No fresh controlled capture was taken during the protected live achievement session."
       ],
       "sources": [
@@ -173,6 +194,72 @@
           ]
         },
         {
+          "path": "scripts/advanced/ae_weapons.lua",
+          "sha256": "5566b679c696ab489e40a0189d0a63b699d01e9657f79a20e6f119239af1680f",
+          "symbols": [
+            "Passive_HealingSmoke",
+            "Passive_HealingSmoke:GetSkillEffect",
+            "Passive_FireBoost",
+            "Passive_FireBoost:GetSkillEffect",
+            "Passive_PlayerTurnShield",
+            "Passive_PlayerTurnShield:GetSkillEffect",
+            "Passive_VoidShock",
+            "Passive_VoidShock:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "Skill",
+            "VoidShockImmune"
+          ]
+        },
+        {
+          "path": "scripts/drops.lua",
+          "sha256": "bfde13bbdfbdaa4f8fdb7c3f5ce0c84e4045bc538835143ec750cffaa79936ff",
+          "symbols": [
+            "ae_weapon_list",
+            "ae_pod_list"
+          ]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "Blobber1",
+            "Blobber2",
+            "Jelly_Health1",
+            "Spider1",
+            "Spider2",
+            "WebbEgg1"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": [
+            "Shaman1",
+            "Shaman2"
+          ]
+        },
+        {
+          "path": "scripts/localization/Weapons.csv",
+          "sha256": "13bfd89f12e5fa0de2e00d6a6b4801d2db604c0285467dbb311b63ce2b440fd7",
+          "symbols": [
+            "Passive_HealingSmoke_Name",
+            "Passive_HealingSmoke_Description",
+            "Passive_FireBoost_Name",
+            "Passive_FireBoost_Description",
+            "Passive_PlayerTurnShield_Name",
+            "Passive_PlayerTurnShield_Description",
+            "Passive_VoidShock_Name",
+            "Passive_VoidShock_Description",
+            "Passive_VoidShock_Upgrade1",
+            "Passive_VoidShock_A_UpgradeDescription"
+          ]
+        },
+        {
           "path": "scripts/text_weapons.lua",
           "sha256": "a432a3dab32f1748657508da314ba8c11211496502493eebd93acc30b5aa61e1",
           "symbols": [
@@ -212,6 +299,18 @@
           ]
         },
         {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_networked_shielding_blocks_player_phase_damage_but_not_enemy_attack",
+            "test_networked_shielding_blocks_player_turn_old_earth_mine_damage",
+            "test_void_shocker_retaliates_after_empty_attack",
+            "test_void_shocker_retaliates_when_attack_only_damages_mountain",
+            "test_void_shocker_does_not_retaliate_after_unit_or_building_damage",
+            "test_void_shocker_counts_shield_and_frozen_absorption_as_no_damage",
+            "test_void_shocker_honors_source_immunity_and_multi_hit_damage"
+          ]
+        },
+        {
           "path": "tests/test_weapon_upgrade_overlay.py",
           "symbols": [
             "test_rocket_artillery_damage_upgrades_overlay_from_save",
@@ -228,7 +327,14 @@
         {
           "path": "tests/test_save_parser_weapon_upgrades.py",
           "symbols": [
-            "test_passive_upgrades_overlay_from_powered_save_mods"
+            "test_passive_upgrades_overlay_from_powered_save_mods",
+            "test_advanced_edition_passives_have_no_modeled_upgrade_variants"
+          ]
+        },
+        {
+          "path": "tests/test_modloader_void_shock.py",
+          "symbols": [
+            "test_modloader_exports_source_defined_void_shock_immunity"
           ]
         },
         {

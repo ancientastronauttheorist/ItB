@@ -227,6 +227,16 @@ def test_passive_upgrades_overlay_from_powered_save_mods():
         assert mission.pawns[0].primary_weapon == expected
 
 
+def test_advanced_edition_passives_have_no_modeled_upgrade_variants():
+    for passive in (
+        "Passive_HealingSmoke",
+        "Passive_FireBoost",
+        "Passive_PlayerTurnShield",
+        "Passive_VoidShock",
+    ):
+        assert save_parser._modeled_upgrade_from_save_mods(passive, [9], [9]) is None
+
+
 def test_titan_fist_powered_mods_overlay():
     mission = extract_mission_state(
         {"sMission": "Mission_Test"},

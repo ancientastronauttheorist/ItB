@@ -172,6 +172,10 @@ bitflags! {
         /// phase. Observed live play resolves its exhaust after queued Vek
         /// attacks, then source-defined FlyAway removes the rocket alive.
         const SATELLITE_LAUNCH_QUEUED = 0x0200_0000;
+        /// Source-defined `VoidShockImmune` pawn property. Support/spawner
+        /// enemies such as Blobbers, Spiders, Shamans, and Psions do not take
+        /// Void Shocker retaliation when their queued action deals no damage.
+        const VOID_SHOCK_IMMUNE = 0x0400_0000;
     }
 }
 
@@ -262,6 +266,9 @@ impl Unit {
     pub fn burrowed(&self) -> bool { self.flags.contains(UnitFlags::BURROWED) }
     pub fn satellite_launch_queued(&self) -> bool {
         self.flags.contains(UnitFlags::SATELLITE_LAUNCH_QUEUED)
+    }
+    pub fn void_shock_immune(&self) -> bool {
+        self.flags.contains(UnitFlags::VOID_SHOCK_IMMUNE)
     }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
@@ -479,6 +486,13 @@ pub struct Board {
     /// Passive_HealingSmoke / Nanofilter Mending: player mechs standing on
     /// smoke heal 1 HP and consume the smoke.
     pub healing_smoke: bool,
+    /// Passive_PlayerTurnShield / Networked Shielding: player mechs cannot
+    /// lose HP while the simulator is resolving the player phase. Cleared at
+    /// the enemy-phase boundary so queued Vek and environment damage land.
+    pub networked_shielding: bool,
+    /// Passive_VoidShock / Void Shocker retaliation magnitude. This build
+    /// exposes only the fixed 1-damage base passive; 0 means absent.
+    pub void_shocker_damage: u8,
     /// Passive_Leech / Viscera Nanobots heal amount for player mechs that
     /// deal killing blows. 0 means the passive is not currently available.
     pub viscera_nanobots_heal: u8,
@@ -617,6 +631,8 @@ impl Default for Board {
             flame_shielding: false,
             heat_engines: false,
             healing_smoke: false,
+            networked_shielding: false,
+            void_shocker_damage: 0,
             viscera_nanobots_heal: 0,
             vek_hormones_damage: 0,
             mass_repair: false,

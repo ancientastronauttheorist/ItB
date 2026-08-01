@@ -763,6 +763,7 @@ local function dump_state()
                     move = p:GetMoveSpeed(),
                     base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed(),
                     minor = pawn_def and pawn_def.Minor or false,
+                    void_shock_immune = pawn_def and pawn_def.VoidShockImmune or false,
                 }
 
                 -- Pilot info (mechs only). Save-file-derived is the most

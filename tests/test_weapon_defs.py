@@ -21,17 +21,21 @@ def test_passive_source_catalog_and_static_defs_are_complete():
         "Passive_Electric": "Storm Generator",
         "Passive_Electric_A": "Storm Generator",
         "Passive_FastDecay": "Forestry Nano",
+        "Passive_FireBoost": "Heat Engines",
         "Passive_FlameImmune": "Flame Shielding",
         "Passive_ForceAmp": "Force Amp",
         "Passive_FriendlyFire": "Vek Hormones",
         "Passive_FriendlyFire_A": "Vek Hormones",
         "Passive_FriendlyFire_B": "Vek Hormones",
         "Passive_FriendlyFire_AB": "Vek Hormones",
+        "Passive_HealingSmoke": "Nanofilter Mending",
         "Passive_Leech": "Viscera Nanobots",
         "Passive_Leech_A": "Viscera Nanobots",
         "Passive_MassRepair": "Repair Field",
         "Passive_Medical": "Medical Supplies",
         "Passive_Psions": "Psionic Receiver",
+        "Passive_PlayerTurnShield": "Networked Shielding",
+        "Passive_VoidShock": "Void Shocker",
     }
 
     assert set(known["source_known_weapons"]) == set(expected)

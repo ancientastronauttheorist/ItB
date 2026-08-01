@@ -1831,6 +1831,10 @@ _MODELED_PASSIVE_LOADOUT_WEAPONS = {
     "Passive_ForceAmp",
     "Passive_Ammo",
     "Passive_CritDefense",
+    "Passive_HealingSmoke",
+    "Passive_FireBoost",
+    "Passive_PlayerTurnShield",
+    "Passive_VoidShock",
 }
 
 

@@ -2991,6 +2991,25 @@ def test_real_passive_board_effect_record_pins_exact_variants_and_native_gaps():
         "a432a3dab32f1748657508da314ba8c"
         "11211496502493eebd93acc30b5aa61e1"
     )
+    ae_passives = sources["scripts/advanced/ae_weapons.lua"]
+    assert ae_passives["sha256"] == (
+        "5566b679c696ab489e40a0189d0a63b6"
+        "99d01e9657f79a20e6f119239af1680f"
+    )
+    assert {
+        "Passive_HealingSmoke:GetSkillEffect",
+        "Passive_FireBoost:GetSkillEffect",
+        "Passive_PlayerTurnShield:GetSkillEffect",
+        "Passive_VoidShock:GetSkillEffect",
+    } <= set(ae_passives["symbols"])
+    assert sources["scripts/global.lua"]["sha256"] == (
+        "96d82d83a1620061e6fd013aa8462883"
+        "e1f3764d03752757ad77fbbbd04bc9b2"
+    )
+    assert sources["scripts/localization/Weapons.csv"]["sha256"] == (
+        "13bfd89f12e5fa0de2e00d6a6b4801d"
+        "2db604c0285467dbb311b63ce2b440fd7"
+    )
 
     implementations = {
         reference["path"]: set(reference["symbols"])
@@ -3002,15 +3021,21 @@ def test_real_passive_board_effect_record_pins_exact_variants_and_native_gaps():
         "mass_repair",
         "auto_shields",
         "stabilizers",
+        "networked_shielding",
+        "void_shocker_damage",
+        "VOID_SHOCK_IMMUNE",
     } == implementations["rust_solver/src/board.rs"]
     assert {
         "enemy_hit_damage",
         "apply_spawn_blocking",
         "simulate_enemy_attacks",
+        "AttackDamageSnapshot",
+        "apply_void_shocker_after_attack",
     } == implementations["rust_solver/src/enemy.rs"]
     assert {
         "apply_auto_shield_after_building_damage",
         "simulate_attack_with_target2",
+        "networked_shield_blocks",
     } == implementations["rust_solver/src/simulate.rs"]
     assert "SOURCE_KNOWN_WEAPONS" in implementations[
         "scripts/regenerate_known_types.py"
@@ -3018,6 +3043,7 @@ def test_real_passive_board_effect_record_pins_exact_variants_and_native_gaps():
     assert implementations["src/bridge/modloader.lua"] == {
         "direct_repair_pawn",
         "Mass_Repair",
+        "void_shock_immune",
     }
     assert implementations["src/capture/save_parser.py"] == {
         "_MODELED_UPGRADED_WEAPONS",
@@ -3039,7 +3065,20 @@ def test_real_passive_board_effect_record_pins_exact_variants_and_native_gaps():
         "test_stabilizers_prevents_only_player_mech_spawn_damage",
     } == tests["rust_solver/src/simulate.rs"]
     assert tests["tests/test_save_parser_weapon_upgrades.py"] == {
-        "test_passive_upgrades_overlay_from_powered_save_mods"
+        "test_passive_upgrades_overlay_from_powered_save_mods",
+        "test_advanced_edition_passives_have_no_modeled_upgrade_variants",
+    }
+    assert {
+        "test_networked_shielding_blocks_player_phase_damage_but_not_enemy_attack",
+        "test_networked_shielding_blocks_player_turn_old_earth_mine_damage",
+        "test_void_shocker_retaliates_after_empty_attack",
+        "test_void_shocker_retaliates_when_attack_only_damages_mountain",
+        "test_void_shocker_does_not_retaliate_after_unit_or_building_damage",
+        "test_void_shocker_counts_shield_and_frozen_absorption_as_no_damage",
+        "test_void_shocker_honors_source_immunity_and_multi_hit_damage",
+    } == tests["rust_solver/src/enemy.rs"]
+    assert tests["tests/test_modloader_void_shock.py"] == {
+        "test_modloader_exports_source_defined_void_shock_immunity"
     }
     assert tests["tests/test_modloader_mass_repair.py"] == {
         "test_direct_repair_helper_clears_every_modeled_repair_status",
@@ -3048,6 +3087,8 @@ def test_real_passive_board_effect_record_pins_exact_variants_and_native_gaps():
     gaps = " ".join(record["known_gaps"])
     assert "Psionic Receiver" in gaps
     assert "Ammo Generator" in gaps
+    assert "Networked Shielding" in gaps
+    assert "Void Shocker" in gaps
     assert "Critical Shields" in gaps
     assert "Networked Armor" in gaps
     assert "Kickoff Boosters" in gaps

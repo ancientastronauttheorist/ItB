@@ -1764,7 +1764,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v379 preserves exact Storm Generator and Vek Hormones upgrade magnitudes
 # and models Repair Field, Auto-Shields, and Stabilizers. Pre-v379 corpus is
 # archived as failure_db_snapshot_sim_v378.jsonl.
-SIMULATOR_VERSION = 379
+# v380 models Advanced Edition Networked Shielding during player-turn damage
+# and Void Shocker retaliation after zero-damage Vek attacks, including the
+# source-defined VoidShockImmune pawn property. The localization-only upgrade
+# has no runtime/loadout ID in this build. Pre-v380 corpus is archived as
+# failure_db_snapshot_sim_v379.jsonl.
+SIMULATOR_VERSION = 380
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

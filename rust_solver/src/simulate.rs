@@ -593,7 +593,9 @@ pub(crate) fn apply_landing_effects(
     if board.units[unit_idx].hp > 0 {
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
-            finish_instant_unit_death(board, unit_idx, result, nx, ny);
+            if !networked_shield_blocks(board, unit_idx) {
+                finish_instant_unit_death(board, unit_idx, result, nx, ny);
+            }
             board.tile_mut(nx, ny).set_old_earth_mine(false);
         } else if tile.freeze_mine() {
             if !board.units[unit_idx].shield() {
@@ -1748,6 +1750,11 @@ pub(crate) fn apply_auto_shield_after_building_damage(
     }
 }
 
+fn networked_shield_blocks(board: &Board, unit_idx: usize) -> bool {
+    board.networked_shielding
+        && board.units[unit_idx].is_player()
+        && board.units[unit_idx].is_mech()
+}
 
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     let _ = apply_damage_core_with_options(board, x, y, damage, result, source, false);
@@ -1774,9 +1781,14 @@ fn apply_damage_core_with_options(
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
         let mission_shield_blocks = mission_shield_absorbs_without_consuming(board, idx);
+        let networked_shield_blocks = networked_shield_blocks(board, idx);
         let unit = &mut board.units[idx];
 
-        if unit.shield() || mission_shield_blocks {
+        if networked_shield_blocks {
+            // Networked Shielding is damage immunity, not a consumable Shield:
+            // preserve HP and status layers during player-turn collateral and
+            // self-damage. The enemy-phase entry point clears the board flag.
+        } else if unit.shield() || mission_shield_blocks {
             if unit.shield() && !mission_shield_blocks {
                 // Shield absorbs any damage, consumed
                 unit.set_shield(false);
@@ -3167,7 +3179,9 @@ fn apply_push_with_policy(
         // Unit survived the push — check for Old Earth Mine (instant kill, bypasses shield)
         let tile = board.tile(nx, ny);
         if policy.trigger_mines && tile.old_earth_mine() {
-            finish_instant_unit_death(board, unit_idx, result, nx, ny);
+            if !networked_shield_blocks(board, unit_idx) {
+                finish_instant_unit_death(board, unit_idx, result, nx, ny);
+            }
             board.tile_mut(nx, ny).set_old_earth_mine(false);
         }
         // Freeze mine: pushed unit gets frozen, mine consumed
@@ -5605,40 +5619,42 @@ fn apply_trapped_death_damage(
     let mut death_explosion = false;
 
     if let Some(uidx) = board.unit_at(x, y) {
-        let unit = &mut board.units[uidx];
-        if unit.hp > 0 {
-            let prev_hp = unit.hp;
-            let tname = unit.type_name_str().to_string();
-            let is_enemy = unit.is_enemy();
-            let is_player_mech = unit.is_player() && unit.is_mech();
-            let has_acid = unit.acid();
-            volatile = is_enemy && unit.is_volatile_vek();
-            death_explosion = is_enemy
-                && (board.blast_psion || board.boss_psion)
-                && unit.receives_psion_aura()
-                && tname != "Jelly_Explode1"
-                && tname != "Jelly_Boss";
-            let mission_counted =
-                unit_counts_for_mission_kill(board.mission_id.as_str(), unit);
-            killed_enemy_uid = unit.uid;
+        if !networked_shield_blocks(board, uidx) {
+            let unit = &mut board.units[uidx];
+            if unit.hp > 0 {
+                let prev_hp = unit.hp;
+                let tname = unit.type_name_str().to_string();
+                let is_enemy = unit.is_enemy();
+                let is_player_mech = unit.is_player() && unit.is_mech();
+                let has_acid = unit.acid();
+                volatile = is_enemy && unit.is_volatile_vek();
+                death_explosion = is_enemy
+                    && (board.blast_psion || board.boss_psion)
+                    && unit.receives_psion_aura()
+                    && tname != "Jelly_Explode1"
+                    && tname != "Jelly_Boss";
+                let mission_counted =
+                    unit_counts_for_mission_kill(board.mission_id.as_str(), unit);
+                killed_enemy_uid = unit.uid;
 
-            unit.hp = 0;
-            unit.set_shield(false);
-            unit.set_frozen(false);
+                unit.hp = 0;
+                unit.set_shield(false);
+                unit.set_frozen(false);
 
-            if is_enemy {
-                result.record_enemy_kill(mission_counted);
-                result.enemy_damage_dealt += prev_hp as i32;
-                killed_enemy_idx = Some(uidx);
-            } else if is_player_mech {
-                result.mechs_killed += 1;
-                result.mech_damage_taken += prev_hp as i32;
-            }
+                if is_enemy {
+                    result.record_enemy_kill(mission_counted);
+                    result.enemy_damage_dealt += prev_hp as i32;
+                    killed_enemy_idx = Some(uidx);
+                } else if is_player_mech {
+                    result.mechs_killed += 1;
+                    result.mech_damage_taken += prev_hp as i32;
+                }
 
-            if has_acid {
-                let terrain = board.tile(x, y).terrain;
-                if !terrain.is_deadly_ground() || terrain == Terrain::Water {
-                    leave_acid_pool_on_death(board, x, y);
+                if has_acid {
+                    let terrain = board.tile(x, y).terrain;
+                    if !terrain.is_deadly_ground() || terrain == Terrain::Water {
+                        leave_acid_pool_on_death(board, x, y);
+                    }
                 }
             }
         }
@@ -6970,8 +6986,10 @@ pub fn simulate_move(
     if move_to != old_pos {
         let tile = board.tile(move_to.0, move_to.1);
         if tile.old_earth_mine() {
-            board.units[mech_idx].hp = 0;
-            result.mechs_killed += 1;
+            if !networked_shield_blocks(board, mech_idx) {
+                board.units[mech_idx].hp = 0;
+                result.mechs_killed += 1;
+            }
             board.tile_mut(move_to.0, move_to.1).set_old_earth_mine(false);
         }
     }

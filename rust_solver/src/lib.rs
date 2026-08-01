@@ -2371,7 +2371,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   implement Repair Field, Auto-Shields, and Stabilizers as board-wide
 //   passive effects. Pre-v379 corpus archived as
 //   failure_db_snapshot_sim_v378.jsonl.
-pub const SIMULATOR_VERSION: u32 = 379;
+// v380 - Advanced Edition Networked Shielding blocks player-turn mech damage,
+//   while Void Shocker retaliates after a Vek attack that lowers no unit or
+//   building HP and honors the source-defined VoidShockImmune pawn property.
+//   The orphan localization-only Void Shocker upgrade is not modeled.
+//   Pre-v380 corpus archived as failure_db_snapshot_sim_v379.jsonl.
+pub const SIMULATOR_VERSION: u32 = 380;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

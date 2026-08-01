@@ -493,6 +493,73 @@ fn apply_env_danger(
     }
 }
 
+#[derive(Clone, Copy)]
+struct AttackDamageSnapshot {
+    unit_hp: [i8; 16],
+    building_hp: [u8; 64],
+}
+
+impl AttackDamageSnapshot {
+    fn capture(board: &Board) -> Self {
+        let mut unit_hp = [0i8; 16];
+        for (idx, hp) in unit_hp
+            .iter_mut()
+            .enumerate()
+            .take(board.unit_count as usize)
+        {
+            *hp = board.units[idx].hp;
+        }
+        let mut building_hp = [0u8; 64];
+        for (idx, hp) in building_hp.iter_mut().enumerate() {
+            let tile = board.tiles[idx];
+            *hp = if tile.terrain == Terrain::Building {
+                tile.building_hp
+            } else {
+                0
+            };
+        }
+        Self { unit_hp, building_hp }
+    }
+
+    fn any_unit_or_building_damage(self, board: &Board) -> bool {
+        (0..board.unit_count.min(16) as usize)
+            .any(|idx| board.units[idx].hp < self.unit_hp[idx])
+            || board
+                .tiles
+                .iter()
+                .enumerate()
+                .any(|(idx, tile)| tile.building_hp < self.building_hp[idx])
+    }
+}
+
+fn apply_void_shocker_after_attack(
+    board: &mut Board,
+    attacker_idx: usize,
+    before: AttackDamageSnapshot,
+    result: &mut ActionResult,
+) {
+    let damage = board.void_shocker_damage;
+    if damage == 0
+        || before.any_unit_or_building_damage(board)
+        || attacker_idx >= board.unit_count as usize
+        || board.units[attacker_idx].hp <= 0
+        || !board.units[attacker_idx].is_enemy()
+        || board.units[attacker_idx].void_shock_immune()
+    {
+        return;
+    }
+
+    let (uid, x, y) = {
+        let attacker = &board.units[attacker_idx];
+        (attacker.uid, attacker.x, attacker.y)
+    };
+    apply_damage(board, x, y, damage, result, DamageSource::Weapon);
+    result.events.push(format!(
+        "void_shocker:{}:{}:{}:{}",
+        uid, x, y, damage
+    ));
+}
+
 fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
     let flying_immune_damage = if board.mission_id == "Mission_Tides" { 1 } else { 0 };
     // Legacy Mission_Satellite markers have enough timing/displacement nuance
@@ -907,6 +974,11 @@ pub fn simulate_enemy_attacks(
     original_positions: &[(u8, u8); 16],
     weapons: &WeaponTable,
 ) -> ActionResult {
+    // Passive_PlayerTurnShield is explicitly limited to the player turn.
+    // From this boundary onward, queued Vek, environments, fire, and spawn
+    // blocking must damage mechs normally.
+    board.networked_shielding = false;
+
     // Mission_Reactivation: thaw 2 frozen Vek at start of enemy phase.
     // Must run BEFORE the frozen-skip in the attack loop so newly-thawed
     // pawns are reflected in post-enemy state (they don't attack this
@@ -1347,7 +1419,14 @@ pub fn simulate_enemy_attacks(
         // Handle it before the missing-target phantom-damage fallback and the
         // generic Smoke latch so neither can fabricate ordinary attack damage.
         if enemy.type_name_str().starts_with("Snowmine") {
+            let attack_damage_before = AttackDamageSnapshot::capture(board);
             simulate_snowmine_attack(board, ei, &mut result);
+            apply_void_shocker_after_attack(
+                board,
+                ei,
+                attack_damage_before,
+                &mut result,
+            );
             continue;
         }
         if enemy.queued_target_x < 0 {
@@ -1357,6 +1436,7 @@ pub fn simulate_enemy_attacks(
             // building so the scorer still penalizes plans that ignore
             // this Vek. See CLAUDE.md §21 grid-drop investigation gate.
             if enemy.has_queued_attack() {
+                let attack_damage_before = AttackDamageSnapshot::capture(board);
                 let ex = enemy.x;
                 let ey = enemy.y;
                 let dmg = if enemy.weapon_damage > 0 { enemy.weapon_damage as i8 } else { 1 };
@@ -1427,6 +1507,12 @@ pub fn simulate_enemy_attacks(
                     );
                     buildings_destroyed += grid_loss as i32;
                 }
+                apply_void_shocker_after_attack(
+                    board,
+                    ei,
+                    attack_damage_before,
+                    &mut result,
+                );
             }
             continue;
         }
@@ -1527,7 +1613,9 @@ pub fn simulate_enemy_attacks(
         let weapon_behind = enemy.weapon_target_behind;
 
         let vh = board.vek_hormones_damage;
+        let attack_damage_before = AttackDamageSnapshot::capture(board);
 
+        'queued_attack: {
         if matches!(enemy_wid, WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1) {
             apply_starfish_appendages(
                 board,
@@ -1538,7 +1626,7 @@ pub fn simulate_enemy_attacks(
                 vh,
                 &mut result,
             );
-            continue;
+            break 'queued_attack;
         }
 
         // BossHeal special-case: Bot Leader's Self-Repairing skill applies
@@ -1553,7 +1641,7 @@ pub fn simulate_enemy_attacks(
         // unconditionally. No damage is applied (wdef.damage=0), no push.
         if enemy_wid == WId::BossHeal {
             apply_weapon_status(board, ex, ey, wdef);
-            continue;
+            break 'queued_attack;
         }
 
         if matches!(enemy_wid, WId::TotemAtk1 | WId::TotemAtk2 | WId::TotemAtkB) {
@@ -1592,7 +1680,7 @@ pub fn simulate_enemy_attacks(
             }
 
             apply_damage(board, ex, ey, 100, &mut result, DamageSource::Weapon);
-            continue;
+            break 'queued_attack;
         }
 
         match wdef.weapon_type {
@@ -1620,7 +1708,7 @@ pub fn simulate_enemy_attacks(
                             }
                         }
                     }
-                    continue;
+                    break 'queued_attack;
                 }
                 if let Some((tx, ty)) = find_projectile_target(
                     board,
@@ -1857,17 +1945,17 @@ pub fn simulate_enemy_attacks(
                 };
                 let new_tx = ex as i8 + offset_x;
                 let new_ty = ey as i8 + offset_y;
-                if !in_bounds(new_tx, new_ty) { continue; }
+                if !in_bounds(new_tx, new_ty) { break 'queued_attack; }
 
                 // Cardinal axis required (exactly one axis non-zero) for artillery
                 // to have a direction for path_size > 1 handling.
                 let dx_sign = offset_x.signum();
                 let dy_sign = offset_y.signum();
-                if (dx_sign != 0) == (dy_sign != 0) { continue; }
+                if (dx_sign != 0) == (dy_sign != 0) { break 'queued_attack; }
 
                 // Min-range check against the (new) attacker→target distance.
                 let curr_range = offset_x.abs() + offset_y.abs();
-                if (curr_range as u8) < wdef.range_min { continue; }
+                if (curr_range as u8) < wdef.range_min { break 'queued_attack; }
                 if matches!(
                     enemy_wid,
                     WId::MothAtk1
@@ -1879,7 +1967,7 @@ pub fn simulate_enemy_attacks(
                 )
                     && (curr_range as u8) > wdef.range_max
                 {
-                    continue;
+                    break 'queued_attack;
                 }
 
                 let tx = new_tx as u8;
@@ -2146,7 +2234,7 @@ pub fn simulate_enemy_attacks(
                     let Some((dx, dy)) = projectile_delta_from_queued_or_current(
                         ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                     ) else {
-                        continue;
+                        break 'queued_attack;
                     };
 
                     let tx1 = ex as i8 + dx;
@@ -2184,12 +2272,12 @@ pub fn simulate_enemy_attacks(
                         let Some(dir) = projectile_dir_from_queued_or_current(
                             ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                         ) else {
-                            continue;
+                            break 'queued_attack;
                         };
                         let (dx, dy) = DIRS[dir];
                         let tx = ex as i8 + dx;
                         let ty = ey as i8 + dy;
-                        if !in_bounds(tx, ty) { continue; }
+                        if !in_bounds(tx, ty) { break 'queued_attack; }
                         let (tx, ty) = (tx as u8, ty as u8);
 
                         let d = enemy_hit_damage(board, tx, ty, damage, vh);
@@ -2208,7 +2296,7 @@ pub fn simulate_enemy_attacks(
                             apply_damage(board, px, py, pd, &mut result, DamageSource::Weapon);
                             apply_push(board, px, py, dir, &mut result);
                         }
-                        continue;
+                        break 'queued_attack;
                     }
 
                     let (tx, ty, attack_dir) = if wdef.queued_damage_persists() {
@@ -2220,7 +2308,7 @@ pub fn simulate_enemy_attacks(
                         let offset_y = qty - queued_origin.1 as i8;
                         let new_tx = ex as i8 + offset_x;
                         let new_ty = ey as i8 + offset_y;
-                        if !in_bounds(new_tx, new_ty) { continue; }
+                        if !in_bounds(new_tx, new_ty) { break 'queued_attack; }
                         (new_tx as u8, new_ty as u8, None)
                     } else {
                         // Standard single-tile melee preserves the original
@@ -2229,11 +2317,11 @@ pub fn simulate_enemy_attacks(
                         let Some((dx, dy)) = projectile_delta_from_queued_or_current(
                             ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
                         ) else {
-                            continue;
+                            break 'queued_attack;
                         };
                         let tx = ex as i8 + dx;
                         let ty = ey as i8 + dy;
-                        if !in_bounds(tx, ty) { continue; }
+                        if !in_bounds(tx, ty) { break 'queued_attack; }
                         let dir = DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy);
                         (tx as u8, ty as u8, dir)
                     };
@@ -2266,12 +2354,12 @@ pub fn simulate_enemy_attacks(
                                     board, hx, hy, wdef, occupied_at_impact,
                                 );
                             }
-                            continue;
+                            break 'queued_attack;
                         }
                     }
                     if enemy_wid == WId::MosquitoAtkB {
                         apply_mosquito_boss_attack(board, tx, ty, &mut result);
-                        continue;
+                        break 'queued_attack;
                     }
                     let target_had_mech = board.unit_at(tx, ty)
                         .is_some_and(|idx| board.units[idx].is_mech());
@@ -2331,13 +2419,20 @@ pub fn simulate_enemy_attacks(
             _ => {
                 // OOB guard: see Melee arm above. Catch-all path also fed
                 // qtx/qty straight into tile_mut and panicked on M04.
-                if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
+                if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { break 'queued_attack; }
                 let tx = qtx as u8;
                 let ty = qty as u8;
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
             }
         }
+        }
+        apply_void_shocker_after_attack(
+            board,
+            ei,
+            attack_damage_before,
+            &mut result,
+        );
     }
 
     if board.env_danger != 0 && env_after_attacks {
@@ -2991,7 +3086,7 @@ fn apply_projectile_grapple(
 mod tests {
     use super::*;
     use crate::serde_bridge::board_from_json;
-    use crate::simulate::{apply_damage, simulate_weapon};
+    use crate::simulate::{apply_damage, simulate_move, simulate_weapon};
 
     fn add_enemy_with_type(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, type_name: &str, qtx: i8, qty: i8) -> usize {
         let mut unit = Unit {
@@ -6462,6 +6557,182 @@ mod tests {
         assert_eq!(board.units[tidx].hp, 0, "Mosquito Leader kill bypasses shield");
         assert!(!board.units[tidx].shield(), "bypassed shield is removed with the dead unit");
         assert!(board.tile(4, 5).smoke(), "Cloudburst Tentacles smokes the target tile");
+    }
+
+    fn add_player_mech(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        board.add_unit(Unit {
+            uid,
+            x,
+            y,
+            hp,
+            max_hp: hp,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        })
+    }
+
+    #[test]
+    fn test_networked_shielding_blocks_player_phase_damage_but_not_enemy_attack() {
+        let mut board = Board::default();
+        board.networked_shielding = true;
+        let mech = add_player_mech(&mut board, 2, 3, 4, 3);
+
+        let mut player_result = ActionResult::default();
+        apply_damage(
+            &mut board,
+            3,
+            4,
+            2,
+            &mut player_result,
+            DamageSource::SelfDamage,
+        );
+        assert_eq!(board.units[mech].hp, 3);
+        assert_eq!(player_result.mech_damage_taken, 0);
+
+        let vek = add_enemy_with_type(&mut board, 1, 3, 3, 2, "Hornet1", 3, 4);
+        board.units[vek].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let orig = default_orig_pos(&board);
+        let enemy_result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(!board.networked_shielding);
+        assert_eq!(board.units[mech].hp, 2);
+        assert_eq!(enemy_result.mech_damage_taken, 1);
+    }
+
+    #[test]
+    fn test_networked_shielding_blocks_player_turn_old_earth_mine_damage() {
+        let mut board = Board::default();
+        board.networked_shielding = true;
+        let mech = add_player_mech(&mut board, 2, 3, 3, 3);
+        board.tile_mut(4, 3).set_old_earth_mine(true);
+
+        let result = simulate_move(&mut board, mech, (4, 3));
+
+        assert_eq!(board.units[mech].hp, 3);
+        assert_eq!(result.mechs_killed, 0);
+        assert!(!board.tile(4, 3).old_earth_mine());
+    }
+
+    #[test]
+    fn test_void_shocker_retaliates_after_empty_attack() {
+        let mut board = Board::default();
+        board.void_shocker_damage = 1;
+        let vek = add_enemy_with_type(&mut board, 1, 3, 3, 2, "Hornet1", 3, 4);
+        board.units[vek].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[vek].hp, 1);
+        assert_eq!(result.enemy_damage_dealt, 1);
+        assert!(result.events.iter().any(|event| event.starts_with("void_shocker:1:")));
+    }
+
+    #[test]
+    fn test_void_shocker_retaliates_when_attack_only_damages_mountain() {
+        let mut board = Board::default();
+        board.void_shocker_damage = 1;
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        let vek = add_enemy_with_type(&mut board, 1, 3, 3, 2, "Hornet1", 3, 4);
+        board.units[vek].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.units[vek].hp, 1);
+    }
+
+    #[test]
+    fn test_void_shocker_does_not_retaliate_after_unit_or_building_damage() {
+        for target_kind in ["unit", "building"] {
+            let mut board = Board::default();
+            board.void_shocker_damage = 1;
+            let vek = add_enemy_with_type(&mut board, 1, 3, 3, 2, "Hornet1", 3, 4);
+            board.units[vek].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+            if target_kind == "unit" {
+                add_player_mech(&mut board, 2, 3, 4, 3);
+            } else {
+                board.tile_mut(3, 4).terrain = Terrain::Building;
+                board.tile_mut(3, 4).building_hp = 2;
+            }
+
+            let orig = default_orig_pos(&board);
+            let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(board.units[vek].hp, 2, "target kind: {target_kind}");
+            assert!(
+                !result.events.iter().any(|event| event.starts_with("void_shocker:")),
+                "target kind: {target_kind}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_void_shocker_counts_shield_and_frozen_absorption_as_no_damage() {
+        for absorbed_by in ["shield", "frozen"] {
+            let mut board = Board::default();
+            board.void_shocker_damage = 1;
+            let vek = add_enemy_with_type(&mut board, 1, 3, 3, 2, "Hornet1", 3, 4);
+            board.units[vek].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+            let mech = add_player_mech(&mut board, 2, 3, 4, 3);
+            if absorbed_by == "shield" {
+                board.units[mech].set_shield(true);
+            } else {
+                board.units[mech].set_frozen(true);
+            }
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(board.units[mech].hp, 3, "absorption: {absorbed_by}");
+            assert_eq!(board.units[vek].hp, 1, "absorption: {absorbed_by}");
+        }
+    }
+
+    #[test]
+    fn test_void_shocker_honors_source_immunity_and_multi_hit_damage() {
+        let mut immune_board = Board::default();
+        immune_board.void_shocker_damage = 1;
+        let immune = add_enemy_with_type(
+            &mut immune_board,
+            1,
+            3,
+            3,
+            2,
+            "Blobber1",
+            3,
+            4,
+        );
+        immune_board.units[immune]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::VOID_SHOCK_IMMUNE);
+        let orig = default_orig_pos(&immune_board);
+        simulate_enemy_attacks(&mut immune_board, &orig, &WEAPONS);
+        assert_eq!(immune_board.units[immune].hp, 2);
+
+        let mut multi_board = Board::default();
+        multi_board.void_shocker_damage = 1;
+        let starfish = add_enemy_with_type(
+            &mut multi_board,
+            10,
+            3,
+            3,
+            3,
+            "Starfish1",
+            3,
+            3,
+        );
+        multi_board.units[starfish]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let mech = add_player_mech(&mut multi_board, 11, 4, 4, 3);
+        let orig = default_orig_pos(&multi_board);
+        simulate_enemy_attacks(&mut multi_board, &orig, &WEAPONS);
+        assert!(multi_board.units[mech].hp < 3);
+        assert_eq!(multi_board.units[starfish].hp, 3);
     }
 
     /// `enemy_weapon_for_type` mappings for the Bot Leader pawns.
