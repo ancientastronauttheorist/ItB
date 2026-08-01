@@ -176,19 +176,26 @@ def test_random_int_prepare_activate_checkpoint_is_explicit_and_exact(lua):
             end,
         })
         local packet = packet_for("random_int")
+        local configured_hook_target = packet.hook_plan[7].target
         assert(controller:prepare(packet))
         assert(_G.random_int == original)
         -- Mutating caller-owned input cannot alter the frozen runtime plan.
         packet.hook_plan[7].target = "mutated"
         assert(controller:activate(string.rep("f", 32)))
         assert(_G.random_int ~= original)
-        local first, middle, tail = _G.random_int(5)
+        local function higher_level_caller()
+            return _G.random_int(5)
+        end
+        local first, middle, tail = higher_level_caller()
         assert(first == 4 and middle == nil and tail == "tail")
         assert(controller:checkpoint("explicit"))
         assert(_G.random_int == original)
         assert(written.checkpoint_seq == 4)
         assert(written.started_epoch == 1001)
         assert(written.events[1].kind == "random_int")
+        -- v1's compatibility-named call_site is the immutable hook target,
+        -- not the higher-level Lua caller or a call-stack reconstruction.
+        assert(written.events[1].context.call_site == configured_hook_target)
         assert(written.events[1].context.call_site == "_G.random_int")
         assert(written.events[1].payload.upper_bound == 5)
         assert(written.events[1].payload.result == 4)
@@ -219,6 +226,7 @@ def test_random_bool_records_raw_argument_without_probability_claim(lua):
         assert(controller:activate(string.rep("f", 32)))
         assert(_G.random_bool(5) == true)
         assert(controller:checkpoint("explicit"))
+        assert(written.events[1].context.call_site == "_G.random_bool")
         assert(written.events[1].payload.argument == 5)
         assert(written.events[1].payload.result == true)
         """

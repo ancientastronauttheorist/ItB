@@ -33,13 +33,22 @@ the original before invoking the host-provided raw writer. It neither polls nor
 owns file paths. A disposable experiment host must pass the already verified
 packet and nonce explicitly and provide a create-only raw writer.
 
+For these v1 RNG records, the on-wire `context.call_site` field is the exact
+configured hook target (`_G.random_int` or `_G.random_bool`). It is not the Lua
+caller or a reconstructed call-stack location. The field name is retained for
+schema compatibility, but a v1 stream cannot by itself attribute an event to
+`random_element`, `random_removal`, a mission/environment selector, or a native
+enemy-decision boundary. Such attribution requires a separately designed and
+behavior-neutral observation boundary.
+
 ## Goals
 
 The trace must answer narrow fidelity questions without becoming part of game
 behavior. Initial event families are:
 
-- `random_int` and `random_bool`: raw arguments, result, real call-site tag,
-  accepted-event sequence, and separate attempted `call_order`. Gaps in
+- `random_int` and `random_bool`: raw arguments, result, exact configured-hook
+  target in the compatibility-named `call_site` field, accepted-event sequence,
+  and separate attempted `call_order`. Gaps in
   `call_order` are expected when an observation is filtered or dropped, but
   accepted RNG events must retain increasing attempted order. The
   `random_bool` argument is deliberately named `argument`; calls such as
@@ -295,6 +304,9 @@ board snapshot is not proof of the candidate tournament that selected it.
 
 - Which exact Lua registration boundary owns `random_int`/`random_bool` on the
   Windows build?
+- Can a behavior-neutral boundary attribute RNG events to higher-level Lua
+  callers without relying on unproven stack inspection or wrapping values that
+  may be non-primitive?
 - Can candidate enumeration be observed without intercepting native
   pathfinding?
 - Which subclass `GetTargetScore` overrides bypass a base wrapper?
