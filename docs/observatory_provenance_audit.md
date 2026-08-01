@@ -65,12 +65,12 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 180 definitions literally and leaves 562 unindexed. Category totals
+names 183 definitions literally and leaves 559 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
-Tumblebug, Centipede, and Digger family records name twelve literally and leave
-28 unindexed. That is a precise indexing backlog, not evidence that all 28
-behaviors are absent from Rust.
+Tumblebug, Centipede, Digger, and Shaman/Totem family records name fifteen
+literally and leave 25 unindexed. That is a precise indexing backlog, not
+evidence that all 25 behaviors are absent from Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected

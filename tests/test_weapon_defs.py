@@ -117,6 +117,43 @@ def test_acid_tank_source_stats_and_cannon_definition():
     assert weapon.acid is True
 
 
+def test_shaman_and_totem_source_stats_and_weapon_definitions():
+    known = json.loads(Path("data/known_types.json").read_text())
+    shaman1 = get_pawn_stats("Shaman1")
+    shaman2 = get_pawn_stats("Shaman2")
+    totem1 = get_pawn_stats("Totem1")
+    totem2 = get_pawn_stats("Totem2")
+    attack1 = get_weapon_def("ShamanAtk1")
+    attack2 = get_weapon_def("ShamanAtk2")
+
+    assert (shaman1.move_speed, shaman1.ranged) == (2, 1)
+    assert shaman1.void_shock_immune is True
+    assert shaman1.default_weapon == "ShamanAtk1"
+    assert (shaman2.move_speed, shaman2.ranged) == (2, 1)
+    assert shaman2.void_shock_immune is True
+    assert shaman2.default_weapon == "ShamanAtk2"
+
+    assert (totem1.move_speed, totem1.ranged, totem1.minor) == (0, 0, True)
+    assert totem1.default_weapon == "TotemAtk1"
+    assert (totem2.move_speed, totem2.ranged, totem2.minor) == (0, 0, True)
+    assert totem2.default_weapon == "TotemAtk2"
+
+    assert attack1 is not None
+    assert attack1.name == "Scarred Totem"
+    assert attack1.weapon_type == "artillery"
+    assert attack1.damage == 0
+    assert attack1.range_min == 2
+    assert attack1.targets_allies is False
+    assert attack2 is not None
+    assert attack2.name == "Hemorrhaged Totem"
+    assert attack2.weapon_type == "artillery"
+    assert attack2.damage == 0
+    assert attack2.range_min == 2
+    assert attack2.targets_allies is False
+    assert "ShamanAtk1" in known["weapon_enum"]
+    assert "ShamanAtk2" in known["weapon_enum"]
+
+
 def test_hacking_cannon_bot_player_aliases_match_mark_i():
     known = json.loads(Path("data/known_types.json").read_text())
     w = get_weapon_def("SnowtankAtk1_Player")

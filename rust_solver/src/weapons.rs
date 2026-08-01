@@ -665,9 +665,13 @@ pub enum WId {
     /// Pinnacle Mine-Bot setup skill. The pawn has MoveSpeed=0; firing leaves
     /// a Freeze Mine at the origin and moves it along a native range-3 path.
     SnowmineAtk1 = 245,
+    /// Normal Shaman's source-authored LineArtillery Totem spawn.
+    ShamanAtk1 = 246,
+    /// Alpha Shaman's source-authored LineArtillery Alpha Totem spawn.
+    ShamanAtk2 = 247,
 }
 
-pub const WEAPON_COUNT: usize = 246;
+pub const WEAPON_COUNT: usize = 248;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1431,6 +1435,15 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[245] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0,
         range_min: 1, range_max: 3, flags: f_nc(0), ..DEF };
 
+    // 246-247: ShamanAtk1/2. The exact AE source derives these from
+    // LineArtillery and spawns Totem1/Totem2 at an empty cardinal target.
+    // enemy.rs owns the source-specific pawn creation; the weapon table keeps
+    // the zero-damage artillery target geometry and minimum range.
+    w[246] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0,
+        range_min: 2, flags: C, ..DEF };
+    w[247] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0,
+        range_min: 2, flags: C, ..DEF };
+
     // 134: Missiles_Shield — Detritus Contraption Shield Barrage.
     w[134] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 0, limited: 2,
         flags: f_nc(WeaponFlags::SHIELD.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
@@ -2019,6 +2032,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "TotemAtk1" => WId::TotemAtk1,
         "TotemAtk2" => WId::TotemAtk2,
         "TotemAtkB" => WId::TotemAtkB,
+        "ShamanAtk1" => WId::ShamanAtk1,
+        "ShamanAtk2" => WId::ShamanAtk2,
         "BouncerAtkB" => WId::BouncerAtkB,
         "Armored_Train_Move" => WId::ArmoredTrainMove,
         "VIP_Truck_Move" => WId::VipTruckMove,
@@ -2269,6 +2284,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::TotemAtk1 => "TotemAtk1",
         WId::TotemAtk2 => "TotemAtk2",
         WId::TotemAtkB => "TotemAtkB",
+        WId::ShamanAtk1 => "ShamanAtk1",
+        WId::ShamanAtk2 => "ShamanAtk2",
         WId::BeetleAtkB => "BeetleAtkB",
         WId::Repair => "_REPAIR",
         WId::SupportRepair => "Support_Repair",
@@ -2352,6 +2369,8 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Totem1" => WId::TotemAtk1,
         "Totem2" => WId::TotemAtk2,
         "TotemB" => WId::TotemAtkB,
+        "Shaman1" => WId::ShamanAtk1,
+        "Shaman2" => WId::ShamanAtk2,
         // Pinnacle bots
         "Snowtank1" => WId::SnowtankAtk1,
         "Snowtank1_Boom" => WId::SnowtankAtk1,
@@ -2575,6 +2594,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::TotemAtk1 => "Scarred Secretion",
         WId::TotemAtk2 => "Hemorrhaged Secretion",
         WId::TotemAtkB => "Extravasating Secretion",
+        WId::ShamanAtk1 => "Scarred Totem",
+        WId::ShamanAtk2 => "Hemorrhaged Totem",
         WId::BouncerAtkB => "Sweeping Horns",
         WId::ArmoredTrainMove => "Armored Charge",
         WId::VipTruckMove => "Floor It!",
@@ -3421,6 +3442,37 @@ mod tests {
     }
 
     #[test]
+    fn test_shaman_spawn_weapon_defs_and_mappings() {
+        let cases = [
+            (
+                WId::ShamanAtk1,
+                "ShamanAtk1",
+                "Shaman1",
+                "Scarred Totem",
+            ),
+            (
+                WId::ShamanAtk2,
+                "ShamanAtk2",
+                "Shaman2",
+                "Hemorrhaged Totem",
+            ),
+        ];
+
+        for (wid, live_id, pawn_type, display_name) in cases {
+            let def = weapon_def(wid);
+            assert_eq!(def.weapon_type, WeaponType::Artillery);
+            assert_eq!(def.damage, 0);
+            assert_eq!(def.range_min, 2);
+            assert_eq!(wid_from_str(live_id), wid);
+            assert_eq!(wid_to_str(wid), live_id);
+            assert_eq!(enemy_weapon_for_type(pawn_type), wid);
+            assert_eq!(weapon_name(wid), display_name);
+        }
+
+        assert_eq!(enemy_weapon_for_type("ShamanBoss"), WId::BeetleAtkB);
+    }
+
+    #[test]
     fn test_string_to_wid_roundtrip() {
         assert_eq!(wid_from_str("Prime_Punchmech"), WId::PrimePunchmech);
         assert_eq!(wid_from_str("Prime_Lightning_A"), WId::PrimeLightningA);
@@ -3435,6 +3487,8 @@ mod tests {
         assert_eq!(wid_from_str("TotemAtk1"), WId::TotemAtk1);
         assert_eq!(wid_from_str("TotemAtk2"), WId::TotemAtk2);
         assert_eq!(wid_from_str("TotemAtkB"), WId::TotemAtkB);
+        assert_eq!(wid_from_str("ShamanAtk1"), WId::ShamanAtk1);
+        assert_eq!(wid_from_str("ShamanAtk2"), WId::ShamanAtk2);
         assert_eq!(wid_from_str("Armored_Train_Move"), WId::ArmoredTrainMove);
         assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
         assert_eq!(wid_from_str("Brute_TC_DoubleShot"), WId::BruteTcDoubleShot);
@@ -3482,6 +3536,8 @@ mod tests {
             ("TotemAtk1", WId::TotemAtk1),
             ("TotemAtk2", WId::TotemAtk2),
             ("TotemAtkB", WId::TotemAtkB),
+            ("ShamanAtk1", WId::ShamanAtk1),
+            ("ShamanAtk2", WId::ShamanAtk2),
             ("Armored_Train_Move", WId::ArmoredTrainMove),
             ("VIP_Truck_Move", WId::VipTruckMove),
             ("ScarabAtkB", WId::ScarabAtkB),

@@ -1785,7 +1785,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Digger's separate queued cardinal damage and exposes those real pawns to
 # later attack collision. Pre-v384 corpus is archived as
 # failure_db_snapshot_sim_v383.jsonl.
-SIMULATOR_VERSION = 384
+# v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
+# with exact source identity and no same-phase queued action. Pre-v385 corpus
+# is archived as failure_db_snapshot_sim_v384.jsonl.
+SIMULATOR_VERSION = 385
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

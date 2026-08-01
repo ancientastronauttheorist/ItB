@@ -88,6 +88,38 @@ pub(crate) fn spawn_enemy(
     true
 }
 
+/// Spawn the source-authored stationary Totem created by ShamanAtk1/2.
+///
+/// Unlike Spider/Blobber children, a new Totem is not hatching or attacking
+/// during the current enemy phase. It is a pushable Minor Vek with its own
+/// projectile weapon, but no queued intent until the native engine selects one
+/// on a later turn.
+fn spawn_shaman_totem(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    type_name: &str,
+    weapon: WId,
+) -> bool {
+    if !spawn_enemy(board, x, y, type_name, 1) {
+        return false;
+    }
+
+    let idx = board
+        .unit_at(x, y)
+        .expect("successful Totem spawn occupies its target");
+    let totem = &mut board.units[idx];
+    totem.flags = UnitFlags::PUSHABLE | UnitFlags::MINOR;
+    totem.weapon = WeaponId(weapon as u16);
+    totem.queued_target_x = -1;
+    totem.queued_target_y = -1;
+    totem.queued_target_raw_x = -1;
+    totem.queued_target_raw_y = -1;
+    totem.queued_origin_x = -1;
+    totem.queued_origin_y = -1;
+    true
+}
+
 /// Whether DiggerAtk1/2's source-authored `sPawn = "Wall"` effect selects
 /// this adjacent tile. The Lua predicate is narrower than ordinary ground
 /// movement: PATH_PROJECTILE must be clear, Water and Time Pods are excluded,
@@ -2165,8 +2197,8 @@ pub fn simulate_enemy_attacks(
                     }
                 }
 
-                // Spawn-artillery side effects: Spider (webb eggs) and
-                // Blobber (blobs) fire a 0-dmg artillery whose real
+                // Spawn-artillery side effects: Spider (webb eggs), Blobber
+                // (blobs), and Shaman (Totems) fire a 0-dmg artillery whose real
                 // effect is placing a unit at the target tile. Without
                 // this the solver never sees the follow-up threat
                 // (egg hatches → Spiderling damages building next turn).
@@ -2184,6 +2216,12 @@ pub fn simulate_enemy_attacks(
                     }
                     WId::BlobberAtkB => {
                         spawn_enemy(board, tx, ty, "BlobB", 2);
+                    }
+                    WId::ShamanAtk1 => {
+                        spawn_shaman_totem(board, tx, ty, "Totem1", WId::TotemAtk1);
+                    }
+                    WId::ShamanAtk2 => {
+                        spawn_shaman_totem(board, tx, ty, "Totem2", WId::TotemAtk2);
                     }
                     _ => {}
                 }
@@ -4587,6 +4625,147 @@ mod tests {
     }
 
     #[test]
+    fn test_shaman_spawns_exact_totem_without_same_phase_attack() {
+        let cases = [
+            ("Shaman1", "Totem1", WId::TotemAtk1, 3),
+            ("Shaman2", "Totem2", WId::TotemAtk2, 5),
+        ];
+
+        for (shaman_type, totem_type, totem_weapon, shaman_hp) in cases {
+            let mut board = Board::default();
+            board.grid_power = 2;
+            board.grid_power_max = 2;
+            board.tile_mut(3, 0).terrain = Terrain::Building;
+            board.tile_mut(3, 0).building_hp = 1;
+
+            let shaman_idx = add_enemy_with_type(
+                &mut board,
+                710,
+                3,
+                3,
+                shaman_hp,
+                shaman_type,
+                3,
+                1,
+            );
+            board.units[shaman_idx]
+                .flags
+                .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+            let orig = default_orig_pos(&board);
+            let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            let totem_idx = board
+                .unit_at(3, 1)
+                .expect("Shaman artillery should place its Totem");
+            let totem = &board.units[totem_idx];
+            assert_eq!(totem.type_name_str(), totem_type);
+            assert_eq!((totem.hp, totem.max_hp), (1, 1));
+            assert_eq!(totem.team, Team::Enemy);
+            assert_eq!((totem.move_speed, totem.base_move), (0, 0));
+            assert!(totem.minor());
+            assert!(totem.pushable());
+            assert_eq!(totem.weapon, WeaponId(totem_weapon as u16));
+            assert_eq!((totem.queued_target_x, totem.queued_target_y), (-1, -1));
+            assert!(!totem.has_queued_attack());
+            assert_eq!(board.tile(3, 0).building_hp, 1);
+            assert_eq!(board.grid_power, 2);
+            assert_eq!(result.grid_damage, 0);
+        }
+    }
+
+    #[test]
+    fn test_shaman_totem_spawn_fails_closed_on_occupied_or_blocked_target() {
+        for blocked_by_terrain in [false, true] {
+            let mut board = Board::default();
+            let shaman_idx = add_enemy_with_type(
+                &mut board,
+                720,
+                3,
+                3,
+                3,
+                "Shaman1",
+                3,
+                1,
+            );
+            board.units[shaman_idx]
+                .flags
+                .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+            if blocked_by_terrain {
+                board.tile_mut(3, 1).terrain = Terrain::Water;
+            } else {
+                let blocker = Unit {
+                    uid: 721,
+                    x: 3,
+                    y: 1,
+                    hp: 3,
+                    max_hp: 3,
+                    team: Team::Player,
+                    flags: UnitFlags::PUSHABLE | UnitFlags::IS_MECH,
+                    ..Default::default()
+                };
+                board.add_unit(blocker);
+            }
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert!(!board
+                .units
+                .iter()
+                .take(board.unit_count as usize)
+                .any(|unit| unit.type_name_str().starts_with("Totem")));
+        }
+    }
+
+    #[test]
+    fn test_spawned_shaman_totem_can_fire_and_self_destruct_next_phase() {
+        let mut board = Board::default();
+        board.grid_power = 2;
+        board.grid_power_max = 2;
+        board.tile_mut(0, 1).terrain = Terrain::Building;
+        board.tile_mut(0, 1).building_hp = 1;
+
+        let shaman_idx = add_enemy_with_type(
+            &mut board,
+            730,
+            4,
+            1,
+            3,
+            "Shaman1",
+            2,
+            1,
+        );
+        board.units[shaman_idx]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let totem_idx = board.unit_at(2, 1).expect("Totem should spawn");
+        board.units[shaman_idx].queued_target_x = -1;
+        board.units[shaman_idx].queued_target_y = -1;
+        board.units[shaman_idx]
+            .flags
+            .remove(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[totem_idx].queued_target_x = 1;
+        board.units[totem_idx].queued_target_y = 1;
+        board.units[totem_idx].queued_origin_x = 2;
+        board.units[totem_idx].queued_origin_y = 1;
+        board.units[totem_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::QUEUED_ORIGIN_SET,
+        );
+
+        let next_orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &next_orig, &WEAPONS);
+
+        assert_eq!(board.tile(0, 1).building_hp, 0);
+        assert_eq!(board.grid_power, 1);
+        assert!(board.units[totem_idx].hp <= 0);
+    }
+
+    #[test]
     fn test_totem_projectile_retraces_into_new_blocker_and_bumps_building() {
         let mut board = Board::default();
         board.grid_power = 2;
@@ -5512,6 +5691,8 @@ mod tests {
         assert_eq!(enemy_weapon_for_type("Totem1"), WId::TotemAtk1);
         assert_eq!(enemy_weapon_for_type("Totem2"), WId::TotemAtk2);
         assert_eq!(enemy_weapon_for_type("TotemB"), WId::TotemAtkB);
+        assert_eq!(enemy_weapon_for_type("Shaman1"), WId::ShamanAtk1);
+        assert_eq!(enemy_weapon_for_type("Shaman2"), WId::ShamanAtk2);
         assert_eq!(enemy_weapon_for_type("Snowtank1_Boom"), WId::SnowtankAtk1);
         assert_eq!(enemy_weapon_for_type("Snowlaser1_Boom"), WId::SnowlaserAtk1);
         assert_eq!(enemy_weapon_for_type("Snowart1_Boom"), WId::SnowartAtk1);

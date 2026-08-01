@@ -366,6 +366,10 @@ fn known_minor_type(type_name: &str) -> bool {
     )
 }
 
+fn known_void_shock_immune_type(type_name: &str) -> bool {
+    matches!(type_name, "Shaman1" | "Shaman2")
+}
+
 fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
     match dir {
         // Engine DIR_UP / DIR_DOWN are vertically opposite the solver's
@@ -737,7 +741,12 @@ pub fn board_from_json(json_str: &str)
             if ju.flying.unwrap_or(false) { flags |= UnitFlags::FLYING; }
             if ju.massive.unwrap_or(false) { flags |= UnitFlags::MASSIVE; }
             if ju.minor.unwrap_or_else(|| known_minor_type(&ju.unit_type)) { flags |= UnitFlags::MINOR; }
-            if ju.void_shock_immune.unwrap_or(false) { flags |= UnitFlags::VOID_SHOCK_IMMUNE; }
+            if ju
+                .void_shock_immune
+                .unwrap_or_else(|| known_void_shock_immune_type(&ju.unit_type))
+            {
+                flags |= UnitFlags::VOID_SHOCK_IMMUNE;
+            }
             if ju.armor.unwrap_or(false) { flags |= UnitFlags::ARMOR; }
             if ju.pushable.unwrap_or(true) { flags |= UnitFlags::PUSHABLE; }
             if ju.ranged.unwrap_or(0) > 0 { flags |= UnitFlags::RANGED; }
@@ -1529,6 +1538,26 @@ mod tests {
 
         assert!(board.units[0].minor(), "Totem2 old recordings should infer Minor=true");
         assert!(!board.units[1].minor(), "ordinary Leaper1 is not a Minor Vek");
+    }
+
+    #[test]
+    fn test_shaman_void_shock_immunity_inferred_but_explicit_live_value_wins() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {"uid": 1, "type": "Shaman1", "x": 4, "y": 1, "hp": 3, "max_hp": 3, "team": 6},
+                {"uid": 2, "type": "Shaman2", "x": 4, "y": 2, "hp": 5, "max_hp": 5, "team": 6,
+                 "void_shock_immune": false}
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.units[0].void_shock_immune());
+        assert!(!board.units[1].void_shock_immune());
     }
 
     #[test]

@@ -2395,7 +2395,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   The new walls participate in later attack collision, while explicit
 //   building, mountain, Water, Time Pod, pawn, and wreck exclusions remain.
 //   Pre-v384 corpus archived as failure_db_snapshot_sim_v383.jsonl.
-pub const SIMULATOR_VERSION: u32 = 384;
+// v385 - Normal and Alpha Shaman queued artillery now spawns the exact
+//   stationary one-HP Minor Totem1/Totem2 with its matching projectile weapon
+//   and no same-phase queued action. Source-defined movement, ranged identity,
+//   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
+//   archived as failure_db_snapshot_sim_v384.jsonl.
+pub const SIMULATOR_VERSION: u32 = 385;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

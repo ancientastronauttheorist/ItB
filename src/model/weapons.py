@@ -1308,15 +1308,17 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=3, push="forward", fire=True, charge=True,
     ),
 
-    # ── Shamans (support/buff — no direct damage) ───────────────────
+    # ── Shamans (zero-damage Totem spawn artillery) ─────────────────
     "ShamanAtk1": WeaponDef(
-        name="Shaman Buff", weapon_type="support",
-        damage=0, targets_allies=True,
+        name="Scarred Totem", weapon_type="artillery",
+        damage=0, range_min=2,
     ),
     "ShamanAtk2": WeaponDef(
-        name="Alpha Shaman Buff", weapon_type="support",
-        damage=0, targets_allies=True,
+        name="Hemorrhaged Totem", weapon_type="artillery",
+        damage=0, range_min=2,
     ),
+    # The separate Shaman Leader source/behavior remains outside the normal
+    # Shaman1/2 provenance tranche and retains its conservative placeholder.
     "ShamanAtkB": WeaponDef(
         name="Shaman Boss Attack", weapon_type="support",
         damage=0, targets_allies=True,

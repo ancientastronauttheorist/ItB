@@ -4934,6 +4934,146 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried ShamanAtk1 source derives from LineArtillery with OnlyEmpty=true. Its target scorer rejects board-edge destinations, starts from Board:GetDeployLocScore, and adds the best adjacent Totem shot score. Its SkillEffect artillery-spawns Totem1 at the queued target; ShamanAtk2 inherits the behavior and substitutes Totem2."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried pawn source defines Shaman1 as Health 3, MoveSpeed 2, Ranged 1, VoidShockImmune, and ShamanAtk1; Shaman2 raises Health to 5 and uses ShamanAtk2. Totem1/2 are one-HP, MoveSpeed-zero, Minor enemy pawns with TotemAtk1/2. Neither Totem definition sets Ranged."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact TotemAtk1 source traces the live PATH_PROJECTILE endpoint, queues projectile damage one with forward push, and then queues DAMAGE_DEATH on the firing Totem; TotemAtk2 inherits the effect with damage three. Simulator v385 maps normal and Alpha Shaman identity exactly, spawns the matching stationary pushable Minor Totem with its projectile weapon and no same-phase intent, and retains the existing live projectile retrace plus self-destruction behavior for later turns."
+        }
+      ],
+      "id": "enemy-weapon-shaman-totem",
+      "implementations": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "spawn_shaman_totem",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::ShamanAtk1",
+            "WId::ShamanAtk2",
+            "WId::TotemAtk1",
+            "WId::TotemAtk2",
+            "enemy_weapon_for_type"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "known_void_shock_immune_type",
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "projected_enemy_uses_special_targeting"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "PawnStats",
+            "Shaman1",
+            "Shaman2",
+            "Totem1",
+            "Totem2"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "ShamanAtk1",
+            "ShamanAtk2"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes the live bridge's current Shaman position, queued origin, queued target, and attack order. It does not reproduce native movement, Board:GetDeployLocScore, adjacent Totem-shot scoring, board-edge filtering, RNG state, target tie-breaking, or future intent selection.",
+        "Static Lua establishes AddArtillery, sPawn creation, four surrounding zero-damage presentation effects, and queued Totem self-death, but not every internal SkillEffect scheduler boundary. Exact native spawn behavior on Fire, Ice, Sand, Forest, Rubble, ACID, Smoke, cracked tiles, items, and the pawn-capacity edge has not been exhaustively traced.",
+        "Totem projectile simulation re-traces the live cardinal line and preserves forward push plus self-destruction, but native Board:GetProjectileEnd, projectile animation timing, DAMAGE_DEATH bookkeeping, and every blocker/status interaction remain engine-owned.",
+        "The separate ShamanBoss/ShamanAtkB leader package remains on its pre-existing conservative approximation and is not claimed by this normal/Alpha record. No fresh controlled live capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_weapons_enemy.lua",
+          "sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "symbols": [
+            "ShamanAtk1",
+            "ShamanAtk1:GetTargetScore",
+            "ShamanAtk1:GetSkillEffect",
+            "ShamanAtk2",
+            "TotemAtk1",
+            "TotemAtk1:GetSkillEffect",
+            "TotemAtk2"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": [
+            "Shaman1",
+            "Shaman2",
+            "Totem1",
+            "Totem2"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_shaman_spawn_weapon_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_shaman_spawns_exact_totem_without_same_phase_attack",
+            "test_shaman_totem_spawn_fails_closed_on_occupied_or_blocked_target",
+            "test_spawned_shaman_totem_can_fire_and_self_destruct_next_phase",
+            "test_totem_projectile_retraces_into_new_blocker_and_bumps_building",
+            "test_totem_projectile_retraces_past_vacated_target_to_building"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_shaman_void_shock_immunity_inferred_but_explicit_live_value_wins"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_shaman_and_totem_source_stats_and_weapon_definitions"
+          ]
+        },
+        {
+          "path": "tests/test_replay_parity.py",
+          "symbols": [
+            "test_replay_solution_shaman_enemy_phase_serializes_new_totem"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_shaman_totem_record_pins_spawn_chain_and_native_gaps"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

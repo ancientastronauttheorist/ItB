@@ -3507,3 +3507,115 @@ def test_real_digger_record_pins_persistent_wall_semantics_and_native_gaps():
     assert "Chasm, Lava, Fire, Ice" in gaps
     assert "native pawn-capacity edge" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_shaman_totem_record_pins_spawn_chain_and_native_gaps():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-shaman-totem"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/ae_weapons_enemy.lua",
+            "sha256": (
+                "db757b1afa790fe3f7576930abd0c7e4c"
+                "f5d8b9dc7308aa15ce9a9736f224d13"
+            ),
+            "symbols": [
+                "ShamanAtk1",
+                "ShamanAtk1:GetTargetScore",
+                "ShamanAtk1:GetSkillEffect",
+                "ShamanAtk2",
+                "TotemAtk1",
+                "TotemAtk1:GetSkillEffect",
+                "TotemAtk2",
+            ],
+        },
+        {
+            "path": "scripts/advanced/ae_pawns.lua",
+            "sha256": (
+                "e87efe90c0342f26969c14159e6b6c93"
+                "766aeedcbc3319fb0f418048d129e9f4"
+            ),
+            "symbols": ["Shaman1", "Shaman2", "Totem1", "Totem2"],
+        },
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "spawn_shaman_totem",
+        "simulate_enemy_attacks",
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::ShamanAtk1",
+        "WId::ShamanAtk2",
+        "WId::TotemAtk1",
+        "WId::TotemAtk2",
+        "enemy_weapon_for_type",
+    }
+    assert implementations["rust_solver/src/serde_bridge.rs"] == {
+        "known_void_shock_immune_type",
+        "board_from_json",
+    }
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "projected_enemy_uses_special_targeting"
+    }
+    assert implementations["src/model/pawn_stats.py"] == {
+        "PawnStats",
+        "Shaman1",
+        "Shaman2",
+        "Totem1",
+        "Totem2",
+    }
+    assert implementations["src/model/weapons.py"] == {
+        "ShamanAtk1",
+        "ShamanAtk2",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_shaman_spawn_weapon_defs_and_mappings"
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_shaman_spawns_exact_totem_without_same_phase_attack",
+        "test_shaman_totem_spawn_fails_closed_on_occupied_or_blocked_target",
+        "test_spawned_shaman_totem_can_fire_and_self_destruct_next_phase",
+        "test_totem_projectile_retraces_into_new_blocker_and_bumps_building",
+        "test_totem_projectile_retraces_past_vacated_target_to_building",
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_shaman_void_shock_immunity_inferred_but_explicit_live_value_wins"
+    }
+    assert tests["tests/test_weapon_defs.py"] == {
+        "test_shaman_and_totem_source_stats_and_weapon_definitions"
+    }
+    assert tests["tests/test_replay_parity.py"] == {
+        "test_replay_solution_shaman_enemy_phase_serializes_new_totem"
+    }
+
+    gaps = " ".join(record["known_gaps"])
+    assert "Board:GetDeployLocScore" in gaps
+    assert "board-edge filtering" in gaps
+    assert "SkillEffect scheduler boundary" in gaps
+    assert "Board:GetProjectileEnd" in gaps
+    assert "ShamanBoss/ShamanAtkB" in gaps
+    assert "protected achievement session" in gaps

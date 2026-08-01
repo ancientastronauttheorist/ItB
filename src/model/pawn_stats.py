@@ -25,6 +25,7 @@ class PawnStats:
     pushable: bool = True
     ignore_smoke: bool = False
     ignore_fire: bool = False
+    void_shock_immune: bool = False
     default_weapon: str = ""
     class_type: str = ""     # Prime, Brute, Ranged, Science, TechnoVek
 
@@ -128,6 +129,12 @@ VEK_STATS = {
     "TumblebugBoss": PawnStats(move_speed=3, ranged=1, massive=True, default_weapon="DungAtkB"),
     "Plasmodia1":    PawnStats(move_speed=2, ranged=1),
     "Plasmodia2":    PawnStats(move_speed=2, ranged=1),
+    "Shaman1":       PawnStats(move_speed=2, ranged=1,
+                                void_shock_immune=True,
+                                default_weapon="ShamanAtk1"),
+    "Shaman2":       PawnStats(move_speed=2, ranged=1,
+                                void_shock_immune=True,
+                                default_weapon="ShamanAtk2"),
     # Objective / special Vek
     "GlowingScorpion": PawnStats(move_speed=3, ranged=0),
     # Vek Bosses (Hive Leaders): Massive + water-immune per Hive Leader trait.
@@ -253,9 +260,12 @@ VEK_STATS = {
     "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),  # legacy alias
     "MantisEgg":     PawnStats(move_speed=0, minor=True, ranged=0),
     "WebbEgg1":      PawnStats(move_speed=0, minor=True, ranged=0, ignore_smoke=True),
-    "Totem1":        PawnStats(move_speed=0, minor=True, ranged=1),
-    "Totem2":        PawnStats(move_speed=0, minor=True, ranged=1),
-    "TotemB":        PawnStats(move_speed=0, minor=True, ranged=1),
+    "Totem1":        PawnStats(move_speed=0, minor=True,
+                                default_weapon="TotemAtk1"),
+    "Totem2":        PawnStats(move_speed=0, minor=True,
+                                default_weapon="TotemAtk2"),
+    "TotemB":        PawnStats(move_speed=0, minor=True,
+                                default_weapon="TotemAtkB"),
     "SlugEgg1":      PawnStats(move_speed=0, minor=True, ranged=0),
     "ShellPsion1":   PawnStats(move_speed=2, flying=True, minor=True, leader="LEADER_TENTACLE"),
 }

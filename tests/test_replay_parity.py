@@ -413,6 +413,82 @@ def test_replay_solution_digger_enemy_phase_serializes_persistent_walls():
 
 
 @pytest.mark.regression
+def test_replay_solution_shaman_enemy_phase_serializes_new_totem():
+    """Installed wheel carries a source-exact Shaman Totem into final state."""
+    import itb_solver
+
+    bridge = {
+        "tiles": [],
+        "units": [
+            {
+                "uid": 0,
+                "type": "PunchMech",
+                "x": 7,
+                "y": 7,
+                "hp": 3,
+                "max_hp": 3,
+                "team": 1,
+                "mech": True,
+                "move": 4,
+                "active": True,
+                "weapons": ["Prime_Punchmech"],
+            },
+            {
+                "uid": 1,
+                "type": "Shaman2",
+                "x": 3,
+                "y": 3,
+                "hp": 5,
+                "max_hp": 5,
+                "team": 6,
+                "move": 2,
+                "ranged": 1,
+                "void_shock_immune": True,
+                "weapons": ["ShamanAtk2"],
+                "has_queued_attack": True,
+                "queued_target": [3, 1],
+                "queued_origin": [3, 3],
+            },
+        ],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "spawning_tiles": [],
+        "environment_danger": [],
+        "remaining_spawns": 0,
+        "turn": 1,
+        "total_turns": 5,
+    }
+    plan = [
+        {
+            "mech_uid": 0,
+            "move_to": [7, 7],
+            "weapon_id": "None",
+            "target": [255, 255],
+        }
+    ]
+
+    raw = itb_solver.replay_solution(json.dumps(bridge), json.dumps(plan))
+    data = json.loads(raw)
+    assert not any(
+        unit["type"].startswith("Totem")
+        for unit in data["post_player_board"]["units"]
+    )
+    totem = next(
+        unit
+        for unit in data["final_board"]["units"]
+        if unit["type"] == "Totem2"
+    )
+    assert (totem["x"], totem["y"]) == (3, 1)
+    assert (totem["hp"], totem["max_hp"]) == (1, 1)
+    assert (totem["team"], totem["move"], totem["base_move"]) == (6, 0, 0)
+    assert totem["minor"] is True
+    assert totem["pushable"] is True
+    assert totem["weapons"] == ["TotemAtk2"]
+    assert totem["queued_target"] == [-1, -1]
+    assert "has_queued_attack" not in totem
+
+
+@pytest.mark.regression
 def test_replay_solution_preserves_building_tile_shields():
     """Tile shields must survive both sparse and full-board replay JSON."""
     import itb_solver
