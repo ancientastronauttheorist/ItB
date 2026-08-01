@@ -1729,6 +1729,25 @@ pub(crate) fn thaw_frozen_building(
     false
 }
 
+/// Auto-Shields applies immediately after a building loses HP and survives,
+/// so a later effect in the same queued attack sees the new Shield.
+pub(crate) fn apply_auto_shield_after_building_damage(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    hp_lost: u8,
+    result: &mut ActionResult,
+) {
+    if !board.auto_shields || hp_lost == 0 {
+        return;
+    }
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+        tile.set_shield(true);
+        result.events.push(format!("auto_shield:{}:{}", x, y));
+    }
+}
+
 
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     let _ = apply_damage_core_with_options(board, x, y, damage, result, source, false);
@@ -1934,6 +1953,13 @@ fn apply_damage_core_with_options(
             );
             result.grid_damage += (grid_loss as i32) - (bldg_hp_lost as i32);
             board.grid_power = board.grid_power.saturating_sub(grid_loss);
+            apply_auto_shield_after_building_damage(
+                board,
+                x,
+                y,
+                bldg_hp_lost,
+                result,
+            );
         }
 
         // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
@@ -2568,6 +2594,7 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
             );
             result.grid_damage += grid_loss as i32;
             board.grid_power = board.grid_power.saturating_sub(grid_loss);
+            apply_auto_shield_after_building_damage(board, nx, ny, hp_lost, result);
         } else {
             // Destroyed objective: bump the thrown unit only.
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
@@ -3010,6 +3037,7 @@ fn apply_push_with_policy(
             );
             result.grid_damage += grid_loss as i32;
             board.grid_power = board.grid_power.saturating_sub(grid_loss);
+            apply_auto_shield_after_building_damage(board, nx, ny, hp_lost, result);
         } else {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
         }
@@ -7049,32 +7077,53 @@ pub fn simulate_attack_with_target2(
     // Repair
     if weapon_id == WId::Repair {
         let storm_active = acid_storm_active(board);
-        let (is_repairman, rx, ry) = {
-            let unit = &mut board.units[mech_idx];
-            let before = unit.hp;
-            let heal: i8 = if unit.boosted() { 2 } else { 1 };
-            unit.hp = unit.hp.min(unit.max_hp - heal) + heal;
-            let healed = (unit.hp - before).max(0) as i32;
+        let heal: i8 = if board.units[mech_idx].boosted() { 2 } else { 1 };
+        let mut repair_targets = vec![mech_idx];
+        if board.mass_repair {
+            repair_targets.extend((0..board.unit_count as usize).filter(|&idx| {
+                idx != mech_idx
+                    && board.units[idx].hp > 0
+                    && board.units[idx].is_player()
+                    && board.units[idx].is_mech()
+            }));
+        }
+
+        let mut is_repairman = false;
+        let mut rx = 0;
+        let mut ry = 0;
+        for idx in repair_targets {
+            let is_actor = idx == mech_idx;
+            let (uid, x, y, healed) = {
+                let unit = &mut board.units[idx];
+                let before = unit.hp;
+                unit.hp = unit.hp.min(unit.max_hp - heal) + heal;
+                let healed = (unit.hp - before).max(0) as i32;
+                unit.set_fire(false);
+                unit.set_acid(false);
+                unit.set_frozen(false);
+                clear_mites(unit);
+                if storm_active {
+                    unit.set_acid(true);
+                }
+                if is_actor {
+                    is_repairman = unit.pilot_repairman();
+                    rx = unit.x;
+                    ry = unit.y;
+                    unit.set_boosted(false);
+                    unit.set_active(false);
+                }
+                refresh_arrogant_boost(unit);
+                (unit.uid, unit.x, unit.y, healed)
+            };
             if healed > 0 {
                 result.mech_hp_repaired += healed;
                 result.events.push(format!(
                     "mech_hp_repaired:repair:{}:{}",
-                    unit.uid, healed
+                    uid, healed
                 ));
             }
-            unit.set_fire(false);
-            unit.set_acid(false);
-            unit.set_frozen(false);
-            clear_mites(unit);
-            if storm_active {
-                unit.set_acid(true);
-            }
-            unit.set_boosted(false);
-            refresh_arrogant_boost(unit);
-            unit.set_active(false);
-            (unit.pilot_repairman(), unit.x, unit.y)
-        };
-        board.tile_mut(rx, ry).set_on_fire(false);
+            board.tile_mut(x, y).set_on_fire(false);
+        }
         // Harold Schmidt (Pilot_Repairman) — Frenzied Repair: push all four
         // cardinal neighbours outward. Uses `apply_push` so push chains,
         // bump-into-building damage, drown/lava kills, and terrain
@@ -9522,6 +9571,73 @@ mod tests {
 
         assert_eq!(board.units[mech].hp, 3, "boosted Repair heals 2 HP");
         assert!(!board.units[mech].boosted(), "Boost is consumed by Repair");
+    }
+
+    #[test]
+    fn test_mass_repair_applies_actor_repair_to_every_living_player_mech() {
+        let mut board = make_test_board();
+        board.mass_repair = true;
+        let actor = add_mech(&mut board, 1, 3, 3, 4, WId::Repair);
+        let ally = add_mech(&mut board, 2, 5, 5, 4, WId::PrimePunchmech);
+        board.units[actor].hp = 1;
+        board.units[actor].set_boosted(true);
+        board.units[ally].hp = 1;
+        board.units[ally].set_fire(true);
+        board.units[ally].set_acid(true);
+        board.units[ally].set_frozen(true);
+        board.tile_mut(5, 5).set_on_fire(true);
+
+        let result = simulate_action(
+            &mut board,
+            actor,
+            (3, 3),
+            WId::Repair,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[actor].hp, 3);
+        assert_eq!(board.units[ally].hp, 3);
+        assert!(!board.units[actor].boosted());
+        assert!(!board.units[ally].fire());
+        assert!(!board.units[ally].acid());
+        assert!(!board.units[ally].frozen());
+        assert!(!board.tile(5, 5).on_fire());
+        assert!(board.units[ally].active(), "Repair Field must not spend the ally action");
+        assert_eq!(result.mech_hp_repaired, 4);
+    }
+
+    #[test]
+    fn test_auto_shields_protects_surviving_building_from_next_hit() {
+        let mut board = make_test_board();
+        board.auto_shields = true;
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let mut result = ActionResult::default();
+
+        apply_damage(
+            &mut board,
+            3,
+            4,
+            1,
+            &mut result,
+            DamageSource::Weapon,
+        );
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert!(board.tile(3, 4).shield());
+
+        apply_damage(
+            &mut board,
+            3,
+            4,
+            1,
+            &mut result,
+            DamageSource::Weapon,
+        );
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert!(!board.tile(3, 4).shield());
+        assert_eq!(result.grid_damage, 1);
+        assert!(result.events.iter().any(|event| event == "auto_shield:3:4"));
     }
 
     #[test]
@@ -14631,7 +14747,7 @@ mod tests {
         // deals 2 damage; without it, 1. Verify by running an enemy-phase sim.
         use crate::enemy::simulate_enemy_attacks;
         let mut board = make_test_board();
-        board.vek_hormones = true;
+        board.vek_hormones_damage = 1;
         // Hornet at (3,3) targets enemy at (3,4) — north (DIRS index 0)
         add_enemy_with_attack(&mut board, 1, 3, 3, 2, WId::HornetAtk1, 1, 3, 4);
         let target = add_enemy(&mut board, 2, 3, 4, 3);
@@ -14643,11 +14759,41 @@ mod tests {
     }
 
     #[test]
+    fn test_vek_hormones_upgrades_use_exact_damage_magnitudes() {
+        use crate::enemy::simulate_enemy_attacks;
+
+        for (bonus, expected_hp) in [(2, 2), (3, 1)] {
+            let mut board = make_test_board();
+            board.vek_hormones_damage = bonus;
+            add_enemy_with_attack(
+                &mut board,
+                1,
+                3,
+                3,
+                2,
+                WId::HornetAtk1,
+                1,
+                3,
+                4,
+            );
+            let target = add_enemy(&mut board, 2, 3, 4, 5);
+            let original = [(255u8, 255u8); 16];
+
+            simulate_enemy_attacks(&mut board, &original, &WEAPONS);
+            assert_eq!(
+                board.units[target].hp,
+                expected_hp,
+                "base damage 1 plus Vek Hormones bonus {bonus}"
+            );
+        }
+    }
+
+    #[test]
     fn test_vek_hormones_does_not_boost_vek_vs_mech() {
         // Same setup but target is a mech — base damage only.
         use crate::enemy::simulate_enemy_attacks;
         let mut board = make_test_board();
-        board.vek_hormones = true;
+        board.vek_hormones_damage = 1;
         add_enemy_with_attack(&mut board, 1, 3, 3, 2, WId::HornetAtk1, 1, 3, 4);
         let mech_idx = add_mech(&mut board, 99, 3, 4, 3, WId::PrimePunchmech);
         let original = [(255u8, 255u8); 16];
@@ -14662,7 +14808,7 @@ mod tests {
         // Sanity: with flag OFF, vek-on-vek is just base damage.
         use crate::enemy::simulate_enemy_attacks;
         let mut board = make_test_board();
-        board.vek_hormones = false;
+        board.vek_hormones_damage = 0;
         add_enemy_with_attack(&mut board, 1, 3, 3, 2, WId::HornetAtk1, 1, 3, 4);
         let target = add_enemy(&mut board, 2, 3, 4, 3);
         let original = [(255u8, 255u8); 16];
@@ -15012,7 +15158,7 @@ mod tests {
         // phase when storm_generator is active. Confirms enemy.rs:198-209.
         use crate::enemy::simulate_enemy_attacks;
         let mut board = make_test_board();
-        board.storm_generator = true;
+        board.storm_generator_damage = 1;
         board.tile_mut(3, 3).set_smoke(true);
         let target = add_enemy(&mut board, 1, 3, 3, 3);
         let original = [(255u8, 255u8); 16];
@@ -15023,10 +15169,23 @@ mod tests {
     }
 
     #[test]
+    fn test_storm_generator_upgrade_deals_two_damage_in_smoke() {
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.storm_generator_damage = 2;
+        board.tile_mut(3, 3).set_smoke(true);
+        let target = add_enemy(&mut board, 1, 3, 3, 3);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
+        assert_eq!(board.units[target].hp, 1);
+    }
+
+    #[test]
     fn test_storm_generator_skips_enemies_not_in_smoke() {
         use crate::enemy::simulate_enemy_attacks;
         let mut board = make_test_board();
-        board.storm_generator = true;
+        board.storm_generator_damage = 1;
         // No smoke on tile (3,4); enemy on it should be untouched.
         let target = add_enemy(&mut board, 1, 3, 4, 3);
         let original = [(255u8, 255u8); 16];
@@ -15042,7 +15201,7 @@ mod tests {
         // are safe (and smoke cancels enemy attacks targeting them).
         use crate::enemy::simulate_enemy_attacks;
         let mut board = make_test_board();
-        board.storm_generator = true;
+        board.storm_generator_damage = 1;
         board.tile_mut(4, 4).set_smoke(true);
         let mech_idx = add_mech(&mut board, 99, 4, 4, 3, WId::PrimePunchmech);
         let original = [(255u8, 255u8); 16];
@@ -15057,7 +15216,7 @@ mod tests {
         // Sanity: enemy on smoke, flag off — no damage.
         use crate::enemy::simulate_enemy_attacks;
         let mut board = make_test_board();
-        board.storm_generator = false;
+        board.storm_generator_damage = 0;
         board.tile_mut(3, 3).set_smoke(true);
         let target = add_enemy(&mut board, 1, 3, 3, 3);
         let original = [(255u8, 255u8); 16];
@@ -15219,6 +15378,24 @@ mod tests {
         let result = apply_spawn_blocking(&mut board, &spawn);
         assert_eq!(result.spawns_blocked, 1);
         assert_eq!(board.units[enemy].hp, 0, "Force Amp: block-damage 1+1=2 kills 2-HP Vek");
+    }
+
+    #[test]
+    fn test_stabilizers_prevents_only_player_mech_spawn_damage() {
+        use crate::enemy::apply_spawn_blocking;
+        let mut board = make_test_board();
+        board.stabilizers = true;
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::Repair);
+        let enemy = add_enemy(&mut board, 2, 5, 5, 2);
+        board.units[mech].set_shield(true);
+        let spawn = [(3u8, 3u8), (5u8, 5u8)];
+
+        let result = apply_spawn_blocking(&mut board, &spawn);
+
+        assert_eq!(result.spawns_blocked, 2);
+        assert_eq!(board.units[mech].hp, 3);
+        assert!(board.units[mech].shield(), "no-damage block must preserve Shield");
+        assert_eq!(board.units[enemy].hp, 1, "Stabilizers does not protect Vek blockers");
     }
 
     #[test]

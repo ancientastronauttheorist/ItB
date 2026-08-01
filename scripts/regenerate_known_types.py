@@ -162,6 +162,36 @@ KNOWN_PHASES: list[str] = [
 ]
 
 
+# Source-catalogued passive loadout IDs. These are deliberately not Rust WId
+# mappings because passives are board-wide native effects, not clickable
+# actions. Keeping the exact Lua IDs here lets the save overlay preserve
+# powered variants without tripping the live research gate.
+SOURCE_KNOWN_WEAPONS: list[str] = [
+    "Passive_Ammo",
+    "Passive_AutoShields",
+    "Passive_Boosters",
+    "Passive_Boosters_A",
+    "Passive_Burrows",
+    "Passive_CritDefense",
+    "Passive_Defenses",
+    "Passive_Defenses_A",
+    "Passive_Electric",
+    "Passive_Electric_A",
+    "Passive_FastDecay",
+    "Passive_FlameImmune",
+    "Passive_ForceAmp",
+    "Passive_FriendlyFire",
+    "Passive_FriendlyFire_A",
+    "Passive_FriendlyFire_AB",
+    "Passive_FriendlyFire_B",
+    "Passive_Leech",
+    "Passive_Leech_A",
+    "Passive_MassRepair",
+    "Passive_Medical",
+    "Passive_Psions",
+]
+
+
 def main() -> int:
     wiki = wiki_pages()
     weapons = weapon_enum()
@@ -183,6 +213,7 @@ def main() -> int:
         "terrain_ids": terrain_lc,
         "observed_pawn_types": observed,
         "observed_weapons": obs_weapons,
+        "source_known_weapons": list(SOURCE_KNOWN_WEAPONS),
         "known_phases": list(KNOWN_PHASES),
     }
 
@@ -194,9 +225,10 @@ def main() -> int:
     print(f"wrote {OUT.relative_to(REPO)}")
     print(f"  wiki_pages:          {len(wiki)}")
     print(f"  weapon_enum:         {len(weapons)}")
-    print(f"  terrain_enum:        {len(terrain)} → terrain_ids {len(terrain_lc)}")
+    print(f"  terrain_enum:        {len(terrain)} -> terrain_ids {len(terrain_lc)}")
     print(f"  observed_pawn_types: {len(observed)}")
     print(f"  observed_weapons:    {len(obs_weapons)}")
+    print(f"  source_known_weapons:{len(SOURCE_KNOWN_WEAPONS):5d}")
     print(f"  known_phases:        {len(KNOWN_PHASES)}")
     return 0
 

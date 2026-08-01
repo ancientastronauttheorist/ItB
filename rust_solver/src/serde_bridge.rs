@@ -1087,7 +1087,14 @@ pub fn board_from_json(json_str: &str)
                 if let Some(weapons) = &ju.weapons {
                     for wname in weapons {
                         match wname.as_str() {
-                            "Passive_Electric" => board.storm_generator = true,
+                            "Passive_Electric" => {
+                                board.storm_generator_damage =
+                                    board.storm_generator_damage.max(1);
+                            }
+                            "Passive_Electric_A" => {
+                                board.storm_generator_damage =
+                                    board.storm_generator_damage.max(2);
+                            }
                             "Passive_FlameImmune" => board.flame_shielding = true,
                             "Passive_FireBoost" => board.heat_engines = true,
                             "Passive_HealingSmoke" => board.healing_smoke = true,
@@ -1097,7 +1104,21 @@ pub fn board_from_json(json_str: &str)
                             "Passive_Leech_A" => {
                                 board.viscera_nanobots_heal = board.viscera_nanobots_heal.max(2);
                             }
-                            "Passive_FriendlyFire" => board.vek_hormones = true,
+                            "Passive_FriendlyFire" => {
+                                board.vek_hormones_damage =
+                                    board.vek_hormones_damage.max(1);
+                            }
+                            "Passive_FriendlyFire_A" | "Passive_FriendlyFire_B" => {
+                                board.vek_hormones_damage =
+                                    board.vek_hormones_damage.max(2);
+                            }
+                            "Passive_FriendlyFire_AB" => {
+                                board.vek_hormones_damage =
+                                    board.vek_hormones_damage.max(3);
+                            }
+                            "Passive_MassRepair" => board.mass_repair = true,
+                            "Passive_AutoShields" => board.auto_shields = true,
+                            "Passive_Burrows" => board.stabilizers = true,
                             "Passive_ForceAmp" => board.force_amp = true,
                             "Passive_Medical" => board.medical_supplies = true,
                             _ => {}
@@ -1956,5 +1977,56 @@ mod tests {
 
         assert!(!hornet.acid(), "flying unit hovering over acid pool stays clean");
         assert!(scarab.acid(), "grounded unit on acid pool inherits A.C.I.D.");
+    }
+
+    #[test]
+    fn test_passive_board_effects_preserve_effective_variants() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "RocketMech",
+                    "x": 5,
+                    "y": 3,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "weapons": [
+                        "Passive_Electric_A",
+                        "Passive_FriendlyFire_AB",
+                        "Passive_MassRepair",
+                        "Passive_AutoShields",
+                        "Passive_Burrows"
+                    ]
+                },
+                {
+                    "uid": 2,
+                    "type": "GravMech",
+                    "x": 5,
+                    "y": 4,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "weapons": [
+                        "Passive_Electric",
+                        "Passive_FriendlyFire_B"
+                    ]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.storm_generator_damage, 2);
+        assert_eq!(board.vek_hormones_damage, 3);
+        assert!(board.mass_repair);
+        assert!(board.auto_shields);
+        assert!(board.stabilizers);
     }
 }

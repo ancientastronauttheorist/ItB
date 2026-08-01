@@ -1761,7 +1761,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Mine at the source, and moves the bot through landing effects. Snowart and
 # inherited BotBoss artillery are capped at the source-defined range 5.
 # Pre-v378 corpus archived as failure_db_snapshot_sim_v377.jsonl.
-SIMULATOR_VERSION = 378
+# v379 preserves exact Storm Generator and Vek Hormones upgrade magnitudes
+# and models Repair Field, Auto-Shields, and Stabilizers. Pre-v379 corpus is
+# archived as failure_db_snapshot_sim_v378.jsonl.
+SIMULATOR_VERSION = 379
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

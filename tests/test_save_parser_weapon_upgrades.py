@@ -194,6 +194,39 @@ def test_repulse_upgrades_overlay_from_save_mods():
         assert mission.pawns[0].primary_weapon == expected
 
 
+def test_passive_upgrades_overlay_from_powered_save_mods():
+    cases = [
+        ("Passive_Electric", [3], [0], "Passive_Electric_A"),
+        ("Passive_Leech", [2], [0], "Passive_Leech_A"),
+        ("Passive_Defenses", [2], [0], "Passive_Defenses_A"),
+        ("Passive_Boosters", [2], [0], "Passive_Boosters_A"),
+        ("Passive_FriendlyFire", [1], [0], "Passive_FriendlyFire_A"),
+        ("Passive_FriendlyFire", [0], [2], "Passive_FriendlyFire_B"),
+        ("Passive_FriendlyFire", [1], [2], "Passive_FriendlyFire_AB"),
+    ]
+    for base, mod1, mod2, expected in cases:
+        mission = extract_mission_state(
+            {"sMission": "Mission_Test"},
+            {
+                "pawn_count": 1,
+                "pawn1": {
+                    "id": 0,
+                    "type": "RocketMech",
+                    "location": Point(2, 2),
+                    "health": 3,
+                    "max_health": 3,
+                    "iTeamId": 1,
+                    "mech": True,
+                    "primary": base,
+                    "primary_mod1": mod1,
+                    "primary_mod2": mod2,
+                },
+            },
+        )
+
+        assert mission.pawns[0].primary_weapon == expected
+
+
 def test_titan_fist_powered_mods_overlay():
     mission = extract_mission_state(
         {"sMission": "Mission_Test"},

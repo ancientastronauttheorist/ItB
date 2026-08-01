@@ -64,8 +64,8 @@ and modified-install scripts revision
 | Active constructor candidates | 465 |
 | Preservation aliases | 4 |
 | Unique candidate IDs | 469 |
-| Exact direct `wid_from_str` matches | 154 |
-| No exact direct match | 315 |
+| Exact direct `wid_from_str` matches | 156 |
+| No exact direct match | 313 |
 | Ambiguous duplicate Lua IDs | 0 |
 | Rust mappings outside selected definitions | 109 |
 | Many-to-one Rust `WId` variants | 33 |
@@ -87,18 +87,19 @@ verified vanilla depot bytes. They are also not behavioral coverage:
 - Rust-only mappings include enemy, mission, compatibility, and other IDs
   outside this deliberately selected player-weapon source set.
 
-Six family-level provenance slices now consume this lexical index:
+Ten player-weapon provenance slices now consume this lexical index:
 `player-weapon-titan-fist`, `player-weapon-rocket-artillery`,
 `player-weapon-aerial-bombs`, `player-weapon-reverse-thrusters`, and
-`player-weapon-control-shot`, plus `player-weapon-needle-shot`. Together they
-name six of the 14 selected source files because Rocket Artillery uses both
-`weapons_base.lua` and
-`weapons_ranged.lua`, while Reverse Thrusters and Control Shot share
-`advanced/ae_weapons.lua`, and Needle Shot inherits targeting from
-`weapons_prime.lua`. Every slice remains `partial`; notably, the Control Shot
-record exposes a source-predicate mismatch and Needle Shot records an
-intact-building target-filter mismatch instead of treating ID coverage as
-behavioral agreement.
+`player-weapon-control-shot`, plus `player-weapon-needle-shot`,
+`player-weapon-support-wind`, `player-weapon-repulse`,
+`player-weapon-deploy-tank`, and `player-weapon-passive-board-effects`.
+Together they name 11 of the 14 selected source files; the separate Snow Bot
+record raises file-level indexing to 12. `weapons_experiment.lua` is
+comment-only and `weapons_structure.lua` is an unreferenced legacy Airfield
+slice, so neither is bulk-indexed merely to improve the count. Every active
+slice remains `partial`; the passive record deliberately catalogs native board
+modifiers outside Rust `WId` while distinguishing five bounded v379 effects
+from the still-untraced native behaviors.
 
 ## How to use the index
 

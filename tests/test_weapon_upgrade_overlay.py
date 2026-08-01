@@ -589,16 +589,58 @@ def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
 
         updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
 
-        assert updates == [{
-            "uid": 1,
-            "slot": 0,
-            "base": "Ranged_Rocket",
-            "upgraded": upgraded,
-        }]
+        assert updates == [
+            {
+                "uid": 1,
+                "slot": 0,
+                "base": "Ranged_Rocket",
+                "upgraded": upgraded,
+            },
+            {
+                "uid": 1,
+                "slot": 1,
+                "base": "Passive_Electric",
+                "upgraded": "Passive_Electric_A",
+            },
+        ]
         assert bridge_data["units"][0]["weapons"] == [
             upgraded,
-            "Passive_Electric",
+            "Passive_Electric_A",
         ]
+
+
+def test_vek_hormones_variants_overlay_from_save(monkeypatch):
+    for upgraded in (
+        "Passive_FriendlyFire_A",
+        "Passive_FriendlyFire_B",
+        "Passive_FriendlyFire_AB",
+    ):
+        bridge_data = {
+            "units": [{
+                "uid": 0,
+                "type": "GravMech",
+                "mech": True,
+                "weapons": ["Science_Gravwell", "Passive_FriendlyFire"],
+            }]
+        }
+        state = SimpleNamespace(
+            weapons=["Science_Gravwell", upgraded],
+            active_mission=SimpleNamespace(pawns=[]),
+        )
+        monkeypatch.setattr(
+            "src.loop.commands.load_game_state",
+            lambda profile="Alpha", state=state: state,
+        )
+
+        updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+        assert updates == [{
+            "uid": 0,
+            "slot": 1,
+            "base": "Passive_FriendlyFire",
+            "upgraded": upgraded,
+        }]
+        assert bridge_data["units"][0]["weapons"][1] == upgraded
 
 
 def test_ricochet_rocket_damage_upgrade_overlay_from_save(monkeypatch):
@@ -769,7 +811,7 @@ def test_powered_pawn_mods_overlay_when_current_weapons_stay_base(monkeypatch):
             "Brute_Jetmech",
             "",
             "Ranged_Rocket",
-            "Passive_Electric_A",
+            "Passive_Electric",
             "Science_Repulse",
             "",
         ]
@@ -809,6 +851,12 @@ def test_powered_pawn_mods_overlay_when_current_weapons_stay_base(monkeypatch):
             "upgraded": "Ranged_Rocket_A",
         },
         {
+            "uid": 1,
+            "slot": 1,
+            "base": "Passive_Electric",
+            "upgraded": "Passive_Electric_A",
+        },
+        {
             "uid": 2,
             "slot": 0,
             "base": "Science_Repulse",
@@ -817,7 +865,7 @@ def test_powered_pawn_mods_overlay_when_current_weapons_stay_base(monkeypatch):
     ]
     assert bridge_data["units"][0]["weapons"] == [
         "Ranged_Rocket_A",
-        "Passive_Electric",
+        "Passive_Electric_A",
     ]
     assert bridge_data["units"][1]["weapons"] == ["Science_Repulse_A"]
 

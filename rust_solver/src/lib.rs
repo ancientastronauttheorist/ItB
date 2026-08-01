@@ -2367,7 +2367,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mine at the source, and moves the bot through landing effects. Snowart and
 //   inherited BotBoss artillery are capped at the source-defined range 5.
 //   Pre-v378 corpus archived as failure_db_snapshot_sim_v377.jsonl.
-pub const SIMULATOR_VERSION: u32 = 378;
+// - v379: Preserve exact Storm Generator and Vek Hormones upgrade magnitudes;
+//   implement Repair Field, Auto-Shields, and Stabilizers as board-wide
+//   passive effects. Pre-v379 corpus archived as
+//   failure_db_snapshot_sim_v378.jsonl.
+pub const SIMULATOR_VERSION: u32 = 379;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

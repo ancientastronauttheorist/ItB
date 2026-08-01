@@ -2770,6 +2770,43 @@ local function ui_probe_menu_state()
     return probes
 end
 
+-- Apply the bridge's direct Repair mutation to one pawn. The command-context
+-- Skill_Repair effect can ACK without changing live state, so Repair Field
+-- must reuse this exact path for every TEAM_MECH pawn instead of delegating
+-- the group effect back to the unreliable native call.
+local function direct_repair_pawn(target, target_uid, heal, save_data, effect_remove)
+    local target_pos = target:GetSpace()
+    local hp = target:GetHealth()
+    local max_hp = get_pawn_max_health(target, target_uid, save_data)
+    local new_hp = math.min(hp, max_hp - heal) + heal
+
+    local hp_set = false
+    local ok_set_health, did_set_health = pcall(function()
+        local fn = target.SetHealth
+        if type(fn) == "function" then
+            fn(target, new_hp)
+            return true
+        end
+        return false
+    end)
+    hp_set = ok_set_health and did_set_health
+
+    local sd = SpaceDamage(target_pos, hp_set and 0 or -heal)
+    sd.iFire = effect_remove
+    sd.iAcid = effect_remove
+    sd.iFrozen = effect_remove
+    sd.iInjure = effect_remove
+    Board:DamageSpace(sd)
+    pcall(function()
+        local fn = target.SetInfected
+        if type(fn) == "function" then
+            fn(target, false)
+        end
+    end)
+
+    return new_hp
+end
+
 local function execute_command(cmd_str)
     local parts = {}
     for word in cmd_str:gmatch("%S+") do
@@ -2923,37 +2960,34 @@ local function execute_command(cmd_str)
             local ok_bo, bo = pcall(function() return pawn:IsBoosted() end)
             if ok_bo and bo then boosted = true end
             local save_data = _read_save_data()
-            local hp = pawn:GetHealth()
             local max_hp = get_pawn_max_health(pawn, uid, save_data)
             local heal = boosted and 2 or 1
-            local new_hp = math.min(hp, max_hp - heal) + heal
 
             -- Board:AddEffect(Skill_Repair:GetSkillEffect(...)) can ACK while
             -- doing nothing from the bridge command context. Mutate HP/status
             -- directly so verify sees the live board update.
-            local hp_set = false
-            local ok_set_health, did_set_health = pcall(function()
-                local fn = pawn.SetHealth
-                if type(fn) == "function" then
-                    fn(pawn, new_hp)
-                    return true
-                end
-                return false
-            end)
-            hp_set = ok_set_health and did_set_health
+            local new_hp = direct_repair_pawn(
+                pawn, uid, heal, save_data, effect_remove)
 
-            local sd = SpaceDamage(pos, hp_set and 0 or -heal)
-            sd.iFire = effect_remove
-            sd.iAcid = effect_remove
-            sd.iFrozen = effect_remove
-            sd.iInjure = effect_remove
-            Board:DamageSpace(sd)
-            pcall(function()
-                local fn = pawn.SetInfected
-                if type(fn) == "function" then
-                    fn(pawn, false)
-                end
+            local mass_repair = false
+            local ok_mass, has_mass = pcall(function()
+                local fn = _G["IsPassiveSkill"]
+                return type(fn) == "function" and fn("Mass_Repair")
             end)
+            mass_repair = ok_mass and has_mass and true or false
+            if mass_repair then
+                local mech_team = _G["TEAM_MECH"] or TEAM_PLAYER
+                local mech_ids = extract_table(Board:GetPawns(mech_team))
+                for _, mid in ipairs(mech_ids) do
+                    if mid ~= uid then
+                        local target = Board:GetPawn(mid)
+                        if target then
+                            direct_repair_pawn(
+                                target, mid, heal, save_data, effect_remove)
+                        end
+                    end
+                end
+            end
 
             -- Direct SpaceDamage is not a normal ability use, so consume Boost
             -- manually. Kai's Arrogant Boost is state-based and returns if the
@@ -2987,6 +3021,7 @@ local function execute_command(cmd_str)
                 end
             end
             method = boosted and "direct_repair_boosted" or "direct_repair"
+            if mass_repair then method = method .. "_mass" end
         end)
         if not ok then
             write_ack("ERROR: Repair failed: " .. tostring(err))

@@ -893,6 +893,10 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Storm Generator", weapon_type="passive",
         upgrade_a="smoke deals 2 damage",
     ),
+    "Passive_Electric_A": WeaponDef(
+        name="Storm Generator", weapon_type="passive",
+        upgrade_a="smoke deals 2 damage",
+    ),
     "Passive_FlameImmune": WeaponDef(
         name="Flame Shielding", weapon_type="passive",
     ),
@@ -900,26 +904,57 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Viscera Nanobots", weapon_type="passive",
         upgrade_a="heal 2 on kill",
     ),
+    "Passive_Leech_A": WeaponDef(
+        name="Viscera Nanobots", weapon_type="passive",
+        upgrade_a="heal 2 on kill",
+    ),
     "Passive_FriendlyFire": WeaponDef(
+        name="Vek Hormones", weapon_type="passive",
+    ),
+    "Passive_FriendlyFire_A": WeaponDef(
+        name="Vek Hormones", weapon_type="passive",
+    ),
+    "Passive_FriendlyFire_B": WeaponDef(
+        name="Vek Hormones", weapon_type="passive",
+    ),
+    "Passive_FriendlyFire_AB": WeaponDef(
         name="Vek Hormones", weapon_type="passive",
     ),
     "Passive_Boosters": WeaponDef(
         name="Kickoff Boosters", weapon_type="passive",
     ),
+    "Passive_Boosters_A": WeaponDef(
+        name="Kickoff Boosters", weapon_type="passive",
+    ),
     "Passive_Defenses": WeaponDef(
+        name="Networked Armor", weapon_type="passive",
+    ),
+    "Passive_Defenses_A": WeaponDef(
         name="Networked Armor", weapon_type="passive",
     ),
     "Passive_MassRepair": WeaponDef(
         name="Repair Field", weapon_type="passive",
     ),
+    "Passive_AutoShields": WeaponDef(
+        name="Auto-Shields", weapon_type="passive",
+    ),
     "Passive_Burrows": WeaponDef(
         name="Stabilizers", weapon_type="passive",
     ),
     "Passive_Psions": WeaponDef(
-        name="Psion Dampener", weapon_type="passive",
+        name="Psionic Receiver", weapon_type="passive",
     ),
     "Passive_Ammo": WeaponDef(
-        name="Supply Drop", weapon_type="passive",
+        name="Ammo Generator", weapon_type="passive",
+    ),
+    "Passive_Medical": WeaponDef(
+        name="Medical Supplies", weapon_type="passive",
+    ),
+    "Passive_FastDecay": WeaponDef(
+        name="Forestry Nano", weapon_type="passive",
+    ),
+    "Passive_CritDefense": WeaponDef(
+        name="Critical Shields", weapon_type="passive",
     ),
     "Passive_HealingSmoke": WeaponDef(
         name="Healing Fog", weapon_type="passive",
@@ -928,7 +963,7 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Flame Boost", weapon_type="passive",
     ),
     "Passive_ForceAmp": WeaponDef(
-        name="Force Amplifier", weapon_type="passive",
+        name="Force Amp", weapon_type="passive",
     ),
 }
 

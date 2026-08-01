@@ -1810,12 +1810,27 @@ _POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
 _COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
 _MODELED_PASSIVE_LOADOUT_WEAPONS = {
     "Passive_Electric",
+    "Passive_Electric_A",
     "Passive_FlameImmune",
     "Passive_Leech",
     "Passive_Leech_A",
-    "Passive_FriendlyFire",
-    "Passive_ForceAmp",
+    "Passive_Defenses",
+    "Passive_Defenses_A",
+    "Passive_MassRepair",
+    "Passive_AutoShields",
+    "Passive_Burrows",
+    "Passive_Psions",
+    "Passive_Boosters",
+    "Passive_Boosters_A",
     "Passive_Medical",
+    "Passive_FriendlyFire",
+    "Passive_FriendlyFire_A",
+    "Passive_FriendlyFire_B",
+    "Passive_FriendlyFire_AB",
+    "Passive_FastDecay",
+    "Passive_ForceAmp",
+    "Passive_Ammo",
+    "Passive_CritDefense",
 }
 
 
@@ -1839,31 +1854,34 @@ def _upgraded_weapon_from_save(
     uid: int,
     slot: int,
 ) -> str | None:
+    passive_loadout_weapon: str | None = None
     weapons = getattr(state, "weapons", []) or []
     if isinstance(weapons, list):
         loadout_idx = uid * 2 + slot
         if loadout_idx < len(weapons):
             weapon_id = weapons[loadout_idx]
-            if (
-                weapon_id in _MODELED_UPGRADED_WEAPONS
-                or weapon_id in _MODELED_PASSIVE_LOADOUT_WEAPONS
-            ):
+            if weapon_id in _MODELED_UPGRADED_WEAPONS:
                 return weapon_id
+            if weapon_id in _MODELED_PASSIVE_LOADOUT_WEAPONS:
+                # A raw passive base ID can coexist with powered pawn-mod
+                # arrays. Prefer the derived effective variant below, while
+                # retaining this as a fallback when pawn data is unavailable.
+                passive_loadout_weapon = weapon_id
 
     pawn = _save_pawn_for_uid(state, uid)
     if pawn is None:
-        return None
+        return passive_loadout_weapon
     if slot == 0:
         return _modeled_upgrade_from_save_mods(
             getattr(pawn, "primary_weapon", ""),
             getattr(pawn, "primary_mod1", []),
             getattr(pawn, "primary_mod2", []),
-        )
+        ) or passive_loadout_weapon
     return _modeled_upgrade_from_save_mods(
         getattr(pawn, "secondary_weapon", ""),
         getattr(pawn, "secondary_mod1", []),
         getattr(pawn, "secondary_mod2", []),
-    )
+    ) or passive_loadout_weapon
 
 
 def _bridge_is_stale_post_mission(

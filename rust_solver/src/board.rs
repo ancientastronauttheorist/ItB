@@ -469,7 +469,9 @@ pub struct Board {
     pub fire_psion: bool,    // Fire Psion (Jelly_Fire1, AE): Vek immune to fire + Vek leave fire on tile when killed
     pub spider_psion: bool,  // Spider Psion (Jelly_Spider1, AE): Vek leave a SpiderlingEgg1 on tile when killed
     pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
-    pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
+    /// Passive_Electric / Storm Generator damage dealt to enemies in Smoke
+    /// each turn. 0 means absent; base is 1 and the A upgrade is 2.
+    pub storm_generator_damage: u8,
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
     /// Passive_FireBoost / Heat Engines: player mechs standing on fire consume
     /// the fire and gain Boost instead of catching fire.
@@ -480,7 +482,12 @@ pub struct Board {
     /// Passive_Leech / Viscera Nanobots heal amount for player mechs that
     /// deal killing blows. 0 means the passive is not currently available.
     pub viscera_nanobots_heal: u8,
-    pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
+    /// Passive_FriendlyFire / Vek Hormones bonus to enemy-on-enemy weapon
+    /// damage. 0 means absent; base is 1, A/B are 2, and AB is 3.
+    pub vek_hormones_damage: u8,
+    pub mass_repair: bool,      // Passive_MassRepair: Repair affects every living player mech
+    pub auto_shields: bool,     // Passive_AutoShields: surviving damaged buildings gain Shield
+    pub stabilizers: bool,      // Passive_Burrows: player mechs take no spawn-block damage
     pub force_amp: bool,        // Passive_ForceAmp: Vek take +1 from bump/spawn-block
                                 // damage. Excludes sentient enemies (Bot Leader).
     pub medical_supplies: bool, // Passive_Medical: all pilots survive mech death (no
@@ -606,12 +613,15 @@ impl Default for Board {
             fire_psion: false,
             spider_psion: false,
             boss_alive: false,
-            storm_generator: false,
+            storm_generator_damage: 0,
             flame_shielding: false,
             heat_engines: false,
             healing_smoke: false,
             viscera_nanobots_heal: 0,
-            vek_hormones: false,
+            vek_hormones_damage: 0,
+            mass_repair: false,
+            auto_shields: false,
+            stabilizers: false,
             force_amp: false,
             medical_supplies: false,
             current_turn: 0,

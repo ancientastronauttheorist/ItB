@@ -9,6 +9,7 @@ use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
 use crate::simulate::{
+    apply_auto_shield_after_building_damage,
     apply_damage,
     apply_damage_defer_death_explosion,
     apply_damage_with_bombrock_exclusion,
@@ -174,12 +175,19 @@ fn apply_mosquito_boss_attack(board: &mut Board, x: u8, y: u8, result: &mut Acti
     }
 }
 
-/// Get effective damage for an enemy hit at a tile (Vek Hormones adds +1 vs other enemies).
-fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: bool) -> u8 {
-    if vek_hormones {
+/// Get effective damage for an enemy hit at a tile. Vek Hormones adds its
+/// source-defined magnitude only when the target is another enemy.
+fn enemy_hit_damage(
+    board: &Board,
+    x: u8,
+    y: u8,
+    base_damage: u8,
+    vek_hormones_damage: u8,
+) -> u8 {
+    if vek_hormones_damage > 0 {
         if let Some(idx) = board.unit_at(x, y) {
             if board.units[idx].is_enemy() {
-                return base_damage + 1;
+                return base_damage.saturating_add(vek_hormones_damage);
             }
         }
     }
@@ -213,7 +221,7 @@ fn apply_starfish_appendages(
     ey: u8,
     damage: u8,
     push_cardinals: bool,
-    vek_hormones: bool,
+    vek_hormones_damage: u8,
     result: &mut ActionResult,
 ) {
     for dir in 0..DIRS.len() {
@@ -224,7 +232,13 @@ fn apply_starfish_appendages(
         if in_bounds(diag_x, diag_y) {
             let x = diag_x as u8;
             let y = diag_y as u8;
-            let d = enemy_hit_damage(board, x, y, damage, vek_hormones);
+            let d = enemy_hit_damage(
+                board,
+                x,
+                y,
+                damage,
+                vek_hormones_damage,
+            );
             apply_damage(board, x, y, d, result, DamageSource::Weapon);
         }
 
@@ -440,6 +454,7 @@ fn apply_env_danger(
         );
         result.grid_damage += (grid_loss as i32) - (lost as i32);
         board.grid_power = board.grid_power.saturating_sub(grid_loss);
+        apply_auto_shield_after_building_damage(board, x, y, lost, result);
     }
 
     if board.tile(x, y).has_pod() {
@@ -627,9 +642,15 @@ pub fn apply_spawn_blocking(
     let mut result = ActionResult::default();
     for &(sx, sy) in spawn_points {
         if let Some(idx) = board.unit_at(sx, sy) {
+            let stabilized_player_mech = board.stabilizers
+                && board.units[idx].is_player()
+                && board.units[idx].is_mech();
             let unit = &mut board.units[idx];
             if unit.hp <= 0 { continue; }
             result.spawns_blocked += 1;
+            if stabilized_player_mech {
+                continue;
+            }
             if unit.shield() {
                 unit.set_shield(false);
                 continue;
@@ -936,8 +957,9 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    // Storm Generator: enemies in smoke take 1 damage
-    if board.storm_generator {
+    // Storm Generator: enemies in smoke take the passive's effective damage.
+    if board.storm_generator_damage > 0 {
+        let damage = board.storm_generator_damage;
         for i in 0..board.unit_count as usize {
             if board.units[i].is_enemy()
                 && board.units[i].hp > 0
@@ -946,7 +968,7 @@ pub fn simulate_enemy_attacks(
                 let x = board.units[i].x;
                 let y = board.units[i].y;
                 if board.tile(x, y).smoke() {
-                    apply_damage(board, x, y, 1, &mut result, DamageSource::Weapon);
+                apply_damage(board, x, y, damage, &mut result, DamageSource::Weapon);
                 }
             }
         }
@@ -1396,6 +1418,13 @@ pub fn simulate_enemy_attacks(
                     );
                     result.grid_damage += (grid_loss as i32) - (lost as i32);
                     board.grid_power = board.grid_power.saturating_sub(grid_loss);
+                    apply_auto_shield_after_building_damage(
+                        board,
+                        bx,
+                        by,
+                        lost,
+                        &mut result,
+                    );
                     buildings_destroyed += grid_loss as i32;
                 }
             }
@@ -1497,7 +1526,7 @@ pub fn simulate_enemy_attacks(
 
         let weapon_behind = enemy.weapon_target_behind;
 
-        let vh = board.vek_hormones;
+        let vh = board.vek_hormones_damage;
 
         if matches!(enemy_wid, WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1) {
             apply_starfish_appendages(

@@ -7,6 +7,45 @@ from src.model.weapons import get_weapon_def
 from src.solver import unknown_detector
 
 
+def test_passive_source_catalog_and_static_defs_are_complete():
+    known = json.loads(Path("data/known_types.json").read_text())
+    expected = {
+        "Passive_Ammo": "Ammo Generator",
+        "Passive_AutoShields": "Auto-Shields",
+        "Passive_Boosters": "Kickoff Boosters",
+        "Passive_Boosters_A": "Kickoff Boosters",
+        "Passive_Burrows": "Stabilizers",
+        "Passive_CritDefense": "Critical Shields",
+        "Passive_Defenses": "Networked Armor",
+        "Passive_Defenses_A": "Networked Armor",
+        "Passive_Electric": "Storm Generator",
+        "Passive_Electric_A": "Storm Generator",
+        "Passive_FastDecay": "Forestry Nano",
+        "Passive_FlameImmune": "Flame Shielding",
+        "Passive_ForceAmp": "Force Amp",
+        "Passive_FriendlyFire": "Vek Hormones",
+        "Passive_FriendlyFire_A": "Vek Hormones",
+        "Passive_FriendlyFire_B": "Vek Hormones",
+        "Passive_FriendlyFire_AB": "Vek Hormones",
+        "Passive_Leech": "Viscera Nanobots",
+        "Passive_Leech_A": "Viscera Nanobots",
+        "Passive_MassRepair": "Repair Field",
+        "Passive_Medical": "Medical Supplies",
+        "Passive_Psions": "Psionic Receiver",
+    }
+
+    assert set(known["source_known_weapons"]) == set(expected)
+    for weapon_id, name in expected.items():
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None, weapon_id
+        assert weapon.weapon_type == "passive"
+        assert weapon.name == name
+
+    unknown_detector.reset_cache()
+    catalog = unknown_detector._load_known()
+    assert set(expected) <= catalog["weapons"]
+
+
 def test_repulse_variant_defs_and_known_rust_ids():
     known = json.loads(Path("data/known_types.json").read_text())
     for weapon_id, rust_id in (

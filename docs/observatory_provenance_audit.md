@@ -55,17 +55,17 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 10 | 4 |
+| Player weapons | 14 | 12 | 2 |
 | Missions | 75 | 20 | 55 |
 | Environments | 15 | 10 | 5 |
-| Unique total | 96 | 37 | 59 |
+| Unique total | 96 | 39 | 57 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 137 definitions literally and leaves 605 unindexed. Category totals
+names 149 definitions literally and leaves 593 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -217,6 +217,22 @@ Snow-family definitions, and queued-artillery side-hit threat coverage. The
 record remains `partial`: native `GetReachable`/`GetPath`/path-profile behavior,
 `AvoidingMines`, movement/item scheduling, setup placement, and enemy AI/RNG
 are all explicitly outside the proven contract.
+
+The tenth player-weapon slice, `player-weapon-passive-board-effects`, adds the
+previously unindexed `weapons_passive.lua` and
+`advanced/ae_weapons_base.lua` sources. It records all 22 powered IDs across
+15 passive families and all ten passive tooltip callbacks, while keeping these
+global board modifiers out of clickable Rust `WId` action slots. Simulator
+v379 preserves the exact Storm Generator 1/2 and Vek Hormones 1/2/2/3
+magnitudes, repeats Repair over every living player Mech, shields surviving
+damaged buildings immediately, and exempts player Mechs from spawn-block
+damage under Stabilizers. The bridge's direct Repair executor mirrors the
+source TEAM_MECH loop, and raw-loadout plus powered-mod save overlays retain
+exact passive variants. A source-known passive catalog does so without
+pretending that every native effect is simulated. Psionic Receiver, Ammo
+Generator, Critical Shields, Forestry Nano,
+native Networked Armor/Kickoff timing, and exhaustive Auto-Shields scheduling
+remain explicit gaps pending controlled build-keyed traces.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific

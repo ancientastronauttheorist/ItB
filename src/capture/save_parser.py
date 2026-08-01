@@ -109,7 +109,13 @@ _MODELED_UPGRADED_WEAPONS = {
     "Science_RainingFire_A",
     "Science_RainingFire_B",
     "Science_RainingFire_AB",
+    "Passive_Electric_A",
     "Passive_Leech_A",
+    "Passive_Defenses_A",
+    "Passive_Boosters_A",
+    "Passive_FriendlyFire_A",
+    "Passive_FriendlyFire_B",
+    "Passive_FriendlyFire_AB",
 }
 
 

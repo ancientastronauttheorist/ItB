@@ -11,6 +11,236 @@
   "inventory": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
   "records": [
     {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried passive source defines 22 powered loadout IDs over 15 passive families. Storm Generator stores Damage 1/2 for base/A, Viscera Nanobots stores Heal 1/2, Networked Armor stores Health 1/2, and Vek Hormones stores Damage 1/2/2/3 for base/A/B/AB; every constructor supplies the native Passive string that distinguishes its effective variant."
+        },
+        {
+          "classification": "fact",
+          "statement": "The Advanced Edition Skill_Repair override removes Fire, ACID, and Injured, then repeats the same SpaceDamage over every other TEAM_MECH pawn when Mass_Repair is active. The shipped descriptions state that Repair Field affects all Mechs, Auto-Shields shields a building after damage, Stabilizers prevents emerging-Vek damage to Mechs, and the remaining passive families have the named global effects."
+        },
+        {
+          "classification": "inference",
+          "statement": "The ten passive GetSkillEffect callbacks operate on fixed TipImage coordinates and demonstrate presentation examples; ordinary combat behavior is therefore a native engine dependency keyed by each constructor's Passive string, rather than an action emitted by those callbacks."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v379 preserves exact Storm Generator and Vek Hormones upgrade magnitudes and adds bounded Repair Field, Auto-Shields, and Stabilizers board effects. Source-catalogued passive IDs remain outside Rust WId action slots while save overlays preserve their exact powered variants."
+        }
+      ],
+      "id": "player-weapon-passive-board-effects",
+      "implementations": [
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "storm_generator_damage",
+            "vek_hormones_damage",
+            "mass_repair",
+            "auto_shields",
+            "stabilizers"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "enemy_hit_damage",
+            "apply_spawn_blocking",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_auto_shield_after_building_damage",
+            "simulate_attack_with_target2"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_MODELED_PASSIVE_LOADOUT_WEAPONS",
+            "_enrich_bridge_mech_weapons_from_save"
+          ]
+        },
+        {
+          "path": "src/capture/save_parser.py",
+          "symbols": [
+            "_MODELED_UPGRADED_WEAPONS",
+            "_modeled_upgrade_from_save_mods"
+          ]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "direct_repair_pawn",
+            "Mass_Repair"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS"
+          ]
+        },
+        {
+          "path": "src/solver/unknown_detector.py",
+          "symbols": [
+            "_load_known",
+            "source_known_weapons"
+          ]
+        },
+        {
+          "path": "scripts/regenerate_known_types.py",
+          "symbols": [
+            "SOURCE_KNOWN_WEAPONS",
+            "source_known_weapons"
+          ]
+        },
+        {
+          "path": "data/known_types.json",
+          "symbols": [
+            "source_known_weapons"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Psionic Receiver aura acquisition/application, Ammo Generator cross-turn limited-use accounting, and Critical Shields' one-shot grid-threshold history remain native engine dependencies without controlled build-keyed traces.",
+        "Forestry Nano is removed from ordinary drops in this build and its death-to-Forest behavior is not simulated. Viscera Nanobots, Flame Shielding, Force Amp, and Medical Supplies retain their earlier bounded implementations but do not have exhaustive native scheduler/status conformance.",
+        "Networked Armor and Kickoff Boosters are trusted through live effective HP and Move values; Rust does not independently reproduce their native mission-start or turn-start application and adjacency timing.",
+        "Auto-Shields is implemented after known Rust building-damage paths, but native trigger ordering across every SpaceDamage, grid-resist, multi-effect, destruction, and mission-script edge has not been captured independently.",
+        "The passive callback bodies prove tooltip examples and fields, not the native Passive-string implementation. No fresh controlled capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_passive.lua",
+          "sha256": "ba3555413140f1eb33c9cc94e0645d980950411524d96b96716f82dbb2512a47",
+          "symbols": [
+            "Passive_FlameImmune",
+            "Passive_Electric",
+            "Passive_Electric:GetSkillEffect",
+            "Passive_Electric_A",
+            "Passive_Leech",
+            "Passive_Leech:GetSkillEffect",
+            "Passive_Leech_A",
+            "Passive_Defenses",
+            "Passive_Defenses_A",
+            "Passive_MassRepair",
+            "Passive_MassRepair:GetSkillEffect",
+            "Passive_AutoShields",
+            "Passive_AutoShields:GetSkillEffect",
+            "Passive_Burrows",
+            "Passive_Psions",
+            "Passive_Boosters",
+            "Passive_Boosters:GetSkillEffect",
+            "Passive_Boosters_A",
+            "Passive_Medical",
+            "Passive_Medical:GetSkillEffect",
+            "Passive_FriendlyFire",
+            "Passive_FriendlyFire:GetSkillEffect",
+            "Passive_FriendlyFire_A",
+            "Passive_FriendlyFire_B",
+            "Passive_FriendlyFire_AB",
+            "Passive_FastDecay",
+            "Passive_FastDecay:GetSkillEffect",
+            "Passive_ForceAmp",
+            "Passive_ForceAmp:GetSkillEffect",
+            "Passive_Ammo",
+            "Passive_CritDefense",
+            "Passive_CritDefense:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "Skill_Repair",
+            "Skill_Repair:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons_base.lua",
+          "sha256": "4444af60a0b4d38894690425a83a4f610cbdc88f20b3fb322db410f257a89742",
+          "symbols": [
+            "Skill_Repair:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/text_weapons.lua",
+          "sha256": "a432a3dab32f1748657508da314ba8c11211496502493eebd93acc30b5aa61e1",
+          "symbols": [
+            "Passive_FlameImmune_Description",
+            "Passive_Electric_Description",
+            "Passive_Leech_Description",
+            "Passive_Defenses_Description",
+            "Passive_MassRepair_Description",
+            "Passive_AutoShields_Description",
+            "Passive_Burrows_Description",
+            "Passive_Psions_Description",
+            "Passive_Boosters_Description",
+            "Passive_Medical_Description",
+            "Passive_FriendlyFire_Description",
+            "Passive_ForceAmp_Description",
+            "Passive_Ammo_Description",
+            "Passive_CritDefense_Description",
+            "Passive_FastDecay_Description"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_passive_board_effects_preserve_effective_variants"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_mass_repair_applies_actor_repair_to_every_living_player_mech",
+            "test_auto_shields_protects_surviving_building_from_next_hit",
+            "test_vek_hormones_upgrades_use_exact_damage_magnitudes",
+            "test_storm_generator_upgrade_deals_two_damage_in_smoke",
+            "test_stabilizers_prevents_only_player_mech_spawn_damage"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_upgrade_overlay.py",
+          "symbols": [
+            "test_rocket_artillery_damage_upgrades_overlay_from_save",
+            "test_vek_hormones_variants_overlay_from_save",
+            "test_powered_pawn_mods_overlay_when_current_weapons_stay_base"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_passive_source_catalog_and_static_defs_are_complete"
+          ]
+        },
+        {
+          "path": "tests/test_save_parser_weapon_upgrades.py",
+          "symbols": [
+            "test_passive_upgrades_overlay_from_powered_save_mods"
+          ]
+        },
+        {
+          "path": "tests/test_modloader_mass_repair.py",
+          "symbols": [
+            "test_direct_repair_helper_clears_every_modeled_repair_status",
+            "test_bridge_repair_field_reuses_direct_repair_for_other_mechs"
+          ]
+        }
+      ]
+    },
+    {
       "coverage": "native_dependency",
       "evidence": [
         {

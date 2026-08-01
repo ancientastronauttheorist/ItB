@@ -2938,3 +2938,117 @@ def test_real_mission_satellite_record_pins_launch_and_open_native_timing():
     assert "DAMAGE_DEATH does not itself prove flying immunity" in gaps
     assert "source-defined Gone success" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_passive_board_effect_record_pins_exact_variants_and_native_gaps():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-passive-board-effects"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    passive = sources["scripts/weapons_passive.lua"]
+    assert passive["sha256"] == (
+        "ba3555413140f1eb33c9cc94e0645d"
+        "980950411524d96b96716f82dbb2512a47"
+    )
+    assert {
+        "Passive_Electric:GetSkillEffect",
+        "Passive_Leech:GetSkillEffect",
+        "Passive_MassRepair:GetSkillEffect",
+        "Passive_AutoShields:GetSkillEffect",
+        "Passive_Boosters:GetSkillEffect",
+        "Passive_Medical:GetSkillEffect",
+        "Passive_FriendlyFire:GetSkillEffect",
+        "Passive_FastDecay:GetSkillEffect",
+        "Passive_ForceAmp:GetSkillEffect",
+        "Passive_CritDefense:GetSkillEffect",
+    } <= set(passive["symbols"])
+    assert sources["scripts/advanced/ae_weapons_base.lua"] == {
+        "path": "scripts/advanced/ae_weapons_base.lua",
+        "sha256": (
+            "4444af60a0b4d38894690425a83a4f61"
+            "0cbdc88f20b3fb322db410f257a89742"
+        ),
+        "symbols": ["Skill_Repair:GetSkillEffect"],
+    }
+    assert sources["scripts/text_weapons.lua"]["sha256"] == (
+        "a432a3dab32f1748657508da314ba8c"
+        "11211496502493eebd93acc30b5aa61e1"
+    )
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "storm_generator_damage",
+        "vek_hormones_damage",
+        "mass_repair",
+        "auto_shields",
+        "stabilizers",
+    } == implementations["rust_solver/src/board.rs"]
+    assert {
+        "enemy_hit_damage",
+        "apply_spawn_blocking",
+        "simulate_enemy_attacks",
+    } == implementations["rust_solver/src/enemy.rs"]
+    assert {
+        "apply_auto_shield_after_building_damage",
+        "simulate_attack_with_target2",
+    } == implementations["rust_solver/src/simulate.rs"]
+    assert "SOURCE_KNOWN_WEAPONS" in implementations[
+        "scripts/regenerate_known_types.py"
+    ]
+    assert implementations["src/bridge/modloader.lua"] == {
+        "direct_repair_pawn",
+        "Mass_Repair",
+    }
+    assert implementations["src/capture/save_parser.py"] == {
+        "_MODELED_UPGRADED_WEAPONS",
+        "_modeled_upgrade_from_save_mods",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_passive_board_effects_preserve_effective_variants"
+    }
+    assert {
+        "test_mass_repair_applies_actor_repair_to_every_living_player_mech",
+        "test_auto_shields_protects_surviving_building_from_next_hit",
+        "test_vek_hormones_upgrades_use_exact_damage_magnitudes",
+        "test_storm_generator_upgrade_deals_two_damage_in_smoke",
+        "test_stabilizers_prevents_only_player_mech_spawn_damage",
+    } == tests["rust_solver/src/simulate.rs"]
+    assert tests["tests/test_save_parser_weapon_upgrades.py"] == {
+        "test_passive_upgrades_overlay_from_powered_save_mods"
+    }
+    assert tests["tests/test_modloader_mass_repair.py"] == {
+        "test_direct_repair_helper_clears_every_modeled_repair_status",
+        "test_bridge_repair_field_reuses_direct_repair_for_other_mechs",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "Psionic Receiver" in gaps
+    assert "Ammo Generator" in gaps
+    assert "Critical Shields" in gaps
+    assert "Networked Armor" in gaps
+    assert "Kickoff Boosters" in gaps
+    assert "protected live achievement session" in gaps
