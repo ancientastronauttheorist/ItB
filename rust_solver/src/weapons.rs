@@ -675,9 +675,12 @@ pub enum WId {
     RangedDefensestrikeB = 249,
     /// Cluster Artillery with Buildings Immune and +1 outer damage powered.
     RangedDefensestrikeAB = 250,
+    /// Any-class Targeted Strike. Inherits Grenade_Base's all-board target
+    /// area and deals 1 center damage plus four outward zero-damage pushes.
+    SupportForce = 251,
 }
 
-pub const WEAPON_COUNT: usize = 251;
+pub const WEAPON_COUNT: usize = 252;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1489,6 +1492,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 106: Repair sentinel
     // Already DEF
 
+    // 251: Support_Force -- Targeted Strike. Lua inherits
+    // Grenade_Base:GetTargetArea, so targeting is all-board rather than
+    // ordinary axis-only artillery. The custom effect damages the center for
+    // 1, then pushes its four cardinal neighbors outward for zero damage.
+    w[251] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1,
+        damage_outer: 0, push: PushDir::Outward, range_min: 0, range_max: 0,
+        limited: 1, flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+
     w
 };
 
@@ -1593,6 +1604,11 @@ pub fn is_cluster_artillery(id: WId) -> bool {
         WId::RangedDefensestrike | WId::RangedDefensestrikeA
             | WId::RangedDefensestrikeB | WId::RangedDefensestrikeAB
     )
+}
+
+#[inline]
+pub fn is_support_force(id: WId) -> bool {
+    id == WId::SupportForce
 }
 
 #[inline]
@@ -2077,6 +2093,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "Armored_Train_Move" => WId::ArmoredTrainMove,
         "VIP_Truck_Move" => WId::VipTruckMove,
         "Acid_Tank_Attack" => WId::AcidTankAtk,
+        "Support_Force" => WId::SupportForce,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
         "BlobAtkB" => WId::BlobAtkB,
@@ -2330,6 +2347,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ShamanAtk2 => "ShamanAtk2",
         WId::BeetleAtkB => "BeetleAtkB",
         WId::Repair => "_REPAIR",
+        WId::SupportForce => "Support_Force",
         WId::SupportRepair => "Support_Repair",
         WId::BlobAtk2 => "BlobAtk2",
         WId::BlobAtkB => "BlobAtkB",
@@ -2643,6 +2661,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ArmoredTrainMove => "Armored Charge",
         WId::VipTruckMove => "Floor It!",
         WId::BeetleAtkB => "Flaming Abdomen",
+        WId::SupportForce => "Targeted Strike",
         WId::SupportRepair => "Repair Drop",
         WId::AcidTankAtk => "A.C.I.D. Cannon",
         WId::BlobBossAtk => "Goo Attack",
@@ -3692,6 +3711,22 @@ mod tests {
         assert_eq!(wid_from_str("Support_Repair"), WId::SupportRepair);
         assert_eq!(wid_to_str(WId::SupportRepair), "Support_Repair");
         assert_eq!(weapon_name(WId::SupportRepair), "Repair Drop");
+    }
+
+    #[test]
+    fn test_support_force_def_and_mapping() {
+        let w = weapon_def(WId::SupportForce);
+        assert_eq!(w.weapon_type, WeaponType::Artillery);
+        assert_eq!(w.damage, 1);
+        assert_eq!(w.damage_outer, 0);
+        assert_eq!(w.push, PushDir::Outward);
+        assert!(w.aoe_adjacent());
+        assert_eq!(w.range_min, 0);
+        assert_eq!(w.range_max, 0);
+        assert_eq!(w.limited, 1);
+        assert_eq!(wid_from_str("Support_Force"), WId::SupportForce);
+        assert_eq!(wid_to_str(WId::SupportForce), "Support_Force");
+        assert_eq!(weapon_name(WId::SupportForce), "Targeted Strike");
     }
 
     #[test]

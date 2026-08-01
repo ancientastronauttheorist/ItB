@@ -1805,6 +1805,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v399: Support_Force (Targeted Strike) inherits Grenade_Base's all-board
+# target area including self and intact buildings. Rust keeps only effectful
+# actions, then applies one center damage and four zero-damage outward pushes.
+# Pre-v399 corpus is archived as recordings/failure_db_snapshot_sim_v398.jsonl.
 # v398: Explicit bridge `has_queued_attack=false` clears stale queued target,
 # raw target, and origin intent during Rust deserialization. Missing legacy
 # flags preserve prior payload handling. Legacy payloads also infer the
@@ -1855,7 +1859,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 398
+SIMULATOR_VERSION = 399
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

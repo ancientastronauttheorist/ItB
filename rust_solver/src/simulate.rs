@@ -19119,6 +19119,29 @@ mod tests {
     }
 
     #[test]
+    fn test_support_force_damages_center_and_pushes_outward_into_building() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 0, 0, 3, WId::SupportForce);
+        let center = add_enemy(&mut board, 2, 3, 3, 3);
+        let pushed = add_enemy(&mut board, 3, 3, 4, 3);
+        {
+            let tile = board.tile_mut(3, 5);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+        let grid_before = board.grid_power;
+
+        let result = simulate_weapon(&mut board, caster, WId::SupportForce, 3, 3);
+
+        assert_eq!(board.units[center].hp, 2, "center takes 1 damage");
+        assert_eq!((board.units[pushed].x, board.units[pushed].y), (3, 4));
+        assert_eq!(board.units[pushed].hp, 2, "outward push bumps on Building");
+        assert_eq!(board.tile(3, 5).building_hp, 0);
+        assert_eq!(board.grid_power, grid_before - 1);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
     fn test_player_snowmine_setup_leaves_mine_moves_and_applies_landing() {
         let mut board = make_test_board();
         let bot = board.add_unit(Unit {

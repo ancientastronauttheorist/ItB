@@ -70,6 +70,33 @@ def test_firestorm_generator_static_defs_use_source_exact_adjacent_minimum():
         assert weapon.push == "forward"
 
 
+def test_support_force_static_def_rust_id_and_unknown_gate_are_aligned():
+    weapon = get_weapon_def("Support_Force")
+    assert weapon is not None
+    assert weapon.name == "Targeted Strike"
+    assert weapon.weapon_type == "artillery"
+    assert weapon.damage == 1
+    assert weapon.damage_outer == 0
+    assert weapon.push == "outward"
+    assert weapon.aoe_adjacent is True
+    assert weapon.range_min == 0
+    assert weapon.range_max == 0
+    assert weapon.limited == 1
+
+    known = json.loads(Path("data/known_types.json").read_text())
+    assert "SupportForce" in known["weapon_enum"]
+
+    unknown_detector.reset_cache()
+    board = SimpleNamespace(
+        units=[SimpleNamespace(
+            type="SupportMech", is_mech=True,
+            weapon="Support_Force", weapon2="",
+        )],
+        tiles=None,
+    )
+    assert unknown_detector.detect_unknowns(board)["weapons"] == []
+
+
 def test_repulse_variant_defs_and_known_rust_ids():
     known = json.loads(Path("data/known_types.json").read_text())
     for weapon_id, rust_id in (

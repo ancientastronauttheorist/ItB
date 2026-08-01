@@ -5759,6 +5759,86 @@ def test_real_mission_snowbattle_record_pins_native_setup_gap():
     assert "safety gate after bridge state extraction" in gaps
 
 
+def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():
+    record = _mission_provenance_record(
+        "player-sources-dormant-experiment-structure"
+    )
+    assert record["coverage"] == "partial"
+    assert record["implementations"] == []
+    sources = {source["path"]: source for source in record["sources"]}
+    assert sources["scripts/weapons_experiment.lua"] == {
+        "path": "scripts/weapons_experiment.lua",
+        "sha256": "75d277da5a2bd2ccd20baadd3b9aa43ba25f93eae75900da987fab08175e995d",
+        "symbols": ["comment-only legacy placeholder (no Lua symbols)"],
+    }
+    assert sources["scripts/weapons_structure.lua"] == {
+        "path": "scripts/weapons_structure.lua",
+        "sha256": "a37f3379901ee5e4e8fa9c9e1596fff209868e411d39eea5d29043a231ab8353",
+        "symbols": [
+            "Pawn_Airfield", "AddPawn", "Structure_Force",
+            "Structure_Force:GetSkillEffect", "Structure_Repair",
+            "Structure_Repair:GetTargetArea", "Structure_Repair:GetSkillEffect",
+        ],
+    }
+    assert sources["scripts/scripts.lua"]["symbols"] == ["GetScripts"]
+    assert sources["scripts/weapons_base.lua"]["symbols"] == [
+        "Grenade_Base", "Grenade_Base:GetTargetArea",
+    ]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "comment-only legacy text" in facts
+    assert "one damage at the selected center" in facts
+    assert "every current TEAM_PLAYER pawn tile" in facts
+    assert "dormant/unrouted legacy evidence" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "no stock runtime reachability" in gaps
+    assert "must not be attributed to active Support_Repair" in gaps
+
+
+def test_real_player_support_force_record_pins_active_drop_reachability_and_gap():
+    record = _mission_provenance_record("player-weapon-support-force")
+    assert record["coverage"] == "partial"
+    sources = {source["path"]: source for source in record["sources"]}
+    assert sources["scripts/weapons_support.lua"] == {
+        "path": "scripts/weapons_support.lua",
+        "sha256": "f5fc6be6bde2aae2676f29c39b45fe039d2a81537608e1f43e17ebc3ecda1855",
+        "symbols": ["Support_Force", "Support_Force:GetSkillEffect"],
+    }
+    assert sources["scripts/weapons_base.lua"] == {
+        "path": "scripts/weapons_base.lua",
+        "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+        "symbols": ["Grenade_Base", "Grenade_Base:GetTargetArea"],
+    }
+    assert sources["scripts/drops.lua"] == {
+        "path": "scripts/drops.lua",
+        "sha256": "bfde13bbdfbdaa4f8fdb7c3f5ce0c84e4045bc538835143ec750cffaa79936ff",
+        "symbols": ["weapon_list", "pod_list", "getWeaponDrop", "checkWeaponDeck"],
+    }
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/known_types.json"] == {"SupportForce"}
+    assert implementations["src/model/weapons.py"] == {"Support_Force"}
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::SupportForce", "is_support_force", "wid_from_str", "wid_to_str",
+        "weapon_name",
+    }
+    assert implementations["rust_solver/src/solver.rs"] == {
+        "get_weapon_targets", "weapon_action_has_effect", "enumerate_actions",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {"simulate_weapon"}
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "every board coordinate, including the firing tile" in facts
+    assert "four zero-damage cardinal SpaceDamage effects" in facts
+    assert "stock drop/deck reachable" in facts
+    assert "Simulator v399" in facts
+    assert "64 source-legal targets" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Limited=1" in gaps
+    assert "exact cross-turn use depletion" in gaps
+    assert "particular campaign's RNG result" in gaps
+
+
 def test_real_mission_freezemines_record_pins_inherited_native_gap():
     record = _mission_provenance_record("mission-freezemines-inherited-placement")
     assert record["coverage"] == "partial"

@@ -55,17 +55,17 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 12 | 2 |
+| Player weapons | 14 | 14 | 0 |
 | Missions | 75 | 72 | 3 |
 | Environments | 15 | 14 | 1 |
-| Unique total | 96 | 91 | 5 |
+| Unique total | 96 | 93 | 3 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 381 definitions literally and leaves 361 unindexed. Category totals
+names 385 definitions literally and leaves 357 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -861,6 +861,25 @@ neither fake dynamic `forced_pawns` metadata nor a mission gate. The shared
 helper now anchors the existing one-HP, move-four, player-team, no-corpse
 Corporate tank and its zero-damage, no-push freeze projectile mapping
 in Python and Rust, while retaining targeting/timing as native behavior.
+
+The last two player-source files are now exact-indexed without assigning false
+runtime weight. `weapons_experiment.lua` is comment-only and defines nothing.
+`weapons_structure.lua` contains an airfield pawn, an all-board one-damage plus
+four-push `Structure_Force`, and a TEAM_PLAYER-wide healing
+`Structure_Repair`, but the shipped `GetScripts` list omits both files and no
+other installed script references their paths or identifiers. They are
+dormant/unrouted legacy evidence, not active weapon implementation claims; in
+particular, `Structure_Repair` is not the loaded `Support_Repair`.
+
+The active Support Force slice instead follows the exact loaded
+`weapons_support.lua` definition through inherited `Grenade_Base` all-board
+targeting and its direct one-damage center plus four outward zero-damage pushes.
+`drops.lua` puts `Support_Force` in both the normal weapon and pod decks, making
+it stock drop-reachable. Simulator v399 adds the exact ID/static definition,
+all 64 source-legal targets with true-no-op action pruning, and the center plus
+outward-push effect, including building/grid bump accounting. Native
+presentation, exhaustive effect ordering, drop RNG, and the base weapon's
+cross-turn `Limited=1` state remain partial gaps.
 
 ## Highest-value expansion order
 

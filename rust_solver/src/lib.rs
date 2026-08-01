@@ -2414,6 +2414,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v399 - Support_Force (Targeted Strike) inherits Grenade_Base's all-board
+// target area including self and intact buildings. Rust keeps only effectful
+// actions, then applies one center damage and four zero-damage outward pushes.
+// Pre-v399 corpus archived as recordings/failure_db_snapshot_sim_v398.jsonl.
 // v398 - Explicit bridge `has_queued_attack=false` clears stale queued target,
 // raw target, and origin intent during deserialization. Missing legacy flags
 // retain their prior payload behavior. Legacy payloads also infer the
@@ -2469,7 +2473,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 398;
+pub const SIMULATOR_VERSION: u32 = 399;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

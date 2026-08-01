@@ -907,6 +907,15 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
 
     # --- ANY CLASS / SUPPORT ---
 
+    # Targeted Strike inherits Grenade_Base:GetTargetArea, which returns every
+    # board coordinate including the firing tile and intact buildings. Its
+    # custom effect deals 1 damage at the selected tile and pushes each
+    # cardinal neighbor outward without dealing outer damage.
+    "Support_Force": WeaponDef(
+        name="Targeted Strike", weapon_type="artillery",
+        damage=1, damage_outer=0, push="outward",
+        range_min=0, range_max=0, aoe_adjacent=True, limited=1,
+    ),
     # Heals every TEAM_PLAYER pawn (mechs + allied NPCs like Train Pawn,
     # Satellite Rocket, Acid Vat, Dam) to full HP and clears fire/acid/frozen.
     # Revives disabled mechs from 0 HP. Does NOT damage buildings and does

@@ -8750,6 +8750,151 @@
           "symbols": ["test_real_mission_snowbattle_record_pins_native_setup_gap"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried weapons_experiment.lua is comment-only legacy text: it declares no pawn, weapon, function, or active Lua callback. It supplies no gameplay semantics."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried weapons_structure.lua declares one-HP, zero-move, TEAM_PLAYER Pawn_Airfield and calls AddPawn for that type. Structure_Force inherits Grenade_Base's every-board-coordinate target area, is Limited=1, and directly applies one damage at the selected center plus four zero-damage outward cardinal pushes. Structure_Repair is a separate Limited=1 skill: GetTargetArea returns every current TEAM_PLAYER pawn tile, and GetSkillEffect applies SpaceDamage(-5) to those targets. It is not the actively loaded Support_Repair definition."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact shipped GetScripts list actively loads weapons_base.lua and weapons_support.lua but omits both weapons_experiment.lua and weapons_structure.lua. An exact installed-script lexical audit finds no other reference to either omitted path or to Pawn_Airfield, Structure_Force, or Structure_Repair, so these two files are dormant/unrouted legacy evidence in this build, not implementation-conformance sources."
+        }
+      ],
+      "id": "player-sources-dormant-experiment-structure",
+      "implementations": [],
+      "known_gaps": [
+        "Because GetScripts omits both files and the installed scripts contain no other reference, no stock runtime reachability is claimed. User/mod loaders, external calls, native registration internals, and hypothetical behavior if loaded are outside this inventory evidence.",
+        "Structure_Force inherits the separately loaded Grenade_Base target helper, but native SkillEffect ordering, board-edge clipping, building/grid/status interactions, Limited-use state, and all UI presentation are intentionally not treated as active implementation obligations for this dormant definition.",
+        "Structure_Repair:GetSkillEffect passes an unresolved global named point into GetTargetArea; that callback ignores its argument in the shipped source. Native global lookup, healing caps/status interactions, disabled-Mech behavior, and AddPawn registration are untraced and must not be attributed to active Support_Repair."
+      ],
+      "sources": [
+        {
+          "path": "scripts/scripts.lua",
+          "sha256": "53632a1abe38638eae14b7a0cc9cee80590a9a90da9d110200d81eb3281b3a60",
+          "symbols": ["GetScripts"]
+        },
+        {
+          "path": "scripts/weapons_experiment.lua",
+          "sha256": "75d277da5a2bd2ccd20baadd3b9aa43ba25f93eae75900da987fab08175e995d",
+          "symbols": ["comment-only legacy placeholder (no Lua symbols)"]
+        },
+        {
+          "path": "scripts/weapons_structure.lua",
+          "sha256": "a37f3379901ee5e4e8fa9c9e1596fff209868e411d39eea5d29043a231ab8353",
+          "symbols": ["Pawn_Airfield", "AddPawn", "Structure_Force", "Structure_Force:GetSkillEffect", "Structure_Repair", "Structure_Repair:GetTargetArea", "Structure_Repair:GetSkillEffect"]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": ["Grenade_Base", "Grenade_Base:GetTargetArea"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact shipped GetScripts list actively loads weapons_base.lua before weapons_support.lua. Support_Force is a Rarity=1, PowerCost=0, Limited=1 Grenade_Base subclass whose inherited GetTargetArea returns every board coordinate, including the firing tile."
+        },
+        {
+          "classification": "fact",
+          "statement": "Support_Force:GetSkillEffect adds its sound and airstrike presentation, then directly adds one damage and bounce at the selected center followed by four zero-damage cardinal SpaceDamage effects whose push direction is outward from that center. Board-edge handling and effect/status interactions remain native boundaries beyond those direct calls."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact drops.lua includes Support_Force in both the base weapon_list and pod_list. checkWeaponDeck copies those lists into GAME.WeaponDeck and GAME.PodWeaponDeck when empty, while getWeaponDrop resolves the named global skill, derives its rarity, selects a drop, and removes it from both decks. Support_Force is therefore actively loaded and stock drop/deck reachable, unlike dormant Structure_Force."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v399 adds the exact Python Support_Force static definition and known Rust ID, an all-board Rust target area that retains self/non-axis/intact-building targets while pruning only true no-op centers, and strike simulation for one center damage plus four outward zero-damage pushes. Focused Python and Rust tests cover the static definition, ID/string/name mappings, 64 source-legal targets, effect-aware action pruning, center damage, outward bump, building/grid damage, and result accounting. The stored Limited=1 definition does not by itself prove cross-turn depletion."
+        }
+      ],
+      "id": "player-weapon-support-force",
+      "implementations": [
+        {
+          "path": "data/known_types.json",
+          "symbols": ["SupportForce"]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": ["Support_Force"]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["WId::SupportForce", "is_support_force", "wid_from_str", "wid_to_str", "weapon_name"]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["get_weapon_targets", "weapon_action_has_effect", "enumerate_actions"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["simulate_weapon"]
+        }
+      ],
+      "known_gaps": [
+        "Support_Force Limited=1 is source-defined, but exact cross-turn use depletion, reset/upgrade behavior, save/bridge overlay, exhausted-slot suppression, and UI state are not yet established end-to-end.",
+        "Native Grenade_Base artillery legality/presentation, AddSound/AddAirstrike/AddBounce scheduling, direct SpaceDamage ordering, board-edge clipping, building/grid/status/terrain interactions, and target/UI conformance require controlled build-keyed traces.",
+        "drops.lua proves deck reachability but not a particular campaign's RNG result, shop/pod timing, duplicate handling, or native random_drop state."
+      ],
+      "sources": [
+        {
+          "path": "scripts/scripts.lua",
+          "sha256": "53632a1abe38638eae14b7a0cc9cee80590a9a90da9d110200d81eb3281b3a60",
+          "symbols": ["GetScripts"]
+        },
+        {
+          "path": "scripts/weapons_support.lua",
+          "sha256": "f5fc6be6bde2aae2676f29c39b45fe039d2a81537608e1f43e17ebc3ecda1855",
+          "symbols": ["Support_Force", "Support_Force:GetSkillEffect"]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": ["Grenade_Base", "Grenade_Base:GetTargetArea"]
+        },
+        {
+          "path": "scripts/drops.lua",
+          "sha256": "bfde13bbdfbdaa4f8fdb7c3f5ce0c84e4045bc538835143ec750cffaa79936ff",
+          "symbols": ["weapon_list", "pod_list", "getWeaponDrop", "checkWeaponDeck"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": ["test_support_force_static_def_rust_id_and_unknown_gate_are_aligned"]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["test_support_force_def_and_mapping"]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["support_force_keeps_all_board_targets_and_prunes_only_true_noops"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_support_force_damages_center_and_pushes_outward_into_building"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_player_support_force_record_pins_active_drop_reachability_and_gap"]
+        }
+      ]
     }
   ],
   "schema_version": 1

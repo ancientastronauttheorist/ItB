@@ -425,6 +425,18 @@ pub(crate) fn get_weapon_targets(
         return targets;
     }
 
+    if is_support_force(weapon_id) {
+        // Support_Force inherits Grenade_Base:GetTargetArea, which returns
+        // every board coordinate including the firing tile and intact
+        // buildings. It is not ordinary axis-only artillery.
+        for x in 0..8u8 {
+            for y in 0..8u8 {
+                targets.push((x, y));
+            }
+        }
+        return targets;
+    }
+
     match wdef.weapon_type {
         WeaponType::Melee => {
             // For path_size>1 melee (Prime_Spear: Range=2, PathSize=2 in
@@ -1103,6 +1115,7 @@ fn tile_fire_weapon_status_effect(tile: &Tile) -> bool {
 fn weapon_action_has_effect(
     board: &Board,
     move_to: (u8, u8),
+    caster_before_move: (u8, u8),
     weapon_id: WId,
     target: (u8, u8),
     weapons: &WeaponTable,
@@ -1133,6 +1146,35 @@ fn weapon_action_has_effect(
         let tile = board.tile(x, y);
         tile.is_building() && !tile.shield()
     };
+
+    if is_support_force(weapon_id) {
+        // Its all-board target area is legal even at self/non-axis/building
+        // tiles. The board still has the caster at `caster_before_move` for a
+        // normal move, while the weapon fires from `move_to`; do not let that
+        // stale source occupancy create an action. Instead, explicitly add
+        // the hypothetical caster at its post-move firing tile.
+        let tile = board.tile(target.0, target.1);
+        let live_non_caster_at = |x: u8, y: u8| {
+            (x, y) != caster_before_move && unit_at(x, y)
+        };
+        let adjacent_non_caster = DIRS.iter().any(|&(dx, dy)| {
+            let x = target.0 as i8 + dx;
+            let y = target.1 as i8 + dy;
+            in_bounds(x, y) && live_non_caster_at(x as u8, y as u8)
+        });
+        let caster_is_center = target == move_to;
+        let caster_is_adjacent = DIRS.iter().any(|&(dx, dy)| {
+            let x = target.0 as i8 + dx;
+            let y = target.1 as i8 + dy;
+            in_bounds(x, y) && (x as u8, y as u8) == move_to
+        });
+        return caster_is_center
+            || caster_is_adjacent
+            || live_non_caster_at(target.0, target.1)
+            || (tile.terrain == Terrain::Building && tile.building_hp > 0)
+            || tile_weapon_terrain_effect(tile, weapon_id, wdef)
+            || adjacent_non_caster;
+    }
 
     if is_thermal_discharger(weapon_id) {
         let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
@@ -1502,7 +1544,14 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     }
                 } else {
                     for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w1_id, mech_from, weapons) {
-                        if weapon_action_has_effect(action_board, attack_pos, w1_id, target, weapons) {
+                        if weapon_action_has_effect(
+                            action_board,
+                            attack_pos,
+                            (action_unit.x, action_unit.y),
+                            w1_id,
+                            target,
+                            weapons,
+                        ) {
                             actions.push((pos, w1_id, target, None));
                         }
                     }
@@ -1545,7 +1594,14 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                     }
                 } else {
                     for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w2_id, (unit.x, unit.y), weapons) {
-                        if weapon_action_has_effect(action_board, attack_pos, w2_id, target, weapons) {
+                        if weapon_action_has_effect(
+                            action_board,
+                            attack_pos,
+                            (action_unit.x, action_unit.y),
+                            w2_id,
+                            target,
+                            weapons,
+                        ) {
                             actions.push((pos, w2_id, target, None));
                         }
                     }
@@ -2977,6 +3033,7 @@ mod top_k_tests {
         assert!(weapon_action_has_effect(
             &board,
             (3, 3),
+            (3, 3),
             WId::ScienceRainingFire,
             (3, 4),
             &WEAPONS,
@@ -3740,12 +3797,14 @@ mod top_k_tests {
         assert!(weapon_action_has_effect(
             &board,
             (3, 3),
+            (3, 3),
             WId::RangedDeployBomb,
             (3, 1),
             &WEAPONS,
         ));
         assert!(!weapon_action_has_effect(
             &board,
+            (3, 3),
             (3, 3),
             WId::RangedDeployBomb,
             (3, 5),
@@ -3864,6 +3923,7 @@ mod top_k_tests {
         assert!(weapon_action_has_effect(
             &board,
             (2, 3),
+            (2, 3),
             WId::RangedArachnoid,
             (2, 6),
             &WEAPONS,
@@ -3881,6 +3941,7 @@ mod top_k_tests {
         );
         assert!(!weapon_action_has_effect(
             &board,
+            (2, 3),
             (2, 3),
             WId::RangedArachnoid,
             (6, 2),
@@ -5248,6 +5309,77 @@ mod top_k_tests {
             assert!(!targets.contains(&(0, 3)), "{weapon:?} must reject distance 6");
             assert!(!targets.contains(&(5, 3)), "{weapon:?} must keep minimum range 2");
         }
+    }
+
+    #[test]
+    fn support_force_keeps_all_board_targets_and_prunes_only_true_noops() {
+        let mut board = Board::default();
+        let mech = board.add_unit(Unit {
+            uid: 91,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::SupportForce as u16),
+            flags: UnitFlags::ACTIVE
+                | UnitFlags::CAN_MOVE
+                | UnitFlags::IS_MECH
+                | UnitFlags::PUSHABLE,
+            move_speed: 2,
+            ..Default::default()
+        });
+        {
+            let tile = board.tile_mut(1, 2);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        let targets = get_weapon_targets(
+            &board, 3, 3, WId::SupportForce, (3, 3), &WEAPONS,
+        );
+        assert_eq!(targets.len(), 64);
+        assert!(targets.contains(&(3, 3)), "source tile is legal");
+        assert!(targets.contains(&(1, 2)), "non-axis Building is legal");
+        assert!(targets.contains(&(0, 0)), "all-board area includes noops");
+
+        assert!(weapon_action_has_effect(
+            &board, (3, 3), (3, 3), WId::SupportForce, (3, 3), &WEAPONS,
+        ));
+        assert!(weapon_action_has_effect(
+            &board, (3, 3), (3, 3), WId::SupportForce, (1, 2), &WEAPONS,
+        ));
+        assert!(!weapon_action_has_effect(
+            &board, (3, 3), (3, 3), WId::SupportForce, (0, 0), &WEAPONS,
+        ));
+
+        // Normal movement keeps the board at the old coordinate while the
+        // attack is evaluated from the intended arrival tile.  Support Force
+        // must therefore retain its own moved center and cardinal neighbors,
+        // while not treating the stale origin as an affected adjacent unit.
+        assert!(weapon_action_has_effect(
+            &board, (5, 3), (3, 3), WId::SupportForce, (5, 3), &WEAPONS,
+        ));
+        assert!(weapon_action_has_effect(
+            &board, (5, 3), (3, 3), WId::SupportForce, (5, 4), &WEAPONS,
+        ));
+        assert!(!weapon_action_has_effect(
+            &board, (5, 3), (3, 3), WId::SupportForce, (2, 3), &WEAPONS,
+        ));
+
+        let actions = enumerate_actions(&board, mech, &WEAPONS);
+        assert!(actions.iter().any(|action| action.1 == WId::SupportForce && action.2 == (3, 3)));
+        assert!(actions.iter().any(|action| action.1 == WId::SupportForce && action.2 == (1, 2)));
+        assert!(!actions.iter().any(|action| action.1 == WId::SupportForce && action.2 == (0, 0)));
+        assert!(actions.iter().any(|action| {
+            action.0 == (5, 3) && action.1 == WId::SupportForce && action.2 == (5, 3)
+        }));
+        assert!(actions.iter().any(|action| {
+            action.0 == (5, 3) && action.1 == WId::SupportForce && action.2 == (5, 4)
+        }));
+        assert!(!actions.iter().any(|action| {
+            action.0 == (5, 3) && action.1 == WId::SupportForce && action.2 == (2, 3)
+        }));
     }
 
     #[test]
