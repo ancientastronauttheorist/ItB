@@ -4609,3 +4609,172 @@ def test_real_mission_terraformer_record_pins_zone_and_mountain_clear():
     assert "IsEndBlocked" in gaps
     assert "Frozen" in gaps
     assert "v198" in gaps
+
+
+def test_real_mission_repair_record_pins_platform_objective_and_native_events():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-repair-platform-objective"
+    )
+    assert record["coverage"] == "partial"
+    sources = {source["path"]: source for source in record["sources"]}
+    assert sources["scripts/advanced/missions/grass/mission_repair.lua"] == {
+        "path": "scripts/advanced/missions/grass/mission_repair.lua",
+        "sha256": (
+            "37a3d07aba486bad553a6bf568ad8596e"
+            "d7d08914625720a41899b6e228d0889"
+        ),
+        "symbols": [
+            "Mission_Repair",
+            "Env_RepairMission",
+            "Mission_Repair:NextTurn",
+            "Mission_Repair:StartDeployment",
+            "Mission_Repair:UpdateMission",
+            "Mission_Repair:GetCompletedObjectives",
+            "Mission_Repair:UpdateObjectives",
+        ],
+    }
+    assert sources["scripts/missions/mission_minebase.lua"] == {
+        "path": "scripts/missions/mission_minebase.lua",
+        "sha256": (
+            "1ac2efa710e4a7469b116ed65a66a4fc"
+            "53b70f6b5e643c62f2a4c21b6705fb4e"
+        ),
+        "symbols": ["Mission_MineBase", "Mission_MineBase:StartMission"],
+    }
+    assert sources["scripts/items.lua"] == {
+        "path": "scripts/items.lua",
+        "sha256": (
+            "9d23a6749ba2222a5bcf7e4ff1c4a300"
+            "eafcb7895bd19429e0877ab930370aea"
+        ),
+        "symbols": ["Item_Repair_Mine"],
+    }
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "apply_landing_effects",
+        "apply_repair_platform",
+        "simulate_move",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_is_transient_delayed_repair_platform_diff",
+        "recommend_deploy_tiles",
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "sets every TEAM_MECH pawn to one HP" in facts
+    assert "subtracting EVENT_REPAIR_UNDO" in facts
+    assert "up to eight random inner-board" in facts
+    assert "SpaceDamage(-10)" in facts
+    assert "player mechs" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "native engine events" in gaps
+    assert "interactive move-undo path" in gaps
+    assert "not reclassified as source-proven" in gaps
+    assert "placement randomness" in gaps
+
+
+def test_real_mission_missiles_record_pins_barrages_and_partial_objective():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-missiles-barrages"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/missions/acid/mission_missiles.lua",
+            "sha256": (
+                "f334ce1a26473322d50528d6349d8b942"
+                "fb9202d2e1b0faa07c1d59f1d299131"
+            ),
+            "symbols": [
+                "Mission_Missiles",
+                "Mission_Missiles:GetCompletedObjectives",
+                "Mission_Missiles:UpdateObjectives",
+                "Mission_Missiles:StartMission",
+                "Missile_Unit",
+                "Missiles_Unit_Weapon",
+                "Missiles_Shield",
+                "Missiles_OneDmg",
+            ],
+        },
+        {
+            "path": "scripts/weapons_support.lua",
+            "sha256": (
+                "f5fc6be6bde2aae2676f29c39b45fe039"
+                "d2a81537608e1f43e17ebc3ecda1855"
+            ),
+            "symbols": [
+                "Support_Missiles",
+                "Support_Missiles:GetTargetArea",
+                "Support_Missiles:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883"
+                "e1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": ["Skill:GetTargetZone"],
+        },
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/solver.rs"] == {
+        "get_weapon_targets",
+        "mission_missiles_action_bonus",
+        "weapon_action_has_effect",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "sim_global_unit_effect",
+        "simulate_weapon",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_enrich_bridge_limited_mission_weapons_from_save",
+        "_is_transient_delayed_multihit_damage_diff",
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "zero reputation at zero or one shot" in facts
+    assert "one reputation at two or three shots" in facts
+    assert "two reputation at four shots" in facts
+    assert "proposed failure when the Missile_Unit dies is commented out" in facts
+    assert "scans x then y" in facts
+    assert "every pawn-space except the source" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "does not export Mission_Missiles.ShotsUsed" in gaps
+    assert "Board:IsPawnSpace" in gaps
+    assert "generic friendly-NPC penalty" in gaps
+    assert "decorative" in gaps

@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 31 | 44 |
+| Missions | 75 | 34 | 41 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 50 | 46 |
+| Unique total | 96 | 53 | 43 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 225 definitions literally and leaves 517 unindexed. Category totals
+names 237 definitions literally and leaves 505 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -113,6 +113,30 @@ record remains `partial`: the bridge is intentionally uninstalled during the
 protected session, so the old fresh-turn save fallback still conservatively
 overcounts decorative markers; native mission-end/UI scheduling and exhaustive
 `DAMAGE_DEATH`/custom-script ordering also remain open.
+
+The Repair Platform slice adds the exact
+`scripts/advanced/missions/grass/mission_repair.lua`, inherited
+`scripts/missions/mission_minebase.lua`, and `scripts/items.lua` sources plus
+all six mission callbacks. The sources prove eight inner-board repair-item
+placements, deployment-time mech HP reduction, pickup-minus-undo objective
+arithmetic, and completion at three uses. Existing bridge, Rust landing,
+objective scoring, deployment reservation, and bounded settlement behavior are
+connected to focused live-derived regressions without overclaiming the native
+event producer: player-mech-only credit, enemy consumption/healing, undo
+timing, and exhaustive `SpaceDamage(-10)` interactions remain explicit gaps.
+
+The Detritus Contraption slice adds exact
+`scripts/advanced/missions/acid/mission_missiles.lua` evidence plus the
+inherited `Support_Missiles` and `Skill:GetTargetZone` callbacks. Lua awards
+zero, one, or two reputation at 0–1, 2–3, or 4 shots, respectively, and its
+commented-out death branch proves that losing the Contraption does not itself
+fail the objective. Both Limited=2 barrages use friendly-fire all-pawn
+targeting, exclude the source, and queue impacts in x-then-y order. Existing
+Rust global-effect ordering, Shield no-op objective use, secondary-only actor
+eligibility, turn-boundary slot depletion, delayed-effect settlement, and
+decorative-conveyor regression provide the implementation anchors. Direct
+mid-turn `ShotsUsed`, native pawn-space edges, artillery scheduling, setup, and
+ZONE_ALL presentation remain partial-coverage gaps.
 
 The Acid Vats slice adds the exact
 `scripts/missions/acid/mission_barrels.lua` source and all nine of its active

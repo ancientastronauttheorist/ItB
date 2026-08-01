@@ -6452,6 +6452,327 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Repair source subclasses Mission_MineBase with eight Item_Repair_Mine placements, sets every TEAM_MECH pawn to one HP at deployment start, updates RepairPickups by adding EVENT_REPAIR_PICKUP and subtracting EVENT_REPAIR_UNDO, and completes its one-reputation objective at three pickups. NextTurn only presents the repair-platform tutorial."
+        },
+        {
+          "classification": "fact",
+          "statement": "The inherited Mission_MineBase:StartMission selects up to eight random inner-board Road, Forest, or Sand points, converts every selected point to Road, and installs the configured item. Item_Repair_Mine carries SpaceDamage(-10), the repair sound, and HealingTile animation; the source does not define which native landings emit the pickup or undo events."
+        },
+        {
+          "classification": "fact",
+          "statement": "The bridge exports live Item_Repair_Mine tiles plus target and RepairPickups progress, with a conservative save fallback for older bridges. Python and Rust preserve that state, consume and heal a platform on landing, value progress toward three, reserve safe platforms during deployment, and use bounded post-move settlement for the native delayed item animation. Existing live-derived regressions restrict objective credit to player mechs while allowing enemies to consume and heal from a platform."
+        }
+      ],
+      "id": "mission-repair-platform-objective",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "dump_state",
+            "Item_Repair_Mine",
+            "repair_platform_target",
+            "repair_platforms_used"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_read_repair_pickups_from_save",
+            "read_bridge_state"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data",
+            "repair_platform_target",
+            "repair_platforms_used"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "repair_platform_target",
+            "repair_platforms_used"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_landing_effects",
+            "apply_repair_platform",
+            "simulate_move"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "mission_repair_bonus"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_is_transient_delayed_repair_platform_diff",
+            "recommend_deploy_tiles"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "EVENT_REPAIR_PICKUP and EVENT_REPAIR_UNDO are native engine events. The Lua source does not establish landing eligibility, team ownership, exact emission timing, or whether every SpaceDamage(-10) edge emits pickup credit. Player-mech-only objective credit and enemy consumption/healing are retained live-derived rules, not reclassified as source-proven here.",
+        "Rust does not model the interactive move-undo path or decrement RepairPickups after EVENT_REPAIR_UNDO. Autonomous bridge combat has no undo command, so this remains a native UI boundary rather than an omitted supported action.",
+        "Native SpaceDamage(-10) ordering with every max-HP, over-max-HP, Shield, Frozen, ACID, Fire, passive, thrown-unit, and death state is not exhaustively traced. Focused live regressions cover max-HP capping, enemy consumption without objective credit, Hydraulic Lifter landing damage before healing, and delayed bridge settlement.",
+        "Mission_MineBase placement randomness, spawner blocking, exact deployment callback timing, tutorial presentation, objective UI timing, and random bonus selection are not reproduced; Rust consumes the resulting live board and selected bonus IDs.",
+        "This record excludes Old Earth and Freeze mine behavior outside the inherited placement loop."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/grass/mission_repair.lua",
+          "sha256": "37a3d07aba486bad553a6bf568ad8596ed7d08914625720a41899b6e228d0889",
+          "symbols": [
+            "Mission_Repair",
+            "Env_RepairMission",
+            "Mission_Repair:NextTurn",
+            "Mission_Repair:StartDeployment",
+            "Mission_Repair:UpdateMission",
+            "Mission_Repair:GetCompletedObjectives",
+            "Mission_Repair:UpdateObjectives"
+          ]
+        },
+        {
+          "path": "scripts/missions/mission_minebase.lua",
+          "sha256": "1ac2efa710e4a7469b116ed65a66a4fc53b70f6b5e643c62f2a4c21b6705fb4e",
+          "symbols": [
+            "Mission_MineBase",
+            "Mission_MineBase:StartMission"
+          ]
+        },
+        {
+          "path": "scripts/items.lua",
+          "sha256": "9d23a6749ba2222a5bcf7e4ff1c4a300eafcb7895bd19429e0877ab930370aea",
+          "symbols": [
+            "Item_Repair_Mine"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_hydraulic_lifter_enemy_landing_damage_precedes_repair_platform_heal",
+            "test_repair_platform_enemy_consumes_without_objective_credit",
+            "test_repair_platform_full_health_mech_does_not_overheal",
+            "test_repair_platform_healing_caps_at_max_hp"
+          ]
+        },
+        {
+          "path": "tests/test_sim_v48_repair_platforms.py",
+          "symbols": [
+            "test_repair_objective_scoring_values_completion",
+            "test_repair_platform_full_health_mech_counts_without_overheal",
+            "test_repair_platform_heals_consumes_and_counts_objective_progress",
+            "test_repair_platform_roundtrips_when_unused"
+          ]
+        },
+        {
+          "path": "tests/test_auto_turn_state.py",
+          "symbols": [
+            "test_repair_platform_move_diff_gets_settle_retry",
+            "test_repair_platform_settle_retry_rejects_mixed_grid_loss"
+          ]
+        },
+        {
+          "path": "tests/test_recommended_deploy.py",
+          "symbols": [
+            "test_repair_mission_reserves_adjacent_safe_deployment_platforms"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_repair_record_pins_platform_objective_and_native_events"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Missiles source creates one two-HP, zero-move, nonpushable, smoke-immune player Missile_Unit, clears ACID from its starting disposal-zone tile, and gives it Limited=2 Shield and one-damage barrages. UpdateObjectives derives ShotsUsed as four minus the living unit's total shots remaining."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission completion intentionally awards zero reputation at zero or one shot, one reputation at two or three shots, and two reputation at four shots. The source's proposed failure when the Missile_Unit dies is commented out, so unit destruction does not itself fail the objective; the solver's generic friendly-NPC loss penalty is protective policy rather than source objective semantics."
+        },
+        {
+          "classification": "fact",
+          "statement": "Inherited Support_Missiles target enumeration scans x then y and, with FriendlyFire=true, includes every pawn-space except the source. GetSkillEffect snapshots that list and queues one artillery SpaceDamage per target with the selected Damage or Shield property. ZoneTargeting=ZONE_ALL makes the inherited Skill:GetTargetZone expose the complete selected group."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust preserves both barrage identities, source exclusion, friendly fire, no building targets, exact lexicographic coordinate order, Shield no-op use during Mission_Missiles, smoke immunity, and a strong four-use action bonus. The turn-boundary save overlay blanks each exhausted slot without reindexing, bounded verification waits for delayed global impacts, and Mission_Missiles correctly ignores decorative conveyor sprites because it has no active belt environment."
+        }
+      ],
+      "id": "mission-missiles-barrages",
+      "implementations": [
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "Missile_Unit"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "Missiles_OneDmg",
+            "Missiles_Shield"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_enrich_bridge_limited_mission_weapons_from_save",
+            "_is_transient_delayed_multihit_damage_diff"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "MissilesOneDmg",
+            "MissilesShield",
+            "wid_from_str",
+            "wid_to_str",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets",
+            "mission_missiles_action_bonus",
+            "weapon_action_has_effect"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "sim_global_unit_effect",
+            "simulate_weapon"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "active_conveyor_mission",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "friendly_npc_killed"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "The Lua bridge does not export Mission_Missiles.ShotsUsed or GetShotsRemaining directly mid-turn. Turn-boundary save overlays provide per-slot Limited-use counts, and Rust strongly values firing both weapons, but the objective counter and partial-reputation tiers are not modeled as an authoritative end-to-end safety scalar.",
+        "Native Board:IsPawnSpace eligibility for burrowed, hidden, emerging, dying, and effect-queued pawns is not independently traced. Rust snapshots its live non-source units and reproduces the exact x-then-y order for modeled board occupants.",
+        "Native AddArtillery delay, Shield/Frozen/death-effect ordering, animation settlement, and every global multi-target status interaction are not exhaustive. Bounded bridge rereads cover the proven delayed HP, Shield, ACID-pool, Mountain, and Blast-Psion shapes without treating those timings as source-proven.",
+        "The source intentionally does not fail the objective when Missile_Unit dies. Rust's generic friendly-NPC penalty still avoids that loss, but no mission-specific protect objective should be inferred from this record.",
+        "Native PAWN_FACTORY setup, disposal-zone selection, pawn-ID allocation, SpawnStartMod/SpawnMod, random bonus selection, and inherited ZONE_ALL UI presentation are not reproduced.",
+        "Saved conveyor custom tiles on Mission_Missiles are decorative according to live evidence and the absence of a belt environment, not a behavior independently stated by mission_missiles.lua."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/acid/mission_missiles.lua",
+          "sha256": "f334ce1a26473322d50528d6349d8b942fb9202d2e1b0faa07c1d59f1d299131",
+          "symbols": [
+            "Mission_Missiles",
+            "Mission_Missiles:GetCompletedObjectives",
+            "Mission_Missiles:UpdateObjectives",
+            "Mission_Missiles:StartMission",
+            "Missile_Unit",
+            "Missiles_Unit_Weapon",
+            "Missiles_Shield",
+            "Missiles_OneDmg"
+          ]
+        },
+        {
+          "path": "scripts/weapons_support.lua",
+          "sha256": "f5fc6be6bde2aae2676f29c39b45fe039d2a81537608e1f43e17ebc3ecda1855",
+          "symbols": [
+            "Support_Missiles",
+            "Support_Missiles:GetTargetArea",
+            "Support_Missiles:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "Skill:GetTargetZone"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_detritus_contraption_barrages"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_missile_barrage_excludes_source_and_requires_valid_target",
+            "test_missile_barrage_uses_lua_coordinate_order_for_blast_psion_teardown",
+            "test_smoked_contraption_missile_barrage_ignores_smoke"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "mission_missiles_enumerates_shield_barrage_when_all_targets_are_shielded",
+            "mission_missiles_prefers_contraption_use_over_skip",
+            "mission_missiles_secondary_only_contraption_remains_actionable"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_mission_missiles_decorative_conveyor_does_not_move_enemy_attack"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_upgrade_overlay.py",
+          "symbols": [
+            "test_missile_unit_exhausted_slot_is_blank_without_reindexing",
+            "test_missile_unit_secondary_exhaustion_preserves_primary_slot"
+          ]
+        },
+        {
+          "path": "tests/test_auto_turn_state.py",
+          "symbols": [
+            "test_missile_barrage_enemy_damage_only_diff_gets_settle_retry",
+            "test_missile_barrage_mixed_shield_consumption_and_damage_lag_retries"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_missiles_record_pins_barrages_and_partial_objective"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
