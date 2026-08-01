@@ -10,6 +10,10 @@
     "destroy": ["Hacked_Building"],
     "protect": ["Snowtank1", "Snowtank1_Player"]
   },
+  "Mission_Artillery": {
+    "destroy": [],
+    "protect": ["ArchiveArtillery"]
+  },
   "Mission_Dam": {
     "destroy": ["Dam_Pawn"],
     "protect": []

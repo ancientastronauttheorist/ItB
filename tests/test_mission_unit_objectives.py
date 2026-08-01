@@ -11,6 +11,13 @@ def test_mission_tanks_protects_archive_tanks():
     assert "Archive_Tank" in resolved["protect"]
 
 
+def test_mission_artillery_protects_old_earth_artillery():
+    resolved = resolve_unit_objectives("Mission_Artillery")
+
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["ArchiveArtillery"]
+
+
 def test_mission_acidstorm_destroys_storm_generator():
     resolved = resolve_unit_objectives("Mission_AcidStorm")
 

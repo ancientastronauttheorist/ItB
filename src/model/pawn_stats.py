@@ -317,8 +317,10 @@ NEUTRAL_STATS = {
     "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False,
                                    ignore_smoke=True,
                                    default_weapon="Rocket_Launch"),
-    "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
-    "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
+    "ArchiveArtillery":  PawnStats(move_speed=1, ranged=1,
+                                   default_weapon="Archive_ArtShot"),
+    "Archive_Tank":      PawnStats(move_speed=4, ranged=1,
+                                   default_weapon="Deploy_TankShot"),
     # Mission_Civilians VIP: immobile except for its Limited=2 range-three
     # movement skill, which is explicitly usable through Smoke.
     "VIP_Truck":         PawnStats(move_speed=0, ranged=1, ignore_smoke=True,

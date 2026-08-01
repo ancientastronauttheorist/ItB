@@ -7779,6 +7779,204 @@
           "symbols": ["test_real_mission_respawn_record_pins_native_resurrection_gate"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Artillery source creates one ArchiveArtillery through native Board:AddPawn, stores its ID, and awards its one-reputation objective only while that stored pawn remains alive. ArchiveArtillery is a two-HP, player-team, Corpse=true artillery actor with source MoveSpeed=1."
+        },
+        {
+          "classification": "fact",
+          "statement": "Archive_ArtShot inherits LineArtillery and queues a two-damage artillery hit on its chosen target, followed by another two-damage artillery hit on the immediately-behind tile in the firing direction; the second hit hides its path. Existing Rust/Python map the weapon and model its behind-tile footprint, while mission objective metadata and plan safety protect the live ArchiveArtillery actor; the Python fallback now also pins its source MoveSpeed=1 and default weapon."
+        }
+      ],
+      "id": "mission-artillery-support-objective",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_Artillery", "ArchiveArtillery"]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": ["Archive_ArtShot"]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["WId::ArchiveArtShot", "wid_from_str", "wid_to_str"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["sim_artillery", "simulate_weapon"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["ArchiveArtillery"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["audit_plan_safety"]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:AddPawn placement, pawn-ID allocation, LineArtillery target legality, effect queue/delay, objective scheduler, presentation, and all queued damage/status/death interactions are not reproduced end-to-end.",
+        "Live bridge actor extraction, native team/active state, and complete source-to-bridge placement conformance still require controlled traces despite the synchronized Python fallback movement and weapon defaults.",
+        "Mission_Artillery:NextTurn is a shipped no-op body in this build. This record does not infer behavior from its commented tutorial code."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/grass/mission_artillery.lua",
+          "sha256": "fe78f546038a8a83a3db277ddd47a32c9be117db14f04ff51145dd880f8418f9",
+          "symbols": ["Mission_Artillery", "Mission_Artillery:StartMission", "Mission_Artillery:UpdateObjectives", "Mission_Artillery:GetCompletedObjectives", "Mission_Artillery:NextTurn", "ArchiveArtillery", "Archive_ArtShot", "Archive_ArtShot:GetSkillEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_archive_artillery_damaging_web_source_keeps_web_if_survives"]
+        },
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": ["test_mission_artillery_protects_old_earth_artillery"]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": ["test_summary_tracks_archive_artillery_from_mission_metadata"]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": ["test_archive_mission_allies_match_source_movement_and_weapons"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_artillery_record_pins_support_and_fallback_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Mines file is a zero-callback Mission_MineBase constructor: it selects Item_Mine, uses GlobalSpawnMod=1 and SpawnStartMod=0, permits only GRID/MECHS/KILL_FIVE/BLOCK/SELFDAMAGE bonuses, and blocks Jelly_Explode and Dung."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing bridge/save import and Rust landing simulation preserve live Item_Mine locations as old-earth mines and model their arrival effect. This connects observed mine state to shared mechanics, not Mission_Mines' inherited native placement or spawn lifecycle."
+        }
+      ],
+      "id": "mission-mines-inherited-old-earth-placement",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["dump_state"]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": ["_read_old_earth_mines_from_save", "read_bridge_state"]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": ["from_bridge_data"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["simulate_move", "apply_landing_effects"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_MineBase's native placement count, inner-board terrain filtering, random selection, item setup, spawn behavior, and mission lifecycle are inherited and not defined by this zero-callback file. This record does not claim source-specific placement simulation.",
+        "GlobalSpawnMod, SpawnStartMod, BlockedUnits, the selected bonus slate, bonus objective timing, and any native mine animation or queue ordering are not forecast from this constructor.",
+        "Generic old-earth mine import/effects do not establish that every current or projected mine came from Mission_Mines rather than another source."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/grass/mission_mines.lua",
+          "sha256": "4857fb2b0c29c758f66f78b5a07451fc8159cfa9c6cedb898d1fb859f5f3b3d0",
+          "symbols": ["Mission_Mines"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_brute_grapple_transit_over_old_earth_mine_does_not_trigger"]
+        },
+        {
+          "path": "tests/test_mine_stale_save_gate.py",
+          "symbols": ["test_reader_does_not_inject_save_mines_after_turn_0"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_mines_record_pins_zero_callback_inherited_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Tanks source creates two defended Archive_Tank pawns, immediately disables both, and at player turn three powers and de-neutralizes each surviving stored ID. Its objective awards two reputation for two survivors, one for one survivor, and fails at zero."
+        },
+        {
+          "classification": "fact",
+          "statement": "Archive_Tank is source-defined as one HP, MoveSpeed=4, initially neutral and player-team, Corpse=false, with Deploy_TankShot. Existing mission-objective metadata, board summary, cannon model, and route policy protect the live tanks without asserting a native activation forecast; the Python fallback now pins its source movement and default weapon."
+        }
+      ],
+      "id": "mission-tanks-delayed-activation",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_Tanks", "Archive_Tank"]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": ["Deploy_TankShot"]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["WId::DeployTankShot", "wid_from_str"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["Archive_Tank"]
+        }
+      ],
+      "known_gaps": [
+        "Native AddDefended satellite-zone selection, stored pawn IDs, SetPowered/SetNeutral timing, turn-three scheduler, mission event presentation, and partial objective settlement are not reproduced as a forecast; existing objective protection consumes live board state.",
+        "Live bridge actor extraction, native team/active state, and complete source-to-bridge placement conformance still require controlled traces despite the synchronized Python fallback movement and weapon defaults.",
+        "The separately indexed Deploy_TankShot cannon does not prove mission activation or objective conformance, and native damage, movement, status, death, and queue interactions remain partial."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/grass/mission_tanks.lua",
+          "sha256": "126c017dce32b8026773621a9fb4c60f187d01c7dc4066627e0c49664e916a77",
+          "symbols": ["Mission_Tanks", "Mission_Tanks:StartMission", "Mission_Tanks:NextTurn", "Mission_Tanks:GetCompletedObjectives", "Mission_Tanks:CountTanks", "Mission_Tanks:UpdateObjectives", "Archive_Tank"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": ["test_mission_tanks_protects_archive_tanks"]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": ["test_summary_tracks_archive_tanks_from_mission_metadata"]
+        },
+        {
+          "path": "tests/test_mission_picker.py",
+          "symbols": ["test_tank_objective_avoided_for_perfect_island_farming"]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": ["test_archive_mission_allies_match_source_movement_and_weapons"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_tanks_record_pins_activation_and_static_gap"]
+        }
+      ]
     }
   ],
   "schema_version": 1

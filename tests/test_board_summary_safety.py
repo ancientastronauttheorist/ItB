@@ -1398,7 +1398,7 @@ def test_summary_tracks_archive_tanks_from_mission_metadata():
             "max_hp": 1,
             "team": 1,
             "mech": False,
-            "move": 3,
+            "move": 4,
             "weapons": ["Deploy_TankShot"],
         },
         {
@@ -1410,7 +1410,7 @@ def test_summary_tracks_archive_tanks_from_mission_metadata():
             "max_hp": 1,
             "team": 1,
             "mech": False,
-            "move": 3,
+            "move": 4,
             "weapons": ["Deploy_TankShot"],
         },
     ])
@@ -1422,6 +1422,31 @@ def test_summary_tracks_archive_tanks_from_mission_metadata():
     assert [u["type"] for u in summary["protected_objective_units"]] == [
         "Archive_Tank",
         "Archive_Tank",
+    ]
+
+
+def test_summary_tracks_archive_artillery_from_mission_metadata():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Artillery"
+    data["units"].append({
+        "uid": 503,
+        "type": "ArchiveArtillery",
+        "x": 3,
+        "y": 4,
+        "hp": 2,
+        "max_hp": 2,
+        "team": 1,
+        "mech": False,
+        "move": 1,
+        "weapons": ["Archive_ArtShot"],
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["protected_objective_units_alive"] == 1
+    assert [u["type"] for u in summary["protected_objective_units"]] == [
+        "ArchiveArtillery",
     ]
 
 

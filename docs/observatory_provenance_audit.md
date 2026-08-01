@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 51 | 24 |
+| Missions | 75 | 54 | 21 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 70 | 26 |
+| Unique total | 96 | 73 | 23 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 308 definitions literally and leaves 434 unindexed. Category totals
+names 318 definitions literally and leaves 424 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -126,6 +126,23 @@ public End Turn route stop before planning or delivery because their native
 wall, queued-beam, and resurrection phases are not simulated. The gates are safety evidence only,
 not a claim of conformance to their native setup, RNG, geometry, effect queue,
 or scheduling.
+
+The Archive grass slice adds three exact shipped mission sources in three
+bounded `partial` records and names all ten active callbacks among them.
+Artillery Support creates and protects its stored two-HP ArchiveArtillery; its
+source-defined two-hit artillery shot is already modeled, and objective metadata
+now protects the live actor. The Python fallback now also pins its one-tile move
+and default weapon, while native placement, LineArtillery legality, and effect
+timing remain open.
+Old Earth Mines is a zero-callback `Mission_MineBase` constructor: its
+`Item_Mine`, spawn modifiers, selected bonus pool, and blocked Vek types are
+catalogued without treating shared import/simulation as native placement
+conformance. Defend the Tanks starts two disabled neutral Archive_Tanks, then
+powers and de-neutralizes each survivor at player turn three, with a 2/1/0
+survivor objective. Existing live-state objective protection and the separately
+indexed cannon are linked, but native defended-zone selection and activation
+scheduling are unforecast; its Python fallback now pins source MoveSpeed=4 and
+default cannon, while full source-to-bridge actor conformance remains open.
 
 The Pinnacle mission slice adds five exact shipped sources in five bounded
 `partial` records and names all sixteen active callbacks among them. Boom Bots

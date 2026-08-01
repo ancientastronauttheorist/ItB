@@ -117,6 +117,16 @@ def test_acid_tank_source_stats_and_cannon_definition():
     assert weapon.acid is True
 
 
+def test_archive_mission_allies_match_source_movement_and_weapons():
+    artillery = get_pawn_stats("ArchiveArtillery")
+    tank = get_pawn_stats("Archive_Tank")
+
+    assert (artillery.move_speed, artillery.ranged) == (1, 1)
+    assert artillery.default_weapon == "Archive_ArtShot"
+    assert (tank.move_speed, tank.ranged) == (4, 1)
+    assert tank.default_weapon == "Deploy_TankShot"
+
+
 def test_disposal_launcher_source_defs_allow_self_targeting():
     stats = get_pawn_stats("Disposal_Unit")
     weapon = get_weapon_def("Disposal_Attack")

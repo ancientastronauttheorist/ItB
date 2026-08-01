@@ -5127,6 +5127,99 @@ def test_real_mission_respawn_record_pins_native_resurrection_gate():
     assert "fail-closed and non-overridable" in gaps
 
 
+def test_real_mission_artillery_record_pins_support_and_fallback_gap():
+    record = _mission_provenance_record("mission-artillery-support-objective")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/grass/mission_artillery.lua",
+        "sha256": "fe78f546038a8a83a3db277ddd47a32c9be117db14f04ff51145dd880f8418f9",
+        "symbols": [
+            "Mission_Artillery", "Mission_Artillery:StartMission",
+            "Mission_Artillery:UpdateObjectives",
+            "Mission_Artillery:GetCompletedObjectives",
+            "Mission_Artillery:NextTurn", "ArchiveArtillery",
+            "Archive_ArtShot", "Archive_ArtShot:GetSkillEffect",
+        ],
+    }]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_unit_objectives.json"] == {
+        "Mission_Artillery", "ArchiveArtillery",
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::ArchiveArtShot", "wid_from_str", "wid_to_str",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "one-reputation objective" in facts
+    assert "immediately-behind tile" in facts
+    assert "plan safety protect" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "LineArtillery target legality" in gaps
+    assert "synchronized Python fallback movement" in gaps
+    assert "shipped no-op body" in gaps
+
+
+def test_real_mission_mines_record_pins_zero_callback_inherited_gap():
+    record = _mission_provenance_record("mission-mines-inherited-old-earth-placement")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/grass/mission_mines.lua",
+        "sha256": "4857fb2b0c29c758f66f78b5a07451fc8159cfa9c6cedb898d1fb859f5f3b3d0",
+        "symbols": ["Mission_Mines"],
+    }]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/bridge/reader.py"] == {
+        "_read_old_earth_mines_from_save", "read_bridge_state",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "simulate_move", "apply_landing_effects",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "zero-callback Mission_MineBase constructor" in facts
+    assert "GlobalSpawnMod=1 and SpawnStartMod=0" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "not defined by this zero-callback file" in gaps
+    assert "does not claim source-specific placement simulation" in gaps
+
+
+def test_real_mission_tanks_record_pins_activation_and_static_gap():
+    record = _mission_provenance_record("mission-tanks-delayed-activation")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/grass/mission_tanks.lua",
+        "sha256": "126c017dce32b8026773621a9fb4c60f187d01c7dc4066627e0c49664e916a77",
+        "symbols": [
+            "Mission_Tanks", "Mission_Tanks:StartMission",
+            "Mission_Tanks:NextTurn", "Mission_Tanks:GetCompletedObjectives",
+            "Mission_Tanks:CountTanks", "Mission_Tanks:UpdateObjectives",
+            "Archive_Tank",
+        ],
+    }]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_unit_objectives.json"] == {
+        "Mission_Tanks", "Archive_Tank",
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::DeployTankShot", "wid_from_str",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "player turn three" in facts
+    assert "two reputation for two survivors, one for one survivor" in facts
+    assert "MoveSpeed=4" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "SetPowered/SetNeutral timing" in gaps
+    assert "synchronized Python fallback movement" in gaps
+    assert "separately indexed Deploy_TankShot cannon" in gaps
+
+
 def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
     record = _mission_provenance_record("mission-boombots-explosive-decay")
     assert record["coverage"] == "partial"
