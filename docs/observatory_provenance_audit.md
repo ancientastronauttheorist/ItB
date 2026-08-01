@@ -56,21 +56,33 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 26 | 49 |
+| Missions | 75 | 27 | 48 |
 | Environments | 15 | 12 | 3 |
-| Unique total | 96 | 45 | 51 |
+| Unique total | 96 | 46 | 50 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 191 definitions literally and leaves 551 unindexed. Category totals
+names 200 definitions literally and leaves 542 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, and Crab/Scarab family records name
 sixteen literally and leave 24 unindexed. That is a precise indexing backlog, not
 evidence that all 24 behaviors are absent from Rust.
+
+The Acid Vats slice adds the exact
+`scripts/missions/acid/mission_barrels.lua` source and all nine of its active
+callbacks. Lua places two neutral, two-HP `AcidVat` pawns from the satellite
+zone, blocks mission end until the enemy-team `AcidVat` count reaches zero, and
+awards full, partial, or failed reputation at zero, one, or any other remaining
+vat count, respectively.
+The source also converts a dead vat's tile to Water plus ACID. Rust preserves
+that death terrain and the established AP Cannon regression ordering, where a
+first target can enter the killed vat tile before the retained terrain conversion. Setup
+randomness/IDs, objective UI timing, and exact effect scheduler ordering remain
+explicit partial-coverage gaps.
 
 The frozen-building mission slice adds the exact
 `scripts/missions/snow/mission_freezebldg.lua` source and its four callbacks.

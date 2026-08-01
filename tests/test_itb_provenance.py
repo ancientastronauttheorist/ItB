@@ -3894,3 +3894,80 @@ def test_real_crab_scarab_artillery_record_pins_exact_range_and_footprint():
     assert "queued-effect scheduler boundaries" in gaps
     assert "pressure may remain scalar without a concrete queue" in gaps
     assert "terrain, status, objective, corpse" in gaps
+
+
+def test_real_mission_acid_vats_record_pins_objective_and_death_terrain():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item for item in provenance["records"] if item["id"] == "mission-acid-vats"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/acid/mission_barrels.lua",
+        "sha256": (
+            "3101ea805315e49e6a098c240f242bea"
+            "28e39466dd9c41deb253468d93f7fc48"
+        ),
+        "symbols": [
+            "Mission_Barrels",
+            "Mission_Barrels:IsEndBlocked",
+            "Mission_Barrels:CountBarrels",
+            "Mission_Barrels:StartMission",
+            "Mission_Barrels:GetCompletedStatus",
+            "Mission_Barrels:GetCompletedObjectives",
+            "Mission_Barrels:UpdateObjectives",
+            "Mission_Barrels:UpdateMission",
+            "AcidVat",
+            "AcidVat:GetDeathEffect",
+            "Acid_Death_Tooltip",
+            "Acid_Death_Tooltip:GetSkillEffect",
+        ],
+    }]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_unit_objectives.json"] == {
+        "Mission_Barrels", "AcidVat",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "apply_acid_vat_death_terrain",
+        "apply_damage_inner",
+        "sim_pierce_projectile",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_mission_barrels_acid_vat_death_creates_acid_water",
+        "test_brute_pierce_shot_barrels_acid_vat_death_terrain_after_first_push",
+    }
+    assert tests["tests/test_board_summary_safety.py"] == {
+        "test_summary_tracks_acid_vats_destroy_objective_from_metadata"
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "two neutral, two-HP AcidVat" in facts
+    assert "one-of-two partial objective at one" in facts
+    assert "Water and applies ACID" in facts
+    assert "AP Cannon regression ordering" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "random_removal" in gaps
+    assert "Board:ClearSpace" in gaps
+    assert "Board:AddPawn" in gaps
+    assert "objective UI" in gaps
+    assert "SkillEffect/death scheduler ordering" in gaps
+    assert "protected achievement session" in gaps

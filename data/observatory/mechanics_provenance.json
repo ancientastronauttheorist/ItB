@@ -5490,6 +5490,88 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Barrels source starts two neutral, two-HP AcidVat pawns from the satellite zone. CountBarrels counts enemy-team pawns whose type contains AcidVat, and IsEndBlocked remains true while any counted vat remains."
+        },
+        {
+          "classification": "fact",
+          "statement": "GetCompletedObjectives awards the full two-reputation objective at zero counted vats, a one-of-two partial objective at one, and a failed objective otherwise; GetCompletedStatus reports Success only at zero. UpdateObjectives displays complete only at zero, otherwise the standard objective."
+        },
+        {
+          "classification": "fact",
+          "statement": "AcidVat:GetDeathEffect converts its death tile to Water and applies ACID. Rust retains that source-backed terrain result for Mission_Barrels and the established AP Cannon regression ordering: a first target may enter the killed vat tile before the retained Water-plus-ACID terrain conversion."
+        }
+      ],
+      "id": "mission-acid-vats",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": [
+            "Mission_Barrels",
+            "AcidVat"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_acid_vat_death_terrain",
+            "apply_damage_inner",
+            "sim_pierce_projectile"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Mission setup uses the native satellite zone, random_removal, Board:ClearSpace, and Board:AddPawn. Rust consumes observed vats and does not reproduce placement randomness, clearing, pawn IDs, or setup timing.",
+        "Native objective UI, Game:AddObjective update timing, postgame partial-credit presentation, and the relationship between CountBarrels and any delayed death effects are not independently captured.",
+        "The exact SkillEffect/death scheduler ordering, including animation and delay behavior, is only bounded by the retained AP Cannon ordering regression; exhaustive terrain, status, collision, and multi-effect conformance remains unverified.",
+        "No fresh controlled bridge capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_barrels.lua",
+          "sha256": "3101ea805315e49e6a098c240f242bea28e39466dd9c41deb253468d93f7fc48",
+          "symbols": [
+            "Mission_Barrels",
+            "Mission_Barrels:IsEndBlocked",
+            "Mission_Barrels:CountBarrels",
+            "Mission_Barrels:StartMission",
+            "Mission_Barrels:GetCompletedStatus",
+            "Mission_Barrels:GetCompletedObjectives",
+            "Mission_Barrels:UpdateObjectives",
+            "Mission_Barrels:UpdateMission",
+            "AcidVat",
+            "AcidVat:GetDeathEffect",
+            "Acid_Death_Tooltip",
+            "Acid_Death_Tooltip:GetSkillEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_mission_barrels_acid_vat_death_creates_acid_water",
+            "test_brute_pierce_shot_barrels_acid_vat_death_terrain_after_first_push"
+          ]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": [
+            "test_summary_tracks_acid_vats_destroy_objective_from_metadata"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_acid_vats_record_pins_objective_and_death_terrain"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
