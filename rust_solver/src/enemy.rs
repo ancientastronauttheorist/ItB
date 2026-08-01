@@ -252,11 +252,13 @@ fn apply_starfish_appendages(
 /// pure Deadly Threat, preserving pre-fix behavior). Final Cave falling rocks
 /// are Deadly Threats, not hoverable chasm conversion.
 ///
-/// `lethal=false` is a genuine non-lethal damage payload (for example
-/// NanoStorm): it does 1 damage with bump-like semantics, ignored by
-/// armor/ACID and consumed by shield, and skips flying units. Buildings take
-/// 1 HP. Status/movement-only environments are removed from `env_danger`
-/// during bridge deserialization.
+/// `lethal=false` is a genuine non-lethal damage payload. Generic legacy
+/// payloads retain the conservative ground-only behavior. `acid=true` is the
+/// exact Env_NanoStorm subclass: its SpaceDamage hits flyers too, deals one
+/// damage, and applies ACID (or leaves an ACID pool when the status is blocked
+/// or the tile was empty). NanoStorm selection excludes buildings.
+/// Status/movement-only environments are removed from `env_danger` during
+/// bridge deserialization.
 ///
 /// Inlined unit/building handling (does not call apply_damage) so we can bypass
 /// shield/frozen for the lethal case without polluting the core damage path.
@@ -265,6 +267,7 @@ fn apply_env_danger(
     x: u8, y: u8,
     lethal: bool,
     flying_immune: bool,
+    acid: bool,
     flying_immune_damage: u8,
     skip_enemy_units: bool,
     result: &mut ActionResult,
@@ -280,6 +283,8 @@ fn apply_env_danger(
     // the shared death-cleanup after the mutable borrow ends — Psion
     // auras must be torn down even on env kills, which bypass apply_damage.
     let mut enemy_died_idx: Option<usize> = None;
+    let mut acid_unit_idx: Option<usize> = None;
+    let mut acid_to_tile = acid && !occupied_by_alive_unit_at_start;
     if let Some(uidx) = board.unit_at(x, y) {
         let unit = &mut board.units[uidx];
         if unit.hp > 0 && !(skip_enemy_units && unit.is_enemy()) {
@@ -338,7 +343,7 @@ fn apply_env_danger(
                         }
                     }
                 }
-            } else if !unit.effectively_flying() {
+            } else if acid || !unit.effectively_flying() {
                 // Non-lethal env (1 dmg): bump-like — consumed by shield, ignores armor/ACID
                 if unit.shield() {
                     unit.set_shield(false);
@@ -360,10 +365,30 @@ fn apply_env_danger(
                     }
                 }
             }
-            // else: flying, non-lethal env doesn't hit
+            // else: flying, generic non-lethal env doesn't hit
+            if acid && unit.hp > 0 {
+                // Match the simulator's shared one-SpaceDamage ordering:
+                // resolve damage first, then apply status to a surviving
+                // occupant. A shield consumed or Frozen thawed by this same
+                // hit therefore no longer blocks ACID.
+                if unit.shield() || unit.frozen() {
+                    acid_to_tile = true;
+                } else {
+                    acid_unit_idx = Some(uidx);
+                }
+            }
             if unit.hp > 0 && unit.hp < hp_before {
                 crate::simulate::cancel_damaged_burrower_attack(unit);
             }
+        }
+    }
+    if let Some(idx) = acid_unit_idx {
+        board.units[idx].set_acid(true);
+    }
+    if acid_to_tile {
+        let tile = board.tile_mut(x, y);
+        if matches!(tile.terrain, Terrain::Water | Terrain::Ground | Terrain::Rubble) {
+            tile.set_acid(true);
         }
     }
     if let Some(idx) = enemy_died_idx {
@@ -385,7 +410,7 @@ fn apply_env_danger(
     let mut destroyed = false;
     {
         let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+        if !acid && tile.terrain == Terrain::Building && tile.building_hp > 0 {
             if tile.frozen() {
                 tile.set_frozen(false);
                 result.events.push(format!("building_thawed:{}:{}", x, y));
@@ -466,12 +491,14 @@ fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
         let bit = 1u64 << tile_idx;
         let lethal = board.env_danger_kill & bit != 0;
         let flying_immune = lethal && (board.env_danger_flying_immune & bit != 0);
+        let acid = board.env_danger_acid & bit != 0;
         apply_env_danger(
             board,
             x,
             y,
             lethal,
             flying_immune,
+            acid,
             flying_immune_damage,
             skip_enemy_units,
             result,
@@ -3839,6 +3866,104 @@ mod tests {
         assert_eq!(board.grid_power, 7);
         assert_eq!(result.grid_damage, 0);
         assert_eq!(result.mech_damage_taken, 0);
+    }
+
+    #[test]
+    fn test_nanostorm_applies_damage_and_acid_but_excludes_buildings() {
+        let input = r#"{
+            "mission_id": "Mission_NanoStorm",
+            "env_type": "nanostorm",
+            "tiles": [
+                {"x": 2, "y": 2, "terrain": "building", "building_hp": 2}
+            ],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "PunchMech",
+                    "x": 3,
+                    "y": 3,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "active": false
+                },
+                {
+                    "uid": 2,
+                    "type": "Hornet1",
+                    "x": 4,
+                    "y": 4,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 6,
+                    "flying": true,
+                    "active": false
+                },
+                {
+                    "uid": 3,
+                    "type": "ShieldMech",
+                    "x": 6,
+                    "y": 6,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "shield": true,
+                    "active": false
+                },
+                {
+                    "uid": 4,
+                    "type": "FrozenMech",
+                    "x": 7,
+                    "y": 7,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "frozen": true,
+                    "active": false
+                }
+            ],
+            "grid_power": 7,
+            "grid_power_max": 7,
+            "spawning_tiles": [],
+            "environment_danger_v2": [
+                [2, 2, 1, 0, 0],
+                [3, 3, 1, 0, 0],
+                [4, 4, 1, 0, 0],
+                [5, 5, 1, 0, 0],
+                [6, 6, 1, 0, 0],
+                [7, 7, 1, 0, 0]
+            ]
+        }"#;
+
+        let (mut board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("NanoStorm bridge JSON parses");
+        assert!(!board.is_env_danger(2, 2));
+        assert!(board.is_env_danger_acid(3, 3));
+        assert!(board.is_env_danger_acid(4, 4));
+        assert!(board.is_env_danger_acid(5, 5));
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[0].hp, 2);
+        assert!(board.units[0].acid());
+        assert!(!board.units[0].frozen());
+        assert_eq!(board.units[1].hp, 1);
+        assert!(board.units[1].acid());
+        assert_eq!(board.units[2].hp, 3);
+        assert!(!board.units[2].shield());
+        assert!(board.units[2].acid());
+        assert_eq!(board.units[3].hp, 3);
+        assert!(!board.units[3].frozen());
+        assert!(board.units[3].acid());
+        assert_eq!(board.tile(2, 2).building_hp, 2);
+        assert_eq!(board.grid_power, 7);
+        assert!(board.tile(5, 5).acid());
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.mech_damage_taken, 1);
+        assert_eq!(result.enemy_damage_dealt, 1);
     }
 
     #[test]

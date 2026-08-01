@@ -2344,7 +2344,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   negative status and is consumed, and first damage against Ice only thaws.
 //   Evaluation also rewards freezing flying Vek like grounded Vek.
 //   Pre-v373 corpus archived as failure_db_snapshot_sim_v372.jsonl.
-pub const SIMULATOR_VERSION: u32 = 373;
+// v374 - NanoStorm's inherited Env_SnowStorm hit applies one damage plus ACID
+//   to ground and flying units, leaves ACID on empty compatible tiles, rejects
+//   source-impossible building markers, and preserves its projected identity.
+//   Pre-v374 corpus archived as failure_db_snapshot_sim_v373.jsonl.
+pub const SIMULATOR_VERSION: u32 = 374;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

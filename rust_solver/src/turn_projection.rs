@@ -1074,7 +1074,9 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "spawning_tiles":        spawning_tiles,
         "environment_tides_index": board.env_tides_index,
         "environment_danger_v2": env_danger_v2,
-        "env_type":              if board.env_smoke != 0 || board.mission_id == "Mission_Sandstorm" {
+        "env_type":              if board.env_danger_acid != 0 || board.mission_id == "Mission_NanoStorm" {
+            "nanostorm"
+        } else if board.env_smoke != 0 || board.mission_id == "Mission_Sandstorm" {
             "sandstorm"
         } else {
             "unknown"
@@ -2376,6 +2378,25 @@ mod tests {
             value["environment_danger_v2"].as_array().unwrap().len(),
             0,
             "unmodeled Sandstorm markers must not re-enter the damage channel"
+        );
+    }
+
+    #[test]
+    fn test_board_to_json_preserves_nanostorm_environment_identity() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_NanoStorm".to_string();
+        let bit = 1u64 << xy_to_idx(4, 3);
+        board.env_danger = bit;
+        board.env_danger_acid = bit;
+
+        let json_str = board_to_json(&board, &[]);
+        let value: serde_json::Value =
+            serde_json::from_str(&json_str).expect("board_to_json emits valid json");
+
+        assert_eq!(value["env_type"], "nanostorm");
+        assert_eq!(
+            value["environment_danger_v2"],
+            serde_json::json!([[4, 3, 1, 0, 0]])
         );
     }
 

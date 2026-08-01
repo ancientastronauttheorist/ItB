@@ -2530,5 +2530,70 @@ def test_real_ice_storm_record_pins_freeze_status_and_open_rng_gap():
     ]
     gaps = " ".join(record["known_gaps"])
     assert "random selection" in gaps
-    assert "ACID application" in gaps
+    assert "indexed separately" in gaps
+    assert "protected live achievement session" in gaps
+
+
+def test_real_nanostorm_record_pins_damage_acid_and_building_exclusion():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-mission-nanostorm"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    assert sources["scripts/advanced/missions/acid/mission_nanostorm.lua"] == {
+        "path": "scripts/advanced/missions/acid/mission_nanostorm.lua",
+        "sha256": (
+            "6c6145ab3f4dc747c89850548d0f1f1d"
+            "ed45584ecd30d5b955a4daf2f85e76f2"
+        ),
+        "symbols": [
+            "Mission_NanoStorm",
+            "Mission_NanoStorm:StartMission",
+            "Env_NanoStorm",
+        ],
+    }
+    assert {
+        "Env_SnowStorm:ApplyEffect",
+        "Env_SnowStorm:SelectSpaces",
+    } <= set(sources["scripts/missions/snow/mission_snowstorm.lua"]["symbols"])
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert "env_danger_acid" in implementations["rust_solver/src/board.rs"]
+    assert "nanostorm_env" in implementations["rust_solver/src/serde_bridge.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_nanostorm_applies_damage_and_acid_but_excludes_buildings"
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_explicit_lethal_mission_outranks_stale_nanostorm_env_type"
+    }
+    assert {
+        "test_nano_storm_damages_and_acidifies_without_freeze",
+        "test_nano_storm_hits_and_acidifies_flying_units",
+        "test_nano_storm_rejects_stale_building_marker",
+    } <= tests["tests/test_ice_storm_pytest.py"]
+    gaps = " ".join(record["known_gaps"])
+    assert "native RNG state" in gaps
+    assert "Shield" in gaps
     assert "protected live achievement session" in gaps

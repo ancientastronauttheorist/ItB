@@ -3044,7 +3044,7 @@
         "Rust consumes live bridge markers rather than reproducing the four-center option pool, random selection, three-by-three construction, or temporary spawn blocking.",
         "Native Frozen status, effect scheduling, weather, sound, delay, animation, and presentation order have not been independently traced end-to-end.",
         "Shield guidance conflicts: a recorded live Cryo hit consumed Shield, while the general mechanics references and Freeze Mine behavior say status-only Freeze does not. Ice Storm keeps the conservative pre-v373 consumption rule pending a controlled native reproducer.",
-        "The Env_SnowStormAcid subclass's native ACID application is not carried by the bridge's current NanoStorm damage-only channel.",
+        "The Acid subclass is indexed separately as environment-mission-nanostorm; exact native SpaceDamage status ordering remains outside this Ice Storm record.",
         "No fresh controlled bridge capture was taken during the protected live achievement session."
       ],
       "sources": [
@@ -3095,7 +3095,7 @@
             "test_ice_storm_freezes_flying_enemy_and_cancels_attack",
             "test_ice_storm_freezes_building_without_grid_loss",
             "test_ice_storm_shield_blocks_freeze_and_is_consumed",
-            "test_nano_storm_remains_damage_without_freeze"
+            "test_nano_storm_damages_and_acidifies_without_freeze"
           ]
         },
         {
@@ -3105,6 +3105,117 @@
             "test_threat_audit_ice_storm_covers_single_building_hit",
             "test_threat_audit_ice_storm_does_not_cover_two_building_hits",
             "test_threat_audit_ice_storm_consumes_building_shield_before_hit"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_NanoStorm source subclasses Env_SnowStorm with Acid=true and stops existing weather at mission start. Its inherited ApplyEffect sets iDamage=1, iAcid=1, and iFrozen=0 on every selected tile."
+        },
+        {
+          "classification": "fact",
+          "statement": "Env_SnowStorm:SelectSpaces uses the same without-replacement four-center pool and 3-by-3 footprint as Ice Storm, but its Acid branch explicitly omits building tiles and does not exclude flying pawns."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v374 consumes the live NanoStorm marker mask through a dedicated env_danger_acid subset, applies one damage plus ACID to unshielded ground and flying units, leaves an ACID pool on an empty compatible tile, rejects stale building markers, and never routes the effect through Frozen."
+        }
+      ],
+      "id": "environment-mission-nanostorm",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "Env_SnowStorm",
+            "nanostorm",
+            "environment_danger_v2"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "env_danger_acid",
+            "is_env_danger_acid"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "nanostorm_env",
+            "env_danger_acid"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger",
+            "apply_env_danger_board"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "board_to_json",
+            "Mission_NanoStorm"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes bridge-supplied markers rather than reproducing the four-center option pool, random removal, three-by-three construction, temporary spawn blocking, or native RNG state and call order.",
+        "Native SpaceDamage ordering for combined damage plus ACID against Shield, Frozen, dying pawns, mountains, Ice, Fire, Smoke, pods, and other terrain/status combinations remains untraced; the focused conformance slice covers ordinary living units, flying units, empty compatible tiles, and source-required building exclusion.",
+        "Weather, sound, delay, animation, presentation, native effect scheduling, and campaign environment selection are not simulated.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/acid/mission_nanostorm.lua",
+          "sha256": "6c6145ab3f4dc747c89850548d0f1f1ded45584ecd30d5b955a4daf2f85e76f2",
+          "symbols": [
+            "Mission_NanoStorm",
+            "Mission_NanoStorm:StartMission",
+            "Env_NanoStorm"
+          ]
+        },
+        {
+          "path": "scripts/missions/snow/mission_snowstorm.lua",
+          "sha256": "b798e1faca26239af59057eaa83155fe3fac9db4e6fdb8010907bad258d9c4d6",
+          "symbols": [
+            "Env_SnowStorm",
+            "Env_SnowStorm:ApplyEffect",
+            "Env_SnowStorm:SelectSpaces"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_nanostorm_applies_damage_and_acid_but_excludes_buildings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_explicit_lethal_mission_outranks_stale_nanostorm_env_type"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_board_to_json_preserves_nanostorm_environment_identity"
+          ]
+        },
+        {
+          "path": "tests/test_ice_storm_pytest.py",
+          "symbols": [
+            "test_nano_storm_damages_and_acidifies_without_freeze",
+            "test_nano_storm_hits_and_acidifies_flying_units",
+            "test_nano_storm_rejects_stale_building_marker"
           ]
         }
       ]

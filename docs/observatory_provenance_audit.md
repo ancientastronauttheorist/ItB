@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 7 | 7 |
-| Missions | 75 | 15 | 60 |
-| Environments | 15 | 9 | 6 |
-| Unique total | 96 | 29 | 67 |
+| Missions | 75 | 16 | 59 |
+| Environments | 15 | 10 | 5 |
+| Unique total | 96 | 30 | 66 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 103 definitions literally and leaves 639 unindexed. Category totals
+names 104 definitions literally and leaves 638 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -282,10 +282,21 @@ safety audit now counts current or incoming unshielded building Ice as
 protection against exactly one queued hit because the first hit only thaws it.
 The record remains `partial`: Rust consumes live markers rather than
 reproducing the center pool or native RNG, native scheduler and presentation
-details are untraced, the Acid subclass's ACID application is not carried by
-the current NanoStorm channel, and conflicting Shield evidence requires a
-controlled native reproducer. Until then, v373 conservatively preserves the
-pre-existing live-derived Shield-consumption behavior.
+details are untraced and conflicting Shield evidence requires a controlled
+native reproducer. Until then, v373 conservatively preserves the pre-existing
+live-derived Shield-consumption behavior. The Acid subclass is tracked by the
+separate NanoStorm record below.
+
+The NanoStorm slice, `environment-mission-nanostorm`, adds the exact 284-byte
+Advanced Edition mission source and its inherited `Env_SnowStorm` callbacks.
+The source fixes the effect at one damage plus ACID, excludes buildings during
+selection, and does not exempt flying pawns. Simulator v374 preserves the live
+warning mask on a dedicated ACID subset, applies the damage/status to ordinary
+ground and flying units, leaves ACID on empty compatible tiles, rejects stale
+building markers, and round-trips the NanoStorm identity. It remains
+`partial`: Rust consumes the selected mask rather than reproducing native RNG,
+and combined Shield/Frozen/death plus mountain/terrain `SpaceDamage` ordering
+still needs controlled native evidence.
 
 The first mission-environment slice, `environment-mission-wind`, pins the
 self-contained Advanced Edition Wind mission source to direction parsing and

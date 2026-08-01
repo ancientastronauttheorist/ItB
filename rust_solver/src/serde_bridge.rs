@@ -506,6 +506,9 @@ pub fn board_from_json(json_str: &str)
     // say flying_immune=1 as lethal to flyers anyway.
     let mission_id = input.mission_id.as_deref();
     let final_cave_env = mission_id == Some("Mission_Final_Cave");
+    let nanostorm_env = mission_id == Some("Mission_NanoStorm")
+        || (matches!(mission_id, None | Some(""))
+            && input.env_type.as_deref() == Some("nanostorm"));
     let deadly_threat_env = matches!(mission_id,
         Some("Mission_Airstrike")
         | Some("Mission_Lightning")
@@ -565,9 +568,11 @@ pub fn board_from_json(json_str: &str)
         // Backwards compat: no v2 → assume all dangers are lethal. Use
         // env_type if available to populate flying_immune; otherwise the
         // pre-fix conservative default (no flying immunity) holds.
-        env_danger_kill = env_danger;
-        if env_type_flying_immune.unwrap_or(false) {
-            env_danger_flying_immune = env_danger;
+        if !nanostorm_env {
+            env_danger_kill = env_danger;
+            if env_type_flying_immune.unwrap_or(false) {
+                env_danger_flying_immune = env_danger;
+            }
         }
     }
     // Mission_Terratide reuses Env_Tides' warning machinery, so its smoke
@@ -604,9 +609,39 @@ pub fn board_from_json(json_str: &str)
         env_danger_kill &= !non_damage_env;
         env_danger_flying_immune &= !non_damage_env;
     }
+    if nanostorm_env {
+        // Exact source identity outranks stale per-tile metadata: the Acid
+        // subclass always emits iDamage=1, never DAMAGE_DEATH or a
+        // terrain-conversion flying exemption.
+        env_danger_kill = 0;
+        env_danger_flying_immune = 0;
+    }
+    // Env_NanoStorm inherits Env_SnowStorm's marked mask but changes each
+    // effect to iDamage=1 + iAcid=1. Its SelectSpaces explicitly excludes
+    // buildings, so reject stale/synthetic building markers before simulation
+    // instead of letting the generic non-lethal branch invent grid damage.
+    let mut env_danger_acid = if nanostorm_env {
+        env_danger
+    } else {
+        0
+    };
+    if env_danger_acid != 0 {
+        for idx in 0..64usize {
+            let bit = 1u64 << idx;
+            if env_danger_acid & bit == 0 {
+                continue;
+            }
+            let (x, y) = idx_to_xy(idx);
+            if board.tile(x, y).is_building() {
+                env_danger &= !bit;
+                env_danger_acid &= !bit;
+            }
+        }
+    }
     board.env_danger = env_danger;
     board.env_danger_kill = env_danger_kill;
     board.env_danger_flying_immune = env_danger_flying_immune;
+    board.env_danger_acid = env_danger_acid;
     board.env_smoke = env_smoke;
     board.env_wind = env_wind;
     board.env_wind_dir = if env_wind != 0 {
@@ -1218,6 +1253,26 @@ mod tests {
         assert_eq!(board.env_danger_kill, 0);
         assert_eq!(board.env_danger_flying_immune, 0);
         assert_eq!(board.env_smoke, 0, "full Sandstorm smoke needs Row export");
+    }
+
+    #[test]
+    fn test_explicit_lethal_mission_outranks_stale_nanostorm_env_type() {
+        let input = r#"{
+            "mission_id": "Mission_Lightning",
+            "env_type": "nanostorm",
+            "tiles": [],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": [],
+            "environment_danger_v2": [[5, 3, 1, 1, 0]]
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("Lightning bridge json parses");
+
+        assert!(board.is_env_danger(5, 3));
+        assert!(board.is_env_danger_kill(5, 3));
+        assert!(!board.is_env_danger_acid(5, 3));
     }
 
     #[test]

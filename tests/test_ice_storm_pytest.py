@@ -5,7 +5,10 @@ import json
 import itb_solver
 
 
-def _board(*, units=None, tiles=None, freeze=None, danger=None):
+def _board(
+    *, units=None, tiles=None, freeze=None, danger=None,
+    mission_id=None, env_type=None,
+):
     data = {
         "grid_power": 5,
         "grid_power_max": 7,
@@ -19,6 +22,10 @@ def _board(*, units=None, tiles=None, freeze=None, danger=None):
         data["environment_freeze"] = freeze
     if danger is not None:
         data["environment_danger_v2"] = danger
+    if mission_id is not None:
+        data["mission_id"] = mission_id
+    if env_type is not None:
+        data["env_type"] = env_type
     return data
 
 
@@ -124,14 +131,63 @@ def test_ice_storm_shield_blocks_freeze_and_is_consumed():
     assert mech["hp"] == 3
 
 
-def test_nano_storm_remains_damage_without_freeze():
+def test_nano_storm_damages_and_acidifies_without_freeze():
     post = _project(
         _board(
             units=[_mech(x=4, y=4, hp=2, max_hp=2)],
             danger=[[4, 4, 1, 0, 0]],
+            mission_id="Mission_NanoStorm",
+            env_type="nanostorm",
         )
     )
 
     mech = _unit(post, 0)
     assert mech["hp"] == 1
+    assert mech["acid"] is True
     assert mech.get("frozen", False) is False
+
+
+def test_nano_storm_hits_and_acidifies_flying_units():
+    hornet = {
+        "uid": 1,
+        "type": "Hornet1",
+        "x": 4,
+        "y": 4,
+        "hp": 2,
+        "max_hp": 2,
+        "team": 6,
+        "flying": True,
+        "move": 4,
+        "active": False,
+        "weapons": ["HornetAtk1"],
+    }
+    post = _project(
+        _board(
+            units=[_mech(), hornet],
+            danger=[[4, 4, 1, 0, 0]],
+            mission_id="Mission_NanoStorm",
+            env_type="nanostorm",
+        )
+    )
+
+    target = _unit(post, 1)
+    assert target["hp"] == 1
+    assert target["acid"] is True
+
+
+def test_nano_storm_rejects_stale_building_marker():
+    post = _project(
+        _board(
+            units=[_mech()],
+            tiles=[
+                {"x": 3, "y": 3, "terrain": "building", "building_hp": 2},
+            ],
+            danger=[[3, 3, 1, 0, 0]],
+            mission_id="Mission_NanoStorm",
+            env_type="nanostorm",
+        )
+    )
+
+    building = _tile(post, 3, 3)
+    assert building["building_hp"] == 2
+    assert post["grid_power"] == 5

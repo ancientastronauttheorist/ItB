@@ -12,6 +12,7 @@ Reference table for the M5 env-hazard sweep. Each Into the Breach corporate isla
 | **Cataclysm** | R.S.T. Corporation | Desert | One row of tiles converts to Chasm each turn; non-flying ground units in that row die. |
 | **Sandstorm** | R.S.T. Corporation | Desert | Smoke gradually covers the level, preventing attacks and repair. |
 | **Conveyor Belts** | Detritus Disposal | Industrial | Tiles push units 1 step per turn along the belt direction. |
+| **Nanobot Storm** | Detritus Disposal | Industrial | A 3x3 storm deals 1 damage and applies ACID; the selector omits buildings but not flying units. |
 | Ice Storm | Pinnacle Robotics | Ice | 3×3 freeze per turn. Not in the original M5 6-list; bridge warnings populate `environment_freeze`. |
 
 ## Sources
@@ -27,7 +28,7 @@ Tracked in `memory/project_m5_env_sweep.md`. Status 2026-07-10: 5/6 confirmed, i
 
 **Architectural note surfaced by the sweep:** Environment warnings need effect-specific routing:
 - **Per-turn damage hazards** (Tidal Waves, Cataclysm, Lightning Storm, probably Air Strike): queue entries in `environment_danger_v2` each turn with `[x, y, damage, kills, flying_immune]` shape.
-- **Status and movement hazards:** Conveyor Belts are tile metadata (`conveyor: N`); Ice Storm uses `environment_freeze`; Terratide's warned row is exposed by `Board:IsEnvironmentDanger` but must be routed to pending smoke, not damage. The resulting smoke is then visible on the raw `tiles` array.
+- **Status and movement hazards:** Conveyor Belts are tile metadata (`conveyor: N`); Ice Storm uses `environment_freeze`; NanoStorm uses `environment_danger_v2` plus `env_type=nanostorm` so its one-point hit also carries ACID; Terratide's warned row is exposed by `Board:IsEnvironmentDanger` but must be routed to pending smoke, not damage. The resulting smoke is then visible on the raw `tiles` array.
 
 Remaining sweep target:
 
