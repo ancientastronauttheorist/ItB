@@ -126,6 +126,13 @@ fn projected_enemy_attack_reach(enemy: &Unit, weapons: &WeaponTable) -> i32 {
     if matches!(wid, WId::MothAtk1 | WId::MothAtk2) {
         return i32::from(weapon.range_max);
     }
+    if wid == WId::HornetAtkB {
+        // Super Stinger inherits the native unlimited, cardinal-only
+        // GetSimpleReachable target area. Seven tiles spans any same-row or
+        // same-column target on the 8x8 board; its three-tile footprint is
+        // handled after the legal click is chosen.
+        return 7;
+    }
     if is_crab_scarab_line_artillery(wid) {
         let footprint_extension = if is_crab_line_artillery(wid) { 1 } else { 0 };
         return i32::from(weapon.range_max) + footprint_extension;
@@ -207,11 +214,12 @@ pub(crate) fn projected_enemy_smoke_cancels(enemy: &Unit) -> bool {
 
 /// Convert a projected threatened tile into the legal click that produces it.
 ///
-/// Concrete Crab/Scarab queues are source-exact from the board's current
-/// origin. Mobile enemies keep a separate coarse movement-pressure envelope,
-/// but this pass does not invent a firing origin after unmodeled movement. A
-/// Crab may threaten the sixth cardinal tile by clicking the fifth; a Scarab
-/// hits only its click.
+/// Concrete Hornet and Crab/Scarab queues are source-exact from the board's
+/// current origin. Mobile enemies keep a separate coarse movement-pressure
+/// envelope, but this pass does not invent a firing origin after unmodeled
+/// movement. An Alpha Hornet may threaten the second cardinal tile by clicking
+/// the first. A Crab may threaten the sixth cardinal tile by clicking the
+/// fifth; a Scarab hits only its click.
 fn projected_requeue_click(
     enemy: &Unit,
     wid: WId,
@@ -219,6 +227,24 @@ fn projected_requeue_click(
     threatened_y: u8,
     weapons: &WeaponTable,
 ) -> Option<(u8, u8)> {
+    if matches!(wid, WId::HornetAtk1 | WId::HornetAtk2 | WId::HornetAtkB) {
+        let dx = threatened_x as i8 - enemy.x as i8;
+        let dy = threatened_y as i8 - enemy.y as i8;
+        if (dx != 0) == (dy != 0) {
+            return None;
+        }
+        let distance = dx.unsigned_abs() + dy.unsigned_abs();
+        return match wid {
+            WId::HornetAtk1 if distance == 1 => Some((threatened_x, threatened_y)),
+            WId::HornetAtk2 if distance == 1 => Some((threatened_x, threatened_y)),
+            WId::HornetAtk2 if distance == 2 => Some((
+                (enemy.x as i8 + dx.signum()) as u8,
+                (enemy.y as i8 + dy.signum()) as u8,
+            )),
+            WId::HornetAtkB => Some((threatened_x, threatened_y)),
+            _ => None,
+        };
+    }
     if !is_crab_scarab_line_artillery(wid) {
         return Some((threatened_x, threatened_y));
     }
@@ -1659,14 +1685,89 @@ mod tests {
     }
 
     #[test]
+    fn test_alpha_hornet_projected_requeue_uses_adjacent_cardinal_click() {
+        let mut cardinal = Board::default();
+        let mut alpha = Unit::default();
+        alpha.uid = 10;
+        alpha.set_type_name("Hornet2");
+        alpha.x = 2;
+        alpha.y = 2;
+        alpha.hp = 4;
+        alpha.max_hp = 4;
+        alpha.team = Team::Enemy;
+        alpha.flags = UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
+        alpha.move_speed = 0;
+        alpha.queued_target_x = -1;
+        alpha.queued_target_y = -1;
+        cardinal.add_unit(alpha.clone());
+        cardinal.tiles[xy_to_idx(4, 2)].terrain = Terrain::Building;
+        cardinal.tiles[xy_to_idx(4, 2)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut cardinal, &crate::weapons::WEAPONS);
+
+        assert_eq!(cardinal.units[0].queued_target_x, 3);
+        assert_eq!(cardinal.units[0].queued_target_y, 2);
+        assert!(cardinal.units[0].has_queued_attack());
+
+        let mut diagonal = Board::default();
+        diagonal.add_unit(alpha.clone());
+        diagonal.tiles[xy_to_idx(3, 3)].terrain = Terrain::Building;
+        diagonal.tiles[xy_to_idx(3, 3)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut diagonal, &crate::weapons::WEAPONS);
+
+        assert_eq!(diagonal.units[0].queued_target_x, -1);
+        assert_eq!(diagonal.units[0].queued_target_y, -1);
+        assert!(!diagonal.units[0].has_queued_attack());
+
+        let mut basic = Board::default();
+        alpha.set_type_name("Hornet1");
+        basic.add_unit(alpha);
+        basic.tiles[xy_to_idx(4, 2)].terrain = Terrain::Building;
+        basic.tiles[xy_to_idx(4, 2)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut basic, &crate::weapons::WEAPONS);
+
+        assert_eq!(basic.units[0].queued_target_x, -1);
+        assert_eq!(basic.units[0].queued_target_y, -1);
+        assert!(!basic.units[0].has_queued_attack());
+    }
+
+    #[test]
+    fn test_hornet_boss_projected_requeue_reaches_distant_cardinal_building() {
+        let mut board = Board::default();
+        let mut boss = Unit::default();
+        boss.uid = 10;
+        boss.set_type_name("HornetBoss");
+        boss.x = 0;
+        boss.y = 0;
+        boss.hp = 6;
+        boss.max_hp = 6;
+        boss.team = Team::Enemy;
+        boss.flags = UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
+        boss.move_speed = 0;
+        boss.queued_target_x = -1;
+        boss.queued_target_y = -1;
+        board.add_unit(boss);
+        board.tiles[xy_to_idx(0, 7)].terrain = Terrain::Building;
+        board.tiles[xy_to_idx(0, 7)].building_hp = 1;
+
+        requeue_enemies_heuristic(&mut board, &crate::weapons::WEAPONS);
+
+        assert_eq!(board.units[0].queued_target_x, 0);
+        assert_eq!(board.units[0].queued_target_y, 7);
+        assert!(board.units[0].has_queued_attack());
+    }
+
+    #[test]
     fn test_heuristic_fallback_to_mech_when_no_building() {
-        // Enemy at (4,4), reach 2+4=6. Mech at (3,3) dist=2. No buildings.
-        // Heuristic should pick the mech.
+        // Enemy at (4,4). Mech at the source-legal adjacent cardinal tile
+        // (4,3). With no buildings, the heuristic should pick the mech.
         let mut b = Board::default();
         b.total_turns = 5; b.current_turn = 1;
         let mut mech = Unit::default();
         mech.uid = 0; mech.set_type_name("PunchMech");
-        mech.x = 3; mech.y = 3; mech.hp = 3; mech.max_hp = 3;
+        mech.x = 4; mech.y = 3; mech.hp = 3; mech.max_hp = 3;
         mech.team = Team::Player;
         mech.flags = UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
         mech.move_speed = 3; mech.base_move = 3;
@@ -1683,7 +1784,7 @@ mod tests {
         requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
 
         let e = &b.units[1];
-        assert_eq!(e.queued_target_x, 3);
+        assert_eq!(e.queued_target_x, 4);
         assert_eq!(e.queued_target_y, 3);
         assert!(e.has_queued_attack());
     }

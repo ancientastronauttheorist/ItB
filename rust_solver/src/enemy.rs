@@ -1726,7 +1726,11 @@ pub fn simulate_enemy_attacks(
         // Applied per-hit below based on target occupant
         let damage = base_damage;
 
-        let weapon_behind = enemy.weapon_target_behind;
+        // Alpha Hornet's second queued hit is an intrinsic property of
+        // HornetAtk2.  Older/partial bridge payloads may omit the redundant
+        // target-behind flag, so retain it as a compatibility supplement
+        // rather than making exact WId behavior depend on it.
+        let weapon_behind = wdef.aoe_behind() || enemy.weapon_target_behind;
 
         let vh = board.vek_hormones_damage;
         let attack_damage_before = AttackDamageSnapshot::capture(board);
@@ -6602,15 +6606,17 @@ mod tests {
     }
 
     #[test]
-    fn test_alpha_hornet_line_still_hits_both_tiles() {
-        // Regression: Alpha Hornet's 2-tile line attack (weapon_behind) should
-        // still damage both tiles after the fix.
+    fn test_alpha_hornet_weapon_id_hits_both_tiles_without_bridge_flag() {
+        // Regression: HornetAtk2 itself defines the two-tile line. A legacy or
+        // partial bridge payload must not silently lose the second hit when
+        // weapon_target_behind is absent/false.
         let mut board = Board::default();
         board.tile_mut(3, 3).terrain = Terrain::Building;
         board.tile_mut(3, 3).building_hp = 1;
         board.tile_mut(4, 3).terrain = Terrain::Building;
         board.tile_mut(4, 3).building_hp = 1;
-        // Hornet at (2,3) firing east, queued target (3,3). weapon_target_behind=true.
+        // Hornet at (2,3) firing east, queued target (3,3). Deliberately leave
+        // weapon_target_behind false so the exact weapon identity is the proof.
         let mut unit = Unit {
             uid: 1, x: 2, y: 3, hp: 4, max_hp: 4,
             team: Team::Enemy,
@@ -6618,7 +6624,7 @@ mod tests {
             queued_target_x: 3,
             queued_target_y: 3,
             weapon_damage: 0,
-            weapon_target_behind: true,
+            weapon_target_behind: false,
             ..Default::default()
         };
         unit.set_type_name("Hornet2");
@@ -6632,6 +6638,86 @@ mod tests {
     }
 
     // ── Pilot_Rock fire tick ────────────────────────────────────────────────
+
+    #[test]
+    fn test_pushed_alpha_hornet_reanchors_line_from_current_position() {
+        let mut board = Board::default();
+        for x in 2..=4 {
+            board.tile_mut(x, 3).terrain = Terrain::Building;
+            board.tile_mut(x, 3).building_hp = 1;
+        }
+        // Originally (2,3) -> (3,3), then pushed west to (1,3). The bridge
+        // normalizes the selected tile to (2,3) while retaining the raw shot
+        // and origin. Live therefore hits (2,3) and (3,3), not (3,3)/(4,3).
+        let mut unit = Unit {
+            uid: 1,
+            x: 1,
+            y: 3,
+            hp: 4,
+            max_hp: 4,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE
+                | UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+            queued_target_x: 2,
+            queued_target_y: 3,
+            queued_target_raw_x: 3,
+            queued_target_raw_y: 3,
+            queued_origin_x: 2,
+            queued_origin_y: 3,
+            ..Default::default()
+        };
+        unit.set_type_name("Hornet2");
+        board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(2, 3).building_hp, 0, "re-anchored first tile");
+        assert_eq!(board.tile(3, 3).building_hp, 0, "re-anchored second tile");
+        assert_eq!(board.tile(4, 3).building_hp, 1, "stale behind tile survives");
+    }
+
+    #[test]
+    fn test_pushed_hornet_boss_reanchors_full_offset_line() {
+        let mut board = Board::default();
+        for x in 3..=6 {
+            board.tile_mut(x, 3).terrain = Terrain::Building;
+            board.tile_mut(x, 3).building_hp = 1;
+        }
+        // Originally (2,3) -> (4,3), then pushed west to (1,3). Artillery
+        // preserves the full +2 offset, so Super Stinger hits (3,3)..(5,3).
+        let mut unit = Unit {
+            uid: 1,
+            x: 1,
+            y: 3,
+            hp: 6,
+            max_hp: 6,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE
+                | UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+            queued_target_x: 3,
+            queued_target_y: 3,
+            queued_target_raw_x: 4,
+            queued_target_raw_y: 3,
+            queued_origin_x: 2,
+            queued_origin_y: 3,
+            ..Default::default()
+        };
+        unit.set_type_name("HornetBoss");
+        board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        for x in 3..=5 {
+            assert_eq!(board.tile(x, 3).building_hp, 0, "re-anchored line tile {x}");
+        }
+        assert_eq!(board.tile(6, 3).building_hp, 1, "stale third tile survives");
+    }
 
     #[test]
     fn test_pilot_rock_skips_fire_tick() {

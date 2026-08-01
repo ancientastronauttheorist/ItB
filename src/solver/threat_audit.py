@@ -169,12 +169,120 @@ def _queued_artillery_perpendicular_building_targets(
     ]
 
 
+def _original_queued_offset(
+    board: Board,
+    attacker: Unit,
+) -> tuple[int, int] | None:
+    """Recover the queued cardinal offset before a push changed position."""
+    origin_x = int(getattr(attacker, "queued_origin_x", -1))
+    origin_y = int(getattr(attacker, "queued_origin_y", -1))
+    origin_known = board.in_bounds(origin_x, origin_y)
+
+    raw_x = int(getattr(attacker, "queued_target_raw_x", -1))
+    raw_y = int(getattr(attacker, "queued_target_raw_y", -1))
+    if raw_x >= 0 and raw_y >= 0 and origin_known:
+        offset = (raw_x - origin_x, raw_y - origin_y)
+        if (offset[0] != 0) != (offset[1] != 0):
+            return offset
+
+    target_x = int(getattr(attacker, "queued_target_x", -1))
+    target_y = int(getattr(attacker, "queued_target_y", -1))
+    if target_x < 0 or target_y < 0:
+        target_x, target_y = int(attacker.target_x), int(attacker.target_y)
+
+    # A bridge-normalized target is already relative to the current pawn
+    # location. Prefer that relation when raw save-file evidence is absent.
+    if bool(getattr(attacker, "queued_target_normalized", False)):
+        offset = (target_x - int(attacker.x), target_y - int(attacker.y))
+        if (offset[0] != 0) != (offset[1] != 0):
+            return offset
+    if origin_known:
+        offset = (target_x - origin_x, target_y - origin_y)
+        if (offset[0] != 0) != (offset[1] != 0):
+            return offset
+
+    # Legacy payloads did not retain piOrigin/raw piQueuedShot. Their queued
+    # target is the best available current-position relation.
+    offset = (target_x - int(attacker.x), target_y - int(attacker.y))
+    if (offset[0] != 0) != (offset[1] != 0):
+        return offset
+    return None
+
+
+def _queued_hornet_line_targets(
+    board: Board,
+    attacker: Unit,
+) -> list[tuple[int, int]]:
+    """Return the exact queued Hornet line impact tiles, building or not."""
+    if attacker.team != 6 or attacker.hp <= 0:
+        return []
+    if not bool(getattr(attacker, "has_queued_attack", False)):
+        return []
+
+    wdef = get_weapon_def(attacker.weapon)
+    if wdef is None:
+        return []
+    offset = _original_queued_offset(board, attacker)
+    if offset is None:
+        return []
+    dx, dy = _sign(offset[0]), _sign(offset[1])
+
+    if wdef.weapon_type == "melee" and (
+        wdef.aoe_behind or bool(getattr(attacker, "weapon_target_behind", False))
+    ):
+        start_x, start_y = int(attacker.x) + dx, int(attacker.y) + dy
+        line_length = 2
+    elif attacker.weapon == "HornetAtkB":
+        # Super Stinger preserves its full original target offset when pushed,
+        # then damages path_size consecutive tiles from that relocated start.
+        start_x = int(attacker.x) + offset[0]
+        start_y = int(attacker.y) + offset[1]
+        line_length = int(wdef.path_size)
+    else:
+        return []
+
+    return [
+        (start_x + distance * dx, start_y + distance * dy)
+        for distance in range(line_length)
+        if board.in_bounds(start_x + distance * dx, start_y + distance * dy)
+    ]
+
+
+def _queued_hornet_line_building_targets(
+    board: Board,
+    attacker: Unit,
+) -> list[tuple[int, int]]:
+    """Return live buildings in the exact queued Hornet line footprint.
+
+    Alpha Hornet's TargetBehind is a second melee hit one tile beyond its
+    selected target. Hornet Leader's HornetAtkB queues three consecutive
+    damage tiles beginning at its selected target. Both shapes are fixed by
+    their weapon definitions, not by the optional bridge field.
+    """
+    wdef = get_weapon_def(attacker.weapon)
+    if wdef is None or not wdef.building_damage:
+        return []
+    return [
+        (x, y)
+        for x, y in _queued_hornet_line_targets(board, attacker)
+        if board.tile(x, y).terrain == "building" and board.tile(x, y).building_hp > 0
+    ]
+
+
 def capture_building_threats(board: Board) -> list[dict[str, Any]]:
     """Capture enemy threats aimed at live buildings in A1-H8 terms."""
     out: list[dict[str, Any]] = []
     seen: set[tuple[int, tuple[int, int]]] = set()
     direct_threat_uids: set[int] = set()
     for tx, ty, attacker in board.get_threatened_buildings():
+        # Hornet line attacks preserve a queued vector through pushes. Their
+        # serialized target can be the stale original p2, so emit the complete
+        # reconstructed footprint below instead of treating p2 as direct.
+        if (
+            attacker.weapon in {"HornetAtk2", "HornetAtkB"}
+            and _queued_hornet_line_targets(board, attacker)
+        ):
+            continue
         tile = board.tile(tx, ty)
         out.append({
             "target": [int(tx), int(ty)],
@@ -192,6 +300,21 @@ def capture_building_threats(board: Board) -> list[dict[str, Any]]:
             tile = board.tile(tx, ty)
             out.append({
                 "threat_kind": "artillery_perpendicular_building",
+                "target": [int(tx), int(ty)],
+                "target_visual": _visual(int(tx), int(ty)),
+                "target_hp": int(tile.building_hp),
+                "attacker": _unit_record(attacker),
+            })
+            seen.add(key)
+            direct_threat_uids.add(int(attacker.uid))
+    for attacker in board.units:
+        for tx, ty in _queued_hornet_line_building_targets(board, attacker):
+            key = (int(attacker.uid), (int(tx), int(ty)))
+            if key in seen:
+                continue
+            tile = board.tile(tx, ty)
+            out.append({
+                "threat_kind": "hornet_line_building",
                 "target": [int(tx), int(ty)],
                 "target_visual": _visual(int(tx), int(ty)),
                 "target_hp": int(tile.building_hp),
@@ -785,17 +908,18 @@ def _will_die_to_prior_melee_before_attack(board: Board, attacker: Unit) -> tupl
         wdef = get_weapon_def(other.weapon)
         if wdef is None or wdef.weapon_type != "melee":
             continue
-        if getattr(other, "weapon_target_behind", False):
-            continue
 
-        dx = _sign(int(other.target_x) - int(other.x))
-        dy = _sign(int(other.target_y) - int(other.y))
-        if (dx != 0) == (dy != 0):
-            continue
-
-        tx = int(other.x) + dx
-        ty = int(other.y) + dy
-        if (tx, ty) != (int(attacker.x), int(attacker.y)):
+        if wdef.aoe_behind or bool(
+            getattr(other, "weapon_target_behind", False)
+        ):
+            hit_tiles = _queued_hornet_line_targets(board, other)
+        else:
+            dx = _sign(int(other.target_x) - int(other.x))
+            dy = _sign(int(other.target_y) - int(other.y))
+            if (dx != 0) == (dy != 0):
+                continue
+            hit_tiles = [(int(other.x) + dx, int(other.y) + dy)]
+        if (int(attacker.x), int(attacker.y)) not in hit_tiles:
             continue
 
         damage = int(getattr(other, "weapon_damage", 0) or 0) or int(wdef.damage)
@@ -865,7 +989,12 @@ def _will_die_to_prior_artillery_before_attack(board: Board, attacker: Unit) -> 
         target_y = int(getattr(other, "queued_target_y", -1))
         if target_x < 0 or target_y < 0:
             target_x, target_y = int(other.target_x), int(other.target_y)
-        hits_attacker = (target_x, target_y) == (int(attacker.x), int(attacker.y))
+        if other.weapon == "HornetAtkB":
+            hits_attacker = (int(attacker.x), int(attacker.y)) in set(
+                _queued_hornet_line_targets(board, other)
+            )
+        else:
+            hits_attacker = (target_x, target_y) == (int(attacker.x), int(attacker.y))
         if not hits_attacker and wdef.aoe_perpendicular:
             origin_x = int(getattr(other, "queued_origin_x", -1))
             origin_y = int(getattr(other, "queued_origin_y", -1))
@@ -1118,6 +1247,39 @@ def _coverage_reason(
         return (
             "still_threatened_artillery_perpendicular",
             "attacker's queued artillery side footprint still includes the building",
+        )
+
+    if threat.get("threat_kind") == "hornet_line_building":
+        current_targets = set(_queued_hornet_line_building_targets(board, attacker))
+        if (tx, ty) not in current_targets:
+            if not bool(getattr(attacker, "has_queued_attack", False)):
+                return "attack_cleared", "attacker no longer has a queued attack"
+            return (
+                "hornet_line_retargeted",
+                "building is no longer in the queued Hornet line footprint",
+            )
+        if _freeze_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            if _frozen_building(board, tx, ty):
+                return (
+                    "target_frozen_building",
+                    "target building is frozen and will thaw",
+                )
+            return (
+                "target_will_be_frozen_by_environment",
+                "Ice Storm freezes the target building before its sole queued hit",
+            )
+        if _shield_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            return (
+                "target_shielded_building",
+                "target building's live shield absorbs its sole queued hit",
+            )
+        return (
+            "still_threatened_hornet_line",
+            "attacker's queued Hornet line footprint still includes the building",
         )
 
     if threat.get("threat_kind") in {

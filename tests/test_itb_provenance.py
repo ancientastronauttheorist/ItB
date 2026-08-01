@@ -3971,3 +3971,139 @@ def test_real_mission_acid_vats_record_pins_objective_and_death_terrain():
     assert "objective UI" in gaps
     assert "SkillEffect/death scheduler ordering" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_hornet_record_pins_line_attacks_and_open_native_gaps():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item for item in provenance["records"] if item["id"] == "enemy-weapon-hornet"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/weapons_enemy.lua",
+            "sha256": (
+                "5231dd7a2de730f04fa4116c0d99f07e"
+                "cbb3b25059db3593d54d689c37bd4b7b"
+            ),
+            "symbols": [
+                "HornetAtk1",
+                "HornetAtk1:GetSkillEffect",
+                "HornetAtk2",
+            ],
+        },
+        {
+            "path": "scripts/pawns.lua",
+            "sha256": (
+                "e999b8d98526c1e36f4746dd65b9d9e7"
+                "ee3ca0b22029ed391d5b71fda49dc239"
+            ),
+            "symbols": ["Hornet1", "Hornet2"],
+        },
+        {
+            "path": "scripts/missions/bosses/hornet.lua",
+            "sha256": (
+                "e41ca873c3e600e4b422291eca2a8c733"
+                "f3193267d351d58c9fd25ffc213185f"
+            ),
+            "symbols": [
+                "HornetBoss",
+                "HornetAtkB",
+                "HornetAtkB:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883e"
+                "1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": ["Skill:GetTargetArea"],
+        },
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::HornetAtk1",
+        "WId::HornetAtk2",
+        "WId::HornetAtkB",
+        "enemy_weapon_for_type",
+    } <= implementations["rust_solver/src/weapons.rs"]
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "simulate_enemy_attacks"
+    }
+    assert implementations["src/model/weapons.py"] == {
+        "HornetAtk1", "HornetAtk2", "HornetAtkB"
+    }
+    assert implementations["src/model/pawn_stats.py"] == {"HornetBoss"}
+    assert implementations["src/model/board.py"] == {
+        "Unit", "Board", "from_bridge_data"
+    }
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "projected_enemy_attack_reach", "projected_requeue_click"
+    }
+    assert implementations["src/solver/threat_audit.py"] == {
+        "_original_queued_offset",
+        "_queued_hornet_line_targets",
+        "_queued_hornet_line_building_targets",
+        "capture_building_threats",
+        "_coverage_reason",
+        "_will_die_to_prior_melee_before_attack",
+        "_will_die_to_prior_artillery_before_attack",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_alpha_hornet_has_aoe_behind"
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_alpha_hornet_weapon_id_hits_both_tiles_without_bridge_flag",
+        "test_pushed_alpha_hornet_reanchors_line_from_current_position",
+        "test_pushed_hornet_boss_reanchors_full_offset_line",
+    }
+    assert tests["tests/test_final_cave_enemy_stats.py"] == {
+        "test_hornet_boss_has_canonical_stats"
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_alpha_hornet_projected_requeue_uses_adjacent_cardinal_click",
+        "test_hornet_boss_projected_requeue_reaches_distant_cardinal_building",
+    }
+    assert tests["tests/test_threat_audit.py"] == {
+        "test_capture_alpha_hornet_line_threat_uses_weapon_definition_not_bridge_flag",
+        "test_capture_hornet_leader_three_tile_line_threat",
+        "test_capture_pushed_alpha_hornet_uses_original_raw_queue_direction",
+        "test_capture_pushed_hornet_leader_preserves_original_target_offset",
+        "test_bridge_retains_raw_and_normalized_queued_hornet_target_fields",
+        "test_threat_audit_alpha_hornet_line_kills_later_attacker_without_bridge_flag",
+        "test_threat_audit_hornet_leader_line_kills_later_attacker_before_attack",
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "one damage on the adjacent selected tile" in facts
+    assert "one tile farther in the same direction" in facts
+    assert "three consecutive tiles" in facts
+    assert "PathSize INT_MAX" in facts
+    assert "Raw piQueuedShot/piOrigin" in facts
+    assert "rechecks every resulting line tile" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Hornet_Acid and HornetAtk_Acid" in gaps
+    assert "target scoring" in gaps
+    assert "obstacles" in gaps
+    assert "queued-effect scheduler boundaries" in gaps
+    assert "protected achievement session" in gaps

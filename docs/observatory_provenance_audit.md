@@ -56,21 +56,21 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 27 | 48 |
+| Missions | 75 | 28 | 47 |
 | Environments | 15 | 12 | 3 |
-| Unique total | 96 | 46 | 50 |
+| Unique total | 96 | 47 | 49 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 200 definitions literally and leaves 542 unindexed. Category totals
+names 202 definitions literally and leaves 540 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
-Tumblebug, Centipede, Digger, Shaman/Totem, and Crab/Scarab family records name
-sixteen literally and leave 24 unindexed. That is a precise indexing backlog, not
-evidence that all 24 behaviors are absent from Rust.
+Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family records name
+eighteen literally and leave 22 unindexed. That is a precise indexing backlog, not
+evidence that all 22 behaviors are absent from Rust.
 
 The Acid Vats slice adds the exact
 `scripts/missions/acid/mission_barrels.lua` source and all nine of its active
@@ -106,6 +106,19 @@ pressure without a projected firing origin stays scalar instead of becoming an
 impossible queued shot. Native target selection, movement, RNG, effect
 scheduling, and exhaustive collision/status interactions remain explicit
 partial-coverage gaps.
+
+The Hornet slice adds the exact `scripts/missions/bosses/hornet.lua` source while
+reusing already-indexed base enemy, pawn, and global target-area sources. The
+ordinary Hornet queues one adjacent damage; Alpha Hornet inherits a two-damage
+attack and adds the same damage one tile farther in the selected direction;
+Hornet Leader queues two damage on three consecutive tiles. Its inherited
+native target area uses simple reachability with unlimited path size and no
+corner allowance. Rust/Python preserve raw `piQueuedShot`/`piOrigin` alongside
+the normalized target, so a pushed Hornet retains its source direction or full
+leader offset and the threat audit rechecks every line tile. The record names
+both previously unindexed Hornet effect callbacks and keeps native boss
+targeting/scoring, obstacles, exact scheduler order, and every Hornet Acid
+behavior as explicit partial-coverage gaps.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected

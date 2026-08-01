@@ -1307,6 +1307,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Flaming Abdomen", weapon_type="charge",
         damage=3, push="forward", fire=True, charge=True,
     ),
+    # Hornet Leader: Super Stinger queues damage on three consecutive tiles.
+    "HornetAtkB": WeaponDef(
+        name="Super Stinger", weapon_type="artillery",
+        damage=2, range_min=1, range_max=0, path_size=3,
+    ),
 
     # ── Shamans (zero-damage Totem spawn artillery) ─────────────────
     "ShamanAtk1": WeaponDef(

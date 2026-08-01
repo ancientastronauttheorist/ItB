@@ -337,6 +337,241 @@ def test_threat_audit_attacker_will_die_to_prior_melee():
     )
 
 
+def test_capture_alpha_hornet_line_threat_uses_weapon_definition_not_bridge_flag():
+    board = Board()
+    for x in (3, 4):
+        board.tile(x, 3).terrain = "building"
+        board.tile(x, 3).building_hp = 2
+    hornet = _enemy(
+        uid=411,
+        pawn_type="Hornet2",
+        x=2,
+        y=3,
+        tx=3,
+        ty=3,
+        hp=3,
+    )
+    hornet.weapon = "HornetAtk2"
+    # The bridge field is optional convenience metadata; the exact WId owns
+    # this footprint and must remain safe when that field is absent/false.
+    hornet.weapon_target_behind = False
+    board.units.append(hornet)
+
+    threats = capture_building_threats(board)
+
+    assert [(t["target"], t.get("threat_kind")) for t in threats] == [
+        ([3, 3], "hornet_line_building"),
+        ([4, 3], "hornet_line_building"),
+    ]
+    audit = audit_threat_coverage(threats, board)
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 2
+    assert audit["entries"][1]["coverage"]["reason"] == (
+        "still_threatened_hornet_line"
+    )
+
+
+def test_capture_hornet_leader_three_tile_line_threat():
+    board = Board()
+    for x in (3, 4, 5):
+        board.tile(x, 3).terrain = "building"
+        board.tile(x, 3).building_hp = 2
+    hornet = _enemy(
+        uid=412,
+        pawn_type="HornetBoss",
+        x=2,
+        y=3,
+        tx=3,
+        ty=3,
+        hp=6,
+    )
+    hornet.weapon = "HornetAtkB"
+    hornet.max_hp = 6
+    board.units.append(hornet)
+
+    threats = capture_building_threats(board)
+
+    assert [(t["target"], t.get("threat_kind")) for t in threats] == [
+        ([3, 3], "hornet_line_building"),
+        ([4, 3], "hornet_line_building"),
+        ([5, 3], "hornet_line_building"),
+    ]
+    audit = audit_threat_coverage(threats, board)
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 3
+    assert {
+        entry["coverage"]["reason"] for entry in audit["entries"]
+    } == {"still_threatened_hornet_line"}
+
+
+def test_capture_pushed_alpha_hornet_uses_original_raw_queue_direction():
+    board = Board()
+    for x in (3, 4):
+        board.tile(x, 2).terrain = "building"
+        board.tile(x, 2).building_hp = 2
+    hornet = _enemy(
+        uid=415,
+        pawn_type="Hornet2",
+        x=2,
+        y=2,
+        tx=3,
+        ty=2,
+        hp=3,
+    )
+    hornet.weapon = "HornetAtk2"
+    hornet.queued_origin_x, hornet.queued_origin_y = 2, 3
+    hornet.queued_target_raw_x, hornet.queued_target_raw_y = 3, 3
+    hornet.queued_target_x, hornet.queued_target_y = 3, 2
+    hornet.queued_target_normalized = True
+    board.units.append(hornet)
+
+    threats = capture_building_threats(board)
+
+    assert [(t["target"], t["threat_kind"]) for t in threats] == [
+        ([3, 2], "hornet_line_building"),
+        ([4, 2], "hornet_line_building"),
+    ]
+
+
+def test_capture_pushed_hornet_leader_preserves_original_target_offset():
+    board = Board()
+    for x in (4, 5, 6):
+        board.tile(x, 2).terrain = "building"
+        board.tile(x, 2).building_hp = 2
+    hornet = _enemy(
+        uid=416,
+        pawn_type="HornetBoss",
+        x=2,
+        y=2,
+        tx=4,
+        ty=2,
+        hp=6,
+    )
+    hornet.weapon = "HornetAtkB"
+    hornet.max_hp = 6
+    hornet.queued_origin_x, hornet.queued_origin_y = 2, 3
+    hornet.queued_target_raw_x, hornet.queued_target_raw_y = 4, 3
+    hornet.queued_target_x, hornet.queued_target_y = 4, 2
+    hornet.queued_target_normalized = True
+    board.units.append(hornet)
+
+    threats = capture_building_threats(board)
+
+    assert [(t["target"], t["threat_kind"]) for t in threats] == [
+        ([4, 2], "hornet_line_building"),
+        ([5, 2], "hornet_line_building"),
+        ([6, 2], "hornet_line_building"),
+    ]
+
+
+def test_bridge_retains_raw_and_normalized_queued_hornet_target_fields():
+    board = Board.from_bridge_data({
+        "tiles": [],
+        "units": [{
+            "uid": 417,
+            "type": "HornetBoss",
+            "x": 2,
+            "y": 2,
+            "hp": 6,
+            "max_hp": 6,
+            "team": 6,
+            "weapons": ["HornetAtkB"],
+            "has_queued_attack": True,
+            "queued_origin": [2, 3],
+            "queued_target_raw": [4, 3],
+            "queued_target": [4, 2],
+            "queued_target_normalized": True,
+        }],
+    })
+
+    hornet = board.units[0]
+    assert (hornet.queued_target_raw_x, hornet.queued_target_raw_y) == (4, 3)
+    assert hornet.queued_target_normalized is True
+    assert (hornet.queued_origin_x, hornet.queued_origin_y) == (2, 3)
+
+
+def test_threat_audit_alpha_hornet_line_kills_later_attacker_without_bridge_flag():
+    board = Board()
+    board.attack_order = [413, 414]
+    board.tile(5, 3).terrain = "building"
+    board.tile(5, 3).building_hp = 2
+    alpha = _enemy(
+        uid=413,
+        pawn_type="Hornet2",
+        x=2,
+        y=3,
+        tx=3,
+        ty=3,
+        hp=3,
+    )
+    alpha.weapon = "HornetAtk2"
+    alpha.weapon_damage = 2
+    alpha.weapon_target_behind = False
+    board.units.append(alpha)
+    later = _enemy(
+        uid=414,
+        pawn_type="Hornet1",
+        x=4,
+        y=3,
+        tx=5,
+        ty=3,
+        hp=2,
+    )
+    later.weapon = "HornetAtk1"
+    later.max_hp = 2
+    board.units.append(later)
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_melee"
+    )
+
+
+def test_threat_audit_hornet_leader_line_kills_later_attacker_before_attack():
+    board = Board()
+    board.attack_order = [418, 419]
+    board.tile(6, 3).terrain = "building"
+    board.tile(6, 3).building_hp = 2
+    leader = _enemy(
+        uid=418,
+        pawn_type="HornetBoss",
+        x=2,
+        y=3,
+        tx=3,
+        ty=3,
+        hp=6,
+    )
+    leader.weapon = "HornetAtkB"
+    leader.weapon_damage = 2
+    leader.max_hp = 6
+    board.units.append(leader)
+    later = _enemy(
+        uid=419,
+        pawn_type="Hornet1",
+        x=5,
+        y=3,
+        tx=6,
+        ty=3,
+        hp=2,
+    )
+    later.weapon = "HornetAtk1"
+    later.max_hp = 2
+    board.units.append(later)
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_artillery"
+    )
+
+
 def test_threat_audit_dungboss_kills_bouncer_before_building_attack():
     board = Board()
     board.attack_order = [153, 202]

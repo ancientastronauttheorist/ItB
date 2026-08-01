@@ -257,6 +257,12 @@ class Unit:
     # Enemy attack details (from bridge piQueuedShot + weapon globals)
     queued_target_x: int = -1  # piQueuedShot direction point
     queued_target_y: int = -1
+    # Original save-file piQueuedShot. The bridge normalizes queued_target to
+    # the current pawn position after a push, so line attacks retain this raw
+    # value plus piOrigin to recover their authored direction/offset.
+    queued_target_raw_x: int = -1
+    queued_target_raw_y: int = -1
+    queued_target_normalized: bool = False
     queued_origin_x: int = -1  # original firing tile for queued line attacks
     queued_origin_y: int = -1
     weapon_damage: int = 0
@@ -773,8 +779,12 @@ class Board:
             qt = ud.get("queued_target")
             qt_x = qt[0] if qt else -1
             qt_y = qt[1] if qt else -1
+            raw_qt = ud.get("queued_target_raw")
+            raw_qt_x = raw_qt[0] if raw_qt else -1
+            raw_qt_y = raw_qt[1] if raw_qt else -1
+            queued_target_normalized = bool(ud.get("queued_target_normalized", False))
             has_queued_attack = bool(ud.get("has_queued_attack", False))
-            if qt_x < 0 and bool(ud.get("queued_target_normalized", False)):
+            if qt_x < 0 and queued_target_normalized:
                 has_queued_attack = False
             qo = ud.get("queued_origin")
             if qo:
@@ -823,6 +833,9 @@ class Board:
                 target_y=qt_y,
                 queued_target_x=qt_x,
                 queued_target_y=qt_y,
+                queued_target_raw_x=raw_qt_x,
+                queued_target_raw_y=raw_qt_y,
+                queued_target_normalized=queued_target_normalized,
                 queued_origin_x=qo_x,
                 queued_origin_y=qo_y,
                 weapon_damage=min(ud.get("weapon_damage", 0), 255),

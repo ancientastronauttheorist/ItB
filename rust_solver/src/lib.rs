@@ -2395,6 +2395,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   The new walls participate in later attack collision, while explicit
 //   building, mountain, Water, Time Pod, pawn, and wreck exclusions remain.
 //   Pre-v384 corpus archived as failure_db_snapshot_sim_v383.jsonl.
+// v388 - Alpha Hornet's source-defined second queued hit follows HornetAtk2's
+//   exact AOE_BEHIND property even when a legacy/partial bridge payload omits
+//   the redundant target-behind flag. Projected normal/Alpha Hornet queues use
+//   only source-legal adjacent cardinal clicks (with Alpha's second-tile
+//   footprint), and the Leader retains its unlimited cardinal target area.
+//   Pre-v388 corpus archived as failure_db_snapshot_sim_v387.jsonl.
 // v387 - Normal and Alpha Crab/Scarab artillery follows LineArtillery's exact
 //   cardinal click range 2..5. Invalid queued range-six shots cancel, while a
 //   legal Crab range-five click retains its source-defined sixth-tile impact;
@@ -2409,7 +2415,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 387;
+pub const SIMULATOR_VERSION: u32 = 388;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

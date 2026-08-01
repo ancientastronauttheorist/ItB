@@ -5572,6 +5572,181 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried base-game Lua maps Hornet1 to HornetAtk1 and Hornet2 to HornetAtk2. HornetAtk1 queues one damage on the adjacent selected tile; HornetAtk2 inherits that effect with damage two and TargetBehind true, adding equal damage one tile farther in the same direction."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Hornet leader source maps HornetBoss to HornetAtkB, which queues two damage on three consecutive tiles. Its inherited native target area uses Board:GetSimpleReachable with PathSize INT_MAX and CornersAllowed false."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust and Python retain the ordinary and Alpha Hornet weapon identities and the HornetBoss Super Stinger identity. Raw piQueuedShot/piOrigin plus the normalized target preserve a pushed Hornet's source direction or full leader offset; the audit rechecks every resulting line tile. The focused Alpha regression requires the HornetAtk2 weapon definition, rather than an optional bridge TargetBehind flag, to retain both queued line tiles."
+        }
+      ],
+      "id": "enemy-weapon-hornet",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::HornetAtk1",
+            "WId::HornetAtk2",
+            "WId::HornetAtkB",
+            "WEAPONS",
+            "weapon_def",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "projected_enemy_attack_reach",
+            "projected_requeue_click"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "HornetAtk1",
+            "HornetAtk2",
+            "HornetAtkB"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "HornetBoss"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "Unit",
+            "Board",
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "GetQueuedShot"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_original_queued_offset",
+            "_queued_hornet_line_targets",
+            "_queued_hornet_line_building_targets",
+            "capture_building_threats",
+            "_coverage_reason",
+            "_will_die_to_prior_melee_before_attack",
+            "_will_die_to_prior_artillery_before_attack"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Hornet_Acid and HornetAtk_Acid are not mapped by this slice; their ACID behavior remains entirely unmodeled rather than being silently folded into the ordinary Hornet attack.",
+        "Rust consumes a live queued target and does not reproduce native Hornet movement, target acquisition, target scoring, candidate enumeration, attack-order choice, RNG state, or tie-breaking. HornetBoss targeting remains bounded by the inherited native simple-reachable helper rather than exhaustively reproduced.",
+        "Native Board:GetSimpleReachable, GetDirection, SpaceDamage, AddQueuedDamage, obstacles, collision, and exact queued-effect scheduler boundaries have not been independently traced for this build; exhaustive terrain, status, objective, corpse, and multi-unit interactions remain unverified.",
+        "No fresh controlled bridge capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_enemy.lua",
+          "sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "symbols": [
+            "HornetAtk1",
+            "HornetAtk1:GetSkillEffect",
+            "HornetAtk2"
+          ]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "Hornet1",
+            "Hornet2"
+          ]
+        },
+        {
+          "path": "scripts/missions/bosses/hornet.lua",
+          "sha256": "e41ca873c3e600e4b422291eca2a8c733f3193267d351d58c9fd25ffc213185f",
+          "symbols": [
+            "HornetBoss",
+            "HornetAtkB",
+            "HornetAtkB:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "Skill:GetTargetArea"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_alpha_hornet_has_aoe_behind"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_alpha_hornet_weapon_id_hits_both_tiles_without_bridge_flag",
+            "test_pushed_alpha_hornet_reanchors_line_from_current_position",
+            "test_pushed_hornet_boss_reanchors_full_offset_line"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_alpha_hornet_projected_requeue_uses_adjacent_cardinal_click",
+            "test_hornet_boss_projected_requeue_reaches_distant_cardinal_building"
+          ]
+        },
+        {
+          "path": "tests/test_final_cave_enemy_stats.py",
+          "symbols": [
+            "test_hornet_boss_has_canonical_stats"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_capture_alpha_hornet_line_threat_uses_weapon_definition_not_bridge_flag",
+            "test_capture_hornet_leader_three_tile_line_threat",
+            "test_capture_pushed_alpha_hornet_uses_original_raw_queue_direction",
+            "test_capture_pushed_hornet_leader_preserves_original_target_offset",
+            "test_bridge_retains_raw_and_normalized_queued_hornet_target_fields",
+            "test_threat_audit_alpha_hornet_line_kills_later_attacker_without_bridge_flag",
+            "test_threat_audit_hornet_leader_line_kills_later_attacker_before_attack"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_hornet_record_pins_line_attacks_and_open_native_gaps"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

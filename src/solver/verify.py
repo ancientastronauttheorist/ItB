@@ -1785,6 +1785,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Digger's separate queued cardinal damage and exposes those real pawns to
 # later attack collision. Pre-v384 corpus is archived as
 # failure_db_snapshot_sim_v383.jsonl.
+# v388: Alpha Hornet's source-defined second queued hit follows HornetAtk2's
+# exact AOE_BEHIND property even when a legacy/partial bridge payload omits
+# the redundant target-behind flag. Projected normal/Alpha Hornet queues use
+# source-legal adjacent cardinal clicks with Alpha's second-tile footprint;
+# the Leader retains its unlimited cardinal target area. Pre-v388 corpus is
+# archived as recordings/failure_db_snapshot_sim_v387.jsonl.
 # v387: Normal and Alpha Crab/Scarab artillery uses LineArtillery's exact
 # cardinal click range 2..5. Invalid range-six queues cancel, while Crab keeps
 # its source-defined sixth-tile impact behind a legal range-five click;
@@ -1796,7 +1802,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 387
+SIMULATOR_VERSION = 388
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
