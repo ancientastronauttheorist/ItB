@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 63 | 12 |
+| Missions | 75 | 67 | 8 |
 | Environments | 15 | 14 | 1 |
-| Unique total | 96 | 82 | 14 |
+| Unique total | 96 | 86 | 10 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 344 definitions literally and leaves 398 unindexed. Category totals
+names 362 definitions literally and leaves 380 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -103,6 +103,24 @@ verbatim. Existing objective metadata, Rust weapon mappings, and the paired-shot
 threat check are implementation anchors only: native placement, inherited
 targeting and movement, effect scheduling, liveness timing, Tower settlement,
 and full mission conformance remain open.
+
+The remaining base Boss Leader slice adds four exact shipped mission sources in
+four bounded `partial` records and names all eighteen active callbacks among
+them: eight in the Blob Boss source, one in Psion Abomination, three in Hive
+Leader, and six in Spider Leader. Blob Boss records its five-death stored-ID
+objective, the `BlobBoss -> BlobBossMed -> BlobBossSmall` aliases, and the
+separate queued four-damage/move attack versus native death-split artillery;
+candidate ordering, `random_removal`, and artillery scheduling are deliberately
+open. Psion Abomination pins `Jelly_Boss` and `LEADER_BOSS`, but its inherited
+tooltip/aura machinery is not attributed to the small mission source. Hive
+Leader makes ordinary Vek spawn before requesting two `SlugEgg1` through
+`FlyingSpawns`; because the helper is native, its placement, RNG, and whether
+its effects are direct or queued remain gaps. Spider Leader directly requests
+two initial eggs, alternates later 2/3 egg requests outside Easy, and its hatch
+constructs an ordered `AddScript(RemovePawn)` plus non-queued `AddDamage` spawn
+of exact `Spiderling1`. Existing static data, mappings, and tests are anchors,
+not a claim that any native placement, helper, script scheduler, or mission
+settlement is fully reproduced.
 
 The mountain, sinkhole, trapped-building, forest-fire, and shield-generator
 slice adds six exact shipped mission sources in five bounded `partial` records.

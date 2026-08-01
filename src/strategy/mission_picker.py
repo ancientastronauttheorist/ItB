@@ -245,9 +245,12 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
 # that the native simulator cannot yet forecast. Keep this list exact-ID only:
 # a similarly named future template remains unknown rather than gated.
 NATIVE_FORECAST_GATED_MISSION_IDS = frozenset({
+    "Mission_BlobBoss",
     "Mission_Fence",
     "Mission_Laser",
     "Mission_Respawn",
+    "Mission_SpiderBoss",
+    "Mission_SlugBoss",
 })
 _NATIVE_FORECAST_GATE_TAG = "native_forecast_gate"
 _NATIVE_FORECAST_GATE_PENALTY = 1000

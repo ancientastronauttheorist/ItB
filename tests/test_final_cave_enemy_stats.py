@@ -85,7 +85,9 @@ def test_spider_boss_has_canonical_stats() -> None:
     assert s.massive is True
     assert s.jumper is True
     assert s.ignore_smoke is True
+    assert s.void_shock_immune is True
     assert s.ranged == 1
+    assert s.default_weapon == ""
 
 
 def test_blob_boss_chain_has_canonical_stats() -> None:
@@ -114,7 +116,24 @@ def test_shaman_boss_has_canonical_stats() -> None:
     assert s.move_speed == 2
     assert s.massive is True
     assert s.ranged == 1
+    assert s.void_shock_immune is True
     assert s.default_weapon == "ShamanAtkB"
+
+
+def test_special_boss_and_egg_source_parity() -> None:
+    """Passive Spawn leaders keep source stats but no invented weapon slots."""
+    blobber = get_pawn_stats("BlobberBoss")
+    slug = get_pawn_stats("SlugBoss")
+    egg = get_pawn_stats("SpiderlingEgg1")
+
+    assert (blobber.move_speed, blobber.ranged, blobber.massive) == (2, 1, True)
+    assert blobber.void_shock_immune is True
+    assert blobber.default_weapon == "BlobberAtkB"
+    assert (slug.move_speed, slug.ranged, slug.massive) == (2, 1, True)
+    assert slug.default_weapon == ""
+    assert (egg.move_speed, egg.ranged, egg.minor) == (0, 0, True)
+    assert egg.ignore_smoke is True
+    assert egg.void_shock_immune is True
 
 
 def test_jelly_boss_has_canonical_stats() -> None:

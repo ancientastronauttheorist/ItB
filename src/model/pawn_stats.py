@@ -218,11 +218,11 @@ VEK_STATS = {
     # `scripts/missions/bosses/spider.lua:50-67`: Health=6, MoveSpeed=2,
     # Massive, Jumper, IgnoreSmoke, Ranged=1, SkillList={} (passive — its
     # SpiderBoss_Tooltip runs `Mission:FlyingSpawns(...,"SpiderlingEgg1")` to
-    # drop 3 eggs each turn). Already mapped to WId::SpiderAtk2 in
-    # rust_solver/src/weapons.rs::enemy_weapon_for_type.
+    # drop 3 eggs each turn). Its source SkillList is empty, so recurring egg
+    # spawning is route-gated instead of being represented as a default weapon.
     "SpiderBoss":    PawnStats(move_speed=2, ranged=1, massive=True,
                                jumper=True, ignore_smoke=True,
-                               default_weapon="SpiderAtk2"),
+                               void_shock_immune=True),
     # Large Goo — Mission_BlobBoss. Per `scripts/missions/bosses/goo.lua`:
     # BlobBoss: HP=3, Move=3, Massive, Ranged=0, SkillList={"BlobBossAtk"}
     # (4-dmg adjacent squish). DeathSpawn=BlobBossMed (HP=2) → BlobBossSmall
@@ -239,21 +239,24 @@ VEK_STATS = {
     # TotemB minion). Mapped to BeetleAtkB in rust enemy_weapon_for_type as
     # the closest 4-dmg melee approximation.
     "ShamanBoss":    PawnStats(move_speed=2, ranged=1, massive=True,
+                               void_shock_immune=True,
                                default_weapon="ShamanAtkB"),
     # Blobber Leader - Mission_BlobberBoss. Per
     # `scripts/advanced/bosses/blobber.lua:17-31`: Health=5, MoveSpeed=2,
     # Massive, Ranged=1, SkillList={"BlobberAtkB"} (throws BlobB).
     "BlobberBoss":   PawnStats(move_speed=2, ranged=1, massive=True,
+                               void_shock_immune=True,
                                default_weapon="BlobberAtkB"),
+    "SlugBoss":      PawnStats(move_speed=2, ranged=1, massive=True),
     # Psion Abomination — Mission_JellyBoss (R.S.T. Corporate HQ finale).
     # Per `scripts/missions/bosses/psion.lua:14-27`: Health=5, MoveSpeed=3,
     # Flying, Leader=LEADER_BOSS, no offensive SkillList (Tooltip "Overpowered"
     # is purely passive: all OTHER Vek gain +1 HP, Regeneration, and explode
     # on death — i.e. stacks LEADER_HEALTH + LEADER_REGEN + LEADER_EXPLODE
     # auras simultaneously). Pushable per game (no Pushable=false flag on
-    # the lua def). The Psion-aura combination is not yet wired in
-    # rust_solver — the boss is only registered to gate the unknown-pawn
-    # fallback. Aura simulation is a follow-up sim-version bump.
+    # the lua def). Rust models and tests the Psion-aura combination.
+    # Rust keeps the source-defined aura behavior while this model supplies
+    # fallback; it has no offensive default weapon.
     "Jelly_Boss":    PawnStats(move_speed=3, flying=True, leader="LEADER_BOSS",
                                pushable=True),
     # Minor enemies
@@ -266,6 +269,8 @@ VEK_STATS = {
     "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),  # legacy alias
     "MantisEgg":     PawnStats(move_speed=0, minor=True, ranged=0),
     "WebbEgg1":      PawnStats(move_speed=0, minor=True, ranged=0, ignore_smoke=True),
+    "SpiderlingEgg1": PawnStats(move_speed=0, minor=True, ranged=0,
+                                 ignore_smoke=True, void_shock_immune=True),
     "Totem1":        PawnStats(move_speed=0, minor=True,
                                 default_weapon="TotemAtk1"),
     "Totem2":        PawnStats(move_speed=0, minor=True,

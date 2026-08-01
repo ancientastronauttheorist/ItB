@@ -364,6 +364,7 @@ fn known_minor_type(type_name: &str) -> bool {
             | "BlobMini"
             | "MantisEgg"
             | "WebbEgg1"
+            | "SpiderlingEgg1"
             | "Spiderling1"
             | "Spiderling2"
             | "Totem1"
@@ -392,7 +393,15 @@ pub struct JsonPistonAction {
 }
 
 fn known_void_shock_immune_type(type_name: &str) -> bool {
-    matches!(type_name, "Shaman1" | "Shaman2")
+    matches!(
+        type_name,
+        "Shaman1"
+            | "Shaman2"
+            | "SpiderBoss"
+            | "SpiderlingEgg1"
+            | "BlobberBoss"
+            | "ShamanBoss"
+    )
 }
 
 fn known_burrower_type(type_name: &str) -> bool {
@@ -838,6 +847,7 @@ pub fn board_from_json(json_str: &str)
                 flags |= UnitFlags::JUMPER;
             }
             if ju.boosted.unwrap_or(false) { flags |= UnitFlags::BOOSTED; }
+            let queued_attack_explicitly_false = ju.has_queued_attack == Some(false);
             if ju.has_queued_attack.unwrap_or(false) { flags |= UnitFlags::HAS_QUEUED_ATTACK; }
             if input.mission_id.as_deref() == Some("Mission_Satellite")
                 && ju.unit_type == "SatelliteRocket"
@@ -867,17 +877,23 @@ pub fn board_from_json(json_str: &str)
             }
 
             // Queued target
-            let (qtx, qty) = if let Some(qt) = &ju.queued_target {
+            let (qtx, qty) = if queued_attack_explicitly_false {
+                (-1, -1)
+            } else if let Some(qt) = &ju.queued_target {
                 if qt.len() >= 2 { (qt[0], qt[1]) } else { (-1, -1) }
             } else {
                 (-1, -1)
             };
-            let (raw_qtx, raw_qty) = if let Some(qt) = &ju.queued_target_raw {
+            let (raw_qtx, raw_qty) = if queued_attack_explicitly_false {
+                (-1, -1)
+            } else if let Some(qt) = &ju.queued_target_raw {
                 if qt.len() >= 2 { (qt[0], qt[1]) } else { (-1, -1) }
             } else {
                 (-1, -1)
             };
-            let (qox, qoy) = if let Some(qo) = &ju.queued_origin {
+            let (qox, qoy) = if queued_attack_explicitly_false {
+                (-1, -1)
+            } else if let Some(qo) = &ju.queued_origin {
                 if qo.len() >= 2 { (qo[0], qo[1]) } else { (-1, -1) }
             } else if qtx >= 0 && qty >= 0 {
                 (ju.x as i8, ju.y as i8)
@@ -1866,7 +1882,8 @@ mod tests {
             "tiles": [],
             "units": [
                 {"uid": 1, "type": "Totem2", "x": 4, "y": 1, "hp": 1, "max_hp": 1, "team": 6},
-                {"uid": 2, "type": "Leaper1", "x": 4, "y": 2, "hp": 1, "max_hp": 1, "team": 6}
+                {"uid": 2, "type": "SpiderlingEgg1", "x": 4, "y": 2, "hp": 1, "max_hp": 1, "team": 6},
+                {"uid": 3, "type": "Leaper1", "x": 4, "y": 3, "hp": 1, "max_hp": 1, "team": 6}
             ],
             "grid_power": 7,
             "spawning_tiles": []
@@ -1876,7 +1893,8 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert!(board.units[0].minor(), "Totem2 old recordings should infer Minor=true");
-        assert!(!board.units[1].minor(), "ordinary Leaper1 is not a Minor Vek");
+        assert!(board.units[1].minor(), "SpiderlingEgg1 old recordings should infer Minor=true");
+        assert!(!board.units[2].minor(), "ordinary Leaper1 is not a Minor Vek");
     }
 
     #[test]
@@ -1897,6 +1915,65 @@ mod tests {
 
         assert!(board.units[0].void_shock_immune());
         assert!(!board.units[1].void_shock_immune());
+    }
+
+    #[test]
+    fn test_special_boss_void_shock_immunity_is_inferred_for_legacy_payloads() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {"uid": 1, "type": "SpiderBoss", "x": 1, "y": 1, "hp": 6, "max_hp": 6, "team": 6},
+                {"uid": 2, "type": "SpiderlingEgg1", "x": 2, "y": 1, "hp": 1, "max_hp": 1, "team": 6},
+                {"uid": 3, "type": "BlobberBoss", "x": 3, "y": 1, "hp": 5, "max_hp": 5, "team": 6},
+                {"uid": 4, "type": "ShamanBoss", "x": 4, "y": 1, "hp": 5, "max_hp": 5, "team": 6}
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        for unit in &board.units[..4] {
+            assert!(unit.void_shock_immune());
+        }
+    }
+
+    #[test]
+    fn test_explicit_no_queued_attack_clears_stale_intent_but_absent_flag_is_legacy() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {"uid": 1, "type": "SpiderBoss", "x": 1, "y": 1, "hp": 6, "max_hp": 6, "team": 6,
+                 "weapons": [], "has_queued_attack": false, "queued_target": [5, 6], "queued_target_raw": [5, 7], "queued_origin": [1, 1]},
+                {"uid": 2, "type": "Jelly_Boss", "x": 2, "y": 1, "hp": 5, "max_hp": 5, "team": 6,
+                 "weapons": [], "has_queued_attack": false, "queued_target": [5, 6], "queued_target_raw": [5, 7], "queued_origin": [2, 1]},
+                {"uid": 3, "type": "SlugBoss", "x": 3, "y": 1, "hp": 5, "max_hp": 5, "team": 6,
+                 "weapons": [], "has_queued_attack": false, "queued_target": [5, 6], "queued_target_raw": [5, 7], "queued_origin": [3, 1]},
+                {"uid": 4, "type": "Moth1", "x": 4, "y": 1, "hp": 2, "max_hp": 2, "team": 6,
+                 "queued_target": [5, 6], "queued_target_raw": [5, 7], "queued_origin": [4, 1]}
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        for unit in &board.units[..3] {
+            assert!(!unit.has_queued_attack());
+            assert_eq!((unit.queued_target_x, unit.queued_target_y), (-1, -1));
+            assert_eq!((unit.queued_target_raw_x, unit.queued_target_raw_y), (-1, -1));
+            assert_eq!((unit.queued_origin_x, unit.queued_origin_y), (-1, -1));
+            assert!(!unit.flags.contains(UnitFlags::QUEUED_ORIGIN_SET));
+            assert!(!unit.flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET));
+        }
+        let legacy = &board.units[3];
+        assert_eq!((legacy.queued_target_x, legacy.queued_target_y), (5, 6));
+        assert_eq!((legacy.queued_target_raw_x, legacy.queued_target_raw_y), (5, 7));
+        assert_eq!((legacy.queued_origin_x, legacy.queued_origin_y), (4, 1));
+        assert!(legacy.flags.contains(UnitFlags::QUEUED_ORIGIN_SET));
+        assert!(legacy.flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET));
     }
 
     #[test]

@@ -5470,6 +5470,107 @@ def test_real_mission_boss_core_record_pins_callbacks_and_native_gaps():
     assert "Tower bonus precedence" in gaps
 
 
+def test_real_mission_blob_boss_record_pins_queued_chain_and_native_gaps():
+    record = _mission_provenance_record("mission-blob-boss-goo-chain")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/bosses/goo.lua",
+        "sha256": (
+            "f6761a7cad49883fa85e631b3a524a6d5"
+            "6d0d593616aa3e1031b1c65b4bab03b"
+        ),
+        "symbols": [
+            "Mission_BlobBoss", "Mission_BlobBoss:StartMission",
+            "Mission_BlobBoss:CountDeadBlobs", "Mission_BlobBoss:UpdateMission",
+            "Mission_BlobBoss:UpdateObjectives", "Mission_BlobBoss:IsBossDead",
+            "BlobBoss", "BlobBoss:GetDeathEffect", "BlobBossMed", "BlobBossSmall",
+            "BlobBossAtk", "BlobBossAtk:GetTargetArea",
+            "BlobBossAtk:GetSkillEffect", "BlobBossAtkMed", "BlobBossAtkSmall",
+        ],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "BlobDeaths=5" in facts
+    assert "random_removal" in facts
+    assert "queues four damage" in facts
+    assert "not direct damage calls" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "PATH_GROUND eligibility" in gaps
+    assert "queued-effect ordering" in gaps
+
+
+def test_real_mission_jelly_boss_record_pins_source_alias_and_native_gaps():
+    record = _mission_provenance_record("mission-jelly-boss-psion-abomination")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/bosses/psion.lua",
+        "sha256": (
+            "bd2f27f4f28fa3cfe87b871840ab2fb4"
+            "36174599b5c0a4fde3b371db7fb27ad3"
+        ),
+        "symbols": [
+            "Mission_JellyBoss", "Mission_JellyBoss:StartMission", "Jelly_Boss",
+            "Jelly_Boss_Tooltip",
+        ],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "GlobalSpawnMod=-1" in facts
+    assert "Leader=LEADER_BOSS" in facts
+    assert "does not define the inherited health/regen/explode aura callbacks" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "LEADER_BOSS lookup" in gaps
+    assert "No direct or queued offensive SkillEffect" in gaps
+
+
+def test_real_mission_slug_boss_record_pins_flying_spawn_helper_gap():
+    record = _mission_provenance_record("mission-slug-boss-hive-spawns")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/bosses/slug.lua",
+        "sha256": (
+            "cf93aa66cf65079d55518a446da2bffd8"
+            "5df4a3602c5afdf52bca6ab6c728d52"
+        ),
+        "symbols": [
+            "Mission_SlugBoss", "Mission_SlugBoss:StartMission",
+            "Mission_SlugBoss:UpdateSpawning", "Mission_SlugBoss:SpawnSluglings",
+            "SlugBoss", "SlugEgg1",
+        ],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "SpawnPawns(GetSpawnCount())" in facts
+    assert "exactly two SlugEgg1" in facts
+    assert "direct AddDamage/AddQueuedDamage" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "FlyingSpawns candidate selection" in gaps
+    assert "Explodes=true" in gaps
+
+
+def test_real_mission_spider_boss_record_pins_hatch_order_and_native_gaps():
+    record = _mission_provenance_record("mission-spider-boss-eggs-and-hatch")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/bosses/spider.lua",
+        "sha256": (
+            "f7d81d714922e1b5b22d5b76a8edcb6f"
+            "b96dd61ae5b20a3008c66b5068046455"
+        ),
+        "symbols": [
+            "Mission_SpiderBoss", "Mission_SpiderBoss:StartMission",
+            "Mission_SpiderBoss:UpdateSpawning", "Mission_SpiderBoss:SpawnSpiderlings",
+            "SpiderBoss", "SpiderBoss_Tooltip", "SpiderBoss_Tooltip:GetSkillEffect",
+            "SpiderlingEgg1", "SpiderlingHatch1",
+            "SpiderlingHatch1:GetTargetScore", "SpiderlingHatch1:GetSkillEffect",
+        ],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "EggCount=-1" in facts
+    assert "alternates the stored count between 2 and 3" in facts
+    assert "first adds a Board:RemovePawn script and then adds a non-queued" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "direct-versus-queued effects" in gaps
+    assert "AddScript/Board:RemovePawn and AddDamage ordering" in gaps
+
+
 def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
     record = _mission_provenance_record("mission-boombots-explosive-decay")
     assert record["coverage"] == "partial"

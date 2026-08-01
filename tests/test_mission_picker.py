@@ -376,7 +376,14 @@ def test_train_no_defender_loses_to_safe_battle():
 
 @pytest.mark.parametrize(
     "mission_id",
-    ("Mission_Fence", "Mission_Laser", "Mission_Respawn"),
+    (
+        "Mission_BlobBoss",
+        "Mission_Fence",
+        "Mission_Laser",
+        "Mission_Respawn",
+        "Mission_SpiderBoss",
+        "Mission_SlugBoss",
+    ),
 )
 def test_native_forecast_gated_mission_loses_to_safe_default_pick(mission_id):
     """Known native-only mission semantics never outrank a safe slate option."""
@@ -452,7 +459,15 @@ def test_lightning_routes_auto_start_veto_native_forecast_gated_missions(routing
             "environment": "Env_Null",
         }
         for index, mission_id in enumerate(
-            ("Mission_Fence", "Mission_Laser", "Mission_Respawn"), start=93
+            (
+                "Mission_BlobBoss",
+                "Mission_Fence",
+                "Mission_Laser",
+                "Mission_Respawn",
+                "Mission_SpiderBoss",
+                "Mission_SlugBoss",
+            ),
+            start=93,
         )
     ]
     ranked = score_island_map(
@@ -464,7 +479,14 @@ def test_lightning_routes_auto_start_veto_native_forecast_gated_missions(routing
     )
 
     assert ranked[0]["mission_id"] == "Mission_Battle"
-    for mission_id in ("Mission_Fence", "Mission_Laser", "Mission_Respawn"):
+    for mission_id in (
+        "Mission_BlobBoss",
+        "Mission_Fence",
+        "Mission_Laser",
+        "Mission_Respawn",
+        "Mission_SpiderBoss",
+        "Mission_SlugBoss",
+    ):
         scored = next(entry for entry in ranked if entry["mission_id"] == mission_id)
         assert scored["route_auto_start_veto_reason"] == (
             f"native_forecast_gate:{mission_id}"
@@ -482,7 +504,15 @@ def test_lightning_route_all_native_forecast_gates_remain_ranked_but_vetoed():
                 "environment": "Env_Null",
             }
             for index, mission_id in enumerate(
-                ("Mission_Fence", "Mission_Laser", "Mission_Respawn"), start=96
+                (
+                    "Mission_BlobBoss",
+                    "Mission_Fence",
+                    "Mission_Laser",
+                    "Mission_Respawn",
+                    "Mission_SpiderBoss",
+                    "Mission_SlugBoss",
+                ),
+                start=96,
             )
         ],
         LIGHTNING_GRAV_SQUAD,
@@ -492,9 +522,12 @@ def test_lightning_route_all_native_forecast_gates_remain_ranked_but_vetoed():
     )
 
     assert {entry["mission_id"] for entry in ranked} == {
+        "Mission_BlobBoss",
         "Mission_Fence",
         "Mission_Laser",
         "Mission_Respawn",
+        "Mission_SpiderBoss",
+        "Mission_SlugBoss",
     }
     assert all(
         entry["route_auto_start_veto_reason"]

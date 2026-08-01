@@ -8333,6 +8333,274 @@
           "symbols": ["test_real_mission_boss_core_record_pins_callbacks_and_native_gaps"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Blob Boss source defines Mission_BlobBoss with SpawnStartMod=-1, SpawnMod=-1, BlobDeaths=5, and BossPawn=BlobBoss. StartMission starts that leader and blocks Jelly_Explode spawns. UpdateMission monotonically records every TEAM_ENEMY pawn whose type contains BlobBoss; CountDeadBlobs, UpdateObjectives, and IsBossDead use only the recorded IDs' Board:IsPawnAlive results, so the source's win predicate is five recorded BlobBoss-family deaths rather than simply the original BossID's death."
+        },
+        {
+          "classification": "fact",
+          "statement": "BlobBoss is a three-HP, MoveSpeed-three, massive enemy with BlobBossAtk and DeathSpawn=BlobBossMed; the two-HP medium inherits that attack and DeathSpawn=BlobBossSmall; the one-HP small has no further DeathSpawn. BlobBoss:GetDeathEffect collects native PATH_GROUND-unblocked diamond points through distance four, partitions distances one/two ahead of farther backups, and uses random_removal to launch up to two immediate NO_DELAY artillery spawns of the exact next type; it alerts and stops if neither candidate list has a point."
+        },
+        {
+          "classification": "fact",
+          "statement": "BlobBossAtk targets every valid cardinal neighbor. Its effect queues four damage at p2, queues a second four damage at p2 only when p2 is Mountain, and queues the simple-path move from p1 to p2 with FULL_DELAY only when p2 is empty or not a Mech. Those damage and move calls are explicitly queued; the death-split AddArtillery calls are separate native artillery effects, not direct damage calls in this source."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing Rust WIds, BlobBoss-family type mapping, split simulation, Python static pawn defaults, objective metadata, and focused regressions are implementation anchors. They are not proof that native BlobList timing, random_removal choice/order, Flying/Artillery placement, queued scheduler, collision, or objective settlement is fully reproduced."
+        }
+      ],
+      "id": "mission-blob-boss-goo-chain",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_BlobBoss", "BlobBoss"]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["WId::BlobBossAtk", "WId::BlobBossAtkMed", "WId::BlobBossAtkSmall", "enemy_weapon_for_type"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["simulate_enemy_attacks"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["blob_split"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["BlobBoss", "BlobBossMed", "BlobBossSmall"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Boss inheritance, StartBoss placement/identity, BlobList callback timing, Board:GetPawns order, substring matching, objective UI/reward settlement, and generic Mission_Infinite spawns remain native lifecycle dependencies.",
+        "general_DiamondTarget ordering, PATH_GROUND eligibility, Board:IsBlocked, random_removal RNG state, candidate fallback, Board:AddAlert, AddArtillery launch/impact/NO_DELAY scheduling, spawn identity/allocation, and all terrain/status/collision edges need controlled build-keyed traces.",
+        "Rust's retained queued-damage, mountain, move, and split behavior is bounded implementation evidence; it does not establish native queued-effect ordering after displacement, death effects, or every Mech/non-Mech target interaction."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/bosses/goo.lua",
+          "sha256": "f6761a7cad49883fa85e631b3a524a6d56d0d593616aa3e1031b1c65b4bab03b",
+          "symbols": ["Mission_BlobBoss", "Mission_BlobBoss:StartMission", "Mission_BlobBoss:CountDeadBlobs", "Mission_BlobBoss:UpdateMission", "Mission_BlobBoss:UpdateObjectives", "Mission_BlobBoss:IsBossDead", "BlobBoss", "BlobBoss:GetDeathEffect", "BlobBossMed", "BlobBossSmall", "BlobBossAtk", "BlobBossAtk:GetTargetArea", "BlobBossAtk:GetSkillEffect", "BlobBossAtkMed", "BlobBossAtkSmall"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_displaced_blob_boss_retargets_queued_damage_by_offset", "test_blob_boss_squish_destroys_full_mountain"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_blob_boss_death_spawns_two_medium_goos", "test_medium_goo_splits_and_small_goo_does_not"]
+        },
+        {
+          "path": "tests/test_final_cave_enemy_stats.py",
+          "symbols": ["test_blob_boss_chain_has_canonical_stats"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_blob_boss_record_pins_queued_chain_and_native_gaps"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Psion Abomination mission declares Mission_JellyBoss with BossPawn=Jelly_Boss, GlobalSpawnMod=-1, and its dedicated objective text. StartMission starts that boss and blocks the exact normal Psion types Jelly_Health, Jelly_Explode, Jelly_Regen, Jelly_Armor, Jelly_Fire, Jelly_Spider, and Jelly_Boost from the spawner."
+        },
+        {
+          "classification": "fact",
+          "statement": "Jelly_Boss is source-defined with Health=5, MoveSpeed=3, Flying=true, DefaultTeam=TEAM_ENEMY, Leader=LEADER_BOSS, Tier=TIER_BOSS, and no SkillList table. Jelly_Boss_Tooltip inherits Jelly_Health_Tooltip and declares Class=Passive. This file itself does not define the inherited health/regen/explode aura callbacks or any direct or queued offensive effect."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing Python pawn data, Rust boss-psion processing, objective metadata, and Jelly_Boss aura regressions are implementation anchors for the exact type and leader alias. They do not convert the source's Leader=LEADER_BOSS declaration into controlled proof of native inherited aura dispatch, lifecycle ordering, or mission conformance."
+        }
+      ],
+      "id": "mission-jelly-boss-psion-abomination",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_JellyBoss", "Jelly_Boss"]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": ["boss_psion"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["Jelly_Boss"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["Jelly_Boss"]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": ["_HEALTH_AURA_SOURCE_TYPES"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Boss inheritance, StartBoss placement/identity, Spawner:BlockPawns behavior, objective UI/reward settlement, and parent Mission_Infinite scheduling remain native engine dependencies.",
+        "Jelly_Health_Tooltip inheritance, LEADER_BOSS lookup and composite health/regen/explode aura dispatch, source/recipient exclusions, aura teardown, damage/death ordering, and all status/terrain interactions are outside psion.lua's direct definitions and require parent-source plus controlled traces.",
+        "No direct or queued offensive SkillEffect is declared here. Current aura simulation is implementation evidence rather than a claim that this source alone specifies native timing or every aura edge."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/bosses/psion.lua",
+          "sha256": "bd2f27f4f28fa3cfe87b871840ab2fb436174599b5c0a4fde3b371db7fb27ad3",
+          "symbols": ["Mission_JellyBoss", "Mission_JellyBoss:StartMission", "Jelly_Boss", "Jelly_Boss_Tooltip"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_final_cave_enemy_stats.py",
+          "symbols": ["test_jelly_boss_has_canonical_stats"]
+        },
+        {
+          "path": "tests/test_jelly_boss_aura.py",
+          "symbols": ["test_boss_alone_does_not_heal_itself", "test_boss_and_soldier_psion_no_double_stack_hp_buff"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_jelly_boss_record_pins_source_alias_and_native_gaps"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Hive Leader mission declares Mission_SlugBoss with BossPawn=SlugBoss and GlobalSpawnMod=-1. StartMission starts the leader, calls SpawnSluglings, then marks every returned point BLOCKED_TEMP. UpdateSpawning first calls SpawnPawns(GetSpawnCount()) and only then calls SpawnSluglings, explicitly ordering ordinary enemy spawn before the helper's egg placement request."
+        },
+        {
+          "classification": "fact",
+          "statement": "SpawnSluglings returns without a request after IsBossDead. Otherwise it calls native FlyingSpawns at Board:GetPawnSpace(BossID) for exactly two SlugEgg1 pawns with the listed spider projectile image, launch sound, and impact sound. The source delegates placement and effect construction to FlyingSpawns: it contains no direct AddDamage/AddQueuedDamage call and does not itself specify whether the helper's projectile/spawn effects are immediate or queued."
+        },
+        {
+          "classification": "fact",
+          "statement": "SlugBoss is a six-HP, MoveSpeed-two, massive, ranged enemy with no SkillList and Explodes=true. SlugEgg1 is a one-HP, immobile, Minor enemy with no SkillList and Explodes=true. Mission/objective metadata, static SlugEgg1 import, and minor-pawn bridge handling are existing repository anchors, not proof of native FlyingSpawns or explosion conformance."
+        }
+      ],
+      "id": "mission-slug-boss-hive-spawns",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_SlugBoss", "SlugBoss"]
+        },
+        {
+          "path": "data/mission_metadata.json",
+          "symbols": ["Mission_SlugBoss"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["SlugEgg1"]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": ["SlugEgg1"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Boss inheritance, StartBoss placement/identity, Board:GetPawnSpace liveness, SpawnPawns roster/RNG, BlockSpawn duration, objective UI/reward settlement, and parent Mission_Infinite scheduling remain untraced native behavior.",
+        "FlyingSpawns candidate selection, RNG, path/terrain/occupancy eligibility, returned-point order, artillery/projectile construction, launch/impact settlement, spawned UID allocation, and direct-versus-queued scheduler semantics are engine-helper gaps; this source makes none of those helper internals explicit.",
+        "SlugBoss/SlugEgg1 Explodes=true and empty SkillLists are source facts, but native explosion footprints, death timing, status interactions, and no-skill enemy behavior are not established by this record."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/bosses/slug.lua",
+          "sha256": "cf93aa66cf65079d55518a446da2bffd85df4a3602c5afdf52bca6ab6c728d52",
+          "symbols": ["Mission_SlugBoss", "Mission_SlugBoss:StartMission", "Mission_SlugBoss:UpdateSpawning", "Mission_SlugBoss:SpawnSluglings", "SlugBoss", "SlugEgg1"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_slug_boss_record_pins_flying_spawn_helper_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Spider Leader mission declares Mission_SpiderBoss with BossPawn=SpiderBoss, GlobalSpawnMod=-2, and EggCount=-1. StartMission starts the leader, blocks Blobber, Spider, Jelly_Spider, and Shaman spawns, and directly calls Board:AddPawn(SpiderlingEgg1) twice. UpdateSpawning first invokes SpawnPawns(GetSpawnCount()), then SpawnSpiderlings."
+        },
+        {
+          "classification": "fact",
+          "statement": "SpawnSpiderlings makes no request when the boss is dead or Frozen. Otherwise it fixes EggCount=2 on first use and on Easy; on other difficulties it alternates the stored count between 2 and 3, then delegates that exact many SpiderlingEgg1 launches from BossID's space to native FlyingSpawns. SpiderBoss is six HP, MoveSpeed two, massive, Jumper, IgnoreSmoke, ranged, and has no SkillList."
+        },
+        {
+          "classification": "fact",
+          "statement": "SpiderBoss_Tooltip:GetSkillEffect adds a script that calls Mission:FlyingSpawns for three SpiderlingEgg1 at the tooltip point. SpiderlingHatch1:GetTargetScore directly returns 10; its effect first adds a Board:RemovePawn script and then adds a non-queued SpaceDamage whose sPawn is the exact SpiderType=Spiderling1. The source distinguishes that ordered AddScript-plus-AddDamage hatch construction from any AddQueuedDamage call; native AddScript/AddDamage scheduler details remain external."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing SpiderBoss-to-SpiderAtk2 mapping, static stats, egg hatch simulation, threat-audit handling, objective metadata, and focused regressions are implementation anchors. They do not prove native initial placement, EggCount persistence, FlyingSpawns RNG, script execution timing, or full SpiderBoss mission conformance."
+        }
+      ],
+      "id": "mission-spider-boss-eggs-and-hatch",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_SpiderBoss", "SpiderBoss"]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["WId::SpiderAtk2", "enemy_weapon_for_type"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["SpiderlingEgg1", "simulate_enemy_attacks"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["SpiderBoss"]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": ["_hatch_destination"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Boss inheritance, StartBoss placement/identity, Spawner:BlockPawns behavior, direct Board:AddPawn placement/RNG/UID allocation, objective UI/reward settlement, and parent Mission_Infinite scheduling remain native lifecycle dependencies.",
+        "FlyingSpawns legality, candidate ordering/RNG, BossID-space lookup, projectile launch/impact settlement, EggCount persistence across native lifecycle boundaries, and the helper's direct-versus-queued effects are untraced engine-helper gaps.",
+        "AddScript/Board:RemovePawn and AddDamage ordering, SpiderlingHatch1 target-selection lifecycle, native SpaceDamage spawn, hatching status/terrain/death behavior, and the approximation of SpiderBoss by SpiderAtk2 require controlled build-keyed conformance evidence."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/bosses/spider.lua",
+          "sha256": "f7d81d714922e1b5b22d5b76a8edcb6fb96dd61ae5b20a3008c66b5068046455",
+          "symbols": ["Mission_SpiderBoss", "Mission_SpiderBoss:StartMission", "Mission_SpiderBoss:UpdateSpawning", "Mission_SpiderBoss:SpawnSpiderlings", "SpiderBoss", "SpiderBoss_Tooltip", "SpiderBoss_Tooltip:GetSkillEffect", "SpiderlingEgg1", "SpiderlingHatch1", "SpiderlingHatch1:GetTargetScore", "SpiderlingHatch1:GetSkillEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_spiderling_egg_hatches_into_spiderling"]
+        },
+        {
+          "path": "tests/test_final_cave_enemy_stats.py",
+          "symbols": ["test_spider_boss_has_canonical_stats"]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": ["test_capture_building_threats_includes_egg_hatch_building"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_spider_boss_record_pins_hatch_order_and_native_gaps"]
+        }
+      ]
     }
   ],
   "schema_version": 1
