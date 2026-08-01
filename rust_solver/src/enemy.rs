@@ -13,7 +13,6 @@ use crate::simulate::{
     apply_damage_defer_death_explosion,
     apply_damage_with_bombrock_exclusion,
     apply_death_explosion,
-    apply_landing_effects,
     apply_push,
     apply_push_dead_bumps_live_blocker,
     apply_push_no_edge_bump,
@@ -25,6 +24,7 @@ use crate::simulate::{
     on_enemy_death,
     place_smoke,
     settle_building_grid_loss,
+    simulate_snowmine_setup,
     thaw_frozen_building,
 };
 
@@ -866,38 +866,14 @@ fn simulate_snowmine_attack(
     enemy_idx: usize,
     result: &mut ActionResult,
 ) {
-    let (x, y, qtx, qty, inert) = {
+    let (qtx, qty) = {
         let enemy = &board.units[enemy_idx];
-        (
-            enemy.x,
-            enemy.y,
-            enemy.queued_target_x,
-            enemy.queued_target_y,
-            enemy.frozen() || enemy.web(),
-        )
+        (enemy.queued_target_x, enemy.queued_target_y)
     };
-    if inert || !in_bounds(qtx, qty) {
+    if !in_bounds(qtx, qty) {
         return;
     }
-
-    let target = (qtx as u8, qty as u8);
-    if target == (x, y) {
-        return;
-    }
-
-    // The Lua effect queues the origin item before the movement. Preserve the
-    // mine even when the destination became occupied during the player phase.
-    board.tile_mut(x, y).set_freeze_mine(true);
-    if board
-        .unit_at(target.0, target.1)
-        .is_some_and(|idx| idx != enemy_idx)
-    {
-        return;
-    }
-
-    board.units[enemy_idx].x = target.0;
-    board.units[enemy_idx].y = target.1;
-    apply_landing_effects(board, enemy_idx, result);
+    simulate_snowmine_setup(board, enemy_idx, (qtx as u8, qty as u8), result);
 }
 
 /// Simulate all enemy attacks on the post-mech-action board.
@@ -1863,7 +1839,15 @@ pub fn simulate_enemy_attacks(
                 // Min-range check against the (new) attacker→target distance.
                 let curr_range = offset_x.abs() + offset_y.abs();
                 if (curr_range as u8) < wdef.range_min { continue; }
-                if matches!(enemy_wid, WId::MothAtk1 | WId::MothAtk2)
+                if matches!(
+                    enemy_wid,
+                    WId::MothAtk1
+                        | WId::MothAtk2
+                        | WId::SnowartAtk1
+                        | WId::SnowartAtk2
+                        | WId::SnowBossAtk
+                        | WId::SnowBossAtk2
+                )
                     && (curr_range as u8) > wdef.range_max
                 {
                     continue;
@@ -3082,6 +3066,38 @@ mod tests {
         assert_eq!((board.units[snowmine].x, board.units[snowmine].y), (2, 2));
         assert!(!board.tile(2, 2).freeze_mine());
         assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_snowart_and_botboss_queued_attacks_cancel_beyond_range_five() {
+        for (uid, type_name, expected_damage) in [
+            (134, "Snowart1", 1),
+            (135, "BotBoss", 2),
+        ] {
+            let mut board = Board::default();
+            board.grid_power = 6;
+            board.grid_power_max = 7;
+            board.tile_mut(0, 3).terrain = Terrain::Building;
+            board.tile_mut(0, 3).building_hp = 2;
+
+            let attacker =
+                add_enemy_with_type(&mut board, uid, 6, 3, 5, type_name, 0, 3);
+            board.units[attacker].weapon_damage = expected_damage;
+            board.units[attacker]
+                .flags
+                .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+            let orig = default_orig_pos(&board);
+            let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(
+                board.tile(0, 3).building_hp,
+                2,
+                "{type_name} must not resolve a queued artillery hit at distance 6"
+            );
+            assert_eq!(board.grid_power, 6);
+            assert_eq!(result.grid_damage, 0);
+        }
     }
 
     #[test]

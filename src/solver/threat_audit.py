@@ -119,6 +119,56 @@ def _self_aoe_building_targets(
     ]
 
 
+def _queued_artillery_perpendicular_building_targets(
+    board: Board,
+    attacker: Unit,
+) -> list[tuple[int, int]]:
+    """Return side-building hits for a queued artillery T footprint.
+
+    ``LineArtillery`` chooses a cardinal target line.  Snowart and the Bot
+    Leader then queue damage on the two tiles perpendicular to that line.  The
+    shape belongs to the weapon definition, rather than a particular pawn, so
+    future queued artillery with the same definition flag is covered too.
+    """
+    if attacker.team != 6 or attacker.hp <= 0:
+        return []
+    if not bool(getattr(attacker, "has_queued_attack", False)):
+        return []
+    wdef = get_weapon_def(attacker.weapon)
+    if (
+        wdef is None
+        or wdef.weapon_type != "artillery"
+        or not wdef.aoe_perpendicular
+        or not wdef.building_damage
+    ):
+        return []
+
+    tx = int(getattr(attacker, "queued_target_x", -1))
+    ty = int(getattr(attacker, "queued_target_y", -1))
+    if tx < 0 or ty < 0:
+        tx, ty = int(attacker.target_x), int(attacker.target_y)
+    origin_x = int(getattr(attacker, "queued_origin_x", -1))
+    origin_y = int(getattr(attacker, "queued_origin_y", -1))
+    if not board.in_bounds(origin_x, origin_y):
+        origin_x, origin_y = int(attacker.x), int(attacker.y)
+    dx = _sign(tx - origin_x)
+    dy = _sign(ty - origin_y)
+    if (dx == 0) == (dy == 0):
+        return []
+
+    # The perpendicular direction is unique for a cardinal LineArtillery
+    # shot.  Do not include the center here: Board.get_threatened_buildings()
+    # already records it when it is a live building.
+    perpendicular = ((-dy, dx), (dy, -dx))
+    return [
+        (tx + side_x, ty + side_y)
+        for side_x, side_y in perpendicular
+        if board.in_bounds(tx + side_x, ty + side_y)
+        and board.tile(tx + side_x, ty + side_y).terrain == "building"
+        and board.tile(tx + side_x, ty + side_y).building_hp > 0
+    ]
+
+
 def capture_building_threats(board: Board) -> list[dict[str, Any]]:
     """Capture enemy threats aimed at live buildings in A1-H8 terms."""
     out: list[dict[str, Any]] = []
@@ -134,6 +184,21 @@ def capture_building_threats(board: Board) -> list[dict[str, Any]]:
         })
         seen.add((int(attacker.uid), (int(tx), int(ty))))
         direct_threat_uids.add(int(attacker.uid))
+    for attacker in board.units:
+        for tx, ty in _queued_artillery_perpendicular_building_targets(board, attacker):
+            key = (int(attacker.uid), (int(tx), int(ty)))
+            if key in seen:
+                continue
+            tile = board.tile(tx, ty)
+            out.append({
+                "threat_kind": "artillery_perpendicular_building",
+                "target": [int(tx), int(ty)],
+                "target_visual": _visual(int(tx), int(ty)),
+                "target_hp": int(tile.building_hp),
+                "attacker": _unit_record(attacker),
+            })
+            seen.add(key)
+            direct_threat_uids.add(int(attacker.uid))
     for attacker in board.units:
         prior_push = _prior_attack_push_destination(board, attacker)
         if prior_push is None:
@@ -796,11 +861,27 @@ def _will_die_to_prior_artillery_before_attack(board: Board, attacker: Unit) -> 
         wdef = get_weapon_def(other.weapon)
         if wdef is None or wdef.weapon_type != "artillery":
             continue
-        if [int(other.target_x), int(other.target_y)] != [
-            int(attacker.x), int(attacker.y)
-        ]:
+        target_x = int(getattr(other, "queued_target_x", -1))
+        target_y = int(getattr(other, "queued_target_y", -1))
+        if target_x < 0 or target_y < 0:
+            target_x, target_y = int(other.target_x), int(other.target_y)
+        hits_attacker = (target_x, target_y) == (int(attacker.x), int(attacker.y))
+        if not hits_attacker and wdef.aoe_perpendicular:
+            origin_x = int(getattr(other, "queued_origin_x", -1))
+            origin_y = int(getattr(other, "queued_origin_y", -1))
+            if not board.in_bounds(origin_x, origin_y):
+                origin_x, origin_y = int(other.x), int(other.y)
+            dx = _sign(target_x - origin_x)
+            dy = _sign(target_y - origin_y)
+            if (dx != 0) != (dy != 0):
+                hits_attacker = (int(attacker.x), int(attacker.y)) in {
+                    (target_x - dy, target_y + dx),
+                    (target_x + dy, target_y - dx),
+                }
+        if not hits_attacker:
             continue
-        if _weapon_damage_kills_unit(int(wdef.damage), attacker):
+        damage = int(getattr(other, "weapon_damage", 0) or 0) or int(wdef.damage)
+        if _weapon_damage_kills_unit(damage, attacker):
             return (
                 True,
                 f"earlier {other.type} uid={int(other.uid)} artillery "
@@ -1003,6 +1084,41 @@ def _coverage_reason(
     )
     if artillery_kill:
         return "attacker_will_die_to_prior_artillery", artillery_detail
+
+    if threat.get("threat_kind") == "artillery_perpendicular_building":
+        current_targets = set(
+            _queued_artillery_perpendicular_building_targets(board, attacker)
+        )
+        if (tx, ty) not in current_targets:
+            if not bool(getattr(attacker, "has_queued_attack", False)):
+                return "attack_cleared", "attacker no longer has a queued attack"
+            return (
+                "artillery_perpendicular_retargeted",
+                "building is no longer in the queued artillery side footprint",
+            )
+        if _freeze_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            if _frozen_building(board, tx, ty):
+                return (
+                    "target_frozen_building",
+                    "target building is frozen and will thaw",
+                )
+            return (
+                "target_will_be_frozen_by_environment",
+                "Ice Storm freezes the target building before its sole queued hit",
+            )
+        if _shield_covers_single_building_threat(
+            board, tx, ty, current_target_counts
+        ):
+            return (
+                "target_shielded_building",
+                "target building's live shield absorbs its sole queued hit",
+            )
+        return (
+            "still_threatened_artillery_perpendicular",
+            "attacker's queued artillery side footprint still includes the building",
+        )
 
     if threat.get("threat_kind") in {
         "self_aoe_building",

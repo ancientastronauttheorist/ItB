@@ -495,3 +495,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 494 | 885 | Repulse B/AB shield adjacent friendlies and buildings. | `docs/agent/solver-reference.md` |
 | 495 | 887 | Mission_Hacking converts the Cannon Bot without killing it. | `docs/agent/solver-reference.md` |
 | 496 | 889 | A successful Satellite launch is a disappearance, not a death. | `docs/agent/solver-reference.md` |
+| 497 | 891 | Mission Bot Defense Mine Bots use Setup rather than ordinary movement; Snow artillery is range 2–5 with perpendicular side hits. | `docs/agent/solver-reference.md` |

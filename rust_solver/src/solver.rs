@@ -373,6 +373,18 @@ pub(crate) fn get_weapon_targets(
     let wdef = &weapons[weapon_id as usize];
     let mut targets = Vec::new();
 
+    if weapon_id == WId::SnowmineAtk1 {
+        let Some(unit_idx) = board.unit_at(mx, my) else {
+            return targets;
+        };
+        for pos in reachable_tiles_with_speed(board, unit_idx, 3) {
+            if pos != (mx, my) {
+                targets.push(pos);
+            }
+        }
+        return targets;
+    }
+
     if weapon_id == WId::VipTruckMove {
         let Some(unit_idx) = board.unit_at(mx, my) else {
             return targets;
@@ -560,6 +572,16 @@ pub(crate) fn get_weapon_targets(
                 for y in 0..8u8 {
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r { continue; }
+                    if matches!(
+                        weapon_id,
+                        WId::SnowartAtk1
+                            | WId::SnowartAtk2
+                            | WId::SnowBossAtk
+                            | WId::SnowBossAtk2
+                    ) && dist > wdef.range_max
+                    {
+                        continue;
+                    }
                     if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     let zero_damage_building_center_ok = matches!(
@@ -1111,7 +1133,7 @@ fn weapon_action_has_effect(
     let wdef = &weapons[weapon_id as usize];
     let (mx, my) = move_to;
 
-    if weapon_id == WId::VipTruckMove {
+    if weapon_id == WId::VipTruckMove || weapon_id == WId::SnowmineAtk1 {
         return target != (mx, my);
     }
 
@@ -1459,7 +1481,8 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         let tile = action_board.tile(attack_pos.0, attack_pos.1);
         let ignores_smoke = action_unit.type_name_str() == "Trapped_Building"
             || action_unit.type_name_str() == "Disposal_Unit"
-            || action_unit.type_name_str() == "Missile_Unit";
+            || action_unit.type_name_str() == "Missile_Unit"
+            || action_unit.type_name_str().starts_with("Snowmine");
         if !tile.smoke() || ignores_smoke {
             // Primary weapon — filter out no-op fires (empty space, nothing affected)
             let w1_id = WId::from_raw(action_unit.weapon.0);
@@ -4946,6 +4969,81 @@ mod top_k_tests {
         assert_eq!(out[0].actions.len(), 1);
         assert_eq!(out[0].actions[0].mech_uid, 7);
         assert_eq!(out[0].actions[0].move_to, (3, 4));
+    }
+
+    #[test]
+    fn player_snowmine_is_actor_with_range_three_setup_targets() {
+        let mut board = Board::default();
+        let bot = board.add_unit(Unit {
+            uid: 700,
+            x: 4,
+            y: 4,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            weapon: WeaponId(WId::SnowmineAtk1 as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[bot].set_type_name("Snowmine1");
+        board.tile_mut(4, 4).set_smoke(true);
+        board.tile_mut(4, 5).terrain = Terrain::Mountain;
+
+        assert!(board.units[bot].is_player_action_unit());
+        let targets = get_weapon_targets(
+            &board,
+            4,
+            4,
+            WId::SnowmineAtk1,
+            (4, 4),
+            &WEAPONS,
+        );
+        assert!(targets.contains(&(1, 4)), "range-3 destination should be offered");
+        assert!(!targets.contains(&(0, 4)), "range-4 destination must be rejected");
+        assert!(!targets.contains(&(4, 4)), "self target is a source-defined no-op");
+        assert!(!targets.contains(&(4, 5)), "mountain destination must be rejected");
+        assert!(!targets.contains(&(4, 6)), "the mountain must also block the short path");
+
+        let actions = enumerate_actions(&board, bot, &WEAPONS);
+        assert!(actions.iter().any(|action| {
+            action.0 == (4, 4)
+                && action.1 == WId::SnowmineAtk1
+                && action.2 == (1, 4)
+        }), "IgnoreSmoke Mine-Bot should keep its setup action");
+
+        board.units[bot].set_web(true);
+        assert!(get_weapon_targets(
+            &board,
+            4,
+            4,
+            WId::SnowmineAtk1,
+            (4, 4),
+            &WEAPONS,
+        ).is_empty(), "grappled Mine-Bot source returns an empty effect");
+    }
+
+    #[test]
+    fn snowart_and_botboss_targeting_stops_at_exact_range_five() {
+        let board = Board::default();
+        for weapon in [
+            WId::SnowartAtk1,
+            WId::SnowartAtk2,
+            WId::SnowBossAtk,
+            WId::SnowBossAtk2,
+        ] {
+            let targets = get_weapon_targets(
+                &board,
+                6,
+                3,
+                weapon,
+                (6, 3),
+                &WEAPONS,
+            );
+            assert!(targets.contains(&(1, 3)), "{weapon:?} should reach distance 5");
+            assert!(!targets.contains(&(0, 3)), "{weapon:?} must reject distance 6");
+            assert!(!targets.contains(&(5, 3)), "{weapon:?} must keep minimum range 2");
+        }
     }
 
     #[test]

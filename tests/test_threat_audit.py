@@ -479,6 +479,83 @@ def test_threat_audit_attacker_will_die_to_prior_artillery():
     )
 
 
+def test_capture_snowart_perpendicular_building_threat_and_dead_or_smoked_coverage():
+    board = Board()
+    # Snowart targets the ground center (4, 4), then queues damage to its
+    # horizontal sides (4, 3) and (4, 5).  The center must not be fabricated
+    # as a building threat.
+    for y in (3, 5):
+        board.tile(4, y).terrain = "building"
+        board.tile(4, y).building_hp = 1
+    snowart = _enemy(
+        uid=10, pawn_type="Snowart1", x=1, y=4, tx=4, ty=4, hp=1,
+    )
+    snowart.weapon = "SnowartAtk1"
+    snowart.queued_target_x = 4
+    snowart.queued_target_y = 4
+    board.units.append(snowart)
+
+    initial = capture_building_threats(board)
+
+    assert {(tuple(t["target"]), t["threat_kind"]) for t in initial} == {
+        ((4, 3), "artillery_perpendicular_building"),
+        ((4, 5), "artillery_perpendicular_building"),
+    }
+    assert audit_threat_coverage(initial, board)["still_threatened_count"] == 2
+
+    dead = Board()
+    for y in (3, 5):
+        dead.tile(4, y).terrain = "building"
+        dead.tile(4, y).building_hp = 1
+    snowart.hp = 0
+    dead.units.append(snowart)
+    assert {
+        entry["coverage"]["reason"]
+        for entry in audit_threat_coverage(initial, dead)["entries"]
+    } == {"attacker_killed"}
+
+    smoked = Board()
+    for y in (3, 5):
+        smoked.tile(4, y).terrain = "building"
+        smoked.tile(4, y).building_hp = 1
+    snowart.hp = 1
+    smoked.tile(1, 4).smoke = True
+    smoked.units.append(snowart)
+    assert {
+        entry["coverage"]["reason"]
+        for entry in audit_threat_coverage(initial, smoked)["entries"]
+    } == {"attacker_smoked"}
+
+
+def test_prior_snowart_side_hit_kills_later_building_attacker_before_attack():
+    board = Board()
+    board.attack_order = [10, 20]
+    board.tile(4, 6).terrain = "building"
+    board.tile(4, 6).building_hp = 1
+
+    snowart = _enemy(
+        uid=10, pawn_type="Snowart2", x=1, y=4, tx=4, ty=4, hp=1,
+    )
+    snowart.weapon = "SnowartAtk2"
+    snowart.queued_target_x = 4
+    snowart.queued_target_y = 4
+    board.units.append(snowart)
+
+    later = _enemy(
+        uid=20, pawn_type="Firefly1", x=4, y=5, tx=4, ty=6, hp=1,
+    )
+    board.units.append(later)
+
+    initial = capture_building_threats(board)
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == (
+        "attacker_will_die_to_prior_artillery"
+    )
+
+
 def test_threat_audit_attacker_will_die_to_soldier_psion_fire_teardown():
     board = Board()
     board.tile(5, 6).terrain = "building"

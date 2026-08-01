@@ -1179,13 +1179,41 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Cannon 8R Mark I", weapon_type="projectile",
         damage=1, range_max=0, fire=True,
     ),
+    "SnowtankAtk2": WeaponDef(
+        name="Cannon 8R Mark II", weapon_type="projectile",
+        damage=3, range_max=0, fire=True,
+    ),
+    "SnowlaserAtk1": WeaponDef(
+        name="Beam Laser Mark I", weapon_type="laser",
+        damage=2, targets_allies=True,
+    ),
+    "SnowlaserAtk2": WeaponDef(
+        name="Beam Laser Mark II", weapon_type="laser",
+        damage=4, targets_allies=True,
+    ),
     "SnowartAtk1": WeaponDef(
         name="Snowart Shot", weapon_type="artillery",
-        damage=1, range_min=2,
+        damage=1, range_min=2, range_max=5, aoe_perpendicular=True,
     ),
     "SnowartAtk2": WeaponDef(
         name="Alpha Snowart Shot", weapon_type="artillery",
-        damage=3, range_min=2,
+        damage=3, range_min=2, range_max=5, aoe_perpendicular=True,
+    ),
+    "SnowBossAtk": WeaponDef(
+        name="Vk8 Rockets Mark III", weapon_type="artillery",
+        damage=2, range_min=2, range_max=5, aoe_perpendicular=True,
+    ),
+    "SnowBossAtk2": WeaponDef(
+        name="Vk8 Rockets Mark IV", weapon_type="artillery",
+        damage=4, range_min=2, range_max=5, aoe_perpendicular=True,
+    ),
+    # Compound mission setup: Rust owns the exact leave-mine + AddMove
+    # simulation. The passive static entry keeps Python fallback/model
+    # consumers from treating the source-defined weapon as unknown.
+    "SnowmineAtk1": WeaponDef(
+        name="Mine-Bot Setup", weapon_type="passive",
+        damage=0, range_min=1, range_max=3,
+        building_damage=False, aoe_center=False,
     ),
     "BurnbugAtk1": WeaponDef(
         name="Hooked Proboscis", weapon_type="projectile",

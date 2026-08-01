@@ -662,9 +662,12 @@ pub enum WId {
     ScienceRepulseB = 243,
     /// Repulse with Shield Self and Shield Friendly powered.
     ScienceRepulseAB = 244,
+    /// Pinnacle Mine-Bot setup skill. The pawn has MoveSpeed=0; firing leaves
+    /// a Freeze Mine at the origin and moves it along a native range-3 path.
+    SnowmineAtk1 = 245,
 }
 
-pub const WEAPON_COUNT: usize = 245;
+pub const WEAPON_COUNT: usize = 246;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1161,10 +1164,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 75: SnowartAtk1 — Pinnacle bot, artillery, 1 dmg.
     // Lua SnowartAtk1 hits the target plus both perpendicular side tiles.
     w[75] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1,
-        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+        range_min: 2, range_max: 5, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 76: SnowartAtk2 — Pinnacle bot, alpha artillery, 3 dmg.
     w[76] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3,
-        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+        range_min: 2, range_max: 5, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 77: LeaperAtk2 — alpha leaper, 5 dmg, web
     w[77] = WeaponDef { weapon_type: WeaponType::Melee, damage: 5, flags: f(WeaponFlags::WEB.bits()), ..DEF };
     // 78: CentipedeAtk2 — alpha centipede, 2 dmg, acid + aoe_perp
@@ -1343,12 +1346,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // takes `Damage` (2 here). No push, no status effects. range_min=2 so the
     // boss can't fire at adjacent tiles.
     w[119] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, damage_outer: 2,
-        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+        range_min: 2, range_max: 5, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 120: SnowBossAtk2 — Bot Leader Mk2's Vk8 Rockets Mark IV. Per
     // `bot.lua:79`, `SnowBossAtk2 = SnowartAtk1:new{Damage = 4}`. Same shape
     // as SnowBossAtk, just 4 damage instead of 2.
     w[120] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, damage_outer: 4,
-        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+        range_min: 2, range_max: 5, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 121: BossHeal — Bot Leader's Self-Repairing skill. Per `bot.lua:28-41`,
     // `BossHeal = SelfTarget:new{Name = "Boss Heal"}` with a SkillEffect that
     // applies Shield (iShield=1) immediately to p1 (=self) AND queues a -5
@@ -1420,6 +1423,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_ALLIES.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     w[244] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits() | WeaponFlags::SHIELD_ALLIES.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+
+    // 245: SnowmineAtk1 — Mine-Bot Setup. Lua uses Board:GetReachable with a
+    // temporary range-3 movement budget, places Freeze_Mine at the source,
+    // then AddMove's the zero-speed pawn to the selected destination. WId-
+    // specific targeting/simulation handles the compound effect.
+    w[245] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0,
+        range_min: 1, range_max: 3, flags: f_nc(0), ..DEF };
 
     // 134: Missiles_Shield — Detritus Contraption Shield Barrage.
     w[134] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 0, limited: 2,
@@ -1982,6 +1992,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "SnowlaserAtk2" => WId::SnowlaserAtk2,
         "SnowartAtk1" => WId::SnowartAtk1,
         "SnowartAtk2" => WId::SnowartAtk2,
+        "SnowmineAtk1" => WId::SnowmineAtk1,
         "LeaperAtk2" => WId::LeaperAtk2,
         "CentipedeAtk2" => WId::CentipedeAtk2,
         "DiggerAtk2" => WId::DiggerAtk2,
@@ -2234,6 +2245,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::SnowlaserAtk2 => "SnowlaserAtk2",
         WId::SnowartAtk1 => "SnowartAtk1",
         WId::SnowartAtk2 => "SnowartAtk2",
+        WId::SnowmineAtk1 => "SnowmineAtk1",
         WId::LeaperAtk2 => "LeaperAtk2",
         WId::CentipedeAtk2 => "CentipedeAtk2",
         WId::DiggerAtk2 => "DiggerAtk2",
@@ -2351,6 +2363,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Snowart1" => WId::SnowartAtk1,
         "Snowart1_Boom" => WId::SnowartAtk1,
         "Snowart2" => WId::SnowartAtk2,
+        "Snowmine1" | "Snowmine2" => WId::SnowmineAtk1,
         "Burnbug1" => WId::BurnbugAtk1,
         "Burnbug2" => WId::BurnbugAtk2,
         // Pinnacle finale boss — Bot Leader. Skill selection (SnowBossAtk vs
@@ -2544,6 +2557,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::SnowlaserAtk2 => "BKR Beam Mark II",
         WId::SnowartAtk1 => "Snowart Shot",
         WId::SnowartAtk2 => "Alpha Snowart Shot",
+        WId::SnowmineAtk1 => "Mine-Bot Setup",
         WId::BurrowerAtk1 => "Burrower Slam",
         WId::BurrowerAtk2 => "Alpha Burrower Slam",
         WId::GastropodAtk1 => "Gastropod Grapple",
@@ -2923,6 +2937,31 @@ mod tests {
         assert_eq!(weapon_name(WId::SnowtankAtk1), "Cannon 8R Mark I");
         assert_eq!(wid_from_str("SnowtankAtk1_Player"), WId::SnowtankAtk1);
         assert_eq!(enemy_weapon_for_type("Snowtank1_Player"), WId::SnowtankAtk1);
+    }
+
+    #[test]
+    fn test_snow_family_exact_ranges_and_mine_setup_identity() {
+        for id in [
+            WId::SnowartAtk1,
+            WId::SnowartAtk2,
+            WId::SnowBossAtk,
+            WId::SnowBossAtk2,
+        ] {
+            let w = weapon_def(id);
+            assert_eq!(w.weapon_type, WeaponType::Artillery);
+            assert_eq!(w.range_min, 2);
+            assert_eq!(w.range_max, 5);
+            assert!(w.aoe_perpendicular());
+        }
+
+        let mine = weapon_def(WId::SnowmineAtk1);
+        assert_eq!(mine.range_min, 1);
+        assert_eq!(mine.range_max, 3);
+        assert_eq!(wid_from_str("SnowmineAtk1"), WId::SnowmineAtk1);
+        assert_eq!(wid_to_str(WId::SnowmineAtk1), "SnowmineAtk1");
+        assert_eq!(weapon_name(WId::SnowmineAtk1), "Mine-Bot Setup");
+        assert_eq!(enemy_weapon_for_type("Snowmine1"), WId::SnowmineAtk1);
+        assert_eq!(enemy_weapon_for_type("Snowmine2"), WId::SnowmineAtk1);
     }
 
     #[test]

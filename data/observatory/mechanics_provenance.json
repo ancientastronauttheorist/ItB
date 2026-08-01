@@ -3848,6 +3848,209 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Snow weapon source defines Cannon 8R Mk I/II as Firefly-derived fire projectiles with 1/3 damage; BKR Beam Mk I/II as queued Laser_Base attacks with 2/4 damage; Snowart Mk I/II as queued LineArtillery attacks with ArtillerySize 5, 1/3 damage, and target-plus-perpendicular damage; and Mine-Bot Setup as a range-3 reachable-path action that leaves Freeze_Mine at p1 before AddMove carries the bot to a distinct p2."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mine-Bot Setup returns an empty SkillEffect when Pawn:IsGrappled(), while Snowmine1/2 declare IgnoreSmoke, Neutral, and AvoidingMines. Mission_BotDefense creates two Snowmine1 pawns, stores their exact IDs, then changes each pawn to TEAM_PLAYER; objective credit is determined only by the survival count of those stored IDs."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact Bot Leader source derives SnowBossAtk/SnowBossAtk2 from SnowartAtk1 with 2/4 damage, creates two frozen robots at mission start, chooses BotBoss2 after sector 2, and uses BotBoss:GetWeapon to select queued BossHeal only while damaged. BossHeal queues the -5 HP/unshield effect and then applies Shield immediately."
+        }
+      ],
+      "id": "snow-bot-family-and-defense",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::SnowmineAtk1",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_attack_with_target2",
+            "simulate_snowmine_setup"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "ENEMY_WEAPON_DEFS",
+            "SnowtankAtk2",
+            "SnowlaserAtk1",
+            "SnowlaserAtk2",
+            "SnowartAtk1",
+            "SnowartAtk2",
+            "SnowBossAtk",
+            "SnowBossAtk2",
+            "SnowmineAtk1"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "VEK_STATS",
+            "Snowmine1",
+            "Snowmine2"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_queued_artillery_perpendicular_building_targets",
+            "capture_building_threats",
+            "_will_die_to_prior_artillery_before_attack"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:GetReachable, Board:GetPath, Pawn:GetPathProf, AvoidingMines, and path/collision/terrain handling remain untraced; the Lua source establishes the Mine-Bot action contract but not every native legal-destination edge case.",
+        "The source construction order establishes Freeze_Mine before AddMove, but native scheduler, animation, movement interruption, item replacement, status, terrain, and simultaneous-effect ordering remain incomplete without a controlled capture.",
+        "Rust consumes live queued targets for current enemy actions and does not reproduce native enemy movement, score-list candidate selection, AI target choice, random state, or tie-breaking for Snow bot families.",
+        "Mission_BotDefense setup placement, Board:AddPawn placement/UID allocation, objective UI/reward scheduling, and Boss mission robot selection remain live-engine dependencies; no fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_snow.lua",
+          "sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989",
+          "symbols": [
+            "SnowtankAtk1",
+            "SnowtankAtk2",
+            "SnowlaserAtk1",
+            "SnowlaserAtk1:GetTargetArea",
+            "SnowlaserAtk1:GetSkillEffect",
+            "SnowlaserAtk2",
+            "SnowartAtk1",
+            "SnowartAtk1:GetSkillEffect",
+            "SnowartAtk2",
+            "SnowmineAtk1",
+            "SnowmineAtk1:GetTargetArea",
+            "SnowmineAtk1:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/missions/snow/mission_botdefense.lua",
+          "sha256": "3b7138e0a0ba821fa46a557f726c94fbba4d7a856a201483873c74e7b06866ef",
+          "symbols": [
+            "Mission_BotDefense",
+            "Mission_BotDefense:StartMission",
+            "Mission_BotDefense:GetCompletedObjectives",
+            "Mission_BotDefense:CountBots",
+            "Mission_BotDefense:UpdateObjectives"
+          ]
+        },
+        {
+          "path": "scripts/missions/bosses/bot.lua",
+          "sha256": "b95bbdd7727c56ec1550cc5fa994b815578591cd4724a593f544e79b363b2c7d",
+          "symbols": [
+            "Mission_BotBoss",
+            "Mission_BotBoss:StartMission",
+            "Mission_BotBoss:GetBossPawn",
+            "BossHeal",
+            "BossHeal:GetSkillEffect",
+            "BotBoss",
+            "BotBoss:GetWeapon",
+            "SnowBossAtk",
+            "BotBoss2",
+            "SnowBossAtk2"
+          ]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "Snowtank1",
+            "Snowtank2",
+            "Snowart1",
+            "Snowart2",
+            "Snowlaser1",
+            "Snowlaser2",
+            "Snowmine1",
+            "Snowmine2"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "FireflyAtk1",
+            "Laser_Base",
+            "LineArtillery",
+            "LineArtillery:GetTargetArea"
+          ]
+        },
+        {
+          "path": "scripts/items.lua",
+          "sha256": "9d23a6749ba2222a5bcf7e4ff1c4a300eafcb7895bd19429e0877ab930370aea",
+          "symbols": [
+            "Freeze_Mine"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_snow_family_exact_ranges_and_mine_setup_identity"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "player_snowmine_is_actor_with_range_three_setup_targets",
+            "snowart_and_botboss_targeting_stops_at_exact_range_five"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_player_snowmine_setup_leaves_mine_moves_and_applies_landing"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_snowart_and_botboss_queued_attacks_cancel_beyond_range_five"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_snow_bot_weapon_defs_and_static_pawn_defaults_match_lua"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_capture_snowart_perpendicular_building_threat_and_dead_or_smoked_coverage",
+            "test_prior_snowart_side_hit_kills_later_building_attacker_before_attack"
+          ]
+        },
+        {
+          "path": "tests/test_replay_parity.py",
+          "symbols": [
+            "test_replay_solution_player_snowmine_setup_roundtrips_mine_and_move"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

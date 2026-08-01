@@ -55,17 +55,17 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 9 | 5 |
-| Missions | 75 | 18 | 57 |
+| Player weapons | 14 | 10 | 4 |
+| Missions | 75 | 20 | 55 |
 | Environments | 15 | 10 | 5 |
-| Unique total | 96 | 34 | 62 |
+| Unique total | 96 | 37 | 59 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 124 definitions literally and leaves 618 unindexed. Category totals
+names 137 definitions literally and leaves 605 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -202,6 +202,21 @@ cleanup, and the existing threat-audit regressions. The record remains
 `partial`: setup RNG/native helpers, the native cause of flyer immunity, exact
 effect scheduling, unusual displacement/race states, and direct Satellite
 objective scoring remain open.
+
+The `snow-bot-family-and-defense` slice adds the exact `weapons_snow.lua`,
+`Mission_BotDefense`, and Bot Leader sources, plus all thirteen active
+callbacks across those files. It traces the Snowtank fire cannon, queued
+Snowlaser, Snowart's range-2-to-5 target-plus-perpendicular artillery, and
+Mine-Bot Setup: an otherwise zero-speed bot receives native reachable-path
+destinations out to three tiles, lays `Freeze_Mine` on its origin, then moves.
+It also records that Bot Defense changes the two exact `Snowmine1` pawns to the
+player team and scores only those stored IDs, and that the Bot Leader inherits
+Snowart's footprint while selecting queued self-repair when damaged. The v378
+implementation links Mine-Bot actor/target/simulation handling, static
+Snow-family definitions, and queued-artillery side-hit threat coverage. The
+record remains `partial`: native `GetReachable`/`GetPath`/path-profile behavior,
+`AvoidingMines`, movement/item scheduling, setup placement, and enemy AI/RNG
+are all explicitly outside the proven contract.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific

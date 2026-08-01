@@ -133,15 +133,31 @@ VEK_STATS = {
     # Vek Bosses (Hive Leaders): Massive + water-immune per Hive Leader trait.
     "ScorpionBoss":  PawnStats(move_speed=3, massive=True, ranged=0),
     # Pinnacle bots
-    "Snowtank1":     PawnStats(move_speed=3, ranged=0),
+    "Snowtank1":     PawnStats(move_speed=3, ranged=0,
+                                 default_weapon="SnowtankAtk1"),
     # Mission_Hacking turns the Cannon Bot over to the player team after the
     # hacking facility falls; the bridge appends _Player but the unit is the
     # same 1 HP, move-3 cannon bot.
     "Snowtank1_Player": PawnStats(move_speed=3, ranged=0,
                                   default_weapon="SnowtankAtk1_Player"),
-    "Snowtank2":     PawnStats(move_speed=3, ranged=0),
-    "Snowart1":      PawnStats(move_speed=3, ranged=1),
-    "Snowart2":      PawnStats(move_speed=3, ranged=1),
+    "Snowtank2":     PawnStats(move_speed=3, ranged=0,
+                                 default_weapon="SnowtankAtk2"),
+    "Snowlaser1":    PawnStats(move_speed=3, ranged=1,
+                                 default_weapon="SnowlaserAtk1"),
+    "Snowlaser2":    PawnStats(move_speed=3, ranged=1,
+                                 default_weapon="SnowlaserAtk2"),
+    "Snowart1":      PawnStats(move_speed=3, ranged=1,
+                                 default_weapon="SnowartAtk1"),
+    "Snowart2":      PawnStats(move_speed=3, ranged=1,
+                                 default_weapon="SnowartAtk2"),
+    # Mine Bots are normally enemy-team neutral pawns, but Mission_BotDefense
+    # switches the spawned Snowmine1 instances to TEAM_PLAYER.  This Python
+    # model records their static pawn defaults only; Mine Bot move-and-mine
+    # execution remains Rust-simulator territory.
+    "Snowmine1":     PawnStats(move_speed=0, ranged=0, ignore_smoke=True,
+                                 default_weapon="SnowmineAtk1"),
+    "Snowmine2":     PawnStats(move_speed=0, ranged=0, ignore_smoke=True,
+                                 default_weapon="SnowmineAtk1"),
     "Burnbug1":      PawnStats(move_speed=2, ranged=1),
     "Burnbug2":      PawnStats(move_speed=2, ranged=1),
     # Burnbug Leader (a.k.a. Gastropod Leader) — Archive Inc Corp HQ finale boss.

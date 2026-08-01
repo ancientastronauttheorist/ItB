@@ -171,6 +171,67 @@ def test_replay_solution_empty_plan_returns_baseline():
 
 
 @pytest.mark.regression
+def test_replay_solution_player_snowmine_setup_roundtrips_mine_and_move():
+    """Installed wheel keeps Bot Defense Mine-Bot Setup as one real action."""
+    import itb_solver
+
+    bridge = {
+        "mission_id": "Mission_BotDefense",
+        "tiles": [
+            {"x": 4, "y": 4, "terrain": "ground", "smoke": True},
+            {"x": 4, "y": 6, "terrain": "ground", "freeze_mine": True},
+        ],
+        "units": [
+            {
+                "uid": 700,
+                "type": "Snowmine1",
+                "x": 4,
+                "y": 4,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "move": 0,
+                "active": True,
+                "weapons": ["SnowmineAtk1"],
+            },
+        ],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "spawning_tiles": [],
+        "environment_danger": [],
+        "remaining_spawns": 0,
+        "turn": 1,
+        "total_turns": 5,
+    }
+    plan = [{
+        "mech_uid": 700,
+        "move_to": [4, 4],
+        "weapon_id": "SnowmineAtk1",
+        "target": [4, 6],
+    }]
+
+    data = json.loads(
+        itb_solver.replay_solution(json.dumps(bridge), json.dumps(plan))
+    )
+    post_attack = data["predicted_states"][0]["post_attack"]
+    bot = next(unit for unit in post_attack["units"] if unit["uid"] == 700)
+    assert bot["pos"] == [4, 6]
+    assert bot["status"]["frozen"] is True
+    assert bot["active"] is False
+
+    final_board = data["final_board"]
+    final_bot = next(unit for unit in final_board["units"] if unit["uid"] == 700)
+    assert [final_bot["x"], final_bot["y"]] == [4, 6]
+    assert any(
+        tile.get("x") == 4
+        and tile.get("y") == 4
+        and tile.get("freeze_mine") is True
+        for tile in final_board["tiles"]
+    )
+
+
+@pytest.mark.regression
 def test_replay_solution_missing_mech_preserves_action_result_shape():
     """The diagnostic sentinel must satisfy the normal per-action contract."""
     import itb_solver

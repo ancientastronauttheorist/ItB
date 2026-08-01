@@ -3412,6 +3412,11 @@ pub fn simulate_weapon_with(
         return result;
     }
 
+    if weapon_id == WId::SnowmineAtk1 {
+        simulate_snowmine_setup(board, attacker_idx, (target_x, target_y), &mut result);
+        return result;
+    }
+
     let leech_kills_before = result.leech_credit_kills;
     let leech_uncapped_before = result.leech_uncapped_kills;
 
@@ -6874,6 +6879,39 @@ pub(crate) fn clear_destroyed_digger_walls(board: &mut Board) {
     }
 }
 
+/// Resolve SnowmineAtk1's compound setup: leave a Freeze Mine at the source,
+/// then move the zero-speed Mine-Bot to its selected range-3 path destination.
+/// The caller is responsible for target-area validation; this helper retains
+/// the source-defined empty effect while grappled/webbed or frozen.
+pub(crate) fn simulate_snowmine_setup(
+    board: &mut Board,
+    unit_idx: usize,
+    target: (u8, u8),
+    result: &mut ActionResult,
+) {
+    let (x, y, inert) = {
+        let unit = &board.units[unit_idx];
+        (unit.x, unit.y, unit.frozen() || unit.web())
+    };
+    if inert || target == (x, y) || !in_bounds(target.0 as i8, target.1 as i8) {
+        return;
+    }
+
+    // Lua queues sItem before AddMove, so preserve the origin mine if the
+    // destination unexpectedly becomes occupied after target selection.
+    board.tile_mut(x, y).set_freeze_mine(true);
+    if board
+        .unit_at(target.0, target.1)
+        .is_some_and(|idx| idx != unit_idx)
+    {
+        return;
+    }
+
+    board.units[unit_idx].x = target.0;
+    board.units[unit_idx].y = target.1;
+    apply_landing_effects(board, unit_idx, result);
+}
+
 /// Move phase only: position update, pod pickup, ACID transfer, mines,
 /// fire-tile catch, teleporter pad swap, WebbEgg adjacency refresh.
 pub fn simulate_move(
@@ -6970,7 +7008,8 @@ pub fn simulate_attack_with_target2(
             let unit = &board.units[mech_idx];
             let ignores_smoke = unit.type_name_str() == "Trapped_Building"
                 || unit.type_name_str() == "Disposal_Unit"
-                || unit.type_name_str() == "Missile_Unit";
+                || unit.type_name_str() == "Missile_Unit"
+                || unit.type_name_str().starts_with("Snowmine");
             (unit.x, unit.y, ignores_smoke)
         };
         if board.tile(sx, sy).smoke() && !ignores_smoke {
@@ -18577,5 +18616,40 @@ mod tests {
                    "no chain — B doesn't move into the empty (3,5)");
         assert_eq!(board.units[a].hp, 2);
         assert_eq!(board.units[b].hp, 2);
+    }
+
+    #[test]
+    fn test_player_snowmine_setup_leaves_mine_moves_and_applies_landing() {
+        let mut board = make_test_board();
+        let bot = board.add_unit(Unit {
+            uid: 700,
+            x: 4,
+            y: 4,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            weapon: WeaponId(WId::SnowmineAtk1 as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[bot].set_type_name("Snowmine1");
+        board.tile_mut(4, 4).set_smoke(true);
+        board.tile_mut(4, 6).set_freeze_mine(true);
+
+        let result = simulate_attack(
+            &mut board,
+            bot,
+            WId::SnowmineAtk1,
+            (4, 6),
+            &WEAPONS,
+        );
+
+        assert_eq!((board.units[bot].x, board.units[bot].y), (4, 6));
+        assert!(board.tile(4, 4).freeze_mine());
+        assert!(board.units[bot].frozen(), "destination mine should run through landing effects");
+        assert!(!board.tile(4, 6).freeze_mine(), "destination mine should be consumed");
+        assert!(!board.units[bot].active());
+        assert_eq!(result.mechs_killed, 0);
     }
 }

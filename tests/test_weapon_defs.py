@@ -60,6 +60,59 @@ def test_hacking_cannon_bot_player_aliases_match_mark_i():
     )
 
 
+def test_snow_bot_weapon_defs_and_static_pawn_defaults_match_lua():
+    tank = get_weapon_def("SnowtankAtk2")
+    assert tank is not None
+    assert tank.weapon_type == "projectile"
+    assert tank.damage == 3
+    assert tank.fire is True
+
+    for weapon_id, damage in (("SnowlaserAtk1", 2), ("SnowlaserAtk2", 4)):
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None
+        assert weapon.weapon_type == "laser"
+        assert weapon.damage == damage
+        assert weapon.targets_allies is True
+
+    for weapon_id, damage in (
+        ("SnowartAtk1", 1),
+        ("SnowartAtk2", 3),
+        ("SnowBossAtk", 2),
+        ("SnowBossAtk2", 4),
+    ):
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None
+        assert weapon.weapon_type == "artillery"
+        assert weapon.damage == damage
+        assert weapon.range_min == 2
+        assert weapon.range_max == 5
+        assert weapon.aoe_perpendicular is True
+
+    expected_defaults = {
+        "Snowtank1": "SnowtankAtk1",
+        "Snowtank2": "SnowtankAtk2",
+        "Snowlaser1": "SnowlaserAtk1",
+        "Snowlaser2": "SnowlaserAtk2",
+        "Snowart1": "SnowartAtk1",
+        "Snowart2": "SnowartAtk2",
+        "Snowmine1": "SnowmineAtk1",
+        "Snowmine2": "SnowmineAtk1",
+    }
+    for pawn_type, weapon_id in expected_defaults.items():
+        assert get_pawn_stats(pawn_type).default_weapon == weapon_id
+    assert get_pawn_stats("Snowmine1").move_speed == 0
+    assert get_pawn_stats("Snowmine1").ignore_smoke is True
+
+    setup = get_weapon_def("SnowmineAtk1")
+    assert setup is not None
+    assert setup.weapon_type == "passive"
+    assert setup.damage == 0
+    assert setup.range_min == 1
+    assert setup.range_max == 3
+    assert setup.building_damage is False
+    assert setup.aoe_center is False
+
+
 def test_dung_attack_aliases_match_tumblebug_weapon_defs():
     normal = get_weapon_def("DungAtk1")
     alpha = get_weapon_def("DungAtk2")

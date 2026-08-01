@@ -1756,7 +1756,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # resolves observed launch exhaust after queued Vek attacks, then removes the
 # living rocket via source-defined FlyAway without counting a death.
 # Pre-v377 corpus archived as failure_db_snapshot_sim_v376.jsonl.
-SIMULATOR_VERSION = 377
+# v378 - Player-team Mission_BotDefense Snowmine pawns retain SnowmineAtk1 as
+# real actors: exact range-3 path targeting ignores Smoke, leaves a Freeze
+# Mine at the source, and moves the bot through landing effects. Snowart and
+# inherited BotBoss artillery are capped at the source-defined range 5.
+# Pre-v378 corpus archived as failure_db_snapshot_sim_v377.jsonl.
+SIMULATOR_VERSION = 378
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
