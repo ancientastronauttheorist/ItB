@@ -1489,7 +1489,8 @@ fn finish_instant_unit_death(
     }
 
     let is_enemy = board.units[unit_idx].is_enemy();
-    let is_player = board.units[unit_idx].is_player();
+    let is_player_mech = board.units[unit_idx].is_player()
+        && board.units[unit_idx].is_mech();
     let mission_counted =
         unit_counts_for_mission_kill(board.mission_id.as_str(), &board.units[unit_idx]);
     let has_acid = board.units[unit_idx].acid();
@@ -1521,7 +1522,7 @@ fn finish_instant_unit_death(
         if can_explode {
             apply_death_explosion(board, death_x, death_y, result, 0);
         }
-    } else if is_player {
+    } else if is_player_mech {
         result.mechs_killed += 1;
     }
 
@@ -3679,12 +3680,13 @@ fn apply_terraformer_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionRe
     if let Some(idx) = board.unit_at(x, y) {
         let hp_before = board.units[idx].hp.max(0) as i32;
         let was_enemy = board.units[idx].is_enemy();
-        let was_player = board.units[idx].is_player();
+        let was_player_mech = board.units[idx].is_player()
+            && board.units[idx].is_mech();
         finish_instant_unit_death(board, idx, result, x, y);
         if hp_before > 0 && board.units[idx].hp <= 0 {
             if was_enemy {
                 result.enemy_damage_dealt += hp_before;
-            } else if was_player {
+            } else if was_player_mech {
                 result.mech_damage_taken += hp_before;
             }
         }
@@ -3755,12 +3757,13 @@ fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResul
     if let Some(idx) = board.unit_at(x, y) {
         let hp_before = board.units[idx].hp.max(0) as i32;
         let was_enemy = board.units[idx].is_enemy();
-        let was_player = board.units[idx].is_player();
+        let was_player_mech = board.units[idx].is_player()
+            && board.units[idx].is_mech();
         finish_instant_unit_death(board, idx, result, x, y);
         if hp_before > 0 && board.units[idx].hp <= 0 {
             if was_enemy {
                 result.enemy_damage_dealt += hp_before;
-            } else if was_player {
+            } else if was_player_mech {
                 result.mech_damage_taken += hp_before;
             }
         }
@@ -9655,6 +9658,46 @@ mod tests {
         assert!(!board.tile(5, 4).on_fire());
         assert!(!board.tile(4, 3).smoke());
         assert!(!board.tile(5, 5).acid());
+    }
+
+    #[test]
+    fn test_disposal_attack_can_self_target_without_counting_launcher_as_mech() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Disposal".to_string();
+        board.protect_objective_unit_types.push("Disposal_Unit".to_string());
+        let launcher = add_mission_ally(
+            &mut board,
+            260,
+            4,
+            4,
+            2,
+            WId::DisposalAttack,
+            "Disposal_Unit",
+        );
+        let adjacent = add_enemy(&mut board, 261, 4, 5, 2);
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+
+        let result = simulate_action(
+            &mut board,
+            launcher,
+            (4, 4),
+            WId::DisposalAttack,
+            (4, 4),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[launcher].hp, 0);
+        assert_eq!(board.units[adjacent].hp, 0);
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mechs_killed, 0);
+        assert_eq!(result.mech_damage_taken, 0);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+        for (x, y) in disposal_cross_tiles(4, 4) {
+            assert!(board.tile(x, y).acid(), "expected acid at ({},{})", x, y);
+        }
+        assert!(result.events.iter().all(|event| {
+            !event.starts_with("illegal_weapon_target:")
+        }));
     }
 
     #[test]

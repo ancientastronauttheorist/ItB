@@ -1805,6 +1805,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v394 retains Mission_Disposal's inherited all-board Grenade_Base target
+# area, including the launcher's own tile. Self-fire now resolves the lethal
+# ACID cross while a dead non-mech launcher is reported and scored as a
+# protected friendly objective loss instead of a mech casualty. Pre-v394
+# corpus is archived as recordings/failure_db_snapshot_sim_v393.jsonl.
 # v390: Control Shot first-click eligibility follows the shipped predicate
 # order for powered, guarding/burrower, frozen, grappled/current/base move,
 # and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained, the
@@ -1832,7 +1837,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 393
+SIMULATOR_VERSION = 394
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -4391,3 +4391,106 @@ def test_real_mission_acid_storm_record_pins_generator_lifecycle():
     assert "native Mission:BaseUpdate scheduling" in gaps
     assert "SetWeather" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_mission_disposal_launcher_record_pins_cross_and_end_block_gap():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-disposal-launcher"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/acid/mission_disposal.lua",
+            "sha256": (
+                "2929df660b2289048aaebc96923cafb61"
+                "58834d01a08116399e514642c5eb908"
+            ),
+            "symbols": [
+                "Mission_Disposal",
+                "Mission_Disposal:CountMountains",
+                "Mission_Disposal:IsEndBlocked",
+                "Mission_Disposal:GetCompletedObjectives",
+                "Mission_Disposal:UpdateObjectives",
+                "Mission_Disposal:GetCompletedStatus",
+                "Mission_Disposal:StartMission",
+                "Disposal_Unit",
+                "Disposal_Attack",
+                "Disposal_Attack:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/weapons_base.lua",
+            "sha256": (
+                "bdb55457746d08b46e8b62ad7cfc27f"
+                "0a08bde9fab7397a4780dfe945b5f8f38"
+            ),
+            "symbols": ["Grenade_Base", "Grenade_Base:GetTargetArea"],
+        },
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_unit_objectives.json"] == {
+        "Mission_Disposal",
+        "Disposal_Unit",
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "DisposalAttack",
+        "disposal_cross_tiles",
+        "wid_from_str",
+        "wid_to_str",
+        "weapon_name",
+    }
+    assert implementations["rust_solver/src/solver.rs"] == {
+        "get_weapon_targets",
+        "weapon_action_has_effect",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "apply_disposal_tile",
+        "sim_disposal",
+        "simulate_weapon",
+    }
+    assert implementations["rust_solver/src/evaluate.rs"] == {
+        "friendly_npc_killed",
+        "mission_protect_unit_dead_penalty",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/solver.rs"] == {
+        "disposal_target_area_includes_every_board_tile_and_launcher_self"
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_disposal_attack_kills_acid_cross_and_clears_mountains",
+        "test_disposal_attack_can_self_target_without_counting_launcher_as_mech",
+    }
+    assert tests["rust_solver/src/evaluate.rs"] == {
+        "test_disposal_launcher_death_scores_protected_npc_loss"
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "every board coordinate including the firing tile" in facts
+    assert "DAMAGE_DEATH and ACID" in facts
+    assert "dead protected friendly NPC" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "IsEndBlocked" in gaps
+    assert "at least one Mountain remains" in gaps
+    assert "separate mission-end, safety, and UI semantics tranche" in gaps
+    assert "no fresh controlled UI capture" in gaps

@@ -117,6 +117,22 @@ def test_acid_tank_source_stats_and_cannon_definition():
     assert weapon.acid is True
 
 
+def test_disposal_launcher_source_defs_allow_self_targeting():
+    stats = get_pawn_stats("Disposal_Unit")
+    weapon = get_weapon_def("Disposal_Attack")
+
+    assert stats.move_speed == 0
+    assert stats.pushable is False
+    assert stats.ignore_smoke is True
+    assert stats.default_weapon == "Disposal_Attack"
+    assert weapon is not None
+    assert weapon.weapon_type == "disposal"
+    assert weapon.range_min == 0
+    assert weapon.range_max == 0
+    assert weapon.acid is True
+    assert weapon.aoe_adjacent is True
+
+
 def test_shaman_and_totem_source_stats_and_weapon_definitions():
     known = json.loads(Path("data/known_types.json").read_text())
     shaman1 = get_pawn_stats("Shaman1")

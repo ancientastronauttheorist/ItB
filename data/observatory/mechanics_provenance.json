@@ -6122,6 +6122,155 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Disposal source creates one two-HP, zero-move, nonpushable, non-grid, smoke-immune player launcher, stores its pawn ID, places it through the native disposal zone, and explicitly clears ACID from its starting tile."
+        },
+        {
+          "classification": "fact",
+          "statement": "Disposal_Attack inherits Grenade_Base:GetTargetArea, which returns every board coordinate including the firing tile. Its custom effect queues the selected tile plus four cardinal neighbors with DAMAGE_DEATH and ACID, converting a Mountain on each affected coordinate to Road and otherwise assigning the engine's numeric ACID terrain value."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v394 mirrors the all-board target area including source-legal launcher self-fire, clips the five-tile cross at board edges, kills affected units, acidifies affected tiles, clears Mountains to Ground, and retains established building/grid and status cleanup behavior. A self-destroyed Disposal_Unit is scored as a dead protected friendly NPC and is no longer reported as a mech casualty."
+        }
+      ],
+      "id": "mission-disposal-launcher",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": [
+            "Mission_Disposal",
+            "Disposal_Unit"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "Disposal_Unit"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "Disposal_Attack"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "DisposalAttack",
+            "disposal_cross_tiles",
+            "wid_from_str",
+            "wid_to_str",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets",
+            "weapon_action_has_effect"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_disposal_tile",
+            "sim_disposal",
+            "simulate_weapon"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "friendly_npc_killed",
+            "mission_protect_unit_dead_penalty"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Disposal:IsEndBlocked prevents mission end only while at least one Mountain remains and the stored launcher pawn is alive. Rust protects Disposal_Unit and models mountain clearing, but it does not model this compound mission-end gate; adding it requires a separate mission-end, safety, and UI semantics tranche.",
+        "Mission setup still depends on native PAWN_FACTORY, disposal-zone placement, Board:AddPawn, pawn-ID allocation, and setup timing. Rust consumes the selected live launcher and does not reproduce placement or setup.",
+        "Mission completion separately fails the launcher objective when the stored pawn is dead and the mountain objective when any Mountain remains. CountMountains, GetCompletedObjectives, UpdateObjectives, GetCompletedStatus, their UI timing, and the native objective scheduler are source-indexed here but not reproduced end-to-end.",
+        "Native DAMAGE_DEATH, shield, Frozen, Corpse, unique-building, terrain replacement, artillery queue/delay, and death-effect ordering are not independently traced exhaustively. The all-board target list is proven by Lua; no fresh controlled UI capture of launcher self-fire was taken during the protected achievement session.",
+        "This record excludes generic Grenade_Base effects outside Disposal_Attack and campaign reward, bonus-objective, dialogue, and presentation behavior."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_disposal.lua",
+          "sha256": "2929df660b2289048aaebc96923cafb6158834d01a08116399e514642c5eb908",
+          "symbols": [
+            "Mission_Disposal",
+            "Mission_Disposal:CountMountains",
+            "Mission_Disposal:IsEndBlocked",
+            "Mission_Disposal:GetCompletedObjectives",
+            "Mission_Disposal:UpdateObjectives",
+            "Mission_Disposal:GetCompletedStatus",
+            "Mission_Disposal:StartMission",
+            "Disposal_Unit",
+            "Disposal_Attack",
+            "Disposal_Attack:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "Grenade_Base",
+            "Grenade_Base:GetTargetArea"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_disposal_attack_def"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "disposal_target_area_includes_every_board_tile_and_launcher_self"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_disposal_attack_kills_acid_cross_and_clears_mountains",
+            "test_disposal_attack_can_self_target_without_counting_launcher_as_mech"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "test_disposal_launcher_death_scores_protected_npc_loss"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_disposal_launcher_source_defs_allow_self_targeting"
+          ]
+        },
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": [
+            "test_mission_disposal_protects_launcher"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_disposal_launcher_record_pins_cross_and_end_block_gap"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

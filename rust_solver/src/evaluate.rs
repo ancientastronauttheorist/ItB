@@ -1965,6 +1965,36 @@ mod tests {
     }
 
     #[test]
+    fn test_disposal_launcher_death_scores_protected_npc_loss() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut alive = Board::default();
+        alive.protect_objective_unit_types.push("Disposal_Unit".to_string());
+
+        let mut launcher = Unit {
+            uid: 260,
+            x: 4,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            ..Unit::default()
+        };
+        launcher.set_type_name("Disposal_Unit");
+        alive.add_unit(launcher);
+
+        let alive_score = evaluate(&alive, &[], &w, 0, 0, 0, &p, 0);
+        let mut dead = alive.clone();
+        dead.units[0].hp = 0;
+        let dead_score = evaluate(&dead, &[], &w, 0, 0, 0, &p, 0);
+        let expected_loss = w.mission_protect_unit_alive_bonus
+            - w.mission_protect_unit_dead_penalty
+            - w.friendly_npc_killed;
+
+        assert!((alive_score - dead_score - expected_loss).abs() < 1.0);
+    }
+
+    #[test]
     fn test_damaged_train_scores_one_rep_degradation_once_per_uid() {
         let w = EvalWeights::default();
         let p = no_psion();

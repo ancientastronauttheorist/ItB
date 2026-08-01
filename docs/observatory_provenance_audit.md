@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 29 | 46 |
+| Missions | 75 | 30 | 45 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 48 | 48 |
+| Unique total | 96 | 49 | 47 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 209 definitions literally and leaves 533 unindexed. Category totals
+names 217 definitions literally and leaves 525 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -84,6 +84,20 @@ allies, enemy eggs/blobs/totems, and split children in solver and replay state.
 Native setup selection, exact `Mission:BaseUpdate` scheduling between queued
 micro-effects, weather presentation, and exhaustive status/terrain edges
 remain explicit partial-coverage gaps.
+
+The Disposal launcher slice adds the exact
+`scripts/missions/acid/mission_disposal.lua` source, all seven of its active
+callbacks, and the inherited `Grenade_Base:GetTargetArea` callback. Lua gives
+the two-HP, immobile, nonpushable, smoke-immune player launcher every board
+coordinate as a legal target, including its own tile. Its custom artillery
+effect queues a lethal ACID cross and converts affected Mountains to Road.
+Simulator v394 closes the prior self-target mismatch, exercises the resulting
+launcher self-destruction, and reports that non-mech loss through protected-NPC
+scoring instead of mech-casualty metrics. The record remains `partial`:
+`Mission_Disposal:IsEndBlocked`'s compound launcher-alive plus
+mountains-remaining gate is not modeled, native setup and effect ordering are
+untraced, and no controlled self-fire UI capture was taken during the protected
+achievement session.
 
 The Acid Vats slice adds the exact
 `scripts/missions/acid/mission_barrels.lua` source and all nine of its active

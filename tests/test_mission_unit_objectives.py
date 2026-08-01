@@ -18,6 +18,13 @@ def test_mission_acidstorm_destroys_storm_generator():
     assert resolved["protect"] == []
 
 
+def test_mission_disposal_protects_launcher():
+    resolved = resolve_unit_objectives("Mission_Disposal")
+
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["Disposal_Unit"]
+
+
 def test_mission_dam_destroys_dam_pawn():
     resolved = resolve_unit_objectives("Mission_Dam")
 

@@ -545,7 +545,7 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     ),
     "Disposal_Attack": WeaponDef(
         name="Disintegrator", weapon_type="disposal",
-        damage=0, acid=True, range_max=0, aoe_adjacent=True,
+        damage=0, acid=True, range_min=0, range_max=0, aoe_adjacent=True,
     ),
 
     # --- RANGED CLASS ---

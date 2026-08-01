@@ -809,16 +809,12 @@ pub(crate) fn get_weapon_targets(
             }
         }
         WeaponType::Disposal => {
-            // Grenade_Base artillery can target any board tile except the
-            // firing tile. The custom effect handles buildings/terrain/units.
+            // Grenade_Base:GetTargetArea returns every board tile, including
+            // the firing tile. The custom effect handles buildings, terrain,
+            // units, and the source-legal launcher self-destruction case.
             for x in 0..8u8 {
                 for y in 0..8u8 {
-                    if (x, y) == (mx, my) { continue; }
-                    let dist = (x as i8 - mx as i8).unsigned_abs()
-                        + (y as i8 - my as i8).unsigned_abs();
-                    if dist >= wdef.range_min && (wdef.range_max == 0 || dist <= wdef.range_max) {
-                        targets.push((x, y));
-                    }
+                    targets.push((x, y));
                 }
             }
         }
@@ -4156,6 +4152,44 @@ mod top_k_tests {
             targets.contains(&(2, 2)),
             "Artemis should still target cardinal F6 from D6"
         );
+    }
+
+    #[test]
+    fn disposal_target_area_includes_every_board_tile_and_launcher_self() {
+        let mut board = Board::default();
+        let launcher = board.add_unit(Unit {
+            uid: 260,
+            x: 4,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::DisposalAttack as u16),
+            flags: UnitFlags::ACTIVE,
+            ..Default::default()
+        });
+        board.units[launcher].set_type_name("Disposal_Unit");
+
+        let targets = get_weapon_targets(
+            &board,
+            4,
+            4,
+            WId::DisposalAttack,
+            (4, 4),
+            &WEAPONS,
+        );
+
+        assert_eq!(targets.len(), 64);
+        assert!(targets.contains(&(0, 0)));
+        assert!(targets.contains(&(7, 7)));
+        assert!(targets.contains(&(4, 4)));
+
+        let actions = enumerate_actions(&board, launcher, &WEAPONS);
+        assert!(actions.iter().any(|action| {
+            action.0 == (4, 4)
+                && action.1 == WId::DisposalAttack
+                && action.2 == (4, 4)
+        }));
     }
 
     #[test]

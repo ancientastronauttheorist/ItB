@@ -1480,7 +1480,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 153: Disposal_Attack — Mission_Disposal A.C.I.D. Launcher. Bespoke
     // artillery cross in simulate.rs: instant-kill units, acidify affected
     // non-mountain tiles, and clear mountains to road/ground.
-    w[153] = WeaponDef { weapon_type: WeaponType::Disposal, damage: 0, range_min: 1, range_max: 0,
+    w[153] = WeaponDef { weapon_type: WeaponType::Disposal, damage: 0, range_min: 0, range_max: 0,
         flags: f_nc(WeaponFlags::ACID.bits() | WeaponFlags::AOE_CENTER.bits() | WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
     // 93-105: Passive weapons — no simulation needed, all DEF
@@ -3357,7 +3357,7 @@ mod tests {
     fn test_disposal_attack_def() {
         let w = weapon_def(WId::DisposalAttack);
         assert_eq!(w.weapon_type, WeaponType::Disposal);
-        assert_eq!(w.range_min, 1);
+        assert_eq!(w.range_min, 0);
         assert_eq!(w.range_max, 0);
         assert!(w.acid());
         assert!(w.aoe_center());

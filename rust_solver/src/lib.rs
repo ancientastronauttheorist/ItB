@@ -2414,6 +2414,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v394 - Mission_Disposal's inherited Grenade_Base target area includes all
+//   64 board tiles, including the launcher itself. Rust now retains that
+//   source-legal self-destruction action, models its lethal ACID cross, and
+//   reports a killed non-mech launcher as a protected friendly objective loss
+//   rather than a mech casualty. Pre-v394 corpus archived as
+//   failure_db_snapshot_sim_v393.jsonl.
 // v390 - Control Shot first-click eligibility follows the shipped predicate
 //   order for powered, guarding/burrower, frozen, grappled/current/base move,
 //   and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained,
@@ -2444,7 +2450,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 393;
+pub const SIMULATOR_VERSION: u32 = 394;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
