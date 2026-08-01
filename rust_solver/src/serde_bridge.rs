@@ -811,7 +811,15 @@ pub fn board_from_json(json_str: &str)
                 flags.remove(UnitFlags::HAS_QUEUED_ATTACK);
             }
 
-            let move_speed = ju.move_speed.or(ju.base_move).unwrap_or(3);
+            // Most legacy/partial payloads retain the generic pawn fallback
+            // of Move 3. Mission_AcidTank's shipped pawn table is an exact
+            // exception: Acid_Tank has MoveSpeed=4. Explicit live `move` or
+            // `base_move` remains authoritative when present.
+            let source_default_move = if ju.unit_type == "Acid_Tank" { 4 } else { 3 };
+            let move_speed = ju
+                .move_speed
+                .or(ju.base_move)
+                .unwrap_or(source_default_move);
             let mut unit = Unit {
                 uid: ju.uid.unwrap_or(board.unit_count as u16),
                 pawn_type: PawnType(0),
@@ -1645,6 +1653,51 @@ mod tests {
         assert_eq!(board.units[0].move_speed, 4);
         assert_eq!(board.units[0].base_move, 4);
         assert_eq!(board.units[1].move_speed, 0);
+        assert_eq!(board.units[1].base_move, 4);
+    }
+
+    #[test]
+    fn test_acid_tank_missing_move_uses_source_default_and_live_move_wins() {
+        let input = r#"{
+            "mission_id": "Mission_AcidTank",
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "Acid_Tank",
+                    "x": 2,
+                    "y": 4,
+                    "hp": 1,
+                    "max_hp": 1,
+                    "team": 1,
+                    "mech": false,
+                    "active": true,
+                    "weapons": ["Acid_Tank_Attack"]
+                },
+                {
+                    "uid": 2,
+                    "type": "Acid_Tank",
+                    "x": 5,
+                    "y": 4,
+                    "hp": 1,
+                    "max_hp": 1,
+                    "team": 1,
+                    "mech": false,
+                    "active": true,
+                    "move": 2,
+                    "base_move": 4,
+                    "weapons": ["Acid_Tank_Attack"]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, ..) = board_from_json(input).expect("Acid Tank bridge json parses");
+
+        assert_eq!(board.units[0].move_speed, 4);
+        assert_eq!(board.units[0].base_move, 4);
+        assert_eq!(board.units[1].move_speed, 2);
         assert_eq!(board.units[1].base_move, 4);
     }
 

@@ -104,6 +104,19 @@ def test_snowtank_mark_i_weapon_def_matches_lua_projectile_fire():
     assert w.fire is True
 
 
+def test_acid_tank_source_stats_and_cannon_definition():
+    stats = get_pawn_stats("Acid_Tank")
+    weapon = get_weapon_def("Acid_Tank_Attack")
+
+    assert stats.move_speed == 4
+    assert stats.ranged == 1
+    assert weapon is not None
+    assert weapon.weapon_type == "projectile"
+    assert weapon.damage == 0
+    assert weapon.push == "none"
+    assert weapon.acid is True
+
+
 def test_hacking_cannon_bot_player_aliases_match_mark_i():
     known = json.loads(Path("data/known_types.json").read_text())
     w = get_weapon_def("SnowtankAtk1_Player")

@@ -529,6 +529,139 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Mission_AcidTank source spawns one player-team Acid_Tank, counts EVENT_ACID_DESTROYED into AcidKills, awards two reputation when AcidKills reaches four, awards one reputation when it is one through three, and fails at zero."
+        },
+        {
+          "classification": "fact",
+          "statement": "The shipped Acid_Tank pawn has one HP and MoveSpeed four. Its Acid_Tank_Attack is a zero-damage, zero-push projectile that applies ACID at the native PATH_PROJECTILE endpoint."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v383 replaces the generic Move-three fallback with the source-exact Move four only for Acid_Tank in the Python static pawn catalog and Rust legacy/partial-payload import. Both paths prefer current move, then base move, then the source default; explicit bridge movement remains authoritative, and existing focused tests preserve cannon and EVENT_ACID_DESTROYED objective behavior."
+        }
+      ],
+      "id": "mission-acid-tank",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "Mission_AcidTank",
+            "mission_kill_target",
+            "mission_kills_done"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "PawnStats",
+            "Acid_Tank"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data",
+            "mission_kill_target",
+            "mission_kills_done"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "source_default_move",
+            "Acid_Tank"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "unit_counts_for_mission_kill",
+            "Mission_AcidTank"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::AcidTankAtk",
+            "Acid_Tank_Attack"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "apply_weapon_status",
+            "sim_projectile",
+            "simulate_weapon"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:AddPawn placement, pawn UID allocation, deployment timing, and collision with unusual occupied setup tiles remain live-engine dependencies; Rust consumes the bridge-selected Acid Tank and does not recreate mission setup.",
+        "EVENT_ACID_DESTROYED production and Mission_AcidTank UpdateMission timing are native. The bridge imports live AcidKills while Rust projects only source-compatible acid-inflicted non-minor enemy deaths.",
+        "Native GetProjectileEnd(PATH_PROJECTILE), projectile presentation, effect scheduling, Shield/Frozen/status ordering, unusual blockers, and exhaustive terrain/pod interactions are not independently traced end-to-end.",
+        "The exact postgame one-reputation partial-credit object and objective UI/status callbacks are source-catalogued but are not reproduced as a separate simulator reward state; safety still targets the full four acid kills.",
+        "Legacy or synthetic payloads without a weapon list still do not reconstruct Acid_Tank_Attack in Rust; v383 corrects only the source-proven movement fallback, while normal live bridge payloads carry both movement and weapon identity.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_acidtank.lua",
+          "sha256": "10089d2b6592acbf49af3e459712a52cdb6009e7946f87bbb6c5e8feecc64599",
+          "symbols": [
+            "Mission_AcidTank",
+            "Mission_AcidTank:StartMission",
+            "Mission_AcidTank:GetCompletedObjectives",
+            "Mission_AcidTank:GetCompletedStatus",
+            "Mission_AcidTank:UpdateObjectives",
+            "Mission_AcidTank:UpdateMission",
+            "Acid_Tank",
+            "Acid_Tank_Attack",
+            "Acid_Tank_Attack:GetSkillEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_acid_tank_missing_move_uses_source_default_and_live_move_wins"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_acid_tank_clean_kill_does_not_advance_mission_kill_counter",
+            "test_acid_tank_acid_kill_advances_mission_kill_counter",
+            "test_acid_tank_cannon_acids_unit_without_ground_pool"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_acid_tank_source_stats_and_cannon_definition"
+          ]
+        },
+        {
+          "path": "tests/test_mission_kill_bonus.py",
+          "symbols": [
+            "test_acid_tank_defaults_to_fixed_kill_target_for_older_bridge",
+            "test_acid_tank_missing_move_uses_source_static_default"
+          ]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": [
+            "test_final_turn_acid_tank_kill_objective_blocks_when_short"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "The exact inventoried LineArtillery base callback starts at distance two, but Science_RainingFire replaces that callback completely and enumerates every in-bounds cardinal tile from distance one through its ArtillerySize. OnlyEmpty remains false, so occupied and otherwise blocked target tiles are retained."
         },
         {

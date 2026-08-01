@@ -648,6 +648,17 @@ class Board:
             primary = weapons[0] if len(weapons) > 0 else ""
             secondary = weapons[1] if len(weapons) > 1 else ""
 
+            # Match the Rust bridge import for legacy/partial payloads:
+            # current move -> base move -> source static default. If only a
+            # current move is present, retain it as the restoration baseline
+            # rather than inventing a different static base value.
+            move_speed = ud.get("move")
+            base_move = ud.get("base_move")
+            if move_speed is None:
+                move_speed = base_move if base_move is not None else stats.move_speed
+            if base_move is None:
+                base_move = move_speed
+
             # Queued target (piQueuedShot direction point)
             qt = ud.get("queued_target")
             qt_x = qt[0] if qt else -1
@@ -674,7 +685,7 @@ class Board:
                 max_hp=ud.get("max_hp", ud.get("hp", 1)),
                 team=ud.get("team", 6),
                 is_mech=ud.get("mech", False),
-                move_speed=ud.get("move", stats.move_speed),
+                move_speed=move_speed,
                 flying=ud.get("flying", stats.flying),
                 massive=stats.massive,
                 armor=ud.get("armor", stats.armor),
@@ -689,7 +700,7 @@ class Board:
                     and ud.get("hp", 1) > 0
                     and bool(ud.get("queued_launch", False))
                 ),
-                base_move=ud.get("base_move", stats.move_speed),
+                base_move=base_move,
                 shield=ud.get("shield", False),
                 acid=ud.get("acid", False),
                 frozen=ud.get("frozen", False),

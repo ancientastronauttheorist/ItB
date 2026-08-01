@@ -2385,7 +2385,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   consumed after resolution instead of repeating forever. Future native
 //   selection and RNG remain unmodeled. Pre-v382 corpus archived as
 //   failure_db_snapshot_sim_v381.jsonl.
-pub const SIMULATOR_VERSION: u32 = 382;
+// v383 - Mission_AcidTank's source-defined MoveSpeed=4 now drives Python
+//   static state and Rust legacy/partial-payload fallback instead of the
+//   generic Move 3 default. Both import paths use current move, then base move,
+//   then the source default; explicit live movement remains authoritative.
+//   Pre-v383 corpus archived as failure_db_snapshot_sim_v382.jsonl.
+pub const SIMULATOR_VERSION: u32 = 383;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

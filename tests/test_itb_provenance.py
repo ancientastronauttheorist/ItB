@@ -3302,3 +3302,91 @@ def test_real_sand_terrain_hazard_record_pins_conversion_and_native_gaps():
     assert "cannot construct the next native" in gaps
     assert "spawn-block" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_acid_tank_record_pins_move_four_fallback_and_native_gaps():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-acid-tank"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/acid/mission_acidtank.lua",
+            "sha256": (
+                "10089d2b6592acbf49af3e459712a52cd"
+                "b6009e7946f87bbb6c5e8feecc64599"
+            ),
+            "symbols": [
+                "Mission_AcidTank",
+                "Mission_AcidTank:StartMission",
+                "Mission_AcidTank:GetCompletedObjectives",
+                "Mission_AcidTank:GetCompletedStatus",
+                "Mission_AcidTank:UpdateObjectives",
+                "Mission_AcidTank:UpdateMission",
+                "Acid_Tank",
+                "Acid_Tank_Attack",
+                "Acid_Tank_Attack:GetSkillEffect",
+            ],
+        }
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/model/pawn_stats.py"] == {
+        "PawnStats",
+        "Acid_Tank",
+    }
+    assert implementations["rust_solver/src/serde_bridge.rs"] == {
+        "board_from_json",
+        "source_default_move",
+        "Acid_Tank",
+    }
+    assert implementations["rust_solver/src/board.rs"] == {
+        "unit_counts_for_mission_kill",
+        "Mission_AcidTank",
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::AcidTankAtk",
+        "Acid_Tank_Attack",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_acid_tank_missing_move_uses_source_default_and_live_move_wins"
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_acid_tank_clean_kill_does_not_advance_mission_kill_counter",
+        "test_acid_tank_acid_kill_advances_mission_kill_counter",
+        "test_acid_tank_cannon_acids_unit_without_ground_pool",
+    }
+    assert tests["tests/test_weapon_defs.py"] == {
+        "test_acid_tank_source_stats_and_cannon_definition"
+    }
+    assert tests["tests/test_mission_kill_bonus.py"] == {
+        "test_acid_tank_defaults_to_fixed_kill_target_for_older_bridge",
+        "test_acid_tank_missing_move_uses_source_static_default",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "Board:AddPawn placement" in gaps
+    assert "EVENT_ACID_DESTROYED production" in gaps
+    assert "GetProjectileEnd(PATH_PROJECTILE)" in gaps
+    assert "without a weapon list" in gaps
+    assert "protected live achievement session" in gaps

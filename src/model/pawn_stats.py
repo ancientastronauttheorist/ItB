@@ -319,10 +319,9 @@ NEUTRAL_STATS = {
                                       default_weapon="DeployUnit_AracnoidAtk"),
     "DeployUnit_AracnoidB": PawnStats(move_speed=3, ranged=0, pushable=True,
                                       default_weapon="DeployUnit_AracnoidAtkB"),
-    # A.C.I.D. Tank: single-use deployable NPC (time-pod / shop reward).
-    # 1 HP base (3 with +2 HP upgrade), Move 3, Normal mass, pushable.
-    # Player-controlled same as a mech.
-    "Acid_Tank":         PawnStats(move_speed=3, ranged=1),
+    # Mission_AcidTank's corporate player ally. Exact mission source:
+    # 1 HP, Move 4, normal mass, pushable, A.C.I.D. Cannon.
+    "Acid_Tank":         PawnStats(move_speed=4, ranged=1),
     # Renfield Bomb (Mission_Final_Cave / final caverns): friendly objective
     # NPC that explodes on a fixed countdown to clear all enemies on the map.
     # Per `scripts/missions/final/mission_final_two.lua:179-188`:

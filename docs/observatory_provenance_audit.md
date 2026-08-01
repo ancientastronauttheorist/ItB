@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 23 | 52 |
+| Missions | 75 | 24 | 51 |
 | Environments | 15 | 12 | 3 |
-| Unique total | 96 | 42 | 54 |
+| Unique total | 96 | 43 | 53 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 172 definitions literally and leaves 570 unindexed. Category totals
+names 178 definitions literally and leaves 564 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -358,6 +358,20 @@ ordinary and lethal-mine landings, empty pairs, and post-swap targeting. It
 remains `partial`: quarter selection, validity/blocking helpers, RNG,
 `Board:AddTeleport`, native timing/chaining, and UI behavior are not
 independently reproduced.
+
+The fifth mission-objective slice, `mission-acid-tank`, adds the exact compact
+A.C.I.D. Tank mission and all six active callbacks. Its source fixes the ally
+at one HP and Move four, defines a zero-damage/no-push ACID projectile, counts
+the native `EVENT_ACID_DESTROYED` counter, and awards full credit at four.
+Simulator v383 closes
+a concrete fallback contradiction: Python static state and Rust payloads that
+omit movement now use Move four instead of the generic Move three. Both import
+paths prefer current move, then base move, then that source default, so
+explicit live movement remains authoritative. Existing cannon, acid-event
+counter, and final-turn safety tests plus new fallback proofs cover the bounded
+contract. The record remains `partial`: native placement, event production,
+projectile endpoint helpers, scheduler/status interactions, partial-reward UI,
+and missing-weapon legacy payloads stay explicit engine dependencies.
 
 The first lethal mission-environment slice, `environment-mission-airstrike`,
 pins its exact five-tile cross for marking, `DAMAGE_DEATH`, and temporary spawn

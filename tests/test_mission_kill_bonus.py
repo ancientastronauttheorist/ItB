@@ -189,3 +189,81 @@ def test_acid_tank_defaults_to_fixed_kill_target_for_older_bridge():
     assert b.mission_kill_target == 4
     assert b.mission_kill_limit == 0
     assert b.mission_kills_done == 3
+
+
+def test_acid_tank_missing_move_uses_source_static_default():
+    data = {
+        "tiles": [
+            {"x": x, "y": y, "terrain": "ground"}
+            for x in range(8)
+            for y in range(8)
+        ],
+        "units": [
+            {
+                "uid": 7,
+                "type": "Acid_Tank",
+                "x": 3,
+                "y": 4,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "active": True,
+                "weapons": ["Acid_Tank_Attack"],
+            },
+            {
+                "uid": 8,
+                "type": "Acid_Tank",
+                "x": 4,
+                "y": 4,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "active": True,
+                "base_move": 2,
+                "weapons": ["Acid_Tank_Attack"],
+            },
+            {
+                "uid": 9,
+                "type": "Acid_Tank",
+                "x": 5,
+                "y": 4,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "active": True,
+                "move": 0,
+                "base_move": 4,
+                "weapons": ["Acid_Tank_Attack"],
+            },
+            {
+                "uid": 10,
+                "type": "Acid_Tank",
+                "x": 6,
+                "y": 4,
+                "hp": 1,
+                "max_hp": 1,
+                "team": 1,
+                "mech": False,
+                "active": True,
+                "move": 2,
+                "weapons": ["Acid_Tank_Attack"],
+            },
+        ],
+        "grid_power": 5,
+        "turn": 1,
+        "mission_id": "Mission_AcidTank",
+    }
+
+    board = Board.from_bridge_data(data)
+
+    assert board.units[0].move_speed == 4
+    assert board.units[0].base_move == 4
+    assert board.units[1].move_speed == 2
+    assert board.units[1].base_move == 2
+    assert board.units[2].move_speed == 0
+    assert board.units[2].base_move == 4
+    assert board.units[3].move_speed == 2
+    assert board.units[3].base_move == 2

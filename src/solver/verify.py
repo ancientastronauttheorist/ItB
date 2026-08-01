@@ -1777,7 +1777,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Lightning remains a lethal no-conversion hazard. Future native selection and
 # RNG are intentionally not guessed. Pre-v382 corpus is archived as
 # failure_db_snapshot_sim_v381.jsonl.
-SIMULATOR_VERSION = 382
+# v383 uses Mission_AcidTank's exact MoveSpeed=4 for Python static state and
+# Rust legacy/partial-payload fallback. Both imports prefer current move, then
+# base move, then the source default; explicit live movement still wins.
+# Pre-v383 corpus is archived as failure_db_snapshot_sim_v382.jsonl.
+SIMULATOR_VERSION = 383
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
