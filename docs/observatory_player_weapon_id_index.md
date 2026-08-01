@@ -45,11 +45,12 @@ comments, and generalized long comments while preserving offsets. It then:
   active candidate.
 
 The Rust scanner reads only the explicit `#[repr(u8)] WId` variants and direct
-literal arms inside `wid_from_str`, after masking line and nested block comments
-without hiding string literals. It rejects duplicate literals, duplicate or
-out-of-range discriminants, missing referenced variants, and unsupported
-complex arms. Many Lua IDs may legitimately map to one `WId`; those reverse
-mappings are preserved rather than collapsed.
+plain-literal arms inside `wid_from_str`, after masking line and nested block
+comments without hiding string literals. Same-line Rust `|` alternatives are
+expanded into one exact mapping per literal. It rejects duplicate literals,
+duplicate or out-of-range discriminants, missing referenced variants, and
+unsupported nonliteral or multiline complex arms. Many Lua IDs may legitimately
+map to one `WId`; those reverse mappings are preserved rather than collapsed.
 
 ## Current exact-inventory result
 
@@ -64,11 +65,11 @@ and modified-install scripts revision
 | Active constructor candidates | 465 |
 | Preservation aliases | 4 |
 | Unique candidate IDs | 469 |
-| Exact direct `wid_from_str` matches | 156 |
-| No exact direct match | 313 |
+| Exact direct `wid_from_str` matches | 159 |
+| No exact direct match | 310 |
 | Ambiguous duplicate Lua IDs | 0 |
-| Rust mappings outside selected definitions | 109 |
-| Many-to-one Rust `WId` variants | 33 |
+| Rust mappings outside selected definitions | 114 |
+| Many-to-one Rust `WId` variants | 36 |
 
 `scripts/advanced/ae_weapons_base.lua` and
 `scripts/weapons_experiment.lua` contain zero active candidates under this

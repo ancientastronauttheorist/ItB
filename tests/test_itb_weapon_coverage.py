@@ -329,6 +329,165 @@ def test_many_to_one_rust_mappings_are_preserved(tmp_path: Path):
     ]
 
 
+def test_literal_or_pattern_indexes_each_exact_rust_input(tmp_path: Path):
+    inventory, content_root, rust_source = _fixture(tmp_path)
+    rust_source.write_text(
+        "#[repr(u8)]\n"
+        "pub enum WId {\n"
+        "  None = 0,\n"
+        "  PrimeTest = 1,\n"
+        "}\n"
+        "pub fn wid_from_str(s: &str) -> WId {\n"
+        "  match s {\n"
+        '    "Prime_Test" | "PrimeTestCompat" => WId::PrimeTest,\n'
+        "    _ => WId::None,\n"
+        "  }\n"
+        "}\n"
+        "pub fn wid_to_str(id: WId) -> &'static str { \"\" }\n",
+        encoding="utf-8",
+    )
+
+    result = analyze_player_weapon_ids(
+        inventory,
+        content_root=content_root,
+        rust_source=rust_source,
+    )
+    definitions = {
+        item["lua_id"]: item for item in result["definitions"]
+    }
+    assert definitions["Prime_Test"]["rust_mapping"]["status"] == "exact"
+    assert result["rust_source"]["wid_from_str_mappings"] == 2
+    assert result["rust_only_mappings"] == [
+        {
+            "lua_id": "PrimeTestCompat",
+            "wid_variant": "PrimeTest",
+            "discriminant": 1,
+        }
+    ]
+    assert result["many_to_one_wid_mappings"] == [
+        {
+            "wid_variant": "PrimeTest",
+            "discriminant": 1,
+            "lua_ids": ["PrimeTestCompat", "Prime_Test"],
+        }
+    ]
+
+
+def test_nonliteral_guard_arm_still_fails_closed(tmp_path: Path):
+    inventory, content_root, rust_source = _fixture(tmp_path)
+    rust_source.write_text(
+        "#[repr(u8)]\n"
+        "pub enum WId {\n"
+        "  None = 0,\n"
+        "  PrimeTest = 1,\n"
+        "}\n"
+        "pub fn wid_from_str(s: &str) -> WId {\n"
+        "  match s {\n"
+        '    "Prime_Test" => WId::PrimeTest,\n'
+        '    s if s.starts_with("Ranged_") => WId::PrimeTest,\n'
+        "    _ => WId::None,\n"
+        "  }\n"
+        "}\n"
+        "pub fn wid_to_str(id: WId) -> &'static str { \"\" }\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(WeaponCoverageError, match="unsupported wid_from_str"):
+        analyze_player_weapon_ids(
+            inventory,
+            content_root=content_root,
+            rust_source=rust_source,
+        )
+
+
+def test_unsupported_mixed_or_pattern_still_fails_closed(tmp_path: Path):
+    inventory, content_root, rust_source = _fixture(tmp_path)
+    rust_source.write_text(
+        "#[repr(u8)]\n"
+        "pub enum WId {\n"
+        "  None = 0,\n"
+        "  PrimeTest = 1,\n"
+        "}\n"
+        "pub fn wid_from_str(s: &str) -> WId {\n"
+        "  match s {\n"
+        '    "Prime_Test" | SOME_ALIAS => WId::PrimeTest,\n'
+        "    _ => WId::None,\n"
+        "  }\n"
+        "}\n"
+        "pub fn wid_to_str(id: WId) -> &'static str { \"\" }\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(WeaponCoverageError, match="unsupported wid_from_str"):
+        analyze_player_weapon_ids(
+            inventory,
+            content_root=content_root,
+            rust_source=rust_source,
+        )
+
+
+@pytest.mark.parametrize(
+    "arm",
+    [
+        '    "Prime_Test"\n      | "PrimeCompat" => WId::PrimeTest,\n',
+        '    "Prime_Test" |\n      "PrimeCompat" => WId::PrimeTest,\n',
+    ],
+)
+def test_multiline_literal_or_pattern_still_fails_closed(
+    tmp_path: Path, arm: str
+):
+    inventory, content_root, rust_source = _fixture(tmp_path)
+    rust_source.write_text(
+        "#[repr(u8)]\n"
+        "pub enum WId {\n"
+        "  None = 0,\n"
+        "  PrimeTest = 1,\n"
+        "}\n"
+        "pub fn wid_from_str(s: &str) -> WId {\n"
+        "  match s {\n"
+        f"{arm}"
+        "    _ => WId::None,\n"
+        "  }\n"
+        "}\n"
+        "pub fn wid_to_str(id: WId) -> &'static str { \"\" }\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(WeaponCoverageError, match="unsupported wid_from_str"):
+        analyze_player_weapon_ids(
+            inventory,
+            content_root=content_root,
+            rust_source=rust_source,
+        )
+
+
+def test_duplicate_literal_inside_or_patterns_still_fails(tmp_path: Path):
+    inventory, content_root, rust_source = _fixture(tmp_path)
+    rust_source.write_text(
+        "#[repr(u8)]\n"
+        "pub enum WId {\n"
+        "  None = 0,\n"
+        "  PrimeTest = 1,\n"
+        "}\n"
+        "pub fn wid_from_str(s: &str) -> WId {\n"
+        "  match s {\n"
+        '    "Prime_Test" | "PrimeCompat" => WId::PrimeTest,\n'
+        '    "PrimeCompat" => WId::PrimeTest,\n'
+        "    _ => WId::None,\n"
+        "  }\n"
+        "}\n"
+        "pub fn wid_to_str(id: WId) -> &'static str { \"\" }\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(WeaponCoverageError, match="duplicate"):
+        analyze_player_weapon_ids(
+            inventory,
+            content_root=content_root,
+            rust_source=rust_source,
+        )
+
+
 def test_duplicate_lua_ids_are_ambiguous_not_last_wins(tmp_path: Path):
     inventory, content_root, rust_source = _fixture(tmp_path)
     ranged_path = content_root / "scripts/weapons_ranged.lua"

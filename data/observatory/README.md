@@ -103,9 +103,11 @@ python scripts/itb_weapon_coverage.py \
 The second argument is the installation's content root (the directory
 containing `scripts/`). The tool reads and hash-verifies all 14 selected Lua
 files, masks Lua comments and strings, extracts active global constructor and
-alias candidates, and joins them to direct `wid_from_str` arms. It emits JSON
-to stdout and never writes to the installation. An exact ID match is not a
-claim about Rust weapon definitions, simulator behavior, or conformance.
+alias candidates, and joins them to direct `wid_from_str` arms. Plain-literal
+Rust `|` alternatives are expanded one-for-one; unsupported match shapes still
+fail closed. It emits JSON to stdout and never writes to the installation. An
+exact ID match is not a claim about Rust weapon definitions, simulator behavior,
+or conformance.
 
 ## Windows PE named anchors
 

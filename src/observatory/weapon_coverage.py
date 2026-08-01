@@ -44,10 +44,16 @@ _RUST_ENUM_RE = re.compile(
     rf"^[ \t]*({_IDENTIFIER})[ \t]*=[ \t]*(\d+)[ \t]*,",
     re.MULTILINE,
 )
-_RUST_MAPPING_RE = re.compile(
-    rf'^[ \t]*"([^"]+)"[ \t]*=>[ \t]*WId::({_IDENTIFIER}),',
+_RUST_LITERAL_PATTERN = r'"[^"\\\r\n]+"'
+_RUST_MAPPING_ARM_RE = re.compile(
+    rf'^[ \t]*(?P<patterns>{_RUST_LITERAL_PATTERN}'
+    rf'(?:[ \t]*\|[ \t]*{_RUST_LITERAL_PATTERN})*)'
+    rf'[ \t]*=>[ \t]*WId::(?P<wid>{_IDENTIFIER})[ \t]*,[ \t]*$',
     re.MULTILINE,
 )
+_RUST_MAPPING_LITERAL_RE = re.compile(r'"([^"\\\r\n]+)"')
+_RUST_LITERAL_ARM_LINE_RE = re.compile(r'^[ \t]*"', re.MULTILINE)
+_RUST_WID_ARM_RE = re.compile(r"=>[ \t]*WId::")
 _RUST_RAW_STRING_START_RE = re.compile(r"(?:b?r)(#+)?\"")
 _LUA_RESERVED = {
     "and",
@@ -542,24 +548,51 @@ def _rust_id_index(text: str) -> tuple[dict[str, int], dict[str, str]]:
 
     body = masked[mapping_start:mapping_end]
     mappings: dict[str, str] = {}
-    for match in _RUST_MAPPING_RE.finditer(body):
-        lua_id, rust_wid = match.groups()
-        if lua_id in mappings:
-            raise WeaponCoverageError(
-                f"duplicate Rust wid_from_str Lua ID: {lua_id}"
-            )
+    supported_spans: list[tuple[int, int]] = []
+    for match in _RUST_MAPPING_ARM_RE.finditer(body):
+        rust_wid = match.group("wid")
         if rust_wid not in variants:
             raise WeaponCoverageError(
                 f"wid_from_str references missing WId variant: {rust_wid}"
             )
-        mappings[lua_id] = rust_wid
-    for line in body.splitlines():
-        if "=> WId::" not in line or re.match(r"^[ \t]*_[ \t]*=>", line):
+        for literal in _RUST_MAPPING_LITERAL_RE.finditer(
+            match.group("patterns")
+        ):
+            lua_id = literal.group(1)
+            if lua_id in mappings:
+                raise WeaponCoverageError(
+                    f"duplicate Rust wid_from_str Lua ID: {lua_id}"
+                )
+            mappings[lua_id] = rust_wid
+        supported_spans.append(match.span())
+
+    for literal_line in _RUST_LITERAL_ARM_LINE_RE.finditer(body):
+        if any(
+            start <= literal_line.start() < end
+            for start, end in supported_spans
+        ):
             continue
-        if not _RUST_MAPPING_RE.match(line):
-            raise WeaponCoverageError(
-                f"unsupported wid_from_str mapping arm: {line.strip()}"
-            )
+        line_end = body.find("\n", literal_line.start())
+        if line_end < 0:
+            line_end = len(body)
+        raise WeaponCoverageError(
+            "unsupported wid_from_str mapping arm: "
+            f"{body[literal_line.start():line_end].strip()}"
+        )
+
+    for arm in _RUST_WID_ARM_RE.finditer(body):
+        if any(start <= arm.start() < end for start, end in supported_spans):
+            continue
+        line_start = body.rfind("\n", 0, arm.start()) + 1
+        line_end = body.find("\n", arm.end())
+        if line_end < 0:
+            line_end = len(body)
+        line = body[line_start:line_end]
+        if re.match(r"^[ \t]*_[ \t]*=>", line):
+            continue
+        raise WeaponCoverageError(
+            f"unsupported wid_from_str mapping arm: {line.strip()}"
+        )
     if not mappings:
         raise WeaponCoverageError("Rust wid_from_str contains no direct mappings")
     return variants, mappings
