@@ -3390,3 +3390,120 @@ def test_real_acid_tank_record_pins_move_four_fallback_and_native_gaps():
     assert "GetProjectileEnd(PATH_PROJECTILE)" in gaps
     assert "without a weapon list" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_digger_record_pins_persistent_wall_semantics_and_native_gaps():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-digger"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/weapons_enemy.lua",
+            "sha256": (
+                "5231dd7a2de730f04fa4116c0d99f07e"
+                "cbb3b25059db3593d54d689c37bd4b7b"
+            ),
+            "symbols": [
+                "DiggerAtk1",
+                "DiggerAtk1:GetTargetArea",
+                "DiggerAtk1:GetSkillEffect",
+                "DiggerAtk2",
+            ],
+        },
+        {
+            "path": "scripts/pawns.lua",
+            "sha256": (
+                "e999b8d98526c1e36f4746dd65b9d9e"
+                "7ee3ca0b22029ed391d5b71fda49dc239"
+            ),
+            "symbols": ["Digger1", "Digger2", "Wall"],
+        },
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "digger_wall_tile_eligible",
+        "DIGGER_WALL_SOURCE_DIRS",
+        "spawn_digger_wall",
+        "simulate_enemy_attacks",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "clear_destroyed_digger_walls"
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::DiggerAtk1",
+        "WId::DiggerAtk2",
+        "enemy_weapon_for_type",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_digger_spawns_four_persistent_neutral_walls_after_own_damage",
+        "test_alpha_digger_damages_occupied_tiles_and_walls_only_empty_cards",
+        "test_digger_wall_source_predicate_rejects_each_blocker_class",
+        "test_digger_wall_blocks_later_enemy_projectile",
+        "test_digger_wall_spawn_skips_safely_at_board_capacity",
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_dead_digger_wall_clears_before_later_needle_shot"
+    }
+    assert tests["tests/test_replay_parity.py"] == {
+        "test_replay_solution_digger_enemy_phase_serializes_persistent_walls"
+    }
+
+    retained = load_json_object(
+        repo_root / "recordings/20260627_104252_085/m18_turn_02_board.json"
+    )
+    live_walls = [
+        unit
+        for unit in retained["data"]["bridge_state"]["units"]
+        if unit["type"] == "Wall"
+    ]
+    assert {(unit["x"], unit["y"]) for unit in live_walls} == {
+        (6, 4),
+        (6, 6),
+        (5, 5),
+    }
+    assert {
+        (unit["x"], unit["y"]): unit["uid"] for unit in live_walls
+    } == {
+        (6, 4): 741,
+        (6, 6): 742,
+        (5, 5): 743,
+    }
+    assert all(
+        unit["team"] == 2
+        and unit["hp"] == 1
+        and unit["max_hp"] == 1
+        and unit["move"] == 0
+        and unit["base_move"] == 0
+        and unit["pushable"]
+        for unit in live_walls
+    )
+
+    gaps = " ".join(record["known_gaps"])
+    assert "scheduler's internal insertion order" in gaps
+    assert "Board:IsBlocked(PATH_PROJECTILE)" in gaps
+    assert "Chasm, Lava, Fire, Ice" in gaps
+    assert "native pawn-capacity edge" in gaps
+    assert "protected achievement session" in gaps

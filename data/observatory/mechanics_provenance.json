@@ -4826,6 +4826,114 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried DiggerAtk1 source targets only its own tile. For each cardinal it emits an sPawn=Wall effect only when Board:IsBlocked(curr, PATH_PROJECTILE) is false, terrain is not Water, and the tile has no Time Pod; it separately queues one damage with no push. DiggerAtk2 inherits that effect and raises damage to two."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried pawn source defines Digger1/2 with MoveSpeed 3 and DiggerAtk1/2, and defines Wall as a neutral TEAM_NONE pawn with one HP and MoveSpeed zero. The retained bridge board recording 20260627_104252_085/m18_turn_02 contains three live one-HP neutral Wall pawns on cardinal tiles around the prior Digger position, corroborating that the Digger's own hit does not erase newly-created walls."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v384 snapshots source-eligible empty cardinals before Digger damage in native up/right/down/left source order, preserves exact one/two adjacent damage, then materializes persistent neutral one-HP zero-move pushable Wall units before later enemy attacks. Existing action-boundary cleanup still removes destroyed Wall pawns only after the killing player action's collision has completed."
+        }
+      ],
+      "id": "enemy-weapon-digger",
+      "implementations": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "digger_wall_tile_eligible",
+            "DIGGER_WALL_SOURCE_DIRS",
+            "spawn_digger_wall",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "clear_destroyed_digger_walls"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::DiggerAtk1",
+            "WId::DiggerAtk2",
+            "enemy_weapon_for_type"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "Digger1",
+            "Digger2",
+            "Wall"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Static Lua establishes separate sPawn and queued-damage effects but not the engine scheduler's internal insertion order. Rust uses source-compatible pre-damage eligibility plus post-damage materialization because retained live bridge evidence proves the new Wall survives; exact per-cardinal presentation timing remains native.",
+        "Board:IsBlocked(PATH_PROJECTILE), sPawn placement, landing status, and survival on Chasm, Lava, Fire, Ice, ACID, Smoke, cracked tiles, items other than pods, and the native pawn-capacity edge have not been exhaustively traced. Focused conformance covers ordinary empty ground and the explicit pawn, wreck, building, mountain, Water, and Time Pod exclusions.",
+        "Rust consumes live Digger positions and queued intent rather than reproducing native movement, scoring, target selection, attack-order choice, RNG state, or tie-breaking.",
+        "The retained bridge recording corroborates persistent Wall state but was not a controlled scheduler experiment. No fresh live capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_enemy.lua",
+          "sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "symbols": [
+            "DiggerAtk1",
+            "DiggerAtk1:GetTargetArea",
+            "DiggerAtk1:GetSkillEffect",
+            "DiggerAtk2"
+          ]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "Digger1",
+            "Digger2",
+            "Wall"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_digger_spawns_four_persistent_neutral_walls_after_own_damage",
+            "test_alpha_digger_damages_occupied_tiles_and_walls_only_empty_cards",
+            "test_digger_wall_source_predicate_rejects_each_blocker_class",
+            "test_digger_wall_blocks_later_enemy_projectile",
+            "test_digger_wall_spawn_skips_safely_at_board_capacity"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_dead_digger_wall_clears_before_later_needle_shot"
+          ]
+        },
+        {
+          "path": "tests/test_replay_parity.py",
+          "symbols": [
+            "test_replay_solution_digger_enemy_phase_serializes_persistent_walls"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_digger_record_pins_persistent_wall_semantics_and_native_gaps"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

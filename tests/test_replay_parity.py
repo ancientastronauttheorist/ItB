@@ -335,6 +335,84 @@ def test_replay_solution_preserves_queued_attack_metadata():
 
 
 @pytest.mark.regression
+def test_replay_solution_digger_enemy_phase_serializes_persistent_walls():
+    """Installed wheel carries Digger-created Walls into final board state."""
+    import itb_solver
+
+    bridge = {
+        "tiles": [],
+        "units": [
+            {
+                "uid": 0,
+                "type": "PunchMech",
+                "x": 7,
+                "y": 7,
+                "hp": 3,
+                "max_hp": 3,
+                "team": 1,
+                "mech": True,
+                "move": 4,
+                "active": True,
+                "weapons": ["Prime_Punchmech"],
+            },
+            {
+                "uid": 1,
+                "type": "Digger1",
+                "x": 3,
+                "y": 3,
+                "hp": 2,
+                "max_hp": 2,
+                "team": 6,
+                "move": 3,
+                "weapons": ["DiggerAtk1"],
+                "has_queued_attack": True,
+                "queued_target": [3, 3],
+                "queued_origin": [3, 3],
+            },
+        ],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "spawning_tiles": [],
+        "environment_danger": [],
+        "remaining_spawns": 0,
+        "turn": 1,
+        "total_turns": 5,
+    }
+    plan = [
+        {
+            "mech_uid": 0,
+            "move_to": [7, 7],
+            "weapon_id": "None",
+            "target": [255, 255],
+        }
+    ]
+
+    raw = itb_solver.replay_solution(json.dumps(bridge), json.dumps(plan))
+    data = json.loads(raw)
+    assert not any(
+        unit["type"] == "Wall" for unit in data["post_player_board"]["units"]
+    )
+    walls = [
+        unit for unit in data["final_board"]["units"] if unit["type"] == "Wall"
+    ]
+    assert {(unit["x"], unit["y"]) for unit in walls} == {
+        (3, 2),
+        (4, 3),
+        (3, 4),
+        (2, 3),
+    }
+    assert all(
+        unit["team"] == 2
+        and unit["hp"] == 1
+        and unit["max_hp"] == 1
+        and unit["move"] == 0
+        and unit["base_move"] == 0
+        and unit["pushable"]
+        for unit in walls
+    )
+
+
+@pytest.mark.regression
 def test_replay_solution_preserves_building_tile_shields():
     """Tile shields must survive both sparse and full-board replay JSON."""
     import itb_solver

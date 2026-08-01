@@ -65,11 +65,11 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 178 definitions literally and leaves 564 unindexed. Category totals
+names 180 definitions literally and leaves 562 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
-Tumblebug, and Centipede family records name ten literally and leave 30
-unindexed. That is a precise indexing backlog, not evidence that all 30
+Tumblebug, Centipede, and Digger family records name twelve literally and leave
+28 unindexed. That is a precise indexing backlog, not evidence that all 28
 behaviors are absent from Rust.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
@@ -314,6 +314,22 @@ projection is generic, and native movement, candidate enumeration,
 remain untraced. The pawn and Leader files are outside the audit's selected
 96-file high-value source set, so the family indexes two callbacks without
 changing source-index totals.
+
+The sixth family-level enemy-weapon slice, `enemy-weapon-digger`, pins the
+self-only target, exact cardinal `PATH_PROJECTILE`/Water/Time-Pod wall
+predicate, separate queued 1/2 damage, Digger pawn mappings, and the neutral
+one-HP zero-move `Wall` definition. Simulator v384 closes the proven state gap:
+source-eligible empty cardinals now retain real neutral Wall pawns after the
+Digger's own hit in native up/right/down/left source order, and those pawns
+block or collide with later attacks. Focused
+tests cover base/Alpha damage, each established exclusion, later-projectile
+collision, board capacity, and the existing destroyed-Wall action-boundary
+cleanup. A retained bridge board independently corroborates persistent live
+Walls. The record remains `partial`: exact native `sPawn` scheduler timing,
+`PATH_PROJECTILE` and placement behavior across less common terrain/status
+combinations, native capacity, movement/selection, attack-order choice, and RNG
+remain untraced. Both source files were already indexed, so source totals do
+not change; its two literal callbacks reduce the exact callback backlog.
 
 The first mission-objective slice, `mission-supply-train`, pins both the base
 Supply Train mission and the Advanced Edition Armored Train child. It covers

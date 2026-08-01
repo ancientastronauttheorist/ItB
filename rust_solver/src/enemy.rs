@@ -88,6 +88,70 @@ pub(crate) fn spawn_enemy(
     true
 }
 
+/// Whether DiggerAtk1/2's source-authored `sPawn = "Wall"` effect selects
+/// this adjacent tile. The Lua predicate is narrower than ordinary ground
+/// movement: PATH_PROJECTILE must be clear, Water and Time Pods are excluded,
+/// and the later queued damage is a separate effect.
+fn digger_wall_tile_eligible(board: &Board, x: u8, y: u8) -> bool {
+    let tile = board.tile(x, y);
+    if tile.terrain == Terrain::Water || tile.has_pod() {
+        return false;
+    }
+    if matches!(tile.terrain, Terrain::Mountain | Terrain::Building) {
+        return false;
+    }
+    board.any_unit_at(x, y).is_none()
+}
+
+// `for dir = DIR_START, DIR_END` traverses native up, right, down, left.
+// Preserve that source order when assigning pawn IDs; retained bridge evidence
+// records the surviving Walls in exactly this coordinate sequence.
+const DIGGER_WALL_SOURCE_DIRS: [(i8, i8); 4] = [
+    (0, -1),
+    (1, 0),
+    (0, 1),
+    (-1, 0),
+];
+
+/// Materialize the neutral one-HP, zero-move rock pawn used by DiggerAtk1/2.
+/// This deliberately does not reuse `spawn_enemy`: Wall is TEAM_NONE and has
+/// no weapon, queued intent, movement, or enemy-phase behavior.
+fn spawn_digger_wall(board: &mut Board, x: u8, y: u8) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+
+    let mut new_uid = 1u16;
+    for unit in board.units.iter().take(board.unit_count as usize) {
+        new_uid = new_uid.max(unit.uid.saturating_add(1));
+    }
+
+    let mut wall = Unit {
+        uid: new_uid,
+        x,
+        y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Neutral,
+        move_speed: 0,
+        base_move: 0,
+        flags: UnitFlags::PUSHABLE,
+        queued_target_x: -1,
+        queued_target_y: -1,
+        queued_target_raw_x: -1,
+        queued_target_raw_y: -1,
+        queued_origin_x: -1,
+        queued_origin_y: -1,
+        ..Unit::default()
+    };
+    wall.set_type_name("Wall");
+    let idx = board.add_unit(wall);
+    if board.tile(x, y).on_fire() || board.tile(x, y).terrain == Terrain::Fire {
+        board.units[idx].set_fire(true);
+    }
+    true
+}
+
 /// Spawn a Spider Psion death egg, falling back to the engine's adjacent
 /// `sPawn` order when the death tile is no longer spawnable.
 pub(crate) fn spawn_spider_psion_death_egg(board: &mut Board, x: u8, y: u8) -> bool {
@@ -2207,6 +2271,25 @@ pub fn simulate_enemy_attacks(
             }
 
             WeaponType::SelfAoe => {
+                // DiggerAtk1 builds neutral rock pawns on source-eligible
+                // adjacent tiles as a separate effect from its queued hit.
+                // Snapshot eligibility before damage: an occupied tile does
+                // not gain a wall merely because this same attack clears it.
+                // Materialize after damage so the Digger's own queued hit does
+                // not destroy the newly-created one-HP wall; recorded live
+                // boards retain these walls for later actions and turns.
+                let mut digger_wall_tiles = [None; 4];
+                if matches!(enemy_wid, WId::DiggerAtk1 | WId::DiggerAtk2) {
+                    for (i, &(dx, dy)) in DIGGER_WALL_SOURCE_DIRS.iter().enumerate() {
+                        let nx = ex as i8 + dx;
+                        let ny = ey as i8 + dy;
+                        if in_bounds(nx, ny)
+                            && digger_wall_tile_eligible(board, nx as u8, ny as u8)
+                        {
+                            digger_wall_tiles[i] = Some((nx as u8, ny as u8));
+                        }
+                    }
+                }
                 if wdef.aoe_center() {
                     apply_damage(board, ex, ey, damage, &mut result, DamageSource::Weapon);
                 }
@@ -2243,6 +2326,9 @@ pub fn simulate_enemy_attacks(
                             }
                         }
                     }
+                }
+                for (x, y) in digger_wall_tiles.into_iter().flatten() {
+                    spawn_digger_wall(board, x, y);
                 }
             }
 
@@ -5262,6 +5348,154 @@ mod tests {
         // Digger self-aoe should hit adjacent buildings (both directions)
         assert_eq!(board.tile(3, 4).building_hp, 0, "Digger should hit N building");
         assert_eq!(board.tile(3, 2).building_hp, 0, "Digger should hit S building");
+    }
+
+    #[test]
+    fn test_digger_spawns_four_persistent_neutral_walls_after_own_damage() {
+        let mut board = Board::default();
+        add_enemy_with_type(&mut board, 1, 3, 3, 2, "Digger1", 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let walls: Vec<&Unit> = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|unit| unit.type_name_str() == "Wall")
+            .collect();
+        assert_eq!(walls.len(), 4);
+        for &(dx, dy) in &DIRS {
+            let x = (3i8 + dx) as u8;
+            let y = (3i8 + dy) as u8;
+            let wall = walls
+                .iter()
+                .find(|wall| (wall.x, wall.y) == (x, y))
+                .expect("every eligible cardinal should retain a Wall");
+            assert_eq!(wall.team, Team::Neutral);
+            assert_eq!((wall.hp, wall.max_hp), (1, 1));
+            assert_eq!((wall.move_speed, wall.base_move), (0, 0));
+            assert!(wall.pushable());
+            assert_eq!(wall.weapon, WeaponId(WId::None as u16));
+            assert_eq!((wall.queued_target_x, wall.queued_target_y), (-1, -1));
+        }
+        assert_eq!(board.unit_at(3, 2).map(|idx| board.units[idx].uid), Some(2));
+        assert_eq!(board.unit_at(4, 3).map(|idx| board.units[idx].uid), Some(3));
+        assert_eq!(board.unit_at(3, 4).map(|idx| board.units[idx].uid), Some(4));
+        assert_eq!(board.unit_at(2, 3).map(|idx| board.units[idx].uid), Some(5));
+    }
+
+    #[test]
+    fn test_alpha_digger_damages_occupied_tiles_and_walls_only_empty_cards() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let mech = add_mech_unit(&mut board, 2, 4, 3, 3);
+        add_enemy_with_type(&mut board, 1, 3, 3, 4, "Digger2", 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.units[mech].hp, 1);
+        assert!(!board.units[..board.unit_count as usize]
+            .iter()
+            .any(|unit| unit.type_name_str() == "Wall"
+                && matches!((unit.x, unit.y), (3, 4) | (4, 3))));
+        let wall_positions: Vec<(u8, u8)> = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|unit| unit.type_name_str() == "Wall")
+            .map(|unit| (unit.x, unit.y))
+            .collect();
+        assert_eq!(wall_positions.len(), 2);
+        assert!(wall_positions.contains(&(3, 2)));
+        assert!(wall_positions.contains(&(2, 3)));
+    }
+
+    #[test]
+    fn test_digger_wall_source_predicate_rejects_each_blocker_class() {
+        for case in 0..6 {
+            let mut board = Board::default();
+            match case {
+                0 => board.tile_mut(3, 4).terrain = Terrain::Mountain,
+                1 => {
+                    board.tile_mut(3, 4).terrain = Terrain::Building;
+                    board.tile_mut(3, 4).building_hp = 1;
+                }
+                2 => board.tile_mut(3, 4).terrain = Terrain::Water,
+                3 => board.tile_mut(3, 4).set_has_pod(true),
+                4 => {
+                    add_mech_unit(&mut board, 10, 3, 4, 3);
+                }
+                5 => {
+                    let mut wreck = Unit {
+                        uid: 10,
+                        x: 3,
+                        y: 4,
+                        hp: 0,
+                        max_hp: 1,
+                        team: Team::Neutral,
+                        ..Unit::default()
+                    };
+                    wreck.set_type_name("Wall");
+                    board.add_unit(wreck);
+                }
+                _ => unreachable!(),
+            }
+            add_enemy_with_type(&mut board, 1, 3, 3, 2, "Digger1", 3, 3);
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert!(board.units[..board.unit_count as usize]
+                .iter()
+                .filter(|unit| unit.hp > 0 && unit.type_name_str() == "Wall")
+                .all(|unit| (unit.x, unit.y) != (3, 4)),
+                "case {case} must reject the north tile");
+        }
+    }
+
+    #[test]
+    fn test_digger_wall_blocks_later_enemy_projectile() {
+        let mut board = Board::default();
+        board.tile_mut(0, 3).terrain = Terrain::Building;
+        board.tile_mut(0, 3).building_hp = 1;
+        add_enemy_with_type(&mut board, 1, 3, 3, 2, "Digger1", 3, 3);
+        add_enemy_with_type(&mut board, 2, 6, 3, 2, "Firefly1", 0, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(0, 3).building_hp, 1,
+            "the later projectile should stop at the newly-created Wall");
+        let blocking_wall = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|unit| unit.type_name_str() == "Wall" && (unit.x, unit.y) == (4, 3))
+            .expect("Digger should create the east Wall before Firefly resolves");
+        assert_eq!(blocking_wall.hp, 0);
+    }
+
+    #[test]
+    fn test_digger_wall_spawn_skips_safely_at_board_capacity() {
+        let mut board = Board::default();
+        add_enemy_with_type(&mut board, 1, 3, 3, 2, "Digger1", 3, 3);
+        for uid in 2..=16 {
+            let mut unit = Unit {
+                uid,
+                x: 8,
+                y: 8,
+                hp: 1,
+                max_hp: 1,
+                team: Team::Neutral,
+                ..Unit::default()
+            };
+            unit.set_type_name("CapacityDummy");
+            board.add_unit(unit);
+        }
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.unit_count, 16);
+        assert!(!board.units.iter().any(|unit| unit.type_name_str() == "Wall"));
     }
 
     #[test]

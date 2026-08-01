@@ -1781,7 +1781,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Rust legacy/partial-payload fallback. Both imports prefer current move, then
 # base move, then the source default; explicit live movement still wins.
 # Pre-v383 corpus is archived as failure_db_snapshot_sim_v382.jsonl.
-SIMULATOR_VERSION = 383
+# v384 retains DiggerAtk1/2's source-eligible neutral Wall pawns after the
+# Digger's separate queued cardinal damage and exposes those real pawns to
+# later attack collision. Pre-v384 corpus is archived as
+# failure_db_snapshot_sim_v383.jsonl.
+SIMULATOR_VERSION = 384
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

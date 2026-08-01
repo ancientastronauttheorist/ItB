@@ -2390,7 +2390,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   generic Move 3 default. Both import paths use current move, then base move,
 //   then the source default; explicit live movement remains authoritative.
 //   Pre-v383 corpus archived as failure_db_snapshot_sim_v382.jsonl.
-pub const SIMULATOR_VERSION: u32 = 383;
+// v384 - DiggerAtk1/2 source-eligible empty cardinal tiles retain neutral,
+//   one-HP, zero-move Wall pawns after the Digger's separate queued damage.
+//   The new walls participate in later attack collision, while explicit
+//   building, mountain, Water, Time Pod, pawn, and wreck exclusions remain.
+//   Pre-v384 corpus archived as failure_db_snapshot_sim_v383.jsonl.
+pub const SIMULATOR_VERSION: u32 = 384;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
