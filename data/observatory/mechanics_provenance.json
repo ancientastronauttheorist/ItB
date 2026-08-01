@@ -5218,6 +5218,134 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_FreezeBldg source snapshots extract_table(Board:GetBuildings()) into mission.Buildings at StartMission and calls Board:SetFrozen(v, true) for every saved coordinate. The mission definition sets BlockEasy=true and MapVetoes={\"any10\"}."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_FreezeBldg:CountThawed increments once for each saved coordinate where Board:IsFrozen(v) is false; GetCompletedObjectives returns self.Objectives at five or more and self.Objectives:Failed() otherwise, while UpdateObjectives displays the same live CountThawed value. The Lua predicate does not inspect terrain, building HP, or building survival."
+        },
+        {
+          "classification": "fact",
+          "statement": "The bridge/save reader retains the original coordinate list and target five while live tile state supplies Frozen. Python and Rust preserve that metadata, thaw frozen buildings on modeled damage, score progress, and block an under-target final state. Their current progress calculation additionally requires a surviving building, which is conservative pending native evidence for Board:IsFrozen on a destroyed original coordinate."
+        }
+      ],
+      "id": "mission-freeze-buildings",
+      "implementations": [
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_read_freeze_building_objective_tiles_from_save",
+            "freeze_building_target",
+            "freeze_building_tiles"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "from_bridge_data",
+            "freeze_building_target",
+            "freeze_building_tiles"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_capture_board_summary",
+            "freeze_buildings_thawed"
+          ]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": [
+            "audit_plan_safety",
+            "freeze_building_objective_failed"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "freeze_building_target",
+            "freeze_building_tiles"
+          ]
+        },
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "evaluate",
+            "Mission_FreezeBldg",
+            "freeze_building_target"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "thaw_frozen_building",
+            "apply_damage_inner",
+            "Mission_FreezeBldg"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Static Lua does not establish what Board:IsFrozen returns after an original objective building has been destroyed or replaced by rubble. The current Python/Rust alive-and-thawed predicate is deliberately conservative; a controlled native capture must thaw and then destroy one tracked building while preserving the visible objective counter and postgame result before destruction can be credited or denied exactly.",
+        "Board:GetBuildings collection timing, native building ordering, exact map composition, MapVetoes any10 filtering, and BlockEasy mission-selection behavior remain engine-owned. Rust consumes the retained coordinate list rather than reproducing mission setup.",
+        "The save-derived mission.Buildings list and live bridge tile Frozen state are combined mid-turn. Exact native serialization timing, unusual direct terrain/status mutation, and stale-save behavior outside the existing guarded reader path are not exhaustively traced.",
+        "Native Board:SetFrozen scheduling, Objective and Game:AddObjective UI timing, IsLargeFont presentation, postgame evaluation order, animation, and every damage/status interaction remain incomplete. No fresh controlled live capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_freezebldg.lua",
+          "sha256": "fe56574f05b58bdbfae1b9f977c0efd9116570d994d5af9a60b98574a6d547a4",
+          "symbols": [
+            "Mission_FreezeBldg",
+            "Mission_FreezeBldg:StartMission",
+            "Mission_FreezeBldg:GetCompletedObjectives",
+            "Mission_FreezeBldg:CountThawed",
+            "Mission_FreezeBldg:UpdateObjectives"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/evaluate.rs",
+          "symbols": [
+            "test_mission_freeze_building_scores_thawed_objective_buildings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_weapon_damage_thaws_frozen_building_without_grid_loss",
+            "test_aerial_bombs_frozen_objective_building_damage_defers_grid"
+          ]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": [
+            "test_summary_tracks_freeze_building_objective_progress"
+          ]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": [
+            "test_freeze_building_objective_blocks_final_under_target",
+            "test_freeze_building_objective_blocks_destroyed_target_before_final",
+            "test_freeze_building_objective_allows_incomplete_nonfinal_progress"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_freeze_buildings_record_pins_exact_predicate_and_rubble_gap"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

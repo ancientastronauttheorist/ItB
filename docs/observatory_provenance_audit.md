@@ -56,21 +56,31 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 25 | 50 |
+| Missions | 75 | 26 | 49 |
 | Environments | 15 | 12 | 3 |
-| Unique total | 96 | 44 | 52 |
+| Unique total | 96 | 45 | 51 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 186 definitions literally and leaves 556 unindexed. Category totals
+names 190 definitions literally and leaves 552 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, and Shaman/Totem family records name fifteen
 literally and leave 25 unindexed. That is a precise indexing backlog, not
 evidence that all 25 behaviors are absent from Rust.
+
+The frozen-building mission slice adds the exact
+`scripts/missions/snow/mission_freezebldg.lua` source and its four callbacks.
+Lua snapshots the starting building coordinates, freezes them, and completes
+the objective when at least five saved coordinates report not Frozen. It does
+not check terrain, HP, or survival. Existing Python/Rust scoring requires an
+alive, thawed building and is therefore documented as conservative rather than
+source-exact: a controlled native capture must establish what `Board:IsFrozen`
+returns for a destroyed original coordinate before rubble is credited or
+denied.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected

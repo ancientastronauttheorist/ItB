@@ -3709,3 +3709,81 @@ def test_real_mission_piston_record_pins_state_gate_and_native_gaps():
     assert "Corpse=true" in gaps
     assert "no push replay is claimed" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_mission_freeze_buildings_record_pins_exact_predicate_and_rubble_gap():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-freeze-buildings"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/snow/mission_freezebldg.lua",
+        "sha256": (
+            "fe56574f05b58bdbfae1b9f977c0efd9"
+            "116570d994d5af9a60b98574a6d547a4"
+        ),
+        "symbols": [
+            "Mission_FreezeBldg",
+            "Mission_FreezeBldg:StartMission",
+            "Mission_FreezeBldg:GetCompletedObjectives",
+            "Mission_FreezeBldg:CountThawed",
+            "Mission_FreezeBldg:UpdateObjectives",
+        ],
+    }]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/bridge/reader.py"] == {
+        "_read_freeze_building_objective_tiles_from_save",
+        "freeze_building_target",
+        "freeze_building_tiles",
+    }
+    assert implementations["rust_solver/src/evaluate.rs"] == {
+        "evaluate", "Mission_FreezeBldg", "freeze_building_target",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "thaw_frozen_building", "apply_damage_inner", "Mission_FreezeBldg",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/evaluate.rs"] == {
+        "test_mission_freeze_building_scores_thawed_objective_buildings"
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_weapon_damage_thaws_frozen_building_without_grid_loss",
+        "test_aerial_bombs_frozen_objective_building_damage_defers_grid",
+    }
+    assert tests["tests/test_plan_safety.py"] == {
+        "test_freeze_building_objective_blocks_final_under_target",
+        "test_freeze_building_objective_blocks_destroyed_target_before_final",
+        "test_freeze_building_objective_allows_incomplete_nonfinal_progress",
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "extract_table(Board:GetBuildings())" in facts
+    assert "Board:IsFrozen(v) is false" in facts
+    assert "does not inspect terrain, building HP, or building survival" in facts
+    assert "surviving building" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "destroyed or replaced by rubble" in gaps
+    assert "alive-and-thawed predicate is deliberately conservative" in gaps
+    assert "visible objective counter and postgame result" in gaps
+    assert "protected achievement session" in gaps
