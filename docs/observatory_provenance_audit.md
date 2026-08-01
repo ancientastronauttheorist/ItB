@@ -65,12 +65,12 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 190 definitions literally and leaves 552 unindexed. Category totals
+names 191 definitions literally and leaves 551 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
-Tumblebug, Centipede, Digger, and Shaman/Totem family records name fifteen
-literally and leave 25 unindexed. That is a precise indexing backlog, not
-evidence that all 25 behaviors are absent from Rust.
+Tumblebug, Centipede, Digger, Shaman/Totem, and Crab/Scarab family records name
+sixteen literally and leave 24 unindexed. That is a precise indexing backlog, not
+evidence that all 24 behaviors are absent from Rust.
 
 The frozen-building mission slice adds the exact
 `scripts/missions/snow/mission_freezebldg.lua` source and its four callbacks.
@@ -81,6 +81,19 @@ alive, thawed building and is therefore documented as conservative rather than
 source-exact: a controlled native capture must establish what `Board:IsFrozen`
 returns for a destroyed original coordinate before rubble is credited or
 denied.
+
+The Crab/Scarab artillery slice reuses already-indexed exact base-game enemy,
+weapon-base, and pawn sources, so it does not change the source-file totals. It
+does name the previously unindexed `CrabAtk1:GetSkillEffect` callback. Both
+families inherit cardinal selected targets at distance 2 through 5; Scarab
+damages the selected tile, while Crab also damages the next tile forward, so a
+legal range-five click can threaten range six. Rust now rejects illegal queued
+clicks beyond five while retaining that one-tile Crab footprint. Concrete
+projected queues remain legal from the current modeled origin; movement-based
+pressure without a projected firing origin stays scalar instead of becoming an
+impossible queued shot. Native target selection, movement, RNG, effect
+scheduling, and exhaustive collision/status interactions remain explicit
+partial-coverage gaps.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected

@@ -40,6 +40,8 @@ use crate::solver::MechAction;
 use crate::types::{Terrain, Team, DIRS, idx_to_xy, xy_to_idx};
 use crate::weapons::{
     enemy_weapon_for_type,
+    is_crab_line_artillery,
+    is_crab_scarab_line_artillery,
     WeaponTable,
     WId,
 };
@@ -124,6 +126,10 @@ fn projected_enemy_attack_reach(enemy: &Unit, weapons: &WeaponTable) -> i32 {
     if matches!(wid, WId::MothAtk1 | WId::MothAtk2) {
         return i32::from(weapon.range_max);
     }
+    if is_crab_scarab_line_artillery(wid) {
+        let footprint_extension = if is_crab_line_artillery(wid) { 1 } else { 0 };
+        return i32::from(weapon.range_max) + footprint_extension;
+    }
     if matches!(
         wid,
         WId::TumblebugAtk1 | WId::TumblebugAtk2 | WId::TumblebugAtkB
@@ -197,6 +203,46 @@ pub(crate) fn projected_enemy_has_attack_pressure(enemy: &Unit) -> bool {
 
 pub(crate) fn projected_enemy_smoke_cancels(enemy: &Unit) -> bool {
     !enemy.type_name_str().starts_with("Snowmine")
+}
+
+/// Convert a projected threatened tile into the legal click that produces it.
+///
+/// Concrete Crab/Scarab queues are source-exact from the board's current
+/// origin. Mobile enemies keep a separate coarse movement-pressure envelope,
+/// but this pass does not invent a firing origin after unmodeled movement. A
+/// Crab may threaten the sixth cardinal tile by clicking the fifth; a Scarab
+/// hits only its click.
+fn projected_requeue_click(
+    enemy: &Unit,
+    wid: WId,
+    threatened_x: u8,
+    threatened_y: u8,
+    weapons: &WeaponTable,
+) -> Option<(u8, u8)> {
+    if !is_crab_scarab_line_artillery(wid) {
+        return Some((threatened_x, threatened_y));
+    }
+
+    let dx = threatened_x as i8 - enemy.x as i8;
+    let dy = threatened_y as i8 - enemy.y as i8;
+    if (dx != 0) == (dy != 0) {
+        return None;
+    }
+    let distance = dx.unsigned_abs() + dy.unsigned_abs();
+    let weapon = &weapons[wid as usize];
+    if distance < weapon.range_min {
+        return None;
+    }
+    if distance <= weapon.range_max {
+        return Some((threatened_x, threatened_y));
+    }
+    if is_crab_line_artillery(wid) && distance == weapon.range_max + 1 {
+        return Some((
+            (threatened_x as i8 - dx.signum()) as u8,
+            (threatened_y as i8 - dy.signum()) as u8,
+        ));
+    }
+    None
 }
 
 fn projected_starfish_target_score(board: &Board, enemy: &Unit) -> i32 {
@@ -475,7 +521,7 @@ pub fn requeue_enemies_heuristic(board: &mut Board, weapons: &WeaponTable) {
         if projected_enemy_uses_special_targeting(&board.units[ei]) { continue; }
 
         // Pass 1: closest alive Building within reach.
-        let mut best_bld: Option<(i32, usize)> = None; // (dist, flat_idx)
+        let mut best_bld: Option<(i32, usize, u8, u8)> = None; // (dist, flat_idx, click)
         for idx in 0..64usize {
             let tile = &board.tiles[idx];
             if tile.terrain != Terrain::Building || tile.building_hp == 0 {
@@ -484,39 +530,51 @@ pub fn requeue_enemies_heuristic(board: &mut Board, weapons: &WeaponTable) {
             let (bx, by) = idx_to_xy(idx);
             let dist = (ex as i32 - bx as i32).abs() + (ey as i32 - by as i32).abs();
             if dist == 0 || dist > reach { continue; }
+            let Some((click_x, click_y)) = projected_requeue_click(
+                &board.units[ei], enemy_wid, bx, by, weapons,
+            ) else {
+                continue;
+            };
             match best_bld {
-                None => best_bld = Some((dist, idx)),
-                Some((d, _)) if dist < d => best_bld = Some((dist, idx)),
+                None => best_bld = Some((dist, idx, click_x, click_y)),
+                Some((d, _, _, _)) if dist < d => {
+                    best_bld = Some((dist, idx, click_x, click_y));
+                }
                 _ => {}
             }
         }
-        if let Some((_, idx)) = best_bld {
-            let (bx, by) = idx_to_xy(idx);
+        if let Some((_, _, click_x, click_y)) = best_bld {
             let e = &mut board.units[ei];
-            e.queued_target_x = bx as i8;
-            e.queued_target_y = by as i8;
+            e.queued_target_x = click_x as i8;
+            e.queued_target_y = click_y as i8;
             e.flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
             continue;
         }
 
         // Pass 2: closest alive player mech within reach.
-        let mut best_mech: Option<(i32, usize)> = None; // (dist, mech_unit_idx)
+        let mut best_mech: Option<(i32, usize, u8, u8)> = None; // (dist, mech_unit_idx, click)
         for mi in 0..n {
             let m = &board.units[mi];
             if !m.is_player() || !m.is_mech() || !m.alive() { continue; }
             let dist = (ex as i32 - m.x as i32).abs() + (ey as i32 - m.y as i32).abs();
             if dist == 0 || dist > reach { continue; }
+            let Some((click_x, click_y)) = projected_requeue_click(
+                &board.units[ei], enemy_wid, m.x, m.y, weapons,
+            ) else {
+                continue;
+            };
             match best_mech {
-                None => best_mech = Some((dist, mi)),
-                Some((d, _)) if dist < d => best_mech = Some((dist, mi)),
+                None => best_mech = Some((dist, mi, click_x, click_y)),
+                Some((d, _, _, _)) if dist < d => {
+                    best_mech = Some((dist, mi, click_x, click_y));
+                }
                 _ => {}
             }
         }
-        if let Some((_, mi)) = best_mech {
-            let (mx, my) = (board.units[mi].x, board.units[mi].y);
+        if let Some((_, _, click_x, click_y)) = best_mech {
             let e = &mut board.units[ei];
-            e.queued_target_x = mx as i8;
-            e.queued_target_y = my as i8;
+            e.queued_target_x = click_x as i8;
+            e.queued_target_y = click_y as i8;
             e.flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
         }
         // else: no target in reach — leave at -1. Option C's
@@ -839,6 +897,7 @@ fn building_retarget_candidates(
             continue;
         }
         let reach = projected_enemy_reach(e, weapons);
+        let wid = projected_enemy_weapon_id(e);
         for idx in 0..64usize {
             let tile = &board.tiles[idx];
             if tile.terrain != Terrain::Building || tile.building_hp == 0 {
@@ -850,10 +909,15 @@ fn building_retarget_candidates(
             if dist == 0 || dist > reach {
                 continue;
             }
+            let Some((click_x, click_y)) = projected_requeue_click(
+                e, wid, bx, by, weapons,
+            ) else {
+                continue;
+            };
             out.push(RetargetCandidate {
                 enemy_uid: e.uid,
-                x: bx,
-                y: by,
+                x: click_x,
+                y: click_y,
                 tile_idx: idx,
                 distance: dist,
                 building_hp: tile.building_hp,
@@ -1731,29 +1795,115 @@ mod tests {
     }
 
     #[test]
-    fn test_webbed_artillery_uses_full_board_reach() {
+    fn test_webbed_scarab_reach_stops_at_lua_maximum() {
+        let queued_target = |x: u8, y: u8| {
+            let mut b = Board::default();
+            let mut enemy = Unit::default();
+            enemy.uid = 10;
+            enemy.set_type_name("Scarab1");
+            enemy.x = 0;
+            enemy.y = 0;
+            enemy.hp = 1;
+            enemy.max_hp = 1;
+            enemy.team = Team::Enemy;
+            enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+            enemy.set_web(true);
+            enemy.queued_target_x = -1;
+            enemy.queued_target_y = -1;
+            b.add_unit(enemy);
+            b.tiles[xy_to_idx(x, y)].terrain = Terrain::Building;
+            b.tiles[xy_to_idx(x, y)].building_hp = 1;
+            requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+            (b.units[0].queued_target_x, b.units[0].queued_target_y)
+        };
+
+        assert_eq!(queued_target(0, 2), (0, 2));
+        assert_eq!(queued_target(0, 5), (0, 5));
+        assert_eq!(queued_target(0, 1), (-1, -1));
+        assert_eq!(queued_target(0, 6), (-1, -1));
+        assert_eq!(queued_target(2, 2), (-1, -1));
+    }
+
+    #[test]
+    fn test_webbed_crab_range_six_threat_queues_range_five_click() {
+        let queued_target = |x: u8, y: u8| {
+            let mut b = Board::default();
+            let mut enemy = Unit::default();
+            enemy.uid = 10;
+            enemy.set_type_name("Crab1");
+            enemy.x = 0;
+            enemy.y = 0;
+            enemy.hp = 3;
+            enemy.max_hp = 3;
+            enemy.team = Team::Enemy;
+            enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+            enemy.set_web(true);
+            enemy.queued_target_x = -1;
+            enemy.queued_target_y = -1;
+            b.add_unit(enemy);
+            b.tiles[xy_to_idx(x, y)].terrain = Terrain::Building;
+            b.tiles[xy_to_idx(x, y)].building_hp = 1;
+            requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+            (b.units[0].queued_target_x, b.units[0].queued_target_y)
+        };
+
+        assert_eq!(queued_target(0, 5), (0, 5));
+        assert_eq!(queued_target(0, 6), (0, 5));
+        assert_eq!(queued_target(3, 3), (-1, -1));
+    }
+
+    #[test]
+    fn test_mobile_crab_scarab_projection_never_queues_illegal_click() {
+        let queued_target = |type_name: &str, y: u8| {
+            let mut b = Board::default();
+            let mut enemy = Unit::default();
+            enemy.uid = 10;
+            enemy.set_type_name(type_name);
+            enemy.x = 0;
+            enemy.y = 0;
+            enemy.hp = 3;
+            enemy.max_hp = 3;
+            enemy.team = Team::Enemy;
+            enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+            enemy.move_speed = 3;
+            enemy.queued_target_x = -1;
+            enemy.queued_target_y = -1;
+            b.add_unit(enemy);
+            b.tiles[xy_to_idx(0, y)].terrain = Terrain::Building;
+            b.tiles[xy_to_idx(0, y)].building_hp = 1;
+            requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+            (b.units[0].queued_target_x, b.units[0].queued_target_y)
+        };
+
+        assert_eq!(queued_target("Scarab1", 5), (0, 5));
+        assert_eq!(queued_target("Scarab1", 6), (-1, -1));
+        assert_eq!(queued_target("Crab1", 5), (0, 5));
+        assert_eq!(queued_target("Crab1", 6), (0, 5));
+        assert_eq!(queued_target("Crab1", 7), (-1, -1));
+    }
+
+    #[test]
+    fn test_crab_range_six_building_retarget_uses_legal_click() {
         let mut b = Board::default();
         let mut enemy = Unit::default();
         enemy.uid = 10;
-        enemy.set_type_name("Scarab1");
+        enemy.set_type_name("Crab1");
         enemy.x = 0;
         enemy.y = 0;
-        enemy.hp = 1;
-        enemy.max_hp = 1;
+        enemy.hp = 3;
+        enemy.max_hp = 3;
         enemy.team = Team::Enemy;
         enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
         enemy.set_web(true);
-        enemy.queued_target_x = -1;
-        enemy.queued_target_y = -1;
         b.add_unit(enemy);
-        b.tiles[xy_to_idx(7, 7)].terrain = Terrain::Building;
-        b.tiles[xy_to_idx(7, 7)].building_hp = 1;
+        b.tiles[xy_to_idx(0, 6)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(0, 6)].building_hp = 2;
 
-        requeue_enemies_heuristic(&mut b, &crate::weapons::WEAPONS);
+        let candidates = building_retarget_candidates(&b, &crate::weapons::WEAPONS);
 
-        assert_eq!(b.units[0].queued_target_x, 7);
-        assert_eq!(b.units[0].queued_target_y, 7);
-        assert!(b.units[0].has_queued_attack());
+        assert_eq!(candidates.len(), 1);
+        assert_eq!((candidates[0].x, candidates[0].y), (0, 5));
+        assert_eq!(candidates[0].tile_idx, xy_to_idx(0, 6));
     }
 
     #[test]
@@ -2319,6 +2469,38 @@ mod tests {
         assert_eq!(queued.units[0].queued_target_x, 0);
         assert_eq!(queued.units[0].queued_target_y, 7);
         assert_eq!(attacked.tile(0, 7).building_hp, 0);
+        assert_eq!(attacked.grid_power, 6);
+    }
+
+    #[test]
+    fn test_requeued_webbed_crab_damages_sixth_tile_on_second_projection() {
+        let mut b = Board::default();
+        b.grid_power = 7;
+        b.grid_power_max = 7;
+        b.current_turn = 1;
+        b.total_turns = 5;
+        let mut enemy = Unit::default();
+        enemy.uid = 10;
+        enemy.set_type_name("Crab1");
+        enemy.x = 0;
+        enemy.y = 0;
+        enemy.hp = 3;
+        enemy.max_hp = 3;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.set_web(true);
+        enemy.queued_target_x = -1;
+        enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+        b.tiles[xy_to_idx(0, 6)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(0, 6)].building_hp = 1;
+
+        let (queued, _) = project_plan(&b, &[], &[], &WEAPONS);
+        let (attacked, _) = project_plan(&queued, &[], &[], &WEAPONS);
+
+        assert_eq!(queued.units[0].queued_target_x, 0);
+        assert_eq!(queued.units[0].queued_target_y, 5);
+        assert_eq!(attacked.tile(0, 6).building_hp, 0);
         assert_eq!(attacked.grid_power, 6);
     }
 

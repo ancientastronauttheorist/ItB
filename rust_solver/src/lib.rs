@@ -2395,6 +2395,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   The new walls participate in later attack collision, while explicit
 //   building, mountain, Water, Time Pod, pawn, and wreck exclusions remain.
 //   Pre-v384 corpus archived as failure_db_snapshot_sim_v383.jsonl.
+// v387 - Normal and Alpha Crab/Scarab artillery follows LineArtillery's exact
+//   cardinal click range 2..5. Invalid queued range-six shots cancel, while a
+//   legal Crab range-five click retains its source-defined sixth-tile impact;
+//   concrete projection queues that legal predecessor click. Pre-v387 corpus
+//   archived as failure_db_snapshot_sim_v386.jsonl.
 // v386 - Mission_Piston bridge state is strictly validated and retained
 //   through projected/replay boards without guessing the neutral hazard's
 //   native Mission_Auto scheduler slot. Pre-v386 corpus snapshot:
@@ -2404,7 +2409,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 386;
+pub const SIMULATOR_VERSION: u32 = 387;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

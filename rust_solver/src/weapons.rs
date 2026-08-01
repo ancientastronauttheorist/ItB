@@ -1109,9 +1109,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[56] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
         flags: f(WeaponFlags::ACID.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 57: ScarabAtk1
-    w[57] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
+    w[57] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, range_max: 5, flags: C, ..DEF };
     // 58: ScarabAtk2
-    w[58] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, flags: C, ..DEF };
+    w[58] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, range_max: 5, flags: C, ..DEF };
     // 151: ScarabAtkB — Scarab Leader's Expectorating Glands. Per
     // `scripts/advanced/bosses/scarab.lua`, LineArtillery deals 4 to the
     // target tile, then queues zero-damage outward pushes on all four cardinal
@@ -1119,9 +1119,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[151] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, push: PushDir::Outward,
         range_min: 2, flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 59: CrabAtk1 — hits 2 tiles in line
-    w[59] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, path_size: 2, flags: C, ..DEF };
+    w[59] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, range_max: 5, path_size: 2, flags: C, ..DEF };
     // 60: CrabAtk2 — hits 2 tiles in line
-    w[60] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, path_size: 2, flags: C, ..DEF };
+    w[60] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, range_max: 5, path_size: 2, flags: C, ..DEF };
     // 61: DiggerAtk1 — self_aoe, adjacent only
     w[61] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 62: BlobberAtk1 — spawns Blob1
@@ -1570,6 +1570,19 @@ pub fn is_rocket_artillery(id: WId) -> bool {
         id,
         WId::RangedRocket | WId::RangedRocketA | WId::RangedRocketB | WId::RangedRocketAB
     )
+}
+
+#[inline]
+pub fn is_crab_scarab_line_artillery(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScarabAtk1 | WId::ScarabAtk2 | WId::CrabAtk1 | WId::CrabAtk2
+    )
+}
+
+#[inline]
+pub fn is_crab_line_artillery(id: WId) -> bool {
+    matches!(id, WId::CrabAtk1 | WId::CrabAtk2)
 }
 
 #[inline]
@@ -2716,6 +2729,27 @@ mod tests {
         // even the base Needle Shot pushes its selected tile.
         assert_eq!(weapon_def(WId::HornetAtk1).push, PushDir::None);
         assert_ne!(wid_from_str("Vek_Hornet"), WId::HornetAtk1);
+    }
+
+    #[test]
+    fn test_crab_scarab_line_artillery_defs_have_exact_two_to_five_range() {
+        let expected = [
+            (WId::ScarabAtk1, "ScarabAtk1", "Scarab1", 1, 1),
+            (WId::ScarabAtk2, "ScarabAtk2", "Scarab2", 3, 1),
+            (WId::CrabAtk1, "CrabAtk1", "Crab1", 1, 2),
+            (WId::CrabAtk2, "CrabAtk2", "Crab2", 3, 2),
+        ];
+        for (id, lua_id, pawn_type, damage, path_size) in expected {
+            let def = weapon_def(id);
+            assert_eq!(def.weapon_type, WeaponType::Artillery);
+            assert_eq!(def.damage, damage);
+            assert_eq!(def.range_min, 2);
+            assert_eq!(def.range_max, 5);
+            assert_eq!(def.path_size, path_size);
+            assert_eq!(wid_from_str(lua_id), id);
+            assert_eq!(wid_to_str(id), lua_id);
+            assert_eq!(enemy_weapon_for_type(pawn_type), id);
+        }
     }
 
     #[test]

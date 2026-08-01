@@ -2080,10 +2080,11 @@ pub fn simulate_enemy_attacks(
                         | WId::SnowartAtk2
                         | WId::SnowBossAtk
                         | WId::SnowBossAtk2
-                )
-                    && (curr_range as u8) > wdef.range_max
+                ) || is_crab_scarab_line_artillery(enemy_wid)
                 {
-                    break 'queued_attack;
+                    if (curr_range as u8) > wdef.range_max {
+                        break 'queued_attack;
+                    }
                 }
 
                 let tx = new_tx as u8;
@@ -3365,6 +3366,43 @@ mod tests {
             );
             assert_eq!(board.grid_power, 6);
             assert_eq!(result.grid_damage, 0);
+        }
+    }
+
+    #[test]
+    fn test_crab_scarab_queued_artillery_respects_exact_range() {
+        for type_name in ["Scarab1", "Scarab2", "Crab1", "Crab2"] {
+            for (target_x, should_hit) in [(2, true), (1, false)] {
+                let mut board = Board::default();
+                board.grid_power = 7;
+                board.grid_power_max = 7;
+                board.tile_mut(target_x, 3).terrain = Terrain::Building;
+                board.tile_mut(target_x, 3).building_hp = 1;
+                let attacker = add_enemy_with_type(
+                    &mut board,
+                    140,
+                    7,
+                    3,
+                    5,
+                    type_name,
+                    target_x as i8,
+                    3,
+                );
+                board.units[attacker]
+                    .flags
+                    .insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+                let orig = default_orig_pos(&board);
+                let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+                assert_eq!(
+                    board.tile(target_x, 3).building_hp,
+                    if should_hit { 0 } else { 1 },
+                    "{type_name} range {} result disagrees with Lua range 2..5",
+                    7 - target_x,
+                );
+                assert_eq!(result.grid_damage > 0, should_hit);
+            }
         }
     }
 
@@ -5369,20 +5407,21 @@ mod tests {
     }
 
     #[test]
-    fn test_crab_hits_two_tiles() {
+    fn test_crab_range_five_click_hits_forward_sixth_tile() {
         let mut board = Board::default();
-        // Crab at (0,0) targeting (4,0) — should also hit (5,0)
-        board.tile_mut(4, 0).terrain = Terrain::Building;
-        board.tile_mut(4, 0).building_hp = 1;
+        // Crab at (0,0) may click the range-five tile and its Type=2 effect
+        // also damages the sixth tile in the same direction.
         board.tile_mut(5, 0).terrain = Terrain::Building;
         board.tile_mut(5, 0).building_hp = 1;
-        add_enemy_with_type(&mut board, 1, 0, 0, 3, "Crab1", 4, 0);
+        board.tile_mut(6, 0).terrain = Terrain::Building;
+        board.tile_mut(6, 0).building_hp = 1;
+        add_enemy_with_type(&mut board, 1, 0, 0, 3, "Crab1", 5, 0);
 
         let orig = default_orig_pos(&board);
         simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
-        assert_eq!(board.tile(4, 0).building_hp, 0, "Crab should hit first tile");
-        assert_eq!(board.tile(5, 0).building_hp, 0, "Crab should hit second tile");
+        assert_eq!(board.tile(5, 0).building_hp, 0, "Crab should hit clicked tile");
+        assert_eq!(board.tile(6, 0).building_hp, 0, "Crab should hit tile after click");
     }
 
     #[test]

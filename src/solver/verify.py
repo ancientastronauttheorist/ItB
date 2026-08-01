@@ -1785,13 +1785,18 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Digger's separate queued cardinal damage and exposes those real pawns to
 # later attack collision. Pre-v384 corpus is archived as
 # failure_db_snapshot_sim_v383.jsonl.
+# v387: Normal and Alpha Crab/Scarab artillery uses LineArtillery's exact
+# cardinal click range 2..5. Invalid range-six queues cancel, while Crab keeps
+# its source-defined sixth-tile impact behind a legal range-five click;
+# concrete projection queues that predecessor. Pre-v387 corpus is archived
+# as recordings/failure_db_snapshot_sim_v386.jsonl.
 # v386: Mission_Piston bridge state is strictly validated and retained through
 # projected/replay boards without guessing the native Mission_Auto scheduler
 # slot. Pre-v386 corpus: recordings/failure_db_snapshot_sim_v385.jsonl.
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 386
+SIMULATOR_VERSION = 387
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

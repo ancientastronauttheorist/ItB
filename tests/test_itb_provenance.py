@@ -3787,3 +3787,110 @@ def test_real_mission_freeze_buildings_record_pins_exact_predicate_and_rubble_ga
     assert "alive-and-thawed predicate is deliberately conservative" in gaps
     assert "visible objective counter and postgame result" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_crab_scarab_artillery_record_pins_exact_range_and_footprint():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-weapon-crab-scarab-artillery"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/weapons_enemy.lua",
+            "sha256": (
+                "5231dd7a2de730f04fa4116c0d99f07e"
+                "cbb3b25059db3593d54d689c37bd4b7b"
+            ),
+            "symbols": [
+                "CrabAtk1",
+                "CrabAtk1:GetSkillEffect",
+                "CrabAtk2",
+                "ScarabAtk1",
+                "ScarabAtk2",
+            ],
+        },
+        {
+            "path": "scripts/weapons_base.lua",
+            "sha256": (
+                "bdb55457746d08b46e8b62ad7cfc27f0"
+                "a08bde9fab7397a4780dfe945b5f8f38"
+            ),
+            "symbols": ["LineArtillery", "LineArtillery:GetTargetArea"],
+        },
+        {
+            "path": "scripts/pawns.lua",
+            "sha256": (
+                "e999b8d98526c1e36f4746dd65b9d9e7"
+                "ee3ca0b22029ed391d5b71fda49dc239"
+            ),
+            "symbols": ["Scarab1", "Scarab2", "Crab1", "Crab2"],
+        },
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/model/weapons.py"] == {
+        "ScarabAtk1", "ScarabAtk2", "CrabAtk1", "CrabAtk2",
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "simulate_enemy_attacks"
+    }
+    assert implementations["rust_solver/src/solver.rs"] == {"get_weapon_targets"}
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "projected_enemy_attack_reach",
+        "projected_enemy_reach",
+        "projected_requeue_click",
+        "requeue_enemies_heuristic",
+        "building_retarget_candidates",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_crab_scarab_line_artillery_defs_have_exact_two_to_five_range"
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_crab_scarab_queued_artillery_respects_exact_range",
+        "test_crab_range_five_click_hits_forward_sixth_tile",
+    }
+    assert tests["rust_solver/src/solver.rs"] == {
+        "crab_scarab_line_artillery_targeting_stops_at_exact_range_five"
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_webbed_scarab_reach_stops_at_lua_maximum",
+        "test_webbed_crab_range_six_threat_queues_range_five_click",
+        "test_mobile_crab_scarab_projection_never_queues_illegal_click",
+        "test_crab_range_six_building_retarget_uses_legal_click",
+        "test_requeued_webbed_crab_damages_sixth_tile_on_second_projection",
+    }
+    assert tests["tests/test_weapon_defs.py"] == {
+        "test_crab_and_scarab_weapon_defs_match_inherited_lua_artillery_range"
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "distances two through ArtillerySize five" in facts
+    assert "one tile forward from the selected tile" in facts
+    assert "range-five target can damage tile six" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "target scoring" in gaps
+    assert "RNG state" in gaps
+    assert "queued-effect scheduler boundaries" in gaps
+    assert "pressure may remain scalar without a concrete queue" in gaps
+    assert "terrain, status, objective, corpse" in gaps

@@ -1065,11 +1065,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     # ── Base Game Artillery ──────────────────────────────────────────
     "ScarabAtk1": WeaponDef(
         name="Scarab Shot", weapon_type="artillery",
-        damage=1, range_min=2,
+        damage=1, range_min=2, range_max=5,
     ),
     "ScarabAtk2": WeaponDef(
         name="Alpha Scarab Shot", weapon_type="artillery",
-        damage=3, range_min=2,
+        damage=3, range_min=2, range_max=5,
     ),
     "ScarabAtkB": WeaponDef(
         name="Expectorating Glands", weapon_type="artillery",
@@ -1078,11 +1078,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     ),
     "CrabAtk1": WeaponDef(
         name="Crab Artillery", weapon_type="artillery",
-        damage=1, range_min=2, path_size=2,
+        damage=1, range_min=2, range_max=5, path_size=2,
     ),
     "CrabAtk2": WeaponDef(
         name="Alpha Crab Artillery", weapon_type="artillery",
-        damage=3, range_min=2, path_size=2,
+        damage=3, range_min=2, range_max=5, path_size=2,
     ),
     "CrabAtkB": WeaponDef(
         name="Raining Expulsions", weapon_type="artillery",

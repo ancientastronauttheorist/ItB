@@ -258,6 +258,24 @@ def test_moth_weapon_defs_match_inherited_lua_artillery_range():
         assert weapon.range_max == 5
 
 
+def test_crab_and_scarab_weapon_defs_match_inherited_lua_artillery_range():
+    """`weapons_enemy.lua` inherits LineArtillery's exact 2..=5 targets."""
+    for weapon_id, damage, footprint_size in (
+        ("ScarabAtk1", 1, 1),
+        ("ScarabAtk2", 3, 1),
+        ("CrabAtk1", 1, 2),
+        ("CrabAtk2", 3, 2),
+    ):
+        weapon = get_weapon_def(weapon_id)
+
+        assert weapon is not None
+        assert weapon.weapon_type == "artillery"
+        assert weapon.damage == damage
+        assert weapon.range_min == 2
+        assert weapon.range_max == 5
+        assert weapon.path_size == footprint_size
+
+
 def test_centipede_weapon_defs_match_lua_acid_t_shape():
     expected = {
         "CentipedeAtk1": ("Centipede Spit", 1),

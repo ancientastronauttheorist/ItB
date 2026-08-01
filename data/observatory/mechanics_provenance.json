@@ -5346,6 +5346,150 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried base-game Lua maps Scarab1/2 to ScarabAtk1/2 and Crab1/2 to CrabAtk1/2. All four inherit LineArtillery cardinal target selection at distances two through ArtillerySize five, stopping at the board edge; Scarab attacks deal one or three damage to the selected tile, while Crab attacks also queue equal damage one tile forward from the selected tile."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v387 gives ScarabAtk1/2 and CrabAtk1/2 the source-exact 2..=5 selected-target interval, retains LineArtillery's permission to select intact Building tiles, rejects queued attacks beyond range five, and preserves the Crab target-plus-forward footprint so a legal range-five target can damage tile six. Focused Rust and Python tests pin both normal/alpha damages and endpoints."
+        }
+      ],
+      "id": "enemy-weapon-crab-scarab-artillery",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::ScarabAtk1",
+            "WId::ScarabAtk2",
+            "WId::CrabAtk1",
+            "WId::CrabAtk2",
+            "WEAPONS",
+            "weapon_def",
+            "wid_from_str",
+            "wid_to_str",
+            "enemy_weapon_for_type",
+            "weapon_name",
+            "is_crab_scarab_line_artillery",
+            "is_crab_line_artillery"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "projected_enemy_attack_reach",
+            "projected_enemy_reach",
+            "projected_requeue_click",
+            "requeue_enemies_heuristic",
+            "building_retarget_candidates"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "ScarabAtk1",
+            "ScarabAtk2",
+            "CrabAtk1",
+            "CrabAtk2"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes live queued Crab and Scarab targets and does not reproduce native movement, target acquisition, inherited target scoring, candidate selection, attack-order choice, RNG state, or tie-breaking.",
+        "Native LineArtillery, Board:IsValid, Board:IsBlocked, GetDirection, SpaceDamage, AddQueuedDamage, AddQueuedArtillery, collision, and queued-effect scheduler boundaries have not been independently traced for this build.",
+        "Projected next-turn movement pressure remains a bounded scalar heuristic rather than exact native pathing and selection. Concrete Crab/Scarab queues are legal from the current modeled origin; when reaching a target would require unmodeled movement, pressure may remain scalar without a concrete queue. The modeled Crab footprint includes the forward tile after a legal selected target, but exhaustive board-edge and collision behavior is not certified.",
+        "Exact conformance across every terrain, status, objective, corpse, blocker, multi-unit collision, and effect-order interaction remains unverified; no fresh controlled capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_enemy.lua",
+          "sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "symbols": [
+            "CrabAtk1",
+            "CrabAtk1:GetSkillEffect",
+            "CrabAtk2",
+            "ScarabAtk1",
+            "ScarabAtk2"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "LineArtillery",
+            "LineArtillery:GetTargetArea"
+          ]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "Scarab1",
+            "Scarab2",
+            "Crab1",
+            "Crab2"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_crab_scarab_line_artillery_defs_have_exact_two_to_five_range"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_crab_scarab_queued_artillery_respects_exact_range",
+            "test_crab_range_five_click_hits_forward_sixth_tile"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "crab_scarab_line_artillery_targeting_stops_at_exact_range_five"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_webbed_scarab_reach_stops_at_lua_maximum",
+            "test_webbed_crab_range_six_threat_queues_range_five_click",
+            "test_mobile_crab_scarab_projection_never_queues_illegal_click",
+            "test_crab_range_six_building_retarget_uses_legal_click",
+            "test_requeued_webbed_crab_damages_sixth_tile_on_second_projection"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_crab_and_scarab_weapon_defs_match_inherited_lua_artillery_range"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_crab_scarab_artillery_record_pins_exact_range_and_footprint"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

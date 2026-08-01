@@ -578,21 +578,24 @@ pub(crate) fn get_weapon_targets(
                             | WId::SnowartAtk2
                             | WId::SnowBossAtk
                             | WId::SnowBossAtk2
-                    ) && dist > wdef.range_max
+                    ) || is_crab_scarab_line_artillery(weapon_id)
                     {
-                        continue;
+                        if dist > wdef.range_max {
+                            continue;
+                        }
                     }
                     if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
-                    let zero_damage_building_center_ok = matches!(
-                        weapon_id,
-                        WId::RangedIgnite | WId::RangedIgniteA
-                            | WId::RangedCrackB | WId::RangedCrackAB
-                    );
+                    let building_center_target_ok = is_crab_scarab_line_artillery(weapon_id)
+                        || matches!(
+                            weapon_id,
+                            WId::RangedIgnite | WId::RangedIgniteA
+                                | WId::RangedCrackB | WId::RangedCrackAB
+                        );
                     if tile.terrain == Terrain::Building
                         && tile.building_hp > 0
                         && !wdef.shield()
-                        && !zero_damage_building_center_ok
+                        && !building_center_target_ok
                     {
                         continue;
                     }
@@ -5080,6 +5083,34 @@ mod top_k_tests {
                 &WEAPONS,
             );
             assert!(targets.contains(&(1, 3)), "{weapon:?} should reach distance 5");
+            assert!(!targets.contains(&(0, 3)), "{weapon:?} must reject distance 6");
+            assert!(!targets.contains(&(5, 3)), "{weapon:?} must keep minimum range 2");
+        }
+    }
+
+    #[test]
+    fn crab_scarab_line_artillery_targeting_stops_at_exact_range_five() {
+        let mut board = Board::default();
+        board.tile_mut(1, 3).terrain = Terrain::Building;
+        board.tile_mut(1, 3).building_hp = 2;
+        for weapon in [
+            WId::ScarabAtk1,
+            WId::ScarabAtk2,
+            WId::CrabAtk1,
+            WId::CrabAtk2,
+        ] {
+            let targets = get_weapon_targets(
+                &board,
+                6,
+                3,
+                weapon,
+                (6, 3),
+                &WEAPONS,
+            );
+            assert!(
+                targets.contains(&(1, 3)),
+                "{weapon:?} should target an intact Building at distance 5",
+            );
             assert!(!targets.contains(&(0, 3)), "{weapon:?} must reject distance 6");
             assert!(!targets.contains(&(5, 3)), "{weapon:?} must keep minimum range 2");
         }
