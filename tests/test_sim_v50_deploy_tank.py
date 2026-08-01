@@ -49,9 +49,48 @@ def test_deploy_tank_stock_cannon_pushes_without_damage():
         "mech_uid": 40,
         "move_to": [3, 3],
         "weapon_id": "Deploy_TankShot",
-        "target": [3, 5],
+        # Rust plan payloads use one adjacent representative to select the
+        # projectile direction; impact still resolves at the first blocker.
+        "target": [3, 4],
     }])
 
     enemy = next(u for u in post["units"] if u["uid"] == 2)
     assert (enemy["x"], enemy["y"]) == (3, 6)
     assert enemy["hp"] == 3
+
+
+@pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
+def test_deploy_tank_upgraded_cannon_damages_and_pushes_distant_blocker():
+    board = {
+        "grid_power": 5,
+        "grid_power_max": 7,
+        "turn": 1,
+        "total_turns": 5,
+        "spawning_tiles": [],
+        "tiles": [],
+        "units": [
+            {
+                "uid": 40, "type": "Deploy_TankB", "x": 3, "y": 3,
+                "hp": 1, "max_hp": 1, "team": 1, "mech": False,
+                "move": 3, "base_move": 3, "active": True,
+                "weapons": ["Deploy_TankShot2"],
+            },
+            {
+                "uid": 2, "type": "Scorpion1", "x": 3, "y": 5,
+                "hp": 4, "max_hp": 4, "team": 2, "move": 3,
+                "base_move": 3, "pushable": True,
+                "weapons": ["ScorpionAtk1"],
+            },
+        ],
+    }
+
+    post = _project(board, [{
+        "mech_uid": 40,
+        "move_to": [3, 3],
+        "weapon_id": "Deploy_TankShot2",
+        "target": [3, 4],
+    }])
+
+    enemy = next(u for u in post["units"] if u["uid"] == 2)
+    assert (enemy["x"], enemy["y"]) == (3, 6)
+    assert enemy["hp"] == 2

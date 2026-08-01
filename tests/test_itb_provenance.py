@@ -2663,3 +2663,71 @@ def test_real_repulse_record_pins_variant_shield_matrix_and_open_native_order():
     assert "SpaceDamage ordering" in gaps
     assert "canonicalizes" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_deploy_tank_record_pins_cannon_effects_and_open_native_helpers():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-deploy-tank"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    assert sources["scripts/weapons_deploy.lua"] == {
+        "path": "scripts/weapons_deploy.lua",
+        "sha256": (
+            "9c5301c1ca91864d92a441ba032d4c02"
+            "4a0e184978d77242f79e0b012522ca73"
+        ),
+        "symbols": [
+            "Deploy_Tank",
+            "Deploy_TankA",
+            "Deploy_TankB",
+            "Deploy_TankAB",
+            "Deploy_TankShot",
+            "Deploy_TankShot2",
+        ],
+    }
+    assert {
+        "TankDefault",
+        "TankDefault:GetTargetArea",
+        "TankDefault:GetSkillEffect",
+    } == set(sources["scripts/weapons_base.lua"]["symbols"])
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::DeployTankShot",
+        "WId::DeployTankShot2",
+    } <= implementations["rust_solver/src/weapons.rs"]
+    assert "sim_projectile" in implementations["rust_solver/src/simulate.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_deploy_tank_canonical_direction_dispatches_both_cannons"
+    }
+    assert {
+        "test_deploy_tank_stock_cannon_pushes_without_damage",
+        "test_deploy_tank_upgraded_cannon_damages_and_pushes_distant_blocker",
+    } == tests["tests/test_sim_v50_deploy_tank.py"]
+    gaps = " ".join(record["known_gaps"])
+    assert "Board:GetSimpleReachable" in gaps
+    assert "adjacent effect-equivalent target" in gaps
+    assert "protected live achievement session" in gaps

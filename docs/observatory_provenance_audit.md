@@ -55,17 +55,17 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 8 | 6 |
+| Player weapons | 14 | 9 | 5 |
 | Missions | 75 | 16 | 59 |
 | Environments | 15 | 10 | 5 |
-| Unique total | 96 | 31 | 65 |
+| Unique total | 96 | 32 | 64 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 106 definitions literally and leaves 636 unindexed. Category totals
+names 108 definitions literally and leaves 634 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -155,6 +155,18 @@ tests. It remains `partial`: Rust canonicalizes the source's five
 effect-equivalent target choices to the center, while native combined
 Shield/push/collision ordering, off-board targets, building edge states,
 animations, and scheduling remain untraced.
+
+The ninth slice, `player-weapon-deploy-tank`, adds the previously unindexed
+`weapons_deploy.lua` source plus its inherited `TankDefault` target/effect
+callbacks in `weapons_base.lua`. The exact base cannon deals zero damage and
+pushes the first projectile blocker forward; the upgraded cannon inherits the
+same path and push with two damage. Rust keeps one adjacent representative for
+each cardinal direction, then traces the projectile to its first blocker.
+Focused Rust and Python tests now cover both base push and upgraded
+damage-plus-push without changing simulator semantics. The record remains
+`partial`: native `Board:GetSimpleReachable`, the complete legal target area,
+`GetProjectileEnd`, exhaustive path/blocker cases, and `SpaceDamage` ordering
+are untraced.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific

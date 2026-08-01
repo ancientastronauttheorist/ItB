@@ -9690,6 +9690,45 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_deploy_tank_canonical_direction_dispatches_both_cannons() {
+        for (weapon_id, damage) in [
+            (WId::DeployTankShot, 0),
+            (WId::DeployTankShot2, 2),
+        ] {
+            let mut board = make_test_board();
+            let tank = add_mission_ally(
+                &mut board,
+                40,
+                3,
+                3,
+                1,
+                weapon_id,
+                "Deploy_Tank",
+            );
+            let enemy = add_enemy(&mut board, 2, 3, 5, 4);
+
+            let result = simulate_attack(
+                &mut board,
+                tank,
+                weapon_id,
+                (3, 4),
+                &WEAPONS,
+            );
+
+            assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 6));
+            assert_eq!(board.units[enemy].hp, 4 - damage);
+            assert!(
+                result
+                    .events
+                    .iter()
+                    .all(|event| !event.starts_with("illegal_weapon_target:")),
+                "canonical projectile direction must dispatch for {weapon_id:?}: {:?}",
+                result.events,
+            );
+        }
+    }
+
     fn add_decoy_building(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
         let idx = board.add_unit(Unit {
             uid, x, y, hp: 2, max_hp: 2,

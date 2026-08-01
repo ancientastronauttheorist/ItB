@@ -3363,6 +3363,112 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Deploy_TankShot source inherits TankDefault with Damage=0 and Push=1; Deploy_TankShot2 inherits that behavior with Damage=2. Deploy_Tank, Deploy_TankA, Deploy_TankB, and Deploy_TankAB select the corresponding base or upgraded cannon through their SkillList."
+        },
+        {
+          "classification": "fact",
+          "statement": "TankDefault obtains its target area from native Board:GetSimpleReachable. GetSkillEffect derives a cardinal direction from p2, calls GetProjectileEnd with PATH_PROJECTILE, and applies Damage plus forward Push to that first blocker."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust keeps one adjacent representative per cardinal direction and then traces to the first projectile blocker; focused Rust and Python tests prove the base push and upgraded damage-plus-push outcomes through that explicit simulator plan contract."
+        }
+      ],
+      "id": "player-weapon-deploy-tank",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::DeployTankShot",
+            "WId::DeployTankShot2",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "sim_projectile",
+            "simulate_attack_with_target2"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "Deploy_TankShot",
+            "Deploy_TankShot2"
+          ]
+        },
+        {
+          "path": "data/known_types.json",
+          "symbols": [
+            "DeployTankShot",
+            "DeployTankShot2",
+            "Deploy_TankShot"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "The native Board:GetSimpleReachable and GetProjectileEnd implementations are untraced, including their complete legal target area, empty-tile, corners, pathing, wreck, phase, and unusual blocker behavior.",
+        "Rust solver, replay, and projection use one adjacent effect-equivalent target per cardinal direction rather than asserting that every possible native TankDefault click has been reproduced; distant target-area behavior remains deliberately unresolved.",
+        "Native SpaceDamage damage, push, collision, Shield, Frozen, death, terrain, animation, and scheduler ordering is not exhaustively traced for the cannon family.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_deploy.lua",
+          "sha256": "9c5301c1ca91864d92a441ba032d4c024a0e184978d77242f79e0b012522ca73",
+          "symbols": [
+            "Deploy_Tank",
+            "Deploy_TankA",
+            "Deploy_TankB",
+            "Deploy_TankAB",
+            "Deploy_TankShot",
+            "Deploy_TankShot2"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "TankDefault",
+            "TankDefault:GetTargetArea",
+            "TankDefault:GetSkillEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_deploy_tank_stock_cannon"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_deploy_tank_canonical_direction_dispatches_both_cannons"
+          ]
+        },
+        {
+          "path": "tests/test_sim_v50_deploy_tank.py",
+          "symbols": [
+            "test_deploy_tank_stock_cannon_pushes_without_damage",
+            "test_deploy_tank_upgraded_cannon_damages_and_pushes_distant_blocker"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
