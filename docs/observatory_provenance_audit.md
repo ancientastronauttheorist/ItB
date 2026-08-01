@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 24 | 51 |
+| Missions | 75 | 25 | 50 |
 | Environments | 15 | 12 | 3 |
-| Unique total | 96 | 43 | 53 |
+| Unique total | 96 | 44 | 52 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 183 definitions literally and leaves 559 unindexed. Category totals
+names 186 definitions literally and leaves 556 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, and Shaman/Totem family records name fifteen
@@ -490,6 +490,19 @@ selector, modes, RNG, scheduling, BigBomb exclusion, or enemy avoidance, and
 does not apply the source's road/lava terrain aftermath. `env_volcano.lua`
 remains unindexed because no focused Rust mode, terrain, fire, phase, or
 selection conformance test exists yet.
+
+The neutral mission-hazard slice, `mission-piston-trash-compactors`, adds the
+previously unindexed `mission_piston.lua` source and all three active callbacks.
+It pins exact randomized placement constraints, the four one-HP immobile
+nonpushable neutral pawn identities, and their zero-damage one-tile forward
+push construction. Simulator v386 adds a complete mission-scoped bridge
+payload, strict unit/orientation corroboration, neutral/static-trait
+preservation, projected JSON round-tripping, and non-overridable solve plus End
+Turn gates. It remains `partial`: native `Mission_Auto` ordering relative to
+Vek and environment effects, `Corpse=true` blocker/action lifecycle, setup RNG,
+`Board:ClearSpace`, and `SpaceDamage` queue timing are not traced. The bridge
+change is committed but intentionally not installed or exercised during the
+protected live achievement session, so no push replay is claimed.
 
 ## Highest-value expansion order
 

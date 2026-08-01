@@ -11,7 +11,7 @@ import re
 from collections import Counter
 
 from src.capture.save_parser import Point, parse_save_file
-from src.model.board import Board
+from src.model.board import Board, validate_mission_piston_payload
 from src.bridge.protocol import read_state
 from src.itb_paths import get_profile_dir, get_save_file
 
@@ -1430,6 +1430,21 @@ def _normalize_mission_hacking_ids(data: dict) -> None:
         data.pop(hack_key, None)
 
 
+def _normalize_mission_pistons(data: dict) -> None:
+    """Keep only a complete, mission-scoped, unit-corroborated payload."""
+    actions = validate_mission_piston_payload(data)
+    if actions is None:
+        data.pop("mission_pistons", None)
+        return
+    data["mission_pistons"] = {
+        "complete": True,
+        "actions": [
+            {"uid": uid, "front": [front_x, front_y]}
+            for uid, front_x, front_y in actions
+        ],
+    }
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -1464,6 +1479,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     _reconcile_remaining_spawns_with_markers(data)
     _reconcile_victory_turns_with_live_turn(data)
     _normalize_mission_hacking_ids(data)
+    _normalize_mission_pistons(data)
 
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a

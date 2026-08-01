@@ -5124,6 +5124,32 @@ def _lookahead_forecast_gaps(
     if not isinstance(projected_bridge, dict):
         return [{"kind": "projected_board_missing"}]
 
+    piston_gaps: list[dict] = []
+    if projected_bridge.get("mission_id") == "Mission_Piston":
+        payload = projected_bridge.get("mission_pistons")
+        actions = payload.get("actions") if isinstance(payload, dict) else None
+        if (
+            not isinstance(payload, dict)
+            or payload.get("complete") is not True
+            or not isinstance(actions, list)
+        ):
+            piston_gaps.append({
+                "kind": "mission_piston_state_unknown",
+                "reason": "complete_projected_payload_missing",
+            })
+        elif actions:
+            piston_gaps.append({
+                "kind": "mission_piston_phase_unknown",
+                "reason": "native_mission_auto_order_not_captured",
+                "piston_uids": sorted({
+                    action.get("uid")
+                    for action in actions
+                    if isinstance(action, dict)
+                    and isinstance(action.get("uid"), int)
+                    and not isinstance(action.get("uid"), bool)
+                }),
+            })
+
     mobile_enemy_uids: list[int] = []
     stationary_approx_uids: list[int] = []
     for unit in projected_bridge.get("units", []) or []:
@@ -5156,7 +5182,7 @@ def _lookahead_forecast_gaps(
         if isinstance(uid, int) and not isinstance(uid, bool):
             mobile_enemy_uids.append(uid)
 
-    gaps: list[dict] = []
+    gaps: list[dict] = list(piston_gaps)
     if mobile_enemy_uids:
         gaps.append({
             "kind": "enemy_movement_unmodeled",
@@ -9083,6 +9109,74 @@ def _check_wheel_sim_version() -> dict | None:
     return None
 
 
+_MISSION_PISTON_TYPES = frozenset({
+    "Pawn_Piston_U",
+    "Pawn_Piston_R",
+    "Pawn_Piston_D",
+    "Pawn_Piston_L",
+})
+
+
+def _mission_piston_forecast_block(board, bridge_data: dict | None) -> dict | None:
+    """Fail closed while Mission_Piston's native hazard phase is unproven.
+
+    Exact Lua establishes each compactor's forward zero-damage push, but not
+    Mission_Auto's ordering relative to queued Vek/environment effects or the
+    lifecycle of ``Corpse=true`` wrecks. This gate is deliberately
+    non-overridable; dirty-plan consent cannot make an invented phase safe.
+    """
+    mission_id = ""
+    if isinstance(bridge_data, dict):
+        mission_id = str(bridge_data.get("mission_id") or "")
+    mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    if mission_id != "Mission_Piston":
+        return None
+
+    units = [
+        unit for unit in getattr(board, "units", [])
+        if getattr(unit, "type", "") in _MISSION_PISTON_TYPES
+        and not getattr(unit, "is_extra_tile", False)
+    ]
+    actions = list(getattr(board, "mission_piston_actions", []) or [])
+    gaps: list[dict] = []
+    if not getattr(board, "mission_pistons_known", False):
+        gaps.append({
+            "kind": "mission_piston_state_unknown",
+            "reason": "complete_unit_corroborated_bridge_payload_missing",
+        })
+    if actions:
+        gaps.append({
+            "kind": "mission_piston_phase_unknown",
+            "reason": "native_mission_auto_order_not_captured",
+            "piston_uids": sorted(action[0] for action in actions),
+        })
+    dead_uids = sorted({
+        unit.uid for unit in units if getattr(unit, "hp", 0) <= 0
+    })
+    if dead_uids:
+        gaps.append({
+            "kind": "mission_piston_corpse_lifecycle_unknown",
+            "reason": "source_sets_corpse_true_but_native_occupancy_is_untraced",
+            "piston_uids": dead_uids,
+        })
+    if not gaps:
+        return None
+    return {
+        "error": "RESEARCH_REQUIRED",
+        "requires_research": True,
+        "blocking": True,
+        "non_overridable": True,
+        "reason": "mission_piston_forecast_unproven",
+        "mission_id": mission_id,
+        "forecast_complete": False,
+        "forecast_gaps": gaps,
+        "next": (
+            "Capture native Mission_Auto Piston/Vek/environment ordering and "
+            "Corpse=true occupancy before enabling this forecast."
+        ),
+    }
+
+
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
               beam: int = 0, candidate_rank: int | None = None,
               destroy_time_pods: bool = False,
@@ -9198,6 +9292,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         _print_result(post_enemy_gate)
         session.save()
         return post_enemy_gate
+
+    piston_gate = _mission_piston_forecast_block(board, bridge_data)
+    if piston_gate is not None:
+        _print_result(piston_gate)
+        return piston_gate
 
     # Check for active mechs (includes friendly controllable units like ArchiveArtillery)
     active_mechs = [mech for mech in board.mechs()
@@ -13774,6 +13873,17 @@ def _held_end_turn_safety_block_result(
             "held_end_turn_mission_identity_mismatch",
             expected_mission=session.current_mission,
             observed_mission=bridge_data.get("mission_id"),
+        )
+
+    piston_gate = _mission_piston_forecast_block(board, bridge_data)
+    if piston_gate is not None:
+        return _blocked(
+            "held_end_turn_mission_piston_unproven",
+            piston_forecast=piston_gate,
+            next_step=(
+                "Do not click End Turn. Capture native Mission_Auto Piston "
+                "ordering/corpse behavior before enabling this mission."
+            ),
         )
 
     turn = int(bridge_data["turn"])
@@ -54375,7 +54485,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         lightning_speed_loss_policy=lightning_speed_loss_policy,
     )
     if "error" in solve_result:
-        result = {"error": f"Solve: {solve_result['error']}", "turn": turn}
+        # Preserve hard-gate metadata (requires_research, non_overridable,
+        # forecast_gaps, and the exact reason) for autonomous callers.  The
+        # contextual error prefix remains backward compatible with existing
+        # CLI consumers, but flattening the result here would hide why no
+        # action execution or End Turn delivery is permitted.
+        result = dict(solve_result)
+        result["error"] = f"Solve: {solve_result['error']}"
+        result.setdefault("turn", turn)
         _print_result(result)
         return result
     if "warning" in solve_result:

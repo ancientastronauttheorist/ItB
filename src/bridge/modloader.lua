@@ -541,6 +541,60 @@ local function mission_hacking_ids(mission_id, mission)
     return bot_id, hack_id
 end
 
+-- Mission_Piston creates up to four neutral Trash Compactors whose exact pawn
+-- type fixes the tile they push. Export the entire live action set atomically:
+-- complete=true with an empty list is distinct from an older/malformed bridge
+-- that could not inspect the mission. The simulator intentionally does not
+-- guess the native Mission_Auto scheduling slot from this state alone.
+local function mission_pistons(mission_id, units)
+    if mission_id ~= "Mission_Piston" or type(units) ~= "table" then
+        return nil
+    end
+    local offsets = {
+        Pawn_Piston_U = {0, -1},
+        Pawn_Piston_R = {1, 0},
+        Pawn_Piston_D = {0, 1},
+        Pawn_Piston_L = {-1, 0},
+    }
+    local actions = {}
+    local seen = {}
+    local piston_count = 0
+    for _, unit in ipairs(units) do
+        local offset = type(unit) == "table" and offsets[unit.type] or nil
+        if offset ~= nil and not unit.is_extra_tile then
+            piston_count = piston_count + 1
+            local uid = unit.uid
+            local x = unit.x
+            local y = unit.y
+            local hp = unit.hp
+            local valid = type(uid) == "number"
+                and uid == math.floor(uid) and uid >= 0 and uid <= 65535
+                and not seen[uid]
+                and type(x) == "number" and x == math.floor(x) and x >= 0 and x < 8
+                and type(y) == "number" and y == math.floor(y) and y >= 0 and y < 8
+                and type(hp) == "number" and hp == math.floor(hp)
+                and unit.team == 2
+            if not valid or piston_count > 4 then
+                return { complete = false, actions = {} }
+            end
+            seen[uid] = true
+            if hp > 0 then
+                local front_x = x + offset[1]
+                local front_y = y + offset[2]
+                if front_x < 0 or front_x >= 8 or front_y < 0 or front_y >= 8 then
+                    return { complete = false, actions = {} }
+                end
+                actions[#actions + 1] = {
+                    uid = uid,
+                    front = {front_x, front_y},
+                }
+            end
+        end
+    end
+    table.sort(actions, function(a, b) return a.uid < b.uid end)
+    return { complete = true, actions = actions }
+end
+
 local function dump_state()
     if not Board then return end
 
@@ -1408,6 +1462,10 @@ local function dump_state()
             if bot_id ~= nil then
                 state.mission_hacking_bot_id = bot_id
                 state.mission_hacking_hack_id = hack_id
+            end
+            local pistons = mission_pistons(mission.ID, state.units)
+            if pistons ~= nil then
+                state.mission_pistons = pistons
             end
         end
     end)

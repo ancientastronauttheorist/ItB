@@ -1087,7 +1087,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
     // enemies the heuristic couldn't place a target on. EvalWeights has
     // struct-level #[serde(default)], so this sparse object falls through
     // to Rust defaults for every other field.
-    let out = json!({
+    let mut out = json!({
         "tiles":                 tiles,
         "units":                 units,
         "grid_power":            board.grid_power,
@@ -1123,6 +1123,18 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "protect_objective_unit_types": board.protect_objective_unit_types,
         "eval_weights":          json!({ "pseudo_threat_eval": true }),
     });
+    if board.mission_id == "Mission_Piston" && board.mission_pistons_known {
+        let actions: Vec<Value> = board.mission_piston_actions.iter().map(|action| {
+            json!({
+                "uid": action.uid,
+                "front": [action.front_x, action.front_y],
+            })
+        }).collect();
+        out["mission_pistons"] = json!({
+            "complete": true,
+            "actions": actions,
+        });
+    }
     serde_json::to_string(&out).unwrap_or_else(|_| "{}".to_string())
 }
 
@@ -2446,6 +2458,35 @@ mod tests {
 
         assert_eq!(roundtrip.mission_hacking_bot_id, Some(41));
         assert_eq!(roundtrip.mission_hacking_hack_id, Some(40));
+    }
+
+    #[test]
+    fn test_board_to_json_roundtrip_preserves_known_piston_state() {
+        let input = r#"{
+          "mission_id":"Mission_Piston",
+          "mission_pistons":{"complete":true,"actions":[
+            {"uid":41,"front":[3,3]}
+          ]},
+          "units":[{"uid":41,"type":"Pawn_Piston_U","x":3,"y":4,
+                    "hp":1,"max_hp":1,"team":2,"move":0,
+                    "active":false,"can_move":false,"pushable":false}],
+          "tiles":[],"spawning_tiles":[]
+        }"#;
+        let (board, ..) = board_from_json(input).expect("Piston state parses");
+        let json_str = board_to_json(&board, &[]);
+        let value: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+        assert_eq!(value["mission_pistons"]["complete"], serde_json::json!(true));
+        assert_eq!(value["mission_pistons"]["actions"], serde_json::json!([
+            {"uid": 41, "front": [3, 3]}
+        ]));
+
+        let (roundtrip, ..) = board_from_json(&json_str)
+            .expect("Piston evidence must survive projected checkpoints");
+        assert!(roundtrip.mission_pistons_known);
+        assert_eq!(roundtrip.mission_piston_actions, vec![
+            crate::board::PistonAction { uid: 41, front_x: 3, front_y: 3 },
+        ]);
+        assert_eq!(roundtrip.units[0].team, Team::Neutral);
     }
 
     #[test]

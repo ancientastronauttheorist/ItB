@@ -1323,6 +1323,26 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Shaman Boss Attack", weapon_type="support",
         damage=0, targets_allies=True,
     ),
+
+    # Mission_Piston neutral Trash Compactors. Each direction queues the same
+    # source-exact zero-damage one-tile forward push; the distinct IDs preserve
+    # native orientation without routing these through Rust's enemy WId path.
+    "Piston_U_Atk": WeaponDef(
+        name="Trash Compactor", weapon_type="melee",
+        damage=0, push="forward", range_max=1,
+    ),
+    "Piston_R_Atk": WeaponDef(
+        name="Trash Compactor", weapon_type="melee",
+        damage=0, push="forward", range_max=1,
+    ),
+    "Piston_D_Atk": WeaponDef(
+        name="Trash Compactor", weapon_type="melee",
+        damage=0, push="forward", range_max=1,
+    ),
+    "Piston_L_Atk": WeaponDef(
+        name="Trash Compactor", weapon_type="melee",
+        damage=0, push="forward", range_max=1,
+    ),
 }
 
 

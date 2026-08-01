@@ -290,6 +290,17 @@ NEUTRAL_STATS = {
     # Digger rock wall: bridge exposes the spawned rock as a neutral "Wall"
     # pawn (1 HP, Move 0, no weapon) rather than terrain.
     "Wall":              PawnStats(move_speed=0),
+    # Mission_Piston Trash Compactors: exact neutral, immobile, nonpushable
+    # one-HP pawns. Their directional skills are captured for identity only;
+    # native Mission_Auto ordering remains gated until traced.
+    "Pawn_Piston_U":     PawnStats(move_speed=0, pushable=False,
+                                   default_weapon="Piston_U_Atk"),
+    "Pawn_Piston_R":     PawnStats(move_speed=0, pushable=False,
+                                   default_weapon="Piston_R_Atk"),
+    "Pawn_Piston_D":     PawnStats(move_speed=0, pushable=False,
+                                   default_weapon="Piston_D_Atk"),
+    "Pawn_Piston_L":     PawnStats(move_speed=0, pushable=False,
+                                   default_weapon="Piston_L_Atk"),
     # Freeze Tank (Pinnacle Robotics) — friendly NPC on Mission_FreezeBots
     # ("Pinnacle Garden"). Per scripts/missions/snow/snow_helper.lua:
     #   Health=1, MoveSpeed=4, SkillList={"Pinnacle_FreezeTank"},

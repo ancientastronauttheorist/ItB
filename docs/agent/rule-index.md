@@ -497,3 +497,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 496 | 889 | A successful Satellite launch is a disappearance, not a death. | `docs/agent/solver-reference.md` |
 | 497 | 891 | Mission Bot Defense Mine Bots use Setup rather than ordinary movement; Snow artillery is range 2–5 with perpendicular side hits. | `docs/agent/solver-reference.md` |
 | 498 | 893 | Passive loadouts are board effects, not clickable weapons. | `docs/agent/solver-reference.md` |
+| 499 | 895 | Mission_Piston needs native phase and corpse evidence before End Turn. | `docs/agent/safety-gates.md` |

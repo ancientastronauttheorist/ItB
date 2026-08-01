@@ -370,6 +370,17 @@ impl Unit {
 
 // ── Board ────────────────────────────────────────────────────────────────────
 
+/// Exact live Mission_Piston push source and front tile captured by the Lua
+/// bridge.  The native Mission_Auto scheduling slot remains intentionally
+/// unmodeled; retaining this state lets Python fail closed and preserves the
+/// evidence across projected/replay board serialization.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PistonAction {
+    pub uid: u16,
+    pub front_x: u8,
+    pub front_y: u8,
+}
+
 /// Fixed-size board state. ~800 bytes, Clone is a memcpy.
 #[derive(Clone, Debug)]
 pub struct Board {
@@ -529,6 +540,11 @@ pub struct Board {
     /// old bridge payloads fail closed rather than guessing by pawn type.
     pub mission_hacking_bot_id: Option<u16>,
     pub mission_hacking_hack_id: Option<u16>,
+    /// True only when the mission-scoped bridge payload completely matches
+    /// every living Pawn_Piston_* unit. Missing/partial legacy payloads remain
+    /// false, distinct from a proven complete empty action list.
+    pub mission_pistons_known: bool,
+    pub mission_piston_actions: Vec<PistonAction>,
     pub mission_kill_target: u8,   // "Kill at least N enemies" target. Generic
                                 // BONUS_KILL_FIVE comes from mission:GetKillBonus();
                                 // Mission_AcidTank is fixed at 4 acid kills.
@@ -647,6 +663,8 @@ impl Default for Board {
             mission_id: String::new(),
             mission_hacking_bot_id: None,
             mission_hacking_hack_id: None,
+            mission_pistons_known: false,
+            mission_piston_actions: Vec::new(),
             mission_kill_target: 0,
             mission_kill_limit: 0,
             mission_kills_done: 0,

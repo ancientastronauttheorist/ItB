@@ -3619,3 +3619,93 @@ def test_real_shaman_totem_record_pins_spawn_chain_and_native_gaps():
     assert "Board:GetProjectileEnd" in gaps
     assert "ShamanBoss/ShamanAtkB" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_mission_piston_record_pins_state_gate_and_native_gaps():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-piston-trash-compactors"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/acid/mission_piston.lua",
+        "sha256": (
+            "1f426bad3b4149f0088831680264f716a"
+            "3f9cc6acebf828306946c55990d51ad"
+        ),
+        "symbols": [
+            "Mission_Piston",
+            "Mission_Piston:StartMission",
+            "Pawn_Piston_U",
+            "Pawn_Piston_R",
+            "Pawn_Piston_D",
+            "Pawn_Piston_L",
+            "Piston_U_Atk",
+            "Piston_U_Atk:GetTargetScore",
+            "Piston_U_Atk:GetSkillEffect",
+            "Piston_R_Atk",
+            "Piston_D_Atk",
+            "Piston_L_Atk",
+        ],
+    }]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/bridge/modloader.lua"] == {"mission_pistons"}
+    assert implementations["src/bridge/reader.py"] == {
+        "_normalize_mission_pistons"
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_mission_piston_forecast_block",
+        "_lookahead_forecast_gaps",
+        "cmd_solve",
+    }
+    assert implementations["rust_solver/src/serde_bridge.rs"] == {
+        "JsonMissionPistons",
+        "JsonPistonAction",
+        "mission_piston_front",
+        "board_from_json",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_mission_pistons_require_complete_exact_neutral_corroboration"
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_board_to_json_roundtrip_preserves_known_piston_state"
+    }
+    assert {
+        "test_lua_helper_exports_exact_sorted_front_tiles_and_complete_empty_state",
+        "test_reader_drops_partial_stale_or_uncorroborated_payloads",
+        "test_python_board_preserves_state_and_forces_exact_neutral_static_traits",
+        "test_hard_forecast_gate_distinguishes_unknown_active_corpse_and_empty",
+        "test_lookahead_surfaces_piston_state_and_scheduler_gaps",
+    } == tests["tests/test_mission_piston_payload.py"]
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "valid, non-edge, unoccupied" in facts
+    assert "zero damage" in facts
+    assert "hard-blocks solving or End Turn" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Mission_Auto" in gaps
+    assert "Board:ClearSpace" in gaps
+    assert "Corpse=true" in gaps
+    assert "no push replay is claimed" in gaps
+    assert "protected achievement session" in gaps

@@ -5074,6 +5074,150 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Piston source randomly removes tiles from the pistons zone and creates at most four directional Trash Compactors. A placement is accepted only when its forward tile is valid, non-edge, unoccupied, and not Building, Mountain, or Water; the chosen source tile is cleared before the pawn is added."
+        },
+        {
+          "classification": "fact",
+          "statement": "Pawn_Piston_U is a one-HP neutral TEAM_NONE pawn with MoveSpeed zero, Corpse=true, Pushable=false, and Piston_U_Atk. The R, L, and D variants inherit those traits while replacing image, directional skill ID, and fixed direction."
+        },
+        {
+          "classification": "fact",
+          "statement": "Piston_U_Atk queues a local hide/animation effect and then queues SpaceDamage on the single forward tile with zero damage and its fixed direction, producing a forward push; the R, L, and D skills inherit that callback. Simulator v386 strictly captures and corroborates the complete live Piston action set, preserves neutral identity and source-static traits through projected JSON, and hard-blocks solving or End Turn while native Mission_Auto scheduling or Corpse occupancy remains unproven."
+        }
+      ],
+      "id": "mission-piston-trash-compactors",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "mission_pistons"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_normalize_mission_pistons"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "MISSION_PISTON_FRONT_OFFSETS",
+            "validate_mission_piston_payload",
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "Pawn_Piston_U",
+            "Pawn_Piston_R",
+            "Pawn_Piston_D",
+            "Pawn_Piston_L"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "Piston_U_Atk",
+            "Piston_R_Atk",
+            "Piston_D_Atk",
+            "Piston_L_Atk"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_mission_piston_forecast_block",
+            "_lookahead_forecast_gaps",
+            "cmd_solve"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "PistonAction",
+            "Board"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "JsonMissionPistons",
+            "JsonPistonAction",
+            "mission_piston_front",
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "board_to_json"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "The source proves each queued forward push but not where Mission_Auto invokes neutral Piston skills relative to environment effects, queued Vek attacks, or other Pistons. Simulator v386 therefore retains state and blocks rather than inventing an order; no push replay is claimed.",
+        "Mission setup consumes the native pistons zone, Board validity/edge/occupancy/terrain helpers, Board:ClearSpace, random_removal, and random_element. Rust does not reproduce setup RNG, rejected-candidate consumption, exact tile clearing, or placement order.",
+        "Corpse=true is source-proven, but dead neutral pawn occupancy, blocker lifetime, and whether a destroyed Piston retains or loses its scheduled action have not been captured. The safety gate remains non-overridable when a corpse is visible.",
+        "Native SkillEffect queue boundaries, animation/hide timing, SpaceDamage push/collision ordering, attack-order integration, and target-score scheduling are not exhaustively traced. No fresh controlled live capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/acid/mission_piston.lua",
+          "sha256": "1f426bad3b4149f0088831680264f716a3f9cc6acebf828306946c55990d51ad",
+          "symbols": [
+            "Mission_Piston",
+            "Mission_Piston:StartMission",
+            "Pawn_Piston_U",
+            "Pawn_Piston_R",
+            "Pawn_Piston_D",
+            "Pawn_Piston_L",
+            "Piston_U_Atk",
+            "Piston_U_Atk:GetTargetScore",
+            "Piston_U_Atk:GetSkillEffect",
+            "Piston_R_Atk",
+            "Piston_D_Atk",
+            "Piston_L_Atk"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_mission_piston_payload.py",
+          "symbols": [
+            "test_lua_helper_exports_exact_sorted_front_tiles_and_complete_empty_state",
+            "test_reader_drops_partial_stale_or_uncorroborated_payloads",
+            "test_python_board_preserves_state_and_forces_exact_neutral_static_traits",
+            "test_hard_forecast_gate_distinguishes_unknown_active_corpse_and_empty",
+            "test_lookahead_surfaces_piston_state_and_scheduler_gaps"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_mission_pistons_require_complete_exact_neutral_corroboration"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_board_to_json_roundtrip_preserves_known_piston_state"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_piston_record_pins_state_gate_and_native_gaps"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

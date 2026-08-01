@@ -849,6 +849,18 @@
     "Passive_PlayerTurnShield",
     "Passive_VoidShock"
   ],
+  "source_known_pawn_types": [
+    "Pawn_Piston_D",
+    "Pawn_Piston_L",
+    "Pawn_Piston_R",
+    "Pawn_Piston_U"
+  ],
+  "source_known_mission_weapons": [
+    "Piston_D_Atk",
+    "Piston_L_Atk",
+    "Piston_R_Atk",
+    "Piston_U_Atk"
+  ],
   "known_phases": [
     "between_missions",
     "combat_enemy",

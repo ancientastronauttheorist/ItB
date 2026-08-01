@@ -92,6 +92,7 @@ def _load_known() -> dict:
     pawn_set: set[str] = set()
     pawn_set.update(doc.get("wiki_pages", []))
     pawn_set.update(doc.get("observed_pawn_types", []))
+    pawn_set.update(doc.get("source_known_pawn_types", []))
 
     terrain_set: set[str] = set()
     terrain_set.update(doc.get("terrain_ids", []))
@@ -104,6 +105,7 @@ def _load_known() -> dict:
     weapon_set.update(doc.get("weapon_enum", []))
     weapon_set.update(doc.get("observed_weapons", []))
     weapon_set.update(doc.get("source_known_weapons", []))
+    weapon_set.update(doc.get("source_known_mission_weapons", []))
 
     phase_set: set[str] = set()
     phase_set.update(doc.get("known_phases", []))

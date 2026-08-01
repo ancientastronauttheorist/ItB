@@ -196,6 +196,25 @@ SOURCE_KNOWN_WEAPONS: list[str] = [
 ]
 
 
+# Exact mission pawn/weapon IDs recovered from shipped Lua but not yet seen in
+# a retained live recording. Keep them separate from observed_* so provenance
+# remains honest, and separate from Rust WId because Mission_Piston's native
+# Mission_Auto scheduler slot is not yet modeled.
+SOURCE_KNOWN_PAWN_TYPES: list[str] = [
+    "Pawn_Piston_D",
+    "Pawn_Piston_L",
+    "Pawn_Piston_R",
+    "Pawn_Piston_U",
+]
+
+SOURCE_KNOWN_MISSION_WEAPONS: list[str] = [
+    "Piston_D_Atk",
+    "Piston_L_Atk",
+    "Piston_R_Atk",
+    "Piston_U_Atk",
+]
+
+
 def main() -> int:
     wiki = wiki_pages()
     weapons = weapon_enum()
@@ -218,6 +237,8 @@ def main() -> int:
         "observed_pawn_types": observed,
         "observed_weapons": obs_weapons,
         "source_known_weapons": list(SOURCE_KNOWN_WEAPONS),
+        "source_known_pawn_types": list(SOURCE_KNOWN_PAWN_TYPES),
+        "source_known_mission_weapons": list(SOURCE_KNOWN_MISSION_WEAPONS),
         "known_phases": list(KNOWN_PHASES),
     }
 
@@ -233,6 +254,8 @@ def main() -> int:
     print(f"  observed_pawn_types: {len(observed)}")
     print(f"  observed_weapons:    {len(obs_weapons)}")
     print(f"  source_known_weapons:{len(SOURCE_KNOWN_WEAPONS):5d}")
+    print(f"  source_known_pawns:  {len(SOURCE_KNOWN_PAWN_TYPES):5d}")
+    print(f"  source_known_mission_weapons:{len(SOURCE_KNOWN_MISSION_WEAPONS):5d}")
     print(f"  known_phases:        {len(KNOWN_PHASES)}")
     return 0
 

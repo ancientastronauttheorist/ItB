@@ -59,6 +59,10 @@ pub struct JsonInput {
     /// legacy payloads; conversion then fails closed.
     pub mission_hacking_bot_id: Option<i64>,
     pub mission_hacking_hack_id: Option<i64>,
+    /// Complete Mission_Piston live action inventory. The source-proven front
+    /// tiles are retained for safety/projection, but no native scheduler slot
+    /// is inferred from them.
+    pub mission_pistons: Option<JsonMissionPistons>,
     /// "Kill at least N enemies" target. Generic kill bonuses come from
     /// mission:GetKillBonus(); Mission_AcidTank is fixed at 4 acid kills.
     /// Missing / 0 -> no kill target on this mission; evaluator's step-function
@@ -366,8 +370,37 @@ fn known_minor_type(type_name: &str) -> bool {
     )
 }
 
+#[derive(Deserialize)]
+pub struct JsonMissionPistons {
+    pub complete: Option<bool>,
+    pub actions: Option<Vec<JsonPistonAction>>,
+}
+
+#[derive(Deserialize)]
+pub struct JsonPistonAction {
+    pub uid: i64,
+    pub front: Option<Vec<i64>>,
+}
+
 fn known_void_shock_immune_type(type_name: &str) -> bool {
     matches!(type_name, "Shaman1" | "Shaman2")
+}
+
+fn mission_piston_front(type_name: &str, x: u8, y: u8) -> Option<(u8, u8)> {
+    let (dx, dy): (i16, i16) = match type_name {
+        "Pawn_Piston_U" => (0, -1),
+        "Pawn_Piston_R" => (1, 0),
+        "Pawn_Piston_D" => (0, 1),
+        "Pawn_Piston_L" => (-1, 0),
+        _ => return None,
+    };
+    let front_x = x as i16 + dx;
+    let front_y = y as i16 + dy;
+    if (0..8).contains(&front_x) && (0..8).contains(&front_y) {
+        Some((front_x as u8, front_y as u8))
+    } else {
+        None
+    }
 }
 
 fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
@@ -946,6 +979,108 @@ pub fn board_from_json(json_str: &str)
             }
         }
     }
+    if board.mission_id == "Mission_Piston" {
+        if let Some(payload) = &input.mission_pistons {
+            if payload.complete == Some(true) {
+                let mut expected: Vec<PistonAction> = Vec::new();
+                let mut all_piston_indices: Vec<usize> = Vec::new();
+                let mut valid = true;
+                for idx in 0..board.unit_count as usize {
+                    let unit = &board.units[idx];
+                    if !matches!(unit.type_name_str(),
+                        "Pawn_Piston_U" | "Pawn_Piston_R" |
+                        "Pawn_Piston_D" | "Pawn_Piston_L")
+                    {
+                        continue;
+                    }
+                    all_piston_indices.push(idx);
+                    if all_piston_indices.len() > 4
+                        || unit.team != Team::Neutral
+                        || all_piston_indices[..all_piston_indices.len() - 1]
+                            .iter()
+                            .any(|&other| board.units[other].uid == unit.uid)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    if unit.hp > 0 {
+                        if let Some((front_x, front_y)) = mission_piston_front(
+                            unit.type_name_str(), unit.x, unit.y,
+                        ) {
+                            expected.push(PistonAction {
+                                uid: unit.uid,
+                                front_x,
+                                front_y,
+                            });
+                        } else {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }
+
+                let mut parsed: Vec<PistonAction> = Vec::new();
+                if let Some(actions) = &payload.actions {
+                    if actions.len() > 4 {
+                        valid = false;
+                    }
+                    for action in actions {
+                        let Some(front) = &action.front else {
+                            valid = false;
+                            break;
+                        };
+                        if action.uid < 0
+                            || action.uid > u16::MAX as i64
+                            || front.len() != 2
+                            || !(0..8).contains(&front[0])
+                            || !(0..8).contains(&front[1])
+                        {
+                            valid = false;
+                            break;
+                        }
+                        let candidate = PistonAction {
+                            uid: action.uid as u16,
+                            front_x: front[0] as u8,
+                            front_y: front[1] as u8,
+                        };
+                        if parsed.iter().any(|item| item.uid == candidate.uid)
+                            || !expected.contains(&candidate)
+                        {
+                            valid = false;
+                            break;
+                        }
+                        parsed.push(candidate);
+                    }
+                } else {
+                    valid = false;
+                }
+                valid &= parsed.len() == expected.len()
+                    && expected.iter().all(|item| parsed.contains(item));
+                if valid {
+                    parsed.sort_by_key(|item| item.uid);
+                    board.mission_pistons_known = true;
+                    board.mission_piston_actions = parsed;
+                    for idx in all_piston_indices {
+                        let unit = &mut board.units[idx];
+                        unit.team = Team::Neutral;
+                        unit.move_speed = 0;
+                        unit.base_move = 0;
+                        unit.flags.remove(
+                            UnitFlags::PUSHABLE
+                                | UnitFlags::CAN_MOVE
+                                | UnitFlags::RANGED
+                                | UnitFlags::ACTIVE
+                                | UnitFlags::HAS_QUEUED_ATTACK,
+                        );
+                        unit.queued_target_x = -1;
+                        unit.queued_target_y = -1;
+                        unit.queued_origin_x = -1;
+                        unit.queued_origin_y = -1;
+                    }
+                }
+            }
+        }
+    }
     board.mission_kill_target = input.mission_kill_target.unwrap_or(0);
     board.mission_kill_limit = input.mission_kill_limit.unwrap_or(0);
     board.mission_kills_done = input.mission_kills_done.unwrap_or(0);
@@ -1419,6 +1554,68 @@ mod tests {
             assert_eq!(board.mission_hacking_bot_id, None);
             assert_eq!(board.mission_hacking_hack_id, None);
         }
+    }
+
+    #[test]
+    fn test_mission_pistons_require_complete_exact_neutral_corroboration() {
+        let valid = r#"{
+            "mission_id":"Mission_Piston",
+            "mission_pistons":{"complete":true,"actions":[
+                {"uid":41,"front":[3,3]},
+                {"uid":42,"front":[5,2]}
+            ]},
+            "tiles":[],
+            "units":[
+                {"uid":42,"type":"Pawn_Piston_L","x":6,"y":2,
+                 "hp":1,"max_hp":1,"team":2,"move":7,"base_move":7,
+                 "active":true,"can_move":true,"pushable":true,
+                 "ranged":1,"has_queued_attack":true},
+                {"uid":41,"type":"Pawn_Piston_U","x":3,"y":4,
+                 "hp":1,"max_hp":1,"team":2,"move":7,"base_move":7,
+                 "active":true,"can_move":true,"pushable":true,
+                 "ranged":1,"has_queued_attack":true}
+            ],
+            "spawning_tiles":[]
+        }"#;
+        let (board, ..) = board_from_json(valid).expect("valid Piston state parses");
+        assert!(board.mission_pistons_known);
+        assert_eq!(board.mission_piston_actions, vec![
+            PistonAction { uid: 41, front_x: 3, front_y: 3 },
+            PistonAction { uid: 42, front_x: 5, front_y: 2 },
+        ]);
+        for idx in 0..board.unit_count as usize {
+            let unit = &board.units[idx];
+            assert_eq!(unit.team, Team::Neutral);
+            assert_eq!((unit.move_speed, unit.base_move), (0, 0));
+            assert!(!unit.pushable());
+            assert!(!unit.can_move());
+            assert!(!unit.ranged());
+            assert!(!unit.active());
+            assert!(!unit.has_queued_attack());
+        }
+
+        let invalid = [
+            valid.replace("Mission_Piston", "Mission_Wind"),
+            valid.replace("\"complete\":true", "\"complete\":false"),
+            valid.replace("{\"uid\":41,\"front\":[3,3]},", ""),
+            valid.replace("\"front\":[3,3]", "\"front\":[3,2]"),
+            valid.replace("\"team\":2", "\"team\":6"),
+        ];
+        for payload in invalid {
+            let (board, ..) = board_from_json(&payload)
+                .expect("invalid Piston evidence fails closed without breaking board parse");
+            assert!(!board.mission_pistons_known);
+            assert!(board.mission_piston_actions.is_empty());
+        }
+
+        let empty = r#"{
+            "mission_id":"Mission_Piston",
+            "mission_pistons":{"complete":true,"actions":[]},
+            "tiles":[],"units":[],"spawning_tiles":[]
+        }"#;
+        let (board, ..) = board_from_json(empty).expect("complete empty state parses");
+        assert!(board.mission_pistons_known);
+        assert!(board.mission_piston_actions.is_empty());
     }
 
     #[test]

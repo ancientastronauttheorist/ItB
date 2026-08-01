@@ -35,6 +35,108 @@ BRIDGE_TERRAIN_ID_MAP = {
 }
 
 
+# Mission_Piston's four neutral Trash Compactors face a fixed cardinal
+# direction encoded by their exact pawn type.  Coordinates here are bridge
+# coordinates, so visual Up is y-1 and visual Down is y+1.
+MISSION_PISTON_FRONT_OFFSETS = {
+    "Pawn_Piston_U": (0, -1),
+    "Pawn_Piston_R": (1, 0),
+    "Pawn_Piston_D": (0, 1),
+    "Pawn_Piston_L": (-1, 0),
+}
+
+
+def validate_mission_piston_payload(
+    data: dict,
+) -> list[tuple[int, int, int]] | None:
+    """Return canonical ``(uid, front_x, front_y)`` actions or ``None``.
+
+    The payload is useful only when it is complete and corroborates every
+    living exact Piston pawn in the generic unit list.  Missing, partial,
+    foreign-mission, duplicate, and orientation-mismatched payloads all fail
+    closed.  A complete empty payload is valid only when no living Piston is
+    present.
+    """
+    if not isinstance(data, dict) or data.get("mission_id") != "Mission_Piston":
+        return None
+    payload = data.get("mission_pistons")
+    if (
+        not isinstance(payload, dict)
+        or payload.get("complete") is not True
+        or not isinstance(payload.get("actions"), list)
+    ):
+        return None
+    raw_units = data.get("units")
+    if not isinstance(raw_units, list):
+        return None
+
+    expected: dict[int, tuple[int, int]] = {}
+    seen_piston_uids: set[int] = set()
+    piston_count = 0
+    for raw in raw_units:
+        if not isinstance(raw, dict):
+            continue
+        offset = MISSION_PISTON_FRONT_OFFSETS.get(raw.get("type"))
+        if offset is None or raw.get("is_extra_tile") is True:
+            continue
+        piston_count += 1
+        uid = raw.get("uid")
+        x = raw.get("x")
+        y = raw.get("y")
+        hp = raw.get("hp")
+        if (
+            not isinstance(uid, int)
+            or isinstance(uid, bool)
+            or not 0 <= uid <= 0xFFFF
+            or uid in seen_piston_uids
+            or not isinstance(x, int)
+            or isinstance(x, bool)
+            or not isinstance(y, int)
+            or isinstance(y, bool)
+            or not 0 <= x < 8
+            or not 0 <= y < 8
+            or not isinstance(hp, int)
+            or isinstance(hp, bool)
+            or raw.get("team") != 2
+        ):
+            return None
+        seen_piston_uids.add(uid)
+        if hp > 0:
+            front = (x + offset[0], y + offset[1])
+            if not (0 <= front[0] < 8 and 0 <= front[1] < 8):
+                return None
+            expected[uid] = front
+    if piston_count > 4:
+        return None
+
+    actions: list[tuple[int, int, int]] = []
+    seen_action_uids: set[int] = set()
+    raw_actions = payload["actions"]
+    if len(raw_actions) > 4:
+        return None
+    for raw in raw_actions:
+        if not isinstance(raw, dict):
+            return None
+        uid = raw.get("uid")
+        front = raw.get("front")
+        if (
+            not isinstance(uid, int)
+            or isinstance(uid, bool)
+            or uid in seen_action_uids
+            or uid not in expected
+            or not isinstance(front, (list, tuple))
+            or len(front) != 2
+            or any(not isinstance(value, int) or isinstance(value, bool) for value in front)
+            or tuple(front) != expected[uid]
+        ):
+            return None
+        seen_action_uids.add(uid)
+        actions.append((uid, front[0], front[1]))
+    if seen_action_uids != set(expected):
+        return None
+    return sorted(actions)
+
+
 # Pilot value lookup: multiplier on the mech_killed penalty reflecting
 # how costly it is to lose this pilot permanently. Values are "extra
 # penalty fraction of base mech_killed" — 0.5 means +50% penalty on top
@@ -286,6 +388,12 @@ class Board:
         # from an unrelated Snowtank1 of the same type.
         self.mission_hacking_bot_id: int | None = None
         self.mission_hacking_hack_id: int | None = None
+        # Mission_Piston's source proves each neutral compactors' fixed
+        # forward push, but not the native Mission_Auto scheduler slot.  Keep
+        # bridge completeness separate from the actions so legacy/malformed
+        # payloads cannot be mistaken for a hazard-free mission.
+        self.mission_pistons_known: bool = False
+        self.mission_piston_actions: list[tuple[int, int, int]] = []
         # "Kill at least N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
         # mission doesn't have this bonus. Target is difficulty-scaled by
         # the game (5 on Easy, 7 on Normal/Hard). Used by the evaluator to
@@ -372,6 +480,8 @@ class Board:
         b.mission_id = self.mission_id
         b.mission_hacking_bot_id = self.mission_hacking_bot_id
         b.mission_hacking_hack_id = self.mission_hacking_hack_id
+        b.mission_pistons_known = self.mission_pistons_known
+        b.mission_piston_actions = list(self.mission_piston_actions)
         b.mission_kill_target = self.mission_kill_target
         b.mission_kill_limit = self.mission_kill_limit
         b.mission_kills_done = self.mission_kills_done
@@ -746,6 +856,23 @@ class Board:
             if valid_pair:
                 board.mission_hacking_bot_id = bot_id
                 board.mission_hacking_hack_id = hack_id
+        piston_actions = validate_mission_piston_payload(data)
+        if piston_actions is not None:
+            board.mission_pistons_known = True
+            board.mission_piston_actions = piston_actions
+            for unit in board.units:
+                if unit.type not in MISSION_PISTON_FRONT_OFFSETS:
+                    continue
+                unit.team = 2
+                unit.move_speed = 0
+                unit.base_move = 0
+                unit.pushable = False
+                unit.active = False
+                unit.has_queued_attack = False
+                unit.target_x = -1
+                unit.target_y = -1
+                unit.queued_target_x = -1
+                unit.queued_target_y = -1
         # Kill-count objective fields. All default 0, which makes the
         # evaluator/safety checks no-op for missions without those objectives.
         # Emitted by the Lua bridge from mission.BonusObjs + mission.KilledVek
