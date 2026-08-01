@@ -5703,8 +5703,8 @@ def test_real_mission_factory_record_pins_critical_and_order_gaps():
 def test_real_mission_freezebots_record_pins_frozen_objective_coverage():
     record = _mission_provenance_record("mission-freezebots-frozen-robots")
     assert record["coverage"] == "partial"
-    source = record["sources"][0]
-    assert source["path"] == "scripts/missions/snow/mission_freezebots.lua"
+    sources = {source["path"]: source for source in record["sources"]}
+    source = sources["scripts/missions/snow/mission_freezebots.lua"]
     assert source["sha256"] == (
         "3fcff4c8edcdab7b787b255e916083e414035a04a32e0b9dec0e82e6e5246786"
     )
@@ -5713,13 +5713,50 @@ def test_real_mission_freezebots_record_pins_frozen_objective_coverage():
         "Mission_FreezeBots:GetCompletedStatus", "Mission_FreezeBots:CountDead",
         "Mission_FreezeBots:CountFrozen", "Mission_FreezeBots:UpdateObjectives",
     ]
+    assert sources["scripts/missions/snow/snow_helper.lua"] == {
+        "path": "scripts/missions/snow/snow_helper.lua",
+        "sha256": "218e6fa6c8efc08a760347af26d185004c5dc141f7c27b8f9ed7a0e985e191d1",
+        "symbols": ["Freeze_Tank", "Pinnacle_FreezeTank"],
+    }
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::PinnacleFreezeTank", "wid_from_str", "wid_to_str",
+    }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "NextRobot twice" in facts
     assert "Freeze_Tank" in facts
     assert "Snowtank, Snowlaser, and Snowart families" in facts
+    assert "Damage=0, Push=0, and Freeze=1" in facts
     gaps = " ".join(record["known_gaps"])
     assert "duplicate-family selection" in gaps
     assert "partial reward settlement" in gaps
+
+
+def test_real_mission_snowbattle_record_pins_native_setup_gap():
+    record = _mission_provenance_record("mission-snowbattle-native-robot-setup")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/snow/mission_snowbattle.lua",
+        "sha256": "f3d7598924348c3283145d4478c0e4b7833bfd37261e61c17fefc3e4b7ed0f0c",
+        "symbols": ["Mission_SnowBattle", "Mission_SnowBattle:StartMission"],
+    }]
+    assert record["implementations"] == [{
+        "path": "data/mission_metadata.json",
+        "symbols": ["Mission_SnowBattle"],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "RobotStart=2" in facts
+    assert (
+        "two normally added native-selected robots and one explicitly frozen "
+        "native-selected robot"
+    ) in facts
+    assert "no dynamic forced_pawns assertion" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "NextRobot candidate roster and RNG" in gaps
+    assert "safety gate after bridge state extraction" in gaps
 
 
 def test_real_mission_freezemines_record_pins_inherited_native_gap():

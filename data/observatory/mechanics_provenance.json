@@ -111,7 +111,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Mission objective metadata now protects all three source-selectable Snowtank, Snowlaser, and Snowart families. Board summaries expose their alive and frozen counts, plan safety rejects either a loss or unfreeze on the final turn, and static metadata represents Freeze_Tank as a friendly freeze-capable NPC. These bounded protections do not reproduce native NextRobot selection or objective accounting."
+          "statement": "Mission objective metadata protects all three source-selectable Snowtank, Snowlaser, and Snowart families. The exact inventoried snow helper defines Freeze_Tank as one HP, MoveSpeed four, DefaultTeam=TEAM_PLAYER, Corporate, and Corpse=false, with the exact Pinnacle_FreezeTank SkillList; it does not declare a Mech field. Its TankDefault projectile has Damage=0, Push=0, and Freeze=1. Existing bridge actor handling, Python static stats, and Rust WId/weapon mapping preserve this friendly NPC and its zero-damage no-push freeze projectile; they do not reproduce native NextRobot selection or objective accounting."
         }
       ],
       "id": "mission-freezebots-frozen-robots",
@@ -125,12 +125,16 @@
           "symbols": ["Freeze_Tank"]
         },
         {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["WId::PinnacleFreezeTank", "wid_from_str", "wid_to_str"]
+        },
+        {
           "path": "src/solver/plan_safety.py",
           "symbols": ["audit_plan_safety"]
         }
       ],
       "known_gaps": [
-        "Native NextRobot selection from Snowtank, Snowlaser, and Snowart families, Board:AddPawn placement, ID assignment, Freeze_Tank behavior, and Mission_Infinite spawn scheduling remain native dependencies.",
+        "Native NextRobot selection from Snowtank, Snowlaser, and Snowart families, Board:AddPawn placement, ID assignment, Freeze_Tank action timing/targeting, and Mission_Infinite spawn scheduling remain native dependencies.",
         "Prefix-family matching covers the shipped Snowtank, Snowlaser, and Snowart variants, but duplicate-family selection, native name normalization, and mid-turn transition edges are not independently traced.",
         "Native Board:IsPawnAlive/IsFrozen timing, UI status text, partial reward settlement, and frozen/thawed effect ordering are not independently traced."
       ],
@@ -139,6 +143,11 @@
           "path": "scripts/missions/snow/mission_freezebots.lua",
           "sha256": "3fcff4c8edcdab7b787b255e916083e414035a04a32e0b9dec0e82e6e5246786",
           "symbols": ["Mission_FreezeBots", "Mission_FreezeBots:StartMission", "Mission_FreezeBots:GetCompletedObjectives", "Mission_FreezeBots:GetCompletedStatus", "Mission_FreezeBots:CountDead", "Mission_FreezeBots:CountFrozen", "Mission_FreezeBots:UpdateObjectives"]
+        },
+        {
+          "path": "scripts/missions/snow/snow_helper.lua",
+          "sha256": "218e6fa6c8efc08a760347af26d185004c5dc141f7c27b8f9ed7a0e985e191d1",
+          "symbols": ["Freeze_Tank", "Pinnacle_FreezeTank"]
         }
       ],
       "tests": [
@@ -8697,6 +8706,48 @@
         {
           "path": "tests/test_itb_provenance.py",
           "symbols": ["test_real_mission_tutorial_and_trailers_record_pins_callbacks_and_native_gaps"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_SnowBattle source subclasses Mission_Auto with RobotStart=2, SpawnStartMod=-2, and UseBonus=true. Its only active callback loops exactly RobotStart times, adding the result of self:NextRobot() each time without explicitly freezing those pawns, then obtains one additional self:NextRobot(), calls SetFrozen(true) on that pawn, and adds it. Thus StartMission requests two normally added native-selected robots and one explicitly frozen native-selected robot."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_SnowBattle does not define NextRobot, candidate-family selection, point selection, Board:AddPawn allocation, or inherited Mission_Auto/Mission_Infinite lifecycle. Those native setup operations complete through StartMission before the autonomous bridge reads the resulting current board; this record adds no dynamic forced_pawns assertion, solver simulation, or mission safety gate."
+        },
+        {
+          "classification": "fact",
+          "statement": "The generated static metadata is an identity/class-chain anchor for Mission_SnowBattle. It does not prove which robot types, locations, UIDs, frozen timing, spawner state, bonuses, or inherited ordinary-enemy behavior the native setup selected; live board extraction remains the authoritative combat state after setup."
+        }
+      ],
+      "id": "mission-snowbattle-native-robot-setup",
+      "implementations": [
+        {
+          "path": "data/mission_metadata.json",
+          "symbols": ["Mission_SnowBattle"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Auto/Mission_Infinite inheritance, NextRobot candidate roster and RNG, terrain/occupancy eligibility, Board:AddPawn point selection and UID allocation, SetFrozen scheduling, spawner construction, bonus selection, and native objective/UI lifecycle are not established by mission_snowbattle.lua.",
+        "The source proves native setup requests before the live board is consumed; it does not support fabricated dynamic forced_pawns metadata, a source-specific solver forecast, or a safety gate after bridge state extraction.",
+        "Native robot behavior, frozen status interactions, and every source-to-bridge setup field still require controlled build-keyed traces."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_snowbattle.lua",
+          "sha256": "f3d7598924348c3283145d4478c0e4b7833bfd37261e61c17fefc3e4b7ed0f0c",
+          "symbols": ["Mission_SnowBattle", "Mission_SnowBattle:StartMission"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_snowbattle_record_pins_native_setup_gap"]
         }
       ]
     }

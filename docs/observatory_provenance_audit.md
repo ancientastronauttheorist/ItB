@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 70 | 5 |
+| Missions | 75 | 72 | 3 |
 | Environments | 15 | 14 | 1 |
-| Unique total | 96 | 89 | 7 |
+| Unique total | 96 | 91 | 5 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 380 definitions literally and leaves 362 unindexed. Category totals
+names 381 definitions literally and leaves 361 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -849,6 +849,18 @@ then blocks solver/auto-turn/public-End-Turn/Lightning-route forecasting of
 that native lifecycle. The static metadata entry and gate do not imply trailer
 effect, tutorial UI, spawn/UID allocation, objective settlement, or campaign
 lifecycle conformance.
+
+The SnowBattle/helper slice adds the exact `Mission_SnowBattle` constructor and
+its sole `StartMission` callback, plus the shared `Freeze_Tank` helper source.
+Lua requests two normally added `NextRobot` pawns that it does not explicitly
+freeze and one additional explicitly frozen `NextRobot` pawn during setup;
+all candidate selection, placement, IDs, and
+inherited lifecycle stay native. The live bridge therefore consumes the
+already-created board rather than forecasting setup, and the record introduces
+neither fake dynamic `forced_pawns` metadata nor a mission gate. The shared
+helper now anchors the existing one-HP, move-four, player-team, no-corpse
+Corporate tank and its zero-damage, no-push freeze projectile mapping
+in Python and Rust, while retaining targeting/timing as native behavior.
 
 ## Highest-value expansion order
 
