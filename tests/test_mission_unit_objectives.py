@@ -53,6 +53,13 @@ def test_mission_botdefense_protects_snowmine_robots():
     assert resolved["protect"] == ["Snowmine1"]
 
 
+def test_mission_freezebots_protects_all_source_robot_families():
+    resolved = resolve_unit_objectives("Mission_FreezeBots")
+
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["Snowtank", "Snowlaser", "Snowart"]
+
+
 def test_mission_botdefense_empty_bridge_list_uses_static_robot_objective():
     bridge_data = {
         "mission_id": "Mission_BotDefense",

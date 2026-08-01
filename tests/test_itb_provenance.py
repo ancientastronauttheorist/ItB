@@ -5021,3 +5021,99 @@ def test_real_mission_shields_record_preserves_source_live_gap():
     gaps = " ".join(record["known_gaps"])
     assert "exact one-time source semantics" in gaps
     assert "controlled direct-hit, push, and death traces" in gaps
+
+
+def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
+    record = _mission_provenance_record("mission-boombots-explosive-decay")
+    assert record["coverage"] == "partial"
+    source = record["sources"][0]
+    assert source["path"] == "scripts/advanced/missions/snow/mission_boombots.lua"
+    assert source["sha256"] == (
+        "1af2b8146aa399f01131f4ae08e7f04f3439ee00a7b908451d4684d0bc44ae2b"
+    )
+    assert source["symbols"][1:5] == [
+        "Mission_BoomBots:StartMission", "Mission_BoomBots:GetDestroyedCount",
+        "Mission_BoomBots:UpdateObjectives", "Mission_BoomBots:GetCompletedObjectives",
+    ]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "two unfrozen and two frozen" in facts
+    assert "Explodes=true" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "random_element roster choice" in gaps
+    assert "0/1/2-reputation settlement" in gaps
+
+
+def test_real_mission_factory_record_pins_critical_and_order_gaps():
+    record = _mission_provenance_record("mission-factory-critical-launches")
+    assert record["coverage"] == "partial"
+    source = record["sources"][0]
+    assert source["path"] == "scripts/missions/snow/mission_factory.lua"
+    assert source["sha256"] == (
+        "bcb9d31ba2efa17c2d48db36acb152760ed0ce7ab89fda4a486389b259af0997"
+    )
+    assert source["symbols"][1:] == [
+        "Mission_Factory:UpdateSpawning", "Mission_Factory:UpdateMission",
+        "Mission_Factory:NextTurn", "Mission_Factory:GetCompletedObjectives",
+    ]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "turn parity" in facts
+    assert "lower-UID Burnbug" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "FlyingSpawns" in gaps
+    assert "SetPowered transition scheduling" in gaps
+
+
+def test_real_mission_freezebots_record_pins_frozen_objective_coverage():
+    record = _mission_provenance_record("mission-freezebots-frozen-robots")
+    assert record["coverage"] == "partial"
+    source = record["sources"][0]
+    assert source["path"] == "scripts/missions/snow/mission_freezebots.lua"
+    assert source["sha256"] == (
+        "3fcff4c8edcdab7b787b255e916083e414035a04a32e0b9dec0e82e6e5246786"
+    )
+    assert source["symbols"][1:] == [
+        "Mission_FreezeBots:StartMission", "Mission_FreezeBots:GetCompletedObjectives",
+        "Mission_FreezeBots:GetCompletedStatus", "Mission_FreezeBots:CountDead",
+        "Mission_FreezeBots:CountFrozen", "Mission_FreezeBots:UpdateObjectives",
+    ]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "NextRobot twice" in facts
+    assert "Freeze_Tank" in facts
+    assert "Snowtank, Snowlaser, and Snowart families" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "duplicate-family selection" in gaps
+    assert "partial reward settlement" in gaps
+
+
+def test_real_mission_freezemines_record_pins_inherited_native_gap():
+    record = _mission_provenance_record("mission-freezemines-inherited-placement")
+    assert record["coverage"] == "partial"
+    source = record["sources"][0]
+    assert source == {
+        "path": "scripts/missions/snow/mission_freezemines.lua",
+        "sha256": "a1b3389a818218d42d9eb4446cabaa5716b0b116c69d4ebbfb2af1fcc188474f",
+        "symbols": ["Mission_FreezeMines"],
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "no active top-level callback" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Mission_MineBase inherited placement" in gaps
+    assert "must not be interpreted as callback coverage" in gaps
+
+
+def test_real_mission_stasis_record_avoids_inferred_objective():
+    record = _mission_provenance_record("mission-stasis-frozen-critical-bots")
+    assert record["coverage"] == "partial"
+    source = record["sources"][0]
+    assert source["path"] == "scripts/missions/snow/mission_stasis.lua"
+    assert source["sha256"] == (
+        "1351366c1b32bb146186c61370bb0b6f1be8033dcada3d22a0a705641e6123a8"
+    )
+    assert source["symbols"] == [
+        "Mission_Stasis", "Mission_Stasis:StartMission", "Mission_Stasis:UpdateMission",
+    ]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "does not receive Mission_Reactivation" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "does not infer such semantics" in gaps
+    assert "no objective, completed-status, reward" in gaps

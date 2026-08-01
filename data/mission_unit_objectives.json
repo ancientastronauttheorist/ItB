@@ -20,7 +20,7 @@
   },
   "Mission_FreezeBots": {
     "destroy": [],
-    "protect": ["Snowtank", "Snowlaser"]
+    "protect": ["Snowtank", "Snowlaser", "Snowart"]
   },
   "Mission_BotDefense": {
     "destroy": [],

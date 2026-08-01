@@ -1144,6 +1144,63 @@ def test_summary_tracks_protected_objective_units_from_mission_metadata():
     ]
 
 
+def test_freezebots_snowart_objective_unfreeze_and_loss_are_safety_blocks():
+    def summary_for(*, frozen, hp):
+        data = _bridge_with_mech()
+        data.update({
+            "mission_id": "Mission_FreezeBots",
+            "turn": 4,
+            "total_turns": 4,
+        })
+        data["units"].append({
+            "uid": 303,
+            "type": "Snowart2",
+            "x": 3,
+            "y": 2,
+            "hp": hp,
+            "max_hp": 1,
+            "team": 6,
+            "mech": False,
+            "move": 4,
+            "weapons": ["SnowartAtk2"],
+            "frozen": frozen,
+        })
+        board = Board.from_bridge_data(data)
+        return _capture_board_summary(board, data)
+
+    current = summary_for(frozen=True, hp=1)
+    unfrozen = summary_for(frozen=False, hp=1)
+    lost = summary_for(frozen=False, hp=0)
+
+    assert current["protected_objective_units_alive"] == 1
+    assert current["protected_objective_units_frozen"] == 1
+    assert current["protected_objective_units"] == [{
+        "uid": 303,
+        "type": "Snowart2",
+        "pos": [3, 2],
+        "hp": 1,
+        "max_hp": 1,
+        "alive": True,
+        "frozen": True,
+        "webbed": False,
+        "team": 6,
+    }]
+
+    unfreeze_safety = audit_plan_safety(current, unfrozen)
+    loss_safety = audit_plan_safety(current, lost)
+
+    assert any(
+        violation["kind"] == "protected_objective_unit_unfrozen"
+        and violation["blocking"]
+        for violation in unfreeze_safety["violations"]
+    )
+    assert any(
+        violation["kind"] == "protected_objective_unit_lost"
+        and violation["blocking"]
+        for violation in loss_safety["violations"]
+    )
+
+
 def test_botdefense_robot_loss_is_a_protected_objective_safety_block():
     def summary_for(include_second_robot):
         data = _bridge_with_mech()

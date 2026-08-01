@@ -15,6 +15,256 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Mission_BoomBots source creates two unfrozen and two frozen random Snowtank1_Boom, Snowlaser1_Boom, or Snowart1_Boom pawns. It counts the four stored pawn IDs by Board:IsPawnAlive and awards two reputation at four deaths, one at two or three deaths, and zero below two. Each Boom subclass sets Explodes=true."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing Rust volatile-decay behavior explicitly includes Pinnacle *_Boom types and has focused Boom Bot death, pushed-corpse, attract, and delayed-decay timing tests. It models the shared explosion mechanics without reconstructing this mission's native roster selection or objective settlement."
+        }
+      ],
+      "id": "mission-boombots-explosive-decay",
+      "implementations": [
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": ["is_volatile_vek"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["apply_volatile_decay"]
+        }
+      ],
+      "known_gaps": [
+        "Native random_element roster choice, Board:AddPawn placement, frozen setup ordering, pawn-ID storage, and Mission_Auto spawn scheduling are not reconstructed; Rust consumes the live board.",
+        "Explodes=true establishes a native dependency, not a complete source proof of the explosion footprint, queued ordering, corpse displacement, objective UI, or 0/1/2-reputation settlement.",
+        "The mission source does not itself prove the current shared Rust volatile-decay representation for every shield, armor, terrain, chained-death, or simultaneous-effect edge."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/snow/mission_boombots.lua",
+          "sha256": "1af2b8146aa399f01131f4ae08e7f04f3439ee00a7b908451d4684d0bc44ae2b",
+          "symbols": ["Mission_BoomBots", "Mission_BoomBots:StartMission", "Mission_BoomBots:GetDestroyedCount", "Mission_BoomBots:UpdateObjectives", "Mission_BoomBots:GetCompletedObjectives", "Snowtank1_Boom", "Snowlaser1_Boom", "Snowart1_Boom"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_boom_bot_death_uses_volatile_decay", "test_needle_shot_killed_boom_bot_open_push_decays_from_final_tile", "test_rock_accelerator_defers_boom_bot_decay_until_after_side_pushes", "test_boom_bot_attract_death_matches_central_processor_capture"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_boombots_record_pins_callbacks_and_explosion_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Factory source inherits Mission_Critical, spawns ordinary Vek, chooses one undamaged critical building by turn parity with fallback to the other, launches one NextRobot through FlyingSpawns, records the landing point, disables the new pawn when it arrives, and restores its power on the next enemy-team turn. Its two-critical objective awards two, one, or zero reputation for zero, one, or two damaged criticals."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing bridge objective-key extraction preserves Mission_Critical critical buildings, while Rust honors bridge attack order. The Mission_Factory regression prevents a lower-UID Burnbug from incorrectly killing a Snowlaser before its live queued beam."
+        }
+      ],
+      "id": "mission-factory-critical-launches",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["objective_keys", "state.attack_order"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["simulate_enemy_attacks"]
+        }
+      ],
+      "known_gaps": [
+        "Native Mission_Critical initialization, damaged-critical selection, FlyingSpawns target/path/launch timing, NextRobot roster RNG, landing confirmation, and SetPowered transition scheduling are not reconstructed.",
+        "Bridge critical-building and attack-order coverage does not prove native factory power state, voice/effect presentation, queued launch ordering, or complete objective settlement conformance.",
+        "The source's commented-out UpdateObjectives implementation is presentation evidence only and is not an active callback."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_factory.lua",
+          "sha256": "bcb9d31ba2efa17c2d48db36acb152760ed0ce7ab89fda4a486389b259af0997",
+          "symbols": ["Mission_Factory", "Mission_Factory:UpdateSpawning", "Mission_Factory:UpdateMission", "Mission_Factory:NextTurn", "Mission_Factory:GetCompletedObjectives"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_bridge_attack_order_lets_snowlaser_fire_before_burnbug"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_factory_record_pins_critical_and_order_gaps"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_FreezeBots source calls NextRobot twice, adds both selected bot IDs, adds Freeze_Tank, and awards full, partial, or failed reputation according to whether two, one, or zero stored bots are alive and frozen. CountDead and CountFrozen separately distinguish dead, freed, and frozen bots for status and objective display."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission objective metadata now protects all three source-selectable Snowtank, Snowlaser, and Snowart families. Board summaries expose their alive and frozen counts, plan safety rejects either a loss or unfreeze on the final turn, and static metadata represents Freeze_Tank as a friendly freeze-capable NPC. These bounded protections do not reproduce native NextRobot selection or objective accounting."
+        }
+      ],
+      "id": "mission-freezebots-frozen-robots",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_FreezeBots", "Snowtank", "Snowlaser", "Snowart"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["Freeze_Tank"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["audit_plan_safety"]
+        }
+      ],
+      "known_gaps": [
+        "Native NextRobot selection from Snowtank, Snowlaser, and Snowart families, Board:AddPawn placement, ID assignment, Freeze_Tank behavior, and Mission_Infinite spawn scheduling remain native dependencies.",
+        "Prefix-family matching covers the shipped Snowtank, Snowlaser, and Snowart variants, but duplicate-family selection, native name normalization, and mid-turn transition edges are not independently traced.",
+        "Native Board:IsPawnAlive/IsFrozen timing, UI status text, partial reward settlement, and frozen/thawed effect ordering are not independently traced."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_freezebots.lua",
+          "sha256": "3fcff4c8edcdab7b787b255e916083e414035a04a32e0b9dec0e82e6e5246786",
+          "symbols": ["Mission_FreezeBots", "Mission_FreezeBots:StartMission", "Mission_FreezeBots:GetCompletedObjectives", "Mission_FreezeBots:GetCompletedStatus", "Mission_FreezeBots:CountDead", "Mission_FreezeBots:CountFrozen", "Mission_FreezeBots:UpdateObjectives"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": ["test_summary_tracks_protected_objective_units_from_mission_metadata", "test_freezebots_snowart_objective_unfreeze_and_loss_are_safety_blocks"]
+        },
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": ["test_mission_freezebots_protects_all_source_robot_families"]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": ["test_freezebots_protected_unit_unfreeze_blocks_plan"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_freezebots_record_pins_frozen_objective_coverage"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_FreezeMines source is only a Mission_MineBase constructor that sets MineType to Freeze_Mine; it defines no active top-level callback."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing Rust and Python model freeze-mine tile behavior and the Mine-Bot setup action, while bridge/save handling and deployment policy preserve visible mines conservatively. The source delegates placement and mission lifecycle to inherited native Mission_MineBase behavior."
+        }
+      ],
+      "id": "mission-freezemines-inherited-placement",
+      "implementations": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["simulate_snowmine_setup", "simulate_attack_with_target2"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["simulate_enemy_attacks"]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": ["_read_freeze_mines_from_save"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_MineBase inherited placement, setup selection, native RNG, MineType dispatch, objective and spawn lifecycle are not defined in this source and remain unproved without the inherited source plus controlled traces.",
+        "Rust mine effects and Mine-Bot setup do not establish source-equivalent native placement count, animation/queue timing, item serialization, or every shield, landing, and terrain interaction.",
+        "This zero-callback file is indexed as exact constructor evidence; it must not be interpreted as callback coverage for Mission_MineBase."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_freezemines.lua",
+          "sha256": "a1b3389a818218d42d9eb4446cabaa5716b0b116c69d4ebbfb2af1fcc188474f",
+          "symbols": ["Mission_FreezeMines"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_player_snowmine_setup_leaves_mine_moves_and_applies_landing"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_snowmine_attack_moves_and_leaves_freeze_mine_without_damage"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_freezemines_record_pins_inherited_native_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Stasis source selects two nonblocked ground-path points in the inner x=3..6, y=1..6 rectangle, creates two random Snowtank, Snowlaser, or Snowart pawns at level 1/2 (or 2/2 after sector two), freezes them, and marks them MissionCritical. UpdateMission is an empty active callback."
+        },
+        {
+          "classification": "fact",
+          "statement": "Rust's enemy-phase regression explicitly confirms that Mission_Stasis does not receive Mission_Reactivation's special thaw behavior. That negative guard preserves ordinary frozen handling only; no source objective or reward semantics are inferred because this file defines none."
+        }
+      ],
+      "id": "mission-stasis-frozen-critical-bots",
+      "implementations": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["simulate_enemy_attacks"]
+        },
+        {
+          "path": "data/mission_metadata.json",
+          "symbols": ["Mission_Stasis"]
+        }
+      ],
+      "known_gaps": [
+        "Native PATH_GROUND eligibility, random bot and point selection, sector lookup, pawn ID allocation, SetFrozen/SetMissionCritical order, Mission_Infinite scheduling, and all native handling of the created bots remain untraced.",
+        "Mission_Stasis supplies no objective, completed-status, reward, or objective-update callback. This record deliberately does not infer such semantics from MissionCritical or external UI text.",
+        "The negative non-Reactivation thaw test does not establish complete frozen, mission-critical, spawn, queued-attack, or enemy-phase conformance."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/snow/mission_stasis.lua",
+          "sha256": "1351366c1b32bb146186c61370bb0b6f1be8033dcada3d22a0a705641e6123a8",
+          "symbols": ["Mission_Stasis", "Mission_Stasis:StartMission", "Mission_Stasis:UpdateMission"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_reactivation_thaw_skipped_on_other_missions"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_stasis_record_avoids_inferred_objective"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "The exact inventoried passive source defines 22 powered loadout IDs over 15 passive families. Storm Generator stores Damage 1/2 for base/A, Viscera Nanobots stores Heal 1/2, Networked Armor stores Health 1/2, and Vek Hormones stores Damage 1/2/2/3 for base/A/B/AB; every constructor supplies the native Passive string that distinguishes its effective variant."
         },
         {

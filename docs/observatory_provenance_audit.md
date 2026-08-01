@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 42 | 33 |
+| Missions | 75 | 47 | 28 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 61 | 35 |
+| Unique total | 96 | 66 | 30 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 276 definitions literally and leaves 466 unindexed. Category totals
+names 292 definitions literally and leaves 450 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -106,6 +106,25 @@ legacy live-derived inference, not source proof: its original Ricochet path was
 later diagnosed as a native no-op and the observed Scorpion already had a
 shield. Controlled direct-hit, push, and generator-death traces are required
 before reconciling that inference with the exact Lua semantics.
+
+The Pinnacle mission slice adds five exact shipped sources in five bounded
+`partial` records and names all sixteen active callbacks among them. Boom Bots
+creates two live plus two frozen random Boom-bot variants, records their IDs,
+and has a 0/1/2-reputation death counter; shared Rust explosive-decay coverage
+is linked without claiming the native roster, placement, or objective timing.
+Factory sources establish alternating intact-critical selection, a disabled
+launched robot, and enemy-turn re-powering. Existing critical-building bridge
+extraction and live attack-order preservation are attached, while native launch
+and power scheduling remain open. Freeze Bots adds two random robots plus a
+Freeze Tank and counts only living frozen stored IDs. Objective metadata now
+matches all three source-selectable Snowtank, Snowlaser, and Snowart families;
+final-turn safety blocks either thaw or loss, while native selection and counter
+timing remain open. Freeze Mines is a zero-callback constructor: it only
+sets `MineType = "Freeze_Mine"` on inherited `Mission_MineBase`; modeled mine
+behavior does not prove native placement or RNG. Finally, Stasis creates two
+random frozen, mission-critical bots on eligible inner-board ground points, but
+defines no objective or reward semantics. Its attached regression only proves
+that Stasis does not receive the separate Reactivation thaw rule.
 
 The Acid Storm lifecycle slice adds the exact
 `scripts/advanced/missions/acid/mission_acidstorm.lua` source and all six of
