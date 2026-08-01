@@ -1786,6 +1786,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Digger's separate queued cardinal damage and exposes those real pawns to
 # later attack collision. Pre-v384 corpus is archived as
 # failure_db_snapshot_sim_v383.jsonl.
+# v391 reapplies Mission_AcidStorm ACID to every living pawn at completed
+# player-action and enemy-phase boundaries while Storm_Generator remains
+# alive. Newly spawned allies and enemies now match source UpdateMission
+# behavior in solver/replay checkpoints; generator death stops new
+# application without clearing prior ACID. Pre-v391 corpus is archived as
+# recordings/failure_db_snapshot_sim_v390.jsonl.
 # v390: Control Shot first-click eligibility follows the shipped predicate
 # order for powered, guarding/burrower, frozen, grappled/current/base move,
 # and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained, the
@@ -1813,7 +1819,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 390
+SIMULATOR_VERSION = 391
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

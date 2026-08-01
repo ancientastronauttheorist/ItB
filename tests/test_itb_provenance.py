@@ -4264,3 +4264,96 @@ def test_real_cluster_artillery_record_pins_variants_and_inherited_helpers():
     assert "ArtilleryDefault" in gaps
     assert "Grid Defense" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_mission_acid_storm_record_pins_generator_lifecycle():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-acid-storm-lifecycle"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/advanced/missions/acid/mission_acidstorm.lua",
+            "sha256": (
+                "71d3d80d27ddeee0f05b6f237eaba35e"
+                "98b5e585d98e67331b0b56a62731f6b8"
+            ),
+            "symbols": [
+                "Mission_AcidStorm",
+                "Env_AcidStorm",
+                "Mission_AcidStorm:GetCompletedObjectives",
+                "Mission_AcidStorm:NextTurn",
+                "Mission_AcidStorm:UpdateObjectives",
+                "Mission_AcidStorm:StartMission",
+                "Mission_AcidStorm:UpdateMission",
+                "Storm_Generator",
+                "Storm_Generator_Tooltip",
+                "Storm_Generator_Tooltip:GetSkillEffect",
+            ],
+        }
+    ]
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_unit_objectives.json"] == {
+        "Mission_AcidStorm",
+        "Storm_Generator",
+    }
+    assert implementations["rust_solver/src/serde_bridge.rs"] == {
+        "known_minor_type",
+        "Storm_Generator",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "acid_storm_active",
+        "apply_active_acid_storm",
+        "drain_pending_spider_eggs",
+        "simulate_action_with_target2",
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "spawn_enemy",
+        "simulate_enemy_attacks",
+    }
+    assert implementations["rust_solver/src/replay.rs"] == {
+        "apply_active_acid_storm",
+        "replay_solution",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_acid_storm_completed_player_action_acidifies_fresh_walking_bomb"
+    }
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_acid_storm_enemy_phase_refreshes_fresh_enemy_spawns_and_keeps_prior_acid_after_death"
+    }
+    assert tests["rust_solver/src/replay.rs"] == {
+        "replay_solution_acid_storm_refreshes_fresh_player_spawn_before_snapshot"
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "every remaining building" in facts
+    assert "every living pawn" in facts
+    assert "does not remove existing ACID" in facts
+    assert "completed player-action and enemy-phase boundaries" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "GetReplaceableBuildings" in gaps
+    assert "native Mission:BaseUpdate scheduling" in gaps
+    assert "SetWeather" in gaps
+    assert "protected achievement session" in gaps

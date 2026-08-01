@@ -1293,6 +1293,26 @@ fn acid_storm_active(board: &Board) -> bool {
             .any(|u| u.hp > 0 && u.type_name_str() == "Storm_Generator")
 }
 
+/// Apply the ACID Storm mission update at a completed simulator boundary.
+///
+/// `Mission_AcidStorm:UpdateMission` reapplies ACID to every living pawn
+/// while its Storm_Generator remains alive.  We deliberately model that at
+/// completed player/enemy phase boundaries instead of assigning a native
+/// sub-effect timestamp: this keeps newly-created allies, Vek, eggs, and
+/// split children consistent in solver and replay projections without making
+/// a claim about the scheduler between individual Lua effects.  The source
+/// stops the weather on generator death but does not remove existing ACID.
+pub(crate) fn apply_active_acid_storm(board: &mut Board) {
+    if !acid_storm_active(board) {
+        return;
+    }
+    for unit in board.units.iter_mut().take(board.unit_count as usize) {
+        if unit.hp > 0 {
+            unit.set_acid(true);
+        }
+    }
+}
+
 fn shield_generator_active(board: &Board) -> bool {
     board.mission_id == "Mission_Shields"
         && board.units[..board.unit_count as usize]
@@ -7294,6 +7314,7 @@ pub fn simulate_action_with_target2(
         board.player_grid_save_expected += (result.grid_damage as f32) * (gd / 100.0);
     }
     clear_destroyed_digger_walls(board);
+    apply_active_acid_storm(board);
     result
 }
 
@@ -9759,6 +9780,30 @@ mod tests {
         assert!(
             board.units[mech].acid(),
             "active ACID Storm should immediately keep repaired units ACIDed"
+        );
+    }
+
+    #[test]
+    fn test_acid_storm_completed_player_action_acidifies_fresh_walking_bomb() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_AcidStorm".to_string();
+        add_enemy_type(&mut board, 99, 1, 1, 3, "Storm_Generator");
+        let dispenser = add_mech(&mut board, 10, 3, 1, 3, WId::RangedDeployBomb);
+
+        let _ = simulate_action(
+            &mut board,
+            dispenser,
+            (3, 1),
+            WId::RangedDeployBomb,
+            (3, 3),
+            &WEAPONS,
+        );
+
+        let bomb = board.unit_at(3, 3).expect("Bomb Dispenser should spawn its ally");
+        assert_eq!(board.units[bomb].type_name_str(), "DeployUnit_Bomby");
+        assert!(
+            board.units[bomb].acid(),
+            "the active ACID Storm refresh must cover fresh player allies"
         );
     }
 

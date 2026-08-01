@@ -21,6 +21,7 @@ use crate::enemy::{
 use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
 use crate::simulate::{
+    apply_active_acid_storm,
     clear_destroyed_digger_walls,
     simulate_attack_with_target2,
     simulate_move,
@@ -162,6 +163,10 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             // explicit skip after any move-only action, so the action is spent.
             board.units[mech_idx].set_active(false);
         }
+        // The split replay path intentionally bypasses simulate_action's
+        // completed-action boundary. Apply the source-defined Acid Storm
+        // update before capturing the post-action snapshot.
+        apply_active_acid_storm(&mut board);
         let attack_unit_deaths = count_unit_deaths_between(&before_attack_board, &board);
         let action_unit_deaths = move_unit_deaths + attack_unit_deaths;
         let mut all_events = move_result.events.clone();
@@ -760,6 +765,44 @@ mod tests {
             "Replay WId::None plan entries represent bridge skips and must deactivate the unit");
         assert_eq!(jet["status"]["boosted"], true,
             "Replay snapshots must preserve Boosted so verify does not create false status diffs");
+    }
+
+    #[test]
+    fn replay_solution_acid_storm_refreshes_fresh_player_spawn_before_snapshot() {
+        let bridge = r#"{
+          "mission_id": "Mission_AcidStorm",
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "BomblingMech", "x": 3, "y": 1,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true, "weapons": ["Ranged_DeployBomb"]},
+            {"uid": 99, "type": "Storm_Generator", "x": 1, "y": 1,
+             "hp": 3, "max_hp": 3, "team": 6, "minor": true}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [3, 1],
+          "weapon_id": "Ranged_DeployBomb",
+          "target": [3, 3]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let value: Value = serde_json::from_str(&raw).expect("valid replay JSON");
+        let bomb = value["predicted_states"][0]["post_attack"]["units"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|unit| unit["type"] == "DeployUnit_Bomby")
+            .expect("Bomb Dispenser spawn is serialized");
+        assert_eq!(bomb["status"]["acid"], true);
     }
 
     #[test]

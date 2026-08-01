@@ -56,21 +56,34 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 28 | 47 |
-| Environments | 15 | 12 | 3 |
-| Unique total | 96 | 47 | 49 |
+| Missions | 75 | 29 | 46 |
+| Environments | 15 | 13 | 2 |
+| Unique total | 96 | 48 | 48 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 203 definitions literally and leaves 539 unindexed. Category totals
+names 209 definitions literally and leaves 533 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
-Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family records name
-eighteen literally and leave 22 unindexed. That is a precise indexing backlog, not
-evidence that all 22 behaviors are absent from Rust.
+Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
+records name seventeen literally and leave 23 unindexed. That is a precise
+indexing backlog, not evidence that all 23 behaviors are absent from Rust.
+
+The Acid Storm lifecycle slice adds the exact
+`scripts/advanced/missions/acid/mission_acidstorm.lua` source and all six of
+its active callbacks. Setup replaces one native-selected building with the
+neutral enemy-team Storm Generator, starts full-board ACID rain, and ACIDs
+every remaining building. While the generator lives, `UpdateMission` reapplies
+ACID to every living pawn; after it dies, the callback stops the weather but
+does not clear existing ACID. Simulator v391 now applies that refresh at
+completed player-action and enemy-phase checkpoints, including fresh player
+allies, enemy eggs/blobs/totems, and split children in solver and replay state.
+Native setup selection, exact `Mission:BaseUpdate` scheduling between queued
+micro-effects, weather presentation, and exhaustive status/terrain edges
+remain explicit partial-coverage gaps.
 
 The Acid Vats slice adds the exact
 `scripts/missions/acid/mission_barrels.lua` source and all nine of its active

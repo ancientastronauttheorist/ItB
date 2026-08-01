@@ -9,6 +9,7 @@ use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
 use crate::simulate::{
+    apply_active_acid_storm,
     apply_auto_shield_after_building_damage,
     apply_damage,
     apply_damage_defer_death_explosion,
@@ -2662,6 +2663,11 @@ pub fn simulate_enemy_attacks(
     // so a Vek that moved onto the corpse's tile during the attack loop
     // won't get displaced.
     crate::simulate::drain_pending_spider_eggs(board);
+    // Mission_AcidStorm refreshes all living pawns after the completed enemy
+    // phase. This deliberately avoids assigning a native sub-effect time
+    // while ensuring enemy-created eggs, blobs, and split children match the
+    // next-player-turn projection.
+    apply_active_acid_storm(board);
 
     result
 }
@@ -3339,6 +3345,46 @@ mod tests {
         assert_eq!((board.units[snowmine].x, board.units[snowmine].y), (2, 2));
         assert!(!board.tile(2, 2).freeze_mine());
         assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_acid_storm_enemy_phase_refreshes_fresh_enemy_spawns_and_keeps_prior_acid_after_death() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_AcidStorm".to_string();
+        add_enemy_with_type(&mut board, 90, 1, 1, 3, "Storm_Generator", -1, -1);
+        let spider = add_enemy_with_type(&mut board, 91, 3, 1, 2, "Spider1", 3, 3);
+        board.units[spider].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let egg = board.unit_at(3, 3).expect("Spider attack should spawn a WebbEgg");
+        assert_eq!(board.units[egg].type_name_str(), "WebbEgg1");
+        assert!(
+            board.units[egg].acid(),
+            "the active ACID Storm refresh must cover fresh enemy spawns"
+        );
+
+        // Once the controller is gone, source UpdateMission stops rain but
+        // never clears ACID already applied to existing pawns.
+        board.units[0].hp = 0;
+        let retained = egg;
+        let second_spider = add_enemy_with_type(&mut board, 92, 5, 1, 2, "Spider1", 5, 3);
+        board.units[second_spider]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(
+            board.units[retained].acid(),
+            "stopping the storm must not remove prior ACID"
+        );
+        let fresh = board.unit_at(5, 3).expect("second Spider attack should spawn a WebbEgg");
+        assert!(
+            !board.units[fresh].acid(),
+            "a dead Storm_Generator must not acidify fresh spawns"
+        );
     }
 
     #[test]

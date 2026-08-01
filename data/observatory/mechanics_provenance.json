@@ -5965,6 +5965,127 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_AcidStorm source starts full-board ACID rain, replaces one native GetReplaceableBuildings choice with the Storm_Generator, and applies ACID to every remaining building. The generator is a neutral, enemy-team, three-HP, immobile, nonpushable Minor mission pawn."
+        },
+        {
+          "classification": "fact",
+          "statement": "While the Storm_Generator is alive, Mission_AcidStorm:UpdateMission restarts the full-board rain and calls SetAcid(true) on every living pawn returned for TEAM_ANY. Once the generator is dead, it stops the weather and returns; the source does not remove existing ACID from pawns or buildings."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v391 retains the live generator as a destroy objective and Minor pawn, then reapplies ACID at completed player-action and enemy-phase boundaries while that generator remains alive. This covers newly created player allies, enemy eggs, blobs, totems, and split children in solver and replay checkpoints; after generator death, fresh spawns remain clean while prior ACID persists."
+        }
+      ],
+      "id": "mission-acid-storm-lifecycle",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": [
+            "Mission_AcidStorm",
+            "Storm_Generator"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "known_minor_type",
+            "Storm_Generator"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "acid_storm_active",
+            "apply_active_acid_storm",
+            "drain_pending_spider_eggs",
+            "simulate_action_with_target2"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "spawn_enemy",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "apply_active_acid_storm",
+            "replay_solution"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Mission setup still depends on native GetReplaceableBuildings, random_removal, Board:ClearSpace, Board:AddPawn, pawn-ID allocation, and setup timing. Rust consumes the selected live generator and building ACID state rather than recreating placement or setup.",
+        "Lua gates the storm through the mission's exact StormID. Rust falls back to any living Storm_Generator because the bridge does not export StormID; the shipped setup creates exactly one and has no respawn callback, while malformed duplicate-generator payloads remain outside the proof.",
+        "The exact native Mission:BaseUpdate scheduling of UpdateMission relative to individual queued SkillEffect operations is not independently traced. v391 applies the full-board refresh at stable completed player-action and enemy-phase checkpoints and does not claim an ACID timestamp between micro-effects.",
+        "Board:SetWeather duration, rain visuals/audio, weather teardown, and any presentation-only effects are not simulated. Native Pawn:SetAcid and Board:SetAcid interactions across every shield, frozen, terrain, building, death, and spawn edge case are not exhaustively captured.",
+        "GetCompletedObjectives, UpdateObjectives, NextTurn voice timing, partial mission-result presentation, and the native objective scheduler remain source-catalogued rather than independently reproduced end-to-end.",
+        "No fresh controlled bridge capture was taken during the protected achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/acid/mission_acidstorm.lua",
+          "sha256": "71d3d80d27ddeee0f05b6f237eaba35e98b5e585d98e67331b0b56a62731f6b8",
+          "symbols": [
+            "Mission_AcidStorm",
+            "Env_AcidStorm",
+            "Mission_AcidStorm:GetCompletedObjectives",
+            "Mission_AcidStorm:NextTurn",
+            "Mission_AcidStorm:UpdateObjectives",
+            "Mission_AcidStorm:StartMission",
+            "Mission_AcidStorm:UpdateMission",
+            "Storm_Generator",
+            "Storm_Generator_Tooltip",
+            "Storm_Generator_Tooltip:GetSkillEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_acid_storm_completed_player_action_acidifies_fresh_walking_bomb"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_acid_storm_enemy_phase_refreshes_fresh_enemy_spawns_and_keeps_prior_acid_after_death"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_acid_storm_refreshes_fresh_player_spawn_before_snapshot"
+          ]
+        },
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": [
+            "test_mission_acidstorm_destroys_storm_generator"
+          ]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": [
+            "test_summary_tracks_destroy_objective_units_from_mission_metadata"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_mission_acid_storm_record_pins_generator_lifecycle"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
