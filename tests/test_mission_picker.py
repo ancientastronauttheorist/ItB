@@ -17,6 +17,7 @@ from src.strategy.mission_picker import (
     BONUS_MECHS,
     BONUS_PACIFIST,
     BONUS_SELFDAMAGE,
+    derive_mission_tags,
     derive_squad_tags,
     score_island_map,
     score_mission,
@@ -399,6 +400,27 @@ def test_native_forecast_gated_mission_loses_to_safe_default_pick(mission_id):
     assert "native forecast semantics unavailable" in " ".join(
         scored["rationale_lines"]
     )
+
+
+def test_advanced_wind_mission_is_not_tagged_as_legacy_critical_buildings():
+    metadata = {
+        "Mission_Wind": {
+            "base_class": "Mission_Infinite",
+            "environment": "Env_RandomWind",
+            "has_objective_building": False,
+            "infinite_spawn": True,
+        },
+    }
+
+    tags = derive_mission_tags(
+        "Mission_Wind",
+        [],
+        "Env_RandomWind",
+        mission_metadata=metadata,
+    )
+
+    assert "protect_specific_building" not in tags
+    assert "infinite_spawn" in tags
 
 
 def test_native_forecast_gate_is_exact_id_only():

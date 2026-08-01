@@ -9168,6 +9168,180 @@ _MISSION_NATIVE_FORECAST_GAPS = {
 }
 
 
+def _mission_wind_payload_block(board, bridge_data: dict | None) -> dict | None:
+    """Fail closed when Mission_Wind lacks its complete live warning payload.
+
+    The native plan is safe to forecast only after the bridge exposes the
+    already-selected vertical direction, both full interior warned columns,
+    and their exact nonlethal v2 encoding.  This is a live payload-integrity
+    gate, not a blanket native-mission gate: non-Wind missions and complete
+    Wind payloads pass unchanged.
+    """
+    mission_id = ""
+    if isinstance(bridge_data, dict):
+        mission_id = str(bridge_data.get("mission_id") or "")
+    mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    if mission_id != "Mission_Wind":
+        return None
+    if (
+        isinstance(bridge_data, dict)
+        and bridge_data.get("phase") != "combat_player"
+    ):
+        return None
+
+    gaps: list[dict] = []
+    observed: dict = {}
+    if not isinstance(bridge_data, dict):
+        gaps.append({"kind": "mission_wind_live_payload_missing"})
+        bridge_data = {}
+
+    env_type = bridge_data.get("env_type")
+    observed["env_type"] = env_type
+    if env_type != "wind":
+        gaps.append({
+            "kind": "mission_wind_environment_identity_invalid",
+            "observed_env_type": env_type,
+            "required_env_type": "wind",
+        })
+
+    wind_dir = bridge_data.get("environment_wind_dir")
+    observed["environment_wind_dir"] = wind_dir
+    if type(wind_dir) is not int or wind_dir not in {0, 2}:
+        gaps.append({
+            "kind": "mission_wind_direction_invalid",
+            "observed_environment_wind_dir": wind_dir,
+            "required_raw_directions": [0, 2],
+            "source_semantics": "Env_RandomWind selects DIR_UP or DIR_DOWN only",
+        })
+
+    masks: dict[str, set[tuple[int, int]]] = {}
+    for field in ("environment_danger", "environment_danger_v2"):
+        raw_mask = bridge_data.get(field)
+        observed[f"{field}_count"] = (
+            len(raw_mask) if isinstance(raw_mask, list) else None
+        )
+        if not isinstance(raw_mask, list):
+            gaps.append({
+                "kind": "mission_wind_warning_mask_missing",
+                "field": field,
+            })
+            continue
+
+        positions: list[tuple[int, int]] = []
+        malformed_entries: list[int] = []
+        invalid_encoding_entries: list[int] = []
+        for index, entry in enumerate(raw_mask):
+            if not (
+                isinstance(entry, (list, tuple))
+                and len(entry) >= 2
+                and type(entry[0]) is int
+                and type(entry[1]) is int
+                and 0 <= entry[0] < 8
+                and 0 <= entry[1] < 8
+            ):
+                malformed_entries.append(index)
+                continue
+            positions.append((entry[0], entry[1]))
+            if field == "environment_danger_v2" and not (
+                len(entry) == 5
+                and type(entry[2]) is int
+                and type(entry[3]) is int
+                and type(entry[4]) is int
+                and entry[2] == 1
+                and entry[3] == 0
+                and entry[4] == 0
+            ):
+                invalid_encoding_entries.append(index)
+
+        unique_positions = set(positions)
+        columns = sorted({x for x, _y in unique_positions})
+        invalid_columns = sorted(set(columns) - set(range(1, 6)))
+        rows_by_column = {
+            str(x): sorted(y for px, y in unique_positions if px == x)
+            for x in columns
+        }
+        duplicate_count = len(positions) - len(unique_positions)
+        full_columns = (
+            len(unique_positions) == 16
+            and len(columns) == 2
+            and all(
+                {y for px, y in unique_positions if px == x} == set(range(8))
+                for x in columns
+            )
+            and not invalid_columns
+        )
+        if invalid_columns:
+            gaps.append({
+                "kind": "mission_wind_lane_columns_invalid",
+                "field": field,
+                "observed_columns": columns,
+                "invalid_columns": invalid_columns,
+                "required_column_subset": [1, 2, 3, 4, 5],
+            })
+        if invalid_encoding_entries:
+            gaps.append({
+                "kind": "mission_wind_warning_encoding_invalid",
+                "field": field,
+                "invalid_entry_indexes": invalid_encoding_entries,
+                "required_v2_encoding": "[x, y, 1, 0, 0]",
+            })
+        if malformed_entries or duplicate_count or not full_columns:
+            gaps.append({
+                "kind": "mission_wind_warning_mask_invalid",
+                "field": field,
+                "raw_entry_count": len(raw_mask),
+                "valid_unique_tile_count": len(unique_positions),
+                "columns": columns,
+                "rows_by_column": rows_by_column,
+                "malformed_entry_indexes": malformed_entries,
+                "duplicate_count": duplicate_count,
+                "required_shape": (
+                    "two distinct complete 8-tile columns selected from 1..5"
+                ),
+            })
+        masks[field] = unique_positions
+
+    if (
+        "environment_danger" in masks
+        and "environment_danger_v2" in masks
+        and masks["environment_danger"] != masks["environment_danger_v2"]
+    ):
+        gaps.append({
+            "kind": "mission_wind_warning_masks_disagree",
+            "environment_danger_only": [
+                list(pos) for pos in sorted(
+                    masks["environment_danger"] - masks["environment_danger_v2"]
+                )
+            ],
+            "environment_danger_v2_only": [
+                list(pos) for pos in sorted(
+                    masks["environment_danger_v2"] - masks["environment_danger"]
+                )
+            ],
+        })
+
+    if not gaps:
+        return None
+    return {
+        "error": "RESEARCH_REQUIRED",
+        "requires_research": True,
+        "blocking": True,
+        "non_overridable": True,
+        "reason": "mission_wind_environment_payload_incomplete",
+        "mission_id": mission_id,
+        "forecast_complete": False,
+        "forecast_gaps": gaps,
+        "observed_wind_payload": observed,
+        "next": (
+            "Refresh the live bridge and require Env_RandomWind identity, a "
+            "source-reachable raw WindDir (0=UP or 2=DOWN), matching warning "
+            "masks containing two complete columns selected from 1..5, and "
+            "exact nonlethal v2 entries [x,y,1,0,0] before solving or "
+            "delivering End Turn."
+        ),
+    }
+
+
 def _mission_native_forecast_block(board, bridge_data: dict | None) -> dict | None:
     """Fail closed for exact missions whose native phases lack a forecast.
 
@@ -9374,6 +9548,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         _print_result(post_enemy_gate)
         session.save()
         return post_enemy_gate
+
+    wind_payload_gate = _mission_wind_payload_block(board, bridge_data)
+    if wind_payload_gate is not None:
+        _print_result(wind_payload_gate)
+        return wind_payload_gate
 
     piston_gate = _mission_piston_forecast_block(board, bridge_data)
     if piston_gate is not None:
@@ -13960,6 +14139,21 @@ def _held_end_turn_safety_block_result(
             "held_end_turn_mission_identity_mismatch",
             expected_mission=session.current_mission,
             observed_mission=bridge_data.get("mission_id"),
+        )
+
+    wind_payload_gate = _mission_wind_payload_block(board, bridge_data)
+    if wind_payload_gate is not None:
+        return _blocked(
+            "held_end_turn_mission_wind_payload_incomplete",
+            error=wind_payload_gate["error"],
+            requires_research=wind_payload_gate["requires_research"],
+            non_overridable=wind_payload_gate["non_overridable"],
+            mission_id=wind_payload_gate["mission_id"],
+            forecast_complete=wind_payload_gate["forecast_complete"],
+            forecast_gaps=wind_payload_gate["forecast_gaps"],
+            observed_wind_payload=wind_payload_gate["observed_wind_payload"],
+            mission_wind_payload=wind_payload_gate,
+            next_step=wind_payload_gate["next"],
         )
 
     piston_gate = _mission_piston_forecast_block(board, bridge_data)

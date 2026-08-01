@@ -169,8 +169,8 @@ def test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch(
 
 
 def test_exact_non_target_mission_is_unaffected(monkeypatch):
-    assert _gate("Mission_Wind") is None
-    _patch_solve_inputs(monkeypatch, "Mission_Wind")
+    assert _gate("Mission_Artillery") is None
+    _patch_solve_inputs(monkeypatch, "Mission_Artillery")
 
     result = commands.cmd_solve()
 

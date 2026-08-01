@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 54 | 21 |
+| Missions | 75 | 56 | 19 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 73 | 23 |
+| Unique total | 96 | 75 | 21 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 318 definitions literally and leaves 424 unindexed. Category totals
+names 325 definitions literally and leaves 417 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -143,6 +143,30 @@ survivor objective. Existing live-state objective protection and the separately
 indexed cannon are linked, but native defended-zone selection and activation
 scheduling are unforecast; its Python fallback now pins source MoveSpeed=4 and
 default cannon, while full source-to-bridge actor conformance remains open.
+
+The sand Filler/Wind slice adds two exact shipped mission paths in two bounded
+`partial` records and names the five active Filler callbacks, while also
+completing the two omitted active callbacks in the existing Advanced Edition
+Wind record. Mission_Filler
+creates a protected Filler_Pawn at a native filler-zone point, clears its
+starting crack, and turns it into Road; its self-targeted two-column north/south
+terrain wave is catalogued but remains native-only because no Rust action model
+reconstructs its hole stop, terrain writes, or queued presentation. The legacy
+base `mission_wind.lua` is exactly two CRLF bytes with no declarations or
+callbacks. It is indexed specifically to prevent attributing the existing
+Advanced Edition wind model to an empty source; the authoritative behavior
+evidence remains the separate `environment-mission-wind` record. The Filler
+live-web safety block is explicitly a discrepancy policy beyond Filler's source
+alive-only objective predicate.
+
+The existing Advanced Edition Wind record now also names every active callback,
+including `Start` and `IsEffect`, and separates two safety layers from source
+simulation: a combat-player-only payload integrity gate requires authoritative
+environment identity, source-reachable raw direction 0 (UP) or 2 (DOWN), two
+matching complete lane columns selected from 1 through 5, and exact current
+v2 `[x, y, 1, 0, 0]` warning entries before solve or End Turn; routing no longer
+assigns this mission a stale critical-building tag. Both are fail-closed policy
+evidence, not a reconstruction of wind RNG or native environment scheduling.
 
 The Pinnacle mission slice adds five exact shipped sources in five bounded
 `partial` records and names all sixteen active callbacks among them. Boom Bots

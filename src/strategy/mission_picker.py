@@ -234,9 +234,10 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     "Mission_ForestFire":     ["fire_tile_counter"],
     # Final / boss
     "Mission_Final":          ["high_threat", "boss"],
-    # Critical buildings (Solar / Wind / Power) — protect 2 specific buildings
+    # Legacy critical-building missions. The Advanced Edition Mission_Wind
+    # definition is loaded later and replaces its old Mission_Critical class
+    # with Mission_Infinite + Env_RandomWind, so Wind must not inherit this tag.
     "Mission_Solar":          ["protect_specific_building"],
-    "Mission_Wind":           ["protect_specific_building"],
     "Mission_Power":          ["protect_specific_building"],
 }
 
@@ -391,7 +392,7 @@ def _tags_from_metadata(
         tags.add("boss")
         tags.add("high_threat")
     if rec.get("has_objective_building"):
-        # Critical missions / Mission_Solar / Wind / Power pin an
+        # Critical missions / Mission_Solar / Power pin an
         # objective building. Train and boss missions also report
         # has_objective_building but already carry their own dedicated
         # tag (``train`` / ``boss``) that drives more specific penalties

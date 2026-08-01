@@ -2213,9 +2213,13 @@
           "classification": "fact",
           "statement": "The exact inventoried Advanced Edition Lua source assigns Mission_Wind to Env_RandomWind; MarkBoard exposes two selected lanes, Plan chooses WindDir and non-repeating indices with random_bool/random_int, and ApplyEffect emits push-only SpaceDamage in direction-dependent scan order."
         },
-        {
-          "classification": "fact",
-          "statement": "Rust routes live wind warnings out of damage handling, converts engine WindDir into solver coordinates, and pushes initially occupied marked tiles before queued attacks; four focused tests, including three live-derived regressions, cover marker classification, blocked-push grid damage, pre-gust corpse cleanup, and raw-direction conversion."
+    {
+      "classification": "fact",
+      "statement": "Rust routes live wind warnings out of damage handling, converts engine WindDir into solver coordinates, and pushes initially occupied marked tiles before queued attacks; four focused tests, including three live-derived regressions, cover marker classification, blocked-push grid damage, pre-gust corpse cleanup, and raw-direction conversion."
+    },
+    {
+      "classification": "fact",
+      "statement": "The command layer now fails closed only during Mission_Wind combat-player state unless the bridge supplies an authoritative wind environment identity, a source-reachable raw engine direction of 0 (UP) or 2 (DOWN), matching complete two-column lane masks whose columns are drawn from 1 through 5, and exact current v2 warning entries [x, y, 1, 0, 0]. It blocks solve and every held End Turn path without mutating the live payload; strategy also no longer tags Advanced Mission_Wind as the unrelated legacy critical-building mission."
         }
       ],
       "id": "environment-mission-wind",
@@ -2227,19 +2231,35 @@
             "board_from_json"
           ]
         },
-        {
-          "path": "rust_solver/src/enemy.rs",
-          "symbols": [
-            "simulate_mission_wind",
-            "simulate_enemy_attacks"
-          ]
+    {
+      "path": "rust_solver/src/enemy.rs",
+      "symbols": [
+        "simulate_mission_wind",
+        "simulate_enemy_attacks"
+      ]
+    },
+    {
+      "path": "src/loop/commands.py",
+      "symbols": [
+        "_mission_wind_payload_block",
+        "cmd_solve",
+        "_held_end_turn_safety_block_result"
+      ]
+    },
+    {
+      "path": "src/strategy/mission_picker.py",
+      "symbols": [
+        "MISSION_ID_TAGS"
+      ]
         }
       ],
       "known_gaps": [
         "Rust does not reproduce Env_RandomWind:Plan RNG, LastIndices exclusion, or native RNG state/call order; it consumes the current bridge-supplied lane mask and direction.",
         "Exact native environment-versus-attack orchestration is not independently traced for this build; pre-attack ordering is supported by live regressions rather than a native scheduler proof.",
-        "Bridge marked-lane/WindDir extraction and class fallback remain runtime dependencies and are not exhaustively conformance-tested across every mission state.",
-        "This record covers Mission_Wind with RandomWind=true and Freeze=false, not generic, nonrandom, or freeze subclasses, presentation effects, or campaign environment selection."
+    "Bridge marked-lane/WindDir extraction and class fallback remain runtime dependencies and are not exhaustively conformance-tested across every mission state.",
+    "The payload gate is a non-overridable integrity stop, not a native wind planner: it deliberately consumes source-reachable raw directions {0,2}, complete two-column masks from columns 1 through 5, and exact [x, y, 1, 0, 0] v2 entries without inventing lanes, RNG, or a missing environment phase.",
+    "Removing the stale critical-building route tag prevents an unrelated policy from being attributed to Advanced Mission_Wind; it does not by itself prove mission metadata/load order or native objective behavior.",
+    "This record covers Mission_Wind with RandomWind=true and Freeze=false, not generic, nonrandom, or freeze subclasses, presentation effects, or campaign environment selection."
       ],
       "sources": [
         {
@@ -2248,21 +2268,48 @@
           "symbols": [
             "Mission_Wind",
             "Env_RandomWind",
+            "Env_RandomWind:Start",
             "Env_RandomWind:MarkBoard",
             "Env_RandomWind:Plan",
+            "Env_RandomWind:IsEffect",
             "Env_RandomWind:ApplyEffect"
           ]
         }
       ],
       "tests": [
-        {
-          "path": "rust_solver/src/simulate.rs",
-          "symbols": [
+    {
+      "path": "rust_solver/src/simulate.rs",
+      "symbols": [
             "test_mission_wind_markers_do_not_damage_buildings",
             "test_mission_wind_dir_push_bumps_mech_into_building",
             "test_mission_wind_fire_kill_corpse_does_not_block_later_gust",
-            "test_mission_wind_raw_dir_two_pushes_egg_sack_out_of_burnbug_lane"
-          ]
+        "test_mission_wind_raw_dir_two_pushes_egg_sack_out_of_burnbug_lane"
+      ]
+    },
+    {
+      "path": "tests/test_mission_wind_payload_gate.py",
+      "symbols": [
+        "test_representative_complete_current_wind_payload_passes",
+        "test_non_wind_mission_is_not_gated_by_wind_payload_shape",
+        "test_wind_payload_validation_is_scoped_to_combat_player",
+        "test_horizontal_raw_wind_directions_are_source_unreachable",
+        "test_direction_must_be_a_source_reachable_raw_engine_integer",
+        "test_environment_identity_must_be_authoritative_wind",
+        "test_malformed_partial_empty_extra_or_row_shaped_masks_block",
+        "test_matching_shape_in_both_fields_is_required",
+        "test_complete_outer_lane_columns_are_source_unreachable",
+        "test_v2_requires_exact_current_nonlethal_wind_encoding",
+        "test_cmd_solve_returns_non_overridable_research_metadata",
+        "test_auto_turn_preserves_wind_payload_gate_metadata",
+        "test_public_end_turn_paths_block_incomplete_wind_before_plan_or_dispatch",
+        "test_validator_does_not_mutate_live_bridge_payload"
+      ]
+    },
+    {
+      "path": "tests/test_mission_picker.py",
+      "symbols": [
+        "test_advanced_wind_mission_is_not_tagged_as_legacy_critical_buildings"
+      ]
         }
       ]
     },
@@ -7975,6 +8022,105 @@
         {
           "path": "tests/test_itb_provenance.py",
           "symbols": ["test_real_mission_tanks_record_pins_activation_and_static_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Filler source creates one two-HP, immobile, nonpushable, smoke-immune neutral player Filler_Pawn in its native filler zone, changes its starting tile to Road, clears that tile's Cracked state, and awards its one-reputation objective only while the stored pawn ID remains alive. Its objective callbacks test only Board:IsPawnAlive; they do not mention web state."
+        },
+        {
+          "classification": "fact",
+          "statement": "Filler_Attack is a native self-targeted wave: in two adjacent columns it attempts ROAD terrain changes north and south at increasing distance, bounces each point, and stops after finding a Hole or passing distance five; Buildings are skipped for terrain damage. Existing objective metadata, board summaries, and plan safety protect the live Filler_Pawn, but do not simulate that native action."
+        }
+      ],
+      "id": "mission-filler-earth-mover-objective",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_Filler", "Filler_Pawn"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["Filler_Pawn"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["audit_plan_safety"]
+        },
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["Mission_Filler"]
+        }
+      ],
+      "known_gaps": [
+        "Native filler-zone placement, Board:AddPawn identity/allocation, Road and Cracked setup mutation, neutral/active scheduling, objective UI, and every source mission lifecycle detail are not reproduced end-to-end.",
+        "No Rust WId/action simulation reconstructs Filler_Attack's two-column, hole-terminated terrain wave, its Building skip, bounce/sound/delay queue, or terrain/status/death interactions. Existing protection is not a claim of autonomous Filler_Pawn action conformance.",
+        "Filler_Pawn web safety is a live-derived discrepancy policy beyond the source's alive-only objective predicate; it is not source proof of objective failure. Mission route tags are likewise conservative policy, not a forecast of the native action or setup RNG."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_filler.lua",
+          "sha256": "38e00c007476a42c05bbe4968f9b081de4bbdfb3761667b0e3e72c28c39079f9",
+          "symbols": ["Mission_Filler", "Mission_Filler:StartMission", "Mission_Filler:UpdateObjectives", "Mission_Filler:GetCompletedObjectives", "Filler_Pawn", "Filler_Attack", "Filler_Attack:GetTargetScore", "Filler_Attack:GetSkillEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": ["test_mission_filler_protects_earth_mover"]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": ["test_summary_tracks_filler_pawn_webbed_objective_state"]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": ["test_filler_protected_unit_webbed_blocks_plan"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_filler_record_pins_native_wave_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried legacy scripts/missions/sand/mission_wind.lua artifact is two CRLF bytes and contains no Lua declarations, tables, or active top-level callback definitions. It cannot be evidence for Mission_Wind behavior."
+        },
+        {
+          "classification": "fact",
+          "statement": "The generated mission metadata instead identifies the Advanced Edition mission_wind.lua source, whose separate environment-mission-wind record carries the exact wind simulation evidence. This empty legacy file is indexed only to make that source distinction explicit."
+        }
+      ],
+      "id": "mission-wind-legacy-empty-stub",
+      "implementations": [
+        {
+          "path": "data/mission_metadata.json",
+          "symbols": ["Mission_Wind"]
+        }
+      ],
+      "known_gaps": [
+        "This empty stub provides no mission class, environment, RNG, lane, direction, effect, setup, scheduling, or UI semantics. It must not be used to support or contradict the separate Advanced Edition wind record.",
+        "The metadata routing to the Advanced Edition source is an inventory-derived repository artifact, not a standalone proof of runtime load order. Controlled runtime evidence remains governed by environment-mission-wind."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_wind.lua",
+          "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+          "symbols": ["legacy CRLF-only stub (no Lua symbols)"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_wind_legacy_stub_records_no_semantics"]
         }
       ]
     }

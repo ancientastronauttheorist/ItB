@@ -1071,8 +1071,10 @@ def test_real_mission_wind_record_keeps_rng_and_bridge_gaps_explicit():
             "symbols": [
                 "Mission_Wind",
                 "Env_RandomWind",
+                "Env_RandomWind:Start",
                 "Env_RandomWind:MarkBoard",
                 "Env_RandomWind:Plan",
+                "Env_RandomWind:IsEffect",
                 "Env_RandomWind:ApplyEffect",
             ],
         }
@@ -1087,22 +1089,45 @@ def test_real_mission_wind_record_keeps_rng_and_bridge_gaps_explicit():
         "board_from_json",
         "simulate_mission_wind",
         "simulate_enemy_attacks",
+        "_mission_wind_payload_block",
+        "cmd_solve",
+        "_held_end_turn_safety_block_result",
+        "MISSION_ID_TAGS",
     } <= implementation_symbols
     test_symbols = {
         symbol
         for reference in record["tests"]
         for symbol in reference["symbols"]
     }
-    assert test_symbols == {
+    assert {
         "test_mission_wind_markers_do_not_damage_buildings",
         "test_mission_wind_dir_push_bumps_mech_into_building",
         "test_mission_wind_fire_kill_corpse_does_not_block_later_gust",
         "test_mission_wind_raw_dir_two_pushes_egg_sack_out_of_burnbug_lane",
-    }
+        "test_representative_complete_current_wind_payload_passes",
+        "test_non_wind_mission_is_not_gated_by_wind_payload_shape",
+        "test_wind_payload_validation_is_scoped_to_combat_player",
+        "test_horizontal_raw_wind_directions_are_source_unreachable",
+        "test_direction_must_be_a_source_reachable_raw_engine_integer",
+        "test_environment_identity_must_be_authoritative_wind",
+        "test_malformed_partial_empty_extra_or_row_shaped_masks_block",
+        "test_matching_shape_in_both_fields_is_required",
+        "test_complete_outer_lane_columns_are_source_unreachable",
+        "test_v2_requires_exact_current_nonlethal_wind_encoding",
+        "test_cmd_solve_returns_non_overridable_research_metadata",
+        "test_auto_turn_preserves_wind_payload_gate_metadata",
+        "test_public_end_turn_paths_block_incomplete_wind_before_plan_or_dispatch",
+        "test_validator_does_not_mutate_live_bridge_payload",
+        "test_advanced_wind_mission_is_not_tagged_as_legacy_critical_buildings",
+    } <= test_symbols
     gaps = " ".join(record["known_gaps"])
     assert "RNG" in gaps
     assert "bridge" in gaps.lower()
     assert "native" in gaps.lower()
+    assert "integrity stop" in gaps
+    assert "{0,2}" in gaps
+    assert "columns 1 through 5" in gaps
+    assert "[x, y, 1, 0, 0]" in gaps
 
 
 def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explicit():
@@ -5218,6 +5243,59 @@ def test_real_mission_tanks_record_pins_activation_and_static_gap():
     assert "SetPowered/SetNeutral timing" in gaps
     assert "synchronized Python fallback movement" in gaps
     assert "separately indexed Deploy_TankShot cannon" in gaps
+
+
+def test_real_mission_filler_record_pins_native_wave_gap():
+    record = _mission_provenance_record("mission-filler-earth-mover-objective")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/sand/mission_filler.lua",
+        "sha256": "38e00c007476a42c05bbe4968f9b081de4bbdfb3761667b0e3e72c28c39079f9",
+        "symbols": [
+            "Mission_Filler", "Mission_Filler:StartMission",
+            "Mission_Filler:UpdateObjectives",
+            "Mission_Filler:GetCompletedObjectives", "Filler_Pawn",
+            "Filler_Attack", "Filler_Attack:GetTargetScore",
+            "Filler_Attack:GetSkillEffect",
+        ],
+    }]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_unit_objectives.json"] == {
+        "Mission_Filler", "Filler_Pawn",
+    }
+    assert implementations["src/solver/plan_safety.py"] == {"audit_plan_safety"}
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "Road" in facts
+    assert "Cracked" in facts
+    assert "stops after finding a Hole" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Board:AddPawn identity/allocation" in gaps
+    assert "No Rust WId/action simulation" in gaps
+    assert "live-derived discrepancy policy" in gaps
+
+
+def test_real_mission_wind_legacy_stub_records_no_semantics():
+    record = _mission_provenance_record("mission-wind-legacy-empty-stub")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/sand/mission_wind.lua",
+        "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+        "symbols": ["legacy CRLF-only stub (no Lua symbols)"],
+    }]
+    assert record["implementations"] == [{
+        "path": "data/mission_metadata.json",
+        "symbols": ["Mission_Wind"],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "two CRLF bytes" in facts
+    assert "contains no Lua declarations" in facts
+    assert "Advanced Edition mission_wind.lua source" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "provides no mission class" in gaps
+    assert "must not be used to support or contradict" in gaps
 
 
 def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
