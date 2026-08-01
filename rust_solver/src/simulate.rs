@@ -16544,16 +16544,19 @@ mod tests {
         use crate::enemy::simulate_enemy_attacks;
         use crate::types::xy_to_idx;
         let mut board = make_test_board();
+        board.mission_id = "Mission_Cataclysm".to_string();
         let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
         let bit = 1u64 << xy_to_idx(3, 3);
         board.env_danger |= bit;
         board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
 
         let original_positions: [(u8, u8); 16] = [(0, 0); 16];
         let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
 
         assert_eq!(board.units[idx].hp, 0,
             "Massive unit on Cataclysm lethal env-danger tile must die");
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Chasm);
     }
 
     #[test]
@@ -16563,16 +16566,22 @@ mod tests {
         use crate::enemy::simulate_enemy_attacks;
         use crate::types::xy_to_idx;
         let mut board = make_test_board();
+        board.mission_id = "Mission_Crack".to_string();
+        board.tile_mut(4, 2).terrain = Terrain::Mountain;
+        board.tile_mut(4, 2).building_hp = 2;
         let idx = add_massive_enemy(&mut board, 42, 4, 2, 4);
         let bit = 1u64 << xy_to_idx(4, 2);
         board.env_danger |= bit;
         board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
 
         let original_positions: [(u8, u8); 16] = [(0, 0); 16];
         let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
 
         assert_eq!(board.units[idx].hp, 0,
             "Massive unit caught by Seismic lethal env-danger must die");
+        assert_eq!(board.tile(4, 2).terrain, Terrain::Chasm);
+        assert_eq!(board.tile(4, 2).building_hp, 0);
     }
 
     #[test]
@@ -16891,6 +16900,7 @@ mod tests {
         use crate::enemy::simulate_enemy_attacks;
         use crate::types::xy_to_idx;
         let mut board = make_test_board();
+        board.mission_id = "Mission_Cataclysm".to_string();
         let idx = add_flying_enemy(&mut board, 9, 5, 2, 3);
         let bit = 1u64 << xy_to_idx(5, 2);
         board.env_danger |= bit;
@@ -16902,17 +16912,20 @@ mod tests {
 
         assert_eq!(board.units[idx].hp, 3,
             "Flying enemy on Cataclysm tile must survive (hovers over chasm)");
+        assert_eq!(board.tile(5, 2).terrain, Terrain::Chasm);
     }
 
     #[test]
-    fn test_air_strike_lethal_kills_flying() {
-        // Regression guard: Air Strike / Lightning have flying_immune=0 even
+    fn test_lightning_lethal_kills_flying_without_terrain_conversion() {
+        // Regression guard: Lightning has flying_immune=0 even
         // when kill_int=1. A flying unit on such a tile MUST die — bombs and
         // lightning hit anything in the air. This was the pre-fix behavior
         // for ALL lethal env; making sure we didn't over-spare.
         use crate::enemy::simulate_enemy_attacks;
         use crate::types::xy_to_idx;
         let mut board = make_test_board();
+        board.mission_id = "Mission_Lightning".to_string();
+        board.tile_mut(2, 6).terrain = Terrain::Sand;
         let idx = add_flying_enemy(&mut board, 11, 2, 6, 3);
         let bit = 1u64 << xy_to_idx(2, 6);
         board.env_danger |= bit;
@@ -16923,7 +16936,12 @@ mod tests {
         let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
 
         assert_eq!(board.units[idx].hp, 0,
-            "Flying enemy on Air Strike tile must die (bombs ignore flight)");
+            "Flying enemy on Lightning tile must die (lightning ignores flight)");
+        assert_eq!(
+            board.tile(2, 6).terrain,
+            Terrain::Sand,
+            "Lightning's SpaceDamage has no terrain override",
+        );
     }
 
     #[test]

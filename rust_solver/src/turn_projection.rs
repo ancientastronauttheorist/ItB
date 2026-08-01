@@ -597,8 +597,31 @@ fn apply_plan_and_enemy_phase(
         }
     }
     b.current_turn = b.current_turn.saturating_add(1);
-    advance_mission_tides_warning(&mut b);
+    advance_environment_warning(&mut b);
     (b, aggregate, blocked_spawn_points)
+}
+
+/// Advance source-modeled rolling warnings or consume the resolved marker.
+///
+/// Tides and Terratide have enough serialized/source state to construct the
+/// next lane. Other environment danger records describe the current enemy
+/// phase only: after projection they must not remain armed as though the same
+/// Cataclysm, Lightning, Seismic, NanoStorm, or similar effect will fire again
+/// next turn. Native selection/RNG for a future marker is deliberately not
+/// guessed here.
+pub(crate) fn advance_environment_warning(board: &mut Board) {
+    if matches!(
+        board.mission_id.as_str(),
+        "Mission_Tides" | "Mission_Terratide"
+    ) {
+        advance_mission_tides_warning(board);
+        return;
+    }
+
+    board.env_danger = 0;
+    board.env_danger_kill = 0;
+    board.env_danger_flying_immune = 0;
+    board.env_danger_acid = 0;
 }
 
 pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
@@ -1419,6 +1442,49 @@ mod tests {
         for x in 0u8..8 {
             assert!(projected.is_env_danger(x, 3));
         }
+    }
+
+    #[test]
+    fn test_cataclysm_projection_converts_to_chasm_and_consumes_current_warning() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Cataclysm".to_string();
+        b.tile_mut(3, 4).terrain = Terrain::Mountain;
+        b.tile_mut(3, 4).building_hp = 2;
+        let bit = 1u64 << xy_to_idx(3, 4);
+        b.env_danger = bit;
+        b.env_danger_kill = bit;
+        b.env_danger_flying_immune = bit;
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.tile(3, 4).terrain, Terrain::Chasm);
+        assert_eq!(projected.tile(3, 4).building_hp, 0);
+        assert_eq!(projected.env_danger, 0);
+        assert_eq!(projected.env_danger_kill, 0);
+        assert_eq!(projected.env_danger_flying_immune, 0);
+        let serialized: serde_json::Value =
+            serde_json::from_str(&board_to_json(&projected, &[])).unwrap();
+        assert!(serialized["environment_danger_v2"]
+            .as_array()
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn test_lightning_projection_consumes_warning_without_inventing_next_selection() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Lightning".to_string();
+        b.tile_mut(6, 2).terrain = Terrain::Sand;
+        let bit = 1u64 << xy_to_idx(6, 2);
+        b.env_danger = bit;
+        b.env_danger_kill = bit;
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.tile(6, 2).terrain, Terrain::Sand);
+        assert_eq!(projected.env_danger, 0);
+        assert_eq!(projected.env_danger_kill, 0);
+        assert_eq!(projected.env_danger_flying_immune, 0);
     }
 
     #[test]

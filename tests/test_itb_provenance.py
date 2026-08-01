@@ -3171,3 +3171,134 @@ def test_real_firestorm_generator_record_pins_adjacent_targeting_correction():
     gaps = " ".join(record["known_gaps"])
     assert "effect-queue ordering" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_sand_terrain_hazard_record_pins_conversion_and_native_gaps():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "environment-sand-terrain-hazards"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    assert sources["scripts/missions/sand/mission_cataclysm.lua"] == {
+        "path": "scripts/missions/sand/mission_cataclysm.lua",
+        "sha256": (
+            "49173aecf489be6ae363a7caeb25c203e"
+            "aee3151a15413ee1c699a400f0e5797"
+        ),
+        "symbols": [
+            "Mission_Cataclysm",
+            "Env_Cataclysm",
+            "Env_Cataclysm:MarkBoard",
+            "Env_Cataclysm:Start",
+            "Env_Cataclysm:IsEffect",
+            "Env_Cataclysm:Plan",
+            "Env_Cataclysm:ApplyEffect",
+        ],
+    }
+    assert sources["scripts/missions/sand/mission_lightning.lua"] == {
+        "path": "scripts/missions/sand/mission_lightning.lua",
+        "sha256": (
+            "2849a6fa5fb27a6c30b992642191fb7d"
+            "1889eb1570f9336318d58b493587649b"
+        ),
+        "symbols": [
+            "Mission_Lightning",
+            "Mission_Lightning:StartMission",
+            "Env_Lightning",
+            "Env_Lightning:MarkSpace",
+            "Env_Lightning:GetAttackEffect",
+            "Env_Lightning:SelectSpaces",
+        ],
+    }
+    assert sources["scripts/missions/sand/mission_crack.lua"] == {
+        "path": "scripts/missions/sand/mission_crack.lua",
+        "sha256": (
+            "9823c2a2ea447ede11339fe4274040218"
+            "480823a3ab7f3231c3940e4dd21f00f"
+        ),
+        "symbols": [
+            "Mission_Crack",
+            "Env_Seismic",
+            "Env_Seismic:MarkSpace",
+            "Env_Seismic:Start",
+            "Env_Seismic:GetAttackEffect",
+            "Env_Seismic:SelectSpaces",
+        ],
+    }
+    base = sources["scripts/environments.lua"]
+    assert base["sha256"] == (
+        "5f8a7d74f537abb33bc88c1f9669f3f"
+        "6fabdd5c8c51aad3486d2e965e4fb80ec"
+    )
+    assert {
+        "Environment:IsValidTarget",
+        "Environment:GetQuarters",
+        "Environment:FindEndpoints",
+        "Environment:GetCrossPath",
+        "Env_Attack:Start",
+        "Env_Attack:IsEffect",
+        "Env_Attack:BlockSpawn",
+        "Env_Attack:Plan",
+        "Env_Attack:ApplyEffect",
+        "Env_Attack:MarkBoard",
+    } <= set(base["symbols"])
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "apply_env_danger",
+        "apply_env_danger_board",
+        "simulate_enemy_attacks",
+    }
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "advance_environment_warning",
+        "advance_mission_tides_warning",
+        "project_plan_with_spawns",
+    }
+    assert implementations["rust_solver/src/replay.rs"] == {
+        "advance_environment_warning",
+        "replay_solution",
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert {
+        "test_massive_cataclysm_lethal_env_dies",
+        "test_massive_seismic_lethal_env_dies",
+        "test_cataclysm_lethal_spares_flying",
+        "test_lightning_lethal_kills_flying_without_terrain_conversion",
+    } <= tests["rust_solver/src/simulate.rs"]
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_cataclysm_projection_converts_to_chasm_and_consumes_current_warning",
+        "test_lightning_projection_consumes_warning_without_inventing_next_selection",
+    }
+    assert tests["rust_solver/src/replay.rs"] == {
+        "replay_solution_cataclysm_converts_chasm_and_consumes_final_warning"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "Cataclysm Index" in gaps
+    assert "Seismic Path" in gaps
+    assert "native random_int/random_element/random_removal" in gaps
+    assert "cannot construct the next native" in gaps
+    assert "spawn-block" in gaps
+    assert "protected live achievement session" in gaps

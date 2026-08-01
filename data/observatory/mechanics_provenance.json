@@ -351,6 +351,184 @@
       "evidence": [
         {
           "classification": "fact",
+          "statement": "The exact inventoried Cataclysm environment advances one column per Plan call, marks every non-building tile in that column, permanently blocks the adjacent future column from spawning, and applies TERRAIN_HOLE to every marked tile. Its mission lasts three turns."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Seismic environment builds one native random cross path, then selects up to three consecutive path cells per Plan call, permanently blocks those cells from spawning, and applies TERRAIN_HOLE. Its inherited target predicate excludes invalid, pod, and building tiles but permits Water."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Lightning environment chooses one valid tile from each of four interior 3-by-3 quarters. Each selected tile receives DAMAGE_DEATH without a terrain override; the inherited validity predicate excludes invalid, pod, building, and Water tiles."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v382 converts bridge-selected Cataclysm and Seismic non-building danger tiles to Chasm while preserving the established flyer-immunity distinction, leaves Lightning terrain unchanged while killing flyers, and consumes resolved non-Tides danger markers in projected and replayed boards instead of firing the same current warning again."
+        }
+      ],
+      "id": "environment-sand-terrain-hazards",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "dump_state",
+            "environment_danger_v2",
+            "cataclysm_or_seismic",
+            "lightning_or_airstrike"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "environment_danger_v2",
+            "environment_danger_flying_immune",
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "board_from_json",
+            "Mission_Cataclysm",
+            "Mission_Crack",
+            "Mission_Lightning"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger",
+            "apply_env_danger_board",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "advance_environment_warning",
+            "advance_mission_tides_warning",
+            "project_plan_with_spawns"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "advance_environment_warning",
+            "replay_solution"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust consumes the bridge-selected current danger mask. It does not serialize or reproduce Cataclysm Index, Seismic Path or Index, Lightning/Seismic Locations, Planned, or CurrentAttack, native random_int/random_element/random_removal calls, candidate order, or RNG state.",
+        "Projected and replayed boards consume a resolved non-Tides danger mask but cannot construct the next native Cataclysm, Lightning, or Seismic warning. Clearing the old mask is exact non-repetition, not a claim that future missions have no environment event.",
+        "Rust scans the live bitset in tile-index order. Native unordered Lightning locations resolve by random removal, ordered Seismic locations resolve serially, and Cataclysm applies a source-built column; death chains and other order-sensitive interactions are not exhaustively conformant.",
+        "Native temporary and permanent spawn-block source state is not serialized for these missions. Cataclysm's future-column block, Seismic's selected-path blocks, Lightning's inherited temporary blocks, and their interaction with emergence remain live-engine dependencies.",
+        "The native outer environment scheduler, effect queue timing, presentation, and exact SpaceDamage terrain/status/pod/death-chain cleanup remain only partially traced.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_cataclysm.lua",
+          "sha256": "49173aecf489be6ae363a7caeb25c203eaee3151a15413ee1c699a400f0e5797",
+          "symbols": [
+            "Mission_Cataclysm",
+            "Env_Cataclysm",
+            "Env_Cataclysm:MarkBoard",
+            "Env_Cataclysm:Start",
+            "Env_Cataclysm:IsEffect",
+            "Env_Cataclysm:Plan",
+            "Env_Cataclysm:ApplyEffect"
+          ]
+        },
+        {
+          "path": "scripts/missions/sand/mission_lightning.lua",
+          "sha256": "2849a6fa5fb27a6c30b992642191fb7d1889eb1570f9336318d58b493587649b",
+          "symbols": [
+            "Mission_Lightning",
+            "Mission_Lightning:StartMission",
+            "Env_Lightning",
+            "Env_Lightning:MarkSpace",
+            "Env_Lightning:GetAttackEffect",
+            "Env_Lightning:SelectSpaces"
+          ]
+        },
+        {
+          "path": "scripts/missions/sand/mission_crack.lua",
+          "sha256": "9823c2a2ea447ede11339fe4274040218480823a3ab7f3231c3940e4dd21f00f",
+          "symbols": [
+            "Mission_Crack",
+            "Env_Seismic",
+            "Env_Seismic:MarkSpace",
+            "Env_Seismic:Start",
+            "Env_Seismic:GetAttackEffect",
+            "Env_Seismic:SelectSpaces"
+          ]
+        },
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": [
+            "Environment",
+            "Environment:IsValidTarget",
+            "Environment:GetQuarters",
+            "Environment:FindEndpoints",
+            "Environment:GetCrossPath",
+            "Env_Attack",
+            "Env_Attack:Start",
+            "Env_Attack:IsEffect",
+            "Env_Attack:BlockSpawn",
+            "Env_Attack:Plan",
+            "Env_Attack:ApplyEffect",
+            "Env_Attack:MarkBoard"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_massive_cataclysm_lethal_env_dies",
+            "test_massive_seismic_lethal_env_dies",
+            "test_cataclysm_lethal_spares_flying",
+            "test_lightning_lethal_kills_flying_without_terrain_conversion",
+            "test_env_danger_v2_deserializes_flying_immune_field",
+            "test_env_danger_v2_legacy_4field_falls_back_to_env_type",
+            "test_env_danger_v2_legacy_4field_lightning_not_immune"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_explicit_lethal_mission_outranks_stale_nanostorm_env_type"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_cataclysm_projection_converts_to_chasm_and_consumes_current_warning",
+            "test_lightning_projection_consumes_warning_without_inventing_next_selection"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_cataclysm_converts_chasm_and_consumes_final_warning"
+          ]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": [
+            "test_summary_flags_mech_on_lethal_environment_danger",
+            "test_summary_honors_flying_immunity_for_environment_danger"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
           "statement": "The exact inventoried LineArtillery base callback starts at distance two, but Science_RainingFire replaces that callback completely and enumerates every in-bounds cardinal tile from distance one through its ArtillerySize. OnlyEmpty remains false, so occupied and otherwise blocked target tiles are retained."
         },
         {

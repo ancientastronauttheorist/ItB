@@ -26,7 +26,7 @@ use crate::simulate::{
     simulate_move,
 };
 use crate::turn_projection::{
-    advance_mission_tides_warning,
+    advance_environment_warning,
     board_to_json,
     requeue_enemies_heuristic,
 };
@@ -271,7 +271,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         }
     }
     board.current_turn = board.current_turn.saturating_add(1);
-    advance_mission_tides_warning(&mut board);
+    advance_environment_warning(&mut board);
     requeue_enemies_heuristic(&mut board, weapons_table);
 
     // Build predicted_outcome (mirrors solver.py:744-756).
@@ -1330,6 +1330,47 @@ mod tests {
             .find(|tile| tile["x"] == json!(1) && tile["y"] == json!(3))
             .expect("the resolved current lane should be serialized as Water");
         assert_eq!(flooded_tile["terrain"], "water");
+    }
+
+    #[test]
+    fn replay_solution_cataclysm_converts_chasm_and_consumes_final_warning() {
+        let bridge = r#"{
+          "mission_id": "Mission_Cataclysm",
+          "env_type": "cataclysm_or_seismic",
+          "turn": 1,
+          "total_turns": 3,
+          "tiles": [
+            {"x": 3, "y": 4, "terrain": "mountain", "building_hp": 2}
+          ],
+          "environment_danger_v2": [[3, 4, 1, 1, 1]],
+          "spawning_tiles": [],
+          "remaining_spawns": 0,
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "units": []
+        }"#;
+
+        let raw = replay_solution(bridge, "[]").expect("replay should succeed");
+        let value: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(
+            value["post_player_board"]["environment_danger_v2"],
+            json!([[3, 4, 1, 1, 1]]),
+            "the current warning must remain armed until the enemy phase",
+        );
+
+        let final_board = &value["final_board"];
+        assert_eq!(final_board["turn"], 2);
+        assert!(final_board["environment_danger_v2"]
+            .as_array()
+            .unwrap()
+            .is_empty());
+        let converted = final_board["tiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|tile| tile["x"] == json!(3) && tile["y"] == json!(4))
+            .expect("the converted Cataclysm tile must be serialized");
+        assert_eq!(converted["terrain"], "chasm");
     }
 
     #[test]

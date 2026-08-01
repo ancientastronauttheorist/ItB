@@ -1772,7 +1772,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v381 follows Firestorm Generator's source override and permits cardinal
 # targets at every distance from 1 through ArtillerySize. Pre-v381 corpus is
 # archived as failure_db_snapshot_sim_v380.jsonl.
-SIMULATOR_VERSION = 381
+# v382 converts source-selected Cataclysm/Seismic danger tiles to chasms and
+# consumes projected/replayed non-Tides danger markers after resolution;
+# Lightning remains a lethal no-conversion hazard. Future native selection and
+# RNG are intentionally not guessed. Pre-v382 corpus is archived as
+# failure_db_snapshot_sim_v381.jsonl.
+SIMULATOR_VERSION = 382
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

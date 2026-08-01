@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 20 | 55 |
-| Environments | 15 | 10 | 5 |
-| Unique total | 96 | 39 | 57 |
+| Missions | 75 | 23 | 52 |
+| Environments | 15 | 12 | 3 |
+| Unique total | 96 | 42 | 54 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 155 definitions literally and leaves 587 unindexed. Category totals
+names 172 definitions literally and leaves 570 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -367,6 +367,18 @@ for empty/occupied cracked Ground and stale immunity input. It remains
 `partial`: Rust consumes live markers rather than reproducing quarter
 selection, validity, native RNG, spawn-block lifecycle, or scheduler order,
 and native `SpaceDamage` behavior is not independently traced end-to-end.
+
+The `environment-sand-terrain-hazards` slice adds the exact Cataclysm,
+Lightning, and Seismic mission sources plus four previously unnamed base
+environment helpers. Simulator v382 closes two concrete projection gaps:
+Cataclysm and Seismic now convert every bridge-selected non-building danger
+tile to Chasm, while Lightning remains lethal to flyers without changing
+terrain; resolved non-Tides danger markers no longer repeat forever in
+projected or replayed boards. The record remains `partial`: Rust consumes the
+current selected mask but cannot reconstruct Cataclysm Index, Seismic Path,
+Lightning/Seismic location queues, native selection/order/RNG, spawn-block
+lifecycle, or the next warning. Those dependencies stay explicit rather than
+being replaced by deterministic guesses.
 
 The Sandstorm slice, `environment-mission-sandstorm`, adds the exact
 `mission_sandstorm.lua` source and closes a proven simulator contradiction.

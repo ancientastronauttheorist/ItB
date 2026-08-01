@@ -478,6 +478,26 @@ fn apply_env_danger(
         tile.set_cracked(false);
     }
 
+    // Exact sand-island terrain hazards assign TERRAIN_HOLE to every marked
+    // non-building tile. Cataclysm does so across its current column;
+    // Seismic Activity does so along its selected cross path. The bridge's
+    // per-tile flying-immunity bit distinguishes these chasm conversions from
+    // pure DAMAGE_DEATH threats such as Lightning. Their native selection,
+    // ordering, and future warning generation remain outside this bounded
+    // current-marker simulation.
+    if matches!(
+        board.mission_id.as_str(),
+        "Mission_Cataclysm" | "Mission_Crack"
+    ) && lethal
+        && flying_immune
+        && !building_at_start
+    {
+        let tile = board.tile_mut(x, y);
+        tile.terrain = Terrain::Chasm;
+        tile.building_hp = 0;
+        tile.set_cracked(false);
+    }
+
     // Exact Env_Tides:ApplyEffect source sets iTerrain=TERRAIN_WATER on every
     // marked tile in the current lane. MarkBoard/ApplyEffect omit live
     // buildings, so do not apply the terrain override if a stale or synthetic

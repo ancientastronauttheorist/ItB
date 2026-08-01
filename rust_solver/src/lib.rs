@@ -2379,7 +2379,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v381 - Firestorm Generator targeting follows its Lua override's inclusive
 //   range 1..ArtillerySize instead of the inherited LineArtillery minimum 2.
 //   Pre-v381 corpus archived as failure_db_snapshot_sim_v380.jsonl.
-pub const SIMULATOR_VERSION: u32 = 381;
+// v382 - Cataclysm and Seismic current danger markers convert source-selected
+//   non-building tiles to Chasm; Lightning remains lethal to flyers without
+//   terrain conversion. Projected/replayed non-Tides danger markers are
+//   consumed after resolution instead of repeating forever. Future native
+//   selection and RNG remain unmodeled. Pre-v382 corpus archived as
+//   failure_db_snapshot_sim_v381.jsonl.
+pub const SIMULATOR_VERSION: u32 = 382;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
