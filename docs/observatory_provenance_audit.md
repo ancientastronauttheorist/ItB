@@ -56,21 +56,37 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 56 | 19 |
+| Missions | 75 | 59 | 16 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 75 | 21 |
+| Unique total | 96 | 78 | 18 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 325 definitions literally and leaves 417 unindexed. Category totals
+names 330 definitions literally and leaves 412 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
 records name seventeen literally and leave 23 unindexed. That is a precise
 indexing backlog, not evidence that all 23 behaviors are absent from Rust.
+
+The base Battle/Survive/Volatile slice adds three exact shipped mission paths
+in three bounded `partial` records. `mission_battle.lua` is exactly two CRLF
+lines and `mission_survive.lua` is zero bytes, so both are deliberately indexed
+as non-evidence: neither has a class or callback and neither supports the
+existing route tags or any inferred inherited lifecycle. `Mission_Volatile`
+supplies five active callbacks. It spawns and marks one exact
+four-HP, MoveSpeed-3, `ScorpionAtk1`, `Explodes=true` GlowingScorpion,
+and fails only if that stored target dies before `TargetLeft`. Its direct
+callback contains a sole-enemy retreat branch guarded by `not
+self.InfiniteSpawn`, but the shipped `Mission_Volatile -> Mission_Auto ->
+Mission_Infinite` class chain leaves `InfiniteSpawn=true`, making that branch
+unreachable in stock play. Existing objective protection and route handling
+are policy/static-model anchors, not a claim that native spawn, scheduler, or
+objective settlement is reproduced. Its commented-out custom death effect
+remains inactive source text.
 
 The mountain, sinkhole, trapped-building, forest-fire, and shield-generator
 slice adds six exact shipped mission sources in five bounded `partial` records.

@@ -8123,6 +8123,151 @@
           "symbols": ["test_real_mission_wind_legacy_stub_records_no_semantics"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried scripts/missions/mission_battle.lua artifact is exactly two CRLF lines (four bytes) and contains no Lua declarations, tables, mission class, or active top-level callback definitions. It supplies no source behavior for Mission_Battle."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing Mission_Battle route scoring is a conservative repository policy anchor only. The blank artifact neither establishes the policy's fixed-roster/high-threat interpretation nor contradicts behavior inherited or registered elsewhere."
+        }
+      ],
+      "id": "mission-battle-empty-stub",
+      "implementations": [
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["Mission_Battle"]
+        }
+      ],
+      "known_gaps": [
+        "This four-byte stub provides no mission class, objective, spawn, roster, environment, RNG, scheduling, UI, or combat semantics. It must not be used to prove or refute the behavior of a runtime Mission_Battle instance.",
+        "Any runtime class registration, inherited mission lifecycle, fixed-roster behavior, bonus selection, and the existing route tags require separate source or controlled runtime evidence; the strategy anchor is policy, not a source-derived forecast."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/mission_battle.lua",
+          "sha256": "dba5166ad9db9ba648c1032ebbd34dcd0d085b50023b839ef5c68ca1db93a563",
+          "symbols": ["legacy two-CRLF-line stub (no Lua symbols)"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_battle_stub_records_no_semantics"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried scripts/missions/mission_survive.lua artifact is zero bytes and contains no Lua declarations, tables, mission class, or active top-level callback definitions. It supplies no source behavior for Mission_Survive."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing Mission_Survive route tagging is a conservative repository policy anchor only. The empty artifact neither establishes that policy nor proves the parent/inherited mission behavior discussed by the route code."
+        }
+      ],
+      "id": "mission-survive-empty-stub",
+      "implementations": [
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["Mission_Survive"]
+        }
+      ],
+      "known_gaps": [
+        "This empty file provides no mission class, objective, spawn, roster, environment, RNG, scheduling, UI, or combat semantics. It must not be used to prove or refute the behavior of a runtime Mission_Survive instance.",
+        "Any runtime class registration, inherited Mission_Infinite lifecycle, spawn pressure, bonus selection, and the existing protect-buildings route tag require separate source or controlled runtime evidence; the strategy anchor is policy, not a source-derived forecast."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/mission_survive.lua",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "symbols": ["empty file (no Lua symbols)"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_survive_stub_records_no_semantics"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Volatile source creates a one-reputation objective, spawns one GlowingScorpion, and marks that exact stored pawn mission-critical if it is alive. GlowingScorpion is source-defined as a four-HP, MoveSpeed=3 enemy with ScorpionAtk1 and Explodes=true."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_Volatile fails its objective only when the stored target becomes non-alive before it has left. Its direct UpdateMission callback contains a conditional that would retreat the exact stored pawn and set TargetLeft=true when it is the sole enemy and InfiniteSpawn is false. In the shipped class chain, however, Mission_Volatile inherits Mission_Auto, Mission_Auto inherits Mission_Infinite, and Mission_Infinite sets InfiniteSpawn=true, so that retreat branch is unreachable for the stock Mission_Volatile definition. The commented-out custom GetDeathEffect is inactive source text and supplies no additional explosion semantics."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing objective-pattern, bonus-objective, pawn-stat, and route-tag handling protects GlowingScorpion/Volatile_Vek on this mission. Those are repository policy and partial static-model anchors; they do not reproduce native spawn placement, UpdateMission scheduling, retreat, or mission-result UI."
+        }
+      ],
+      "id": "mission-volatile-glowing-scorpion-objective",
+      "implementations": [
+        {
+          "path": "data/mission_bonus_objectives.json",
+          "symbols": ["Mission_Volatile", "GlowingScorpion"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_protected_objective_patterns"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["GlowingScorpion"]
+        },
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["Mission_Volatile", "GlowingScorpion"]
+        }
+      ],
+      "known_gaps": [
+        "Native SpawnPawn placement/identity, SetMissionCritical timing, inherited Mission_Infinite spawning, objective presentation, tutorial timing, and UpdateMission scheduling relative to combat and mission end are not reproduced end-to-end.",
+        "The dormant stored-ID retreat branch would require a non-stock override of InfiniteSpawn before it could run; no runtime behavior or simulator gap is inferred from that unreachable branch. Target-death timing and all source-to-bridge mission-state exports remain untraced, so existing protection must not be treated as conformance to native objective settlement.",
+        "Generic Explodes=true handling and ScorpionAtk1 behavior are covered only by their separate generic records/regressions. The inactive commented GetDeathEffect neither defines nor validates a Mission_Volatile-specific explosion footprint."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/mission_volatile.lua",
+          "sha256": "cb60e9c4b3730604c1a958ec7ae44cf22ff901e7d5fd543b5ae8f9403d9af5c4",
+          "symbols": [
+            "Mission_Volatile",
+            "Mission_Volatile:GetCompletedObjectives",
+            "Mission_Volatile:NextTurn",
+            "Mission_Volatile:UpdateObjectives",
+            "Mission_Volatile:StartMission",
+            "Mission_Volatile:UpdateMission",
+            "GlowingScorpion"
+          ]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": ["Mission_Infinite", "Mission_Auto"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_protected_objective_patterns.py",
+          "symbols": ["test_live_volatile_mission_metadata_counts_as_protected"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_volatile_record_pins_callbacks_and_retreat_gap"]
+        }
+      ]
     }
   ],
   "schema_version": 1

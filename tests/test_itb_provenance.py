@@ -5298,6 +5298,91 @@ def test_real_mission_wind_legacy_stub_records_no_semantics():
     assert "must not be used to support or contradict" in gaps
 
 
+def test_real_mission_battle_stub_records_no_semantics():
+    record = _mission_provenance_record("mission-battle-empty-stub")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/mission_battle.lua",
+        "sha256": "dba5166ad9db9ba648c1032ebbd34dcd0d085b50023b839ef5c68ca1db93a563",
+        "symbols": ["legacy two-CRLF-line stub (no Lua symbols)"],
+    }]
+    assert record["implementations"] == [{
+        "path": "src/strategy/mission_picker.py",
+        "symbols": ["Mission_Battle"],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "two CRLF lines" in facts
+    assert "no source behavior" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "no mission class" in gaps
+    assert "strategy anchor is policy" in gaps
+
+
+def test_real_mission_survive_stub_records_no_semantics():
+    record = _mission_provenance_record("mission-survive-empty-stub")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/mission_survive.lua",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "symbols": ["empty file (no Lua symbols)"],
+    }]
+    assert record["implementations"] == [{
+        "path": "src/strategy/mission_picker.py",
+        "symbols": ["Mission_Survive"],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "zero bytes" in facts
+    assert "no source behavior" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "no mission class" in gaps
+    assert "Mission_Infinite lifecycle" in gaps
+    assert "strategy anchor is policy" in gaps
+
+
+def test_real_mission_volatile_record_pins_callbacks_and_retreat_gap():
+    record = _mission_provenance_record("mission-volatile-glowing-scorpion-objective")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/mission_volatile.lua",
+            "sha256": "cb60e9c4b3730604c1a958ec7ae44cf22ff901e7d5fd543b5ae8f9403d9af5c4",
+            "symbols": [
+                "Mission_Volatile",
+                "Mission_Volatile:GetCompletedObjectives",
+                "Mission_Volatile:NextTurn",
+                "Mission_Volatile:UpdateObjectives",
+                "Mission_Volatile:StartMission",
+                "Mission_Volatile:UpdateMission",
+                "GlowingScorpion",
+            ],
+        },
+        {
+            "path": "scripts/missions/missions.lua",
+            "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+            "symbols": ["Mission_Infinite", "Mission_Auto"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_bonus_objectives.json"] == {
+        "Mission_Volatile", "GlowingScorpion",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_protected_objective_patterns",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "four-HP" in facts
+    assert "TargetLeft=true" in facts
+    assert "retreat branch is unreachable" in facts
+    assert "commented-out custom GetDeathEffect" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "non-stock override of InfiniteSpawn" in gaps
+    assert "no runtime behavior or simulator gap" in gaps
+    assert "inactive commented GetDeathEffect" in gaps
+
+
 def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
     record = _mission_provenance_record("mission-boombots-explosive-decay")
     assert record["coverage"] == "partial"
