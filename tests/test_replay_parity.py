@@ -171,6 +171,40 @@ def test_replay_solution_empty_plan_returns_baseline():
 
 
 @pytest.mark.regression
+def test_replay_solution_missing_mech_preserves_action_result_shape():
+    """The diagnostic sentinel must satisfy the normal per-action contract."""
+    import itb_solver
+
+    bridge = {
+        "tiles": [],
+        "units": [],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "spawning_tiles": [],
+        "environment_danger": [],
+        "remaining_spawns": 0,
+        "turn": 1,
+        "total_turns": 4,
+    }
+    plan = [{
+        "mech_uid": 999,
+        "move_to": [4, 4],
+        "weapon_id": "None",
+        "target": [255, 255],
+    }]
+
+    raw = itb_solver.replay_solution(json.dumps(bridge), json.dumps(plan))
+    data = json.loads(raw)
+    action_result = data["action_results"][0]
+
+    assert not (EXPECTED_AR_KEYS - set(action_result))
+    assert action_result["grid_damage"] == 0
+    assert action_result["mechs_killed"] == 0
+    for phase in ("post_move", "post_attack"):
+        assert data["predicted_states"][0][phase]["error"] == "mech_not_found"
+
+
+@pytest.mark.regression
 def test_replay_solution_preserves_boosted_status():
     """Boosted must stay in replay snapshots for verify.py diff parity."""
     import itb_solver

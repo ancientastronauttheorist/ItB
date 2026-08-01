@@ -276,7 +276,7 @@ def test_missing_post_action_audit_evidence_fails_closed(
                 "turn": 3,
                 "in_active_mission": False,
             },
-            "post_action_audit_mission_inactive",
+            "post_action_audit_active_mission_not_proven",
         ),
     ],
 )

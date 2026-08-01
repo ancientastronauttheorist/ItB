@@ -70,7 +70,11 @@ def test_project_plan_retains_only_marker_blocked_at_emergence():
     assert out["action_result"]["spawns_blocked"] == 1
     assert out["spawn_points"] == [[2, 2]]
     assert board["spawning_tiles"] == [[2, 2]]
-    assert all(unit["uid"] != 1 for unit in board["units"])
+    assert [unit["uid"] for unit in board["units"]] == [1]
+    wreck = board["units"][0]
+    assert (wreck["x"], wreck["y"]) == (2, 2)
+    assert wreck["hp"] == 0
+    assert wreck["mech"] is True
 
 
 @pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
@@ -113,4 +117,8 @@ def test_replay_final_board_consumes_unblocked_spawn_markers():
 
     assert replay["post_player_board"]["spawning_tiles"] == [[2, 2], [5, 5]]
     assert replay["final_board"]["spawning_tiles"] == [[2, 2]]
-    assert replay["final_board"]["units"] == []
+    assert [unit["uid"] for unit in replay["final_board"]["units"]] == [1]
+    wreck = replay["final_board"]["units"][0]
+    assert (wreck["x"], wreck["y"]) == (2, 2)
+    assert wreck["hp"] == 0
+    assert wreck["mech"] is True
