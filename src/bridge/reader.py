@@ -812,6 +812,53 @@ def _safe_to_overlay_save_grass(data: dict) -> bool:
     return _safe_to_overlay_turn_boundary_save_tiles(data)
 
 
+def _normalize_live_terraform_grass(data: dict) -> bool:
+    """Normalize an authoritative live Mission_Terraform grass remainder.
+
+    The updated bridge has already intersected Board:GetZone("grass") with the
+    exact custom sprite. Reject the complete payload on malformed coordinates
+    so a fresh turn boundary can still use the conservative legacy save
+    fallback. An empty list is authoritative and must not trigger that
+    fallback.
+    """
+    if (data.get("mission_id") != "Mission_Terraform"
+            or data.get("terraform_grass_live") is not True):
+        return False
+
+    raw_tiles = data.get("terraform_grass_tiles")
+    if not isinstance(raw_tiles, list):
+        data.pop("terraform_grass_live", None)
+        data.pop("terraform_grass_tiles", None)
+        return False
+
+    grass_tiles: set[tuple[int, int]] = set()
+    for raw in raw_tiles:
+        if (not isinstance(raw, (list, tuple)) or len(raw) != 2
+                or not all(isinstance(value, int) and not isinstance(value, bool)
+                           for value in raw)):
+            data.pop("terraform_grass_live", None)
+            data.pop("terraform_grass_tiles", None)
+            return False
+        x, y = raw
+        if not (0 <= x < 8 and 0 <= y < 8):
+            data.pop("terraform_grass_live", None)
+            data.pop("terraform_grass_tiles", None)
+            return False
+        grass_tiles.add((x, y))
+
+    data["terraform_grass_tiles"] = [
+        [x, y] for x, y in sorted(grass_tiles)
+    ]
+    for td in data.get("tiles", []) or []:
+        if not isinstance(td, dict):
+            continue
+        pos = (td.get("x"), td.get("y"))
+        td.pop("grass", None)
+        if pos in grass_tiles:
+            td["grass"] = True
+    return True
+
+
 def _safe_to_overlay_save_building_shields(data: dict) -> bool:
     return (
         not bool(data.get("tile_shields_live", False))
@@ -1480,6 +1527,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     _reconcile_victory_turns_with_live_turn(data)
     _normalize_mission_hacking_ids(data)
     _normalize_mission_pistons(data)
+    live_terraform_grass = _normalize_live_terraform_grass(data)
 
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a
@@ -1504,6 +1552,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                 data["repair_platforms_used"] = pickups
 
     if (data.get("mission_id") == "Mission_Terraform"
+            and not live_terraform_grass
             and _safe_to_overlay_save_grass(data)):
         grass_tiles = _read_terraform_grass_tiles_from_save(data)
         if grass_tiles:

@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 30 | 45 |
+| Missions | 75 | 31 | 44 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 49 | 47 |
+| Unique total | 96 | 50 | 46 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 217 definitions literally and leaves 525 unindexed. Category totals
+names 225 definitions literally and leaves 517 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -98,6 +98,21 @@ scoring instead of mech-casualty metrics. The record remains `partial`:
 mountains-remaining gate is not modeled, native setup and effect ordering are
 untraced, and no controlled self-fire UI capture was taken during the protected
 achievement session.
+
+The Terraformer sweep slice adds the exact
+`scripts/missions/sand/mission_terraform.lua` source and all eight of its active
+callbacks while reusing the already-indexed inherited `Skill:GetTargetArea`.
+Lua checks only still-custom `ground_grass.png` points inside
+`Board:GetZone("grass")`, not every matching map sprite, and its two-row by
+three-wide attack clears that custom marker unconditionally even when Mountain
+terrain is retained. The exact inventoried maps prove decorative off-zone grass
+on maps 2 and 3 and objective Mountain grass on map 2. Simulator v395 clears
+Mountain objective grass, while the dormant bridge exports the exact live
+zone-filtered remainder and distinguishes an authoritative empty result. The
+record remains `partial`: the bridge is intentionally uninstalled during the
+protected session, so the old fresh-turn save fallback still conservatively
+overcounts decorative markers; native mission-end/UI scheduling and exhaustive
+`DAMAGE_DEATH`/custom-script ordering also remain open.
 
 The Acid Vats slice adds the exact
 `scripts/missions/acid/mission_barrels.lua` source and all nine of its active

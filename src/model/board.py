@@ -662,6 +662,25 @@ class Board:
             if isinstance(uid, int)
         ]
 
+        authoritative_terraform_grass: set[tuple[int, int]] | None = None
+        if (data.get("mission_id") == "Mission_Terraform"
+                and data.get("terraform_grass_live") is True):
+            raw_grass_tiles = data.get("terraform_grass_tiles")
+            if isinstance(raw_grass_tiles, list):
+                candidate: set[tuple[int, int]] = set()
+                valid = True
+                for raw in raw_grass_tiles:
+                    if (not isinstance(raw, (list, tuple)) or len(raw) != 2
+                            or not all(isinstance(value, int)
+                                       and not isinstance(value, bool)
+                                       for value in raw)
+                            or not (0 <= raw[0] < 8 and 0 <= raw[1] < 8)):
+                        valid = False
+                        break
+                    candidate.add((raw[0], raw[1]))
+                if valid:
+                    authoritative_terraform_grass = candidate
+
         # Tiles
         for td in data.get("tiles", []):
             x, y = td["x"], td["y"]
@@ -685,10 +704,13 @@ class Board:
                     td.get("repair_platform", False)
                     or td.get("item") == "Item_Repair_Mine"
                 )
-                bt.grass = bool(
-                    td.get("grass", False)
-                    or td.get("custom") == "ground_grass.png"
-                )
+                if authoritative_terraform_grass is not None:
+                    bt.grass = (x, y) in authoritative_terraform_grass
+                else:
+                    bt.grass = bool(
+                        td.get("grass", False)
+                        or td.get("custom") == "ground_grass.png"
+                    )
                 if "conveyor" in td:
                     bt.conveyor = td["conveyor"]
                 if bt.terrain == "building":

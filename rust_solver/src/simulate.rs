@@ -3731,9 +3731,9 @@ fn apply_terraformer_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionRe
         tile.terrain = Terrain::Sand;
         tile.building_hp = 0;
     }
-    if terrain != Terrain::Mountain {
-        tile.set_grass(false);
-    }
+    // Mission_Terraform's queued sScript clears the custom grass sprite on
+    // every swept tile, including Mountains whose terrain stays unchanged.
+    tile.set_grass(false);
 
     if let Some(idx) = board.unit_at(x, y) {
         board.units[idx].set_fire(false);
@@ -9583,7 +9583,7 @@ mod tests {
         assert!(!board.tile(7, 2).on_fire());
         assert!(!board.tile(7, 2).grass());
         assert_eq!(board.tile(7, 3).terrain, Terrain::Mountain);
-        assert!(board.tile(7, 3).grass());
+        assert!(!board.tile(7, 3).grass());
     }
 
     #[test]

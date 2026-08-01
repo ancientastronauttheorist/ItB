@@ -1805,6 +1805,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v395: Mission_Terraform's queued custom-tile script clears objective grass
+# on every swept tile, including Mountains whose terrain remains Mountain.
+# The bridge now exports only still-custom points from the exact live grass
+# objective zone, excluding decorative markers in shipped maps. Pre-v395
+# corpus is archived as recordings/failure_db_snapshot_sim_v394.jsonl.
 # v394 retains Mission_Disposal's inherited all-board Grenade_Base target
 # area, including the launcher's own tile. Self-fire now resolves the lethal
 # ACID cross while a dead non-mech launcher is reported and scored as a
@@ -1837,7 +1842,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 394
+SIMULATOR_VERSION = 395
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

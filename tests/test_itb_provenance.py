@@ -4494,3 +4494,118 @@ def test_real_mission_disposal_launcher_record_pins_cross_and_end_block_gap():
     assert "at least one Mountain remains" in gaps
     assert "separate mission-end, safety, and UI semantics tranche" in gaps
     assert "no fresh controlled UI capture" in gaps
+
+
+def test_real_mission_terraformer_record_pins_zone_and_mountain_clear():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-terraformer-sweep"
+    )
+    assert record["coverage"] == "partial"
+    sources = {source["path"]: source for source in record["sources"]}
+    assert sources["scripts/missions/sand/mission_terraform.lua"] == {
+        "path": "scripts/missions/sand/mission_terraform.lua",
+        "sha256": (
+            "52d3ea23e01938a47c06fad04be6fa23"
+            "d5baa3516738c39abc9224dc2a7d49a2"
+        ),
+        "symbols": [
+            "Mission_Terraform",
+            "Mission_Terraform:IsEndBlocked",
+            "Mission_Terraform:NextTurn",
+            "Mission_Terraform:GetCompletedObjectives",
+            "Mission_Terraform:UpdateObjectives",
+            "Mission_Terraform:GetCompletedStatus",
+            "Mission_Terraform:StartMission",
+            "Mission_Terraform:UpdateMission",
+            "Terraformer",
+            "Terraformer_Attack",
+            "Terraformer_Attack:GetSkillEffect",
+        ],
+    }
+    assert sources["scripts/global.lua"]["sha256"] == (
+        "96d82d83a1620061e6fd013aa8462883"
+        "e1f3764d03752757ad77fbbbd04bc9b2"
+    )
+    assert sources["scripts/global.lua"]["symbols"] == [
+        "Skill",
+        "Skill:GetTargetArea",
+    ]
+    inventory_maps = {
+        item["path"]: item["sha256"]
+        for item in inventory["content"]["maps"]["files"]
+    }
+    assert {
+        path: inventory_maps[path]
+        for path in (
+            "maps/terraformer1.map",
+            "maps/terraformer2.map",
+            "maps/terraformer3.map",
+        )
+    } == {
+        "maps/terraformer1.map": (
+            "6e265a2e0a16a17fff622104f3dcb081"
+            "8265bb70441a0dcb9ca6e5e4a8798b80"
+        ),
+        "maps/terraformer2.map": (
+            "44e3abd2a6f5afe07420aba65ef60dafa"
+            "ee8efdd886019e5ddcdd9cda4c0ffa8"
+        ),
+        "maps/terraformer3.map": (
+            "87dff7034fc24c9efcc86e0ce927ea1c"
+            "31546d18680905ae0a013538a270eb3b"
+        ),
+    }
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/bridge/modloader.lua"] == {
+        "dump_state",
+        "mission_terraform_grass_tiles",
+    }
+    assert implementations["src/bridge/reader.py"] == {
+        "_normalize_live_terraform_grass",
+        "_read_terraform_grass_tiles_from_save",
+        "read_bridge_state",
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "TerraformerAttack",
+        "terraformer_sweep_tiles",
+        "weapon_name",
+        "wid_from_str",
+        "wid_to_str",
+    }
+    assert implementations["rust_solver/src/simulate.rs"] == {
+        "apply_terraformer_tile",
+        "sim_terraformer",
+        "simulate_weapon",
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert 'only Board:GetZone("grass")' in facts
+    assert "unconditional Board:SetCustomTile" in facts
+    assert "has 17 custom and 16 zone points" in facts
+    assert "has 17 custom and 13 zone points" in facts
+    assert "6e265a2e0a16a17fff622104f3dcb0818265bb70441a0dcb9ca6e5e4a8798b80" in facts
+    assert "44e3abd2a6f5afe07420aba65ef60dafaee8efdd886019e5ddcdd9cda4c0ffa8" in facts
+    assert "87dff7034fc24c9efcc86e0ce927ea1c31546d18680905ae0a013538a270eb3b" in facts
+    assert "including Mountains while retaining Mountain terrain" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "not been installed or live-captured" in gaps
+    assert "overcounts the documented decorative points" in gaps
+    assert "IsEndBlocked" in gaps
+    assert "Frozen" in gaps
+    assert "v198" in gaps

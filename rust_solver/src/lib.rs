@@ -2414,6 +2414,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v395 - Mission_Terraform's queued custom-tile script clears objective grass
+//   on every swept tile, including Mountains whose terrain remains Mountain.
+//   The bridge now exports only still-custom points from the exact live grass
+//   objective zone, excluding decorative grass markers in shipped maps.
+//   Pre-v395 corpus archived as failure_db_snapshot_sim_v394.jsonl.
 // v394 - Mission_Disposal's inherited Grenade_Base target area includes all
 //   64 board tiles, including the launcher itself. Rust now retains that
 //   source-legal self-destruction action, models its lethal ACID cross, and
@@ -2450,7 +2455,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 394;
+pub const SIMULATOR_VERSION: u32 = 395;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

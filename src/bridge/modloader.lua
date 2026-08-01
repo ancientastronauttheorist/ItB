@@ -548,6 +548,54 @@ local function mission_tides_planned(mission_id, live_environment)
     return live_environment.Planned
 end
 
+-- Mission_Terraform completes only when no point in Board:GetZone("grass")
+-- retains the exact custom grass sprite. Save map_data also contains
+-- decorative ground_grass.png markers outside that objective zone, so export
+-- the live, zone-filtered remainder rather than making Python guess from the
+-- static map. nil means unavailable/malformed; an empty table is an
+-- authoritative completed objective.
+local function mission_terraform_grass_tiles(mission_id, board)
+    if mission_id ~= "Mission_Terraform" then return nil end
+
+    local ok_zone, zone = pcall(function() return board:GetZone("grass") end)
+    if not ok_zone or zone == nil then return nil end
+
+    local ok_size, size = pcall(function() return zone:size() end)
+    if not ok_size or type(size) ~= "number"
+            or size ~= math.floor(size) or size < 0 or size > 64 then
+        return nil
+    end
+
+    local result = {}
+    local seen = {}
+    for i = 1, size do
+        local ok_point, point = pcall(function() return zone:index(i) end)
+        if not ok_point or point == nil then return nil end
+        local ok_xy, x, y = pcall(function() return point.x, point.y end)
+        if not ok_xy or type(x) ~= "number" or type(y) ~= "number"
+                or x ~= math.floor(x) or y ~= math.floor(y)
+                or x < 0 or x > 7 or y < 0 or y > 7 then
+            return nil
+        end
+
+        local ok_custom, custom = pcall(function()
+            return board:GetCustomTile(point)
+        end)
+        if not ok_custom then return nil end
+        if custom == "ground_grass.png" then
+            local key = x .. "," .. y
+            if not seen[key] then
+                seen[key] = true
+                result[#result + 1] = {x, y}
+            end
+        end
+    end
+    table.sort(result, function(a, b)
+        return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
+    end)
+    return result
+end
+
 -- Exact identity for Mission_Hacking's stored Cannon Bot and facility. Return
 -- the pair together or nothing: partial/malformed identity must never make the
 -- simulator guess from another Snowtank1 of the same type.
@@ -631,6 +679,24 @@ local function dump_state()
     if not Board then return end
 
     local state = {}
+
+    local mission_id = nil
+    if _ITB_CURRENT_MISSION ~= nil then
+        mission_id = _ITB_CURRENT_MISSION.ID
+    end
+
+    local terraform_grass_lookup = {}
+    local terraform_grass_tiles = mission_terraform_grass_tiles(
+        mission_id,
+        Board
+    )
+    if terraform_grass_tiles ~= nil then
+        state.terraform_grass_live = true
+        state.terraform_grass_tiles = terraform_grass_tiles
+        for _, grass in ipairs(terraform_grass_tiles) do
+            terraform_grass_lookup[grass[1] .. "," .. grass[2]] = true
+        end
+    end
 
     -- Phase detection. Game:GetTeamTurn() can keep returning the last combat
     -- team after MissionEnd, so require the active-mission cache too.
@@ -751,6 +817,9 @@ local function dump_state()
                 terrain = TERRAIN_NAMES[terrain_id] or "ground",
                 terrain_id = terrain_id,
             }
+            if terraform_grass_lookup[x .. "," .. y] then
+                tile.grass = true
+            end
 
             -- Status effects
             local ok_f, fire = pcall(function() return Board:IsFire(pt) end)

@@ -4,6 +4,7 @@ from src.bridge import reader as bridge_reader
 from src.bridge.reader import (
     _active_region_keys,
     _grass_tiles_from_region_blocks,
+    _normalize_live_terraform_grass,
     _region_blocks,
     _read_terraform_grass_tiles_from_save,
     _safe_to_overlay_save_grass,
@@ -154,3 +155,86 @@ def test_bridge_grass_field_sets_board_tile_flag():
 
     assert board.tile(2, 5).grass is True
     assert board.tile(3, 4).grass is True
+
+
+def test_live_terraform_grass_remainder_is_authoritative_over_decorative_custom():
+    data = {
+        "mission_id": "Mission_Terraform",
+        "terraform_grass_live": True,
+        "terraform_grass_tiles": [[7, 3], [1, 1], [7, 3]],
+        "tiles": [
+            {"x": 1, "y": 1, "terrain": "ground"},
+            {
+                "x": 5,
+                "y": 1,
+                "terrain": "ground",
+                "grass": True,
+                "custom": "ground_grass.png",
+            },
+            {
+                "x": 7,
+                "y": 3,
+                "terrain": "mountain",
+                "custom": "ground_grass.png",
+            },
+        ],
+        "units": [],
+    }
+
+    assert _normalize_live_terraform_grass(data) is True
+    assert data["terraform_grass_tiles"] == [[1, 1], [7, 3]]
+    board = Board.from_bridge_data(data)
+    assert board.tile(1, 1).grass is True
+    assert board.tile(7, 3).grass is True
+    assert board.tile(5, 1).grass is False
+
+
+def test_live_terraform_grass_empty_is_authoritative_completion():
+    data = {
+        "mission_id": "Mission_Terraform",
+        "terraform_grass_live": True,
+        "terraform_grass_tiles": [],
+        "tiles": [
+            {
+                "x": 4,
+                "y": 5,
+                "terrain": "ground",
+                "grass": True,
+                "custom": "ground_grass.png",
+            }
+        ],
+        "units": [],
+    }
+
+    assert _normalize_live_terraform_grass(data) is True
+    board = Board.from_bridge_data(data)
+    assert board.tile(4, 5).grass is False
+
+
+def test_malformed_live_terraform_grass_falls_back_instead_of_claiming_authority():
+    data = {
+        "mission_id": "Mission_Terraform",
+        "terraform_grass_live": True,
+        "terraform_grass_tiles": [[8, 1]],
+        "tiles": [],
+    }
+
+    assert _normalize_live_terraform_grass(data) is False
+    assert "terraform_grass_live" not in data
+    assert "terraform_grass_tiles" not in data
+
+    direct = Board.from_bridge_data({
+        "mission_id": "Mission_Terraform",
+        "terraform_grass_live": True,
+        "terraform_grass_tiles": [[8, 1]],
+        "tiles": [
+            {
+                "x": 5,
+                "y": 1,
+                "terrain": "ground",
+                "custom": "ground_grass.png",
+            }
+        ],
+        "units": [],
+    })
+    assert direct.tile(5, 1).grass is True
