@@ -311,6 +311,44 @@ def test_smoldering_shells_upgrade_weapon_defs():
     assert more_smoke.upgrade_a == "more smoke"
 
 
+def test_cluster_artillery_upgrade_defs_and_known_rust_ids():
+    known = json.loads(Path("data/known_types.json").read_text())
+    expected = {
+        "Ranged_Defensestrike": (1, True, "RangedDefensestrike"),
+        "Ranged_Defensestrike_A": (1, False, "RangedDefensestrikeA"),
+        "Ranged_Defensestrike_B": (2, True, "RangedDefensestrikeB"),
+        "Ranged_Defensestrike_AB": (2, False, "RangedDefensestrikeAB"),
+    }
+
+    for weapon_id, (damage_outer, building_damage, rust_id) in expected.items():
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None
+        assert weapon.name == "Cluster Artillery"
+        assert weapon.weapon_type == "artillery"
+        assert weapon.damage == 0
+        assert weapon.damage_outer == damage_outer
+        assert weapon.push == "outward"
+        assert weapon.range_min == 2
+        assert weapon.aoe_adjacent is True
+        assert weapon.aoe_center is False
+        assert weapon.building_damage is building_damage
+        assert rust_id in known["weapon_enum"]
+
+
+def test_cluster_artillery_underscored_variants_do_not_trigger_unknown_gate():
+    unknown_detector.reset_cache()
+    for weapon_id in (
+        "Ranged_Defensestrike_A",
+        "Ranged_Defensestrike_B",
+        "Ranged_Defensestrike_AB",
+    ):
+        board = SimpleNamespace(
+            units=[SimpleNamespace(type="DStrikeMech", is_mech=True, weapon=weapon_id, weapon2="")],
+            tiles=[],
+        )
+        assert unknown_detector.detect_unknowns(board)["weapons"] == []
+
+
 def test_techno_hornet_needle_shot_defs_and_fallback_stats():
     known = json.loads(Path("data/known_types.json").read_text())
     expected = {

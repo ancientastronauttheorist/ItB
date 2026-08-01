@@ -587,6 +587,7 @@ pub(crate) fn get_weapon_targets(
                     if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     let building_center_target_ok = is_crab_scarab_line_artillery(weapon_id)
+                        || is_cluster_artillery(weapon_id)
                         || matches!(
                             weapon_id,
                             WId::RangedIgnite | WId::RangedIgniteA
@@ -4183,6 +4184,31 @@ mod top_k_tests {
             targets.contains(&(2, 2)),
             "Artemis should still target cardinal F6 from D6"
         );
+    }
+
+    #[test]
+    fn cluster_artillery_variants_target_intact_building_centers() {
+        let mut board = Board::default();
+        for (x, y) in [(3, 1), (3, 7), (1, 3), (7, 3), (3, 4), (4, 4)] {
+            let tile = board.tile_mut(x, y);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+
+        for id in [
+            WId::RangedDefensestrike,
+            WId::RangedDefensestrikeA,
+            WId::RangedDefensestrikeB,
+            WId::RangedDefensestrikeAB,
+        ] {
+            let targets = get_weapon_targets(&board, 3, 3, id, (3, 3), &WEAPONS);
+            assert!(targets.contains(&(3, 1)), "{id:?} accepts range-two building");
+            assert!(targets.contains(&(3, 7)), "{id:?} accepts far-edge building");
+            assert!(targets.contains(&(1, 3)), "{id:?} accepts horizontal building");
+            assert!(targets.contains(&(7, 3)), "{id:?} accepts opposite edge building");
+            assert!(!targets.contains(&(3, 4)), "{id:?} rejects adjacent center");
+            assert!(!targets.contains(&(4, 4)), "{id:?} rejects diagonal center");
+        }
     }
 
     #[test]

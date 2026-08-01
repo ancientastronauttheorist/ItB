@@ -609,6 +609,60 @@ def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
         ]
 
 
+def test_cluster_artillery_upgrades_overlay_from_save(monkeypatch):
+    for upgraded in (
+        "Ranged_Defensestrike_A",
+        "Ranged_Defensestrike_B",
+        "Ranged_Defensestrike_AB",
+    ):
+        bridge_data = {
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "DStrikeMech",
+                    "mech": True,
+                    "weapons": ["Ranged_Defensestrike", "Passive_Electric"],
+                }
+            ]
+        }
+
+        class FakeState:
+            weapons = [
+                "Brute_Jetmech",
+                "",
+                upgraded,
+                "Passive_Electric_A",
+                "Science_Repulse",
+                "",
+            ]
+
+        monkeypatch.setattr(
+            "src.loop.commands.load_game_state",
+            lambda profile="Alpha", state=FakeState(): state,
+        )
+
+        updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+        assert updates == [
+            {
+                "uid": 1,
+                "slot": 0,
+                "base": "Ranged_Defensestrike",
+                "upgraded": upgraded,
+            },
+            {
+                "uid": 1,
+                "slot": 1,
+                "base": "Passive_Electric",
+                "upgraded": "Passive_Electric_A",
+            },
+        ]
+        assert bridge_data["units"][0]["weapons"] == [
+            upgraded,
+            "Passive_Electric_A",
+        ]
+
+
 def test_vek_hormones_variants_overlay_from_save(monkeypatch):
     for upgraded in (
         "Passive_FriendlyFire_A",

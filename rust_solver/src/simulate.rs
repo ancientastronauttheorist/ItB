@@ -14373,6 +14373,55 @@ mod tests {
         assert_eq!(board.units[blocker].hp, 2, "Live blocker took bump");
     }
 
+    #[test]
+    fn test_cluster_artillery_variants_dispatch_outer_damage_and_building_immunity() {
+        let cases = [
+            (WId::RangedDefensestrike, 1, false),
+            (WId::RangedDefensestrikeA, 1, true),
+            (WId::RangedDefensestrikeB, 2, false),
+            (WId::RangedDefensestrikeAB, 2, true),
+        ];
+
+        for (weapon_id, outer_damage, buildings_immune) in cases {
+            let mut board = make_test_board();
+            let mech_idx = add_mech(&mut board, 0, 0, 0, 3, weapon_id);
+            let center = add_enemy(&mut board, 1, 4, 4, 5);
+            let outer = add_enemy(&mut board, 2, 4, 5, 5);
+            board.tile_mut(5, 4).terrain = Terrain::Building;
+            board.tile_mut(5, 4).building_hp = 5;
+
+            let _ = simulate_weapon(&mut board, mech_idx, weapon_id, 4, 4);
+
+            assert_eq!(board.units[center].hp, 5, "{weapon_id:?} leaves center harmless");
+            assert_eq!(board.units[outer].hp, 5 - outer_damage, "{weapon_id:?} outer damage");
+            assert_eq!((board.units[outer].x, board.units[outer].y), (4, 6));
+            assert_eq!(
+                board.tile(5, 4).building_hp,
+                if buildings_immune { 5 } else { 5 - outer_damage as u8 },
+                "{weapon_id:?} direct adjacent-building damage",
+            );
+        }
+    }
+
+    #[test]
+    fn test_cluster_artillery_building_immunity_does_not_block_collision_damage() {
+        for (weapon_id, outer_damage) in [
+            (WId::RangedDefensestrikeA, 1),
+            (WId::RangedDefensestrikeAB, 2),
+        ] {
+            let mut board = make_test_board();
+            let mech_idx = add_mech(&mut board, 0, 0, 0, 3, weapon_id);
+            let pusher = add_enemy(&mut board, 1, 5, 4, 5);
+            board.tile_mut(6, 4).terrain = Terrain::Building;
+            board.tile_mut(6, 4).building_hp = 5;
+
+            let _ = simulate_weapon(&mut board, mech_idx, weapon_id, 4, 4);
+
+            assert_eq!(board.units[pusher].hp, 5 - outer_damage - 1);
+            assert_eq!(board.tile(6, 4).building_hp, 4, "collision still damages Grid");
+        }
+    }
+
     // ── Grav Well (Science_Gravwell) ───────────────────────────────────────────
     // Gravity Mech weapon: artillery (range ≥2) that pulls the targeted unit
     // ONE TILE toward the attacker. No damage on a clear pull; bump damage if

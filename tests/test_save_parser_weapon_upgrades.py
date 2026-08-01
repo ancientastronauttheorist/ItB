@@ -136,6 +136,35 @@ def test_bomb_dispenser_two_bombs_upgrade_overlays():
     assert mission.pawns[0].primary_weapon == "Ranged_DeployBomb_A"
 
 
+def test_cluster_artillery_upgrades_overlay_from_save_mods():
+    cases = [
+        ([1], [0], "Ranged_Defensestrike_A"),
+        ([0], [1], "Ranged_Defensestrike_B"),
+        ([1], [1], "Ranged_Defensestrike_AB"),
+    ]
+    for mod1, mod2, expected in cases:
+        mission = extract_mission_state(
+            {"sMission": "Mission_Test"},
+            {
+                "pawn_count": 1,
+                "pawn1": {
+                    "id": 1,
+                    "type": "DStrikeMech",
+                    "location": Point(2, 2),
+                    "health": 3,
+                    "max_health": 3,
+                    "iTeamId": 1,
+                    "mech": True,
+                    "primary": "Ranged_Defensestrike",
+                    "primary_mod1": mod1,
+                    "primary_mod2": mod2,
+                },
+            },
+        )
+
+        assert mission.pawns[0].primary_weapon == expected
+
+
 def test_needle_shot_upgrades_overlay_from_save_mods():
     cases = [
         ([1, 1], [0, 0, 0], "Vek_Hornet_A"),

@@ -669,9 +669,15 @@ pub enum WId {
     ShamanAtk1 = 246,
     /// Alpha Shaman's source-authored LineArtillery Alpha Totem spawn.
     ShamanAtk2 = 247,
+    /// Cluster Artillery with Buildings Immune powered.
+    RangedDefensestrikeA = 248,
+    /// Cluster Artillery with +1 outer damage powered.
+    RangedDefensestrikeB = 249,
+    /// Cluster Artillery with Buildings Immune and +1 outer damage powered.
+    RangedDefensestrikeAB = 250,
 }
 
-pub const WEAPON_COUNT: usize = 248;
+pub const WEAPON_COUNT: usize = 251;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -892,6 +898,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 33: Ranged_Defensestrike — Cluster Artillery
     w[33] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, damage_outer: 1, push: PushDir::Outward, range_min: 2,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 248-250: Cluster Artillery upgrades. The selected center remains harmless;
+    // Buildings Immune suppresses direct outer-ring damage but not collision damage.
+    w[248] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, damage_outer: 1, push: PushDir::Outward, range_min: 2,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
+    w[249] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, damage_outer: 2, push: PushDir::Outward, range_min: 2,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    w[250] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, damage_outer: 2, push: PushDir::Outward, range_min: 2,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
     // 34: Ranged_Rocket — Rocket Artillery
     // Tooltip: "Fires a pushing artillery and creates Smoke behind the shooter."
     // Smoke lands ONE tile opposite the shot direction, at the shooter's row/col —
@@ -1573,6 +1587,15 @@ pub fn is_rocket_artillery(id: WId) -> bool {
 }
 
 #[inline]
+pub fn is_cluster_artillery(id: WId) -> bool {
+    matches!(
+        id,
+        WId::RangedDefensestrike | WId::RangedDefensestrikeA
+            | WId::RangedDefensestrikeB | WId::RangedDefensestrikeAB
+    )
+}
+
+#[inline]
 pub fn is_crab_scarab_line_artillery(id: WId) -> bool {
     matches!(
         id,
@@ -1893,6 +1916,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Disposal_Attack" => WId::DisposalAttack,
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
+        "Ranged_Defensestrike_A" | "RangedDefensestrikeA" => WId::RangedDefensestrikeA,
+        "Ranged_Defensestrike_B" | "RangedDefensestrikeB" => WId::RangedDefensestrikeB,
+        "Ranged_Defensestrike_AB" | "RangedDefensestrikeAB" => WId::RangedDefensestrikeAB,
         "Ranged_Rocket" => WId::RangedRocket,
         "Ranged_Rocket_A" => WId::RangedRocketA,
         "RangedRocketA" => WId::RangedRocketA,
@@ -2171,6 +2197,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::DisposalAttack => "Disposal_Attack",
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
+        WId::RangedDefensestrikeA => "Ranged_Defensestrike_A",
+        WId::RangedDefensestrikeB => "Ranged_Defensestrike_B",
+        WId::RangedDefensestrikeAB => "Ranged_Defensestrike_AB",
         WId::RangedRocket => "Ranged_Rocket",
         WId::RangedRocketA => "Ranged_Rocket_A",
         WId::RangedRocketB => "Ranged_Rocket_B",
@@ -2501,7 +2530,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::DeployTankShot => "Stock Cannon",
         WId::DeployTankShot2 => "Stock Cannon",
         WId::RangedRockthrow => "Rock Launcher",
-        WId::RangedDefensestrike => "Cluster Artillery",
+        WId::RangedDefensestrike | WId::RangedDefensestrikeA
+            | WId::RangedDefensestrikeB | WId::RangedDefensestrikeAB => "Cluster Artillery",
         WId::RangedRocket => "Rocket Artillery",
         WId::RangedRocketA => "Rocket Artillery",
         WId::RangedRocketB => "Rocket Artillery",
@@ -3020,6 +3050,35 @@ mod tests {
         assert_eq!(weapon_name(WId::SnowmineAtk1), "Mine-Bot Setup");
         assert_eq!(enemy_weapon_for_type("Snowmine1"), WId::SnowmineAtk1);
         assert_eq!(enemy_weapon_for_type("Snowmine2"), WId::SnowmineAtk1);
+    }
+
+    #[test]
+    fn test_cluster_artillery_upgrade_defs_and_mappings() {
+        let expected = [
+            (WId::RangedDefensestrike, "Ranged_Defensestrike", 1, false),
+            (WId::RangedDefensestrikeA, "Ranged_Defensestrike_A", 1, true),
+            (WId::RangedDefensestrikeB, "Ranged_Defensestrike_B", 2, false),
+            (WId::RangedDefensestrikeAB, "Ranged_Defensestrike_AB", 2, true),
+        ];
+
+        for (id, lua_id, outer_damage, buildings_immune) in expected {
+            let def = weapon_def(id);
+            assert_eq!(def.weapon_type, WeaponType::Artillery);
+            assert_eq!(def.damage_outer, outer_damage);
+            assert_eq!(def.push, PushDir::Outward);
+            assert_eq!(def.range_min, 2);
+            assert!(def.aoe_adjacent());
+            assert!(!def.aoe_center(), "the selected center remains harmless");
+            assert_eq!(def.building_immune(), buildings_immune);
+            assert!(is_cluster_artillery(id));
+            assert_eq!(wid_from_str(lua_id), id);
+            assert_eq!(wid_to_str(id), lua_id);
+            assert_eq!(weapon_name(id), "Cluster Artillery");
+        }
+
+        assert_eq!(wid_from_str("RangedDefensestrikeA"), WId::RangedDefensestrikeA);
+        assert_eq!(wid_from_str("RangedDefensestrikeB"), WId::RangedDefensestrikeB);
+        assert_eq!(wid_from_str("RangedDefensestrikeAB"), WId::RangedDefensestrikeAB);
     }
 
     #[test]

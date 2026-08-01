@@ -151,8 +151,9 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   - score_breakdown still computed by Python evaluate_breakdown on the
 #     post-enemy board round-tripped via board_to_json.
 # Pre-v13 rows archived to failure_db_snapshot_sim_v12.jsonl.
-# v14: Cluster Artillery (Ranged_Defensestrike) center-tile damage
-# corrected 0 → 1 in rust_solver/src/weapons.rs:365. Surfaced by
+# v14: Cluster Artillery's base Damage metadata was corrected from 0 to 1 for
+# overlay/scoring parity. Source DamageCenter remains zero and AOE_CENTER stays
+# disabled, so only the four adjacent tiles take damage_outer. Surfaced by the
 # grid_drop investigation on run 20260424_011517_057 t03.
 # Pre-v14 rows archived to failure_db_snapshot_sim_v13.jsonl.
 # v15: Cracked-ground → Chasm on damage (simulate.rs) + volatile_enemy_killed
@@ -1785,6 +1786,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Digger's separate queued cardinal damage and exposes those real pawns to
 # later attack collision. Pre-v384 corpus is archived as
 # failure_db_snapshot_sim_v383.jsonl.
+# v389: Cluster Artillery A/B/AB effective IDs preserve exact outer-ring damage
+# and Buildings Immune combinations. All four variants accept intact building
+# centers at cardinal range 2..8 while the selected center remains harmless.
+# Pre-v389 corpus is archived as recordings/failure_db_snapshot_sim_v388.jsonl.
 # v388: Alpha Hornet's source-defined second queued hit follows HornetAtk2's
 # exact AOE_BEHIND property even when a legacy/partial bridge payload omits
 # the redundant target-behind flag. Projected normal/Alpha Hornet queues use
@@ -1802,7 +1807,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 388
+SIMULATOR_VERSION = 389
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

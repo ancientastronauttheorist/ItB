@@ -5747,6 +5747,155 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried base-game Lua defines Ranged_Defensestrike plus A, B, and AB. The base and A variants deal one damage to each of the four cardinal tiles around the selected center; B and AB deal two. A and AB use Buildings Immune, while the selected center remains harmless."
+        },
+        {
+          "classification": "fact",
+          "statement": "Cluster Artillery inherits LineArtillery target selection and ArtilleryDefault effect construction. The inherited target area permits an intact Building as the selected protected center at cardinal range two through eight; ArtilleryDefault queues the surrounding outward-push damage rather than a center hit."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v389 gives all four effective IDs distinct Rust/Python definitions, save-overlay recognition, and known-type coverage. Rust permits their intact Building centers, applies the one/two-damage outer ring and Buildings Immune direct-damage rule, and retains physical collision damage from an outward push into a building."
+        }
+      ],
+      "id": "player-weapon-cluster-artillery",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::RangedDefensestrike",
+            "WId::RangedDefensestrikeA",
+            "WId::RangedDefensestrikeB",
+            "WId::RangedDefensestrikeAB",
+            "WEAPONS",
+            "is_cluster_artillery",
+            "wid_from_str",
+            "wid_to_str",
+            "weapon_name"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_weapon",
+            "sim_artillery",
+            "apply_direct_weapon_damage"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "Ranged_Defensestrike",
+            "Ranged_Defensestrike_A",
+            "Ranged_Defensestrike_B",
+            "Ranged_Defensestrike_AB"
+          ]
+        },
+        {
+          "path": "src/capture/save_parser.py",
+          "symbols": [
+            "_MODELED_UPGRADED_WEAPONS"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Rust does not reproduce native LineArtillery candidate enumeration, Board:IsValid/IsBlocked behavior, target selection, save/load timing, move-before-fire choices, RNG state, or tie-breaking; it consumes the selected live weapon identity and evaluates bounded legal targets.",
+        "Native ArtilleryDefault, SpaceDamage, AddArtillery, directional push, collision, Grid Defense, and queued-effect scheduler semantics are not independently traced exhaustively for this build. Buildings Immune is bounded to direct outer-ring damage; exhaustive terrain, status, objective, corpse, and multi-unit interaction conformance remains open.",
+        "No fresh controlled bridge capture was taken during the protected achievement session; save-overlay and bridge effective-ID behavior is covered by parser/model regressions rather than a new live run."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_ranged.lua",
+          "sha256": "41417c5d5690bc2f51938480eb2c538f7b260e8233c4ad9209b35080ece90747",
+          "symbols": [
+            "Ranged_Defensestrike",
+            "Ranged_Defensestrike_A",
+            "Ranged_Defensestrike_B",
+            "Ranged_Defensestrike_AB"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "LineArtillery",
+            "LineArtillery:GetTargetArea",
+            "ArtilleryDefault",
+            "ArtilleryDefault:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "DStrikeMech"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_cluster_artillery_upgrade_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_cluster_artillery_no_damage_to_center",
+            "test_cluster_artillery_damages_and_pushes_adjacent",
+            "test_cluster_artillery_protects_building_in_center",
+            "test_cluster_artillery_kills_outer_corpse_absorbed_by_blocker",
+            "test_cluster_artillery_live_outer_unit_still_bumps_live_blocker",
+            "test_cluster_artillery_variants_dispatch_outer_damage_and_building_immunity",
+            "test_cluster_artillery_building_immunity_does_not_block_collision_damage"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "cluster_artillery_variants_target_intact_building_centers"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_cluster_artillery_upgrade_defs_and_known_rust_ids",
+            "test_cluster_artillery_underscored_variants_do_not_trigger_unknown_gate"
+          ]
+        },
+        {
+          "path": "tests/test_save_parser_weapon_upgrades.py",
+          "symbols": [
+            "test_cluster_artillery_upgrades_overlay_from_save_mods"
+          ]
+        },
+        {
+          "path": "tests/test_research_comparator.py",
+          "symbols": [
+            "test_ring_aoe_vision_reads_outer_damage_not_flagged",
+            "test_ring_aoe_genuine_damage_disagreement_still_flagged"
+          ]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": [
+            "test_real_cluster_artillery_record_pins_variants_and_inherited_helpers"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

@@ -4107,3 +4107,109 @@ def test_real_hornet_record_pins_line_attacks_and_open_native_gaps():
     assert "obstacles" in gaps
     assert "queued-effect scheduler boundaries" in gaps
     assert "protected achievement session" in gaps
+
+
+def test_real_cluster_artillery_record_pins_variants_and_inherited_helpers():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-cluster-artillery"
+    )
+    assert record["coverage"] == "partial"
+    sources = {reference["path"]: reference for reference in record["sources"]}
+    assert sources["scripts/weapons_ranged.lua"] == {
+        "path": "scripts/weapons_ranged.lua",
+        "sha256": (
+            "41417c5d5690bc2f51938480eb2c538f"
+            "7b260e8233c4ad9209b35080ece90747"
+        ),
+        "symbols": [
+            "Ranged_Defensestrike",
+            "Ranged_Defensestrike_A",
+            "Ranged_Defensestrike_B",
+            "Ranged_Defensestrike_AB",
+        ],
+    }
+    assert sources["scripts/weapons_base.lua"] == {
+        "path": "scripts/weapons_base.lua",
+        "sha256": (
+            "bdb55457746d08b46e8b62ad7cfc27f0"
+            "a08bde9fab7397a4780dfe945b5f8f38"
+        ),
+        "symbols": [
+            "LineArtillery",
+            "LineArtillery:GetTargetArea",
+            "ArtilleryDefault",
+            "ArtilleryDefault:GetSkillEffect",
+        ],
+    }
+    assert sources["scripts/pawns.lua"] == {
+        "path": "scripts/pawns.lua",
+        "sha256": (
+            "e999b8d98526c1e36f4746dd65b9d9e7"
+            "ee3ca0b22029ed391d5b71fda49dc239"
+        ),
+        "symbols": ["DStrikeMech"],
+    }
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::RangedDefensestrike",
+        "WId::RangedDefensestrikeA",
+        "WId::RangedDefensestrikeB",
+        "WId::RangedDefensestrikeAB",
+        "is_cluster_artillery",
+    } <= implementations["rust_solver/src/weapons.rs"]
+    assert implementations["rust_solver/src/solver.rs"] == {"get_weapon_targets"}
+    assert implementations["src/model/weapons.py"] == {
+        "Ranged_Defensestrike",
+        "Ranged_Defensestrike_A",
+        "Ranged_Defensestrike_B",
+        "Ranged_Defensestrike_AB",
+    }
+    assert implementations["src/capture/save_parser.py"] == {
+        "_MODELED_UPGRADED_WEAPONS"
+    }
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_cluster_artillery_upgrade_defs_and_mappings"
+    }
+    assert tests["rust_solver/src/solver.rs"] == {
+        "cluster_artillery_variants_target_intact_building_centers"
+    }
+    assert {
+        "test_cluster_artillery_variants_dispatch_outer_damage_and_building_immunity",
+        "test_cluster_artillery_building_immunity_does_not_block_collision_damage",
+    } <= tests["rust_solver/src/simulate.rs"]
+    assert tests["tests/test_save_parser_weapon_upgrades.py"] == {
+        "test_cluster_artillery_upgrades_overlay_from_save_mods"
+    }
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "four cardinal tiles" in facts
+    assert "selected center remains harmless" in facts
+    assert "intact Building as the selected protected center" in facts
+    assert "physical collision damage" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "LineArtillery candidate enumeration" in gaps
+    assert "ArtilleryDefault" in gaps
+    assert "Grid Defense" in gaps
+    assert "protected achievement session" in gaps

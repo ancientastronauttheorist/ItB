@@ -65,7 +65,7 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 202 definitions literally and leaves 540 unindexed. Category totals
+names 203 definitions literally and leaves 539 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family records name
@@ -119,6 +119,15 @@ leader offset and the threat audit rechecks every line tile. The record names
 both previously unindexed Hornet effect callbacks and keeps native boss
 targeting/scoring, obstacles, exact scheduler order, and every Hornet Acid
 behavior as explicit partial-coverage gaps.
+
+The Cluster Artillery slice reuses already-indexed `weapons_ranged.lua`,
+`weapons_base.lua`, and `pawns.lua` source files, so source totals do not
+change. Its four exact effective IDs retain a harmless selected center, a
+one- or two-damage cardinal outer ring, and the Buildings Immune direct-damage
+exception on A/AB while preserving physical collision damage. The record adds
+the previously unindexed inherited `ArtilleryDefault:GetSkillEffect` callback.
+Native target selection, effect scheduling, and exhaustive collision/status
+interactions remain partial-coverage gaps.
 
 This is not evidence that spawn, scoring, or enemy weapons are complete: their
 existing records remain `native_dependency` or `partial`. All three selected

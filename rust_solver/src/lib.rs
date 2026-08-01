@@ -558,11 +558,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // corpses don't teleport. Closes the silent position desync that caused
 // grid loss on run 20260423_131700_144 Disposal Site C (ScienceMech
 // predicted E3, actual C3 — exact 2-tile pad swap).
-// v14: Cluster Artillery (Ranged_Defensestrike) center-tile damage
-// corrected from 0 → 1 in weapons.rs. Matches game behavior where the
-// weapon deals 1 damage to the center target tile in addition to the
-// 4 adjacent tiles. Surfaced by grid_drop investigation on
-// run 20260424_011517_057 t03 (predicted grid=3, actual=4).
+// v14: Cluster Artillery's base Damage metadata was corrected from 0 to 1 for
+// overlay/scoring parity. Its source-authored DamageCenter remains zero: the
+// AOE_CENTER flag is disabled, so only the four adjacent tiles take the
+// separate damage_outer value. Surfaced by grid_drop investigation on run
+// 20260424_011517_057 t03 (predicted grid=3, actual=4).
 // v15: Cracked-ground → Chasm on damage in simulate.rs (was only
 // handled for Ice terrain). Unit standing on a damaged cracked-ground
 // tile falls in and dies; Massive does NOT save from Chasm. Plus new
@@ -2395,6 +2395,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   The new walls participate in later attack collision, while explicit
 //   building, mountain, Water, Time Pod, pawn, and wreck exclusions remain.
 //   Pre-v384 corpus archived as failure_db_snapshot_sim_v383.jsonl.
+// v389 - Cluster Artillery A/B/AB effective IDs retain exact outer-ring damage
+//   and Buildings Immune combinations. All four variants accept intact
+//   building centers at cardinal range 2..8 while the selected center stays
+//   harmless. Pre-v389 corpus archived as failure_db_snapshot_sim_v388.jsonl.
 // v388 - Alpha Hornet's source-defined second queued hit follows HornetAtk2's
 //   exact AOE_BEHIND property even when a legacy/partial bridge payload omits
 //   the redundant target-behind flag. Projected normal/Alpha Hornet queues use
@@ -2415,7 +2419,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 388;
+pub const SIMULATOR_VERSION: u32 = 389;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -577,6 +577,27 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="no building damage",
         upgrade_b="+1 outer damage (total 2)",
     ),
+    "Ranged_Defensestrike_A": WeaponDef(
+        name="Cluster Artillery", weapon_type="artillery",
+        damage=0, damage_outer=1, push="outward", range_min=2,
+        aoe_adjacent=True, aoe_center=False, building_damage=False,
+        upgrade_a="no building damage",
+        upgrade_b="+1 outer damage (total 2)",
+    ),
+    "Ranged_Defensestrike_B": WeaponDef(
+        name="Cluster Artillery", weapon_type="artillery",
+        damage=0, damage_outer=2, push="outward", range_min=2,
+        aoe_adjacent=True, aoe_center=False,
+        upgrade_a="no building damage",
+        upgrade_b="+1 outer damage (total 2)",
+    ),
+    "Ranged_Defensestrike_AB": WeaponDef(
+        name="Cluster Artillery", weapon_type="artillery",
+        damage=0, damage_outer=2, push="outward", range_min=2,
+        aoe_adjacent=True, aoe_center=False, building_damage=False,
+        upgrade_a="no building damage",
+        upgrade_b="+1 outer damage (total 2)",
+    ),
     "Ranged_Rocket": WeaponDef(
         name="Rocket Artillery", weapon_type="artillery",
         damage=2, push="forward", smoke_behind_shooter=True, range_min=2,

@@ -87,12 +87,13 @@ verified vanilla depot bytes. They are also not behavioral coverage:
 - Rust-only mappings include enemy, mission, compatibility, and other IDs
   outside this deliberately selected player-weapon source set.
 
-Ten player-weapon provenance slices now consume this lexical index:
+Eleven player-weapon provenance slices now consume this lexical index:
 `player-weapon-titan-fist`, `player-weapon-rocket-artillery`,
 `player-weapon-aerial-bombs`, `player-weapon-reverse-thrusters`, and
 `player-weapon-control-shot`, plus `player-weapon-needle-shot`,
 `player-weapon-support-wind`, `player-weapon-repulse`,
-`player-weapon-deploy-tank`, and `player-weapon-passive-board-effects`.
+`player-weapon-deploy-tank`, `player-weapon-passive-board-effects`, and
+`player-weapon-cluster-artillery`.
 Together they name 11 of the 14 selected source files; the separate Snow Bot
 record raises file-level indexing to 12. `weapons_experiment.lua` is
 comment-only and `weapons_structure.lua` is an unreferenced legacy Airfield
@@ -104,7 +105,7 @@ from the still-untraced native behaviors.
 ## How to use the index
 
 Use exact matches to choose small, well-tested families for provenance slices,
-as with the six current slices. For each family, separately inspect its Lua
+as with the eleven current slices. For each family, separately inspect its Lua
 effect/target functions, all powered variants, Rust definitions and dispatch,
 focused tests, native-helper dependencies, and known edge gaps. Use absent and
 many-to-one entries as review queues, never as automatic bug reports.
