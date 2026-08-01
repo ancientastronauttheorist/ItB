@@ -32,6 +32,13 @@ def test_mission_dam_destroys_dam_pawn():
     assert resolved["protect"] == []
 
 
+def test_mission_shields_destroys_shield_generator():
+    resolved = resolve_unit_objectives("Mission_Shields")
+
+    assert resolved["destroy"] == ["Shield_Building"]
+    assert resolved["protect"] == []
+
+
 def test_mission_filler_protects_earth_mover():
     resolved = resolve_unit_objectives("Mission_Filler")
 

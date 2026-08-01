@@ -708,6 +708,29 @@ def test_final_turn_destroy_objective_unit_alive_blocks():
     assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
 
 
+def test_final_turn_shield_generator_alive_blocks():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Shields",
+            turn=4,
+            total_turns=4,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "Shield_Building", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_Shields",
+            turn=4,
+            total_turns=4,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "Shield_Building", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
+
+
 def test_penultimate_infinite_spawn_destroy_objective_unit_alive_does_not_block():
     audit = audit_plan_safety(
         _summary(

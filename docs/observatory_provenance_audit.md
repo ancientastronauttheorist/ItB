@@ -56,21 +56,56 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 36 | 39 |
+| Missions | 75 | 42 | 33 |
 | Environments | 15 | 13 | 2 |
-| Unique total | 96 | 55 | 41 |
+| Unique total | 96 | 61 | 35 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 250 definitions literally and leaves 492 unindexed. Category totals
+names 276 definitions literally and leaves 466 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
 records name seventeen literally and leave 23 unindexed. That is a precise
 indexing backlog, not evidence that all 23 behaviors are absent from Rust.
+
+The mountain, sinkhole, trapped-building, forest-fire, and shield-generator
+slice adds six exact shipped mission sources in five bounded `partial` records.
+`Mission_Force` supplies all eight callbacks: it starts by damaging up to three
+Mountains, counts native `EVENT_MOUNTAIN_DESTROYED`, demands two destructions,
+and combines that objective with forced Kill Five only for its completion-status
+presentation. Existing bridge/Rust/safety counter plumbing is attached without
+claiming native setup RNG, event timing, or compound mission-end conformance.
+`Mission_Holes` supplies its two callbacks: it queues `GetSpawnCount` Hornets
+and blocks an early end. Its Mite behavior is explicitly an inherited
+`BONUS_SELFDAMAGE`/native dependency; existing infected-mech safety is not
+misreported as being defined by this file. Mission routing now applies the
+conservative `mite_counter` veto only when that exact bonus is present, while
+retaining the veto when the bonus slate is unavailable or malformed.
+
+Both shipped `Mission_Trapped` definitions are indexed. The Advanced Edition
+definition is the effective listed source and adds `NonGrid` plus `SpawnMod=2`;
+the older base file remains shipped evidence, not a claim that its setup runs in
+the Advanced Edition load. Rust already maps the smoke-immune two-HP decoy and
+its self-plus-cardinal-non-building `DAMAGE_DEATH` blast, while placement RNG,
+native eligibility, and queued-effect edge cases remain partial. The Forest
+Fire source now pins its sixteen-road setup cap, x-then-y fire scan, and 0/1/2
+reputation tiers. Shared fire simulation and conservative route avoidance are
+not an authoritative native Forest Fire counter.
+
+The Shield Generator source now pins one-time `SetShield(true)` for each newly
+seen pawn, starting-building shields, non-Zoltan/all-building removal after
+generator death, and the generator-death objective. The generator is now also
+mapped as a required destroy-objective unit, so final-turn safety blocks plans
+that leave it alive. Current Rust's v280/v283
+non-consuming and implicit-protection behavior is deliberately recorded as a
+legacy live-derived inference, not source proof: its original Ricochet path was
+later diagnosed as a native no-op and the observed Scorpion already had a
+shield. Controlled direct-hit, push, and generator-death traces are required
+before reconciling that inference with the exact Lua semantics.
 
 The Acid Storm lifecycle slice adds the exact
 `scripts/advanced/missions/acid/mission_acidstorm.lua` source and all six of

@@ -7032,6 +7032,293 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Force source forces BONUS_KILL_FIVE, starts by dealing one damage to up to three randomly removed Mountain tiles, and records progress by adding EVENT_MOUNTAIN_DESTROYED to Mountains. Its sole objective requires two destroyed Mountains; IsEndBlocked remains true below that target, while GetCompletedStatus reports Failure only when both the Mountain objective and Kill Five bonus fail."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing bridge, Python, Rust, projection, scoring, and final-turn safety plumbing carry the live MountainsGoal/Mountains counter and current Mountain tiles. This is a bounded representation of the source counter, not a reconstruction of its random setup or native event scheduler."
+        }
+      ],
+      "id": "mission-force-mountain-counter",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["dump_state"]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": ["_read_mission_force_progress_from_save", "read_bridge_state"]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": ["Board", "from_bridge_data"]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": ["projected_mountains_destroyed"]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["mission_mountain_action_score", "mission_mountain_tile_score"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["audit_plan_safety"]
+        }
+      ],
+      "known_gaps": [
+        "Native GetTerrainList ordering, random_removal selection, Board:DamageSpace Mountain damage semantics, EVENT_MOUNTAIN_DESTROYED timing, briefing voice, objective UI, and Mission_Infinite scheduling are not independently reconstructed.",
+        "Rust projects current modeled Mountain tiles and source counter debt, but does not reproduce Mission_Force:IsEndBlocked or GetCompletedStatus's compound Kill Five / Mountain presentation end-to-end.",
+        "The source's initially damaged Mountains and dynamic native event count are consumed from bridge/save state; no controlled source-to-live setup capture is claimed by this record."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_force.lua",
+          "sha256": "fa42203134fae821bb488eb41f49d62bba4dd5e79e53afbf729b0a63e31bf725",
+          "symbols": ["Mission_Force", "Mission_Force:PrepBonus", "Mission_Force:GetCompletedStatus", "Mission_Force:NextTurn", "Mission_Force:StartMission", "Mission_Force:IsEndBlocked", "Mission_Force:UpdateMission", "Mission_Force:GetCompletedObjectives", "Mission_Force:UpdateObjectives"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["mission_force_pruning_keeps_damaged_mountain_shot"]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": ["test_mountain_objective_blocks_final_under_target", "test_mountain_objective_allows_final_target_met"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_force_record_pins_counter_and_gaps"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Holes source is the Sinkhole Hive: it uses the sand_hole map tag, excludes BONUS_BLOCK from its explicit bonus pool, queues exactly GetSpawnCount Hornets in UpdateSpawning, and blocks mission end until the penultimate turn."
+        },
+        {
+          "classification": "fact",
+          "statement": "Its Mite objective is inherited through BONUS_SELFDAMAGE rather than defined in this file: existing bridge extraction, board state, summaries, and final-turn safety track infected player mechs and require zero remaining Mites when that status is present."
+        }
+      ],
+      "id": "mission-holes-sinkhole-hive",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["dump_state"]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": ["Unit", "from_bridge_data"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_board_summary"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["audit_plan_safety"]
+        },
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["Mission_Holes"]
+        }
+      ],
+      "known_gaps": [
+        "Native GetSpawnCount, NextPawn, Board:SpawnPawn placement/RNG, Hornet behavior, mission turn limit, and Mission_Infinite spawning are not reconstructed by this record.",
+        "BONUS_SELFDAMAGE inheritance, BaseDeployment infection application, and native infected-count timing are not source-indexed here; the existing Mite safety representation is deliberately described as an inherited/native dependency.",
+        "Mission_Holes:IsEndBlocked is not modeled as an authoritative mission-end gate; strategy avoidance and final-turn status safety are policy layers, not a claim of full native conformance."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_holes.lua",
+          "sha256": "ba6df180c061ceb4fe400bcc3083e2e392b505952c5a460ace40c98c25dc3718",
+          "symbols": ["Mission_Holes", "Mission_Holes:UpdateSpawning", "Mission_Holes:IsEndBlocked"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": ["test_mite_objective_blocks_final_infected_mech", "test_mite_objective_allows_final_clear"]
+        },
+        {
+          "path": "tests/test_mission_picker.py",
+          "symbols": ["test_mission_holes_mite_counter_requires_explicit_selfdamage_bonus", "test_mission_holes_unknown_bonus_slate_retains_mite_counter_fallback"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_holes_record_pins_spawn_and_inherited_mites"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact base and Advanced Edition Mission_Trapped sources both replace up to two nonadjacent eligible buildings with two-HP, zero-move, nonpushable, smoke-immune player Trapped_Buildings. The advanced effective definition adds NonGrid=true and SpawnMod=2; its GetReplaceableBuildings setup supersedes the base file's manual flyer-space filter in the listed advanced load path."
+        },
+        {
+          "classification": "fact",
+          "statement": "Trapped_Explode targets the decoy itself and each cardinal adjacent non-Building tile, then queues DAMAGE_DEATH at those points. Existing Rust maps the weapon, allows the smoke-immune decoy actor, and simulates self plus non-building cardinal deaths, including Mountain destruction."
+        }
+      ],
+      "id": "mission-trapped-decoy-buildings",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["TrappedExplode", "wid_from_str", "wid_to_str", "weapon_name"]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["enumerate_actions"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["sim_trapped_explode", "simulate_weapon"]
+        }
+      ],
+      "known_gaps": [
+        "Native building eligibility, GetReplaceableBuildings, random removal/order, ClearSpace/AddPawn setup, pawn IDs, AI scheduling, and SpawnMod timing are not reproduced.",
+        "The base source is indexed as shipped evidence, while the advanced source is the listed effective definition; this record does not claim the legacy setup callback runs in the Advanced Edition mission load.",
+        "Native SkillEffect queue order, Frozen/Shield/death effects, building identity, UI targeting, and every DAMAGE_DEATH interaction remain partial native dependencies."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/sand/mission_trapped.lua",
+          "sha256": "f46bb4cce26c02dd1904a88217fc5d154bba61a21cbf85f72d1c101460d37a02",
+          "symbols": ["Mission_Trapped", "Mission_Trapped:StartMission", "Trapped_Building", "Trapped_Explode", "Trapped_Explode:GetSkillEffect"]
+        },
+        {
+          "path": "scripts/advanced/missions/sand/mission_trapped.lua",
+          "sha256": "6916b02be75795f7bb133767ece7367c1d3ecb346013157892fdaabbc07c46da",
+          "symbols": ["Mission_Trapped", "Mission_Trapped:StartMission", "Trapped_Building", "Trapped_Explode", "Trapped_Explode:GetTargetArea", "Trapped_Explode:GetSkillEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["trapped_building_can_attack_from_smoke"]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_trapped_explode_kills_self_and_adjacent_units", "test_trapped_explode_skips_adjacent_buildings_and_destroys_mountains"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_trapped_record_pins_base_and_ae_callbacks"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_ForestFire source turns up to sixteen randomly removed Road tiles into Forest, counts Board:IsFire over every board coordinate in x-then-y order, and awards two reputation at eight or more fires, one at four through seven, and zero below four."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing terrain/fire simulation and mission-picker policy recognize Forest Fire as a fire-tile counter mission and avoid it for fragile perfect-island or Lightning routes. They do not expose the native fire counter or objective reward tiers as an authoritative solver scalar."
+        }
+      ],
+      "id": "mission-forest-fire-counter",
+      "implementations": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["simulate_weapon"]
+        },
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["Mission_ForestFire", "score_mission"]
+        }
+      ],
+      "known_gaps": [
+        "Native Road filtering, random Forest placement, Board:IsFire timing, fire spread/extinguish scheduling, objective UI, and partial-reputation settlement are not modeled as an authoritative solver scalar for Mission_ForestFire.",
+        "Rust terrain/fire behavior is a shared mechanics implementation; it does not prove that a simulated fire count equals the native mission counter on every queued status, terrain, frozen, or smoke edge.",
+        "Route avoidance is conservative strategy policy rather than source-derived objective conformance."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/grass/mission_fires.lua",
+          "sha256": "a146d1ff25ffb5d8d4459990214bd831c3a0c4cd243fd4ee7f8dc7d98044d739",
+          "symbols": ["Mission_ForestFire", "Mission_ForestFire:StartMission", "Mission_ForestFire:GetFireCount", "Mission_ForestFire:GetCompletedObjectives", "Mission_ForestFire:GetReward", "Mission_ForestFire:UpdateObjectives"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_forest_fire_record_pins_counter_and_policy_gap"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Shields source replaces one eligible building with a one-HP enemy-team neutral Shield_Building, shields every starting building, then gives each previously unseen pawn one ordinary SetShield(true) while the generator lives. On generator death it clears shields from non-Zoltan pawns and all buildings; the objective is complete only once Board:IsPawnAlive(GenID) is false."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v280/v283 retain a legacy live-derived inference from Arachnophiles Spider Breeding run 20260624_150610_500 (Mission_Shields turns 1–2): generator shields are modeled as non-consuming and non-generator enemies/buildings can receive implicit protection where bridge shield bits are absent. The original Ricochet path was later diagnosed as a native no-op and the observed Scorpion already had shield=true, so that run is not controlled proof of either behavior; both remain source-vs-live hypotheses requiring a direct-hit, push, and generator-death trace."
+        }
+      ],
+      "id": "mission-shields-generator",
+      "implementations": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["shield_generator_active", "mission_shield_absorbs_without_consuming", "clear_shield_generator_shields"]
+        },
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_Shields", "Shield_Building"]
+        },
+        {
+          "path": "src/solver/plan_safety.py",
+          "symbols": ["audit_plan_safety"]
+        }
+      ],
+      "known_gaps": [
+        "The source calls ordinary SetShield(true) once per pawn and explicit shield removal at generator death; it does not itself establish simulator v280's non-consuming absorption or v283's implicit enemy/building protection. Those legacy live-derived inferences conflict with the exact one-time source semantics and require controlled direct-hit, push, and death traces.",
+        "Native Board:AddShield/RemoveShield, SetShield, shield consumption, bridge per-tile shield serialization, update scheduling, pawn discovery/order, and Zoltan_Skill exception are not independently conformed end-to-end.",
+        "Generator placement RNG, tutorial/UI/presentation, Env_Null behavior, objectives, bonuses, and full native death/effect ordering remain partial dependencies."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/snow/mission_shields.lua",
+          "sha256": "43a620c78ab42e4fe94e78ba311086bcc5a28433c0a841ca90cc542447a430d6",
+          "symbols": ["Mission_Shields", "Env_ShieldMission", "Mission_Shields:GetCompletedObjectives", "Mission_Shields:NextTurn", "Mission_Shields:UpdateObjectives", "Mission_Shields:StartMission", "Mission_Shields:UpdateMission", "Shield_Building", "Shield_Generator_Tooltip", "Shield_Generator_Tooltip:GetSkillEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": ["test_arachnoid_injector_respects_implicit_shield_generator_protection", "test_shield_generator_shields_block_damage_and_push_without_consuming", "test_shield_generator_death_clears_shields_and_restores_ordinary_behavior"]
+        },
+        {
+          "path": "tests/test_mission_unit_objectives.py",
+          "symbols": ["test_mission_shields_destroys_shield_generator"]
+        },
+        {
+          "path": "tests/test_plan_safety.py",
+          "symbols": ["test_final_turn_shield_generator_alive_blocks"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_shields_record_preserves_source_live_gap"]
+        }
+      ]
     }
   ],
   "schema_version": 1

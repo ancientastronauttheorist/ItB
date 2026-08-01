@@ -221,7 +221,9 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     "Mission_Tanks":          ["fragile_ally_objective"],
     "Mission_Terraform":      ["terraform_grass_counter", "death_engine_objective"],
     "Mission_Filler":         ["earth_mover_pit"],
-    "Mission_Holes":          ["mite_counter"],
+    # Sinkhole Hive only infects mechs with mites when its selected bonus is
+    # BONUS_SELFDAMAGE.  Keep that conditional below, where the live bonus
+    # slate is available; an explicit non-self-damage bonus is not a mite run.
     "Mission_Dam":            ["mite_counter", "death_engine_objective"],
     "Mission_Disposal":       ["death_engine_objective"],
     "Mission_Teleporter":     ["mite_counter"],
@@ -417,7 +419,7 @@ def _tags_from_metadata(
 
 def derive_mission_tags(
     mission_id: str,
-    bonus_objective_ids: list[int],
+    bonus_objective_ids: list[int] | None,
     environment: str | None,
     mission_metadata: dict[str, dict[str, Any]] | None = None,
 ) -> set[str]:
@@ -431,6 +433,13 @@ def derive_mission_tags(
     tags: set[str] = set()
     if mission_id:
         tags.update(MISSION_ID_TAGS.get(mission_id, []))
+    if mission_id == "Mission_Holes":
+        # Mission_Holes' Lua BaseDeployment infects player mechs only for
+        # BONUS_SELFDAMAGE.  A missing/malformed bridge bonus list is not an
+        # explicit negative, so retain the historical conservative routing
+        # fallback until the slate is observable.
+        if bonus_objective_ids is None or BONUS_SELFDAMAGE in bonus_objective_ids:
+            tags.add("mite_counter")
     if environment:
         tags.update(ENVIRONMENT_TAGS.get(environment, []))
     # Authoritative metadata overlay.
@@ -981,11 +990,17 @@ def score_mission(
     overlay so they're not flaky on game updates.
     """
     mission_id = entry.get("mission_id", "")
-    bonus_ids = entry.get("bonus_objective_ids", []) or []
+    raw_bonus_ids = entry.get("bonus_objective_ids")
+    bonus_ids = raw_bonus_ids if isinstance(raw_bonus_ids, list) else []
     env = entry.get("environment")
     diff_mod = entry.get("diff_mod", 0) or 0
 
-    mission_tags = derive_mission_tags(mission_id, bonus_ids, env, mission_metadata)
+    mission_tags = derive_mission_tags(
+        mission_id,
+        bonus_ids if isinstance(raw_bonus_ids, list) else None,
+        env,
+        mission_metadata,
+    )
     rationale: list[str] = []
     score = 0
 

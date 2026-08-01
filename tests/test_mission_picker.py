@@ -14,6 +14,7 @@ from src.strategy.mission_picker import (
     BONUS_KILL_FIVE,
     BONUS_MECHS,
     BONUS_PACIFIST,
+    BONUS_SELFDAMAGE,
     derive_squad_tags,
     score_island_map,
     score_mission,
@@ -177,14 +178,16 @@ def _terraform_counter_mission() -> dict:
     }
 
 
-def _mite_counter_mission() -> dict:
+def _mite_counter_mission(*, bonus_objective_ids: list[int] | None = None) -> dict:
     """Mite custom objective: knock all mites off the mechs."""
-    return {
+    mission = {
         "region_id": 13,
         "mission_id": "Mission_Holes",
-        "bonus_objective_ids": [],
         "environment": "Env_Null",
     }
+    if bonus_objective_ids is not None:
+        mission["bonus_objective_ids"] = bonus_objective_ids
+    return mission
 
 
 def _sandstorm_mission() -> dict:
@@ -1010,18 +1013,40 @@ def test_terraform_counter_avoided_for_perfect_island_farming():
 
 def test_mite_counter_avoided_for_perfect_island_farming():
     ranked = score_island_map(
-        [_mite_counter_mission(), _safe_battle_mission()],
+        [_mite_counter_mission(bonus_objective_ids=[BONUS_SELFDAMAGE]), _safe_battle_mission()],
         RIFT_WALKERS_SQUAD,
         grid_power=7,
         mission_metadata={},
     )
     assert ranked[0]["mission_id"] == "Mission_Battle"
     mites = next(e for e in ranked if e["mission_id"] == "Mission_Holes")
-    assert mites["score"] <= -50
+    assert mites["score"] <= -48
     assert "mite_counter" in mites["mission_tags"]
     rationale = " ".join(mites["rationale_lines"])
     assert "mite counter" in rationale
     assert "hard veto" in rationale
+
+
+def test_mission_holes_mite_counter_requires_explicit_selfdamage_bonus():
+    for bonus_ids in ([BONUS_GRID], []):
+        scored = score_mission(
+            _mite_counter_mission(bonus_objective_ids=bonus_ids),
+            derive_squad_tags(RIFT_WALKERS_SQUAD),
+            grid_power=7,
+            mission_metadata={},
+        )
+        assert "mite_counter" not in scored["mission_tags"]
+
+
+def test_mission_holes_unknown_bonus_slate_retains_mite_counter_fallback():
+    scored = score_mission(
+        _mite_counter_mission(),
+        derive_squad_tags(RIFT_WALKERS_SQUAD),
+        grid_power=7,
+        mission_metadata={},
+    )
+
+    assert "mite_counter" in scored["mission_tags"]
 
 
 # ---------------------------------------------------------------------------

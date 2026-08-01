@@ -4908,3 +4908,116 @@ def test_real_mission_civilians_record_pins_vip_move_semantics():
     assert "Native Board:GetReachable" in gaps
     assert "stale" in gaps
     assert "Mission:AddDefended satellite-zone randomness" in gaps
+
+
+def _mission_provenance_record(record_id: str) -> dict:
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+    return next(item for item in provenance["records"] if item["id"] == record_id)
+
+
+def test_real_mission_force_record_pins_counter_and_gaps():
+    record = _mission_provenance_record("mission-force-mountain-counter")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/sand/mission_force.lua",
+        "sha256": "fa42203134fae821bb488eb41f49d62bba4dd5e79e53afbf729b0a63e31bf725",
+        "symbols": [
+            "Mission_Force", "Mission_Force:PrepBonus",
+            "Mission_Force:GetCompletedStatus", "Mission_Force:NextTurn",
+            "Mission_Force:StartMission", "Mission_Force:IsEndBlocked",
+            "Mission_Force:UpdateMission", "Mission_Force:GetCompletedObjectives",
+            "Mission_Force:UpdateObjectives",
+        ],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "EVENT_MOUNTAIN_DESTROYED" in facts
+    assert "BONUS_KILL_FIVE" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "random_removal" in gaps
+    assert "GetCompletedStatus" in gaps
+
+
+def test_real_mission_holes_record_pins_spawn_and_inherited_mites():
+    record = _mission_provenance_record("mission-holes-sinkhole-hive")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/missions/sand/mission_holes.lua",
+        "sha256": "ba6df180c061ceb4fe400bcc3083e2e392b505952c5a460ace40c98c25dc3718",
+        "symbols": [
+            "Mission_Holes", "Mission_Holes:UpdateSpawning",
+            "Mission_Holes:IsEndBlocked",
+        ],
+    }]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "BONUS_BLOCK" in facts
+    assert "GetSpawnCount Hornets" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "BONUS_SELFDAMAGE inheritance" in gaps
+    assert "Mission_Holes:IsEndBlocked" in gaps
+
+
+def test_real_mission_trapped_record_pins_base_and_ae_callbacks():
+    record = _mission_provenance_record("mission-trapped-decoy-buildings")
+    assert record["coverage"] == "partial"
+    sources = {source["path"]: source for source in record["sources"]}
+    assert sources["scripts/missions/sand/mission_trapped.lua"]["sha256"] == (
+        "f46bb4cce26c02dd1904a88217fc5d154bba61a21cbf85f72d1c101460d37a02"
+    )
+    assert sources["scripts/advanced/missions/sand/mission_trapped.lua"]["sha256"] == (
+        "6916b02be75795f7bb133767ece7367c1d3ecb346013157892fdaabbc07c46da"
+    )
+    assert sources["scripts/advanced/missions/sand/mission_trapped.lua"]["symbols"][-2:] == [
+        "Trapped_Explode:GetTargetArea", "Trapped_Explode:GetSkillEffect"
+    ]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "DAMAGE_DEATH" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "legacy setup callback" in gaps
+    assert "SkillEffect queue order" in gaps
+
+
+def test_real_mission_forest_fire_record_pins_counter_and_policy_gap():
+    record = _mission_provenance_record("mission-forest-fire-counter")
+    assert record["coverage"] == "partial"
+    source = record["sources"][0]
+    assert source["path"] == "scripts/advanced/missions/grass/mission_fires.lua"
+    assert source["sha256"] == (
+        "a146d1ff25ffb5d8d4459990214bd831c3a0c4cd243fd4ee7f8dc7d98044d739"
+    )
+    assert source["symbols"] == [
+        "Mission_ForestFire", "Mission_ForestFire:StartMission",
+        "Mission_ForestFire:GetFireCount", "Mission_ForestFire:GetCompletedObjectives",
+        "Mission_ForestFire:GetReward", "Mission_ForestFire:UpdateObjectives",
+    ]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "two reputation at eight or more fires" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "authoritative solver scalar" in gaps
+    assert "conservative strategy policy" in gaps
+
+
+def test_real_mission_shields_record_preserves_source_live_gap():
+    record = _mission_provenance_record("mission-shields-generator")
+    assert record["coverage"] == "partial"
+    source = record["sources"][0]
+    assert source["path"] == "scripts/advanced/missions/snow/mission_shields.lua"
+    assert source["sha256"] == (
+        "43a620c78ab42e4fe94e78ba311086bcc5a28433c0a841ca90cc542447a430d6"
+    )
+    assert "Mission_Shields:UpdateMission" in source["symbols"]
+    assert "Shield_Generator_Tooltip:GetSkillEffect" in source["symbols"]
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "not controlled proof" in facts
+    assert "Ricochet path was later diagnosed as a native no-op" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "exact one-time source semantics" in gaps
+    assert "controlled direct-hit, push, and death traces" in gaps
