@@ -8268,6 +8268,71 @@
           "symbols": ["test_real_mission_volatile_record_pins_callbacks_and_retreat_gap"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Boss source inherits Mission_Infinite, creates an Objective(BossText, 1), and stores the generic leader pawn ID. Initialize clears BonusObjs and adds Str_Tower; StartBoss creates and adds the configured BossPawn, and only ScorpionBoss increments the Scorpion spawner count by one. Its objective is complete only when Board:IsPawnAlive(BossID) is false, while GetCompletedStatus gives a failed BONUS_ASSET Tower priority over dead-boss Success and otherwise Boss; it also shows the info tutorial only on player turn one."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact Beetle, Firefly, and Scorpion leader sources each derive a Mission_*Boss from Mission_Boss with GlobalSpawnMod=-1. BeetleBoss is six HP, MoveSpeed three, ranged, massive, and uses the inherited BeetleAtk1-derived BeetleAtkB with Damage=3, Fly=1, and Fire=true. FireflyBoss is six HP, MoveSpeed three, ranged, massive, and its one active callback queues a four-damage projectile to GetProjectileEnd in the selected direction plus a second four-damage projectile to the opposite endpoint unless that endpoint is its own tile. ScorpionBoss is seven HP, MoveSpeed three, massive, and its two active callbacks select only itself then queue two-damage cardinal melee and directly add each attack sound effect and hold grapple for all four directions. The source spelling Misison_FireflyBoss_Obj is preserved exactly."
+        },
+        {
+          "classification": "fact",
+          "statement": "Existing objective metadata, Rust WId mappings, and Firefly threat-audit handling are implementation anchors for the three leader identities and weapons. They are not controlled proof that native Mission_Boss placement, leader targeting, inherited weapon behavior, effect queue, objective settlement, or scheduler ordering is source-conformant."
+        }
+      ],
+      "id": "mission-boss-core-beetle-firefly-scorpion",
+      "implementations": [
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": ["Mission_BeetleBoss", "BeetleBoss", "Mission_FireflyBoss", "FireflyBoss", "Mission_ScorpionBoss", "ScorpionBoss"]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": ["WId::BeetleAtkB", "WId::FireflyAtkB", "WId::ScorpionAtkB", "enemy_weapon_for_type"]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": ["FireflyAtkB"]
+        }
+      ],
+      "known_gaps": [
+        "Mission_Boss inherits Mission_Infinite, so native mission setup, spawner construction, parent objective/bonus lifecycle, Board:AddPawn placement and ID allocation, asset placement, and scheduling around StartMission, NextTurn, and settlement remain untraced.",
+        "The leader child sources do not define native target scoring, candidate selection, movement, guarding/stability, inherited BeetleAtk1 traversal, projectile endpoint rules beyond their direct calls, collision/status interactions, or the complete queued effect scheduler. Those behaviors require parent/weapon source and controlled build-keyed traces.",
+        "Static objective metadata and Rust mappings do not prove source-to-bridge mission identity, BossID liveness timing, Tower bonus precedence, Firefly's paired projectile ordering, Scorpion grapple persistence, or any complete leader-objective conformance."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/bosses/boss.lua",
+          "sha256": "9a957789e714c6d22d2f90bcd79dbb68c897aaa530e23d5be50cf7cf650853f1",
+          "symbols": ["Mission_Boss", "Mission_Boss:GetRewardCount", "Mission_Boss:GetObjectives", "Mission_Boss:GetBossPawn", "Mission_Boss:IsBossDead", "Mission_Boss:GetCompletedStatus", "Mission_Boss:Initialize", "Mission_Boss:StartBoss", "Mission_Boss:NextTurn", "Mission_Boss:StartMission", "Mission_Boss:UpdateObjectives", "Mission_Boss:GetCompletedObjectives"]
+        },
+        {
+          "path": "scripts/missions/bosses/beetle.lua",
+          "sha256": "7494baf7d88bb339fa6ddb558b71f4b94c56b8ad930256896e4a10c72dc37fea",
+          "symbols": ["Mission_BeetleBoss", "BeetleBoss", "BeetleAtkB"]
+        },
+        {
+          "path": "scripts/missions/bosses/firefly.lua",
+          "sha256": "f1c016ba9031553067a38f1de3d884d176dd1af22cd74d3bf02de32649642250",
+          "symbols": ["Mission_FireflyBoss", "FireflyBoss", "FireflyAtkB", "FireflyAtkB:GetSkillEffect"]
+        },
+        {
+          "path": "scripts/missions/bosses/scorpion.lua",
+          "sha256": "acf7325aba556595e45c24e6773bb5dc63feffe734217bba04bf9d1662b1bb63",
+          "symbols": ["Mission_ScorpionBoss", "ScorpionBoss", "ScorpionAtkB", "ScorpionAtkB:GetTargetArea", "ScorpionAtkB:GetSkillEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_boss_core_record_pins_callbacks_and_native_gaps"]
+        }
+      ]
     }
   ],
   "schema_version": 1

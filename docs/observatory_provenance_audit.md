@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 59 | 16 |
-| Environments | 15 | 13 | 2 |
-| Unique total | 96 | 78 | 18 |
+| Missions | 75 | 63 | 12 |
+| Environments | 15 | 14 | 1 |
+| Unique total | 96 | 82 | 14 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 330 definitions literally and leaves 412 unindexed. Category totals
+names 344 definitions literally and leaves 398 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -87,6 +87,22 @@ unreachable in stock play. Existing objective protection and route handling
 are policy/static-model anchors, not a claim that native spawn, scheduler, or
 objective settlement is reproduced. Its commented-out custom death effect
 remains inactive source text.
+
+The shared Boss-core slice adds four exact shipped mission sources in one
+bounded `partial` record and names all fourteen active callbacks among them:
+eleven in `Mission_Boss`, one in Firefly Leader, two in Scorpion Leader, and
+none in Beetle Leader. `Mission_Boss` creates the configured leader, stores its
+ID, adds the Tower asset, and makes leader death the direct objective predicate;
+the Tower bonus failure takes priority in its completion-status display. The
+Beetle, Firefly, and Scorpion child definitions pin their respective stats and
+weapons. Firefly's direct callback queues two four-damage opposing projectiles,
+while Scorpion selects only itself, queues four cardinal two-damage melee hits,
+and directly adds their sound effects and hold grapples. The shipped
+`Misison_FireflyBoss_Obj` typo is intentionally recorded
+verbatim. Existing objective metadata, Rust weapon mappings, and the paired-shot
+threat check are implementation anchors only: native placement, inherited
+targeting and movement, effect scheduling, liveness timing, Tower settlement,
+and full mission conformance remain open.
 
 The mountain, sinkhole, trapped-building, forest-fire, and shield-generator
 slice adds six exact shipped mission sources in five bounded `partial` records.

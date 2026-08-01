@@ -1805,6 +1805,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v397: Scorpion Leader Massive Spinneret applies immediate AddGrapple to each
+# original surviving adjacent target before queued outward melee/push. A
+# blocked push retains the boss-owned web; actual movement clears it. Pre-v397
+# corpus is archived as recordings/failure_db_snapshot_sim_v396.jsonl.
 # v396: Mission_Bomb's ProtoBomb honors IgnoreFire=true; Mission_Civilians'
 # VIP_Truck honors IgnoreSmoke=true while using its Limited movement skill.
 # Pre-v396 corpus is archived as recordings/failure_db_snapshot_sim_v395.jsonl.
@@ -1845,7 +1849,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 396
+SIMULATOR_VERSION = 397
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

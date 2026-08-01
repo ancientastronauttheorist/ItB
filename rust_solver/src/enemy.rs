@@ -2368,21 +2368,25 @@ pub fn simulate_enemy_attacks(
                         if in_bounds(nx, ny) {
                             let d = enemy_hit_damage(board, nx as u8, ny as u8, adjacent_damage, vh);
                             apply_damage(board, nx as u8, ny as u8, d, &mut result, DamageSource::Weapon);
+                            // Massive Spinneret's AddGrapple is immediate on
+                            // the original adjacent survivor; its melee/push
+                            // is queued afterward. An actual tile change in
+                            // apply_push then clears this web, while a blocked
+                            // push leaves the source-owned grapple intact.
+                            if wdef.web() {
+                                if let Some(idx) = board.unit_at(nx as u8, ny as u8) {
+                                    if board.units[idx].hp > 0 && !board.units[idx].pilot_soldier() {
+                                        board.units[idx].set_web(true);
+                                        board.units[idx].web_source_uid = enemy_uid;
+                                    }
+                                }
+                            }
                             // Push outward / inward per weapon def (Scorpion Leader's
                             // Massive Spinneret pushes every target away from itself).
                             match wdef.push {
                                 PushDir::Outward => apply_push(board, nx as u8, ny as u8, i, &mut result),
                                 PushDir::Inward => apply_push(board, nx as u8, ny as u8, opposite_dir(i), &mut result),
                                 _ => {}
-                            }
-                            // Status effects (WEB from Massive Spinneret, etc.):
-                            // apply to the live unit on that tile.
-                            if wdef.web() {
-                                if let Some(idx) = board.unit_at(nx as u8, ny as u8) {
-                                    if !board.units[idx].pilot_soldier() {
-                                        board.units[idx].set_web(true);
-                                    }
-                                }
                             }
                         }
                     }
@@ -6254,6 +6258,73 @@ mod tests {
         };
         unit.set_type_name("BeetleBoss");
         board.add_unit(unit)
+    }
+
+    fn add_scorpion_boss(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
+        let mut unit = Unit {
+            uid, x, y, hp: 6, max_hp: 6,
+            team: Team::Enemy,
+            flags: UnitFlags::MASSIVE | UnitFlags::HAS_QUEUED_ATTACK,
+            queued_target_x: x as i8,
+            queued_target_y: y as i8,
+            weapon: WeaponId(WId::ScorpionAtkB as u16),
+            weapon_damage: 2,
+            ..Default::default()
+        };
+        unit.set_type_name("ScorpionBoss");
+        board.add_unit(unit)
+    }
+
+    #[test]
+    fn test_scorpion_boss_spinneret_grapples_before_queued_outward_push() {
+        // `ScorpionAtkB` applies AddGrapple immediately to each original
+        // adjacent survivor, then queues its 2-damage outward melee. The
+        // northern push is blocked so it retains the web/source; successful
+        // pushes clear the just-applied web when their targets change tiles.
+        let mut board = Board::default();
+        board.tile_mut(3, 1).terrain = Terrain::Mountain;
+        let north = add_mech_unit(&mut board, 10, 3, 2, 5);
+        let east = add_mech_unit(&mut board, 11, 4, 3, 5);
+        let south = add_mech_unit(&mut board, 12, 3, 4, 5);
+        let west = add_mech_unit(&mut board, 13, 2, 3, 5);
+        let boss = add_scorpion_boss(&mut board, 99, 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        // North takes the Spinneret hit plus the mountain bump, remains on
+        // its original tile, and therefore keeps the immediate grapple.
+        assert_eq!(board.units[north].hp, 2);
+        assert_eq!((board.units[north].x, board.units[north].y), (3, 2));
+        assert!(board.units[north].web());
+        assert_eq!(board.units[north].web_source_uid, board.units[boss].uid);
+
+        for (idx, expected_pos) in [(east, (5, 3)), (south, (3, 5)), (west, (1, 3))] {
+            assert_eq!(board.units[idx].hp, 3, "every adjacent survivor takes 2 damage");
+            assert_eq!((board.units[idx].x, board.units[idx].y), expected_pos);
+            assert!(!board.units[idx].web(), "a successful push breaks the web");
+            assert_eq!(board.units[idx].web_source_uid, 0);
+        }
+    }
+
+    #[test]
+    fn test_scorpion_boss_spinneret_skips_dead_and_soldier_web_targets() {
+        use crate::board::PilotFlags;
+
+        let mut board = Board::default();
+        let dead = add_mech_unit(&mut board, 10, 3, 2, 2);
+        let soldier = add_mech_unit(&mut board, 11, 4, 3, 5);
+        board.units[soldier].pilot_flags = PilotFlags::SOLDIER;
+        add_scorpion_boss(&mut board, 99, 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[dead].hp <= 0);
+        assert!(!board.units[dead].web());
+        assert_eq!(board.units[dead].web_source_uid, 0);
+        assert!(!board.units[soldier].web());
+        assert_eq!(board.units[soldier].web_source_uid, 0);
     }
 
     #[test]

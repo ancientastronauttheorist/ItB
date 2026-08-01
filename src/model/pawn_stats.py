@@ -138,7 +138,10 @@ VEK_STATS = {
     # Objective / special Vek
     "GlowingScorpion": PawnStats(move_speed=3, ranged=0),
     # Vek Bosses (Hive Leaders): Massive + water-immune per Hive Leader trait.
-    "ScorpionBoss":  PawnStats(move_speed=3, massive=True, ranged=0),
+    # `missions/bosses/scorpion.lua` declares SkillList={"ScorpionAtkB"}.
+    # Keep the static source identity here; Rust owns runtime type->WId fallback.
+    "ScorpionBoss":  PawnStats(move_speed=3, massive=True, ranged=0,
+                                default_weapon="ScorpionAtkB"),
     # Pinnacle bots
     "Snowtank1":     PawnStats(move_speed=3, ranged=0,
                                  default_weapon="SnowtankAtk1"),
@@ -195,9 +198,12 @@ VEK_STATS = {
     "Jelly_Boost1":  PawnStats(move_speed=2, flying=True, leader="LEADER_BOOST"),
     "Jelly_Fire1":   PawnStats(move_speed=2, flying=True, leader="LEADER_FIRE"),
     "Jelly_Spider1": PawnStats(move_speed=2, flying=True, leader="LEADER_SPIDER"),
-    # Bosses
-    "FireflyBoss":   PawnStats(move_speed=3, ranged=1, massive=True),
-    "BeetleBoss":    PawnStats(move_speed=3, ranged=0, massive=True),
+    # Original Hive Leader source parity. These static SkillLists document
+    # pawn identity; Rust owns runtime type->WId fallback for bridge payloads.
+    "FireflyBoss":   PawnStats(move_speed=3, ranged=1, massive=True,
+                                default_weapon="FireflyAtkB"),
+    "BeetleBoss":    PawnStats(move_speed=3, ranged=1, massive=True,
+                                default_weapon="BeetleAtkB"),
     # Hornet Leader — Mission_HornetBoss (Hive Leader corp HQ) + appears in
     # Mission_Final / Mission_Final_Cave BossList. Per
     # `scripts/missions/bosses/hornet.lua:11-25`: Health=6, MoveSpeed=3,

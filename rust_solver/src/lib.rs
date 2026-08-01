@@ -2414,6 +2414,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v397 - Scorpion Leader Massive Spinneret applies immediate AddGrapple to
+// each original surviving adjacent target before queued outward melee/push.
+// A blocked push retains the boss-owned web; an actual move clears it. Pre-v397
+// corpus archived as recordings/failure_db_snapshot_sim_v396.jsonl.
 // v396 - Mission_Bomb's ProtoBomb now honors source-defined IgnoreFire=true,
 //   and Mission_Civilians' VIP_Truck honors IgnoreSmoke=true while using its
 //   Limited movement skill. Pre-v396 corpus archived as
@@ -2459,7 +2463,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 396;
+pub const SIMULATOR_VERSION: u32 = 397;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

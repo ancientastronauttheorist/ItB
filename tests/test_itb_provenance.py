@@ -5383,6 +5383,93 @@ def test_real_mission_volatile_record_pins_callbacks_and_retreat_gap():
     assert "inactive commented GetDeathEffect" in gaps
 
 
+def test_real_mission_boss_core_record_pins_callbacks_and_native_gaps():
+    record = _mission_provenance_record(
+        "mission-boss-core-beetle-firefly-scorpion"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/bosses/boss.lua",
+            "sha256": (
+                "9a957789e714c6d22d2f90bcd79dbb68"
+                "c897aaa530e23d5be50cf7cf650853f1"
+            ),
+            "symbols": [
+                "Mission_Boss",
+                "Mission_Boss:GetRewardCount",
+                "Mission_Boss:GetObjectives",
+                "Mission_Boss:GetBossPawn",
+                "Mission_Boss:IsBossDead",
+                "Mission_Boss:GetCompletedStatus",
+                "Mission_Boss:Initialize",
+                "Mission_Boss:StartBoss",
+                "Mission_Boss:NextTurn",
+                "Mission_Boss:StartMission",
+                "Mission_Boss:UpdateObjectives",
+                "Mission_Boss:GetCompletedObjectives",
+            ],
+        },
+        {
+            "path": "scripts/missions/bosses/beetle.lua",
+            "sha256": (
+                "7494baf7d88bb339fa6ddb558b71f4b94"
+                "c56b8ad930256896e4a10c72dc37fea"
+            ),
+            "symbols": ["Mission_BeetleBoss", "BeetleBoss", "BeetleAtkB"],
+        },
+        {
+            "path": "scripts/missions/bosses/firefly.lua",
+            "sha256": (
+                "f1c016ba9031553067a38f1de3d884d17"
+                "6dd1af22cd74d3bf02de32649642250"
+            ),
+            "symbols": [
+                "Mission_FireflyBoss",
+                "FireflyBoss",
+                "FireflyAtkB",
+                "FireflyAtkB:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/missions/bosses/scorpion.lua",
+            "sha256": (
+                "acf7325aba556595e45c24e6773bb5dc"
+                "63feffe734217bba04bf9d1662b1bb63"
+            ),
+            "symbols": [
+                "Mission_ScorpionBoss",
+                "ScorpionBoss",
+                "ScorpionAtkB",
+                "ScorpionAtkB:GetTargetArea",
+                "ScorpionAtkB:GetSkillEffect",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_unit_objectives.json"] == {
+        "Mission_BeetleBoss", "BeetleBoss", "Mission_FireflyBoss",
+        "FireflyBoss", "Mission_ScorpionBoss", "ScorpionBoss",
+    }
+    assert implementations["rust_solver/src/weapons.rs"] == {
+        "WId::BeetleAtkB", "WId::FireflyAtkB", "WId::ScorpionAtkB",
+        "enemy_weapon_for_type",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "BONUS_ASSET Tower priority" in facts
+    assert "Misison_FireflyBoss_Obj" in facts
+    assert "two-damage cardinal melee" in facts
+    assert "directly add each attack sound effect and hold grapple" in facts
+    assert "implementation anchors" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Board:AddPawn placement and ID allocation" in gaps
+    assert "inherited BeetleAtk1 traversal" in gaps
+    assert "Tower bonus precedence" in gaps
+
+
 def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
     record = _mission_provenance_record("mission-boombots-explosive-decay")
     assert record["coverage"] == "partial"

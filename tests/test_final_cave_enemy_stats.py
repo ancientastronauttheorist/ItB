@@ -54,6 +54,26 @@ def test_hornet_boss_has_canonical_stats() -> None:
     assert s.default_weapon == "HornetAtkB"
 
 
+def test_original_hive_leaders_have_source_skill_metadata() -> None:
+    """The original boss Lua definitions provide these fixed static SkillLists.
+
+    BeetleBoss is also ranged in the source despite its charge-shaped attack;
+    `Pawn.ranged` describes the native target-selection class, not whether the
+    resolved weapon ends adjacent to the target.
+    """
+    expected = {
+        "FireflyBoss": (1, "FireflyAtkB"),
+        "BeetleBoss": (1, "BeetleAtkB"),
+        "ScorpionBoss": (0, "ScorpionAtkB"),
+    }
+    for pawn_type, (ranged, weapon) in expected.items():
+        stats = get_pawn_stats(pawn_type)
+        assert stats.move_speed == 3
+        assert stats.massive is True
+        assert stats.ranged == ranged
+        assert stats.default_weapon == weapon
+
+
 def test_spider_boss_has_canonical_stats() -> None:
     """SpiderBoss per `missions/bosses/spider.lua:50-67`:
     Health=6, MoveSpeed=2, Massive, Jumper, IgnoreSmoke, Ranged=1.
