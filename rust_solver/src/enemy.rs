@@ -776,13 +776,25 @@ fn apply_env_smoke_board(board: &mut Board) {
     // Reconstruct the complete effect row here while retaining env_smoke as
     // the bridge-visible warning mask used by turn projection/serialization.
     if board.mission_id == "Mission_Terratide" {
-        let mut warned = smoke_bits;
         let mut warned_rows = 0u16;
-        while warned != 0 {
-            let tile_idx = warned.trailing_zeros() as usize;
-            warned &= warned - 1;
-            let (_, y) = idx_to_xy(tile_idx);
-            warned_rows |= 1u16 << y;
+        if board.env_tides_planned == Some(true) {
+            // Env_Terratide maps the source Index to y = 7 - Index. Index 8
+            // is terminal/off-board and therefore has no current effect row.
+            if let Some(index) = board.env_tides_index {
+                if index <= 7 {
+                    warned_rows |= 1u16 << (7 - index);
+                }
+            }
+        } else if board.env_tides_planned.is_none() {
+            // Legacy payloads have no Planned scalar; retain the visible-mask
+            // behavior. Explicit false is authoritative and suppresses it.
+            let mut warned = smoke_bits;
+            while warned != 0 {
+                let tile_idx = warned.trailing_zeros() as usize;
+                warned &= warned - 1;
+                let (_, y) = idx_to_xy(tile_idx);
+                warned_rows |= 1u16 << y;
+            }
         }
         smoke_bits = 0;
         for y in 0u8..8 {
@@ -1286,7 +1298,11 @@ pub fn simulate_enemy_attacks(
     // Terratide is a smoke wave, not a damaging tide. It resolves before
     // queued Vek attacks; the smoke-cancellation latch below therefore sees
     // newly smoked attackers and suppresses their current attack.
-    if board.env_smoke != 0 {
+    if board.env_smoke != 0
+        || (board.mission_id == "Mission_Terratide"
+            && board.env_tides_planned == Some(true)
+            && board.env_tides_index.is_some())
+    {
         apply_env_smoke_board(board);
     }
 
@@ -4335,6 +4351,41 @@ mod tests {
                 "{pawn_type} must dispatch its exact Lua diagonal damage",
             );
         }
+    }
+
+    #[test]
+    fn test_terratide_index_reconstructs_markerless_current_smoke_lane() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Terratide".to_string();
+        board.env_tides_index = Some(3);
+        board.env_tides_planned = Some(true);
+        for x in 0u8..8 {
+            board.tile_mut(x, 4).terrain = Terrain::Building;
+            board.tile_mut(x, 4).building_hp = 1;
+        }
+        assert_eq!(board.env_smoke, 0);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        for x in 0u8..8 {
+            assert!(board.tile(x, 4).smoke(), "Index 3 should smoke ({x},4)");
+        }
+        assert!(!board.tile(0, 3).smoke());
+        assert!(!board.tile(0, 5).smoke());
+    }
+
+    #[test]
+    fn test_terratide_unplanned_index_does_not_reapply_smoke() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Terratide".to_string();
+        board.env_tides_index = Some(3);
+        board.env_tides_planned = Some(false);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!((0u8..8).all(|x| !board.tile(x, 4).smoke()));
     }
 
     #[test]

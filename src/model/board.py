@@ -354,6 +354,11 @@ class Board:
         self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
         # Maps (x,y) -> (damage, is_lethal)
         self.environment_danger_flying_immune: set[tuple[int, int]] = set()
+        # Live Env_Tides.Index for Mission_Tides and its Terratide subclass.
+        # The Rust simulator is authoritative; Python retains the scalar for
+        # bridge/copy parity and reconstructs markerless Terratide smoke.
+        self.environment_tides_index: int | None = None
+        self.environment_tides_planned: bool | None = None
         # Mission_Terratide warned tiles become smoke before queued Vek
         # attacks.  Keep them separate from environment_danger: they deal no
         # damage and are consumed by the Rust simulator as a status wave.
@@ -470,6 +475,8 @@ class Board:
         b.environment_danger = set(self.environment_danger)
         b.environment_danger_v2 = dict(self.environment_danger_v2)
         b.environment_danger_flying_immune = set(self.environment_danger_flying_immune)
+        b.environment_tides_index = self.environment_tides_index
+        b.environment_tides_planned = self.environment_tides_planned
         b.environment_smoke = set(self.environment_smoke)
         b.environment_freeze = set(self.environment_freeze)
         b.env_type = self.env_type
@@ -715,6 +722,27 @@ class Board:
             board.environment_wind_dir = wind_dir
         mission_id = data.get("mission_id")
         terratide_smoke = mission_id == "Mission_Terratide"
+        tides_index = data.get("environment_tides_index")
+        if (
+            mission_id in {"Mission_Tides", "Mission_Terratide"}
+            and type(tides_index) is int
+            and 1 <= tides_index <= 8
+        ):
+            board.environment_tides_index = tides_index
+        tides_planned = data.get("environment_tides_planned")
+        if (
+            mission_id in {"Mission_Tides", "Mission_Terratide"}
+            and type(tides_planned) is bool
+        ):
+            board.environment_tides_planned = tides_planned
+        if (
+            terratide_smoke
+            and board.environment_tides_planned is True
+            and board.environment_tides_index is not None
+        ):
+            current_row = 7 - board.environment_tides_index
+            if 0 <= current_row < 8:
+                board.environment_smoke.update((x, current_row) for x in range(8))
         # Env_Sandstorm markers describe smoke/terrain changes and never carry
         # iDamage. Until the bridge exports its live Row, omit them from the
         # generic damage channel instead of predicting phantom HP/grid loss.

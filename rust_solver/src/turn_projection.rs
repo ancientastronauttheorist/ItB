@@ -730,9 +730,31 @@ fn legacy_tides_index_from_markers(mut markers: u64) -> Option<u8> {
     row
 }
 
+/// Recover Env_Terratide.Index from one source-consistent legacy warning row.
+/// Terratide reverses the inherited mapping to y = 7 - Index. Its initial
+/// Index is 1, so source-valid warning rows are y=0..6; row 7 belongs to the
+/// mission's separately seeded starting smoke and cannot prove an Index.
+fn legacy_terratide_index_from_markers(mut markers: u64) -> Option<u8> {
+    let mut row = None;
+    while markers != 0 {
+        let tile_idx = markers.trailing_zeros() as usize;
+        markers &= markers - 1;
+        let (_, y) = idx_to_xy(tile_idx);
+        if y > 6 || row.is_some_and(|existing| existing != y) {
+            return None;
+        }
+        row = Some(y);
+    }
+    row.map(|y| 7 - y)
+}
+
 pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
     if board.mission_id == "Mission_Terratide" {
-        if board.env_smoke == 0 {
+        if board.env_tides_planned == Some(false) {
+            board.env_smoke = 0;
+            return;
+        }
+        if board.env_tides_planned.is_none() && board.env_smoke == 0 {
             return;
         }
 
@@ -741,14 +763,27 @@ pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
         // next warning moves toward y=0, opposite Mission_Tides. Rebuild every
         // represented next row so columns omitted by a building in the old
         // lane can reappear; MarkBoard omits only buildings in the new lane.
-        let mut warned = board.env_smoke;
         let mut next_rows = 0u16;
-        while warned != 0 {
-            let tile_idx = warned.trailing_zeros() as usize;
-            warned &= warned - 1;
-            let (_, y) = idx_to_xy(tile_idx);
-            if y > 0 {
-                next_rows |= 1u16 << (y - 1);
+        if board.env_tides_index.is_none() {
+            board.env_tides_index = legacy_terratide_index_from_markers(board.env_smoke);
+        }
+        if let Some(index) = board.env_tides_index {
+            let next_index = index.saturating_add(1).min(8);
+            board.env_tides_index = Some(next_index);
+            if next_index <= 7 {
+                next_rows |= 1u16 << (7 - next_index);
+            }
+        } else {
+            // Empty, row-seven, or multi-row legacy payloads cannot prove the
+            // inherited Index. Retain the prior marker-derived shift.
+            let mut warned = board.env_smoke;
+            while warned != 0 {
+                let tile_idx = warned.trailing_zeros() as usize;
+                warned &= warned - 1;
+                let (_, y) = idx_to_xy(tile_idx);
+                if y > 0 {
+                    next_rows |= 1u16 << (y - 1);
+                }
             }
         }
 
@@ -1217,6 +1252,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "remaining_spawns":      board.remaining_spawns,
         "spawning_tiles":        spawning_tiles,
         "environment_tides_index": board.env_tides_index,
+        "environment_tides_planned": board.env_tides_planned,
         "environment_danger_v2": env_danger_v2,
         "env_type":              if board.env_danger_acid != 0 || board.mission_id == "Mission_NanoStorm" {
             "nanostorm"
@@ -1731,6 +1767,70 @@ mod tests {
                 "a higher-y building must not shadow Terratide warning ({x},3)",
             );
         }
+    }
+
+    #[test]
+    fn test_mission_terratide_index_survives_markerless_lane_across_depth() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Terratide".to_string();
+        b.total_turns = 5;
+        b.current_turn = 1;
+        b.env_tides_index = Some(3);
+        b.env_tides_planned = Some(true);
+        for x in 0u8..8 {
+            b.tile_mut(x, 4).terrain = Terrain::Building;
+            b.tile_mut(x, 4).building_hp = 1;
+            b.tile_mut(x, 3).terrain = Terrain::Building;
+            b.tile_mut(x, 3).building_hp = 1;
+        }
+
+        let (first, _) = project_plan(&b, &[], &[], &WEAPONS);
+        assert_eq!(first.env_tides_index, Some(4));
+        assert_eq!(first.env_smoke, 0, "buildings hide every y=3 warning");
+        for x in 0u8..8 {
+            assert!(first.tile(x, 4).smoke(), "Index 3 should smoke ({x},4)");
+        }
+
+        let (second, _) = project_plan(&first, &[], &[], &WEAPONS);
+        assert_eq!(second.env_tides_index, Some(5));
+        for x in 0u8..8 {
+            assert!(second.tile(x, 3).smoke(), "Index 4 should smoke ({x},3)");
+            assert!(second.is_env_smoke(x, 2), "Index 5 should warn ({x},2)");
+        }
+    }
+
+    #[test]
+    fn test_mission_terratide_unplanned_index_does_not_advance() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Terratide".to_string();
+        b.env_tides_index = Some(3);
+        b.env_tides_planned = Some(false);
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.env_tides_index, Some(3));
+        assert_eq!(projected.env_tides_planned, Some(false));
+        assert_eq!(projected.env_smoke, 0);
+        assert!((0u8..8).all(|x| !projected.tile(x, 4).smoke()));
+    }
+
+    #[test]
+    fn test_mission_terratide_legacy_index_recovery_is_single_row_and_bounded() {
+        assert_eq!(
+            legacy_terratide_index_from_markers(1u64 << xy_to_idx(3, 4)),
+            Some(3),
+        );
+        assert_eq!(legacy_terratide_index_from_markers(0), None);
+        assert_eq!(
+            legacy_terratide_index_from_markers(1u64 << xy_to_idx(3, 7)),
+            None,
+        );
+        assert_eq!(
+            legacy_terratide_index_from_markers(
+                (1u64 << xy_to_idx(1, 4)) | (1u64 << xy_to_idx(2, 3)),
+            ),
+            None,
+        );
     }
 
     #[test]
@@ -2754,6 +2854,7 @@ mod tests {
         let (mut board, spawn_points) = simple_board();
         board.mission_id = "Mission_Tides".to_string();
         board.env_tides_index = Some(3);
+        board.env_tides_planned = Some(true);
         board.units[1].queued_target_raw_x = 5;
         board.units[1].queued_target_raw_y = 4;
         board.units[0].pilot_flags = crate::board::PilotFlags::ROCK;
@@ -2785,6 +2886,7 @@ mod tests {
         assert_eq!(board.grid_power, b2.grid_power);
         assert_eq!(board.current_turn, b2.current_turn);
         assert_eq!(b2.env_tides_index, Some(3));
+        assert_eq!(b2.env_tides_planned, Some(true));
         assert!(b2.is_tides_spawn_permanently_blocked(7, 3));
         assert_eq!(b2.units[1].queued_target_raw_x, 5);
         assert_eq!(b2.units[1].queued_target_raw_y, 4);

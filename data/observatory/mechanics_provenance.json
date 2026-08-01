@@ -974,6 +974,10 @@
         {
           "classification": "fact",
           "statement": "The bridge classifies Mission_Terratide before generic inherited-Index detection. Rust routes its warning mask to pending smoke, reconstructs the complete effect row including buildings before queued attacks, and advances the next non-building warning row toward y=0."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v393 extends the dormant mission-scoped Env_Tides Index and Planned exports to Mission_Terratide, accepts them only for Tides and Terratide, reconstructs the complete current y=7-Index smoke lane only when Planned is explicitly true even if every visible marker is absent, and persists the reverse-mapped next lane across projection and replay depth without applying Tides' water-only permanent spawn blocks. Explicit Planned=false suppresses index-only smoke and advancement. Legacy payloads recover Index only from one source-valid warning row; empty, row-seven, or multi-row masks retain the prior fail-closed shift."
         }
       ],
       "id": "environment-mission-terratide",
@@ -982,6 +986,8 @@
           "path": "src/bridge/modloader.lua",
           "symbols": [
             "dump_state",
+            "mission_tides_index",
+            "mission_tides_planned",
             "Mission_Terratide"
           ]
         },
@@ -1013,6 +1019,7 @@
         {
           "path": "rust_solver/src/turn_projection.rs",
           "symbols": [
+            "legacy_terratide_index_from_markers",
             "advance_mission_tides_warning",
             "project_plan_with_spawns"
           ]
@@ -1025,7 +1032,7 @@
         }
       ],
       "known_gaps": [
-        "The bridge does not export Env_Terratide.Index. Rust infers the current and next rows from at least one warning marker, so it cannot reconstruct or advance a lane whose eight visible markers are all absent.",
+        "The environment_tides_index and environment_tides_planned exports are implemented for Env_Terratide and default behavior-preserving but have not been installed or live-captured during the protected active achievement session. Source proves the inherited Index, Planned gate, and row mapping; the bridge properties' runtime availability remains conditional on the existing uninstalled bridge contract.",
         "Rust does not independently seed Mission_Terratide:StartMission's initial y=7 smoke or Env_Tides:Start's inherited permanent y=1 spawn block; it consumes live tile and current spawn-marker state and does not generate future spawn locations.",
         "Terratide-before-queued-attacks ordering is live-derived rather than proven from an independently traced native scheduler.",
         "Native iSmoke interactions with every pawn passive, status, item, and terrain combination remain non-exhaustive.",
@@ -1055,6 +1062,16 @@
       ],
       "tests": [
         {
+          "path": "tests/test_modloader_tides_metadata.py",
+          "symbols": [
+            "test_tides_metadata_exports_exact_integer_index_for_inherited_missions",
+            "test_tides_metadata_omits_unrelated_missions",
+            "test_tides_metadata_rejects_missing_fractional_and_out_of_range_indices",
+            "test_tides_metadata_exports_exact_planned_state_for_inherited_missions",
+            "test_modloader_serializes_only_the_mission_scoped_inherited_tides_index"
+          ]
+        },
+        {
           "path": "tests/test_modloader_terratide.py",
           "symbols": [
             "test_terratide_overrides_inherited_tides_before_class_detection"
@@ -1064,6 +1081,9 @@
           "path": "tests/test_terratide_smoke.py",
           "symbols": [
             "test_terratide_warning_routes_to_pending_smoke_not_damage",
+            "test_terratide_index_reconstructs_markerless_smoke_and_survives_copy",
+            "test_environment_tides_index_is_rejected_for_unrelated_or_invalid_payloads",
+            "test_terratide_index_without_explicit_planned_true_does_not_invent_smoke",
             "test_threat_audit_credits_attacker_on_pending_terratide_smoke"
           ]
         },
@@ -1071,26 +1091,32 @@
           "path": "rust_solver/src/serde_bridge.rs",
           "symbols": [
             "test_terratide_danger_routes_to_smoke_not_damage",
-            "test_tides_index_is_accepted_only_for_mission_tides"
+            "test_tides_index_is_accepted_only_for_tides_and_terratide"
           ]
         },
         {
           "path": "rust_solver/src/enemy.rs",
           "symbols": [
-            "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack"
+            "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack",
+            "test_terratide_index_reconstructs_markerless_current_smoke_lane",
+            "test_terratide_unplanned_index_does_not_reapply_smoke"
           ]
         },
         {
           "path": "rust_solver/src/turn_projection.rs",
           "symbols": [
             "test_mission_terratide_projection_smokes_full_row_and_advances_warning_backwards",
-            "test_mission_terratide_prior_building_does_not_shadow_next_warning"
+            "test_mission_terratide_prior_building_does_not_shadow_next_warning",
+            "test_mission_terratide_index_survives_markerless_lane_across_depth",
+            "test_mission_terratide_unplanned_index_does_not_advance",
+            "test_mission_terratide_legacy_index_recovery_is_single_row_and_bounded"
           ]
         },
         {
           "path": "rust_solver/src/replay.rs",
           "symbols": [
-            "replay_solution_terratide_smokes_full_row_and_advances_final_warning_lane"
+            "replay_solution_terratide_smokes_full_row_and_advances_final_warning_lane",
+            "replay_solution_terratide_index_recovers_markerless_smoke_and_warning"
           ]
         }
       ]
@@ -1104,7 +1130,7 @@
         },
         {
           "classification": "fact",
-          "statement": "The dormant bridge source exports Mission_Tides' live Env_Tides.Index. Rust consumes it to advance markerless warning lanes, derives the exact source-defined permanent full-row spawn-block boundary through the current Index, defers Mission_Tides danger until after queued attacks, applies grounded lethality, the observed one damage to ordinary flyers, and Lua's explicit DAMAGE_DEATH on flooded Mountains even for flyers; it destroys marked pods, converts marked current-lane terrain to Water, and reconstructs the next warning from Lua's building-shadow and convert rules."
+          "statement": "The dormant bridge source exports Mission_Tides' live Env_Tides Index and Planned state. Rust consumes Index to advance markerless warning lanes, derives the exact source-defined permanent full-row spawn-block boundary through the current Index, defers Mission_Tides danger until after queued attacks, applies grounded lethality, the observed one damage to ordinary flyers, and Lua's explicit DAMAGE_DEATH on flooded Mountains even for flyers; it destroys marked pods, converts marked current-lane terrain to Water, and reconstructs the next warning from Lua's building-shadow and convert rules."
         },
         {
           "classification": "fact",
@@ -1117,6 +1143,7 @@
           "path": "src/bridge/modloader.lua",
           "symbols": [
             "mission_tides_index",
+            "mission_tides_planned",
             "dump_state"
           ]
         },
@@ -1181,10 +1208,11 @@
         {
           "path": "tests/test_modloader_tides_metadata.py",
           "symbols": [
-            "test_tides_metadata_exports_exact_integer_index",
-            "test_tides_metadata_omits_terratide_and_other_missions",
+            "test_tides_metadata_exports_exact_integer_index_for_inherited_missions",
+            "test_tides_metadata_omits_unrelated_missions",
             "test_tides_metadata_rejects_missing_fractional_and_out_of_range_indices",
-            "test_modloader_serializes_only_the_mission_scoped_tides_index"
+            "test_tides_metadata_exports_exact_planned_state_for_inherited_missions",
+            "test_modloader_serializes_only_the_mission_scoped_inherited_tides_index"
           ]
         },
         {
@@ -1196,7 +1224,7 @@
         {
           "path": "rust_solver/src/serde_bridge.rs",
           "symbols": [
-            "test_tides_index_is_accepted_only_for_mission_tides"
+            "test_tides_index_is_accepted_only_for_tides_and_terratide"
           ]
         },
         {

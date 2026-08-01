@@ -471,10 +471,14 @@ pub struct Board {
     /// Mission_Wind push direction, matching engine DIR_* constants and Rust
     /// DIRS. -1 means older bridge/recording without WindDir export.
     pub env_wind_dir: i8,
-    /// Live Mission_Tides Env_Tides `Index`. None means an older bridge or a
-    /// different environment. Unlike visible warnings, Index remains
-    /// available when MarkBoard hides every tile in the lane.
+    /// Live Env_Tides `Index` for Tides and Terratide. None means an older
+    /// bridge or a different environment. Unlike visible warnings, Index
+    /// remains available when MarkBoard hides every tile in the lane.
     pub env_tides_index: Option<u8>,
+    /// Live Env_Tides `Planned` for the same mission-scoped payload. Index
+    /// persists after ApplyEffect, so only explicit true proves that a fully
+    /// markerless Terratide lane is pending.
+    pub env_tides_planned: Option<bool>,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
     /// Frozen=true to any alive unit standing on these tiles and freezes live
@@ -649,6 +653,7 @@ impl Default for Board {
             env_wind: 0,
             env_wind_dir: -1,
             env_tides_index: None,
+            env_tides_planned: None,
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,

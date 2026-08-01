@@ -1144,7 +1144,7 @@ def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explici
         reference["path"]: set(reference["symbols"])
         for reference in record["implementations"]
     }
-    assert {"mission_tides_index", "dump_state"} <= implementations[
+    assert {"mission_tides_index", "mission_tides_planned", "dump_state"} <= implementations[
         "src/bridge/modloader.lua"
     ]
     assert {
@@ -1243,7 +1243,12 @@ def test_real_mission_terratide_record_tracks_inherited_smoke_semantics():
         reference["path"]: set(reference["symbols"])
         for reference in record["implementations"]
     }
-    assert {"dump_state", "Mission_Terratide"} <= implementations[
+    assert {
+        "dump_state",
+        "mission_tides_index",
+        "mission_tides_planned",
+        "Mission_Terratide",
+    } <= implementations[
         "src/bridge/modloader.lua"
     ]
     assert implementations["src/model/board.py"] == {"from_bridge_data"}
@@ -1254,6 +1259,7 @@ def test_real_mission_terratide_record_tracks_inherited_smoke_semantics():
         implementations["rust_solver/src/enemy.rs"]
     )
     assert {
+        "legacy_terratide_index_from_markers",
         "advance_mission_tides_warning",
         "project_plan_with_spawns",
     } <= implementations["rust_solver/src/turn_projection.rs"]
@@ -1261,19 +1267,43 @@ def test_real_mission_terratide_record_tracks_inherited_smoke_semantics():
         reference["path"]: set(reference["symbols"])
         for reference in record["tests"]
     }
+    assert tests["tests/test_modloader_tides_metadata.py"] == {
+        "test_tides_metadata_exports_exact_integer_index_for_inherited_missions",
+        "test_tides_metadata_omits_unrelated_missions",
+        "test_tides_metadata_rejects_missing_fractional_and_out_of_range_indices",
+        "test_tides_metadata_exports_exact_planned_state_for_inherited_missions",
+        "test_modloader_serializes_only_the_mission_scoped_inherited_tides_index",
+    }
+    assert tests["tests/test_terratide_smoke.py"] == {
+        "test_terratide_warning_routes_to_pending_smoke_not_damage",
+        "test_terratide_index_reconstructs_markerless_smoke_and_survives_copy",
+        "test_environment_tides_index_is_rejected_for_unrelated_or_invalid_payloads",
+        "test_terratide_index_without_explicit_planned_true_does_not_invent_smoke",
+        "test_threat_audit_credits_attacker_on_pending_terratide_smoke",
+    }
     assert tests["rust_solver/src/turn_projection.rs"] == {
         "test_mission_terratide_projection_smokes_full_row_and_advances_warning_backwards",
         "test_mission_terratide_prior_building_does_not_shadow_next_warning",
+        "test_mission_terratide_index_survives_markerless_lane_across_depth",
+        "test_mission_terratide_unplanned_index_does_not_advance",
+        "test_mission_terratide_legacy_index_recovery_is_single_row_and_bounded",
     }
     assert tests["rust_solver/src/enemy.rs"] == {
-        "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack"
+        "test_terratide_wave_smokes_without_damage_and_cancels_queued_attack",
+        "test_terratide_index_reconstructs_markerless_current_smoke_lane",
+        "test_terratide_unplanned_index_does_not_reapply_smoke",
     }
     assert tests["rust_solver/src/serde_bridge.rs"] == {
         "test_terratide_danger_routes_to_smoke_not_damage",
-        "test_tides_index_is_accepted_only_for_mission_tides",
+        "test_tides_index_is_accepted_only_for_tides_and_terratide",
+    }
+    assert tests["rust_solver/src/replay.rs"] == {
+        "replay_solution_terratide_smokes_full_row_and_advances_final_warning_lane",
+        "replay_solution_terratide_index_recovers_markerless_smoke_and_warning",
     }
     gaps = " ".join(record["known_gaps"])
-    assert "does not export Env_Terratide.Index" in gaps
+    assert "not been installed or live-captured" in gaps
+    assert "conditional" in gaps
     assert "does not independently seed" in gaps
     assert "live-derived" in gaps
 

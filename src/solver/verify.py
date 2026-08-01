@@ -1798,6 +1798,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # row-zero, and multi-row payloads retain the fail-closed marker shift.
 # Pre-v392 corpus is archived as
 # recordings/failure_db_snapshot_sim_v391.jsonl.
+# v393 retains Mission_Terratide's inherited live Env_Tides Index and Planned
+# state. Explicit Planned=true reconstructs markerless current smoke and
+# advances reverse-mapped lanes across projection/replay depth; false
+# suppresses both, without applying Tides' water-only spawn blocks. Single-row
+# legacy masks recover the scalar; ambiguous masks retain the prior fallback.
+# Pre-v393 corpus is archived as
+# recordings/failure_db_snapshot_sim_v392.jsonl.
 # v390: Control Shot first-click eligibility follows the shipped predicate
 # order for powered, guarding/burrower, frozen, grappled/current/base move,
 # and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained, the
@@ -1825,7 +1832,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 392
+SIMULATOR_VERSION = 393
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

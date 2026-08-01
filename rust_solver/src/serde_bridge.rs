@@ -30,9 +30,12 @@ pub struct JsonInput {
     /// worthless. Floored at 0.5 in `evaluate::future_factor` instead.
     pub is_infinite_spawn: Option<bool>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
-    /// Live Mission_Tides Env_Tides Index. This survives markerless warning
-    /// lanes and is mission-gated while loading.
+    /// Live Env_Tides Index for Mission_Tides or its Terratide subclass. This
+    /// survives markerless warning lanes and is mission-gated while loading.
     pub environment_tides_index: Option<u8>,
+    /// Live Env_Tides Planned flag. Index persists after ApplyEffect, so this
+    /// is required for index-only Terratide smoke reconstruction.
+    pub environment_tides_planned: Option<bool>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int, flying_immune?], ...]
     /// Ice Storm freeze tiles (sim v25). List of [x, y]. Vanilla Env_SnowStorm
@@ -576,13 +579,24 @@ pub fn board_from_json(json_str: &str)
         | Some("Mission_Cataclysm")
         | Some("Mission_Crack")
     );
-    // The scalar is mission-scoped. Ignore stale/foreign payloads so an Index
-    // inherited by Terratide or retained across missions cannot change Tides
-    // projection semantics.
-    board.env_tides_index = if mission_id == Some("Mission_Tides") {
+    // The scalar is mission-scoped to Env_Tides and its exact Terratide
+    // subclass. Ignore stale/foreign payloads; the permanent spawn mask remains
+    // independently gated to Mission_Tides in Board.
+    board.env_tides_index = if matches!(
+        mission_id,
+        Some("Mission_Tides") | Some("Mission_Terratide")
+    ) {
         input
             .environment_tides_index
             .filter(|index| (1..=8).contains(index))
+    } else {
+        None
+    };
+    board.env_tides_planned = if matches!(
+        mission_id,
+        Some("Mission_Tides") | Some("Mission_Terratide")
+    ) {
+        input.environment_tides_planned
     } else {
         None
     };
@@ -1587,29 +1601,50 @@ mod tests {
     }
 
     #[test]
-    fn test_tides_index_is_accepted_only_for_mission_tides() {
+    fn test_tides_index_is_accepted_only_for_tides_and_terratide() {
         let tides = r#"{
             "mission_id": "Mission_Tides",
             "environment_tides_index": 3,
+            "environment_tides_planned": true,
             "tiles": [],
             "units": [],
             "spawning_tiles": []
         }"#;
         let (board, ..) = board_from_json(tides).expect("Tides bridge json parses");
         assert_eq!(board.env_tides_index, Some(3));
+        assert_eq!(board.env_tides_planned, Some(true));
         assert!(board.is_tides_spawn_permanently_blocked(7, 3));
         assert!(!board.is_tides_spawn_permanently_blocked(7, 4));
 
         let terratide = r#"{
             "mission_id": "Mission_Terratide",
             "environment_tides_index": 3,
+            "environment_tides_planned": false,
             "tiles": [],
             "units": [],
             "spawning_tiles": []
         }"#;
         let (board, ..) =
             board_from_json(terratide).expect("Terratide bridge json parses");
+        assert_eq!(board.env_tides_index, Some(3));
+        assert_eq!(board.env_tides_planned, Some(false));
+        assert_eq!(
+            board.tides_permanent_spawn_block_mask(),
+            0,
+            "Terratide does not execute Env_Tides' water-only BlockSpawn branch",
+        );
+
+        let foreign = r#"{
+            "mission_id": "Mission_Wind",
+            "environment_tides_index": 3,
+            "environment_tides_planned": true,
+            "tiles": [],
+            "units": [],
+            "spawning_tiles": []
+        }"#;
+        let (board, ..) = board_from_json(foreign).expect("foreign bridge json parses");
         assert_eq!(board.env_tides_index, None);
+        assert_eq!(board.env_tides_planned, None);
 
         let legacy = r#"{
             "mission_id": "Mission_Tides",
@@ -1619,6 +1654,7 @@ mod tests {
         }"#;
         let (board, ..) = board_from_json(legacy).expect("legacy bridge json parses");
         assert_eq!(board.env_tides_index, None);
+        assert_eq!(board.env_tides_planned, None);
 
         let impossible_zero = r#"{
             "mission_id": "Mission_Tides",

@@ -1466,6 +1466,53 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_terratide_index_recovers_markerless_smoke_and_warning() {
+        let bridge = r#"{
+          "mission_id": "Mission_Terratide",
+          "environment_tides_index": 3,
+          "environment_tides_planned": true,
+          "env_type": "sandstorm",
+          "turn": 1,
+          "total_turns": 5,
+          "tiles": [
+            {"x": 0, "y": 3, "terrain": "building", "building_hp": 1},
+            {"x": 0, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 1, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 2, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 3, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 4, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 5, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 6, "y": 4, "terrain": "building", "building_hp": 1},
+            {"x": 7, "y": 4, "terrain": "building", "building_hp": 1}
+          ],
+          "environment_danger_v2": [],
+          "spawning_tiles": [],
+          "remaining_spawns": 0,
+          "grid_power": 5,
+          "grid_power_max": 7,
+          "units": []
+        }"#;
+
+        let raw = replay_solution(bridge, "[]").expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let final_board = &v["final_board"];
+        assert_eq!(final_board["environment_tides_index"], 4);
+        let danger = final_board["environment_danger_v2"].as_array().unwrap();
+        assert_eq!(danger.len(), 7);
+        for x in 1u8..8 {
+            assert!(danger.iter().any(|entry| entry == &json!([x, 3, 1, 0, 0])));
+        }
+        assert!(!danger.iter().any(|entry| entry[0] == json!(0)));
+        let smoked_row = final_board["tiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|tile| tile["y"] == json!(4) && tile["smoke"] == json!(true))
+            .count();
+        assert_eq!(smoked_row, 8, "Index 3 must smoke the hidden y=4 lane");
+    }
+
+    #[test]
     fn replay_solution_mission_tides_wave_destroys_pod() {
         let bridge = r#"{
           "mission_id": "Mission_Tides",

@@ -513,10 +513,14 @@ local function point_list_contains(pt_list, point)
 end
 
 -- Env_Tides source metadata that Board:IsEnvironmentDanger cannot express.
+-- Mission_Terratide inherits the same Index and reverses its row mapping.
 -- Keep this helper pure so the mission-scoped scalar is independently
 -- testable without loading the game or installing this bridge.
 local function mission_tides_index(mission_id, live_environment)
-    if mission_id ~= "Mission_Tides" then return nil end
+    if mission_id ~= "Mission_Tides"
+            and mission_id ~= "Mission_Terratide" then
+        return nil
+    end
     if type(live_environment) ~= "table"
             or type(live_environment.Index) ~= "number" then
         return nil
@@ -528,6 +532,20 @@ local function mission_tides_index(mission_id, live_environment)
         return nil
     end
     return index
+end
+
+-- Planned distinguishes a pending Env_Tides/Terratide wave from the brief
+-- post-ApplyEffect state where Index persists but MarkBoard is inactive.
+local function mission_tides_planned(mission_id, live_environment)
+    if mission_id ~= "Mission_Tides"
+            and mission_id ~= "Mission_Terratide" then
+        return nil
+    end
+    if type(live_environment) ~= "table"
+            or type(live_environment.Planned) ~= "boolean" then
+        return nil
+    end
+    return live_environment.Planned
 end
 
 -- Exact identity for Mission_Hacking's stored Cannon Bot and facility. Return
@@ -1375,9 +1393,10 @@ local function dump_state()
 
     -- The visible warning mask can be empty when every column is hidden by a
     -- building shadow or already has the target terrain. Export the live
-    -- Index so Rust can still advance Env_Tides::Plan exactly. Rust derives
-    -- the full-row permanent spawn-block boundary from the inventoried source;
-    -- no native blocked-cell getter has been identified for this build.
+    -- Index so Rust can still advance Env_Tides::Plan exactly. For Tides, Rust
+    -- derives the full-row permanent spawn-block boundary from the inventoried
+    -- source; Terratide does not execute that water-only BlockSpawn branch.
+    -- No native blocked-cell getter has been identified for this build.
     pcall(function()
         local mission = _ITB_CURRENT_MISSION
         if not mission or not mission.LiveEnvironment then return end
@@ -1387,6 +1406,13 @@ local function dump_state()
         )
         if index ~= nil then
             state.environment_tides_index = index
+        end
+        local planned = mission_tides_planned(
+            mission.ID or "",
+            mission.LiveEnvironment
+        )
+        if planned ~= nil then
+            state.environment_tides_planned = planned
         end
     end)
 

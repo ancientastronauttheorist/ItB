@@ -55,6 +55,58 @@ def test_terratide_warning_routes_to_pending_smoke_not_damage():
     assert board.environment_danger_v2 == {}
 
 
+def test_terratide_index_reconstructs_markerless_smoke_and_survives_copy():
+    bridge = _terratide_bridge()
+    bridge["environment_tides_index"] = 3
+    bridge["environment_tides_planned"] = True
+    bridge["environment_danger"] = []
+    bridge["environment_danger_v2"] = []
+    bridge["tiles"] = [
+        {"x": x, "y": 4, "terrain": "building", "building_hp": 1}
+        for x in range(8)
+    ]
+
+    board = Board.from_bridge_data(bridge)
+
+    assert board.environment_tides_index == 3
+    assert board.environment_tides_planned is True
+    assert board.environment_smoke == {(x, 4) for x in range(8)}
+    copied = board.copy()
+    assert copied.environment_tides_index == 3
+    assert copied.environment_tides_planned is True
+    assert copied.environment_smoke == board.environment_smoke
+
+
+def test_environment_tides_index_is_rejected_for_unrelated_or_invalid_payloads():
+    foreign = _terratide_bridge()
+    foreign["mission_id"] = "Mission_Wind"
+    foreign["environment_tides_index"] = 3
+    foreign["environment_tides_planned"] = True
+    invalid = _terratide_bridge()
+    invalid["environment_tides_index"] = True
+    invalid["environment_tides_planned"] = 1
+
+    assert Board.from_bridge_data(foreign).environment_tides_index is None
+    assert Board.from_bridge_data(foreign).environment_tides_planned is None
+    invalid_board = Board.from_bridge_data(invalid)
+    assert invalid_board.environment_tides_index is None
+    assert invalid_board.environment_tides_planned is None
+
+
+def test_terratide_index_without_explicit_planned_true_does_not_invent_smoke():
+    bridge = _terratide_bridge()
+    bridge["environment_tides_index"] = 3
+    bridge["environment_tides_planned"] = False
+    bridge["environment_danger"] = []
+    bridge["environment_danger_v2"] = []
+
+    board = Board.from_bridge_data(bridge)
+
+    assert board.environment_tides_index == 3
+    assert board.environment_tides_planned is False
+    assert board.environment_smoke == set()
+
+
 def test_threat_audit_credits_attacker_on_pending_terratide_smoke():
     before = _threat_board()
     initial = capture_building_threats(before)

@@ -546,10 +546,18 @@ scheduler helpers are untraced, and flyer/timing evidence remains live-derived.
 The inherited `environment-mission-terratide` slice pins its exact Advanced
 Edition source plus the base Tides implementation. It covers full-row smoke,
 pre-attack cancellation, reverse warning advancement, and the fact that a
-prior-row building does not shadow the next warning. It remains `partial`
-because the bridge does not export `Env_Terratide.Index`, native scheduling and
-smoke interactions are not exhaustive, and initial smoke/permanent spawn setup
-is consumed from live state rather than independently generated.
+prior-row building does not shadow the next warning. Simulator v393 extends
+the dormant inherited `Index` and `Planned` exports to Terratide. Only explicit
+`Planned=true` authorizes reconstruction of a complete markerless
+`y=7-Index` smoke lane and reverse-mapped advancement across projection/replay
+depth; `Planned=false` suppresses both, because Lua leaves Index intact after
+`ApplyEffect`. The projection does not invent Tides' water-only permanent
+spawn blocks. One source-valid legacy warning row can recover the same scalar;
+empty, row-seven, and multi-row masks retain the prior fail-closed shift. It
+remains `partial` because those bridge exports have not been installed or
+live-captured, native scheduling and smoke interactions are not exhaustive,
+and initial y=7 smoke is consumed from live state rather than independently
+generated.
 
 The Conveyor Belt slice, `environment-mission-belt-conveyors`, adds the exact
 `mission_belt.lua` source and all 12 of its top-level callbacks. It connects

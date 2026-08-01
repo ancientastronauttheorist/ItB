@@ -2407,6 +2407,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   continue across projection depth; empty, row-zero, and multi-row payloads
 //   retain the prior fail-closed marker shift. Pre-v392 corpus archived as
 //   failure_db_snapshot_sim_v391.jsonl.
+// v393 - Mission_Terratide now retains its inherited live Env_Tides Index and
+//   Planned state. Explicit Planned=true reconstructs a markerless current
+//   smoke lane and advances future lanes across projection/replay depth;
+//   false suppresses both, without applying Tides' water-only spawn blocks.
+//   Source-consistent single-row legacy masks recover the scalar; ambiguous
+//   masks retain the prior fallback. Pre-v393 corpus archived as
+//   failure_db_snapshot_sim_v392.jsonl.
 // v390 - Control Shot first-click eligibility follows the shipped predicate
 //   order for powered, guarding/burrower, frozen, grappled/current/base move,
 //   and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained,
@@ -2437,7 +2444,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 392;
+pub const SIMULATOR_VERSION: u32 = 393;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
