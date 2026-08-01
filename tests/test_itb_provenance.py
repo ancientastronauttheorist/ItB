@@ -2855,3 +2855,86 @@ def test_real_mission_hacking_record_pins_conversion_and_open_update_timing():
     assert "same-enemy-phase cancellation" in gaps
     assert "RemovePawn plus AddPawn reset behavior" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_mission_satellite_record_pins_launch_and_open_native_timing():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-satellite-launch"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/grass/mission_satellites.lua",
+            "sha256": (
+                "ad88320a25a411db2fb7de188b658e27"
+                "05b2e6552a737f387d2ab9c982285301"
+            ),
+            "symbols": [
+                "Mission_Satellite",
+                "Mission_Satellite:GetSavedCount",
+                "Mission_Satellite:GetCompletedObjectives",
+                "Mission_Satellite:StartMission",
+                "Mission_Satellite:NextTurn",
+                "Mission_Satellite:UpdateMission",
+                "Mission_Satellite:IsDestroyed",
+                "Mission_Satellite:IsGone",
+                "Mission_Satellite:UpdateObjectives",
+                "SatelliteRocket",
+                "Rocket_Launch",
+                "Rocket_Launch:GetSkillEffect",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "queued_launch",
+        "environment_danger_v2",
+    } == implementations["src/bridge/modloader.lua"]
+    assert implementations["src/bridge/reader.py"] == {
+        "_satellite_launch_danger_tiles",
+        "_mark_satellite_launch_danger_flying_immune",
+    }
+    assert {
+        "UnitFlags::SATELLITE_LAUNCH_QUEUED",
+        "count_unit_deaths_between",
+        "is_mission_satellite_flyaway",
+    } == implementations["rust_solver/src/board.rs"]
+    assert {
+        "apply_env_danger_board",
+        "resolve_mission_satellite_flyaways",
+        "simulate_enemy_attacks",
+    } == implementations["rust_solver/src/enemy.rs"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_mission_satellite_vek_attack_before_launch",
+        "test_mission_satellite_launch_exhaust_then_flyaway",
+        "test_destroyed_queued_satellite_is_not_flyaway",
+        "test_satellite_launch_danger_does_not_prevent_queued_enemy_attack",
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_board_to_json_roundtrip_scopes_satellite_launch_identity"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "random_removal" in gaps
+    assert "DAMAGE_DEATH does not itself prove flying immunity" in gaps
+    assert "source-defined Gone success" in gaps
+    assert "protected live achievement session" in gaps

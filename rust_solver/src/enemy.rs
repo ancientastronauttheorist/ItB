@@ -480,11 +480,20 @@ fn apply_env_danger(
 
 fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
     let flying_immune_damage = if board.mission_id == "Mission_Tides" { 1 } else { 0 };
-    // Live Mission_Satellite launches have enough timing/displacement nuance
-    // that treating marked tiles as reliable pre-attack enemy kills is unsafe.
-    // Keep them dangerous for player units/buildings, but let queued Vek attacks
-    // resolve instead of crediting speculative enemy deaths.
-    let skip_enemy_units = board.mission_id == "Mission_Satellite";
+    // Legacy Mission_Satellite markers have enough timing/displacement nuance
+    // that they are not reliable enemy-kill evidence. Exact v377 payloads also
+    // carry the living queued SatelliteRocket, which proves the source-defined
+    // cardinal DAMAGE_DEATH: queued Vek attack first, then kill only an enemy
+    // still occupying one of those exact exhaust tiles.
+    let has_exact_satellite_launch = board.mission_id == "Mission_Satellite"
+        && board.units[..board.unit_count as usize].iter().any(|unit| {
+            unit.hp > 0
+                && unit.team == Team::Player
+                && unit.type_name_str() == "SatelliteRocket"
+                && unit.satellite_launch_queued()
+        });
+    let skip_enemy_units = board.mission_id == "Mission_Satellite"
+        && !has_exact_satellite_launch;
     for tile_idx in 0usize..64 {
         if board.env_danger & (1u64 << tile_idx) == 0 { continue; }
         let (x, y) = idx_to_xy(tile_idx);
@@ -504,6 +513,52 @@ fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
             result,
         );
     }
+}
+
+/// Resolve the source-defined tail of a queued Satellite launch.
+///
+/// `Rocket_Launch:GetSkillEffect` queues four cardinal exhaust deaths and then
+/// calls `FlyAway()` on the center pawn. Existing live regressions establish
+/// that queued Vek attacks land before this effect. Compacting the fixed unit
+/// array here mirrors `Board:GetPawn(id) == nil` without inventing an off-board
+/// living coordinate or misclassifying a successful launch as a death.
+fn resolve_mission_satellite_flyaways(board: &mut Board) {
+    if board.mission_id != "Mission_Satellite" {
+        return;
+    }
+
+    let old_count = board.unit_count as usize;
+    let mut write = 0usize;
+    for read in 0..old_count {
+        let unit = board.units[read];
+        let launched = unit.hp > 0
+            && unit.team == Team::Player
+            && unit.type_name_str() == "SatelliteRocket"
+            && unit.satellite_launch_queued();
+        if launched {
+            for &(dx, dy) in &DIRS {
+                let x = unit.x as i8 + dx;
+                let y = unit.y as i8 + dy;
+                if !(0..8).contains(&x) || !(0..8).contains(&y) {
+                    continue;
+                }
+                let bit = 1u64 << xy_to_idx(x as u8, y as u8);
+                board.env_danger &= !bit;
+                board.env_danger_kill &= !bit;
+                board.env_danger_flying_immune &= !bit;
+                board.env_danger_acid &= !bit;
+            }
+            continue;
+        }
+        if write != read {
+            board.units[write] = unit;
+        }
+        write += 1;
+    }
+    for idx in write..old_count {
+        board.units[idx] = Unit::default();
+    }
+    board.unit_count = write as u8;
 }
 
 /// Apply Mission_Terratide's warned Sandstorm lane as smoke only.
@@ -2275,6 +2330,7 @@ pub fn simulate_enemy_attacks(
     if board.env_danger != 0 && env_after_attacks {
         apply_env_danger_board(board, &mut result);
     }
+    resolve_mission_satellite_flyaways(board);
 
     if board.mission_id == "Mission_BeltRandom" {
         simulate_conveyor_belts(board, &mut result);

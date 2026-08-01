@@ -87,9 +87,10 @@ def _is_infinite_spawn_mission(mission_id: str) -> bool:
 def _satellite_launch_danger_tiles(data: dict) -> set[tuple[int, int]]:
     """Return Mission_Satellite launch blast tiles.
 
-    Launch blasts resolve before Vek attacks, but they spare flying pawns.
     Older/current Lua bridge builds expose their adjacent death tiles with
-    ``flying_immune=0``. Normalize that bit before solver/audit use.
+    ``flying_immune=0``. Normalize that bit before solver/audit use. Shipped
+    Lua proves the queued exhaust/FlyAway construction; live regressions show
+    queued Vek attacks landing first and flying pawns surviving the exhaust.
     """
     if data.get("mission_id") != "Mission_Satellite":
         return set()
@@ -98,7 +99,7 @@ def _satellite_launch_danger_tiles(data: dict) -> set[tuple[int, int]]:
     for unit in data.get("units", []) or []:
         if not isinstance(unit, dict):
             continue
-        if "Satellite" not in str(unit.get("type", "")):
+        if unit.get("type") != "SatelliteRocket":
             continue
         if unit.get("hp", 0) <= 0 or not unit.get("queued_launch"):
             continue

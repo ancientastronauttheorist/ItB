@@ -993,6 +993,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if u.boosted()                    { unit_val["boosted"]              = json!(true); }
         if u.ranged()                     { unit_val["ranged"]               = json!(1u8); }
         if u.has_queued_attack()          { unit_val["has_queued_attack"]    = json!(true); }
+        if u.satellite_launch_queued()    { unit_val["queued_launch"]        = json!(true); }
         if u.queued_target_raw_x >= 0 && u.queued_target_raw_y >= 0 {
             unit_val["queued_target_raw"] = json!([
                 u.queued_target_raw_x,
@@ -2379,6 +2380,45 @@ mod tests {
 
         assert_eq!(roundtrip.mission_hacking_bot_id, Some(41));
         assert_eq!(roundtrip.mission_hacking_hack_id, Some(40));
+    }
+
+    #[test]
+    fn test_board_to_json_roundtrip_scopes_satellite_launch_identity() {
+        let input = r#"{
+          "mission_id":"Mission_Satellite",
+          "units":[{"uid":77,"type":"SatelliteRocket","x":4,"y":4,
+                    "hp":2,"max_hp":2,"team":1,"queued_launch":true}],
+          "tiles":[]
+        }"#;
+        let (board, ..) = board_from_json(input).expect("satellite bridge state parses");
+        assert!(board.units[0].satellite_launch_queued());
+
+        let projected = board_to_json(&board, &[]);
+        assert!(projected.contains("\"queued_launch\":true"));
+        let (roundtrip, ..) = board_from_json(&projected)
+            .expect("queued launch identity survives projected checkpoints");
+        assert!(roundtrip.units[0].satellite_launch_queued());
+
+        let stale = input.replace("Mission_Satellite", "Mission_Airstrike");
+        let (other_mission, ..) = board_from_json(&stale).expect("stale payload parses");
+        assert!(
+            !other_mission.units[0].satellite_launch_queued(),
+            "queued_launch must fail closed outside the exact mission",
+        );
+
+        let wrong_type = input.replace("SatelliteRocket", "Archive_Tank");
+        let (other_type, ..) = board_from_json(&wrong_type).expect("wrong-type payload parses");
+        assert!(
+            !other_type.units[0].satellite_launch_queued(),
+            "queued_launch must fail closed for an unrelated pawn",
+        );
+
+        let dead = input.replacen("\"hp\":2", "\"hp\":0", 1);
+        let (dead_rocket, ..) = board_from_json(&dead).expect("dead rocket payload parses");
+        assert!(
+            !dead_rocket.units[0].satellite_launch_queued(),
+            "a stale queued_launch bit on a dead rocket must fail closed",
+        );
     }
 
     #[test]

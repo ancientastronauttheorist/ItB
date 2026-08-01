@@ -494,3 +494,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 493 | 883 | NanoStorm is one damage plus ACID, not generic non-lethal danger. | `docs/agent/solver-reference.md` |
 | 494 | 885 | Repulse B/AB shield adjacent friendlies and buildings. | `docs/agent/solver-reference.md` |
 | 495 | 887 | Mission_Hacking converts the Cannon Bot without killing it. | `docs/agent/solver-reference.md` |
+| 496 | 889 | A successful Satellite launch is a disappearance, not a death. | `docs/agent/solver-reference.md` |

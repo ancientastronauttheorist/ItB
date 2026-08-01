@@ -981,10 +981,11 @@ pub fn evaluate(
     //   - Enemies on danger tiles: partial-credit reward toward enemy_killed
     //     (assumes the hazard will finish them next turn).
     //
-    // IMPORTANT: Most lethal env (kill_int=1, Air Strike / Lightning / Satellite)
-    // bypasses flying, so a flying mech on such a tile IS killed by the simulator
-    // (enemy.rs::apply_env_danger). Tidal Wave / Cataclysm / Seismic — flagged
-    // env_danger_flying_immune — skip flyers; the simulator leaves them alive.
+    // IMPORTANT: Air Strike and Lightning lethal env bypasses flying, so a
+    // flying mech on such a tile IS killed by the simulator
+    // (enemy.rs::apply_env_danger). Tidal Wave / Cataclysm / Seismic and
+    // observed Mission_Satellite exhaust are flagged env_danger_flying_immune;
+    // the simulator leaves their flyers alive.
     // Final Cave falling rocks are intentionally not flying-immune.
     // The flying skip here is correct for NON-lethal branches (wind/sand/snow
     // don't affect flying) AND for flying_immune-lethal branches; we explicitly

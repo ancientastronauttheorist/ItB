@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 9 | 5 |
-| Missions | 75 | 17 | 58 |
+| Missions | 75 | 18 | 57 |
 | Environments | 15 | 10 | 5 |
-| Unique total | 96 | 33 | 63 |
+| Unique total | 96 | 34 | 62 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 115 definitions literally and leaves 627 unindexed. Category totals
+names 124 definitions literally and leaves 618 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -184,6 +184,24 @@ remains `partial`: legacy or not-yet-installed bridge payloads omit the pair and
 therefore fail closed, native setup RNG/placement is unmodeled, and per-update
 timing against animations or an already queued enemy bot attack remains
 untraced.
+
+The second dedicated mission slice, `mission-satellite-launch`, adds the
+previously unindexed `mission_satellites.lua` source and all nine of its active
+callbacks. It pins two random non-adjacent setup tiles, turns-one-and-three
+powering, the source distinction between a gone/saved rocket and a
+present/destroyed one, exact SatelliteRocket stats, and the four queued
+cardinal `DAMAGE_DEATH` effects followed by `FlyAway`. Simulator v377 keeps the
+exact mission-scoped `queued_launch` bridge bit through projected checkpoints,
+applies observed exhaust after queued Vek attacks, kills an enemy still on an
+exact source-defined exhaust tile, removes only the still-live launching rocket
+without counting a death, and clears consumed markers. Legacy markers without
+exact rocket identity retain conservative no-kill credit.
+Focused tests cover mission/type scoping, round trips, grounded versus flying
+exhaust, destroyed-versus-launched identity, death accounting, stale marker
+cleanup, and the existing threat-audit regressions. The record remains
+`partial`: setup RNG/native helpers, the native cause of flyer immunity, exact
+effect scheduling, unusual displacement/race states, and direct Satellite
+objective scoring remain open.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific

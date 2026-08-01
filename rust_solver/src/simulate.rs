@@ -16329,10 +16329,10 @@ mod tests {
 
     // ── Flying immunity on terrain-conversion lethal env (sim v19+) ──────────
     //
-    // Tidal Wave / Cataclysm / Seismic Activity convert tiles to water/chasm.
-    // Effectively-flying units hover and survive. Air Strike / Lightning /
-    // Satellite Rocket stay lethal even to flyers (bombs/lightning ignore
-    // flight altitude). Pre-v19, apply_env_danger killed any unit on a
+    // Tidal Wave / Cataclysm / Seismic Activity convert tiles to water/chasm,
+    // and observed Mission_Satellite exhaust uses the same flying-immunity
+    // channel. Effectively-flying units survive those hazards. Air Strike and
+    // Lightning stay lethal even to flyers. Pre-v19, apply_env_danger killed any unit on a
     // kill_int=1 tile regardless of flying — the bridge had no way to express
     // the distinction. v19 adds `env_danger_flying_immune` as a sibling bitset
     // (5th field on each environment_danger_v2 entry).
@@ -16470,7 +16470,8 @@ mod tests {
     fn test_mission_satellite_vek_attack_before_launch() {
         // Heat Sinkers Feed the Flame run 20260619_004557_388,
         // Mission_Satellite turn 2: a Scarab on a satellite launch tile still
-        // fired at G7 before the launch removed it.
+        // fired at G7. This legacy fixture lacks exact queued-rocket identity,
+        // so it proves attack-before-exhaust timing but must not claim a kill.
         use crate::enemy::simulate_enemy_attacks;
         use crate::types::xy_to_idx;
         let mut board = make_test_board();
@@ -16493,10 +16494,126 @@ mod tests {
 
         let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
 
-        assert_eq!(board.units[enemy].hp, 2, "satellite marker must not be reliable enemy kill coverage");
+        assert_eq!(board.units[enemy].hp, 2, "legacy marker alone must not receive enemy-kill credit");
         assert_eq!(board.tile(2, 1).building_hp, 0);
         assert_eq!(board.grid_power, 6);
         assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_mission_satellite_launch_exhaust_then_flyaway() {
+        use crate::board::count_unit_deaths_between;
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Satellite".to_string();
+        let mut rocket = Unit {
+            uid: 77,
+            x: 4,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::MASSIVE | UnitFlags::SATELLITE_LAUNCH_QUEUED,
+            ..Unit::default()
+        };
+        rocket.set_type_name("SatelliteRocket");
+        board.add_unit(rocket);
+        let _grounded = add_mech(&mut board, 78, 5, 4, 2, WId::PrimePunchmech);
+        let flying = add_mech(&mut board, 79, 4, 5, 2, WId::PrimePunchmech);
+        board.units[flying].flags.insert(UnitFlags::FLYING);
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 2).terrain = Terrain::Building;
+        board.tile_mut(3, 2).building_hp = 1;
+        let enemy = add_enemy_type(&mut board, 80, 3, 4, 2, "Scarab1");
+        board.units[enemy].weapon = WeaponId(WId::ScarabAtk1 as u16);
+        board.units[enemy].weapon_damage = 1;
+        board.units[enemy].queued_target_x = 3;
+        board.units[enemy].queued_target_y = 2;
+        board.units[enemy].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        for (x, y) in [(3u8, 4u8), (5, 4), (4, 3), (4, 5)] {
+            let bit = 1u64 << xy_to_idx(x, y);
+            board.env_danger |= bit;
+            board.env_danger_kill |= bit;
+            board.env_danger_flying_immune |= bit;
+        }
+        let before = board.clone();
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .all(|unit| unit.uid != 77),
+            "source-defined FlyAway removes the successfully launched rocket",
+        );
+        assert_eq!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .find(|unit| unit.uid == 78)
+                .map(|unit| unit.hp),
+            Some(0),
+        );
+        assert_eq!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .find(|unit| unit.uid == 79)
+                .map(|unit| unit.hp),
+            Some(2),
+            "observed launch exhaust spares flying pawns",
+        );
+        assert_eq!(board.tile(3, 2).building_hp, 0, "queued Vek attack lands first");
+        assert_eq!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .find(|unit| unit.uid == 80)
+                .map(|unit| unit.hp),
+            Some(0),
+            "an enemy still on exact source-defined exhaust dies after attacking",
+        );
+        assert_eq!(board.env_danger, 0, "consumed exhaust markers must clear");
+        assert_eq!(count_unit_deaths_between(&before, &board), 2);
+        assert!(!crate::turn_projection::board_to_json(&board, &[])
+            .contains("SatelliteRocket"));
+    }
+
+    #[test]
+    fn test_destroyed_queued_satellite_is_not_flyaway() {
+        use crate::board::count_unit_deaths_between;
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Satellite".to_string();
+        let mut rocket = Unit {
+            uid: 77,
+            x: 4,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::MASSIVE | UnitFlags::SATELLITE_LAUNCH_QUEUED,
+            ..Unit::default()
+        };
+        rocket.set_type_name("SatelliteRocket");
+        board.add_unit(rocket);
+        let center = 1u64 << xy_to_idx(4, 4);
+        board.env_danger = center;
+        board.env_danger_kill = center;
+        let before = board.clone();
+
+        let _ = simulate_enemy_attacks(&mut board, &[(0u8, 0u8); 16], &WEAPONS);
+
+        assert_eq!(board.unit_count, 1, "a destroyed rocket remains distinguishable from FlyAway");
+        assert_eq!(board.units[0].uid, 77);
+        assert_eq!(board.units[0].hp, 0);
+        assert_eq!(count_unit_deaths_between(&before, &board), 1);
     }
 
     #[test]

@@ -167,6 +167,11 @@ bitflags! {
         /// the rest of the current turn. It remains alive for kill/HP/future
         /// pressure accounting but is absent from board occupancy and output.
         const BURROWED = 0b0001_0000_0000_0000_0000_0000;
+        /// Exact Mission_Satellite bridge evidence that this living
+        /// SatelliteRocket has queued Rocket_Launch for the current enemy
+        /// phase. Observed live play resolves its exhaust after queued Vek
+        /// attacks, then source-defined FlyAway removes the rocket alive.
+        const SATELLITE_LAUNCH_QUEUED = 0x0200_0000;
     }
 }
 
@@ -255,6 +260,9 @@ impl Unit {
     pub fn boosted(&self) -> bool { self.flags.contains(UnitFlags::BOOSTED) }
     pub fn infected(&self) -> bool { self.flags.contains(UnitFlags::INFECTED) }
     pub fn burrowed(&self) -> bool { self.flags.contains(UnitFlags::BURROWED) }
+    pub fn satellite_launch_queued(&self) -> bool {
+        self.flags.contains(UnitFlags::SATELLITE_LAUNCH_QUEUED)
+    }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -397,9 +405,10 @@ pub struct Board {
     /// (water-conversion is treated as a destroy, not a drown, and chasm
     /// always kills non-flying including Massive).
     ///
-    /// Air Strike / Lightning / Satellite Rocket / Final Cave falling rocks
+    /// Air Strike, Lightning, and Final Cave falling rocks
     /// are NOT in this set — those bypass flight (bombs / lightning / rocks
     /// hit anything in the air).
+    /// Mission_Satellite exhaust also uses this bit based on live evidence.
     /// Subset of `env_danger_kill`. When a kill tile is NOT in this set,
     /// flying offers no protection.
     pub env_danger_flying_immune: u64,
@@ -1011,11 +1020,37 @@ pub fn count_unit_deaths_between(before: &Board, after: &Board) -> i32 {
         if was_alive
             && !after_alive.get(&uid).copied().unwrap_or(false)
             && !is_mission_hacking_bot_replacement(before, after, uid)
+            && !is_mission_satellite_flyaway(before, after, uid)
         {
             deaths += 1;
         }
     }
     deaths + new_dead_after.len() as i32
+}
+
+/// Mission_Satellite's `FlyAway()` removes a successfully launched rocket
+/// from `Board:GetPawn` without destroying it. Exempt only that exact queued,
+/// living SatelliteRocket disappearance; every other missing pawn remains a
+/// death for No Survivors and action accounting.
+fn is_mission_satellite_flyaway(before: &Board, after: &Board, uid: u16) -> bool {
+    if before.mission_id != "Mission_Satellite" || after.mission_id != "Mission_Satellite" {
+        return false;
+    }
+    if after.units[..after.unit_count as usize]
+        .iter()
+        .any(|unit| unit.uid == uid)
+    {
+        return false;
+    }
+    before.units[..before.unit_count as usize]
+        .iter()
+        .any(|unit| {
+            unit.uid == uid
+                && unit.hp > 0
+                && unit.team == Team::Player
+                && unit.type_name_str() == "SatelliteRocket"
+                && unit.satellite_launch_queued()
+        })
 }
 
 /// Mission_Hacking deliberately removes its live hostile Cannon Bot and adds a
@@ -1156,6 +1191,39 @@ mod tests {
             count_unit_deaths_between(&before, &after),
             1,
             "missing stored identity must count the disappearance as a death",
+        );
+    }
+
+    #[test]
+    fn test_satellite_flyaway_is_not_a_unit_death() {
+        let mut before = Board::default();
+        before.mission_id = "Mission_Satellite".to_string();
+        let mut rocket = Unit {
+            uid: 77,
+            x: 4,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::MASSIVE | UnitFlags::SATELLITE_LAUNCH_QUEUED,
+            ..Unit::default()
+        };
+        rocket.set_type_name("SatelliteRocket");
+        before.add_unit(rocket);
+
+        let mut after = before.clone();
+        after.unit_count = 0;
+        after.units[0] = Unit::default();
+        assert_eq!(count_unit_deaths_between(&before, &after), 0);
+
+        let mut ordinary_before = before.clone();
+        ordinary_before.units[0]
+            .flags
+            .remove(UnitFlags::SATELLITE_LAUNCH_QUEUED);
+        assert_eq!(
+            count_unit_deaths_between(&ordinary_before, &after),
+            1,
+            "an unqueued disappearance must remain a death",
         );
     }
 

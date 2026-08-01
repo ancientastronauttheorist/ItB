@@ -591,8 +591,9 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // turn 1 (snapshots/grid_drop_20260424_144237_364_t01_a1).
 // v19 (2026-04-25, flying-on-terrain-conversion env): apply_env_danger
 // now spares effectively-flying units on terrain-conversion lethal
-// hazards (Tidal Wave, Cataclysm, Seismic). Air Strike / Lightning /
-// Satellite Rocket continue to kill flyers. New per-tile bit
+// hazards (Tidal Wave, Cataclysm, Seismic). Air Strike and Lightning
+// continue to kill flyers; later Satellite bridge normalization uses the
+// same bit for observed launch-exhaust immunity. New per-tile bit
 // `env_danger_flying_immune` carries the distinction; bridge emits a
 // 5th element on each `environment_danger_v2` entry, with an
 // `env_type`-based fallback for older recordings. Closes the silent
@@ -2357,7 +2358,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and Shield. The replacement remains an active player actor, does not count
 //   as a unit death, and verifies by type+tile across live UID allocation.
 //   Pre-v376 corpus archived as failure_db_snapshot_sim_v375.jsonl.
-pub const SIMULATOR_VERSION: u32 = 376;
+// v377 - Mission_Satellite preserves exact queued Rocket_Launch identity,
+//   resolves observed launch exhaust after queued Vek attacks, then removes
+//   the living rocket via source-defined FlyAway without counting a death.
+//   Pre-v377 corpus archived as failure_db_snapshot_sim_v376.jsonl.
+pub const SIMULATOR_VERSION: u32 = 377;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

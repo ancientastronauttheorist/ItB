@@ -3,6 +3,7 @@ import json
 from src.bridge.reader import _mark_satellite_launch_danger_flying_immune
 from src.loop.commands import _load_board_from_recording
 from src.model.board import Board
+from src.model.pawn_stats import get_pawn_stats
 
 
 def _satellite_state():
@@ -69,6 +70,35 @@ def test_board_marks_satellite_targets_as_flying_immune_env_danger():
         (4, 4),
         (4, 6),
     }
+    rocket = next(unit for unit in board.units if unit.type == "SatelliteRocket")
+    assert rocket.queued_launch is True
+
+
+def test_satellite_source_stats_are_preserved():
+    stats = get_pawn_stats("SatelliteRocket")
+
+    assert stats.move_speed == 0
+    assert stats.massive is True
+    assert stats.pushable is False
+    assert stats.ignore_smoke is True
+    assert stats.default_weapon == "Rocket_Launch"
+
+
+def test_python_queued_launch_identity_is_exactly_scoped():
+    state = _satellite_state()
+    assert Board.from_bridge_data(state).units[0].queued_launch is True
+
+    stale_mission = _satellite_state()
+    stale_mission["mission_id"] = "Mission_Airstrike"
+    assert Board.from_bridge_data(stale_mission).units[0].queued_launch is False
+
+    stale_type = _satellite_state()
+    stale_type["units"][0]["type"] = "Archive_Tank"
+    assert Board.from_bridge_data(stale_type).units[0].queued_launch is False
+
+    dead = _satellite_state()
+    dead["units"][0]["hp"] = 0
+    assert Board.from_bridge_data(dead).units[0].queued_launch is False
 
 
 def test_recording_loader_normalizes_stale_satellite_payload(tmp_path):

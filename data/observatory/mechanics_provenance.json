@@ -3688,6 +3688,166 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Satellite source creates two SatelliteRocket pawns on random satellite-zone tiles, repeatedly rejecting the second tile until it is non-adjacent to the first. It powers rocket one on enemy turn 1 and rocket two on enemy turn 3."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission completion distinguishes a gone rocket from a destroyed rocket: GetSavedCount counts stored satellite IDs for which Board:GetPawn returns nil, while IsDestroyed requires a still-present pawn that is not alive."
+        },
+        {
+          "classification": "fact",
+          "statement": "SatelliteRocket has Health 2, Neutral and Corpse behavior, IgnoreSmoke, MoveSpeed 0, DefaultTeam TEAM_PLAYER, Pushable false, and Rocket_Launch. Rocket_Launch queues DAMAGE_DEATH on all four cardinal neighbors, then queues center-tile Hide, a custom flying animation, FlyAway, and the launched-silo custom tile."
+        },
+        {
+          "classification": "fact",
+          "statement": "Live regressions establish two engine behaviors not proven by the Lua construction order alone: queued Vek attacks land before launch exhaust, and flying pawns survive the exhaust. Simulator v377 preserves exact mission-scoped queued_launch identity, applies the already-normalized danger after queued Vek attacks, kills an enemy still on an exact source-defined exhaust tile, removes only a still-living queued SatelliteRocket as FlyAway rather than a death, and clears its consumed exhaust markers."
+        }
+      ],
+      "id": "mission-satellite-launch",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "queued_launch",
+            "environment_danger_v2"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_satellite_launch_danger_tiles",
+            "_mark_satellite_launch_danger_flying_immune"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "queued_launch",
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "SatelliteRocket"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "UnitFlags::SATELLITE_LAUNCH_QUEUED",
+            "count_unit_deaths_between",
+            "is_mission_satellite_flyaway"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "queued_launch",
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_env_danger_board",
+            "resolve_mission_satellite_flyaways",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "board_to_json"
+          ]
+        },
+        {
+          "path": "src/solver/threat_audit.py",
+          "symbols": [
+            "_lethal_environment_resolves_after_attacks",
+            "_will_die_to_lethal_environment_before_attack"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native random_removal state and consumption order, Board:GetZone ordering, GetAdjacent, SetRoad, SetCustomTile, Board:AddPawn placement, and collision/fallback behavior during mission setup are not reproduced; the solver consumes the live bridge board.",
+        "The Lua source proves queued effect construction but not its scheduling relative to queued Vek attacks. The after-attacks rule is based on named live regressions; legacy payloads without exact queued rocket identity deliberately do not credit enemy kills, and unusual launch displacement or animation races remain open.",
+        "DAMAGE_DEATH does not itself prove flying immunity. The bridge normalization and simulator rule preserve observed live flyer survival, but the responsible native predicate has not been traced.",
+        "Native SkillEffect queue timing, voice/shake/sound and custom-animation delays, edge-of-board cardinal effects, a rocket destroyed during the same enemy phase, and unusual push/displacement states are not exhaustively captured.",
+        "Rust does not yet score the Satellite mission objective directly. Any future objective model must distinguish source-defined Gone success from destroyed failure instead of routing the rocket through generic protect-unit scoring.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/grass/mission_satellites.lua",
+          "sha256": "ad88320a25a411db2fb7de188b658e2705b2e6552a737f387d2ab9c982285301",
+          "symbols": [
+            "Mission_Satellite",
+            "Mission_Satellite:GetSavedCount",
+            "Mission_Satellite:GetCompletedObjectives",
+            "Mission_Satellite:StartMission",
+            "Mission_Satellite:NextTurn",
+            "Mission_Satellite:UpdateMission",
+            "Mission_Satellite:IsDestroyed",
+            "Mission_Satellite:IsGone",
+            "Mission_Satellite:UpdateObjectives",
+            "SatelliteRocket",
+            "Rocket_Launch",
+            "Rocket_Launch:GetSkillEffect"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "test_satellite_flyaway_is_not_a_unit_death"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_mission_satellite_vek_attack_before_launch",
+            "test_mission_satellite_launch_exhaust_then_flyaway",
+            "test_destroyed_queued_satellite_is_not_flyaway",
+            "test_satellite_launch_danger_does_not_prevent_queued_enemy_attack"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_board_to_json_roundtrip_scopes_satellite_launch_identity"
+          ]
+        },
+        {
+          "path": "tests/test_satellite_launch_order.py",
+          "symbols": [
+            "test_reader_marks_satellite_launch_danger_flying_immune",
+            "test_board_marks_satellite_targets_as_flying_immune_env_danger",
+            "test_satellite_source_stats_are_preserved",
+            "test_python_queued_launch_identity_is_exactly_scoped",
+            "test_recording_loader_normalizes_stale_satellite_payload"
+          ]
+        },
+        {
+          "path": "tests/test_threat_audit.py",
+          "symbols": [
+            "test_threat_audit_satellite_launch_does_not_cover_pre_attack_threat"
+          ]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": [
+            "test_summary_satellite_fallback_ignores_non_queued_rockets"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1

@@ -305,6 +305,7 @@ pub struct JsonUnit {
     pub boosted: Option<bool>,
     pub web_source_uid: Option<u16>,
     pub has_queued_attack: Option<bool>,
+    pub queued_launch: Option<bool>,
     pub base_move: Option<u8>,
     pub weapons: Option<Vec<String>>,
     pub queued_target: Option<Vec<i8>>,
@@ -490,11 +491,11 @@ pub fn board_from_json(json_str: &str)
     // Environment danger v2: per-tile {damage, kill, flying_immune} metadata.
     // Each entry is [x, y, damage, kill_int, flying_immune?] where:
     //   kill_int != 0      → Deadly Threat (bypasses shield/frozen/armor/ACID)
-    //   flying_immune != 0 → terrain-conversion lethal (Tidal Wave/Cataclysm/
-    //                        Seismic): effectively-flying units survive.
-    //                        Air Strike / Lightning / Satellite Rocket /
-    //                        Final Cave falling rocks leave this field 0 —
-    //                        they bypass flight.
+    //   flying_immune != 0 → lethal effects observed to spare effectively-
+    //                        flying units: Tidal Wave/Cataclysm/Seismic and
+    //                        Mission_Satellite launch exhaust.
+    //                        Air Strike / Lightning / Final Cave falling rocks
+    //                        leave this field 0 — they bypass flight.
     // The 5th field is an optional addition introduced at SIMULATOR_VERSION 19
     // (Lua bridge 2026-04-25). Older recordings only have 4 fields; we infer
     // flying_immune from the top-level `env_type` tag when present, else
@@ -753,6 +754,13 @@ pub fn board_from_json(json_str: &str)
             if ju.web.unwrap_or(false) || probe_web { flags |= UnitFlags::WEB; }
             if ju.boosted.unwrap_or(false) { flags |= UnitFlags::BOOSTED; }
             if ju.has_queued_attack.unwrap_or(false) { flags |= UnitFlags::HAS_QUEUED_ATTACK; }
+            if input.mission_id.as_deref() == Some("Mission_Satellite")
+                && ju.unit_type == "SatelliteRocket"
+                && hp > 0
+                && ju.queued_launch.unwrap_or(false)
+            {
+                flags |= UnitFlags::SATELLITE_LAUNCH_QUEUED;
+            }
             if ju.unit_type == "Disposal_Unit" {
                 flags.remove(UnitFlags::PUSHABLE);
                 flags |= UnitFlags::RANGED;

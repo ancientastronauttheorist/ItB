@@ -274,7 +274,9 @@ NEUTRAL_STATS = {
     # mech_killed (-150000) one. Pushable per game (no Pushable=false flag).
     "Freeze_Tank":       PawnStats(move_speed=4, ranged=1, pushable=True,
                                    default_weapon="Pinnacle_FreezeTank"),
-    "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False),
+    "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False,
+                                   ignore_smoke=True,
+                                   default_weapon="Rocket_Launch"),
     "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
     "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
     "VIP_Truck":         PawnStats(move_speed=0, ranged=1,

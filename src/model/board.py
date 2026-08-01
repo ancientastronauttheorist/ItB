@@ -175,6 +175,8 @@ class Unit:
     # skills). Default 0.0 = no bonus (treat as AI/default pilot).
     pilot_id: str = ""
     pilot_value: float = 0.0
+    # Mission_Satellite bridge evidence that Rocket_Launch is queued now.
+    queued_launch: bool = False
 
     @property
     def is_player(self) -> bool:
@@ -681,6 +683,12 @@ class Board:
                 weapon=primary,
                 weapon2=secondary,
                 active=ud.get("active", True),
+                queued_launch=(
+                    data.get("mission_id") == "Mission_Satellite"
+                    and ptype == "SatelliteRocket"
+                    and ud.get("hp", 1) > 0
+                    and bool(ud.get("queued_launch", False))
+                ),
                 base_move=ud.get("base_move", stats.move_speed),
                 shield=ud.get("shield", False),
                 acid=ud.get("acid", False),
@@ -914,17 +922,25 @@ class Board:
                 targeted.add((tt[0], tt[1]))
         raw_satellites = [
             ud for ud in data.get("units", []) or []
-            if isinstance(ud, dict) and "Satellite" in str(ud.get("type", ""))
+            if (
+                data.get("mission_id") == "Mission_Satellite"
+                and isinstance(ud, dict)
+                and ud.get("type") == "SatelliteRocket"
+            )
         ]
         satellite_launch_field_present = any(
             "queued_launch" in ud for ud in raw_satellites
         )
         queued_satellite_uids = {
             ud.get("uid") for ud in raw_satellites
-            if ud.get("queued_launch")
+            if ud.get("hp", 0) > 0 and ud.get("queued_launch")
         }
         for u in board.units:
-            if "Satellite" in u.type and u.hp > 0:
+            if (
+                data.get("mission_id") == "Mission_Satellite"
+                and u.type == "SatelliteRocket"
+                and u.hp > 0
+            ):
                 if satellite_launch_field_present and u.uid not in queued_satellite_uids:
                     continue
                 adj = [(u.x-1, u.y), (u.x+1, u.y), (u.x, u.y-1), (u.x, u.y+1)]
