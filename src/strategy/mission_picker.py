@@ -251,6 +251,7 @@ NATIVE_FORECAST_GATED_MISSION_IDS = frozenset({
     "Mission_Respawn",
     "Mission_SpiderBoss",
     "Mission_SlugBoss",
+    "Mission_Tutorial",
 })
 _NATIVE_FORECAST_GATE_TAG = "native_forecast_gate"
 _NATIVE_FORECAST_GATE_PENALTY = 1000

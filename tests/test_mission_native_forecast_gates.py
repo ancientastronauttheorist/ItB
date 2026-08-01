@@ -15,6 +15,7 @@ MISSION_GAPS = {
     "Mission_Respawn": "mission_respawn_resurrection_unmodeled",
     "Mission_SpiderBoss": "mission_spider_boss_recurring_egg_spawns_unmodeled",
     "Mission_SlugBoss": "mission_slug_boss_recurring_egg_spawns_unmodeled",
+    "Mission_Tutorial": "mission_tutorial_scripted_lifecycle_unmodeled",
 }
 
 

@@ -675,15 +675,26 @@ local function mission_pistons(mission_id, units)
     return { complete = true, actions = actions }
 end
 
+-- CreateTutorial constructs Mission_Tutorial without assigning the ID field
+-- used by ordinary CreateMission.  Preserve every explicit mission ID and
+-- synthesize only this source-defined tutorial identity so safety gates do not
+-- mistake its scripted native lifecycle for an ordinary combat mission.
+local function mission_bridge_id(mission)
+    if mission == nil then return nil end
+    local mission_id = mission.ID
+    if (mission_id == nil or mission_id == "")
+            and mission.Name == "Tutorial" then
+        return "Mission_Tutorial"
+    end
+    return mission_id
+end
+
 local function dump_state()
     if not Board then return end
 
     local state = {}
 
-    local mission_id = nil
-    if _ITB_CURRENT_MISSION ~= nil then
-        mission_id = _ITB_CURRENT_MISSION.ID
-    end
+    local mission_id = mission_bridge_id(_ITB_CURRENT_MISSION)
 
     local terraform_grass_lookup = {}
     local terraform_grass_tiles = mission_terraform_grass_tiles(
@@ -1575,7 +1586,7 @@ local function dump_state()
     pcall(function()
         local mission = _ITB_CURRENT_MISSION
         if mission then
-            state.mission_id = mission.ID
+            state.mission_id = mission_id
             -- Mission_Hacking converts one specific stored Cannon Bot after
             -- one specific stored facility dies. Export both live pawn IDs so
             -- the simulator never guesses from type alone when other

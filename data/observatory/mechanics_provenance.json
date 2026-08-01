@@ -8601,6 +8601,104 @@
           "symbols": ["test_real_mission_spider_boss_record_pins_hatch_order_and_native_gaps"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried GetScripts loader actively lists scripts/missions/mission_tutorial.lua, comments out scripts/missions/mission_ae_trailer.lua, and contains no mission_trailer.lua list entry. The exact CreateTutorial function constructs Mission_ActiveTutorial from Mission_Tutorial and calls Initialize. Thus the standard tutorial is the active shipped loader path, while both trailer files are dormant/unrouted by that list; external/user loader behavior remains outside these source facts."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried base and Advanced Edition trailer files both declare a global Mission_Tutorial with TurnLimit=7, SpawnStartMod=-10, EnemySpawn=false, MechSpawn=false, and UseBonus=false; their only declared difference at construction is MapTags trailer versus ae_trailer. StartMission resets both flags. On successive non-busy UpdateMission checks, each runs TrailerOpening once, then TrailerOpening_Two once, and thereafter adds a five-second SkillEffect delay whenever the board is non-busy."
+        },
+        {
+          "classification": "fact",
+          "statement": "The base trailer hides the pawn at (3,6), then scripts a delayed Hornet1, Firefly1, and Scorpion1 sequence with selected activation, movement, and FireWeapon calls. It later directly adds SpaceDamage sPawn spawns for PunchMech at (3,3), ArtiMech at (2,1), and TankMech at (2,4), followed by exact scripted attacks. The Advanced Edition trailer instead hides (1,6), scripts Moth1, Dung1, and two Leaper1 spawns, and directly adds HydrantMech, TrimissileMech, and BottlecapMech at its listed coordinates before one Bottlecap FireWeapon call. Both append fixed delays and CEO voice calls to their local SkillEffects."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact standard tutorial declares TUT_ATTACKS=0 and TUT_COMBATMECH=1, fixed enemy/mech/target positions, stored pawn IDs, and a seven-turn no-bonus Mission_Tutorial. Its enemy NextTurn branches create/queue prescribed Vek for turns zero through three, while player branches create PunchMech, TankMech, and ArtiMech at turns one through three. It calls Board:SpawnQueued after those branches; turn-three enemy additions depend on the pre-spawn Board:GetEnemyCount result."
+        },
+        {
+          "classification": "fact",
+          "statement": "The standard tutorial's UpdateTurnOne/Two/Three and UpdateMission callbacks are native UI/tutorial state machines: they add and clear named tips, inspect selection, movement, armed-weapon, undo, and board-busy state, and call Game:BlockNextTurn while their scripted states require it. GetCompletedObjectives returns Bonus_Simple_Kill with availability selected from current enemy count, while UpdateObjectives adds that one-reputation objective only after turn three. UpdateMission also clears the PunchMech priority target after turn one and shows the game-over tip once when grid power reaches zero."
+        },
+        {
+          "classification": "fact",
+          "statement": "The repository normalizes the separately constructed native Tutorial name to exact Mission_Tutorial only when mission.ID is absent, preserving every explicit ID, so the bridge exposes the active tutorial identity. The command and mission-picker layers then give that exact ID a non-overridable native-forecast safety gate before solve, auto-turn, every public End Turn path, and Lightning route auto-start. The generated metadata remains a static anchor only: neither identity normalization nor the gate reproduces trailer effects, the tutorial's PAWN_FACTORY/SpawnPawn lifecycle, tip/undo state, BlockNextTurn timing, fixed map, or objective presentation."
+        }
+      ],
+      "id": "mission-tutorial-and-trailer-scripts",
+      "implementations": [
+        {
+          "path": "data/mission_metadata.json",
+          "symbols": ["Mission_Tutorial"]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["mission_bridge_id", "dump_state"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
+        },
+        {
+          "path": "src/strategy/mission_picker.py",
+          "symbols": ["NATIVE_FORECAST_GATED_MISSION_IDS"]
+        }
+      ],
+      "known_gaps": [
+        "The shipped GetScripts list actively loads the standard tutorial, comments out the Advanced Edition trailer, and omits the base trailer. External/user import behavior, loader override precedence, map selection, initial pawn state, Board:IsBusy scheduling, and all dormant trailer SkillEffect delay/AddScript/AddDamage/voice execution remain native lifecycle dependencies; no source-to-solver trailer behavior is claimed.",
+        "The standard tutorial's PAWN_FACTORY construction, SpawnPawn/SpawnQueued placement and UID allocation, priority-target behavior, Vek AI, weapon execution, Game tips/selection/arming/undo APIs, Game:BlockNextTurn, map state, and turn scheduler are not reproduced by the repository. The exact bridge identity and gate deliberately stop before forecasting those phases.",
+        "The exact one-reputation objective's availability/status/UI settlement and the grid-power game-over presentation are source calls, not controlled evidence of bridge extraction or Rust mission-end conformance. This record deliberately does not infer a normal campaign mission lifecycle from tutorial or trailer-only source."
+      ],
+      "sources": [
+        {
+          "path": "scripts/scripts.lua",
+          "sha256": "53632a1abe38638eae14b7a0cc9cee80590a9a90da9d110200d81eb3281b3a60",
+          "symbols": ["GetScripts"]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": ["CreateTutorial"]
+        },
+        {
+          "path": "scripts/missions/mission_ae_trailer.lua",
+          "sha256": "b3bab4d6a928ea6d7c72afc2be044402f5b03d8f426c67f592c880c72ba8e39e",
+          "symbols": ["Mission_Tutorial", "Mission_Tutorial:StartMission", "Mission_Tutorial:UpdateMission", "TrailerOpening", "TrailerOpening_Two"]
+        },
+        {
+          "path": "scripts/missions/mission_trailer.lua",
+          "sha256": "5bd9d7a4ac8810c4c9433357fc8e56c9b6bf533f4bbec922526ff3c2b079662f",
+          "symbols": ["Mission_Tutorial", "Mission_Tutorial:StartMission", "Mission_Tutorial:UpdateMission", "TrailerOpening", "TrailerOpening_Two"]
+        },
+        {
+          "path": "scripts/missions/mission_tutorial.lua",
+          "sha256": "8629ce275906d97e3f53172ff7202ff3c59cd10322583c3c391a92621b8bbf39",
+          "symbols": ["TUT_ATTACKS", "TUT_COMBATMECH", "Mission_Tutorial", "Mission_Tutorial:StartMission", "Mission_Tutorial:NextTurn", "Mission_Tutorial:AddUndoTip", "Mission_Tutorial:GetCompletedObjectives", "Mission_Tutorial:UpdateObjectives", "Mission_Tutorial:UpdateTurnOne", "Mission_Tutorial:UpdateTurnTwo", "Mission_Tutorial:UpdateTurnThree", "Mission_Tutorial:UpdateMission"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_modloader_tutorial_identity.py",
+          "symbols": ["test_tutorial_without_create_mission_id_gets_exact_bridge_identity", "test_bridge_identity_preserves_explicit_ids_and_does_not_guess_other_names", "test_dump_state_uses_normalized_identity_for_public_payload"]
+        },
+        {
+          "path": "tests/test_mission_native_forecast_gates.py",
+          "symbols": ["test_cmd_solve_returns_exact_non_overridable_native_forecast_gate", "test_auto_turn_preserves_native_forecast_gate_metadata", "test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch", "test_lightning_route_veto_recognizes_native_forecast_gate_from_id_alone"]
+        },
+        {
+          "path": "tests/test_mission_picker.py",
+          "symbols": ["test_native_forecast_gated_mission_loses_to_safe_default_pick", "test_native_forecast_gate_is_exact_id_only", "test_lightning_routes_auto_start_veto_native_forecast_gated_missions"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_real_mission_tutorial_and_trailers_record_pins_callbacks_and_native_gaps"]
+        }
+      ]
     }
   ],
   "schema_version": 1

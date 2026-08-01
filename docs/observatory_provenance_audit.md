@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 12 | 2 |
-| Missions | 75 | 67 | 8 |
+| Missions | 75 | 70 | 5 |
 | Environments | 15 | 14 | 1 |
-| Unique total | 96 | 86 | 10 |
+| Unique total | 96 | 89 | 7 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 362 definitions literally and leaves 380 unindexed. Category totals
+names 380 definitions literally and leaves 362 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
@@ -833,6 +833,22 @@ Vek and environment effects, `Corpse=true` blocker/action lifecycle, setup RNG,
 `Board:ClearSpace`, and `SpaceDamage` queue timing are not traced. The bridge
 change is committed but intentionally not installed or exercised during the
 protected live achievement session, so no push replay is claimed.
+
+The tutorial/trailer slice adds the three exact shipped `Mission_Tutorial`
+sources and their 17 defined callable callbacks: four each from the base and
+Advanced Edition trailer definitions, and nine from the standard tutorial.
+The exact `GetScripts` loader actively imports the standard tutorial, comments
+out the Advanced Edition trailer entry, and omits the base trailer entry; the
+two trailer definitions are therefore dormant/unrouted by the shipped list,
+not competing active mission definitions. `CreateTutorial` constructs the
+standard `Mission_Tutorial`. Its fixed Vek and mech sequence still runs through
+native pawn construction, spawn queuing, tips, selection/arming/undo checks,
+and `BlockNextTurn` state machines. The bridge normalizes the separately
+constructed source name to exact `Mission_Tutorial`; a non-overridable gate
+then blocks solver/auto-turn/public-End-Turn/Lightning-route forecasting of
+that native lifecycle. The static metadata entry and gate do not imply trailer
+effect, tutorial UI, spawn/UID allocation, objective settlement, or campaign
+lifecycle conformance.
 
 ## Highest-value expansion order
 

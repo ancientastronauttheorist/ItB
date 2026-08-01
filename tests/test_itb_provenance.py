@@ -5571,6 +5571,95 @@ def test_real_mission_spider_boss_record_pins_hatch_order_and_native_gaps():
     assert "AddScript/Board:RemovePawn and AddDamage ordering" in gaps
 
 
+def test_real_mission_tutorial_and_trailers_record_pins_callbacks_and_native_gaps():
+    record = _mission_provenance_record("mission-tutorial-and-trailer-scripts")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/scripts.lua",
+            "sha256": (
+                "53632a1abe38638eae14b7a0cc9cee80"
+                "590a9a90da9d110200d81eb3281b3a60"
+            ),
+            "symbols": ["GetScripts"],
+        },
+        {
+            "path": "scripts/missions/missions.lua",
+            "sha256": (
+                "505c02a8668ba2e39d868f95051ede81"
+                "c6cc1611f1e409219b6caa4fbe1d0257"
+            ),
+            "symbols": ["CreateTutorial"],
+        },
+        {
+            "path": "scripts/missions/mission_ae_trailer.lua",
+            "sha256": (
+                "b3bab4d6a928ea6d7c72afc2be044402"
+                "f5b03d8f426c67f592c880c72ba8e39e"
+            ),
+            "symbols": [
+                "Mission_Tutorial", "Mission_Tutorial:StartMission",
+                "Mission_Tutorial:UpdateMission", "TrailerOpening",
+                "TrailerOpening_Two",
+            ],
+        },
+        {
+            "path": "scripts/missions/mission_trailer.lua",
+            "sha256": (
+                "5bd9d7a4ac8810c4c9433357fc8e56c9"
+                "b6bf533f4bbec922526ff3c2b079662f"
+            ),
+            "symbols": [
+                "Mission_Tutorial", "Mission_Tutorial:StartMission",
+                "Mission_Tutorial:UpdateMission", "TrailerOpening",
+                "TrailerOpening_Two",
+            ],
+        },
+        {
+            "path": "scripts/missions/mission_tutorial.lua",
+            "sha256": (
+                "8629ce275906d97e3f53172ff7202ff3"
+                "c59cd10322583c3c391a92621b8bbf39"
+            ),
+            "symbols": [
+                "TUT_ATTACKS", "TUT_COMBATMECH", "Mission_Tutorial",
+                "Mission_Tutorial:StartMission", "Mission_Tutorial:NextTurn",
+                "Mission_Tutorial:AddUndoTip",
+                "Mission_Tutorial:GetCompletedObjectives",
+                "Mission_Tutorial:UpdateObjectives",
+                "Mission_Tutorial:UpdateTurnOne",
+                "Mission_Tutorial:UpdateTurnTwo",
+                "Mission_Tutorial:UpdateTurnThree",
+                "Mission_Tutorial:UpdateMission",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["data/mission_metadata.json"] == {"Mission_Tutorial"}
+    assert implementations["src/bridge/modloader.lua"] == {
+        "mission_bridge_id", "dump_state",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block",
+        "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn",
+    }
+    assert implementations["src/strategy/mission_picker.py"] == {
+        "NATIVE_FORECAST_GATED_MISSION_IDS",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "dormant/unrouted" in facts
+    assert "TurnLimit=7" in facts
+    assert "Board:SpawnQueued" in facts
+    assert "Game:BlockNextTurn" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "loader override precedence" in gaps
+    assert "PAWN_FACTORY construction" in gaps
+    assert "does not infer a normal campaign mission lifecycle" in gaps
+
+
 def test_real_mission_boombots_record_pins_callbacks_and_explosion_gap():
     record = _mission_provenance_record("mission-boombots-explosive-decay")
     assert record["coverage"] == "partial"

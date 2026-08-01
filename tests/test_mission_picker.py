@@ -383,6 +383,7 @@ def test_train_no_defender_loses_to_safe_battle():
         "Mission_Respawn",
         "Mission_SpiderBoss",
         "Mission_SlugBoss",
+        "Mission_Tutorial",
     ),
 )
 def test_native_forecast_gated_mission_loses_to_safe_default_pick(mission_id):
@@ -466,6 +467,7 @@ def test_lightning_routes_auto_start_veto_native_forecast_gated_missions(routing
                 "Mission_Respawn",
                 "Mission_SpiderBoss",
                 "Mission_SlugBoss",
+                "Mission_Tutorial",
             ),
             start=93,
         )
@@ -486,6 +488,7 @@ def test_lightning_routes_auto_start_veto_native_forecast_gated_missions(routing
         "Mission_Respawn",
         "Mission_SpiderBoss",
         "Mission_SlugBoss",
+        "Mission_Tutorial",
     ):
         scored = next(entry for entry in ranked if entry["mission_id"] == mission_id)
         assert scored["route_auto_start_veto_reason"] == (
@@ -511,6 +514,7 @@ def test_lightning_route_all_native_forecast_gates_remain_ranked_but_vetoed():
                     "Mission_Respawn",
                     "Mission_SpiderBoss",
                     "Mission_SlugBoss",
+                    "Mission_Tutorial",
                 ),
                 start=96,
             )
@@ -528,6 +532,7 @@ def test_lightning_route_all_native_forecast_gates_remain_ranked_but_vetoed():
         "Mission_Respawn",
         "Mission_SpiderBoss",
         "Mission_SlugBoss",
+        "Mission_Tutorial",
     }
     assert all(
         entry["route_auto_start_veto_reason"]
