@@ -1103,6 +1103,11 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if u.fire()                       { unit_val["fire"]                 = json!(true); }
         if u.infected()                   { unit_val["infected"]             = json!(true); }
         if u.web()                        { unit_val["web"]                  = json!(true); }
+        if u.grappled()                   { unit_val["grappled"]             = json!(true); }
+        if !u.powered()                   { unit_val["powered"]              = json!(false); }
+        if u.guarding()                   { unit_val["guarding"]             = json!(true); }
+        if u.burrower()                   { unit_val["burrower"]             = json!(true); }
+        if u.jumper()                     { unit_val["jumper"]               = json!(true); }
         if u.boosted()                    { unit_val["boosted"]              = json!(true); }
         if u.ranged()                     { unit_val["ranged"]               = json!(1u8); }
         if u.has_queued_attack()          { unit_val["has_queued_attack"]    = json!(true); }
@@ -2726,6 +2731,41 @@ mod tests {
         // that board_to_json injects.
         assert!(weights.pseudo_threat_eval,
             "projected board_to_json must set eval_weights.pseudo_threat_eval=true");
+    }
+
+    #[test]
+    fn test_board_to_json_roundtrip_preserves_control_shot_predicates() {
+        let mut board = Board::default();
+        let mut unit = Unit {
+            uid: 17,
+            x: 3,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            move_speed: 0,
+            base_move: 7,
+            flags: UnitFlags::GRAPPLED
+                | UnitFlags::UNPOWERED
+                | UnitFlags::GUARDING
+                | UnitFlags::BURROWER
+                | UnitFlags::JUMPER,
+            ..Default::default()
+        };
+        unit.set_type_name("ControlTarget");
+        board.add_unit(unit);
+
+        let json_str = board_to_json(&board, &[]);
+        let (roundtrip, ..) = board_from_json(&json_str)
+            .expect("Control Shot predicates must survive projected checkpoints");
+        let retained = &roundtrip.units[0];
+        assert_eq!(retained.base_move, 7);
+        assert_eq!(retained.move_speed, 0);
+        assert!(retained.grappled());
+        assert!(!retained.powered());
+        assert!(retained.guarding());
+        assert!(retained.burrower());
+        assert!(retained.jumper());
     }
 
     #[test]

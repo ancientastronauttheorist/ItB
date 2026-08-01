@@ -2047,15 +2047,15 @@
       "evidence": [
         {
           "classification": "fact",
-          "statement": "The exact inventoried Advanced Edition Lua source defines Control Shot as an adjacent cardinal first click gated by IsControllable, followed by native path-profile movement within maximum budgets of 2, 3, 3, or 4 tiles; aside from TipImage metadata, A, B, and AB change only MoveDistance."
+          "statement": "The exact inventoried Advanced Edition Lua source defines Control Shot as an adjacent cardinal first click at Range=1. Its ordered IsControllable predicate requires a pawn space, rejects guarding non-Burrowers, unpowered pawns, and Frozen pawns, then admits Snowmine1 or VIP_Truck; every other pawn needs nonzero current move or IsGrappled plus nonzero GetBaseMove. The source has no team or projectile-blocker predicate."
         },
         {
           "classification": "fact",
-          "statement": "Rust has all four exact IDs, mappings, and definitions plus bespoke target enumeration, reachability, simulation, landing effects, achievement events, and 14 focused tests, including exact base/A/B/AB movement-budget boundaries."
+          "statement": "A, B, and AB change MoveDistance to 3, 3, and 4 (besides TipImage metadata). v390 carries the bridged live base move, powered, guarding, Burrower, Jumper, and explicit IsGrappled state through Rust; it centralizes the ordered eligibility predicate with no team or non-source projectile filter, uses the fixed 2/3/3/4 controlled-movement budgets, and native-validates both target lists before bridge GetFinalEffect execution."
         },
         {
           "classification": "unresolved",
-          "statement": "Rust's enemy-only eligibility predicate differs materially from the Lua IsControllable body, and native/UI behavior for predicate cases not represented by Rust has not been established."
+          "statement": "The representation is source-directed but remains partial: Lua delegates pawn-space, target lists, paths, and effects to native helpers, while Rust uses a bounded alive/non-extra representation, direct BFS, and coordinate mutation."
         }
       ],
       "id": "player-weapon-control-shot",
@@ -2072,8 +2072,24 @@
           ]
         },
         {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "UnitFlags::UNPOWERED",
+            "UnitFlags::GUARDING",
+            "UnitFlags::BURROWER",
+            "UnitFlags::GRAPPLED",
+            "UnitFlags::JUMPER",
+            "pub fn powered",
+            "pub fn guarding",
+            "pub fn burrower",
+            "pub fn grappled",
+            "pub fn jumper"
+          ]
+        },
+        {
           "path": "rust_solver/src/movement.rs",
           "symbols": [
+            "control_shot_eligible_unit",
             "controlled_reachable_tiles_with_cost",
             "controlled_reachable_tiles"
           ]
@@ -2083,8 +2099,6 @@
           "symbols": [
             "control_shot_target_range",
             "control_shot_move_budget",
-            "control_shot_eligible_unit",
-            "control_shot_has_clear_projectile_line",
             "enumerate_control_shot_targets"
           ]
         },
@@ -2093,19 +2107,46 @@
           "symbols": [
             "control_shot_target_range",
             "control_shot_move_budget",
-            "control_shot_eligible_unit",
-            "control_shot_has_clear_projectile_line",
             "sim_control_shot"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "JsonUnit",
+            "board_from_json",
+            "known_burrower_type",
+            "known_jumper_type"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "board_to_json"
+          ]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "p:GetBaseMove()",
+            "p:IsPowered()",
+            "p:IsBurrower()",
+            "p:IsJumper()",
+            "IsGrappled",
+            "point_list_contains",
+            "skill:GetTargetArea",
+            "skill:GetSecondTargetArea",
+            "skill:GetFinalEffect"
           ]
         }
       ],
       "known_gaps": [
-        "Rust adds enemy-only and non-extra-tile requirements absent from Lua, omits Lua's powered, guarding with burrower exception, and nonzero base-move predicates, rejects a zero-current-speed grappled pawn that Lua may admit, and does not preserve Lua's explicit Snowmine1 or VIP_Truck exceptions.",
-        "The source predicate mismatch does not by itself prove every otherwise qualifying ally is live-controllable because native IsPowered and related pawn methods remain untraced.",
-        "Native Board:GetReachable, Board:GetPath, Pawn:GetPathProf, IsPowered, IsGuarding, IsGrappled, GetMoveSpeed, GetBaseMove, AddMove, AddLeap, and AddBurrow semantics have not been independently traced for this build.",
-        "Destination reachability, path profile, terrain, status, and landing-effect equivalence is not exhaustive; Rust uses independent reachability and direct coordinate mutation rather than native path-effect sequencing.",
-        "The projectile-blocker condition has no corresponding explicit Lua check and is normally redundant at fixed Range=1; current blocker tests use a distance-two target that is already out of range.",
-        "There is no focused replay or exact bridge/native UI conformance proof, and raw bridge execution has not supplied reliable Let's Walk achievement credit."
+        "Lua has no explicit extra-tile predicate: Rust's alive/non-extra representation protects duplicate multi-tile entries, but native Board:IsPawnSpace behavior on every ExtraSpace coordinate has not been established.",
+        "Native Board:IsPawnSpace, Board:GetReachable, Board:GetPath, Pawn:GetPathProf, IsPowered, IsGuarding, IsGrappled, GetBaseMove, AddMove, AddLeap, and AddBurrow semantics remain incompletely traced across terrain, status, collision, and effect scheduling.",
+        "Lua does not textually reject choosing the origin as the second click. Whether Board:GetReachable publishes that no-op destination remains a native uncertainty; Rust deliberately omits zero-distance moves.",
+        "The bridge now prefers live predicate calls, but legacy payload defaults and static known Burrower/Jumper fallbacks can differ from native state. The updated modloader has not been installed or controlled-captured during the protected achievement session.",
+        "Rust's independent fixed-budget BFS and direct coordinate mutation remain an approximation of native path profiles and AddMove/AddLeap/AddBurrow sequencing, including landing effects.",
+        "There is no focused replay or exact visible-UI/achievement conformance proof; native bridge target-list validation establishes legal selection, not reliable Let's Walk credit."
       ],
       "sources": [
         {
@@ -2136,7 +2177,7 @@
           "symbols": [
             "control_shot_target_enumeration_respects_first_click_range",
             "control_shot_variants_enumerate_exact_move_budgets",
-            "control_shot_target_enumeration_respects_projectile_blockers"
+            "control_shot_target_enumeration_matches_source_predicate"
           ]
         },
         {
@@ -2146,12 +2187,40 @@
             "test_control_shot_single_upgrade_variants_move_three_spaces",
             "test_control_shot_variants_reject_first_destination_beyond_budget",
             "test_control_shot_ab_adjacent_target_can_move_four_spaces",
-            "test_control_shot_can_move_webbed_unit",
-            "test_control_shot_rejects_allied_target_unit",
+            "test_control_shot_can_move_grappled_zero_current_move_unit",
+            "test_control_shot_moves_eligible_ally_without_lets_walk_progress",
+            "test_control_shot_moves_named_zero_move_exceptions",
+            "test_control_shot_rejects_ineligible_source_predicate_cases",
             "test_control_shot_rejects_out_of_range_destination",
             "test_control_shot_rejects_out_of_range_target_unit",
             "test_control_shot_rejects_diagonal_target_unit",
-            "test_control_shot_rejects_blocked_projectile_line"
+            "test_control_shot_guarding_burrower_remains_eligible"
+          ]
+        },
+        {
+          "path": "rust_solver/src/movement.rs",
+          "symbols": [
+            "test_control_shot_fixed_budget_moves_grappled_and_named_exceptions",
+            "test_control_shot_named_exceptions_still_obey_prior_status_gates"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_control_shot_native_predicates_and_base_move_survive_bridge_parse"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_board_to_json_roundtrip_preserves_control_shot_predicates"
+          ]
+        },
+        {
+          "path": "tests/test_modloader_control_shot_state.py",
+          "symbols": [
+            "test_control_shot_state_export_uses_live_predicates_separately",
+            "test_control_shot_execution_validates_native_target_areas_before_effect"
           ]
         }
       ]

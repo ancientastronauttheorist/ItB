@@ -8,6 +8,7 @@ use crate::board::*;
 use crate::weapons::*;
 use crate::movement::{
     cardinal_direction,
+    control_shot_eligible_unit,
     controlled_reachable_tiles_with_cost,
     direction_between,
 };
@@ -5858,25 +5859,8 @@ fn control_shot_move_budget(wdef: &WeaponDef) -> u8 {
     wdef.range_max.max(2)
 }
 
-fn control_shot_eligible_unit(unit: &Unit) -> bool {
-    unit.alive() && unit.is_enemy() && !unit.is_extra_tile() && !unit.frozen() && unit.move_speed > 0
-}
-
 fn control_shot_target_in_line(source: (u8, u8), first: (u8, u8)) -> bool {
     source.0 == first.0 || source.1 == first.1
-}
-
-fn control_shot_has_clear_projectile_line(
-    board: &Board,
-    source: (u8, u8),
-    first: (u8, u8),
-) -> bool {
-    let dx = (first.0 as i8 - source.0 as i8).signum();
-    let dy = (first.1 as i8 - source.1 as i8).signum();
-    matches!(
-        find_projectile_blocker_from(board, source.0 as i8, source.1 as i8, dx, dy, false),
-        Some(blocker) if blocker == first
-    )
 }
 
 fn sim_control_shot(
@@ -5909,13 +5893,6 @@ fn sim_control_shot(
     if !control_shot_target_in_line((attacker.x, attacker.y), first) {
         result.events.push(format!(
             "invalid_control_shot_line:{}:{}:{}:{}",
-            attacker.x, attacker.y, first.0, first.1
-        ));
-        return;
-    }
-    if !control_shot_has_clear_projectile_line(board, (attacker.x, attacker.y), first) {
-        result.events.push(format!(
-            "invalid_control_shot_blocked_line:{}:{}:{}:{}",
             attacker.x, attacker.y, first.0, first.1
         ));
         return;
@@ -7593,13 +7570,13 @@ mod tests {
     }
 
     #[test]
-    fn test_control_shot_can_move_webbed_unit() {
+    fn test_control_shot_can_move_grappled_zero_current_move_unit() {
         let mut board = make_test_board();
         let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
         let enemy = add_enemy(&mut board, 1, 3, 4, 3);
-        board.units[enemy].move_speed = 3;
+        board.units[enemy].move_speed = 0;
         board.units[enemy].base_move = 3;
-        board.units[enemy].set_web(true);
+        board.units[enemy].flags |= UnitFlags::GRAPPLED;
 
         let result = simulate_attack_with_target2(
             &mut board,
@@ -7617,7 +7594,7 @@ mod tests {
     }
 
     #[test]
-    fn test_control_shot_rejects_allied_target_unit() {
+    fn test_control_shot_moves_eligible_ally_without_lets_walk_progress() {
         let mut board = make_test_board();
         let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
         let ally = add_mech(&mut board, 1, 3, 4, 3, WId::None);
@@ -7633,13 +7610,96 @@ mod tests {
             &WEAPONS,
         );
 
-        assert_eq!((board.units[ally].x, board.units[ally].y), (3, 4));
+        assert_eq!((board.units[ally].x, board.units[ally].y), (4, 4));
         assert!(result.events.iter().any(|e| {
-            e == "invalid_control_shot_target:3:4"
+            e == "control_shot:3:4:4:4:distance:1"
         }));
         assert!(!result.events.iter().any(|e| {
             e.starts_with("achievement_lets_walk:")
         }));
+    }
+
+    #[test]
+    fn test_control_shot_moves_named_zero_move_exceptions() {
+        for (type_name, team) in [
+            ("Snowmine1", Team::Neutral),
+            ("VIP_Truck", Team::Player),
+        ] {
+            let mut board = make_test_board();
+            let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+            let target = board.add_unit(Unit {
+                uid: 1,
+                x: 3,
+                y: 4,
+                hp: 1,
+                max_hp: 1,
+                team,
+                flags: UnitFlags::PUSHABLE,
+                move_speed: 0,
+                base_move: 0,
+                ..Default::default()
+            });
+            board.units[target].set_type_name(type_name);
+
+            let result = simulate_attack_with_target2(
+                &mut board,
+                control,
+                WId::ScienceTcControl,
+                (3, 4),
+                Some((4, 4)),
+                &WEAPONS,
+            );
+
+            assert_eq!(
+                (board.units[target].x, board.units[target].y),
+                (4, 4),
+                "{type_name} should use Control Shot's fixed movement budget",
+            );
+            assert!(result.events.iter().any(|event| {
+                event == "control_shot:3:4:4:4:distance:1"
+            }));
+            assert!(!result.events.iter().any(|event| {
+                event.starts_with("achievement_lets_walk:")
+            }));
+        }
+    }
+
+    #[test]
+    fn test_control_shot_rejects_ineligible_source_predicate_cases() {
+        let cases = [
+            ("Static", 0, 3, UnitFlags::PUSHABLE),
+            ("NoBaseMove", 3, 0, UnitFlags::PUSHABLE),
+            ("Guarding", 3, 3, UnitFlags::PUSHABLE | UnitFlags::GUARDING),
+            ("Unpowered", 3, 3, UnitFlags::PUSHABLE | UnitFlags::UNPOWERED),
+            ("Frozen", 3, 3, UnitFlags::PUSHABLE | UnitFlags::FROZEN),
+        ];
+
+        for (type_name, move_speed, base_move, flags) in cases {
+            let mut board = make_test_board();
+            let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
+            let target = add_enemy_type(&mut board, 1, 3, 4, 3, type_name);
+            board.units[target].move_speed = move_speed;
+            board.units[target].base_move = base_move;
+            board.units[target].flags = flags;
+
+            let result = simulate_attack_with_target2(
+                &mut board,
+                control,
+                WId::ScienceTcControl,
+                (3, 4),
+                Some((4, 4)),
+                &WEAPONS,
+            );
+
+            assert_eq!(
+                (board.units[target].x, board.units[target].y),
+                (3, 4),
+                "{type_name} must not be controllable",
+            );
+            assert!(result.events.iter().any(|event| {
+                event == "invalid_control_shot_target:3:4"
+            }));
+        }
     }
 
     #[test]
@@ -7718,33 +7778,26 @@ mod tests {
     }
 
     #[test]
-    fn test_control_shot_rejects_blocked_projectile_line() {
+    fn test_control_shot_guarding_burrower_remains_eligible() {
         let mut board = make_test_board();
         let control = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceTcControl);
-        let enemy = add_enemy(&mut board, 1, 3, 5, 3);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 3);
         board.units[enemy].move_speed = 3;
         board.units[enemy].base_move = 3;
-        {
-            let tile = board.tile_mut(3, 4);
-            tile.terrain = Terrain::Building;
-            tile.building_hp = 2;
-        }
+        board.units[enemy].flags |= UnitFlags::GUARDING | UnitFlags::BURROWER;
 
         let result = simulate_attack_with_target2(
             &mut board,
             control,
             WId::ScienceTcControl,
-            (3, 5),
-            Some((4, 5)),
+            (3, 4),
+            Some((4, 4)),
             &WEAPONS,
         );
 
-        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 5));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 4));
         assert!(result.events.iter().any(|e| {
-            e == "invalid_control_shot_blocked_line:3:3:3:5"
-        }));
-        assert!(!result.events.iter().any(|e| {
-            e.starts_with("achievement_lets_walk:")
+            e == "achievement_lets_walk:distance:1:target:3:4:dest:4:4"
         }));
     }
 

@@ -176,13 +176,17 @@ range-four dispatch now pins backblast damage, smoke, recoil, and movement.
 
 The fifth slice, `player-weapon-control-shot`, reuses that exact
 `ae_weapons.lua` hash but adds family-level evidence for all four
-`Science_TC_Control` variants. It records a concrete fidelity gap rather than
-raising the file count: Rust restricts first-click eligibility to enemies and
-does not reproduce several Lua `IsControllable` branches, including powered,
-guarding/burrower, base-move, grappled zero-speed, Snowmine, and VIP Truck
-cases. Fixed adjacent first-click range and the separate maximum 2/3/3/4
-controlled movement budgets are now explicit. Native pawn predicates, path
-effects, and visible UI behavior remain unresolved.
+`Science_TC_Control` variants. v390 follows the source's ordered adjacent
+first-click predicate: pawn space, guarding unless Burrower, powered, not
+Frozen, then Snowmine1/VIP_Truck or current move-or-explicit-grappled plus
+base move. It deliberately has no team or projectile-blocker condition, and
+uses the separate fixed 2/3/3/4 controlled-movement budgets. The bridge now
+captures the native predicate values and validates both native target lists
+before `GetFinalEffect`. It remains `partial`: Rust represents pawn space as
+alive/non-extra, uses independent BFS and coordinate mutation rather than
+native path/effect sequencing, and needs a controlled installed-build capture
+for extra tiles, no-op destinations, path/profile, visible UI, and achievement
+credit behavior.
 
 The sixth slice, `player-weapon-needle-shot`, adds the previously unindexed
 `weapons_technovek.lua` source plus inherited Spear targeting. It pins all four

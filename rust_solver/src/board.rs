@@ -176,6 +176,23 @@ bitflags! {
         /// enemies such as Blobbers, Spiders, Shamans, and Psions do not take
         /// Void Shocker retaliation when their queued action deals no damage.
         const VOID_SHOCK_IMMUNE = 0x0400_0000;
+        /// Live `Pawn:IsPowered()` returned false. Missing legacy bridge data
+        /// defaults to powered, so only this explicit negative blocks skills
+        /// such as Control Shot.
+        const UNPOWERED = 0x0800_0000;
+        /// Live `Pawn:IsGuarding()` state (Stable or an equivalent native
+        /// guard). Control Shot rejects guarding pawns unless they burrow.
+        const GUARDING = 0x1000_0000;
+        /// Live/static `Pawn:IsBurrower()` identity, distinct from BURROWED's
+        /// current off-board retreat state.
+        const BURROWER = 0x2000_0000;
+        /// Exact live `Pawn:IsGrappled()` result. This remains distinct from
+        /// WEB, whose bridge probe also includes Spider-egg and alternate web
+        /// APIs that are not necessarily native IsGrappled.
+        const GRAPPLED = 0x4000_0000;
+        /// Live/static `Pawn:IsJumper()` identity for native path/effect
+        /// provenance. Rust still treats its path profile conservatively.
+        const JUMPER = 0x8000_0000;
     }
 }
 
@@ -270,6 +287,11 @@ impl Unit {
     pub fn void_shock_immune(&self) -> bool {
         self.flags.contains(UnitFlags::VOID_SHOCK_IMMUNE)
     }
+    pub fn powered(&self) -> bool { !self.flags.contains(UnitFlags::UNPOWERED) }
+    pub fn guarding(&self) -> bool { self.flags.contains(UnitFlags::GUARDING) }
+    pub fn burrower(&self) -> bool { self.flags.contains(UnitFlags::BURROWER) }
+    pub fn grappled(&self) -> bool { self.flags.contains(UnitFlags::GRAPPLED) }
+    pub fn jumper(&self) -> bool { self.flags.contains(UnitFlags::JUMPER) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }

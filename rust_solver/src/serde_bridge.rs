@@ -307,6 +307,12 @@ pub struct JsonUnit {
     pub infected: Option<bool>,
     pub web: Option<bool>,
     pub web_probes: Option<JsonWebProbes>,
+    #[serde(alias = "is_grappled")]
+    pub grappled: Option<bool>,
+    pub powered: Option<bool>,
+    pub guarding: Option<bool>,
+    pub burrower: Option<bool>,
+    pub jumper: Option<bool>,
     pub boosted: Option<bool>,
     pub web_source_uid: Option<u16>,
     pub has_queued_attack: Option<bool>,
@@ -384,6 +390,14 @@ pub struct JsonPistonAction {
 
 fn known_void_shock_immune_type(type_name: &str) -> bool {
     matches!(type_name, "Shaman1" | "Shaman2")
+}
+
+fn known_burrower_type(type_name: &str) -> bool {
+    matches!(type_name, "Burrower1" | "Burrower2")
+}
+
+fn known_jumper_type(type_name: &str) -> bool {
+    matches!(type_name, "Leaper1" | "Leaper2" | "SpiderBoss")
 }
 
 fn mission_piston_front(type_name: &str, x: u8, y: u8) -> Option<(u8, u8)> {
@@ -796,6 +810,19 @@ pub fn board_from_json(json_str: &str)
                 .and_then(|p| p.is_grappled)
                 .unwrap_or(false);
             if ju.web.unwrap_or(false) || probe_web { flags |= UnitFlags::WEB; }
+            if ju.grappled.or_else(|| {
+                ju.web_probes.as_ref().and_then(|p| p.is_grappled)
+            }).unwrap_or(false) {
+                flags |= UnitFlags::GRAPPLED;
+            }
+            if ju.powered == Some(false) { flags |= UnitFlags::UNPOWERED; }
+            if ju.guarding.unwrap_or(false) { flags |= UnitFlags::GUARDING; }
+            if ju.burrower.unwrap_or_else(|| known_burrower_type(&ju.unit_type)) {
+                flags |= UnitFlags::BURROWER;
+            }
+            if ju.jumper.unwrap_or_else(|| known_jumper_type(&ju.unit_type)) {
+                flags |= UnitFlags::JUMPER;
+            }
             if ju.boosted.unwrap_or(false) { flags |= UnitFlags::BOOSTED; }
             if ju.has_queued_attack.unwrap_or(false) { flags |= UnitFlags::HAS_QUEUED_ATTACK; }
             if input.mission_id.as_deref() == Some("Mission_Satellite")
@@ -1402,6 +1429,85 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.tile(5, 5).terrain, Terrain::Ice);
+    }
+
+    #[test]
+    fn test_control_shot_native_predicates_and_base_move_survive_bridge_parse() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 17,
+                    "type": "ControlTarget",
+                    "x": 3,
+                    "y": 4,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 2,
+                    "move": 0,
+                    "base_move": 7,
+                    "web": false,
+                    "web_probes": {"IsGrappled": false},
+                    "grappled": true,
+                    "powered": false,
+                    "guarding": true,
+                    "burrower": true,
+                    "jumper": true
+                },
+                {
+                    "uid": 18,
+                    "type": "LegacyTarget",
+                    "x": 5,
+                    "y": 4,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 2,
+                    "move": 2
+                },
+                {
+                    "uid": 19,
+                    "type": "Burrower1",
+                    "x": 6,
+                    "y": 4,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 2,
+                    "move": 3
+                },
+                {
+                    "uid": 20,
+                    "type": "Leaper1",
+                    "x": 7,
+                    "y": 4,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 2,
+                    "move": 3
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, ..) = board_from_json(input).expect("bridge json parses");
+        let native = &board.units[0];
+        assert_eq!(native.base_move, 7);
+        assert!(!native.web(), "aggregate web must remain independent");
+        assert!(native.grappled(), "explicit IsGrappled must survive");
+        assert!(!native.powered());
+        assert!(native.guarding());
+        assert!(native.burrower());
+        assert!(native.jumper());
+
+        let legacy = &board.units[1];
+        assert_eq!(legacy.base_move, 2);
+        assert!(legacy.powered(), "missing legacy field defaults powered");
+        assert!(!legacy.guarding());
+        assert!(!legacy.burrower());
+        assert!(!legacy.grappled());
+        assert!(!legacy.jumper());
+        assert!(board.units[2].burrower(), "legacy Burrower identity fallback");
+        assert!(board.units[3].jumper(), "legacy Jumper identity fallback");
     }
 
     #[test]

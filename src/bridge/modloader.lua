@@ -498,6 +498,20 @@ local function get_live_tile_shield(pt, runtime_region_shields)
     return false
 end
 
+local function point_list_contains(pt_list, point)
+    if pt_list == nil or point == nil then return false end
+    local ok_size, size = pcall(function() return pt_list:size() end)
+    if not ok_size or type(size) ~= "number" then return false end
+    for i = 1, size do
+        local ok_point, candidate = pcall(function() return pt_list:index(i) end)
+        if ok_point and candidate ~= nil
+            and candidate.x == point.x and candidate.y == point.y then
+            return true
+        end
+    end
+    return false
+end
+
 -- Env_Tides source metadata that Board:IsEnvironmentDanger cannot express.
 -- Keep this helper pure so the mission-scoped scalar is independently
 -- testable without loading the game or installing this bridge.
@@ -805,6 +819,11 @@ local function dump_state()
                 if ok_mh and type(mh) == "number" and mh > 0 then
                     live_max_hp = mh
                 end
+                local base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed()
+                local ok_bm, live_base_move = pcall(function() return p:GetBaseMove() end)
+                if ok_bm and type(live_base_move) == "number" then
+                    base_move = live_base_move
+                end
                 local unit = {
                     uid = pid,
                     type = ptype,
@@ -815,7 +834,7 @@ local function dump_state()
                     mech = p:IsMech(),
                     active = p:IsActive(),
                     move = p:GetMoveSpeed(),
-                    base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed(),
+                    base_move = base_move,
                     minor = pawn_def and pawn_def.Minor or false,
                     void_shock_immune = pawn_def and pawn_def.VoidShockImmune or false,
                 }
@@ -886,6 +905,12 @@ local function dump_state()
                 if pushable ~= nil then
                     unit.pushable = pushable
                 end
+                local ok_pw, powered = pcall(function() return p:IsPowered() end)
+                if ok_pw and type(powered) == "boolean" then unit.powered = powered end
+                local ok_bu, burrower = pcall(function() return p:IsBurrower() end)
+                if ok_bu and type(burrower) == "boolean" then unit.burrower = burrower end
+                local ok_ju, jumper = pcall(function() return p:IsJumper() end)
+                if ok_ju and type(jumper) == "boolean" then unit.jumper = jumper end
 
                 -- Status effects
                 local ok_f, fly = pcall(function() return p:IsFlying() end)
@@ -929,6 +954,9 @@ local function dump_state()
                     end
                 end
                 unit.web = web
+                if type(web_probes.IsGrappled) == "boolean" then
+                    unit.grappled = web_probes.IsGrappled
+                end
                 unit.web_probes = web_probes  -- diagnostic; remove when verified
                 -- Webber identification: try API methods first, fall back later (post-loop)
                 if web then
@@ -2338,6 +2366,26 @@ local function execute_two_click_by_slot(pawn, weapon_slot, tx1, ty1, tx2, ty2)
         if not target_pawn then
             return false, "Control Shot first click has no pawn at " ..
                    first.x .. "," .. first.y
+        end
+        local ok_first, first_targets = pcall(function()
+            return skill:GetTargetArea(source)
+        end)
+        if not ok_first then
+            return false, "Control Shot GetTargetArea failed: " .. tostring(first_targets)
+        end
+        if not point_list_contains(first_targets, first) then
+            return false, "Control Shot first click is not natively eligible at " ..
+                   first.x .. "," .. first.y
+        end
+        local ok_second, second_targets = pcall(function()
+            return skill:GetSecondTargetArea(source, first)
+        end)
+        if not ok_second then
+            return false, "Control Shot GetSecondTargetArea failed: " .. tostring(second_targets)
+        end
+        if not point_list_contains(second_targets, second) then
+            return false, "Control Shot second click is not natively reachable at " ..
+                   second.x .. "," .. second.y
         end
         local ok, ctrl_err = pcall(function()
             Board:AddEffect(skill:GetFinalEffect(source, first, second))

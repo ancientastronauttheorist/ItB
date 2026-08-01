@@ -2395,6 +2395,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   The new walls participate in later attack collision, while explicit
 //   building, mountain, Water, Time Pod, pawn, and wreck exclusions remain.
 //   Pre-v384 corpus archived as failure_db_snapshot_sim_v383.jsonl.
+// v390 - Control Shot first-click eligibility follows the shipped predicate
+//   order for powered, guarding/burrower, frozen, grappled/current/base move,
+//   and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained,
+//   the non-source projectile filter is removed, bridge state preserves the
+//   native predicates, and direct execution native-validates both clicks.
+//   Pre-v390 corpus archived as failure_db_snapshot_sim_v389.jsonl.
 // v389 - Cluster Artillery A/B/AB effective IDs retain exact outer-ring damage
 //   and Buildings Immune combinations. All four variants accept intact
 //   building centers at cardinal range 2..8 while the selected center stays
@@ -2419,7 +2425,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 389;
+pub const SIMULATOR_VERSION: u32 = 390;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

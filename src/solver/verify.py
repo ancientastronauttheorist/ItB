@@ -1786,6 +1786,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Digger's separate queued cardinal damage and exposes those real pawns to
 # later attack collision. Pre-v384 corpus is archived as
 # failure_db_snapshot_sim_v383.jsonl.
+# v390: Control Shot first-click eligibility follows the shipped predicate
+# order for powered, guarding/burrower, frozen, grappled/current/base move,
+# and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained, the
+# non-source projectile filter is removed, bridge state preserves the native
+# predicates, and direct execution native-validates both clicks. Pre-v390
+# corpus is archived as recordings/failure_db_snapshot_sim_v389.jsonl.
 # v389: Cluster Artillery A/B/AB effective IDs preserve exact outer-ring damage
 # and Buildings Immune combinations. All four variants accept intact building
 # centers at cardinal range 2..8 while the selected center remains harmless.
@@ -1807,7 +1813,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 389
+SIMULATOR_VERSION = 390
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

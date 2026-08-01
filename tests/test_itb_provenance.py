@@ -1337,7 +1337,7 @@ def test_real_final_cave_record_is_limited_to_marked_lethal_danger():
     assert "does not cover Env_Volcano" in gaps
 
 
-def test_real_control_shot_record_exposes_source_predicate_mismatch():
+def test_real_control_shot_record_pins_v390_source_predicate_and_bridge_validation():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(
         repo_root / "data/observatory/mechanics_provenance.json"
@@ -1387,27 +1387,78 @@ def test_real_control_shot_record_exposes_source_predicate_mismatch():
         "is_control_shot",
     } <= implementations["rust_solver/src/weapons.rs"]
     assert {
+        "UnitFlags::UNPOWERED",
+        "UnitFlags::GUARDING",
+        "UnitFlags::BURROWER",
+        "UnitFlags::GRAPPLED",
+        "UnitFlags::JUMPER",
+        "pub fn powered",
+        "pub fn guarding",
+        "pub fn burrower",
+        "pub fn grappled",
+        "pub fn jumper",
+    } <= implementations["rust_solver/src/board.rs"]
+    assert {
+        "control_shot_eligible_unit",
         "controlled_reachable_tiles_with_cost",
         "controlled_reachable_tiles",
     } == implementations["rust_solver/src/movement.rs"]
+    assert {
+        "control_shot_target_range",
+        "control_shot_move_budget",
+        "enumerate_control_shot_targets",
+    } == implementations["rust_solver/src/solver.rs"]
+    assert {
+        "control_shot_target_range",
+        "control_shot_move_budget",
+        "sim_control_shot",
+    } == implementations["rust_solver/src/simulate.rs"]
+    assert {
+        "JsonUnit",
+        "board_from_json",
+        "known_burrower_type",
+        "known_jumper_type",
+    } == implementations["rust_solver/src/serde_bridge.rs"]
+    assert implementations["rust_solver/src/turn_projection.rs"] == {"board_to_json"}
+    assert {
+        "p:GetBaseMove()",
+        "p:IsPowered()",
+        "p:IsBurrower()",
+        "p:IsJumper()",
+        "IsGrappled",
+        "point_list_contains",
+        "skill:GetTargetArea",
+        "skill:GetSecondTargetArea",
+        "skill:GetFinalEffect",
+    } == implementations["src/bridge/modloader.lua"]
     tests = {
         reference["path"]: set(reference["symbols"])
         for reference in record["tests"]
     }
-    assert len(set().union(*tests.values())) == 14
+    assert len(set().union(*tests.values())) == 22
     assert {
         "control_shot_variants_enumerate_exact_move_budgets",
-        "test_control_shot_single_upgrade_variants_move_three_spaces",
-        "test_control_shot_variants_reject_first_destination_beyond_budget",
+        "control_shot_target_enumeration_matches_source_predicate",
+        "test_control_shot_can_move_grappled_zero_current_move_unit",
+        "test_control_shot_moves_eligible_ally_without_lets_walk_progress",
+        "test_control_shot_moves_named_zero_move_exceptions",
+        "test_control_shot_rejects_ineligible_source_predicate_cases",
+        "test_control_shot_guarding_burrower_remains_eligible",
+        "test_control_shot_fixed_budget_moves_grappled_and_named_exceptions",
+        "test_control_shot_named_exceptions_still_obey_prior_status_gates",
+        "test_control_shot_native_predicates_and_base_move_survive_bridge_parse",
+        "test_control_shot_state_export_uses_live_predicates_separately",
+        "test_control_shot_execution_validates_native_target_areas_before_effect",
     } <= set().union(*tests.values())
-    assert "test_control_shot_rejects_allied_target_unit" in tests[
+    assert "test_control_shot_moves_eligible_ally_without_lets_walk_progress" in tests[
         "rust_solver/src/simulate.rs"
     ]
     gaps = " ".join(record["known_gaps"])
-    assert "enemy-only" in gaps
-    assert "Snowmine1 or VIP_Truck" in gaps
-    assert "zero-current-speed grappled pawn" in gaps
-    assert "fixed Range=1" in gaps
+    assert "extra-tile" in gaps
+    assert "origin as the second click" in gaps
+    assert "legacy payload defaults" in gaps
+    assert "direct coordinate mutation" in gaps
+    assert "visible-UI/achievement" in gaps
 
 
 def test_real_mission_belt_record_pins_checkpoint_direction_fix():

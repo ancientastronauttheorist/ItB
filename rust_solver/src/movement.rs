@@ -140,9 +140,34 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
 
 /// Reachable tiles for Control Shot-style forced movement.
 ///
-/// Control Shot uses the target unit's movement constraints, but it can move a
-/// webbed unit. Frozen and zero-move units still cannot be controlled. The
-/// returned cost is the number of movement spaces used.
+/// Control Shot uses the target unit's movement constraints and a fixed weapon
+/// budget. Native Lua explicitly admits grappled zero-current-move pawns plus
+/// Snowmine1/VIP_Truck after its eligibility gates. The returned cost is the
+/// number of movement spaces used.
+fn control_shot_named_move_exception(unit: &Unit) -> bool {
+    matches!(unit.type_name_str(), "Snowmine1" | "VIP_Truck")
+}
+
+/// Source-faithful `Science_TC_Control:IsControllable` predicate over the
+/// bridge state Rust can represent. The one deliberate restriction is
+/// `!is_extra_tile()`: native Lua has no such check, but extra entries are
+/// duplicate bodies for a single multi-tile pawn and cannot yet be moved
+/// independently without corrupting the board model.
+pub fn control_shot_eligible_unit(unit: &Unit) -> bool {
+    if !unit.alive()
+        || unit.is_extra_tile()
+        || (unit.guarding() && !unit.burrower())
+        || !unit.powered()
+        || unit.frozen()
+    {
+        return false;
+    }
+    if control_shot_named_move_exception(unit) {
+        return true;
+    }
+    (unit.move_speed > 0 || unit.grappled()) && unit.base_move > 0
+}
+
 pub fn controlled_reachable_tiles_with_cost(
     board: &Board,
     unit_idx: usize,
@@ -152,7 +177,10 @@ pub fn controlled_reachable_tiles_with_cost(
     let ux = unit.x;
     let uy = unit.y;
 
-    if unit.frozen() || unit.move_speed == 0 || speed == 0 {
+    let fixed_budget_movement = unit.move_speed > 0
+        || unit.grappled()
+        || control_shot_named_move_exception(unit);
+    if unit.frozen() || !fixed_budget_movement || speed == 0 {
         return vec![((ux, uy), 0)];
     }
 
@@ -403,6 +431,84 @@ mod tests {
         unit.flags |= UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::CAN_MOVE;
         let idx = board.add_unit(unit);
         (board, idx)
+    }
+
+    #[test]
+    fn test_control_shot_fixed_budget_moves_grappled_and_named_exceptions() {
+        let cases = [
+            ("Grappled", 3, UnitFlags::GRAPPLED),
+            ("Snowmine1", 0, UnitFlags::empty()),
+            ("VIP_Truck", 0, UnitFlags::empty()),
+        ];
+
+        for (type_name, base_move, flags) in cases {
+            let mut board = Board::default();
+            let mut unit = Unit {
+                uid: 1,
+                x: 3,
+                y: 3,
+                hp: 1,
+                max_hp: 1,
+                team: Team::Neutral,
+                move_speed: 0,
+                base_move,
+                flags,
+                ..Default::default()
+            };
+            unit.set_type_name(type_name);
+            let idx = board.add_unit(unit);
+
+            assert!(
+                control_shot_eligible_unit(&board.units[idx]),
+                "{type_name} should pass the source predicate",
+            );
+            let reachable = controlled_reachable_tiles_with_cost(&board, idx, 2);
+            assert!(
+                reachable.contains(&((5, 3), 2)),
+                "{type_name} should receive the weapon's fixed movement budget",
+            );
+        }
+    }
+
+    #[test]
+    fn test_control_shot_named_exceptions_still_obey_prior_status_gates() {
+        for blocking_flag in [
+            UnitFlags::FROZEN,
+            UnitFlags::UNPOWERED,
+            UnitFlags::GUARDING,
+        ] {
+            let mut unit = Unit {
+                uid: 1,
+                hp: 1,
+                max_hp: 1,
+                flags: blocking_flag,
+                ..Default::default()
+            };
+            unit.set_type_name("Snowmine1");
+            assert!(
+                !control_shot_eligible_unit(&unit),
+                "Snowmine1 must not bypass {blocking_flag:?}",
+            );
+        }
+
+        let mut board = Board::default();
+        let unit = Unit {
+            uid: 1,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            move_speed: 0,
+            base_move: 3,
+            flags: UnitFlags::GRAPPLED | UnitFlags::FROZEN,
+            ..Default::default()
+        };
+        let idx = board.add_unit(unit);
+        assert_eq!(
+            controlled_reachable_tiles_with_cost(&board, idx, 2),
+            vec![((3, 3), 0)],
+            "frozen remains immobile even when grappled",
+        );
     }
 
     #[test]
