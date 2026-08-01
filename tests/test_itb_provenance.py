@@ -1157,6 +1157,7 @@ def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explici
         "simulate_enemy_attacks",
     } <= implementations["rust_solver/src/enemy.rs"]
     assert {
+        "legacy_tides_index_from_markers",
         "advance_mission_tides_warning",
         "project_plan_with_spawns",
     } <= implementations["rust_solver/src/turn_projection.rs"]
@@ -1175,7 +1176,10 @@ def test_real_mission_tides_record_keeps_remaining_native_and_spawn_gaps_explici
         "test_mission_tides_index_advances_markerless_lane_and_spawn_boundary",
         "test_mission_tides_index_beats_stale_visible_marker_row",
         "test_mission_tides_conservative_projection_keeps_current_marker",
-        "test_mission_tides_legacy_marker_fallback_still_advances",
+        "test_mission_tides_legacy_single_row_recovers_index_and_advances",
+        "test_mission_tides_legacy_recovered_index_survives_hidden_next_lane",
+        "test_mission_tides_legacy_ambiguous_rows_keep_fail_closed_fallback",
+        "test_mission_tides_legacy_empty_and_row_zero_masks_do_not_recover_index",
         "test_board_to_json_roundtrip",
     } == tests["rust_solver/src/turn_projection.rs"]
     assert tests["rust_solver/src/replay.rs"] == {

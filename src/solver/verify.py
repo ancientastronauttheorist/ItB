@@ -1792,6 +1792,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # behavior in solver/replay checkpoints; generator death stops new
 # application without clearing prior ACID. Pre-v391 corpus is archived as
 # recordings/failure_db_snapshot_sim_v390.jsonl.
+# v392 recovers Mission_Tides' current source Index from a legacy non-empty
+# warning mask only when all markers occupy one valid lane. Markerless future
+# lanes and permanent spawn blocking then survive deeper projection; empty,
+# row-zero, and multi-row payloads retain the fail-closed marker shift.
+# Pre-v392 corpus is archived as
+# recordings/failure_db_snapshot_sim_v391.jsonl.
 # v390: Control Shot first-click eligibility follows the shipped predicate
 # order for powered, guarding/burrower, frozen, grappled/current/base move,
 # and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained, the
@@ -1819,7 +1825,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 391
+SIMULATOR_VERSION = 392
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

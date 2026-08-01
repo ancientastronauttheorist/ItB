@@ -533,9 +533,15 @@ exact base Tidal Waves mission to warning ingestion, post-attack danger
 resolution, observed flyer damage, pod destruction, and projected/replayed
 lane advancement. Rust now applies exact full-row water conversion and derives
 the permanent spawn-block boundary plus markerless future warning from the
-source `Index`. It remains `partial`: the dormant bridge export has not been
-installed during the protected live session, native blocked-cell and scheduler
-helpers are untraced, and flyer/timing evidence remains live-derived.
+source `Index`. Conditional on the existing warning-mask bridge contract,
+simulator v392 also performs source-consistent recovery of that current Index
+from a legacy visible warning only when every marker lies on one source-valid
+row, allowing a later fully hidden lane to advance again at deeper projection;
+empty, row-zero, and multi-row legacy masks remain fail-closed. This is not an
+end-to-end proof that native `Board:IsEnvironmentDanger` exactly equals Lua's
+marker mask. The record remains `partial`: the dormant bridge export has not
+been installed during the protected live session, native blocked-cell and
+scheduler helpers are untraced, and flyer/timing evidence remains live-derived.
 
 The inherited `environment-mission-terratide` slice pins its exact Advanced
 Edition source plus the base Tides implementation. It covers full-row smoke,

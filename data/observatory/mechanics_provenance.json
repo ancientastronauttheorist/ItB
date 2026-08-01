@@ -1105,6 +1105,10 @@
         {
           "classification": "fact",
           "statement": "The dormant bridge source exports Mission_Tides' live Env_Tides.Index. Rust consumes it to advance markerless warning lanes, derives the exact source-defined permanent full-row spawn-block boundary through the current Index, defers Mission_Tides danger until after queued attacks, applies grounded lethality, the observed one damage to ordinary flyers, and Lua's explicit DAMAGE_DEATH on flooded Mountains even for flyers; it destroys marked pods, converts marked current-lane terrain to Water, and reconstructs the next warning from Lua's building-shadow and convert rules."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v392 performs source-consistent recovery of the current Env_Tides.Index from legacy payloads only when a non-empty visible warning mask occupies exactly one source-valid row, conditional on the existing warning-mask bridge contract. Lua proves MarkBoard's exact i == self.Index gate despite arbitrary omitted columns; Rust preserves markerless future lanes and permanent spawn blocking across projection depth, while empty, row-zero, or multi-row payloads remain on the prior fail-closed marker shift."
         }
       ],
       "id": "environment-mission-tides",
@@ -1140,6 +1144,7 @@
         {
           "path": "rust_solver/src/turn_projection.rs",
           "symbols": [
+            "legacy_tides_index_from_markers",
             "advance_mission_tides_warning",
             "project_plan_with_spawns"
           ]
@@ -1213,7 +1218,10 @@
             "test_mission_tides_index_advances_markerless_lane_and_spawn_boundary",
             "test_mission_tides_index_beats_stale_visible_marker_row",
             "test_mission_tides_conservative_projection_keeps_current_marker",
-            "test_mission_tides_legacy_marker_fallback_still_advances",
+            "test_mission_tides_legacy_single_row_recovers_index_and_advances",
+            "test_mission_tides_legacy_recovered_index_survives_hidden_next_lane",
+            "test_mission_tides_legacy_ambiguous_rows_keep_fail_closed_fallback",
+            "test_mission_tides_legacy_empty_and_row_zero_masks_do_not_recover_index",
             "test_board_to_json_roundtrip"
           ]
         },

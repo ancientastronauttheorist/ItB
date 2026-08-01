@@ -2401,6 +2401,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   match source UpdateMission behavior in solver and replay checkpoints;
 //   generator death stops new application without clearing prior ACID.
 //   Pre-v391 corpus archived as failure_db_snapshot_sim_v390.jsonl.
+// v392 - Legacy Mission_Tides payloads recover the source-defined current
+//   Index when every visible environment marker occupies one valid lane.
+//   Markerless future lanes and the permanent spawn-block boundary can then
+//   continue across projection depth; empty, row-zero, and multi-row payloads
+//   retain the prior fail-closed marker shift. Pre-v392 corpus archived as
+//   failure_db_snapshot_sim_v391.jsonl.
 // v390 - Control Shot first-click eligibility follows the shipped predicate
 //   order for powered, guarding/burrower, frozen, grappled/current/base move,
 //   and Snowmine1/VIP_Truck exceptions. Eligible non-enemies are retained,
@@ -2431,7 +2437,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 391;
+pub const SIMULATOR_VERSION: u32 = 392;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

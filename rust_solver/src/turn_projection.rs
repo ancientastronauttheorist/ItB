@@ -708,6 +708,28 @@ pub(crate) fn advance_environment_warning(board: &mut Board) {
     board.env_danger_acid = 0;
 }
 
+/// Recover Env_Tides.Index from a legacy visible warning mask.
+///
+/// Under the existing warning-mask bridge contract, Lua `MarkBoard` only marks
+/// cells whose y coordinate equals the live Index, while building shadow and
+/// existing Water may omit arbitrary columns. A non-empty mask on exactly one
+/// source-valid row therefore identifies the current Index. Empty, row-zero,
+/// or multi-row payloads fail closed and retain the older marker-shift
+/// projection without inventing persistent spawn-block state.
+fn legacy_tides_index_from_markers(mut markers: u64) -> Option<u8> {
+    let mut row = None;
+    while markers != 0 {
+        let tile_idx = markers.trailing_zeros() as usize;
+        markers &= markers - 1;
+        let (_, y) = idx_to_xy(tile_idx);
+        if !(1..=7).contains(&y) || row.is_some_and(|existing| existing != y) {
+            return None;
+        }
+        row = Some(y);
+    }
+    row
+}
+
 pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
     if board.mission_id == "Mission_Terratide" {
         if board.env_smoke == 0 {
@@ -756,6 +778,9 @@ pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
     // represented row from board state so previously omitted columns can
     // reappear when appropriate while Lua's building shadow stays intact.
     let mut next_rows = 0u16;
+    if board.env_tides_index.is_none() {
+        board.env_tides_index = legacy_tides_index_from_markers(board.env_danger);
+    }
     if let Some(index) = board.env_tides_index {
         // The live scalar is authoritative even if every visible marker was
         // omitted by building shadow / existing Water. Preserve 8 as the
@@ -766,8 +791,8 @@ pub(crate) fn advance_mission_tides_warning(board: &mut Board) {
             next_rows |= 1u16 << next_index;
         }
     } else {
-        // Legacy recordings do not carry Index. Keep the marker-derived
-        // direction fallback exactly as before.
+        // Empty, row-zero, or multi-row legacy payloads cannot prove Index.
+        // Keep the marker-derived direction fallback exactly as before.
         let mut warned = board.env_danger;
         while warned != 0 {
             let tile_idx = warned.trailing_zeros() as usize;
@@ -1536,7 +1561,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mission_tides_legacy_marker_fallback_still_advances() {
+    fn test_mission_tides_legacy_single_row_recovers_index_and_advances() {
         let mut b = Board::default();
         b.mission_id = "Mission_Tides".to_string();
         b.env_danger = 1u64 << xy_to_idx(3, 2);
@@ -1545,10 +1570,60 @@ mod tests {
 
         let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
 
+        assert_eq!(projected.env_tides_index, Some(3));
+        for x in 0u8..8 {
+            assert!(projected.is_env_danger(x, 3));
+            assert!(projected.is_tides_spawn_permanently_blocked(x, 3));
+        }
+    }
+
+    #[test]
+    fn test_mission_tides_legacy_recovered_index_survives_hidden_next_lane() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.env_danger = 1u64 << xy_to_idx(3, 3);
+        b.env_danger_kill = b.env_danger;
+        b.env_danger_flying_immune = b.env_danger;
+        for x in 0u8..8 {
+            b.tile_mut(x, 4).terrain = Terrain::Water;
+        }
+
+        let (first, _) = project_plan(&b, &[], &[], &WEAPONS);
+        assert_eq!(first.env_tides_index, Some(4));
+        assert_eq!(first.env_danger, 0, "Water hides the entire next lane");
+
+        let (second, _) = project_plan(&first, &[], &[], &WEAPONS);
+        assert_eq!(second.env_tides_index, Some(5));
+        for x in 0u8..8 {
+            assert!(second.is_env_danger(x, 5));
+        }
+    }
+
+    #[test]
+    fn test_mission_tides_legacy_ambiguous_rows_keep_fail_closed_fallback() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Tides".to_string();
+        b.env_danger =
+            (1u64 << xy_to_idx(2, 2)) | (1u64 << xy_to_idx(5, 4));
+        b.env_danger_kill = b.env_danger;
+        b.env_danger_flying_immune = b.env_danger;
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
         assert_eq!(projected.env_tides_index, None);
         for x in 0u8..8 {
             assert!(projected.is_env_danger(x, 3));
+            assert!(projected.is_env_danger(x, 5));
         }
+    }
+
+    #[test]
+    fn test_mission_tides_legacy_empty_and_row_zero_masks_do_not_recover_index() {
+        assert_eq!(legacy_tides_index_from_markers(0), None);
+        assert_eq!(
+            legacy_tides_index_from_markers(1u64 << xy_to_idx(3, 0)),
+            None
+        );
     }
 
     #[test]
