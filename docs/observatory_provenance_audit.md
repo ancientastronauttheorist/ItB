@@ -55,17 +55,17 @@ For the modified local Windows inventory at scripts revision
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
-| Player weapons | 14 | 7 | 7 |
+| Player weapons | 14 | 8 | 6 |
 | Missions | 75 | 16 | 59 |
 | Environments | 15 | 10 | 5 |
-| Unique total | 96 | 30 | 66 |
+| Unique total | 96 | 31 | 65 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 104 definitions literally and leaves 638 unindexed. Category totals
+names 106 definitions literally and leaves 636 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -144,6 +144,17 @@ movement, building bump damage, and attack classification. It remains
 `partial`: Rust intentionally searches one effect-equivalent representative per
 zone, does not independently track the base weapon's cross-turn use limit, and
 native effect scheduling, presentation, and pawn-space edge cases are untraced.
+
+The eighth slice, `player-weapon-repulse`, adds the previously unindexed
+`weapons_science.lua` source and separates all four Repulse IDs. Simulator
+v375 preserves the common zero-damage outward pushes, B/AB Shield Friendly on
+adjacent player-team pawns and buildings, and A/AB Shield Self after the four
+adjacent effects. Save overlays, Python definitions, known Rust IDs, target
+enumeration, simulation, and replay serialization are covered by focused
+tests. It remains `partial`: Rust canonicalizes the source's five
+effect-equivalent target choices to the center, while native combined
+Shield/push/collision ordering, off-board targets, building edge states,
+animations, and scheduling remain untraced.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific

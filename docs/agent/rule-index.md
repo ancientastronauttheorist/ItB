@@ -492,3 +492,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 491 | 879 | Terminal reprojection preserves only verified player-action counters. | `docs/agent/safety-gates.md` |
 | 492 | 881 | Held End Turn revalidation and delivery are persistent authorization gates. | `docs/agent/safety-gates.md` |
 | 493 | 883 | NanoStorm is one damage plus ACID, not generic non-lethal danger. | `docs/agent/solver-reference.md` |
+| 494 | 885 | Repulse B/AB shield adjacent friendlies and buildings. | `docs/agent/solver-reference.md` |

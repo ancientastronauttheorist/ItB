@@ -657,9 +657,14 @@ pub enum WId {
     /// Tumblebug Leader's live Lua attack. It shares Alpha damage but spawns
     /// up to two BombRocks instead of one.
     TumblebugAtkB = 242,
+    /// Repulse with Shield Friendly powered: shields adjacent player-team
+    /// pawns and buildings while preserving the base outward pushes.
+    ScienceRepulseB = 243,
+    /// Repulse with Shield Self and Shield Friendly powered.
+    ScienceRepulseAB = 244,
 }
 
-pub const WEAPON_COUNT: usize = 243;
+pub const WEAPON_COUNT: usize = 245;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1409,6 +1414,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 133: Science_Repulse_A — Repulse with Shield Self
     w[133] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+    // 243-244: Science_Repulse_B/AB. Shield Friendly affects adjacent
+    // player-team pawns and buildings; AB also shields the firing mech.
+    w[243] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_ALLIES.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+    w[244] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits() | WeaponFlags::SHIELD_ALLIES.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
 
     // 134: Missiles_Shield — Detritus Contraption Shield Barrage.
     w[134] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 0, limited: 2,
@@ -1881,9 +1892,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_Gravwell" => WId::ScienceGravwell,
         "Science_Repulse" => WId::ScienceRepulse,
         "Science_Repulse_A" => WId::ScienceRepulseA,
-        // Model the self-shield portion of the AB upgrade. Friendly/building
-        // shield remains conservative until building shields are modeled.
-        "Science_Repulse_AB" => WId::ScienceRepulseA,
+        "Science_Repulse_B" => WId::ScienceRepulseB,
+        "Science_Repulse_AB" => WId::ScienceRepulseAB,
         "Science_Swap" => WId::ScienceSwap,
         "Science_Swap_A" => WId::ScienceSwapA,
         "Science_Swap_B" => WId::ScienceSwapB,
@@ -2149,6 +2159,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceGravwell => "Science_Gravwell",
         WId::ScienceRepulse => "Science_Repulse",
         WId::ScienceRepulseA => "Science_Repulse_A",
+        WId::ScienceRepulseB => "Science_Repulse_B",
+        WId::ScienceRepulseAB => "Science_Repulse_AB",
         WId::ScienceSwap => "Science_Swap",
         WId::ScienceSwapA => "Science_Swap_A",
         WId::ScienceSwapB => "Science_Swap_B",
@@ -2464,8 +2476,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::DeployUnitSelfDamage => "Trigger",
         WId::SciencePullmech => "Attract Shot",
         WId::ScienceGravwell => "Grav Well",
-        WId::ScienceRepulse => "Repulse",
-        WId::ScienceRepulseA => "Repulse",
+        WId::ScienceRepulse | WId::ScienceRepulseA
+            | WId::ScienceRepulseB | WId::ScienceRepulseAB => "Repulse",
         WId::ScienceSwap | WId::ScienceSwapA
             | WId::ScienceSwapB | WId::ScienceSwapAB => "Teleporter",
         WId::ScienceRainingFire | WId::ScienceRainingFireA
@@ -3335,6 +3347,35 @@ mod tests {
         assert_eq!(both.damage, 3);
         assert!(both.chain());
         assert!(both.building_immune());
+    }
+
+    #[test]
+    fn test_repulse_variant_defs_and_mappings() {
+        assert_eq!(WId::ScienceRepulse as u8, 42);
+        assert_eq!(WId::ScienceRepulseA as u8, 133);
+        assert_eq!(WId::ScienceRepulseB as u8, 243);
+        assert_eq!(WId::ScienceRepulseAB as u8, 244);
+
+        let cases = [
+            (WId::ScienceRepulse, "Science_Repulse", false, false),
+            (WId::ScienceRepulseA, "Science_Repulse_A", true, false),
+            (WId::ScienceRepulseB, "Science_Repulse_B", false, true),
+            (WId::ScienceRepulseAB, "Science_Repulse_AB", true, true),
+        ];
+        for (wid, live_id, shield_self, shield_allies) in cases {
+            let def = weapon_def(wid);
+            assert_eq!(def.weapon_type, WeaponType::SelfAoe);
+            assert_eq!(def.damage, 0);
+            assert_eq!(def.push, PushDir::Outward);
+            assert!(def.aoe_adjacent());
+            assert!(!def.aoe_center());
+            assert!(def.no_edge_bump_adjacent_push());
+            assert_eq!(def.shield_self(), shield_self);
+            assert_eq!(def.shield_allies(), shield_allies);
+            assert_eq!(wid_from_str(live_id), wid);
+            assert_eq!(wid_to_str(wid), live_id);
+            assert_eq!(weapon_name(wid), "Repulse");
+        }
     }
 
     #[test]

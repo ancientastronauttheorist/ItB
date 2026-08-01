@@ -92,6 +92,7 @@ _MODELED_UPGRADED_WEAPONS = {
     "Ranged_Arachnoid_B",
     "Ranged_Arachnoid_AB",
     "Science_Repulse_A",
+    "Science_Repulse_B",
     "Science_Repulse_AB",
     "Science_Swap_A",
     "Science_Swap_B",

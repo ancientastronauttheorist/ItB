@@ -1742,7 +1742,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # to ground and flying units, leaves ACID on empty compatible tiles, rejects
 # source-impossible building markers, and preserves its projected identity.
 # Pre-v374 corpus archived as failure_db_snapshot_sim_v373.jsonl.
-SIMULATOR_VERSION = 374
+# v375 - Repulse B/AB keep distinct IDs and apply Shield Friendly to adjacent
+# player-team pawns and buildings while preserving outward pushes; AB also
+# retains Shield Self. Pre-v375 corpus archived as
+# failure_db_snapshot_sim_v374.jsonl.
+SIMULATOR_VERSION = 375
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -165,6 +165,35 @@ def test_needle_shot_upgrades_overlay_from_save_mods():
         assert mission.pawns[0].primary_weapon == expected
 
 
+def test_repulse_upgrades_overlay_from_save_mods():
+    cases = [
+        ([1], [0, 0], "Science_Repulse_A"),
+        ([0], [1, 1], "Science_Repulse_B"),
+        ([1], [1, 1], "Science_Repulse_AB"),
+    ]
+    for mod1, mod2, expected in cases:
+        mission = extract_mission_state(
+            {"sMission": "Mission_Test"},
+            {
+                "pawn_count": 1,
+                "pawn1": {
+                    "id": 0,
+                    "type": "PulseMech",
+                    "location": Point(2, 2),
+                    "health": 3,
+                    "max_health": 3,
+                    "iTeamId": 1,
+                    "mech": True,
+                    "primary": "Science_Repulse",
+                    "primary_mod1": mod1,
+                    "primary_mod2": mod2,
+                },
+            },
+        )
+
+        assert mission.pawns[0].primary_weapon == expected
+
+
 def test_titan_fist_powered_mods_overlay():
     mission = extract_mission_state(
         {"sMission": "Mission_Test"},

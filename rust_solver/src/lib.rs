@@ -2348,7 +2348,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   to ground and flying units, leaves ACID on empty compatible tiles, rejects
 //   source-impossible building markers, and preserves its projected identity.
 //   Pre-v374 corpus archived as failure_db_snapshot_sim_v373.jsonl.
-pub const SIMULATOR_VERSION: u32 = 374;
+// v375 - Repulse B/AB keep distinct IDs and apply Shield Friendly to adjacent
+//   player-team pawns and buildings while preserving outward pushes; AB also
+//   retains Shield Self. Pre-v375 corpus archived as
+//   failure_db_snapshot_sim_v374.jsonl.
+pub const SIMULATOR_VERSION: u32 = 375;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

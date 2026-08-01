@@ -1094,6 +1094,56 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_repulse_b_serializes_moved_ally_and_building_shields() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 3, "y": 4, "terrain": "building", "building_hp": 1}
+          ],
+          "units": [
+            {"uid": 0, "type": "PulseMech", "x": 3, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Science_Repulse_B"]},
+            {"uid": 1, "type": "PunchMech", "x": 2, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": false, "weapons": ["Prime_Punchmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 3],
+          "weapon_id": "Science_Repulse_B",
+          "target": [3, 3]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let ally = post_attack["units"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|unit| unit["uid"] == 1)
+            .expect("pushed ally should remain serialized");
+        assert_eq!(ally["pos"], json!([1, 3]));
+        assert_eq!(ally["status"]["shield"], true);
+
+        let building = post_attack["tiles_changed"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|tile| tile["x"] == 3 && tile["y"] == 4)
+            .expect("adjacent building should remain serialized");
+        assert_eq!(building["shield"], true);
+    }
+
+    #[test]
     fn replay_solution_empty_plan_returns_baseline_outcome() {
         // The current-turn enemy has no queued attack. The final board advances
         // one turn and heuristically queues it against the only building.

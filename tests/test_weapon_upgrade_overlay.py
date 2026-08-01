@@ -820,3 +820,44 @@ def test_powered_pawn_mods_overlay_when_current_weapons_stay_base(monkeypatch):
         "Passive_Electric",
     ]
     assert bridge_data["units"][1]["weapons"] == ["Science_Repulse_A"]
+
+
+def test_repulse_b_and_ab_powered_mods_overlay_to_bridge(monkeypatch):
+    for mod1, mod2, expected in (
+        ([0], [2, 2], "Science_Repulse_B"),
+        ([1], [2, 2], "Science_Repulse_AB"),
+    ):
+        bridge_data = {
+            "units": [{
+                "uid": 2,
+                "type": "PulseMech",
+                "mech": True,
+                "weapons": ["Science_Repulse"],
+            }]
+        }
+        state = SimpleNamespace(
+            weapons=["", "", "", "", "Science_Repulse"],
+            active_mission=SimpleNamespace(pawns=[SimpleNamespace(
+                pawn_id=2,
+                primary_weapon="Science_Repulse",
+                primary_mod1=mod1,
+                primary_mod2=mod2,
+                secondary_weapon="",
+                secondary_mod1=[],
+                secondary_mod2=[],
+            )]),
+        )
+        monkeypatch.setattr(
+            "src.loop.commands.load_game_state",
+            lambda profile="Alpha", state=state: state,
+        )
+
+        updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+        assert updates == [{
+            "uid": 2,
+            "slot": 0,
+            "base": "Science_Repulse",
+            "upgraded": expected,
+        }]
+        assert bridge_data["units"][0]["weapons"] == [expected]

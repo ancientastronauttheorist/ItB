@@ -741,6 +741,21 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="shield self",
         upgrade_b="shield allies in range",
     ),
+    "Science_Repulse_A": WeaponDef(
+        name="Repulse", weapon_type="self_aoe",
+        damage=0, push="outward", aoe_adjacent=True, aoe_center=False,
+        shield=True,
+    ),
+    "Science_Repulse_B": WeaponDef(
+        name="Repulse", weapon_type="self_aoe",
+        damage=0, push="outward", aoe_adjacent=True, aoe_center=False,
+        shield=True,
+    ),
+    "Science_Repulse_AB": WeaponDef(
+        name="Repulse", weapon_type="self_aoe",
+        damage=0, push="outward", aoe_adjacent=True, aoe_center=False,
+        shield=True,
+    ),
     "Science_Swap": WeaponDef(
         name="Teleporter", weapon_type="swap",
         damage=0, range_max=1,

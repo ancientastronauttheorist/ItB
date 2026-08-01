@@ -2597,3 +2597,69 @@ def test_real_nanostorm_record_pins_damage_acid_and_building_exclusion():
     assert "native RNG state" in gaps
     assert "Shield" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_repulse_record_pins_variant_shield_matrix_and_open_native_order():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-repulse"
+    )
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [{
+        "path": "scripts/weapons_science.lua",
+        "sha256": (
+            "b77845b449f4e477805fe1b5087113451"
+            "19230a7b70cfb0b049d79ccd735376e"
+        ),
+        "symbols": [
+            "Science_Repulse",
+            "Science_Repulse:GetTargetArea",
+            "Science_Repulse:GetSkillEffect",
+            "Science_Repulse_A",
+            "Science_Repulse_B",
+            "Science_Repulse_AB",
+        ],
+    }]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::ScienceRepulse",
+        "WId::ScienceRepulseA",
+        "WId::ScienceRepulseB",
+        "WId::ScienceRepulseAB",
+        "WeaponFlags::SHIELD_SELF",
+        "WeaponFlags::SHIELD_ALLIES",
+    } <= implementations["rust_solver/src/weapons.rs"]
+    assert "sim_self_aoe" in implementations["rust_solver/src/simulate.rs"]
+    assert "Science_Repulse_B" in implementations["src/model/weapons.py"]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/weapons.rs"] == {
+        "test_repulse_variant_defs_and_mappings"
+    }
+    assert {
+        "test_repulse_b_shields_adjacent_friendlies_and_buildings_only",
+        "test_repulse_ab_combines_friendly_building_and_self_shields",
+        "test_repulse_center_and_cardinal_targets_are_effect_equivalent",
+        "test_repulse_offboard_cardinal_target_noops_conservatively",
+    } <= tests["rust_solver/src/simulate.rs"]
+    gaps = " ".join(record["known_gaps"])
+    assert "SpaceDamage ordering" in gaps
+    assert "canonicalizes" in gaps
+    assert "protected live achievement session" in gaps

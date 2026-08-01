@@ -5523,21 +5523,33 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
         let nx = ax as i8 + dx;
         let ny = ay as i8 + dy;
         if !in_bounds(nx, ny) { continue; }
-        let occupied_at_impact = board.unit_at(nx as u8, ny as u8).is_some();
-        apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
-        match wdef.push {
-            PushDir::Outward => {
-                let bx = nx + dx;
-                let by = ny + dy;
-                if !(wdef.no_edge_bump_adjacent_push() && wdef.damage == 0 && !in_bounds(bx, by)) {
-                    apply_push(board, nx as u8, ny as u8, i, result);
+        let nx = nx as u8;
+        let ny = ny as u8;
+        if wdef.shield_allies() {
+            if let Some(idx) = board.unit_at(nx, ny) {
+                if board.units[idx].is_player() {
+                    board.units[idx].set_shield(true);
                 }
             }
-            PushDir::Inward => apply_push(board, nx as u8, ny as u8, opposite_dir(i), result),
+            if board.tile(nx, ny).is_building() {
+                board.tile_mut(nx, ny).set_shield(true);
+            }
+        }
+        let occupied_at_impact = board.unit_at(nx, ny).is_some();
+        apply_damage(board, nx, ny, wdef.damage, result, DamageSource::Weapon);
+        match wdef.push {
+            PushDir::Outward => {
+                let bx = nx as i8 + dx;
+                let by = ny as i8 + dy;
+                if !(wdef.no_edge_bump_adjacent_push() && wdef.damage == 0 && !in_bounds(bx, by)) {
+                    apply_push(board, nx, ny, i, result);
+                }
+            }
+            PushDir::Inward => apply_push(board, nx, ny, opposite_dir(i), result),
             _ => {}
         }
         apply_weapon_status_with_impact_occupancy(
-            board, nx as u8, ny as u8, wdef, occupied_at_impact,
+            board, nx, ny, wdef, occupied_at_impact,
         );
     }
     if wdef.shield_self() {
@@ -9429,6 +9441,92 @@ mod tests {
         assert!(
             !board.units[enemy].shield(),
             "Shield Self should not shield adjacent enemies"
+        );
+    }
+
+    #[test]
+    fn test_repulse_b_shields_adjacent_friendlies_and_buildings_only() {
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 3, 3, 3, WId::ScienceRepulseB);
+        let ally = add_mech(&mut board, 3, 2, 3, 3, WId::Repair);
+        let enemy = add_enemy(&mut board, 10, 3, 2, 2);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+
+        let _ = simulate_weapon(&mut board, pulse, WId::ScienceRepulseB, 3, 3);
+
+        assert_eq!((board.units[ally].x, board.units[ally].y), (1, 3));
+        assert!(board.units[ally].shield(), "friendly shield should move with the pushed ally");
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 1));
+        assert!(!board.units[enemy].shield(), "Shield Friendly must not shield enemies");
+        assert!(board.tile(3, 4).shield(), "adjacent building should gain Shield");
+        assert!(!board.units[pulse].shield(), "B alone must not shield the firing mech");
+    }
+
+    #[test]
+    fn test_repulse_ab_combines_friendly_building_and_self_shields() {
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 3, 3, 3, WId::ScienceRepulseAB);
+        let ally = add_mech(&mut board, 3, 2, 3, 3, WId::Repair);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+
+        let _ = simulate_weapon(&mut board, pulse, WId::ScienceRepulseAB, 3, 3);
+
+        assert!(board.units[pulse].shield());
+        assert_eq!((board.units[ally].x, board.units[ally].y), (1, 3));
+        assert!(board.units[ally].shield());
+        assert!(board.tile(3, 4).shield());
+    }
+
+    #[test]
+    fn test_repulse_center_and_cardinal_targets_are_effect_equivalent() {
+        let targets = [(3, 3), (3, 4), (4, 3), (3, 2), (2, 3)];
+        let mut outcomes = Vec::new();
+        for target in targets {
+            let mut board = make_test_board();
+            let pulse = add_mech(&mut board, 2, 3, 3, 3, WId::ScienceRepulseAB);
+            let ally = add_mech(&mut board, 3, 2, 3, 3, WId::Repair);
+            let enemy = add_enemy(&mut board, 10, 3, 2, 2);
+            board.tile_mut(3, 4).terrain = Terrain::Building;
+            board.tile_mut(3, 4).building_hp = 1;
+
+            let result = simulate_weapon(
+                &mut board,
+                pulse,
+                WId::ScienceRepulseAB,
+                target.0,
+                target.1,
+            );
+            outcomes.push((
+                board.units[pulse].shield(),
+                board.units[ally].x,
+                board.units[ally].y,
+                board.units[ally].shield(),
+                board.units[enemy].x,
+                board.units[enemy].y,
+                board.units[enemy].shield(),
+                board.tile(3, 4).shield(),
+                result.events,
+            ));
+        }
+
+        assert!(outcomes.iter().all(|outcome| outcome == &outcomes[0]));
+    }
+
+    #[test]
+    fn test_repulse_offboard_cardinal_target_noops_conservatively() {
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 7, 3, 3, WId::ScienceRepulseAB);
+        let enemy = add_enemy(&mut board, 10, 6, 3, 2);
+
+        let result = simulate_weapon(&mut board, pulse, WId::ScienceRepulseAB, 8, 3);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 3));
+        assert!(!board.units[pulse].shield());
+        assert!(
+            result.events.iter().any(|event| event.starts_with("invalid_self_aoe_target")),
+            "conservative off-board rejection should remain auditable"
         );
     }
 

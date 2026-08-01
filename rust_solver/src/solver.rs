@@ -4440,7 +4440,7 @@ mod top_k_tests {
             hp: 5,
             max_hp: 3,
             team: Team::Player,
-            weapon: WeaponId(WId::ScienceRepulseA as u16),
+            weapon: WeaponId(WId::ScienceRepulseAB as u16),
             flags: UnitFlags::IS_MECH
                 | UnitFlags::MASSIVE
                 | UnitFlags::PUSHABLE
@@ -4464,13 +4464,13 @@ mod top_k_tests {
 
         assert!(
             actions.iter().any(|a| {
-                a.0 == (4, 4) && a.1 == WId::ScienceRepulseA && a.2 == (5, 3)
+                a.0 == (4, 4) && a.1 == WId::ScienceRepulseAB && a.2 == (5, 3)
             }),
             "Repulse after pad swap must click the post-teleport Pulse tile"
         );
         assert!(
             !actions.iter().any(|a| {
-                a.0 == (4, 4) && a.1 == WId::ScienceRepulseA && a.2 == (4, 4)
+                a.0 == (4, 4) && a.1 == WId::ScienceRepulseAB && a.2 == (4, 4)
             }),
             "Repulse must not keep the stale pre-teleport pad target"
         );

@@ -7,6 +7,29 @@ from src.model.weapons import get_weapon_def
 from src.solver import unknown_detector
 
 
+def test_repulse_variant_defs_and_known_rust_ids():
+    known = json.loads(Path("data/known_types.json").read_text())
+    for weapon_id, rust_id in (
+        ("Science_Repulse", "ScienceRepulse"),
+        ("Science_Repulse_A", "ScienceRepulseA"),
+        ("Science_Repulse_B", "ScienceRepulseB"),
+        ("Science_Repulse_AB", "ScienceRepulseAB"),
+    ):
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None
+        assert weapon.name == "Repulse"
+        assert weapon.weapon_type == "self_aoe"
+        assert weapon.damage == 0
+        assert weapon.push == "outward"
+        assert weapon.aoe_adjacent is True
+        assert weapon.aoe_center is False
+        assert rust_id in known["weapon_enum"]
+
+    assert get_weapon_def("Science_Repulse_A").shield is True
+    assert get_weapon_def("Science_Repulse_B").shield is True
+    assert get_weapon_def("Science_Repulse_AB").shield is True
+
+
 def test_snowtank_mark_i_weapon_def_matches_lua_projectile_fire():
     w = get_weapon_def("SnowtankAtk1")
 

@@ -3219,6 +3219,150 @@
           ]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Science_Repulse source emits four zero-damage outward cardinal SpaceDamage effects around p1, followed by a zero-damage self effect; p2 is unused by GetSkillEffect."
+        },
+        {
+          "classification": "fact",
+          "statement": "Repulse A sets ShieldSelf, B sets ShieldFriendly, and AB sets both. ShieldFriendly is gated per adjacent tile by Board:IsBuilding(curr) or Board:GetPawnTeam(curr) == TEAM_PLAYER, so it excludes enemies and does not itself shield the source tile."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v375 keeps base, A, B, and AB as distinct weapon IDs; preserves their common outward pushes; applies B/AB Shield Friendly to adjacent player-team pawns and buildings; and applies A/AB Shield Self after the adjacent effects."
+        }
+      ],
+      "id": "player-weapon-repulse",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::ScienceRepulse",
+            "WId::ScienceRepulseA",
+            "WId::ScienceRepulseB",
+            "WId::ScienceRepulseAB",
+            "WeaponFlags::SHIELD_SELF",
+            "WeaponFlags::SHIELD_ALLIES",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "sim_self_aoe",
+            "self_aoe_target_in_area"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "Science_Repulse",
+            "Science_Repulse_A",
+            "Science_Repulse_B",
+            "Science_Repulse_AB"
+          ]
+        },
+        {
+          "path": "src/capture/save_parser.py",
+          "symbols": [
+            "_MODELED_UPGRADED_WEAPONS",
+            "Science_Repulse_B"
+          ]
+        },
+        {
+          "path": "data/known_types.json",
+          "symbols": [
+            "ScienceRepulseB",
+            "ScienceRepulseAB"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native SpaceDamage ordering for a simultaneously shielded and pushed friendly pawn, including collision, Shield, Frozen, death, web, terrain, and building edge cases, has not been independently traced; v375 follows the simulator's established pre-push positive-shield convention.",
+        "Rust canonicalizes the source's five p2 choices to the centered p1 representative during action enumeration because GetSkillEffect ignores p2; simulation accepts the center or any cardinal adjacent target and rejects other clicks.",
+        "Native handling of off-board GetTargetArea entries, DIR_START-to-DIR_END numeric order, destroyed or unique Board:IsBuilding states, animation, bounce, presentation, and scheduler timing remains untraced.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/weapons_science.lua",
+          "sha256": "b77845b449f4e477805fe1b508711345119230a7b70cfb0b049d79ccd735376e",
+          "symbols": [
+            "Science_Repulse",
+            "Science_Repulse:GetTargetArea",
+            "Science_Repulse:GetSkillEffect",
+            "Science_Repulse_A",
+            "Science_Repulse_B",
+            "Science_Repulse_AB"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_repulse_variant_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_repulse_shield_self_upgrade_shields_pulse_after_pushes",
+            "test_repulse_b_shields_adjacent_friendlies_and_buildings_only",
+            "test_repulse_ab_combines_friendly_building_and_self_shields",
+            "test_repulse_center_and_cardinal_targets_are_effect_equivalent",
+            "test_repulse_offboard_cardinal_target_noops_conservatively",
+            "test_repulse_invalid_diagonal_target_noops",
+            "test_repulse_edge_push_does_not_bump_off_board"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "self_aoe_after_teleporter_targets_post_swap_tile"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_repulse_b_serializes_moved_ally_and_building_shields"
+          ]
+        },
+        {
+          "path": "tests/test_save_parser_weapon_upgrades.py",
+          "symbols": [
+            "test_repulse_upgrades_overlay_from_save_mods"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_upgrade_overlay.py",
+          "symbols": [
+            "test_repulse_b_and_ab_powered_mods_overlay_to_bridge"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_repulse_variant_defs_and_known_rust_ids"
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1
