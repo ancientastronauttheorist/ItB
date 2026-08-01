@@ -278,6 +278,12 @@ class Board:
         self.medical_supplies: bool = False
         # Mission metadata (from bridge mission.ID, e.g. "Mission_Dam").
         self.mission_id: str = ""
+        # Mission_Hacking stores exact pawn IDs for its protected Cannon Bot
+        # and Hacking Facility. These are bridge-authored only; None on older
+        # payloads makes the Rust conversion fail closed instead of guessing
+        # from an unrelated Snowtank1 of the same type.
+        self.mission_hacking_bot_id: int | None = None
+        self.mission_hacking_hack_id: int | None = None
         # "Kill at least N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
         # mission doesn't have this bonus. Target is difficulty-scaled by
         # the game (5 on Easy, 7 on Normal/Hard). Used by the evaluator to
@@ -362,6 +368,8 @@ class Board:
         b.force_amp = self.force_amp
         b.medical_supplies = self.medical_supplies
         b.mission_id = self.mission_id
+        b.mission_hacking_bot_id = self.mission_hacking_bot_id
+        b.mission_hacking_hack_id = self.mission_hacking_hack_id
         b.mission_kill_target = self.mission_kill_target
         b.mission_kill_limit = self.mission_kill_limit
         b.mission_kills_done = self.mission_kills_done
@@ -704,6 +712,21 @@ class Board:
 
         # Mission metadata — may be empty string if bridge couldn't resolve.
         board.mission_id = data.get("mission_id", "") or ""
+        if board.mission_id == "Mission_Hacking":
+            bot_id = data.get("mission_hacking_bot_id")
+            hack_id = data.get("mission_hacking_hack_id")
+            valid_pair = (
+                isinstance(bot_id, int)
+                and not isinstance(bot_id, bool)
+                and isinstance(hack_id, int)
+                and not isinstance(hack_id, bool)
+                and 0 <= bot_id <= 0xFFFF
+                and 0 <= hack_id <= 0xFFFF
+                and bot_id != hack_id
+            )
+            if valid_pair:
+                board.mission_hacking_bot_id = bot_id
+                board.mission_hacking_hack_id = hack_id
         # Kill-count objective fields. All default 0, which makes the
         # evaluator/safety checks no-op for missions without those objectives.
         # Emitted by the Lua bridge from mission.BonusObjs + mission.KilledVek

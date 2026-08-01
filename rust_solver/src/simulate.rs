@@ -7133,6 +7133,12 @@ pub fn simulate_attack_with_target2(
     // Train_Pawn where the live board already has a fresh Train_Damaged pawn.
     crate::enemy::transition_destroyed_supply_train(board);
 
+    // Mission_Hacking's per-update callback converts the Cannon Bot as soon as
+    // a completed player action leaves the Hacking Facility dead. Materialize
+    // the fresh player pawn before replay captures the post-attack board or the
+    // solver considers another actor.
+    crate::enemy::transition_hacked_cannon_bot(board);
+
     drain_pending_spider_eggs(board);
     result
 }
@@ -8788,6 +8794,79 @@ mod tests {
         assert_eq!(board.units[extra_idx].hp, 1);
         assert_ne!(board.units[primary_idx].uid, 164);
         assert_eq!(board.units[primary_idx].uid, board.units[extra_idx].uid);
+    }
+
+    #[test]
+    fn test_player_action_converts_hacking_bot_before_next_actor() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_Hacking".to_string();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::BruteTankmech);
+
+        let mut facility = Unit {
+            uid: 40,
+            x: 3,
+            y: 4,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::MINOR,
+            ..Unit::default()
+        };
+        facility.set_type_name("Hacked_Building");
+        let facility_idx = board.add_unit(facility);
+
+        let mut hostile_bot = Unit {
+            uid: 41,
+            x: 5,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::SHIELD | UnitFlags::HAS_QUEUED_ATTACK,
+            weapon: WeaponId(WId::SnowtankAtk1 as u16),
+            queued_target_x: 5,
+            queued_target_y: 6,
+            ..Unit::default()
+        };
+        hostile_bot.set_type_name("Snowtank1");
+        let bot_idx = board.add_unit(hostile_bot);
+        board.mission_hacking_bot_id = Some(41);
+        board.mission_hacking_hack_id = Some(40);
+        let victim = add_enemy_type(&mut board, 42, 5, 6, 2, "Scarab1");
+        let before = board.clone();
+
+        simulate_attack(
+            &mut board,
+            mech,
+            WId::BruteTankmech,
+            (3, 4),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[facility_idx].hp, 0);
+        assert_eq!(board.units[bot_idx].type_name_str(), "Snowtank1_Player");
+        assert_eq!(board.units[bot_idx].uid, 43);
+        assert_eq!(board.mission_hacking_bot_id, Some(43));
+        assert_eq!(board.units[bot_idx].team, Team::Player);
+        assert!(board.units[bot_idx].shield());
+        assert!(board.units[bot_idx].is_player_action_unit());
+        assert_eq!(
+            count_unit_deaths_between(&before, &board),
+            1,
+            "only the destroyed facility counts; the bot conversion is not a death",
+        );
+
+        simulate_attack(
+            &mut board,
+            bot_idx,
+            WId::SnowtankAtk1,
+            (5, 5),
+            &WEAPONS,
+        );
+        assert_eq!(board.units[victim].hp, 1);
+        assert_eq!((board.units[victim].x, board.units[victim].y), (5, 6));
+        assert!(board.units[victim].fire());
+        assert!(!board.units[bot_idx].active());
     }
 
     #[test]

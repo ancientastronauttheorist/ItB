@@ -1746,7 +1746,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # player-team pawns and buildings while preserving outward pushes; AB also
 # retains Shield Self. Pre-v375 corpus archived as
 # failure_db_snapshot_sim_v374.jsonl.
-SIMULATOR_VERSION = 375
+# v376 - Mission_Hacking replaces the hostile Snowtank1 with a fresh
+# Snowtank1_Player after the Hacking Facility dies, preserving only its tile
+# and Shield. The replacement remains an active player actor, does not count
+# as a unit death, and verifies by type+tile across live UID allocation.
+# Pre-v376 corpus archived as failure_db_snapshot_sim_v375.jsonl.
+SIMULATOR_VERSION = 376
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -2029,6 +2034,7 @@ _UNSTABLE_SPAWN_IDENTITY_TYPES = {
     "DeployUnit_Bomby",
     "DeployUnit_Aracnoid",
     "DeployUnit_AracnoidB",
+    "Snowtank1_Player",
 }
 
 

@@ -1473,6 +1473,9 @@ def test_real_mission_belt_record_pins_checkpoint_direction_fix():
     assert implementations["rust_solver/src/turn_projection.rs"] == {
         "board_to_json"
     }
+    assert implementations["rust_solver/src/replay.rs"] == {
+        "replay_solution"
+    }
     tests = {
         reference["path"]: set(reference["symbols"])
         for reference in record["tests"]
@@ -2730,4 +2733,125 @@ def test_real_deploy_tank_record_pins_cannon_effects_and_open_native_helpers():
     gaps = " ".join(record["known_gaps"])
     assert "Board:GetSimpleReachable" in gaps
     assert "adjacent effect-equivalent target" in gaps
+    assert "protected live achievement session" in gaps
+
+
+def test_real_mission_hacking_record_pins_conversion_and_open_update_timing():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "mission-hacking-conversion"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    assert sources["scripts/advanced/missions/snow/mission_hacking.lua"] == {
+        "path": "scripts/advanced/missions/snow/mission_hacking.lua",
+        "sha256": (
+            "1d26d25e090ef69854001d48a676657b"
+            "f049e37b432acf87aebf66936feb0e55"
+        ),
+        "symbols": [
+            "Mission_Hacking",
+            "Mission_Hacking:UpdateObjectives",
+            "Mission_Hacking:GetCompletedStatus",
+            "Mission_Hacking:NextTurn",
+            "Mission_Hacking:GetCompletedObjectives",
+            "Mission_Hacking:StartMission",
+            "Mission_Hacking:UpdateMission",
+            "Hacked_Building",
+            "Snowtank1_Player",
+            "SnowtankAtk1_Player",
+        ],
+    }
+    assert sources["scripts/missions/missions.lua"]["symbols"] == [
+        "Mission:BaseUpdate"
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "transition_hacked_cannon_bot",
+        "simulate_enemy_attacks",
+    } <= implementations["rust_solver/src/enemy.rs"]
+    assert {
+        "count_unit_deaths_between",
+        "is_mission_hacking_bot_replacement",
+    } <= implementations["rust_solver/src/board.rs"]
+    assert {
+        "mission_hacking_ids",
+        "mission_hacking_bot_id",
+        "mission_hacking_hack_id",
+    } <= implementations["src/bridge/modloader.lua"]
+    assert implementations["src/bridge/reader.py"] == {
+        "_normalize_mission_hacking_ids"
+    }
+    assert {
+        "mission_hacking_bot_id",
+        "mission_hacking_hack_id",
+        "from_bridge_data",
+        "copy",
+    } <= implementations["src/model/board.py"]
+    assert {
+        "mission_hacking_bot_id",
+        "mission_hacking_hack_id",
+        "board_from_json",
+    } <= implementations["rust_solver/src/serde_bridge.rs"]
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "board_to_json"
+    }
+    assert "_UNSTABLE_SPAWN_IDENTITY_TYPES" in implementations[
+        "src/solver/verify.py"
+    ]
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert {
+        "test_hacking_conversion_replaces_bot_and_preserves_only_location_and_shield",
+        "test_hacking_conversion_guards_missing_wrong_or_dead_identity",
+        "test_hacking_conversion_uses_stored_bot_id_not_unrelated_snowtank",
+        "test_enemy_phase_tail_carries_hacking_conversion_into_next_turn",
+    } == tests["rust_solver/src/enemy.rs"]
+    assert tests["rust_solver/src/board.rs"] == {
+        "test_hacking_bot_uid_replacement_is_not_a_unit_death"
+    }
+    assert tests["rust_solver/src/simulate.rs"] == {
+        "test_player_action_converts_hacking_bot_before_next_actor"
+    }
+    assert tests["rust_solver/src/serde_bridge.rs"] == {
+        "test_hacking_identity_requires_a_complete_valid_mission_scoped_pair"
+    }
+    assert tests["rust_solver/src/turn_projection.rs"] == {
+        "test_board_to_json_roundtrip_preserves_hacking_identity"
+    }
+    assert tests["rust_solver/src/replay.rs"] == {
+        "replay_solution_preserves_fresh_hacking_bot_identity"
+    }
+    assert tests["tests/test_mission_hacking_identity.py"] == {
+        "test_lua_hacking_identity_exports_only_a_complete_exact_pair",
+        "test_modloader_serializes_the_hacking_identity_pair_together",
+        "test_reader_drops_partial_or_malformed_hacking_identity",
+        "test_reader_keeps_a_valid_hacking_identity_pair",
+        "test_python_board_import_and_copy_preserve_only_valid_hacking_identity",
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "paired HackID and BotID" in gaps
+    assert "fail closed" in gaps
+    assert "same-enemy-phase cancellation" in gaps
+    assert "RemovePawn plus AddPawn reset behavior" in gaps
     assert "protected live achievement session" in gaps

@@ -337,7 +337,29 @@ diff = diff_states(predicted_spider_egg, actual_spider_egg_board)
 check("SpiderlingEgg1 UID drift matched by type+tile", diff.is_empty(),
       diff.unit_diffs)
 
-# Test 22: live bridge can keep a pod visible under a moved mech until attack.
+# Test 22: Mission_Hacking replaces the Cannon Bot with a fresh live pawn ID.
+predicted_hacking_bot = {
+    "units": [{
+        "uid": 43,
+        "type": "Snowtank1_Player",
+        "pos": [5, 4],
+        "hp": 1,
+        "alive": True,
+        "status": {"shield": True},
+    }],
+    "tiles_changed": [],
+    "grid_power": 7,
+    "unstable_spawn_uids": [43],
+}
+actual_hacking_board = make_board(units=[
+    mk_unit(51, "Snowtank1_Player", 5, 4, hp=1, max_hp=1, team=1,
+            is_mech=False, active=True, shield=True),
+])
+diff = diff_states(predicted_hacking_bot, actual_hacking_board)
+check("Mission_Hacking fresh Cannon Bot UID matched by type+tile", diff.is_empty(),
+      diff.unit_diffs)
+
+# Test 23: live bridge can keep a pod visible under a moved mech until attack.
 predicted_mid_move_pod = {
     "mech_uid": 2,
     "snapshot_phase": "after_move",

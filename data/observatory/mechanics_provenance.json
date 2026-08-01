@@ -1438,6 +1438,12 @@
           ]
         },
         {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution"
+          ]
+        },
+        {
           "path": "src/solver/threat_audit.py",
           "symbols": [
             "_active_conveyor_mission",
@@ -3466,6 +3472,219 @@
           "symbols": [
             "test_deploy_tank_stock_cannon_pushes_without_damage",
             "test_deploy_tank_upgraded_cannon_damages_and_pushes_distant_blocker"
+          ]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried Mission_Hacking source creates a shielded Hacked_Building and a shielded hostile Snowtank1, stores both pawn IDs, protects the bot, and requires the facility to be destroyed."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_Hacking:UpdateMission checks for the stored facility pawn's death and a still-living non-player stored bot, then records the bot tile and Shield, removes that pawn, adds Snowtank1_Player on the same tile, reapplies only the recorded Shield, and stores the fresh pawn ID."
+        },
+        {
+          "classification": "fact",
+          "statement": "The source-defined Snowtank1_Player has one HP, MoveSpeed 3, TEAM_PLAYER, and SnowtankAtk1_Player; that cannon inherits TankDefault with one damage, Fire, and no Push. Mission:BaseUpdate calls the mission-specific UpdateMission callback after LiveEnvironment:MarkBoard."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v376 applies the conversion after a completed player action and at the conservative enemy-phase tail, only in Mission_Hacking when the exact paired BotID and HackID exported by the bridge identify a living non-player Snowtank1 and a dead facility. It assigns a fresh UID, stores that UID as BotID, preserves only tile plus Shield, makes the new cannon bot an active player actor, exempts that exact replacement from unit-death accounting, and allows replay verification to match the live fresh UID by type plus tile."
+        }
+      ],
+      "id": "mission-hacking-conversion",
+      "implementations": [
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "mission_hacking_ids",
+            "mission_hacking_bot_id",
+            "mission_hacking_hack_id"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_normalize_mission_hacking_ids"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "mission_hacking_bot_id",
+            "mission_hacking_hack_id",
+            "from_bridge_data",
+            "copy"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "transition_hacked_cannon_bot",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "simulate_attack_with_target2"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "count_unit_deaths_between",
+            "is_mission_hacking_bot_replacement"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "mission_hacking_bot_id",
+            "mission_hacking_hack_id",
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "board_to_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::SnowtankAtk1",
+            "wid_from_str"
+          ]
+        },
+        {
+          "path": "src/solver/verify.py",
+          "symbols": [
+            "_UNSTABLE_SPAWN_IDENTITY_TYPES",
+            "diff_states"
+          ]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": [
+            "Snowtank1_Player"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "SnowtankAtk1_Player"
+          ]
+        },
+        {
+          "path": "data/mission_unit_objectives.json",
+          "symbols": [
+            "Mission_Hacking",
+            "Hacked_Building",
+            "Snowtank1",
+            "Snowtank1_Player"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Legacy recordings and a running game that has not yet received the updated source bridge omit Mission_Hacking's paired HackID and BotID; reader and Rust deliberately fail closed rather than guessing by Snowtank1 type. The source bridge change was not installed during the protected live achievement session.",
+        "Native GetReplaceableBuildings, random_removal, Board:ClearSpace, Board:AddPawn placement and UID allocation, and the mission's two initial Shield applications are not reproduced; the simulator consumes live setup state.",
+        "Mission:BaseUpdate runs UpdateMission per update, but exact scheduling against queued animations, multi-hit effects, environment work, and an already queued Snowtank1 enemy attack is untraced. Rust does not claim same-enemy-phase cancellation and converts at the enemy-phase tail for next-turn projection.",
+        "The source explicitly copies only location and Shield. Native RemovePawn plus AddPawn reset behavior for Fire, ACID, Frozen, Web, Boost, readiness, faction metadata, and unusual occupied-tile states has not been independently captured.",
+        "SnowtankAtk1_Player inherits native TankDefault targeting and projectile helpers; the complete legal target area, GetProjectileEnd behavior, SpaceDamage Fire and terrain ordering, animations, and scheduling remain partial.",
+        "No fresh controlled bridge capture was taken during the protected live achievement session."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/missions/snow/mission_hacking.lua",
+          "sha256": "1d26d25e090ef69854001d48a676657bf049e37b432acf87aebf66936feb0e55",
+          "symbols": [
+            "Mission_Hacking",
+            "Mission_Hacking:UpdateObjectives",
+            "Mission_Hacking:GetCompletedStatus",
+            "Mission_Hacking:NextTurn",
+            "Mission_Hacking:GetCompletedObjectives",
+            "Mission_Hacking:StartMission",
+            "Mission_Hacking:UpdateMission",
+            "Hacked_Building",
+            "Snowtank1_Player",
+            "SnowtankAtk1_Player"
+          ]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": [
+            "Mission:BaseUpdate"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_hacking_conversion_replaces_bot_and_preserves_only_location_and_shield",
+            "test_hacking_conversion_guards_missing_wrong_or_dead_identity",
+            "test_hacking_conversion_uses_stored_bot_id_not_unrelated_snowtank",
+            "test_enemy_phase_tail_carries_hacking_conversion_into_next_turn"
+          ]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": [
+            "test_hacking_bot_uid_replacement_is_not_a_unit_death"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_player_action_converts_hacking_bot_before_next_actor"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_hacking_identity_requires_a_complete_valid_mission_scoped_pair"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_board_to_json_roundtrip_preserves_hacking_identity"
+          ]
+        },
+        {
+          "path": "rust_solver/src/replay.rs",
+          "symbols": [
+            "replay_solution_preserves_fresh_hacking_bot_identity"
+          ]
+        },
+        {
+          "path": "tests/test_mission_hacking_identity.py",
+          "symbols": [
+            "test_lua_hacking_identity_exports_only_a_complete_exact_pair",
+            "test_modloader_serializes_the_hacking_identity_pair_together",
+            "test_reader_drops_partial_or_malformed_hacking_identity",
+            "test_reader_keeps_a_valid_hacking_identity_pair",
+            "test_python_board_import_and_copy_preserve_only_valid_hacking_identity"
+          ]
+        },
+        {
+          "path": "tests/test_verify.py",
+          "symbols": [
+            "predicted_hacking_bot",
+            "Mission_Hacking fresh Cannon Bot UID matched by type+tile"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_hacking_cannon_bot_player_aliases_match_mark_i"
           ]
         }
       ]

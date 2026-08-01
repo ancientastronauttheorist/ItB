@@ -55,6 +55,10 @@ pub struct JsonInput {
     pub environment_wind_dir: Option<i8>,
     pub eval_weights: Option<EvalWeights>,
     pub mission_id: Option<String>,
+    /// Exact Mission_Hacking identity exported by the Lua bridge. Missing on
+    /// legacy payloads; conversion then fails closed.
+    pub mission_hacking_bot_id: Option<i64>,
+    pub mission_hacking_hack_id: Option<i64>,
     /// "Kill at least N enemies" target. Generic kill bonuses come from
     /// mission:GetKillBonus(); Mission_AcidTank is fixed at 4 acid kills.
     /// Missing / 0 -> no kill target on this mission; evaluator's step-function
@@ -901,6 +905,20 @@ pub fn board_from_json(json_str: &str)
     board.remaining_spawns = input.remaining_spawns.unwrap_or(u32::MAX);
     board.infinite_spawn = input.is_infinite_spawn.unwrap_or(false);
     board.mission_id = input.mission_id.clone().unwrap_or_default();
+    if board.mission_id == "Mission_Hacking" {
+        if let (Some(bot_id), Some(hack_id)) = (
+            input.mission_hacking_bot_id,
+            input.mission_hacking_hack_id,
+        ) {
+            if (0..=u16::MAX as i64).contains(&bot_id)
+                && (0..=u16::MAX as i64).contains(&hack_id)
+                && bot_id != hack_id
+            {
+                board.mission_hacking_bot_id = Some(bot_id as u16);
+                board.mission_hacking_hack_id = Some(hack_id as u16);
+            }
+        }
+    }
     board.mission_kill_target = input.mission_kill_target.unwrap_or(0);
     board.mission_kill_limit = input.mission_kill_limit.unwrap_or(0);
     board.mission_kills_done = input.mission_kills_done.unwrap_or(0);
@@ -1319,6 +1337,36 @@ mod tests {
         let (board, ..) =
             board_from_json(impossible_zero).expect("malformed Index is ignored");
         assert_eq!(board.env_tides_index, None);
+    }
+
+    #[test]
+    fn test_hacking_identity_requires_a_complete_valid_mission_scoped_pair() {
+        let valid = r#"{
+            "mission_id": "Mission_Hacking",
+            "mission_hacking_bot_id": 41,
+            "mission_hacking_hack_id": 40,
+            "tiles": [],
+            "units": [],
+            "spawning_tiles": []
+        }"#;
+        let (board, ..) = board_from_json(valid).expect("valid hacking identity parses");
+        assert_eq!(board.mission_hacking_bot_id, Some(41));
+        assert_eq!(board.mission_hacking_hack_id, Some(40));
+
+        let invalid = [
+            r#"{"mission_id":"Mission_Hacking","tiles":[],"units":[],"spawning_tiles":[]}"#,
+            r#"{"mission_id":"Mission_Hacking","mission_hacking_bot_id":41,"tiles":[],"units":[],"spawning_tiles":[]}"#,
+            r#"{"mission_id":"Mission_Hacking","mission_hacking_bot_id":-1,"mission_hacking_hack_id":40,"tiles":[],"units":[],"spawning_tiles":[]}"#,
+            r#"{"mission_id":"Mission_Hacking","mission_hacking_bot_id":65536,"mission_hacking_hack_id":40,"tiles":[],"units":[],"spawning_tiles":[]}"#,
+            r#"{"mission_id":"Mission_Hacking","mission_hacking_bot_id":40,"mission_hacking_hack_id":40,"tiles":[],"units":[],"spawning_tiles":[]}"#,
+            r#"{"mission_id":"Mission_Wind","mission_hacking_bot_id":41,"mission_hacking_hack_id":40,"tiles":[],"units":[],"spawning_tiles":[]}"#,
+        ];
+        for payload in invalid {
+            let (board, ..) = board_from_json(payload)
+                .expect("malformed or stale hacking identity must fail closed");
+            assert_eq!(board.mission_hacking_bot_id, None);
+            assert_eq!(board.mission_hacking_hack_id, None);
+        }
     }
 
     #[test]

@@ -1082,6 +1082,8 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             "unknown"
         },
         "mission_id":            board.mission_id,
+        "mission_hacking_bot_id": board.mission_hacking_bot_id,
+        "mission_hacking_hack_id": board.mission_hacking_hack_id,
         "mission_kill_target":   board.mission_kill_target,
         "mission_kill_limit":    board.mission_kill_limit,
         "mission_kills_done":    board.mission_kills_done,
@@ -2362,6 +2364,21 @@ mod tests {
         // that board_to_json injects.
         assert!(weights.pseudo_threat_eval,
             "projected board_to_json must set eval_weights.pseudo_threat_eval=true");
+    }
+
+    #[test]
+    fn test_board_to_json_roundtrip_preserves_hacking_identity() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Hacking".to_string();
+        board.mission_hacking_bot_id = Some(41);
+        board.mission_hacking_hack_id = Some(40);
+
+        let json_str = board_to_json(&board, &[]);
+        let (roundtrip, ..) = board_from_json(&json_str)
+            .expect("Mission_Hacking identity must survive projected checkpoints");
+
+        assert_eq!(roundtrip.mission_hacking_bot_id, Some(41));
+        assert_eq!(roundtrip.mission_hacking_hack_id, Some(40));
     }
 
     #[test]

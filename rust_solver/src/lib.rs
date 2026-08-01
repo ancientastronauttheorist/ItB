@@ -2352,7 +2352,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   player-team pawns and buildings while preserving outward pushes; AB also
 //   retains Shield Self. Pre-v375 corpus archived as
 //   failure_db_snapshot_sim_v374.jsonl.
-pub const SIMULATOR_VERSION: u32 = 375;
+// v376 - Mission_Hacking replaces the hostile Snowtank1 with a fresh
+//   Snowtank1_Player after the Hacking Facility dies, preserving only its tile
+//   and Shield. The replacement remains an active player actor, does not count
+//   as a unit death, and verifies by type+tile across live UID allocation.
+//   Pre-v376 corpus archived as failure_db_snapshot_sim_v375.jsonl.
+pub const SIMULATOR_VERSION: u32 = 376;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

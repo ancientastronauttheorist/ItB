@@ -56,16 +56,16 @@ For the modified local Windows inventory at scripts revision
 | Enemy scoring | 1 | 1 | 0 |
 | Enemy weapons | 2 | 2 | 0 |
 | Player weapons | 14 | 9 | 5 |
-| Missions | 75 | 16 | 59 |
+| Missions | 75 | 17 | 58 |
 | Environments | 15 | 10 | 5 |
-| Unique total | 96 | 32 | 64 |
+| Unique total | 96 | 33 | 63 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 108 definitions literally and leaves 634 unindexed. Category totals
+names 115 definitions literally and leaves 627 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -167,6 +167,23 @@ damage-plus-push without changing simulator semantics. The record remains
 `partial`: native `Board:GetSimpleReachable`, the complete legal target area,
 `GetProjectileEnd`, exhaustive path/blocker cases, and `SpaceDamage` ordering
 are untraced.
+
+The first dedicated mission-conversion slice, `mission-hacking-conversion`,
+adds the previously unindexed `mission_hacking.lua` source and the exact
+`Mission:BaseUpdate` callback that dispatches its update. Simulator v376
+replaces the hostile `Snowtank1` with a fresh active `Snowtank1_Player` after
+the exact stored facility dies, using the paired `BotID` and `HackID` exported
+by the Lua bridge instead of guessing from pawn type. It preserves only the
+bot's tile and Shield, assigns the Mark I cannon, stores the fresh UID back as
+`BotID`, excludes the intentional UID replacement from death accounting, and
+matches live fresh UIDs by type plus tile during verification. Focused tests
+cover strict bridge/reader/model/serde identity handling, round trips, an
+unrelated `Snowtank1` regression, source-defined state reset, player-action and
+enemy-tail boundaries, cannon use, death accounting, and UID drift. The record
+remains `partial`: legacy or not-yet-installed bridge payloads omit the pair and
+therefore fail closed, native setup RNG/placement is unmodeled, and per-update
+timing against animations or an already queued enemy bot attack remains
+untraced.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific

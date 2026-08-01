@@ -516,6 +516,31 @@ local function mission_tides_index(mission_id, live_environment)
     return index
 end
 
+-- Exact identity for Mission_Hacking's stored Cannon Bot and facility. Return
+-- the pair together or nothing: partial/malformed identity must never make the
+-- simulator guess from another Snowtank1 of the same type.
+local function mission_hacking_ids(mission_id, mission)
+    if mission_id ~= "Mission_Hacking" or type(mission) ~= "table" then
+        return nil, nil
+    end
+    local bot_id = mission.BotID
+    local hack_id = mission.HackID
+    local function valid_pawn_id(value)
+        return type(value) == "number"
+            and value == value
+            and value ~= math.huge
+            and value ~= -math.huge
+            and value >= 0
+            and value <= 65535
+            and value == math.floor(value)
+    end
+    if not valid_pawn_id(bot_id) or not valid_pawn_id(hack_id)
+            or bot_id == hack_id then
+        return nil, nil
+    end
+    return bot_id, hack_id
+end
+
 local function dump_state()
     if not Board then return end
 
@@ -1373,6 +1398,16 @@ local function dump_state()
         local mission = _ITB_CURRENT_MISSION
         if mission then
             state.mission_id = mission.ID
+            -- Mission_Hacking converts one specific stored Cannon Bot after
+            -- one specific stored facility dies. Export both live pawn IDs so
+            -- the simulator never guesses from type alone when other
+            -- Snowtank1 enemies are present. Missing/invalid IDs are omitted;
+            -- old bridge payloads therefore fail closed in Rust.
+            local bot_id, hack_id = mission_hacking_ids(mission.ID, mission)
+            if bot_id ~= nil then
+                state.mission_hacking_bot_id = bot_id
+                state.mission_hacking_hack_id = hack_id
+            end
         end
     end)
 

@@ -671,6 +671,63 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_preserves_fresh_hacking_bot_identity() {
+        let bridge = r#"{
+          "mission_id": "Mission_Hacking",
+          "mission_hacking_bot_id": 41,
+          "mission_hacking_hack_id": 40,
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "TankMech", "x": 3, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true, "weapons": ["Brute_Tankmech"]},
+            {"uid": 40, "type": "Hacked_Building", "x": 3, "y": 4,
+             "hp": 1, "max_hp": 1, "team": 6, "minor": true},
+            {"uid": 41, "type": "Snowtank1", "x": 5, "y": 4,
+             "hp": 3, "max_hp": 3, "team": 6, "shield": true,
+             "weapons": ["SnowtankAtk1"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [3, 3],
+          "weapon_id": "Brute_Tankmech",
+          "target": [3, 4]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("hacking replay should succeed");
+        let value: Value = serde_json::from_str(&raw).expect("valid replay JSON");
+
+        let post_attack = &value["predicted_states"][0]["post_attack"];
+        assert_eq!(post_attack["unstable_spawn_uids"], json!([42]));
+        let converted = post_attack["units"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|unit| unit["uid"] == 42)
+            .expect("fresh Cannon Bot is serialized in the action checkpoint");
+        assert_eq!(converted["type"], "Snowtank1_Player");
+        assert_eq!(converted["team"], 1);
+
+        for board_key in ["post_player_board", "final_board"] {
+            assert_eq!(value[board_key]["mission_hacking_bot_id"], 42);
+            assert_eq!(value[board_key]["mission_hacking_hack_id"], 40);
+            assert!(value[board_key]["units"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|unit| unit["uid"] == 42 && unit["type"] == "Snowtank1_Player"));
+        }
+    }
+
+    #[test]
     fn replay_solution_snapshots_include_boosted_status() {
         let bridge = r#"{
           "tiles": [],

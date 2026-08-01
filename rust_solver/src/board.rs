@@ -494,6 +494,11 @@ pub struct Board {
                                 // 2026-04-28.
     pub mission_id: String,     // Mission class name from bridge (e.g. "Mission_Dam").
                                 // Empty when the bridge couldn't resolve it.
+    /// Exact Mission_Hacking pawn IDs exported from mission.BotID/HackID.
+    /// Both must be present before the simulator may replace the hostile bot;
+    /// old bridge payloads fail closed rather than guessing by pawn type.
+    pub mission_hacking_bot_id: Option<u16>,
+    pub mission_hacking_hack_id: Option<u16>,
     pub mission_kill_target: u8,   // "Kill at least N enemies" target. Generic
                                 // BONUS_KILL_FIVE comes from mission:GetKillBonus();
                                 // Mission_AcidTank is fixed at 4 acid kills.
@@ -605,6 +610,8 @@ impl Default for Board {
             remaining_spawns: u32::MAX, // Unknown → treat as "plenty of future"
             infinite_spawn: false,
             mission_id: String::new(),
+            mission_hacking_bot_id: None,
+            mission_hacking_hack_id: None,
             mission_kill_target: 0,
             mission_kill_limit: 0,
             mission_kills_done: 0,
@@ -1001,11 +1008,70 @@ pub fn count_unit_deaths_between(before: &Board, after: &Board) -> i32 {
 
     let mut deaths = 0;
     for (uid, was_alive) in before_alive {
-        if was_alive && !after_alive.get(&uid).copied().unwrap_or(false) {
+        if was_alive
+            && !after_alive.get(&uid).copied().unwrap_or(false)
+            && !is_mission_hacking_bot_replacement(before, after, uid)
+        {
             deaths += 1;
         }
     }
     deaths + new_dead_after.len() as i32
+}
+
+/// Mission_Hacking deliberately removes its live hostile Cannon Bot and adds a
+/// fresh player pawn at the same tile. That uid replacement is not a death for
+/// No Survivors or action accounting. Keep the exception exact so an ordinary
+/// missing unit still counts.
+fn is_mission_hacking_bot_replacement(before: &Board, after: &Board, old_uid: u16) -> bool {
+    if before.mission_id != "Mission_Hacking" || after.mission_id != "Mission_Hacking" {
+        return false;
+    }
+    let (Some(before_bot_uid), Some(before_facility_uid), Some(after_bot_uid), Some(after_facility_uid)) = (
+        before.mission_hacking_bot_id,
+        before.mission_hacking_hack_id,
+        after.mission_hacking_bot_id,
+        after.mission_hacking_hack_id,
+    ) else {
+        return false;
+    };
+    if before_bot_uid != old_uid
+        || before_facility_uid != after_facility_uid
+        || after_bot_uid == old_uid
+    {
+        return false;
+    }
+    if after.units[..after.unit_count as usize]
+        .iter()
+        .any(|unit| unit.uid == after_facility_uid && unit.hp > 0)
+    {
+        return false;
+    }
+    let Some(old_bot) = before.units[..before.unit_count as usize]
+        .iter()
+        .find(|unit| {
+            unit.uid == old_uid
+                && unit.hp > 0
+                && unit.team != Team::Player
+                && unit.type_name_str() == "Snowtank1"
+        })
+    else {
+        return false;
+    };
+
+    let mut replacements = after.units[..after.unit_count as usize]
+        .iter()
+        .filter(|unit| {
+            unit.uid == after_bot_uid
+                && unit.hp > 0
+                && unit.team == Team::Player
+                && unit.type_name_str() == "Snowtank1_Player"
+                && unit.x == old_bot.x
+                && unit.y == old_bot.y
+                && !before.units[..before.unit_count as usize]
+                    .iter()
+                    .any(|prior| prior.uid == unit.uid)
+        });
+    replacements.next().is_some() && replacements.next().is_none()
 }
 
 // ── Size assertions ──────────────────────────────────────────────────────────
@@ -1041,6 +1107,56 @@ mod tests {
         after.units[3].hp = 0;
 
         assert_eq!(count_unit_deaths_between(&before, &after), 3);
+    }
+
+    #[test]
+    fn test_hacking_bot_uid_replacement_is_not_a_unit_death() {
+        let mut before = Board::default();
+        before.mission_id = "Mission_Hacking".to_string();
+        let mut hostile = Unit {
+            uid: 10,
+            x: 4,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        hostile.set_type_name("Snowtank1");
+        before.add_unit(hostile);
+        before.mission_hacking_bot_id = Some(10);
+        before.mission_hacking_hack_id = Some(20);
+
+        let mut after = before.clone();
+        let mut friendly = Unit {
+            uid: 11,
+            x: 4,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            ..Unit::default()
+        };
+        friendly.set_type_name("Snowtank1_Player");
+        after.units[0] = friendly;
+        after.mission_hacking_bot_id = Some(11);
+
+        assert_eq!(count_unit_deaths_between(&before, &after), 0);
+
+        after.units[0].x = 5;
+        assert_eq!(
+            count_unit_deaths_between(&before, &after),
+            1,
+            "same-tile identity is required for the narrow exception",
+        );
+
+        after.units[0].x = 4;
+        after.mission_hacking_bot_id = None;
+        assert_eq!(
+            count_unit_deaths_between(&before, &after),
+            1,
+            "missing stored identity must count the disappearance as a death",
+        );
     }
 
     #[test]

@@ -2308,6 +2308,13 @@ pub fn simulate_enemy_attacks(
     // iteration to trigger the action-boundary transition above.
     transition_destroyed_supply_train(board);
 
+    // Mission_Hacking:UpdateMission replaces the hostile Cannon Bot with a
+    // fresh player-controlled pawn once the Hacking Facility is gone. At this
+    // conservative enemy-phase boundary, carry that source-defined conversion
+    // into the next player-turn projection. Exact mid-enemy-phase interruption
+    // of an already queued bot attack remains native-scheduling dependent.
+    transition_hacked_cannon_bot(board);
+
     // Train_Pawn end-of-enemy-phase advance: moves 2 tiles forward along its
     // rail (direction = primary_tile - extra_tile). If either destination
     // tile is blocked (mountain, building, any non-train unit, or a wreck),
@@ -2548,6 +2555,80 @@ pub(crate) fn transition_destroyed_supply_train(board: &mut Board) -> bool {
 
     board.units[p] = primary;
     board.units[e] = extra;
+    true
+}
+
+/// Replace Mission_Hacking's hostile Cannon Bot after the facility is gone.
+///
+/// The shipped mission callback removes the old `Snowtank1` pawn and adds a
+/// fresh `Snowtank1_Player` on the same tile, explicitly copying only Shield.
+/// Reuse the fixed board slot, assign a fresh logical uid, and reset every
+/// other status/intent field through `Unit::default()`. The bridge does not
+/// expose Mission_Hacking's BotID/HackID on legacy payloads, so require both
+/// exact bridge-authored IDs and fail closed when either is missing.
+pub(crate) fn transition_hacked_cannon_bot(board: &mut Board) -> bool {
+    if board.mission_id != "Mission_Hacking" {
+        return false;
+    }
+    let (Some(bot_uid), Some(facility_uid)) = (
+        board.mission_hacking_bot_id,
+        board.mission_hacking_hack_id,
+    ) else {
+        return false;
+    };
+    if board.units[..board.unit_count as usize]
+        .iter()
+        .any(|unit| unit.uid == facility_uid && unit.hp > 0)
+    {
+        return false;
+    }
+
+    let Some(bot_idx) = (0..board.unit_count as usize).find(|&i| {
+        let unit = &board.units[i];
+        unit.uid == bot_uid
+            && unit.hp > 0
+            && unit.team != Team::Player
+            && unit.type_name_str() == "Snowtank1"
+    }) else {
+        return false;
+    };
+
+    let old_bot = board.units[bot_idx];
+    let max_uid = board.units[..board.unit_count as usize]
+        .iter()
+        .map(|unit| unit.uid)
+        .max()
+        .unwrap_or(0);
+    let Some(new_uid) = max_uid.checked_add(1) else {
+        return false;
+    };
+
+    let mut flags = UnitFlags::PUSHABLE | UnitFlags::ACTIVE | UnitFlags::CAN_MOVE;
+    if old_bot.shield() {
+        flags |= UnitFlags::SHIELD;
+    }
+    let mut player_bot = Unit {
+        uid: new_uid,
+        x: old_bot.x,
+        y: old_bot.y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Player,
+        move_speed: 3,
+        base_move: 3,
+        flags,
+        weapon: WeaponId(WId::SnowtankAtk1 as u16),
+        queued_target_x: -1,
+        queued_target_y: -1,
+        queued_target_raw_x: -1,
+        queued_target_raw_y: -1,
+        queued_origin_x: -1,
+        queued_origin_y: -1,
+        ..Unit::default()
+    };
+    player_bot.set_type_name("Snowtank1_Player");
+    board.units[bot_idx] = player_bot;
+    board.mission_hacking_bot_id = Some(new_uid);
     true
 }
 
@@ -5213,6 +5294,180 @@ mod tests {
         assert_eq!(board.units[e].hp, 1);
         assert_ne!(board.units[p].uid, old_uid);
         assert_eq!((board.units[p].x, board.units[p].y), (4, 6));
+    }
+
+    fn add_hacking_facility(board: &mut Board, hp: i8) -> usize {
+        let mut facility = Unit {
+            uid: 40,
+            x: 3,
+            y: 4,
+            hp,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::MINOR | UnitFlags::SHIELD,
+            ..Unit::default()
+        };
+        facility.set_type_name("Hacked_Building");
+        board.add_unit(facility)
+    }
+
+    fn add_hostile_hacking_bot(board: &mut Board, uid: u16) -> usize {
+        let mut bot = Unit {
+            uid,
+            x: 5,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            move_speed: 4,
+            base_move: 4,
+            flags: UnitFlags::PUSHABLE
+                | UnitFlags::SHIELD
+                | UnitFlags::ACID
+                | UnitFlags::FIRE
+                | UnitFlags::WEB
+                | UnitFlags::BOOSTED
+                | UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+            weapon: WeaponId(WId::SnowtankAtk1 as u16),
+            weapon2: WeaponId(WId::FireflyAtk2 as u16),
+            queued_target_x: 5,
+            queued_target_y: 7,
+            queued_target_raw_x: 5,
+            queued_target_raw_y: 7,
+            queued_origin_x: 5,
+            queued_origin_y: 4,
+            weapon_damage: 3,
+            weapon_push: 1,
+            weapon_target_behind: true,
+            web_source_uid: 99,
+            ..Unit::default()
+        };
+        bot.set_type_name("Snowtank1");
+        board.add_unit(bot)
+    }
+
+    fn set_hacking_identity(board: &mut Board, bot_uid: u16) {
+        board.mission_hacking_bot_id = Some(bot_uid);
+        board.mission_hacking_hack_id = Some(40);
+    }
+
+    #[test]
+    fn test_hacking_conversion_replaces_bot_and_preserves_only_location_and_shield() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Hacking".to_string();
+        add_hacking_facility(&mut board, 0);
+        let bot = add_hostile_hacking_bot(&mut board, 41);
+        set_hacking_identity(&mut board, 41);
+        let old_uid = board.units[bot].uid;
+
+        assert!(transition_hacked_cannon_bot(&mut board));
+
+        let converted = &board.units[bot];
+        assert_eq!(converted.type_name_str(), "Snowtank1_Player");
+        assert_eq!((converted.x, converted.y), (5, 4));
+        assert_eq!(converted.uid, 42);
+        assert_eq!(board.mission_hacking_bot_id, Some(42));
+        assert_ne!(converted.uid, old_uid);
+        assert_eq!(converted.team, Team::Player);
+        assert_eq!((converted.hp, converted.max_hp), (1, 1));
+        assert_eq!((converted.move_speed, converted.base_move), (3, 3));
+        assert_eq!(converted.weapon, WeaponId(WId::SnowtankAtk1 as u16));
+        assert_eq!(converted.weapon2, WeaponId::NONE);
+        assert_eq!(
+            converted.flags,
+            UnitFlags::PUSHABLE | UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::SHIELD,
+        );
+        assert!(converted.is_player_action_unit());
+        assert_eq!(converted.queued_target_x, -1);
+        assert_eq!(converted.queued_target_y, -1);
+        assert_eq!(converted.queued_target_raw_x, -1);
+        assert_eq!(converted.queued_target_raw_y, -1);
+        assert_eq!(converted.queued_origin_x, -1);
+        assert_eq!(converted.queued_origin_y, -1);
+        assert_eq!(converted.weapon_damage, 0);
+        assert_eq!(converted.weapon_push, 0);
+        assert!(!converted.weapon_target_behind);
+        assert_eq!(converted.web_source_uid, 0);
+        assert!(!transition_hacked_cannon_bot(&mut board), "conversion is one-shot");
+    }
+
+    #[test]
+    fn test_hacking_conversion_guards_missing_wrong_or_dead_identity() {
+        let mut missing_ids = Board::default();
+        missing_ids.mission_id = "Mission_Hacking".to_string();
+        add_hacking_facility(&mut missing_ids, 0);
+        add_hostile_hacking_bot(&mut missing_ids, 41);
+        assert!(!transition_hacked_cannon_bot(&mut missing_ids));
+
+        let mut facility_alive = Board::default();
+        facility_alive.mission_id = "Mission_Hacking".to_string();
+        add_hacking_facility(&mut facility_alive, 1);
+        add_hostile_hacking_bot(&mut facility_alive, 41);
+        set_hacking_identity(&mut facility_alive, 41);
+        assert!(!transition_hacked_cannon_bot(&mut facility_alive));
+
+        let mut wrong_mission = Board::default();
+        wrong_mission.mission_id = "Mission_Filler".to_string();
+        add_hostile_hacking_bot(&mut wrong_mission, 41);
+        set_hacking_identity(&mut wrong_mission, 41);
+        assert!(!transition_hacked_cannon_bot(&mut wrong_mission));
+
+        let mut dead_bot = Board::default();
+        dead_bot.mission_id = "Mission_Hacking".to_string();
+        let dead = add_hostile_hacking_bot(&mut dead_bot, 41);
+        set_hacking_identity(&mut dead_bot, 41);
+        dead_bot.units[dead].hp = 0;
+        assert!(!transition_hacked_cannon_bot(&mut dead_bot));
+
+        let mut already_player = Board::default();
+        already_player.mission_id = "Mission_Hacking".to_string();
+        let player = add_hostile_hacking_bot(&mut already_player, 41);
+        set_hacking_identity(&mut already_player, 41);
+        already_player.units[player].team = Team::Player;
+        assert!(!transition_hacked_cannon_bot(&mut already_player));
+    }
+
+    #[test]
+    fn test_hacking_conversion_uses_stored_bot_id_not_unrelated_snowtank() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Hacking".to_string();
+        add_hacking_facility(&mut board, 0);
+        let tracked = add_hostile_hacking_bot(&mut board, 41);
+        let unrelated = add_hostile_hacking_bot(&mut board, 42);
+        set_hacking_identity(&mut board, 41);
+
+        assert!(transition_hacked_cannon_bot(&mut board));
+        assert_eq!(board.units[tracked].type_name_str(), "Snowtank1_Player");
+        assert_eq!(board.units[unrelated].type_name_str(), "Snowtank1");
+        assert_eq!(board.units[unrelated].team, Team::Enemy);
+
+        let mut dead_tracked = Board::default();
+        dead_tracked.mission_id = "Mission_Hacking".to_string();
+        let tracked = add_hostile_hacking_bot(&mut dead_tracked, 41);
+        let unrelated = add_hostile_hacking_bot(&mut dead_tracked, 42);
+        dead_tracked.units[tracked].hp = 0;
+        set_hacking_identity(&mut dead_tracked, 41);
+        assert!(!transition_hacked_cannon_bot(&mut dead_tracked));
+        assert_eq!(dead_tracked.units[unrelated].team, Team::Enemy);
+    }
+
+    #[test]
+    fn test_enemy_phase_tail_carries_hacking_conversion_into_next_turn() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Hacking".to_string();
+        add_hacking_facility(&mut board, 0);
+        let bot = add_hostile_hacking_bot(&mut board, 41);
+        set_hacking_identity(&mut board, 41);
+        board.units[bot].flags.remove(UnitFlags::HAS_QUEUED_ATTACK);
+        let original_positions = default_orig_pos(&board);
+
+        simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[bot].type_name_str(), "Snowtank1_Player");
+        assert_eq!(board.units[bot].team, Team::Player);
+        assert!(board.units[bot].is_player_action_unit());
     }
 
     fn add_beetle_boss(board: &mut Board, uid: u16, x: u8, y: u8, qtx: u8, qty: u8) -> usize {

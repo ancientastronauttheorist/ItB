@@ -1408,6 +1408,27 @@ def _reconcile_victory_turns_with_live_turn(data: dict) -> None:
     data["victory_turns_reconciled_from_live_turn"] = True
 
 
+def _normalize_mission_hacking_ids(data: dict) -> None:
+    """Keep only a complete, mission-scoped BotID/HackID pair."""
+    bot_key = "mission_hacking_bot_id"
+    hack_key = "mission_hacking_hack_id"
+    bot_id = data.get(bot_key)
+    hack_id = data.get(hack_key)
+    valid_pair = (
+        data.get("mission_id") == "Mission_Hacking"
+        and isinstance(bot_id, int)
+        and not isinstance(bot_id, bool)
+        and isinstance(hack_id, int)
+        and not isinstance(hack_id, bool)
+        and 0 <= bot_id <= 0xFFFF
+        and 0 <= hack_id <= 0xFFFF
+        and bot_id != hack_id
+    )
+    if not valid_pair:
+        data.pop(bot_key, None)
+        data.pop(hack_key, None)
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -1441,6 +1462,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
 
     _reconcile_remaining_spawns_with_markers(data)
     _reconcile_victory_turns_with_live_turn(data)
+    _normalize_mission_hacking_ids(data)
 
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a
