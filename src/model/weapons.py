@@ -823,6 +823,26 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Confusion Ray", weapon_type="projectile",
         damage=0, push="flip", range_max=0,
     ),
+    "Science_RainingFire": WeaponDef(
+        name="Firestorm Generator", weapon_type="artillery",
+        damage=0, push="forward", fire=True, range_min=1, range_max=2,
+        path_size=2,
+    ),
+    "Science_RainingFire_A": WeaponDef(
+        name="Firestorm Generator", weapon_type="artillery",
+        damage=0, push="forward", fire=True, range_min=1, range_max=3,
+        path_size=3,
+    ),
+    "Science_RainingFire_B": WeaponDef(
+        name="Firestorm Generator", weapon_type="artillery",
+        damage=0, push="forward", fire=True, range_min=1, range_max=4,
+        path_size=4,
+    ),
+    "Science_RainingFire_AB": WeaponDef(
+        name="Firestorm Generator", weapon_type="artillery",
+        damage=0, push="forward", fire=True, range_min=1, range_max=5,
+        path_size=5,
+    ),
     "Science_KO_Crack": WeaponDef(
         name="Seismic Capacitor", weapon_type="melee",
         damage=1, push="flip",

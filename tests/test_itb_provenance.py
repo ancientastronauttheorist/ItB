@@ -3093,3 +3093,81 @@ def test_real_passive_board_effect_record_pins_exact_variants_and_native_gaps():
     assert "Networked Armor" in gaps
     assert "Kickoff Boosters" in gaps
     assert "protected live achievement session" in gaps
+
+
+def test_real_firestorm_generator_record_pins_adjacent_targeting_correction():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    inventory = load_json_object(
+        repo_root
+        / "data/observatory/inventories"
+        / "windows_build_13725832_31fe35265598_local_modified.json"
+    )
+    validate_provenance(provenance, inventory, repo_root=repo_root)
+
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "player-weapon-firestorm-generator"
+    )
+    assert record["coverage"] == "partial"
+    sources = {
+        reference["path"]: reference
+        for reference in record["sources"]
+    }
+    firestorm = sources["scripts/advanced/ae_weapons.lua"]
+    assert firestorm["sha256"] == (
+        "5566b679c696ab489e40a0189d0a63b6"
+        "99d01e9657f79a20e6f119239af1680f"
+    )
+    assert {
+        "Science_RainingFire",
+        "Science_RainingFire:GetTargetArea",
+        "Science_RainingFire:GetSkillEffect",
+        "Science_RainingFire_A",
+        "Science_RainingFire_B",
+        "Science_RainingFire_AB",
+    } == set(firestorm["symbols"])
+    assert sources["scripts/weapons_base.lua"]["sha256"] == (
+        "bdb55457746d08b46e8b62ad7cfc27"
+        "f0a08bde9fab7397a4780dfe945b5f8f38"
+    )
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert {
+        "WId::ScienceRainingFire",
+        "WId::ScienceRainingFireA",
+        "WId::ScienceRainingFireB",
+        "WId::ScienceRainingFireAB",
+        "is_firestorm_generator",
+    } == implementations["rust_solver/src/weapons.rs"]
+    assert implementations["rust_solver/src/solver.rs"] == {
+        "get_weapon_targets",
+        "weapon_action_has_effect",
+    }
+    assert "sim_firestorm_generator" in implementations[
+        "rust_solver/src/simulate.rs"
+    ]
+
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["rust_solver/src/solver.rs"] == {
+        "firestorm_generator_adjacent_new_fire_target_is_actionable"
+    }
+    assert {
+        "test_firestorm_generator_target_enumeration_includes_adjacent_and_respects_maximum",
+        "test_firestorm_generator_adjacent_target_ignites_and_pushes_without_transit",
+    } <= tests["rust_solver/src/simulate.rs"]
+    assert tests["tests/test_weapon_defs.py"] == {
+        "test_firestorm_generator_static_defs_use_source_exact_adjacent_minimum"
+    }
+    gaps = " ".join(record["known_gaps"])
+    assert "effect-queue ordering" in gaps
+    assert "protected live achievement session" in gaps

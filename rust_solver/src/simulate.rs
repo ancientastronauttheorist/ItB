@@ -8245,21 +8245,54 @@ mod tests {
     }
 
     #[test]
-    fn test_firestorm_generator_target_enumeration_respects_base_range() {
+    fn test_firestorm_generator_target_enumeration_includes_adjacent_and_respects_maximum() {
         let mut board = make_test_board();
-        let _mech = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceRainingFire);
+        let _mech = add_mech(&mut board, 0, 0, 0, 2, WId::ScienceRainingFire);
+        board.tile_mut(0, 1).terrain = Terrain::Mountain;
+        board.tile_mut(0, 1).building_hp = 2;
 
-        let targets = crate::solver::get_weapon_targets(
-            &board,
-            3,
-            3,
-            WId::ScienceRainingFire,
-            (3, 3),
-            &WEAPONS,
-        );
+        for (weapon, maximum) in [
+            (WId::ScienceRainingFire, 2),
+            (WId::ScienceRainingFireA, 3),
+            (WId::ScienceRainingFireB, 4),
+            (WId::ScienceRainingFireAB, 5),
+        ] {
+            let targets = crate::solver::get_weapon_targets(
+                &board,
+                0,
+                0,
+                weapon,
+                (0, 0),
+                &WEAPONS,
+            );
 
-        assert!(targets.contains(&(3, 5)), "range-2 target missing: {:?}", targets);
-        assert!(!targets.contains(&(3, 6)), "base Firestorm should not reach range 3");
+            assert!(
+                targets.contains(&(0, 1)),
+                "{weapon:?} must include its blocked adjacent tile: {targets:?}"
+            );
+            assert!(
+                targets.contains(&(0, maximum)),
+                "{weapon:?} maximum target missing: {targets:?}"
+            );
+            assert!(
+                !targets.contains(&(0, maximum + 1)),
+                "{weapon:?} must stop after its source ArtillerySize"
+            );
+        }
+    }
+
+    #[test]
+    fn test_firestorm_generator_adjacent_target_ignites_and_pushes_without_transit() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 3, 3, 2, WId::ScienceRainingFire);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech, WId::ScienceRainingFire, 3, 4);
+
+        assert!(board.units[enemy].fire());
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 5));
+        assert!(board.tile(3, 4).on_fire());
+        assert!(!board.tile(3, 2).on_fire());
     }
 
     fn add_mission_ally(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, weapon: WId, type_name: &str) -> usize {

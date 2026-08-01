@@ -1062,10 +1062,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 227-230: Science_RainingFire - Firestorm Generator. Line artillery that
     // lights every tile from shooter to target, then pushes the target tile.
-    w[227] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 2, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
-    w[228] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 3, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
-    w[229] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 4, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
-    w[230] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 2, range_max: 5, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[227] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 1, range_max: 2, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[228] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 1, range_max: 3, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[229] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 1, range_max: 4, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    w[230] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Forward, range_min: 1, range_max: 5, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
 
     // 238-241: Vek_Hornet — Techno-Hornet's Needle Shot. The installed
     // weapons_technovek.lua inherits Prime_Spear targeting: every tile through
@@ -2846,11 +2846,14 @@ mod tests {
 
         let firestorm = weapon_def(WId::ScienceRainingFire);
         assert_eq!(firestorm.weapon_type, WeaponType::Artillery);
-        assert_eq!(firestorm.range_min, 2);
+        assert_eq!(firestorm.range_min, 1);
         assert_eq!(firestorm.range_max, 2);
         assert!(firestorm.fire());
+        assert_eq!(weapon_def(WId::ScienceRainingFireA).range_min, 1);
         assert_eq!(weapon_def(WId::ScienceRainingFireA).range_max, 3);
+        assert_eq!(weapon_def(WId::ScienceRainingFireB).range_min, 1);
         assert_eq!(weapon_def(WId::ScienceRainingFireB).range_max, 4);
+        assert_eq!(weapon_def(WId::ScienceRainingFireAB).range_min, 1);
         assert_eq!(weapon_def(WId::ScienceRainingFireAB).range_max, 5);
         assert!(is_firestorm_generator(WId::ScienceRainingFireAB));
 

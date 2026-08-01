@@ -50,6 +50,26 @@ def test_passive_source_catalog_and_static_defs_are_complete():
     assert set(expected) <= catalog["weapons"]
 
 
+def test_firestorm_generator_static_defs_use_source_exact_adjacent_minimum():
+    variants = {
+        "Science_RainingFire": 2,
+        "Science_RainingFire_A": 3,
+        "Science_RainingFire_B": 4,
+        "Science_RainingFire_AB": 5,
+    }
+
+    for weapon_id, maximum in variants.items():
+        weapon = get_weapon_def(weapon_id)
+        assert weapon is not None
+        assert weapon.name == "Firestorm Generator"
+        assert weapon.weapon_type == "artillery"
+        assert weapon.range_min == 1
+        assert weapon.range_max == maximum
+        assert weapon.path_size == maximum
+        assert weapon.fire is True
+        assert weapon.push == "forward"
+
+
 def test_repulse_variant_defs_and_known_rust_ids():
     known = json.loads(Path("data/known_types.json").read_text())
     for weapon_id, rust_id in (

@@ -2868,6 +2868,45 @@ mod top_k_tests {
     }
 
     #[test]
+    fn firestorm_generator_adjacent_new_fire_target_is_actionable() {
+        let mut board = Board::default();
+        let mech = board.add_unit(Unit {
+            uid: 1,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceRainingFire as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        assert!(weapon_action_has_effect(
+            &board,
+            (3, 3),
+            WId::ScienceRainingFire,
+            (3, 4),
+            &WEAPONS,
+        ));
+        let actions = enumerate_actions(&board, mech, &WEAPONS);
+        assert!(actions.iter().any(|action| {
+            action.1 == WId::ScienceRainingFire && action.2 == (3, 4)
+        }));
+    }
+
+    #[test]
     fn boosted_events_count_exact_achievement_events() {
         let events = vec![
             "achievement_boosted:unit:1:source:fire:tile:3:4".to_string(),

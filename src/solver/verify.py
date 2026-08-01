@@ -1769,7 +1769,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # source-defined VoidShockImmune pawn property. The localization-only upgrade
 # has no runtime/loadout ID in this build. Pre-v380 corpus is archived as
 # failure_db_snapshot_sim_v379.jsonl.
-SIMULATOR_VERSION = 380
+# v381 follows Firestorm Generator's source override and permits cardinal
+# targets at every distance from 1 through ArtillerySize. Pre-v381 corpus is
+# archived as failure_db_snapshot_sim_v380.jsonl.
+SIMULATOR_VERSION = 381
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -65,7 +65,7 @@ categories, so category totals overlap while the summary counts unique paths.
 
 The exact callback audit finds 742 active top-level callback definition
 instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 153 definitions literally and leaves 589 unindexed. Category totals
+names 155 definitions literally and leaves 587 unindexed. Category totals
 overlap for mission-environment files. Most importantly, the two broad enemy
 weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
 Tumblebug, and Centipede family records name ten literally and leave 30
@@ -239,6 +239,17 @@ Ammo Generator, Critical Shields, Forestry Nano, native Networked
 Armor/Kickoff timing, exhaustive Auto-Shields scheduling, and unusual native
 terrain/script ordering around the v380 passives remain explicit gaps pending
 controlled build-keyed traces.
+
+The eleventh player-weapon slice, `player-weapon-firestorm-generator`, proves a
+source-level targeting override that the simulator previously missed. Although
+base `LineArtillery` starts at distance two, `Science_RainingFire` replaces its
+target callback and enumerates every cardinal tile from distance one through
+`ArtillerySize`; its base/A/B/AB maxima are 2/3/4/5. Simulator v381 therefore
+restores adjacent Firestorm targets in definitions, solver enumeration, effect
+pruning, and execution. The endpoint receives Fire plus forward push, while
+only non-endpoint line tiles receive the intermediate Fire effect. Native
+helper ordering and exhaustive status, terrain, pod, collision, and death-chain
+interactions remain explicitly partial.
 
 The first family-level enemy-weapon slice, `enemy-weapon-starfish`, pins the
 normal, alpha, and leader pawn-to-weapon mappings and all five family-specific

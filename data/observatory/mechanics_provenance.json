@@ -347,6 +347,134 @@
       ]
     },
     {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The exact inventoried LineArtillery base callback starts at distance two, but Science_RainingFire replaces that callback completely and enumerates every in-bounds cardinal tile from distance one through its ArtillerySize. OnlyEmpty remains false, so occupied and otherwise blocked target tiles are retained."
+        },
+        {
+          "classification": "fact",
+          "statement": "The shipped Firestorm Generator variants set ArtillerySize to 2, 3, 4, and 5 for base, A, B, and AB. GetSkillEffect applies zero-damage Fire plus forward push on the clicked endpoint and zero-damage Fire without push on each intermediate line tile; an adjacent click therefore has no intermediate effect."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v381 changes all four Rust definitions to minimum range one, exposes adjacent targets through solver enumeration and effect pruning, and preserves the exact variant maximum ranges, line Fire, and endpoint-only push in focused conformance tests."
+        }
+      ],
+      "id": "player-weapon-firestorm-generator",
+      "implementations": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "WId::ScienceRainingFire",
+            "WId::ScienceRainingFireA",
+            "WId::ScienceRainingFireB",
+            "WId::ScienceRainingFireAB",
+            "is_firestorm_generator"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "get_weapon_targets",
+            "weapon_action_has_effect"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "sim_firestorm_generator",
+            "simulate_weapon"
+          ]
+        },
+        {
+          "path": "src/model/weapons.py",
+          "symbols": [
+            "WEAPON_DEFS",
+            "Science_RainingFire_AB"
+          ]
+        },
+        {
+          "path": "src/capture/save_parser.py",
+          "symbols": [
+            "_MODELED_UPGRADED_WEAPONS",
+            "Science_RainingFire_AB"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_enrich_bridge_mech_weapons_from_save"
+          ]
+        }
+      ],
+      "known_gaps": [
+        "Native Board:IsValid, Board:IsBlocked, SpaceDamage, AddArtillery, AddDamage, Fire, push, and effect-queue ordering have not been independently traced for this build.",
+        "Rust models the source-visible target list and effects, but exact UI cursor grouping, animation delays, sound, bounce, and presentation are outside solver semantics.",
+        "Exact conformance across every Fire-immune pawn, shield/frozen layer, building, terrain, pod, achievement, collision, and death-effect interaction remains non-exhaustive.",
+        "No fresh controlled runtime capture was taken during the protected live achievement session; this correction is pinned to exact shipped Lua and local corpus evidence."
+      ],
+      "sources": [
+        {
+          "path": "scripts/advanced/ae_weapons.lua",
+          "sha256": "5566b679c696ab489e40a0189d0a63b699d01e9657f79a20e6f119239af1680f",
+          "symbols": [
+            "Science_RainingFire",
+            "Science_RainingFire:GetTargetArea",
+            "Science_RainingFire:GetSkillEffect",
+            "Science_RainingFire_A",
+            "Science_RainingFire_B",
+            "Science_RainingFire_AB"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "LineArtillery",
+            "LineArtillery:GetTargetArea"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "path": "rust_solver/src/weapons.rs",
+          "symbols": [
+            "test_heat_sinkers_weapon_defs_and_mappings"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "firestorm_generator_adjacent_new_fire_target_is_actionable"
+          ]
+        },
+        {
+          "path": "rust_solver/src/simulate.rs",
+          "symbols": [
+            "test_firestorm_generator_lights_three_fresh_enemies_and_pushes_target",
+            "test_firestorm_generator_destroys_time_pod_on_fire_line",
+            "test_firestorm_generator_stops_at_clicked_endpoint",
+            "test_firestorm_generator_target_enumeration_includes_adjacent_and_respects_maximum",
+            "test_firestorm_generator_adjacent_target_ignites_and_pushes_without_transit"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_defs.py",
+          "symbols": [
+            "test_firestorm_generator_static_defs_use_source_exact_adjacent_minimum"
+          ]
+        },
+        {
+          "path": "tests/test_weapon_upgrade_overlay.py",
+          "symbols": [
+            "test_firestorm_range_overlay_from_save"
+          ]
+        }
+      ]
+    },
+    {
       "coverage": "native_dependency",
       "evidence": [
         {
