@@ -37,15 +37,26 @@ change is complete.
 
 ## Agents, Branches, and Worktrees
 
-- Use `gpt-5.6-terra` for every subagent by default. Pass the model override
-  explicitly when spawning, use a bounded context fork plus a self-contained
-  task packet because full-history forks cannot take a model override, and use
-  another model only when the user explicitly requests it.
-- Use those Terra subagents liberally for independent research, implementation,
-  validation, and review. Parallelize bounded tasks when useful, give every
-  subagent a clear scope, and reconcile their results before drawing
-  conclusions. Avoid having multiple agents edit the same files concurrently;
-  the primary agent remains responsible for integration and final validation.
+- Use subagents selectively, only for bounded independent work where delegation
+  is likely to save meaningful time or provide a genuinely independent check.
+  Keep small edits, tightly coupled implementation, integration, final
+  validation, Git operations, and live-session decisions with the primary
+  agent.
+- Choose `gpt-5.6-terra` or `gpt-5.6-sol` per task instead of applying one
+  blanket default. Prefer Terra for routine bounded research, implementation,
+  and validation; prefer Sol when the task needs deeper ambiguous reasoning,
+  high-risk semantic analysis, or a demanding independent review. Pass the
+  chosen model override explicitly when spawning, using a bounded context fork
+  plus a self-contained task packet because full-history forks cannot take a
+  model override.
+- Run at most two subagents concurrently unless a clearly independent larger
+  fan-out has a concrete expected benefit. Subagents must not recursively spawn
+  more agents unless the primary agent explicitly requests that delegation.
+- Give each subagent a non-overlapping scope and avoid concurrent edits to the
+  same files. Use one independent reviewer for an important semantic tranche;
+  add more reviewers only for distinct, non-overlapping risk areas. The primary
+  agent remains responsible for reconciling results, integration, and final
+  validation.
 - Keep the primary checkout on `main` and work directly on `main`. Do not
   create, publish, or switch to another named local or remote branch unless I
   explicitly change this policy.
