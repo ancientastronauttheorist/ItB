@@ -33,6 +33,16 @@ the original before invoking the host-provided raw writer. It neither polls nor
 owns file paths. A disposable experiment host must pass the already verified
 packet and nonce explicitly and provide a create-only raw writer.
 
+The completed offline boundary pass for the pinned Windows executable maps the
+actual Luabind registration route, all four RNG binding leaves, the shared RNG
+core, and the native enemy-decision calls that bypass those leaves. The normal
+leaf success paths are strongly non-yielding, but static analysis cannot prove
+that an installed hook is behavior-neutral. Controller v1 is therefore a
+deliberately partial first experiment: it observes calls resolved through the
+selected Lua global, not the native tie-breaks or other direct core callers.
+Addresses and conclusions are valid only for the exact executable identity in
+`docs/itb_native_anchor_research.md` and its reviewed boundary artifact.
+
 For these v1 RNG records, the on-wire `context.call_site` field is the exact
 configured hook target (`_G.random_int` or `_G.random_bool`). It is not the Lua
 caller or a reconstructed call-stack location. The field name is retained for
@@ -285,9 +295,11 @@ Before any Lua change:
    build, controller/Mod Loader hashes, mission/turn, timeline/seed
    fingerprints, phase, exact config digest, caps, nonce, and expiry. A generic
    bridge command must never activate tracing.
-4. Add one event family at a time, beginning with `random_int`/`random_bool`,
-   only after the exact boundary is proven non-yielding and return-preserving in
-   a Lua 5.1-compatible harness.
+4. Add one event family at a time. For the pinned Windows build, reviewed leaf
+   paths plus the Lua 5.1-compatible return-preservation harness justify a first
+   disposable `_G.random_int` or `_G.random_bool` trial. They do not prove
+   installed-hook neutrality, and the coverage manifest must label this global
+   boundary as partial because native callers bypass it.
 5. Use a controlled synthetic experiment, not an achievement run.
 6. Compare enabled versus disabled outcomes and repeated identical trials.
 7. Finalize raw evidence offline, preserve the hook-coverage manifest, and
@@ -302,17 +314,17 @@ board snapshot is not proof of the candidate tournament that selected it.
 
 ## Open questions
 
-- Which exact Lua registration boundary owns `random_int`/`random_bool` on the
-  Windows build?
-- Can a behavior-neutral boundary attribute RNG events to higher-level Lua
-  callers without relying on unproven stack inspection or wrapping values that
-  may be non-primitive?
-- Can candidate enumeration be observed without intercepting native
-  pathfinding?
+- Can an ABI-safe observer at the shared RNG core capture the complete stream,
+  assign bounded return-address IDs, and pass matched enabled/disabled trials?
+- Can the mapped candidate loop be observed without perturbing vector order,
+  dynamic callback lookup, or native pathfinding state?
 - Which subclass `GetTargetScore` overrides bypass a base wrapper?
 - What primitive `SkillEffect` summary is sufficient for Rust conformance
   without walking engine userdata recursively?
-- At what boundary can the final selected action be logged before execution?
+- Does the mapped 24-byte selected-record copy correspond one-to-one with the
+  downstream Pawn action queue, and where is the final queue commit?
+- Which shared-RNG callers feed spawn selection, and what is their exact order
+  relative to enemy planning and Lua spawner decisions?
 
 These are explicitly unresolved. The codec makes future answers comparable; it
 does not claim the hooks are already safe or complete.

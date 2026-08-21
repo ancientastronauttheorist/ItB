@@ -130,3 +130,41 @@ values in executable sections remain explicitly labeled reference candidates
 until a decoder and control-flow analysis confirm them. Named Lua C-API imports
 and their IAT-slot RVAs are parsed as direct PE facts to support that later
 control-flow work.
+
+## Reviewed Windows PE boundaries
+
+After focused decoding promotes candidate anchors, store only normalized
+addresses, region SHA-256 values, decoded call edges, classified findings, and
+explicit limitations in a `pe_reviewed_boundary_map`. Do not store executable
+bytes or decompiled source. Verify the committed build-keyed artifact against
+the exact PE and matching inventory:
+
+```text
+python scripts/itb_pe_boundary_map.py \
+  --executable "<Into the Breach>/Breach.exe" \
+  --inventory data/observatory/inventories/<matching-snapshot>.json \
+  --evidence data/observatory/native/<build-keyed-boundaries>.json
+```
+
+Schema 1 verification requires the Python package `capstone==5.0.7`, matching
+the decoder recorded in the artifact; a different version fails closed.
+
+Validation fails closed on identity drift, unknown fields, malformed evidence,
+region or summary mismatch, non-executable or non-file-backed ranges, changed
+function hashes, incomplete Capstone 5.x decoding from a declared reviewed
+region start, calls that do not begin on instruction boundaries relative to
+that start, and mismatched IAT imports.
+
+The verifier does **not** independently discover x86 function entries or prove
+control-flow reachability. A shifted declared start can reframe embedded bytes,
+so region starts and extents remain reviewed analyst evidence backed by Ghidra
+and focused Capstone analysis. A successful result proves exact identity, bytes,
+and decoding consistency conditional on those reviewed boundaries; it does not
+turn a semantic inference into a runtime fact.
+
+For Ghidra headless work, keep the project outside the repository in a path
+keyed by the full executable SHA-256. The reusable
+`scripts/ghidra/ExportItbBoundaryFacts.java` post-script emits deterministic TSV
+function extents, hashes, calls, and references for explicitly supplied labeled
+addresses. Treat that output as review input and publish only normalized JSON
+whose identity, bytes, and declared-boundary-relative calls pass the verifier.

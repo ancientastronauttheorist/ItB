@@ -86,6 +86,14 @@ does not select the generator. **Our implementation models only the sampled
 macOS environment and documents that in the module docstring.** Any bundled or
 private native PRNG would invalidate this model for the corresponding binding.
 
+A later offline pass proved that the exact Windows executable identified in
+`docs/itb_native_anchor_research.md` routes its four gameplay RNG bindings and
+native enemy tie-breaks through an MSVC CRT-style 15-bit LCG. That result is
+build-specific. It neither identifies the platform of the older recordings in
+this document nor establishes which boundary performs Grid Defense checks, so
+the Park-Miller hypotheses remain macOS-only candidates until a build-keyed
+runtime trace attributes the resist caller.
+
 ### 1.3 `math.random(100)` ∈ [1,100]
 
 Binning: `floor((rand() % RAND_MAX) / RAND_MAX * 100) + 1`.

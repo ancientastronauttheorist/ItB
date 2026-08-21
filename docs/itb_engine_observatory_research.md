@@ -8,10 +8,13 @@ highest-leverage direction available for improving solver fidelity.
 The important discovery is that ITB is not one sealed black box. The installed
 game contains a large readable Lua specification surrounding a much smaller
 native engine. The Lua already exposes weapon effects, targeting areas, spawn
-selection, mission logic, and much of enemy target scoring. The remaining
-unknowns are narrower and more valuable: native pathfinding, enemy movement and
-tie-breaking, turn orchestration, random-number generation and consumption
-order, effect execution, and hidden engine state.
+selection, mission logic, and much of enemy target scoring. Targeted analysis
+of one pinned Windows executable has now also mapped its RNG implementation,
+enemy candidate tournament, native equal-best tie-break, and selected AI record.
+The remaining unknowns are narrower and more valuable: native path and movement
+enumeration details, complete RNG caller attribution and consumption order,
+downstream action-queue and turn orchestration, effect execution, and hidden
+engine state.
 
 The strategic ordering should therefore be:
 
@@ -130,9 +133,11 @@ large portion of the mechanics.
 `scripts/spawner.lua` contains the difficulty- and island-specific spawner
 parameters.
 
-The spawn algorithm is therefore not fundamentally unknown. The unresolved
-pieces are the native RNG implementation, its state, and the complete call
-order leading into these Lua decisions.
+The spawn algorithm is therefore not fundamentally unknown. For the exact
+inventoried Windows executable, the shared RNG algorithm and state transition
+are now mapped. The unresolved pieces are spawn-specific caller attribution,
+the complete call order leading into these Lua decisions, the state needed for
+replay, and equivalence on other platform builds.
 
 ### Enemy targeting
 
@@ -148,9 +153,11 @@ damage, buildings, enemies, pods, movement position, smoke, fire, water,
 spawning tiles, and custom pawn position scores. Enemy-specific weapon scripts
 override `GetTargetScore` where they require custom behavior.
 
-This means the visible target-scoring formula is already available. The main
-unknowns are likely candidate generation, movement/path enumeration, native
-position helpers, tie-breaking, and orchestration around those Lua callbacks.
+This means the visible target-scoring formula is already available. On the
+pinned Windows build, the target-vector loop, score calls, equal-best retention,
+and native random tie-break are now mapped. Movement/path enumeration details,
+native position helpers, runtime subclass coverage, higher-level record
+selection, and the downstream queue handoff remain to be validated.
 
 ### Weapons, missions, and environments
 
@@ -190,9 +197,10 @@ claims reproducible.
 In two noisy seed-replay cases, manual inspection of simple Park-Miller
 candidate streams found no obvious alignment with the new-unit diffs. No spawn
 pool mapping or formal call-order fit was performed, so the experiment did not
-establish whether `master_seed` and `ai_seed` are sufficient. The unmapped
-native `random_int`/`random_bool` behavior and hidden call order remain the
-central blockers; runtime RNG tracing attacks them directly.
+establish whether `master_seed` and `ai_seed` are sufficient. Those recordings
+also lack build identity, so the now-mapped Windows MSVC-style RNG cannot be
+applied to them retroactively. Complete caller attribution and hidden call order
+remain the central blockers; runtime RNG tracing attacks them directly.
 
 Related local research:
 
@@ -283,61 +291,61 @@ reveal:
 
 ## Phase 3: Trace gameplay RNG
 
-The first controlled experiment should wrap the Lua-visible RNG functions:
+The dormant controller in `src/bridge/observatory_controller.lua` provides the
+first controlled experiment: install exactly one return-preserving wrapper on
+either `_G.random_int` or `_G.random_bool`. Tracing must be opt-in, bounded, and
+restricted to a disposable experiment so normal achievement play is not
+flooded with logs or perturbed by trace collection. Its schema-compatible
+`call_site` value identifies the configured global, not the higher-level Lua
+caller.
 
-```lua
-local original_random_int = random_int
+The offline Windows boundary map proves that native enemy selection also calls
+the shared RNG core directly. A global wrapper is therefore useful but
+incomplete by design; it cannot establish the complete stream or observe the
+mapped native equal-best tie-break.
 
-random_int = function(max)
-    local result = original_random_int(max)
-    -- Record phase, turn, caller, max, result, and current seed evidence.
-    return result
-end
-```
+Questions the staged Lua-then-native trace program can answer include:
 
-The same should be done for `random_bool`. Tracing must be opt-in, bounded, and
-restricted to controlled experiments so normal achievement play is not flooded
-with logs or perturbed by expensive trace collection.
-
-Questions this can answer include:
-
-- What is the exact output order?
-- Which Lua subsystems consume gameplay randomness?
-- Do animations or UI code consume the same stream?
-- Does enemy movement consume RNG before spawning?
+- What is the exact Lua-visible subset and complete native output order?
+- Which calls resolve through the selected Lua global?
+- What is the exact interleaving of native enemy calls and Lua spawn calls?
 - How does the saved `aiSeed` relate to the next observed result?
-- Do spawn selection and enemy tie-breaking share a stream?
+- When is the shared stream reseeded between planning and spawning?
 - Which state must be cloned for deterministic forks?
 
-If wrapping a global captures calls originating in Lua but not RNG calls made
-entirely inside native code, the experiment should move down to the native Lua
-boundary.
+After proving that the global wrapper is neutral, a separate experiment can move to
+the shared native RNG core and classify bounded return-address IDs. Such a core
+observer needs its own ABI and enabled/disabled proof; safety does not transfer
+from the Lua wrapper.
 
 ## Phase 4: Investigate a native Lua-call tracer
 
-`Breach.exe` imports Lua 5.1 directly. Native functions exposed to Lua must be
-registered through the Lua C API. The Mod Loader already uses replacement or
-proxy DLLs for additional Windows functionality, making that boundary a
-promising observation point.
+`Breach.exe` imports Lua 5.1 directly. Offline analysis of the pinned Windows
+build has recovered the relevant Luabind route. The registration builder at RVA
+`0x0004ac40` constructs descriptors for both overloads of each RNG name. Its
+closure builder calls imported `lua_pushcclosure`, and its name writer publishes
+the closure with `lua_settable`.
 
-A build-specific tracing proxy might observe sequences such as:
-
-```text
-lua_pushcclosure(native_function_pointer)
-lua_setfield(..., function_name)
-```
-
-and produce a map:
+The resulting build-keyed map is:
 
 ```text
-Lua function name -> native function address
+random_int(max)    -> RVA 0x000e0c20
+random_int(lo, hi) -> RVA 0x000e0c40
+random_bool(n)     -> RVA 0x000e0cb0
+random_bool(a, b)  -> RVA 0x000e0cd0
 ```
+
+This disproves the earlier random-specific `lua_setfield` hypothesis. The full
+reviewed map and exact identity are in `docs/itb_native_anchor_research.md` and
+`data/observatory/native/windows_build_13725832_31fe35265598_pe_boundaries.json`.
 
 Selected native Lua functions might be observable through a carefully validated
 trampoline that records Lua stack arguments and results before and after
-invoking the original function. This is a research design, not an established
-capability. A trampoline can change calling or timing behavior and must be
-validated against the exact binary before its evidence is trusted.
+invoking the original function. This remains a research design, not an
+established capability. The four binding leaves are also incomplete for total
+RNG coverage because native AI code calls the shared core directly. Any
+trampoline can change calling or timing behavior and must be validated against
+the exact binary before its evidence is trusted.
 
 - `random_int`
 - `random_bool`
@@ -383,37 +391,34 @@ The current local installation contains a custom bridge-oriented
 extension tree. Community code should therefore be studied and selectively
 integrated rather than blindly installed over the bridge.
 
-## Phase 6: Targeted Ghidra analysis
+## Phase 6: Targeted Ghidra analysis — offline tranche complete
 
-Static native analysis should begin only after Lua tracing and community work
-have narrowed the questions.
+The focused pass is complete for the exact Windows executable with SHA-256
+`31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9`.
+Ghidra review plus the PE byte/call verifier now map and pin:
 
-Useful string anchors already present in `Breach.exe` include:
+- all four RNG binding leaves and their actual Luabind registration route;
+- the shared MSVC CRT RNG state transition and seed setter;
+- `aiSeed` load, seeding, advance, store, and archive paths;
+- the enemy target-vector tournament, `ScorePositioning`, `GetTargetScore`, and
+  direct equal-best RNG call;
+- dynamic `GetTargetArea` and `GetSkillEffect` callback paths; and
+- the final 24-byte selected AI record copied into `aiDest` / `aiTarget` state.
 
-- `random_int`
-- `random_bool`
-- `aiSeed`
-- `ScorePositioning`
-- `GetTargetScore`
+The durable artifact contains reviewed region hashes and call edges decoded at
+instruction boundaries relative to the declared starts, rather than executable
+bytes or decompiled source. Run `scripts/itb_pe_boundary_map.py` against the
+exact executable and inventory to revalidate it. Function-entry selection and
+reachability remain reviewed analyst evidence, not independently discovered
+verifier facts.
 
-The likely workflow is:
+The remaining native priorities are now narrower:
 
-1. Load the exact platform/build executable into Ghidra and record its full
-   Observatory identity.
-2. Identify xrefs to the known Lua registration strings.
-3. Recover the native function pointer registered for each name.
-4. Name only the relevant functions and adjacent data structures.
-5. Validate every interpretation with a controlled runtime experiment.
-6. Write a behavioral specification rather than copying decompiled code.
-7. Implement the behavior independently in Rust.
-
-Top native-analysis priorities are:
-
-1. RNG implementation and state transition.
-2. Enemy candidate enumeration and tie-breaking.
-3. Native pathfinding and reachability details.
-4. Turn-phase ordering and queued effect execution.
-5. Save, undo, and mission serialization.
+1. Correlate the selected AI record with the downstream Pawn action queue.
+2. Attribute shared-RNG callers, especially spawn selection, in exact order.
+3. Resolve native pathfinding and reachability details needed by mismatches.
+4. Resolve turn-phase ordering, queued effect execution, and hidden state.
+5. Validate every behavior used by Rust with controlled matched captures.
 
 Full executable reconstruction would spend enormous effort on systems irrelevant
 to tactical solving. Targeted analysis keeps the work aligned with solver IQ.
@@ -557,9 +562,13 @@ The scaling hierarchy should be:
 
 ### Milestone 5: Targeted native map
 
-- Map named Lua bindings to executable addresses.
-- Analyze only RNG, enemy decision, pathfinding, and serialization targets.
-- Validate interpretations dynamically.
+- **Offline Windows tranche complete:** named RNG bindings, the shared RNG,
+  enemy candidate/score callbacks, tie-breaking, and the selected record are
+  build-keyed and independently verifiable.
+- Keep pathfinding and serialization analysis mismatch-driven rather than
+  attempting broad reconstruction.
+- Validate the mapped interpretations and hook neutrality dynamically before
+  promoting trace-derived behavior into Rust.
 
 ### Milestone 6: Differential lab
 
@@ -587,13 +596,12 @@ Useful metrics include:
 
 ## Final recommendation
 
-Begin with Lua provenance and runtime instrumentation, not full decompilation.
-
-The first concrete experiment should record `random_int`, `random_bool`, enemy
-candidate scores, and final chosen actions for a small set of controlled turns.
-That work is comparatively inexpensive, directly targets the current spawn and
-enemy-projection gaps, and will tell us exactly which native rooms still need to
-be opened.
+The targeted offline map is now deep enough; do not broaden into full
+decompilation. The next concrete experiment should use a disposable,
+non-achievement installation and add one reviewed observation family at a time.
+Start with one global RNG wrapper, prove enabled/disabled equivalence, then move
+to bounded native caller attribution, candidate scores, and correlation of the
+selected record with the final queued action.
 
 Once those traces improve the Rust world model, parallel VMs become a powerful
 force multiplier instead of a way to scale uncertainty.

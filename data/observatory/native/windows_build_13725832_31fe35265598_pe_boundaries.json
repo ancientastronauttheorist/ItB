@@ -1,0 +1,643 @@
+{
+  "analysis_kind": "pe_reviewed_boundary_map",
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0004b484",
+      "id": "builder_to_random_bool_factory_2",
+      "kind": "direct_rel32",
+      "meaning": "The registration builder creates the two-argument random_bool descriptor.",
+      "source_region": "registration_builder",
+      "target": {"region": "random_bool_factory_2", "rva": "0x00050820", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0004b4a0",
+      "id": "builder_to_random_bool_factory_1",
+      "kind": "direct_rel32",
+      "meaning": "The registration builder creates the one-argument random_bool descriptor.",
+      "source_region": "registration_builder",
+      "target": {"region": "random_bool_factory_1", "rva": "0x000507f0", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0004b4ac",
+      "id": "builder_to_random_int_factory_2",
+      "kind": "direct_rel32",
+      "meaning": "The registration builder creates the two-argument random_int descriptor.",
+      "source_region": "registration_builder",
+      "target": {"region": "random_int_factory_2", "rva": "0x000507c0", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0004b4b8",
+      "id": "builder_to_random_int_factory_1",
+      "kind": "direct_rel32",
+      "meaning": "The registration builder creates the one-argument random_int descriptor.",
+      "source_region": "registration_builder",
+      "target": {"region": "random_int_factory_1", "rva": "0x00050790", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00050807",
+      "id": "random_bool_factory_1_to_descriptor",
+      "kind": "direct_rel32",
+      "meaning": "The one-argument factory constructs its reviewed descriptor.",
+      "source_region": "random_bool_factory_1",
+      "target": {"region": "random_bool_descriptor_1", "rva": "0x00054110", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00050836",
+      "id": "random_bool_factory_2_to_descriptor",
+      "kind": "direct_rel32",
+      "meaning": "The two-argument factory constructs its reviewed descriptor.",
+      "source_region": "random_bool_factory_2",
+      "target": {"region": "random_bool_descriptor_2", "rva": "0x00054180", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000507d6",
+      "id": "random_int_factory_2_to_descriptor",
+      "kind": "direct_rel32",
+      "meaning": "The two-argument factory constructs its reviewed descriptor.",
+      "source_region": "random_int_factory_2",
+      "target": {"region": "random_int_descriptor_2", "rva": "0x000540a0", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000507a6",
+      "id": "random_int_factory_1_to_descriptor",
+      "kind": "direct_rel32",
+      "meaning": "The one-argument factory constructs its reviewed descriptor.",
+      "source_region": "random_int_factory_1",
+      "target": {"region": "random_int_descriptor_1", "rva": "0x00054030", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002ea85e",
+      "id": "closure_builder_to_lua_pushcclosure",
+      "kind": "iat_indirect",
+      "meaning": "The Luabind closure builder directly creates the Lua C closure.",
+      "source_region": "closure_builder",
+      "target": {"iat_rva": "0x003d64a0", "library": "lua5.1.dll", "name": "lua_pushcclosure", "type": "import"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002ea7ea",
+      "id": "binding_name_writer_to_lua_settable",
+      "kind": "iat_indirect",
+      "meaning": "The Luabind name path writes the named binding through lua_settable.",
+      "source_region": "binding_name_writer",
+      "target": {"iat_rva": "0x003d6550", "library": "lua5.1.dll", "name": "lua_settable", "type": "import"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0c2d",
+      "id": "random_int_1_to_rng_core",
+      "kind": "direct_rel32",
+      "meaning": "The one-argument random_int leaf consumes the shared RNG core.",
+      "source_region": "random_int_1",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0c55",
+      "id": "random_int_2_to_rng_core",
+      "kind": "direct_rel32",
+      "meaning": "The two-argument random_int leaf consumes the shared RNG core.",
+      "source_region": "random_int_2",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0cb3",
+      "id": "random_bool_1_to_rng_core",
+      "kind": "direct_rel32",
+      "meaning": "The one-argument random_bool leaf consumes the shared RNG core.",
+      "source_region": "random_bool_1",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0cd3",
+      "id": "random_bool_2_to_rng_core",
+      "kind": "direct_rel32",
+      "meaning": "The two-argument random_bool leaf consumes the shared RNG core.",
+      "source_region": "random_bool_2",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00387f16",
+      "id": "rng_core_to_state_owner",
+      "kind": "direct_rel32",
+      "meaning": "The RNG core obtains the CRT per-thread state owner.",
+      "source_region": "rng_core",
+      "target": {"region": "rng_state_owner", "rva": "0x0038ed32", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00387f3c",
+      "id": "rng_seed_to_state_owner",
+      "kind": "direct_rel32",
+      "meaning": "The seed setter writes through the same CRT per-thread state owner.",
+      "source_region": "rng_seed",
+      "target": {"region": "rng_state_owner", "rva": "0x0038ed32", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f680a",
+      "id": "ai_orchestrator_to_rng_seed",
+      "kind": "direct_rel32",
+      "meaning": "Enemy planning seeds the shared RNG before selection work.",
+      "source_region": "ai_orchestrator",
+      "target": {"region": "rng_seed", "rva": "0x00387f37", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f682e",
+      "id": "ai_orchestrator_to_record_selector",
+      "kind": "direct_rel32",
+      "meaning": "Enemy planning obtains the selected 24-byte decision record.",
+      "source_region": "ai_orchestrator",
+      "target": {"region": "record_selector", "rva": "0x000f7dd0", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f6ae6",
+      "id": "ai_orchestrator_to_seed_advance",
+      "kind": "direct_rel32",
+      "meaning": "Enemy planning advances the stored AI seed after decision work.",
+      "source_region": "ai_orchestrator",
+      "target": {"region": "ai_seed_advance", "rva": "0x000e0bf0", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f6b4e",
+      "id": "ai_orchestrator_reseeds_rng",
+      "kind": "direct_rel32",
+      "meaning": "The orchestrator later restores a time-derived seed to the same RNG setter.",
+      "source_region": "ai_orchestrator",
+      "target": {"region": "rng_seed", "rva": "0x00387f37", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0bf4",
+      "id": "seed_advance_to_rng_core_first",
+      "kind": "direct_rel32",
+      "meaning": "The AI seed-advance helper consumes its first shared RNG value.",
+      "source_region": "ai_seed_advance",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0c06",
+      "id": "seed_advance_to_rng_core_retry",
+      "kind": "direct_rel32",
+      "meaning": "The AI seed-advance helper can retry against the shared RNG core.",
+      "source_region": "ai_seed_advance",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f6eff",
+      "id": "ai_seed_read_default_to_rng_core",
+      "kind": "direct_rel32",
+      "meaning": "The AI seed restore path obtains a shared-RNG default before reading aiSeed.",
+      "source_region": "ai_seed_read",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7a14",
+      "id": "candidate_loop_to_target_area_wrapper",
+      "kind": "direct_rel32",
+      "meaning": "The candidate loop obtains the target-area vector before scoring targets.",
+      "source_region": "candidate_loop",
+      "target": {"region": "target_area_wrapper", "rva": "0x00229230", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7a45",
+      "id": "candidate_loop_to_score_positioning",
+      "kind": "direct_rel32",
+      "meaning": "The candidate loop obtains the movement-position score.",
+      "source_region": "candidate_loop",
+      "target": {"region": "score_positioning", "rva": "0x000f7870", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7b02",
+      "id": "candidate_loop_to_target_score",
+      "kind": "direct_rel32",
+      "meaning": "The candidate loop scores each target through GetTargetScore.",
+      "source_region": "candidate_loop",
+      "target": {"region": "target_score", "rva": "0x00229310", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7b62",
+      "id": "candidate_loop_tie_break_to_rng_core",
+      "kind": "direct_rel32",
+      "meaning": "Equal-best targets are selected with a direct native RNG call.",
+      "source_region": "candidate_loop",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7f6a",
+      "id": "record_selector_to_rng_core_1",
+      "kind": "direct_rel32",
+      "meaning": "The higher-level selector contains a direct shared-RNG choice.",
+      "source_region": "record_selector",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7f94",
+      "id": "record_selector_to_rng_core_2",
+      "kind": "direct_rel32",
+      "meaning": "The higher-level selector contains a second direct shared-RNG choice.",
+      "source_region": "record_selector",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f8012",
+      "id": "record_selector_to_rng_core_3",
+      "kind": "direct_rel32",
+      "meaning": "The higher-level selector contains a third direct shared-RNG choice.",
+      "source_region": "record_selector",
+      "target": {"region": "rng_core", "rva": "0x00387f16", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f78d5",
+      "id": "score_positioning_to_named_integer_invoker",
+      "kind": "direct_rel32",
+      "meaning": "Enemy ScorePositioning dispatches by method name and extracts an integer.",
+      "source_region": "score_positioning",
+      "target": {"region": "named_integer_invoker", "rva": "0x000f8770", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f87cf",
+      "id": "named_integer_invoker_to_named_lookup",
+      "kind": "direct_rel32",
+      "meaning": "The integer invoker enters the reviewed Lua method lookup helper.",
+      "source_region": "named_integer_invoker",
+      "target": {"region": "named_lookup", "rva": "0x000f8ca0", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f8ce0",
+      "id": "named_lookup_to_lua_getfield",
+      "kind": "iat_indirect",
+      "meaning": "Named callback lookup directly uses lua_getfield on the actual object.",
+      "source_region": "named_lookup",
+      "target": {"iat_rva": "0x003d6504", "library": "lua5.1.dll", "name": "lua_getfield", "type": "import"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00229293",
+      "id": "target_area_wrapper_to_target_area",
+      "kind": "direct_rel32",
+      "meaning": "The enemy target-area wrapper enters the reviewed dynamic callback function.",
+      "source_region": "target_area_wrapper",
+      "target": {"region": "target_area", "rva": "0x00269cc0", "type": "region"}
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016ce79",
+      "id": "deployment_score_to_named_integer_invoker",
+      "kind": "direct_rel32",
+      "meaning": "The second ScorePositioning anchor belongs to deployment scoring.",
+      "source_region": "deployment_score",
+      "target": {"region": "named_integer_invoker", "rva": "0x000f8770", "type": "region"}
+    }
+  ],
+  "findings": [
+    {
+      "claim": "All four overloads are Luabind function registrations for the exact names random_int and random_bool. Their descriptors point to the four reviewed native leaves, the shared closure builder calls lua_pushcclosure, and the name-binding path uses lua_settable rather than lua_setfield.",
+      "evidence_class": "fact",
+      "id": "lua_rng_registration",
+      "implications": [
+        "The prior string candidates are promoted to build-specific Lua registration boundaries.",
+        "A random-function-specific lua_setfield path is disproven for this route."
+      ],
+      "limitations": [
+        "The signature-specific Luabind dispatchers are shared with unrelated bindings and are poor narrow hook points."
+      ],
+      "regions": ["registration_builder", "random_int_descriptor_1", "random_int_descriptor_2", "random_bool_descriptor_1", "random_bool_descriptor_2", "closure_builder", "binding_name_writer"]
+    },
+    {
+      "claim": "The one-argument random_int returns zero without consuming RNG when its bound is zero and otherwise uses signed remainder. The two-argument form returns the lower bound without consuming RNG when bounds are equal and otherwise adds a signed remainder over their difference. random_bool(n) tests remainder zero, while random_bool(a,b) tests whether the remainder modulo b is below a; neither boolean leaf guards a zero divisor.",
+      "evidence_class": "fact",
+      "id": "lua_rng_leaf_contracts",
+      "implications": [
+        "Normal positive ranges are upper-exclusive.",
+        "Equal or zero shortcut cases do not advance the shared stream."
+      ],
+      "limitations": [
+        "Game call sites normally supply valid positive ranges; unusual negative and zero-divisor behavior is not promoted into a public API promise."
+      ],
+      "regions": ["random_int_1", "random_int_2", "random_bool_1", "random_bool_2"]
+    },
+    {
+      "claim": "The shared RNG is the linked MSVC CRT per-thread generator: state at the returned per-thread object plus 0x18 is updated with state * 0x343fd + 0x269ec3 using 32-bit wrap, and the result is (state >> 16) & 0x7fff. The seed setter writes the same field.",
+      "evidence_class": "fact",
+      "id": "native_rng_algorithm",
+      "implications": [
+        "The old Park-Miller hypothesis is false for this Windows executable.",
+        "The algorithm is reproducible when seed and complete consumption order are known."
+      ],
+      "limitations": [
+        "This is exact only for the pinned PE hash and does not transfer to macOS or Linux."
+      ],
+      "regions": ["rng_core", "rng_seed", "rng_state_owner"]
+    },
+    {
+      "claim": "Enemy planning seeds the same RNG from the AI object's +0x80 aiSeed field, performs selection work with direct calls to that core, advances and stores aiSeed through the reviewed helper, and later reseeds the CRT state for other work.",
+      "evidence_class": "inference",
+      "id": "shared_ai_seed_stream",
+      "implications": [
+        "Lua RNG calls and native enemy tie-breaking share one stream during the seeded planning window.",
+        "A complete replay needs native calls as well as Lua-visible calls."
+      ],
+      "limitations": [
+        "Static analysis establishes data flow and call order in the function, not runtime branch frequency."
+      ],
+      "regions": ["ai_orchestrator", "ai_seed_write", "ai_seed_read", "ai_seed_advance", "rng_core", "rng_seed"]
+    },
+    {
+      "claim": "The reviewed enemy candidate loop obtains a target-area vector, consumes it sequentially in returned order, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best targets, and chooses among them with a direct native RNG call modulo the equal-best count.",
+      "evidence_class": "inference",
+      "id": "enemy_candidate_tournament",
+      "implications": [
+        "Returned Lua target-area order is a real candidate-order input.",
+        "A _G.random_int wrapper cannot see the equal-best native tie-break."
+      ],
+      "limitations": [
+        "Individual Lua subclass implementations still determine how each returned target-area vector is constructed."
+      ],
+      "regions": ["candidate_loop", "target_area_wrapper", "target_score", "score_positioning", "rng_core"]
+    },
+    {
+      "claim": "The higher-level selector returns one 24-byte decision record. The AI orchestrator copies it to object offsets +0x50 through +0x67; the exact archive-side labels identify destination coordinates at +0x50/+0x54 and target coordinates at +0x58/+0x5c.",
+      "evidence_class": "inference",
+      "id": "selected_ai_record",
+      "implications": [
+        "The copy at RVA 0x000f683c through 0x000f684f is the narrowest proven final selected-record observation boundary."
+      ],
+      "limitations": [
+        "Static evidence does not prove that this record copy is the later Pawn action or animation queue commit."
+      ],
+      "regions": ["record_selector", "ai_orchestrator", "ai_seed_write"]
+    },
+    {
+      "claim": "ScorePositioning, GetTargetScore, GetTargetArea or GetSecondTargetArea, and GetSkillEffect are dynamically looked up on the actual Lua object and their typed results are copied back into native containers.",
+      "evidence_class": "inference",
+      "id": "dynamic_lua_callbacks",
+      "implications": [
+        "Hook coverage must enumerate actual loaded subclass function values instead of assuming a base Skill wrapper observes every override."
+      ],
+      "limitations": [
+        "Static analysis does not enumerate the runtime-loaded subclass set for a particular mission."
+      ],
+      "regions": ["score_positioning", "named_integer_invoker", "named_lookup", "target_score", "target_area", "skill_effect"]
+    },
+    {
+      "claim": "The second ScorePositioning string reference is part of GetDeployLocScore deployment scoring, not a second enemy-decision tournament.",
+      "evidence_class": "inference",
+      "id": "deployment_anchor_correction",
+      "implications": [
+        "Only the RVA 0x000f7870 path should anchor ordinary enemy candidate positioning work."
+      ],
+      "limitations": [
+        "Deployment scoring is not otherwise modeled by this report."
+      ],
+      "regions": ["deployment_score", "named_integer_invoker"]
+    },
+    {
+      "claim": "The executable has no lua_yield import and no exact lua_yield string, while each RNG leaf's normal success path contains only scalar work and its direct call to the non-yielding RNG core. This strongly supports non-yielding Lua-visible RNG calls but does not prove installed-hook neutrality.",
+      "evidence_class": "inference",
+      "id": "rng_non_yielding_success_path",
+      "implications": [
+        "The dormant one-call return-preserving Lua wrapper has a defensible static boundary for a disposable experiment."
+      ],
+      "limitations": [
+        "Static analysis cannot prove exception or longjmp behavior, detour correctness, reentrancy, or enabled-versus-disabled gameplay equivalence."
+      ],
+      "regions": ["random_int_1", "random_int_2", "random_bool_1", "random_bool_2", "rng_core"]
+    }
+  ],
+  "hook_boundaries": [
+    {
+      "boundary": "Lua globals _G.random_int and _G.random_bool",
+      "captures": ["Calls that resolve through the two Lua globals"],
+      "evidence_class": "inference",
+      "id": "lua_global_rng",
+      "misses": ["Native enemy tie-breaks", "Native aiSeed advancement", "Other direct RNG-core callers"],
+      "regions": ["random_int_1", "random_int_2", "random_bool_1", "random_bool_2"],
+      "runtime_proof_required": ["Matched tracing-enabled and tracing-disabled disposable-install trials"],
+      "status": "partial_static_boundary"
+    },
+    {
+      "boundary": "Four native Luabind RNG leaves",
+      "captures": ["Every call routed through the registered random_int and random_bool overloads"],
+      "evidence_class": "fact",
+      "id": "native_rng_binding_leaves",
+      "misses": ["Every native caller that invokes the RNG core directly"],
+      "regions": ["random_int_1", "random_int_2", "random_bool_1", "random_bool_2"],
+      "runtime_proof_required": ["ABI-safe detour proof", "Call-site attribution if overload identity is required"],
+      "status": "partial_static_boundary"
+    },
+    {
+      "boundary": "Shared RNG core at RVA 0x00387f16",
+      "captures": ["The complete shared CRT RNG stream for all callers of this exact function"],
+      "evidence_class": "fact",
+      "id": "native_rng_core",
+      "misses": ["Semantic origin unless return address or a reviewed caller ID is recorded"],
+      "regions": ["rng_core", "rng_state_owner"],
+      "runtime_proof_required": ["ABI-safe detour proof", "Bounded caller attribution", "Matched enabled-versus-disabled trials"],
+      "status": "proven_static_boundary"
+    },
+    {
+      "boundary": "Enemy ScorePositioning wrapper at RVA 0x000f7870",
+      "captures": ["Ordinary enemy positioning callback input and integer result"],
+      "evidence_class": "inference",
+      "id": "enemy_score_positioning",
+      "misses": ["Deployment ScorePositioning path", "Internal Lua subclass logic unless separately instrumented"],
+      "regions": ["score_positioning", "named_integer_invoker", "named_lookup"],
+      "runtime_proof_required": ["Parameter-layout proof", "Behavior-neutral detour trial"],
+      "status": "partial_static_boundary"
+    },
+    {
+      "boundary": "Enemy candidate loop at RVA 0x000f78f0",
+      "captures": ["Target-area iteration order", "Position score", "Per-target score", "Equal-best native tie-break"],
+      "evidence_class": "inference",
+      "id": "enemy_candidate_loop",
+      "misses": ["Subclass construction logic before the returned vector", "Higher-level record-selection branches"],
+      "regions": ["candidate_loop", "target_area_wrapper", "target_score", "score_positioning"],
+      "runtime_proof_required": ["Candidate-container ABI proof", "Bounded primitive extraction", "Matched trials"],
+      "status": "partial_static_boundary"
+    },
+    {
+      "boundary": "GetTargetArea or GetSecondTargetArea function at RVA 0x00269cc0",
+      "captures": ["Dynamic callback selection and returned target vector before native filtering/copy"],
+      "evidence_class": "inference",
+      "id": "get_target_area",
+      "misses": ["Unloaded subclasses", "Semantic reason each Lua callback chose its order"],
+      "regions": ["target_area_wrapper", "target_area"],
+      "runtime_proof_required": ["Returned-container ABI proof", "Actual loaded-method coverage manifest"],
+      "status": "partial_static_boundary"
+    },
+    {
+      "boundary": "GetSkillEffect containing function at RVA 0x00268050",
+      "captures": ["Dynamic GetSkillEffect lookup and returned native effect container"],
+      "evidence_class": "inference",
+      "id": "get_skill_effect",
+      "misses": ["A safe complete primitive serialization for every effect variant"],
+      "regions": ["skill_effect"],
+      "runtime_proof_required": ["Opaque bounded summary contract", "Container lifetime and ABI proof", "Matched trials"],
+      "status": "partial_static_boundary"
+    },
+    {
+      "boundary": "Selected 24-byte AI record copy at RVA 0x000f683c through 0x000f684f",
+      "captures": ["Selected destination and target coordinates plus the remaining selected record fields"],
+      "evidence_class": "inference",
+      "id": "selected_ai_record_copy",
+      "misses": ["Proof of the downstream Pawn action or animation queue commit"],
+      "regions": ["ai_orchestrator", "record_selector"],
+      "runtime_proof_required": ["Field-layout proof", "Correlation with the later queued Pawn action"],
+      "status": "partial_static_boundary"
+    },
+    {
+      "boundary": "Final downstream Pawn action queue commit",
+      "captures": [],
+      "evidence_class": "hypothesis",
+      "id": "final_pawn_queue_commit",
+      "misses": ["The exact final pre-execution action object remains unmapped"],
+      "regions": [],
+      "runtime_proof_required": ["Correlate selected-record writes with queued Pawn getters in a disposable capture"],
+      "status": "unresolved"
+    }
+  ],
+  "identity": {
+    "appmanifest_sha256": "075cffc2f0027fb793040cd0a66c72c09a17bab6a9cb9407a644725c5b5a6d98",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [{"depot_id": "590381", "manifest": "8335438558621014449"}],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {"architecture": "x86", "format": "pe", "path": "SDL2.dll", "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10", "size": 891904},
+      {"architecture": "x86", "format": "pe", "path": "fmod.dll", "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00", "size": 1518080},
+      {"architecture": "x86", "format": "pe", "path": "fmodstudio.dll", "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d", "size": 1085440},
+      {"architecture": "x86", "format": "pe", "path": "lua5.1.dll", "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14", "size": 419840},
+      {"architecture": "x86", "format": "pe", "path": "steam_api.dll", "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7", "size": 263080},
+      {"architecture": "x86", "format": "pe", "path": "vcruntime140.dll", "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4", "size": 83784}
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "limitations": [
+      "Addresses, hashes, and conclusions are exact only for the pinned Windows executable.",
+      "Region starts and extents are reviewed analyst inputs; the verifier proves hashes and instruction boundaries relative to each declared start but does not independently discover function entries or reachability.",
+      "Function names without retained RTTI or exact string evidence remain semantic analyst labels.",
+      "Static analysis does not prove detour neutrality, runtime branch frequency, or matched gameplay outcomes.",
+      "No executable bytes or proprietary decompiled source are stored in this artifact."
+    ],
+    "procedure": [
+      "Verify the PE, Steam inventory, and prior named-anchor map identity.",
+      "Decode focused functions independently with Capstone and Ghidra headless analysis.",
+      "Trace only the registration, RNG, scoring, targeting, and selected-record paths required by the Observatory hook plan.",
+      "Record reviewed function extents as SHA-256-pinned regions, decode each complete region linearly from its declared start with Capstone, and accept selected rel32 and IAT calls only at instruction boundaries relative to that start.",
+      "Classify behavioral conclusions as facts, inferences, or hypotheses and retain runtime-only blockers explicitly."
+    ],
+    "tools": [
+      {"name": "ITB PE parser and verifier", "role": "Identity, region hash, import, and call-edge validation", "version": "schema 1"},
+      {"name": "Capstone", "role": "Independent focused x86 instruction decoding", "version": "5.0.7"},
+      {"name": "Ghidra", "role": "Headless function, reference, call-graph, RTTI, and bounded decompiler corroboration", "version": "12.1.3"}
+    ]
+  },
+  "pe": {"bits": 32, "image_base": "0x00400000"},
+  "regions": [
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0004c877", "evidence_class": "fact", "id": "registration_builder", "section": ".text", "sha256": "8f0921f242d3fdfeb89453f2939344ebe6ef7af929ebfbeb7d6ef22a54947cbb", "size": 7223, "start_rva": "0x0004ac40"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000507b5", "evidence_class": "fact", "id": "random_int_factory_1", "section": ".text", "sha256": "9f1b6d57d46e9fe035aa6d79c37a8fa3bb9806cb3a4a1ef6b731b5c9ffb5d856", "size": 37, "start_rva": "0x00050790"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000507e5", "evidence_class": "fact", "id": "random_int_factory_2", "section": ".text", "sha256": "c4570c7b27eb23c58b51d9d71f4d8225997ab7e2a6375080b3e69ce42d58a660", "size": 37, "start_rva": "0x000507c0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x00050816", "evidence_class": "fact", "id": "random_bool_factory_1", "section": ".text", "sha256": "b7ade1533eef808be1db9d439bd1cd254620b879eb04be7a174be37abd459616", "size": 38, "start_rva": "0x000507f0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x00050845", "evidence_class": "fact", "id": "random_bool_factory_2", "section": ".text", "sha256": "123cf0a142831d693d0b54b8f300bd9398d24003ec9fd8e0e061cd2cbc72efcc", "size": 37, "start_rva": "0x00050820"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0005409e", "evidence_class": "fact", "id": "random_int_descriptor_1", "section": ".text", "sha256": "6e2ddb6cb38e6bc324fa4c1c890e8b7efb5e8dbe0c5ee1b867c62784f1317642", "size": 110, "start_rva": "0x00054030"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0005410e", "evidence_class": "fact", "id": "random_int_descriptor_2", "section": ".text", "sha256": "b965167dac547e31c96374e5b6656d2d6bce77207f35ae2a4a9b1e2af6f575ba", "size": 110, "start_rva": "0x000540a0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0005417d", "evidence_class": "fact", "id": "random_bool_descriptor_1", "section": ".text", "sha256": "0af4782483ed26b4a9c054efe6c468d55133711276342335c69964d5e727e8ae", "size": 109, "start_rva": "0x00054110"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000541ee", "evidence_class": "fact", "id": "random_bool_descriptor_2", "section": ".text", "sha256": "12cf398e2d5ad0f66f66666fb7b579514423ce83ac49c7c73f62994219eb2d7f", "size": 110, "start_rva": "0x00054180"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x002ea81a", "evidence_class": "fact", "id": "binding_name_writer", "section": ".text", "sha256": "5212f7900e77e33746f15895b38c21e70634a6c80f48f7ec0a9dc5ff5554390d", "size": 570, "start_rva": "0x002ea5e0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x002ea89d", "evidence_class": "fact", "id": "closure_builder", "section": ".text", "sha256": "7ccb69986751a399d34584c44c0c52c68da088fe85a5e8a62743964cbcc4db0c", "size": 125, "start_rva": "0x002ea820"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000e0c3a", "evidence_class": "fact", "id": "random_int_1", "section": ".text", "sha256": "76e4d6f1289067724a2b6a8348ef91cb772a9bb12f6debf07b66efc11a6dd70e", "size": 26, "start_rva": "0x000e0c20"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000e0c66", "evidence_class": "fact", "id": "random_int_2", "section": ".text", "sha256": "36a857a7f1867f83e3e6bb3090a14935952f66b8def4d11d36650fc9efd42285", "size": 38, "start_rva": "0x000e0c40"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000e0cc3", "evidence_class": "fact", "id": "random_bool_1", "section": ".text", "sha256": "36a123e309bae6a3460ab9397d03bb7db7731c3cc0a00c23821dcdf4f5d316ea", "size": 19, "start_rva": "0x000e0cb0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000e0ce4", "evidence_class": "fact", "id": "random_bool_2", "section": ".text", "sha256": "0e59141f8db76bc835a5d1f27866ed5d5370523ead0d1f4498d82305ffc58a47", "size": 20, "start_rva": "0x000e0cd0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x00387f37", "evidence_class": "fact", "id": "rng_core", "section": ".text", "sha256": "3d7a67186e320b23a31d2ca6f9281211b373b60d44f35531cf4369da45cf0179", "size": 33, "start_rva": "0x00387f16"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x00387f49", "evidence_class": "fact", "id": "rng_seed", "section": ".text", "sha256": "67b19fe39627674ef04d07bd86e989a39ce744be2e93f9265c16e2aeb928cf9d", "size": 18, "start_rva": "0x00387f37"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0038edb5", "evidence_class": "fact", "id": "rng_state_owner", "section": ".text", "sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f", "size": 131, "start_rva": "0x0038ed32"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000f6b74", "evidence_class": "fact", "id": "ai_orchestrator", "section": ".text", "sha256": "f788de533a9e841719e4611a646afccb11ac950835e379fa70296c24f98e9bb4", "size": 2020, "start_rva": "0x000f6390"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000f6e08", "evidence_class": "fact", "id": "ai_seed_write", "section": ".text", "sha256": "79446f0f210aee70f19e203e8235260a8cb631d8c2bd67291062496444125e13", "size": 296, "start_rva": "0x000f6ce0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000f6fa6", "evidence_class": "fact", "id": "ai_seed_read", "section": ".text", "sha256": "9b6235977ffc513fe44b973cacf9cac9df5762108881a345b80a63175adb19a7", "size": 406, "start_rva": "0x000f6e10"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000e0c1d", "evidence_class": "fact", "id": "ai_seed_advance", "section": ".text", "sha256": "cd9532389901fcddf43ec02bbcdf85b8408f6bc4c01afe97fb5c5dcca8d32e70", "size": 45, "start_rva": "0x000e0bf0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000f78ec", "evidence_class": "fact", "id": "score_positioning", "section": ".text", "sha256": "9794db437203d18af0ce5245bc178f537e20f715b192c671cc7ecde7d279a42a", "size": 124, "start_rva": "0x000f7870"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000f7c17", "evidence_class": "fact", "id": "candidate_loop", "section": ".text", "sha256": "a162b5ead3bfcb851bf99f31b204485769570deb38fb6eb8102040214bcfc064", "size": 807, "start_rva": "0x000f78f0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000f817f", "evidence_class": "fact", "id": "record_selector", "section": ".text", "sha256": "ab07271dab17b1f63227885cd1d1560ca227a85588f18915f477864b3f2ec8fe", "size": 943, "start_rva": "0x000f7dd0"},
+    {"boundary_basis": "Reviewed contiguous function extent through the reachable epilogue, corroborated with Ghidra 12.1.3 and focused Capstone decoding", "end_rva_exclusive": "0x000f8873", "evidence_class": "fact", "id": "named_integer_invoker", "section": ".text", "sha256": "59607f3c4741577e11c570b31aeb3dfaadec00d85ec8a69e024a7f06760e584e", "size": 259, "start_rva": "0x000f8770"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x000f8d10", "evidence_class": "fact", "id": "named_lookup", "section": ".text", "sha256": "a65b8049efbc88f1c206dcfb1e12f63c88e012a656b21ee4d4ca7b14e6337cd1", "size": 112, "start_rva": "0x000f8ca0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x00229307", "evidence_class": "fact", "id": "target_area_wrapper", "section": ".text", "sha256": "9156f8498c8e6cb817eb0d75123888ebff9331f90745ecb9e857ebe45d3c82b1", "size": 215, "start_rva": "0x00229230"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0022947f", "evidence_class": "fact", "id": "target_score", "section": ".text", "sha256": "7316bcd20f712aa7232980057b847fcf30e5fe7ded97f96cd236dad0c8805405", "size": 367, "start_rva": "0x00229310"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x00269f12", "evidence_class": "fact", "id": "target_area", "section": ".text", "sha256": "49c903372860741f8dcdc25a9db1aca6363fa4db7b328d2c9dcac8d625abe4cd", "size": 594, "start_rva": "0x00269cc0"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0026833f", "evidence_class": "fact", "id": "skill_effect", "section": ".text", "sha256": "6bb49352f06f6b4c19cc0e469e8d6e2a95afc87c8214eb68e85fdd5d5085155a", "size": 751, "start_rva": "0x00268050"},
+    {"boundary_basis": "Ghidra 12.1.3 function body corroborated with focused Capstone decoding", "end_rva_exclusive": "0x0016ceb8", "evidence_class": "fact", "id": "deployment_score", "section": ".text", "sha256": "bd12a7778d5e2abc43df8a963e74c21f5e88b57e92957e776f3fedf8a5a1d144", "size": 232, "start_rva": "0x0016cdd0"}
+  ],
+  "schema_version": 1,
+  "summary": {
+    "direct_call_edge_count": 35,
+    "finding_count": 9,
+    "hook_boundary_count": 9,
+    "region_count": 32,
+    "unresolved_count": 5
+  },
+  "unresolved": [
+    {
+      "id": "downstream_pawn_queue_commit",
+      "next_evidence": "Correlate the selected-record copy with queued Pawn fields and the later action object in a disposable build-keyed capture.",
+      "question": "Where is the exact final pre-execution Pawn action queue commit?",
+      "static_status": "The selected AI record is mapped, but its later queue handoff is not proven."
+    },
+    {
+      "id": "native_detour_neutrality",
+      "next_evidence": "Run matched tracing-enabled and tracing-disabled trials with exact proxy, controller, and executable hashes.",
+      "question": "Can any native hook preserve ABI, returns, errors, timing, and gameplay outcomes?",
+      "static_status": "No static analysis can prove an installed detour is behavior-neutral."
+    },
+    {
+      "id": "runtime_subclass_coverage",
+      "next_evidence": "Enumerate actual loaded method identities and record an exact hook-coverage manifest per capture.",
+      "question": "Which runtime subclass callbacks participate in a particular enemy tournament?",
+      "static_status": "Dynamic object lookup is proven, but the mission-specific loaded subclass set is runtime state."
+    },
+    {
+      "id": "rng_caller_attribution",
+      "next_evidence": "Record bounded return-address IDs at the RNG core and map only observed callers back to reviewed functions.",
+      "question": "Which semantic subsystem owns each shared-RNG call in a real phase?",
+      "static_status": "A raw text scan finds 118 rel32 call encodings to the core; only the high-value enemy-planning paths are classified here."
+    },
+    {
+      "id": "spawn_rng_order",
+      "next_evidence": "Use the shared-core caller IDs and matched phase traces to isolate spawn selection and fit exact call ordering.",
+      "question": "What is the native spawn-selection RNG call order?",
+      "static_status": "The generator boundary is proven, but spawn consumers and their phase-dependent ordering are not separated by static names."
+    }
+  ]
+}

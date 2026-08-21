@@ -2,8 +2,9 @@
 
 **Status:** candidate streams were printed for two recorded turns. A reviewer
 noticed no obvious manual alignment; mechanical matching was not implemented.
-The limitation is documented; offline tools downstream of this insight are
-described below.
+The limitation is documented. A later exact-build Windows boundary pass mapped
+the native RNG but cannot retroactively identify these recordings or recover
+their missing call order.
 
 This document is the writeup for `scripts/seed_replay_experiment.py`. It is
 *post-hoc validation only* — never used in any live decision loop.
@@ -14,14 +15,13 @@ The two noisy recorded cases showed no obvious alignment under manual
 inspection of simple Park-Miller candidate streams. The experiment did not map
 the spawn pool or perform a formal call-order/offset fit, so it cannot determine
 whether `master_seed` + `ai_seed` are sufficient. The Lua spawner calls
-native-visible `random_int` and `random_bool` at known semantic points, but we
-have not mapped their implementation, state, seeding ritual, or complete call
-order. The recording manifests do not contain platform, executable/native
-hashes, depot/build identity, libc identity, or content revisions, so their
-engine provenance is unverified. Separately, strings in the inventoried Windows
-PE expose `random_int`, `random_bool`, `aiSeed`, and `seed`; that does not prove
-which RNG backed these recordings or whether either path shares state with
-Lua's `math.random`.
+native-visible `random_int` and `random_bool` at known semantic points, but the
+recording manifests do not contain platform, executable/native hashes,
+depot/build identity, libc identity, or content revisions. Their engine
+provenance is therefore unverified. A later pass proved that the pinned Windows
+PE uses an MSVC-style shared RNG and mapped its seeding ritual, but that does not
+identify which RNG backed these recordings or recover their complete call
+order.
 
 The locally observed `itb_test.dylib` is not a trustworthy origin for these
 claims. The official macOS depot does not list it, and the local artifact's
@@ -36,9 +36,10 @@ That said, the experiment was still worth running:
   mapping, or formal call-order fit was performed. With only two noisy,
   build-unkeyed cases, this does not rule out shared Park-Miller state or
   another offset model.
-- **It catalogs what we DO know** (algorithm in Lua, seed sources we
-  capture, and one sampled macOS libc PRNG identity) and what is blocked
-  (native binding identity, hidden state, and complete consumption order).
+- **It catalogs what we DO know** (algorithm in Lua, seed sources we capture,
+  one sampled macOS libc PRNG identity, and the later pinned Windows native
+  map) and what is blocked (recording identity, hidden state, and complete
+  consumption order).
 - **It justifies why we keep capturing `ai_seed`** in `resist_probe.jsonl`
   and `bridge_state.mission_seeds[<region>].ai_seed` even though it
   has not been validated as an offline replay key. It still functions as a
@@ -86,29 +87,33 @@ negative result:
 
 ## Why this is hard (and what we'd need to change)
 
-The blocker is the `random_int` / `random_bool` boundary and the hidden engine
-state around it:
+For these two historical recordings, the blockers are missing build identity,
+hidden state, and complete call order:
 
-- `strings` on the sampled main executable confirms the binding names are
-  resident there. Their registration mechanism and function bodies remain
-  unmapped.
+- The pinned Windows executable's registration mechanism, four binding bodies,
+  shared RNG core, seed setter, and enemy-planning seed ritual are now mapped.
+  See `docs/itb_native_anchor_research.md`. Those facts apply only to that
+  exact executable hash.
 - `nm -gU` on the unrelated-provenance local `itb_test.dylib` exports only
   `_luaopen_itb_test`; this does not locate the game's RNG bindings.
-- We do not know whether they:
-  - call `rand()` (sharing libc state with Lua's `math.random`),
-  - own a private `std::mt19937` seeded from `aiSeed`,
-  - or use a third RNG (xorshift, MINSTD, Knuth's TYPE_3, etc.).
-- Even if they share libc `rand()` state, other engine systems may consume RNG
-  between turns. AI planning, target choice, and animation are candidates, not
-  established consumers of the same stream. Without instrumentation we cannot
-  identify or count those calls.
+- The recordings do not say whether they came from that Windows PE or the
+  sampled macOS environment, so choosing either generator would invent
+  provenance.
+- Other engine systems consume the shared Windows RNG between semantic Lua
+  decisions. Static analysis proves native AI calls, including tie-breaking,
+  but runtime attribution is still required to identify and count the exact
+  sequence that led to each spawn.
 
-To get a real prediction match we would need either:
+To get a real prediction match we would need a combination of:
 
-1. **Live-game RNG instrumentation.** Add a Lua hook in `modloader.lua` that wraps `random_int` / `random_bool` and logs every call with its result during an enemy phase. Then we can verify Park-Miller equivalence empirically. **(out of scope for this experiment — would touch live bridge code.)**
-2. **Targeted native boundary research.** On an exact platform/build/hash,
-   anchor the Lua registration strings in the main executable and validate the
-   mapped behavior empirically. Do not assume a local dylib contains the body.
+1. **Live-game RNG instrumentation.** On a disposable non-achievement install,
+   activate one dormant `_G.random_int` / `_G.random_bool` wrapper at a time,
+   then compare it with bounded native caller evidence. **(Out of scope for this
+   historical experiment; it would touch installed runtime code.)**
+2. **Targeted native boundary research — completed for the pinned Windows
+   build.** The remaining requirement is controlled dynamic validation; do not
+   transfer the result to a different binary or assume a local dylib contains
+   the body.
 3. **Differential observation.** Capture *thousands* of (ai_seed → first-spawn-type) pairs and treat it as a regression problem: can we learn a function `(ai_seed) → spawn_index_offset` empirically? Plausible but expensive.
 
 ## What this enables anyway
@@ -133,6 +138,7 @@ Even with prediction blocked, `ai_seed` capture remains valuable for:
 - `scripts/seed_replay.py` — pure-Python Park-Miller / Lua 5.1 `math.random` reproducer (existing).
 - `docs/seed_replay_hypotheses.md` — formal H1/H2/H3 hypotheses for the resist-roll problem (existing).
 - `tests/test_seed_replay.py` — golden values against macOS libc (existing).
+- `docs/itb_native_anchor_research.md` — exact Windows boundary follow-up.
 
 ## Honest scorecard
 
