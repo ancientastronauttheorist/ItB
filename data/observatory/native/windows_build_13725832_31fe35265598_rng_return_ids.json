@@ -1,0 +1,1510 @@
+{
+  "analysis_kind": "native_rng_return_id_map",
+  "callers": [
+    {
+      "call_rva": "0x00083190",
+      "caller_id": 1,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00083195",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000b41f0",
+      "caller_id": 2,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000b41f5",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bc924",
+      "caller_id": 3,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bc929",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcac9",
+      "caller_id": 4,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcace",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcb56",
+      "caller_id": 5,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcb5b",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcb96",
+      "caller_id": 6,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcb9b",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcbea",
+      "caller_id": 7,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcbef",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcc23",
+      "caller_id": 8,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcc28",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcc47",
+      "caller_id": 9,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcc4c",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcca1",
+      "caller_id": 10,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcca6",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bccca",
+      "caller_id": 11,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcccf",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bccf4",
+      "caller_id": 12,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bccf9",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000bcd48",
+      "caller_id": 13,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000bcd4d",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000d85ed",
+      "caller_id": 14,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000d85f2",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000d9015",
+      "caller_id": 15,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000d901a",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000d9ce9",
+      "caller_id": 16,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000d9cee",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000d9d03",
+      "caller_id": 17,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000d9d08",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000dc2f0",
+      "caller_id": 18,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000dc2f5",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0bf4",
+      "caller_id": 19,
+      "classification": {
+        "edge_id": "seed_advance_to_rng_core_first",
+        "meaning": "The AI seed-advance helper consumes its first shared RNG value.",
+        "source_region": "ai_seed_advance",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000e0bf9",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0c06",
+      "caller_id": 20,
+      "classification": {
+        "edge_id": "seed_advance_to_rng_core_retry",
+        "meaning": "The AI seed-advance helper can retry against the shared RNG core.",
+        "source_region": "ai_seed_advance",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000e0c0b",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0c2d",
+      "caller_id": 21,
+      "classification": {
+        "edge_id": "random_int_1_to_rng_core",
+        "meaning": "The one-argument random_int leaf consumes the shared RNG core.",
+        "source_region": "random_int_1",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000e0c32",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0c55",
+      "caller_id": 22,
+      "classification": {
+        "edge_id": "random_int_2_to_rng_core",
+        "meaning": "The two-argument random_int leaf consumes the shared RNG core.",
+        "source_region": "random_int_2",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000e0c5a",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0c87",
+      "caller_id": 23,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000e0c8c",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0c93",
+      "caller_id": 24,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000e0c98",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0cb3",
+      "caller_id": 25,
+      "classification": {
+        "edge_id": "random_bool_1_to_rng_core",
+        "meaning": "The one-argument random_bool leaf consumes the shared RNG core.",
+        "source_region": "random_bool_1",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000e0cb8",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000e0cd3",
+      "caller_id": 26,
+      "classification": {
+        "edge_id": "random_bool_2_to_rng_core",
+        "meaning": "The two-argument random_bool leaf consumes the shared RNG core.",
+        "source_region": "random_bool_2",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000e0cd8",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000f5f22",
+      "caller_id": 27,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000f5f27",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000f6eff",
+      "caller_id": 28,
+      "classification": {
+        "edge_id": "ai_seed_read_default_to_rng_core",
+        "meaning": "The AI seed restore path obtains a shared-RNG default before reading aiSeed.",
+        "source_region": "ai_seed_read",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000f6f04",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000f7b62",
+      "caller_id": 29,
+      "classification": {
+        "edge_id": "candidate_loop_tie_break_to_rng_core",
+        "meaning": "Equal-best targets are selected with a direct native RNG call.",
+        "source_region": "candidate_loop",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000f7b67",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000f7f6a",
+      "caller_id": 30,
+      "classification": {
+        "edge_id": "record_selector_to_rng_core_1",
+        "meaning": "The higher-level selector contains a direct shared-RNG choice.",
+        "source_region": "record_selector",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000f7f6f",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000f7f94",
+      "caller_id": 31,
+      "classification": {
+        "edge_id": "record_selector_to_rng_core_2",
+        "meaning": "The higher-level selector contains a second direct shared-RNG choice.",
+        "source_region": "record_selector",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000f7f99",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000f8012",
+      "caller_id": 32,
+      "classification": {
+        "edge_id": "record_selector_to_rng_core_3",
+        "meaning": "The higher-level selector contains a third direct shared-RNG choice.",
+        "source_region": "record_selector",
+        "status": "reviewed_direct_call"
+      },
+      "return_rva": "0x000f8017",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000f88a3",
+      "caller_id": 33,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000f88a8",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000fb96b",
+      "caller_id": 34,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000fb970",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x000fb997",
+      "caller_id": 35,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x000fb99c",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00104a3b",
+      "caller_id": 36,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00104a40",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00104a98",
+      "caller_id": 37,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00104a9d",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00104ac5",
+      "caller_id": 38,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00104aca",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00104af9",
+      "caller_id": 39,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00104afe",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0011c8a8",
+      "caller_id": 40,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0011c8ad",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001319e3",
+      "caller_id": 41,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001319e8",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00131e66",
+      "caller_id": 42,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00131e6b",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00132213",
+      "caller_id": 43,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00132218",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0014c2e2",
+      "caller_id": 44,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0014c2e7",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00167590",
+      "caller_id": 45,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00167595",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00168a7b",
+      "caller_id": 46,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00168a80",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00168efd",
+      "caller_id": 47,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00168f02",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00169269",
+      "caller_id": 48,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0016926e",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0016d509",
+      "caller_id": 49,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0016d50e",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0016d94a",
+      "caller_id": 50,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0016d94f",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0016d96e",
+      "caller_id": 51,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0016d973",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0016efbc",
+      "caller_id": 52,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0016efc1",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0016f8d3",
+      "caller_id": 53,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0016f8d8",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00170350",
+      "caller_id": 54,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00170355",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0017036b",
+      "caller_id": 55,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00170370",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00170414",
+      "caller_id": 56,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00170419",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0017058b",
+      "caller_id": 57,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00170590",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00172462",
+      "caller_id": 58,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00172467",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00172e16",
+      "caller_id": 59,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00172e1b",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00172e70",
+      "caller_id": 60,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00172e75",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0017376e",
+      "caller_id": 61,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00173773",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00173908",
+      "caller_id": 62,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0017390d",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00173a0c",
+      "caller_id": 63,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00173a11",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001745ed",
+      "caller_id": 64,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001745f2",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00174f62",
+      "caller_id": 65,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00174f67",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001751a6",
+      "caller_id": 66,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001751ab",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00176e27",
+      "caller_id": 67,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00176e2c",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0018375f",
+      "caller_id": 68,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00183764",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00183e4d",
+      "caller_id": 69,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00183e52",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0018624d",
+      "caller_id": 70,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00186252",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0018b64c",
+      "caller_id": 71,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0018b651",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0018f321",
+      "caller_id": 72,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0018f326",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00196fe3",
+      "caller_id": 73,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00196fe8",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0019adc5",
+      "caller_id": 74,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0019adca",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0019b2c7",
+      "caller_id": 75,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0019b2cc",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001acf50",
+      "caller_id": 76,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001acf55",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001c2d99",
+      "caller_id": 77,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001c2d9e",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001c5ad0",
+      "caller_id": 78,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001c5ad5",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001c5cd1",
+      "caller_id": 79,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001c5cd6",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001c5ce5",
+      "caller_id": 80,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001c5cea",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001d0d01",
+      "caller_id": 81,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001d0d06",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001f81c4",
+      "caller_id": 82,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001f81c9",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001f8ef0",
+      "caller_id": 83,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001f8ef5",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001f9821",
+      "caller_id": 84,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001f9826",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001f9f2b",
+      "caller_id": 85,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001f9f30",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x001fb65e",
+      "caller_id": 86,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x001fb663",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00201c1c",
+      "caller_id": 87,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00201c21",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00201caa",
+      "caller_id": 88,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00201caf",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00205705",
+      "caller_id": 89,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0020570a",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0020e5ef",
+      "caller_id": 90,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0020e5f4",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0021f9b7",
+      "caller_id": 91,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0021f9bc",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00220962",
+      "caller_id": 92,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00220967",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00220974",
+      "caller_id": 93,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00220979",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00220986",
+      "caller_id": 94,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0022098b",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00220998",
+      "caller_id": 95,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0022099d",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0022593a",
+      "caller_id": 96,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0022593f",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0022596f",
+      "caller_id": 97,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225974",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0022597b",
+      "caller_id": 98,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225980",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00225995",
+      "caller_id": 99,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0022599a",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x002259e2",
+      "caller_id": 100,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x002259e7",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00225b45",
+      "caller_id": 101,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225b4a",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00225b89",
+      "caller_id": 102,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225b8e",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00225c16",
+      "caller_id": 103,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225c1b",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00225cdc",
+      "caller_id": 104,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225ce1",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00225cfd",
+      "caller_id": 105,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225d02",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00225d1c",
+      "caller_id": 106,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00225d21",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x002265a5",
+      "caller_id": 107,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x002265aa",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0022b78a",
+      "caller_id": 108,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0022b78f",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0022e6e7",
+      "caller_id": 109,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0022e6ec",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x002336f5",
+      "caller_id": 110,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x002336fa",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00233704",
+      "caller_id": 111,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00233709",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x002339c5",
+      "caller_id": 112,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x002339ca",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x002339d4",
+      "caller_id": 113,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x002339d9",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00233c3a",
+      "caller_id": 114,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00233c3f",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00233c49",
+      "caller_id": 115,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00233c4e",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00242d9e",
+      "caller_id": 116,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00242da3",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x00242db1",
+      "caller_id": 117,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x00242db6",
+      "section": ".text"
+    },
+    {
+      "call_rva": "0x0025e2d7",
+      "caller_id": 118,
+      "classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "return_rva": "0x0025e2dc",
+      "section": ".text"
+    }
+  ],
+  "identity": {
+    "appmanifest_sha256": "075cffc2f0027fb793040cd0a66c72c09a17bab6a9cb9407a644725c5b5a6d98",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "candidate_scan": "Scan every file-backed byte of executable PE sections for raw E8 rel32 values whose decoded target is rng_core.",
+    "limitations": [
+      "Raw candidates may be opcode-looking bytes embedded in data or operands.",
+      "Only boundary-map call sites are semantically reviewed.",
+      "Any executed unknown caller makes complete attribution invalid.",
+      "The IDs are valid only for the exact executable identity."
+    ],
+    "runtime_rule": "A native helper may record only the matching small ID, never an absolute address or pointer.",
+    "stable_id_rule": "Sort by call RVA and assign IDs 1..N; reserve ID 0 for an executed return address absent from this exact catalog."
+  },
+  "rng_core": {
+    "entry_rva": "0x00387f16",
+    "maximum_caller_id": 255,
+    "region_id": "rng_core",
+    "unknown_caller_id": 0
+  },
+  "schema_version": 1,
+  "sources": {
+    "boundary_map_canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "inventory_canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4"
+  },
+  "summary": {
+    "raw_call_candidate_count": 118,
+    "reviewed_call_count": 11,
+    "unclassified_call_count": 107,
+    "unknown_caller_id": 0
+  }
+}

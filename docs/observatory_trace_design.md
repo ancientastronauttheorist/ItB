@@ -25,6 +25,12 @@ work. `src/bridge/modloader.lua`, the installed game, the game process, and the
 active achievement session remain untouched. Deployment requires a separately
 reviewed safe window.
 
+The controlled native-capture sequence and non-VM isolation gate are now
+specified in `docs/observatory_capture_campaign.md`. Repo-only matched-trial,
+native-checkpoint, runtime-callback, spawn-attribution, selected-record
+correlation, and RNG return-ID tooling are diagnostic companions to this
+contract. None automatically promote evidence into schema v2.
+
 Controller v1 permits exactly one installed hook, either `_G.random_int` or
 `_G.random_bool`; all seven other event families must be explicitly disabled.
 It calls the original once, preserves every return (including interior and
@@ -314,8 +320,9 @@ board snapshot is not proof of the candidate tournament that selected it.
 
 ## Open questions
 
-- Can an ABI-safe observer at the shared RNG core capture the complete stream,
-  assign bounded return-address IDs, and pass matched enabled/disabled trials?
+- Can an ABI-safe observer at the shared RNG core capture the complete stream
+  using the committed 118-entry bounded return-address catalog and pass matched
+  control/exact-hook trials?
 - Can the mapped candidate loop be observed without perturbing vector order,
   dynamic callback lookup, or native pathfinding state?
 - Which subclass `GetTargetScore` overrides bypass a base wrapper?

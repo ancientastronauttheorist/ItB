@@ -27,7 +27,11 @@ The durable artifacts are:
   for exact strings, conservative initial references, imports, and PE identity;
 - `data/observatory/native/windows_build_13725832_31fe35265598_pe_boundaries.json`
   for reviewed region hashes, mechanically decoded calls, classified findings,
-  hook scope, and remaining runtime questions.
+  hook scope, and remaining runtime questions;
+- `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
+  for deterministic small IDs covering all 118 raw `rel32` candidates to the
+  shared RNG core. Eleven are matched to reviewed call edges; the other 107
+  remain explicitly unclassified until runtime evidence or further review.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct
@@ -222,3 +226,9 @@ controlled and dynamic:
 6. Capture actual subclass coverage and separate spawn-selection callers.
 7. Finalize evidence offline, convert proven behavior into Rust conformance
    tests, remove the experimental hooks, and verify the installation is clean.
+
+The exact isolation gate, helper constraints, counterbalanced experiment order,
+abort rules, and cleanup proof are in `docs/observatory_capture_campaign.md`.
+The repository now validates matched-trial receipts, bounded native diagnostic
+checkpoints, runtime callback manifests, spawn RNG spans, and selected-record
+queue correlations. No runtime result exists yet.

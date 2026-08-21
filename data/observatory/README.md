@@ -168,3 +168,30 @@ keyed by the full executable SHA-256. The reusable
 function extents, hashes, calls, and references for explicitly supplied labeled
 addresses. Treat that output as review input and publish only normalized JSON
 whose identity, bytes, and declared-boundary-relative calls pass the verifier.
+
+## Native RNG return-address IDs
+
+Build or verify the complete raw-call catalog only against the exact executable,
+inventory, and reviewed boundary map:
+
+```text
+python scripts/itb_rng_return_map.py build \
+  --executable "<Into the Breach>/Breach.exe" \
+  --inventory data/observatory/inventories/<matching-snapshot>.json \
+  --boundaries data/observatory/native/<build-keyed-boundaries>.json \
+  --output data/observatory/native/<build-keyed-rng-return-ids>.json
+
+python scripts/itb_rng_return_map.py verify \
+  --executable "<Into the Breach>/Breach.exe" \
+  --inventory data/observatory/inventories/<matching-snapshot>.json \
+  --boundaries data/observatory/native/<build-keyed-boundaries>.json \
+  --catalog data/observatory/native/<build-keyed-rng-return-ids>.json
+```
+
+ID 0 is reserved for an executed caller absent from the catalog. IDs 1..N are
+assigned by sorted call RVA. The raw scan intentionally includes opcode-looking
+bytes that may not be reachable instructions; only exact reviewed boundary-map
+edges receive semantic labels. A native diagnostic stores the small ID, never
+the absolute return address. Any observed ID 0 invalidates complete caller
+attribution. File publication is create-only and restricted to direct JSON
+children of `data/observatory/native/`; omit `--output` to use stdout elsewhere.
